@@ -5,7 +5,7 @@
 import { checkRateLimit } from '../rateLimit/apiRateLimiter';
 import { LayoffRound } from '../../data/companyDatabase';
 
-const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
+import { callOpenRouterProxy } from './openRouterProxy';
 const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
 export interface DeepSeekSignals {
@@ -18,7 +18,15 @@ export interface DeepSeekSignals {
   confidence: number;
   primaryRiskDriver: string;
   timeHorizon: '3months' | '6months' | '12months' | 'beyond12months';
-  patternMatch: 'early-warning' | 'developing' | 'acute' | 'stable';
+  /**
+   * v7.0: patternId from the HISTORICAL_PATTERNS database, or null.
+   * Claude selects from a pre-computed candidate list — it cannot invent patterns.
+   * The ID is validated against HISTORICAL_PATTERNS before display.
+   *
+   * Deprecated: 'early-warning' | 'developing' | 'acute' | 'stable' enum values
+   * are no longer valid; they had no structured data backing.
+   */
+  patternMatch: string | null;
 }
 
 export interface DeepSeekResult {
@@ -35,8 +43,6 @@ export const runDeepSeekFinancial = async (
   layoffHistory: LayoffRound[],
   swarmContext?: string
 ): Promise<DeepSeekResult> => {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-  if (!apiKey) return { model: 'deepseek-v3', success: false, signals: null, rawConfidence: 0 };
   if (!checkRateLimit('openrouter')) return { model: 'deepseek-v3', success: false, signals: null, rawConfidence: 0 };
 
   const swarmSection = swarmContext ? `\n\n${swarmContext}\n` : '';
@@ -71,33 +77,10 @@ Return ONLY this JSON structure — no markdown or explanation:
 }`;
 
   try {
-    const response = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://humanproof.app',
-        'X-Title': 'HumanProof Layoff Calculator',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.05,  // Near-deterministic for financial analysis
-        max_tokens: 350,
-      }),
-    });
-
-    if (!response.ok) throw new Error(`OpenRouter HTTP ${response.status}`);
-    const data = await response.json();
-    const raw: string = data.choices?.[0]?.message?.content ?? '';
-    const parsed: DeepSeekSignals = JSON.parse(raw.replace(/```json|```/g, '').trim());
-
-    return {
-      model: 'deepseek-v3',
-      success: true,
-      signals: parsed,
-      rawConfidence: parsed.confidence ?? 0.5,
-    };
+    const proxyRes = await callOpenRouterProxy({ model: MODEL, prompt, maxTokens: 350, temperature: 0.05, responseFormat: 'json_object' });
+    if (!proxyRes.success || !proxyRes.content) throw new Error(proxyRes.error ?? 'Proxy returned no content');
+    const parsed: DeepSeekSignals = JSON.parse(proxyRes.content.replace(/```json|```/g, '').trim());
+    return { model: 'deepseek-v3', success: true, signals: parsed, rawConfidence: parsed.confidence ?? 0.5 };
   } catch (error: any) {
     console.warn('[DeepSeekAgent] Failed:', error.message);
     return { model: 'deepseek-v3', success: false, signals: null, rawConfidence: 0 };

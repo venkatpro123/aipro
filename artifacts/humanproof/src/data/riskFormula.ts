@@ -51,7 +51,7 @@ import {
 
 import { selectRoadmapBlocks, mergeBlocksIntoRoadmap } from "./roadmapBlocks";
 import { DANGER_SKILLS, SAFE_SKILLS, TRANSITION_RECS } from "./skillsData";
-import { industryRiskData } from "./industryRiskData";
+import { getAllIndustryRisk } from "../services/db/staticDataService";
 import { inferRoleRisk } from "./roleExposureData";
 import { getCountryD5Score, COUNTRY_RISK_PROFILES } from "./countryRiskProfile";
 import { countryCodeToD5Key } from "./companyDatabase";
@@ -332,7 +332,7 @@ const INDUSTRY_NETWORK_DENSITY: Record<string, number> = {
  */
 export const calculateD1 = (workType: string, industry: string, country: string = 'usa'): number => {
   const indRiskKey = INDUSTRY_KEY_TO_RISK_KEY[industry] ?? 'Technology';
-  const indData = industryRiskData[indRiskKey];
+  const indData = getAllIndustryRisk()[indRiskKey];
   const adoptionRate = indData?.aiAdoptionRate ?? 0.60;
 
   // Role-specific AI risk from roleExposureData (via fuzzy matching on workType)
@@ -403,7 +403,7 @@ export const calculateD2 = (workType: string, industry?: string): number => {
   // ── Component A: Industry-level AI adoption rate (from industryRiskData) ──
   // This is how fast the SECTOR is adopting AI tooling overall
   const indRiskKey = industry ? (INDUSTRY_KEY_TO_RISK_KEY[industry] ?? 'Technology') : 'Technology';
-  const indData = industryRiskData[indRiskKey];
+  const indData = getAllIndustryRisk()[indRiskKey];
   const adoptionRate = indData?.aiAdoptionRate ?? 0.55;  // 0–1
 
   // ── Component B: Role-category deployment maturity ─────────────────────────

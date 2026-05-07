@@ -1,0 +1,1952 @@
+[
+  {
+    "company_name": "FRANKLIN RESOURCES INC",
+    "industry": "Asset Management",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 9900,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "MCCORMICK & CO INC",
+    "industry": "Packaged Foods",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 14100,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "CHECK POINT SOFTWARE TECHNOLOGIES LTD",
+    "industry": "Software - Infrastructure",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6825,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Ascendis Pharma A/S",
+    "industry": "Biotechnology",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 1189,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "LOGITECH INTERNATIONAL S.A.",
+    "industry": "Computer Hardware",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 7300,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "BridgeBio Pharma, Inc.",
+    "industry": "Biotechnology",
+    "company_size": "mid",
+    "stage": "public",
+    "workforce_count": 834,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "TTM TECHNOLOGIES INC",
+    "industry": "Electronic Components",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 18200,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Ally Financial Inc.",
+    "industry": "Credit Services",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 10300,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Evercore Inc.",
+    "industry": "Capital Markets",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 2544,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "REINSURANCE GROUP OF AMERICA INC",
+    "industry": "Insurance - Reinsurance",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 4300,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "PayPay Corp",
+    "industry": "Software - Infrastructure",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 2012,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "APA Corp",
+    "industry": "Oil & Gas E&P",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 1791,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "HASBRO, INC.",
+    "industry": "Leisure",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 4520,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "ALIGN TECHNOLOGY INC",
+    "industry": "Medical Instruments & Supplies",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 20290,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "DT Midstream, Inc.",
+    "industry": "Oil & Gas Midstream",
+    "company_size": "mid",
+    "stage": "public",
+    "workforce_count": 588,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "SMITH & NEPHEW PLC",
+    "industry": "Medical Devices",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 16988,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "CARREFOUR SA",
+    "industry": "Grocery Stores",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 298604,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "GRACO INC",
+    "industry": "Specialty Industrial Machinery",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 4400,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "RPM INTERNATIONAL INC/DE/",
+    "industry": "Specialty Chemicals",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 17778,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "RENAISSANCERE HOLDINGS LTD",
+    "industry": "Insurance - Reinsurance",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 1040,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "LAMAR ADVERTISING CO/NEW",
+    "industry": "REIT - Specialty",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 3500,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Okta, Inc.",
+    "industry": "Software - Infrastructure",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6366,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Legence Corp.",
+    "industry": "Engineering & Construction",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 7000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "INSULET CORP",
+    "industry": "Medical Devices",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 5400,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Oklo Inc.",
+    "industry": "Utilities - Independent Power Producers",
+    "company_size": "mid",
+    "stage": "public",
+    "workforce_count": 215,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "BROWN FORMAN CORP",
+    "industry": "Beverages - Wineries & Distilleries",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 5000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Planet Labs PBC",
+    "industry": "Aerospace & Defense",
+    "company_size": "mid",
+    "stage": "public",
+    "workforce_count": 945,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Pacific Airport Group",
+    "industry": "Airports & Air Services",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 3506,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "MODINE MANUFACTURING CO",
+    "industry": "Auto Parts",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 11000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Gaming & Leisure Properties, Inc.",
+    "industry": "REIT - Specialty",
+    "company_size": "mid",
+    "stage": "public",
+    "workforce_count": 20,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "CNA FINANCIAL CORP",
+    "industry": "Insurance - Property & Casualty",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6600,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Laopu Gold Co. Ltd./ADR",
+    "industry": "Luxury Goods",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 2113,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "FIVE BELOW, INC",
+    "industry": "Specialty Retail",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 7800,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "UDR, Inc.",
+    "industry": "REIT - Residential",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 1420,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "NEUROCRINE BIOSCIENCES INC",
+    "industry": "Drug Manufacturers - Specialty & Generic",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 2000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Penumbra Inc",
+    "industry": "Medical Devices",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 4700,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "TopBuild Corp",
+    "industry": "Engineering & Construction",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 14707,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "NEW YORK TIMES CO",
+    "industry": "Publishing",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "CNH Industrial N.V.",
+    "industry": "Farm & Heavy Construction Machinery",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 34197,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "ERIE INDEMNITY CO",
+    "industry": "Insurance Brokers",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6667,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "BEST BUY CO INC",
+    "industry": "Specialty Retail",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 82000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Avery Dennison Corp",
+    "industry": "Packaging & Containers",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 35000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Solstice Advanced Materials Inc.",
+    "industry": "Specialty Chemicals",
+    "company_size": "large",
+    "stage": "public",
+    "workforce_count": 4100,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Coca-Cola Consolidated, Inc.",
+    "industry": "Beverages - Non-Alcoholic",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 15000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "GENERAC HOLDINGS INC.",
+    "industry": "Specialty Industrial Machinery",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 9400,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "GLOBUS MEDICAL INC",
+    "industry": "Medical Devices",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "SCREEN Holdings Co., Ltd./ADR",
+    "industry": "Semiconductor Equipment & Materials",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6910,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "James Hardie Industries plc",
+    "industry": "Building Materials",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 6000,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Allegion plc",
+    "industry": "Security & Protection Services",
+    "company_size": "global_giant",
+    "stage": "public",
+    "workforce_count": 13300,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "PINTEREST, INC.",
+    "industry": "Internet Content & Information",
+    "company_size": "enterprise",
+    "stage": "public",
+    "workforce_count": 5265,
+    "open_jobs_count": 0,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Public (NASDAQ/NYSE)",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 120
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "moderate",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.1,
+      "product_manager": 0.1,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.5,
+    "market_risk_score": 0.15,
+    "company_risk_score": 0.1,
+    "confidence_score": 0.95,
+    "archetype": "mature_stable",
+    "data_source": "expansion_batch_2026_real",
+    "last_updated": "2026-04-28"
+  }
+]

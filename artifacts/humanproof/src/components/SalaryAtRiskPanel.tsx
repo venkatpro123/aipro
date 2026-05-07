@@ -1,8 +1,35 @@
 // SalaryAtRiskPanel.tsx
 // "What is the financial cost of inaction?" — highest-conversion feature.
 // Three income trajectories over 36 months: no-action, partial adaptation,
-// full transition. Every number is grounded in documented transition data.
-// Shows the ROI of the Survivor plan against the cost of inaction.
+// full transition.
+//
+// PROVENANCE: Trajectory parameters are grounded in peer-reviewed displaced-worker
+// research and government surveys. See the inline source labels on each parameter
+// in getTrajParams() for full citations.
+//
+// Key sources:
+//   [BLS-2024]  Bureau of Labor Statistics Displaced Worker Survey, August 2024
+//   [AER-2020]  Lachowska, Mas & Woodbury, American Economic Review 110(10), 2020
+//   [JLS-1993]  Jacobson, LaLonde & Sullivan, AER 83(4), 1993
+//   [WEF-2025]  World Economic Forum Future of Jobs Report 2025
+//   [ROW-2024]  Rest of World (2024), India tech worker displacement cases
+//   [TAA-EVAL]  Mathematica TAA Evaluation for U.S. Dept. of Labor (2023)
+//   [IDA]       Government of India Industrial Disputes Act — severance formula
+//
+// CORRECTION NOTE: The previous version cited "McKinsey 2021 Fig. 5" as the source
+// for the 38% income floor. That citation was incorrect — McKinsey Fig. 5 shows
+// occupational transition probabilities, not income recovery levels. The 0.38
+// value was also a misreading of BLS data (BLS reports that 38% of re-employed
+// workers earned *less*, not that they earned 38% of prior wages). The corrected
+// critical-tier value is 0.52 [AER-2020 + ROW-2024]. See parameter comments below.
+//
+// IMPORTANT: These are developer-calibrated estimates, NOT regression outputs from
+// this platform's user data. No statistical validation has been run against actual
+// displaced worker outcomes. Parameters are directionally grounded in the cited
+// sources but have not been validated against a held-out dataset.
+//
+// UI RULE: All figures shown to users must include "modelled estimate" qualification.
+// Do NOT display these as actuarial/factual income predictions.
 
 import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
@@ -39,7 +66,7 @@ function getCitySalaryPremium(cityKey: string | undefined): number {
 }
 
 // ── v4.0 collapse stage → stable period multiplier ──────────────────────────
-function getStageMultiplier(stage: 1 | 2 | 3 | null): number {
+export function getStageMultiplier(stage: 1 | 2 | 3 | null): number {
   if (stage === 3) return 0.25;
   if (stage === 2) return 0.50;
   if (stage === 1) return 0.75;
@@ -53,11 +80,79 @@ function getBandWidth(quality: 'live' | 'partial' | 'fallback' | undefined): num
   return 0.25;
 }
 
-// ── Income trajectory model — grounded in:
-//    - McKinsey Future of Work displacement income data 2024
-//    - LinkedIn Economic Graph salary data for India/US
-//    - Verified career twin network transition outcomes
-// ────────────────────────────────────────────────────────────────────────────
+// ── Income trajectory model ──────────────────────────────────────────────────
+//
+// EMPIRICAL BASIS AND KNOWN LIMITATIONS
+// ──────────────────────────────────────
+// Parameters are grounded in peer-reviewed research and government surveys
+// where possible. Uncalibrated parameters are explicitly labelled.
+// No regression has been run against this platform's own user outcomes.
+//
+// PRIMARY SOURCES
+// ───────────────
+// [BLS-2024]    Bureau of Labor Statistics, "Worker Displacement News Release"
+//               (August 2024, survey reference period Jan 2024).
+//               Key finding: 65.7% of long-tenured displaced workers reemployed
+//               within ~2 years; of those, 62% earned the same or more, 38% earned less.
+//               IMPORTANT: the "38%" is a *percentage of workers with wage losses*,
+//               NOT an income level. Median income of reemployed workers is not
+//               directly published in the news release.
+//               https://www.bls.gov/news.release/disp.htm
+//
+// [AER-2020]    Lachowska, Mas & Woodbury (2020), "Sources of Displaced Workers'
+//               Long-Term Earnings Losses", American Economic Review 110(10).
+//               Key finding: average earnings loss ~35% across years 1-3 post-
+//               displacement, with slow recovery. Workers reach ~65% of prior wages
+//               on average across the displaced-worker population.
+//               https://www.aeaweb.org/articles?id=10.1257/aer.20180652
+//
+// [JLS-1993]    Jacobson, LaLonde & Sullivan (1993), "Earnings Losses of Displaced
+//               Workers", American Economic Review 83(4), pp. 685-709.
+//               Key finding: high-tenure workers displaced from distressed firms
+//               lose ~25% of expected earnings on average, persisting 5+ years.
+//               https://ideas.repec.org/a/aea/aecrev/v83y1993i4p685-709.html
+//
+// [TAA-EVAL]    Mathematica / Social Policy Research (2023), TAA Evaluation for
+//               U.S. Dept. of Labor. Retraining workers earn ~$50K more cumulatively
+//               over 10 years vs. non-retraining cohort, but year 1-3 earnings are
+//               lower due to training period. https://www.mathematica.org/projects/
+//               trade-adjustment-assistance-evaluation
+//
+// [NASSCOM-25]  NASSCOM "Technology Sector in India Strategic Review 2025".
+//               India IT sector net added 60K jobs in 2024 (+1.1% YoY to 5.43M).
+//               262K job cuts occurred in 2023. Wage growth slower than global avg.
+//               https://nasscom.in/knowledge-center/publications/
+//               technology-sector-india-strategic-review-2025
+//
+// [ROW-2024]    Rest of World (2024), "After U.S. tech layoffs, Indian workers went
+//               home to a worse job market". Real-world cases: US tech income ~$160K
+//               → India reemployment at ~₹30L (~$36K) = 77.5% income loss for
+//               US-repatriation cases. India-domestic displaced IT: 40-60% loss.
+//               https://restofworld.org/2024/indian-workers-us-tech-layoffs/
+//
+// [WEF-2025]    World Economic Forum "Future of Jobs Report 2025".
+//               63 of 100 Indian workers require reskilling by 2030;
+//               reskilling cohorts show above-average wage growth vs. non-reskilling.
+//               https://reports.weforum.org/docs/WEF_Future_of_Jobs_Report_2025.pdf
+//
+// [IDA]         Government of India, Industrial Disputes Act — severance formula:
+//               15 days × years of service (calculated from last 3 months salary ÷ 30).
+//               https://talentproindia.com/2025/02/20/severance-pay-india/
+//
+// METHODOLOGY NOTES ON noActionMultiplierM36
+// ──────────────────────────────────────────
+// The critical-tier value (0.52) is computed from:
+//   (1) BLS-2024 all-displaced-worker average: ~35% earnings loss → 65% remaining
+//   (2) India-automation-specific penalty: structural occupation decline reduces
+//       re-employment prospects further. BPO/data-entry roles in India face demand
+//       contraction, not just cyclical layoffs. ROW-2024 documents 40-77% losses
+//       for Indian workers in automation-exposed roles.
+//   (3) Weighted midpoint for India high-automation cohort (BPO, data entry,
+//       customer support): 40-50% earnings loss → 0.52 is the upper bound of
+//       the defensible range. The previously cited "38% [source: McKinsey 2021
+//       Fig 5]" was incorrect — McKinsey Fig 5 shows occupational displacement
+//       probabilities, not income recovery at 36 months.
+// ── UNCALIBRATED — no regression validation has been run on platform data. ───
 
 interface TrajectoryParams {
   // No-action path: stable period (months) before decline begins
@@ -74,60 +169,295 @@ interface TrajectoryParams {
   // Full transition recovery: income as fraction of starting at month 24/36
   transitionRecoveryM24: number;
   transitionRecoveryM36: number;
+  // ── Scenario path: conditional on actual layoff at stableMonths ──────────
+  // Models the REALISTIC post-layoff experience rather than the expected-value
+  // smooth decline. Income sources post-layoff:
+  //   Severance:      15 days/year under IDA (India) → typically 1–3 months full salary
+  //   Bridge income:  ESIC unemployment (~50% daily wage, 6mo, but most tech workers
+  //                   ineligible), freelance gigs, savings drawdown — modelled as a
+  //                   combined fraction of prior salary (20–45% depending on tier)
+  //   Re-employment:  new role at noActionMultiplierM36 fraction of prior salary
+  severanceMonths:    number;  // months at full-salary equivalent (severance pay)
+  bridgeIncomeRate:   number;  // fraction of prior salary during job search
+  reemploymentMonth:  number;  // months from layoff until first new role (0-indexed from layoff)
 }
 
-function getTrajParams(score: number): TrajectoryParams {
-  if (score >= 80) return {  // Critical risk
+export function getTrajParams(score: number): TrajectoryParams {
+  // Each value is labelled with its empirical source. Values marked [EST] are
+  // developer estimates where no direct empirical source was found. All values
+  // represent India IT/tech sector unless otherwise noted.
+
+  if (score >= 80) return {
+    // ── CRITICAL RISK: high-automation roles (BPO, data entry, customer support)
+    // These roles face structural demand decline, not cyclical layoffs.
+    // Workers competing for fewer same-occupation slots accept steeper wage cuts.
+
     stableMonths: 8,
-    noActionMultiplierM36: 0.38,
+    // [EST] ~8 months typical employment stability after first stress signals
+    // appear at this risk level before income disruption. No direct citation.
+    // BLS-2024 shows median displacement event lag is difficult to isolate;
+    // 6-12 months is the observable range for India IT sector signals.
+
+    noActionMultiplierM36: 0.52,
+    // ESTIMATE — data applicability limitation (v7.0 Fix 8):
+    //   AER-2020 studied US manufacturing workers displaced in the 1980s–1990s.
+    //   ROW-2024 studied India BPO workers (call-centre, data-entry roles).
+    //   Neither directly validates IT sector professionals (software engineers,
+    //   data scientists, product managers) in India in 2026.
+    //   This parameter is a developer estimate pending India IT sector outcome data.
+    //   Calibration path: collect 500+ India IT displacement outcomes via the
+    //   career twin network, then re-derive via logistic regression.
+    //   UI treatment: Critical tier no-action slope shows amber volatility band
+    //   with "Trajectory estimate — India IT sector displacement data pending."
+    //
+    // [AER-2020 + ROW-2024 + BLS-2024] CORRECTED from previous 0.38.
+    // Source history: the former value of 0.38 incorrectly cited "McKinsey 2021
+    // Fig 5" — McKinsey Fig 5 shows occupational transition probabilities, not
+    // income recovery levels. The BLS "38%" refers to the fraction of reemployed
+    // workers who earned LESS, not the income level they reached.
+    //
+    // Correct derivation:
+    //   AER-2020: average ~35% earnings loss for all displaced workers → 65% remaining.
+    //   ROW-2024: India-specific automation-exposed workers show 40-77% income loss.
+    //   India BPO / data-entry cohort: 40-50% loss is defensible upper range.
+    //   Midpoint of India automation cohort: ~48% loss → 0.52 remaining at M36.
+    //
+    // This is more pessimistic than the BLS all-worker average (65-75% remaining)
+    // because (a) India automation-specific displacement shrinks the supply of jobs
+    // in the same occupation, forcing cross-occupation moves at lower wages, and
+    // (b) India labor market supply/demand ratio for these roles is unfavorable.
+
     partialSlowdownFactor: 0.45,
+    // [EST] Upskilling reduces the rate of wage decline but doesn't stop it.
+    // No direct citation — developer estimate. A 45% slowdown means the partial
+    // adaptation path erodes at ~55% of the no-action rate.
+
     partialStableExtension: 4,
+    // [EST] Partial upskilling buys ~4 additional months of stability (role
+    // becomes slightly more defensible). No direct citation.
+
     transitionDipFraction: 0.82,
+    // [EST+BLS-2024] Job search income dip. BLS-2024 shows ~16.1% of displaced
+    // workers still unemployed at survey time. Income during search: ESIC rarely
+    // covers India tech workers; 82% represents a worker maintaining ~18% income
+    // loss through freelance/savings/partial employment during the search period.
+    // ROW-2024 real cases support 15-25% income loss during search as typical.
+
     transitionDipMonth: 4,
+    // [ROW-2024 + BLS-2024] Median time to first new role during full transition.
+    // ROW-2024: India domestic search 2-7+ months observed; 4 months is the
+    // lower half of that range for workers who actively transition occupations.
+    // BLS-2024: 65.7% reemployed within ~24 months; median is ~8-10 months for
+    // all workers, but active transitioners are faster than the passive average.
+
     transitionRecoveryM24: 1.18,
+    // [WEF-2025 + TAA-EVAL] Reskilling upper quartile recovery. WEF-2025 confirms
+    // reskilling cohorts outperform non-reskilling peers. TAA-EVAL shows positive
+    // cumulative earnings advantage from Year 4 onward. 1.18 = 18% above prior
+    // wages at M24 for the upper quartile of successful transitioners in India.
+
     transitionRecoveryM36: 1.35,
+    // [WEF-2025 + TAA-EVAL] Continuation of reskilling advantage at M36.
+    // WEF-2025 documents wage growth premiums for reskilled workers in India tech.
+    // TAA-EVAL shows $50K cumulative advantage over 10 years; M36 upside consistent.
+
+    // ── Scenario path (conditional on layoff at stableMonths) ────────────────
+    severanceMonths: 2,
+    // [IDA] India Industrial Disputes Act: 15 days × years of service ÷ 30.
+    // Assuming 5yr avg tenure: (15 × 5) / 30 = 2.5 months ≈ 2 months full salary.
+    // IDA formula: https://talentproindia.com/2025/02/20/severance-pay-india/
+
+    bridgeIncomeRate: 0.20,
+    // [EST+IDA] ESIC unemployment benefit: ~50% of daily wage for 6 months, but
+    // ESIC only covers workers earning < ₹21,000/month — most India tech workers
+    // are ineligible. 20% represents gig work + freelance + savings drawdown
+    // during critical-tier job search (harder-to-place automation-heavy roles).
+
+    reemploymentMonth: 5,
+    // [ROW-2024] India IT job search duration for automation-exposed roles.
+    // ROW-2024 real cases: 2-7+ months. 5 months is the median of that range.
+    // BLS-2024 US benchmark: median ~5-8 months for all displaced workers.
   };
-  if (score >= 65) return {  // High risk
+
+  if (score >= 65) return {
+    // ── HIGH RISK: mixed-automation roles (financial analysis, recruiting, content)
+
     stableMonths: 14,
-    noActionMultiplierM36: 0.55,
+    // [EST] Longer stability window than critical tier — partial automation
+    // means role exists but gradually erodes. No direct citation; range 12-18
+    // months is developer estimate consistent with moderate displacement timelines.
+
+    noActionMultiplierM36: 0.62,
+    // [AER-2020 + BLS-2024] CORRECTED from previous 0.55.
+    // AER-2020: average ~35% earnings loss across displaced worker population.
+    // For mixed-automation roles, re-employment in adjacent roles is more feasible
+    // than for critical tier, but still requires some wage concession.
+    // BLS-2024: ~38% of reemployed workers earned less → average loss among
+    // those workers is approximately 25-30% → midpoint retained income ~70%.
+    // India mixed-automation cohort: slightly worse than BLS due to market depth.
+    // 38% earnings loss → 0.62 remaining. Defensible range: 0.60-0.68.
+
     partialSlowdownFactor: 0.40,
+    // [EST] Less decay slowdown than critical tier because the automation risk
+    // is more direct. Developer estimate.
+
     partialStableExtension: 6,
+    // [EST] 6 additional months of stability from partial upskilling.
+
     transitionDipFraction: 0.88,
+    // [EST+ROW-2024] Slightly shallower income dip during job search than critical
+    // tier — more consultable skillset means higher freelance/interim income.
+    // 12% loss during search period is consistent with ROW-2024 lower-bound cases.
+
     transitionDipMonth: 5,
+    // [ROW-2024] Slightly longer search than critical tier for full transition
+    // (occupation switch from finance/HR to AI-adjacent takes longer to build
+    // portfolio for). 5 months midpoint of observed 2-7 month range.
+
     transitionRecoveryM24: 1.14,
+    // [WEF-2025] Reskilling recovery for mixed-automation workers. Lower upside
+    // than critical tier because starting from a higher base at transition.
+
     transitionRecoveryM36: 1.28,
+    // [WEF-2025 + TAA-EVAL] M36 reskilling advantage, consistent with TAA-EVAL
+    // cumulative earnings premium trajectory.
+
+    severanceMonths: 2,
+    // [IDA] Same formula as critical tier. 5yr avg tenure assumption.
+
+    bridgeIncomeRate: 0.28,
+    // [EST+IDA] Slightly higher bridge than critical tier — mixed-automation
+    // workers have more consultable skills (e.g., part-time financial analysis
+    // freelance, HR advisory). 28% represents improved gig/savings coverage.
+
+    reemploymentMonth: 5,
+    // [ROW-2024] Same median search estimate as critical tier. Mixed-automation
+    // workers may take similar time to find an acceptable offer, but have more
+    // options to explore.
   };
-  if (score >= 45) return {  // Elevated risk
+
+  if (score >= 45) return {
+    // ── ELEVATED RISK: moderate automation (software engineering, design, PM)
+
     stableMonths: 18,
+    // [EST] Longer stability window — augmentation more likely than displacement.
+    // Role productivity improves with AI tools, delaying workforce reduction.
+
     noActionMultiplierM36: 0.72,
+    // [AER-2020 + BLS-2024] UNCHANGED — already consistent with empirical data.
+    // AER-2020 general displaced worker average: 35% loss → 65% remaining.
+    // For moderate-automation roles where re-employment in same field is common:
+    // 28% loss → 0.72 is defensible. JLS-1993 shows ~25% persistent losses for
+    // high-tenure workers displaced from distressed firms — consistent with 0.72
+    // when accounting for India labor market depth.
+
     partialSlowdownFactor: 0.35,
+    // [EST] Developer estimate. Upskilling in AI-adjacent skills substantially
+    // slows decline for augmentation-type roles.
+
     partialStableExtension: 8,
+    // [EST] AI tool proficiency can extend relevance of existing roles significantly
+    // for elevated-risk workers.
+
     transitionDipFraction: 0.92,
+    // [EST+BLS-2024] Shallow dip — consultable skills maintain 92% income during
+    // search period. Consistent with BLS pattern that re-employed moderate-tier
+    // workers typically maintain income close to prior level.
+
     transitionDipMonth: 5,
+    // [ROW-2024] Occupation changes from engineering/design to AI-engineering
+    // take time to build portfolio. 5 months is consistent with observed ranges.
+
     transitionRecoveryM24: 1.10,
+    // [WEF-2025] Moderate reskilling upside — augmentation path yields 10% above
+    // prior wages at M24 for successful transitioners.
+
     transitionRecoveryM36: 1.22,
+    // [WEF-2025] Compounding skill advantage at M36. Consistent with WEF-2025
+    // premium for AI-augmented workers over non-augmented peers.
+
+    severanceMonths: 3,
+    // [IDA] Longer tenure typical in moderate-risk bracket (7-10yr avg).
+    // (15 × 8yr) / 30 = 4 months, rounded to 3 as conservative estimate.
+
+    bridgeIncomeRate: 0.35,
+    // [EST] Broader consulting network, more transferable output. Freelance
+    // software / design work fills the gap reasonably during search.
+
+    reemploymentMonth: 4,
+    // [ROW-2024 + BLS-2024] More transferable skills → shorter search.
+    // BLS-2024 shows faster re-employment for workers in higher-wage occupations.
   };
-  return {  // Moderate / low risk
+
+  return {
+    // ── MODERATE / LOW RISK: low-automation roles (security, research, healthcare)
+
     stableMonths: 24,
+    // [EST] Longest stability window — these roles grow with AI rather than being
+    // displaced by it. 24 months is a conservative estimate of employment stability.
+
     noActionMultiplierM36: 0.85,
+    // [JLS-1993 + BLS-2024] UNCHANGED — already consistent with empirical floor.
+    // JLS-1993: ~25% persistent earnings loss for high-tenure displaced workers.
+    // BLS-2024: 62% of displaced workers earned same or more at re-employment —
+    // low-risk workers fall disproportionately in this group.
+    // 15% loss → 0.85 is the upper bound (most defensible figure for this cohort).
+    // Even after displacement, low-automation workers typically find comparable
+    // roles quickly due to stable labor demand in their occupation.
+
     partialSlowdownFactor: 0.25,
+    // [EST] Minimal decay slowdown needed — role is already relatively protected.
+
     partialStableExtension: 10,
+    // [EST] Substantial stability extension from any upskilling — AI augmentation
+    // is an additive advantage, not a displacement force, for this cohort.
+
     transitionDipFraction: 0.96,
+    // [EST+BLS-2024] Very shallow dip — 4% income loss during search. Consistent
+    // with BLS pattern for low-automation occupations where demand remains strong.
+    // Healthcare, security, and research roles show near-continuous demand.
+
     transitionDipMonth: 3,
+    // [BLS-2024] Fast re-employment for low-risk roles. BLS-2024 confirms lower-
+    // displacement-probability roles have shorter median search durations.
+
     transitionRecoveryM24: 1.06,
+    // [WEF-2025] Modest but positive reskilling upside. Low-automation workers
+    // who add AI skills gain a credential premium but from a strong base.
+
     transitionRecoveryM36: 1.15,
+    // [WEF-2025] Compounding advantage at M36 for AI-augmented low-risk workers.
+
+    severanceMonths: 3,
+    // [IDA] Typically longer tenure in low-risk roles (8-12yr avg).
+    // (15 × 9yr) / 30 = 4.5 months, using 3 as conservative estimate.
+
+    bridgeIncomeRate: 0.45,
+    // [EST] Strong consulting viability — security, healthcare, research roles
+    // have natural freelance/advisory markets. 45% bridge income is credible.
+
+    reemploymentMonth: 3,
+    // [BLS-2024] Short search; role is still in demand. BLS-2024 confirms low-
+    // automation occupations have notably faster reemployment than high-automation.
   };
 }
 
-function computeTrajectory(
+export function computeTrajectory(
   monthlyIncome: number,
   params: TrajectoryParams,
-): { month: number; noAction: number; partial: number; full: number }[] {
+): { month: number; noAction: number; partial: number; full: number; scenario: number }[] {
   const MONTHS = 36;
   const points = [];
 
+  // Scenario path absolute month boundaries
+  const layoffM       = params.stableMonths;
+  const severanceEndM = layoffM + params.severanceMonths;
+  const reemployM     = layoffM + params.reemploymentMonth;
+
   for (let m = 0; m <= MONTHS; m += 3) {
-    // No-action path: flat during stable period, then linear decline to endpoint
+    // No-action path: flat during stable period, then linear decline to endpoint.
+    // This is an EXPECTED VALUE across all outcomes (stay employed + laid off + re-hired),
+    // not a scenario path. It deliberately does not show the spike-down.
     let noAction: number;
     if (m <= params.stableMonths) {
       noAction = monthlyIncome;
@@ -151,17 +481,14 @@ function computeTrajectory(
     // Full transition: dip then recovery
     let full: number;
     if (m <= params.transitionDipMonth) {
-      // Linear decline to dip
       full = monthlyIncome * (1 - (1 - params.transitionDipFraction) * (m / params.transitionDipMonth));
     } else if (m <= 24) {
-      // Recovery to m24 target
       const recoveryProgress = (m - params.transitionDipMonth) / (24 - params.transitionDipMonth);
       full = monthlyIncome * (
         params.transitionDipFraction +
         (params.transitionRecoveryM24 - params.transitionDipFraction) * recoveryProgress
       );
     } else {
-      // Continue to m36 target
       const lateProgress = (m - 24) / 12;
       full = monthlyIncome * (
         params.transitionRecoveryM24 +
@@ -169,7 +496,30 @@ function computeTrajectory(
       );
     }
 
-    points.push({ month: m, noAction: Math.round(noAction), partial: Math.round(partial), full: Math.round(full) });
+    // Scenario path: CONDITIONAL on actual layoff at stableMonths.
+    // Shows the realistic experience rather than the probability-weighted smooth curve:
+    //   Phase 1 (0 → layoffM):          employed at full salary
+    //   Phase 2 (layoffM → severanceEnd): severance pay ≈ full salary equivalent
+    //   Phase 3 (severanceEnd → reemployM): bridge income (ESIC + freelance + savings)
+    //   Phase 4 (reemployM → 36):        re-employed at noActionMultiplierM36 fraction
+    let scenario: number;
+    if (m < layoffM) {
+      scenario = monthlyIncome;
+    } else if (m < severanceEndM) {
+      scenario = monthlyIncome; // severance: full salary equivalent, finite duration
+    } else if (m < reemployM) {
+      scenario = monthlyIncome * params.bridgeIncomeRate; // near-zero: the spike-down
+    } else {
+      scenario = monthlyIncome * params.noActionMultiplierM36; // re-employed at new steady state
+    }
+
+    points.push({
+      month: m,
+      noAction:  Math.round(noAction),
+      partial:   Math.round(partial),
+      full:      Math.round(full),
+      scenario:  Math.round(scenario),
+    });
   }
   return points;
 }
@@ -188,6 +538,7 @@ const SCENARIO_COLORS = {
   noAction: "#ef4444",
   partial:  "#f59e0b",
   full:     "#10b981",
+  scenario: "#7c3aed",  // violet — conditional layoff experience path
 };
 
 export const SalaryAtRiskPanel: React.FC<Props> = ({
@@ -200,18 +551,22 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
 }) => {
   const [annualInput, setAnnualInput] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [showScenario, setShowScenario] = useState(false);
 
   const annual = parseInt(annualInput.replace(/[^0-9]/g, ""), 10) || 0;
   const monthly = Math.round(annual / 12);
 
-  // v4.0: Apply collapse-stage compression to stable period
+  // v4.0: Apply collapse-stage compression to stable period.
+  // baseStableMonths is always the uncompressed value so the chart can draw a
+  // reference line at the original stable-period endpoint alongside the
+  // stage-compressed endpoint — making the compression visible, not just labelled.
   const params = useMemo(() => {
     const base = getTrajParams(riskScore);
     const stageMult = getStageMultiplier(collapseStage);
-    if (stageMult === 1.0) return base;
     return {
       ...base,
-      stableMonths: Math.max(2, Math.round(base.stableMonths * stageMult)),
+      baseStableMonths: base.stableMonths,
+      stableMonths: stageMult < 1 ? Math.max(2, Math.round(base.stableMonths * stageMult)) : base.stableMonths,
     };
   }, [riskScore, collapseStage]);
 
@@ -264,11 +619,14 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
   const planCost = currency === "INR" ? PLAN_ANNUAL_INR : PLAN_ANNUAL_USD;
   const roiMultiple = inactionCost > 0 ? Math.round(inactionCost / planCost) : 0;
 
-  // Determine chart max for scaling — include volatility band upper bounds
+  // Determine chart max for scaling — include volatility band upper bounds,
+  // and scenario path values when the scenario overlay is active (bridge income
+  // can drop well below the expected-value curve, so the chart needs to scale down).
   const allValues = trajectory.flatMap(p => [
     p.noAction * (1 + bandWidth),
     p.partial * (1 + bandWidth),
     p.full * (1 + bandWidth),
+    ...(showScenario ? [p.scenario] : []),
   ]);
   const chartMax = Math.max(...allValues, monthly);
   const rawMin = Math.min(...allValues) * 0.9;
@@ -331,6 +689,11 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
           <p className="text-xs text-muted-foreground mt-0.5">
             What does inaction actually cost you in money over 36 months?
           </p>
+          {riskScore >= 80 && (
+            <p className="text-[10px] text-amber-400/80 mt-1 font-mono">
+              ⚠ Trajectory estimate — Critical tier parameters derived from BPO/manufacturing data, not India IT 2026. Amber band reflects model uncertainty.
+            </p>
+          )}
         </div>
         <span
           className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest"
@@ -434,6 +797,96 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                         style={{ filter: `drop-shadow(0 0 3px ${SCENARIO_COLORS[key]}60)` }}
                       />
                     ))}
+
+                  {/* Collapse-stage stable period annotation lines.
+                      Rendered when collapseStage is set and the compression
+                      actually changed stableMonths. Shows:
+                        — a faint white dashed line at the BASE (original) endpoint
+                        — a solid amber line at the COMPRESSED endpoint
+                      This makes the compression visible on the chart rather than
+                      only appearing as a text note below. */}
+                  {collapseStage && params.stableMonths < params.baseStableMonths && (() => {
+                    const adjIdx  = trajectory.findIndex(p => p.month >= params.stableMonths);
+                    const baseIdx = trajectory.findIndex(p => p.month >= params.baseStableMonths);
+                    const adjX  = adjIdx  >= 0 ? PAD.l + (adjIdx  / (trajectory.length - 1)) * plotW : -1;
+                    const baseX = baseIdx >= 0 ? PAD.l + (baseIdx / (trajectory.length - 1)) * plotW : -1;
+                    if (adjX < 0) return null;
+                    return (
+                      <g>
+                        {/* Base (original) stable period — faint white dashed */}
+                        {baseX >= 0 && (
+                          <>
+                            <line x1={baseX} y1={PAD.t} x2={baseX} y2={PAD.t + plotH}
+                              stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="3 3" />
+                            <text x={baseX - 4} y={PAD.t + 14} textAnchor="end"
+                              fill="rgba(255,255,255,0.28)" fontSize="7" fontFamily="monospace">
+                              Base M{params.baseStableMonths}
+                            </text>
+                          </>
+                        )}
+                        {/* Compressed stable period — amber solid */}
+                        <line x1={adjX} y1={PAD.t} x2={adjX} y2={PAD.t + plotH}
+                          stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.85" />
+                        <text x={adjX + 3} y={PAD.t + 14}
+                          fill="#f59e0b" fontSize="7" fontFamily="monospace" opacity="0.9">
+                          Stage {collapseStage} M{params.stableMonths}
+                        </text>
+                      </g>
+                    );
+                  })()}
+
+                  {/* Scenario overlay — conditional path if laid off at stableMonths */}
+                  {showScenario && (() => {
+                    const layoffIdx = trajectory.findIndex(p => p.month >= params.stableMonths);
+                    const layoffX   = layoffIdx >= 0 ? PAD.l + (layoffIdx / (trajectory.length - 1)) * plotW : 0;
+                    const layoffY   = layoffIdx >= 0 ? PAD.t + toY(trajectory[layoffIdx].scenario, plotH) : 0;
+                    const scenPath  = trajectory
+                      .map((p, i) => {
+                        const x = PAD.l + (i / (trajectory.length - 1)) * plotW;
+                        const y = PAD.t + toY(p.scenario, plotH);
+                        return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+                      })
+                      .join(" ");
+                    return (
+                      <g>
+                        {/* Vertical dashed line at displacement event */}
+                        <line
+                          x1={layoffX} y1={PAD.t} x2={layoffX} y2={PAD.t + plotH}
+                          stroke={SCENARIO_COLORS.scenario} strokeWidth="1"
+                          strokeDasharray="3 2" opacity="0.5"
+                        />
+                        <text x={layoffX + 3} y={PAD.t + 9}
+                          fill={SCENARIO_COLORS.scenario} fontSize="8" fontFamily="monospace" opacity="0.8">
+                          Layoff M{params.stableMonths}
+                        </text>
+                        {/* Scenario path */}
+                        <path d={scenPath} fill="none"
+                          stroke={SCENARIO_COLORS.scenario} strokeWidth="1.5"
+                          strokeDasharray="5 2"
+                          style={{ filter: `drop-shadow(0 0 3px ${SCENARIO_COLORS.scenario}50)` }}
+                        />
+                        {/* Dot at layoff event */}
+                        <circle cx={layoffX} cy={layoffY} r="3"
+                          fill={SCENARIO_COLORS.scenario}
+                          style={{ filter: `drop-shadow(0 0 4px ${SCENARIO_COLORS.scenario})` }}
+                        />
+                        {/* Bridge income label */}
+                        {(() => {
+                          const bridgeIdx = trajectory.findIndex(p => p.month >= params.stableMonths + params.severanceMonths);
+                          if (bridgeIdx < 0) return null;
+                          const bx = PAD.l + (bridgeIdx / (trajectory.length - 1)) * plotW;
+                          const by = PAD.t + toY(trajectory[bridgeIdx].scenario, plotH);
+                          return (
+                            <text x={bx + 3} y={by - 4}
+                              fill={SCENARIO_COLORS.scenario} fontSize="7" fontFamily="monospace" opacity="0.75">
+                              Bridge ({Math.round(params.bridgeIncomeRate * 100)}%)
+                            </text>
+                          );
+                        })()}
+                      </g>
+                    );
+                  })()}
+
                   {/* Endpoint labels */}
                   {(["noAction", "partial", "full"] as const).map(key => {
                     const last = trajectory[trajectory.length - 1];
@@ -453,7 +906,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                 {visiblePaths.includes('noAction') && (
                   <span className="flex items-center gap-1.5">
                     <span className="w-6 border-t-2 border-dashed border-red-400" />
-                    <span className="text-muted-foreground">No action</span>
+                    <span className="text-muted-foreground">No action (expected value)</span>
                   </span>
                 )}
                 {visiblePaths.includes('partial') && (
@@ -470,11 +923,43 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                     <span className="text-muted-foreground">Full transition</span>
                   </span>
                 )}
+                {showScenario && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-6 border-t-2 border-dashed" style={{ borderColor: SCENARIO_COLORS.scenario }} />
+                    <span style={{ color: SCENARIO_COLORS.scenario }}>If laid off at M{params.stableMonths}</span>
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5 opacity-60">
                   <span className="w-4 h-2 rounded bg-emerald-400 opacity-20" />
                   <span className="text-muted-foreground">Confidence band (±{Math.round(bandWidth * 100)}%)</span>
                 </span>
+                {/* Scenario toggle */}
+                <button
+                  onClick={() => setShowScenario(v => !v)}
+                  className="ml-auto text-[9px] px-2 py-0.5 rounded border transition-colors font-mono uppercase tracking-wider"
+                  style={{
+                    borderColor: showScenario ? SCENARIO_COLORS.scenario : 'rgba(255,255,255,0.15)',
+                    color:       showScenario ? SCENARIO_COLORS.scenario : 'rgba(255,255,255,0.4)',
+                    background:  showScenario ? `${SCENARIO_COLORS.scenario}12` : 'transparent',
+                  }}
+                >
+                  {showScenario ? '✕ Hide' : '+ Show'} if-laid-off scenario
+                </button>
               </div>
+              {/* Scenario path explanation */}
+              {showScenario && (
+                <div className="mt-2 p-3 rounded-lg text-[10px] leading-relaxed"
+                  style={{ background: `${SCENARIO_COLORS.scenario}0a`, border: `1px solid ${SCENARIO_COLORS.scenario}25` }}>
+                  <span style={{ color: SCENARIO_COLORS.scenario }} className="font-bold">Scenario path (violet): </span>
+                  <span className="text-muted-foreground">
+                    If laid off at M{params.stableMonths}: {params.severanceMonths} months severance at full salary →
+                    {' '}{Math.round(params.bridgeIncomeRate * 100)}% bridge income (ESIC/freelance/savings) during job search →
+                    re-employed at {Math.round(params.noActionMultiplierM36 * 100)}% of prior salary at M{params.stableMonths + params.reemploymentMonth}.
+                    The red dashed curve is the probability-weighted average across all outcomes — the violet curve is what a laid-off individual actually experiences.
+                    Estimates uncalibrated; India tech sector assumption.
+                  </span>
+                </div>
+              )}
               {/* v4.0 Contextual annotations */}
               <div className="space-y-1 mt-2">
                 {collapseStage && collapseStage >= 2 && (
@@ -571,8 +1056,9 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
             {/* Disclaimer + reset */}
             <div className="flex justify-between items-center mt-3">
               <p className="text-[10px] text-muted-foreground opacity-50 leading-relaxed max-w-xs">
-                Projections based on verified career transition data and displacement income research.
-                Actual outcomes depend on individual decisions, market conditions, and timing.
+                Modelled estimates. Sources: BLS Displaced Worker Survey 2024, Lachowska/Mas/Woodbury AER 2020,
+                WEF Future of Jobs 2025, NASSCOM 2025. Parameters are directional, not regression-validated.
+                Actual outcomes vary significantly by role, sector, and individual circumstances.
               </p>
               <button
                 onClick={() => { setSubmitted(false); setAnnualInput(""); }}

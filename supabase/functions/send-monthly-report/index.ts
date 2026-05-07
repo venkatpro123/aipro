@@ -1,0 +1,363 @@
+// send-monthly-report/index.ts
+// Intelligence Upgrade 5 — Monthly India AI Displacement Report
+//
+// Called by generate_monthly_report() Postgres function via pg_net.
+// Responsibilities:
+//   1. Receive report JSON payload
+//   2. Fetch all users with monthly_report = true from user_preferences
+//   3. Render the HTML email for each recipient (role-personalised when possible)
+//   4. Send via Resend API (configure RESEND_API_KEY in Edge Function secrets)
+//   5. Update monthly_reports.sent_at and email_count
+//
+// Environment variables required:
+//   RESEND_API_KEY         — Resend API key for email delivery
+//   SUPABASE_URL           — Supabase project URL
+//   SUPABASE_SERVICE_ROLE_KEY — Service role key (bypasses RLS to read user_preferences)
+//   FROM_EMAIL             — Sender address, e.g. "HumanProof <noreply@humanproof.ai>"
+//   REPORT_BASE_URL        — Public URL base, e.g. "https://humanproof.ai"
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface RoleSignalRow {
+  role_key:     string;
+  industry:     string;
+  avg_score:    number;
+  sample_size:  number;
+  change_vs_30d?: number;
+}
+
+interface CompanyChange {
+  company_name:        string;
+  industry:            string;
+  risk_score:          number;
+  change_date:         string;
+  current_stage_label: string;
+}
+
+interface TransitionStory {
+  from_role:          string;
+  to_role:            string;
+  salary_change_pct:  number;
+  transition_months:  number;
+  transition_period:  string;
+}
+
+interface PredictionUpdate {
+  company_role:   string;
+  swarm_score:    number;
+  actual_outcome: number;
+  accuracy_score: number;
+  recorded_at:    string;
+}
+
+interface MonthlyReportPayload {
+  generated_at:        string;
+  year_month:          string;
+  top_risk_roles:      RoleSignalRow[];
+  most_improved:       RoleSignalRow[];
+  company_changes:     CompanyChange[];
+  transition_story:    TransitionStory | null;
+  prediction_updates:  PredictionUpdate[];
+  metadata:            { total_audits_this_month: number; total_opt_in_users: number; year_month: string };
+}
+
+interface UserPreference {
+  user_id:              string;
+  email_alerts:         boolean;
+  monthly_report:       boolean;
+  country_code:         string;
+  preferred_role_prefix?: string | null;
+  city_key?:            string | null;
+}
+
+// ── HTML email renderer ───────────────────────────────────────────────────────
+
+function formatMonthName(yearMonth: string): string {
+  const [y, m] = yearMonth.split('-');
+  const date = new Date(Number(y), Number(m) - 1, 1);
+  return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+}
+
+function renderRoleRow(role: RoleSignalRow): string {
+  const arrow = (role.change_vs_30d ?? 0) > 2 ? '▲' : (role.change_vs_30d ?? 0) < -2 ? '▼' : '—';
+  const arrowColor = arrow === '▲' ? '#ef4444' : arrow === '▼' ? '#10b981' : '#6b7280';
+  return `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e293b;color:#e2e8f0;font-family:monospace;font-size:13px">
+        ${role.role_key.replace(/_/g,' ').replace(/\b\w/g,(c)=>c.toUpperCase())}
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:12px">${role.industry}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e293b;text-align:center">
+        <span style="background:${role.avg_score>=65?'rgba(239,68,68,0.15)':role.avg_score>=45?'rgba(245,158,11,0.15)':'rgba(16,185,129,0.15)'};
+          color:${role.avg_score>=65?'#f87171':role.avg_score>=45?'#fbbf24':'#34d399'};
+          padding:2px 8px;border-radius:4px;font-family:monospace;font-weight:700;font-size:13px">
+          ${role.avg_score}
+        </span>
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e293b;text-align:center;color:${arrowColor};font-weight:700;font-size:13px">
+        ${arrow} ${role.change_vs_30d != null ? Math.abs(role.change_vs_30d).toFixed(1) : ''}
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #1e293b;color:#64748b;font-size:11px;text-align:right">
+        n=${role.sample_size}
+      </td>
+    </tr>`;
+}
+
+function renderHtmlEmail(
+  payload: MonthlyReportPayload,
+  reportUrl: string,
+  recipientRolePrefix?: string | null,
+): string {
+  const monthName = formatMonthName(payload.year_month);
+  const topRisk   = payload.top_risk_roles.slice(0, 5);
+  const improved  = payload.most_improved.slice(0, 5);
+  const story     = payload.transition_story;
+  const changes   = payload.company_changes.slice(0, 3);
+
+  // Role-personalised headline when user has a known prefix
+  const personalHeadline = recipientRolePrefix
+    ? `Your role category appeared in ${
+        topRisk.some(r => r.role_key.startsWith(recipientRolePrefix))
+          ? 'the top-5 highest-risk list this month'
+          : 'the stable zone this month'
+      }.`
+    : '';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HumanProof India AI Displacement Report — ${monthName}</title>
+</head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e2e8f0">
+  <div style="max-width:620px;margin:0 auto;padding:32px 16px">
+
+    <!-- Header -->
+    <div style="margin-bottom:28px">
+      <div style="font-size:10px;color:#475569;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px">
+        HumanProof Intelligence · ${monthName}
+      </div>
+      <h1 style="margin:0;font-size:24px;font-weight:900;color:#f1f5f9;letter-spacing:-0.03em;line-height:1.2">
+        India AI Displacement Report
+      </h1>
+      <p style="color:#94a3b8;font-size:14px;margin:8px 0 0;line-height:1.6">
+        ${payload.metadata.total_audits_this_month.toLocaleString()} audits analysed this month.
+        ${personalHeadline}
+      </p>
+    </div>
+
+    <!-- Top risk roles -->
+    <div style="background:#1e293b;border-radius:10px;margin-bottom:20px;overflow:hidden">
+      <div style="padding:14px 16px;border-bottom:1px solid #334155;display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;font-weight:800;color:#f87171;text-transform:uppercase;letter-spacing:0.08em">
+          ▲ Highest Risk Roles This Month
+        </span>
+      </div>
+      ${topRisk.length > 0 ? `
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="padding:6px 12px;text-align:left;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Role</th>
+            <th style="padding:6px 12px;text-align:left;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Industry</th>
+            <th style="padding:6px 12px;text-align:center;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Score</th>
+            <th style="padding:6px 12px;text-align:center;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Δ 30d</th>
+            <th style="padding:6px 12px;text-align:right;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">n</th>
+          </tr>
+        </thead>
+        <tbody>${topRisk.map(renderRoleRow).join('')}</tbody>
+      </table>` : `<p style="padding:16px;color:#64748b;font-size:13px">No roles meet the minimum sample threshold this month.</p>`}
+    </div>
+
+    <!-- Most improved -->
+    ${improved.length > 0 ? `
+    <div style="background:#1e293b;border-radius:10px;margin-bottom:20px;overflow:hidden">
+      <div style="padding:14px 16px;border-bottom:1px solid #334155">
+        <span style="font-size:12px;font-weight:800;color:#34d399;text-transform:uppercase;letter-spacing:0.08em">
+          ▼ Most Improved Roles vs Last Month
+        </span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="padding:6px 12px;text-align:left;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Role</th>
+            <th style="padding:6px 12px;text-align:left;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Industry</th>
+            <th style="padding:6px 12px;text-align:center;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Score</th>
+            <th style="padding:6px 12px;text-align:center;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">Δ 30d</th>
+            <th style="padding:6px 12px;text-align:right;font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.06em">n</th>
+          </tr>
+        </thead>
+        <tbody>${improved.map(r => renderRoleRow({ ...r, change_vs_30d: -(r as any).improvement })).join('')}</tbody>
+      </table>
+    </div>` : ''}
+
+    <!-- Company watch -->
+    ${changes.length > 0 ? `
+    <div style="background:#1e293b;border-radius:10px;margin-bottom:20px;overflow:hidden">
+      <div style="padding:14px 16px;border-bottom:1px solid #334155">
+        <span style="font-size:12px;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:0.08em">
+          Company Watch — Elevated Risk Signals
+        </span>
+      </div>
+      <div style="padding:12px 16px">
+        ${changes.map(c => `
+        <div style="padding:10px 0;border-bottom:1px solid #1e293b30">
+          <div style="font-weight:700;color:#e2e8f0;font-size:13px">${c.company_name}</div>
+          <div style="color:#94a3b8;font-size:12px;margin-top:3px">
+            ${c.industry} · Risk score: <span style="color:#fbbf24;font-weight:700;font-family:monospace">${c.risk_score}</span>
+            · ${c.current_stage_label} · Updated ${c.change_date.split('T')[0]}
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Career transition story -->
+    ${story ? `
+    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;margin-bottom:20px;padding:16px 20px">
+      <div style="font-size:10px;color:#34d399;text-transform:uppercase;letter-spacing:0.08em;font-weight:800;margin-bottom:8px">
+        ✓ Verified Transition This Month
+      </div>
+      <div style="color:#e2e8f0;font-size:14px;line-height:1.6">
+        <strong>${story.from_role.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</strong>
+        → <strong>${story.to_role.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</strong>
+        in ${story.transition_months} months.
+        Salary: ${story.salary_change_pct > 0 ? '+' : ''}${story.salary_change_pct}% vs prior role.
+        Transition period: ${story.transition_period}.
+      </div>
+    </div>` : ''}
+
+    <!-- CTA -->
+    <div style="text-align:center;margin:28px 0">
+      <a href="${reportUrl}"
+         style="display:inline-block;background:linear-gradient(135deg,#22d3ee,#818cf8);color:#0f172a;font-weight:900;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;letter-spacing:0.02em">
+        View Full Report →
+      </a>
+      <div style="color:#475569;font-size:11px;margin-top:10px">
+        ${reportUrl}
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="border-top:1px solid #1e293b;padding-top:20px;color:#475569;font-size:11px;line-height:1.7">
+      <p style="margin:0 0 6px">
+        <strong style="color:#64748b">HumanProof</strong> — AI displacement risk intelligence for India tech professionals.
+      </p>
+      <p style="margin:0 0 6px">
+        This report is based on ${payload.metadata.total_audits_this_month.toLocaleString()} anonymised audit submissions from opted-in users.
+        No personal data is shared. Scores represent aggregate risk patterns, not predictions for any individual.
+      </p>
+      <p style="margin:0">
+        <a href="${(Deno.env.get('REPORT_BASE_URL') ?? 'https://humanproof.ai')}/settings"
+           style="color:#60a5fa;text-decoration:none">Manage email preferences</a>
+        · <a href="${(Deno.env.get('REPORT_BASE_URL') ?? 'https://humanproof.ai')}/privacy"
+              style="color:#60a5fa;text-decoration:none">Privacy policy</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>`;
+}
+
+// ── Main handler ──────────────────────────────────────────────────────────────
+
+serve(async (req: Request) => {
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+  }
+
+  try {
+    const body = await req.json() as { year_month: string; payload: MonthlyReportPayload };
+    const { year_month, payload } = body;
+
+    if (!year_month || !payload) {
+      return new Response(JSON.stringify({ error: 'year_month and payload required' }), { status: 400 });
+    }
+
+    const supabaseUrl    = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const resendApiKey   = Deno.env.get('RESEND_API_KEY');
+    const fromEmail      = Deno.env.get('FROM_EMAIL') ?? 'HumanProof Intelligence <noreply@humanproof.ai>';
+    const reportBaseUrl  = Deno.env.get('REPORT_BASE_URL') ?? 'https://humanproof.ai';
+
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Fetch users opted in to monthly reports
+    const { data: recipients, error: fetchErr } = await supabase
+      .from('user_preferences')
+      .select('user_id, preferred_role_prefix, city_key')
+      .eq('monthly_report', true);
+
+    if (fetchErr) {
+      console.error('[MonthlyReport] Failed to fetch recipients:', fetchErr.message);
+      return new Response(JSON.stringify({ error: fetchErr.message }), { status: 500 });
+    }
+
+    const userList = (recipients ?? []) as UserPreference[];
+    const reportUrl = `${reportBaseUrl}/intelligence/report/${year_month}`;
+
+    let sent = 0;
+    let failed = 0;
+
+    if (!resendApiKey) {
+      console.warn('[MonthlyReport] RESEND_API_KEY not set — skipping email dispatch. Report stored, URL live.');
+    } else {
+      // Fetch user emails from auth.users via admin client
+      for (const user of userList) {
+        try {
+          const { data: authUser } = await supabase.auth.admin.getUserById(user.user_id);
+          const email = authUser?.user?.email;
+          if (!email) continue;
+
+          const html = renderHtmlEmail(payload, reportUrl, user.preferred_role_prefix);
+          const monthName = formatMonthName(year_month);
+
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${resendApiKey}`,
+            },
+            body: JSON.stringify({
+              from: fromEmail,
+              to:   [email],
+              subject: `India AI Displacement Report — ${monthName}`,
+              html,
+            }),
+          });
+
+          if (res.ok) {
+            sent++;
+          } else {
+            const errText = await res.text();
+            console.warn(`[MonthlyReport] Resend failed for ${email}: ${errText}`);
+            failed++;
+          }
+        } catch (e: any) {
+          console.warn(`[MonthlyReport] Error sending to user ${user.user_id}: ${e.message}`);
+          failed++;
+        }
+      }
+    }
+
+    // Update monthly_reports with delivery metadata
+    await supabase
+      .from('monthly_reports')
+      .update({ sent_at: new Date().toISOString(), email_count: sent })
+      .eq('year_month', year_month);
+
+    console.log(`[MonthlyReport] ${year_month} complete: ${sent} sent, ${failed} failed, ${userList.length} total recipients.`);
+
+    return new Response(
+      JSON.stringify({ success: true, year_month, sent, failed, recipients: userList.length }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+
+  } catch (e: any) {
+    console.error('[MonthlyReport] Unhandled error:', e.message);
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+  }
+});

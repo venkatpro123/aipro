@@ -24,6 +24,12 @@ export interface CareerTwinMatch {
   distanceScore: number;       // 0 = perfect match, higher = less similar
   similarityPct: number;       // 0-100 (inverted distance, for display)
   matchReasons: string[];
+  /** True when the twin is from a different labour-market region than the user.
+   *  The UI should flag this so users know advice may not transfer directly. */
+  isDifferentMarket: boolean;
+  /** True when no same-region twin clears the quality threshold and this result
+   *  is the best available across all markets. */
+  isGeographicFallback: boolean;
 }
 
 const STORAGE_KEY = 'hp_career_twin_db';
@@ -302,6 +308,48 @@ function roleSimilarity(roleA: string, roleB: string): number {
   return 0.1;
 }
 
+// ── Soft geographic market similarity ────────────────────────────────────────
+//
+// geoMismatch values (used as the raw geo term before weighting):
+//   0.0  — exact country match OR 'global' twin (market-agnostic advice)
+//   0.4  — same labour-market region (e.g. India/Singapore — similar hiring
+//           dynamics, adjacent salary bands, comparable tech ecosystem)
+//   1.0  — different region (e.g. India/Germany — structurally different labour
+//           markets; advice like "attend Berlin meetups" does not transfer)
+//
+// Regions are based on labour-market comparability, not geography.
+// APAC_DEV: developing-market tech hubs with similar talent supply/demand dynamics.
+// APAC_ADV: advanced APAC economies (AU/NZ/JP/KR) — higher salary bands.
+// NA / WEST_EU / LATAM / MENA: self-explanatory regional clusters.
+const GEO_REGION: Record<string, string> = {
+  'india': 'apac_dev',    'singapore': 'apac_dev',  'philippines': 'apac_dev',
+  'indonesia': 'apac_dev','malaysia': 'apac_dev',   'vietnam': 'apac_dev',
+  'bangladesh': 'apac_dev','sri lanka': 'apac_dev', 'pakistan': 'apac_dev',
+  'usa': 'na',            'canada': 'na',
+  'uk': 'west_eu',        'germany': 'west_eu',     'france': 'west_eu',
+  'netherlands': 'west_eu','sweden': 'west_eu',      'ireland': 'west_eu',
+  'australia': 'apac_adv','new zealand': 'apac_adv','japan': 'apac_adv',
+  'south korea': 'apac_adv',
+  'brazil': 'latam',      'mexico': 'latam',        'argentina': 'latam',
+  'colombia': 'latam',    'chile': 'latam',
+  'uae': 'mena',          'saudi arabia': 'mena',   'egypt': 'mena',
+  'nigeria': 'africa',    'kenya': 'africa',        'south africa': 'africa',
+  'global': 'global',  // intentionally market-agnostic — zero penalty
+};
+
+function geoMismatch(userCountry: string, twinCountry: string): number {
+  const u = userCountry.toLowerCase().trim();
+  const t = twinCountry.toLowerCase().trim();
+  if (u === t) return 0.0;
+  if (t === 'global') return 0.0;   // global twins are universally applicable
+  if (u === 'global') return 0.0;   // user with global context — no geo preference
+  const rU = GEO_REGION[u];
+  const rT = GEO_REGION[t];
+  if (!rU || !rT) return 1.0;       // unknown country → treat as full mismatch
+  if (rU === rT) return 0.4;        // same labour-market region — partial credit
+  return 1.0;                       // different region — full mismatch
+}
+
 // ── Euclidean distance (spec-aligned) ────────────────────────────────────────
 
 function computeDistance(
@@ -317,8 +365,7 @@ function computeDistance(
   const riskDelta = Math.abs(userRisk - twin.fromRiskScore) / 100;
   const riskComponent = riskDelta * 0.20;
 
-  const geoMatch = userCountry.toLowerCase() === twin.fromCountry.toLowerCase() ? 0 : 1;
-  const geoComponent = geoMatch * 0.20;
+  const geoComponent = geoMismatch(userCountry, twin.fromCountry) * 0.20;
 
   return Math.sqrt(
     roleComponent ** 2 +
@@ -327,6 +374,12 @@ function computeDistance(
     geoComponent ** 2,
   );
 }
+
+// Maximum distance a twin may have to be included in results.
+// distance > MAX_MATCH_DISTANCE → similarity < ~29% → results are too dissimilar
+// to be actionable. If no twin clears this bar, the best available is returned
+// with isGeographicFallback = true so the UI can communicate the limitation.
+const MAX_MATCH_DISTANCE = 0.72;
 
 // ── Storage: localStorage + optional Supabase sync ───────────────────────────
 
@@ -371,23 +424,48 @@ export function findCareerTwins(
   topN = 5,
 ): CareerTwinMatch[] {
   const db = loadLocalDB();
+  const userRegion = GEO_REGION[userCountry.toLowerCase().trim()] ?? null;
 
   const scored = db.map(twin => {
     const dist = computeDistance(userRole, userExperience, userRiskScore, userCountry, twin);
     const similarityPct = Math.round(Math.max(0, (1 - dist) * 100));
+    const mismatch = geoMismatch(userCountry, twin.fromCountry);
+    const twinRegion = GEO_REGION[twin.fromCountry.toLowerCase().trim()] ?? null;
+    const isDifferentMarket = mismatch > 0 && twin.fromCountry.toLowerCase() !== 'global';
 
     const reasons: string[] = [];
     if (roleSimilarity(userRole, twin.fromRole) > 0.6) reasons.push(`Similar role: ${twin.fromRole}`);
     if (Math.abs(userExperience - twin.fromExperienceYears) <= 2) reasons.push(`Similar experience (${twin.fromExperienceYears} yrs)`);
     if (Math.abs(userRiskScore - twin.fromRiskScore) <= 15) reasons.push(`Similar risk score (${twin.fromRiskScore}%)`);
-    if (userCountry.toLowerCase() === twin.fromCountry.toLowerCase()) reasons.push(`Same country (${twin.fromCountry})`);
+    if (!isDifferentMarket) reasons.push(`Same market: ${twin.fromCountry}`);
+    else if (userRegion && twinRegion && userRegion === twinRegion) reasons.push(`Similar region (${twin.fromCountry})`);
 
-    return { twin, distanceScore: dist, similarityPct, matchReasons: reasons };
+    return {
+      twin,
+      distanceScore: dist,
+      similarityPct,
+      matchReasons: reasons,
+      isDifferentMarket,
+      isGeographicFallback: false, // set below after threshold check
+    };
   });
 
-  return scored
-    .sort((a, b) => a.distanceScore - b.distanceScore)
-    .slice(0, topN);
+  scored.sort((a, b) => a.distanceScore - b.distanceScore);
+
+  // Apply quality threshold — only include twins within MAX_MATCH_DISTANCE.
+  // If the filtered set is large enough, use it; otherwise fall back to top-N
+  // across all matches but flag them as geographic fallbacks.
+  const withinThreshold = scored.filter(s => s.distanceScore <= MAX_MATCH_DISTANCE);
+  const useAll = withinThreshold.length < Math.ceil(topN / 2);
+
+  const candidates = useAll ? scored : withinThreshold;
+  const results = candidates.slice(0, topN);
+
+  if (useAll) {
+    results.forEach(r => { r.isGeographicFallback = true; });
+  }
+
+  return results;
 }
 
 export function getTransitionStats(): {

@@ -31,8 +31,11 @@ interface Props {
 }
 
 // ── Seeded benchmark distributions ───────────────────────────────────────────
-// These are empirically-grounded distributions based on documented role-sector
-// displacement research. Updated quarterly from platform audit data.
+// RESEARCH ESTIMATES — NOT real platform audit data.
+// These distributions were authored based on NASSCOM 2025, WEF Future of Jobs 2025,
+// and McKinsey automation reports. The sample sizes (e.g. 847, 2341) are modelled
+// projections, not counts of HumanProof platform audits. Current real audit count: 0.
+// The UI must not imply these are live or user-generated statistics.
 // Format: [p10, p25, median, p75, p90] = score values at those percentiles
 
 type RoleBenchmark = {
@@ -244,7 +247,7 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
         <div className="flex-1">
           <h3 className="text-sm font-black tracking-tight">Peer Benchmark</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {bench.label} at {bench.companyTier} · {bench.sampleSize.toLocaleString()} professionals audited
+            {bench.label} at {bench.companyTier} · n≈{bench.sampleSize.toLocaleString()} (research estimate)
           </p>
         </div>
       </div>
@@ -257,12 +260,13 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
             <span className="text-base text-muted-foreground font-normal ml-2">risk ranking</span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Among <strong>{bench.sampleSize.toLocaleString()}</strong> {bench.label} who audited in the past 90 days, your score of{" "}
-            <strong style={{ color: scoreColor }}>{score}</strong> places you in the{" "}
+            Based on a research model of approximately{" "}
+            <strong>{bench.sampleSize.toLocaleString()}</strong> {bench.label} (research estimate, not platform data), your score of{" "}
+            <strong style={{ color: scoreColor }}>{score}</strong> falls in the{" "}
             <strong style={{ color: percentileColor }}>{percentile}th percentile</strong> —{" "}
             {percentile > 50
-              ? `above the ${median} median. More risk than ${100 - percentile}% of peers.`
-              : `below the ${median} median. Better positioned than ${100 - percentile}% of peers.`}
+              ? `above the modelled ${median} median.`
+              : `below the modelled ${median} median.`}
           </p>
         </div>
 

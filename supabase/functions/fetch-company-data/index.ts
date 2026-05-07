@@ -8,8 +8,74 @@ const corsHeaders = {
 };
 
 type JsonObject = Record<string, any>;
+type MatchType = "exact" | "prefix" | "contains" | "word_overlap" | "none";
+type SignalSourceKind = "live" | "db" | "heuristic" | "user_input";
+type SignalFreshnessState = "fresh" | "degraded" | "invalid";
+
+interface ProvenancedSignal<T = unknown> {
+  key: string;
+  value: T | null;
+  source: SignalSourceKind;
+  sourceName: string;
+  observedAt: string;
+  fetchedAt: string;
+  freshnessDays: number;
+  freshnessState: SignalFreshnessState;
+  confidence: number;
+  supersedes?: string[];
+  conflictWith?: string[];
+}
+
+interface SignalConflict {
+  signalType: string;
+  descriptions: string[];
+  severity: "low" | "medium" | "high" | "critical";
+  conflictingSources: Array<{
+    source: string;
+    value: number;
+    timestamp: string;
+  }>;
+  recommendedResolution?: string;
+}
 
 const STALE_HOURS = 24;
+const STALE_DAYS_DEGRADED = 7;
+const STALE_DAYS_INVALID = 30;
+
+const normalise = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const tokens = (value: string) =>
+  normalise(value)
+    .split(" ")
+    .filter(Boolean);
+
+const computeMatchConfidence = (
+  query: string,
+  matchedName: string,
+): { score: number; matchType: MatchType } => {
+  const qNorm = normalise(query);
+  const mNorm = normalise(matchedName);
+
+  if (qNorm === mNorm) return { score: 1.0, matchType: "exact" };
+  if (mNorm.startsWith(qNorm) || qNorm.startsWith(mNorm)) {
+    return { score: 0.9, matchType: "prefix" };
+  }
+  if (mNorm.includes(qNorm) || qNorm.includes(mNorm)) {
+    return { score: 0.7, matchType: "contains" };
+  }
+
+  const qTokens = tokens(query);
+  const mTokens = new Set(tokens(matchedName));
+  if (qTokens.length === 0) return { score: 0.0, matchType: "none" };
+  const overlap = qTokens.filter((token) => mTokens.has(token)).length;
+  if (overlap > 0) return { score: 0.5, matchType: "word_overlap" };
+  return { score: 0.0, matchType: "none" };
+};
 
 const toIsoDate = (value: unknown): string => {
   try {
@@ -31,8 +97,30 @@ const extractEmployeeCount = (row: JsonObject): number => {
     mid: 500,
     large: 5000,
     enterprise: 50000,
+    mega: 150000,
   };
-  return sizeMap[String(row.company_size || "").toLowerCase()] || 1000;
+  const fromSize = sizeMap[String(row.company_size || "").toLowerCase()];
+  if (fromSize) return fromSize;
+
+  // Well-known global companies — hard-coded floor to prevent the 1K default
+  // from being displayed when financial_signals.employee_count is missing.
+  const KNOWN_HEADCOUNTS: Record<string, number> = {
+    google: 182000, alphabet: 182000,
+    microsoft: 228000, amazon: 1540000,
+    meta: 72000, facebook: 72000,
+    apple: 164000, tesla: 140000,
+    netflix: 13000, nvidia: 36000,
+    salesforce: 73000, oracle: 164000,
+    ibm: 288000, intel: 124000,
+  };
+  const nameLower = String(row.company_name || "").toLowerCase();
+  for (const [key, count] of Object.entries(KNOWN_HEADCOUNTS)) {
+    if (nameLower.includes(key)) return count;
+  }
+
+  // Unknown company — use 5000 as a neutral mid-range default rather than 1000
+  // which displays as "1K" and misleads users into thinking it's a tiny startup.
+  return 5000;
 };
 
 const normalizeFromCompanyIntel = (row: JsonObject) => {
@@ -104,6 +192,45 @@ const isStale = (isoDate: string): boolean => {
   return ageMs > STALE_HOURS * 60 * 60 * 1000;
 };
 
+const computeFreshnessDays = (isoDate: string): number =>
+  Math.max(0, Math.floor((Date.now() - new Date(isoDate).getTime()) / (24 * 60 * 60 * 1000)));
+
+const freshnessStateFromDays = (days: number): SignalFreshnessState => {
+  if (days > STALE_DAYS_INVALID) return "invalid";
+  if (days > STALE_DAYS_DEGRADED) return "degraded";
+  return "fresh";
+};
+
+const signalConfidence = (source: SignalSourceKind, freshnessState: SignalFreshnessState) => {
+  const base = source === "live" ? 0.92 : source === "db" ? 0.74 : 0.35;
+  if (freshnessState === "fresh") return base;
+  if (freshnessState === "degraded") return Math.max(0.2, base - 0.18);
+  return Math.max(0.12, base - 0.35);
+};
+
+const createSignal = <T,>(
+  key: string,
+  value: T | null,
+  source: SignalSourceKind,
+  sourceName: string,
+  observedAt: string,
+  fetchedAt: string,
+): ProvenancedSignal<T> => {
+  const freshnessDays = computeFreshnessDays(observedAt);
+  const freshnessState = freshnessStateFromDays(freshnessDays);
+  return {
+    key,
+    value,
+    source,
+    sourceName,
+    observedAt,
+    fetchedAt,
+    freshnessDays,
+    freshnessState,
+    confidence: signalConfidence(source, freshnessState),
+  };
+};
+
 const tryFetchAlphaVantage90D = async (
   ticker: string,
   apiKey: string,
@@ -135,6 +262,17 @@ const tryFetchAlphaVantage90D = async (
   return Number((((latestClose - olderClose) / olderClose) * 100).toFixed(2));
 };
 
+// Word-boundary match prevents false positives from package names or unrelated
+// text containing the company name as a substring (e.g. "apple" in "Snapple",
+// "meta" in "metadata"). Mirrors the implementation in proxy-live-signals.
+function companyWordBoundaryMatch(text: string, companyLower: string): boolean {
+  const escaped = companyLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(?<![a-z0-9-])${escaped}(?![a-z0-9-])`, "i");
+  return re.test(text);
+}
+
+const LAYOFF_KEYWORDS_EF = ["layoff", "job cut", "workforce reduction", "restructuring", "retrench", "redundan"];
+
 const tryFetchLayoffNews = async (
   companyName: string,
   apiKey: string,
@@ -142,36 +280,45 @@ const tryFetchLayoffNews = async (
   hasLayoffNews: boolean;
   layoffs: Array<{ date: string; percent_cut: number | null; headline: string; source: string }>;
 }> => {
-  // Require the company name in quotes so a 30-word article that mentions the
-  // word "layoff" anywhere doesn't get attributed to this company.
   const query = `"${companyName}" AND (layoff OR layoffs OR "workforce reduction" OR "job cuts")`;
-  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=5&language=en&apiKey=${encodeURIComponent(apiKey)}`;
+  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=10&language=en&apiKey=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) return { hasLayoffNews: false, layoffs: [] };
 
-  const json = await res.json();
-  const articles = Array.isArray(json.articles) ? json.articles : [];
+  const parsed = await res.json() as { articles?: Array<Record<string, unknown>> };
+  const articles = Array.isArray(parsed.articles) ? parsed.articles : [];
   if (articles.length === 0) return { hasLayoffNews: false, layoffs: [] };
 
-  // Stricter title-side match: the company name must appear in the headline.
-  // A bare description match is too easy to false-positive on.
-  const lowerName = companyName.toLowerCase();
-  const matched = articles.filter((a: any) =>
-    typeof a?.title === "string" && a.title.toLowerCase().includes(lowerName),
-  );
+  // Use word-boundary match instead of simple .includes() to prevent false
+  // positives. Also allow description-only matches when a layoff keyword is present.
+  const companyLower = companyName.toLowerCase();
+  const matched = articles.filter((a) => {
+    const title = String(a?.title ?? "").toLowerCase();
+    const desc  = String(a?.description ?? "").toLowerCase();
+    if (companyWordBoundaryMatch(title, companyLower)) return true;
+    if (companyWordBoundaryMatch(desc, companyLower) &&
+        LAYOFF_KEYWORDS_EF.some((kw) => desc.includes(kw))) return true;
+    return false;
+  });
   if (matched.length === 0) return { hasLayoffNews: false, layoffs: [] };
 
   // Extract a percent_cut from the article only if the headline/description
   // actually states one. Never default to a hardcoded percentage — that
   // fabricates a layoff event from a single news mention.
-  const layoffs = matched.slice(0, 3).map((a: any) => {
-    const text = `${a.title ?? ""} ${a.description ?? ""}`;
+  const layoffs = matched.slice(0, 3).map((a: Record<string, unknown>) => {
+    const title = String(a.title ?? "");
+    const desc  = String(a.description ?? "");
+    const text  = `${title} ${desc}`;
     const pctMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
+    const sourceObj = typeof a.source === "object" && a.source !== null
+      ? (a.source as Record<string, unknown>)
+      : {};
+    const sourceName = typeof sourceObj.name === "string" ? sourceObj.name : "NewsAPI";
     return {
-      date: a.publishedAt || new Date().toISOString(),
+      date: String(a.publishedAt || new Date().toISOString()),
       percent_cut: pctMatch ? parseFloat(pctMatch[1]) : null,
-      headline: a.title ?? "",
-      source: a.source?.name ?? "NewsAPI",
+      headline: title,
+      source: sourceName,
     };
   });
 
@@ -200,7 +347,56 @@ Deno.serve(async (req) => {
 
     const normalized = normalizeCompanyName(companyName);
 
-    // Primary source: company_intelligence
+    // Fast path: check cached_company_intelligence before hitting the main table.
+    // Previously this table was always written to but never read — making the
+    // 24-hour staleness window meaningless.
+    const { data: cached } = await supabaseClient
+      .from("cached_company_intelligence")
+      .select("*")
+      .eq("company_name", normalized)
+      .maybeSingle();
+
+    const cacheAge = cached?.last_updated
+      ? (Date.now() - new Date(cached.last_updated).getTime()) / 3_600_000
+      : Infinity;
+
+    // Serve from cache when it's fresh (< STALE_HOURS) and has the key financial fields.
+    if (cached && cacheAge < STALE_HOURS && cached.employee_count != null) {
+      return new Response(
+        JSON.stringify({
+          companyName: cached.company_name,
+          data: {
+            company_name:       cached.company_name,
+            is_public:          cached.is_public ?? false,
+            industry:           cached.industry ?? "Technology",
+            region:             "GLOBAL",
+            employee_count:     cached.employee_count,
+            revenue_yoy:        cached.revenue_yoy ?? null,
+            stock_90d_change:   cached.stock_90d_change ?? null,
+            recent_layoff_news: cached.recent_layoff_news ?? false,
+            recent_layoffs:     [],
+            layoff_rounds:      0,
+            last_layoff_percent: null,
+            ai_investment_signal: "medium",
+            last_updated:       cached.last_updated,
+            source:             "cached_company_intelligence",
+          },
+          source:         "cached_company_intelligence",
+          sourcePath:     "edge_exact",
+          matchConfidence: 1.0,
+          matchType:      "exact",
+          authoritativeSignals: {},
+          conflicts:      [],
+          dataQuality:    "LIVE_OR_REFRESHED",
+          dataFreshness:  { lastUpdated: cached.last_updated, stale: false, staleThresholdHours: STALE_HOURS },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Primary source: company_intelligence with the same confidence gate used
+    // by the frontend lookup. Weak word-overlap matches must not silently seed
+    // the audit with the wrong company.
     const { data: intelExact } = await supabaseClient
       .from("company_intelligence")
       .select("*")
@@ -208,17 +404,53 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let intelRow = intelExact;
+    let matchConfidence = intelExact ? 1.0 : 0.0;
+    let matchType: MatchType = intelExact ? "exact" : "none";
+    let matchedCompanyName: string | null = intelExact?.company_name ?? null;
+    let sourcePath:
+      | "edge_exact"
+      | "edge_prefix"
+      | "edge_contains"
+      | "edge_fallback" = intelExact ? "edge_exact" : "edge_fallback";
+
     if (!intelRow) {
-      const { data: intelFuzzy } = await supabaseClient
+      const { data: intelFuzzyRows } = await supabaseClient
         .from("company_intelligence")
         .select("*")
         .ilike("company_name", `%${companyName}%`)
-        .limit(1)
-        .maybeSingle();
-      intelRow = intelFuzzy;
+        .order("confidence_score", { ascending: false })
+        .limit(5);
+
+      if (Array.isArray(intelFuzzyRows) && intelFuzzyRows.length > 0) {
+        let bestRow: JsonObject | null = null;
+        let bestScore = 0;
+        let bestType: MatchType = "none";
+        for (const row of intelFuzzyRows) {
+          const candidate = String(row.company_name || "");
+          const { score, matchType: candidateType } = computeMatchConfidence(companyName, candidate);
+          if (score > bestScore) {
+            bestRow = row;
+            bestScore = score;
+            bestType = candidateType;
+          }
+        }
+
+        if (bestRow && bestScore >= 0.5) {
+          intelRow = bestRow;
+          matchConfidence = bestScore;
+          matchType = bestType;
+          matchedCompanyName = String(bestRow.company_name || "");
+          sourcePath =
+            bestType === "prefix"
+              ? "edge_prefix"
+              : bestType === "contains"
+                ? "edge_contains"
+                : "edge_fallback";
+        }
+      }
     }
 
-    let merged = intelRow
+    const merged = intelRow
       ? normalizeFromCompanyIntel(intelRow)
       : {
           company_name: companyName,
@@ -239,6 +471,8 @@ Deno.serve(async (req) => {
           last_updated: new Date().toISOString(),
           source: "fallback",
         };
+    const baselineMerged = structuredClone(merged);
+    const conflicts: SignalConflict[] = [];
 
     const provenance: string[] = [];
     provenance.push(
@@ -260,6 +494,31 @@ Deno.serve(async (req) => {
       try {
         const stock90d = await tryFetchAlphaVantage90D(merged.ticker, alphaKey);
         if (stock90d !== null) {
+          if (
+            typeof baselineMerged.stock_90d_change === "number" &&
+            Math.abs(baselineMerged.stock_90d_change - stock90d) >= 8
+          ) {
+            conflicts.push({
+              signalType: "stock_90d_change",
+              descriptions: [
+                `Live stock signal (${stock90d}%) differs materially from DB stock signal (${baselineMerged.stock_90d_change}%).`,
+              ],
+              severity: "high",
+              conflictingSources: [
+                {
+                  source: "alpha_vantage",
+                  value: stock90d,
+                  timestamp: new Date().toISOString(),
+                },
+                {
+                  source: baselineMerged.source || "company_intelligence",
+                  value: baselineMerged.stock_90d_change,
+                  timestamp: baselineMerged.last_updated,
+                },
+              ],
+              recommendedResolution: "Use the fresher live stock signal and refresh the DB cache.",
+            });
+          }
           merged.stock_90d_change = stock90d;
           merged.last_updated = new Date().toISOString();
           provenance.push("alpha_vantage.stock_90d_change");
@@ -278,6 +537,28 @@ Deno.serve(async (req) => {
           newsKey,
         );
         if (layoffNews.hasLayoffNews) {
+          if ((baselineMerged.layoff_rounds ?? 0) === 0 && layoffNews.layoffs.length > 0) {
+            conflicts.push({
+              signalType: "layoff_rounds",
+              descriptions: [
+                "Live layoff coverage found recent workforce reduction signals while the database recorded no layoff rounds.",
+              ],
+              severity: "critical",
+              conflictingSources: [
+                {
+                  source: "newsapi",
+                  value: layoffNews.layoffs.length,
+                  timestamp: new Date().toISOString(),
+                },
+                {
+                  source: baselineMerged.source || "company_intelligence",
+                  value: baselineMerged.layoff_rounds ?? 0,
+                  timestamp: baselineMerged.last_updated,
+                },
+              ],
+              recommendedResolution: "Use the live layoff evidence immediately and refresh the persisted layoff history.",
+            });
+          }
           merged.recent_layoff_news = true;
           merged.recent_layoffs = layoffNews.layoffs;
           // Count distinct layoff *events* (events on different dates) rather
@@ -299,6 +580,31 @@ Deno.serve(async (req) => {
             .map((l) => l.percent_cut)
             .filter((p): p is number => typeof p === "number");
           if (observedPercents.length > 0) {
+            if (
+              typeof baselineMerged.last_layoff_percent === "number" &&
+              Math.abs(baselineMerged.last_layoff_percent - Math.max(...observedPercents)) >= 3
+            ) {
+              conflicts.push({
+                signalType: "last_layoff_percent",
+                descriptions: [
+                  `Live layoff severity (${Math.max(...observedPercents)}%) differs materially from DB severity (${baselineMerged.last_layoff_percent}%).`,
+                ],
+                severity: "high",
+                conflictingSources: [
+                  {
+                    source: "newsapi",
+                    value: Math.max(...observedPercents),
+                    timestamp: new Date().toISOString(),
+                  },
+                  {
+                    source: baselineMerged.source || "company_intelligence",
+                    value: baselineMerged.last_layoff_percent,
+                    timestamp: baselineMerged.last_updated,
+                  },
+                ],
+                recommendedResolution: "Use the fresher live layoff severity and refresh the DB cache.",
+              });
+            }
             merged.last_layoff_percent = Math.max(...observedPercents);
           }
           merged.last_updated = new Date().toISOString();
@@ -341,12 +647,89 @@ Deno.serve(async (req) => {
       .upsert(cachePayload, { onConflict: "company_name" });
 
     const stale = isStale(merged.last_updated);
+    const authoritativeSignals: Record<string, ProvenancedSignal<any>> = {};
+    const signalObservedAt = toIsoDate(merged.last_updated);
+    const dbObservedAt = toIsoDate(baselineMerged.last_updated);
+    const hasLiveStockProvenance = provenance.some((entry) =>
+      entry.startsWith("alpha_vantage."),
+    );
+    const hasLiveNewsProvenance = provenance.some((entry) =>
+      entry.startsWith("newsapi."),
+    );
+
+    if (merged.stock_90d_change !== null) {
+      authoritativeSignals.stock_90d_change = createSignal(
+        "stock_90d_change",
+        merged.stock_90d_change,
+        hasLiveStockProvenance ? "live" : intelRow ? "db" : "heuristic",
+        hasLiveStockProvenance ? "alpha_vantage" : baselineMerged.source || "company_intelligence",
+        hasLiveStockProvenance ? signalObservedAt : dbObservedAt,
+        signalObservedAt,
+      );
+    }
+    if (merged.revenue_yoy !== null) {
+      authoritativeSignals.revenue_yoy = createSignal(
+        "revenue_yoy",
+        merged.revenue_yoy,
+        hasLiveStockProvenance ? "live" : intelRow ? "db" : "heuristic",
+        hasLiveStockProvenance ? "alpha_vantage" : baselineMerged.source || "company_intelligence",
+        hasLiveStockProvenance ? signalObservedAt : dbObservedAt,
+        signalObservedAt,
+      );
+    }
+    authoritativeSignals.layoff_rounds = createSignal(
+      "layoff_rounds",
+      merged.layoff_rounds,
+      hasLiveNewsProvenance ? "live" : intelRow ? "db" : "heuristic",
+      hasLiveNewsProvenance ? "newsapi" : baselineMerged.source || "company_intelligence",
+      hasLiveNewsProvenance ? signalObservedAt : dbObservedAt,
+      signalObservedAt,
+    );
+    authoritativeSignals.last_layoff_percent = createSignal(
+      "last_layoff_percent",
+      merged.last_layoff_percent,
+      hasLiveNewsProvenance ? "live" : intelRow ? "db" : "heuristic",
+      hasLiveNewsProvenance ? "newsapi" : baselineMerged.source || "company_intelligence",
+      hasLiveNewsProvenance ? signalObservedAt : dbObservedAt,
+      signalObservedAt,
+    );
+    authoritativeSignals.employee_count = createSignal(
+      "employee_count",
+      merged.employee_count,
+      intelRow ? "db" : "heuristic",
+      baselineMerged.source || "company_intelligence",
+      dbObservedAt,
+      signalObservedAt,
+    );
+    authoritativeSignals.revenue_per_employee = createSignal(
+      "revenue_per_employee",
+      merged.revenue_per_employee,
+      intelRow ? "db" : "heuristic",
+      baselineMerged.source || "company_intelligence",
+      dbObservedAt,
+      signalObservedAt,
+    );
+    authoritativeSignals.ai_investment_signal = createSignal(
+      "ai_investment_signal",
+      merged.ai_investment_signal,
+      intelRow ? "db" : "heuristic",
+      baselineMerged.source || "company_intelligence",
+      dbObservedAt,
+      signalObservedAt,
+    );
 
     return new Response(
       JSON.stringify({
+        companyName: merged.company_name,
         data: merged,
         source: provenance.join(" | "),
+        sourcePath,
         provenance,
+        matchedCompanyName,
+        matchConfidence,
+        matchType,
+        authoritativeSignals,
+        conflicts,
         dataQuality: stale ? "PARTIAL_STALE" : "LIVE_OR_REFRESHED",
         dataFreshness: {
           lastUpdated: merged.last_updated,

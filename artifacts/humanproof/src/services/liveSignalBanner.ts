@@ -40,6 +40,8 @@ export const computeLiveSignalStatus = (
   const staleness   = result.dataFreshness?.stalenessWarning ?? null;
   const dbSource    = result.meta?.dbSource ?? '';
   const calcMode    = result.meta?.calculationMode ?? 'DB_FALLBACK';
+  const hardFailures = result.signalQuality?.hardFailures ?? [];
+  const confidenceCaps = result.signalQuality?.confidenceCapsApplied ?? [];
 
   // Detect unknown company
   const unknownCompany =
@@ -101,6 +103,11 @@ export const computeLiveSignalStatus = (
     statusMessage += ` · ${agentFailures.length} AI model${agentFailures.length > 1 ? 's' : ''} unavailable (${agentFailures.join(', ')})`;
     if (overallStatus === 'live') statusColor = 'amber';  // downgrade confidence
   }
+  if (hardFailures.length > 0) {
+    statusMessage += ` · ${hardFailures.length} critical live-signal failure${hardFailures.length > 1 ? 's' : ''}`;
+    statusColor = 'red';
+    statusIcon = '🔴';
+  }
 
   // Confidence note
   let confidenceNote: string;
@@ -111,6 +118,9 @@ export const computeLiveSignalStatus = (
     confidenceNote = `${confidencePct}% confidence — moderate agreement`;
   } else {
     confidenceNote = `${confidencePct}% confidence — limited data, treat as estimate`;
+  }
+  if (confidenceCaps.length > 0) {
+    confidenceNote += ` · ${confidenceCaps[0]}`;
   }
 
   return {

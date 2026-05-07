@@ -24,6 +24,8 @@ import {
 import { LiveSignalStatusBar } from "./LiveSignalStatusBar";
 import { OutcomeFeedbackPrompt } from "./OutcomeFeedbackPrompt";
 import { computeLiveSignalStatus } from "../services/liveSignalBanner";
+import { useBreakingNewsPoller } from "../hooks/useBreakingNewsPoller";
+import { useCompanySignalSubscription } from "../hooks/useCompanySignalSubscription";
 
 // Lazy-loaded tab panels (code-split for performance)
 const OverviewTab = lazy(() => import("@/components/AuditTabs/OverviewTab"));
@@ -163,9 +165,9 @@ export const AuditDashboardLayout: React.FC<AuditDashboardLayoutProps> = ({
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  // Breadcrumb context
+  // Breadcrumb context — workTypeKey uses underscores (it_data_analyst), not hyphens
   const roleLabel = result.workTypeKey
-    .replace(/-/g, " ")
+    .replace(/[_-]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
   const companySuffix = result.companyName ? ` @ ${result.companyName}` : "";
@@ -173,6 +175,17 @@ export const AuditDashboardLayout: React.FC<AuditDashboardLayoutProps> = ({
 
   const liveStatus = React.useMemo(() => computeLiveSignalStatus(result), [result]);
   const companyRoleKey = `${result.companyName?.toLowerCase() || 'unknown'}::${result.workTypeKey}`;
+
+  // Poll breaking news for the current result's company each time the dashboard
+  // opens. The hook is self-throttled (15min / session) so rapid re-renders don't
+  // multiply requests. When a match is injected, BreakingNewsBanner fires via
+  // the onNewLayoffEvent() listener in LayoffCalculator.
+  useBreakingNewsPoller(result.companyName ?? null);
+
+  // Subscribe to Supabase Realtime changes on company_intelligence for this company.
+  // When the pipeline writes an updated signal, a Sonner toast fires with a
+  // "Recalculate" action button that re-runs scoring in-place.
+  useCompanySignalSubscription(result.companyName ?? null, onRecalculate);
 
   return (
     <div className="audit-dashboard space-y-8" data-testid="audit-dashboard">

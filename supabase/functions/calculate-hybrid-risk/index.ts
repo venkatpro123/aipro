@@ -73,6 +73,7 @@ Deno.serve(async (req) => {
       {
         error:
           'Request body must include { companyName, roleTitle, department, userFactors, consensusData }. ' +
+          'Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. ' +
           'See _shared/scoringTypes.ts for the full HybridScoreInputs shape.',
         code: 'INVALID_PAYLOAD',
       },
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
 
   try {
     const result = calculateHybridScore(payload);
-    return json({ result, schemaVersion: 'hybrid-score@1' });
+    return json({ result, schemaVersion: 'hybrid-score@2' });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';
     return json(

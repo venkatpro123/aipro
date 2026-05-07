@@ -1,11 +1,12 @@
 // swarmCache.ts
-// 24-hour TTL caching layer for SwarmReport.
-// Same localStorage pattern as analysisCache.ts but shorter TTL (signals are more volatile).
+// 2-hour TTL caching layer for SwarmReport.
+// TTL reduced from 24h — swarm signals (stock, news sentiment, layoff velocity) are
+// volatile enough that a same-day re-run should re-fire the 30 agents.
 // Cache key: swarm_cache::{company}::{role}::{department}
 
 import { SwarmReport } from './swarmTypes';
 
-const SWARM_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+const SWARM_CACHE_TTL_MS = 1000 * 60 * 60 * 2; // 2 hours (was 24h)
 
 const makeKey = (company: string, role: string, department: string): string =>
   `swarm_cache::${company.toLowerCase()}::${role.toLowerCase()}::${department.toLowerCase()}`;

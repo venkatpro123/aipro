@@ -11,6 +11,13 @@ export interface FinancialContext {
   currentAnnualIncome: number | null;       // INR
   currency: 'INR' | 'USD';
   capturedAt: number;                       // unix ms
+  /**
+   * India city key — must match a key in CITY_OPPORTUNITIES.
+   * E.g. 'bangalore', 'mumbai', 'hyderabad', 'pune', 'chennai', 'delhi_ncr'.
+   * Used by getCityCompanyIntersection() to name specific local employers in
+   * the action plan. When absent, the action plan falls back to national data.
+   */
+  city?: string;
 }
 
 export type RiskAppetite = 'conservative' | 'moderate' | 'aggressive';
@@ -45,6 +52,45 @@ export function loadFinancialContext(): FinancialContext | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Normalise a user-supplied city string to a CITY_OPPORTUNITIES key.
+ * Accepts: "Bangalore", "Bengaluru", "bangalore", "Hyderabad", "Delhi NCR", etc.
+ * Returns the canonical lowercase underscore key, or null when unrecognised.
+ */
+export function normaliseCityKey(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const ALIASES: Record<string, string> = {
+    bangalore:  'bangalore', bengaluru: 'bangalore', bengalore: 'bangalore',
+    mumbai:     'mumbai',  bombay:   'mumbai',
+    hyderabad:  'hyderabad', hyd:    'hyderabad',
+    pune:       'pune',
+    chennai:    'chennai', madras:  'chennai',
+    delhi:      'delhi_ncr', 'new delhi': 'delhi_ncr', delhi_ncr: 'delhi_ncr', ncr: 'delhi_ncr',
+    kolkata:    'kolkata', calcutta: 'kolkata',
+    noida:      'noida',
+    gurgaon:    'gurgaon', gurugram: 'gurgaon',
+    ahmedabad:  'ahmedabad',
+    kochi:      'kochi', cochin: 'kochi',
+    indore:     'indore',
+    coimbatore: 'coimbatore',
+  };
+  const key = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, '');
+  if (ALIASES[key]) return ALIASES[key];
+  // Direct key check (e.g. already 'bangalore')
+  const direct = raw.toLowerCase().replace(/\s+/g, '_');
+  return ALIASES[direct] ?? direct;
+}
+
+/**
+ * Load the user's city key from stored FinancialContext.
+ * Returns null when not set or when the stored value cannot be normalised.
+ * Use this instead of reading localStorage.city directly in components.
+ */
+export function loadCityKey(): string | null {
+  const ctx = loadFinancialContext();
+  return normaliseCityKey(ctx?.city ?? null);
 }
 
 export function clearFinancialContext(): void {

@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "One Medical (Amazon Enriched)",
+    "workforce_count": 8433,
+    "open_jobs_count": 125,
+    "layoff_history": {
+      "total_layoffs": 541,
+      "last_layoff_date": "2025-08-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Forward Health (AI Care Enriched)",
+    "workforce_count": 653,
+    "open_jobs_count": 9,
+    "layoff_history": {
+      "total_layoffs": 35,
+      "last_layoff_date": "2025-03-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Parsley Health (Enriched)",
+    "workforce_count": 456,
+    "open_jobs_count": 11,
+    "layoff_history": {
+      "total_layoffs": 24,
+      "last_layoff_date": "2025-11-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Spring Health (Enriched)",
+    "workforce_count": 910,
+    "open_jobs_count": 20,
+    "layoff_history": {
+      "total_layoffs": 78,
+      "last_layoff_date": "2025-05-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lyra Health (Enriched)",
+    "workforce_count": 1439,
+    "open_jobs_count": 27,
+    "layoff_history": {
+      "total_layoffs": 95,
+      "last_layoff_date": "2025-01-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Modern Health (Enriched)",
+    "workforce_count": 757,
+    "open_jobs_count": 9,
+    "layoff_history": {
+      "total_layoffs": 37,
+      "last_layoff_date": "2026-01-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sword Health (Enriched)",
+    "workforce_count": 891,
+    "open_jobs_count": 20,
+    "layoff_history": {
+      "total_layoffs": 64,
+      "last_layoff_date": "2025-12-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Adaptive Biotechnologies",
+    "workforce_count": 839,
+    "open_jobs_count": 13,
+    "layoff_history": {
+      "total_layoffs": 153,
+      "last_layoff_date": "2025-07-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Twist Bioscience (Enriched)",
+    "workforce_count": 1206,
+    "open_jobs_count": 33,
+    "layoff_history": {
+      "total_layoffs": 353,
+      "last_layoff_date": "2025-08-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PacBio (Pacific Biosciences Enriched)",
+    "workforce_count": 808,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 107,
+      "last_layoff_date": "2025-10-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "10x Genomics (Enriched)",
+    "workforce_count": 1304,
+    "open_jobs_count": 29,
+    "layoff_history": {
+      "total_layoffs": 161,
+      "last_layoff_date": "2025-03-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Guardant Health (Enriched)",
+    "workforce_count": 1784,
+    "open_jobs_count": 27,
+    "layoff_history": {
+      "total_layoffs": 292,
+      "last_layoff_date": "2026-01-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Exact Sciences (Enriched)",
+    "workforce_count": 6568,
+    "open_jobs_count": 82,
+    "layoff_history": {
+      "total_layoffs": 456,
+      "last_layoff_date": "2025-10-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Fulgent Genetics (Enriched)",
+    "workforce_count": 1082,
+    "open_jobs_count": 29,
+    "layoff_history": {
+      "total_layoffs": 66,
+      "last_layoff_date": "2025-07-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Veracyte (Enriched)",
+    "workforce_count": 809,
+    "open_jobs_count": 17,
+    "layoff_history": {
+      "total_layoffs": 49,
+      "last_layoff_date": "2025-12-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Evolent Health (Enriched)",
+    "workforce_count": 3208,
+    "open_jobs_count": 89,
+    "layoff_history": {
+      "total_layoffs": 278,
+      "last_layoff_date": "2025-09-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Phreesia (Enriched)",
+    "workforce_count": 1604,
+    "open_jobs_count": 19,
+    "layoff_history": {
+      "total_layoffs": 106,
+      "last_layoff_date": "2025-03-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HealthCatalyst (Enriched)",
+    "workforce_count": 1373,
+    "open_jobs_count": 39,
+    "layoff_history": {
+      "total_layoffs": 196,
+      "last_layoff_date": "2026-01-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Definitive Healthcare (Enriched)",
+    "workforce_count": 936,
+    "open_jobs_count": 18,
+    "layoff_history": {
+      "total_layoffs": 106,
+      "last_layoff_date": "2025-03-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Certara (Enriched)",
+    "workforce_count": 1129,
+    "open_jobs_count": 17,
+    "layoff_history": {
+      "total_layoffs": 101,
+      "last_layoff_date": "2025-01-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Simulation Plus (Enriched)",
+    "workforce_count": 253,
+    "open_jobs_count": 3,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-10-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Veeva Systems (Deep Enriched)",
+    "workforce_count": 7171,
+    "open_jobs_count": 167,
+    "layoff_history": {
+      "total_layoffs": 505,
+      "last_layoff_date": "2025-08-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Medidata Solutions (Dassault Enriched)",
+    "workforce_count": 4206,
+    "open_jobs_count": 62,
+    "layoff_history": {
+      "total_layoffs": 284,
+      "last_layoff_date": "2025-01-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lantheus (Enriched)",
+    "workforce_count": 834,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 48,
+      "last_layoff_date": "2026-01-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Haemonetics (Enriched)",
+    "workforce_count": 3034,
+    "open_jobs_count": 30,
+    "layoff_history": {
+      "total_layoffs": 272,
+      "last_layoff_date": "2025-06-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Teleflex (Enriched)",
+    "workforce_count": 13816,
+    "open_jobs_count": 402,
+    "layoff_history": {
+      "total_layoffs": 1098,
+      "last_layoff_date": "2025-04-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Integra LifeSciences (Enriched)",
+    "workforce_count": 3672,
+    "open_jobs_count": 100,
+    "layoff_history": {
+      "total_layoffs": 296,
+      "last_layoff_date": "2025-07-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Masimo (Enriched)",
+    "workforce_count": 6402,
+    "open_jobs_count": 95,
+    "layoff_history": {
+      "total_layoffs": 310,
+      "last_layoff_date": "2025-08-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Globus Medical (Enriched)",
+    "workforce_count": 4423,
+    "open_jobs_count": 47,
+    "layoff_history": {
+      "total_layoffs": 322,
+      "last_layoff_date": "2025-03-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Penumbra (Enriched)",
+    "workforce_count": 3743,
+    "open_jobs_count": 42,
+    "layoff_history": {
+      "total_layoffs": 243,
+      "last_layoff_date": "2026-04-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "NuVasive (Globus Enriched)",
+    "workforce_count": 2852,
+    "open_jobs_count": 46,
+    "layoff_history": {
+      "total_layoffs": 153,
+      "last_layoff_date": "2025-12-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hologic (Enriched)",
+    "workforce_count": 6839,
+    "open_jobs_count": 79,
+    "layoff_history": {
+      "total_layoffs": 289,
+      "last_layoff_date": "2025-05-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Waters Corporation (Enriched)",
+    "workforce_count": 8108,
+    "open_jobs_count": 180,
+    "layoff_history": {
+      "total_layoffs": 637,
+      "last_layoff_date": "2025-04-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PerkinElmer (Revvity Enriched)",
+    "workforce_count": 10906,
+    "open_jobs_count": 277,
+    "layoff_history": {
+      "total_layoffs": 887,
+      "last_layoff_date": "2025-03-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mettler-Toledo (Enriched)",
+    "workforce_count": 16272,
+    "open_jobs_count": 172,
+    "layoff_history": {
+      "total_layoffs": 981,
+      "last_layoff_date": "2025-12-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bio-Techne (Enriched)",
+    "workforce_count": 3070,
+    "open_jobs_count": 86,
+    "layoff_history": {
+      "total_layoffs": 194,
+      "last_layoff_date": "2026-03-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Maravai LifeSciences (Enriched)",
+    "workforce_count": 759,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 147,
+      "last_layoff_date": "2025-03-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sartorius Stedim Biotech (Global Enriched)",
+    "workforce_count": 10183,
+    "open_jobs_count": 193,
+    "layoff_history": {
+      "total_layoffs": 900,
+      "last_layoff_date": "2026-01-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pall Corporation (Danaher Enriched)",
+    "workforce_count": 10250,
+    "open_jobs_count": 122,
+    "layoff_history": {
+      "total_layoffs": 650,
+      "last_layoff_date": "2025-10-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cytiva (Danaher Enriched)",
+    "workforce_count": 8173,
+    "open_jobs_count": 218,
+    "layoff_history": {
+      "total_layoffs": 498,
+      "last_layoff_date": "2026-02-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "AXA Global (Global Giant Sync)",
+    "workforce_count": 142537,
+    "open_jobs_count": 2551,
+    "layoff_history": {
+      "total_layoffs": 10683,
+      "last_layoff_date": "2025-06-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BioMarin Pharmaceutical (Enriched)",
+    "workforce_count": 3042,
+    "open_jobs_count": 67,
+    "layoff_history": {
+      "total_layoffs": 441,
+      "last_layoff_date": "2025-05-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Vertex Pharmaceuticals (Enriched)",
+    "workforce_count": 4902,
+    "open_jobs_count": 138,
+    "layoff_history": {
+      "total_layoffs": 404,
+      "last_layoff_date": "2025-08-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Alexion (AstraZeneca Enriched)",
+    "workforce_count": 3516,
+    "open_jobs_count": 94,
+    "layoff_history": {
+      "total_layoffs": 193,
+      "last_layoff_date": "2025-09-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Seagen (Pfizer Enriched)",
+    "workforce_count": 2871,
+    "open_jobs_count": 54,
+    "layoff_history": {
+      "total_layoffs": 146,
+      "last_layoff_date": "2025-02-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Incyte (Enriched)",
+    "workforce_count": 2570,
+    "open_jobs_count": 61,
+    "layoff_history": {
+      "total_layoffs": 150,
+      "last_layoff_date": "2025-01-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Horizon Therapeutics (Amgen Enriched)",
+    "workforce_count": 1819,
+    "open_jobs_count": 34,
+    "layoff_history": {
+      "total_layoffs": 150,
+      "last_layoff_date": "2025-04-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Jazz Pharmaceuticals (Enriched)",
+    "workforce_count": 3119,
+    "open_jobs_count": 85,
+    "layoff_history": {
+      "total_layoffs": 171,
+      "last_layoff_date": "2025-10-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sarepta Therapeutics (Enriched)",
+    "workforce_count": 1093,
+    "open_jobs_count": 28,
+    "layoff_history": {
+      "total_layoffs": 62,
+      "last_layoff_date": "2025-07-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Alnylam Pharmaceuticals (Enriched)",
+    "workforce_count": 2123,
+    "open_jobs_count": 60,
+    "layoff_history": {
+      "total_layoffs": 129,
+      "last_layoff_date": "2026-02-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

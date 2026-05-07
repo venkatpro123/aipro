@@ -15,7 +15,12 @@ import { KeyRiskDriversPanel } from "@/components/LayoffCalculator/KeyRiskDriver
 import { StatCard } from "./common/StatCard";
 import { SectionHeader } from "./common/SectionHeader";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
+import { ProvenancePopover } from "@/components/ProvenancePopover";
+import { buildDimensionProvenance } from "../../services/dimensionProvenance";
+import type { CompanyData } from "../../data/companyDatabase";
 import type { TabProps } from "./common/types";
+// v12.0
+import { CareerPortfolioPanel } from "./common/CareerPortfolioPanel";
 
 // ---------------------------------------------------------------------------
 // Dimension metadata — labels + weights + narrative generators
@@ -160,13 +165,36 @@ const getNarrative = (meta: DimMeta, score: number): string => {
 interface LayerScoreCardProps {
   dim: { key: string; label: string; score: number };
   weights: Record<string, number>;
+  result: TabProps["result"];
+  companyData: CompanyData | null;
 }
 
-const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights }) => {
+// Raw hex values — used for alpha-compositing (background, border, glow).
+// CSS variables cannot be combined with hex-alpha suffixes, so hex is required here.
+const DIM_COLORS_HEX: Record<string, string> = {
+  L1: '#00d4e0', L2: '#f59e0b', L3: '#7c3aed',
+  L4: '#10b981', L5: '#ef4444',
+  D1: '#7c3aed', D2: '#a78bfa', D3: '#06b6d4',
+  D4: '#ef4444', D5: '#10b981',
+  D6: '#06b6d4', D7: '#a78bfa', D8: '#f43f5e',
+};
+
+// CSS variable references — used for text color and SVG stroke (no alpha needed).
+const DIM_COLOR_MAP: Record<string, string> = {
+  L1: 'var(--chart-1)', L2: 'var(--chart-2)', L3: 'var(--chart-3)',
+  L4: 'var(--chart-4)', L5: 'var(--chart-5)',
+  D1: 'var(--chart-3)', D2: 'var(--chart-7)', D3: 'var(--chart-6)',
+  D4: 'var(--chart-5)', D5: 'var(--chart-4)',
+  D6: 'var(--chart-6)', D7: 'var(--chart-7)', D8: 'var(--chart-8)',
+};
+
+const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, companyData }) => {
   const meta = getDimMeta(dim.key);
   const weight = weights[dim.key] ?? 0;
   const score = dim.score; // 0–100
-  const color = getScoreColor(score);
+  const riskColor = getScoreColor(score);
+  const dimColor = DIM_COLOR_MAP[dim.key] ?? riskColor;      // CSS var — for text/stroke
+  const dimHex   = DIM_COLORS_HEX[dim.key] ?? '#00d4e0';    // raw hex — for alpha backgrounds
   const weightPct = Math.round(weight * 100);
   const contribution = Math.round((score / 100) * weight * 100);
   const narrative = meta ? getNarrative(meta, score) : null;
@@ -175,64 +203,155 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights }) => {
   const verdictLabel = score < 35 ? "PROTECTED" : score < 65 ? "MODERATE" : "ELEVATED";
   const verdictColor = score < 35 ? "var(--emerald)" : score < 65 ? "var(--amber)" : "var(--red)";
 
+  const provenance = React.useMemo(
+    () => buildDimensionProvenance(dim.key, score, result, companyData),
+    [dim.key, score, result, companyData],
+  );
+
   return (
-    <div
-      className="layer-score-card glass-panel group transition-all duration-300 hover:border-[var(--border-cyan)]"
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+      className="group transition-all duration-300"
       style={{
-        display: "flex", flexDirection: "column",
-        padding: "var(--space-5)", borderRadius: "var(--radius-lg)", gap: "var(--space-3)",
-        borderLeft: `3px solid ${color}`,
+        display: "flex",
+        flexDirection: "column",
+        padding: "var(--space-5)",
+        borderRadius: "var(--radius-xl)",
+        gap: "var(--space-3)",
+        border: `1px solid ${dimHex}30`,
+        background: `${dimHex}0a`,
+        position: "relative",
+        overflow: "hidden",
+        transition: "box-shadow 0.25s var(--ease-out), border-color 0.25s",
       }}
+      whileHover={{ boxShadow: `0 4px 24px ${dimHex}28` }}
     >
+      {/* Top gradient accent stripe */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: "2px",
+        background: `linear-gradient(90deg, ${dimColor} 0%, ${dimColor}40 100%)`,
+        borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
+      }} />
+
       {/* Header row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-          <div className="label-xs text-muted-foreground flex items-center gap-[var(--space-2)]">
-            <span style={{ backgroundColor: `${color}22`, color, padding: "2px 8px", borderRadius: "var(--radius-sm)", fontWeight: 800, fontSize: "9px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: 0 }}>
+          {/* Dimension pill + label */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`dimension-pill dimension-pill-${dim.key.startsWith('D') ? dim.key : dim.key}`}
+              style={{
+                background: `${dimHex}22`,
+                color: dimColor,
+                border: `1px solid ${dimHex}38`,
+                padding: '2px 8px',
+                borderRadius: '5px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                flexShrink: 0,
+              }}
+            >
               {dim.key}
             </span>
-            <span className="font-semibold">{meta?.fullLabel ?? dim.label}</span>
+            <span className="text-xs font-semibold text-muted-foreground leading-tight">
+              {meta?.fullLabel ?? dim.label}
+            </span>
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-            <div className="text-2xl font-black tracking-tighter" style={{ color }}>{score}</div>
-            <span className="text-xs text-muted-foreground font-mono">/100</span>
+
+          {/* Score + verdict badges */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "2rem",
+                fontWeight: 900,
+                letterSpacing: "-0.05em",
+                lineHeight: 1,
+                color: riskColor,
+              }}
+            >
+              {score}
+            </div>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "var(--text-3)", opacity: 0.6 }}>/100</span>
             <span
-              className="text-[9px] font-black px-1.5 py-0.5 rounded ml-1"
-              style={{ background: `${verdictColor}15`, color: verdictColor, border: `1px solid ${verdictColor}30` }}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.58rem",
+                fontWeight: 900,
+                padding: "2px 6px",
+                borderRadius: "4px",
+                background: `${verdictColor}15`,
+                color: verdictColor,
+                border: `1px solid ${verdictColor}30`,
+                letterSpacing: "0.10em",
+              }}
             >
               {verdictLabel}
             </span>
+            <ProvenancePopover provenance={provenance} fullLabel={meta?.fullLabel ?? dim.label} />
           </div>
         </div>
-        <div className="p-[var(--space-2)] rounded-full bg-white/5 opacity-40 group-hover:opacity-100 transition-opacity">
-          <Icon className="w-5 h-5" />
+
+        {/* Icon */}
+        <div style={{
+          padding: "8px",
+          borderRadius: "10px",
+          background: `${dimHex}18`,
+          border: `1px solid ${dimHex}28`,
+          flexShrink: 0,
+          opacity: 0.7,
+          transition: "opacity 0.2s",
+        }} className="group-hover:opacity-100">
+          <Icon className="w-4 h-4" style={{ color: dimColor } as React.CSSProperties} />
         </div>
       </div>
 
-      {/* Bar */}
-      <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+      {/* Gradient progress bar */}
+      <div className="gradient-bar-track">
         <motion.div
-          className="h-full rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${score}%` }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}44` }}
+          className="gradient-bar"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: score / 100 }}
+          transition={{ duration: 1.0, ease: "easeOut", delay: 0.15 }}
+          style={{
+            height: "100%",
+            borderRadius: "3px",
+            background: `linear-gradient(90deg, ${dimHex}aa 0%, ${dimHex} 100%)`,
+            boxShadow: `0 0 12px ${dimHex}55`,
+            transformOrigin: "left center",
+          }}
         />
       </div>
 
-      {/* Weight + contribution */}
-      <div className="flex justify-between items-center text-[10px] uppercase font-mono tracking-wider">
-        <span className="text-muted-foreground">Weight <span className="text-[var(--text)] ml-1">{weightPct}%</span></span>
-        <span className="text-muted-foreground">Contribution <span className="ml-1 font-bold" style={{ color }}>+{contribution} pts</span></span>
+      {/* Weight + contribution row */}
+      <div className="flex justify-between items-center" style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em" }}>
+        <span style={{ color: "var(--text-3)", textTransform: "uppercase" }}>
+          Weight <span style={{ color: "var(--text-2)", fontWeight: 800, marginLeft: "4px" }}>{weightPct}%</span>
+        </span>
+        <span style={{ color: "var(--text-3)", textTransform: "uppercase" }}>
+          Contributes <span style={{ color: dimColor, fontWeight: 900, marginLeft: "4px" }}>+{contribution} pts</span>
+        </span>
       </div>
 
       {/* Narrative */}
       {narrative && (
-        <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-white/5 pt-3 mt-1">
+        <p style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: "0.7rem",
+          color: "var(--text-3)",
+          lineHeight: 1.6,
+          borderTop: "1px solid rgba(255,255,255,0.05)",
+          paddingTop: "var(--space-3)",
+          marginTop: "2px",
+        }}>
           {narrative}
         </p>
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -246,31 +365,106 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
   const topProtective = [...dims].sort((a, b) => a.score - b.score)[0];
   const topRiskMeta = topRisk ? getDimMeta(topRisk.key) : null;
   const topProtMeta = topProtective ? getDimMeta(topProtective.key) : null;
+  // Use hex values for alpha-compositing in backgrounds/borders
+  const riskDimHex   = topRisk      ? (DIM_COLORS_HEX[topRisk.key]      ?? '#ef4444') : '#ef4444';
+  const protDimHex   = topProtective ? (DIM_COLORS_HEX[topProtective.key] ?? '#10b981') : '#10b981';
+  // CSS vars for text/stroke color properties
+  const riskDimColor = topRisk      ? (DIM_COLOR_MAP[topRisk.key]      ?? 'var(--red)')     : 'var(--red)';
+  const protDimColor = topProtective ? (DIM_COLOR_MAP[topProtective.key] ?? 'var(--emerald)') : 'var(--emerald)';
 
   if (!topRisk || !topProtective) return null;
 
   return (
     <div className="grid md:grid-cols-2 gap-3 mb-6">
-      <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 flex items-start gap-3">
-        <TrendingUp className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-        <div>
-          <div className="text-xs font-black text-red-400 uppercase tracking-widest mb-1">Primary Risk Driver</div>
-          <div className="text-sm font-bold">{topRiskMeta?.fullLabel ?? topRisk.label} — {topRisk.score}/100</div>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            {topRiskMeta ? getNarrative(topRiskMeta, topRisk.score) : "Highest-scoring dimension in your profile."}
-          </p>
+      {/* Primary risk driver card */}
+      <motion.div
+        initial={{ opacity: 0, x: -12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+        style={{
+          padding: '16px',
+          borderRadius: '14px',
+          border: `1px solid rgba(239,68,68,0.22)`,
+          background: 'rgba(239,68,68,0.06)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: '#ef4444', opacity: 0.7 }} />
+        <div className="flex items-start gap-3">
+          <TrendingUp className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#ef4444' }} />
+          <div className="flex-1 min-w-0">
+            <div className="data-label mb-1" style={{ color: '#ef4444' }}>Primary Risk Driver</div>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span style={{
+                fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900,
+                letterSpacing: '-0.04em', lineHeight: 1, color: riskDimColor,
+              }}>
+                {topRisk.score}
+              </span>
+              <span className="data-label" style={{ opacity: 0.5 }}>/100</span>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800,
+                color: riskDimColor, background: `${riskDimHex}22`,
+                border: `1px solid ${riskDimHex}38`, borderRadius: '4px', padding: '1px 6px',
+              }}>
+                {topRisk.key}
+              </span>
+            </div>
+            <div className="text-xs font-bold mb-1" style={{ color: 'var(--text-2)' }}>
+              {topRiskMeta?.fullLabel ?? topRisk.label}
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {topRiskMeta ? getNarrative(topRiskMeta, topRisk.score) : "Highest-scoring dimension in your profile."}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 flex items-start gap-3">
-        <TrendingDown className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-        <div>
-          <div className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-1">Strongest Protection</div>
-          <div className="text-sm font-bold">{topProtMeta?.fullLabel ?? topProtective.label} — {topProtective.score}/100</div>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            {topProtMeta ? getNarrative(topProtMeta, topProtective.score) : "Lowest-scoring (most protected) dimension."}
-          </p>
+      </motion.div>
+
+      {/* Strongest protection card */}
+      <motion.div
+        initial={{ opacity: 0, x: 12 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.35, delay: 0.08, ease: [0.34, 1.56, 0.64, 1] }}
+        style={{
+          padding: '16px',
+          borderRadius: '14px',
+          border: `1px solid rgba(16,185,129,0.22)`,
+          background: 'rgba(16,185,129,0.06)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: '#10b981', opacity: 0.7 }} />
+        <div className="flex items-start gap-3">
+          <TrendingDown className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#10b981' }} />
+          <div className="flex-1 min-w-0">
+            <div className="data-label mb-1" style={{ color: '#10b981' }}>Strongest Protection</div>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span style={{
+                fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900,
+                letterSpacing: '-0.04em', lineHeight: 1, color: protDimColor,
+              }}>
+                {topProtective.score}
+              </span>
+              <span className="data-label" style={{ opacity: 0.5 }}>/100</span>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800,
+                color: protDimColor, background: `${protDimHex}22`,
+                border: `1px solid ${protDimHex}38`, borderRadius: '4px', padding: '1px 6px',
+              }}>
+                {topProtective.key}
+              </span>
+            </div>
+            <div className="text-xs font-bold mb-1" style={{ color: 'var(--text-2)' }}>
+              {topProtMeta?.fullLabel ?? topProtective.label}
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {topProtMeta ? getNarrative(topProtMeta, topProtective.score) : "Lowest-scoring (most protected) dimension."}
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -426,7 +620,13 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {result.dimensions.map(dim => (
-              <LayerScoreCard key={dim.key} dim={dim} weights={weights} />
+              <LayerScoreCard
+                key={dim.key}
+                dim={dim}
+                weights={weights}
+                result={result}
+                companyData={companyData ?? null}
+              />
             ))}
           </div>
         </div>
@@ -464,7 +664,9 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
                   <StatCard label="Signal Freshness" value={`${result.dataFreshness.ageInDays}d avg`} icon={Clock} />
                 </div>
                 <div className="glass-panel p-4 rounded-lg">
-                  <StatCard label="Live Signals" value={`${result.signalQuality.liveSignals} / 17`} icon={Activity} />
+                  <StatCard label="Live Signals"
+                    value={`${result.signalQuality.liveSignals} / ${Math.max(1, result.signalQuality.liveSignals + result.signalQuality.heuristicSignals)}`}
+                    icon={Activity} />
                 </div>
               </div>
 
@@ -486,6 +688,11 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
             companyName={result.companyName ?? ""}
             dataQuality={dataQualityLabel}
           />
+        </div>
+
+        {/* v12.0: Career Portfolio — risk concentration visualization */}
+        <div className="mt-6">
+          <CareerPortfolioPanel result={result} />
         </div>
 
       </motion.div>

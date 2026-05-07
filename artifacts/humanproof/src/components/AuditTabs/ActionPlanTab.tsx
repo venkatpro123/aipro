@@ -9,15 +9,15 @@ import {
   CheckCircle, Circle, Filter, Download, Zap, ArrowRight,
   Search, BarChart, Shield, BookOpen, Users, TrendingUp,
   Clock, Target, Cpu, Brain, AlertTriangle, ChevronRight,
-  Star, ExternalLink,
+  Star, ExternalLink, DollarSign,
 } from "lucide-react";
 import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
 import { CareerTwinCard } from "@/components/CareerTwinCard";
-import { ActionDependencyGraph } from "../../components/ActionDependencyGraph";
+import { ActionDependencyGraph, assignPhase } from "../../components/ActionDependencyGraph";
 import { getCareerIntelligence } from "@/data/intelligence";
-import { getCitiesForRole, formatSalaryPremium } from "@/data/cityOpportunities";
-import { getActionLearningTime } from "@/data/skillLearningHours";
+import { getCitiesForRole, formatSalaryPremium, getCityCompanyIntersection } from "@/data/cityOpportunities";
+import { getActionLearningTime, getSkillLearningWeeks } from "@/data/skillLearningHours";
 import { TimeAvailableTrack, TRACKS } from "../../components/TimeAvailableTrack";
 import type { TrackType } from "../../components/TimeAvailableTrack";
 import { FinancialContextInput } from "../../components/FinancialContextInput";
@@ -25,13 +25,49 @@ import { CareerCapitalAssessment } from "../../components/CareerCapitalAssessmen
 import { PeerBenchmarkPanel } from "../../components/PeerBenchmarkPanel";
 import {
   loadFinancialContext,
+  loadCityKey,
   deriveFinancialProfile,
   getPerformanceCollapseStrategy,
   type FinancialProfile,
 } from "@/services/financialContextService";
+import {
+  computeScoreVelocity,
+  getUserReturnType,
+} from "@/services/scoreDeltaService";
+import {
+  deriveSeniorityBracket,
+  describeBracketSignals,
+  getAdaptiveRoleActions,
+  BRACKET_ORDER,
+  BRACKET_LABELS,
+  type SeniorityBracket,
+} from "@/services/seniorityActionEngine";
+import {
+  getPersonalizedActions,
+  getRoleGroupLabel,
+  resolveRoleGroup,
+  scoreToRiskLevel,
+} from "@/services/actionPersonalizationEngine";
+import { generateCareerInsurancePlan } from "@/services/careerInsuranceEngine";
+import { generateTrajectoryProjection } from "@/services/trajectoryProjection";
+import { getMarketDemandSignals } from "@/services/marketDemandSignals";
+import { CareerInsuranceKit } from "@/components/CareerInsuranceKit";
+import { FinancialImpactCalculator } from "@/components/FinancialImpactCalculator";
+import { SeniorityBracketConfirmation } from "@/components/SeniorityBracketConfirmation";
+import {
+  getCareerPathMarket,
+  getCareerPathMarketSync,
+  formatDemandTrendLabel,
+  formatSuccessRate,
+  isMarketDataStale,
+  marketDataAgeLabel,
+  type CareerPathMarket,
+} from "@/services/careerPathMarket";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import type { TabProps } from "./common/types";
 import type { ActionPlanItem } from "@/types/hybridResult";
+// v12.0 panels
+import { NegotiationIntelligencePanel } from "./common/NegotiationIntelligencePanel";
 
 // ---------------------------------------------------------------------------
 // Role-aware recommendation generator
@@ -87,11 +123,15 @@ function escalatePriority(priority: ActionPlanItem['priority'], urgencyMultiplie
   return priority;
 }
 
-function buildDynamicActions(
+export function buildDynamicActions(
   result: TabProps["result"],
   companyName: string,
   financialProfile?: FinancialProfile | null,
   selectedTrack: TrackType = 'moderate',
+  liveMarketData?: CareerPathMarket | null,
+  bracketOverride?: SeniorityBracket,
+  /** City key for getCityCompanyIntersection. Pass explicitly — do not read localStorage inside this function. */
+  cityKey?: string | null,
 ): ActionPlanItem[] {
   const score = result.total;
   const roleKey = result.workTypeKey;
@@ -99,12 +139,90 @@ function buildDynamicActions(
   const intel = getCareerIntelligence(roleKey);
   const actions: ActionPlanItem[] = [];
 
-  // 1. Score-based urgent action
+  // Derive seniority bracket for all downstream action calibration
+  const tenureYears = (result as any).userFactors?.tenureYears ?? (result as any).tenureYears ?? 3;
+  const careerYears = (result as any).userFactors?.careerYears ?? (result as any).experienceYears ?? tenureYears;
+  const performanceTier = (result as any).userFactors?.performanceTier ?? (result as any).performanceTier ?? 'unknown';
+  const uniquenessDepth = (result as any).uniquenessDepth ?? (result as any).userFactors?.uniquenessDepth ?? 'generic';
+  const seniorityBracket = bracketOverride ?? deriveSeniorityBracket(tenureYears, performanceTier, uniquenessDepth, careerYears);
+
+  // ── v8.0: Hyper-specific role-matched actions from actionPersonalizationEngine ──
+  // Uses the 47-role prefix database with India-specific variants for region IN.
+  // These are injected as the FIRST actions (highest priority) because they are
+  // specific to this exact role, seniority, risk level, and region combination.
+  const region = (result as any).region ?? (result as any).companyRegion;
+  const roleTitle = (result as any).roleTitle ?? result.workTypeKey ?? '';
+  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region);
+  const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a, i) => ({
+    id: `personalized_${i}`,
+    title: a.title ?? 'Action',
+    description: a.description ?? '',
+    priority: (a.priority as ActionPlanItem['priority']) ?? (score >= 65 ? 'Critical' : 'High'),
+    layerFocus: a.layerFocus ?? 'L3 · Role Displacement',
+    riskReductionPct: a.riskReductionPct ?? 15,
+    deadline: a.deadline ?? '30 days',
+    evidence: [{
+      signal: `Role: ${getRoleGroupLabel(roleTitle)} · ${seniorityBracket} bracket · ${scoreToRiskLevel(score)} risk`,
+      source: 'actionPersonalizationEngine v8.0',
+      confidence: 'high' as const,
+    }],
+  }));
+
+  // India-specific context note as a visible action item when present
+  if (personalizedSet.indiaSpecificContext && region === 'IN') {
+    personalizedActions.push({
+      id: 'india_market_context',
+      title: 'India Market Context',
+      description: personalizedSet.indiaSpecificContext,
+      priority: 'Medium',
+      layerFocus: 'L4 · Market Conditions',
+      riskReductionPct: 5,
+      deadline: 'Ongoing',
+      evidence: [{ signal: 'India sector intelligence', source: 'indiaSectorIntelligence v8.0', confidence: 'medium' }],
+    });
+  }
+
+  // Inject personalized actions at the top of the list
+  actions.push(...personalizedActions);
+
+  // v6.0 Fix 7: Department freeze score Phase 0 action — inserted BEFORE score-tier action.
+  // When the user's department shows a freeze score ≥ 65 and stage ≥ 2, the department-level
+  // signal is more specific and more urgent than the company-wide score.
+  // This is Phase 0: unlocks immediately, displayed before all other phases.
+  const departmentFreezeScore = (result as any).departmentFreezeScore as number | null | undefined;
+  const collapseStageForDept = result.collapseStage ?? null;
+  const userDepartment = (result as any).userFactors?.department ?? (result as any).department ?? '';
+  if (
+    departmentFreezeScore != null &&
+    departmentFreezeScore >= 65 &&
+    collapseStageForDept != null &&
+    collapseStageForDept >= 2
+  ) {
+    const freezeLabel = departmentFreezeScore >= 80 ? 'Critical Freeze' : 'Freeze';
+    const leadTimeWeeks = departmentFreezeScore >= 80 ? '8–10' : '6–8';
+    actions.push({
+      id: `dept-freeze-phase0-${roleKey}`,
+      title: `[Phase 0] ${userDepartment || 'Your Department'} Shows ${freezeLabel} Signal — Act ${leadTimeWeeks} Weeks Earlier`,
+      description: `Your department shows a ${departmentFreezeScore}% hiring freeze score at ${companyName}. Departments entering ${freezeLabel} status are cut ${leadTimeWeeks} weeks before company-wide announcements. Your individual risk score (${score}/100) reflects company-level signals, but your department-level signal is higher. Begin your transition timeline ${leadTimeWeeks} weeks earlier than the overall score suggests.\n\nImmediate action: Update your CV this week to be application-ready. Do not wait for the announcement — by then you will be one of hundreds of candidates from the same company applying simultaneously. The competitive advantage of being first is weeks, not days.`,
+      priority: "Critical",
+      layerFocus: "L2 · Layoff & Instability History",
+      riskReductionPct: 25,
+      deadline: "This week — pre-announcement window",
+    });
+  }
+
+  // 1. Score-based urgent action — seniority-calibrated framing
   if (score >= 75) {
+    const seniorityFraming: Record<typeof seniorityBracket, string> = {
+      junior:    `At your career stage, pivoting is faster and less costly than for mid-career professionals. Now is the time to build the new skills BEFORE you need them.`,
+      mid:       `Mid-career professionals have the highest opportunity cost of delay — enough experience to pivot credibly but limited runway before responsibilities narrow choices.`,
+      senior:    `Senior professionals often underestimate displacement risk because of past success. The data shows: seniority protects against immediate cuts but accelerates responsibility for adaptation.`,
+      principal: `At principal level, displacement risk manifests differently — it is existential role shrinkage and org re-classification, not a layoff notice. The window for proactive repositioning is 12–24 months.`,
+    };
     actions.push({
       id: `dyn-urgent-${roleKey}`,
       title: `Initiate Role Transition Planning — ${Math.round(score)}% Displacement Risk`,
-      description: `Your risk score of ${score}/100 puts you in the top quartile for AI displacement. Within 12–18 months, this role category will face structural reduction or significant scope change. Begin mapping an adjacent role transition now — the best time to start is 18 months before you need to.`,
+      description: `Your risk score of ${score}/100 puts you in the top quartile for AI displacement. ${seniorityFraming[seniorityBracket]} Begin mapping an adjacent role transition now — the best time to start is 18 months before you need to.`,
       priority: "Critical",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 30,
@@ -114,7 +232,7 @@ function buildDynamicActions(
     actions.push({
       id: `dyn-strategic-${roleKey}`,
       title: `Start Strategic Upskilling — Moderate Exposure Detected`,
-      description: `Your score of ${score}/100 indicates moderate displacement risk. You're in the "augmentation window" — AI will enhance rather than replace your role, but only if you actively develop AI-adjacent skills. Focus on the 1–2 skills that will most differentiate you in the next hiring cycle.`,
+      description: `Your score of ${score}/100 indicates moderate displacement risk. You are in the augmentation window — AI will enhance rather than replace your role, but only if you actively develop AI-adjacent skills. For a ${seniorityBracket === 'junior' ? 'junior professional, this means building foundations' : seniorityBracket === 'mid' ? 'mid-level professional, this means owning tool integration decisions' : seniorityBracket === 'senior' ? 'senior professional, this means establishing governance frameworks' : 'principal, this means defining organizational AI strategy'}. Focus on the 1–2 actions that will most differentiate you in the next hiring cycle.`,
       priority: "High",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 20,
@@ -122,11 +240,11 @@ function buildDynamicActions(
     });
   }
 
-  // 2. Role-specific actions
-  const roleActions = ROLE_SPECIFIC_ACTIONS[prefix] ?? [];
-  for (const action of roleActions.slice(0, 2)) {
+  // 2. Seniority-adaptive role actions — replaces generic ROLE_SPECIFIC_ACTIONS
+  const { actions: seniorityRoleActions } = getAdaptiveRoleActions(prefix, seniorityBracket);
+  for (const action of seniorityRoleActions.slice(0, 2)) {
     actions.push({
-      id: `role-${prefix}-${actions.length}`,
+      id: `role-${prefix}-${seniorityBracket}-${actions.length}`,
       priority: score >= 65 ? "High" : "Medium",
       deadline: score >= 75 ? "45 days" : "90 days",
       riskReductionPct: 15,
@@ -148,17 +266,23 @@ function buildDynamicActions(
     });
   }
 
-  // 4. Safe skill deepening
+  // 4. Safe skill deepening — seniority calibrated
   const topSafe = intel?.skills?.safe?.[0];
   if (topSafe) {
+    const safeSkillAction: Record<typeof seniorityBracket, string> = {
+      junior:    `At your stage, depth beats breadth. Pick one project where this skill is the primary value add and ship it publicly — GitHub, blog, or a demo. Junior professionals with 1 visible proof of this skill are hired above more experienced candidates who cannot show it.`,
+      mid:       `Move from practitioner to recognized practitioner. Write a LinkedIn post, internal tech talk, or case study documenting your most complex application of this skill. Mid-level professionals who publish domain expertise receive 3× more senior-role referrals from their own network.`,
+      senior:    `Your depth in this skill is your most durable asset. The next step is not learning — it is multiplication: mentor 1–2 junior people in this skill, or write the framework for how your organization applies it. Senior experts who systematize their knowledge cannot be replaced, only succeeded.`,
+      principal: `At principal level, your moat is not doing — it is defining. Write the authoritative resource (book chapter, industry white paper, conference talk) on this skill's application in your domain. This converts your expertise from valuable-to-your-employer into visible-to-the-market.`,
+    };
     actions.push({
       id: `skill-safe-${topSafe.skill.replace(/\s/g, '-')}`,
-      title: `Deepen "${topSafe.skill}" — Your Primary Human Moat`,
-      description: `${topSafe.whySafe}. This skill has a long-term value score of ${topSafe.longTermValue}/100. Invest in advanced application: seek visible projects, mentoring opportunities, or advisory roles that showcase this strength.`,
+      title: `Deepen "${topSafe.skill}" — Your Primary Human Moat (LTV: ${topSafe.longTermValue}/100)`,
+      description: `${topSafe.whySafe} ${safeSkillAction[seniorityBracket]}`,
       priority: "Medium",
-      layerFocus: "L1 · Financial Positioning",
-      riskReductionPct: 12,
-      deadline: "Ongoing — 30 min/day",
+      layerFocus: "L5 · Personal Protection",
+      riskReductionPct: 14,
+      deadline: "Ongoing — 30 min/day minimum",
     });
   }
 
@@ -190,17 +314,67 @@ function buildDynamicActions(
     });
   }
 
-  // 7. Career Twin-based insight
+  // 7. Career Twin-based insight — market-grounded with city intersection (v6.0 Upgrade 4)
   if (intel?.careerPaths?.length) {
     const topPath = intel.careerPaths[0];
+    // Use synchronous lookup inside the pure action builder.
+    // The component-level useEffect below fetches the async (live Supabase) version
+    // and stores it in liveMarketData — if available it overrides this result.
+    const market = liveMarketData ?? getCareerPathMarketSync(topPath.role);
+    // v7.0: cityKey is now an explicit parameter — no localStorage reads inside this function.
+    // The city key must be normalised (lowercase, underscores) before being passed here.
+    let cityIntersectionText = '';
+    if (market) {
+      if (cityKey) {
+        // City provided — run intersection against CITY_OPPORTUNITIES
+        const intersection = getCityCompanyIntersection(cityKey, prefix, market.topHiringCompaniesIndia);
+        const cityLabel = cityKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        if (intersection.source === 'intersection' && intersection.companies.length > 0) {
+          // Named employers confirmed in both city data AND national career path market
+          cityIntersectionText = ` In ${cityLabel}, ${topPath.role} is actively hiring at: ${intersection.companies.join(', ')}. These employers appear in both the ${cityLabel} market and the national ${topPath.role} talent pool — prioritise these for applications.`;
+        } else if (intersection.source === 'city_fallback' && intersection.companies.length > 0) {
+          // City has data but not enough overlap — use city-specific list
+          cityIntersectionText = ` Top ${cityLabel} employers for this function: ${intersection.companies.join(', ')}.`;
+        } else if (intersection.source === 'national_fallback' && intersection.companies.length > 0) {
+          // City not in CITY_OPPORTUNITIES — fall back to national data, say so explicitly
+          cityIntersectionText = ` National hiring leaders for ${topPath.role}: ${intersection.companies.join(', ')} (city-specific data not available for ${cityLabel}; verify on Naukri/LinkedIn).`;
+        }
+      } else if (market.topHiringCompaniesIndia.length > 0) {
+        // No city provided — name national employers directly rather than generic "the market"
+        const topNational = market.topHiringCompaniesIndia.slice(0, 3);
+        cityIntersectionText = ` Top national employers hiring for ${topPath.role} in India: ${topNational.join(', ')}. Add your city in the Financial Context section to see which of these hire locally.`;
+      }
+    }
+    // Compute data age and staleness for the market opening count.
+    // Opening counts are hardcoded integers — they do not refresh automatically.
+    // If data is > 90 days old (MARKET_DATA_STALE_DAYS), add a live-verification caveat
+    // so users do not make a career pivot decision on significantly out-of-date demand data.
+    const stale     = market ? isMarketDataStale(market) : false;
+    const ageLabel  = market ? marketDataAgeLabel(market) : '';
+    const openingsDisplay = market
+      ? `${market.indiaOpenings.toLocaleString()} (${ageLabel})`
+      : '';
+    const stalenessCaveat = stale
+      ? ` Opening count is ${ageLabel} — verify current demand on LinkedIn/Naukri before committing to this transition.`
+      : '';
+
+    // Provenance prefix: live Supabase data vs research estimate
+    const isLiveData = market?.dataSource?.startsWith('Live');
+    const provenancePrefix = market
+      ? (isLiveData ? '[🟢 Live]' : '[📅 Research est.]')
+      : '';
+
+    const marketContext = market
+      ? ` ${provenancePrefix} Market reality: ${openingsDisplay} active openings in India (${formatDemandTrendLabel(market.demandTrend)}).${stalenessCaveat} Hiring bar: ${market.hiringBar} Success rate (12 months): ${formatSuccessRate(market.successRate12mPct)}. Median salary delta: +${market.medianSalaryDeltaPct}%.${cityIntersectionText}`
+      : ` Key skill gap: ${topPath.skillGap}. Reach out to 2 people currently in this role on LinkedIn this week to verify market demand before investing.`;
     actions.push({
       id: `career-path-${topPath.role.replace(/\s/g, '-')}`,
       title: `Explore Adjacent Role: ${topPath.role}`,
-      description: `This transition offers ${topPath.riskReduction}% risk reduction and ${topPath.salaryDelta} salary delta. Key skill gap: ${topPath.skillGap}. Typical transition time: ${topPath.timeToTransition}. Reach out to 2 people currently in this role on LinkedIn this week.`,
+      description: `This transition offers ${topPath.riskReduction}% risk reduction. Typical transition time: ${topPath.timeToTransition}.${marketContext}`,
       priority: score >= 70 ? "High" : "Medium",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: topPath.riskReduction,
-      deadline: topPath.timeToTransition,
+      deadline: market ? `${market.weeksToFirstInterview} weeks to first interview` : topPath.timeToTransition,
     });
   }
 
@@ -270,16 +444,12 @@ function buildDynamicActions(
     });
   }
 
-  // Intelligence Upgrade 4: Annotate skill-related actions with weeks-to-proficiency
-  // based on the user's current time-available track
-  const trackWeeklyHours = selectedTrack === 'minimal' ? 2 : selectedTrack === 'intensive' ? 20 : 8;
+  // Attach multi-track weeks-to-proficiency to each action item once.
+  // The data is stored on the item object; ActionItem highlights the active
+  // track at render time — changing selectedTrack re-renders without recomputing.
   const annotatedActions = actions.map(item => {
-    const learningTime = getActionLearningTime(item.title, trackWeeklyHours as 2 | 8 | 20);
-    if (!learningTime) return item;
-    return {
-      ...item,
-      description: item.description + ` (${learningTime})`,
-    };
+    const learningWeeks = getSkillLearningWeeks(item.title);
+    return learningWeeks ? { ...item, learningWeeks } : item;
   });
 
   // De-duplicate by id
@@ -289,11 +459,17 @@ function buildDynamicActions(
   // Priority 4: Apply financial context — adjust urgency and filter expensive items
   if (financialProfile) {
     const { urgencyMultiplier, riskAppetite } = financialProfile;
-    unique = unique.map(item => ({
-      ...item,
-      deadline: item.deadline ? adjustDeadline(item.deadline, urgencyMultiplier) : item.deadline,
-      priority: escalatePriority(item.priority, urgencyMultiplier),
-    }));
+    unique = unique.map(item => {
+      const adjusted = item.deadline ? adjustDeadline(item.deadline, urgencyMultiplier) : item.deadline;
+      return {
+        ...item,
+        // Preserve original deadline when urgency compression changed it so the
+        // UI can show "urgency-adjusted from {original}" alongside the new value.
+        originalDeadline: adjusted !== item.deadline ? item.deadline : undefined,
+        deadline: adjusted,
+        priority: escalatePriority(item.priority, urgencyMultiplier),
+      };
+    });
     // Conservative profile: suppress any action that implies long income gap
     if (riskAppetite === 'conservative') {
       unique = unique.filter(item =>
@@ -313,7 +489,7 @@ function buildDynamicActions(
 
 // costINR: approximate monthly/one-time cost in Indian Rupees. 0 = free.
 // Conservative profiles (< ₹3K) are filtered to free/affordable only.
-const COURSE_RESOURCES: Record<string, { title: string; provider: string; url: string; free: boolean; costINR: number }[]> = {
+export const COURSE_RESOURCES: Record<string, { title: string; provider: string; url: string; free: boolean; costINR: number }[]> = {
   sw: [
     { title: "GitHub Copilot Advanced Techniques", provider: "GitHub", url: "https://docs.github.com/en/copilot", free: true, costINR: 0 },
     { title: "AI-Powered Code Review Workflow", provider: "DeepLearning.AI", url: "https://www.deeplearning.ai/short-courses/", free: true, costINR: 0 },
@@ -352,6 +528,84 @@ const COURSE_RESOURCES: Record<string, { title: string; provider: string; url: s
 };
 
 // ---------------------------------------------------------------------------
+// SeniorityBracketCallout
+// ---------------------------------------------------------------------------
+
+interface SeniorityBracketCalloutProps {
+  derivedBracket: SeniorityBracket;
+  signals: string[];
+  overrideBracket: SeniorityBracket | null;
+  onOverride: (b: SeniorityBracket | null) => void;
+}
+
+const SeniorityBracketCallout: React.FC<SeniorityBracketCalloutProps> = ({
+  derivedBracket,
+  signals,
+  overrideBracket,
+  onOverride,
+}) => {
+  const effectiveBracket = overrideBracket ?? derivedBracket;
+  const idx = BRACKET_ORDER.indexOf(effectiveBracket);
+  const isOverridden = overrideBracket !== null;
+  const canGoUp = idx < BRACKET_ORDER.length - 1;
+  const canGoDown = idx > 0;
+
+  return (
+    <div className="rounded-xl border border-white/10 p-4 mb-4 bg-white/[0.03]">
+      <div className="flex items-start gap-3">
+        <Brain className="w-4 h-4 flex-shrink-0 mt-0.5 text-violet-400" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-xs text-muted-foreground">Actions calibrated for</span>
+            <span className="text-xs font-black text-violet-300 bg-violet-500/15 border border-violet-500/25 px-2 py-0.5 rounded">
+              {BRACKET_LABELS[effectiveBracket]}
+            </span>
+            {isOverridden && (
+              <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">
+                Adjusted
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
+            {isOverridden
+              ? `Adjusted from ${BRACKET_LABELS[derivedBracket]} based on your input. Recommendations now reflect ${BRACKET_LABELS[effectiveBracket]} expectations.`
+              : `Based on: ${signals.join(' · ')}`}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {isOverridden ? (
+              <button
+                onClick={() => onOverride(null)}
+                className="text-[10px] px-2.5 py-1 rounded border border-white/15 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
+              >
+                Reset to derived ({BRACKET_LABELS[derivedBracket]})
+              </button>
+            ) : (
+              <span className="text-[10px] text-muted-foreground/50 font-mono">Actions wrong for your level?</span>
+            )}
+            {canGoDown && (
+              <button
+                onClick={() => onOverride(BRACKET_ORDER[idx - 1])}
+                className="text-[10px] px-2.5 py-1 rounded border border-white/15 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono flex items-center gap-1"
+              >
+                ▼ More junior
+              </button>
+            )}
+            {canGoUp && (
+              <button
+                onClick={() => onOverride(BRACKET_ORDER[idx + 1])}
+                className="text-[10px] px-2.5 py-1 rounded border border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/15 text-violet-300 transition-colors font-mono flex items-center gap-1"
+              >
+                ▲ More senior
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // ActionItem component
 // ---------------------------------------------------------------------------
 
@@ -367,64 +621,157 @@ interface ActionItemProps {
   isCompleted: boolean;
   onToggle: () => void;
   index: number;
+  isLocked?: boolean;
+  selectedTrack: TrackType;
 }
 
-const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, index }) => {
-  const color = PRIORITY_COLOR[item.priority as keyof typeof PRIORITY_COLOR] ?? "var(--cyan)";
+const ACTION_TRACK_CFG = [
+  { track: 'minimal'   as TrackType, hours: 2,  key: 'w2'  as const },
+  { track: 'moderate'  as TrackType, hours: 8,  key: 'w8'  as const },
+  { track: 'intensive' as TrackType, hours: 20, key: 'w20' as const },
+] as const;
+
+// Priority color tokens for action items — richer than the old map
+const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  Critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.20)',  label: 'CRITICAL' },
+  High:     { color: '#f97316', bg: 'rgba(249,115,22,0.06)', border: 'rgba(249,115,22,0.18)', label: 'HIGH' },
+  Medium:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.05)', border: 'rgba(245,158,11,0.16)', label: 'MEDIUM' },
+  Low:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.04)',border: 'rgba(148,163,184,0.14)',label: 'LOW' },
+};
+
+const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, index, isLocked = false, selectedTrack }) => {
+  const cfg = PRIORITY_CONFIG[item.priority] ?? PRIORITY_CONFIG.Medium;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={`action-item glass-panel group transition-all duration-300 hover:border-[var(--border-cyan)] rounded-xl overflow-hidden ${isCompleted ? "opacity-60" : ""}`}
-      style={{ borderLeft: `4px solid ${color}` }}
+      transition={{ delay: Math.min(index * 0.04, 0.4), ease: [0.34, 1.56, 0.64, 1] }}
+      className={`group transition-all duration-250 ${isLocked ? 'opacity-35 pointer-events-none' : ''}`}
+      style={{
+        borderRadius: '12px',
+        border: `1px solid ${cfg.border}`,
+        background: isCompleted ? 'rgba(255,255,255,0.02)' : cfg.bg,
+        overflow: 'hidden',
+        opacity: isCompleted ? 0.55 : 1,
+      }}
+      whileHover={isLocked ? {} : { boxShadow: `0 4px 20px ${cfg.color}14` } as any}
     >
-      <div className="flex items-start gap-4 p-5">
+      {/* Top accent stripe */}
+      <div style={{
+        height: '2px',
+        background: isCompleted ? 'rgba(255,255,255,0.08)' : `linear-gradient(90deg, ${cfg.color} 0%, ${cfg.color}40 100%)`,
+        opacity: isCompleted ? 0.4 : 0.65,
+      }} />
+
+      <div className="flex items-start gap-3 p-4">
+        {/* Checkbox */}
         <button
-          onClick={onToggle}
-          className="flex-shrink-0 mt-1 focus:outline-none group-hover:scale-110 transition-transform"
+          onClick={isLocked ? undefined : onToggle}
+          disabled={isLocked}
+          className="flex-shrink-0 mt-0.5 focus:outline-none transition-transform"
+          style={{ transform: 'scale(1)', cursor: isLocked ? 'not-allowed' : 'pointer' }}
           aria-checked={isCompleted}
+          aria-disabled={isLocked}
           role="checkbox"
         >
-          {isCompleted
-            ? <CheckCircle className="w-6 h-6 text-[var(--emerald)]" />
-            : <Circle className="w-6 h-6 text-muted-foreground opacity-40" />}
+          {isCompleted ? (
+            <CheckCircle className="w-5 h-5" style={{ color: '#10b981' }} />
+          ) : (
+            <Circle className="w-5 h-5" style={{ color: cfg.color, opacity: 0.5 }} />
+          )}
         </button>
 
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap justify-between items-start mb-1 gap-2">
-            <h4 className={`text-base font-black tracking-tight leading-snug ${isCompleted ? "line-through opacity-70" : ""}`}>
+          {/* Title + badges row */}
+          <div className="flex flex-wrap items-start gap-2 mb-2">
+            <h4 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.3,
+              color: isCompleted ? 'var(--text-3)' : 'var(--text)',
+              textDecoration: isCompleted ? 'line-through' : 'none',
+              flex: '1 1 200px',
+            }}>
               {item.title}
             </h4>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <div
-                className="text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-widest border"
-                style={{ backgroundColor: `${color}11`, color, borderColor: `${color}33` }}
-              >
-                {item.priority}
-              </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
               {item.riskReductionPct > 0 && (
-                <div className="text-[9px] px-2 py-0.5 rounded font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  -{item.riskReductionPct}% RISK
-                </div>
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 900,
+                  padding: '2px 6px', borderRadius: '4px',
+                  background: 'rgba(16,185,129,0.12)', color: '#10b981',
+                  border: '1px solid rgba(16,185,129,0.22)', letterSpacing: '0.08em',
+                }}>
+                  −{item.riskReductionPct}% RISK
+                </span>
               )}
             </div>
           </div>
 
-          <p className={`text-sm leading-relaxed text-muted-foreground mb-3 ${isCompleted ? "opacity-50" : ""}`}>
+          {/* Description */}
+          <p style={{
+            fontFamily: 'var(--font-sans)', fontSize: '0.72rem',
+            color: isCompleted ? 'var(--text-3)' : 'var(--text-3)',
+            lineHeight: 1.6, marginBottom: '10px',
+          }}>
             {item.description}
           </p>
 
-          <div className="flex flex-wrap gap-3 items-center text-[10px] font-mono tracking-wider text-muted-foreground/60">
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 border border-white/5">
-              <Target className="w-3 h-3" />
+          {/* Learning weeks ROI row */}
+          {item.learningWeeks && (
+            <div className="flex items-center gap-2 flex-wrap mb-2.5" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem' }}>
+              <Zap className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--amber)', opacity: 0.6 }} />
+              {ACTION_TRACK_CFG.map(({ track, hours, key }, i) => {
+                const weeks = item.learningWeeks![key];
+                const sel = track === selectedTrack;
+                return (
+                  <React.Fragment key={track}>
+                    {i > 0 && <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>}
+                    <span style={{
+                      color: sel ? '#f59e0b' : 'var(--text-3)',
+                      fontWeight: sel ? 800 : 400,
+                      opacity: sel ? 1 : 0.45,
+                      letterSpacing: '0.06em',
+                    }}>
+                      {hours}h/wk: {weeks}w
+                    </span>
+                  </React.Fragment>
+                );
+              })}
+              <span style={{ color: 'var(--text-3)', opacity: 0.35 }}>to proficiency</span>
+            </div>
+          )}
+
+          {/* Meta row — layer focus + deadline */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '3px 8px', borderRadius: '6px',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
+              fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
+              letterSpacing: '0.06em',
+            }}>
+              <Target className="w-2.5 h-2.5" />
               {item.layerFocus}
             </div>
             {item.deadline && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 border border-white/5">
-                <Clock className="w-3 h-3 text-[var(--amber)]" />
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '3px 8px', borderRadius: '6px',
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
+                fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
+                letterSpacing: '0.06em',
+              }}>
+                <Clock className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
                 {item.deadline}
+                {item.originalDeadline && (
+                  <span style={{ opacity: 0.5, fontSize: '0.52rem' }}>
+                    (from {item.originalDeadline})
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -440,17 +787,46 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
 
 const ProgressIndicator: React.FC<{ completed: number; total: number }> = ({ completed, total }) => {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const color = pct < 30 ? "var(--red)" : pct < 70 ? "var(--orange)" : "var(--emerald)";
+  const color = pct < 30 ? "#ef4444" : pct < 70 ? "#f97316" : "#10b981";
+
+  // SVG ring parameters
+  const size = 64;
+  const r = 26;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct / 100);
 
   return (
-    <div className="glass-panel-heavy p-[var(--space-6)] rounded-2xl min-w-[240px]">
-      <div className="flex justify-between items-end mb-3">
-        <div>
-          <h4 className="label-xs text-muted-foreground mb-1 uppercase tracking-widest">Mission Progress</h4>
-          <span className="text-3xl font-black tracking-tighter" style={{ color }}>{pct}%</span>
+    <div className="glass-panel-heavy rounded-2xl" style={{ padding: '20px 24px', minWidth: '220px' }}>
+      <div className="flex items-center gap-4 mb-3">
+        {/* Mini completion ring */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={7} />
+            <motion.circle
+              cx={size/2} cy={size/2} r={r}
+              fill="none" stroke={color} strokeWidth={7}
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              initial={{ strokeDashoffset: circ }}
+              animate={{ strokeDashoffset: offset }}
+              transition={{ duration: 1.0, ease: "easeOut" }}
+              style={{ filter: `drop-shadow(0 0 6px ${color}60)` }}
+            />
+          </svg>
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--font-display)', fontSize: '0.75rem', fontWeight: 900,
+            color, letterSpacing: '-0.03em',
+          }}>
+            {pct}%
+          </div>
         </div>
-        <div className="text-[10px] font-mono text-muted-foreground bg-white/5 px-2 py-1 rounded">
-          {completed}/{total} ACTIONS
+        <div>
+          <div className="data-label mb-1">ACTION PROGRESS</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-2)', fontWeight: 700 }}>
+            {completed} of {total} complete
+          </div>
         </div>
       </div>
       <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -466,19 +842,37 @@ const ProgressIndicator: React.FC<{ completed: number; total: number }> = ({ com
 };
 
 // ---------------------------------------------------------------------------
+// Course filtering — pure function, exported for testing
+// ---------------------------------------------------------------------------
+
+type CourseEntry = { title: string; provider: string; url: string; free: boolean; costINR: number };
+
+/**
+ * Filter a course list to options compatible with the user's financial profile.
+ * Conservative profiles (< 2 months runway) see only free / ≤ ₹3,000 courses.
+ * When no affordable course exists for a prefix, returns [] rather than falling
+ * back to an expensive course — showing an ₹8K certification to a user with
+ * no emergency fund is harmful advice.
+ */
+export function filterCoursesForProfile(
+  courses: CourseEntry[],
+  riskAppetite: 'conservative' | 'moderate' | 'aggressive' | null | undefined,
+): CourseEntry[] {
+  if (riskAppetite !== 'conservative') return courses;
+  return courses.filter(c => c.free || c.costINR <= 3000);
+}
+
+// ---------------------------------------------------------------------------
 // Course Resource Card
 // ---------------------------------------------------------------------------
 
 const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: FinancialProfile | null }> = ({ rolePrefix, financialProfile }) => {
   const allCourses = COURSE_RESOURCES[rolePrefix] ?? COURSE_RESOURCES.default;
 
-  // Priority 4: Filter by financial context — conservative users see free/≤₹3K only
-  const courses = useMemo(() => {
-    if (!financialProfile || financialProfile.riskAppetite !== 'conservative') return allCourses;
-    const affordable = allCourses.filter(c => c.free || c.costINR <= 3000);
-    // Always show at least 1 option even if all are expensive
-    return affordable.length > 0 ? affordable : allCourses.slice(0, 1);
-  }, [allCourses, financialProfile]);
+  const courses = useMemo(
+    () => filterCoursesForProfile(allCourses, financialProfile?.riskAppetite),
+    [allCourses, financialProfile?.riskAppetite],
+  );
 
   const conservativeFiltered = financialProfile?.riskAppetite === 'conservative' && courses.length < allCourses.length;
 
@@ -491,9 +885,15 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: Fina
           {conservativeFiltered ? 'FREE / ≤₹3K' : 'CURATED'}
         </span>
       </div>
-      {conservativeFiltered && (
+      {conservativeFiltered && courses.length > 0 && (
         <p className="text-[10px] text-amber-400 mb-3 leading-relaxed">
           Showing free and affordable options based on your financial context.
+        </p>
+      )}
+      {conservativeFiltered && courses.length === 0 && (
+        <p className="text-[10px] text-amber-400 mb-3 leading-relaxed">
+          No free or ≤₹3K courses available for this role right now.
+          Search Coursera Audit, YouTube, and NPTEL for free alternatives.
         </p>
       )}
       <div className="space-y-3">
@@ -550,6 +950,66 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
     [performanceTier, collapseStageForOverride, result.total],
   );
 
+  // ── New intelligence engine state (component-scope, not IIFE) ────────────
+  const insurancePlan = useMemo(
+    () => generateCareerInsurancePlan(result, companyData),
+    [result, companyData],
+  );
+  const [showInsurance, setShowInsurance] = useState(() => result.total >= 45);
+  const [showFinancial, setShowFinancial] = useState(false);
+
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
+
+  // v7.0 Fix 3: Returning users see their completed actions hidden by default.
+  // This prevents repeat recommendations for actions already taken.
+  // First-time users default to showing all (nothing is completed yet).
+  const returnType = useMemo(() => getUserReturnType(
+    result.workTypeKey,
+    result.total,
+    result.experience ?? '5-10',
+    result.countryKey ?? 'usa',
+  ), [result.workTypeKey, result.total, result.experience, result.countryKey]);
+
+  const isReturningUser = returnType !== 'first_time';
+  const [hideCompleted, setHideCompleted] = useState<boolean>(isReturningUser);
+  const [selectedTrack, setSelectedTrack] = useState<TrackType>(() =>
+    result.total >= 70 ? "intensive" : result.total >= 45 ? "moderate" : "minimal"
+  );
+  // Driven by SeniorityBracketConfirmation — null until the user confirms or
+  // overrides (first render uses derivedBracket directly in buildDynamicActions).
+  const [confirmedBracket, setConfirmedBracket] = useState<SeniorityBracket | null>(null);
+
+  const { derivedBracket, bracketSignals } = useMemo(() => {
+    const tenureYears = (result as any).userFactors?.tenureYears ?? (result as any).tenureYears ?? 3;
+    const careerYears = (result as any).userFactors?.careerYears ?? (result as any).experienceYears ?? tenureYears;
+    const performanceTier = (result as any).userFactors?.performanceTier ?? (result as any).performanceTier ?? 'unknown';
+    const uniquenessDepth = (result as any).uniquenessDepth ?? (result as any).userFactors?.uniquenessDepth ?? 'generic';
+    return {
+      derivedBracket: deriveSeniorityBracket(tenureYears, performanceTier, uniquenessDepth, careerYears),
+      bracketSignals: describeBracketSignals(tenureYears, performanceTier, uniquenessDepth, careerYears),
+    };
+  }, [result]);
+
+  // Live market data — fetched async from Supabase cache after initial render.
+  // buildDynamicActions uses this when available; falls back to getCareerPathMarketSync().
+  const [liveMarketData, setLiveMarketData] = useState<CareerPathMarket | null>(null);
+  const _marketIntel = getCareerIntelligence(result.workTypeKey);
+  const _topPathRole = _marketIntel?.careerPaths?.[0]?.role ?? '';
+  useEffect(() => {
+    if (!_topPathRole) return;
+    let cancelled = false;
+    getCareerPathMarket(_topPathRole).then(data => {
+      if (!cancelled) setLiveMarketData(data ?? null);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [_topPathRole]);
+
+  // Load cityKey once at component mount (normalised by loadCityKey).
+  // Re-read when the component renders — FinancialContextInput may have just saved it.
+  const cityKey = useMemo(() => loadCityKey(), []);
+
   // Merge server-side recs with dynamic role-specific ones, passing financial profile
   const allRecommendations = useMemo(() => {
     const dynamic = buildDynamicActions(
@@ -557,20 +1017,16 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
       result.companyName ?? companyData?.name ?? "your company",
       financialProfile,
       selectedTrack,
+      liveMarketData,
+      confirmedBracket ?? undefined,
+      cityKey,
     );
     const serverRecs = result.recommendations ?? [];
     // Merge: prefer dynamic, append non-duplicate server recs
     const dynamicIds = new Set(dynamic.map(d => d.id));
     const serverExtra = serverRecs.filter(r => !dynamicIds.has(r.id));
     return [...dynamic, ...serverExtra];
-  }, [result, companyData]);
-
-  const [filter, setFilter] = useState("all");
-  const [search, setSearch] = useState("");
-  const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
-  const [selectedTrack, setSelectedTrack] = useState<TrackType>(() =>
-    result.total >= 70 ? "intensive" : result.total >= 45 ? "moderate" : "minimal"
-  );
+  }, [result, companyData, financialProfile, selectedTrack, liveMarketData, confirmedBracket, cityKey]);
 
   useEffect(() => {
     try {
@@ -590,8 +1046,10 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
       if (filter !== "all" && item.priority.toLowerCase() !== filter) return false;
       if (search && !item.title.toLowerCase().includes(search.toLowerCase()) &&
           !item.description.toLowerCase().includes(search.toLowerCase())) return false;
+      // v7.0 Fix 3: hide completed items when toggle is active
+      if (hideCompleted && completedItems[item.id]) return false;
       return true;
-    }), [allRecommendations, filter, search]);
+    }), [allRecommendations, filter, search, hideCompleted, completedItems]);
 
   const trackConfig = TRACKS[selectedTrack];
   const trackLimitedItems = useMemo(() => {
@@ -626,6 +1084,31 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
     [sortedItems, completedItems],
   );
 
+  // Phase lock state — mirrors ActionDependencyGraph logic so the flat list and
+  // the dependency graph panel enforce the same threshold consistently.
+  // Phase 2 locks until Phase 1 ≥50% complete; Phase 3 locks until Phase 2 ≥50%.
+  // Items whose phase is locked have their checkbox disabled (not just visually dim).
+  const { lockedPhases } = useMemo(() => {
+    const byPhase: Record<1 | 2 | 3, ActionPlanItem[]> = { 1: [], 2: [], 3: [] };
+    for (const item of sortedItems) {
+      byPhase[assignPhase(item)].push(item);
+    }
+    const phasePct = (ph: 1 | 2 | 3): number => {
+      const items = byPhase[ph];
+      if (items.length === 0) return 100;
+      const done = items.filter(i => completedItems[i.id]).length;
+      return Math.round((done / items.length) * 100);
+    };
+    const p1 = phasePct(1);
+    const p2 = phasePct(2);
+    return {
+      lockedPhases: new Set<1 | 2 | 3>([
+        ...(p1 < 50 ? [2 as const] : []),
+        ...(p2 < 50 ? [3 as const] : []),
+      ]),
+    };
+  }, [sortedItems, completedItems]);
+
   const handleExport = () => {
     try {
       const text = [
@@ -658,13 +1141,108 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
     <section aria-labelledby="action-plan-heading" className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
+        {/* ── Intelligence Engines: Career Insurance + Financial Impact ──────── */}
+        {/* These panels sit above the action list so users see the "why" before
+            they see the "what." Each panel is independently collapsible to avoid
+            overwhelming lower-risk users.
+            insurancePlan, showInsurance, showFinancial are declared at component scope below. */}
+        {true && (
+            <div className="space-y-4 mb-6">
+              {/* Career Insurance Kit */}
+              <div className="rounded-2xl border border-white/10 overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                  onClick={() => setShowInsurance(v => !v)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-5 h-5 text-cyan-400" />
+                    <div className="text-left">
+                      <p className="text-sm font-black tracking-tight">Career Insurance Kit</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Specific 30-day survival plan · cited actions · week-by-week timeline
+                      </p>
+                    </div>
+                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                      insurancePlan.urgencyTier === 'critical' ? 'bg-red-500/15 text-red-400 border-red-500/25' :
+                      insurancePlan.urgencyTier === 'elevated' ? 'bg-amber-500/15 text-amber-400 border-amber-500/25' :
+                      'bg-blue-500/15 text-blue-400 border-blue-500/25'
+                    }`}>
+                      {insurancePlan.urgencyTier}
+                    </span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${showInsurance ? 'rotate-90' : ''}`} />
+                </button>
+                {showInsurance && (
+                  <div className="px-5 py-5 border-t border-white/6">
+                    <CareerInsuranceKit plan={insurancePlan} companyName={companyData.name ?? ''} />
+                  </div>
+                )}
+              </div>
+
+              {/* Financial Impact Calculator */}
+              <div className="rounded-2xl border border-white/10 overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                  onClick={() => setShowFinancial(v => !v)}
+                >
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="w-5 h-5 text-emerald-400" />
+                    <div className="text-left">
+                      <p className="text-sm font-black tracking-tight">Financial Impact Calculator</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Actual cost of a layoff · emergency fund gap · negotiation leverage
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${showFinancial ? 'rotate-90' : ''}`} />
+                </button>
+                {showFinancial && (
+                  <div className="px-5 py-5 border-t border-white/6">
+                    <FinancialImpactCalculator result={result} />
+                  </div>
+                )}
+              </div>
+            </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
-          <div>
+          <div className="flex-1">
             <SectionHeader
               title="Personalized Action Plan"
               description={`${sortedItems.length} actions tailored to ${result.workTypeKey.replace(/_/g, " ")} at risk score ${result.total}/100. Set your available hours to see only what's realistic for your schedule.`}
             />
+            {/* v8.0: Role personalization badge — shows which role group was resolved */}
+            {(() => {
+              const roleTitle = (result as any).roleTitle ?? result.workTypeKey ?? '';
+              const roleGroupLabel = getRoleGroupLabel(roleTitle);
+              const roleGroup = resolveRoleGroup(roleTitle);
+              const riskLevel = scoreToRiskLevel(result.total);
+              const region = (result as any).region ?? (result as any).companyRegion;
+              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region);
+              return (
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>
+                  <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                    {roleGroupLabel}
+                  </span>
+                  <span className="text-[10px] font-black bg-white/8 border border-white/10 px-2 py-0.5 rounded capitalize">
+                    {derivedBracket}
+                  </span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded capitalize ${
+                    riskLevel === 'critical' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                    riskLevel === 'high' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                    riskLevel === 'moderate' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  }`}>{riskLevel} risk</span>
+                  {region === 'IN' && personalizedSet.indiaSpecificContext && (
+                    <span className="text-[9px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">
+                      🇮🇳 India-specific
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <ProgressIndicator completed={completedCount} total={sortedItems.length} />
         </div>
@@ -703,6 +1281,16 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         )}
 
+        {/* Seniority bracket confirmation — persisted across refreshes via localStorage,
+            overrides logged to seniority_bracket_overrides for algorithm QA */}
+        <SeniorityBracketConfirmation
+          derivedBracket={derivedBracket}
+          signals={bracketSignals}
+          workTypeKey={result.workTypeKey}
+          riskScore={result.total}
+          onBracketResolved={setConfirmedBracket}
+        />
+
         {/* Time-available track selector */}
         <TimeAvailableTrack
           selectedTrack={selectedTrack}
@@ -733,6 +1321,26 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
+            {/* v7.0 Fix 3: hide-completed toggle — visible only when there are completed items */}
+            {completedCount > 0 && (
+              <button
+                onClick={() => setHideCompleted(v => !v)}
+                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors"
+                style={{
+                  background:   hideCompleted ? 'rgba(16,185,129,0.10)' : 'rgba(255,255,255,0.05)',
+                  borderColor:  hideCompleted ? 'rgba(16,185,129,0.30)' : 'rgba(255,255,255,0.10)',
+                  color:        hideCompleted ? 'var(--emerald)' : 'var(--text-3)',
+                }}
+                title={hideCompleted
+                  ? `${completedCount} completed action${completedCount !== 1 ? 's' : ''} hidden — click to show`
+                  : `Showing all actions including ${completedCount} completed`}
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                {hideCompleted
+                  ? `${completedCount} done · Show`
+                  : `${completedCount} done · Hide`}
+              </button>
+            )}
             <button
               onClick={handleExport}
               className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-muted-foreground hover:text-[var(--text)]"
@@ -742,19 +1350,79 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         </div>
 
-        {/* Action Items */}
+        {/* Returning-user context banner — shown when there are hidden completed actions */}
+        {isReturningUser && hideCompleted && completedCount > 0 && (
+          <div className="mb-4 px-4 py-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <p className="text-xs text-emerald-300/80 leading-relaxed">
+              <span className="font-semibold text-emerald-300">
+                {completedCount} action{completedCount !== 1 ? 's' : ''} from previous sessions
+              </span>{' '}
+              hidden from the active plan. Your current plan shows only remaining actions.{' '}
+              <button onClick={() => setHideCompleted(false)} className="underline hover:no-underline">
+                Show all
+              </button>
+            </p>
+          </div>
+        )}
+
+        {/* Action Items — priority-grouped with colored section headers */}
         <AnimatePresence>
           {sortedItems.length > 0 ? (
-            <div className="space-y-2">
-              {sortedItems.map((item, i) => (
-                <ActionItem
-                  key={item.id}
-                  item={item}
-                  isCompleted={!!completedItems[item.id]}
-                  onToggle={() => setCompletedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
-                  index={i}
-                />
-              ))}
+            <div className="space-y-6">
+              {(['Critical', 'High', 'Medium', 'Low'] as const).map(priority => {
+                const priorityItems = sortedItems.filter(item => item.priority === priority);
+                if (priorityItems.length === 0) return null;
+                const cfg = PRIORITY_CONFIG[priority];
+                const completedCount = priorityItems.filter(item => completedItems[item.id]).length;
+                return (
+                  <div key={priority}>
+                    {/* Section header */}
+                    <div className="priority-section-header flex items-center gap-2 mb-3" style={{ '--priority-color': cfg.color } as React.CSSProperties}>
+                      <div style={{
+                        width: '6px', height: '6px', borderRadius: '50%',
+                        background: cfg.color, boxShadow: `0 0 8px ${cfg.color}`,
+                        flexShrink: 0,
+                        animation: priority === 'Critical' ? 'pulse-live 1.8s ease-in-out infinite' : 'none',
+                      }} />
+                      <span>{cfg.label} PRIORITY</span>
+                      <span style={{
+                        marginLeft: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
+                        fontWeight: 700, color: cfg.color, opacity: 0.6,
+                      }}>
+                        {completedCount}/{priorityItems.length}
+                      </span>
+                      {completedCount > 0 && (
+                        <div style={{
+                          marginLeft: 'auto',
+                          height: '3px', width: `${Math.round((completedCount / priorityItems.length) * 60)}px`,
+                          background: '#10b981', borderRadius: '2px',
+                          boxShadow: '0 0 8px #10b98140',
+                        }} />
+                      )}
+                    </div>
+
+                    {/* Items in this priority group */}
+                    <div className="space-y-2">
+                      {priorityItems.map((item, i) => {
+                        const itemPhase = assignPhase(item);
+                        const itemIsLocked = lockedPhases.has(itemPhase as 2 | 3);
+                        return (
+                          <ActionItem
+                            key={item.id}
+                            item={item}
+                            isCompleted={!!completedItems[item.id]}
+                            onToggle={() => setCompletedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                            index={i}
+                            isLocked={itemIsLocked}
+                            selectedTrack={selectedTrack}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center p-8 glass-panel rounded-xl">
@@ -837,6 +1505,13 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
             experience={result.experience}
           />
         </div>
+
+        {/* v12.0: Negotiation Intelligence — current employer leverage analysis */}
+        {(result as any).negotiationIntelligence?.shouldDisplay && (
+          <div className="mt-6">
+            <NegotiationIntelligencePanel negotiation={(result as any).negotiationIntelligence} />
+          </div>
+        )}
       </motion.div>
     </section>
   );

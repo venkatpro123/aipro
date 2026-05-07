@@ -19,9 +19,9 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Legal Tech Director', riskReduction: 55, skillGap: 'AI implementation, Legal Ops', transitionDifficulty: 'Medium', industryMapping: ['Law Firms'], salaryDelta: '+30-60%', timeToTransition: '12 months' },
-      { role: 'General Counsel (In-House)', riskReduction: 42, skillGap: 'Business strategy, P&L', transitionDifficulty: 'Medium', industryMapping: ['Corporate'], salaryDelta: '+50-100%', timeToTransition: '24 months' },
-      { role: 'AI Governance Attorney', riskReduction: 65, skillGap: 'EU AI Act, NIST AI RMF', transitionDifficulty: 'Hard', industryMapping: ['Consulting', 'Tech'], salaryDelta: '+40-80%', timeToTransition: '18 months' },
+      { role: 'Legal Tech Director', riskReduction: 55, skillGap: 'AI implementation, Legal Ops', transitionDifficulty: 'Medium', industryMapping: ['Law Firms'], salaryDelta: '+30-60%', timeToTransition: '12 months', months_to_first_income: 4, income_dip_months: 2 },
+      { role: 'General Counsel (In-House)', riskReduction: 42, skillGap: 'Business strategy, P&L', transitionDifficulty: 'Medium', industryMapping: ['Corporate'], salaryDelta: '+50-100%', timeToTransition: '24 months', months_to_first_income: 8, income_dip_months: 4 },
+      { role: 'AI Governance Attorney', riskReduction: 65, skillGap: 'EU AI Act, NIST AI RMF', transitionDifficulty: 'Hard', industryMapping: ['Consulting', 'Tech'], salaryDelta: '+40-80%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
     ],
     roadmap: {
       '0-2': { phase_1: { timeline: '30 days', focus: 'AI Tool Fluency', actions: [{ action: 'Trial Harvey AI for 30 days on actual documents', why: 'Understand what AI can and cannot do in your exact practice area.', outcome: 'Honest AI capability assessment', tool: 'Harvey' }] } },
@@ -46,7 +46,7 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
     },
     careerPaths: [
       { role: 'Complex Litigation Lead', riskReduction: 40, skillGap: 'Trial experience, Mediation', transitionDifficulty: 'Hard', industryMapping: ['Law Firms'], salaryDelta: '+40-100%', timeToTransition: '60 months' },
-      { role: 'Arbitration Specialist', riskReduction: 52, skillGap: 'ADR certifications, International law', transitionDifficulty: 'Medium', industryMapping: ['International Law'], salaryDelta: '+50-120%', timeToTransition: '36 months' },
+      { role: 'Arbitration Specialist', riskReduction: 52, skillGap: 'ADR certifications, International law', transitionDifficulty: 'Medium', industryMapping: ['International Law'], salaryDelta: '+50-120%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     inactionScenario: 'Litigators who rely on research and drafting as their primary value will be commoditised. Oral advocacy and trial strategy are your moats — invest in those exclusively.',
     riskTrend: [{ year: 2024, riskScore: 20, label: 'Now' }, { year: 2025, riskScore: 25, label: '+1yr' }, { year: 2026, riskScore: 30, label: '+2yr' }, { year: 2027, riskScore: 35, label: '+3yr' }, { year: 2028, riskScore: 38, label: '+4yr' }],
@@ -66,8 +66,8 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'VC IP Lead', riskReduction: 55, skillGap: 'Commercialization strategy', transitionDifficulty: 'Hard', industryMapping: ['VC Firms'], salaryDelta: '+50-100%', timeToTransition: '24 months' },
-      { role: 'AI Intellectual Property Counsel', riskReduction: 70, skillGap: 'LLM architecture understanding, copyright law evolution', transitionDifficulty: 'Hard', industryMapping: ['Big Tech', 'AI Startups'], salaryDelta: '+60-120%', timeToTransition: '18 months' },
+      { role: 'VC IP Lead', riskReduction: 55, skillGap: 'Commercialization strategy', transitionDifficulty: 'Hard', industryMapping: ['VC Firms'], salaryDelta: '+50-100%', timeToTransition: '24 months', months_to_first_income: 8, income_dip_months: 4 },
+      { role: 'AI Intellectual Property Counsel', riskReduction: 70, skillGap: 'LLM architecture understanding, copyright law evolution', transitionDifficulty: 'Hard', industryMapping: ['Big Tech', 'AI Startups'], salaryDelta: '+60-120%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
     ],
     riskTrend: [{ year: 2024, riskScore: 28, label: 'Now' }, { year: 2026, riskScore: 35, label: '+2yr' }, { year: 2027, riskScore: 40, label: '+3yr' }, { year: 2028, riskScore: 42, label: '+4yr' }, { year: 2029, riskScore: 45, label: '+5yr' }],
     confidenceScore: 96,
@@ -86,8 +86,8 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Director of Legal Innovation', riskReduction: 60, skillGap: 'AI governance, LegalTech implementation', transitionDifficulty: 'Medium', industryMapping: ['Law Firms'], salaryDelta: '+40-80%', timeToTransition: '18 months' },
-      { role: 'Chief Legal Technology Officer', riskReduction: 65, skillGap: 'CIO-level tech strategy', transitionDifficulty: 'Hard', industryMapping: ['Enterprise Legal'], salaryDelta: '+60-120%', timeToTransition: '36 months' },
+      { role: 'Director of Legal Innovation', riskReduction: 60, skillGap: 'AI governance, LegalTech implementation', transitionDifficulty: 'Medium', industryMapping: ['Law Firms'], salaryDelta: '+40-80%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
+      { role: 'Chief Legal Technology Officer', riskReduction: 65, skillGap: 'CIO-level tech strategy', transitionDifficulty: 'Hard', industryMapping: ['Enterprise Legal'], salaryDelta: '+60-120%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     riskTrend: [{ year: 2024, riskScore: 25, label: 'Now' }, { year: 2026, riskScore: 30, label: '+2yr' }, { year: 2027, riskScore: 35, label: '+3yr' }, { year: 2028, riskScore: 38, label: '+4yr' }, { year: 2029, riskScore: 40, label: '+5yr' }],
     confidenceScore: 96,
@@ -106,8 +106,8 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Private Defense Partner', riskReduction: 35, skillGap: 'Business development, Private client relations', transitionDifficulty: 'Medium', industryMapping: ['Legal'], salaryDelta: '+100-300%', timeToTransition: '24 months' },
-      { role: 'Civil Rights Attorney', riskReduction: 28, skillGap: 'Constitutional law specialization', transitionDifficulty: 'Medium', industryMapping: ['NGO/Nonprofit'], salaryDelta: '+20-50%', timeToTransition: '18 months' },
+      { role: 'Private Defense Partner', riskReduction: 35, skillGap: 'Business development, Private client relations', transitionDifficulty: 'Medium', industryMapping: ['Legal'], salaryDelta: '+100-300%', timeToTransition: '24 months', months_to_first_income: 8, income_dip_months: 4 },
+      { role: 'Civil Rights Attorney', riskReduction: 28, skillGap: 'Constitutional law specialization', transitionDifficulty: 'Medium', industryMapping: ['NGO/Nonprofit'], salaryDelta: '+20-50%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
     ],
     riskTrend: [{ year: 2024, riskScore: 15, label: 'Now' }, { year: 2026, riskScore: 18, label: '+2yr' }, { year: 2027, riskScore: 22, label: '+3yr' }, { year: 2028, riskScore: 24, label: '+4yr' }, { year: 2029, riskScore: 26, label: '+5yr' }],
     confidenceScore: 98,
@@ -126,7 +126,7 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Forensic Accountant (Private Sector)', riskReduction: 52, skillGap: 'Legal evidence standards, Expert witness certification', transitionDifficulty: 'Medium', industryMapping: ['Big 4', 'Boutique Investigative Firms'], salaryDelta: '+40-80%', timeToTransition: '18 months' },
+      { role: 'Forensic Accountant (Private Sector)', riskReduction: 52, skillGap: 'Legal evidence standards, Expert witness certification', transitionDifficulty: 'Medium', industryMapping: ['Big 4', 'Boutique Investigative Firms'], salaryDelta: '+40-80%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
     ],
     riskTrend: [{ year: 2024, riskScore: 35, label: 'Now' }, { year: 2026, riskScore: 48, label: '+2yr' }, { year: 2027, riskScore: 58, label: '+3yr' }, { year: 2028, riskScore: 65, label: '+4yr' }, { year: 2029, riskScore: 70, label: '+5yr' }],
     confidenceScore: 94,
@@ -147,7 +147,7 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief AI Ethics Counsel', riskReduction: 20, skillGap: 'AI system architecture understanding, policy writing', transitionDifficulty: 'Hard', industryMapping: ['Big Tech', 'Consulting', 'Gov'], salaryDelta: '+80-200%', timeToTransition: '18 months' },
+      { role: 'Chief AI Ethics Counsel', riskReduction: 20, skillGap: 'AI system architecture understanding, policy writing', transitionDifficulty: 'Hard', industryMapping: ['Big Tech', 'Consulting', 'Gov'], salaryDelta: '+80-200%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
     ],
     inactionScenario: 'This is one of the highest-growth legal specialties in 2024-2030. Not entering this field is the opportunity cost risk, not displacement.',
     riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 6, label: '+2yr' }, { year: 2027, riskScore: 5, label: '+3yr' }, { year: 2028, riskScore: 5, label: '+4yr' }, { year: 2029, riskScore: 5, label: '+5yr' }],
@@ -167,7 +167,7 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief Privacy Officer', riskReduction: 38, skillGap: 'Executive board communication, Global regulatory mapping', transitionDifficulty: 'Hard', industryMapping: ['Tech', 'Finance', 'Healthcare'], salaryDelta: '+60-150%', timeToTransition: '36 months' },
+      { role: 'Chief Privacy Officer', riskReduction: 38, skillGap: 'Executive board communication, Global regulatory mapping', transitionDifficulty: 'Hard', industryMapping: ['Tech', 'Finance', 'Healthcare'], salaryDelta: '+60-150%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     riskTrend: [{ year: 2024, riskScore: 18, label: 'Now' }, { year: 2026, riskScore: 20, label: '+2yr' }, { year: 2027, riskScore: 22, label: '+3yr' }, { year: 2028, riskScore: 24, label: '+4yr' }, { year: 2029, riskScore: 25, label: '+5yr' }],
     confidenceScore: 98,
@@ -186,8 +186,8 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief Compliance Officer', riskReduction: 45, skillGap: 'Board presentation, Risk management certification', transitionDifficulty: 'Hard', industryMapping: ['Banking', 'Pharma', 'Insurance'], salaryDelta: '+60-150%', timeToTransition: '36 months' },
-      { role: 'RegTech Implementation Lead', riskReduction: 58, skillGap: 'AI compliance tools, API integrations', transitionDifficulty: 'Medium', industryMapping: ['Fintech', 'Consulting'], salaryDelta: '+40-80%', timeToTransition: '18 months' },
+      { role: 'Chief Compliance Officer', riskReduction: 45, skillGap: 'Board presentation, Risk management certification', transitionDifficulty: 'Hard', industryMapping: ['Banking', 'Pharma', 'Insurance'], salaryDelta: '+60-150%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
+      { role: 'RegTech Implementation Lead', riskReduction: 58, skillGap: 'AI compliance tools, API integrations', transitionDifficulty: 'Medium', industryMapping: ['Fintech', 'Consulting'], salaryDelta: '+40-80%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
     ],
     riskTrend: [{ year: 2024, riskScore: 38, label: 'Now' }, { year: 2026, riskScore: 50, label: '+2yr' }, { year: 2027, riskScore: 60, label: '+3yr' }, { year: 2028, riskScore: 65, label: '+4yr' }, { year: 2029, riskScore: 68, label: '+5yr' }],
     confidenceScore: 95,
@@ -206,8 +206,8 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       safe: [{ skill: 'Complex Case Timeline Management', whySafe: 'Coordinating multi-case deadlines, attorney schedules, and client communications at a human-touch level.', longTermValue: 78, difficulty: 'Medium' }],
     },
     careerPaths: [
-      { role: 'Legal Project Manager', riskReduction: 60, skillGap: 'AI legal tools, Project management certification', transitionDifficulty: 'Medium', industryMapping: ['Law Firms'], salaryDelta: '+30-60%', timeToTransition: '12 months' },
-      { role: 'Legal Technologist / Trainer', riskReduction: 65, skillGap: 'LegalTech implementation, User training', transitionDifficulty: 'Medium', industryMapping: ['LegalTech'], salaryDelta: '+40-70%', timeToTransition: '12 months' },
+      { role: 'Legal Project Manager', riskReduction: 60, skillGap: 'AI legal tools, Project management certification', transitionDifficulty: 'Medium', industryMapping: ['Law Firms'], salaryDelta: '+30-60%', timeToTransition: '12 months', months_to_first_income: 4, income_dip_months: 2 },
+      { role: 'Legal Technologist / Trainer', riskReduction: 65, skillGap: 'LegalTech implementation, User training', transitionDifficulty: 'Medium', industryMapping: ['LegalTech'], salaryDelta: '+40-70%', timeToTransition: '12 months', months_to_first_income: 4, income_dip_months: 2 },
     ],
     inactionScenario: 'Paralegals who do not develop AI tool fluency and pivot to Legal Ops/Project Management face direct position elimination within 2-3 years.',
     riskTrend: [{ year: 2024, riskScore: 62, label: 'Now' }, { year: 2025, riskScore: 72, label: '+1yr' }, { year: 2026, riskScore: 80, label: '+2yr' }, { year: 2027, riskScore: 86, label: '+3yr' }, { year: 2028, riskScore: 90, label: '+4yr' }],
@@ -227,7 +227,7 @@ export const SERVICES_LEGAL_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'International Commercial Arbitrator', riskReduction: 25, skillGap: 'ICC/LCIA accreditation, Cross-border law', transitionDifficulty: 'Hard', industryMapping: ['International Law', 'Finance'], salaryDelta: '+100-400%', timeToTransition: '36 months' },
+      { role: 'International Commercial Arbitrator', riskReduction: 25, skillGap: 'ICC/LCIA accreditation, Cross-border law', transitionDifficulty: 'Hard', industryMapping: ['International Law', 'Finance'], salaryDelta: '+100-400%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 9, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 11, label: '+4yr' }, { year: 2029, riskScore: 12, label: '+5yr' }],
     confidenceScore: 99,

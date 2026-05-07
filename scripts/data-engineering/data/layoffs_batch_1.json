@@ -1,0 +1,47 @@
+[
+  {
+    "company_name": "Alphabet (Google)",
+    "layoff_history": {
+      "total_layoffs": 14000,
+      "last_layoff_date": "2024-05-01",
+      "layoff_frequency": "frequent",
+      "affected_departments": ["hardware", "engineering", "sales", "assistant", "recruiting"]
+    }
+  },
+  {
+    "company_name": "Tesla",
+    "layoff_history": {
+      "total_layoffs": 14000,
+      "last_layoff_date": "2024-04-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["manufacturing", "software", "sales", "services"]
+    }
+  },
+  {
+    "company_name": "Amazon",
+    "layoff_history": {
+      "total_layoffs": 27500,
+      "last_layoff_date": "2024-04-03",
+      "layoff_frequency": "frequent",
+      "affected_departments": ["aws", "twitch", "devices", "retail", "hr"]
+    }
+  },
+  {
+    "company_name": "Microsoft",
+    "layoff_history": {
+      "total_layoffs": 11900,
+      "last_layoff_date": "2024-01-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["gaming", "hardware", "engineering", "sales"]
+    }
+  },
+  {
+    "company_name": "Meta",
+    "layoff_history": {
+      "total_layoffs": 10500,
+      "last_layoff_date": "2024-03-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["reality_labs", "engineering", "recruiting", "sales"]
+    }
+  }
+]

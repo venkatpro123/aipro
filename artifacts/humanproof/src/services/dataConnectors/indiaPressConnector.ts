@@ -113,15 +113,24 @@ function detectSentiment(text: string): -1 | 0 | 1 {
 export async function fetchIndiaPressSignals(
   company: string,
 ): Promise<IndiaPressSummary> {
+  const emptyResult: IndiaPressSummary = {
+    company, signals: [], layoffSignalCount: 0, sentimentScore: 0,
+    anyFeedReachable: false, sourcesUsed: [], fetchedAt: new Date().toISOString(),
+  };
+  try {
   const companyLower = company.trim().toLowerCase();
   const feedNames = Object.keys(FEEDS);
 
-  const feedResults = await Promise.all(
+  // Use allSettled so one broken feed doesn't abort the others
+  const feedSettled = await Promise.allSettled(
     feedNames.map(async (name) => ({
       name,
       items: await fetchFeed(FEEDS[name]),
     })),
   );
+  const feedResults = feedSettled
+    .filter(r => r.status === 'fulfilled')
+    .map(r => (r as PromiseFulfilledResult<{ name: string; items: any[] }>).value);
 
   const sourcesUsed: string[] = [];
   const signals: IndiaPressSignal[] = [];
@@ -178,4 +187,8 @@ export async function fetchIndiaPressSignals(
     sourcesUsed,
     fetchedAt: new Date().toISOString(),
   };
+  } catch (err: any) {
+    console.warn('[IndiaPress] fetchIndiaPressSignals failed:', err?.message);
+    return emptyResult;
+  }
 }

@@ -4,6 +4,7 @@ import {
   calculateCompanyHealthScore,
   calculateLayoffHistoryScore,
   calculateEmployeeFactorsScore,
+  LAYER_WEIGHTS,
   type ScoreInputs,
 } from "../../services/layoffScoreEngine";
 import { companyDatabase } from "../../data/companyDatabase";
@@ -141,12 +142,39 @@ describe("Integration Tests - Full Calculation Flow", () => {
   });
 
   describe("Weight Distribution Validation", () => {
-    it("should sum weights to 1.0 (30+25+25+5+15)", () => {
-      const inputs = createBaseInputs();
-      const result = calculateLayoffScore(inputs);
-      const { L1, L2, L3, L4, L5 } = result.breakdown;
-      const totalWeight = 0.3 + 0.25 + 0.25 + 0.05 + 0.15;
-      expect(totalWeight).toBe(1.0);
+    // COMPOSITE_FORMULA_WEIGHTS is intentionally unexported (callers must use
+    // the rawScore result, not individual weights). Its sum is enforced by the
+    // module-load IIFE in layoffScoreEngine.ts — if that assertion had failed,
+    // this entire test file would have thrown on import. Reaching any test here
+    // is implicit proof that COMPOSITE_FORMULA_WEIGHTS sums to 1.00 ± 0.001.
+    it("COMPOSITE_FORMULA_WEIGHTS: implicit pass — module loaded without throwing", () => {
+      // The IIFE at module load throws if |sum - 1.0| > 0.001.
+      // calculateLayoffScore being callable at all proves the assertion passed.
+      const result = calculateLayoffScore(createBaseInputs());
+      expect(result.score).toBeGreaterThanOrEqual(0);
+      expect(result.score).toBeLessThanOrEqual(100);
+    });
+
+    it("LAYER_WEIGHTS: sum equals 1.10 exactly", () => {
+      // LAYER_WEIGHTS is exported and used by the WhatIf simulator with mandatory
+      // division by weightSum. An unexpected sum here means simulated scores are
+      // miscalibrated. The IIFE also catches this, but this test makes the
+      // assertion explicit and surfaceable in test reports.
+      const sum = Object.values(LAYER_WEIGHTS).reduce((a, b) => a + b, 0);
+      expect(sum).toBeCloseTo(1.10, 10);
+    });
+
+    it("LAYER_WEIGHTS: individual terms match documented values", () => {
+      // Guard against a refactor that renames or adds a term without updating
+      // the header comment. Each value is cross-checked against the code comment.
+      expect(LAYER_WEIGHTS.L1).toBe(0.30);
+      expect(LAYER_WEIGHTS.L2).toBe(0.25);
+      expect(LAYER_WEIGHTS.L3).toBe(0.20);
+      expect(LAYER_WEIGHTS.L4).toBe(0.12);
+      expect(LAYER_WEIGHTS.L5).toBe(0.08);
+      expect(LAYER_WEIGHTS.D6).toBe(0.08);
+      expect(LAYER_WEIGHTS.D7).toBe(0.07);
+      expect(Object.keys(LAYER_WEIGHTS)).toHaveLength(7);
     });
   });
 

@@ -4,10 +4,10 @@ import React, { createContext, useContext, useReducer, ReactNode } from "react";
 import {
   ScoreResult,
   UserFactors,
-  ScoreInputs,
 } from "../services/layoffScoreEngine";
 import { ScoreHistoryEntry } from "../services/scoreStorageService";
 import { CompanyData } from "../data/companyDatabase";
+import type { HybridResult } from "../types/hybridResult";
 
 export interface LayoffState {
   companyName: string | null;
@@ -17,7 +17,7 @@ export interface LayoffState {
   /** Resolved oracle key from MASTER_CAREER_INTELLIGENCE, e.g. "sw_backend" */
   oracleKey: string | null;
   userFactors: UserFactors | null;
-  scoreResult: ScoreResult | null;
+  scoreResult: ScoreResult | HybridResult | null;
   scoreHistory: ScoreHistoryEntry[];
   alertDrift: {
     drift: number;
@@ -45,7 +45,7 @@ type LayoffAction =
   | { type: "SET_COMPANY_DATA"; payload: CompanyData | null }
   | { type: "SET_ORACLE_KEY"; payload: string }
   | { type: "SET_CALCULATING"; payload: boolean }
-  | { type: "SET_SCORE_RESULT"; payload: ScoreResult }
+  | { type: "SET_SCORE_RESULT"; payload: ScoreResult | HybridResult }
   | { type: "SET_HISTORY"; payload: ScoreHistoryEntry[] }
   | { type: "SET_ALERT_DRIFT"; payload: LayoffState["alertDrift"] }
   | { type: "INCREMENT_SAVE_COUNTER" }

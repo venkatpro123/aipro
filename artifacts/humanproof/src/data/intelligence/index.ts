@@ -72,6 +72,57 @@ export const MASTER_CAREER_INTELLIGENCE: Record<string, CareerIntelligence> = {
   ...SERVICES_RETAIL_INTELLIGENCE,   // 8 Retail, Consumer & Hospitality roles
 };
 
+// ── Duplicate-key guard ────────────────────────────────────────────────────────
+// MASTER_CAREER_INTELLIGENCE is built by spreading multiple modules in order.
+// JavaScript spread silently lets later modules overwrite earlier ones for the
+// same key — correct for intentional overrides (SERVICES_LEGAL over SERVICES),
+// but a silent data loss when two modules accidentally define the same key.
+// This assertion runs once at module load in non-production builds and logs every
+// unintentional collision so they can be resolved at the module level.
+if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+  const allModules: Array<[string, Record<string, CareerIntelligence>]> = [
+    ['TECH', TECH_INTELLIGENCE],
+    ['FINANCE', FINANCE_INTELLIGENCE],
+    ['SERVICES', SERVICES_INTELLIGENCE],
+    ['SERVICES_LEGAL', SERVICES_LEGAL_INTELLIGENCE],
+    ['SERVICES_HR', SERVICES_HR_INTELLIGENCE],
+    ['HEALTHCARE', HEALTHCARE_INTELLIGENCE],
+    ['INDUSTRY', INDUSTRY_INTELLIGENCE],
+    ['CREATIVE', CREATIVE_INTELLIGENCE],
+    ['EMERGING', EMERGING_INTELLIGENCE],
+    ['SERVICES_GOV', SERVICES_GOV_INTELLIGENCE],
+    ['SERVICES_EDU', SERVICES_EDU_INTELLIGENCE],
+    ['SERVICES_RETAIL', SERVICES_RETAIL_INTELLIGENCE],
+  ];
+  // Known intentional overrides — these are expected and should not warn.
+  const INTENTIONAL_OVERRIDES = new Set([
+    // SERVICES_LEGAL overrides leg_* from SERVICES
+    // SERVICES_HR overrides hr_* from SERVICES
+    'ser_legal_ops',
+    'gov_defender',
+    'gov_tax_auditor',
+    'gov_policy_analyst',
+    'gov_diplomat',
+    'gov_social_worker',
+  ]);
+  const seen = new Map<string, string>(); // key → first module name
+  for (const [modName, mod] of allModules) {
+    for (const key of Object.keys(mod)) {
+      if (seen.has(key) && !INTENTIONAL_OVERRIDES.has(key)) {
+        const prefix = key.split('_')[0];
+        const isExpectedOverride =
+          (modName === 'SERVICES_LEGAL' && prefix === 'leg') ||
+          (modName === 'SERVICES_HR'    && prefix === 'hr');
+        if (!isExpectedOverride) {
+          console.warn(`[MASTER_CAREER_INTELLIGENCE] Duplicate key "${key}" in ${modName} overrides ${seen.get(key)}. If intentional, add to INTENTIONAL_OVERRIDES.`);
+        }
+      } else {
+        seen.set(key, modName);
+      }
+    }
+  }
+}
+
 // ── BUG-08 FIX: Pre-built O(1) lookup caches ──────────────────────────────────
 // Previously every call to getCareerIntelligence() did an O(n) object lookup across
 // 400+ records. These Map caches pre-build at module load time for instant reads.
@@ -290,6 +341,24 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   agri_finance:         'fin_credit_analyst',
 };
 
+const HUMAN_TITLE_TO_INTEL_KEY: Record<string, string> = {
+  'software engineer': 'sw_software_engineer',
+  'software developer': 'sw_software_engineer',
+  'backend developer': 'sw_backend',
+  'backend engineer': 'sw_backend',
+  'database administrator': 'sw_dba',
+  'database administrator dba': 'sw_dba',
+  dba: 'sw_dba',
+};
+
+const normaliseHumanTitle = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[()]/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 // ── Public APIs ────────────────────────────────────────────────────────────────
 
 /**
@@ -316,6 +385,13 @@ export const resolveIntelligenceKey = (roleKey: string): string => {
   if (aliased && _directCache.has(aliased)) {
     _resolvedKeyCache.set(roleKey, aliased);
     return aliased;
+  }
+
+  // 3b. Human-readable title alias bridge
+  const humanAlias = HUMAN_TITLE_TO_INTEL_KEY[normaliseHumanTitle(roleKey)];
+  if (humanAlias && _directCache.has(humanAlias)) {
+    _resolvedKeyCache.set(roleKey, humanAlias);
+    return humanAlias;
   }
 
   // 4. Prefix heuristic for unmapped keys
@@ -346,7 +422,13 @@ export const resolveIntelligenceKey = (roleKey: string): string => {
     return prefixKey;
   }
 
-  // 5. No match — cache the miss as the original key to avoid repeated lookups
+  // 5. No match — cache the original key and warn. The caller's _directCache.get()
+  // will return undefined, which getCareerIntelligence() converts to null. Without
+  // this warning, null intelligence causes silent fallback to generic action templates
+  // with no signal to the caller or the user.
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+    console.warn(`[resolveIntelligenceKey] No match for "${roleKey}" — career intelligence will be null. Check CATALOG_TO_INTEL_KEY or add a direct entry in the relevant module.`);
+  }
   _resolvedKeyCache.set(roleKey, roleKey);
   return roleKey;
 };
@@ -424,3 +506,29 @@ export {
   seedHash,
 } from './contentVariantEngine';
 
+
+// ── v6.0 Fix 8: Career path filtering by uniqueness depth ────────────────────
+import type { CareerPath } from './types';
+
+type UniquenessDepth = 'generic' | 'functional_specialist' | 'critical_knowledge';
+
+/**
+ * Filter career paths by the user's uniqueness depth.
+ * critical_knowledge users see 'critical_only' and 'specialist_and_critical' paths.
+ * functional_specialist users see 'generic_and_specialist' and 'specialist_and_critical' paths.
+ * generic users see 'generic_and_specialist' and 'all' paths.
+ * When uniquenessDepthFilter is absent, path is shown to everyone.
+ */
+export function filterCareerPathsByUniqueness(
+  paths: CareerPath[],
+  uniquenessDepth: UniquenessDepth,
+): CareerPath[] {
+  return paths.filter(p => {
+    const f = p.uniquenessDepthFilter ?? 'all';
+    if (f === 'all') return true;
+    if (uniquenessDepth === 'critical_knowledge') return f === 'critical_only' || f === 'specialist_and_critical';
+    if (uniquenessDepth === 'functional_specialist') return f === 'generic_and_specialist' || f === 'specialist_and_critical';
+    // generic
+    return f === 'generic_and_specialist';
+  });
+}

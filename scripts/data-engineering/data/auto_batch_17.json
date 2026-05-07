@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "KakaoBank (Global Enriched)",
+    "workforce_count": 1533,
+    "open_jobs_count": 18,
+    "layoff_history": {
+      "total_layoffs": 81,
+      "last_layoff_date": "2025-01-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Grab Financial (Global Enriched)",
+    "workforce_count": 2451,
+    "open_jobs_count": 50,
+    "layoff_history": {
+      "total_layoffs": 204,
+      "last_layoff_date": "2025-06-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tabby (Global Enriched)",
+    "workforce_count": 663,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 33,
+      "last_layoff_date": "2025-11-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tamara (Global Enriched)",
+    "workforce_count": 448,
+    "open_jobs_count": 11,
+    "layoff_history": {
+      "total_layoffs": 33,
+      "last_layoff_date": "2025-06-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mollie (Global Enriched)",
+    "workforce_count": 806,
+    "open_jobs_count": 22,
+    "layoff_history": {
+      "total_layoffs": 62,
+      "last_layoff_date": "2025-08-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "GoCardless (Global Enriched)",
+    "workforce_count": 931,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 216,
+      "last_layoff_date": "2025-04-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Starling Bank (Global Enriched)",
+    "workforce_count": 3529,
+    "open_jobs_count": 63,
+    "layoff_history": {
+      "total_layoffs": 267,
+      "last_layoff_date": "2025-07-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zopa (Global Enriched)",
+    "workforce_count": 668,
+    "open_jobs_count": 11,
+    "layoff_history": {
+      "total_layoffs": 53,
+      "last_layoff_date": "2025-02-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Ledger (Global Enriched)",
+    "workforce_count": 815,
+    "open_jobs_count": 19,
+    "layoff_history": {
+      "total_layoffs": 183,
+      "last_layoff_date": "2025-09-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Yolt (Global Enriched)",
+    "workforce_count": 252,
+    "open_jobs_count": 7,
+    "layoff_history": {
+      "total_layoffs": 21,
+      "last_layoff_date": "2026-01-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Solaris (Global Enriched)",
+    "workforce_count": 814,
+    "open_jobs_count": 18,
+    "layoff_history": {
+      "total_layoffs": 65,
+      "last_layoff_date": "2025-03-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ClearBank (Global Enriched)",
+    "workforce_count": 557,
+    "open_jobs_count": 9,
+    "layoff_history": {
+      "total_layoffs": 37,
+      "last_layoff_date": "2025-01-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "OakNorth (Global Enriched)",
+    "workforce_count": 840,
+    "open_jobs_count": 21,
+    "layoff_history": {
+      "total_layoffs": 38,
+      "last_layoff_date": "2025-10-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bill (Global Enriched)",
+    "workforce_count": 2563,
+    "open_jobs_count": 55,
+    "layoff_history": {
+      "total_layoffs": 169,
+      "last_layoff_date": "2025-03-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tipalti (Global Enriched)",
+    "workforce_count": 980,
+    "open_jobs_count": 16,
+    "layoff_history": {
+      "total_layoffs": 181,
+      "last_layoff_date": "2025-06-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BlackLine",
+    "workforce_count": 10079,
+    "open_jobs_count": 224,
+    "layoff_history": {
+      "total_layoffs": 724,
+      "last_layoff_date": "2025-11-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "AvidXchange (Global Enriched)",
+    "workforce_count": 1633,
+    "open_jobs_count": 22,
+    "layoff_history": {
+      "total_layoffs": 69,
+      "last_layoff_date": "2025-06-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Nedbank (Global Enriched)",
+    "workforce_count": 28635,
+    "open_jobs_count": 816,
+    "layoff_history": {
+      "total_layoffs": 1428,
+      "last_layoff_date": "2025-03-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Rapyd (Global Enriched)",
+    "workforce_count": 1106,
+    "open_jobs_count": 21,
+    "layoff_history": {
+      "total_layoffs": 65,
+      "last_layoff_date": "2025-01-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Evernorth (Global Enriched)",
+    "workforce_count": 85289,
+    "open_jobs_count": 993,
+    "layoff_history": {
+      "total_layoffs": 5835,
+      "last_layoff_date": "2026-03-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Next Insurance (Global Enriched)",
+    "workforce_count": 977,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 199,
+      "last_layoff_date": "2025-11-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Coalition (Global Enriched)",
+    "workforce_count": 639,
+    "open_jobs_count": 12,
+    "layoff_history": {
+      "total_layoffs": 59,
+      "last_layoff_date": "2025-02-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Scalable Capital (Global Enriched)",
+    "workforce_count": 458,
+    "open_jobs_count": 9,
+    "layoff_history": {
+      "total_layoffs": 34,
+      "last_layoff_date": "2025-06-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Trade Republic (Global Enriched)",
+    "workforce_count": 588,
+    "open_jobs_count": 12,
+    "layoff_history": {
+      "total_layoffs": 35,
+      "last_layoff_date": "2025-05-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PROS Holdings",
+    "workforce_count": 10247,
+    "open_jobs_count": 157,
+    "layoff_history": {
+      "total_layoffs": 744,
+      "last_layoff_date": "2025-08-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Docker",
+    "workforce_count": 10232,
+    "open_jobs_count": 105,
+    "layoff_history": {
+      "total_layoffs": 687,
+      "last_layoff_date": "2026-01-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hasura",
+    "workforce_count": 1514,
+    "open_jobs_count": 26,
+    "layoff_history": {
+      "total_layoffs": 89,
+      "last_layoff_date": "2025-08-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PhonePe (Global Enriched)",
+    "workforce_count": 6529,
+    "open_jobs_count": 66,
+    "layoff_history": {
+      "total_layoffs": 373,
+      "last_layoff_date": "2025-02-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PNC Financial Services (Global Enriched)",
+    "workforce_count": 59900,
+    "open_jobs_count": 817,
+    "layoff_history": {
+      "total_layoffs": 3986,
+      "last_layoff_date": "2026-01-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "N26 (Global Enriched)",
+    "workforce_count": 1490,
+    "open_jobs_count": 36,
+    "layoff_history": {
+      "total_layoffs": 178,
+      "last_layoff_date": "2026-01-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "AppFolio",
+    "workforce_count": 9864,
+    "open_jobs_count": 112,
+    "layoff_history": {
+      "total_layoffs": 874,
+      "last_layoff_date": "2025-01-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BharatPe (Global Enriched)",
+    "workforce_count": 1185,
+    "open_jobs_count": 35,
+    "layoff_history": {
+      "total_layoffs": 95,
+      "last_layoff_date": "2025-03-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Paytm (Global Enriched)",
+    "workforce_count": 28217,
+    "open_jobs_count": 346,
+    "layoff_history": {
+      "total_layoffs": 3192,
+      "last_layoff_date": "2026-04-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Spendesk (Global Enriched)",
+    "workforce_count": 594,
+    "open_jobs_count": 11,
+    "layoff_history": {
+      "total_layoffs": 34,
+      "last_layoff_date": "2025-10-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BitGo (Global Enriched)",
+    "workforce_count": 393,
+    "open_jobs_count": 4,
+    "layoff_history": {
+      "total_layoffs": 96,
+      "last_layoff_date": "2025-09-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Anchorage Digital (Global Enriched)",
+    "workforce_count": 354,
+    "open_jobs_count": 7,
+    "layoff_history": {
+      "total_layoffs": 102,
+      "last_layoff_date": "2025-01-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zego (Global Enriched)",
+    "workforce_count": 448,
+    "open_jobs_count": 6,
+    "layoff_history": {
+      "total_layoffs": 97,
+      "last_layoff_date": "2025-04-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zettle (Global Enriched)",
+    "workforce_count": 1180,
+    "open_jobs_count": 13,
+    "layoff_history": {
+      "total_layoffs": 89,
+      "last_layoff_date": "2025-11-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Satispay (Global Enriched)",
+    "workforce_count": 441,
+    "open_jobs_count": 7,
+    "layoff_history": {
+      "total_layoffs": 33,
+      "last_layoff_date": "2025-04-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "FairMoney (Global Enriched)",
+    "workforce_count": 360,
+    "open_jobs_count": 10,
+    "layoff_history": {
+      "total_layoffs": 21,
+      "last_layoff_date": "2025-05-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "GXS Bank (Global Enriched)",
+    "workforce_count": 441,
+    "open_jobs_count": 9,
+    "layoff_history": {
+      "total_layoffs": 28,
+      "last_layoff_date": "2025-12-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Trust Bank (Global Enriched)",
+    "workforce_count": 356,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 23,
+      "last_layoff_date": "2026-02-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bunq (Global Enriched)",
+    "workforce_count": 501,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 38,
+      "last_layoff_date": "2025-02-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Talkdesk",
+    "workforce_count": 10147,
+    "open_jobs_count": 291,
+    "layoff_history": {
+      "total_layoffs": 1182,
+      "last_layoff_date": "2025-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Dialpad",
+    "workforce_count": 10060,
+    "open_jobs_count": 188,
+    "layoff_history": {
+      "total_layoffs": 810,
+      "last_layoff_date": "2026-04-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Intercom",
+    "workforce_count": 9846,
+    "open_jobs_count": 173,
+    "layoff_history": {
+      "total_layoffs": 1046,
+      "last_layoff_date": "2025-03-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Meyer Burger",
+    "workforce_count": 9800,
+    "open_jobs_count": 237,
+    "layoff_history": {
+      "total_layoffs": 996,
+      "last_layoff_date": "2026-01-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wave (Global Enriched)",
+    "workforce_count": 1132,
+    "open_jobs_count": 16,
+    "layoff_history": {
+      "total_layoffs": 76,
+      "last_layoff_date": "2026-03-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "SunPower",
+    "workforce_count": 10142,
+    "open_jobs_count": 217,
+    "layoff_history": {
+      "total_layoffs": 1897,
+      "last_layoff_date": "2025-05-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ING Group (Global Enriched)",
+    "workforce_count": 57871,
+    "open_jobs_count": 586,
+    "layoff_history": {
+      "total_layoffs": 5912,
+      "last_layoff_date": "2026-01-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

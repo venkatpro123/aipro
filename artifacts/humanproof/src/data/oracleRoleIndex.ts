@@ -154,14 +154,61 @@ const buildOracleRoleIndex = (): OracleRoleEntry[] => {
   return entries.sort((a, b) => a.currentRiskScore - b.currentRiskScore);
 };
 
-/** Full pre-built index — computed once at module load time */
-export const ALL_ORACLE_ROLES: OracleRoleEntry[] = buildOracleRoleIndex();
+// Lazily initialised: buildOracleRoleIndex() iterates all 371 role objects and
+// sorts them — ~50ms CPU on a mid-range Android. Running it at module load would
+// block the main thread during the initial parse burst. Instead it runs on the
+// first call to searchOracleRoles / getRoleEntryByKey / getAllOracleRoles,
+// which only happens when the user opens the Audit form (a lazy-loaded route).
+let _cachedIndex: OracleRoleEntry[] | null = null;
+
+function getOracleIndex(): OracleRoleEntry[] {
+  if (!_cachedIndex) _cachedIndex = buildOracleRoleIndex();
+  return _cachedIndex;
+}
+
+/**
+ * Full pre-built index, materialised on first call.
+ * Prefer searchOracleRoles() for search and getRoleEntryByKey() for lookups.
+ * Use this only when you need the raw array (e.g. bulk iteration).
+ */
+export function getAllOracleRoles(): OracleRoleEntry[] {
+  return getOracleIndex();
+}
+
+/**
+ * @deprecated Use getAllOracleRoles() — this constant triggers eager construction
+ * when destructured at import time in some bundler configurations.
+ * Kept for backward compatibility; consumers inside the lazy audit route are fine.
+ */
+export const ALL_ORACLE_ROLES: OracleRoleEntry[] = getAllOracleRoles();
 
 // ── Search API ────────────────────────────────────────────────────────────
+
+// Seniority words that should not penalise a shorter-title match.
+// "Senior Data Analyst" queried against "Data Analyst" should score the same
+// word-overlap as against "Senior Data Analyst" — both share the domain tokens.
+const SENIORITY_TOKENS = new Set(['senior', 'junior', 'lead', 'staff', 'principal', 'head', 'chief', 'associate', 'manager', 'director', 'vp', 'executive']);
+
+/**
+ * Count how many non-seniority query words appear in the entry's display title.
+ * Higher count = semantically closer match regardless of title length.
+ */
+const domainWordOverlap = (entry: OracleRoleEntry, qWords: string[]): number => {
+  const titleLow = entry.displayTitle.toLowerCase();
+  return qWords.filter(w => !SENIORITY_TOKENS.has(w) && titleLow.includes(w)).length;
+};
 
 /**
  * Search oracle roles by display title or oracle key.
  * Returns top `limit` matches sorted by relevance (start-of-string first).
+ *
+ * Tiebreaker order within each group:
+ *   1. Domain word overlap (non-seniority query tokens matched — more = better)
+ *   2. Shorter title (more specific match)
+ *   3. Higher risk score (actionable results surface first)
+ *
+ * This prevents "Senior Data Analyst" from ranking "Data Scientist" above
+ * "Data Analyst" just because they have the same title length.
  */
 export const searchOracleRoles = (
   query: string,
@@ -169,13 +216,14 @@ export const searchOracleRoles = (
 ): OracleRoleEntry[] => {
   if (!query || query.length < 2) return [];
   const q = query.toLowerCase().trim();
+  const qWords = q.split(/\s+/).filter(w => w.length > 1);
 
   // Group 1: title/key starts with the query (exact prefix — most relevant)
   // Group 2: title/key contains the query anywhere (looser — secondary)
   const startsWith: OracleRoleEntry[] = [];
   const contains:   OracleRoleEntry[] = [];
 
-  for (const entry of ALL_ORACLE_ROLES) {
+  for (const entry of getOracleIndex()) {
     const titleLow = entry.displayTitle.toLowerCase();
     const keyLow   = entry.oracleKey.toLowerCase();
     if (titleLow.startsWith(q) || keyLow.startsWith(q)) {
@@ -186,13 +234,11 @@ export const searchOracleRoles = (
     if (startsWith.length + contains.length >= limit * 4) break;
   }
 
-  // Sort within each group:
-  //   1. Shorter title first (more specific match wins)
-  //   2. Higher risk score as tiebreaker (actionable results surface first)
   const sortGroup = (arr: OracleRoleEntry[]): OracleRoleEntry[] =>
     arr.sort((a, b) =>
-      a.displayTitle.length - b.displayTitle.length ||
-      b.currentRiskScore - a.currentRiskScore
+      domainWordOverlap(b, qWords) - domainWordOverlap(a, qWords) ||  // more domain overlap wins
+      a.displayTitle.length - b.displayTitle.length                 ||  // shorter title wins
+      b.currentRiskScore - a.currentRiskScore                           // higher risk breaks tie
     );
 
   return [...sortGroup(startsWith), ...sortGroup(contains)].slice(0, limit);
@@ -203,7 +249,7 @@ export const searchOracleRoles = (
  * Get a single OracleRoleEntry by its oracle key (exact match).
  */
 export const getRoleEntryByKey = (oracleKey: string): OracleRoleEntry | null => {
-  return ALL_ORACLE_ROLES.find(e => e.oracleKey === oracleKey) ?? null;
+  return getOracleIndex().find(e => e.oracleKey === oracleKey) ?? null;
 };
 
 /**

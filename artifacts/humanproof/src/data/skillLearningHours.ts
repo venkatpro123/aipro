@@ -231,3 +231,26 @@ export function getActionLearningTime(
   }
   return null;
 }
+
+/**
+ * Returns weeks-to-proficiency for all three standard tracks simultaneously.
+ * Intended for the ActionItem ROI block: store once on the item, highlight
+ * the active track at render time without recomputation.
+ * Returns null when no skill keyword matches the action title.
+ */
+export function getSkillLearningWeeks(
+  actionTitle: string,
+): { w2: number; w8: number; w20: number } | null {
+  for (const key of Object.keys(SKILL_LEARNING_HOURS)) {
+    if (key === '_default') continue;
+    if (actionTitle.toLowerCase().includes(key.toLowerCase())) {
+      const h = SKILL_LEARNING_HOURS[key].interview_ready;
+      return {
+        w2:  Math.ceil(h / 2),
+        w8:  Math.ceil(h / 8),
+        w20: Math.ceil(h / 20),
+      };
+    }
+  }
+  return null;
+}

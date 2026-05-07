@@ -1,0 +1,60 @@
+name: Bundle Size Check
+
+# Runs on every PR and push to main.
+# Fails if any chunk exceeds its budget in scripts/check-bundle-size.js.
+# This prevents the career-intelligence module from silently re-entering
+# the main eager chunk (which would undo the p95 TTI improvements and
+# restore the 420KB → 250KB regression on 4G India mobile).
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'artifacts/humanproof/src/**'
+      - 'artifacts/humanproof/vite.config.ts'
+      - 'artifacts/humanproof/package.json'
+  pull_request:
+    paths:
+      - 'artifacts/humanproof/src/**'
+      - 'artifacts/humanproof/vite.config.ts'
+      - 'artifacts/humanproof/package.json'
+
+jobs:
+  bundle-size:
+    name: Bundle size budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: artifacts/humanproof
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: artifacts/humanproof/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # Dummy env vars so the build doesn't fail on missing secrets
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder
+
+      - name: Check bundle size budgets
+        run: node scripts/check-bundle-size.js
+
+      - name: Upload bundle stats on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: artifacts/humanproof/dist/assets/
+          retention-days: 7

@@ -244,3 +244,39 @@ export function formatSalaryPremium(pct: number): string {
   if (pct < 0) return `${pct}% below national median`;
   return 'At national median';
 }
+
+/**
+ * v6.0 Upgrade 4: City × career-path intersection.
+ * Cross-references the city's top hiring companies with the career path market's
+ * top hiring companies to find companies active at BOTH the given city AND the target role.
+ * Returns the intersection, ranked by employer_count in the city.
+ */
+export function getCityCompanyIntersection(
+  cityKey: string,
+  targetRolePrefix: string,
+  /** Companies from careerPathMarket.topHiringCompaniesIndia */
+  nationalTopCompanies: string[],
+): { companies: string[]; source: 'intersection' | 'city_fallback' | 'national_fallback' } {
+  const cityProfile = CITY_OPPORTUNITIES[cityKey];
+  if (!cityProfile) {
+    return { companies: nationalTopCompanies.slice(0, 3), source: 'national_fallback' };
+  }
+
+  const cityCompanies = cityProfile.roles[targetRolePrefix]?.top_5_hiring_companies ?? [];
+
+  // Find companies present in BOTH lists (case-insensitive partial match)
+  const intersection = nationalTopCompanies.filter(natCo =>
+    cityCompanies.some(cityCo =>
+      cityCo.toLowerCase().includes(natCo.split(' ')[0].toLowerCase()) ||
+      natCo.toLowerCase().includes(cityCo.split(' ')[0].toLowerCase())
+    )
+  );
+
+  if (intersection.length >= 2) {
+    return { companies: intersection.slice(0, 3), source: 'intersection' };
+  }
+
+  // Not enough intersection — return city companies with national companies as supplement
+  const combined = [...new Set([...cityCompanies, ...nationalTopCompanies])].slice(0, 3);
+  return { companies: combined, source: cityCompanies.length > 0 ? 'city_fallback' : 'national_fallback' };
+}

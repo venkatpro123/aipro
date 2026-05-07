@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Nubank",
+    "workforce_count": 49398,
+    "open_jobs_count": 770,
+    "layoff_history": {
+      "total_layoffs": 3075,
+      "last_layoff_date": "2026-01-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Visa (Global Enriched)",
+    "workforce_count": 28085,
+    "open_jobs_count": 471,
+    "layoff_history": {
+      "total_layoffs": 1442,
+      "last_layoff_date": "2025-08-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mastercard (Global Enriched)",
+    "workforce_count": 33588,
+    "open_jobs_count": 840,
+    "layoff_history": {
+      "total_layoffs": 2636,
+      "last_layoff_date": "2025-09-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Discover Financial (Global Enriched)",
+    "workforce_count": 21064,
+    "open_jobs_count": 244,
+    "layoff_history": {
+      "total_layoffs": 1610,
+      "last_layoff_date": "2026-02-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Capital One (Global Enriched)",
+    "workforce_count": 55986,
+    "open_jobs_count": 1437,
+    "layoff_history": {
+      "total_layoffs": 5321,
+      "last_layoff_date": "2025-03-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Plaid (Global Enriched)",
+    "workforce_count": 1131,
+    "open_jobs_count": 20,
+    "layoff_history": {
+      "total_layoffs": 338,
+      "last_layoff_date": "2025-07-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Royal Bank of Canada (Global Enriched)",
+    "workforce_count": 92180,
+    "open_jobs_count": 2185,
+    "layoff_history": {
+      "total_layoffs": 5583,
+      "last_layoff_date": "2025-04-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Toronto-Dominion Bank (Global Enriched)",
+    "workforce_count": 94894,
+    "open_jobs_count": 2773,
+    "layoff_history": {
+      "total_layoffs": 5612,
+      "last_layoff_date": "2025-06-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Santander (Global Enriched)",
+    "workforce_count": 215925,
+    "open_jobs_count": 6179,
+    "layoff_history": {
+      "total_layoffs": 10265,
+      "last_layoff_date": "2025-11-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BBVA (Global Enriched)",
+    "workforce_count": 124585,
+    "open_jobs_count": 2495,
+    "layoff_history": {
+      "total_layoffs": 10257,
+      "last_layoff_date": "2026-04-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DBS Bank (Global Enriched)",
+    "workforce_count": 36142,
+    "open_jobs_count": 571,
+    "layoff_history": {
+      "total_layoffs": 2360,
+      "last_layoff_date": "2025-08-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "OCBC Bank (Global Enriched)",
+    "workforce_count": 29402,
+    "open_jobs_count": 298,
+    "layoff_history": {
+      "total_layoffs": 2691,
+      "last_layoff_date": "2025-09-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "UOB (Global Enriched)",
+    "workforce_count": 25090,
+    "open_jobs_count": 700,
+    "layoff_history": {
+      "total_layoffs": 1780,
+      "last_layoff_date": "2025-08-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "NAB (Global Enriched)",
+    "workforce_count": 32123,
+    "open_jobs_count": 478,
+    "layoff_history": {
+      "total_layoffs": 2275,
+      "last_layoff_date": "2025-05-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "State Bank of India (Global Enriched)",
+    "workforce_count": 252623,
+    "open_jobs_count": 6451,
+    "layoff_history": {
+      "total_layoffs": 16547,
+      "last_layoff_date": "2025-01-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HDFC Bank (Global Enriched)",
+    "workforce_count": 174005,
+    "open_jobs_count": 2797,
+    "layoff_history": {
+      "total_layoffs": 11859,
+      "last_layoff_date": "2025-07-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ICICI Bank (Global Enriched)",
+    "workforce_count": 128681,
+    "open_jobs_count": 2373,
+    "layoff_history": {
+      "total_layoffs": 8680,
+      "last_layoff_date": "2025-06-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Qatar National Bank (Global Enriched)",
+    "workforce_count": 30342,
+    "open_jobs_count": 585,
+    "layoff_history": {
+      "total_layoffs": 2399,
+      "last_layoff_date": "2026-03-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Verizon",
+    "workforce_count": 50224,
+    "open_jobs_count": 655,
+    "layoff_history": {
+      "total_layoffs": 6700,
+      "last_layoff_date": "2025-06-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Emirates NBD (Global Enriched)",
+    "workforce_count": 29439,
+    "open_jobs_count": 642,
+    "layoff_history": {
+      "total_layoffs": 2228,
+      "last_layoff_date": "2025-05-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Al Rajhi Bank (Global Enriched)",
+    "workforce_count": 18013,
+    "open_jobs_count": 249,
+    "layoff_history": {
+      "total_layoffs": 965,
+      "last_layoff_date": "2026-01-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "National Bank of Kuwait (Global Enriched)",
+    "workforce_count": 6116,
+    "open_jobs_count": 64,
+    "layoff_history": {
+      "total_layoffs": 393,
+      "last_layoff_date": "2025-10-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bank of China (Global Enriched)",
+    "workforce_count": 298695,
+    "open_jobs_count": 3707,
+    "layoff_history": {
+      "total_layoffs": 21542,
+      "last_layoff_date": "2025-07-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ICBC (Global Enriched)",
+    "workforce_count": 422631,
+    "open_jobs_count": 12459,
+    "layoff_history": {
+      "total_layoffs": 33873,
+      "last_layoff_date": "2026-02-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Standard Bank (Global Enriched)",
+    "workforce_count": 51031,
+    "open_jobs_count": 1142,
+    "layoff_history": {
+      "total_layoffs": 4442,
+      "last_layoff_date": "2025-01-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "FirstRand Bank (Global Enriched)",
+    "workforce_count": 44816,
+    "open_jobs_count": 897,
+    "layoff_history": {
+      "total_layoffs": 2777,
+      "last_layoff_date": "2025-06-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Absa Bank (Global Enriched)",
+    "workforce_count": 34744,
+    "open_jobs_count": 595,
+    "layoff_history": {
+      "total_layoffs": 1772,
+      "last_layoff_date": "2026-04-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "First Abu Dhabi Bank (Global Enriched)",
+    "workforce_count": 14980,
+    "open_jobs_count": 242,
+    "layoff_history": {
+      "total_layoffs": 1346,
+      "last_layoff_date": "2026-01-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Kasikornbank (Global Enriched)",
+    "workforce_count": 17742,
+    "open_jobs_count": 232,
+    "layoff_history": {
+      "total_layoffs": 1277,
+      "last_layoff_date": "2026-01-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Siam Commercial Bank (Global Enriched)",
+    "workforce_count": 21682,
+    "open_jobs_count": 476,
+    "layoff_history": {
+      "total_layoffs": 1206,
+      "last_layoff_date": "2025-07-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Malayan Banking Berhad (Global Enriched)",
+    "workforce_count": 43308,
+    "open_jobs_count": 478,
+    "layoff_history": {
+      "total_layoffs": 3356,
+      "last_layoff_date": "2026-02-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CIMB Group (Global Enriched)",
+    "workforce_count": 33683,
+    "open_jobs_count": 673,
+    "layoff_history": {
+      "total_layoffs": 2514,
+      "last_layoff_date": "2025-03-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bank Central Asia (Global Enriched)",
+    "workforce_count": 25951,
+    "open_jobs_count": 384,
+    "layoff_history": {
+      "total_layoffs": 2204,
+      "last_layoff_date": "2025-07-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bank Mandiri (Global Enriched)",
+    "workforce_count": 38954,
+    "open_jobs_count": 508,
+    "layoff_history": {
+      "total_layoffs": 3515,
+      "last_layoff_date": "2025-11-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "U.S. Bancorp (Global Enriched)",
+    "workforce_count": 76061,
+    "open_jobs_count": 1339,
+    "layoff_history": {
+      "total_layoffs": 5628,
+      "last_layoff_date": "2025-04-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Truist Financial (Global Enriched)",
+    "workforce_count": 53411,
+    "open_jobs_count": 1111,
+    "layoff_history": {
+      "total_layoffs": 4906,
+      "last_layoff_date": "2025-06-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Fifth Third Bank (Global Enriched)",
+    "workforce_count": 19562,
+    "open_jobs_count": 530,
+    "layoff_history": {
+      "total_layoffs": 1099,
+      "last_layoff_date": "2025-03-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Citizens Financial Group (Global Enriched)",
+    "workforce_count": 18784,
+    "open_jobs_count": 295,
+    "layoff_history": {
+      "total_layoffs": 1529,
+      "last_layoff_date": "2025-10-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BMO Financial Group (Global Enriched)",
+    "workforce_count": 54982,
+    "open_jobs_count": 1272,
+    "layoff_history": {
+      "total_layoffs": 3985,
+      "last_layoff_date": "2025-09-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Scotiabank (Global Enriched)",
+    "workforce_count": 92141,
+    "open_jobs_count": 1541,
+    "layoff_history": {
+      "total_layoffs": 8244,
+      "last_layoff_date": "2026-01-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CIBC (Global Enriched)",
+    "workforce_count": 49281,
+    "open_jobs_count": 1226,
+    "layoff_history": {
+      "total_layoffs": 3133,
+      "last_layoff_date": "2025-12-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Navy Federal Credit Union (Enriched)",
+    "workforce_count": 24042,
+    "open_jobs_count": 697,
+    "layoff_history": {
+      "total_layoffs": 1598,
+      "last_layoff_date": "2026-02-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Qonto (Global Enriched)",
+    "workforce_count": 1277,
+    "open_jobs_count": 19,
+    "layoff_history": {
+      "total_layoffs": 100,
+      "last_layoff_date": "2025-05-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bitpanda (Global Enriched)",
+    "workforce_count": 704,
+    "open_jobs_count": 16,
+    "layoff_history": {
+      "total_layoffs": 312,
+      "last_layoff_date": "2025-08-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "SumUp (Global Enriched)",
+    "workforce_count": 3032,
+    "open_jobs_count": 53,
+    "layoff_history": {
+      "total_layoffs": 230,
+      "last_layoff_date": "2026-04-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Kavak (Global Enriched)",
+    "workforce_count": 7943,
+    "open_jobs_count": 180,
+    "layoff_history": {
+      "total_layoffs": 580,
+      "last_layoff_date": "2025-08-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Ebanx (Global Enriched)",
+    "workforce_count": 1491,
+    "open_jobs_count": 18,
+    "layoff_history": {
+      "total_layoffs": 91,
+      "last_layoff_date": "2025-03-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Clip (Global Enriched)",
+    "workforce_count": 1128,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 101,
+      "last_layoff_date": "2025-04-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DLocal (Global Enriched)",
+    "workforce_count": 883,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 46,
+      "last_layoff_date": "2025-01-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zepz (Global Enriched)",
+    "workforce_count": 1381,
+    "open_jobs_count": 40,
+    "layoff_history": {
+      "total_layoffs": 509,
+      "last_layoff_date": "2025-09-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

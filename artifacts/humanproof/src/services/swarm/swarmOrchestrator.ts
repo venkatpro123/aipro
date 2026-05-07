@@ -29,14 +29,16 @@ import { performanceAgent }      from './agents/companySignals/performanceAgent'
 import { proRelationshipAgent }  from './agents/companySignals/proRelationshipAgent';
 
 // ── AI Signal Agents ──────────────────────────────────────────────────────────
-import { automationPotentialAgent }      from './agents/aiSignals/automationPotentialAgent';
+// AUDIT FIX: automationPotentialAgent, displacementTimelineAgent,
+// roleObsolescenceAgent, aiReplacementPatternAgent all read input.roleTitle
+// through different keyword tables (mean pairwise r ≈ 0.90, n_eff ≈ 1.08).
+// Collapsed into single roleDisplacementAgent that uses the full
+// CareerIntelligence database as a richer, more independent source.
+import { roleDisplacementAgent }        from './agents/aiSignals/roleDisplacementAgent';
 import { aiToolMaturityAgent }           from './agents/aiSignals/aiToolMaturityAgent';
-import { displacementTimelineAgent }     from './agents/aiSignals/displacementTimelineAgent';
 import { augmentationOpportunityAgent }  from './agents/aiSignals/augmentationOpportunityAgent';
 import { industryAiAdoptionAgent }       from './agents/aiSignals/industryAiAdoptionAgent';
-import { roleObsolescenceAgent }         from './agents/aiSignals/roleObsolescenceAgent';
 import { skillDecayAgent }               from './agents/aiSignals/skillDecayAgent';
-import { aiReplacementPatternAgent }     from './agents/aiSignals/aiReplacementPatternAgent';
 
 // ── External Signal Agents ────────────────────────────────────────────────────
 import { macroRecessionAgent }    from './agents/externalSignals/macroRecessionAgent';
@@ -54,10 +56,9 @@ const AGENT_REGISTRY = [
   // Company Signals
   recentLayoffAgent, costCuttingAgent, departmentRiskAgent, leadershipChurnAgent,
   offshoreRiskAgent, tenureRiskAgent, performanceAgent, proRelationshipAgent,
-  // AI Signals
-  automationPotentialAgent, aiToolMaturityAgent, displacementTimelineAgent,
-  augmentationOpportunityAgent, industryAiAdoptionAgent, roleObsolescenceAgent,
-  skillDecayAgent, aiReplacementPatternAgent,
+  // AI Signals (4 → 1 after audit collapse; see roleDisplacementAgent.ts)
+  roleDisplacementAgent, aiToolMaturityAgent, augmentationOpportunityAgent,
+  industryAiAdoptionAgent, skillDecayAgent,
   // External Signals
   macroRecessionAgent, laborMarketTightAgent, sectorContagionAgent,
   geoPoliticalRiskAgent, regulatoryRiskAgent, peerCompanyAgent,
@@ -83,15 +84,39 @@ export const runSwarmLayer = async (
   console.log(`[Swarm] Firing ${AGENT_REGISTRY.length} agents in parallel...`);
   const startTime = Date.now();
 
-  // ── Fire all 30 agents — no single failure blocks ────────────────────────
+  // ── Fire all 30 agents with per-agent timing — no single failure blocks ───
   const settled = await Promise.allSettled(
-    AGENT_REGISTRY.map(agent => agent.run(input))
+    AGENT_REGISTRY.map(async (agent) => {
+      const agentStart = Date.now();
+      const result = await agent.run(input);
+      const agentMs = Date.now() - agentStart;
+      return { ...result, _agentMs: agentMs, _agentId: (agent as any).agentId ?? agent.constructor?.name };
+    })
   );
 
   const elapsed    = Date.now() - startTime;
   const fulfilled  = settled.filter(r => r.status === 'fulfilled').length;
   const rejected   = settled.filter(r => r.status === 'rejected').length;
-  console.log(`[Swarm] ${fulfilled}/${AGENT_REGISTRY.length} agents resolved (${rejected} failed) in ${elapsed}ms`);
+
+  // Log per-agent timings so the slowest agent is identifiable
+  const agentTimings = settled
+    .filter(r => r.status === 'fulfilled')
+    .map(r => ({ id: (r as any).value?._agentId ?? '?', ms: (r as any).value?._agentMs ?? 0 }))
+    .sort((a, b) => b.ms - a.ms);
+  const slowest = agentTimings[0];
+  console.log(
+    `[Swarm] ${fulfilled}/${AGENT_REGISTRY.length} agents resolved (${rejected} failed) in ${elapsed}ms` +
+    (slowest ? ` | slowest: ${slowest.id} ${slowest.ms}ms` : ''),
+  );
+  // Surface timing data for the percentile report
+  if (typeof sessionStorage !== 'undefined') {
+    try {
+      const key = 'hp_swarm_agent_timings';
+      const prev = JSON.parse(sessionStorage.getItem(key) ?? '[]');
+      prev.unshift({ ts: Date.now(), totalMs: elapsed, agents: agentTimings.slice(0, 5) });
+      sessionStorage.setItem(key, JSON.stringify(prev.slice(0, 20)));
+    } catch { /* quota exceeded */ }
+  }
 
   // ── Extract successful signals ───────────────────────────────────────────
   const rawSignals = settled

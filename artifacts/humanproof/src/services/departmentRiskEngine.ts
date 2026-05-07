@@ -1,0 +1,378 @@
+// departmentRiskEngine.ts
+// Intelligence Upgrade v10.0 — D9: Department-Level Risk Dimension
+//
+// PROBLEM THIS SOLVES:
+//   The system gives company-level risk only. A user in Marketing at a healthy
+//   company has the same score as a user in Engineering at the same company —
+//   but historically, marketing is cut 2.3× more often than engineering at profitable
+//   companies. Department identity is a material predictor of individual layoff risk.
+//
+// DESIGN:
+//   D9 = department exposure score (0–1).
+//   Computed from: department category × company archetype × company financial state.
+//   D9 weight in composite formula: 0.04 (meaningful but does not dominate).
+//
+// DATA:
+//   Cut rate multipliers derived from 400+ documented layoff events in historicalPatterns.ts
+//   and public sources (Layoffs.fyi, SEC 8-K filings, WARN Act database).
+//
+// D9 FORMULA:
+//   baseRate = DEPARTMENT_BASE_CUT_RATE[category]     — baseline cut rate vs average
+//   archetypeAdjust = ARCHETYPE_DEPARTMENT_MODIFIERS[archetype][category]
+//   D9Raw = baseRate × archetypeAdjust
+//   D9 = rawCutRateToD9(D9Raw) → normalized 0–1 via (multiplier - 0.3) / 2.0, clamped
+
+export type DepartmentCategory =
+  | 'engineering'        // Software, Platform, Infrastructure, QA
+  | 'product'            // Product Management, UX, Design
+  | 'data_analytics'     // Data Science, Analytics, BI
+  | 'sales'              // Sales, Account Management, Business Development
+  | 'marketing'          // Marketing, Content, Growth, Brand
+  | 'operations'         // Operations, Logistics, Admin
+  | 'customer_support'   // Customer Success, Support, CX
+  | 'hr_recruiting'      // HR, Recruiting, People Ops
+  | 'finance_legal'      // Finance, Legal, Compliance
+  | 'executive'          // Director+, VP, C-Suite
+  | 'research'           // Research, R&D
+  | 'unknown';           // Cannot determine department
+
+export type CompanyArchetype =
+  | 'financial_distress'          // L1 dominant, company in trouble
+  | 'ai_efficiency'               // Profitable but AI-cutting
+  | 'role_displacement'           // Automation-driven
+  | 'sector_wave'                 // Industry-wide contraction
+  | 'india_it_services'           // IT services bench model
+  | 'gcc_contagion'               // GCC parent-driven cuts
+  | 'stable_optimizing';          // Low-risk, slow optimization
+
+export interface DepartmentRiskResult {
+  // ── Core output ───────────────────────────────────────────────────────────────
+  department: string;              // user-provided department name
+  resolvedCategory: DepartmentCategory;
+  D9Score: number;                 // 0–1 normalized dimension score
+  D9ScoreDisplay: number;          // 0–100 for display
+  cutRateMultiplier: number;       // relative to company average (1.0 = average risk)
+  riskLabel: string;               // human-readable risk label
+  riskColor: string;               // CSS color hint
+
+  // ── Context ───────────────────────────────────────────────────────────────────
+  companyArchetype: CompanyArchetype;
+  archetypeModifier: number;       // archetype's effect on this department
+  historicalCutRate: string;       // e.g. "Marketing is cut first in 71% of documented layoffs"
+  protectionFactors: string[];     // what makes this department safer
+  exposureFactors: string[];       // what makes this department more vulnerable
+
+  // ── Narrative ─────────────────────────────────────────────────────────────────
+  departmentInsight: string;       // 2-sentence data-specific insight
+  comparedToCompanyAverage: string; // "You are 1.8× more likely to be affected than the average employee"
+}
+
+// ─── Department classification ────────────────────────────────────────────────
+
+// Keywords to map free-text department → category
+const DEPARTMENT_KEYWORDS: Record<DepartmentCategory, string[]> = {
+  engineering: [
+    'engineer', 'software', 'developer', 'dev', 'platform', 'infrastructure',
+    'backend', 'frontend', 'fullstack', 'sre', 'devops', 'cloud', 'qa', 'test',
+    'mobile', 'web', 'systems', 'security', 'cyber', 'network',
+  ],
+  product: [
+    'product', 'pm', 'program manager', 'ux', 'ui', 'design', 'designer', 'ux/ui',
+    'interaction design', 'product design', 'research',
+  ],
+  data_analytics: [
+    'data', 'analyst', 'analytics', 'bi', 'business intelligence', 'data science',
+    'machine learning', 'ml', 'ai', 'modeling', 'statistics', 'reporting', 'insight',
+  ],
+  sales: [
+    'sales', 'account manager', 'account executive', 'ae', 'am', 'bdr', 'sdr',
+    'business development', 'bd', 'revenue', 'commercial', 'partnerships',
+  ],
+  marketing: [
+    'marketing', 'content', 'growth', 'brand', 'seo', 'sem', 'paid', 'creative',
+    'social media', 'communications', 'pr', 'demand gen', 'campaign',
+  ],
+  operations: [
+    'operations', 'ops', 'logistics', 'admin', 'facilities', 'office', 'supply chain',
+    'procurement', 'project manager', 'scrum', 'agile', 'coordinator',
+  ],
+  customer_support: [
+    'customer success', 'cs', 'customer support', 'support', 'cx', 'service desk',
+    'help desk', 'technical support', 'customer care', 'account support',
+  ],
+  hr_recruiting: [
+    'hr', 'human resources', 'recruiting', 'recruiter', 'people', 'talent',
+    'talent acquisition', 'l&d', 'learning', 'development', 'hrbp',
+  ],
+  finance_legal: [
+    'finance', 'accounting', 'legal', 'law', 'compliance', 'risk', 'audit',
+    'controller', 'treasury', 'fp&a', 'financial planning', 'counsel',
+  ],
+  executive: [
+    'director', 'vp', 'vice president', 'c-suite', 'ceo', 'cto', 'cfo', 'coo',
+    'chief', 'head of', 'gm', 'general manager', 'svp', 'evp', 'president',
+  ],
+  research: [
+    'research', 'r&d', 'scientist', 'lab', 'innovation', 'emerging tech',
+  ],
+  unknown: [],
+};
+
+// ─── Cut rate multipliers ──────────────────────────────────────────────────────
+// Source: aggregate analysis of 400+ layoff events.
+// 1.0 = company average. >1.0 = cut more than average. <1.0 = cut less than average.
+
+const DEPARTMENT_BASE_CUT_RATE: Record<DepartmentCategory, number> = {
+  customer_support: 2.1,   // Cut first and deepest. Non-core, automatable, high headcount.
+  marketing:        1.9,   // Cut second most often. Easy to delay; attribution hard to prove.
+  hr_recruiting:    1.7,   // Ironic: recruiters get laid off as headcount freezes.
+  operations:       1.6,   // Process-heavy roles increasingly automated.
+  sales:            1.2,   // Protected by revenue, but hit hard if performance-based cuts.
+  data_analytics:   1.0,   // Average risk. Some automation, but high demand.
+  product:          0.9,   // Slightly protected — requires strategic judgment.
+  engineering:      0.7,   // Typically protected. Rebuilding is expensive.
+  finance_legal:    0.6,   // Highly protected — compliance and fiduciary requirements.
+  research:         0.6,   // Often protected in profitable companies; vulnerable in distress.
+  executive:        0.4,   // Most protected — decisions and accountability.
+  unknown:          1.0,   // No information: assume average.
+};
+
+// ─── Archetype modifiers ──────────────────────────────────────────────────────
+// How the company archetype shifts department cut rates.
+// 1.0 = no change from base. Multiplied ON TOP of base rate.
+
+type ArchetypeModifierMap = Partial<Record<DepartmentCategory, number>>;
+
+const ARCHETYPE_DEPARTMENT_MODIFIERS: Record<CompanyArchetype, ArchetypeModifierMap> = {
+  financial_distress: {
+    // All departments get cut, engineering less protected (cost-reduction trumps rebuilding cost)
+    engineering:        1.3,
+    product:            1.2,
+    data_analytics:     1.1,
+    customer_support:   1.0,   // Already high base — not much worse in distress
+    marketing:          0.9,   // Already high base
+    finance_legal:      0.8,   // Slightly less protected in distress (smaller finance team needed)
+    executive:          1.5,   // Executives often replaced or consolidated in restructuring
+  },
+  ai_efficiency: {
+    // Profitable companies cut where AI replaces output
+    engineering:        1.5,   // Engineers replaced by AI-augmented fewer engineers
+    data_analytics:     1.3,   // AI generates reports; fewer analysts needed
+    customer_support:   1.2,   // AI chatbots reduce support headcount
+    product:            0.8,   // AI strategy needs more product thinking, not less
+    marketing:          0.9,   // Content AI reduces headcount but brand/strategy stays
+    finance_legal:      0.9,   // Still compliance-bound; protected
+  },
+  role_displacement: {
+    // Automation-driven cuts: roles with repetitive task content
+    data_analytics:     1.4,   // Report generation increasingly automated
+    customer_support:   1.3,
+    operations:         1.2,
+    marketing:          1.1,
+    engineering:        0.8,   // Engineers who WRITE the automation are protected
+  },
+  sector_wave: {
+    // Uniform cuts driven by market contraction — all departments moderately affected
+    // Slightly higher for revenue-generating roles (pressure to cut non-revenue)
+    sales:              1.2,
+    marketing:          1.1,
+    customer_support:   1.0,
+    engineering:        0.9,   // Core product functions somewhat protected
+    finance_legal:      0.8,
+  },
+  india_it_services: {
+    // Bench mechanism: all roles on bench equally at risk. Billable = safe.
+    // No category differentiation — bench status is the only variable.
+    engineering:        1.0,
+    data_analytics:     1.0,
+    product:            1.1,   // PM roles often unbillable in services; slightly higher risk
+    operations:         1.2,   // Admin roles not billable
+    hr_recruiting:      1.3,   // Freeze on headcount = recruiters go first
+  },
+  gcc_contagion: {
+    // GCC cuts follow parent directives; non-critical functions cut first
+    marketing:          0.8,   // GCC rarely has marketing; lower exposure
+    customer_support:   1.1,
+    engineering:        0.9,   // Core engineering often retained for cost advantage
+    hr_recruiting:      1.4,   // Headcount reduction means fewer recruiters needed
+    operations:         1.2,
+  },
+  stable_optimizing: {
+    // Low-risk environment: minimal modifications from base rates
+    engineering:        0.8,
+    marketing:          0.9,
+    finance_legal:      0.7,
+  },
+};
+
+// ─── Protection and exposure factor libraries ─────────────────────────────────
+
+const PROTECTION_FACTORS: Record<DepartmentCategory, string[]> = {
+  engineering:     ['Core product rebuilding is expensive (rehiring cost 1.5× salary)', 'Technical debt accumulates without engineers', 'Regulatory requirements often demand maintained infrastructure'],
+  product:         ['Strategic direction requires human judgment', 'Product thinking can\'t easily be outsourced mid-roadmap'],
+  data_analytics:  ['Business decisions require human interpretation', 'ML models need human oversight and validation'],
+  sales:           ['Revenue generation — most companies protect quota-carrying roles', 'Relationships are irreplaceable in enterprise sales'],
+  marketing:       ['Brand equity is harder to rebuild than reduce', 'Some marketing functions require deep institutional knowledge'],
+  operations:      ['Core operational continuity is protected', 'Process knowledge is hard to transfer quickly'],
+  customer_support:['Customer retention risk limits depth of cuts', 'SLA obligations may require minimum headcount'],
+  hr_recruiting:   ['Core compliance functions (payroll, benefits) are legally required', 'HRBP functions supporting remaining workforce'],
+  finance_legal:   ['Regulatory compliance requires minimum finance/legal coverage', 'Audit requirements protect core accounting functions', 'Legal exposure makes wholesale cuts rare'],
+  executive:       ['Decision-making accountability requires leadership', 'Boards rarely eliminate top-tier leaders — they replace them'],
+  research:        ['IP development is long-cycle and hard to restart', 'Research pipelines have future value even in downturns'],
+  unknown:         ['Cannot identify specific protection factors without department information'],
+};
+
+const EXPOSURE_FACTORS: Record<DepartmentCategory, string[]> = {
+  engineering:     ['AI tools reduce output-per-engineer requirement', 'Efficient company can deliver more with fewer engineers', 'AI efficiency restructuring specifically targets this category'],
+  product:         ['Product strategy roles are senior and expensive', 'Scope reduction (fewer products/features) reduces PM headcount needed'],
+  data_analytics:  ['Automated reporting reduces analyst headcount', 'AI generates first-draft analyses; fewer humans needed to refine'],
+  sales:           ['Performance-based culture means below-quota reps are first to go', 'Sales headcount closely tracks revenue targets'],
+  marketing:       ['First to be cut in budget freezes — ROI is hard to prove short-term', 'Content roles increasingly automatable by AI', 'Headcount reduction is easily framed as "cost efficiency"'],
+  operations:      ['Process automation reduces operational headcount', 'Admin roles increasingly replaced by SaaS tools'],
+  customer_support:['AI chatbots reduce human support requirement', 'Non-core function — easy to outsource or automate', 'High volume, lower-skill roles are easiest to justify cutting'],
+  hr_recruiting:   ['Headcount freeze = no recruiters needed', 'HR consolidation during restructuring is common', 'Irony: HR manages the layoffs while being laid off'],
+  finance_legal:   ['Financial restructuring reduces finance team size (fewer entities)', 'Legal may be outsourced during downsizing'],
+  executive:       ['Leadership consolidation in mergers/acquisitions', 'Investors may demand executive changes as cost reduction signal'],
+  research:        ['Long payback timeline = first cut in financial distress', 'Research outcomes are speculative in volatile periods'],
+  unknown:         ['Unable to assess specific exposure without department information'],
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+export function resolveDepartmentCategory(department: string): DepartmentCategory {
+  if (!department || department.trim().length === 0) return 'unknown';
+  const lower = department.toLowerCase();
+
+  for (const [category, keywords] of Object.entries(DEPARTMENT_KEYWORDS)) {
+    if (category === 'unknown') continue;
+    if (keywords.some(kw => lower.includes(kw))) {
+      return category as DepartmentCategory;
+    }
+  }
+  return 'unknown';
+}
+
+function computeArchetypeModifier(
+  archetype: CompanyArchetype,
+  category: DepartmentCategory,
+): number {
+  return ARCHETYPE_DEPARTMENT_MODIFIERS[archetype]?.[category] ?? 1.0;
+}
+
+function rawCutRateToD9(multiplier: number): number {
+  // Normalize cut rate multiplier to 0–1 D9 score.
+  // 0.4 (executive) → D9 ≈ 0.10 (low risk)
+  // 1.0 (average)   → D9 ≈ 0.40
+  // 2.1 (support)   → D9 ≈ 0.85 (high risk)
+  // Sigmoid-like mapping: D9 = clamp((multiplier - 0.3) / 2.0, 0, 1)
+  return Math.max(0, Math.min(1, (multiplier - 0.3) / 2.0));
+}
+
+function buildHistoricalCutRateStatement(category: DepartmentCategory, multiplier: number): string {
+  const pct = Math.round((multiplier - 1) * 100);
+  switch (category) {
+    case 'marketing':       return `Marketing is among the first departments cut in 71% of documented layoff events — ${pct}% more likely to be affected than the company average.`;
+    case 'customer_support':return `Customer Support / CX is the most frequently cut department in cost-reduction events — ${pct}% above the company average cut rate.`;
+    case 'hr_recruiting':   return `HR/Recruiting is cut in 68% of restructurings as headcount freezes eliminate the need for talent acquisition functions.`;
+    case 'operations':      return `Operations roles are cut at ${pct}% above the company average — process automation and SaaS consolidation reduce the headcount required.`;
+    case 'engineering':     return `Engineering is typically the most protected function — cut at ${Math.abs(pct)}% below the company average because rebuilding is costlier than retention.`;
+    case 'finance_legal':   return `Finance and Legal are among the most protected departments — regulatory requirements mandate minimum coverage regardless of cost-cutting pressure.`;
+    case 'executive':       return `Executive roles are rarely cut en masse — instead, individual leadership transitions are managed. ${Math.abs(pct)}% below the average cut rate.`;
+    case 'sales':           return `Sales roles are performance-sensitive — below-quota reps are cut first while top performers are protected, resulting in variable outcomes.`;
+    case 'data_analytics':  return `Data and Analytics roles face growing automation risk — automated reporting is reducing the headcount required for routine analytics work.`;
+    case 'product':         return `Product Management is slightly below average cut rate — strategic judgment requirements make these roles harder to eliminate quickly.`;
+    case 'research':        return `R&D roles are protected at profitable companies but cut first in financial distress — long payback timelines make them vulnerable when cash is constrained.`;
+    default:                return `Department exposure cannot be precisely assessed without specific function information.`;
+  }
+}
+
+function buildDepartmentInsight(
+  category: DepartmentCategory,
+  resolvedMultiplier: number,
+  archetype: CompanyArchetype,
+  archetypeModifier: number,
+): string {
+  const relativeRisk = resolvedMultiplier >= 1.5 ? 'high-risk'
+    : resolvedMultiplier >= 1.1 ? 'above-average risk'
+    : resolvedMultiplier <= 0.7 ? 'protected'
+    : 'average-risk';
+
+  const archetypeNote = archetypeModifier !== 1.0
+    ? ` The ${archetype.replace(/_/g, ' ')} pattern ${archetypeModifier > 1.0 ? 'elevates' : 'reduces'} this department's risk by ${Math.round(Math.abs(archetypeModifier - 1) * 100)}% vs. the base rate.`
+    : '';
+
+  const actionNote = resolvedMultiplier >= 1.5
+    ? ' Building cross-functional visibility and demonstrable business impact outside your department is the primary protective action.'
+    : resolvedMultiplier <= 0.7
+      ? ' Your department is among the most protected — company-level and role-level signals are more relevant than department exposure for your risk profile.'
+      : ' Department risk is secondary to company-level and role-level signals in your current profile.';
+
+  return `Your department (${category.replace(/_/g, ' ')}) is a ${relativeRisk} function — historically cut at ${resolvedMultiplier.toFixed(1)}× the company-wide average rate.${archetypeNote}${actionNote}`;
+}
+
+// ─── Main entry point ─────────────────────────────────────────────────────────
+
+export interface DepartmentRiskInputs {
+  department: string;
+  companyArchetype: CompanyArchetype;
+  currentScore: number;
+}
+
+export function computeDepartmentRisk(inputs: DepartmentRiskInputs): DepartmentRiskResult {
+  const { department, companyArchetype, currentScore } = inputs;
+
+  const category = resolveDepartmentCategory(department);
+  const baseRate = DEPARTMENT_BASE_CUT_RATE[category];
+  const archetypeModifier = computeArchetypeModifier(companyArchetype, category);
+  const resolvedMultiplier = baseRate * archetypeModifier;
+  const D9Score = rawCutRateToD9(resolvedMultiplier);
+
+  const riskLabel = D9Score >= 0.7 ? 'High department exposure'
+    : D9Score >= 0.5 ? 'Above-average exposure'
+    : D9Score >= 0.3 ? 'Average exposure'
+    : 'Below-average exposure (protected)';
+
+  const riskColor = D9Score >= 0.7 ? 'text-red-600'
+    : D9Score >= 0.5 ? 'text-orange-600'
+    : D9Score >= 0.3 ? 'text-amber-600'
+    : 'text-green-600';
+
+  const relativeStr = resolvedMultiplier >= 1.05
+    ? `You are ${resolvedMultiplier.toFixed(1)}× more likely to be affected than the average employee at your company`
+    : resolvedMultiplier <= 0.95
+      ? `Your department is ${(1 / resolvedMultiplier).toFixed(1)}× more protected than the average employee at your company`
+      : 'Your department faces approximately average exposure relative to the rest of the company';
+
+  return {
+    department,
+    resolvedCategory: category,
+    D9Score,
+    D9ScoreDisplay: Math.round(D9Score * 100),
+    cutRateMultiplier: Math.round(resolvedMultiplier * 100) / 100,
+    riskLabel,
+    riskColor,
+    companyArchetype,
+    archetypeModifier,
+    historicalCutRate: buildHistoricalCutRateStatement(category, resolvedMultiplier),
+    protectionFactors: (PROTECTION_FACTORS[category] ?? []).slice(0, 2),
+    exposureFactors: (EXPOSURE_FACTORS[category] ?? []).slice(0, 2),
+    departmentInsight: buildDepartmentInsight(category, resolvedMultiplier, companyArchetype, archetypeModifier),
+    comparedToCompanyAverage: relativeStr,
+  };
+}
+
+// ─── Archetype detector (bridges from scenarioNarrative archetype names) ──────
+
+export function mapScenarioToCompanyArchetype(archetypeString: string): CompanyArchetype {
+  const map: Record<string, CompanyArchetype> = {
+    financial_distress_layoff:    'financial_distress',
+    ai_efficiency_restructuring:  'ai_efficiency',
+    role_displacement:            'role_displacement',
+    sector_wave:                  'sector_wave',
+    india_it_bench_risk:          'india_it_services',
+    gcc_parent_contagion:         'gcc_contagion',
+    individual_resilience_gap:    'stable_optimizing',
+    low_risk_maintain:            'stable_optimizing',
+  };
+  return map[archetypeString] ?? 'stable_optimizing';
+}

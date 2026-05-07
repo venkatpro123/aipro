@@ -17,7 +17,8 @@ interface Props {
 // ── Horizon label → estimated months ─────────────────────────────────────────
 // BUG-06 FIX: Added 'immediate', '<1yr', 'now' horizon cases that appeared
 // in some seeded role data but were silently falling through to the 24-month default.
-const horizonToMonths = (horizon: string): number => {
+const horizonToMonths = (horizon: string | undefined | null): number => {
+  if (!horizon) return 24;
   const h = horizon.toLowerCase().trim();
   if (h === 'immediate' || h === 'now' || h === 'active') return 3;
   if (h === '<1yr' || h === '0-1yr' || h === '<12mo') return 9;
@@ -28,7 +29,7 @@ const horizonToMonths = (horizon: string): number => {
   return 24;
 };
 
-const horizonLabel = (horizon: string): string => {
+const horizonLabel = (horizon: string | undefined | null): string => {
   const months = horizonToMonths(horizon);
   if (months <= 3)  return 'Immediate threat';
   if (months <= 9)  return '< 12 months';
@@ -38,7 +39,7 @@ const horizonLabel = (horizon: string): string => {
   return '3–5 years';
 };
 
-const horizonUrgency = (horizon: string): 'critical' | 'warning' | 'caution' => {
+const horizonUrgency = (horizon: string | undefined | null): 'critical' | 'warning' | 'caution' => {
   const months = horizonToMonths(horizon);
   if (months <= 12) return 'critical';
   if (months <= 24) return 'warning';
@@ -77,7 +78,7 @@ const ImpactBar = ({ score, color, label }: { score: number; color: string; labe
 );
 
 // ── Urgency Clock ─────────────────────────────────────────────────────────────
-const UrgencyClock = ({ horizon }: { horizon: string }) => {
+const UrgencyClock = ({ horizon }: { horizon: string | undefined | null }) => {
   const urgency = horizonUrgency(horizon);
   const colorMap = { critical: '#ef4444', warning: '#f59e0b', caution: '#3b82f6' };
   const color = colorMap[urgency];

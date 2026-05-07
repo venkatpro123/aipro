@@ -278,7 +278,17 @@ function generateRecommendations(
  * the same consensus input.
  */
 export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
-  const { userFactors, consensusData: consensus } = inputs;
+  const {
+    userFactors,
+    consensusData: consensus,
+    provenance,
+    reconciliationSummary,
+    missingDataFallbacks,
+    degradedSignalClasses,
+    hardFailures,
+    confidenceCap,
+    confidenceCapsApplied,
+  } = inputs;
 
   const L1 = calculateCompanyHealth(consensus);
   const L2 = calculateLayoffHistory(consensus);
@@ -328,14 +338,23 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
   }
 
   const finalScore = Math.round(Math.max(0, Math.min(1, rawScore)) * 100);
-  const confidencePercent = Math.round(consensus.overallConfidence * 100);
+  const uncappedConfidencePercent = Math.round(consensus.overallConfidence * 100);
+  const cappedConfidencePercent =
+    confidenceCap != null
+      ? Math.min(uncappedConfidencePercent, Math.round(confidenceCap * 100))
+      : uncappedConfidencePercent;
 
   const baseRange =
     consensus.revenueGrowth.confidenceInterval.high -
     consensus.revenueGrowth.confidenceInterval.low;
   const conflictPenalty = consensus.allConflicts.length * 5;
   const overridePenalty = overrides.length * 3;
-  const totalRange = Math.min(35, Math.max(8, baseRange * 100 + conflictPenalty + overridePenalty));
+  const capPenalty = confidenceCap != null && uncappedConfidencePercent > cappedConfidencePercent ? 6 : 0;
+  const failurePenalty = (hardFailures?.length ?? 0) * 4;
+  const totalRange = Math.min(
+    40,
+    Math.max(8, baseRange * 100 + conflictPenalty + overridePenalty + capPenalty + failurePenalty),
+  );
 
   const confidenceInterval = {
     low: Math.max(0, finalScore - Math.round(totalRange / 2)),
@@ -360,9 +379,12 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
   const signalQuality = {
     hasConflicts: consensus.conflictLevel !== 'none',
     conflictingSignals: consensus.allConflicts,
-    missingDataFallbacks: [] as string[],
+    missingDataFallbacks: missingDataFallbacks ?? ([] as string[]),
     liveSignals: consensus.freshnessReport.liveSignalCount,
     heuristicSignals: consensus.freshnessReport.heuristicSignalCount,
+    degradedSignalClasses,
+    hardFailures,
+    confidenceCapsApplied,
   };
 
   const breakdown: ScoreBreakdown = { L1, L2, L3, L4, L5 };
@@ -370,18 +392,30 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
 
   const tier = getScoreTier(finalScore);
   const disclaimer =
-    consensus.conflictLevel === 'critical'
+    (hardFailures?.length ?? 0) > 0
+      ? 'WARNING: Critical live-signal failures forced fallback behavior. Treat this assessment as a constrained estimate.'
+      : consensus.conflictLevel === 'critical'
       ? 'WARNING: Major signal conflicts detected. Treat this assessment as preliminary and verify with additional sources.'
       : 'This is a risk estimation based on the latest available signals. It is not a prediction or guarantee.';
+
+  const uniqueSources = provenance
+    ? Array.from(
+        new Set(
+          Object.values(provenance)
+            .map((signal) => signal.sourceName)
+            .filter((sourceName) => typeof sourceName === 'string' && sourceName.length > 0),
+        ),
+      )
+    : consensus.revenueGrowth.sourcesUsed;
 
   return {
     score: finalScore,
     confidenceInterval,
-    confidencePercent,
+    confidencePercent: cappedConfidencePercent,
     tier,
     breakdown,
     confidence:
-      confidencePercent >= 70 ? 'High' : confidencePercent >= 45 ? 'Medium' : 'Low',
+      cappedConfidencePercent >= 70 ? 'High' : cappedConfidencePercent >= 45 ? 'Medium' : 'Low',
     calculatedAt: new Date().toISOString(),
     nextUpdateDue: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     disclaimer,
@@ -390,10 +424,12 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
     recommendations,
     consensusSnapshot: {
       primarySource: consensus.freshnessReport.percentLive > 0.5 ? 'live' : 'db',
-      signalSources: consensus.revenueGrowth.sourcesUsed,
+      signalSources: uniqueSources,
       conflictCount: consensus.allConflicts.length,
       overridesApplied: overrides,
       overallFreshness: consensus.freshnessReport.avgSignalAge,
+      authoritativeSignals: provenance,
+      reconciliationSummary,
     },
   };
 }

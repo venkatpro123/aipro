@@ -31,6 +31,18 @@ const IncomeChangeBadge: React.FC<{ pct: number | null }> = ({ pct }) => {
   );
 };
 
+// Markets where advice is commonly non-transferable to India / APAC-dev context.
+// Checked against twin.fromCountry to decide whether to show a context warning.
+const DIFFERENT_MARKET_REGIONS: Record<string, string> = {
+  usa: 'US', canada: 'US/Canada', uk: 'UK', germany: 'Germany/EU',
+  france: 'EU', netherlands: 'EU', sweden: 'EU', ireland: 'EU',
+  australia: 'Australia/NZ', 'new zealand': 'Australia/NZ',
+};
+
+function getMarketLabel(country: string): string {
+  return DIFFERENT_MARKET_REGIONS[country.toLowerCase()] ?? country;
+}
+
 export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
   userRole,
   userExperience,
@@ -44,6 +56,9 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
   );
 
   if (twins.length === 0) return null;
+
+  const hasGeographicFallback = twins.some(t => t.isGeographicFallback);
+  const crossMarketCount = twins.filter(t => t.isDifferentMarket).length;
 
   return (
     <div className="mt-6 rounded-xl border border-cyan-500/20 bg-cyan-500/5 overflow-hidden">
@@ -63,10 +78,31 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
         </div>
       </div>
 
+      {/* Geographic fallback / cross-market banner */}
+      {hasGeographicFallback && (
+        <div className="px-5 pt-3 pb-1">
+          <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2 text-[10px] text-amber-300 leading-relaxed">
+            No close matches found in your market. Showing best available from other regions —
+            strategies may need adaptation for the {userCountry} context.
+          </div>
+        </div>
+      )}
+      {!hasGeographicFallback && crossMarketCount > 0 && (
+        <div className="px-5 pt-3 pb-1">
+          <div className="rounded-lg bg-white/4 border border-white/10 px-3 py-2 text-[10px] text-muted-foreground leading-relaxed">
+            {crossMarketCount === twins.length ? 'All' : `${crossMarketCount}`} match{crossMarketCount !== 1 ? 'es' : ''}{' '}
+            from a different market context — strategies marked ⚠ may not transfer directly to {userCountry}.
+          </div>
+        </div>
+      )}
+
       {/* Twin cards */}
       <div className="divide-y divide-white/5">
         {twins.map((match, i) => {
-          const { twin, similarityPct, matchReasons } = match;
+          const { twin, similarityPct, matchReasons, isDifferentMarket, isGeographicFallback } = match;
+          const twinMarket = getMarketLabel(twin.fromCountry);
+          const showContextWarning = isDifferentMarket && twin.fromCountry !== 'global';
+
           return (
             <motion.div
               key={twin.id}
@@ -85,6 +121,17 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
                     ✓ Verified
                   </span>
                 )}
+                {/* Country badge — always shown so users know the market context */}
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded font-mono ml-auto flex-shrink-0"
+                  style={{
+                    background: showContextWarning ? 'rgba(245,158,11,0.10)' : 'rgba(255,255,255,0.06)',
+                    color:      showContextWarning ? '#fbbf24' : 'rgba(255,255,255,0.45)',
+                    border:     showContextWarning ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {twin.fromCountry === 'global' ? '🌐 Global' : `📍 ${twin.fromCountry}`}
+                </span>
               </div>
 
               {/* Metrics row */}
@@ -106,6 +153,17 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
                 {twin.whatWorked}
               </div>
 
+              {/* Cross-market context note */}
+              {showContextWarning && (
+                <div className="mt-2 text-[10px] leading-relaxed rounded px-2 py-1.5"
+                  style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', color: '#fbbf24' }}>
+                  ⚠ {twinMarket} market context — location-specific steps (events, platforms, hiring norms)
+                  may not apply in {userCountry}. Focus on the transferable parts: credentials, portfolio,
+                  and skills signals.
+                  {isGeographicFallback && ' Best available match — no close {userCountry} equivalents in network yet.'}
+                </div>
+              )}
+
               {/* Match reasons */}
               {matchReasons.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
@@ -121,10 +179,10 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
         })}
       </div>
 
-      {/* Footer CTA */}
+      {/* Footer CTA — shows user's own market context, not the first twin's */}
       <div className="p-4 border-t border-white/10 bg-white/2">
         <p className="text-[10px] text-muted-foreground text-center">
-          Based on {twins[0]?.twin?.fromCountry ?? userCountry} career transitions in our network ·{" "}
+          Matched to your context: {userCountry} ·{" "}
           <span className="text-cyan-400 cursor-pointer hover:underline">Submit your transition</span>
         </p>
       </div>

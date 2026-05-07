@@ -84,11 +84,19 @@ function detectSentiment(text: string): 'negative' | 'neutral' | 'positive' {
 }
 
 export async function fetchCompanyNewsSignals(company: string): Promise<NewsSummary> {
+  const emptyResult: NewsSummary = {
+    company, signals: [], negativeCount: 0, layoffSignalCount: 0,
+    sentimentScore: 0, fetchedAt: new Date().toISOString(),
+  };
+  try {
   const companyLower = company.toLowerCase();
 
-  const [etItems, hnSignals] = await Promise.all([
+  const [etItems, hnSignals] = await Promise.allSettled([
     fetchRSSFeed(FEEDS.economicTimes),
     fetchHNMentions(company),
+  ]).then(results => [
+    results[0].status === 'fulfilled' ? results[0].value : [] as any[],
+    results[1].status === 'fulfilled' ? results[1].value : [] as NewsSignal[],
   ]);
 
   const etSignals: NewsSignal[] = etItems
@@ -123,4 +131,8 @@ export async function fetchCompanyNewsSignals(company: string): Promise<NewsSumm
     sentimentScore: (posCount - negCount) / total,
     fetchedAt: new Date().toISOString(),
   };
+  } catch (err: any) {
+    console.warn('[RSSConnector] fetchCompanyNewsSignals failed:', err?.message);
+    return emptyResult;
+  }
 }

@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Netskope (Global Giant Sync)",
+    "workforce_count": 2452,
+    "open_jobs_count": 30,
+    "layoff_history": {
+      "total_layoffs": 97,
+      "last_layoff_date": "2025-05-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CyberArk (Global Giant Sync)",
+    "workforce_count": 2850,
+    "open_jobs_count": 52,
+    "layoff_history": {
+      "total_layoffs": 63,
+      "last_layoff_date": "2025-08-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Check Point (Global Giant Sync)",
+    "workforce_count": 6228,
+    "open_jobs_count": 124,
+    "layoff_history": {
+      "total_layoffs": 310,
+      "last_layoff_date": "2025-03-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Varonis (Global Giant Sync)",
+    "workforce_count": 2149,
+    "open_jobs_count": 41,
+    "layoff_history": {
+      "total_layoffs": 178,
+      "last_layoff_date": "2026-04-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tata Power (India Giant)",
+    "workforce_count": 21861,
+    "open_jobs_count": 528,
+    "layoff_history": {
+      "total_layoffs": 594,
+      "last_layoff_date": "2025-06-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tata Elxsi (India Giant)",
+    "workforce_count": 12663,
+    "open_jobs_count": 170,
+    "layoff_history": {
+      "total_layoffs": 295,
+      "last_layoff_date": "2025-08-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tata Communications (India Giant)",
+    "workforce_count": 14086,
+    "open_jobs_count": 334,
+    "layoff_history": {
+      "total_layoffs": 614,
+      "last_layoff_date": "2025-07-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Voltas (India Giant)",
+    "workforce_count": 5099,
+    "open_jobs_count": 125,
+    "layoff_history": {
+      "total_layoffs": 217,
+      "last_layoff_date": "2025-12-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "LogRhythm (Global Giant Sync)",
+    "workforce_count": 842,
+    "open_jobs_count": 11,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2026-01-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Exabeam (Global Giant Sync)",
+    "workforce_count": 1108,
+    "open_jobs_count": 28,
+    "layoff_history": {
+      "total_layoffs": 37,
+      "last_layoff_date": "2026-03-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ClickHouse (Global Giant Sync)",
+    "workforce_count": 553,
+    "open_jobs_count": 13,
+    "layoff_history": {
+      "total_layoffs": 15,
+      "last_layoff_date": "2025-10-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "SolarWinds (Global Giant Sync)",
+    "workforce_count": 2495,
+    "open_jobs_count": 74,
+    "layoff_history": {
+      "total_layoffs": 123,
+      "last_layoff_date": "2025-10-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Max Financial Services (India Giant)",
+    "workforce_count": 14132,
+    "open_jobs_count": 178,
+    "layoff_history": {
+      "total_layoffs": 637,
+      "last_layoff_date": "2025-08-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Project44 (Global Giant Sync)",
+    "workforce_count": 1231,
+    "open_jobs_count": 36,
+    "layoff_history": {
+      "total_layoffs": 283,
+      "last_layoff_date": "2025-01-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "FullStory (Global Giant Sync)",
+    "workforce_count": 542,
+    "open_jobs_count": 14,
+    "layoff_history": {
+      "total_layoffs": 24,
+      "last_layoff_date": "2026-03-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "OCL India (India Giant)",
+    "workforce_count": 2078,
+    "open_jobs_count": 35,
+    "layoff_history": {
+      "total_layoffs": 88,
+      "last_layoff_date": "2025-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "LaunchDarkly (Global Giant Sync)",
+    "workforce_count": 561,
+    "open_jobs_count": 12,
+    "layoff_history": {
+      "total_layoffs": 24,
+      "last_layoff_date": "2025-02-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pinecone (Global Giant Sync)",
+    "workforce_count": 245,
+    "open_jobs_count": 3,
+    "layoff_history": {
+      "total_layoffs": 10,
+      "last_layoff_date": "2025-03-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Stove Kraft (India Star)",
+    "workforce_count": 1831,
+    "open_jobs_count": 50,
+    "layoff_history": {
+      "total_layoffs": 52,
+      "last_layoff_date": "2025-12-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Starburst (Global Giant Sync)",
+    "workforce_count": 544,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 91,
+      "last_layoff_date": "2026-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Indian Overseas Bank (India Giant)",
+    "workforce_count": 21690,
+    "open_jobs_count": 307,
+    "layoff_history": {
+      "total_layoffs": 885,
+      "last_layoff_date": "2025-11-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tamilnad Mercantile Bank (India Giant)",
+    "workforce_count": 4886,
+    "open_jobs_count": 124,
+    "layoff_history": {
+      "total_layoffs": 168,
+      "last_layoff_date": "2025-12-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "City Union Bank (India Giant)",
+    "workforce_count": 6239,
+    "open_jobs_count": 137,
+    "layoff_history": {
+      "total_layoffs": 169,
+      "last_layoff_date": "2025-12-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Teradata (Global Giant Sync)",
+    "workforce_count": 7527,
+    "open_jobs_count": 101,
+    "layoff_history": {
+      "total_layoffs": 534,
+      "last_layoff_date": "2026-04-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cloudera (Global Giant Sync)",
+    "workforce_count": 2838,
+    "open_jobs_count": 41,
+    "layoff_history": {
+      "total_layoffs": 226,
+      "last_layoff_date": "2026-01-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DLF India (India Giant Sync)",
+    "workforce_count": 11767,
+    "open_jobs_count": 317,
+    "layoff_history": {
+      "total_layoffs": 481,
+      "last_layoff_date": "2025-07-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Century Real Estate (India Star)",
+    "workforce_count": 1409,
+    "open_jobs_count": 18,
+    "layoff_history": {
+      "total_layoffs": 31,
+      "last_layoff_date": "2025-02-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Adani Realty (India Giant Sync)",
+    "workforce_count": 3431,
+    "open_jobs_count": 35,
+    "layoff_history": {
+      "total_layoffs": 115,
+      "last_layoff_date": "2025-10-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Webflow (Global Giant Sync)",
+    "workforce_count": 848,
+    "open_jobs_count": 10,
+    "layoff_history": {
+      "total_layoffs": 37,
+      "last_layoff_date": "2025-05-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wix (Global Giant Sync)",
+    "workforce_count": 5273,
+    "open_jobs_count": 123,
+    "layoff_history": {
+      "total_layoffs": 993,
+      "last_layoff_date": "2025-09-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Squarespace (Global Giant Sync)",
+    "workforce_count": 1805,
+    "open_jobs_count": 44,
+    "layoff_history": {
+      "total_layoffs": 310,
+      "last_layoff_date": "2025-10-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sketch (Global Giant Sync)",
+    "workforce_count": 122,
+    "open_jobs_count": 1,
+    "layoff_history": {
+      "total_layoffs": 90,
+      "last_layoff_date": "2025-04-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zeplin (Global Giant Sync)",
+    "workforce_count": 138,
+    "open_jobs_count": 1,
+    "layoff_history": {
+      "total_layoffs": 10,
+      "last_layoff_date": "2025-12-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Ceros (Global Giant Sync)",
+    "workforce_count": 565,
+    "open_jobs_count": 9,
+    "layoff_history": {
+      "total_layoffs": 87,
+      "last_layoff_date": "2026-02-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bynder (Global Giant Sync)",
+    "workforce_count": 557,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 21,
+      "last_layoff_date": "2025-10-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Frontify (Global Giant Sync)",
+    "workforce_count": 354,
+    "open_jobs_count": 4,
+    "layoff_history": {
+      "total_layoffs": 16,
+      "last_layoff_date": "2025-08-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Vimeo (Global Giant Sync)",
+    "workforce_count": 1131,
+    "open_jobs_count": 21,
+    "layoff_history": {
+      "total_layoffs": 205,
+      "last_layoff_date": "2025-04-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Loom (Global Giant Sync)",
+    "workforce_count": 251,
+    "open_jobs_count": 6,
+    "layoff_history": {
+      "total_layoffs": 10,
+      "last_layoff_date": "2025-08-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Dalmia Bharat (India Giant)",
+    "workforce_count": 8517,
+    "open_jobs_count": 135,
+    "layoff_history": {
+      "total_layoffs": 237,
+      "last_layoff_date": "2026-04-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "JK Cement (India Giant)",
+    "workforce_count": 5134,
+    "open_jobs_count": 106,
+    "layoff_history": {
+      "total_layoffs": 109,
+      "last_layoff_date": "2026-03-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Ramco Cements (India Giant)",
+    "workforce_count": 3214,
+    "open_jobs_count": 59,
+    "layoff_history": {
+      "total_layoffs": 147,
+      "last_layoff_date": "2025-03-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Star Cement (India Star)",
+    "workforce_count": 1402,
+    "open_jobs_count": 42,
+    "layoff_history": {
+      "total_layoffs": 55,
+      "last_layoff_date": "2026-03-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Prism Johnson (India Giant)",
+    "workforce_count": 4512,
+    "open_jobs_count": 87,
+    "layoff_history": {
+      "total_layoffs": 153,
+      "last_layoff_date": "2025-09-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Orient Cement (India Star)",
+    "workforce_count": 1116,
+    "open_jobs_count": 29,
+    "layoff_history": {
+      "total_layoffs": 44,
+      "last_layoff_date": "2026-02-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Heidelberg Cement India (Global Giant Sync)",
+    "workforce_count": 857,
+    "open_jobs_count": 11,
+    "layoff_history": {
+      "total_layoffs": 23,
+      "last_layoff_date": "2025-12-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sagar Cements (India Star)",
+    "workforce_count": 563,
+    "open_jobs_count": 7,
+    "layoff_history": {
+      "total_layoffs": 22,
+      "last_layoff_date": "2026-03-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "India Cements (India Giant Sync)",
+    "workforce_count": 3558,
+    "open_jobs_count": 67,
+    "layoff_history": {
+      "total_layoffs": 114,
+      "last_layoff_date": "2026-03-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "JFrog (Global Giant Sync)",
+    "workforce_count": 1406,
+    "open_jobs_count": 19,
+    "layoff_history": {
+      "total_layoffs": 44,
+      "last_layoff_date": "2025-03-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Elastic (Global Giant Sync)",
+    "workforce_count": 3247,
+    "open_jobs_count": 67,
+    "layoff_history": {
+      "total_layoffs": 586,
+      "last_layoff_date": "2025-09-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "MongoDB (Global Giant Sync)",
+    "workforce_count": 5287,
+    "open_jobs_count": 142,
+    "layoff_history": {
+      "total_layoffs": 253,
+      "last_layoff_date": "2025-07-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

@@ -8,16 +8,22 @@ const formatDate = (isoString: string) => {
 };
 
 export const LayoffAlertBanner: React.FC = () => {
-  const { dispatch } = useLayoff();
+  const { state, dispatch } = useLayoff();
   const [drift, setDrift] = useState<DriftResult | null>(null);
 
   useEffect(() => {
-    // Detect drift on mount
-    const detected = detectScoreDrift();
+    // BUG-08 FIX applied here: pass current company + role so we only compare
+    // scores for the same job, not the last two scores from any company in history.
+    // Previously detectScoreDrift() was called without arguments, so a TCS score
+    // followed by an Infosys score would incorrectly fire the banner.
+    const companyName = state.companyName ?? undefined;
+    const roleTitle   = state.roleTitle   ?? undefined;
+    const detected = detectScoreDrift(companyName, roleTitle);
     if (detected) {
       setDrift(detected);
     }
-  }, []);
+    // Re-run when the displayed company/role changes (e.g. after force-refresh)
+  }, [state.companyName, state.roleTitle]);
 
   if (!drift) return null;
 

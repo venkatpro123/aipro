@@ -8,6 +8,17 @@ import { UserFactors } from '../layoffScoreEngine';
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
+/**
+ * A single peer company's layoff event — used by sectorContagionAgent to
+ * distinguish causal contagion from coincidental macro-correlated timing.
+ */
+export interface PeerLayoffEvent {
+  company:     string;
+  date:        string;          // ISO date string (e.g. '2024-01-20')
+  percentCut:  number;          // estimated % of workforce cut
+  department?: string;          // first affected department, if known
+}
+
 export interface SwarmInput {
   companyName:        string;
   industry:           string;
@@ -17,6 +28,9 @@ export interface SwarmInput {
   companyData:        CompanyData;
   industryData?:      IndustryRisk;
   userFactors:        UserFactors;
+  /** Named peer layoff events from COMPANY_INTELLIGENCE_DB — enables temporal
+   *  contagion analysis in sectorContagionAgent. Absent = static fallback. */
+  peerLayoffEvents?:  PeerLayoffEvent[];
 }
 
 // ── Per-Agent Output ─────────────────────────────────────────────────────────

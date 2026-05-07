@@ -39,7 +39,9 @@ const mapDbRowToCompanyData = (row: any) => {
 
   return {
     name:                row.company_name,
-    ticker:              row.ticker   || hire.ticker  || null,
+    // stock_ticker is the canonical column name; row.ticker is a fallback for
+    // older rows seeded before the schema settled on stock_ticker.
+    ticker:              row.stock_ticker || row.ticker || fin.ticker || fin.stock_ticker || fin.symbol || null,
     isPublic:            row.is_public ?? hire.is_public ?? false,
     industry:            row.industry,
     region:              row.region   || hire.region  || 'US',
@@ -110,12 +112,22 @@ router.get('/company/:name/live', async (req: Request, res: Response) => {
   }
 
   try {
-    // 1. Load base data from company_intelligence
-    const { data: dbRows } = await supabase
+    // 1. Load base data from company_intelligence — try exact first, then prefix fuzzy
+    let { data: dbRows } = await supabase
       .from('company_intelligence')
       .select('*')
       .ilike('company_name', name.trim())
       .limit(1);
+
+    if (!dbRows || dbRows.length === 0) {
+      const fuzzyResult = await supabase
+        .from('company_intelligence')
+        .select('*')
+        .ilike('company_name', `%${name.trim()}%`)
+        .order('confidence_score', { ascending: false })
+        .limit(1);
+      dbRows = fuzzyResult.data;
+    }
 
     const base = dbRows?.[0] ? mapDbRowToCompanyData(dbRows[0]) : null;
 

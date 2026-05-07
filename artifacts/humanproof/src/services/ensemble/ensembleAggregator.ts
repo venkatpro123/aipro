@@ -64,6 +64,7 @@ export const aggregateEnsembleResults = ({
   engineScore,
   engineConfidence,
   swarmScore,
+  swarmConfidence,
 }: {
   gemmaResult: GemmaResult;
   deepseekResult: DeepSeekResult;
@@ -71,7 +72,10 @@ export const aggregateEnsembleResults = ({
   geminiResult: GeminiResult | null;
   engineScore: number;
   engineConfidence: number;
-  swarmScore?: number;    // [SWARM] Optional swarm risk score (0–100)
+  swarmScore?: number;       // [SWARM] Optional swarm risk score (0–100)
+  swarmConfidence?: number;  // [SWARM] Swarm's own confidence (0–100). Blend ONLY
+                             // when ≥ SWARM_MIN_CONFIDENCE — a hardcoded fallback
+                             // of 10 (all-agents-failed) must NOT pollute the score.
 }): AggregateResult => {
   const scores: IndividualScore[] = [];
   const debugLog: any[] = [];
@@ -188,9 +192,22 @@ export const aggregateEnsembleResults = ({
 
 
 
-  // ── [SWARM] Blend swarm score into final (configurable weight, default 15%) ──
-  if (swarmScore !== undefined && swarmScore >= 0 && swarmScore <= 100) {
-    // BUG-B19 FIX: Safe SSR check for import.meta.env to prevent crashes in non-Vite/Test/SSR envs
+  // ── [SWARM] Blend swarm score into final — ONLY when confidence is meaningful ─
+  // Minimum confidence threshold: 20%. When all 30 agents fail, aggregateSwarmResults
+  // returns swarmConfidence=10 and swarmRiskScore=50 (hardcoded neutral fallback).
+  // Blending that 50 at 20% weight silently pulls a high-risk engine score of 85 down
+  // to 78 — a 7-point error in the dangerous direction, with NO user-visible warning.
+  //
+  // Gate: only blend when swarmConfidence >= SWARM_MIN_CONFIDENCE (20%).
+  // Below threshold: skip blend entirely, use pure engine score, log the skip.
+  const SWARM_MIN_CONFIDENCE = 20;
+  const swarmIsReliable = (
+    swarmScore !== undefined &&
+    swarmScore >= 0 && swarmScore <= 100 &&
+    (swarmConfidence ?? 0) >= SWARM_MIN_CONFIDENCE
+  );
+
+  if (swarmIsReliable) {
     const getEnsembleWeight = () => {
       try {
         if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
@@ -201,8 +218,13 @@ export const aggregateEnsembleResults = ({
     };
     const rawBlend = parseFloat(getEnsembleWeight());
     const safeWeight = Math.max(0.05, Math.min(0.35, isNaN(rawBlend) ? 0.15 : rawBlend));
-    finalScore = Math.round(finalScore * (1 - safeWeight) + swarmScore * safeWeight);
-    console.log(`[Ensemble] Swarm blend: final=${finalScore} (weight=${safeWeight.toFixed(2)})`);
+    finalScore = Math.round(finalScore * (1 - safeWeight) + swarmScore! * safeWeight);
+    console.log(`[Ensemble] Swarm blend: final=${finalScore} (weight=${safeWeight.toFixed(2)}, swarmConf=${swarmConfidence}%)`);
+  } else if (swarmScore !== undefined) {
+    console.warn(
+      `[Ensemble] Swarm blend SKIPPED — confidence ${swarmConfidence ?? 0}% < ${SWARM_MIN_CONFIDENCE}% threshold.` +
+      ` swarmScore=${swarmScore} NOT applied. Using pure engine score=${finalScore}.`
+    );
   }
 
   // ── BUG FIX: Model-count confidence cap ──────────────────────────────────

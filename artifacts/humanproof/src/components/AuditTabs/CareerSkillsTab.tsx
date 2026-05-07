@@ -2,11 +2,11 @@
 // Career trajectory and skills analysis — Answers "What should I focus on?"
 // Displays: AI skill risk matrix, at-risk skills, human-durable skills, roadmap, simulator.
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AIRiskSkillMatrix from "@/components/AIRiskSkillMatrix";
 import StrategicRoadmap from "@/components/StrategicRoadmap";
-import { selectStrategyArchetype, buildArchetypeRoadmap } from "@/services/strategyArchetypes";
+import { selectStrategyArchetypeFull, buildArchetypeRoadmap, applyCollapseCompression } from "@/services/strategyArchetypes";
 import { CareerTwinSubmissionModal } from "@/components/CareerTwinSubmissionModal";
 import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
@@ -16,6 +16,9 @@ import { LAYER_WEIGHTS } from "@/services/layoffScoreEngine";
 import { getScoreColor } from "@/data/riskEngine";
 import type { TabProps } from "./common/types";
 import type { CareerIntelligence } from "@/data/intelligence/types";
+import { overlaySkillDemand } from "@/services/skillDemandService";
+import { SkillFreshnessLabel, SkillPanelStaticNotice } from "./SkillFreshnessLabel";
+import { getCareerPathMarketSync, isMarketDataStale, marketDataAgeLabel, isMarketDataFreshWarning, marketDataAgeInline } from "@/services/careerPathMarket";
 import {
   Shield, AlertTriangle, TrendingUp, TrendingDown, Cpu,
   Brain, Heart, Lightbulb, Users, Zap, Target, ChevronRight,
@@ -147,6 +150,8 @@ const AtRiskSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) =
   const atRisk = intel.skills.at_risk ?? [];
   const obsolete = intel.skills.obsolete ?? [];
   const combined = [...obsolete, ...atRisk].slice(0, 8);
+  // Check if ANY skill has live demand data — drives the panel-level static notice
+  const hasAnyLive = combined.some(s => s.demandLive != null);
 
   if (combined.length === 0) {
     return (
@@ -159,6 +164,8 @@ const AtRiskSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) =
 
   return (
     <div className="space-y-3">
+      {/* Panel-level static notice — shown when no skills have live demand data */}
+      {!hasAnyLive && <SkillPanelStaticNotice />}
       {combined.map((s, i) => {
         const risk = s.riskScore ?? 70;
         const color = risk >= 80 ? "var(--red)" : risk >= 60 ? "var(--orange)" : "var(--amber)";
@@ -187,11 +194,19 @@ const AtRiskSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) =
                       <Cpu className="w-2.5 h-2.5 inline mr-0.5" />{s.aiTool}
                     </span>
                   )}
+                  {/* Freshness label — live/stale/research-est */}
+                  <SkillFreshnessLabel demandLive={s.demandLive} showCount={false} />
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{s.reason}</p>
-                <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-muted-foreground">
+                <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-muted-foreground flex-wrap">
                   <span><Clock className="w-2.5 h-2.5 inline mr-1" />{s.horizon ?? "1-3yr"}</span>
                   <span>Replacement: <span style={{ color }} className="font-bold">{s.aiReplacement ?? "Partial"}</span></span>
+                  {/* Demand count inline when live data available */}
+                  {s.demandLive?.liveJobCount != null && (
+                    <span className="text-emerald-400/70">
+                      {s.demandLive.liveJobCount.toLocaleString()} India roles
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex-shrink-0 text-right">
@@ -238,9 +253,11 @@ const getDifficultyColor = (diff: string) => {
 
 const HumanDurableSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) => {
   const safe = intel.skills.safe.slice(0, 8);
+  const hasAnyLive = safe.some(s => s.demandLive != null);
 
   return (
     <div className="grid grid-cols-1 gap-3">
+      {!hasAnyLive && <SkillPanelStaticNotice />}
       {safe.map((s, i) => (
         <motion.div
           key={i}
@@ -260,6 +277,7 @@ const HumanDurableSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ inte
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                   HUMAN-DURABLE
                 </span>
+                <SkillFreshnessLabel demandLive={s.demandLive} showCount={false} />
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{s.whySafe}</p>
               <div className="flex items-center gap-3 mt-2 text-[10px]">
@@ -370,11 +388,18 @@ const WhatIfSkillSimulator: React.FC<{
     const bd = breakdown;
     const adjustedL3 = Math.max(0, Math.min(1, (bd.L3 ?? 0.5) - l3Delta));
 
-    // Recompose using canonical engine layer weights.
-    // IMPORTANT: normalize by the total weight sum since LAYER_WEIGHTS intentionally
-    // reflects relative proportions that may sum to != 1.0. Without normalization,
-    // scores would be inflated/deflated by the sum factor.
+    // Recompose using LAYER_WEIGHTS (sum = 1.10, WhatIf-only sensitivity weights).
+    //
+    // LAYER_WEIGHTS ≠ COMPOSITE_FORMULA_WEIGHTS. Do not substitute one for the other.
+    //   COMPOSITE_FORMULA_WEIGHTS (9 terms, sum = 1.00) — lives in layoffScoreEngine.ts,
+    //     used only inside calculateLayoffScore(), requires NO normalization.
+    //   LAYER_WEIGHTS (7 entries, sum = 1.10) — used HERE only, ALWAYS requires:
+    //     recomposed = rawComposed / weightSum * 100
+    //
+    // Omitting the division inflates every simulated score by ≈10 pts.
+    // A module-load assertion in layoffScoreEngine.ts enforces both sums.
     const weightSum = (Object.values(LAYER_WEIGHTS) as number[]).reduce((s, w) => s + w, 0);
+    // weightSum is always 1.10 (enforced by layoffScoreEngine.ts assertion at startup).
     const rawComposed = (
       (bd.L1 ?? 0.5) * LAYER_WEIGHTS.L1 +
       (bd.L2 ?? 0.5) * LAYER_WEIGHTS.L2 +
@@ -384,7 +409,7 @@ const WhatIfSkillSimulator: React.FC<{
       (bd.D6 ?? 0.5) * LAYER_WEIGHTS.D6 +
       (bd.D7 ?? 0.5) * LAYER_WEIGHTS.D7
     );
-    const recomposed = (rawComposed / weightSum) * 100;
+    const recomposed = (rawComposed / weightSum) * 100; // divide by 1.10 — mandatory
 
     return Math.max(3, Math.min(98, Math.round(recomposed)));
   }, [baseScore, breakdown]);
@@ -490,10 +515,24 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
   const scoreColor = getScoreColor(result.total);
 
   const rawIntel = useMemo(() => getCareerIntelligence(result.workTypeKey), [result.workTypeKey]);
-  const intel = useMemo(
+  const baseIntel = useMemo(
     () => rawIntel ?? buildFallbackIntel(result.workTypeKey, result.total),
     [rawIntel, result.workTypeKey, result.total],
   );
+
+  // Overlay live Naukri/LinkedIn demand data from market_intelligence_cache.
+  // The overlay is fetched asynchronously so the panel renders immediately with
+  // static data, then skill cards gain freshness labels once the cache query resolves.
+  const [intel, setIntel] = useState<CareerIntelligence>(baseIntel);
+  useEffect(() => {
+    setIntel(baseIntel); // reset on role change
+    overlaySkillDemand(baseIntel, result.workTypeKey).then(enriched => {
+      setIntel(enriched);
+    }).catch(() => {/* keep static intel on error */});
+  }, [baseIntel, result.workTypeKey]);
+
+  // v6.0: Derive uniqueness depth at component level for career path filtering
+  const uniquenessDepth = (result as any).uniquenessDepth ?? (result as any).userFactors?.uniquenessDepth ?? 'generic';
 
   const safeCount = intel.skills.safe?.length ?? 0;
   const atRiskCount = intel.skills.at_risk?.length ?? 0;
@@ -528,10 +567,18 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
   const expYears = (result as any).experienceYears ?? parseInt(result.experience?.split('-')[0] ?? '5', 10) ?? 5;
   // D3 augmentation risk: lower value = higher augmentation potential
   const augmentationRisk = result.breakdown?.L3 ?? 0.5;
-  const archetype = selectStrategyArchetype(expYears, capitalPillars, capitalTotal, augmentationRisk);
-  const archetypeRoadmap = archetype
-    ? buildArchetypeRoadmap(archetype, intel.displayRole, capitalPillars, expYears)
-    : null;
+  const archetypeSelection = useMemo(
+    () => selectStrategyArchetypeFull(expYears, capitalPillars, capitalTotal, augmentationRisk),
+    [expYears, capitalPillars, capitalTotal, augmentationRisk],
+  );
+  const archetype = archetypeSelection.primary;
+  const archetypeRoadmap = useMemo(() => {
+    if (!archetype) return null;
+    const base = buildArchetypeRoadmap(archetype, intel.displayRole, capitalPillars, expYears);
+    const stage = result.collapseStage ?? null;
+    if (stage && stage >= 1) return applyCollapseCompression(base, stage as 1 | 2 | 3);
+    return base;
+  }, [archetype, intel.displayRole, capitalPillars, expYears, result.collapseStage]);
 
   const [showTwinModal, setShowTwinModal] = useState(false);
   const [twinSubmitted, setTwinSubmitted] = useState(() => {
@@ -653,54 +700,156 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
           </div>
         </div>
 
-        {/* ── Career Paths ── */}
-        {intel.careerPaths && intel.careerPaths.length > 0 && (
-          <div className="mb-6">
-            <SectionHeader
-              title="Recommended Pivot Paths"
-              description="Adjacent roles you can transition into that offer lower AI risk and comparable or higher earning potential."
-            />
-            <div className="grid md:grid-cols-2 gap-4">
-              {intel.careerPaths.slice(0, 4).map((path, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="glass-panel p-4 rounded-xl hover:border-[var(--border-cyan)] transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 rounded-lg bg-cyan-500/10 flex-shrink-0">
-                      <Zap className="w-4 h-4 text-cyan-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-sm font-bold">{path.role}</span>
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                          -{path.riskReduction}% RISK
-                        </span>
-                        <span className="text-[9px] font-bold text-muted-foreground">{path.salaryDelta}</span>
+        {/* ── Career Paths (v6.0: uniqueness-filtered + income-continuity-filtered) ── */}
+        {(() => {
+          if (!intel.careerPaths || intel.careerPaths.length === 0) return null;
+          const ud = uniquenessDepth as 'generic' | 'functional_specialist' | 'critical_knowledge';
+          // Fix 8: filter by uniqueness depth
+          const filteredByUniqueness = intel.careerPaths.filter(p => {
+            const f = p.uniquenessDepthFilter ?? 'all';
+            if (f === 'all') return true;
+            if (ud === 'critical_knowledge') return f === 'critical_only' || f === 'specialist_and_critical';
+            if (ud === 'functional_specialist') return f === 'generic_and_specialist' || f === 'specialist_and_critical';
+            return f === 'generic_and_specialist';
+          });
+          // Fix 10: filter by income continuity for conservative profiles
+          const runwayMonths = (() => {
+            try {
+              const ctx = JSON.parse(localStorage.getItem('hp_financial_context') || '{}');
+              if (ctx.monthlyExpenses && ctx.emergencyFundMonths) return ctx.emergencyFundMonths as number;
+            } catch { /* ignore */ }
+            return null;
+          })();
+          const isConservative = (() => {
+            try {
+              const ctx = JSON.parse(localStorage.getItem('hp_financial_context') || '{}');
+              if (!ctx.emergencyFundMonths) return false;
+              const runway = ctx.emergencyFundMonths as number;
+              const deps = ctx.dependents as number ?? 0;
+              return runway < 2 || (runway < 4 && deps >= 2);
+            } catch { return false; }
+          })();
+          const visiblePaths = filteredByUniqueness.filter(p => {
+            if (!isConservative || !runwayMonths || !p.months_to_first_income) return true;
+            return p.months_to_first_income <= runwayMonths / 2;
+          });
+          const hiddenCount = filteredByUniqueness.length - visiblePaths.length;
+          return (
+            <div className="mb-6">
+              <SectionHeader
+                title="Recommended Pivot Paths"
+                description="Adjacent roles you can transition into that offer lower AI risk and comparable or higher earning potential."
+              />
+              {visiblePaths.length === 0 && (
+                <p className="text-xs text-muted-foreground p-4 rounded-xl border border-white/10">
+                  No transition paths compatible with your current financial profile. All available paths require an income gap longer than your available runway.
+                </p>
+              )}
+              <div className="grid md:grid-cols-2 gap-4">
+                {visiblePaths.slice(0, 4).map((path, i) => {
+                  // Derive a role key from the path role name for market data lookup.
+                  // e.g. "ML Engineer" → "ml_engineer", "Platform Engineer" → "platform_engineer"
+                  const pathRoleKey = path.role
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '_')
+                    .replace(/^_|_$/g, '');
+                  const market = getCareerPathMarketSync(pathRoleKey);
+                  const marketStale       = market ? isMarketDataStale(market)       : false;
+                  const marketFreshWarn   = market ? isMarketDataFreshWarning(market) : false;
+                  const marketAge         = market ? marketDataAgeLabel(market)       : null;
+                  const marketAgeInline_  = market ? marketDataAgeInline(market)      : null;
+
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="glass-panel p-4 rounded-xl hover:border-[var(--border-cyan)] transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-1.5 rounded-lg bg-cyan-500/10 flex-shrink-0">
+                          <Zap className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="text-sm font-bold">{path.role}</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                              -{path.riskReduction}% RISK
+                            </span>
+                            <span className="text-[9px] font-bold text-muted-foreground">{path.salaryDelta}</span>
+                            {market && (
+                              <span
+                                className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                                  marketStale     ? 'text-amber-400/70 bg-amber-500/10' :
+                                  marketFreshWarn ? 'text-amber-300/60 bg-amber-500/8'  :
+                                                    'text-cyan-400/80 bg-cyan-500/10'
+                                }`}
+                                title={marketAge ?? undefined}
+                              >
+                                {market.indiaOpenings != null ? `${market.indiaOpenings.toLocaleString()} India openings` : ''}
+                                {marketAgeInline_ ? ` · ${marketAgeInline_}` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">Gap: {path.skillGap}</p>
+                          <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground flex-wrap">
+                            <span><Clock className="w-2.5 h-2.5 inline mr-1" />{path.timeToTransition}</span>
+                            <span>Difficulty: <span className="text-amber-400">{path.transitionDifficulty}</span></span>
+                            {path.months_to_first_income != null && (
+                              <span className="text-emerald-400">First pay: ~{path.months_to_first_income}mo</span>
+                            )}
+                            {market?.hiringBar && (
+                              <span className="text-muted-foreground">Bar: {market.hiringBar}</span>
+                            )}
+                          </div>
+                          {market?.successRate12mPct != null && (
+                            <div className="mt-1.5 flex items-center gap-2 text-[10px]">
+                              <div className="h-1 w-16 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${market.successRate12mPct}%` }} />
+                              </div>
+                              <span className="text-emerald-400/70">{market.successRate12mPct}% 12-mo success rate</span>
+                            </div>
+                          )}
+                          {isConservative && path.months_to_first_income != null && (
+                            <p className="text-[9px] text-emerald-400/70 mt-1">
+                              Income gap: {path.income_dip_months ?? 0} months below 90% baseline
+                            </p>
+                          )}
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2">Gap: {path.skillGap}</p>
-                      <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
-                        <span><Clock className="w-2.5 h-2.5 inline mr-1" />{path.timeToTransition}</span>
-                        <span>Difficulty: <span className="text-amber-400">{path.transitionDifficulty}</span></span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-                  </div>
-                </motion.div>
-              ))}
+                    </motion.div>
+                  );
+                })}
+              </div>
+              {hiddenCount > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-3 opacity-60">
+                  {hiddenCount} additional transition {hiddenCount === 1 ? 'path' : 'paths'} available — {isConservative ? `require${hiddenCount === 1 ? 's' : ''} a ${runwayMonths ? Math.round(runwayMonths * 0.5) + '+' : 'longer'}-month income gap not compatible with your financial profile. Increase your emergency fund to see them.` : 'filtered by role profile.'}
+                </p>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ── Upskilling Roadmap — v4.0 archetype-aware ── */}
         <CollapsibleSection title="Strategic Transformation Roadmap">
           <div className="space-y-4">
             {archetypeRoadmap ? (
-              /* v4.0: Archetype roadmap supersedes the bracket-based roadmap */
+              /* v4.0/v6.0: Archetype roadmap with collapse compression support */
               <div className="space-y-4">
+
+                {/* v6.0 Upgrade 5: Compression banner — shows urgency-adjusted timeline */}
+                {archetypeRoadmap.compressionApplied && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/8 p-3 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-300 leading-relaxed">
+                      <span className="font-bold">Timeline compressed:</span>{' '}
+                      {archetypeRoadmap.compressionApplied.bannerText}
+                    </p>
+                  </div>
+                )}
+
                 <div className="rounded-xl border border-cyan-500/25 bg-cyan-500/6 p-4">
                   <div className="text-[10px] font-black text-cyan-400 uppercase tracking-widest mb-1">
                     {archetypeRoadmap.archetype} Strategy Activated
@@ -709,10 +858,28 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                   <p className="text-xs text-muted-foreground leading-relaxed">{archetypeRoadmap.whyThisArchetype}</p>
                 </div>
 
+                {/* v6.0 Fix 9: Hybrid archetype sequence when user qualifies for two */}
+                {archetypeSelection.hybridSequence && archetypeSelection.secondary && (
+                  <div className="rounded-xl border border-purple-500/25 bg-purple-500/6 p-4">
+                    <div className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-2">
+                      Hybrid Strategy: {archetypeSelection.primary} + {archetypeSelection.secondary}
+                    </div>
+                    {archetypeSelection.hybridSequence.split('\n\n').map((para, i) => (
+                      <p key={i} className="text-xs text-muted-foreground leading-relaxed mb-2 last:mb-0">{para}</p>
+                    ))}
+                  </div>
+                )}
+
                 {archetypeRoadmap.phase0 && (
                   <div className="rounded-xl border border-amber-500/25 bg-amber-500/6 p-4">
                     <div className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">
-                      Phase 0 — {archetypeRoadmap.phase0.weekRange}
+                      Phase 0 —{' '}
+                      <span>{archetypeRoadmap.phase0.weekRange}</span>
+                      {archetypeRoadmap.phase0.originalWeekRange && archetypeRoadmap.phase0.originalWeekRange !== archetypeRoadmap.phase0.weekRange && (
+                        <span className="text-amber-400/55 ml-1 font-normal normal-case tracking-normal">
+                          (compressed from {archetypeRoadmap.phase0.originalWeekRange})
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm font-bold mb-2">{archetypeRoadmap.phase0.title}</p>
                     <div className="space-y-1 mb-2">
@@ -734,6 +901,11 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: c }}>
                           Phase {phase.phase} — {phase.weekRange}
+                          {phase.originalWeekRange && phase.originalWeekRange !== phase.weekRange && (
+                            <span className="ml-1 font-normal normal-case tracking-normal opacity-60">
+                              (compressed from {phase.originalWeekRange})
+                            </span>
+                          )}
                         </span>
                         <span className="text-xs text-muted-foreground">{phase.focus}</span>
                       </div>

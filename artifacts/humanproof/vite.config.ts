@@ -24,6 +24,26 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Intelligence data — 371 role profiles, 842KB raw / 187KB gzip.
+          // Splitting into its own chunk achieves three things:
+          //   1. Cache-stable: hash only changes when role data changes, not on every deploy
+          //   2. Absent from main chunk on landing page (AuditTerminalPage is now lazy)
+          //   3. Loads in parallel with the app shell once the audit route is requested
+          if (id.includes('/data/intelligence/') || id.includes('/data/oracleRoleIndex')) {
+            return 'career-intelligence';
+          }
+          // Vendor libs — split for long-term cache stability
+          if (id.includes('node_modules')) {
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('react-dom') || id.includes('/react/')) return 'vendor-react';
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
   // BUG-09 FIX: Inject build timestamp so DATA_LAST_UPDATED reflects real build date
   define: {

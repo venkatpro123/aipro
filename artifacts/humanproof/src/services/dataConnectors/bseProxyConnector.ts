@@ -105,11 +105,16 @@ export async function fetchBSEDataViaProxy(companyName: string): Promise<BSEComp
       rangePosition = ((price - low52) / (high52 - low52)) * 2 - 1; // [-1, +1]
     }
 
-    // Approximate 90-day change from range position
-    // (rough heuristic when real 90-day data is unavailable)
+    // The BSE GetCompanyDetails endpoint does not expose a true 90-day price series.
+    // We derive an approximation from the 52-week range position (rangePosition ∈ [-1,+1])
+    // by scaling to [-25%,+25%]. This is a heuristic — not a measured 90-day return.
+    // It is tagged _isStock90dApproximate = true so analyzeSignalQuality can add a
+    // fallback warning ("stock90d derived from 52-week range, ±10pt accuracy").
     let stock90DayChange: number | null = null;
+    let isStock90dApproximate = false;
     if (rangePosition !== null) {
-      stock90DayChange = Math.round(rangePosition * 25); // [-25%, +25%] approximation
+      stock90DayChange     = Math.round(rangePosition * 25);
+      isStock90dApproximate = true;
     }
 
     return {
@@ -122,9 +127,10 @@ export async function fetchBSEDataViaProxy(companyName: string): Promise<BSEComp
       peRatio: pe,
       stock52wRangePosition: rangePosition,
       stock90DayChange,
+      isStock90dApproximate,
       fetchedAt: new Date().toISOString(),
       source: 'proxy',
-    };
+    } as any;
   } catch (err: any) {
     console.warn(`[BSEProxy] Call failed: ${err.message}`);
     return buildFallback(companyName, scripCode);

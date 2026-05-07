@@ -109,20 +109,26 @@ describe("Regression Tests - Tier Boundaries", () => {
     });
 
     it('Score 75-100 should be "High risk"', () => {
+      // Maximally distressed inputs: multiple layoff rounds, extreme revenue contraction,
+      // highest-displacement role, zero personal protection, sub-threshold tenure.
+      // The calibrated engine (L2 ×1.11, L3 ×0.93) reaches ~76 with these signals.
       const inputs: ScoreInputs = {
         companyData: {
-          name: "Struggling Startup",
+          name: "Collapsing Startup",
           isPublic: false,
           industry: "Startups (pre-seed)",
           region: "US",
-          employeeCount: 30,
-          revenueGrowthYoY: -30,
-          stock90DayChange: null,
-          layoffsLast24Months: [{ date: "2026-03-01", percentCut: 30 }],
-          layoffRounds: 3,
-          lastLayoffPercent: 30,
-          revenuePerEmployee: 50000,
-          aiInvestmentSignal: "low",
+          employeeCount: 500,           // overstaffing signal fires harder with headcount
+          revenueGrowthYoY: -50,        // -50% YoY — severe contraction
+          stock90DayChange: -45,        // steep stock decline
+          layoffsLast24Months: [
+            { date: "2026-03-01", percentCut: 40 },
+            { date: "2025-09-01", percentCut: 25 },
+          ],
+          layoffRounds: 4,
+          lastLayoffPercent: 40,
+          revenuePerEmployee: 30000,    // well below sector floor
+          aiInvestmentSignal: "high",   // AI replacing roles actively
           source: "Test",
           lastUpdated: "2026-04-01",
         },
@@ -130,8 +136,9 @@ describe("Regression Tests - Tier Boundaries", () => {
         roleTitle: "Data Entry Specialist",
         department: "Administration",
         userFactors: {
-          tenureYears: 0.5,
+          tenureYears: 0.3,             // probationary — last in, first out
           isUniqueRole: false,
+          uniquenessDepth: "generic",   // fully generic role
           performanceTier: "below",
           hasRecentPromotion: false,
           hasKeyRelationships: false,

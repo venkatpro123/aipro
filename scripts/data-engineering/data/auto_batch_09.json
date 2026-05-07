@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Lago",
+    "workforce_count": 1504,
+    "open_jobs_count": 43,
+    "layoff_history": {
+      "total_layoffs": 118,
+      "last_layoff_date": "2026-01-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Warp (Developer Tools)",
+    "workforce_count": 1504,
+    "open_jobs_count": 43,
+    "layoff_history": {
+      "total_layoffs": 96,
+      "last_layoff_date": "2025-06-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Ghostty (Terminal Enriched)",
+    "workforce_count": 200,
+    "open_jobs_count": 2,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-03-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Peak Games",
+    "workforce_count": 10064,
+    "open_jobs_count": 276,
+    "layoff_history": {
+      "total_layoffs": 606,
+      "last_layoff_date": "2025-05-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Dream Games",
+    "workforce_count": 9943,
+    "open_jobs_count": 186,
+    "layoff_history": {
+      "total_layoffs": 779,
+      "last_layoff_date": "2026-04-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tabby",
+    "workforce_count": 9928,
+    "open_jobs_count": 143,
+    "layoff_history": {
+      "total_layoffs": 647,
+      "last_layoff_date": "2025-07-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mamamyth (Social)",
+    "workforce_count": 9800,
+    "open_jobs_count": 199,
+    "layoff_history": {
+      "total_layoffs": 718,
+      "last_layoff_date": "2025-10-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tines",
+    "workforce_count": 1497,
+    "open_jobs_count": 30,
+    "layoff_history": {
+      "total_layoffs": 120,
+      "last_layoff_date": "2025-04-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Insider (Marketing)",
+    "workforce_count": 10163,
+    "open_jobs_count": 186,
+    "layoff_history": {
+      "total_layoffs": 658,
+      "last_layoff_date": "2025-02-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Getir (Enriched)",
+    "workforce_count": 50020,
+    "open_jobs_count": 570,
+    "layoff_history": {
+      "total_layoffs": 5136,
+      "last_layoff_date": "2025-09-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Kitopi",
+    "workforce_count": 9812,
+    "open_jobs_count": 179,
+    "layoff_history": {
+      "total_layoffs": 576,
+      "last_layoff_date": "2025-03-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Anthropic (Enriched)",
+    "workforce_count": 10276,
+    "open_jobs_count": 108,
+    "layoff_history": {
+      "total_layoffs": 662,
+      "last_layoff_date": "2025-06-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Perplexity AI",
+    "workforce_count": 1471,
+    "open_jobs_count": 22,
+    "layoff_history": {
+      "total_layoffs": 133,
+      "last_layoff_date": "2025-10-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Miro (Enriched)",
+    "workforce_count": 10095,
+    "open_jobs_count": 178,
+    "layoff_history": {
+      "total_layoffs": 925,
+      "last_layoff_date": "2025-01-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Fly.io",
+    "workforce_count": 1520,
+    "open_jobs_count": 21,
+    "layoff_history": {
+      "total_layoffs": 109,
+      "last_layoff_date": "2025-04-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Railway",
+    "workforce_count": 1516,
+    "open_jobs_count": 37,
+    "layoff_history": {
+      "total_layoffs": 92,
+      "last_layoff_date": "2025-09-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Render",
+    "workforce_count": 1514,
+    "open_jobs_count": 44,
+    "layoff_history": {
+      "total_layoffs": 115,
+      "last_layoff_date": "2025-06-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wolt (Enriched)",
+    "workforce_count": 10088,
+    "open_jobs_count": 255,
+    "layoff_history": {
+      "total_layoffs": 934,
+      "last_layoff_date": "2026-03-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bolt (European Enriched)",
+    "workforce_count": 9870,
+    "open_jobs_count": 263,
+    "layoff_history": {
+      "total_layoffs": 774,
+      "last_layoff_date": "2025-02-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Klarna (Scale Enriched)",
+    "workforce_count": 49224,
+    "open_jobs_count": 1334,
+    "layoff_history": {
+      "total_layoffs": 5267,
+      "last_layoff_date": "2025-12-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Oatly",
+    "workforce_count": 9822,
+    "open_jobs_count": 191,
+    "layoff_history": {
+      "total_layoffs": 439,
+      "last_layoff_date": "2025-03-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pleo",
+    "workforce_count": 10055,
+    "open_jobs_count": 223,
+    "layoff_history": {
+      "total_layoffs": 896,
+      "last_layoff_date": "2026-04-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Einride",
+    "workforce_count": 10286,
+    "open_jobs_count": 239,
+    "layoff_history": {
+      "total_layoffs": 508,
+      "last_layoff_date": "2025-10-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wealthsimple",
+    "workforce_count": 9970,
+    "open_jobs_count": 199,
+    "layoff_history": {
+      "total_layoffs": 962,
+      "last_layoff_date": "2026-04-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sourcegraph",
+    "workforce_count": 10283,
+    "open_jobs_count": 194,
+    "layoff_history": {
+      "total_layoffs": 836,
+      "last_layoff_date": "2025-05-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Linear",
+    "workforce_count": 1508,
+    "open_jobs_count": 23,
+    "layoff_history": {
+      "total_layoffs": 121,
+      "last_layoff_date": "2025-08-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Arc (The Browser Company)",
+    "workforce_count": 1499,
+    "open_jobs_count": 27,
+    "layoff_history": {
+      "total_layoffs": 96,
+      "last_layoff_date": "2025-11-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Paystack (Enriched)",
+    "workforce_count": 9841,
+    "open_jobs_count": 144,
+    "layoff_history": {
+      "total_layoffs": 594,
+      "last_layoff_date": "2025-10-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Flutterwave (Enriched)",
+    "workforce_count": 10216,
+    "open_jobs_count": 259,
+    "layoff_history": {
+      "total_layoffs": 633,
+      "last_layoff_date": "2025-07-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Coinbase (Crypto Enriched)",
+    "workforce_count": 51375,
+    "open_jobs_count": 1333,
+    "layoff_history": {
+      "total_layoffs": 4915,
+      "last_layoff_date": "2025-10-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Uniswap Labs",
+    "workforce_count": 1494,
+    "open_jobs_count": 26,
+    "layoff_history": {
+      "total_layoffs": 109,
+      "last_layoff_date": "2025-11-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "JFrog (Enriched)",
+    "workforce_count": 10203,
+    "open_jobs_count": 304,
+    "layoff_history": {
+      "total_layoffs": 983,
+      "last_layoff_date": "2025-01-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Supabase (Milestone Enriched)",
+    "workforce_count": 1497,
+    "open_jobs_count": 33,
+    "layoff_history": {
+      "total_layoffs": 105,
+      "last_layoff_date": "2025-11-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Postman (Milestone Enriched)",
+    "workforce_count": 9959,
+    "open_jobs_count": 152,
+    "layoff_history": {
+      "total_layoffs": 753,
+      "last_layoff_date": "2026-03-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Jupiter (Neobank)",
+    "workforce_count": 1529,
+    "open_jobs_count": 19,
+    "layoff_history": {
+      "total_layoffs": 89,
+      "last_layoff_date": "2026-04-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sierra Space",
+    "workforce_count": 10269,
+    "open_jobs_count": 284,
+    "layoff_history": {
+      "total_layoffs": 933,
+      "last_layoff_date": "2025-05-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Axiom Space",
+    "workforce_count": 9874,
+    "open_jobs_count": 215,
+    "layoff_history": {
+      "total_layoffs": 585,
+      "last_layoff_date": "2026-04-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Skyroot Aerospace",
+    "workforce_count": 9852,
+    "open_jobs_count": 251,
+    "layoff_history": {
+      "total_layoffs": 647,
+      "last_layoff_date": "2025-07-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Agnikul Cosmos",
+    "workforce_count": 10153,
+    "open_jobs_count": 112,
+    "layoff_history": {
+      "total_layoffs": 781,
+      "last_layoff_date": "2026-01-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PsiQuantum",
+    "workforce_count": 9874,
+    "open_jobs_count": 129,
+    "layoff_history": {
+      "total_layoffs": 645,
+      "last_layoff_date": "2025-03-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "MediaTek (Enriched)",
+    "workforce_count": 50628,
+    "open_jobs_count": 693,
+    "layoff_history": {
+      "total_layoffs": 3201,
+      "last_layoff_date": "2025-09-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Renesas (Enriched)",
+    "workforce_count": 50125,
+    "open_jobs_count": 565,
+    "layoff_history": {
+      "total_layoffs": 2731,
+      "last_layoff_date": "2026-04-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Advantest",
+    "workforce_count": 10175,
+    "open_jobs_count": 102,
+    "layoff_history": {
+      "total_layoffs": 563,
+      "last_layoff_date": "2025-02-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tokyo Electron",
+    "workforce_count": 49607,
+    "open_jobs_count": 1102,
+    "layoff_history": {
+      "total_layoffs": 3389,
+      "last_layoff_date": "2025-06-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pfizer (2026 Market Pivot)",
+    "workforce_count": 82225,
+    "open_jobs_count": 1335,
+    "layoff_history": {
+      "total_layoffs": 6444,
+      "last_layoff_date": "2026-02-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Moderna (AI Expansion)",
+    "workforce_count": 5537,
+    "open_jobs_count": 76,
+    "layoff_history": {
+      "total_layoffs": 420,
+      "last_layoff_date": "2025-06-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Teladoc Health (Enriched)",
+    "workforce_count": 5254,
+    "open_jobs_count": 142,
+    "layoff_history": {
+      "total_layoffs": 617,
+      "last_layoff_date": "2025-08-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "BetterHelp (Enriched)",
+    "workforce_count": 4544,
+    "open_jobs_count": 79,
+    "layoff_history": {
+      "total_layoffs": 356,
+      "last_layoff_date": "2025-01-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Medtronic (Legacy Enriched)",
+    "workforce_count": 93828,
+    "open_jobs_count": 1790,
+    "layoff_history": {
+      "total_layoffs": 7962,
+      "last_layoff_date": "2025-06-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CVS Health (Digital Pivot)",
+    "workforce_count": 305422,
+    "open_jobs_count": 3301,
+    "layoff_history": {
+      "total_layoffs": 29936,
+      "last_layoff_date": "2026-02-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

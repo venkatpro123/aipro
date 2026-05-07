@@ -1,0 +1,22 @@
+[
+  { "company_name": "Qualcomm", "layoff_history": { "total_layoffs": 1200, "last_layoff_date": "2026-04-15", "layoff_frequency": "occasional", "affected_departments": ["engineering", "sales"] } },
+  { "company_name": "Take-Two Interactive", "layoff_history": { "total_layoffs": 600, "last_layoff_date": "2026-04-10", "layoff_frequency": "rare", "affected_departments": ["publishing", "studios"] } },
+  { "company_name": "Eventbrite", "layoff_history": { "total_layoffs": 100, "last_layoff_date": "2026-03-20", "layoff_frequency": "occasional", "affected_departments": ["sales", "support"] } },
+  { "company_name": "Bumble", "layoff_history": { "total_layoffs": 350, "last_layoff_date": "2025-02-27", "layoff_frequency": "rare", "affected_departments": ["product", "engineering"] } },
+  { "company_name": "Paramount Global", "layoff_history": { "total_layoffs": 800, "last_layoff_date": "2025-02-13", "layoff_frequency": "occasional", "affected_departments": ["media", "corporate"] } },
+  { "company_name": "Warner Bros. Discovery", "layoff_history": { "total_layoffs": 1000, "last_layoff_date": "2025-06-25", "layoff_frequency": "occasional", "affected_departments": ["streaming", "networks"] } },
+  { "company_name": "Twitch", "layoff_history": { "total_layoffs": 500, "last_layoff_date": "2025-01-10", "layoff_frequency": "frequent", "affected_departments": ["operations", "partnerships"] } },
+  { "company_name": "Grammarly", "layoff_history": { "total_layoffs": 230, "last_layoff_date": "2025-02-07", "layoff_frequency": "rare", "affected_departments": ["marketing", "sales"] } },
+  { "company_name": "Instacart", "layoff_history": { "total_layoffs": 250, "last_layoff_date": "2025-02-13", "layoff_frequency": "rare", "affected_departments": ["engineering", "operations"] } },
+  { "company_name": "Sunrun", "layoff_history": { "total_layoffs": 1000, "last_layoff_date": "2025-05-15", "layoff_frequency": "rare", "affected_departments": ["installation", "sales"] } },
+  { "company_name": "Enphase Energy", "layoff_history": { "total_layoffs": 300, "last_layoff_date": "2025-01-05", "layoff_frequency": "rare", "affected_departments": ["manufacturing", "operations"] } },
+  { "company_name": "Hasbro", "layoff_history": { "total_layoffs": 1100, "last_layoff_date": "2025-01-11", "layoff_frequency": "occasional", "affected_departments": ["toys", "corporate"] } },
+  { "company_name": "Under Armour", "layoff_history": { "total_layoffs": 200, "last_layoff_date": "2025-05-20", "layoff_frequency": "rare", "affected_departments": ["retail", "corporate"] } },
+  { "company_name": "Mozilla", "layoff_history": { "total_layoffs": 60, "last_layoff_date": "2025-02-13", "layoff_frequency": "occasional", "affected_departments": ["product", "engineering"] } },
+  { "company_name": "TikTok", "layoff_history": { "total_layoffs": 1000, "last_layoff_date": "2025-06-15", "layoff_frequency": "occasional", "affected_departments": ["moderation", "sales"] } },
+  { "company_name": "Tencent", "layoff_history": { "total_layoffs": 500, "last_layoff_date": "2025-03-10", "layoff_frequency": "rare", "affected_departments": ["gaming", "cloud"] } },
+  { "company_name": "Alibaba", "layoff_history": { "total_layoffs": 2000, "last_layoff_date": "2025-05-20", "layoff_frequency": "occasional", "affected_departments": ["ecommerce", "cloud"] } },
+  { "company_name": "Lionsgate", "layoff_history": { "total_layoffs": 100, "last_layoff_date": "2025-04-10", "layoff_frequency": "rare", "affected_departments": ["film", "tv"] } },
+  { "company_name": "PitchBook", "layoff_history": { "total_layoffs": 100, "last_layoff_date": "2025-07-25", "layoff_frequency": "rare", "affected_departments": ["sales", "research"] } },
+  { "company_name": "Aurora", "layoff_history": { "total_layoffs": 100, "last_layoff_date": "2025-08-30", "layoff_frequency": "rare", "affected_departments": ["engineering", "operations"] } }
+]

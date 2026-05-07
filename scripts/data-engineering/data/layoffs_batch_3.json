@@ -1,0 +1,47 @@
+[
+  {
+    "company_name": "Salesforce",
+    "layoff_history": {
+      "total_layoffs": 8000,
+      "last_layoff_date": "2024-01-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["sales", "engineering", "recruiting"]
+    }
+  },
+  {
+    "company_name": "SAP",
+    "layoff_history": {
+      "total_layoffs": 8000,
+      "last_layoff_date": "2024-01-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["engineering", "consulting"]
+    }
+  },
+  {
+    "company_name": "Zoom",
+    "layoff_history": {
+      "total_layoffs": 1300,
+      "last_layoff_date": "2023-02-07",
+      "layoff_frequency": "rare",
+      "affected_departments": ["sales", "product"]
+    }
+  },
+  {
+    "company_name": "Twilio",
+    "layoff_history": {
+      "total_layoffs": 1500,
+      "last_layoff_date": "2023-02-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["sales", "engineering"]
+    }
+  },
+  {
+    "company_name": "Dropbox",
+    "layoff_history": {
+      "total_layoffs": 500,
+      "last_layoff_date": "2023-04-27",
+      "layoff_frequency": "rare",
+      "affected_departments": ["engineering", "recruiting"]
+    }
+  }
+]

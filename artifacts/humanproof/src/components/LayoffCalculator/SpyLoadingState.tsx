@@ -390,6 +390,76 @@ export const SpyLoadingState: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* v10.0: Data Intelligence Stream — live source bars */}
+      {stage >= 1 && (
+        <div style={{
+          marginBottom: '20px',
+          padding: '14px 16px',
+          background: 'rgba(0,0,0,0.4)',
+          border: '1px solid rgba(0,245,255,0.12)',
+          borderRadius: '10px',
+          backdropFilter: 'blur(8px)',
+        }}>
+          <div style={{
+            fontFamily: 'monospace', fontSize: '0.6rem', fontWeight: 800,
+            letterSpacing: '0.16em', color: 'rgba(0,245,255,0.6)',
+            marginBottom: '10px', textTransform: 'uppercase',
+          }}>
+            ◈ Intelligence Data Streams
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {[
+              { label: 'Supabase Intelligence DB', delay: 0,    speed: 0.9, color: '#00d4e0' },
+              { label: 'Financial Signals API',     delay: 200,  speed: 0.7, color: '#10b981' },
+              { label: 'NewsAPI Sentiment',          delay: 400,  speed: 0.6, color: '#7c3aed' },
+              { label: 'Layoffs.fyi Connector',     delay: 600,  speed: 0.8, color: '#f59e0b' },
+              { label: 'SEC EDGAR Regulatory',      delay: 800,  speed: 0.5, color: '#06b6d4' },
+              { label: 'Naukri Job Index',          delay: 1000, speed: 0.6, color: '#a78bfa' },
+              { label: 'Swarm Analysis (30 agents)',delay: 1200, speed: 0.4, color: '#f97316' },
+              { label: 'Intelligence Synthesis',    delay: 1600, speed: 0.3, color: '#ef4444' },
+            ].map((src, i) => {
+              const progress = Math.min(100, Math.max(0, ((stage - 1) * 25 + (i < 4 ? 30 : 10)) * src.speed));
+              const status = progress >= 100 ? 'LIVE' : progress > 0 ? 'LOADING' : 'CACHED';
+              return (
+                <div key={src.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {/* Source label */}
+                  <div style={{
+                    fontFamily: 'monospace', fontSize: '0.58rem', color: 'rgba(255,255,255,0.45)',
+                    width: '140px', flexShrink: 0, letterSpacing: '0.04em',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {src.label}
+                  </div>
+                  {/* Fill bar */}
+                  <div style={{
+                    flex: 1, height: '4px', background: 'rgba(255,255,255,0.05)',
+                    borderRadius: '2px', overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${progress}%`,
+                      background: src.color,
+                      borderRadius: '2px',
+                      boxShadow: progress > 0 ? `0 0 8px ${src.color}60` : 'none',
+                      transition: `width ${1 / src.speed}s ease-out`,
+                    }} />
+                  </div>
+                  {/* Status badge */}
+                  <div style={{
+                    fontFamily: 'monospace', fontSize: '0.5rem', fontWeight: 800,
+                    color: status === 'LIVE' ? '#10b981' : status === 'LOADING' ? src.color : 'rgba(255,255,255,0.25)',
+                    width: '44px', flexShrink: 0, letterSpacing: '0.08em',
+                    textAlign: 'right',
+                  }}>
+                    {status}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Current Phase Display */}
       <div
         style={{

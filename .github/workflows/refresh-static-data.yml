@@ -1,0 +1,111 @@
+name: Refresh Static Data
+
+# Runs weekly (Sunday 02:00 UTC) and on manual dispatch.
+# Writes ONLY to role_exposure_data and industry_risk_data via the
+# pipeline_upsert_static() guard function — never with a raw service_role key.
+#
+# AUTHENTICATION MODEL
+# ────────────────────
+# The pipeline uses SUPABASE_PIPELINE_ANON_KEY (the public anon key, NOT the
+# service role key). The actual write privileges come from the SECURITY DEFINER
+# guard function, which runs as the postgres superuser but enforces an explicit
+# table allowlist. This means:
+#   - A compromised SUPABASE_PIPELINE_ANON_KEY cannot write to user data tables
+#     (layoff_scores, journal, roadmap_progress, etc.) because the guard function
+#     rejects them by name.
+#   - The service role key is never stored in GitHub Secrets, so leaking the CI
+#     secret does not grant full database access.
+#   - Every write is recorded in internal.pipeline_audit_log with the caller
+#     identifier 'github-actions / refresh-static-data'.
+#
+# SECRETS REQUIRED (set in GitHub → Settings → Secrets → Actions)
+#   SUPABASE_URL              — project URL (not a secret, but kept here for consistency)
+#   SUPABASE_PIPELINE_ANON_KEY — anon key (public, but scoped via guard function)
+#   PIPELINE_WRITE_SECRET     — custom header value checked by the guard function
+#                               to distinguish pipeline calls from browser calls
+#
+# DO NOT add SUPABASE_SERVICE_ROLE_KEY to GitHub Secrets.
+# Rotate the service role key immediately if it was previously stored there.
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'   # Weekly, Sunday 02:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — validate data without writing to the database'
+        required: false
+        default: 'true'
+        type: boolean
+      tables:
+        description: 'Comma-separated tables to refresh (role_exposure_data,industry_risk_data)'
+        required: false
+        default: 'role_exposure_data,industry_risk_data'
+
+jobs:
+  refresh:
+    name: Refresh static data tables
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read    # read repo — no write permissions needed
+      # No id-token: write — the pipeline does not use OIDC for now
+
+    env:
+      SUPABASE_URL:       ${{ secrets.SUPABASE_URL }}
+      PIPELINE_ANON_KEY:  ${{ secrets.SUPABASE_PIPELINE_ANON_KEY }}
+      DRY_RUN:            ${{ github.event.inputs.dry_run || 'false' }}
+      TABLES:             ${{ github.event.inputs.tables || 'role_exposure_data,industry_risk_data' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate data files (schema check only)
+        run: npx tsx scripts/data-engineering/validate-static-data.ts
+        # This step runs against local TypeScript files only — no DB connection.
+        # Fails fast if the data files have schema violations before any DB write.
+
+      - name: Dry-run upsert (reads plan, does not write)
+        if: env.DRY_RUN == 'true'
+        run: |
+          npx tsx scripts/data-engineering/refresh-static-data.ts \
+            --tables "$TABLES" \
+            --dry-run \
+            --caller "github-actions/refresh-static-data@${{ github.sha }}"
+        env:
+          SUPABASE_URL:      ${{ env.SUPABASE_URL }}
+          PIPELINE_ANON_KEY: ${{ env.PIPELINE_ANON_KEY }}
+
+      - name: Upsert via guard function
+        if: env.DRY_RUN != 'true'
+        run: |
+          npx tsx scripts/data-engineering/refresh-static-data.ts \
+            --tables "$TABLES" \
+            --caller "github-actions/refresh-static-data@${{ github.sha }}"
+        env:
+          SUPABASE_URL:      ${{ env.SUPABASE_URL }}
+          PIPELINE_ANON_KEY: ${{ env.PIPELINE_ANON_KEY }}
+
+      - name: Verify audit log entry was written
+        if: env.DRY_RUN != 'true'
+        run: npx tsx scripts/data-engineering/verify-audit-log.ts
+        env:
+          SUPABASE_URL:      ${{ env.SUPABASE_URL }}
+          PIPELINE_ANON_KEY: ${{ env.PIPELINE_ANON_KEY }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Static data refresh failed. Check internal.pipeline_audit_log for FAILED entries."
+          echo "::error::If the service role key may be compromised, rotate it immediately in the Supabase dashboard."

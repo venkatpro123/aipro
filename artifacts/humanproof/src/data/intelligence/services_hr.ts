@@ -22,9 +22,9 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Talent Intelligence Specialist', riskReduction: 55, skillGap: 'Market mapping, Competitive talent analytics', transitionDifficulty: 'Medium', industryMapping: ['Corporate HR'], salaryDelta: '+30-60%', timeToTransition: '12 months' },
-      { role: 'Executive Search Consultant', riskReduction: 50, skillGap: 'C-suite network development, Board advisory', transitionDifficulty: 'Hard', industryMapping: ['Executive Search Firms'], salaryDelta: '+50-150%', timeToTransition: '36 months' },
-      { role: 'TA Technology Lead (ATS)', riskReduction: 62, skillGap: 'AI recruiting tools, Data analytics', transitionDifficulty: 'Medium', industryMapping: ['Tech Companies'], salaryDelta: '+30-60%', timeToTransition: '12 months' },
+      { role: 'Talent Intelligence Specialist', riskReduction: 55, skillGap: 'Market mapping, Competitive talent analytics', transitionDifficulty: 'Medium', industryMapping: ['Corporate HR'], salaryDelta: '+30-60%', timeToTransition: '12 months', months_to_first_income: 4, income_dip_months: 2 },
+      { role: 'Executive Search Consultant', riskReduction: 50, skillGap: 'C-suite network development, Board advisory', transitionDifficulty: 'Hard', industryMapping: ['Executive Search Firms'], salaryDelta: '+50-150%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
+      { role: 'TA Technology Lead (ATS)', riskReduction: 62, skillGap: 'AI recruiting tools, Data analytics', transitionDifficulty: 'Medium', industryMapping: ['Tech Companies'], salaryDelta: '+30-60%', timeToTransition: '12 months', months_to_first_income: 4, income_dip_months: 2 },
     ],
     roadmap: {
       '0-2': { phase_1: { timeline: '60 days', focus: 'AI Tool Mastery', actions: [{ action: 'Become the AI recruiting tool expert in your team', why: 'The recruiter who can evaluate AI tools is the recruiter who keeps their job.', outcome: 'Differentiated market position', tool: 'Greenhouse, Lever, LinkedIn Talent Insights' }] } },
@@ -48,9 +48,9 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief People Officer', riskReduction: 45, skillGap: 'Board-level business strategy, P&L understanding', transitionDifficulty: 'Hard', industryMapping: ['Corporate'], salaryDelta: '+50-150%', timeToTransition: '36 months' },
-      { role: 'Organizational Design Consultant', riskReduction: 55, skillGap: 'Systems thinking, Process architecture', transitionDifficulty: 'Medium', industryMapping: ['Consulting'], salaryDelta: '+40-80%', timeToTransition: '18 months' },
-      { role: 'AI Change Management Lead', riskReduction: 62, skillGap: 'AI transformation methodology, Organizational behavior', transitionDifficulty: 'Medium', industryMapping: ['All sectors'], salaryDelta: '+40-80%', timeToTransition: '12 months' },
+      { role: 'Chief People Officer', riskReduction: 45, skillGap: 'Board-level business strategy, P&L understanding', transitionDifficulty: 'Hard', industryMapping: ['Corporate'], salaryDelta: '+50-150%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
+      { role: 'Organizational Design Consultant', riskReduction: 55, skillGap: 'Systems thinking, Process architecture', transitionDifficulty: 'Medium', industryMapping: ['Consulting'], salaryDelta: '+40-80%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
+      { role: 'AI Change Management Lead', riskReduction: 62, skillGap: 'AI transformation methodology, Organizational behavior', transitionDifficulty: 'Medium', industryMapping: ['All sectors'], salaryDelta: '+40-80%', timeToTransition: '12 months', months_to_first_income: 4, income_dip_months: 2 },
     ],
     riskTrend: [{ year: 2024, riskScore: 25, label: 'Now' }, { year: 2025, riskScore: 28, label: '+1yr' }, { year: 2026, riskScore: 32, label: '+2yr' }, { year: 2027, riskScore: 38, label: '+3yr' }, { year: 2028, riskScore: 42, label: '+4yr' }],
     confidenceScore: 96,
@@ -69,8 +69,8 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Total Rewards Director', riskReduction: 58, skillGap: 'Global tax strategy, Executive compensation regulations', transitionDifficulty: 'Hard', industryMapping: ['Enterprise'], salaryDelta: '+40-80%', timeToTransition: '18 months' },
-      { role: 'Compensation Strategy Consultant', riskReduction: 62, skillGap: 'Consulting skills, Multi-client management', transitionDifficulty: 'Medium', industryMapping: ['Consulting'], salaryDelta: '+50-100%', timeToTransition: '24 months' },
+      { role: 'Total Rewards Director', riskReduction: 58, skillGap: 'Global tax strategy, Executive compensation regulations', transitionDifficulty: 'Hard', industryMapping: ['Enterprise'], salaryDelta: '+40-80%', timeToTransition: '18 months', months_to_first_income: 6, income_dip_months: 3 },
+      { role: 'Compensation Strategy Consultant', riskReduction: 62, skillGap: 'Consulting skills, Multi-client management', transitionDifficulty: 'Medium', industryMapping: ['Consulting'], salaryDelta: '+50-100%', timeToTransition: '24 months', months_to_first_income: 8, income_dip_months: 4 },
     ],
     riskTrend: [{ year: 2024, riskScore: 35, label: 'Now' }, { year: 2025, riskScore: 45, label: '+1yr' }, { year: 2026, riskScore: 55, label: '+2yr' }, { year: 2027, riskScore: 62, label: '+3yr' }, { year: 2028, riskScore: 68, label: '+4yr' }],
     confidenceScore: 94,
@@ -91,7 +91,7 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief People Analytics Officer', riskReduction: 30, skillGap: 'Data science, Machine learning, R/Python', transitionDifficulty: 'Hard', industryMapping: ['Large Enterprise'], salaryDelta: '+80-180%', timeToTransition: '36 months' },
+      { role: 'Chief People Analytics Officer', riskReduction: 30, skillGap: 'Data science, Machine learning, R/Python', transitionDifficulty: 'Hard', industryMapping: ['Large Enterprise'], salaryDelta: '+80-180%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     riskTrend: [{ year: 2024, riskScore: 22, label: 'Now' }, { year: 2026, riskScore: 20, label: '+2yr' }, { year: 2027, riskScore: 18, label: '+3yr' }, { year: 2028, riskScore: 17, label: '+4yr' }, { year: 2029, riskScore: 16, label: '+5yr' }],
     confidenceScore: 97,
@@ -110,7 +110,7 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief Diversity Officer', riskReduction: 35, skillGap: 'Board-level strategy, Organizational policy design', transitionDifficulty: 'Hard', industryMapping: ['Large Enterprise', 'Public Sector'], salaryDelta: '+50-150%', timeToTransition: '36 months' },
+      { role: 'Chief Diversity Officer', riskReduction: 35, skillGap: 'Board-level strategy, Organizational policy design', transitionDifficulty: 'Hard', industryMapping: ['Large Enterprise', 'Public Sector'], salaryDelta: '+50-150%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     riskTrend: [{ year: 2024, riskScore: 15, label: 'Now' }, { year: 2026, riskScore: 18, label: '+2yr' }, { year: 2027, riskScore: 20, label: '+3yr' }, { year: 2028, riskScore: 22, label: '+4yr' }, { year: 2029, riskScore: 24, label: '+5yr' }],
     confidenceScore: 98,
@@ -129,7 +129,7 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Chief Transformation Officer', riskReduction: 25, skillGap: 'P&L management, Enterprise AI platform expertise', transitionDifficulty: 'Hard', industryMapping: ['Global Enterprise'], salaryDelta: '+80-200%', timeToTransition: '36 months' },
+      { role: 'Chief Transformation Officer', riskReduction: 25, skillGap: 'P&L management, Enterprise AI platform expertise', transitionDifficulty: 'Hard', industryMapping: ['Global Enterprise'], salaryDelta: '+80-200%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     inactionScenario: 'This is one of the most in-demand roles of 2024-2027. Every enterprise undergoing AI adoption needs a human who can manage the people side of the transition.',
     riskTrend: [{ year: 2024, riskScore: 12, label: 'Now' }, { year: 2026, riskScore: 10, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 15, label: '+5yr' }],
@@ -149,7 +149,7 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Future of Work Strategy Lead', riskReduction: 35, skillGap: 'AI literacy, Scenario planning methodology', transitionDifficulty: 'Medium', industryMapping: ['Large Enterprise', 'Consulting'], salaryDelta: '+50-100%', timeToTransition: '24 months' },
+      { role: 'Future of Work Strategy Lead', riskReduction: 35, skillGap: 'AI literacy, Scenario planning methodology', transitionDifficulty: 'Medium', industryMapping: ['Large Enterprise', 'Consulting'], salaryDelta: '+50-100%', timeToTransition: '24 months', months_to_first_income: 8, income_dip_months: 4 },
     ],
     riskTrend: [{ year: 2024, riskScore: 18, label: 'Now' }, { year: 2026, riskScore: 16, label: '+2yr' }, { year: 2027, riskScore: 15, label: '+3yr' }, { year: 2028, riskScore: 14, label: '+4yr' }, { year: 2029, riskScore: 14, label: '+5yr' }],
     confidenceScore: 97,
@@ -168,7 +168,7 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'Global Payroll Director', riskReduction: 45, skillGap: 'International employment law, HRIS architecture', transitionDifficulty: 'Hard', industryMapping: ['Multinational Enterprise'], salaryDelta: '+40-80%', timeToTransition: '24 months' },
+      { role: 'Global Payroll Director', riskReduction: 45, skillGap: 'International employment law, HRIS architecture', transitionDifficulty: 'Hard', industryMapping: ['Multinational Enterprise'], salaryDelta: '+40-80%', timeToTransition: '24 months', months_to_first_income: 8, income_dip_months: 4 },
     ],
     riskTrend: [{ year: 2024, riskScore: 42, label: 'Now' }, { year: 2025, riskScore: 52, label: '+1yr' }, { year: 2026, riskScore: 62, label: '+2yr' }, { year: 2027, riskScore: 70, label: '+3yr' }, { year: 2028, riskScore: 76, label: '+4yr' }],
     confidenceScore: 95,
@@ -187,7 +187,7 @@ export const SERVICES_HR_INTELLIGENCE: Record<string, CareerIntelligence> = {
       ],
     },
     careerPaths: [
-      { role: 'VP Employee Experience', riskReduction: 35, skillGap: 'Brand strategy, Architecture, Behavioral science', transitionDifficulty: 'Hard', industryMapping: ['Large Tech', 'Financial Services'], salaryDelta: '+60-150%', timeToTransition: '36 months' },
+      { role: 'VP Employee Experience', riskReduction: 35, skillGap: 'Brand strategy, Architecture, Behavioral science', transitionDifficulty: 'Hard', industryMapping: ['Large Tech', 'Financial Services'], salaryDelta: '+60-150%', timeToTransition: '36 months', months_to_first_income: 10, income_dip_months: 5 },
     ],
     riskTrend: [{ year: 2024, riskScore: 15, label: 'Now' }, { year: 2026, riskScore: 13, label: '+2yr' }, { year: 2027, riskScore: 12, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 12, label: '+5yr' }],
     confidenceScore: 97,

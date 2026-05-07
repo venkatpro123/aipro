@@ -1,10 +1,10 @@
 // gemmaAgent.ts
 // Agent 1: Gemma 3 27B (via OpenRouter) — OSINT & company signal extraction
-// Free tier: 200 requests/day via openrouter.ai
+// v6.0 Audit Fix: calls go through openRouterProxy (Edge Function) — key never in browser.
 
 import { checkRateLimit } from '../rateLimit/apiRateLimiter';
+import { callOpenRouterProxy } from './openRouterProxy';
 
-const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
 const MODEL = 'google/gemma-3-27b-it:free';
 
 export interface GemmaSignals {
@@ -32,8 +32,6 @@ export const runGemmaOSINT = async (
   roleTitle: string,
   swarmContext?: string
 ): Promise<GemmaResult> => {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-  if (!apiKey) return { model: 'gemma-3-27b', success: false, signals: null, rawConfidence: 0 };
   if (!checkRateLimit('openrouter')) return { model: 'gemma-3-27b', success: false, signals: null, rawConfidence: 0 };
 
   const swarmSection = swarmContext ? `\n\n${swarmContext}\n` : '';
@@ -63,34 +61,10 @@ Respond with ONLY this JSON — no markdown, no explanation:
 Base analysis on known financial performance of ${companyName}, industry trends in ${industry}, and AI automation vulnerability of ${roleTitle} roles. If you have low confidence about ${companyName}, use industry-level signals and set confidence below 0.5.`;
 
   try {
-    const response = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://humanproof.app',
-        'X-Title': 'HumanProof Layoff Calculator',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.1,
-        max_tokens: 400,
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!response.ok) throw new Error(`OpenRouter HTTP ${response.status}`);
-    const data = await response.json();
-    const raw: string = data.choices?.[0]?.message?.content ?? '';
-    const parsed: GemmaSignals = JSON.parse(raw.replace(/```json|```/g, '').trim());
-
-    return {
-      model: 'gemma-3-27b',
-      success: true,
-      signals: parsed,
-      rawConfidence: parsed.confidence ?? 0.5,
-    };
+    const proxyRes = await callOpenRouterProxy({ model: MODEL, prompt, maxTokens: 400, temperature: 0.1, responseFormat: 'json_object' });
+    if (!proxyRes.success || !proxyRes.content) throw new Error(proxyRes.error ?? 'Proxy returned no content');
+    const parsed: GemmaSignals = JSON.parse(proxyRes.content.replace(/```json|```/g, '').trim());
+    return { model: 'gemma-3-27b', success: true, signals: parsed, rawConfidence: parsed.confidence ?? 0.5 };
   } catch (error: any) {
     console.warn('[GemmaAgent] Failed:', error.message);
     return { model: 'gemma-3-27b', success: false, signals: null, rawConfidence: 0 };

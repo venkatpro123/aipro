@@ -1,11 +1,23 @@
 // analysisCache.ts
-// Dual-layer cache: localStorage (24h) → Supabase (7-day TTL)
+// Dual-layer cache: localStorage (1h) → Supabase (24h TTL)
+//
+// TTL rationale:
+//   1 hour local:  short enough that a breaking layoff event within the same session
+//                  will be picked up when the user re-submits after an hour. The
+//                  previous 24h TTL meant stale cached results persisted through the
+//                  entire working day, hiding intra-day news events.
+//   24h remote:    cross-device deduplication; expired entries are stale enough that
+//                  a fresh fetch is warranted.
+//
+// Breaking-news invalidation: invalidateForCompany() below clears cache entries for a
+// specific company key so that injectLayoffEvent() can force fresh scoring immediately.
+//
 // Table required: layoff_analysis_cache (id UUID, key TEXT UNIQUE, data JSONB, created_at TIMESTAMPTZ)
 
 import { supabase } from '../../utils/supabase';
 
-const LOCAL_TTL_MS  = 1000 * 60 * 60 * 24;      // 24 hours
-const REMOTE_TTL_MS = 1000 * 60 * 60 * 24 * 7;  // 7 days
+const LOCAL_TTL_MS  = 1000 * 60 * 60 * 1;       // 1 hour  (was 24h)
+const REMOTE_TTL_MS = 1000 * 60 * 60 * 24;      // 24 hours (was 7 days)
 
 // BUG-09 FIX: strip heavy swarm visualization data before caching to prevent
 // localStorage quota overflow (~80KB → ~5KB per entry)
@@ -92,5 +104,50 @@ export const setCachedAnalysis = async (key: string, value: any): Promise<void> 
     .then(({ error }) => {
       if (error) console.warn('[Cache] Supabase upsert failed:', error.message);
       else console.log('[Cache] Saved to Supabase:', key);
+    });
+};
+
+/**
+ * Return the local-cache write timestamp for a key, or null if not cached / expired.
+ * Used by the cache-hit banner to display "Cached result from X minutes ago."
+ */
+export const getCacheTimestamp = (key: string): number | null => {
+  try {
+    const raw = localStorage.getItem(`hp_ensemble_${key}`);
+    if (!raw) return null;
+    const { timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp < LOCAL_TTL_MS) return timestamp as number;
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Invalidate all cache entries whose key starts with the given company prefix.
+ * Called immediately when a breaking news event is injected for a company that
+ * has a cached result — forces fresh scoring on the next submit.
+ *
+ * @param companyName  Plain company name (case-insensitive). Matches cache keys
+ *                     that begin with `{companyName.toLowerCase()}::`.
+ */
+export const invalidateForCompany = (companyName: string): void => {
+  const prefix = `hp_ensemble_${companyName.toLowerCase()}::`;
+  const toDelete: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k?.startsWith(prefix)) toDelete.push(k);
+  }
+  toDelete.forEach(k => {
+    localStorage.removeItem(k);
+    console.info(`[Cache] Invalidated by breaking news: ${k}`);
+  });
+  // Also invalidate in Supabase (fire-and-forget)
+  supabase
+    .from('layoff_analysis_cache')
+    .delete()
+    .like('key', `${companyName.toLowerCase()}::%`)
+    .then(({ error }) => {
+      if (error) console.warn('[Cache] Remote invalidation failed:', error.message);
     });
 };

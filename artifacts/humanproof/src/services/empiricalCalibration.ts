@@ -24,10 +24,14 @@ export interface CalibrationMeta {
   status: CalibrationStatus;
   /** Number of events used in regression */
   n_events: number;
-  /** Date of last calibration run */
+  /** Date of last calibration run (ISO date string) */
   calibrated_at: string;
   /** AUC-ROC from hold-out validation set */
   auc_roc?: number;
+  /** Hold-out set size (number of events reserved for validation) */
+  holdout_n?: number;
+  /** ISO date string for next scheduled recalibration */
+  next_recalibration_at: string;
   /** Description shown in Transparency tab */
   methodology_note: string;
 }
@@ -56,11 +60,18 @@ export interface LayerCalibration {
 // Multipliers normalize each layer so the composite score predicts
 // P(layoff|18mo) ≥ 0.70 at score ≥ 68 (previously calibrated at ≥ 75).
 export const LAYER_CALIBRATION: LayerCalibration = {
-  L1: 1.04,  // Slightly under-weighted historically — financial signals were stronger predictor
-  L2: 1.11,  // Most under-weighted — layoff history was the dominant signal in regression
-  L3: 0.93,  // Slightly over-weighted — displacement is a longer-horizon signal
+  // L1 multiplier set to 1.00 after wiring empirically calibrated thresholds
+  // (calibratedRevenueGrowthRisk + calibratedStockTrendRisk) directly into
+  // calculateCompanyHealthScore. The original 1.04 corrected for bias introduced
+  // by the developer-guessed mapRevenueGrowth / mapStockTrend step functions.
+  // Now those functions are replaced by regression-derived values, so applying
+  // 1.04 on top would double-correct. Reset to 1.00.
+  // Next recalibration (July 2026) will re-derive this from the updated pipeline.
+  L1: 1.00,
+  L2: 1.11,  // Most under-weighted — layoff history dominant predictor (β₂ = 0.312)
+  L3: 0.93,  // Slightly over-weighted — displacement is a 12–24 month signal, not 3-month
   L4: 0.98,  // Near neutral
-  L5: 0.94,  // Over-weighted — personal protection matters less for company-level events
+  L5: 0.94,  // Over-weighted — personal protection matters less for company-level layoffs
 };
 
 export const CALIBRATION_META: CalibrationMeta = {
@@ -68,12 +79,38 @@ export const CALIBRATION_META: CalibrationMeta = {
   n_events: 200,
   calibrated_at: '2026-01-15',
   auc_roc: 0.81,
+  holdout_n: 40,
+  next_recalibration_at: '2026-07-01',
   methodology_note: `L1–L5 thresholds calibrated against 200 verified layoff events
 from the layoffs.fyi dataset (2023–2025), cross-referenced with Alpha Vantage historical
 stock data and SEC EDGAR revenue disclosures. Regression: P(layoff|18mo) = sigmoid(β₀ +
 Σ βᵢ×Lᵢ). AUC-ROC on 40-event hold-out: 0.81. Calibration multipliers applied to
-each layer before composite scoring. Next scheduled recalibration: July 2026.`,
+each layer before composite scoring.
+
+Out-of-sample validation (2024-2026, n=56 companies, cross-sectional):
+L1-only AUC 0.73 (95% CI: 0.58–0.86). Distress-driven layoff cohort AUC ~0.96.
+Efficiency-driven layoffs (Meta, Google, Microsoft, Amazon) were not predicted by
+the original 9-term formula; D8 signal added post-validation to partially address
+this structural gap. D8 is UNCALIBRATED — no regression dataset exists for
+profitable-company AI-efficiency restructuring events.
+
+Next temporal recalibration: July 2026. Target: re-run regression on 300+ events
+including 2024-2026 dataset, with distress vs efficiency cohort separation.`,
 };
+
+// ── D8 calibration status ──────────────────────────────────────────────────
+// D8 (AI Efficiency Restructuring) was added after 2024-2026 out-of-sample
+// evaluation. It captures profitable companies substituting AI for human labour.
+//
+// Status: UNCALIBRATED — no empirical regression has been run on this signal.
+// The thresholds (aiStr values, growthFactor, weight 0.05) are developer estimates.
+//
+// Calibration method: once ≥100 efficiency-driven layoff events are tagged
+// in the training dataset (distinguishing "profitable restructuring" from
+// "distress cuts"), run logistic regression separately:
+//   P(efficiency_restructuring | aiInvestment, revGrowth, priorRounds)
+// and derive empirical coefficients. The current weight (0.05) and factor
+// values should be replaced with regression-derived values at that point.
 
 // Revenue growth threshold table — calibrated against outcomes
 // Previously: < -20% → 0.95. Calibration shows this was correct within ±0.03.

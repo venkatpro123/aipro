@@ -65,7 +65,7 @@ function computeROIPerHour(item: ActionPlanItem): number {
   return (item.riskReductionPct ?? 0) / hours;
 }
 
-function assignPhase(item: ActionPlanItem): Phase {
+export function assignPhase(item: ActionPlanItem): Phase {
   const d = (item.deadline ?? "").toLowerCase();
   const p = item.priority;
 

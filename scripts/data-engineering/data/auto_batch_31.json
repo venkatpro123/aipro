@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "AXA (Global Giant)",
+    "workforce_count": 146595,
+    "open_jobs_count": 2233,
+    "layoff_history": {
+      "total_layoffs": 4785,
+      "last_layoff_date": "2026-02-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Allianz (Global Giant)",
+    "workforce_count": 158796,
+    "open_jobs_count": 1948,
+    "layoff_history": {
+      "total_layoffs": 7534,
+      "last_layoff_date": "2025-09-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Generali (Global Giant)",
+    "workforce_count": 82158,
+    "open_jobs_count": 2136,
+    "layoff_history": {
+      "total_layoffs": 3170,
+      "last_layoff_date": "2026-02-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Prudential plc (Global Giant)",
+    "workforce_count": 14777,
+    "open_jobs_count": 324,
+    "layoff_history": {
+      "total_layoffs": 459,
+      "last_layoff_date": "2025-01-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Aviva (Global Giant)",
+    "workforce_count": 22162,
+    "open_jobs_count": 384,
+    "layoff_history": {
+      "total_layoffs": 919,
+      "last_layoff_date": "2026-02-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Standard Life (Global Giant)",
+    "workforce_count": 6936,
+    "open_jobs_count": 88,
+    "layoff_history": {
+      "total_layoffs": 345,
+      "last_layoff_date": "2025-07-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Liberty Shoes (India Star)",
+    "workforce_count": 5292,
+    "open_jobs_count": 145,
+    "layoff_history": {
+      "total_layoffs": 210,
+      "last_layoff_date": "2025-06-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Khadim India (India Star)",
+    "workforce_count": 3497,
+    "open_jobs_count": 93,
+    "layoff_history": {
+      "total_layoffs": 121,
+      "last_layoff_date": "2025-04-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mirza International (India Star)",
+    "workforce_count": 2088,
+    "open_jobs_count": 26,
+    "layoff_history": {
+      "total_layoffs": 46,
+      "last_layoff_date": "2025-04-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Rajesh Exports (India Giant)",
+    "workforce_count": 12282,
+    "open_jobs_count": 334,
+    "layoff_history": {
+      "total_layoffs": 369,
+      "last_layoff_date": "2025-11-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Kalyan Jewellers (India Giant)",
+    "workforce_count": 8653,
+    "open_jobs_count": 174,
+    "layoff_history": {
+      "total_layoffs": 306,
+      "last_layoff_date": "2025-08-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Thangamayil Jewellery (India Star)",
+    "workforce_count": 1842,
+    "open_jobs_count": 45,
+    "layoff_history": {
+      "total_layoffs": 83,
+      "last_layoff_date": "2025-10-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Thames & Hudson (Global Giant)",
+    "workforce_count": 843,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 33,
+      "last_layoff_date": "2025-04-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pearson Global (Global Giant)",
+    "workforce_count": 21621,
+    "open_jobs_count": 253,
+    "layoff_history": {
+      "total_layoffs": 810,
+      "last_layoff_date": "2025-03-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wolters Kluwer (Global Giant)",
+    "workforce_count": 20667,
+    "open_jobs_count": 233,
+    "layoff_history": {
+      "total_layoffs": 611,
+      "last_layoff_date": "2025-11-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hinduja Global Solutions (India Giant)",
+    "workforce_count": 21029,
+    "open_jobs_count": 460,
+    "layoff_history": {
+      "total_layoffs": 453,
+      "last_layoff_date": "2025-09-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Gulf Oil India (India Star)",
+    "workforce_count": 859,
+    "open_jobs_count": 20,
+    "layoff_history": {
+      "total_layoffs": 42,
+      "last_layoff_date": "2026-02-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "TVS Holdings (India Giant)",
+    "workforce_count": 4419,
+    "open_jobs_count": 118,
+    "layoff_history": {
+      "total_layoffs": 196,
+      "last_layoff_date": "2025-08-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sundram Fasteners (India Giant)",
+    "workforce_count": 12525,
+    "open_jobs_count": 202,
+    "layoff_history": {
+      "total_layoffs": 551,
+      "last_layoff_date": "2025-09-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wheels India (India Star)",
+    "workforce_count": 2132,
+    "open_jobs_count": 27,
+    "layoff_history": {
+      "total_layoffs": 76,
+      "last_layoff_date": "2025-05-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Crompton Greaves (India Giant)",
+    "workforce_count": 6584,
+    "open_jobs_count": 194,
+    "layoff_history": {
+      "total_layoffs": 143,
+      "last_layoff_date": "2025-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bajaj Electricals (India Giant)",
+    "workforce_count": 3222,
+    "open_jobs_count": 34,
+    "layoff_history": {
+      "total_layoffs": 89,
+      "last_layoff_date": "2025-01-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Orient Electric (India Star)",
+    "workforce_count": 1403,
+    "open_jobs_count": 40,
+    "layoff_history": {
+      "total_layoffs": 46,
+      "last_layoff_date": "2025-10-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Polycab India (India Giant)",
+    "workforce_count": 5258,
+    "open_jobs_count": 67,
+    "layoff_history": {
+      "total_layoffs": 162,
+      "last_layoff_date": "2025-06-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Dassault Systemes (Global Giant)",
+    "workforce_count": 22392,
+    "open_jobs_count": 662,
+    "layoff_history": {
+      "total_layoffs": 1027,
+      "last_layoff_date": "2025-01-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bentley Systems (Global Giant)",
+    "workforce_count": 4991,
+    "open_jobs_count": 84,
+    "layoff_history": {
+      "total_layoffs": 187,
+      "last_layoff_date": "2025-10-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Trimble Inc (Global Giant)",
+    "workforce_count": 11679,
+    "open_jobs_count": 168,
+    "layoff_history": {
+      "total_layoffs": 564,
+      "last_layoff_date": "2025-11-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PTC Inc (Global Giant)",
+    "workforce_count": 7268,
+    "open_jobs_count": 214,
+    "layoff_history": {
+      "total_layoffs": 160,
+      "last_layoff_date": "2025-02-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Ansys Inc (Global Giant)",
+    "workforce_count": 6195,
+    "open_jobs_count": 113,
+    "layoff_history": {
+      "total_layoffs": 212,
+      "last_layoff_date": "2025-07-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Fastly (Global Giant)",
+    "workforce_count": 1202,
+    "open_jobs_count": 32,
+    "layoff_history": {
+      "total_layoffs": 122,
+      "last_layoff_date": "2025-10-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Snowflake (Global Giant)",
+    "workforce_count": 7449,
+    "open_jobs_count": 182,
+    "layoff_history": {
+      "total_layoffs": 179,
+      "last_layoff_date": "2025-03-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Confluent (Global Giant)",
+    "workforce_count": 2826,
+    "open_jobs_count": 76,
+    "layoff_history": {
+      "total_layoffs": 272,
+      "last_layoff_date": "2025-11-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Transport Corp of India (India Giant)",
+    "workforce_count": 5211,
+    "open_jobs_count": 129,
+    "layoff_history": {
+      "total_layoffs": 123,
+      "last_layoff_date": "2026-03-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "VRL Logistics (India Giant)",
+    "workforce_count": 18302,
+    "open_jobs_count": 426,
+    "layoff_history": {
+      "total_layoffs": 889,
+      "last_layoff_date": "2025-12-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Laxmi Organic (India Star)",
+    "workforce_count": 2561,
+    "open_jobs_count": 74,
+    "layoff_history": {
+      "total_layoffs": 86,
+      "last_layoff_date": "2025-01-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Camlin Fine Sciences (India Star)",
+    "workforce_count": 1407,
+    "open_jobs_count": 29,
+    "layoff_history": {
+      "total_layoffs": 45,
+      "last_layoff_date": "2026-04-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Garware Technical Fibres (India Star)",
+    "workforce_count": 5518,
+    "open_jobs_count": 87,
+    "layoff_history": {
+      "total_layoffs": 270,
+      "last_layoff_date": "2026-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bodal Chemicals (India Star)",
+    "workforce_count": 1819,
+    "open_jobs_count": 26,
+    "layoff_history": {
+      "total_layoffs": 85,
+      "last_layoff_date": "2026-03-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Gujarat Fluorochemicals (India Giant)",
+    "workforce_count": 3520,
+    "open_jobs_count": 95,
+    "layoff_history": {
+      "total_layoffs": 135,
+      "last_layoff_date": "2026-01-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Deepak Nitrite (India Giant)",
+    "workforce_count": 2564,
+    "open_jobs_count": 70,
+    "layoff_history": {
+      "total_layoffs": 104,
+      "last_layoff_date": "2026-04-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sudarshan Chemical (India Star)",
+    "workforce_count": 2265,
+    "open_jobs_count": 57,
+    "layoff_history": {
+      "total_layoffs": 80,
+      "last_layoff_date": "2025-02-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Alkyl Amines (India Star)",
+    "workforce_count": 856,
+    "open_jobs_count": 20,
+    "layoff_history": {
+      "total_layoffs": 25,
+      "last_layoff_date": "2025-01-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Check Point Software (Global Giant)",
+    "workforce_count": 6084,
+    "open_jobs_count": 162,
+    "layoff_history": {
+      "total_layoffs": 261,
+      "last_layoff_date": "2025-08-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CyberArk (Global Giant)",
+    "workforce_count": 2778,
+    "open_jobs_count": 41,
+    "layoff_history": {
+      "total_layoffs": 70,
+      "last_layoff_date": "2025-12-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "JFrog (Global Giant)",
+    "workforce_count": 1428,
+    "open_jobs_count": 26,
+    "layoff_history": {
+      "total_layoffs": 41,
+      "last_layoff_date": "2025-03-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HashiCorp (Global Giant)",
+    "workforce_count": 2222,
+    "open_jobs_count": 66,
+    "layoff_history": {
+      "total_layoffs": 248,
+      "last_layoff_date": "2025-08-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PagerDuty (Global Giant)",
+    "workforce_count": 1201,
+    "open_jobs_count": 34,
+    "layoff_history": {
+      "total_layoffs": 101,
+      "last_layoff_date": "2026-02-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "New Relic (Global Giant)",
+    "workforce_count": 2559,
+    "open_jobs_count": 60,
+    "layoff_history": {
+      "total_layoffs": 487,
+      "last_layoff_date": "2026-04-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "F5 Networks (Global Giant)",
+    "workforce_count": 7634,
+    "open_jobs_count": 110,
+    "layoff_history": {
+      "total_layoffs": 867,
+      "last_layoff_date": "2025-10-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Nutanix (Global Giant)",
+    "workforce_count": 6189,
+    "open_jobs_count": 162,
+    "layoff_history": {
+      "total_layoffs": 455,
+      "last_layoff_date": "2025-10-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

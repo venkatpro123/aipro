@@ -1,9 +1,15 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useEffect, useCallback, useRef } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  LayoutDashboard, BarChart3, Building2, Brain, ListChecks, Shield,
+} from "lucide-react";
 import { HybridResult } from "../../types/hybridResult";
 import { CompanyData } from "../../data/companyDatabase";
 import { GlobalErrorBoundary } from "../GlobalErrorBoundary";
+import { getDegradationState, type DegradationState } from "../../services/apiDegradationMonitor";
+import { useCompanySignalSubscription } from "../../hooks/useCompanySignalSubscription";
+import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
 
 // Lazy-loaded tab modules for performance
 const OverviewTab = lazy(() => import("../AuditTabs/OverviewTab"));
@@ -18,26 +24,135 @@ interface Props {
   companyData: CompanyData;
   onRetake: () => void;
   onDownload?: () => void;
+  /** Optional: trigger a score recalculation without a full page reload */
+  onRecalculate?: () => void;
 }
 
-const TabTrigger: React.FC<{ value: string; label: string; icon: string }> = ({
-  value,
-  label,
-  icon,
-}) => (
+const TabLoader: React.FC = () => (
+  <div className="flex flex-col items-center justify-center py-[var(--space-16)]">
+    <div className="relative mb-6">
+      <div className="w-10 h-10 rounded-full border-2 border-[var(--cyan)]/10 border-t-[var(--cyan)] animate-spin" />
+      <div className="absolute inset-0 rounded-full" style={{ boxShadow: '0 0 20px rgba(0,212,224,0.2)' }} />
+    </div>
+    <p className="label-xs tracking-[0.3em]" style={{ color: 'rgba(0,212,224,0.6)' }}>LOADING INTELLIGENCE...</p>
+  </div>
+);
+
+// Per-tab icon and badge configuration
+const TAB_CONFIG = [
+  { value: 'overview',        label: 'Overview',      Icon: LayoutDashboard, shortLabel: 'Overview' },
+  { value: 'risk_breakdown',  label: 'Risk',          Icon: BarChart3,       shortLabel: 'Risk' },
+  { value: 'company_profile', label: 'Company',       Icon: Building2,       shortLabel: 'Company' },
+  { value: 'career_skills',   label: 'Career',        Icon: Brain,           shortLabel: 'Career' },
+  { value: 'action_plan',     label: 'Action Plan',   Icon: ListChecks,      shortLabel: 'Actions' },
+  { value: 'transparency',    label: 'Transparency',  Icon: Shield,          shortLabel: 'Data' },
+] as const;
+
+type TabValue = typeof TAB_CONFIG[number]['value'];
+
+function getTabBadge(value: TabValue, result: HybridResult): { count: number; color: string } | null {
+  const score = result.total;
+  const scoreColor = score >= 70 ? '#ef4444' : score >= 50 ? '#f97316' : score >= 35 ? '#f59e0b' : '#10b981';
+  switch (value) {
+    case 'overview':
+      return { count: score, color: scoreColor };
+    case 'risk_breakdown':
+      return { count: result.dimensions?.length ?? 5, color: 'var(--cyan)' };
+    case 'company_profile':
+      return result.signalQuality?.liveSignals > 0
+        ? { count: result.signalQuality.liveSignals, color: 'var(--emerald)' }
+        : null;
+    case 'career_skills':
+      return null;
+    case 'action_plan': {
+      const critical = result.recommendations?.filter(r => r.priority === 'Critical').length ?? 0;
+      return critical > 0 ? { count: critical, color: '#ef4444' } : null;
+    }
+    case 'transparency': {
+      const conflicts = result.signalQuality?.conflictingSignals?.length ?? 0;
+      return conflicts > 0 ? { count: conflicts, color: '#f59e0b' } : null;
+    }
+    default:
+      return null;
+  }
+}
+
+const TabTrigger: React.FC<{
+  value: TabValue;
+  label: string;
+  shortLabel: string;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  badge: { count: number; color: string } | null;
+}> = ({ value, label, shortLabel, Icon, badge }) => (
   <Tabs.Trigger
     value={value}
-    className="relative px-6 py-4 flex items-center gap-2 text-sm font-semibold tracking-wide transition-all
-               text-white/40 hover:text-white/80 data-[state=active]:text-[var(--cyan)] group outline-none whitespace-nowrap"
+    className="relative flex items-center gap-2 outline-none whitespace-nowrap group"
     style={{
-      transitionDuration: 'var(--dur-base)',
-      transitionTimingFunction: 'var(--ease-out)',
+      padding: '8px 14px',
+      borderRadius: '10px',
+      transition: 'all 200ms var(--ease-out)',
+      color: 'rgba(255,255,255,0.42)',
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
     }}
   >
-    <span className="text-lg opacity-60 group-data-[state=active]:opacity-100 transition-opacity">{icon}</span>
-    <span className="font-display uppercase tracking-widest text-[10px] sm:text-xs">{label}</span>
-    
-    <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--cyan)] scale-x-0 transition-transform duration-300 group-data-[state=active]:scale-x-100 group-data-[state=active]:shadow-[0_0_12px_var(--cyan)]" />
+    {/* Active gradient background */}
+    <div
+      className="absolute inset-0 rounded-[10px] opacity-0 group-data-[state=active]:opacity-100 transition-opacity"
+      style={{
+        background: 'linear-gradient(135deg, rgba(0,212,224,0.14) 0%, rgba(0,212,224,0.06) 100%)',
+        border: '1px solid rgba(0,212,224,0.25)',
+        boxShadow: '0 0 20px rgba(0,212,224,0.12)',
+      }}
+    />
+
+    {/* Icon */}
+    <Icon
+      className="w-3.5 h-3.5 flex-shrink-0 transition-all relative"
+      style={{
+        color: 'inherit',
+        opacity: 0.7,
+      } as React.CSSProperties}
+    />
+
+    {/* Label */}
+    <span
+      className="relative transition-colors"
+      style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.65rem',
+        fontWeight: 800,
+        letterSpacing: '0.10em',
+        textTransform: 'uppercase',
+      }}
+    >
+      <span className="hidden sm:inline">{label}</span>
+      <span className="sm:hidden">{shortLabel}</span>
+    </span>
+
+    {/* Data badge */}
+    {badge && (
+      <span
+        className="relative flex-shrink-0 tab-badge"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.55rem',
+          fontWeight: 900,
+          letterSpacing: '0.06em',
+          padding: '1px 5px',
+          borderRadius: '4px',
+          background: `${badge.color}18`,
+          color: badge.color,
+          border: `1px solid ${badge.color}30`,
+          lineHeight: 1.4,
+          minWidth: '18px',
+          textAlign: 'center',
+        }}
+      >
+        {badge.count}
+      </span>
+    )}
   </Tabs.Trigger>
 );
 
@@ -46,7 +161,21 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
   companyData,
   onRetake,
   onDownload,
+  onRecalculate,
 }) => {
+  const [activeTab, setActiveTab] = useState<TabValue>('overview');
+  const prevTabRef = useRef<TabValue>('overview');
+
+  const handleTabChange = (val: string) => {
+    prevTabRef.current = activeTab;
+    setActiveTab(val as TabValue);
+  };
+
+  // Directional slide direction based on tab index delta
+  const tabIndex = TAB_CONFIG.findIndex(t => t.value === activeTab);
+  const prevTabIndex = TAB_CONFIG.findIndex(t => t.value === prevTabRef.current);
+  const slideDirection = tabIndex >= prevTabIndex ? 1 : -1;
+
   const [communityShare, setCommunityShare] = useState<boolean>(() => {
     try { return localStorage.getItem('hp_community_share') === '1'; } catch { return false; }
   });
@@ -56,90 +185,251 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
     setCommunityShare(next);
     try { localStorage.setItem('hp_community_share', next ? '1' : '0'); } catch { /* ignore */ }
   };
+
+  // Rate-limit transparency — reactive: re-reads every 30s.
+  const [degradation, setDegradation] = useState<DegradationState>(() => getDegradationState());
+  useEffect(() => {
+    setDegradation(getDegradationState());
+    const id = setInterval(() => setDegradation(getDegradationState()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Stable recalculate callback — passed to realtime subscription so toasts offer
+  // a "Recalculate" button that re-runs the scoring engine without a full page reload.
+  const stableRecalculate = useCallback(() => {
+    onRecalculate?.();
+  }, [onRecalculate]);
+
+  // Subscribe to both company_intelligence UPDATEs and breaking_news_events INSERTs.
+  // Pass companyData.name as dbCompanyName so the eq filter matches the exact DB row
+  // (fixes the case-sensitivity bug when user typed a different case than the DB stores).
+  useCompanySignalSubscription({
+    companyName: result.companyName ?? companyData.name,
+    dbCompanyName: companyData.name,
+    onRefresh: stableRecalculate,
+  });
+
+  // Poll for breaking news on page load and whenever the active company changes.
+  // v12.0: Auto-recalculate when breaking news matches the current company.
+  // Guard: only recalculate when result is not from cache to prevent infinite loops.
+  useBreakingNewsPoller(companyData.name, {
+    onBreakingNewsMatched: (matches) => {
+      if (matches.length > 0 && !result.fromCache) {
+        stableRecalculate();
+      }
+    },
+  });
+
+  // Compute data staleness for the stale-data banner below
+  const dataAgeDays = result.dataFreshness?.ageInDays ?? 0;
+  const isFallbackSource = (companyData.source ?? '').toLowerCase().includes('fallback')
+    || (companyData.source ?? '').toLowerCase().includes('unknown');
+  const showStaleBanner = dataAgeDays > 30 || isFallbackSource;
+
   return (
     <div className="w-full max-w-7xl mx-auto pb-[var(--space-16)]" style={{ padding: '0 var(--space-6)' }}>
-      <Tabs.Root defaultValue="overview" className="flex flex-col">
-        {/* Navigation Bar — Sticky Pill with Fade Mask */}
-        <div className="sticky top-[var(--space-4)] z-50 mb-[var(--space-8)]">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[var(--bg)] to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[var(--bg)] to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-            
-            <div className="bg-[var(--bg-raised)]/90 backdrop-blur-2xl border border-[var(--border-2)] rounded-full px-[var(--space-2)] overflow-x-auto no-scrollbar shadow-2xl transition-all hover:border-[var(--border-cyan)]">
-              <Tabs.List className="flex items-center min-w-max">
-                <TabTrigger value="overview" label="Overview" icon="📊" />
-                <TabTrigger value="risk_breakdown" label="Risk Breakdown" icon="🎯" />
-                <TabTrigger value="company_profile" label="Company Profile" icon="🏢" />
-                <TabTrigger value="career_skills" label="Career & Skills" icon="⚡" />
-                <TabTrigger value="action_plan" label="Action Plan" icon="📝" />
-                <TabTrigger value="transparency" label="Transparency" icon="◎" />
+
+      {/* [AUDIT FIX]: Stale data / fallback source banner — surfaced prominently so
+          users know when the score is based on outdated DB snapshots rather than
+          live company signals. Previously this information was buried in the
+          Transparency tab which most users never visit. */}
+      {showStaleBanner && (
+        <div className="mb-4 rounded-xl border border-orange-500/30 bg-orange-500/6 px-4 py-3 flex items-start gap-3">
+          <span className="text-orange-400 text-sm flex-shrink-0 mt-0.5">🕐</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-orange-300">
+              {isFallbackSource
+                ? 'Company not found in database — score uses sector and role baselines only.'
+                : `Company data is ${dataAgeDays} days old — recent developments may not be reflected.`}
+            </p>
+            <p className="text-[10px] text-orange-400/70 mt-1">
+              {isFallbackSource
+                ? 'Financial health, layoff history, and company-specific risk signals are unavailable. The score reflects your industry sector risk and personal factors only. Consider verifying recent news before acting on this score.'
+                : `The company intelligence snapshot was last updated ${dataAgeDays} days ago. If ${companyData.name} has had layoffs, leadership changes, or financial events since then, they are not in this score. Check the Company Profile tab for data age details.`}
+            </p>
+          </div>
+          {onRecalculate && (
+            <button
+              onClick={onRecalculate}
+              className="flex-shrink-0 text-[10px] font-mono px-2 py-1 rounded border border-orange-500/30 text-orange-300 hover:bg-orange-500/10 transition-colors"
+            >
+              REFRESH
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Rate-limit / quota degradation banner — reactive, updates every 30s */}
+      {degradation.isDegraded && degradation.summary && (
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/8 px-4 py-3 flex items-start gap-3">
+          <span className="text-amber-400 text-sm flex-shrink-0 mt-0.5">⚠</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-amber-300">{degradation.summary}</p>
+            <p className="text-[10px] text-amber-400/70 mt-1">
+              Score accuracy may be reduced — affected dimensions use heuristic fallbacks.
+              {degradation.rateLimited.length > 0
+                ? ' Quota resets at midnight UTC. No action needed.'
+                : ' Retrying may succeed if the error was transient.'}
+            </p>
+            {/* Per-service detail */}
+            {Object.keys(degradation.perService).length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {Object.entries(degradation.perService).map(([svc, state]) => (
+                  <span key={svc} className="text-[9px] font-mono px-1.5 py-0.5 rounded border bg-amber-500/10 border-amber-500/20 text-amber-300">
+                    {svc}: {state?.rateLimited ? '🔴 rate-limited' : '🟡 error'}
+                    {degradation.sessionCounts?.[svc as keyof typeof degradation.sessionCounts] != null && (
+                      <> · {degradation.sessionCounts[svc as keyof typeof degradation.sessionCounts]} req</>
+                    )}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Proactive approaching-quota warning */}
+            {degradation.approachingQuota.length > 0 && (
+              <p className="text-[9px] text-amber-400/60 mt-1">
+                ⚡ Approaching daily limit: {degradation.approachingQuota.map(s => {
+                  const count = degradation.sessionCounts?.[s] ?? 0;
+                  return `${s} (${count} req this session)`;
+                }).join(', ')}. Score may fall back to heuristics soon.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Tabs.Root value={activeTab} onValueChange={handleTabChange} className="flex flex-col">
+        {/* Navigation Bar — Sticky Rounded Pill with Data Badges */}
+        <div className="sticky top-[var(--space-3)] z-50 mb-[var(--space-6)]">
+          <div className="relative">
+            {/* Fade masks for horizontal overflow */}
+            <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[var(--bg)] to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[var(--bg)] to-transparent z-10 pointer-events-none" />
+
+            <div
+              className="overflow-x-auto no-scrollbar"
+              style={{
+                background: 'rgba(13,17,23,0.88)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: '14px',
+                padding: '5px',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset',
+              }}
+            >
+              <Tabs.List className="flex items-center gap-1 min-w-max">
+                {TAB_CONFIG.map(({ value, label, shortLabel, Icon }) => (
+                  <TabTrigger
+                    key={value}
+                    value={value}
+                    label={label}
+                    shortLabel={shortLabel}
+                    Icon={Icon}
+                    badge={getTabBadge(value, result)}
+                  />
+                ))}
               </Tabs.List>
             </div>
           </div>
         </div>
 
-        {/* Tab Contents — standardized layout container */}
+        {/* Tab Contents
+            Each Tabs.Content is always in the DOM — Radix manages show/hide via its
+            internal Presence component. We do NOT use asChild or conditional rendering
+            because that conflicts with Radix's hidden-attribute mechanism and prevents
+            non-overview tabs from mounting. The motion.div inside each tab provides
+            the entrance animation every time the tab becomes active. */}
         <div className="relative">
-          <AnimatePresence mode="wait">
-            <Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center py-[var(--space-16)]">
-                  <div className="w-10 h-10 rounded-full border-2 border-[var(--cyan)]/10 border-t-[var(--cyan)] animate-spin mb-[var(--space-6)]" />
-                  <p className="label-xs text-[var(--cyan)]/50 tracking-[0.3em]">
-                    DECRYPTING INTELLIGENCE...
-                  </p>
-                </div>
-              }
-            >
-              <Tabs.Content value="overview">
-                <GlobalErrorBoundary>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-                    <OverviewTab result={result} companyData={companyData} onRecalculate={onRetake} onDownload={onDownload} />
-                  </motion.div>
-                </GlobalErrorBoundary>
-              </Tabs.Content>
 
-              <Tabs.Content value="risk_breakdown">
-                <GlobalErrorBoundary>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-                    <RiskBreakdownTab result={result} companyData={companyData} />
-                  </motion.div>
-                </GlobalErrorBoundary>
-              </Tabs.Content>
+          <Tabs.Content value="overview" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <OverviewTab result={result} companyData={companyData} onRecalculate={onRecalculate ?? onRetake} onDownload={onDownload} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
 
-              <Tabs.Content value="company_profile">
-                <GlobalErrorBoundary>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-                    <CompanyProfileTab result={result} companyData={companyData} />
-                  </motion.div>
-                </GlobalErrorBoundary>
-              </Tabs.Content>
+          <Tabs.Content value="risk_breakdown" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="risk_breakdown"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <RiskBreakdownTab result={result} companyData={companyData} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
 
-              <Tabs.Content value="career_skills">
-                <GlobalErrorBoundary>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-                    <CareerSkillsTab result={result} companyData={companyData} />
-                  </motion.div>
-                </GlobalErrorBoundary>
-              </Tabs.Content>
+          <Tabs.Content value="company_profile" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="company_profile"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <CompanyProfileTab result={result} companyData={companyData} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
 
-              <Tabs.Content value="action_plan">
-                <GlobalErrorBoundary>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-                    <ActionPlanTab result={result} companyData={companyData} />
-                  </motion.div>
-                </GlobalErrorBoundary>
-              </Tabs.Content>
+          <Tabs.Content value="career_skills" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="career_skills"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <CareerSkillsTab result={result} companyData={companyData} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
 
-              <Tabs.Content value="transparency">
-                <GlobalErrorBoundary>
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
-                    <TransparencyTab result={result} companyData={companyData} />
-                  </motion.div>
-                </GlobalErrorBoundary>
-              </Tabs.Content>
-            </Suspense>
-          </AnimatePresence>
+          <Tabs.Content value="action_plan" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="action_plan"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <ActionPlanTab result={result} companyData={companyData} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
+
+          <Tabs.Content value="transparency" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="transparency"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <TransparencyTab result={result} companyData={companyData} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
+
         </div>
 
         {/* Global Footer Controls — Oracle Branding */}

@@ -41,6 +41,55 @@ const INDUSTRY_BENCHMARKS: Record<string, {
 const getBenchmark = (industry: string) =>
   INDUSTRY_BENCHMARKS[industry] ?? INDUSTRY_BENCHMARKS.default;
 
+const getAuthoritativeSignal = (
+  result: TabProps["result"],
+  key: string,
+) => result.authoritativeSignals?.[key] ?? result.consensusSnapshot?.authoritativeSignals?.[key];
+
+const deriveCompanyProvenance = (
+  result: TabProps["result"],
+  companyData: CompanyData,
+): { sourceLabel: string; sourceDetail: string; ageDays: number } => {
+  const primarySignals = [
+    getAuthoritativeSignal(result, "stock90DayChange"),
+    getAuthoritativeSignal(result, "stock_90d_change"),
+    getAuthoritativeSignal(result, "revenueGrowthYoY"),
+    getAuthoritativeSignal(result, "revenue_yoy"),
+    getAuthoritativeSignal(result, "layoffRounds"),
+    getAuthoritativeSignal(result, "layoff_rounds"),
+  ].filter(Boolean);
+
+  if (primarySignals.length > 0) {
+    const liveCount = primarySignals.filter((signal) => signal?.source === "live").length;
+    const degraded = primarySignals.some((signal) => signal?.freshnessState !== "fresh");
+    const ageDays = Math.max(...primarySignals.map((signal) => signal?.freshnessDays ?? 0));
+    if (liveCount > 0) {
+      return {
+        sourceLabel: degraded ? "Live + Degraded" : "Canonical Live",
+        sourceDetail: `${liveCount}/${primarySignals.length} primary signals are live authoritative sources`,
+        ageDays,
+      };
+    }
+
+    return {
+      sourceLabel: "Canonical DB",
+      sourceDetail: "Primary company metrics are coming from authoritative DB provenance",
+      ageDays,
+    };
+  }
+
+  const ageMs = Date.now() - new Date(companyData.lastUpdated ?? new Date().toISOString()).getTime();
+  const ageDays = Math.max(0, Math.floor(ageMs / 86400000));
+  const fallback = companyData.source?.toLowerCase().includes("fallback");
+  return {
+    sourceLabel: fallback ? "Fallback Snapshot" : "Legacy Source String",
+    sourceDetail: fallback
+      ? "No canonical provenance found for primary company signals"
+      : "Displaying legacy source metadata because canonical signal provenance is unavailable",
+    ageDays,
+  };
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const REGION_LABEL: Record<string, string> = {
@@ -67,7 +116,8 @@ const formatMarketCap = (n: number | null | undefined): string => {
 
 const CompanyIdentityCard: React.FC<{
   companyData: CompanyData & { marketCap?: number | null };
-}> = ({ companyData }) => {
+  provenance: { sourceLabel: string; sourceDetail: string; ageDays: number };
+}> = ({ companyData, provenance }) => {
   type IdentityField = { label: string; value: string; icon: React.ReactNode; hint?: string };
   const fields: IdentityField[] = [
     { label: "Industry", value: companyData.industry || "—", icon: <Building2 className="w-4 h-4 text-blue-400" /> },
@@ -78,38 +128,171 @@ const CompanyIdentityCard: React.FC<{
     ...((companyData as any).lastFundingRound ? [{ label: "Last Funding", value: `${(companyData as any).lastFundingRound}${(companyData as any).monthsSinceLastFunding != null ? ` · ${(companyData as any).monthsSinceLastFunding} mo ago` : ""}`, icon: <Briefcase className="w-4 h-4 text-pink-400" /> }] : []),
   ];
 
+  // Company initial avatar gradient (seeded by name)
+  const initial = (companyData.name ?? '?')[0].toUpperCase();
+  const INDUSTRY_GRADIENTS: Record<string, string> = {
+    technology: 'linear-gradient(135deg, #06b6d4 0%, #7c3aed 100%)',
+    finance:    'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+    healthcare: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+    retail:     'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
+    manufacturing:'linear-gradient(135deg, #6b7280 0%, #374151 100%)',
+  };
+  const industryKey = (companyData.industry ?? '').toLowerCase().split(' ')[0];
+  const avatarGradient = INDUSTRY_GRADIENTS[industryKey] ?? 'linear-gradient(135deg, #00d4e0 0%, #7c3aed 100%)';
+
+  // Quick financial metrics strip
+  const revGrowth = companyData.revenueGrowthYoY;
+  const stockChange = companyData.stock90DayChange;
+  const layoffRounds = companyData.layoffRounds ?? 0;
+  const provenanceColor = provenance.ageDays > 90 ? '#ef4444' : provenance.ageDays > 30 ? '#f59e0b' : '#10b981';
+
   return (
-    <div className="company-identity-card glass-panel-heavy p-[var(--space-6)] shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-[var(--cyan)]/10 text-[var(--cyan)]">
-            <Globe className="w-5 h-5" />
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+      className="glass-panel-heavy shadow-xl"
+      style={{ borderRadius: '16px', overflow: 'hidden' }}
+    >
+      {/* Main identity header */}
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="flex items-start gap-4">
+          {/* Company avatar */}
+          <div style={{
+            width: 52, height: 52, borderRadius: '12px', flexShrink: 0,
+            background: avatarGradient,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 900,
+            color: '#fff',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          }}>
+            {initial}
           </div>
-          <div>
-            <h4 className="text-lg font-bold tracking-tight leading-tight">{companyData.name}</h4>
-            <p className="text-xs text-muted-foreground">
-              {companyData.industry}{companyData.region ? ` · ${REGION_LABEL[companyData.region] ?? companyData.region}` : ""}
+
+          {/* Name + industry */}
+          <div className="flex-1 min-w-0">
+            <h4 style={{
+              fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 800,
+              letterSpacing: '-0.02em', lineHeight: 1.2, color: 'var(--text)', margin: 0,
+            }}>
+              {companyData.name}
+            </h4>
+            <p style={{
+              fontFamily: 'var(--font-sans)', fontSize: '0.72rem', color: 'var(--text-3)',
+              marginTop: '4px', lineHeight: 1.3,
+            }}>
+              {companyData.industry}
+              {companyData.region ? ` · ${REGION_LABEL[companyData.region] ?? companyData.region}` : ""}
+              {companyData.employeeCount ? ` · ${formatHeadcount(companyData.employeeCount)} employees` : ""}
             </p>
           </div>
-        </div>
-        <div className="text-right text-[10px] text-muted-foreground leading-tight">
-          {companyData.lastUpdated && <div>Last updated: {companyData.lastUpdated}</div>}
-          {companyData.source && <div className="opacity-70">Source: {companyData.source}</div>}
+
+          {/* Source badge */}
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+              color: provenance.sourceLabel === "Canonical Live" ? '#10b981'
+                : provenance.sourceLabel === "Canonical DB" ? '#06b6d4'
+                : '#f59e0b',
+              background: 'rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '6px', padding: '3px 8px',
+              letterSpacing: '0.10em', textTransform: 'uppercase',
+            }}>
+              {provenance.sourceLabel}
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
+              color: provenanceColor, marginTop: '4px',
+            }}>
+              {provenance.ageDays}d old {provenance.ageDays > 30 ? '⚠' : '✓'}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-[var(--space-3)]">
-        {fields.map(f => (
-          <div key={f.label} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-white/5" title={f.hint}>
-            <div className="flex-shrink-0 p-1.5 rounded bg-black/20">{f.icon}</div>
-            <div className="flex-1 min-w-0">
-              <div className="label-xs text-muted-foreground">{f.label}</div>
-              <div className="text-sm font-bold tracking-tight truncate">{f.value}</div>
+      {/* Quick metrics strip */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        {[
+          {
+            label: 'Revenue YoY',
+            value: revGrowth != null ? `${revGrowth > 0 ? '+' : ''}${revGrowth}%` : '—',
+            color: revGrowth == null ? 'var(--text-3)' : revGrowth >= 0 ? '#10b981' : '#ef4444',
+            icon: revGrowth != null ? (revGrowth >= 0 ? '▲' : '▼') : '—',
+          },
+          {
+            label: 'Stock 90d',
+            value: stockChange != null ? `${stockChange > 0 ? '+' : ''}${stockChange}%` : '—',
+            color: stockChange == null ? 'var(--text-3)' : stockChange >= 0 ? '#10b981' : '#ef4444',
+            icon: stockChange != null ? (stockChange >= 0 ? '▲' : '▼') : '—',
+          },
+          {
+            label: 'Layoff Rounds',
+            value: `${layoffRounds}`,
+            color: layoffRounds === 0 ? '#10b981' : layoffRounds === 1 ? '#f59e0b' : '#ef4444',
+            icon: layoffRounds > 0 ? '⚠' : '✓',
+          },
+          {
+            label: 'Public',
+            value: companyData.isPublic ? (companyData.ticker ?? 'Yes') : 'Private',
+            color: 'var(--text-2)',
+            icon: companyData.isPublic ? '◎' : '◉',
+          },
+        ].map((m, i) => (
+          <div
+            key={m.label}
+            style={{
+              padding: '12px 16px',
+              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+            }}
+          >
+            <div className="data-label" style={{ marginBottom: '4px' }}>{m.label}</div>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900,
+              letterSpacing: '-0.03em', color: m.color, lineHeight: 1,
+            }}>
+              {m.icon !== '—' && m.icon !== '◎' && m.icon !== '◉' && m.icon !== '⚠' && m.icon !== '✓'
+                ? `${m.icon} ` : ''}{m.value}
             </div>
           </div>
         ))}
       </div>
-    </div>
+
+      {/* Identity fields grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-0">
+        {fields.map((f, i) => (
+          <div
+            key={f.label}
+            className="flex items-start gap-3"
+            title={f.hint}
+            style={{
+              padding: '12px 16px',
+              borderRight: (i % 3 !== 2) ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+            }}
+          >
+            <div style={{
+              padding: '6px', borderRadius: '8px',
+              background: 'rgba(255,255,255,0.05)',
+              flexShrink: 0,
+            }}>{f.icon}</div>
+            <div className="flex-1 min-w-0">
+              <div className="data-label">{f.label}</div>
+              <div style={{
+                fontFamily: 'var(--font-sans)', fontSize: '0.75rem', fontWeight: 700,
+                color: 'var(--text-2)', marginTop: '2px',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {f.value}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
   );
 };
 
@@ -291,43 +474,87 @@ const FinancialHealthDossier: React.FC<{
   const benchmarkColor = (d?: "above" | "below" | "on-par") =>
     d === "above" ? "text-emerald-400" : d === "below" ? "text-rose-400" : "text-muted-foreground";
 
+  // Raw hex values — used for alpha-compositing in backgrounds/borders (CSS vars can't have hex-alpha suffix)
+  const metricColors = ['#10b981', '#00d4e0', '#f59e0b', '#ef4444', '#7c3aed', '#a78bfa'];
+
   return (
-    <div className="financial-health-card glass-panel-heavy p-[var(--space-6)] shadow-xl">
-      <div className="flex items-center gap-2 mb-[var(--space-6)]">
-        <div className="p-2 rounded-lg bg-[var(--cyan)]/10 text-[var(--cyan)]"><BarChart4 className="w-5 h-5" /></div>
-        <h4 className="text-lg font-bold tracking-tight">Financial Health Dossier</h4>
+    <div className="glass-panel-heavy shadow-xl" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+      <div className="flex items-center gap-2 px-6 py-4 border-b border-white/[0.07]">
+        <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(0,212,224,0.10)', color: 'var(--cyan)' }}>
+          <BarChart4 className="w-4 h-4" />
+        </div>
+        <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+          Financial Health Dossier
+        </h4>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-4)]">
-        {metrics.map((metric, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
-            className="group flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-all"
-          >
-            <div className="flex-shrink-0 p-2.5 rounded-lg bg-black/20 group-hover:scale-110 transition-transform">
-              {metric.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="label-xs text-muted-foreground mb-1">{metric.label}</div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight">{metric.value}</span>
-                {metric.trend === "up" && <TrendingUp className="w-4 h-4 text-emerald-500" />}
-                {metric.trend === "down" && <TrendingDown className="w-4 h-4 text-rose-500" />}
-              </div>
-              {metric.description && (
-                <div className="text-[10px] text-muted-foreground mt-1 opacity-70">{metric.description}</div>
-              )}
-              {metric.benchmark && (
-                <div className={`text-[10px] mt-1 font-mono ${benchmarkColor(metric.benchmarkDelta)}`}>
-                  {metric.benchmarkDelta === "above" ? "▲ Above" : metric.benchmarkDelta === "below" ? "▼ Below" : "≈"} {metric.benchmark}
+      <div className="grid grid-cols-1 md:grid-cols-2" style={{ padding: '4px' }}>
+        {metrics.map((metric, i) => {
+          const accentColor = metricColors[i % metricColors.length];
+          const trendColor = metric.trend === 'up' ? '#10b981' : metric.trend === 'down' ? '#ef4444' : 'var(--text-3)';
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07, ease: [0.34, 1.56, 0.64, 1] }}
+              className="group"
+              style={{
+                padding: '16px',
+                borderRadius: '12px',
+                margin: '4px',
+                background: `${accentColor}12`,
+                border: `1px solid ${accentColor}28`,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'box-shadow 0.2s',
+              }}
+              whileHover={{ boxShadow: `0 4px 20px ${accentColor}22` } as any}
+            >
+              {/* Top accent */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: accentColor, opacity: 0.5 }} />
+
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="data-label mb-2">{metric.label}</div>
+                  <div className="flex items-baseline gap-2 flex-wrap mb-1.5">
+                    <span style={{
+                      fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900,
+                      letterSpacing: '-0.04em', lineHeight: 1,
+                      color: metric.trend === 'up' ? '#10b981' : metric.trend === 'down' ? '#ef4444' : accentColor,
+                    }}>
+                      {metric.value}
+                    </span>
+                    {metric.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />}
+                    {metric.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#ef4444' }} />}
+                  </div>
+                  {metric.description && (
+                    <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4, marginBottom: '4px' }}>
+                      {metric.description}
+                    </p>
+                  )}
+                  {metric.benchmark && (
+                    <div style={{
+                      fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+                      color: metric.benchmarkDelta === 'above' ? '#10b981' : metric.benchmarkDelta === 'below' ? '#ef4444' : 'var(--text-3)',
+                      letterSpacing: '0.06em',
+                    }}>
+                      {metric.benchmarkDelta === 'above' ? '▲ Above' : metric.benchmarkDelta === 'below' ? '▼ Below' : '≈'} {metric.benchmark}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+                <div style={{
+                  padding: '8px', borderRadius: '10px',
+                  background: `${accentColor}12`,
+                  border: `1px solid ${accentColor}20`,
+                  flexShrink: 0, opacity: 0.8,
+                }}>
+                  {metric.icon}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -344,71 +571,143 @@ interface LayoffEvent {
 }
 
 const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> = ({ events, companyName }) => {
-  const sorted = [...events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sorted = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const getSeverityColor = (s: LayoffEvent["severity"]) =>
-    s === "major" ? "var(--red)" : s === "moderate" ? "var(--orange)" : "var(--amber)";
+    s === "major" ? "#ef4444" : s === "moderate" ? "#f97316" : "#f59e0b";
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short" });
 
   const patternLabel = events.length >= 3
-    ? `Chronic restructuring (${events.length} rounds in 24 mo)`
+    ? `Chronic restructuring`
     : events.length === 2
-      ? "Repeat reductions — second wave completed"
+      ? "Repeat reductions"
       : events.length === 1
-        ? "Single event — watch for follow-up within 9 months"
+        ? "Single event"
         : null;
 
   return (
-    <div className="glass-panel p-[var(--space-6)]">
-      <div className="flex items-center gap-2 mb-[var(--space-6)]">
-        <Calendar className="w-5 h-5 text-muted-foreground" />
-        <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Layoff History</h4>
-        {patternLabel && (
-          <span className="text-[9px] px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/20 font-bold ml-auto">
+    <div className="glass-panel-heavy shadow-xl" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.07]">
+        <Calendar className="w-4 h-4 text-muted-foreground" />
+        <h4 className="data-label" style={{ color: 'var(--text-2)', letterSpacing: '0.14em' }}>
+          LAYOFF HISTORY
+        </h4>
+        {patternLabel && events.length > 0 && (
+          <span style={{
+            marginLeft: 'auto',
+            fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+            padding: '2px 8px', borderRadius: '4px',
+            background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)',
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+          }}>
             {patternLabel}
           </span>
         )}
       </div>
 
-      {events.length === 0 ? (
-        <div className="p-4 bg-[var(--emerald)]/5 border border-[var(--emerald)]/20 rounded-xl text-xs text-[var(--emerald)]/80 leading-relaxed">
-          <strong>Stability Index: High.</strong> No documented workforce reductions detected in the primary 24-month tracking window. This is a meaningful protective signal.
-        </div>
-      ) : (
-        <div className="space-y-4 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[1px] before:bg-white/10">
-          {sorted.map((event, i) => (
-            <div key={i} className="flex gap-4 relative">
-              <div
-                className="w-[23px] h-[23px] rounded-full border-2 border-[var(--bg)] z-10 flex items-center justify-center shrink-0"
-                style={{ backgroundColor: getSeverityColor(event.severity) }}
-              >
-                <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
-              </div>
-              <div className="flex-1 bg-white/5 p-4 rounded-xl border border-white/5">
-                <div className="flex flex-wrap justify-between items-center mb-1 gap-2">
-                  <span className="font-mono text-xs font-bold">{formatDate(event.date)}</span>
-                  <span
-                    className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter"
-                    style={{ backgroundColor: `${getSeverityColor(event.severity)}22`, color: getSeverityColor(event.severity) }}
-                  >
-                    {event.severity} Impact
-                  </span>
+      <div style={{ padding: '16px 20px' }}>
+        {events.length === 0 ? (
+          <div style={{
+            padding: '14px 16px', borderRadius: '12px',
+            background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.20)',
+          }}>
+            <div className="data-label" style={{ color: '#10b981', marginBottom: '4px' }}>✓ STABILITY INDEX: HIGH</div>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+              No documented workforce reductions in the primary 24-month tracking window. This is a meaningful protective signal.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {/* Horizontal timeline strip */}
+            <div style={{ position: 'relative', overflowX: 'auto', paddingBottom: '8px' }}>
+              {/* Timeline connector line */}
+              <div style={{
+                position: 'absolute', top: '22px', left: '0', right: '0',
+                height: '2px', background: 'rgba(255,255,255,0.07)',
+                zIndex: 0,
+              }} />
+              <div style={{
+                display: 'flex', gap: '16px', alignItems: 'flex-start',
+                minWidth: 'min-content', paddingTop: '0', position: 'relative', zIndex: 1,
+              }}>
+                {sorted.map((event, i) => {
+                  const sColor = getSeverityColor(event.severity);
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, ease: [0.34, 1.56, 0.64, 1] }}
+                      style={{ flexShrink: 0, width: '160px' }}
+                    >
+                      {/* Timeline dot */}
+                      <div style={{
+                        width: '16px', height: '16px', borderRadius: '50%',
+                        background: sColor,
+                        boxShadow: `0 0 12px ${sColor}60`,
+                        margin: '0 auto 10px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        animation: i === sorted.length - 1 ? 'pulse-live 2s ease-in-out infinite' : 'none',
+                        zIndex: 2, position: 'relative',
+                      }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />
+                      </div>
+
+                      {/* Event chip */}
+                      <div style={{
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: `1px solid ${sColor}30`,
+                        background: `${sColor}08`,
+                      }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 800, color: sColor, marginBottom: '4px' }}>
+                          {formatDate(event.date)}
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.8rem', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)', lineHeight: 1.2, marginBottom: '4px' }}>
+                          {event.percentage > 0
+                            ? `${event.percentage}% cut`
+                            : 'Undisclosed'}
+                        </div>
+                        {event.count > 0 && (
+                          <div className="data-label" style={{ opacity: 0.6 }}>{event.count.toLocaleString()} roles</div>
+                        )}
+                        {event.department && (
+                          <div className="data-label" style={{ marginTop: '4px', opacity: 0.5 }}>{event.department}</div>
+                        )}
+                        <div style={{
+                          marginTop: '6px',
+                          fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 900,
+                          padding: '1px 6px', borderRadius: '3px',
+                          background: `${sColor}15`, color: sColor,
+                          display: 'inline-block', textTransform: 'uppercase', letterSpacing: '0.08em',
+                        }}>
+                          {event.severity}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                {/* Timeline end arrow */}
+                <div style={{
+                  flexShrink: 0, display: 'flex', alignItems: 'center', paddingTop: '14px',
+                }}>
+                  <div style={{
+                    width: '20px', height: '2px', background: 'rgba(255,255,255,0.15)',
+                  }} />
+                  <div style={{
+                    width: 0, height: 0,
+                    borderTop: '5px solid transparent', borderBottom: '5px solid transparent',
+                    borderLeft: '6px solid rgba(255,255,255,0.15)',
+                  }} />
                 </div>
-                <div className="text-sm font-black tracking-tight mb-1">
-                  {event.count > 0 ? `${event.count.toLocaleString()} Roles Cut` : "Undisclosed count"} ({event.percentage}%)
-                </div>
-                {event.department && (
-                  <div className="text-[10px] text-muted-foreground">
-                    Targeted: {event.department}
-                  </div>
-                )}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -651,6 +950,7 @@ const LiveSignalFeed: React.FC<{ signals: SignalEvent[] }> = ({ signals }) => {
 const buildIntelligentSignals = (
   companyData: CompanyData,
   resultWorkTypeKey: string,
+  result?: import('./common/types').TabProps['result'],
 ): SignalEvent[] => {
   const signals: SignalEvent[] = [];
   const bench = getBenchmark(companyData.industry);
@@ -660,10 +960,16 @@ const buildIntelligentSignals = (
   const patched = companyData as typeof companyData & {
     _hiringFreezeScore?: number;
     _hiringPostingTrend?: string;
+    _hiringIsLive?: boolean;
+    _hiringDisclosure?: string;
+    _naukriOpenings?: number | null;
+    _linkedinOpenings?: number | null;
     _liveNewsSentiment?: number;
+    _isStock90dApproximate?: boolean;
+    _layoffsDatasetUnavailable?: boolean;
   };
 
-  // Stock signal
+  // Stock signal — label clearly distinguishes live Yahoo Finance data from stale DB values
   if (companyData.stock90DayChange != null) {
     const chg = companyData.stock90DayChange;
     const direction = chg > 0 ? "rallied" : chg < 0 ? "fell" : "held flat";
@@ -672,12 +978,24 @@ const buildIntelligentSignals = (
       : Math.abs(chg) > 15 ? `significant ${chg > 0 ? "uptrend" : "drawdown"} — guidance change likely`
       : Math.abs(chg) > 5 ? `${chg > 0 ? "uptrend" : "downtrend"} — within normal range`
       : "essentially flat — no market-moving event";
-    const exchange = companyData.region === "IN" ? "BSE/NSE" : companyData.isPublic ? "Stock exchange" : "Private valuation";
+    const isApprox = patched._isStock90dApproximate;
+    // Determine the actual data source from reconciliation metadata rather than
+    // always defaulting to "AlphaVantage" even for stale DB values.
+    const authStock = (result as any)?.authoritativeSignals?.stock90DayChange
+      ?? (result as any)?.consensusSnapshot?.authoritativeSignals?.stock90DayChange;
+    const isLiveStock = authStock?.source === 'live';
+    const exchange = isApprox
+      ? "BSE proxy (52w estimate ±10pt)"
+      : isLiveStock
+        ? (companyData.region === "IN" ? "Yahoo Finance / BSE" : "Yahoo Finance (live)")
+        : companyData.isPublic
+          ? "Company Intelligence DB (cached)"
+          : "Private valuation estimate";
     signals.push({
       timestamp: fetchedAt,
       source: exchange,
       type: "financial",
-      content: `${companyData.ticker ?? companyData.name} ${direction} ${chg > 0 ? "+" : ""}${chg}% over 90 days — ${magnitude}`,
+      content: `${companyData.ticker ?? companyData.name} ${direction} ${chg > 0 ? "+" : ""}${chg}% over 90 days${isApprox ? " (approximate)" : ""} — ${magnitude}`,
       impact: Math.abs(chg) > 15 ? "high" : Math.abs(chg) > 5 ? "medium" : "low",
     });
   }
@@ -733,21 +1051,33 @@ const buildIntelligentSignals = (
     }
   }
 
-  // Hiring posting trend (live or heuristic)
+  // Hiring posting trend — label source as live (Serper via Edge Function) or heuristic
   if (patched._hiringPostingTrend) {
     const trend = patched._hiringPostingTrend;
     const freeze = patched._hiringFreezeScore;
+    const isHiringLive = patched._hiringIsLive === true;
     const verdict = trend === "declining"
       ? "open-roles count shrinking — hiring freeze likely in effect"
       : trend === "growing"
         ? "open-roles count rising — active expansion, protective signal"
         : "open-roles steady — no clear expansion or contraction";
     const freezeNote = freeze != null && freeze > 0.6 ? ` (freeze-score ${Math.round(freeze * 100)}/100 — high)` : "";
+    const countNote = isHiringLive
+      ? (() => {
+          const parts: string[] = [];
+          if (patched._naukriOpenings != null)  parts.push(`Naukri: ${patched._naukriOpenings}`);
+          if (patched._linkedinOpenings != null) parts.push(`LinkedIn: ${patched._linkedinOpenings}`);
+          return parts.length ? ` [${parts.join(', ')}]` : '';
+        })()
+      : '';
+    const dataSource = isHiringLive
+      ? "Serper/Naukri+LinkedIn (live)"
+      : `Heuristic baseline — ${patched._hiringDisclosure ?? "Q1 2026 static prior, not live"}`;
     signals.push({
       timestamp: fetchedAt,
-      source: "Job-board scrape (Serper)",
+      source: dataSource,
       type: "job-market",
-      content: `${resultWorkTypeKey.replace(/_/g, " ")} postings: ${verdict}${freezeNote}`,
+      content: `${resultWorkTypeKey.replace(/_/g, " ")} postings: ${verdict}${freezeNote}${countNote}`,
       impact: trend === "declining" ? "high" : "medium",
     });
   }
@@ -773,20 +1103,22 @@ const buildIntelligentSignals = (
     });
   }
 
-  // News sentiment
+  // News sentiment: sentimentSignal is 0–1 (higher = more negative/risky layoff coverage).
+  // Previously interpreted as -1 to +1 which caused all thresholds to fire incorrectly
+  // (value is always ≥ 0, so "strongly negative" and "tilting negative" never fired).
   if (patched._liveNewsSentiment != null) {
-    const s = patched._liveNewsSentiment;
-    const verdict = s < -0.3 ? "strongly negative — layoff/restructuring keywords frequent"
-      : s < -0.1 ? "tilting negative — cost-cutting language present"
-      : s < 0.1 ? "neutral — no directional signal"
-      : s < 0.3 ? "tilting positive — growth/hiring language"
-      : "strongly positive — expansion narrative dominant";
+    const s = patched._liveNewsSentiment as number; // 0 = no coverage, 1 = max coverage
+    const verdict = s >= 0.8 ? "high-volume layoff coverage — multiple independent sources"
+      : s >= 0.5 ? "moderate layoff coverage — restructuring language present"
+      : s >= 0.2 ? "low layoff coverage — isolated mentions"
+      : "minimal layoff coverage — no significant signals";
+    const riskLevel = s >= 0.5 ? "high" : s >= 0.2 ? "medium" : "low";
     signals.push({
       timestamp: fetchedAt,
       source: "News-aggregator NLP",
       type: "news",
-      content: `Press sentiment ${s > 0 ? "+" : ""}${s.toFixed(2)} — ${verdict}`,
-      impact: Math.abs(s) > 0.3 ? "high" : "medium",
+      content: `News layoff signal: ${Math.round(s * 100)}/100 — ${verdict}`,
+      impact: riskLevel as SignalEvent["impact"],
     });
   }
 
@@ -904,14 +1236,26 @@ const buildDepartmentNews = (
 
 export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) => {
   const { width } = useAdaptiveSystem();
+  const provenance = useMemo(
+    () => deriveCompanyProvenance(result, companyData),
+    [result, companyData],
+  );
 
   const layoffEvents: LayoffEvent[] = useMemo(() => {
     if (!companyData.layoffsLast24Months?.length) return [];
-    return companyData.layoffsLast24Months.map(l => ({
+    return companyData.layoffsLast24Months.map((l: any) => ({
       date: l.date,
-      count: companyData.employeeCount ? Math.round(companyData.employeeCount * (l.percentCut / 100)) : 0,
+      // Only compute a headcount when we actually know the percentage.
+      // Avoid showing "(0 roles cut)" for events where % is unknown.
+      count: l.percentCut > 0 && companyData.employeeCount
+        ? Math.round(companyData.employeeCount * (l.percentCut / 100))
+        : 0,
       percentage: l.percentCut,
       severity: l.percentCut > 10 ? "major" : l.percentCut > 3 ? "moderate" : "minor",
+      // Pass through affected departments when the DB/connectors provided them
+      department: Array.isArray(l.affectedDepartments) && l.affectedDepartments.length
+        ? l.affectedDepartments.join(', ')
+        : typeof l.department === 'string' ? l.department : undefined,
     }));
   }, [companyData]);
 
@@ -932,12 +1276,15 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
     }
     if (companyData.layoffRounds != null) {
       const rounds = companyData.layoffRounds;
-      const industryRounds = bench.avgLayoffRate / 10; // convert % to round-equivalent
+      // sector context: show the actual documented avg attrition rate, not a
+      // meaningless rounds proxy computed by dividing % by 10.
       bms.push({
-        metric: "Layoff Rounds vs Sector",
+        metric: "Layoff Rounds (24 mo) vs Sector Stability",
         company: rounds,
-        industry: parseFloat(industryRounds.toFixed(1)),
-        label: rounds === 0 ? "None" : `${rounds} rounds`,
+        // Use 1.0 as the neutral "industry average" reference so the bar position
+        // reflects round count relative to one expected round, not an arbitrary rate.
+        industry: 1.0,
+        label: rounds === 0 ? "None" : `${rounds} round${rounds !== 1 ? 's' : ''}`,
         percentile: rounds === 0 ? 85 : rounds === 1 ? 55 : rounds === 2 ? 30 : 15,
       });
     }
@@ -950,25 +1297,99 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
     return bms;
   }, [companyData, bench]);
 
+  // Map oracle keys → camelCase roleRiskMap keys from company_intelligence DB.
+  // roleRiskMap only has 6 canonical roles; everything else falls back to the
+  // closest proxy. This table is exhaustive across all known oracle key namespaces.
+  const ORACLE_TO_ROLE_RISK_KEY: Record<string, string> = {
+    // Software Engineering
+    sw_backend:          'softwareEngineer',
+    sw_frontend:         'softwareEngineer',
+    sw_fullstack:        'softwareEngineer',
+    sw_mobile:           'softwareEngineer',
+    sw_devops:           'softwareEngineer',
+    sw_sre:              'softwareEngineer',
+    sw_platform:         'softwareEngineer',
+    sw_embedded:         'softwareEngineer',
+    sw_security:         'softwareEngineer',
+    sw_qa:               'softwareEngineer',
+    // Data & ML
+    sw_data:             'dataScientist',
+    sw_ml:               'dataScientist',
+    sw_ai:               'dataScientist',
+    ds_analyst:          'dataScientist',
+    ds_engineer:         'dataScientist',
+    ds_scientist:        'dataScientist',
+    bi_analyst:          'dataScientist',
+    // Product & Program Management
+    pm_product:          'productManager',
+    pm_program:          'productManager',
+    pm_technical:        'productManager',
+    pm_growth:           'productManager',
+    // Design
+    design_ux:           'designer',
+    design_ui:           'designer',
+    design_product:      'designer',
+    design_brand:        'designer',
+    design_content:      'designer',
+    // HR & People
+    hr_recruiter:        'hrRecruiter',
+    hr_generalist:       'hrRecruiter',
+    hr_talent:           'hrRecruiter',
+    hr_hrbp:             'hrRecruiter',
+    hr_comp:             'hrRecruiter',
+    // Sales & Customer Success
+    sales_ae:            'sales',
+    sales_sdr:           'sales',
+    sales_bdr:           'sales',
+    sales_csm:           'sales',
+    sales_se:            'sales',
+    sales_partner:       'sales',
+    // Finance — closest proxy is sales (both are business-facing roles)
+    finance_analyst:     'sales',
+    finance_fp:          'sales',
+    finance_accounting:  'sales',
+    // Legal — proxy to sales (both are non-technical support roles)
+    legal_counsel:       'sales',
+    legal_paralegal:     'sales',
+    // Executive — proxy to productManager (strategy-facing)
+    exec_vp:             'productManager',
+    exec_director:       'productManager',
+    exec_cto:            'productManager',
+    exec_cpo:            'productManager',
+    // Operations & Support
+    ops_generalist:      'hrRecruiter',
+    ops_analyst:         'dataScientist',
+    support_cs:          'sales',
+    support_technical:   'softwareEngineer',
+    // Marketing — proxy to sales
+    mktg_content:        'sales',
+    mktg_demand:         'sales',
+    mktg_brand:          'designer',
+  };
+
   const hiringPulseSignal: {
     freezeScore: number | null; postingTrend: any; estimatedOpenings: number | null;
     isLive: boolean; roleTitle: string; companySpecificRoleRisk: number | null;
   } = useMemo(() => {
     const patched = companyData as any;
-    const roleRiskMap = (companyData as any).roleRiskMap;
+    const roleRiskMap = patched.roleRiskMap ?? {};
+    const riskKey = ORACLE_TO_ROLE_RISK_KEY[result.workTypeKey] ?? result.workTypeKey;
+    const companySpecificRoleRisk =
+      roleRiskMap[riskKey] ?? roleRiskMap[result.workTypeKey] ?? null;
+
     return {
-      freezeScore: patched._hiringFreezeScore ?? null,
-      postingTrend: patched._hiringPostingTrend ?? null,
-      estimatedOpenings: patched._estimatedRoleOpenings ?? null,
-      isLive: patched._hiringSource === "supabase-osint",
-      roleTitle: result.workTypeKey || "this role",
-      companySpecificRoleRisk: roleRiskMap?.[result.workTypeKey] ?? null,
+      freezeScore:            patched._hiringFreezeScore ?? null,
+      postingTrend:           patched._hiringPostingTrend ?? null,
+      estimatedOpenings:      patched._estimatedRoleOpenings ?? null,
+      isLive:                 patched._hiringIsLive === true,
+      roleTitle:              result.workTypeKey || "this role",
+      companySpecificRoleRisk,
     };
   }, [companyData, result.workTypeKey]);
 
   const liveSignals = useMemo(
-    () => buildIntelligentSignals(companyData, result.workTypeKey),
-    [companyData, result.workTypeKey],
+    () => buildIntelligentSignals(companyData, result.workTypeKey, result),
+    [companyData, result.workTypeKey, result],
   );
 
   const departmentNews = useMemo(
@@ -982,13 +1403,44 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
 
         {/* Company Identity */}
         <div className="mb-6">
-          <CompanyIdentityCard companyData={companyData as any} />
+          <CompanyIdentityCard companyData={companyData as any} provenance={provenance} />
         </div>
 
         {/* Hiring Pulse */}
         <div className="mb-6">
           <HiringPulseCard signal={hiringPulseSignal} companyName={companyData.name} />
         </div>
+
+        {/* D8 AI Efficiency Restructuring indicator — shown when D8 signal fires.
+            Informs the user that even though this company looks financially healthy,
+            the combination of high AI investment + prior cuts + growing revenue
+            matches the pattern seen in profitable companies that cut for AI productivity. */}
+        {(() => {
+          const ai = companyData.aiInvestmentSignal ?? 'medium';
+          const rev = companyData.revenueGrowthYoY ?? null;
+          const rounds = companyData.layoffRounds ?? 0;
+          const isEfficiencyPattern =
+            (ai === 'high' || ai === 'very-high') &&
+            rounds > 0 &&
+            rev !== null && rev > 0;
+          if (!isEfficiencyPattern) return null;
+          return (
+            <div className="mb-4 p-3 rounded-xl border border-violet-500/25 bg-violet-500/6 flex items-start gap-2">
+              <span className="text-violet-400 text-sm flex-shrink-0 mt-0.5">⚡</span>
+              <div>
+                <p className="text-xs font-semibold text-violet-300 leading-snug">
+                  AI efficiency restructuring pattern detected
+                </p>
+                <p className="text-[10px] text-violet-300/60 mt-1 leading-relaxed">
+                  {companyData.name} shows {ai} AI investment, {rev > 0 ? '+' : ''}{rev}% revenue growth,
+                  and {rounds} prior layoff round{rounds !== 1 ? 's' : ''}. This matches the pattern
+                  of profitable companies that reduce headcount specifically for AI productivity gains
+                  rather than financial distress. D8 signal active — see Transparency tab for methodology.
+                </p>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Financial Health Dossier */}
         <div className="mb-6">

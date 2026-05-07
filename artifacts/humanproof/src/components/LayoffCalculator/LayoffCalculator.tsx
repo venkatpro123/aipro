@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useLayoff } from "../../context/LayoffContext";
 import { LayoffInputForm } from "./LayoffInputForm";
 import { LayoffScoreDisplay } from "./LayoffScoreDisplay";
@@ -27,8 +27,10 @@ import { LayoffAuditDashboard } from "./LayoffAuditDashboard";
 import { mapToHybridResult } from "../../utils/hybridResultMapper";
 import { resolveCompanyData } from "../../data/companyIntelligenceBridge";
 import { COMPANY_INTELLIGENCE_DB } from "../../data/companyIntelligenceDB";
-import { getCompanyByName, CompanyData } from "../../data/companyDatabase";
-import { industryRiskData, IndustryRisk } from "../../data/industryRiskData";
+import { CompanyData } from "../../data/companyDatabase";
+import { getCompanySync as getCompanyByName, getAllIndustryRisk } from "../../services/db/staticDataService";
+import { queryCompanyIntelligenceWithMatch } from "../../services/companyIntelligenceService";
+import { IndustryRisk } from "../../data/industryRiskData";
 import { RoleExposure } from "../../data/roleExposureData";
 import { saveLayoffScore } from "../../services/scoreStorageService";
 import { LayoffAlertBanner } from "./LayoffAlertBanner";
@@ -49,6 +51,12 @@ import { countryCodeToD5Key } from "../../data/companyDatabase";
 import { injectLayoffEvent } from "../../data/layoffNewsCache";
 import { recordScore } from "../../services/scoreDeltaService";
 import { detectCollapseStage } from "../../services/collapsePredictor";
+import { PipelineTimer } from "../../services/pipelineTimer";
+import { CachedResultBanner } from "./CachedResultBanner";
+import { BreakingNewsBanner } from "./BreakingNewsBanner";
+import { fetchAuditData } from "../../services/auditDataPipeline";
+import { resolveRoleInput } from "../../services/roleResolution";
+import { HybridResult } from "../../types/hybridResult";
 
 interface Props {
   /** Optional: passed from ToolsPage so action plan links can switch tabs */
@@ -136,6 +144,15 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   // ── BUG FIX: Double-submit guard ─────────────────────────────────────────
   const isSubmitting = useRef(false);
 
+  // ── Force-refresh state — set by CachedResultBanner "Recalculate" button ──
+  const [isForceRefreshing, setIsForceRefreshing] = useState(false);
+
+  // ── Supabase Realtime for breaking_news_events is handled by useCompanySignalSubscription
+  // inside LayoffAuditDashboard (rendered when hasCompletedAssessment=true). That hook
+  // does client-side name matching (Realtime doesn't support ilike filters), injects into
+  // layoffNewsCache, and fires the BreakingNewsBanner listener. Maintaining a second channel
+  // here with an unsupported `ilike` filter caused duplicate subscriptions and silent failures.
+
   // ── ARCHITECTURE: Session result cache ────────────────────────────────────
   // Key = companyName + roleKey + experience + country hash (10-min TTL)
   const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -176,7 +193,322 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   }, []);
 
 
-  const handleCalculate = async () => {
+  const handleForceRefresh = async () => {
+    setIsForceRefreshing(true);
+    try {
+      await handleCalculate(true);
+    } finally {
+      setIsForceRefreshing(false);
+    }
+  };
+
+  const runAuditPipelineDrivenCalculation = async (
+    forceRefresh = false,
+  ): Promise<void> => {
+    const roleTitle = state.roleTitle || "Employee";
+    const resolvedRole = resolveRoleInput(roleTitle, { oracleKey: state.oracleKey });
+    const effectiveOracleKey = resolvedRole.canonicalKey ?? state.oracleKey ?? null;
+    const effectiveDepartment =
+      state.department ||
+      (effectiveOracleKey ? getAutoDeducedDepartment(effectiveOracleKey) : "Operations");
+    const userFactors =
+      state.userFactors || {
+        tenureYears: 1.5,
+        careerYears: 1.5,
+        isUniqueRole: false,
+        performanceTier: "average" as const,
+        hasRecentPromotion: false,
+        hasKeyRelationships: false,
+      };
+
+    dispatch({
+      type: "SET_INPUTS",
+      payload: {
+        oracleKey: effectiveOracleKey,
+        department: effectiveDepartment,
+      },
+    });
+
+    // When recalculating after breaking news, clear the last-session snapshot so the
+    // stale result isn't restored from storage if the page refreshes mid-calculation.
+    if (forceRefresh) {
+      try { sessionStorage.removeItem('hp_last_score_session'); } catch { /* ignore */ }
+    }
+
+    setEnsembleStage(1);
+    const { result: pipelineResult, companyData, source } = await fetchAuditData({
+      companyName: state.companyName || "Unknown",
+      roleTitle,
+      department: effectiveDepartment,
+      userFactors,
+      oracleKey: effectiveOracleKey ?? undefined,
+      financialRunwayMonths: (userFactors as any).financialRunwayMonths ?? 0,
+    });
+
+    dispatch({ type: "SET_COMPANY_DATA", payload: companyData });
+    setLiveSignalCount(pipelineResult.signalQuality.liveSignals ?? 0);
+    setHeuristicSignalCount(pipelineResult.signalQuality.heuristicSignals ?? 0);
+
+    const pipelineQuality: "live" | "partial" | "fallback" =
+      source === "live" && (pipelineResult.signalQuality.hardFailures?.length ?? 0) === 0
+        ? "live"
+        : source === "fallback"
+          ? "fallback"
+          : "partial";
+    setDataQuality(pipelineQuality);
+
+    const localIntel = effectiveOracleKey ? getCareerIntelligence(effectiveOracleKey) : null;
+    if (localIntel) setCareerIntelligence(localIntel);
+
+    const careerExp =
+      userFactors?.careerYears ?? userFactors.tenureYears;
+    const oracleExp = deriveExperience(careerExp);
+    const d5CountryKey = countryCodeToD5Key(companyData.region || "GLOBAL");
+    // Case-insensitive industry lookup with title-case fallback so "technology"
+    // and "Technology" both resolve correctly against the risk map keys.
+    const _industryMap = getAllIndustryRisk();
+    const _industryRaw = companyData.industry?.trim() ?? '';
+    const industryData: IndustryRisk | undefined =
+      _industryMap[_industryRaw] ??
+      _industryMap[_industryRaw.replace(/\b\w/g, c => c.toUpperCase())] ??
+      _industryMap[_industryRaw.toLowerCase()];
+    const oracleBody = {
+      roleKey: effectiveOracleKey || "generic",
+      industry: companyData.industry,
+      experience: oracleExp,
+      country: d5CountryKey,
+    };
+
+    const cacheKey = buildCacheKey(
+      companyData.name,
+      effectiveOracleKey || "generic",
+      oracleExp,
+      d5CountryKey,
+    );
+
+    // forceRefresh (triggered by breaking-news "Recalculate" toast) bypasses the
+    // Oracle session cache so the new event is incorporated into the fresh score.
+    let cachedOracleResult: OracleResult | null = null;
+    if (!forceRefresh) {
+      try {
+        const rawCache = sessionStorage.getItem(cacheKey);
+        if (rawCache) {
+          const { value, ts } = JSON.parse(rawCache);
+          if (Date.now() - ts < CACHE_TTL_MS) cachedOracleResult = value;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const oraclePromise = cachedOracleResult
+      ? Promise.resolve(cachedOracleResult)
+      : supabase.functions
+          .invoke("compute-oracle", { body: oracleBody })
+          .then(({ data, error }) => {
+            if (error || !data || !Array.isArray(data.dimensions)) {
+              console.warn("[Oracle] compute-oracle failed:", error?.message);
+              return null;
+            }
+            try {
+              sessionStorage.setItem(
+                cacheKey,
+                JSON.stringify({ value: data, ts: Date.now() }),
+              );
+            } catch {
+              /* quota exceeded */
+            }
+            return data as OracleResult;
+          })
+          .catch((err) => {
+            console.warn("[Oracle] Edge Function unreachable:", err);
+            return null;
+          });
+
+    let swarmDone = false;
+    const shadowPromise = runFullEnsembleAnalysis({
+      companyName: companyData.name,
+      companyData,
+      industry: companyData.industry,
+      industryData,
+      roleTitle,
+      department: effectiveDepartment,
+      tenureYears: userFactors.tenureYears,
+      isUniqueRole: userFactors.isUniqueRole,
+      uniquenessDepth: userFactors.uniquenessDepth,
+      performanceTier: userFactors.performanceTier,
+      hasRecentPromotion: userFactors.hasRecentPromotion,
+      hasKeyRelationships: userFactors.hasKeyRelationships,
+      forceRefresh,
+      onSwarmComplete: () => {
+        swarmDone = true;
+        setEnsembleStage(2);
+      },
+    }).catch((err) => {
+      console.warn("[Ensemble] Shadow path failed:", err);
+      return null;
+    });
+
+    const stageTimer = setTimeout(() => {
+      if (!swarmDone) {
+        setEnsembleStage((prev) => (prev < 2 ? 2 : prev));
+      }
+    }, 4000);
+
+    const [resolvedOracle, shadowEnsemble] = await Promise.all([
+      oraclePromise,
+      shadowPromise,
+    ]);
+    clearTimeout(stageTimer);
+    if (resolvedOracle) setOracleResult(resolvedOracle);
+    setEnsembleStage(3);
+
+    const mergedResult: HybridResult = {
+      ...pipelineResult,
+      primaryRiskDriver: (shadowEnsemble as any)?.primaryRiskDriver ?? pipelineResult.primaryRiskDriver,
+      sixMonthInactionConsequence: (shadowEnsemble as any)?.sixMonthInactionConsequence ?? pipelineResult.sixMonthInactionConsequence,
+      oneActionThisWeek: (shadowEnsemble as any)?.oneActionThisWeek ?? pipelineResult.oneActionThisWeek,
+      whatChangesRiskMost: (shadowEnsemble as any)?.whatChangesRiskMost ?? pipelineResult.whatChangesRiskMost,
+      estimatedTimeline: (shadowEnsemble as any)?.estimatedTimeline ?? pipelineResult.estimatedTimeline,
+      keyProtectiveFactor: (shadowEnsemble as any)?.keyProtectiveFactor ?? pipelineResult.keyProtectiveFactor,
+      scenarioArchetype: (shadowEnsemble as any)?.scenarioArchetype ?? pipelineResult.scenarioArchetype,
+      scenarioArchetypeLabel: (shadowEnsemble as any)?.scenarioArchetypeLabel ?? pipelineResult.scenarioArchetypeLabel,
+      indiaSpecificInsight: (shadowEnsemble as any)?.indiaSpecificInsight ?? pipelineResult.indiaSpecificInsight,
+      confidenceNote: (shadowEnsemble as any)?.confidenceNote ?? pipelineResult.confidenceNote,
+      resolvedPattern: (shadowEnsemble as any)?.resolvedPattern ?? pipelineResult.resolvedPattern,
+      agentStatus: (shadowEnsemble as any)?.agentStatus ?? pipelineResult.agentStatus,
+      meta: {
+        ...pipelineResult.meta,
+        calculationMode: `${pipelineResult.meta?.calculationMode ?? "CONSENSUS_HYBRID"}+UI_PIPELINE`,
+      },
+    };
+
+    dispatch({ type: "SET_SCORE_RESULT", payload: mergedResult });
+
+    if (companyData.name && !companyData.source?.includes("Fallback") && !companyData.source?.includes("Unknown")) {
+      detectCollapseStage({
+        companyName: companyData.name,
+        industry: companyData.industry || "Technology",
+        roleTitle,
+        stock90dChange: companyData.stock90DayChange,
+        aiInvestmentSignal: companyData.aiInvestmentSignal ?? "medium",
+        layoffRounds: companyData.layoffRounds ?? 0,
+        mostRecentLayoffDate: companyData.layoffsLast24Months?.[0]?.date ?? null,
+        filingDelinquent: false,
+        userDepartment: effectiveDepartment,
+      }).then(report => {
+        if (report.stage || (report.departmentRisks && report.departmentRisks.length > 0)) {
+          dispatch({
+            type: "SET_SCORE_RESULT",
+            payload: {
+              ...mergedResult,
+              ...(report.stage ? { collapseStage: report.stage } : {}),
+              departmentFreezeScore: report.userDepartmentFreezeScore ?? null,
+            },
+          });
+        }
+      }).catch(() => { /* best effort */ });
+    }
+
+    recordScore({
+      roleKey: effectiveOracleKey || "generic",
+      industryKey: companyData.industry || "Technology",
+      countryKey: d5CountryKey,
+      experience: oracleExp,
+      score: mergedResult.total,
+      timestamp: Date.now(),
+      isGrounded: pipelineQuality === "live",
+      breakdown: {
+        L1: mergedResult.breakdown.L1,
+        L2: mergedResult.breakdown.L2,
+        L3: mergedResult.breakdown.L3,
+        L4: mergedResult.breakdown.L4,
+        L5: mergedResult.breakdown.L5,
+        ...((mergedResult.breakdown as any).D6 != null ? { D6: (mergedResult.breakdown as any).D6 } : {}),
+        ...((mergedResult.breakdown as any).D7 != null ? { D7: (mergedResult.breakdown as any).D7 } : {}),
+      },
+      companyName: companyData.name,
+      companySnapshot: {
+        stock90DayChange: companyData.stock90DayChange ?? null,
+        revenueGrowthYoY: companyData.revenueGrowthYoY ?? null,
+        layoffRounds: companyData.layoffRounds ?? 0,
+        lastLayoffPercent: companyData.lastLayoffPercent ?? null,
+        aiInvestmentSignal: companyData.aiInvestmentSignal ?? "medium",
+        employeeCount: companyData.employeeCount,
+        revenuePerEmployee: companyData.revenuePerEmployee,
+      },
+    });
+
+    dispatch({
+      type: "SHOW_TOAST",
+      payload: {
+        message: `Audit pipeline complete · ${mergedResult.confidencePercent}% confidence · ${mergedResult.signalQuality.liveSignals} live signals`,
+        type: "success",
+      },
+    });
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user?.id && state.companyName && state.roleTitle) {
+        const allowCommunityShare = (() => {
+          try { return localStorage.getItem('hp_community_share') === '1'; } catch { return false; }
+        })();
+        await supabase.from("layoff_scores").insert({
+          user_id: session.user.id,
+          company_name: state.companyName,
+          role_title: state.roleTitle,
+          department: effectiveDepartment,
+          score: mergedResult.total,
+          tier: mergedResult.tier.label,
+          tier_color: mergedResult.tier.color,
+          confidence: mergedResult.confidence,
+          breakdown: mergedResult.breakdown,
+          models_used: shadowEnsemble ? (shadowEnsemble as any).modelsUsed ?? [] : [],
+          data_quality: pipelineQuality,
+          calculated_at: new Date().toISOString(),
+          allow_community_share: allowCommunityShare,
+        });
+
+        scoreSyncService.setUserId(session.user.id);
+        scoreSyncService.syncFromLocal([{
+          source: "layoff",
+          score: mergedResult.total,
+          plot_score: mergedResult.total,
+          data_version: "v2",
+          app_version: "2.0",
+          metadata: {
+            company: state.companyName,
+            role: state.roleTitle,
+            tier: mergedResult.tier.label,
+            dataQuality: pipelineQuality,
+          },
+        }]).catch(() => {});
+      }
+    } catch (syncError) {
+      console.warn("[Layoff] Server score sync failed:", syncError);
+    }
+
+    try {
+      sessionStorage.setItem(
+        "hp_last_score_session",
+        JSON.stringify({
+          result: mergedResult,
+          companyName: state.companyName,
+          roleTitle: state.roleTitle,
+          dataQuality: pipelineQuality,
+          oracleResult: resolvedOracle ?? null,
+          careerIntel: localIntel ?? null,
+          ts: Date.now(),
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleCalculate = async (forceRefresh = false) => {
     // ── BUG FIX: Prevent concurrent submissions ────────────────────────────
     if (isSubmitting.current) return;
     isSubmitting.current = true;
@@ -192,6 +524,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     let computedQuality: "live" | "partial" | "fallback" = "fallback";
 
     try {
+      try {
+        await runAuditPipelineDrivenCalculation(forceRefresh);
+        return;
+      } catch (pipelineError) {
+        console.warn(
+          "[AuditPipeline] UI pipeline path failed, falling back to legacy submit path:",
+          pipelineError,
+        );
+      }
+
       let companyData: CompanyData | null = null;
       let companyFallback: CompanyData | null = state.companyData || null;
 
@@ -220,14 +562,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             Array.isArray(osintData.recent_layoffs)
               ? osintData.recent_layoffs.map((l: any) => ({
                   date: l.date ?? new Date().toISOString(),
+                  // Use 0 for unknown severity — fabricating 5% inflates L2 scoring
                   percentCut:
-                    typeof l.percent_cut === "number" ? l.percent_cut : 5,
+                    typeof l.percent_cut === "number" ? l.percent_cut : 0,
                 }))
               : osintData.recent_layoff_news
                 ? [
                     {
                       date: new Date().toISOString(),
-                      percentCut: osintData.last_layoff_percent ?? 5,
+                      // Only use a real percent if the DB stored one; 0 = undisclosed
+                      percentCut: osintData.last_layoff_percent ?? 0,
                     },
                   ]
                 : [];
@@ -323,11 +667,46 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             });
           }
         } else {
-          console.warn("Fallback: Failed to fetch live data", error);
-          companyData =
-            companyFallback || getCompanyByName(state.companyName || "");
-          // ── BUG FIX: Make fallback visible to user ─────────────────────────
-          setDataQuality("fallback");
+          console.warn("[LayoffCalc] OSINT Edge Function unavailable — querying Supabase 2000-company table");
+          // ── Resolution order when OSINT fails ─────────────────────────────
+          // 1. Supabase company_intelligence (2000+ companies, always try first)
+          // 2. Legacy static DB (58 companies, code-side)
+          // 3. Hard fallback (±30pt warning shown)
+          let resolved: CompanyData | null = null;
+
+          try {
+            const matchResult = await queryCompanyIntelligenceWithMatch(state.companyName || "");
+            if (matchResult) {
+              resolved   = matchResult.companyData;
+              companyData = resolved;
+              setDataQuality("partial");
+              setLiveSignalCount(0);
+              setHeuristicSignalCount(7);
+              console.log(`[LayoffCalc] Supabase HIT: "${resolved.name}" (ratio=${matchResult.matchRatio.toFixed(2)}, exact=${matchResult.isExactMatch})`);
+
+              // Surface mismatch warning when the fuzzy-matched name differs from what the user typed.
+              // matchRatio 0.50–0.79: different entity, show amber warning.
+              // matchRatio < 0.50: rejected by confidence gate, falls through to fallback.
+              if (!matchResult.isExactMatch && matchResult.matchedCompanyName && matchResult.matchRatio < 0.80) {
+                dispatch({
+                  type: "SHOW_TOAST",
+                  payload: {
+                    message: `Matched to "${matchResult.matchedCompanyName}" — confirm this is the correct entity before submitting`,
+                    type: "warning",
+                  },
+                });
+              }
+            }
+          } catch (supabaseErr) {
+            console.warn("[LayoffCalc] Supabase intelligence lookup failed:", supabaseErr);
+          }
+
+          if (!resolved) {
+            // Static DB final fallback
+            companyData = companyFallback || getCompanyByName(state.companyName || "");
+          }
+
+          setDataQuality(companyData ? "partial" : "fallback");
         }
       }
 
@@ -389,7 +768,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       }
 
       const industryData: IndustryRisk | undefined =
-        fetchedIndustryData || industryRiskData[companyData.industry];
+        fetchedIndustryData || getAllIndustryRisk()[companyData.industry];
 
       const inputs: ScoreInputs = {
         companyData,
@@ -437,6 +816,12 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       // ── BUG FIX: Stage 1 — Swarm + engine firing ─────────────────────────
       setEnsembleStage(1);
 
+      // ── Pipeline timing — shared across all async stages ─────────────────
+      // fetchAuditData (called above) started a new timer. Retrieve it so we can
+      // pass it into the ensemble and Oracle calls.
+      // We create a new timer here since fetchAuditData is not called in this branch.
+      const _calcTimer = PipelineTimer.start(companyData.name);
+
       // ── [TRAJECTORY] Fire Oracle via compute-oracle Edge Function ────────
       const oracleBody = {
         roleKey: oracleRoleKey,
@@ -463,22 +848,27 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
       const oraclePromise = cachedOracleResult
         ? Promise.resolve(cachedOracleResult)
-        : supabase.functions.invoke('compute-oracle', { body: oracleBody })
-            .then(({ data, error }) => {
-              if (error || !data || !Array.isArray(data.dimensions)) {
-                console.warn('[Oracle] compute-oracle failed:', error?.message);
+        : (() => {
+            _calcTimer.mark('oracle_start');
+            return supabase.functions.invoke('compute-oracle', { body: oracleBody })
+              .then(({ data, error }) => {
+                _calcTimer.mark('oracle_end');
+                if (error || !data || !Array.isArray(data.dimensions)) {
+                  console.warn('[Oracle] compute-oracle failed:', error?.message);
+                  return null;
+                }
+                try {
+                  sessionStorage.setItem(cacheKey, JSON.stringify({ value: data, ts: Date.now() }));
+                } catch { /* quota exceeded */ }
+                setOracleResult(data as OracleResult);
+                return data as OracleResult;
+              })
+              .catch((err) => {
+                _calcTimer.mark('oracle_end');
+                console.warn('[Oracle] Edge Function unreachable:', err);
                 return null;
-              }
-              try {
-                sessionStorage.setItem(cacheKey, JSON.stringify({ value: data, ts: Date.now() }));
-              } catch { /* quota exceeded */ }
-              setOracleResult(data as OracleResult);
-              return data as OracleResult;
-            })
-            .catch((err) => {
-              console.warn('[Oracle] Edge Function unreachable:', err);
-              return null;
-            });
+              });
+          })();
 
       // ── BUG FIX: Stage transitions driven by orchestrator callbacks ─────────
       // We start the analysis and trigger stage 2 based on swarm completion
@@ -492,13 +882,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         department: inputs.department,
         tenureYears: inputs.userFactors.tenureYears,
         isUniqueRole: inputs.userFactors.isUniqueRole,
-        uniquenessDepth: inputs.userFactors.uniquenessDepth, // Priority 3 fix
+        uniquenessDepth: inputs.userFactors.uniquenessDepth,
         performanceTier: inputs.userFactors.performanceTier,
         hasRecentPromotion: inputs.userFactors.hasRecentPromotion,
         hasKeyRelationships: inputs.userFactors.hasKeyRelationships,
         roleExposureOverride: fetchedRoleExposure,
+        _timer: _calcTimer,
+        forceRefresh,
         onSwarmComplete: () => {
-          // Swarm done → advance to Gemini synthesis stage
           swarmDone = true;
           setEnsembleStage(2);
         },
@@ -570,6 +961,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
       dispatch({ type: "SET_SCORE_RESULT", payload: enrichedResult });
 
+      // ── Pipeline timing — mark pipeline_end and emit full report ──────────
+      _calcTimer.mark('pipeline_end');
+      const _timingReport = _calcTimer.report();
+      // Mark first_render on next animation frame (after React commit)
+      requestAnimationFrame(() => {
+        _calcTimer.mark('first_render');
+      });
+
       // ── Priority 5: Async collapse detection — patches collapseStage into result ──
       // Runs non-blocking so dashboard loads immediately; stage appears within ~1s.
       // Only runs for known companies (not fallback) to avoid meaningless results.
@@ -583,9 +982,19 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           layoffRounds: companyData.layoffRounds ?? 0,
           mostRecentLayoffDate: companyData.layoffsLast24Months?.[0]?.date ?? null,
           filingDelinquent: false,
+          userDepartment: inputs.department,
         }).then(report => {
-          if (report.stage) {
-            dispatch({ type: "SET_SCORE_RESULT", payload: { ...enrichedResult, collapseStage: report.stage } });
+          if (report.stage || (report.departmentRisks && report.departmentRisks.length > 0)) {
+            // v6.0: Also propagate the user's department freeze score for Fix 7
+            const userDeptFreeze = report.userDepartmentFreezeScore ?? null;
+            dispatch({
+              type: "SET_SCORE_RESULT",
+              payload: {
+                ...enrichedResult,
+                ...(report.stage ? { collapseStage: report.stage } : {}),
+                departmentFreezeScore: userDeptFreeze,
+              },
+            });
           }
         }).catch(() => { /* collapse detection is best-effort */ });
       }
@@ -606,6 +1015,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
                        ...(bd.D6 != null ? { D6: bd.D6 } : {}),
                        ...(bd.D7 != null ? { D7: bd.D7 } : {}) },
           companyName: companyData.name,
+          // v6.0 Fix 3: Store company snapshot so delta attribution can reference actual values
+          companySnapshot: {
+            stock90DayChange: companyData.stock90DayChange ?? null,
+            revenueGrowthYoY: companyData.revenueGrowthYoY ?? null,
+            layoffRounds: companyData.layoffRounds ?? 0,
+            lastLayoffPercent: companyData.lastLayoffPercent ?? null,
+            aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
+            employeeCount: companyData.employeeCount,
+            revenuePerEmployee: companyData.revenuePerEmployee,
+          },
         });
       }
 
@@ -812,6 +1231,31 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         />
       )}
 
+      {/* Cache-hit banner — shown when result is from 1h localStorage cache */}
+      {state.hasCompletedAssessment &&
+        state.scoreResult &&
+        !state.isCalculating &&
+        (state.scoreResult as any).fromCache && (
+          <div className="max-w-4xl mx-auto px-4 mb-2">
+            <CachedResultBanner
+              cachedAt={(state.scoreResult as any).cachedAt}
+              onForceRefresh={handleForceRefresh}
+              isRefreshing={isForceRefreshing}
+            />
+          </div>
+        )}
+
+      {/* Breaking news banner — appears mid-session when injectLayoffEvent fires */}
+      {state.hasCompletedAssessment && !state.isCalculating && (
+        <div className="max-w-4xl mx-auto px-4 mb-4">
+          <BreakingNewsBanner
+            currentCompanyName={state.companyName ?? null}
+            onForceRefresh={handleForceRefresh}
+            isRefreshing={isForceRefreshing}
+          />
+        </div>
+      )}
+
       {state.hasCompletedAssessment &&
         state.scoreResult &&
         !state.isCalculating && (
@@ -839,7 +1283,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
       {showShareCard && state.scoreResult && (
         <LayoffShareCard
-          score={state.scoreResult.score}
+          score={(state.scoreResult as any).score ?? (state.scoreResult as any).total}
           tier={state.scoreResult.tier}
           companyName={state.companyName || "Unknown"}
           roleTitle={state.roleTitle || "Unknown"}

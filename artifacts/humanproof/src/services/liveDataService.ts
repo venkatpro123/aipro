@@ -4,8 +4,24 @@
 // Hierarchy: proxy-live-signals EF (stock+news) → free data connectors → heuristic fallback
 
 import { injectLayoffEvent, LayoffNewsEvent } from '../data/layoffNewsCache';
+import type { CompanyData } from '../data/companyDatabase';
 import { enrichCompanySignals } from './dataConnectors/index';
 import { supabase as _supabase } from '../utils/supabase';
+import {
+  recordApiDegradation,
+  isRateLimitError,
+  incrementRequestCount,
+  isQuotaExhausted,
+  isApproachingQuota,
+} from './apiDegradationMonitor';
+import {
+  isCallAllowed,
+  recordSuccess as circuitSuccess,
+  recordFailure as circuitFailure,
+  getCachedResponse,
+  getCircuitSnapshot,
+} from './apiCircuitBreaker';
+import type { PipelineTimerInstance } from './pipelineTimer';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,6 +30,8 @@ export interface StockLiveData {
   revenueGrowthYoY: number | null;
   marketCap: number | null;
   peRatio: number | null;
+  /** Full-time employee count from Yahoo Finance assetProfile.fullTimeEmployees */
+  employeeCount: number | null;
   source: 'alphavantage' | 'heuristic';
   fetchedAt: string;
 }
@@ -33,8 +51,74 @@ export interface HiringLiveData {
    *  populated when a live API actually returned a count (Serper); null
    *  for heuristic baselines so the UI does not present a fake number. */
   estimatedOpenings: number | null;
+  /** Naukri-specific count (live only). */
+  naukriOpenings: number | null;
+  /** LinkedIn-specific count (live only). */
+  linkedinOpenings: number | null;
+  /**
+   * true  = Serper API was called server-side; counts are live job-board data.
+   * false = ROLE_DEMAND_BASE static prior from Q1 2026; NOT live data.
+   * UI must show "heuristic" qualifier when false — currently missing in prod.
+   */
+  isLive: boolean;
+  /** Disclosure text for "heuristic" tooltip when isLive = false. */
+  disclosure: string;
   source: 'supabase-osint' | 'heuristic';
   fetchedAt: string;
+}
+
+export type SignalSourceKind = 'live' | 'db' | 'heuristic' | 'user_input';
+export type SignalFreshnessState = 'fresh' | 'degraded' | 'invalid';
+
+export interface ProvenancedSignal<T = unknown> {
+  key: string;
+  value: T | null;
+  source: SignalSourceKind;
+  sourceName: string;
+  observedAt: string;
+  fetchedAt: string;
+  freshnessDays: number;
+  freshnessState: SignalFreshnessState;
+  confidence: number;
+  supersedes?: string[];
+  conflictWith?: string[];
+}
+
+export interface SignalConflict {
+  signalType: string;
+  descriptions: string[];
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  conflictingSources: Array<{
+    source: string;
+    value: number;
+    timestamp: string;
+  }>;
+  recommendedResolution?: string;
+}
+
+export interface ReconciliationSummary {
+  liveWonKeys: string[];
+  dbWonKeys: string[];
+  conflictedKeys: string[];
+  degradedKeys: string[];
+  ignoredLiveKeys?: string[];
+  confidenceCapsApplied?: string[];
+  hardFailures?: string[];
+}
+
+export interface ReconciledCompanySignals {
+  active: CompanyData;
+  signals: Record<string, ProvenancedSignal<any>>;
+  conflicts: SignalConflict[];
+  liveSignalCount: number;
+  informativeLiveSignalCount: number;
+  degradedLiveSignalCount: number;
+  degradedSignalClasses: string[];
+  hardFailures: string[];
+  missingDataFallbacks: string[];
+  confidenceCap?: number;
+  confidenceCapsApplied: string[];
+  summary: ReconciliationSummary;
 }
 
 export interface LiveDataResult {
@@ -42,20 +126,42 @@ export interface LiveDataResult {
   newsData: NewsLiveData | null;
   hiringData: HiringLiveData | null;
   overallSource: 'full-live' | 'partial-live' | 'heuristic' | 'unknown-company';
-  liveSignalCount: number;       // number of real API signals used
-  heuristicSignalCount: number;  // number of static/inferred signals
+  liveSignalCount: number;          // API calls that returned non-null data
+  heuristicSignalCount: number;     // static/inferred signals
+  /**
+   * [AUDIT FIX]: Signals that came from LIVE external API calls in this session only.
+   * Does NOT include stale DB values that were returned by the EF and labeled as "live".
+   * Used to display honest "X live API signals" vs the inflated liveSignalCount.
+   * Stock from Yahoo Finance = 1-2 genuine, news from NewsAPI = 1 genuine, hiring = 1 if Serper.
+   */
+  genuineLiveApiSignals: number;
+  /**
+   * Signals that actually changed companyData vs the static DB baseline.
+   * A field counted here was null in the DB and non-null from the live API.
+   * Use this for confidence interval calculations — not liveSignalCount.
+   *
+   * Example: TCS has stock90DayChange: 15 in static DB. Alpha Vantage returns 15.
+   *   liveSignalCount = 1 (API returned non-null)
+   *   informativeLiveSignals = 0 (DB guard prevented write — no new information)
+   */
+  informativeLiveSignals: number;
   fetchedAt: string;
   apiErrors: string[];           // non-fatal errors for transparency
   /**
    * High-confidence layoff events derived from regulatory or news sources
    * (SEC EDGAR 8-K, WARN Act, India press) — surfaced separately so
-   * `patchCompanyDataWithLive` can backfill `layoffsLast24Months` when the
-   * base CompanyData record is missing it. The previous flow only injected
-   * into `layoffNewsCache`, which is consulted by L2's `newsRisk` (10% of
-   * L2) but not by `recentLayoffRisk` (30% of L2) — so a confirmed SEC 8-K
-   * laid almost no weight on the score. This field closes that gap.
+   * `reconcileCompanySignals` can backfill `layoffsLast24Months` when the
+   * base CompanyData record is missing it.
+   *
+   * `affectedCount`: raw worker count from regulatory filings (WARN Act).
+   * When present and companyData.employeeCount is known, `reconcileCompanySignals`
+   * computes the percentCut instead of storing 0, restoring L2 severity scoring.
    */
-  derivedLayoffEvents: { date: string; percentCut: number; source: string }[];
+  derivedLayoffEvents: { date: string; percentCut: number; source: string; affectedCount?: number }[];
+  reconciled?: ReconciledCompanySignals;
+  degradedSignalClasses: string[];
+  hardFailures: string[];
+  _connectorSignals?: any;
 }
 
 // ── Server-side proxy call (Alpha Vantage + NewsAPI — keys never in browser) ──
@@ -139,6 +245,7 @@ const fetchAlphaVantageOverview = async (
       revenueGrowthYoY,
       marketCap,
       peRatio,
+      employeeCount: null,
       source: 'alphavantage',
       fetchedAt: new Date().toISOString(),
     };
@@ -237,19 +344,33 @@ const extractDepartmentsFromText = (text: string): string[] => {
  *
  * @param companyName  Human-readable company name (e.g. "Google")
  * @param ticker       Stock ticker if known (e.g. "GOOGL"). Pass null for private companies.
- * @returns            LiveDataResult with truthful signal counts and source attribution.
+ * @param _timer       Optional pipeline timer for performance tracking.
+ * @param roleTitle    User's role title — passed to connectors so Serper/Naukri can
+ *                     return role-specific hiring counts instead of company-wide defaults.
+ * @param industry     Company industry — passed to connectors for sector-level layoff counts.
  */
 export const fetchLiveCompanyData = async (
   companyName: string,
   ticker?: string | null,
+  _timer?: PipelineTimerInstance,
+  roleTitle?: string,
+  industry?: string,
 ): Promise<LiveDataResult> => {
   const errors: string[] = [];
   let liveCount = 0;
   let heuristicCount = 0;
   const derivedLayoffEvents: { date: string; percentCut: number; source: string }[] = [];
+  const degradedSignalClasses: string[] = [];
+  const hardFailures: string[] = [];
+  let connectorSignals: any = null;
 
   // Ticker resolution — no API keys in the browser
+  // Only PUBLIC companies with real exchange-listed tickers belong here.
+  // Private companies (Stripe, Rippling, Anthropic etc.) must NOT have entries —
+  // a fake ticker like 'STRIP' triggers Yahoo Finance fetch failures, which trip
+  // the circuit breaker and block stock signals for all subsequent companies.
   const TICKER_MAP: Record<string, string> = {
+    // US public — NYSE / NASDAQ
     amazon: 'AMZN', google: 'GOOGL', alphabet: 'GOOGL',
     microsoft: 'MSFT', apple: 'AAPL', meta: 'META', facebook: 'META',
     tesla: 'TSLA', netflix: 'NFLX', nvidia: 'NVDA',
@@ -259,12 +380,23 @@ export const fetchLiveCompanyData = async (
     spotify: 'SPOT', shopify: 'SHOP', adobe: 'ADBE', snap: 'SNAP',
     palantir: 'PLTR', snowflake: 'SNOW', coinbase: 'COIN',
     datadog: 'DDOG', cloudflare: 'NET', twilio: 'TWLO',
-    samsara: 'IOT', stripe: 'STRIP', rippling: 'RPLG',
+    samsara: 'IOT',
     okta: 'OKTA', crowdstrike: 'CRWD', zscaler: 'ZS',
-    servicenow: 'NOW', workday: 'WDAY', zendesk: 'ZEN',
-    zoom: 'ZM', slack: 'WORK', dropbox: 'DBX',
-    infosys: 'INFY', wipro: 'WIT', 'tata consultancy': 'TCS.NS', tcs: 'TCS.NS',
+    servicenow: 'NOW', workday: 'WDAY',
+    zoom: 'ZM', dropbox: 'DBX',
+    'paycom software': 'PAYC', paycom: 'PAYC',
+    intuit: 'INTU', autodesk: 'ADSK', veeva: 'VEEV',
+    'mongodb': 'MDB', 'gitlab': 'GTLB', 'hashicorp': 'HCP',
+    // India — NSE / BSE
+    infosys: 'INFY', wipro: 'WIT',
+    'tata consultancy': 'TCS.NS', tcs: 'TCS.NS',
     hcl: 'HCLTECH.NS', 'tech mahindra': 'TECHM.NS',
+    'hcl technologies': 'HCLTECH.NS',
+    'mphasis': 'MPHASIS.NS', 'persistent': 'PERSISTENT.NS',
+    // China / APAC — ADRs
+    alibaba: 'BABA', 'jd.com': 'JD', baidu: 'BIDU',
+    // Europe
+    'sap': 'SAP', 'nokia': 'NOK',
   };
   const resolvedTicker = ticker ?? (() => {
     const lower = companyName.toLowerCase();
@@ -278,59 +410,163 @@ export const fetchLiveCompanyData = async (
   let stockData: StockLiveData | null = null;
   let newsData: NewsLiveData | null = null;
 
-  try {
-    const proxyResult = await fetchViaProxy(companyName, resolvedTicker, 'both');
-    errors.push(...proxyResult.errors);
+  // ── Gate 1: per-session quota guard ──────────────────────────────────────
+  // proxy-live-signals uses Yahoo Finance (no key) for stock, NOT Alpha Vantage.
+  // Track it under 'yahoo_finance' so real AV quota (localhost fallback) stays accurate.
+  const yFinanceExhausted = isQuotaExhausted('yahoo_finance');
+  const newsExhausted     = isQuotaExhausted('newsapi');
 
-    const ps = proxyResult.stockData;
-    if (ps && ps.price90DayChange !== undefined) {
-      stockData = {
-        price90DayChange: ps.price90DayChange ?? null,
-        revenueGrowthYoY: ps.revenueGrowthYoY ?? null,
-        marketCap: ps.marketCap ?? null,
-        peRatio: ps.peRatio ?? null,
-        source: 'alphavantage',
-        fetchedAt: new Date().toISOString(),
-      };
-      // Count only fields that are actually populated — price and revenue are separate signals
-      if (ps.price90DayChange != null) liveCount += 1; else heuristicCount += 1;
-      if (ps.revenueGrowthYoY != null) liveCount += 1; else heuristicCount += 1;
-    } else {
-      if (resolvedTicker) errors.push(`Alpha Vantage: no data for ${resolvedTicker}`);
-      else errors.push('No ticker — stock signals unavailable (private/unknown company)');
+  if (yFinanceExhausted || isApproachingQuota('yahoo_finance')) {
+    errors.push(yFinanceExhausted
+      ? 'Stock proxy (Yahoo Finance): session quota exhausted (50/day). Heuristic fallback active.'
+      : 'Stock proxy (Yahoo Finance): approaching daily quota. Remaining requests limited.');
+    if (yFinanceExhausted) {
+      recordApiDegradation('yahoo_finance', 'rate_limited', 'Session quota exhausted');
       heuristicCount += 2;
     }
+  }
+  if (newsExhausted) {
+    errors.push('NewsAPI: daily quota exhausted this session (100/day). Heuristic fallback active.');
+    recordApiDegradation('newsapi', 'rate_limited', 'Session quota exhausted');
+    heuristicCount += 1;
+  }
 
-    const pn = proxyResult.newsData;
-    if (pn && pn.recentHeadlineCount !== undefined) {
-      newsData = {
-        latestLayoffEvent: pn.latestLayoffEvent ?? null,
-        recentHeadlineCount: pn.recentHeadlineCount,
-        sentimentSignal: pn.sentimentSignal,
-        source: 'newsapi',
-        fetchedAt: pn.fetchedAt ?? new Date().toISOString(),
-      };
-      if (pn.latestLayoffEvent) {
-        injectLayoffEvent(pn.latestLayoffEvent as LayoffNewsEvent);
-      }
+  // ── Gate 2: circuit breaker ───────────────────────────────────────────────
+  // OPEN circuit = 3+ consecutive failures in the last 5 minutes.
+  // Each service is gated independently — stock open does NOT block news.
+  const yFinanceCircuitOpen = !isCallAllowed('yahoo_finance');
+  const newsCircuitOpen     = !isCallAllowed('newsapi');
+
+  if (yFinanceCircuitOpen) {
+    const yfSnap  = getCircuitSnapshot('yahoo_finance');
+    const yfCache = getCachedResponse<StockLiveData>('yahoo_finance');
+    if (yfCache) {
+      stockData = { ...yfCache.data, fetchedAt: new Date(yfCache.cachedAt).toISOString() };
+      errors.push(`Stock proxy circuit OPEN — using cached data from ${yfSnap.cachedAgeLabel ?? 'earlier'}.`);
       liveCount += 1;
     } else {
-      errors.push('NewsAPI: no results from proxy');
+      errors.push(`Stock proxy circuit OPEN (${yfSnap.consecutiveFailures} failures). No cached data — heuristic fallback.`);
+      heuristicCount += 2;
+    }
+  }
+
+  if (newsCircuitOpen) {
+    const newsSnap  = getCircuitSnapshot('newsapi');
+    const newsCache = getCachedResponse<NewsLiveData>('newsapi');
+    if (newsCache) {
+      newsData = { ...newsCache.data, fetchedAt: new Date(newsCache.cachedAt).toISOString() };
+      errors.push(`NewsAPI circuit OPEN — using cached data from ${newsSnap.cachedAgeLabel ?? 'earlier'}.`);
+      liveCount += 1;
+    } else {
+      errors.push(`NewsAPI circuit OPEN (${newsSnap.consecutiveFailures} failures). No cached data — heuristic fallback.`);
       heuristicCount += 1;
     }
-  } catch (proxyErr: any) {
-    errors.push(`proxy-live-signals: ${proxyErr.message}`);
-    heuristicCount += 3;
-    // Legacy localhost fallback for local dev
-    const alphaKey = (import.meta as any).env?.VITE_ALPHAVANTAGE_KEY as string | undefined;
-    const newsKey  = (import.meta as any).env?.VITE_NEWSAPI_KEY as string | undefined;
-    if (alphaKey && resolvedTicker) {
-      stockData = await fetchAlphaVantageOverview(resolvedTicker, alphaKey);
-      if (stockData?.source === 'alphavantage') { liveCount += 2; heuristicCount -= 2; }
-    }
-    if (newsKey) {
-      newsData = await fetchNewsAPIHeadlines(companyName, newsKey);
-      if (newsData?.source === 'newsapi') { liveCount += 1; heuristicCount -= 1; }
+  }
+
+  // Determine proxy action based on which services are independently available.
+  // Previously the AND-logic caused news to be skipped when stock circuit was open.
+  // Now each service is gated independently and action reflects exactly what's needed.
+  const stockNeeded = !yFinanceExhausted && !yFinanceCircuitOpen;
+  const newsNeeded  = !newsExhausted && !newsCircuitOpen;
+  const proxyAction: 'stock' | 'news' | 'both' | null =
+    stockNeeded && newsNeeded ? 'both'
+    : stockNeeded             ? 'stock'
+    : newsNeeded              ? 'news'
+    : null;
+
+  if (proxyAction) {
+    try {
+      if (stockNeeded && resolvedTicker) incrementRequestCount('yahoo_finance');
+      if (newsNeeded)                    incrementRequestCount('newsapi');
+
+      if (stockNeeded) _timer?.mark('yahoo_finance_start');
+      if (newsNeeded)  _timer?.mark('newsapi_start');
+
+      const proxyResult = await fetchViaProxy(companyName, resolvedTicker, proxyAction);
+
+      if (stockNeeded) _timer?.mark('yahoo_finance_end');
+      if (newsNeeded)  _timer?.mark('newsapi_end');
+
+      errors.push(...proxyResult.errors);
+
+      const flags = (proxyResult as any).rateLimitFlags ?? {};
+      if (flags.avRateLimited || flags.yahooRateLimited) {
+        recordApiDegradation('yahoo_finance', 'rate_limited', 'Stock proxy rate limited');
+      }
+      if (flags.newsRateLimited) {
+        recordApiDegradation('newsapi', 'rate_limited', 'NewsAPI rateLimited response');
+      }
+
+      if (stockNeeded) {
+        const ps = proxyResult.stockData;
+        const stockBlocked = flags.avRateLimited || flags.yahooRateLimited;
+        if (ps && ps.price90DayChange !== undefined && !stockBlocked) {
+          stockData = {
+            price90DayChange: ps.price90DayChange ?? null,
+            revenueGrowthYoY: ps.revenueGrowthYoY ?? null,
+            marketCap: ps.marketCap ?? null,
+            peRatio: ps.peRatio ?? null,
+            employeeCount: typeof ps.employeeCount === 'number' && ps.employeeCount > 0 ? ps.employeeCount : null,
+            source: 'alphavantage', // keep schema-compatible source label
+            fetchedAt: new Date().toISOString(),
+          };
+          circuitSuccess('yahoo_finance', stockData);
+          if (ps.price90DayChange != null) liveCount += 1; else heuristicCount += 1;
+          if (ps.revenueGrowthYoY != null) liveCount += 1; else heuristicCount += 1;
+        } else {
+          if (resolvedTicker && !stockBlocked) {
+            errors.push(`Stock proxy: no data for ${resolvedTicker}`);
+            circuitFailure('yahoo_finance', `no data for ${resolvedTicker}`);
+          } else if (!resolvedTicker) {
+            errors.push('No ticker — stock signals unavailable (private/unknown company)');
+          }
+          heuristicCount += 2;
+        }
+      }
+
+      if (newsNeeded) {
+        const pn = proxyResult.newsData;
+        if (pn && pn.recentHeadlineCount !== undefined && !flags.newsRateLimited) {
+          newsData = {
+            latestLayoffEvent: pn.latestLayoffEvent ?? null,
+            recentHeadlineCount: pn.recentHeadlineCount,
+            sentimentSignal: pn.sentimentSignal,
+            source: 'newsapi',
+            fetchedAt: pn.fetchedAt ?? new Date().toISOString(),
+          };
+          circuitSuccess('newsapi', newsData);
+          if (pn.latestLayoffEvent) {
+            injectLayoffEvent(pn.latestLayoffEvent as LayoffNewsEvent);
+          }
+          liveCount += 1;
+        } else {
+          if (!flags.newsRateLimited) {
+            errors.push('NewsAPI: no results from proxy');
+            circuitFailure('newsapi', 'no results from proxy');
+          }
+          heuristicCount += 1;
+        }
+      }
+    } catch (proxyErr: any) {
+      errors.push(`proxy-live-signals: ${proxyErr.message}`);
+      if (stockNeeded) { heuristicCount += 2; circuitFailure('yahoo_finance', proxyErr.message); }
+      if (newsNeeded)  { heuristicCount += 1; circuitFailure('newsapi',       proxyErr.message); }
+      if (isRateLimitError(proxyErr)) {
+        recordApiDegradation('supabase_osint', 'rate_limited', proxyErr.message);
+      } else {
+        recordApiDegradation('supabase_osint', 'network_error', proxyErr.message);
+      }
+      // localhost dev fallback (only fires on localhost — VITE_ keys present)
+      const alphaKey = (import.meta as any).env?.VITE_ALPHAVANTAGE_KEY as string | undefined;
+      const newsKey  = (import.meta as any).env?.VITE_NEWSAPI_KEY as string | undefined;
+      if (alphaKey && resolvedTicker && !yFinanceExhausted) {
+        stockData = await fetchAlphaVantageOverview(resolvedTicker, alphaKey);
+        if (stockData?.source === 'alphavantage') { liveCount += 2; heuristicCount -= 2; }
+      }
+      if (newsKey && !newsExhausted) {
+        newsData = await fetchNewsAPIHeadlines(companyName, newsKey);
+        if (newsData?.source === 'newsapi') { liveCount += 1; heuristicCount -= 1; }
+      }
     }
   }
 
@@ -339,7 +575,14 @@ export const fetchLiveCompanyData = async (
   // Naukri heuristic is always present but is NOT a live signal — it's a baseline.
   let hiringData: HiringLiveData | null = null;
   try {
-    const connectorSignals = await enrichCompanySignals(companyName, '', '');
+    _timer?.mark('bse_fetch_start');
+    _timer?.mark('serper_start');
+    // Pass roleTitle so Naukri/Serper can fetch role-specific opening counts.
+    // Pass industry so getSectorLayoffCount returns meaningful peer-company signals.
+    // Previously both were '', making hiring always heuristic and sector count always 0.
+    connectorSignals = await enrichCompanySignals(companyName, roleTitle ?? '', industry ?? '');
+    _timer?.mark('bse_fetch_end');
+    _timer?.mark('serper_end');
 
     // 'Naukri Heuristic' is unconditionally added by the connector — filter it out
     // when deciding whether real connector data was returned.
@@ -354,23 +597,31 @@ export const fetchLiveCompanyData = async (
         revenueGrowthYoY: connectorSignals.revenueYoY,
         marketCap: connectorSignals.marketCapCr,
         peRatio: connectorSignals.peRatio,
+        employeeCount: null,
         source: 'alphavantage',
         fetchedAt: connectorSignals.fetchedAt,
       };
       liveCount += 1;
     }
 
-    // Hiring signal: live only when Serper API was used (not heuristic baseline)
-    const hiringIsLive = connectorSignals.sourcesUsed.includes('Serper API');
+    // Hiring signal: live only when Serper API was used via the Edge Function.
+    // The naukriConnector now routes through proxy-live-signals (server-side Serper key).
+    // isLive = true only when the Edge Function confirmed a Serper call was made.
+    const hiringIsLive = connectorSignals.roleDemandIsLive;
     hiringData = {
-      freezeScore: connectorSignals.hiringFreezeScore,
-      postingTrend: connectorSignals.roleDemandTrend === 'rising' ? 'growing'
+      freezeScore:     connectorSignals.hiringFreezeScore,
+      postingTrend:    connectorSignals.roleDemandTrend === 'rising' ? 'growing'
         : connectorSignals.roleDemandTrend === 'falling' ? 'declining' : 'stable',
-      // Only forward the openings count when it was a live API response;
-      // heuristic baselines have no count and we'd rather show "—" than a
-      // misleading number.
+      // Only forward counts when they came from a live Serper call.
       estimatedOpenings: hiringIsLive ? connectorSignals.estimatedOpenings : null,
-      source: hiringIsLive ? 'supabase-osint' : 'heuristic',
+      naukriOpenings:    hiringIsLive ? (connectorSignals as any).naukriOpenings ?? null : null,
+      linkedinOpenings:  hiringIsLive ? (connectorSignals as any).linkedinOpenings ?? null : null,
+      isLive:            hiringIsLive,
+      disclosure:        hiringIsLive
+        ? ''
+        : 'Static heuristic baseline (Q1 2026 review) — Serper API key not configured server-side. ' +
+          'Set SERPER_API_KEY in Supabase Edge Function secrets to enable live Naukri/LinkedIn counts.',
+      source:   hiringIsLive ? 'supabase-osint' : 'heuristic',
       fetchedAt: connectorSignals.fetchedAt,
     };
     if (hiringIsLive) liveCount += 1;
@@ -437,13 +688,17 @@ export const fetchLiveCompanyData = async (
     if (connectorSignals.warnDatasetReachable && connectorSignals.warnNoticeCount > 0) {
       liveCount += 1;
       // WARN Act notices are *legally required* layoff disclosures with hard
-      // affected-employee counts. Inject as a confirmed event with computed
-      // percentCut when both totalAffected and a baseline employee count exist.
+      // affected-employee counts. Store affectedCount so reconcileCompanySignals
+      // can compute the real percentCut once employeeCount is known.
       if (connectorSignals.warnMostRecentFiling) {
+        const warnAffected: number | null =
+          typeof connectorSignals.warnAffectedTotal === 'number' && connectorSignals.warnAffectedTotal > 0
+            ? connectorSignals.warnAffectedTotal
+            : null;
         injectLayoffEvent({
           companyName,
           date: connectorSignals.warnMostRecentFiling,
-          headline: `WARN Act notice (${connectorSignals.warnAffectedTotal || 'count undisclosed'} workers across ${connectorSignals.warnNoticeCount} filing${connectorSignals.warnNoticeCount === 1 ? '' : 's'})`,
+          headline: `WARN Act notice (${warnAffected ?? 'count undisclosed'} workers across ${connectorSignals.warnNoticeCount} filing${connectorSignals.warnNoticeCount === 1 ? '' : 's'})`,
           percentCut: 0,
           source: 'WARN Act',
           url: '',
@@ -451,7 +706,8 @@ export const fetchLiveCompanyData = async (
         });
         derivedLayoffEvents.push({
           date: connectorSignals.warnMostRecentFiling,
-          percentCut: 0,
+          percentCut: 0, // computed in reconcileCompanySignals using employeeCount
+          affectedCount: warnAffected ?? undefined,
           source: 'WARN Act',
         });
       }
@@ -464,12 +720,92 @@ export const fetchLiveCompanyData = async (
     errors.push(`Data connectors: ${e.message}`);
   }
 
+  // ── breaking_news_events: query the persistent breaking-news store ──────────
+  // This is the primary real-time path for events detected between weekly runs.
+  // Events here flow directly into derivedLayoffEvents which patchCompanyDataWithLive
+  // uses to backfill layoffsLast24Months — feeding recentLayoffRisk (30% of L2),
+  // NOT just newsRisk (10%). This is the difference between a ~2pt score change
+  // and a ~8–15pt score change for a major breaking announcement like TCS 15k.
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: breakingRows } = await _supabase
+      .from('breaking_news_events')
+      .select('company_name, event_date, headline, percent_cut, affected_count, confidence, source, source_url')
+      .ilike('company_name', `%${companyName}%`)
+      .gte('event_date', thirtyDaysAgo.toISOString().slice(0, 10))
+      .order('event_date', { ascending: false })
+      .limit(5);
+
+    if (breakingRows && breakingRows.length > 0) {
+      liveCount += 1; // a breaking-news DB hit counts as a live signal
+      for (const row of breakingRows as Array<{
+        company_name: string; event_date: string; headline: string;
+        percent_cut: number | null; affected_count: number | null;
+        confidence: string; source: string; source_url: string | null;
+      }>) {
+        const alreadyInDerived = derivedLayoffEvents.some(e => e.date === row.event_date);
+        if (!alreadyInDerived) {
+          derivedLayoffEvents.push({
+            date:       row.event_date,
+            percentCut: row.percent_cut ?? 0,
+            source:     `breaking_news_events (${row.source})`,
+          });
+          // Also inject into the in-memory cache so the score engine's newsRisk fires
+          injectLayoffEvent({
+            companyName,
+            date:                row.event_date,
+            headline:            row.headline,
+            percentCut:          row.percent_cut ?? 5,
+            source:              row.source,
+            url:                 row.source_url ?? '',
+            affectedDepartments: [],
+          });
+        }
+      }
+      errors.push(`Breaking news: ${breakingRows.length} event(s) from breaking_news_events`);
+    }
+  } catch (bnErr: any) {
+    errors.push(`breaking_news_events query failed: ${bnErr?.message}`);
+  }
+
   // ── Determine overall source quality ────────────────────────────────────
   const overallSource: LiveDataResult['overallSource'] =
     liveCount >= 4 ? 'full-live'
     : liveCount >= 2 ? 'partial-live'
     : !resolvedTicker ? 'unknown-company'
     : 'heuristic';
+
+  const errorText = errors.join(' | ').toLowerCase();
+  if (
+    errorText.includes('yahoo') || errorText.includes('stock proxy') ||
+    errorText.includes('alphavantage') || errorText.includes('alpha vantage') ||
+    errorText.includes('no ticker') || errorText.includes('fmp')
+  ) {
+    degradedSignalClasses.push('financial');
+  }
+  if (errorText.includes('newsapi') || errorText.includes('breaking_news_events') || errorText.includes('layoff')) {
+    degradedSignalClasses.push('layoffs');
+  }
+  if (!hiringData?.isLive) {
+    degradedSignalClasses.push('hiring');
+  }
+  if (errorText.includes('circuit open') || errorText.includes('proxy-live-signals') || errorText.includes('quota exhausted') || errorText.includes('session quota')) {
+    hardFailures.push(...errors.filter((msg) =>
+      /circuit open|proxy-live-signals|quota exhausted|session quota/i.test(msg),
+    ));
+  }
+
+  // genuineLiveApiSignals: count only signals that came from real external API calls
+  // in this session — not stale DB values or heuristic fallbacks.
+  // Stock via Yahoo Finance = up to 2 (price + revenue), news via NewsAPI/GNews = 1,
+  // hiring via Serper = 1 if live. Breaking news DB = 1 if rows found.
+  const genuineLiveApiSignals =
+    (stockData?.source === 'alphavantage' && stockData.price90DayChange != null ? 1 : 0) +
+    (stockData?.source === 'alphavantage' && stockData.revenueGrowthYoY != null ? 1 : 0) +
+    (newsData?.source === 'newsapi' || newsData?.source === 'gnews' || newsData?.source === 'google-news-rss' ? 1 : 0) +
+    (hiringData?.isLive === true ? 1 : 0);
 
   return {
     stockData,
@@ -478,71 +814,597 @@ export const fetchLiveCompanyData = async (
     overallSource,
     liveSignalCount: liveCount,
     heuristicSignalCount: heuristicCount,
+    genuineLiveApiSignals,
+    informativeLiveSignals: 0, // computed after patchCompanyDataWithLive in auditDataPipeline
     fetchedAt: new Date().toISOString(),
     apiErrors: errors,
     derivedLayoffEvents,
+    degradedSignalClasses: Array.from(new Set(degradedSignalClasses)),
+    hardFailures,
+    _connectorSignals: connectorSignals,
+  };
+};
+
+const DAY_MS = 86_400_000;
+
+const toIso = (value: string | undefined, fallback: string): string => {
+  if (!value) return fallback;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? fallback : parsed.toISOString();
+};
+
+const computeFreshnessDays = (iso: string, now: Date): number =>
+  Math.max(0, Math.floor((now.getTime() - new Date(iso).getTime()) / DAY_MS));
+
+const classifyFreshness = (days: number): SignalFreshnessState => {
+  if (days > 30) return 'invalid';
+  if (days > 7) return 'degraded';
+  return 'fresh';
+};
+
+const inferBaseSourceKind = (source?: string): SignalSourceKind => {
+  const normalized = (source ?? '').toLowerCase();
+  if (normalized.includes('fallback') || normalized.includes('unknown')) return 'heuristic';
+  if (normalized.includes('user input')) return 'user_input';
+  return 'db';
+};
+
+const inferSignalConfidence = (
+  source: SignalSourceKind,
+  freshnessState: SignalFreshnessState,
+): number => {
+  const base =
+    source === 'live' ? 0.92
+    : source === 'db' ? 0.74
+    : source === 'user_input' ? 0.58
+    : 0.35;
+  if (freshnessState === 'fresh') return base;
+  if (freshnessState === 'degraded') return Math.max(0.2, base - 0.18);
+  return Math.max(0.12, base - 0.35);
+};
+
+const cloneLayoffEvents = (events: Array<{ date: string; percentCut: number; source?: string }>) =>
+  events.map((event) => ({
+    date: event.date,
+    percentCut: event.percentCut,
+    ...(event.source ? { source: event.source } : {}),
+  }));
+
+const mergeLayoffEvents = (
+  existing: Array<{ date: string; percentCut: number; source?: string }>,
+  incoming: Array<{ date: string; percentCut: number; source?: string }>,
+) => {
+  const byDate = new Map<string, { date: string; percentCut: number; source?: string }>();
+  for (const event of [...existing, ...incoming]) {
+    // Regulatory filings (SEC 8-K + WARN Act) frequently cover the same underlying
+    // layoff event from different angles on the same date. Bucket them under a shared
+    // 'regulatory' key so they don't inflate the layoffRounds count.
+    const isRegulatory = /(sec edgar|warn act|regulatory)/i.test(event.source ?? '');
+    const key = isRegulatory && event.percentCut === 0
+      ? `${event.date.slice(0, 10)}:regulatory`
+      : `${event.date.slice(0, 10)}:${event.percentCut}:${event.source ?? ''}`;
+
+    const existing_entry = byDate.get(key);
+    // When merging, prefer the entry with a higher percentCut (e.g. WARN with a
+    // computed % beats an SEC entry still at 0) so severity is never silently lost.
+    if (!existing_entry || event.percentCut > existing_entry.percentCut) {
+      byDate.set(key, { ...event });
+    }
+  }
+  return Array.from(byDate.values()).sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+};
+
+const createSignal = <T>(
+  key: string,
+  value: T | null,
+  source: SignalSourceKind,
+  sourceName: string,
+  observedAt: string,
+  fetchedAt: string,
+  now: Date,
+): ProvenancedSignal<T> => {
+  const freshnessDays = computeFreshnessDays(observedAt, now);
+  const freshnessState = classifyFreshness(freshnessDays);
+  return {
+    key,
+    value,
+    source,
+    sourceName,
+    observedAt,
+    fetchedAt,
+    freshnessDays,
+    freshnessState,
+    confidence: inferSignalConfidence(source, freshnessState),
+  };
+};
+
+const pushConflict = (
+  conflicts: SignalConflict[],
+  signalType: string,
+  severity: SignalConflict['severity'],
+  descriptions: string[],
+  liveSignal: ProvenancedSignal<any> | null,
+  dbSignal: ProvenancedSignal<any> | null,
+  recommendedResolution: string,
+) => {
+  conflicts.push({
+    signalType,
+    descriptions,
+    severity,
+    conflictingSources: [
+      ...(liveSignal
+        ? [{
+            source: liveSignal.sourceName,
+            value: typeof liveSignal.value === 'number' ? liveSignal.value : 0,
+            timestamp: liveSignal.observedAt,
+          }]
+        : []),
+      ...(dbSignal
+        ? [{
+            source: dbSignal.sourceName,
+            value: typeof dbSignal.value === 'number' ? dbSignal.value : 0,
+            timestamp: dbSignal.observedAt,
+          }]
+        : []),
+    ],
+    recommendedResolution,
+  });
+};
+
+const chooseAuthoritativeSignal = <T>({
+  key,
+  dbSignal,
+  liveSignal,
+  heuristicSignal,
+  isMaterialConflict,
+  conflictDescription,
+  conflicts,
+  summary,
+}: {
+  key: string;
+  dbSignal: ProvenancedSignal<T> | null;
+  liveSignal: ProvenancedSignal<T> | null;
+  heuristicSignal?: ProvenancedSignal<T> | null;
+  isMaterialConflict?: (dbValue: T, liveValue: T) => boolean;
+  conflictDescription?: (dbValue: T, liveValue: T) => string[];
+  conflicts: SignalConflict[];
+  summary: ReconciliationSummary;
+}): ProvenancedSignal<T> | null => {
+  const liveUsable = liveSignal && liveSignal.freshnessState !== 'invalid';
+  const dbUsable = dbSignal && dbSignal.freshnessState !== 'invalid';
+
+  let chosen = dbSignal ?? heuristicSignal ?? null;
+
+  if (liveUsable) {
+    if (!dbUsable) {
+      chosen = liveSignal;
+    } else if (liveSignal!.freshnessState === 'fresh' && dbSignal!.freshnessState !== 'fresh') {
+      chosen = liveSignal;
+    } else if (liveSignal!.freshnessState === 'fresh' && dbSignal!.freshnessState === 'fresh') {
+      chosen = liveSignal;
+      if (
+        isMaterialConflict &&
+        dbSignal!.value != null &&
+        liveSignal!.value != null &&
+        isMaterialConflict(dbSignal!.value as T, liveSignal!.value as T)
+      ) {
+        summary.conflictedKeys.push(key);
+        liveSignal!.conflictWith = [dbSignal!.sourceName];
+        pushConflict(
+          conflicts,
+          key,
+          key === 'layoffRounds' || key === 'layoffsLast24Months' ? 'critical' : 'high',
+          conflictDescription
+            ? conflictDescription(dbSignal!.value as T, liveSignal!.value as T)
+            : [`${key} differs materially between live and database sources.`],
+          liveSignal!,
+          dbSignal!,
+          'Use the fresher live signal and cap confidence until the database is refreshed.',
+        );
+      }
+    } else if (!dbUsable) {
+      chosen = liveSignal;
+    } else {
+      summary.ignoredLiveKeys = [...(summary.ignoredLiveKeys ?? []), key];
+    }
+  }
+
+  if (chosen?.source === 'live') {
+    summary.liveWonKeys.push(key);
+    chosen.supersedes = dbSignal ? [dbSignal.sourceName] : undefined;
+  } else if (chosen?.source === 'db') {
+    summary.dbWonKeys.push(key);
+  }
+
+  if (liveSignal && chosen !== liveSignal) {
+    summary.ignoredLiveKeys = [...(summary.ignoredLiveKeys ?? []), key];
+  }
+
+  return chosen;
+};
+
+export const reconcileCompanySignals = (
+  base: CompanyData,
+  live: LiveDataResult,
+  now: Date = new Date(),
+): ReconciledCompanySignals => {
+  const active = {
+    ...base,
+    layoffsLast24Months: cloneLayoffEvents(base.layoffsLast24Months ?? []),
+  } as CompanyData & Record<string, any>;
+  const signals: Record<string, ProvenancedSignal<any>> = {};
+  const conflicts: SignalConflict[] = [];
+  const summary: ReconciliationSummary = {
+    liveWonKeys: [],
+    dbWonKeys: [],
+    conflictedKeys: [],
+    degradedKeys: [],
+  };
+  const missingDataFallbacks = [...live.apiErrors];
+  const degradedSignalClasses = Array.from(new Set(live.degradedSignalClasses ?? []));
+  const hardFailures = [...(live.hardFailures ?? [])];
+  const confidenceCapsApplied: string[] = [];
+  let confidenceCap: number | undefined;
+  let informativeLiveSignalCount = 0;
+  let degradedLiveSignalCount = 0;
+
+  const baseObservedAt = toIso(base.lastUpdated, now.toISOString());
+  const baseSourceKind = inferBaseSourceKind(base.source);
+  const baseSourceName = base.source || 'company_intelligence';
+
+  const dbStock = base.stock90DayChange != null
+    ? createSignal('stock90DayChange', base.stock90DayChange, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now)
+    : null;
+  const liveStock = live.stockData?.price90DayChange != null
+    ? createSignal('stock90DayChange', live.stockData.price90DayChange, 'live', live.stockData.source, live.stockData.fetchedAt, live.stockData.fetchedAt, now)
+    : null;
+  if (liveStock && liveStock.freshnessState !== 'fresh') degradedLiveSignalCount++;
+  const stockSignal = chooseAuthoritativeSignal<number>({
+    key: 'stock90DayChange',
+    dbSignal: dbStock,
+    liveSignal: liveStock,
+    conflicts,
+    summary,
+    isMaterialConflict: (dbValue, liveValue) => Math.abs(dbValue - liveValue) >= 8,
+    conflictDescription: (dbValue, liveValue) => [
+      `Live stock trend (${liveValue}%) materially differs from DB stock trend (${dbValue}%).`,
+    ],
+  });
+  if (stockSignal) {
+    signals.stock90DayChange = stockSignal;
+    active.stock90DayChange = stockSignal.value;
+    if (stockSignal.source === 'live' && base.stock90DayChange !== stockSignal.value) informativeLiveSignalCount++;
+  }
+
+  const dbRevenue = base.revenueGrowthYoY != null
+    ? createSignal('revenueGrowthYoY', base.revenueGrowthYoY, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now)
+    : null;
+  const liveRevenue = live.stockData?.revenueGrowthYoY != null
+    ? createSignal('revenueGrowthYoY', live.stockData.revenueGrowthYoY, 'live', live.stockData.source, live.stockData.fetchedAt, live.stockData.fetchedAt, now)
+    : null;
+  if (liveRevenue && liveRevenue.freshnessState !== 'fresh') degradedLiveSignalCount++;
+  const revenueSignal = chooseAuthoritativeSignal<number>({
+    key: 'revenueGrowthYoY',
+    dbSignal: dbRevenue,
+    liveSignal: liveRevenue,
+    conflicts,
+    summary,
+    isMaterialConflict: (dbValue, liveValue) => Math.abs(dbValue - liveValue) >= 5,
+    conflictDescription: (dbValue, liveValue) => [
+      `Live revenue growth (${liveValue}%) materially differs from DB revenue growth (${dbValue}%).`,
+    ],
+  });
+  if (revenueSignal) {
+    signals.revenueGrowthYoY = revenueSignal;
+    active.revenueGrowthYoY = revenueSignal.value;
+    if (revenueSignal.source === 'live' && base.revenueGrowthYoY !== revenueSignal.value) informativeLiveSignalCount++;
+  }
+
+  // Compute WARN Act percentCut from affectedCount + employeeCount when available.
+  // Previously all WARN/SEC events stored percentCut=0, zeroing out L2 severity scoring.
+  const baseEmployeeCount =
+    base.employeeCount && base.employeeCount > 100 ? base.employeeCount : null;
+
+  const liveLayoffEvents = mergeLayoffEvents(
+    [],
+    live.derivedLayoffEvents.map((event) => {
+      const computedPct =
+        event.percentCut === 0 &&
+        typeof event.affectedCount === 'number' &&
+        event.affectedCount > 0 &&
+        baseEmployeeCount
+          ? Math.round((event.affectedCount / baseEmployeeCount) * 1000) / 10
+          : event.percentCut;
+      return {
+        date: event.date,
+        percentCut: computedPct,
+        source: event.source,
+      };
+    }),
+  );
+  const dbLayoffEvents = createSignal(
+    'layoffsLast24Months',
+    cloneLayoffEvents(base.layoffsLast24Months ?? []),
+    baseSourceKind,
+    baseSourceName,
+    baseObservedAt,
+    baseObservedAt,
+    now,
+  );
+  const liveLayoffSignal = liveLayoffEvents.length > 0
+    ? createSignal('layoffsLast24Months', liveLayoffEvents, 'live', 'regulatory/news live signals', live.fetchedAt, live.fetchedAt, now)
+    : null;
+  if (liveLayoffSignal && liveLayoffSignal.freshnessState !== 'fresh') degradedLiveSignalCount++;
+
+  if (liveLayoffEvents.length > 0 && (base.layoffsLast24Months?.length ?? 0) === 0) {
+    summary.conflictedKeys.push('layoffsLast24Months');
+    pushConflict(
+      conflicts,
+      'layoffsLast24Months',
+      'critical',
+      ['Live layoff events were detected but the database shows a clean layoff history.'],
+      liveLayoffSignal,
+      dbLayoffEvents,
+      'Use the confirmed live event immediately and refresh the persisted layoff history.',
+    );
+  }
+
+  const layoffEventsSignal = chooseAuthoritativeSignal<Array<{ date: string; percentCut: number; source?: string }>>({
+    key: 'layoffsLast24Months',
+    dbSignal: dbLayoffEvents,
+    liveSignal: liveLayoffSignal,
+    conflicts,
+    summary,
+    isMaterialConflict: (dbValue, liveValue) => {
+      const dbCount = Array.isArray(dbValue) ? dbValue.length : 0;
+      const liveCount = Array.isArray(liveValue) ? liveValue.length : 0;
+      return dbCount !== liveCount;
+    },
+    conflictDescription: (dbValue, liveValue) => [
+      `Live layoff event count (${Array.isArray(liveValue) ? liveValue.length : 0}) differs from DB layoff event count (${Array.isArray(dbValue) ? dbValue.length : 0}).`,
+    ],
+  });
+  if (layoffEventsSignal) {
+    const mergedEvents =
+      layoffEventsSignal.source === 'live'
+        ? mergeLayoffEvents(base.layoffsLast24Months ?? [], layoffEventsSignal.value ?? [])
+        : layoffEventsSignal.value ?? [];
+    signals.layoffsLast24Months = {
+      ...layoffEventsSignal,
+      value: mergedEvents,
+    };
+    active.layoffsLast24Months = cloneLayoffEvents(mergedEvents);
+    if (layoffEventsSignal.source === 'live' && liveLayoffEvents.length > 0) informativeLiveSignalCount++;
+  }
+
+  const liveLayoffRoundsValue = liveLayoffEvents.length > 0 ? liveLayoffEvents.length : null;
+  const dbLayoffRounds = createSignal('layoffRounds', base.layoffRounds ?? 0, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now);
+  const liveLayoffRounds = liveLayoffRoundsValue != null
+    ? createSignal('layoffRounds', liveLayoffRoundsValue, 'live', 'regulatory/news live signals', live.fetchedAt, live.fetchedAt, now)
+    : null;
+  const layoffRoundsSignal = chooseAuthoritativeSignal<number>({
+    key: 'layoffRounds',
+    dbSignal: dbLayoffRounds,
+    liveSignal: liveLayoffRounds,
+    conflicts,
+    summary,
+    isMaterialConflict: (dbValue, liveValue) => dbValue !== liveValue,
+    conflictDescription: (dbValue, liveValue) => [
+      `Live layoff rounds (${liveValue}) disagree with DB layoff rounds (${dbValue}).`,
+    ],
+  });
+  if (layoffRoundsSignal) {
+    signals.layoffRounds = layoffRoundsSignal;
+    active.layoffRounds =
+      layoffRoundsSignal.source === 'live'
+        ? Math.max(
+            layoffRoundsSignal.value ?? 0,
+            active.layoffsLast24Months?.length ?? 0,
+            base.layoffRounds ?? 0,
+          )
+        : layoffRoundsSignal.value ?? 0;
+  }
+
+  const liveLastLayoffPercentValue = liveLayoffEvents
+    .map((event) => event.percentCut)
+    .filter((value) => typeof value === 'number' && value > 0)
+    .sort((a, b) => b - a)[0] ?? null;
+  const dbLastLayoffPercent = base.lastLayoffPercent != null
+    ? createSignal('lastLayoffPercent', base.lastLayoffPercent, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now)
+    : null;
+  const liveLastLayoffPercent = liveLastLayoffPercentValue != null
+    ? createSignal('lastLayoffPercent', liveLastLayoffPercentValue, 'live', 'regulatory/news live signals', live.fetchedAt, live.fetchedAt, now)
+    : null;
+  const lastLayoffPercentSignal = chooseAuthoritativeSignal<number>({
+    key: 'lastLayoffPercent',
+    dbSignal: dbLastLayoffPercent,
+    liveSignal: liveLastLayoffPercent,
+    conflicts,
+    summary,
+    isMaterialConflict: (dbValue, liveValue) => Math.abs(dbValue - liveValue) >= 3,
+    conflictDescription: (dbValue, liveValue) => [
+      `Live layoff severity (${liveValue}%) differs materially from DB severity (${dbValue}%).`,
+    ],
+  });
+  if (lastLayoffPercentSignal) {
+    signals.lastLayoffPercent = lastLayoffPercentSignal;
+    active.lastLayoffPercent = lastLayoffPercentSignal.value;
+  }
+
+  // Live employee count from Yahoo Finance fullTimeEmployees — always preferred over
+  // the DB value because the DB often has stale or size-bucket defaults (e.g. 1000).
+  const liveEmployeeCount = live.stockData?.employeeCount ?? null;
+  const employeeSignal = createSignal(
+    'employeeCount',
+    liveEmployeeCount != null ? liveEmployeeCount : base.employeeCount,
+    liveEmployeeCount != null ? 'live' : baseSourceKind,
+    liveEmployeeCount != null ? live.stockData!.source : baseSourceName,
+    liveEmployeeCount != null ? live.stockData!.fetchedAt : baseObservedAt,
+    liveEmployeeCount != null ? live.stockData!.fetchedAt : baseObservedAt,
+    now,
+  );
+  if (liveEmployeeCount != null) {
+    active.employeeCount = liveEmployeeCount;
+    if (liveEmployeeCount !== base.employeeCount) {
+      informativeLiveSignalCount++;
+      summary.liveWonKeys.push('employeeCount');
+    }
+  }
+  signals.employeeCount = employeeSignal;
+
+  const revenuePerEmployeeSignal = createSignal(
+    'revenuePerEmployee',
+    base.revenuePerEmployee,
+    baseSourceKind,
+    baseSourceName,
+    baseObservedAt,
+    baseObservedAt,
+    now,
+  );
+  signals.revenuePerEmployee = revenuePerEmployeeSignal;
+
+  const aiInvestmentSignal = createSignal(
+    'aiInvestmentSignal',
+    base.aiInvestmentSignal,
+    baseSourceKind,
+    baseSourceName,
+    baseObservedAt,
+    baseObservedAt,
+    now,
+  );
+  signals.aiInvestmentSignal = aiInvestmentSignal;
+
+  const dbHiringTrend = active._hiringPostingTrend
+    ? createSignal('hiringTrend', active._hiringPostingTrend, inferBaseSourceKind(active._hiringSource), active._hiringSource ?? baseSourceName, baseObservedAt, baseObservedAt, now)
+    : null;
+  const liveHiringTrend = live.hiringData?.postingTrend && live.hiringData.postingTrend !== 'unknown'
+    ? createSignal('hiringTrend', live.hiringData.postingTrend, live.hiringData.isLive ? 'live' : 'heuristic', live.hiringData.source, live.hiringData.fetchedAt, live.hiringData.fetchedAt, now)
+    : null;
+  if (liveHiringTrend && liveHiringTrend.freshnessState !== 'fresh' && liveHiringTrend.source === 'live') degradedLiveSignalCount++;
+  const hiringSignal = chooseAuthoritativeSignal<string>({
+    key: 'hiringTrend',
+    dbSignal: dbHiringTrend,
+    liveSignal: liveHiringTrend?.source === 'live' ? liveHiringTrend : null,
+    heuristicSignal: liveHiringTrend?.source === 'heuristic' ? liveHiringTrend : null,
+    conflicts,
+    summary,
+    isMaterialConflict: (dbValue, liveValue) => dbValue !== liveValue,
+    conflictDescription: (dbValue, liveValue) => [
+      `Live hiring trend (${liveValue}) disagrees with DB hiring trend (${dbValue}).`,
+    ],
+  });
+  if (hiringSignal) {
+    signals.hiringTrend = hiringSignal;
+    active._hiringPostingTrend = hiringSignal.value;
+  }
+
+  if (live.hiringData?.freezeScore != null) active._hiringFreezeScore = live.hiringData.freezeScore;
+  if (live.hiringData) {
+    active._hiringSource = live.hiringData.source;
+    active._hiringIsLive = live.hiringData.isLive;
+    active._hiringDisclosure = live.hiringData.disclosure;
+    active._estimatedRoleOpenings = live.hiringData.estimatedOpenings;
+    active._naukriOpenings = live.hiringData.naukriOpenings;
+    active._linkedinOpenings = live.hiringData.linkedinOpenings;
+    if (live.hiringData.isLive && live.hiringData.estimatedOpenings != null) informativeLiveSignalCount++;
+  }
+
+  if (live.newsData) {
+    active._liveNewsChecked = true;
+    active._liveNewsSentiment = live.newsData.sentimentSignal;
+  }
+
+  const intendedLiveClasses = [
+    ...(base.isPublic ? ['financial'] : []),
+    'layoffs',
+    'hiring',
+  ];
+  const degradedSet = new Set(degradedSignalClasses);
+
+  if (base.isPublic && !live.stockData) {
+    degradedSet.add('financial');
+    missingDataFallbacks.push('⚠ Alpha Vantage unavailable for this public company — L1 confidence reduced and DB/heuristic values may remain active.');
+  }
+  if (!live.newsData && live.derivedLayoffEvents.length === 0) {
+    degradedSet.add('layoffs');
+    missingDataFallbacks.push('⚠ Live layoff/news sources unavailable — L2 may understate recent workforce reductions.');
+  }
+  if (!live.hiringData?.isLive) {
+    degradedSet.add('hiring');
+    missingDataFallbacks.push('Hiring trend is heuristic-only — live job-posting signals were not available for this audit.');
+  }
+
+  for (const key of degradedSet) {
+    if (!summary.degradedKeys.includes(key)) summary.degradedKeys.push(key);
+  }
+
+  const failedClassRatio = intendedLiveClasses.length > 0
+    ? intendedLiveClasses.filter((key) => degradedSet.has(key)).length / intendedLiveClasses.length
+    : 0;
+
+  const criticalFinancialGap =
+    base.isPublic &&
+    !stockSignal &&
+    !revenueSignal;
+  if (criticalFinancialGap) {
+    confidenceCap = 0.35;
+    confidenceCapsApplied.push('Critical live financial signal failure with no direct substitute. Confidence capped at 35%.');
+    hardFailures.push('Critical financial live signals unavailable for a public company and no direct DB substitute exists.');
+  } else if (failedClassRatio > 0.4) {
+    confidenceCap = 0.55;
+    confidenceCapsApplied.push('More than 40% of intended live signal classes failed. Confidence capped at 55%.');
+  }
+
+  const newestChosenAt = Object.values(signals)
+    .map((signal) => signal.fetchedAt)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+  if (newestChosenAt) {
+    active.lastUpdated = newestChosenAt.slice(0, 10);
+  }
+  active.source =
+    summary.liveWonKeys.length > 0
+      ? `${base.source || 'company_intelligence'} + Live Reconciled`
+      : base.source;
+  active._informativeLiveSignals = informativeLiveSignalCount;
+  active._authoritativeSignals = signals;
+  active._reconciliationSummary = summary;
+  active._confidenceCap = confidenceCap;
+  active._confidenceCapsApplied = confidenceCapsApplied;
+  active._hardFailures = hardFailures;
+  active._degradedSignalClasses = Array.from(degradedSet);
+
+  summary.confidenceCapsApplied = confidenceCapsApplied;
+  summary.hardFailures = hardFailures;
+
+  return {
+    active,
+    signals,
+    conflicts,
+    liveSignalCount: live.liveSignalCount,
+    informativeLiveSignalCount,
+    degradedLiveSignalCount,
+    degradedSignalClasses: Array.from(degradedSet),
+    hardFailures,
+    missingDataFallbacks: Array.from(new Set(missingDataFallbacks)),
+    confidenceCap,
+    confidenceCapsApplied,
+    summary,
   };
 };
 
 /**
- * patchCompanyDataWithLive — Merges live API signals onto a base CompanyData object.
- * Never removes existing data — only overwrites with fresher live values.
+ * Legacy compatibility shim.
+ * Prefer `reconcileCompanySignals()` for authoritative live-vs-db resolution.
  */
 export const patchCompanyDataWithLive = (
   base: Record<string, any>,
   live: LiveDataResult,
-): Record<string, any> => {
-  const patched = { ...base };
-
-  if (live.stockData) {
-    if (live.stockData.price90DayChange !== null && patched.stock90DayChange == null) {
-      patched.stock90DayChange = live.stockData.price90DayChange;
-    }
-    if (live.stockData.revenueGrowthYoY !== null && patched.revenueGrowthYoY == null) {
-      patched.revenueGrowthYoY = live.stockData.revenueGrowthYoY;
-    }
-    if (live.stockData.marketCap !== null && patched.marketCap == null) {
-      patched.marketCap = live.stockData.marketCap;
-    }
-    const srcLabel = live.stockData.source === 'alphavantage' ? 'AlphaVantage' : 'Market Data';
-    patched.source = `${base.source ?? 'DB'} + ${srcLabel} Live`;
-    patched.lastUpdated = live.stockData.fetchedAt.slice(0, 10);
-  }
-
-  if (live.newsData) {
-    patched._liveNewsChecked = true;
-    patched._liveNewsSentiment = live.newsData.sentimentSignal;
-  }
-
-  // Apply hiring-freeze signal from connectors (Naukri)
-  if (live.hiringData?.freezeScore != null) {
-    patched._hiringFreezeScore = live.hiringData.freezeScore;
-    patched._hiringPostingTrend = live.hiringData.postingTrend;
-    patched._hiringSource = live.hiringData.source;
-    // Only forwarded when the source was a live API; null otherwise so the
-    // UI can show "—" rather than fabricating a count.
-    if (live.hiringData.estimatedOpenings != null) {
-      patched._estimatedRoleOpenings = live.hiringData.estimatedOpenings;
-    }
-  }
-
-  // Backfill layoffsLast24Months from regulatory-grade live signals (SEC 8-K,
-  // WARN Act). recentLayoffRisk is 30% of L2 and reads from layoffsLast24Months
-  // — without this merge, the highest-confidence sources would only flow
-  // through the 10%-weighted newsRisk path. Only backfill when base is empty;
-  // never overwrite curated DB rows that may include percentCut data EDGAR
-  // can't surface.
-  if (live.derivedLayoffEvents.length > 0) {
-    const existing = Array.isArray(patched.layoffsLast24Months) ? patched.layoffsLast24Months : [];
-    if (existing.length === 0) {
-      patched.layoffsLast24Months = live.derivedLayoffEvents.map(e => ({
-        date: e.date,
-        percentCut: e.percentCut,
-        source: e.source,
-      }));
-      patched.layoffRounds = (patched.layoffRounds ?? 0) + live.derivedLayoffEvents.length;
-    }
-  }
-
-  return patched;
+): { patched: Record<string, any>; informativeLiveSignals: number } => {
+  const reconciled = reconcileCompanySignals(base as CompanyData, live);
+  return {
+    patched: reconciled.active as Record<string, any>,
+    informativeLiveSignals: reconciled.informativeLiveSignalCount,
+  };
 };

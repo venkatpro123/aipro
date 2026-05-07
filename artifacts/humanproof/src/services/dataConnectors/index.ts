@@ -43,10 +43,12 @@ export interface EnrichedCompanySignals {
    */
   roleDemandIsLive: boolean;
   /** Estimated open postings for this role at this company. Null when the
-   *  Serper API did not run; the heuristic baseline path does not produce
-   *  a count. UI must check `roleDemandIsLive` before treating this as a
-   *  live job-market figure. */
+   *  Serper API did not run via proxy-live-signals. */
   estimatedOpenings: number | null;
+  /** Naukri-specific count from Serper. Null when not live. */
+  naukriOpenings: number | null;
+  /** LinkedIn-specific count from Serper. Null when not live. */
+  linkedinOpenings: number | null;
   // News sentiment
   newsSentimentScore: number;
   layoffNewsCount: number;
@@ -75,26 +77,47 @@ export async function enrichCompanySignals(
 ): Promise<EnrichedCompanySignals> {
   const sourcesUsed: string[] = [];
 
-  // Run all fetches in parallel — each degrades gracefully
-  const [
-    bseCode,
-    layoffData,
-    mcaData,
-    roleData,
-    newsData,
-    indiaPressData,
-    secData,
-    warnData,
-  ] = await Promise.all([
-    findBSEScripCode(companyName),
-    getCompanyLayoffs(companyName),
-    fetchMCACompanyInfo(companyName),
-    fetchRoleDemandSignal(roleTitle, companyName),
-    fetchCompanyNewsSignals(companyName),
-    fetchIndiaPressSignals(companyName),
-    fetchSecEdgar8KSignals(companyName),
-    fetchWarnNotices(companyName),
+  // Run all 8 connectors in parallel using Promise.allSettled.
+  //
+  // WHY allSettled instead of Promise.all:
+  //   Promise.all fails fast — if connector 3 throws, connectors 4-8 results are
+  //   discarded even if they completed successfully. With 8 independent network
+  //   sources, this is unacceptable: a Naukri site change shouldn't abort the
+  //   BSE, MCA, RSS, and SEC EDGAR results that may have already resolved.
+  //
+  //   Promise.allSettled always collects every result regardless of individual
+  //   failures. Rejected slots become { status: 'rejected', reason: Error } and
+  //   we substitute the appropriate null/fallback value below.
+  //
+  // This is the correct primitive for a "best-effort multi-source enrichment"
+  // pattern. Each connector is independently optional; none is on the critical path.
+  const settled = await Promise.allSettled([
+    findBSEScripCode(companyName),       // 0: bseCode
+    getCompanyLayoffs(companyName),      // 1: layoffData
+    fetchMCACompanyInfo(companyName),    // 2: mcaData
+    fetchRoleDemandSignal(roleTitle, companyName), // 3: roleData
+    fetchCompanyNewsSignals(companyName), // 4: newsData
+    fetchIndiaPressSignals(companyName), // 5: indiaPressData
+    fetchSecEdgar8KSignals(companyName), // 6: secData
+    fetchWarnNotices(companyName),       // 7: warnData
   ]);
+
+  // Extract values — rejected connectors fall back to null or their empty-state type.
+  // Log rejections so they appear in production logs but never abort the pipeline.
+  const unwrap = <T>(result: PromiseSettledResult<T>, name: string, fallback: T): T => {
+    if (result.status === 'fulfilled') return result.value;
+    console.warn(`[Connectors] ${name} failed:`, (result as PromiseRejectedResult).reason?.message ?? result);
+    return fallback;
+  };
+
+  const bseCode       = unwrap(settled[0], 'findBSEScripCode',       null);
+  const layoffData    = unwrap(settled[1], 'getCompanyLayoffs',       null);
+  const mcaData       = unwrap(settled[2], 'fetchMCACompanyInfo',     null);
+  const roleData      = unwrap(settled[3], 'fetchRoleDemandSignal',   { roleTitle, company: companyName, estimatedOpenings: null, naukriOpenings: null, linkedinOpenings: null, demandTrend: 'stable' as const, hiringFreezeScore: 0.35, source: 'Naukri Heuristic' as const, isLive: false, disclosure: 'Connector failed — heuristic baseline used', fetchedAt: new Date().toISOString() });
+  const newsData      = unwrap(settled[4], 'fetchCompanyNewsSignals', { company: companyName, signals: [], negativeCount: 0, layoffSignalCount: 0, sentimentScore: 0, fetchedAt: new Date().toISOString() });
+  const indiaPressData = unwrap(settled[5], 'fetchIndiaPressSignals', { company: companyName, signals: [], layoffSignalCount: 0, sentimentScore: 0, sourcesUsed: [], anyFeedReachable: false, fetchedAt: new Date().toISOString() });
+  const secData       = unwrap(settled[6], 'fetchSecEdgar8KSignals',  { company: companyName, filingCount: 0, distinctEventDates: 0, mostRecentFiling: null, hits: [], edgarReachable: false, fetchedAt: new Date().toISOString() });
+  const warnData      = unwrap(settled[7], 'fetchWarnNotices',        { company: companyName, notices: [], totalAffected: 0, mostRecentFiling: null, warnDataReachable: false, sourceUrl: null, fetchedAt: new Date().toISOString() });
 
   // BSE + NSE — attempt after scrip code resolved.
   // We track stock90DayChange (true quarterly return — null until a real chart
@@ -167,6 +190,8 @@ export async function enrichCompanySignals(
     hiringFreezeScore: roleData.hiringFreezeScore,
     roleDemandIsLive: roleData.isLive,
     estimatedOpenings: roleData.estimatedOpenings,
+    naukriOpenings:   (roleData as any).naukriOpenings   ?? null,
+    linkedinOpenings: (roleData as any).linkedinOpenings ?? null,
     newsSentimentScore: newsData.sentimentScore,
     layoffNewsCount: newsData.layoffSignalCount,
     indiaPressLayoffCount: indiaPressData.layoffSignalCount,

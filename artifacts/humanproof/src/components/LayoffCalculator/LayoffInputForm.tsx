@@ -1,6 +1,14 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useLayoff } from "../../context/LayoffContext";
 import { searchAllCompanies, resolveCompanyData } from "../../data/companyIntelligenceBridge";
+import {
+  searchCompanies as searchSupabaseCompanies,
+  computeMatchRatio,
+  computeMatchConfidence,
+  FUZZY_MATCH_MIN_RATIO,
+  MATCH_CONFIRMATION_THRESHOLD,
+  type MatchType,
+} from "../../services/companyIntelligenceService";
 import { CompanyData } from "../../data/companyDatabase";
 import { profileUnknownCompany } from "../../services/ensemble/quickProfilerAgent";
 import { Building, Info, Zap, Shield, TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -13,6 +21,8 @@ import {
   OracleRoleEntry,
 } from "../../data/oracleRoleIndex";
 import { motion, AnimatePresence } from "framer-motion";
+import { getCareerIntelligence } from "../../data/careerIntelligenceDB";
+import { resolveRoleInput } from "../../services/roleResolution";
 
 interface Props {
   onNext: () => void;
@@ -286,6 +296,122 @@ const RoleIntelPreviewCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
   );
 };
 
+// ── RoleResolutionBanner ──────────────────────────────────────────────────────
+// Shown below RoleIntelPreviewCard after the user selects a role.
+// Two states:
+//   found    → confirms the resolved key + coverage stats so the user knows
+//              what the Skills & Career tab will show before they submit.
+//   fallback → the oracle key has no career intelligence entry; the dashboard
+//              will use buildFallbackIntel (score-derived generic content).
+//              Shows a feedback link so users can request database coverage.
+
+const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
+  const intel = useMemo(() => getCareerIntelligence(entry.oracleKey), [entry.oracleKey]);
+
+  if (intel) {
+    const atRiskCount = intel.skills.at_risk?.length ?? 0;
+    const safeCount   = intel.skills.safe?.length ?? 0;
+    const pathCount   = intel.careerPaths?.length ?? 0;
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          background: 'rgba(16,185,129,0.06)',
+          border: '1px solid rgba(16,185,129,0.22)',
+          marginTop: '-12px',
+          marginBottom: '16px',
+        }}
+      >
+        {/* Resolution confirmation line */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <span style={{ color: '#10b981', fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            ✓ Resolved
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', fontWeight: 600 }}>
+            Analyzing as: {intel.displayRole}
+          </span>
+          <span
+            style={{
+              color: 'rgba(255,255,255,0.35)',
+              fontSize: '0.65rem',
+              fontFamily: 'monospace',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '4px',
+              padding: '1px 6px',
+            }}
+          >
+            key: {entry.oracleKey}
+          </span>
+        </div>
+        {/* Coverage stats */}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Intelligence coverage:</span>
+          {atRiskCount > 0 && (
+            <span style={{ color: '#f59e0b', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+              {atRiskCount} at-risk skill{atRiskCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          {safeCount > 0 && (
+            <span style={{ color: '#10b981', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+              {safeCount} safe skill{safeCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          {pathCount > 0 && (
+            <span style={{ color: '#818cf8', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+              {pathCount} transition path{pathCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          {atRiskCount === 0 && safeCount === 0 && pathCount === 0 && (
+            <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>basic</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback — no CareerIntelligence entry for this oracle key
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        padding: '10px 14px',
+        borderRadius: '8px',
+        background: 'rgba(245,158,11,0.06)',
+        border: '1px solid rgba(245,158,11,0.25)',
+        marginTop: '-12px',
+        marginBottom: '16px',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+        <span style={{ color: '#f59e0b', fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
+          ⚠ Limited Coverage
+        </span>
+        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem' }}>
+          Role not in our database — analysis generated from risk score.
+        </span>
+      </div>
+      <div style={{ color: '#6b7280', fontSize: '0.72rem', lineHeight: 1.5 }}>
+        Coverage: <span style={{ color: '#f59e0b' }}>basic</span>. Skills &amp; Career tab will show general guidance, not role-specific intelligence.{' '}
+        <a
+          href="/contact"
+          style={{ color: '#818cf8', textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={e => { e.stopPropagation(); window.open('/contact', '_blank'); }}
+        >
+          Request coverage for your role →
+        </a>
+      </div>
+    </div>
+  );
+};
+
 export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const { state, dispatch } = useLayoff();
   const [step, setStep] = useState(1);
@@ -300,6 +426,23 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   );
   const [isProfiling, setIsProfiling] = useState(false);
   const [profileFailed, setProfileFailed] = useState(false);
+  // v6.0 Audit Fix: Disambiguation state — when Supabase returns multiple fuzzy matches
+  const [disambiguationCandidates, setDisambiguationCandidates] = useState<Array<{
+    name: string; industry: string; region: string; riskScore: number;
+  }>>([]);
+  const [showDisambiguation, setShowDisambiguation] = useState(false);
+
+  // Match confirmation prompt — shown when user clicks a result with confidence < 0.8.
+  // The pending company is held here; it is NOT committed to selectedCompany until
+  // the user explicitly confirms. This prevents a word_overlap match from driving a
+  // score without the user knowing which company was actually matched.
+  const [pendingMatchConfirmation, setPendingMatchConfirmation] = useState<{
+    company:     any;           // the search result object
+    matchedName: string;        // the DB company name that was matched
+    confidence:  number;        // 0.5 or 0.7
+    matchType:   MatchType;
+    userQuery:   string;        // what the user originally typed
+  } | null>(null);
 
   // Role search state — oracle-backed
   const [roleTitle, setRoleTitle] = useState(state.roleTitle || "");
@@ -307,6 +450,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const [roleSuggestions, setRoleSuggestions] = useState<OracleRoleEntry[]>([]);
   const [showRoleSuggestions, setShowRoleSuggestions] = useState(false);
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
+  // Tracks whether a previously confirmed selection was cleared by editing the field.
+  // When true, a warning badge is shown so the user knows calibrated data is no longer linked.
+  const [oracleSelectionCleared, setOracleSelectionCleared] = useState(false);
   const roleInputRef = useRef<HTMLInputElement>(null);
 
   // Step 2 state
@@ -326,6 +472,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const [hasRecentPromotion, setHasRecentPromotion] = useState(
     state.userFactors?.hasRecentPromotion ?? false
   );
+  // v10.0: Financial runway — months of expenses covered. 0 = not provided.
+  const [financialRunwayMonths, setFinancialRunwayMonths] = useState<number>(0);
+
   const [hasKeyRelationships, setHasKeyRelationships] = useState(
     state.userFactors?.hasKeyRelationships ?? false
   );
@@ -345,7 +494,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     return Math.min(99, Math.max(1, base));
   }, [selectedOracleEntry, performanceTier, tenureYears, uniquenessDepth, hasRecentPromotion, hasKeyRelationships]);
 
-  // ── Company search with debounce — BUG-B6 FIX ────────────────────────
+  // ── Company search with debounce — queries Supabase 2000-company table first ──
+  // Resolution order: Supabase (2000 companies) → local bridge (50) → Clearbit (name/logo only)
   useEffect(() => {
     const tid = setTimeout(async () => {
       if (!companySearch || companySearch.length < 2 || selectedCompany) {
@@ -353,45 +503,91 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         return;
       }
 
-      // Local lookup is fast, do it immediately but display with external
+      // 1. Supabase company_intelligence (2000 companies) — try first
+      // If multiple candidates with the same root name exist, surface disambiguation
+      let merged: any[] = [];
+      try {
+        const supabaseResults = await searchSupabaseCompanies(companySearch, 10);
+        // Disambiguation: if ≥2 results share the first word of the query, let the user pick
+        const rootWord = (companySearch ?? '').split(' ')[0].toLowerCase();
+        const sameRootCount = supabaseResults.filter(r =>
+          r.name != null && r.name.toLowerCase().startsWith(rootWord)
+        ).length;
+        if (sameRootCount >= 3) {
+          setDisambiguationCandidates(supabaseResults.slice(0, 5).map(r => ({
+            name: r.name, industry: r.industry, region: 'GLOBAL', riskScore: r.riskScore,
+          })));
+          setShowDisambiguation(true);
+        } else {
+          setShowDisambiguation(false);
+          setDisambiguationCandidates([]);
+        }
+        // Only push entries with valid names — null company_name from DB would
+        // crash every subsequent .name.toLowerCase() call in this effect.
+        supabaseResults.filter(r => r.name != null && r.name.length > 0).slice(0, 8).forEach(r => {
+          merged.push({
+            name: r.name,
+            industry: r.industry,
+            isPublic: false,
+            region: "GLOBAL",
+            employeeCount: 0,
+            layoffsLast24Months: [],
+            layoffRounds: 0,
+            lastLayoffPercent: null,
+            revenuePerEmployee: 150000,
+            aiInvestmentSignal: "medium",
+            source: "Supabase Intelligence",
+            lastUpdated: new Date().toISOString(),
+            riskScore: r.riskScore,
+            isExternal: false,
+            fromSupabase: true,
+          } as any);
+        });
+      } catch (_) { /* Supabase unavailable — fall through */ }
+
+      // 2. Local code-side bridge (50 companies) — supplement Supabase results
       const local = searchAllCompanies(companySearch).map((c) => {
         const fullData = resolveCompanyData(c.key);
-        return { ...(fullData as any), isExternal: false };
+        return { ...(fullData as any), isExternal: false, fromSupabase: false };
+      });
+      local.forEach(loc => {
+        if (loc.name && !merged.find(m => m.name != null && m.name.toLowerCase() === loc.name.toLowerCase())) {
+          merged.push(loc);
+        }
       });
 
-      try {
-        const resp = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${companySearch}`);
-        if (resp.ok) {
-          const external = await resp.json();
-          const merged = [...local];
-          external.forEach((ext: any) => {
-            if (!merged.find((m) => m.name.toLowerCase() === ext.name.toLowerCase())) {
-              merged.push({
-                name: ext.name,
-                logo: ext.logo,
-                domain: ext.domain,
-                isPublic: false,
-                industry: "Detecting...",
-                region: "GLOBAL",
-                employeeCount: 0,
-                layoffsLast24Months: [],
-                layoffRounds: 0,
-                lastLayoffPercent: null,
-                revenuePerEmployee: 150000,
-                aiInvestmentSignal: "medium",
-                source: "Clearbit",
-                lastUpdated: new Date().toISOString(),
-                isExternal: true,
-              } as any);
-            }
-          });
-          setSearchResults(merged.slice(0, 8));
-        } else {
-          setSearchResults(local);
-        }
-      } catch (_) {
-        setSearchResults(local);
+      // 3. Clearbit fallback for name/logo only (when Supabase + local have < 3 results)
+      if (merged.length < 3) {
+        try {
+          const resp = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(companySearch)}`);
+          if (resp.ok) {
+            const external = await resp.json();
+            external.forEach((ext: any) => {
+              if (ext.name && !merged.find((m) => m.name != null && m.name.toLowerCase() === ext.name.toLowerCase())) {
+                merged.push({
+                  name: ext.name,
+                  logo: ext.logo,
+                  domain: ext.domain,
+                  isPublic: false,
+                  industry: "Unknown — full analysis on submit",
+                  region: "GLOBAL",
+                  employeeCount: 0,
+                  layoffsLast24Months: [],
+                  layoffRounds: 0,
+                  lastLayoffPercent: null,
+                  revenuePerEmployee: 150000,
+                  aiInvestmentSignal: "medium",
+                  source: "Clearbit",
+                  lastUpdated: new Date().toISOString(),
+                  isExternal: true,
+                } as any);
+              }
+            });
+          }
+        } catch (_) { /* Clearbit unavailable */ }
       }
+
+      setSearchResults(merged.slice(0, 10));
     }, 300);
     return () => clearTimeout(tid);
   }, [companySearch, selectedCompany]);
@@ -405,9 +601,11 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         setRoleSuggestions(results);
         setShowRoleSuggestions(results.length > 0);
         setFocusedSuggestionIndex(-1);
-        // If user typed something that no longer matches current selection, clear it
-        if (selectedOracleEntry && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
+        // If user edited the field past the point where it still matches the confirmed
+        // selection, clear it and raise the warning flag so the UI can tell the user.
+        if (selectedOracleEntry && roleTitle && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
           setSelectedOracleEntry(null);
+          setOracleSelectionCleared(true);
         }
       } else {
         setShowRoleSuggestions(false);
@@ -421,6 +619,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const selectRole = (entry: OracleRoleEntry) => {
     setRoleTitle(entry.displayTitle);
     setSelectedOracleEntry(entry);
+    setOracleSelectionCleared(false);
     setShowRoleSuggestions(false);
   };
 
@@ -462,16 +661,36 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     const val = e.target.value;
     setCompanySearch(val);
     setSelectedCompany(null);
+    setPendingMatchConfirmation(null);  // dismiss stale prompt when user retypes
   };
 
-  const selectCompany = async (comp: any) => {
+  const selectCompany = async (comp: any, skipConfidenceCheck = false) => {
+    // Compute match confidence between what the user typed and the result name.
+    // word_overlap (0.5) must never drive a score without explicit confirmation —
+    // "Wipro BPO" → "Wipro" is a different legal entity and a different risk profile.
+    if (!skipConfidenceCheck && companySearch && comp.name) {
+      const { score: confidence, matchType } = computeMatchConfidence(companySearch, comp.name);
+      if (confidence < MATCH_CONFIRMATION_THRESHOLD) {
+        // Hold the result pending user confirmation; do not commit yet.
+        setPendingMatchConfirmation({
+          company:     comp,
+          matchedName: comp.name,
+          confidence,
+          matchType,
+          userQuery:   companySearch,
+        });
+        setSearchResults([]);
+        return;
+      }
+    }
+    setPendingMatchConfirmation(null);
     setCompanySearch(comp.name);
     setSearchResults([]);
     if (comp.isExternal) {
       // BUG-B20 FIX: Quick re-lookup in local DB before firing expensive profile API.
       // Clearbit might return "Meta" while DB has "Meta Platforms" — we want to find the DB entry if possible.
       const localMatch = resolveCompanyData(comp.name);
-      if (localMatch && localMatch.name.toLowerCase() === comp.name.toLowerCase()) {
+      if (localMatch && localMatch.name && comp.name && localMatch.name.toLowerCase() === comp.name.toLowerCase()) {
         setSelectedCompany(localMatch);
         return;
       }
@@ -500,6 +719,11 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
 
   const handleNextStep1 = async () => {
     if (!companySearch || !roleTitle.trim()) return;
+    const resolvedRole = resolveRoleInput(roleTitle.trim(), {
+      oracleKey: selectedOracleEntry?.oracleKey ?? null,
+    });
+    if (!resolvedRole.canonicalKey) return;
+
     let finalCompany = selectedCompany;
     if (!finalCompany) {
       setIsProfiling(true);
@@ -527,8 +751,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     }
 
     // Auto-derive department from oracle key
-    const department = selectedOracleEntry
-      ? getAutoDeducedDepartment(selectedOracleEntry.oracleKey)
+    const department = resolvedRole.canonicalKey
+      ? getAutoDeducedDepartment(resolvedRole.canonicalKey)
       : "Operations";
 
     dispatch({ type: "SET_COMPANY_DATA", payload: finalCompany });
@@ -538,7 +762,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         companyName: finalCompany.name,
         roleTitle: roleTitle.trim(),
         department,
-        oracleKey: selectedOracleEntry?.oracleKey ?? null,
+        oracleKey: resolvedRole.canonicalKey,
       },
     });
     setStep(2);
@@ -563,13 +787,20 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           performanceTier: performanceTier as "top" | "average" | "below" | "unknown",
           hasRecentPromotion,
           hasKeyRelationships,
-        },
+          financialRunwayMonths, // v10.0: passed to fetchAuditData for personalized strategy
+        } as any,
       },
     });
     onNext();
   };
 
-  const canProceedStep1 = companySearch.trim().length > 0 && roleTitle.trim().length > 0;
+  const resolvedRolePreview = resolveRoleInput(roleTitle.trim(), {
+    oracleKey: selectedOracleEntry?.oracleKey ?? null,
+  });
+  const canProceedStep1 =
+    companySearch.trim().length > 0 &&
+    roleTitle.trim().length > 0 &&
+    !!resolvedRolePreview.canonicalKey;
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -639,13 +870,98 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 </div>
                 {searchResults.length > 0 && (
                   <div className="glass-panel-heavy" style={{ position: "absolute", zIndex: 100, width: '100%', marginTop: '56px', borderRadius: '12px', overflow: 'hidden', maxHeight: '300px', overflowY: 'auto' }}>
-                    {searchResults.map(res => (
-                      <div key={res.name} onClick={() => selectCompany(res)} className="tab-btn" style={{ width: '100%', justifyContent: 'flex-start', padding: '12px 16px', height: 'auto', borderRadius: 0, borderBottom: '1px solid var(--border)' }}>
-                        <div style={{ flex: 1, textAlign: 'left' }}>
-                          <div style={{ fontWeight: 700 }}>{res.name}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{res.industry}</div>
+                    {searchResults.map(res => {
+                      // Compute match ratio between what the user typed and this result name.
+                      // Shown as a subtle indicator so users can spot when the result
+                      // is a partial/parent-company match (e.g. "Wipro BPO" → "Wipro").
+                      const ratio = computeMatchRatio(companySearch, res.name);
+                      const isPartialMatch = ratio < 0.80 && ratio >= FUZZY_MATCH_MIN_RATIO;
+                      const isBelowThreshold = ratio < FUZZY_MATCH_MIN_RATIO;
+                      return (
+                        <div key={res.name} onClick={() => selectCompany(res)} className="tab-btn" style={{ width: '100%', justifyContent: 'flex-start', padding: '12px 16px', height: 'auto', borderRadius: 0, borderBottom: '1px solid var(--border)', opacity: isBelowThreshold ? 0.45 : 1 }}>
+                          <div style={{ flex: 1, textAlign: 'left' }}>
+                            <div style={{ fontWeight: 700 }}>{res.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+                              {res.industry}
+                              {(res as any).fromSupabase && (
+                                <span style={{ marginLeft: 6, color: 'var(--cyan)', fontWeight: 700 }}>· Intelligence DB</span>
+                              )}
+                              {isPartialMatch && (
+                                <span style={{ marginLeft: 6, color: '#f59e0b', fontWeight: 700 }}>· partial match</span>
+                              )}
+                            </div>
+                          </div>
+                          {(res as any).riskScore != null && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: (res as any).riskScore >= 65 ? '#ef4444' : (res as any).riskScore >= 45 ? '#f59e0b' : '#10b981' }}>
+                              {(res as any).riskScore}
+                            </span>
+                          )}
                         </div>
-                      </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Match confirmation prompt — shown when confidence < 0.8 */}
+                {pendingMatchConfirmation && (
+                  <div style={{ marginTop: '4px', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.08)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+                      Confirm company match
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', marginBottom: 10, lineHeight: 1.5 }}>
+                      You typed <span style={{ fontWeight: 700, color: 'var(--text)' }}>"{pendingMatchConfirmation.userQuery}"</span>.
+                      {' '}The closest match is <span style={{ fontWeight: 700, color: 'var(--text)' }}>{pendingMatchConfirmation.matchedName}</span>.
+                      {pendingMatchConfirmation.matchType === 'word_overlap' && (
+                        <span style={{ color: '#f59e0b' }}> These may be different entities — confirm before scores are calculated.</span>
+                      )}
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => {
+                          // User confirmed — proceed with the matched company
+                          selectCompany(pendingMatchConfirmation.company, true);
+                        }}
+                        style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
+                      >
+                        Yes, use {pendingMatchConfirmation.matchedName}
+                      </button>
+                      <button
+                        onClick={() => {
+                          // User rejected — fall back to unknown company using their original query.
+                          // This triggers the Tier C scoring path (scope framing, no hallucinated data).
+                          setPendingMatchConfirmation(null);
+                          setSearchResults([]);
+                          // Keep companySearch as the user's original text so they can refine it,
+                          // but clear selectedCompany so no matched data feeds the score.
+                          setSelectedCompany(null);
+                        }}
+                        style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-3)', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer' }}
+                      >
+                        No, search again
+                      </button>
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4 }}>
+                      If you proceed without confirming, your company will be treated as unknown and scored using role and industry signals only.
+                    </div>
+                  </div>
+                )}
+
+                {/* v6.0 Audit Fix: Disambiguation banner — multiple Supabase entities share this name */}
+                {showDisambiguation && disambiguationCandidates.length > 0 && (
+                  <div style={{ marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--amber, #f59e0b)', background: 'rgba(245,158,11,0.08)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--amber, #f59e0b)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+                      Multiple entities found — confirm which one:
+                    </div>
+                    {disambiguationCandidates.map(c => (
+                      <button key={c.name} onClick={() => {
+                        setCompanySearch(c.name);
+                        setShowDisambiguation(false);
+                        setDisambiguationCandidates([]);
+                      }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: '4px 0', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--text-2)', fontWeight: 600 }}
+                      >
+                        → {c.name} <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>({c.industry})</span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -678,6 +994,19 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
               </div>
 
               {selectedOracleEntry && <RoleIntelPreviewCard entry={selectedOracleEntry} />}
+              {selectedOracleEntry && <RoleResolutionBanner entry={selectedOracleEntry} />}
+              {oracleSelectionCleared && !selectedOracleEntry && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', marginTop: '8px' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>No role linked</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>Your edit cleared the selected role. Pick from the suggestions to restore calibrated data.</span>
+                </div>
+              )}
+              {!selectedOracleEntry && roleTitle.trim().length > 1 && !resolvedRolePreview.canonicalKey && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', marginTop: '8px' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--red)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Unresolved role</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>Select a suggested role or use a canonical title like Software Developer, Backend Developer, or Database Administrator.</span>
+                </div>
+              )}
 
               <button
                 onClick={handleNextStep1}
@@ -769,6 +1098,80 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                       {item.active && <div style={{ fontSize: '0.7rem', color: 'var(--cyan)', fontWeight: 800 }}>ACTIVE</div>}
                     </button>
                   ))}
+              </div>
+
+              {/* v10.0: Financial Runway — personalizes job search strategy */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Financial Runway 💰 <span style={{ fontWeight: 400, opacity: 0.6 }}>(optional)</span>
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 800,
+                    color: financialRunwayMonths === 0 ? 'var(--text-3)'
+                      : financialRunwayMonths < 3 ? '#ef4444'
+                      : financialRunwayMonths < 6 ? '#f97316'
+                      : financialRunwayMonths < 12 ? '#f59e0b'
+                      : '#10b981',
+                    padding: '2px 8px', borderRadius: '5px',
+                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                  }}>
+                    {financialRunwayMonths === 0 ? 'Not specified'
+                      : financialRunwayMonths < 3 ? `${financialRunwayMonths}mo — Critical`
+                      : financialRunwayMonths < 6 ? `${financialRunwayMonths}mo — Elevated`
+                      : financialRunwayMonths < 12 ? `${financialRunwayMonths}mo — Comfortable`
+                      : `${financialRunwayMonths}mo — Strong`}
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min={0}
+                  max={24}
+                  step={1}
+                  value={financialRunwayMonths}
+                  onChange={e => setFinancialRunwayMonths(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    accentColor: financialRunwayMonths === 0 ? 'var(--text-3)'
+                      : financialRunwayMonths < 3 ? '#ef4444'
+                      : financialRunwayMonths < 6 ? '#f97316'
+                      : financialRunwayMonths < 12 ? '#f59e0b'
+                      : '#10b981',
+                    cursor: 'pointer',
+                    height: '6px',
+                    borderRadius: '3px',
+                  }}
+                />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                  {[
+                    { label: 'Not set', val: 0 },
+                    { label: 'Critical', val: 3, color: '#ef4444' },
+                    { label: 'Elevated', val: 6, color: '#f97316' },
+                    { label: 'Comfortable', val: 12, color: '#f59e0b' },
+                    { label: 'Strong 24+', val: 24, color: '#10b981' },
+                  ].map(m => (
+                    <button
+                      key={m.val}
+                      type="button"
+                      onClick={() => setFinancialRunwayMonths(m.val)}
+                      style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 700,
+                        color: financialRunwayMonths >= m.val && m.val > 0 ? (m.color ?? 'var(--text-2)') : 'var(--text-3)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        padding: '2px 0', opacity: financialRunwayMonths === m.val ? 1 : 0.5,
+                        textTransform: 'uppercase', letterSpacing: '0.04em',
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '6px', lineHeight: 1.4, opacity: 0.7 }}>
+                  Months of living expenses you have saved. Personalizes your job search strategy and move sequence.
+                </p>
               </div>
 
               <button

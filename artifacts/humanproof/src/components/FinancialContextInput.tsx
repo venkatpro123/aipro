@@ -12,6 +12,7 @@ import {
 import {
   saveFinancialContext,
   deriveFinancialProfile,
+  normaliseCityKey,
   type FinancialContext,
   type FinancialProfile,
 } from "../services/financialContextService";
@@ -41,8 +42,10 @@ export const FinancialContextInput: React.FC<Props> = ({
   const [dependents, setDependents] = useState("0");
   const [runwayMonths, setRunwayMonths] = useState("");
   const [income, setIncome] = useState("");
+  const [city, setCity] = useState("");
 
   const handleSave = () => {
+    const normCity = normaliseCityKey(city.trim() || null);
     const ctx: FinancialContext = {
       monthlyExpenses: expenses ? parseInt(expenses.replace(/[^0-9]/g, ""), 10) : null,
       dependents: parseInt(dependents, 10) || 0,
@@ -50,6 +53,7 @@ export const FinancialContextInput: React.FC<Props> = ({
       currentAnnualIncome: income ? parseInt(income.replace(/[^0-9]/g, ""), 10) : null,
       currency,
       capturedAt: Date.now(),
+      city: normCity ?? undefined,
     };
     saveFinancialContext(ctx);
     const derived = deriveFinancialProfile(ctx, riskScore);
@@ -167,6 +171,31 @@ export const FinancialContextInput: React.FC<Props> = ({
                     />
                   </div>
                 </div>
+
+                {/* City — unlocks named-employer recommendations */}
+                {currency === "INR" && (
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                      Your City (optional — names local employers in your action plan)
+                    </label>
+                    <input
+                      type="text"
+                      list="city-suggestions"
+                      placeholder="e.g. Bangalore, Mumbai, Hyderabad, Pune"
+                      value={city}
+                      onChange={e => setCity(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
+                    />
+                    <datalist id="city-suggestions">
+                      {['Bangalore', 'Mumbai', 'Hyderabad', 'Pune', 'Chennai', 'Delhi NCR', 'Kolkata', 'Noida', 'Gurgaon', 'Ahmedabad', 'Kochi', 'Indore', 'Coimbatore'].map(c => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      When provided, your action plan names specific companies hiring in your city — not just "the market."
+                    </p>
+                  </div>
+                )}
               </div>
 
               <button

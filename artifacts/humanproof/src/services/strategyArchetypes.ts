@@ -2,20 +2,66 @@
 // Intelligence Upgrade 3 — v4.0
 // Career capital × experience → 4 strategy archetypes.
 //
+// ARCHETYPE COUNT: exactly 4. No additional archetypes are planned or partially
+// implemented. Any external documentation claiming "~8 archetypes" is incorrect
+// and should be treated as a stale reference.
+//
 // These 4 playbooks supersede the bracket-based 3-phase roadmap structure
 // when triggered. They produce fundamentally different strategies, not
 // content variations inside the same template.
 //
-// The 4 archetypes:
-//   LEVERAGE   — 10+ yr exp, network capital ≥ 18/25
-//   PLATFORM   — 10+ yr exp, knowledge capital ≥ 18/25, network < 12
-//   AUGMENT    — 5-10 yr exp, D3 augmentation potential > 0.65
-//   RESKILL    — any exp, capital total < 25 (Foundation tier)
-//              OR exp > 10 yr AND capital total < 35
+// The 4 archetypes — trigger conditions, phase structure, and hybrid detection:
+//
+//   LEVERAGE   — trigger: exp ≥ 10yr AND networkCapital ≥ 18/25
+//                phases: P0 "Activate network map" (wk 1–2),
+//                        P1 "Run 15 conversations" (wk 3–8),
+//                        P2 "Close 1 offer" (wk 9–16)
+//                hybrid: when knowledgeCapital ≥ 15 → secondary PLATFORM
+//                collapse compression: applies to phase week ranges
+//
+//   PLATFORM   — trigger: exp ≥ 10yr AND knowledgeCapital ≥ 18/25 AND network < 12
+//                phases: P0 "Identify publishable insight" (wk 1–2),
+//                        P1 "Publish 2 artifacts" (wk 3–10),
+//                        P2 "Convert inbound to offer" (wk 11–20)
+//                hybrid: when networkCapital ≥ 9 → secondary LEVERAGE
+//                collapse compression: applies to phase week ranges
+//
+//   AUGMENT    — trigger: exp ≥ 5yr AND exp < 10yr AND augmentationRiskScore < 0.35
+//                (augHigh = low augmentation risk = high augmentation POTENTIAL)
+//                phases: P0 "Map AI-augmentable tasks" (wk 1–2),
+//                        P1 "Ship 1 AI-augmented proof point" (wk 3–10),
+//                        P2 "Position as AI-fluent specialist" (wk 11–18)
+//                hybrid: no secondary (exp bracket is exclusive)
+//                collapse compression: applies to phase week ranges
+//
+//   RESKILL    — trigger: capitalTotal < 25 (Foundation tier)
+//                OR (exp > 10yr AND capitalTotal < 35)
+//                phases: P0 "Emergency fund + runway assessment" (wk 1),
+//                        P1 "Select one adjacent skill and build proof" (wk 2–12),
+//                        P2 "Apply with new credential" (wk 13–24)
+//                hybrid: no secondary (RESKILL is the fallback when no capital threshold met)
+//                collapse compression: applies to phase week ranges
+//
+// Hybrid detection (v6.0 Fix 9):
+//   primary + secondary are detected by selectStrategyArchetypeFull().
+//   Hybrid sequence instructions are pre-written in the code (not LLM-generated)
+//   so they remain deterministic. See selectStrategyArchetypeFull() for the
+//   four hybrid combinations and their sequencing rationales.
 
 import type { CapitalPillars } from './capitalLeverageStrategy';
 
 export type StrategyArchetype = 'LEVERAGE' | 'PLATFORM' | 'AUGMENT' | 'RESKILL' | null;
+
+export interface ArchetypePhase {
+  phase: number;
+  title: string;
+  weekRange: string;
+  /** v6.0: Original un-compressed week range — shown when compression was applied */
+  originalWeekRange?: string;
+  focus: string;
+  actions: string[];
+  milestone: string;
+}
 
 export interface ArchetypeResult {
   archetype: StrategyArchetype;
@@ -26,16 +72,24 @@ export interface ArchetypeResult {
     actions: string[];
     milestone: string;
     weekRange: string;
+    originalWeekRange?: string;
   };
-  phases: {
-    phase: number;
-    title: string;
-    weekRange: string;
-    focus: string;
-    actions: string[];
-    milestone: string;
-  }[];
+  phases: ArchetypePhase[];
   whyThisArchetype: string;
+  /** v6.0: Collapse stage compression metadata — shown as a banner above the roadmap */
+  compressionApplied?: {
+    collapseStage: number;
+    factor: number;
+    bannerText: string;
+  };
+}
+
+export interface ArchetypeSelection {
+  primary: StrategyArchetype;
+  /** v6.0 Fix 9: Secondary archetype when user qualifies for two simultaneously */
+  secondary?: Exclude<StrategyArchetype, null>;
+  /** Hybrid sequencing instructions when both primary and secondary apply */
+  hybridSequence?: string;
 }
 
 export function selectStrategyArchetype(
@@ -45,25 +99,61 @@ export function selectStrategyArchetype(
   /** D3 augmentation risk score 0–1 (higher = LOWER augmentation potential) */
   augmentationRiskScore?: number,
 ): StrategyArchetype {
+  return selectStrategyArchetypeFull(experienceYears, capitalPillars, capitalTotal, augmentationRiskScore).primary;
+}
+
+/** Full selection including secondary archetype detection. */
+export function selectStrategyArchetypeFull(
+  experienceYears: number,
+  capitalPillars: CapitalPillars,
+  capitalTotal: number,
+  augmentationRiskScore?: number,
+): ArchetypeSelection {
   const { networkCapital, knowledgeCapital } = capitalPillars;
+  const augHigh = augmentationRiskScore !== undefined && augmentationRiskScore < 0.35;
 
-  // LEVERAGE: long experience + strong network = activate relationships first
-  if (experienceYears >= 10 && networkCapital >= 18) return 'LEVERAGE';
+  // Determine primary
+  let primary: StrategyArchetype = null;
+  if (experienceYears >= 10 && networkCapital >= 18) primary = 'LEVERAGE';
+  else if (experienceYears >= 10 && knowledgeCapital >= 18 && networkCapital < 12) primary = 'PLATFORM';
+  else if (experienceYears >= 5 && experienceYears < 10 && augHigh) primary = 'AUGMENT';
+  else if (capitalTotal < 25 || (experienceYears > 10 && capitalTotal < 35)) primary = 'RESKILL';
 
-  // PLATFORM: long experience + deep knowledge but weak network
-  if (experienceYears >= 10 && knowledgeCapital >= 18 && networkCapital < 12) return 'PLATFORM';
+  if (!primary) return { primary: null };
 
-  // AUGMENT: mid-career with high augmentation potential
-  // augmentationRiskScore < 0.35 means augmentation is HIGH (role benefits from AI)
-  const augmentationPotentialHigh = augmentationRiskScore !== undefined && augmentationRiskScore < 0.35;
-  if (experienceYears >= 5 && experienceYears < 10 && augmentationPotentialHigh) return 'AUGMENT';
+  // v6.0 Fix 9: Detect secondary archetype (within 3 pts of trigger threshold)
+  let secondary: Exclude<StrategyArchetype, null> | undefined;
+  let hybridSequence: string | undefined;
 
-  // RESKILL: limited capital regardless of experience
-  if (capitalTotal < 25) return 'RESKILL';
-  if (experienceYears > 10 && capitalTotal < 35) return 'RESKILL';
+  if (primary === 'LEVERAGE' && knowledgeCapital >= 15) {
+    // Also near PLATFORM threshold — strong knowledge available to publish
+    secondary = 'PLATFORM';
+    hybridSequence = `Your primary strategy is LEVERAGE — activate your network first because warm relationships close 6× faster than cold applications. Your secondary strategy is PLATFORM — publish one proof of expertise in parallel to give your network something concrete to share.\n\nSequence: Weeks 1–2: execute Phase 0 of both archetypes simultaneously — map your network AND identify one publishable insight. Weeks 3–6: LEVERAGE activates conversations (15 minimum) while PLATFORM publishes first artifact. Week 7 onward: LEVERAGE conversations reference the PLATFORM artifact. Your network now has something specific to share rather than a general referral.`;
+  } else if (primary === 'PLATFORM' && networkCapital >= 9) {
+    // Network is weak but not zero — can run parallel track
+    secondary = 'LEVERAGE';
+    hybridSequence = `Your primary strategy is PLATFORM — publish first to create the proof of expertise that converts cold outreach into warm reception. Your secondary strategy is LEVERAGE — your network is limited but not zero.\n\nSequence: Weeks 1–4: PLATFORM only — publish two pieces before any outreach. Week 5 onward: begin LEVERAGE track with your published work as the introduction. "I wrote this piece on [topic] last week — I thought of you because..." converts at 4× the rate of cold contact without a reference point.`;
+  } else if (primary === 'AUGMENT' && networkCapital >= 12) {
+    // Mid-career with both augmentation potential and meaningful network
+    secondary = 'LEVERAGE';
+    hybridSequence = `Your primary strategy is AUGMENT — become the AI-capable version of your role because your augmentation potential is high. Your secondary strategy is LEVERAGE — you have enough network to activate relationships around your demonstrated productivity improvement.\n\nSequence: Weeks 1–6: AUGMENT Phase 1 only — build genuine AI tool proficiency. Week 7: begin LEVERAGE in parallel using your productivity improvement as the conversation hook. "I reduced X from 4 hours to 45 minutes using [AI tool] — I wanted to share this with you before writing it up more formally."`;
+  }
 
-  // No archetype triggered — use standard bracket roadmap
-  return null;
+  return { primary, ...(secondary ? { secondary, hybridSequence } : {}) };
+}
+
+/**
+ * Compress a week-range string by a factor.
+ * "Weeks 1–6" × 0.5 → "Weeks 1–3"
+ * "Before Phase 1" is left unchanged (it's a label, not a duration).
+ */
+function compressWeekRange(original: string, factor: number): string {
+  const m = original.match(/Weeks\s+(\d+)[–\-](\d+)/);
+  if (!m) return original;
+  const start = parseInt(m[1], 10);
+  const end = parseInt(m[2], 10);
+  const newEnd = Math.max(start, Math.round(end * factor));
+  return `Weeks ${start}–${newEnd}`;
 }
 
 export function buildArchetypeRoadmap(
@@ -71,6 +161,8 @@ export function buildArchetypeRoadmap(
   roleDisplayName: string,
   capitalPillars: CapitalPillars,
   experienceYears: number,
+  /** v6.0 Fix 5: collapse stage compresses phase timelines */
+  collapseStage?: 1 | 2 | 3 | null,
 ): ArchetypeResult {
   switch (archetype) {
     case 'LEVERAGE':
@@ -274,4 +366,53 @@ export function buildArchetypeRoadmap(
         ],
       };
   }
+}
+
+/**
+ * Apply collapse stage time compression to an ArchetypeResult.
+ * Stage 3: compress all phase timelines to 30% of original (factor 0.3).
+ * Stage 2: compress to 50% (factor 0.5).
+ * Stage 1: compress to 75% (factor 0.75).
+ * Phase 3 is dropped entirely at Stage 3 — 3–4 months is not enough for 3 phases.
+ * Shows both original and compressed timelines so urgency is visible.
+ */
+export function applyCollapseCompression(
+  roadmap: ArchetypeResult,
+  collapseStage: 1 | 2 | 3,
+): ArchetypeResult {
+  const factors: Record<1 | 2 | 3, number> = { 1: 0.75, 2: 0.50, 3: 0.30 };
+  const factor = factors[collapseStage];
+
+  const bannerPhrases: Record<1 | 2 | 3, string> = {
+    1: 'Stage 1 signals detected — timelines compressed to 75% of standard duration.',
+    2: 'Stage 2 signals detected — timelines compressed to 50% of standard duration. Execute phases concurrently where possible.',
+    3: 'Stage 3 signals detected — timelines compressed to 30%. Phase 3 dropped: you have 3–4 months, not 16–20. Focus on Phase 1 and Phase 2 only.',
+  };
+
+  const compressedPhases = roadmap.phases
+    .filter(p => collapseStage < 3 || p.phase < 3) // drop Phase 3 at Stage 3
+    .map(p => ({
+      ...p,
+      originalWeekRange: p.weekRange,
+      weekRange: compressWeekRange(p.weekRange, factor),
+    }));
+
+  const compressedPhase0 = roadmap.phase0
+    ? {
+        ...roadmap.phase0,
+        originalWeekRange: roadmap.phase0.weekRange,
+        weekRange: compressWeekRange(roadmap.phase0.weekRange, factor),
+      }
+    : undefined;
+
+  return {
+    ...roadmap,
+    ...(compressedPhase0 ? { phase0: compressedPhase0 } : {}),
+    phases: compressedPhases,
+    compressionApplied: {
+      collapseStage,
+      factor,
+      bannerText: bannerPhrases[collapseStage],
+    },
+  };
 }

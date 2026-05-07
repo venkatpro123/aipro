@@ -2,6 +2,7 @@
 // Layoff-specific score persistence with typed history and drift detection
 
 import { ScoreResult, ScoreBreakdown } from './layoffScoreEngine';
+import type { HybridResult } from '../types/hybridResult';
 
 const STORAGE_KEY = 'hp_layoff_score_history';
 
@@ -29,15 +30,16 @@ export interface DriftResult {
 }
 
 export const saveLayoffScore = (
-  scoreResult: ScoreResult,
+  scoreResult: ScoreResult | HybridResult,
   companyName: string,
   roleTitle: string,
   department: string = '',
   dataQuality: 'live' | 'partial' | 'fallback' = 'live'
 ): ScoreHistoryEntry => {
+  const scoreValue = (scoreResult as any).score ?? (scoreResult as any).total ?? 0;
   const entry: ScoreHistoryEntry = {
     id: crypto.randomUUID(),
-    score: scoreResult.score,
+    score: scoreValue,
     tier: scoreResult.tier.label,
     tierColor: scoreResult.tier.color,
     companyName,

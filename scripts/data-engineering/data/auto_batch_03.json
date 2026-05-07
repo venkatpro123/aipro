@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Target (Tech Enriched)",
+    "workforce_count": 51492,
+    "open_jobs_count": 921,
+    "layoff_history": {
+      "total_layoffs": 4719,
+      "last_layoff_date": "2026-02-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zed",
+    "workforce_count": 203,
+    "open_jobs_count": 5,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-06-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Anduril (Scale Enriched)",
+    "workforce_count": 10156,
+    "open_jobs_count": 116,
+    "layoff_history": {
+      "total_layoffs": 763,
+      "last_layoff_date": "2025-03-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Aurora",
+    "workforce_count": 10190,
+    "open_jobs_count": 122,
+    "layoff_history": {
+      "total_layoffs": 536,
+      "last_layoff_date": "2025-12-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "X (Twitter)",
+    "workforce_count": 10074,
+    "open_jobs_count": 133,
+    "layoff_history": {
+      "total_layoffs": 7215,
+      "last_layoff_date": "2025-07-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Arm",
+    "workforce_count": 9915,
+    "open_jobs_count": 281,
+    "layoff_history": {
+      "total_layoffs": 959,
+      "last_layoff_date": "2025-10-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hapag-Lloyd",
+    "workforce_count": 50755,
+    "open_jobs_count": 1002,
+    "layoff_history": {
+      "total_layoffs": 3167,
+      "last_layoff_date": "2025-03-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Just Eat Takeaway",
+    "workforce_count": 50201,
+    "open_jobs_count": 1262,
+    "layoff_history": {
+      "total_layoffs": 5900,
+      "last_layoff_date": "2025-11-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Physics Wallah",
+    "workforce_count": 10248,
+    "open_jobs_count": 118,
+    "layoff_history": {
+      "total_layoffs": 820,
+      "last_layoff_date": "2025-03-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Graphite",
+    "workforce_count": 201,
+    "open_jobs_count": 2,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-06-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tanium",
+    "workforce_count": 10020,
+    "open_jobs_count": 287,
+    "layoff_history": {
+      "total_layoffs": 649,
+      "last_layoff_date": "2026-03-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Qualcomm",
+    "workforce_count": 50107,
+    "open_jobs_count": 1096,
+    "layoff_history": {
+      "total_layoffs": 2354,
+      "last_layoff_date": "2025-03-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Peloton",
+    "workforce_count": 10295,
+    "open_jobs_count": 195,
+    "layoff_history": {
+      "total_layoffs": 3759,
+      "last_layoff_date": "2026-01-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Workday",
+    "workforce_count": 50593,
+    "open_jobs_count": 1312,
+    "layoff_history": {
+      "total_layoffs": 4039,
+      "last_layoff_date": "2025-03-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Vanta (Enriched)",
+    "workforce_count": 9869,
+    "open_jobs_count": 282,
+    "layoff_history": {
+      "total_layoffs": 702,
+      "last_layoff_date": "2026-01-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Factorial (Enriched)",
+    "workforce_count": 9877,
+    "open_jobs_count": 234,
+    "layoff_history": {
+      "total_layoffs": 610,
+      "last_layoff_date": "2026-03-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Orb",
+    "workforce_count": 1477,
+    "open_jobs_count": 28,
+    "layoff_history": {
+      "total_layoffs": 95,
+      "last_layoff_date": "2025-08-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ASML",
+    "workforce_count": 50712,
+    "open_jobs_count": 1287,
+    "layoff_history": {
+      "total_layoffs": 4874,
+      "last_layoff_date": "2025-04-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Unity Technologies",
+    "workforce_count": 10133,
+    "open_jobs_count": 207,
+    "layoff_history": {
+      "total_layoffs": 2267,
+      "last_layoff_date": "2025-08-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Monzo",
+    "workforce_count": 9968,
+    "open_jobs_count": 128,
+    "layoff_history": {
+      "total_layoffs": 949,
+      "last_layoff_date": "2025-09-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Best Buy",
+    "workforce_count": 50240,
+    "open_jobs_count": 1282,
+    "layoff_history": {
+      "total_layoffs": 3738,
+      "last_layoff_date": "2025-02-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tamara",
+    "workforce_count": 10147,
+    "open_jobs_count": 155,
+    "layoff_history": {
+      "total_layoffs": 868,
+      "last_layoff_date": "2026-04-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Chewy",
+    "workforce_count": 10139,
+    "open_jobs_count": 229,
+    "layoff_history": {
+      "total_layoffs": 1032,
+      "last_layoff_date": "2025-05-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Vercel",
+    "workforce_count": 1476,
+    "open_jobs_count": 39,
+    "layoff_history": {
+      "total_layoffs": 139,
+      "last_layoff_date": "2026-01-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DLocal",
+    "workforce_count": 9882,
+    "open_jobs_count": 137,
+    "layoff_history": {
+      "total_layoffs": 572,
+      "last_layoff_date": "2025-03-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Disney",
+    "workforce_count": 50041,
+    "open_jobs_count": 615,
+    "layoff_history": {
+      "total_layoffs": 10603,
+      "last_layoff_date": "2025-05-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lyft",
+    "workforce_count": 9908,
+    "open_jobs_count": 211,
+    "layoff_history": {
+      "total_layoffs": 1765,
+      "last_layoff_date": "2026-03-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DoorDash",
+    "workforce_count": 49993,
+    "open_jobs_count": 1280,
+    "layoff_history": {
+      "total_layoffs": 4137,
+      "last_layoff_date": "2025-10-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mistral AI",
+    "workforce_count": 10051,
+    "open_jobs_count": 223,
+    "layoff_history": {
+      "total_layoffs": 729,
+      "last_layoff_date": "2025-05-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "SafetyCulture",
+    "workforce_count": 10199,
+    "open_jobs_count": 300,
+    "layoff_history": {
+      "total_layoffs": 700,
+      "last_layoff_date": "2026-01-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Adobe",
+    "workforce_count": 50132,
+    "open_jobs_count": 581,
+    "layoff_history": {
+      "total_layoffs": 3164,
+      "last_layoff_date": "2025-04-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "23andMe",
+    "workforce_count": 1502,
+    "open_jobs_count": 26,
+    "layoff_history": {
+      "total_layoffs": 400,
+      "last_layoff_date": "2026-02-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Teladoc Health",
+    "workforce_count": 10081,
+    "open_jobs_count": 287,
+    "layoff_history": {
+      "total_layoffs": 975,
+      "last_layoff_date": "2026-03-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Better.com",
+    "workforce_count": 1499,
+    "open_jobs_count": 31,
+    "layoff_history": {
+      "total_layoffs": 9098,
+      "last_layoff_date": "2025-09-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Twitch (Amazon)",
+    "workforce_count": 9828,
+    "open_jobs_count": 204,
+    "layoff_history": {
+      "total_layoffs": 1414,
+      "last_layoff_date": "2026-02-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zoom",
+    "workforce_count": 10082,
+    "open_jobs_count": 257,
+    "layoff_history": {
+      "total_layoffs": 1852,
+      "last_layoff_date": "2025-02-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Netlify",
+    "workforce_count": 1541,
+    "open_jobs_count": 21,
+    "layoff_history": {
+      "total_layoffs": 186,
+      "last_layoff_date": "2025-03-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wayfair",
+    "workforce_count": 10274,
+    "open_jobs_count": 162,
+    "layoff_history": {
+      "total_layoffs": 2268,
+      "last_layoff_date": "2026-03-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Carvana",
+    "workforce_count": 9918,
+    "open_jobs_count": 120,
+    "layoff_history": {
+      "total_layoffs": 4640,
+      "last_layoff_date": "2026-04-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Raycast",
+    "workforce_count": 1489,
+    "open_jobs_count": 41,
+    "layoff_history": {
+      "total_layoffs": 130,
+      "last_layoff_date": "2025-03-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "AMD",
+    "workforce_count": 51080,
+    "open_jobs_count": 1114,
+    "layoff_history": {
+      "total_layoffs": 3605,
+      "last_layoff_date": "2026-03-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Fortinet",
+    "workforce_count": 51031,
+    "open_jobs_count": 1340,
+    "layoff_history": {
+      "total_layoffs": 4796,
+      "last_layoff_date": "2026-02-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "SentinelOne",
+    "workforce_count": 10298,
+    "open_jobs_count": 249,
+    "layoff_history": {
+      "total_layoffs": 657,
+      "last_layoff_date": "2025-02-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CircleCI",
+    "workforce_count": 1524,
+    "open_jobs_count": 15,
+    "layoff_history": {
+      "total_layoffs": 218,
+      "last_layoff_date": "2025-03-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Walmart",
+    "workforce_count": 51220,
+    "open_jobs_count": 634,
+    "layoff_history": {
+      "total_layoffs": 5537,
+      "last_layoff_date": "2026-03-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "OpenSea (Enriched)",
+    "workforce_count": 9883,
+    "open_jobs_count": 236,
+    "layoff_history": {
+      "total_layoffs": 841,
+      "last_layoff_date": "2025-02-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Target",
+    "workforce_count": 51327,
+    "open_jobs_count": 784,
+    "layoff_history": {
+      "total_layoffs": 2310,
+      "last_layoff_date": "2026-03-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Instacart",
+    "workforce_count": 9989,
+    "open_jobs_count": 152,
+    "layoff_history": {
+      "total_layoffs": 476,
+      "last_layoff_date": "2025-07-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "eBay",
+    "workforce_count": 51056,
+    "open_jobs_count": 1224,
+    "layoff_history": {
+      "total_layoffs": 4054,
+      "last_layoff_date": "2025-04-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Toast",
+    "workforce_count": 9921,
+    "open_jobs_count": 200,
+    "layoff_history": {
+      "total_layoffs": 1095,
+      "last_layoff_date": "2025-08-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

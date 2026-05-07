@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Bharti Airtel (India Giant)",
+    "workforce_count": 75312,
+    "open_jobs_count": 1410,
+    "layoff_history": {
+      "total_layoffs": 5274,
+      "last_layoff_date": "2025-02-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Infosys (India Giant)",
+    "workforce_count": 320803,
+    "open_jobs_count": 6664,
+    "layoff_history": {
+      "total_layoffs": 14987,
+      "last_layoff_date": "2025-03-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "State Bank of India (India Giant)",
+    "workforce_count": 238328,
+    "open_jobs_count": 6021,
+    "layoff_history": {
+      "total_layoffs": 15928,
+      "last_layoff_date": "2026-01-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Larsen & Toubro (India Giant)",
+    "workforce_count": 45154,
+    "open_jobs_count": 669,
+    "layoff_history": {
+      "total_layoffs": 3442,
+      "last_layoff_date": "2025-07-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bajaj Finance (India Giant)",
+    "workforce_count": 55720,
+    "open_jobs_count": 1561,
+    "layoff_history": {
+      "total_layoffs": 3439,
+      "last_layoff_date": "2026-02-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Adani Enterprises (India Enterprise)",
+    "workforce_count": 27663,
+    "open_jobs_count": 293,
+    "layoff_history": {
+      "total_layoffs": 1623,
+      "last_layoff_date": "2025-05-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Axis Bank (India Giant)",
+    "workforce_count": 95123,
+    "open_jobs_count": 2610,
+    "layoff_history": {
+      "total_layoffs": 7055,
+      "last_layoff_date": "2025-08-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ITC Ltd (India Giant)",
+    "workforce_count": 41895,
+    "open_jobs_count": 510,
+    "layoff_history": {
+      "total_layoffs": 3580,
+      "last_layoff_date": "2025-03-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wipro (India Giant)",
+    "workforce_count": 234851,
+    "open_jobs_count": 5913,
+    "layoff_history": {
+      "total_layoffs": 19536,
+      "last_layoff_date": "2026-01-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HCLTech (India Giant)",
+    "workforce_count": 227063,
+    "open_jobs_count": 4519,
+    "layoff_history": {
+      "total_layoffs": 15454,
+      "last_layoff_date": "2025-02-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mahindra & Mahindra (India Giant)",
+    "workforce_count": 45184,
+    "open_jobs_count": 540,
+    "layoff_history": {
+      "total_layoffs": 2709,
+      "last_layoff_date": "2026-01-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tata Motors (India Giant)",
+    "workforce_count": 83459,
+    "open_jobs_count": 2070,
+    "layoff_history": {
+      "total_layoffs": 4809,
+      "last_layoff_date": "2025-03-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sun Pharma (India Giant)",
+    "workforce_count": 40918,
+    "open_jobs_count": 595,
+    "layoff_history": {
+      "total_layoffs": 3149,
+      "last_layoff_date": "2025-11-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Asian Paints (India Giant)",
+    "workforce_count": 12296,
+    "open_jobs_count": 214,
+    "layoff_history": {
+      "total_layoffs": 959,
+      "last_layoff_date": "2025-05-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "ONGC (India Giant)",
+    "workforce_count": 26634,
+    "open_jobs_count": 518,
+    "layoff_history": {
+      "total_layoffs": 1630,
+      "last_layoff_date": "2026-04-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "JSW Steel (India Giant)",
+    "workforce_count": 14190,
+    "open_jobs_count": 224,
+    "layoff_history": {
+      "total_layoffs": 874,
+      "last_layoff_date": "2025-09-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Titan Co (India Giant)",
+    "workforce_count": 9488,
+    "open_jobs_count": 233,
+    "layoff_history": {
+      "total_layoffs": 802,
+      "last_layoff_date": "2025-04-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tech Mahindra (India Giant)",
+    "workforce_count": 148966,
+    "open_jobs_count": 3821,
+    "layoff_history": {
+      "total_layoffs": 8263,
+      "last_layoff_date": "2025-01-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "LTIMindtree (India Giant)",
+    "workforce_count": 80683,
+    "open_jobs_count": 1026,
+    "layoff_history": {
+      "total_layoffs": 6184,
+      "last_layoff_date": "2025-07-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Avenue Supermarts (India Giant)",
+    "workforce_count": 12053,
+    "open_jobs_count": 295,
+    "layoff_history": {
+      "total_layoffs": 862,
+      "last_layoff_date": "2025-03-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zomato Ltd (India Giant)",
+    "workforce_count": 4023,
+    "open_jobs_count": 85,
+    "layoff_history": {
+      "total_layoffs": 793,
+      "last_layoff_date": "2025-04-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "FSN E-Commerce (India Giant)",
+    "workforce_count": 3539,
+    "open_jobs_count": 101,
+    "layoff_history": {
+      "total_layoffs": 187,
+      "last_layoff_date": "2025-11-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Coal India (India Giant)",
+    "workforce_count": 269441,
+    "open_jobs_count": 7980,
+    "layoff_history": {
+      "total_layoffs": 16540,
+      "last_layoff_date": "2025-02-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hindalco (India Giant)",
+    "workforce_count": 22064,
+    "open_jobs_count": 231,
+    "layoff_history": {
+      "total_layoffs": 1537,
+      "last_layoff_date": "2025-07-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Vedanta (India Giant)",
+    "workforce_count": 28504,
+    "open_jobs_count": 649,
+    "layoff_history": {
+      "total_layoffs": 1969,
+      "last_layoff_date": "2025-07-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Maruti Suzuki (India Giant)",
+    "workforce_count": 15835,
+    "open_jobs_count": 264,
+    "layoff_history": {
+      "total_layoffs": 926,
+      "last_layoff_date": "2025-03-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hero MotoCorp (India Giant)",
+    "workforce_count": 9164,
+    "open_jobs_count": 188,
+    "layoff_history": {
+      "total_layoffs": 782,
+      "last_layoff_date": "2026-02-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Apollo Hospitals (India Giant)",
+    "workforce_count": 74003,
+    "open_jobs_count": 843,
+    "layoff_history": {
+      "total_layoffs": 4854,
+      "last_layoff_date": "2025-02-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Dr. Reddy's (India Giant)",
+    "workforce_count": 25189,
+    "open_jobs_count": 407,
+    "layoff_history": {
+      "total_layoffs": 1982,
+      "last_layoff_date": "2025-06-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cipla Ltd (India Giant)",
+    "workforce_count": 26670,
+    "open_jobs_count": 544,
+    "layoff_history": {
+      "total_layoffs": 1588,
+      "last_layoff_date": "2025-10-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Life Insurance Corp (India Giant)",
+    "workforce_count": 107304,
+    "open_jobs_count": 2236,
+    "layoff_history": {
+      "total_layoffs": 7607,
+      "last_layoff_date": "2025-06-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Indian Oil Corp (India Giant)",
+    "workforce_count": 30723,
+    "open_jobs_count": 448,
+    "layoff_history": {
+      "total_layoffs": 2323,
+      "last_layoff_date": "2026-04-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Power Grid Corp (India Giant)",
+    "workforce_count": 8680,
+    "open_jobs_count": 172,
+    "layoff_history": {
+      "total_layoffs": 728,
+      "last_layoff_date": "2025-09-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bank of Baroda (India Giant)",
+    "workforce_count": 83450,
+    "open_jobs_count": 894,
+    "layoff_history": {
+      "total_layoffs": 4286,
+      "last_layoff_date": "2026-03-06",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "KPIT Technologies (India Star)",
+    "workforce_count": 12330,
+    "open_jobs_count": 336,
+    "layoff_history": {
+      "total_layoffs": 800,
+      "last_layoff_date": "2025-01-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pidilite Industries (India Star)",
+    "workforce_count": 8595,
+    "open_jobs_count": 152,
+    "layoff_history": {
+      "total_layoffs": 485,
+      "last_layoff_date": "2026-02-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Berger Paints (India Star)",
+    "workforce_count": 4481,
+    "open_jobs_count": 118,
+    "layoff_history": {
+      "total_layoffs": 307,
+      "last_layoff_date": "2025-11-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Godrej Consumer (India Star)",
+    "workforce_count": 11878,
+    "open_jobs_count": 342,
+    "layoff_history": {
+      "total_layoffs": 898,
+      "last_layoff_date": "2025-04-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Marico Ltd (India Star)",
+    "workforce_count": 1583,
+    "open_jobs_count": 16,
+    "layoff_history": {
+      "total_layoffs": 106,
+      "last_layoff_date": "2025-11-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cummins India (India Star)",
+    "workforce_count": 4438,
+    "open_jobs_count": 118,
+    "layoff_history": {
+      "total_layoffs": 349,
+      "last_layoff_date": "2026-02-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bosch India (India Star)",
+    "workforce_count": 9403,
+    "open_jobs_count": 193,
+    "layoff_history": {
+      "total_layoffs": 878,
+      "last_layoff_date": "2025-05-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Apollo Tyres (India Star)",
+    "workforce_count": 17973,
+    "open_jobs_count": 214,
+    "layoff_history": {
+      "total_layoffs": 1447,
+      "last_layoff_date": "2025-12-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Balkrishna Industries (India Star)",
+    "workforce_count": 3577,
+    "open_jobs_count": 99,
+    "layoff_history": {
+      "total_layoffs": 344,
+      "last_layoff_date": "2025-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Muthoot Finance (India Star)",
+    "workforce_count": 28464,
+    "open_jobs_count": 290,
+    "layoff_history": {
+      "total_layoffs": 2626,
+      "last_layoff_date": "2025-09-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Shriram Finance (India Star)",
+    "workforce_count": 74285,
+    "open_jobs_count": 1457,
+    "layoff_history": {
+      "total_layoffs": 5217,
+      "last_layoff_date": "2025-02-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HDFC Life (India Star)",
+    "workforce_count": 30431,
+    "open_jobs_count": 701,
+    "layoff_history": {
+      "total_layoffs": 2002,
+      "last_layoff_date": "2026-03-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "SBI Life (India Star)",
+    "workforce_count": 22079,
+    "open_jobs_count": 352,
+    "layoff_history": {
+      "total_layoffs": 1599,
+      "last_layoff_date": "2025-01-28",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cyient Ltd (India Star)",
+    "workforce_count": 15332,
+    "open_jobs_count": 350,
+    "layoff_history": {
+      "total_layoffs": 1306,
+      "last_layoff_date": "2026-04-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tata Elxsi (India Star)",
+    "workforce_count": 12970,
+    "open_jobs_count": 301,
+    "layoff_history": {
+      "total_layoffs": 933,
+      "last_layoff_date": "2026-01-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lupin Ltd (India Star)",
+    "workforce_count": 21711,
+    "open_jobs_count": 231,
+    "layoff_history": {
+      "total_layoffs": 1333,
+      "last_layoff_date": "2025-06-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

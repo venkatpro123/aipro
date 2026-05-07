@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Thndr (Global Enriched)",
+    "workforce_count": 121,
+    "open_jobs_count": 1,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-06-22",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Swan (Global Enriched)",
+    "workforce_count": 177,
+    "open_jobs_count": 4,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-05-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lydia (Global Enriched)",
+    "workforce_count": 249,
+    "open_jobs_count": 3,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-10-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "StashAway (Global Enriched)",
+    "workforce_count": 139,
+    "open_jobs_count": 3,
+    "layoff_history": {
+      "total_layoffs": 51,
+      "last_layoff_date": "2025-07-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Endowus (Global Enriched)",
+    "workforce_count": 118,
+    "open_jobs_count": 3,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-08-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Applied Materials",
+    "workforce_count": 51240,
+    "open_jobs_count": 661,
+    "layoff_history": {
+      "total_layoffs": 3645,
+      "last_layoff_date": "2025-03-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Paxos (Global Enriched)",
+    "workforce_count": 345,
+    "open_jobs_count": 8,
+    "layoff_history": {
+      "total_layoffs": 94,
+      "last_layoff_date": "2026-04-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Freshworks",
+    "workforce_count": 9802,
+    "open_jobs_count": 190,
+    "layoff_history": {
+      "total_layoffs": 949,
+      "last_layoff_date": "2025-04-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PPRO (Global Enriched)",
+    "workforce_count": 617,
+    "open_jobs_count": 7,
+    "layoff_history": {
+      "total_layoffs": 36,
+      "last_layoff_date": "2025-12-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wasoko (Global Enriched)",
+    "workforce_count": 818,
+    "open_jobs_count": 21,
+    "layoff_history": {
+      "total_layoffs": 39,
+      "last_layoff_date": "2026-03-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cora (Global Enriched)",
+    "workforce_count": 459,
+    "open_jobs_count": 7,
+    "layoff_history": {
+      "total_layoffs": 28,
+      "last_layoff_date": "2025-03-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Nubank (Global Enriched)",
+    "workforce_count": 8419,
+    "open_jobs_count": 128,
+    "layoff_history": {
+      "total_layoffs": 637,
+      "last_layoff_date": "2025-06-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tide (Global Enriched)",
+    "workforce_count": 1213,
+    "open_jobs_count": 24,
+    "layoff_history": {
+      "total_layoffs": 98,
+      "last_layoff_date": "2025-01-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "STC Pay (Global Enriched)",
+    "workforce_count": 840,
+    "open_jobs_count": 10,
+    "layoff_history": {
+      "total_layoffs": 66,
+      "last_layoff_date": "2025-03-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Remote (Global Enriched)",
+    "workforce_count": 1232,
+    "open_jobs_count": 35,
+    "layoff_history": {
+      "total_layoffs": 71,
+      "last_layoff_date": "2025-10-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Accenture",
+    "workforce_count": 50586,
+    "open_jobs_count": 858,
+    "layoff_history": {
+      "total_layoffs": 22502,
+      "last_layoff_date": "2025-10-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Deloitte",
+    "workforce_count": 49627,
+    "open_jobs_count": 1363,
+    "layoff_history": {
+      "total_layoffs": 4362,
+      "last_layoff_date": "2025-09-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "PwC",
+    "workforce_count": 49240,
+    "open_jobs_count": 1087,
+    "layoff_history": {
+      "total_layoffs": 2971,
+      "last_layoff_date": "2025-10-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Geidea (Global Enriched)",
+    "workforce_count": 615,
+    "open_jobs_count": 13,
+    "layoff_history": {
+      "total_layoffs": 43,
+      "last_layoff_date": "2025-01-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Segment (Twilio)",
+    "workforce_count": 9860,
+    "open_jobs_count": 238,
+    "layoff_history": {
+      "total_layoffs": 1043,
+      "last_layoff_date": "2025-01-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mixpanel",
+    "workforce_count": 10171,
+    "open_jobs_count": 162,
+    "layoff_history": {
+      "total_layoffs": 796,
+      "last_layoff_date": "2025-12-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Laka (Global Enriched)",
+    "workforce_count": 79,
+    "open_jobs_count": 1,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2025-06-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Yoco (Global Enriched)",
+    "workforce_count": 442,
+    "open_jobs_count": 6,
+    "layoff_history": {
+      "total_layoffs": 23,
+      "last_layoff_date": "2026-04-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lam Research",
+    "workforce_count": 49003,
+    "open_jobs_count": 627,
+    "layoff_history": {
+      "total_layoffs": 5899,
+      "last_layoff_date": "2025-06-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "First Solar",
+    "workforce_count": 49924,
+    "open_jobs_count": 943,
+    "layoff_history": {
+      "total_layoffs": 3570,
+      "last_layoff_date": "2025-04-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "FullStory",
+    "workforce_count": 10196,
+    "open_jobs_count": 218,
+    "layoff_history": {
+      "total_layoffs": 593,
+      "last_layoff_date": "2025-01-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sentry",
+    "workforce_count": 1497,
+    "open_jobs_count": 29,
+    "layoff_history": {
+      "total_layoffs": 108,
+      "last_layoff_date": "2025-04-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Onsemi",
+    "workforce_count": 10100,
+    "open_jobs_count": 267,
+    "layoff_history": {
+      "total_layoffs": 727,
+      "last_layoff_date": "2025-03-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Hindustan Unilever (India Giant)",
+    "workforce_count": 20831,
+    "open_jobs_count": 363,
+    "layoff_history": {
+      "total_layoffs": 1858,
+      "last_layoff_date": "2025-01-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Reddit",
+    "workforce_count": 9884,
+    "open_jobs_count": 246,
+    "layoff_history": {
+      "total_layoffs": 786,
+      "last_layoff_date": "2025-03-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Match Group",
+    "workforce_count": 9820,
+    "open_jobs_count": 269,
+    "layoff_history": {
+      "total_layoffs": 1047,
+      "last_layoff_date": "2025-03-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Capital One",
+    "workforce_count": 49039,
+    "open_jobs_count": 1211,
+    "layoff_history": {
+      "total_layoffs": 2552,
+      "last_layoff_date": "2025-12-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Citigroup",
+    "workforce_count": 50861,
+    "open_jobs_count": 1182,
+    "layoff_history": {
+      "total_layoffs": 23980,
+      "last_layoff_date": "2026-02-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wells Fargo",
+    "workforce_count": 49527,
+    "open_jobs_count": 1256,
+    "layoff_history": {
+      "total_layoffs": 4044,
+      "last_layoff_date": "2025-09-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "American Express",
+    "workforce_count": 50461,
+    "open_jobs_count": 821,
+    "layoff_history": {
+      "total_layoffs": 3530,
+      "last_layoff_date": "2025-03-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Epirus",
+    "workforce_count": 1494,
+    "open_jobs_count": 20,
+    "layoff_history": {
+      "total_layoffs": 141,
+      "last_layoff_date": "2025-02-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Kotak Mahindra Bank (India Giant)",
+    "workforce_count": 76889,
+    "open_jobs_count": 1275,
+    "layoff_history": {
+      "total_layoffs": 4876,
+      "last_layoff_date": "2025-09-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "NTPC Ltd (India Giant)",
+    "workforce_count": 17801,
+    "open_jobs_count": 230,
+    "layoff_history": {
+      "total_layoffs": 1358,
+      "last_layoff_date": "2025-04-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "UltraTech Cement (India Giant)",
+    "workforce_count": 22956,
+    "open_jobs_count": 404,
+    "layoff_history": {
+      "total_layoffs": 1611,
+      "last_layoff_date": "2025-02-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Tata Steel (India Giant)",
+    "workforce_count": 80246,
+    "open_jobs_count": 1383,
+    "layoff_history": {
+      "total_layoffs": 7214,
+      "last_layoff_date": "2026-01-29",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Eicher Motors (India Giant)",
+    "workforce_count": 5637,
+    "open_jobs_count": 71,
+    "layoff_history": {
+      "total_layoffs": 387,
+      "last_layoff_date": "2025-03-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Bharat Petroleum (India Giant)",
+    "workforce_count": 9699,
+    "open_jobs_count": 139,
+    "layoff_history": {
+      "total_layoffs": 669,
+      "last_layoff_date": "2025-11-14",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Punjab National Bank (India Giant)",
+    "workforce_count": 102936,
+    "open_jobs_count": 2831,
+    "layoff_history": {
+      "total_layoffs": 8292,
+      "last_layoff_date": "2025-03-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Adani Green Energy (India Star)",
+    "workforce_count": 2503,
+    "open_jobs_count": 35,
+    "layoff_history": {
+      "total_layoffs": 230,
+      "last_layoff_date": "2025-01-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mphasis (India Star)",
+    "workforce_count": 32533,
+    "open_jobs_count": 907,
+    "layoff_history": {
+      "total_layoffs": 1619,
+      "last_layoff_date": "2025-08-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Persistent Systems (India Star)",
+    "workforce_count": 22673,
+    "open_jobs_count": 373,
+    "layoff_history": {
+      "total_layoffs": 2103,
+      "last_layoff_date": "2025-12-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Dabur India (India Star)",
+    "workforce_count": 7494,
+    "open_jobs_count": 181,
+    "layoff_history": {
+      "total_layoffs": 413,
+      "last_layoff_date": "2026-03-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "TVS Motor (India Star)",
+    "workforce_count": 5657,
+    "open_jobs_count": 145,
+    "layoff_history": {
+      "total_layoffs": 487,
+      "last_layoff_date": "2026-02-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Coforge Ltd (India Star)",
+    "workforce_count": 25235,
+    "open_jobs_count": 514,
+    "layoff_history": {
+      "total_layoffs": 1089,
+      "last_layoff_date": "2025-05-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Torrent Pharma (India Star)",
+    "workforce_count": 14969,
+    "open_jobs_count": 294,
+    "layoff_history": {
+      "total_layoffs": 1194,
+      "last_layoff_date": "2026-01-20",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

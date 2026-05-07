@@ -19,7 +19,8 @@ import {
   resolveCompanyProfile,
 } from './companyIntelligenceDB';
 
-import { CompanyData, companyDatabase, getCompanyByName } from './companyDatabase';
+import { CompanyData } from './companyDatabase';
+import { getCompanySync as getCompanyByName, getAllCompanies as getCompanyList } from '../services/db/staticDataService';
 
 // ── Revenue Trend → YoY Growth Estimate ──────────────────────────────────────
 // Maps qualitative trend to a numeric estimate used by mapRevenueGrowth()
@@ -42,11 +43,16 @@ const BURN_RATE_TO_REV_PER_EMP: Record<
 };
 
 // ── Company Size → Employee Count Proxy ──────────────────────────────────────
-const SIZE_TO_EMPLOYEE_COUNT: Record<CompanyProfile['companySize'], number> = {
-  small:      30,
-  mid:       200,
-  large:    3000,
-  enterprise: 50000,
+// All valid companySize values must be covered — an undefined lookup produces
+// NaN employee counts that silently corrupt layoff % calculations in L2.
+const SIZE_TO_EMPLOYEE_COUNT: Record<string, number> = {
+  startup:    20,     // very early stage
+  small:      60,
+  mid:        500,
+  medium:     2000,   // alias used by some DB seeds
+  large:      10000,
+  enterprise: 60000,
+  mega:       200000, // was missing — caused NaN pct for large IT/enterprise companies
 };
 
 // ── Hiring Freeze Score → Stock 90-Day Change Proxy ──────────────────────────
@@ -138,9 +144,11 @@ export const companyProfileToData = (
   // Build layoff rounds array for L2 calculation
   const layoffRounds: { date: string; percentCut: number }[] = [];
   if (layoffHistory.totalLayoffs > 0 && layoffHistory.lastLayoffDate !== 'none') {
-    // Use actual last layoff date; estimate percent from total vs size proxy
-    const empCount = SIZE_TO_EMPLOYEE_COUNT[companySize];
-    const pct = Math.round((layoffHistory.totalLayoffs / empCount) * 100 * 10) / 10;
+    // Use actual last layoff date; estimate percent from total vs size proxy.
+    // Guard against unknown companySize values that would return undefined and produce NaN.
+    const empCount = SIZE_TO_EMPLOYEE_COUNT[companySize] ?? SIZE_TO_EMPLOYEE_COUNT['mid'];
+    const rawPct = (layoffHistory.totalLayoffs / empCount) * 100;
+    const pct = Number.isFinite(rawPct) ? Math.round(rawPct * 10) / 10 : 0;
     layoffRounds.push({
       date: layoffHistory.lastLayoffDate,
       percentCut: Math.min(pct, 40),  // cap at 40% — realistic ceiling
@@ -158,13 +166,15 @@ export const companyProfileToData = (
   }
 
   return {
-    name:             companyName,
+    // Guard against undefined companyName — the score engine calls .toLowerCase()
+    // on CompanyData.name without a null check (line 789 of layoffScoreEngine.ts).
+    name:             companyName ?? 'Unknown Company',
     ticker:           profile.stockTicker,
     stockTicker:      profile.stockTicker,  // for swarm market agents
     isPublic,
     industry:         profile.industry,
     region:           COMPANY_KEY_TO_REGION[companyKey] ?? 'US',
-    employeeCount:    SIZE_TO_EMPLOYEE_COUNT[companySize],
+    employeeCount:    SIZE_TO_EMPLOYEE_COUNT[companySize] ?? SIZE_TO_EMPLOYEE_COUNT['mid'],
     revenueGrowthYoY: REVENUE_TREND_TO_YOY[financialSignals.revenueTrend],
     // Phase 4 fix: use real stockTicker with live proxy fallback instead of name-guessing
     stock90DayChange: isPublic
@@ -217,7 +227,8 @@ const ROLE_KEY_ALIASES: Record<string, string[]> = {
  * matched against roleRiskMap via fuzzy alias lookup.
  * Returns null if companyData has no roleRiskMap or no match found.
  */
-export function getCompanyRoleRisk(companyData: CompanyData, roleTitle: string): number | null {
+export function getCompanyRoleRisk(companyData: CompanyData, roleTitle: string | null | undefined): number | null {
+  if (!roleTitle) return null;
   const map = companyData.roleRiskMap;
   if (!map || Object.keys(map).length === 0) return null;
 
@@ -316,7 +327,7 @@ export const getAllCompanies = (): UnifiedCompanyEntry[] => {
   }
 
   // From legacy DB (fill gaps not in intelligence DB)
-  for (const cd of companyDatabase) {
+  for (const cd of getCompanyList()) {
     const nameKey = cd.name.toLowerCase();
     if (!seen.has(nameKey)) {
       seen.add(nameKey);

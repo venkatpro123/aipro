@@ -26,6 +26,33 @@ export interface SignalConflict {
   recommendedResolution?: string;
 }
 
+export type SignalSourceKind = 'live' | 'db' | 'heuristic' | 'user_input';
+export type SignalFreshnessState = 'fresh' | 'degraded' | 'invalid';
+
+export interface ProvenancedSignal<T = unknown> {
+  key: string;
+  value: T | null;
+  source: SignalSourceKind;
+  sourceName: string;
+  observedAt: string;
+  fetchedAt: string;
+  freshnessDays: number;
+  freshnessState: SignalFreshnessState;
+  confidence: number;
+  supersedes?: string[];
+  conflictWith?: string[];
+}
+
+export interface ReconciliationSummary {
+  liveWonKeys: string[];
+  dbWonKeys: string[];
+  conflictedKeys: string[];
+  degradedKeys: string[];
+  ignoredLiveKeys?: string[];
+  confidenceCapsApplied?: string[];
+  hardFailures?: string[];
+}
+
 export interface ResolvedSignal {
   /** Consensus value, normalized 0–1. Convention varies per signal — see
    *  ConsensusSignalSet field comments for direction (0=good or 0=bad). */
@@ -153,6 +180,9 @@ export interface ScoreResult {
     missingDataFallbacks: string[];
     liveSignals: number;
     heuristicSignals: number;
+    degradedSignalClasses?: string[];
+    hardFailures?: string[];
+    confidenceCapsApplied?: string[];
   };
   recommendations: ActionPlanItem[];
   consensusSnapshot: {
@@ -161,6 +191,8 @@ export interface ScoreResult {
     conflictCount: number;
     overridesApplied: string[];
     overallFreshness: number;
+    authoritativeSignals?: Record<string, ProvenancedSignal<unknown>>;
+    reconciliationSummary?: ReconciliationSummary;
   };
 }
 
@@ -170,4 +202,11 @@ export interface HybridScoreInputs {
   department: string;
   userFactors: UserFactors;
   consensusData: ConsensusSignalSet;
+  provenance?: Record<string, ProvenancedSignal<unknown>>;
+  reconciliationSummary?: ReconciliationSummary;
+  missingDataFallbacks?: string[];
+  degradedSignalClasses?: string[];
+  hardFailures?: string[];
+  confidenceCap?: number;
+  confidenceCapsApplied?: string[];
 }

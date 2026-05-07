@@ -1,0 +1,22 @@
+[
+  { "company_name": "TCS (Tata Consultancy Services)", "layoff_history": { "total_layoffs": 12000, "last_layoff_date": "2025-06-01", "layoff_frequency": "rare", "affected_departments": ["it_services", "consulting"] } },
+  { "company_name": "Siemens", "layoff_history": { "total_layoffs": 5600, "last_layoff_date": "2025-03-15", "layoff_frequency": "occasional", "affected_departments": ["digital_industries", "manufacturing"] } },
+  { "company_name": "Carter's", "layoff_history": { "total_layoffs": 300, "last_layoff_date": "2025-08-10", "layoff_frequency": "rare", "affected_departments": ["corporate", "retail"] } },
+  { "company_name": "Adidas", "layoff_history": { "total_layoffs": 500, "last_layoff_date": "2025-07-20", "layoff_frequency": "occasional", "affected_departments": ["headquarters", "operations"] } },
+  { "company_name": "Starbucks", "layoff_history": { "total_layoffs": 500, "last_layoff_date": "2025-09-01", "layoff_frequency": "occasional", "affected_departments": ["corporate", "management"] } },
+  { "company_name": "Pendo", "layoff_history": { "total_layoffs": 100, "last_layoff_date": "2026-04-10", "layoff_frequency": "rare", "affected_departments": ["sales", "engineering"] } },
+  { "company_name": "Angi", "layoff_history": { "total_layoffs": 350, "last_layoff_date": "2026-01-15", "layoff_frequency": "occasional", "affected_departments": ["sales", "operations"] } },
+  { "company_name": "Nike", "layoff_history": { "total_layoffs": 1400, "last_layoff_date": "2026-02-20", "layoff_frequency": "occasional", "affected_departments": ["supply_chain", "corporate"] } },
+  { "company_name": "Target", "layoff_history": { "total_layoffs": 1000, "last_layoff_date": "2026-03-05", "layoff_frequency": "occasional", "affected_departments": ["supply_chain", "management"] } },
+  { "company_name": "Kenvue", "layoff_history": { "total_layoffs": 700, "last_layoff_date": "2026-02-10", "layoff_frequency": "rare", "affected_departments": ["operations", "corporate"] } },
+  { "company_name": "Ashley Furniture", "layoff_history": { "total_layoffs": 300, "last_layoff_date": "2026-03-15", "layoff_frequency": "rare", "affected_departments": ["manufacturing", "plant"] } },
+  { "company_name": "Snowflake", "layoff_history": { "total_layoffs": 400, "last_layoff_date": "2025-08-05", "layoff_frequency": "rare", "affected_departments": ["sales", "recruiting"] } },
+  { "company_name": "Datadog", "layoff_history": { "total_layoffs": 200, "last_layoff_date": "2025-09-12", "layoff_frequency": "rare", "affected_departments": ["recruiting", "sales"] } },
+  { "company_name": "Shopify", "layoff_history": { "total_layoffs": 1000, "last_layoff_date": "2025-05-04", "layoff_frequency": "occasional", "affected_departments": ["engineering", "support"] } },
+  { "company_name": "Airbnb", "layoff_history": { "total_layoffs": 300, "last_layoff_date": "2025-03-03", "layoff_frequency": "rare", "affected_departments": ["recruiting", "corporate"] } },
+  { "company_name": "Booking.com", "layoff_history": { "total_layoffs": 2500, "last_layoff_date": "2025-02-10", "layoff_frequency": "occasional", "affected_departments": ["customer_service", "operations"] } },
+  { "company_name": "Palantir", "layoff_history": { "total_layoffs": 100, "last_layoff_date": "2025-08-20", "layoff_frequency": "rare", "affected_departments": ["recruiting", "sales"] } },
+  { "company_name": "Plaid", "layoff_history": { "total_layoffs": 260, "last_layoff_date": "2025-06-15", "layoff_frequency": "rare", "affected_departments": ["engineering", "recruiting"] } },
+  { "company_name": "Klarna", "layoff_history": { "total_layoffs": 700, "last_layoff_date": "2025-05-25", "layoff_frequency": "occasional", "affected_departments": ["operations", "customer_service"] } },
+  { "company_name": "Chime", "layoff_history": { "total_layoffs": 150, "last_layoff_date": "2025-07-10", "layoff_frequency": "rare", "affected_departments": ["marketing", "recruiting"] } }
+]

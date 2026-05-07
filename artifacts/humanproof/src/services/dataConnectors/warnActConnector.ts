@@ -51,10 +51,19 @@ export interface WarnSummary {
   fetchedAt: string;
 }
 
-const DEFAULT_WARN_URLS = [
-  // Project-maintained mirror — primary. Re-publishes state WARN feeds nightly.
-  'https://warn-mirror.humanproof.ai/notices.json',
-];
+// v7.0 Fix: removed 'warn-mirror.humanproof.ai/notices.json' — this URL was a
+// placeholder that never existed, causing an 8-second DNS timeout on every audit.
+// Configure VITE_WARN_DATA_URLS to point to your own WARN data mirror, or leave
+// empty to skip WARN checks entirely (warnDataReachable: false is returned honestly).
+//
+// WARN data sources (all require server-side scraping — not directly fetchable):
+//   • California WARN: https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/
+//   • New York DOL: https://dol.ny.gov/worker-adjustment-and-retraining-notification-warn
+//   • Washington ESD: https://esd.wa.gov/newsroom/layoff-notification-database
+//   • Texas TWC: https://twc.texas.gov/businesses/employer-information/mass-claims-warn
+// A server-side worker that scrapes these into layoffs.json and hosts it at a public URL
+// is required. Set VITE_WARN_DATA_URLS to that URL.
+const DEFAULT_WARN_URLS: string[] = [];  // empty → fail fast, warnDataReachable: false
 
 function getWarnUrls(): string[] {
   try {
@@ -109,9 +118,19 @@ export async function fetchWarnNotices(company: string): Promise<WarnSummary> {
   let sourceUrl: string | null = null;
   let notices: WarnNotice[] = [];
 
+  // v7.0 Fix: fail fast when no URLs configured (avoids 8s DNS timeout per audit).
+  if (urls.length === 0) {
+    return {
+      company, notices: [], mostRecentFiling: null, totalAffected: 0,
+      warnDataReachable: false, sourceUrl: null,
+      fetchedAt: new Date().toISOString(),
+    };
+  }
+
   for (const url of urls) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      // Reduced timeout from 8000 → 5000ms — WARN data mirrors are static files
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       if (!res.ok) continue;
       warnDataReachable = true;
       sourceUrl = url;

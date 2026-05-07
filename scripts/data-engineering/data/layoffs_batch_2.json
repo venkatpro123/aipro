@@ -1,0 +1,47 @@
+[
+  {
+    "company_name": "Snap",
+    "layoff_history": {
+      "total_layoffs": 800,
+      "last_layoff_date": "2026-04-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["engineering", "sales", "recruiting"]
+    }
+  },
+  {
+    "company_name": "GoPro",
+    "layoff_history": {
+      "total_layoffs": 145,
+      "last_layoff_date": "2026-04-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["hardware", "marketing"]
+    }
+  },
+  {
+    "company_name": "Atlassian",
+    "layoff_history": {
+      "total_layoffs": 1600,
+      "last_layoff_date": "2026-03-15",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["engineering", "sales", "support"]
+    }
+  },
+  {
+    "company_name": "Oracle",
+    "layoff_history": {
+      "total_layoffs": 18000,
+      "last_layoff_date": "2026-04-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["sales", "support", "marketing"]
+    }
+  },
+  {
+    "company_name": "Intel",
+    "layoff_history": {
+      "total_layoffs": 15000,
+      "last_layoff_date": "2025-08-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["manufacturing", "engineering", "sales"]
+    }
+  }
+]

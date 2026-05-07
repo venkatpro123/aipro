@@ -1,0 +1,47 @@
+[
+  {
+    "company_name": "PayPal",
+    "layoff_history": {
+      "total_layoffs": 2500,
+      "last_layoff_date": "2024-01-30",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["engineering", "operations"]
+    }
+  },
+  {
+    "company_name": "Block (Square/CashApp)",
+    "layoff_history": {
+      "total_layoffs": 1000,
+      "last_layoff_date": "2024-01-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["cash_app", "square", "hr"]
+    }
+  },
+  {
+    "company_name": "Coinbase",
+    "layoff_history": {
+      "total_layoffs": 950,
+      "last_layoff_date": "2023-01-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["recruiting", "engineering", "support"]
+    }
+  },
+  {
+    "company_name": "Stripe",
+    "layoff_history": {
+      "total_layoffs": 1100,
+      "last_layoff_date": "2022-11-03",
+      "layoff_frequency": "rare",
+      "affected_departments": ["recruiting", "sales"]
+    }
+  },
+  {
+    "company_name": "Robinhood",
+    "layoff_history": {
+      "total_layoffs": 1000,
+      "last_layoff_date": "2023-06-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["operations", "marketing", "education"]
+    }
+  }
+]

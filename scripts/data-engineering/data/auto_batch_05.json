@@ -1,0 +1,702 @@
+[
+  {
+    "company_name": "Grab",
+    "workforce_count": 49062,
+    "open_jobs_count": 1043,
+    "layoff_history": {
+      "total_layoffs": 5264,
+      "last_layoff_date": "2025-11-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "GoTo Group",
+    "workforce_count": 49426,
+    "open_jobs_count": 1252,
+    "layoff_history": {
+      "total_layoffs": 5317,
+      "last_layoff_date": "2025-08-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Sea (SeaMoney)",
+    "workforce_count": 49740,
+    "open_jobs_count": 572,
+    "layoff_history": {
+      "total_layoffs": 10136,
+      "last_layoff_date": "2025-01-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zip",
+    "workforce_count": 9994,
+    "open_jobs_count": 235,
+    "layoff_history": {
+      "total_layoffs": 719,
+      "last_layoff_date": "2025-09-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Paytm",
+    "workforce_count": 50941,
+    "open_jobs_count": 971,
+    "layoff_history": {
+      "total_layoffs": 4695,
+      "last_layoff_date": "2026-04-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "StoneCo",
+    "workforce_count": 9883,
+    "open_jobs_count": 278,
+    "layoff_history": {
+      "total_layoffs": 531,
+      "last_layoff_date": "2025-10-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "C6 Bank",
+    "workforce_count": 9906,
+    "open_jobs_count": 180,
+    "layoff_history": {
+      "total_layoffs": 1473,
+      "last_layoff_date": "2025-01-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Razorpay",
+    "workforce_count": 9859,
+    "open_jobs_count": 161,
+    "layoff_history": {
+      "total_layoffs": 876,
+      "last_layoff_date": "2025-04-05",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pine Labs",
+    "workforce_count": 10205,
+    "open_jobs_count": 268,
+    "layoff_history": {
+      "total_layoffs": 785,
+      "last_layoff_date": "2025-06-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Checkout.com",
+    "workforce_count": 9825,
+    "open_jobs_count": 145,
+    "layoff_history": {
+      "total_layoffs": 956,
+      "last_layoff_date": "2025-02-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "N26",
+    "workforce_count": 9911,
+    "open_jobs_count": 195,
+    "layoff_history": {
+      "total_layoffs": 884,
+      "last_layoff_date": "2025-10-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Kraken",
+    "workforce_count": 10074,
+    "open_jobs_count": 298,
+    "layoff_history": {
+      "total_layoffs": 1677,
+      "last_layoff_date": "2025-12-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Atlassian",
+    "workforce_count": 50042,
+    "open_jobs_count": 570,
+    "layoff_history": {
+      "total_layoffs": 2832,
+      "last_layoff_date": "2025-01-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DocuSign",
+    "workforce_count": 50224,
+    "open_jobs_count": 760,
+    "layoff_history": {
+      "total_layoffs": 4040,
+      "last_layoff_date": "2026-01-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Worldline",
+    "workforce_count": 50142,
+    "open_jobs_count": 1310,
+    "layoff_history": {
+      "total_layoffs": 3824,
+      "last_layoff_date": "2025-06-02",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Shift4",
+    "workforce_count": 9983,
+    "open_jobs_count": 116,
+    "layoff_history": {
+      "total_layoffs": 750,
+      "last_layoff_date": "2025-01-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Flywire",
+    "workforce_count": 10101,
+    "open_jobs_count": 148,
+    "layoff_history": {
+      "total_layoffs": 518,
+      "last_layoff_date": "2025-12-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Marqeta",
+    "workforce_count": 10293,
+    "open_jobs_count": 146,
+    "layoff_history": {
+      "total_layoffs": 486,
+      "last_layoff_date": "2025-06-21",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Figma",
+    "workforce_count": 10205,
+    "open_jobs_count": 229,
+    "layoff_history": {
+      "total_layoffs": 840,
+      "last_layoff_date": "2025-08-27",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Airtable",
+    "workforce_count": 10154,
+    "open_jobs_count": 193,
+    "layoff_history": {
+      "total_layoffs": 1129,
+      "last_layoff_date": "2025-12-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Twilio",
+    "workforce_count": 50049,
+    "open_jobs_count": 1273,
+    "layoff_history": {
+      "total_layoffs": 4735,
+      "last_layoff_date": "2025-06-18",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Shopify",
+    "workforce_count": 51040,
+    "open_jobs_count": 1038,
+    "layoff_history": {
+      "total_layoffs": 3455,
+      "last_layoff_date": "2025-10-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HubSpot",
+    "workforce_count": 9968,
+    "open_jobs_count": 179,
+    "layoff_history": {
+      "total_layoffs": 1077,
+      "last_layoff_date": "2025-12-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Adevinta",
+    "workforce_count": 10108,
+    "open_jobs_count": 185,
+    "layoff_history": {
+      "total_layoffs": 737,
+      "last_layoff_date": "2025-08-31",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "FedEx",
+    "workforce_count": 51449,
+    "open_jobs_count": 768,
+    "layoff_history": {
+      "total_layoffs": 4174,
+      "last_layoff_date": "2026-03-16",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DHL (Deutsche Post)",
+    "workforce_count": 50166,
+    "open_jobs_count": 1054,
+    "layoff_history": {
+      "total_layoffs": 4494,
+      "last_layoff_date": "2025-04-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Maersk",
+    "workforce_count": 50150,
+    "open_jobs_count": 659,
+    "layoff_history": {
+      "total_layoffs": 13304,
+      "last_layoff_date": "2025-09-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Mercado Libre",
+    "workforce_count": 50265,
+    "open_jobs_count": 1350,
+    "layoff_history": {
+      "total_layoffs": 3270,
+      "last_layoff_date": "2025-03-17",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zalando",
+    "workforce_count": 10222,
+    "open_jobs_count": 244,
+    "layoff_history": {
+      "total_layoffs": 1407,
+      "last_layoff_date": "2025-06-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Alibaba (Cainiao)",
+    "workforce_count": 10023,
+    "open_jobs_count": 118,
+    "layoff_history": {
+      "total_layoffs": 497,
+      "last_layoff_date": "2025-06-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Coupang",
+    "workforce_count": 50634,
+    "open_jobs_count": 806,
+    "layoff_history": {
+      "total_layoffs": 3510,
+      "last_layoff_date": "2026-04-12",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Cohere",
+    "workforce_count": 1483,
+    "open_jobs_count": 28,
+    "layoff_history": {
+      "total_layoffs": 84,
+      "last_layoff_date": "2025-03-03",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CoreWeave",
+    "workforce_count": 10135,
+    "open_jobs_count": 217,
+    "layoff_history": {
+      "total_layoffs": 637,
+      "last_layoff_date": "2025-01-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Lambda Labs",
+    "workforce_count": 1502,
+    "open_jobs_count": 31,
+    "layoff_history": {
+      "total_layoffs": 92,
+      "last_layoff_date": "2025-04-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Pinecone",
+    "workforce_count": 1524,
+    "open_jobs_count": 34,
+    "layoff_history": {
+      "total_layoffs": 118,
+      "last_layoff_date": "2026-03-01",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "DeepL",
+    "workforce_count": 9880,
+    "open_jobs_count": 174,
+    "layoff_history": {
+      "total_layoffs": 723,
+      "last_layoff_date": "2025-10-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Jasper",
+    "workforce_count": 1523,
+    "open_jobs_count": 19,
+    "layoff_history": {
+      "total_layoffs": 143,
+      "last_layoff_date": "2025-12-10",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Midjourney",
+    "workforce_count": 203,
+    "open_jobs_count": 4,
+    "layoff_history": {
+      "total_layoffs": 20,
+      "last_layoff_date": "2026-04-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "RunwayML",
+    "workforce_count": 1540,
+    "open_jobs_count": 35,
+    "layoff_history": {
+      "total_layoffs": 136,
+      "last_layoff_date": "2025-04-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Snowflake",
+    "workforce_count": 51416,
+    "open_jobs_count": 921,
+    "layoff_history": {
+      "total_layoffs": 2907,
+      "last_layoff_date": "2025-09-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Together AI",
+    "workforce_count": 1478,
+    "open_jobs_count": 17,
+    "layoff_history": {
+      "total_layoffs": 103,
+      "last_layoff_date": "2026-02-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Databricks",
+    "workforce_count": 10120,
+    "open_jobs_count": 273,
+    "layoff_history": {
+      "total_layoffs": 721,
+      "last_layoff_date": "2026-03-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "MongoDB",
+    "workforce_count": 10152,
+    "open_jobs_count": 146,
+    "layoff_history": {
+      "total_layoffs": 464,
+      "last_layoff_date": "2026-02-07",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Confluent",
+    "workforce_count": 9873,
+    "open_jobs_count": 132,
+    "layoff_history": {
+      "total_layoffs": 795,
+      "last_layoff_date": "2025-04-08",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Zscaler",
+    "workforce_count": 9943,
+    "open_jobs_count": 128,
+    "layoff_history": {
+      "total_layoffs": 811,
+      "last_layoff_date": "2025-12-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "CrowdStrike",
+    "workforce_count": 50584,
+    "open_jobs_count": 555,
+    "layoff_history": {
+      "total_layoffs": 4592,
+      "last_layoff_date": "2025-01-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Snyk",
+    "workforce_count": 10274,
+    "open_jobs_count": 196,
+    "layoff_history": {
+      "total_layoffs": 871,
+      "last_layoff_date": "2025-12-04",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Wiz",
+    "workforce_count": 9860,
+    "open_jobs_count": 125,
+    "layoff_history": {
+      "total_layoffs": 600,
+      "last_layoff_date": "2025-11-24",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "Etsy",
+    "workforce_count": 10089,
+    "open_jobs_count": 289,
+    "layoff_history": {
+      "total_layoffs": 885,
+      "last_layoff_date": "2025-10-09",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HelloFresh",
+    "workforce_count": 10175,
+    "open_jobs_count": 110,
+    "layoff_history": {
+      "total_layoffs": 485,
+      "last_layoff_date": "2026-04-25",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

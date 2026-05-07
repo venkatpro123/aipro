@@ -1,0 +1,47 @@
+[
+  {
+    "company_name": "Spotify",
+    "layoff_history": {
+      "total_layoffs": 1500,
+      "last_layoff_date": "2023-12-04",
+      "layoff_frequency": "frequent",
+      "affected_departments": ["podcasts", "engineering", "marketing"]
+    }
+  },
+  {
+    "company_name": "Disney",
+    "layoff_history": {
+      "total_layoffs": 7000,
+      "last_layoff_date": "2023-05-26",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["media", "parks", "entertainment"]
+    }
+  },
+  {
+    "company_name": "Wayfair",
+    "layoff_history": {
+      "total_layoffs": 1650,
+      "last_layoff_date": "2024-01-19",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["management", "operations"]
+    }
+  },
+  {
+    "company_name": "eBay",
+    "layoff_history": {
+      "total_layoffs": 1000,
+      "last_layoff_date": "2024-01-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["operations", "marketing"]
+    }
+  },
+  {
+    "company_name": "Unity Technologies",
+    "layoff_history": {
+      "total_layoffs": 1800,
+      "last_layoff_date": "2024-01-08",
+      "layoff_frequency": "frequent",
+      "affected_departments": ["engineering", "sales", "weta"]
+    }
+  }
+]

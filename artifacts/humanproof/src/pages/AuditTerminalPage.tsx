@@ -65,7 +65,8 @@ const DIM_INFO: Record<string, { label: string; desc: string }> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const getRoleIcon = (label: string): React.ReactNode => {
+const getRoleIcon = (label: string | undefined | null): React.ReactNode => {
+  if (!label) return <Star className="w-4 h-4" />;
   const l = label.toLowerCase();
   if (l.includes('backend') || l.includes('api') || l.includes('sql')) return <Database className="w-4 h-4" />;
   if (l.includes('frontend') || l.includes('web') || l.includes('react') || l.includes('ui') || l.includes('ux')) return <Layout className="w-4 h-4" />;

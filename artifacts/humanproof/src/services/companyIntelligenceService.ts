@@ -51,15 +51,21 @@ function rowToProfile(row: CIRow): CompanyProfile {
   const risk = row.role_risk_map ?? {};
 
   return {
-    companyName: row.company_name,
-    industry: row.industry,
+    // Ensure companyName is always a non-empty string — a null DB value would
+    // propagate to CompanyData.name = undefined and crash the score engine's
+    // layoffNewsCache filter which calls .toLowerCase() without a null check.
+    companyName: row.company_name ?? `Unknown-${row.id ?? 'company'}`,
+    industry: row.industry ?? 'Technology',
     companySize: (row.company_size ?? 'mid') as CompanyProfile['companySize'],
     stage: (row.stage ?? 'mature') as CompanyProfile['stage'],
     stockTicker: row.stock_ticker ?? undefined,
 
     financialSignals: {
       revenueTrend: (fin.revenueTrend ?? row.revenue_trend ?? 'stable') as CompanyProfile['financialSignals']['revenueTrend'],
-      fundingStage: (fin.fundingStage ?? row.funding_stage ?? 'public') as CompanyProfile['financialSignals']['fundingStage'],
+      // Infer isPublic from row.stage so it mirrors fetch-company-data logic.
+      // Previously defaulted to 'public' for all missing rows — incorrectly marked
+      // private companies as listed and triggered failed stock lookups.
+      fundingStage: (fin.fundingStage ?? (row.stage === 'public' ? 'public' : row.funding_stage ?? 'series_d')) as CompanyProfile['financialSignals']['fundingStage'],
       burnRateEstimate: (fin.burnRateEstimate ?? row.burn_rate_estimate ?? 'moderate') as CompanyProfile['financialSignals']['burnRateEstimate'],
       lastFundingDate: fin.lastFundingDate ?? row.last_funding_date,
     },
@@ -94,18 +100,164 @@ function rowToProfile(row: CIRow): CompanyProfile {
 }
 
 // ── Cache — avoid repeated Supabase calls for the same company in a session ───
-const sessionCache = new Map<string, CompanyData | null>();
+// Stores full match metadata so cache hits return accurate confidence (not hardcoded 1.0).
+interface CacheEntry {
+  companyData: CompanyData;
+  matchConfidence: number;
+  matchType: MatchType;
+  matchedCompanyName: string | null;
+}
+const sessionCache = new Map<string, CacheEntry | null>();
 
-// ── Primary lookup: exact name match, then ILIKE fuzzy ───────────────────────
+// ── Match quality helpers ─────────────────────────────────────────────────────
+
+/**
+ * Four-tier match confidence — reflects how much structural evidence supports
+ * the name mapping. Used to gate whether user confirmation is required.
+ *
+ *  exact        1.0  Query normalises to the same string as the DB name.
+ *                    Safe to use without confirmation.
+ *  prefix       0.9  DB name starts with query, or query starts with DB name.
+ *                    E.g. "Micro" → "Microsoft". Safe to use without confirmation.
+ *  contains     0.7  DB name contains the query as a contiguous substring.
+ *                    E.g. "soft" → "Microsoft". Requires UI disclosure; no prompt.
+ *  word_overlap 0.5  Query tokens appear in DB name but not as a prefix or
+ *                    contiguous match. E.g. "Wipro BPO" → "Wipro".
+ *                    MUST NOT drive a score without explicit user confirmation.
+ *  none         0.0  No meaningful overlap. Rejected; treated as unknown company.
+ */
+export type MatchType = 'exact' | 'prefix' | 'contains' | 'word_overlap' | 'none';
+
+export interface MatchConfidence {
+  score:     number;    // 0.0 | 0.5 | 0.7 | 0.9 | 1.0
+  matchType: MatchType;
+}
+
+/** Threshold below which a match requires user confirmation before driving a score. */
+export const MATCH_CONFIRMATION_THRESHOLD = 0.8;
+
+/** Threshold below which a match is rejected outright (not even offered for confirmation). */
+export const MATCH_REJECTION_THRESHOLD = 0.5;
+
+const STOP_WORDS = new Set([
+  'ltd', 'limited', 'inc', 'corp', 'corporation', 'pvt', 'private',
+  'the', 'and', '&', 'of', 'co', 'group', 'holdings', 'technologies', 'services',
+]);
+
+function normalise(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function tokens(s: string): string[] {
+  return normalise(s).split(' ').filter(t => t.length > 1 && !STOP_WORDS.has(t));
+}
+
+/**
+ * Compute the four-tier match confidence between the user's query and the DB name.
+ *
+ * Examples:
+ *   "Microsoft"    vs "Microsoft"          → exact        (1.0)
+ *   "Micro"        vs "Microsoft"          → prefix       (0.9)
+ *   "Microsoft Corp" vs "Microsoft"        → prefix       (0.9)
+ *   "tata motors"  vs "Tata Motors Ltd"    → contains     (0.7)
+ *   "Wipro BPO"    vs "Wipro"              → word_overlap (0.5)
+ *   "HDFC Life"    vs "HDFC Bank"          → word_overlap (0.5)
+ *   "Random XYZ"   vs "Microsoft"          → none         (0.0)
+ */
+export function computeMatchConfidence(query: string, matchedName: string): MatchConfidence {
+  const qNorm = normalise(query);
+  const mNorm = normalise(matchedName);
+
+  if (qNorm === mNorm) return { score: 1.0, matchType: 'exact' };
+
+  // Prefix: one string is a prefix of the other (after normalisation)
+  if (mNorm.startsWith(qNorm) || qNorm.startsWith(mNorm)) {
+    return { score: 0.9, matchType: 'prefix' };
+  }
+
+  // Contains: DB name contains query as a contiguous substring or vice versa
+  if (mNorm.includes(qNorm) || qNorm.includes(mNorm)) {
+    return { score: 0.7, matchType: 'contains' };
+  }
+
+  // Word overlap: token-level matching
+  const qTokens = tokens(query);
+  const mTokens = new Set(tokens(matchedName));
+  if (qTokens.length === 0) return { score: 0.0, matchType: 'none' };
+  const overlap = qTokens.filter(t => mTokens.has(t)).length;
+  if (overlap > 0) return { score: 0.5, matchType: 'word_overlap' };
+
+  return { score: 0.0, matchType: 'none' };
+}
+
+/**
+ * @deprecated Use computeMatchConfidence instead.
+ * Kept for backward-compat with existing UI callers that read a 0–1 ratio.
+ */
+export function computeMatchRatio(query: string, matchedName: string): number {
+  return computeMatchConfidence(query, matchedName).score;
+}
+
+/** @deprecated Use MATCH_CONFIRMATION_THRESHOLD or MATCH_REJECTION_THRESHOLD. */
+export const FUZZY_MATCH_MIN_RATIO = MATCH_REJECTION_THRESHOLD;
+
+/**
+ * Extended result from queryCompanyIntelligence that surfaces match quality.
+ *
+ * ENFORCEMENT CONTRACT:
+ *   matchConfidence >= 0.8  → use silently (exact or prefix match)
+ *   matchConfidence  = 0.7  → disclose in UI but proceed (contains match)
+ *   matchConfidence  = 0.5  → MUST show "Did you mean?" prompt before scoring
+ *   matchConfidence  = 0.0  → rejected; falls through to unknown company fallback
+ *
+ * A word_overlap match (0.5) driving a score without confirmation is a silent
+ * accuracy regression: "HDFC Life" → "HDFC Bank" would compute the wrong company's
+ * financial health. The prompt turns that into an honest unknown company instead.
+ */
+export interface CompanyMatchResult {
+  companyData:        CompanyData;
+  matchedCompanyName: string | null;  // null = exact, string = DB name that was matched
+  matchConfidence:    number;          // 0.0 | 0.5 | 0.7 | 0.9 | 1.0
+  matchType:          MatchType;
+  // Legacy alias — equals matchConfidence; kept for callers that read matchRatio
+  matchRatio:         number;
+  isExactMatch:       boolean;
+}
+
+// ── Primary lookup: exact match, then confidence-gated fuzzy ─────────────────
 
 export async function queryCompanyIntelligence(
   companyName: string,
 ): Promise<CompanyData | null> {
+  const result = await queryCompanyIntelligenceWithMatch(companyName);
+  return result?.companyData ?? null;
+}
+
+/**
+ * Full match result including confidence metadata.
+ * Use this when the caller needs to surface "Matched to: [company]" in the UI.
+ */
+export async function queryCompanyIntelligenceWithMatch(
+  companyName: string,
+): Promise<CompanyMatchResult | null> {
   const cacheKey = companyName.toLowerCase().trim();
-  if (sessionCache.has(cacheKey)) return sessionCache.get(cacheKey)!;
+  if (sessionCache.has(cacheKey)) {
+    const cached = sessionCache.get(cacheKey)!;
+    if (!cached) return null;
+    // Return stored match quality — previously this always reported 1.0/exact,
+    // which bypassed quality gates for prefix/contains matches served from cache.
+    return {
+      companyData:        cached.companyData,
+      matchedCompanyName: cached.matchedCompanyName,
+      matchConfidence:    cached.matchConfidence,
+      matchType:          cached.matchType,
+      matchRatio:         cached.matchConfidence,
+      isExactMatch:       cached.matchType === 'exact',
+    };
+  }
 
   try {
-    // 1. Exact match (case-insensitive)
+    // ── Step 1: Exact match (case-insensitive) ───────────────────────────────
     const { data: exactRows, error: exactErr } = await supabase
       .from('company_intelligence')
       .select('*')
@@ -113,27 +265,80 @@ export async function queryCompanyIntelligence(
       .limit(1);
 
     if (!exactErr && exactRows && exactRows.length > 0) {
-      const profile = rowToProfile(exactRows[0] as CIRow);
+      const row     = exactRows[0] as CIRow;
+      const profile = rowToProfile(row);
       const companyKey = companyName.toLowerCase().replace(/[\s.&()/]+/g, '_').replace(/[^a-z0-9_]/g, '');
       const companyData = companyProfileToData(profile, companyKey);
-      sessionCache.set(cacheKey, companyData);
-      return companyData;
+      sessionCache.set(cacheKey, { companyData, matchConfidence: 1.0, matchType: 'exact', matchedCompanyName: null });
+      return {
+        companyData,
+        matchedCompanyName: null,
+        matchConfidence:    1.0,
+        matchType:          'exact',
+        matchRatio:         1.0,
+        isExactMatch:       true,
+      };
     }
 
-    // 2. Fuzzy ILIKE — partial word match
+    // ── Step 2: Fuzzy ILIKE with confidence gate ─────────────────────────────
+    // ORDER BY confidence_score DESC so the best-documented company wins when
+    // multiple rows match (e.g. "tata" matches Tata Motors, Tata Steel, TCS).
+    // Previously there was no ORDER BY — result was insertion-order dependent.
     const { data: fuzzyRows, error: fuzzyErr } = await supabase
       .from('company_intelligence')
       .select('*')
       .ilike('company_name', `%${companyName.trim()}%`)
-      .limit(1);
+      .order('confidence_score', { ascending: false })
+      .limit(5); // fetch top-5 by confidence, then pick the best token-ratio match
 
     if (!fuzzyErr && fuzzyRows && fuzzyRows.length > 0) {
-      const profile = rowToProfile(fuzzyRows[0] as CIRow);
-      const companyKey = (fuzzyRows[0] as CIRow).company_name
-        .toLowerCase().replace(/[\s.&()/]+/g, '_').replace(/[^a-z0-9_]/g, '');
+      // Among the candidates, pick the one with the highest token-overlap ratio.
+      // This resolves "Wipro BPO" → "Wipro BPO Ltd" (ratio 1.0) over "Wipro" (ratio 0.5).
+      let bestRow: CIRow | null = null;
+      let bestRatio = 0;
+      for (const row of fuzzyRows as CIRow[]) {
+        const ratio = computeMatchRatio(companyName, row.company_name);
+        if (ratio > bestRatio) {
+          bestRatio = ratio;
+          bestRow   = row;
+        }
+      }
+
+      // Confidence gate: reject if no meaningful token overlap with the matched name.
+      // word_overlap (0.5) is NOT rejected here — it passes through so the UI can
+      // show the "Did you mean?" prompt. Rejection at this layer is for score=0 only.
+      if (!bestRow || bestRatio < MATCH_REJECTION_THRESHOLD) {
+        console.info(
+          `[CompanyIntelligence] Fuzzy match rejected: "${companyName}" → ` +
+          `"${bestRow?.company_name ?? 'none'}" confidence=${bestRatio.toFixed(2)} < ${MATCH_REJECTION_THRESHOLD}. ` +
+          `Treating as unknown company.`
+        );
+        sessionCache.set(cacheKey, null); // null = no match; typed as CacheEntry | null
+        return null;
+      }
+
+      const profile    = rowToProfile(bestRow);
+      const companyKey = bestRow.company_name.toLowerCase().replace(/[\s.&()/]+/g, '_').replace(/[^a-z0-9_]/g, '');
       const companyData = companyProfileToData(profile, companyKey);
-      sessionCache.set(cacheKey, companyData);
-      return companyData;
+
+      const { score: matchConfidence, matchType } = computeMatchConfidence(companyName, bestRow.company_name);
+      const matchedName = bestRow.company_name === companyName.trim() ? null : bestRow.company_name;
+
+      // Cache with full match metadata so subsequent cache hits return accurate confidence.
+      // word_overlap (0.5) still excluded — user hasn't confirmed, caching would silently
+      // reuse a potentially wrong mapping on the next call.
+      if (bestRatio >= MATCH_CONFIRMATION_THRESHOLD) {
+        sessionCache.set(cacheKey, { companyData, matchConfidence, matchType, matchedCompanyName: matchedName });
+      }
+
+      return {
+        companyData,
+        matchedCompanyName: matchedName,
+        matchConfidence,
+        matchType,
+        matchRatio:   matchConfidence,
+        isExactMatch: false,
+      };
     }
   } catch (err) {
     console.warn('[CompanyIntelligence] Supabase query failed:', err);
@@ -208,11 +413,61 @@ export async function searchCompanies(
       .limit(limit);
 
     if (error || !data) return [];
-    return (data as any[]).map(r => ({
-      name: r.company_name,
-      industry: r.industry,
-      riskScore: Math.round((r.company_risk_score ?? 0.4) * 100),
-    }));
+    // Filter rows where company_name is null/empty — these would cause
+    // "Cannot read properties of undefined (reading 'toLowerCase')" in the
+    // LayoffInputForm autocomplete filter at line 511.
+    return (data as any[])
+      .filter(r => r.company_name && typeof r.company_name === 'string' && r.company_name.trim().length > 0)
+      .map(r => ({
+        name: r.company_name as string,
+        industry: r.industry ?? 'Unknown',
+        riskScore: Math.round((r.company_risk_score ?? 0.4) * 100),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+// ── v6.0 Audit Fix: Disambiguation — return multiple candidates for fuzzy match ──
+// When a user types "Wipro", we return Wipro, Wipro BPM, Wipro Infotech, etc.
+// The UI then lets the user confirm which entity they work at before scoring.
+
+export interface CompanyCandidate {
+  name: string;
+  industry: string;
+  region: string;
+  riskScore: number;
+  /** Hire freeze score 0–100, shown as a signal quality indicator */
+  hiringFreezeScore?: number;
+  source: 'supabase_intelligence';
+}
+
+export async function queryCompanyCandidates(
+  query: string,
+  limit = 5,
+): Promise<CompanyCandidate[]> {
+  if (!query || query.length < 2) return [];
+  try {
+    const { data, error } = await supabase
+      .from('company_intelligence')
+      .select('company_name, industry, region, company_risk_score, hiring_freeze_score')
+      .ilike('company_name', `%${query.trim()}%`)
+      .order('confidence_score', { ascending: false })
+      .limit(limit);
+
+    if (error || !data) return [];
+    return (data as any[])
+      .filter(r => r.company_name && typeof r.company_name === 'string' && r.company_name.trim().length > 0)
+      .map(r => ({
+        name:               r.company_name as string,
+        industry:           r.industry ?? 'Unknown',
+        region:             r.region ?? 'GLOBAL',
+        riskScore:          Math.round((r.company_risk_score ?? 0.4) * 100),
+        hiringFreezeScore:  r.hiring_freeze_score != null
+                              ? Math.round(r.hiring_freeze_score * 100)
+                              : undefined,
+        source:             'supabase_intelligence' as const,
+      }));
   } catch {
     return [];
   }

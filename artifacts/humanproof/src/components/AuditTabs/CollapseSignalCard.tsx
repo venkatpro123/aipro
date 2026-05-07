@@ -114,12 +114,35 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
               <ShieldCheck className="w-5 h-5 text-emerald-500" />
             )}
             <div>
-              <div className="font-bold text-sm tracking-tight">
-                {stageConf?.label ?? "No Collapse Signals Detected"}
+              <div className="font-bold text-sm tracking-tight flex items-center gap-2 flex-wrap">
+                {/* stageLabel already contains the promoted qualifier when isPromoted=true
+                    e.g. "Stage 2 — partial evidence (1/3 Stage 2, 2/3 Stage 1)" */}
+                {report.stageLabel ?? (stageConf?.label ?? "No Collapse Signals Detected")}
+                {/* Promoted badge — shown when cross-stage rule promoted the stage */}
+                {report.isPromoted && report.stage && (
+                  <span
+                    className="text-[9px] font-black px-1.5 py-0.5 rounded tracking-widest"
+                    style={{ background: `${badgeColor}22`, color: badgeColor }}
+                    title="Stage promoted from cross-stage evidence — single higher-stage signal confirmed by multiple lower-stage signals"
+                  >
+                    PROMOTED
+                  </span>
+                )}
               </div>
               {report.stage && (
                 <div className="text-xs text-muted-foreground mt-0.5">
                   Estimated timeframe: {report.timeToCollapseRange}
+                  {report.signalConfidence !== undefined && (
+                    <span className="ml-2 opacity-60">
+                      · {report.signalConfidence >= 0.67 ? 'high' : report.signalConfidence >= 0.33 ? 'moderate' : 'low'} confidence
+                    </span>
+                  )}
+                </div>
+              )}
+              {/* Suppressed stage disclosure */}
+              {!report.stage && report.suppressedStage && (
+                <div className="text-[10px] text-amber-400/70 mt-0.5">
+                  Stage {report.suppressedStage} signals present but below confidence threshold
                 </div>
               )}
             </div>

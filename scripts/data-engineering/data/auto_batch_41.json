@@ -1,0 +1,30 @@
+[
+  {
+    "company_name": "BEL Global (India Giant Sync)",
+    "workforce_count": 10699,
+    "open_jobs_count": 224,
+    "layoff_history": {
+      "total_layoffs": 219,
+      "last_layoff_date": "2026-01-23",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  },
+  {
+    "company_name": "HAL Global (India Giant Sync)",
+    "workforce_count": 28258,
+    "open_jobs_count": 648,
+    "layoff_history": {
+      "total_layoffs": 692,
+      "last_layoff_date": "2025-01-13",
+      "layoff_frequency": "occasional",
+      "affected_departments": [
+        "operations",
+        "corporate_restructuring"
+      ]
+    }
+  }
+]

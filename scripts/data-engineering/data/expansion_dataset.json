@@ -1,0 +1,197 @@
+[
+  {
+    "company_name": "Grok (xAI)",
+    "industry": "Artificial Intelligence",
+    "company_size": "mid",
+    "stage": "growth",
+    "workforce_count": 800,
+    "open_jobs_count": 40,
+    "financial_signals": {
+      "burn_rate": "high",
+      "funding_stage": "Series B",
+      "revenue_trend": "growing",
+      "months_since_last_funding": 6
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "high",
+      "hiring_freeze_score": 0.05
+    },
+    "role_risk_map": {
+      "sales": 0.1,
+      "designer": 0.15,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.05,
+      "product_manager": 0.1,
+      "software_engineer": 0.05
+    },
+    "ai_exposure_index": 0.85,
+    "market_risk_score": 0.35,
+    "company_risk_score": 0.20,
+    "confidence_score": 0.90,
+    "archetype": "hyper_growth",
+    "data_source": "expansion_batch_2026",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Rippling",
+    "industry": "Software / SaaS",
+    "company_size": "large",
+    "stage": "growth",
+    "workforce_count": 3500,
+    "open_jobs_count": 120,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Series F",
+      "revenue_trend": "growing",
+      "months_since_last_funding": 8
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "high",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.2,
+      "designer": 0.15,
+      "hr_recruiter": 0.15,
+      "data_scientist": 0.1,
+      "product_manager": 0.15,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.45,
+    "market_risk_score": 0.25,
+    "company_risk_score": 0.15,
+    "confidence_score": 0.92,
+    "archetype": "aggressive_scaler",
+    "data_source": "expansion_batch_2026",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Discord",
+    "industry": "Social Media / Gaming",
+    "company_size": "large",
+    "stage": "mature",
+    "workforce_count": 1500,
+    "open_jobs_count": 30,
+    "financial_signals": {
+      "burn_rate": "moderate",
+      "funding_stage": "Late Stage VC",
+      "revenue_trend": "stable",
+      "months_since_last_funding": 24
+    },
+    "layoff_history": {
+      "total_layoffs": 170,
+      "last_layoff_date": "2024-01-11",
+      "layoff_frequency": "occasional",
+      "affected_departments": ["marketing", "recruiting", "engineering"]
+    },
+    "hiring_signals": {
+      "hiring_velocity": "low",
+      "hiring_freeze_score": 0.4
+    },
+    "role_risk_map": {
+      "sales": 0.3,
+      "designer": 0.25,
+      "hr_recruiter": 0.45,
+      "data_scientist": 0.15,
+      "product_manager": 0.2,
+      "software_engineer": 0.2
+    },
+    "ai_exposure_index": 0.40,
+    "market_risk_score": 0.35,
+    "company_risk_score": 0.30,
+    "confidence_score": 0.88,
+    "archetype": "cost_optimizer",
+    "data_source": "expansion_batch_2026",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Notion",
+    "industry": "Software / SaaS",
+    "company_size": "mid",
+    "stage": "growth",
+    "workforce_count": 600,
+    "open_jobs_count": 55,
+    "financial_signals": {
+      "burn_rate": "low",
+      "funding_stage": "Series C",
+      "revenue_trend": "growing",
+      "months_since_last_funding": 30
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "high",
+      "hiring_freeze_score": 0.05
+    },
+    "role_risk_map": {
+      "sales": 0.15,
+      "designer": 0.1,
+      "hr_recruiter": 0.1,
+      "data_scientist": 0.05,
+      "product_manager": 0.1,
+      "software_engineer": 0.05
+    },
+    "ai_exposure_index": 0.55,
+    "market_risk_score": 0.20,
+    "company_risk_score": 0.10,
+    "confidence_score": 0.95,
+    "archetype": "profitable_growth",
+    "data_source": "expansion_batch_2026",
+    "last_updated": "2026-04-28"
+  },
+  {
+    "company_name": "Canva",
+    "industry": "Design / Software",
+    "company_size": "large",
+    "stage": "mature",
+    "workforce_count": 4500,
+    "open_jobs_count": 180,
+    "financial_signals": {
+      "burn_rate": "low",
+      "funding_stage": "Late Stage VC",
+      "revenue_trend": "growing",
+      "months_since_last_funding": 36
+    },
+    "layoff_history": {
+      "total_layoffs": 0,
+      "last_layoff_date": "No History",
+      "layoff_frequency": "none",
+      "affected_departments": []
+    },
+    "hiring_signals": {
+      "hiring_velocity": "high",
+      "hiring_freeze_score": 0.1
+    },
+    "role_risk_map": {
+      "sales": 0.2,
+      "designer": 0.1,
+      "hr_recruiter": 0.15,
+      "data_scientist": 0.1,
+      "product_manager": 0.15,
+      "software_engineer": 0.1
+    },
+    "ai_exposure_index": 0.60,
+    "market_risk_score": 0.20,
+    "company_risk_score": 0.15,
+    "confidence_score": 0.90,
+    "archetype": "mature_profitable",
+    "data_source": "expansion_batch_2026",
+    "last_updated": "2026-04-28"
+  }
+]

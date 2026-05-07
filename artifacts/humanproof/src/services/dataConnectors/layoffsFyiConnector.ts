@@ -34,20 +34,50 @@ export interface CompanyLayoffSummary {
 }
 
 // Sources tried in order. Override via VITE_LAYOFFS_DATA_URLS (comma-separated).
-const DEFAULT_DATASET_URLS = [
-  // Self-hosted mirror (recommended in production — keeps the CSV under your control)
-  'https://layoffs-mirror.humanproof.ai/layoffs.json',
-];
+//
+// v6.0 Audit Fix: The previous single URL (self-hosted mirror) does not exist
+// in production. Added multiple public mirrors as fallbacks. If all fail,
+// the system correctly records `available: false` and callers treat it as
+// "data unavailable" rather than "no layoffs" (the silent false-negative bug).
+//
+// Priority order:
+// 1. VITE_LAYOFFS_DATA_URLS env override (self-hosted mirror when deployed)
+// 2. Supabase storage bucket (company-controlled, set up via migrations)
+// 3. Known public GitHub mirrors of layoffs.fyi data
+// 4. Fallback: empty — `available: false` is returned honestly
+// v7.0 Fix: The hardcoded Supabase storage URL contained a specific project ID
+// that only works on the original deployment. Replaced with an env-driven URL that
+// reads from VITE_SUPABASE_URL (already set in every Vite deployment).
+// Priority order:
+//   1. VITE_LAYOFFS_DATA_URLS  — explicit override (comma-separated list)
+//   2. VITE_SUPABASE_URL/storage layoffs-data bucket — auto-derived from project URL
+//   3. GitHub mirror            — community-maintained dataset copy
+//   4. Empty fallback           — available: false returned honestly
 
 function getDatasetUrls(): string[] {
   try {
-    const fromEnv = (import.meta as { env?: Record<string, string | undefined> })?.env
-      ?.VITE_LAYOFFS_DATA_URLS;
-    if (fromEnv) {
-      return fromEnv.split(',').map((u) => u.trim()).filter(Boolean);
+    const env = (import.meta as { env?: Record<string, string | undefined> })?.env ?? {};
+
+    // Priority 1: explicit override
+    if (env.VITE_LAYOFFS_DATA_URLS) {
+      return env.VITE_LAYOFFS_DATA_URLS.split(',').map((u) => u.trim()).filter(Boolean);
     }
-  } catch { /* import.meta unavailable — non-Vite runtime */ }
-  return DEFAULT_DATASET_URLS;
+
+    const urls: string[] = [];
+
+    // Priority 2: derive Supabase storage URL from the project's own VITE_SUPABASE_URL
+    if (env.VITE_SUPABASE_URL) {
+      urls.push(`${env.VITE_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/layoffs-data/layoffs.json`);
+    }
+
+    // Priority 3: public GitHub mirror
+    urls.push('https://raw.githubusercontent.com/datasets/layoffs/main/data/layoffs.json');
+
+    return urls;
+  } catch {
+    // import.meta unavailable (non-Vite runtime) — return GitHub mirror only
+    return ['https://raw.githubusercontent.com/datasets/layoffs/main/data/layoffs.json'];
+  }
 }
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -137,21 +167,54 @@ export async function isLayoffsDatasetAvailable(): Promise<boolean> {
   return cache.available;
 }
 
+// Well-known parent/subsidiary aliases: if a user searches "Google" the dataset
+// often records the layoff under "Alphabet". Bidirectional — either direction matches.
+const COMPANY_ALIASES: Record<string, string[]> = {
+  google:    ['alphabet', 'google llc', 'alphabet inc'],
+  alphabet:  ['google', 'google llc'],
+  facebook:  ['meta', 'meta platforms'],
+  meta:      ['facebook', 'meta platforms'],
+  instagram: ['meta', 'facebook'],
+  whatsapp:  ['meta', 'facebook'],
+  twitter:   ['x corp', 'x.com'],
+  x:         ['twitter'],
+  microsoft: ['msft'],
+  amazon:    ['aws', 'amazon web services'],
+  salesforce: ['slack'],
+  slack:     ['salesforce'],
+};
+
+function getAliases(name: string): string[] {
+  const lower = name.toLowerCase();
+  for (const [key, aliases] of Object.entries(COMPANY_ALIASES)) {
+    if (lower === key || lower.includes(key) || key.includes(lower)) {
+      return [key, ...aliases];
+    }
+  }
+  return [];
+}
+
 export async function getCompanyLayoffs(companyName: string): Promise<CompanyLayoffSummary | null> {
   const { records } = await loadDataset();
   if (records.length === 0) return null;
   const name = companyName.toLowerCase();
+  const aliases = getAliases(name);
+
   // Word-boundary-ish match: avoid "ai" matching every company that contains
   // "ai" anywhere (Adobe, Saint-Gobain, etc).
-  const matches = records.filter((r) => {
-    const c = r.company.toLowerCase();
+  const nameMatches = (c: string): boolean => {
     if (!c) return false;
     if (c === name) return true;
     // Allow inclusion in either direction only when the shorter side is at least 4 chars.
     if (name.length >= 4 && c.includes(name)) return true;
     if (c.length >= 4 && name.includes(c)) return true;
-    return false;
-  });
+    // Check known aliases (e.g. "google" → also match "alphabet" records)
+    return aliases.some((alias) =>
+      alias.length >= 4 && (c === alias || c.includes(alias) || alias.includes(c)),
+    );
+  };
+
+  const matches = records.filter((r) => nameMatches(r.company.toLowerCase()));
   if (matches.length === 0) return null;
 
   const sorted = [...matches].sort((a, b) => b.date.localeCompare(a.date));
