@@ -229,8 +229,17 @@ function buildFinancialDistressNarrative(
   const stockPhrase = cd.stock90DayChange != null ? `stock ${cd.stock90DayChange > 0 ? '+' : ''}${cd.stock90DayChange}% (90d)` : null;
   const financialSignals = [revPhrase, stockPhrase].filter(Boolean).join(', ') || 'financial signals below baseline';
   const lastLayoff = (cd.layoffsLast24Months ?? [])[0];
+  // Use a platform-agnostic date formatter to guarantee identical output across
+  // browsers, Node.js (test runner), and operating systems regardless of ICU data.
+  // toLocaleDateString('en-GB') differs between Node < 16 (no ICU) and browsers.
+  const _formatLayoffDate = (iso: string): string => {
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso; // fallback to raw string if unparseable
+    return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  };
   const historyPhrase = lastLayoff
-    ? `${cd.layoffRounds} round${cd.layoffRounds > 1 ? 's' : ''} in 24 months (most recent: ${new Date(lastLayoff.date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })})`
+    ? `${cd.layoffRounds} round${cd.layoffRounds > 1 ? 's' : ''} in 24 months (most recent: ${_formatLayoffDate(lastLayoff.date)})`
     : cd.layoffRounds > 0 ? `${cd.layoffRounds} documented round${cd.layoffRounds > 1 ? 's' : ''}` : 'no documented rounds yet';
 
   const isHighRisk = score >= 65;

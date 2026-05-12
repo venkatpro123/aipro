@@ -1,0 +1,133 @@
+// SkillPortfolioPanel.tsx — v14.0
+// Skill portfolio fit score, declining skills, gap skills, retool priority.
+
+import React from "react";
+import { motion } from "framer-motion";
+import { Layers, TrendingUp, TrendingDown, Zap, AlertCircle } from "lucide-react";
+import type { SkillPortfolioFitResult } from "@/services/skillPortfolioFitEngine";
+
+interface SkillPortfolioPanelProps {
+  portfolio: SkillPortfolioFitResult;
+}
+
+const TIER_COLORS: Record<string, { text: string; bg: string; border: string }> = {
+  ELITE:       { text: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)' },
+  STRONG:      { text: '#3b82f6', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.22)' },
+  ADEQUATE:    { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
+  WEAK:        { text: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.22)' },
+  VULNERABLE:  { text: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
+};
+
+const TREND_ICON = {
+  SURGING:  <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />,
+  GROWING:  <TrendingUp className="w-3 h-3" style={{ color: '#3b82f6' }} />,
+  STABLE:   <Zap className="w-3 h-3" style={{ color: '#f59e0b' }} />,
+  DECLINING: <TrendingDown className="w-3 h-3" style={{ color: '#f97316' }} />,
+  OBSOLETE:  <AlertCircle className="w-3 h-3" style={{ color: '#ef4444' }} />,
+};
+
+const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) => {
+  const colors = TIER_COLORS[portfolio.portfolioStrengthTier] ?? TIER_COLORS.ADEQUATE;
+  const d1Delta = portfolio.portfolioVsRoleDelta;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl p-4"
+      style={{ background: colors.bg, border: `1px solid ${colors.border}` }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Layers className="w-4 h-4" style={{ color: colors.text }} />
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Skill Portfolio Fit</span>
+        </div>
+        <span
+          className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
+          style={{ background: `${colors.text}18`, color: colors.text, border: `1px solid ${colors.text}30` }}
+        >
+          {portfolio.portfolioStrengthTier}
+        </span>
+      </div>
+
+      {/* Score + delta */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="text-sm font-bold" style={{ color: colors.text }}>{portfolio.fitScore}</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Fit Score</div>
+        </div>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="text-sm font-bold" style={{ color: d1Delta < 0 ? '#10b981' : d1Delta > 10 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
+            {d1Delta < 0 ? `${d1Delta}` : d1Delta > 0 ? `+${d1Delta}` : '='}{d1Delta !== 0 ? 'pt' : ''}
+          </div>
+          <div className="text-[10px] opacity-45 mt-0.5">vs Role-D1</div>
+        </div>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="text-[10px] font-bold" style={{ color: portfolio.skillDecayRisk === 'HIGH' ? '#ef4444' : portfolio.skillDecayRisk === 'MEDIUM' ? '#f59e0b' : '#10b981' }}>
+            {portfolio.skillDecayRisk}
+          </div>
+          <div className="text-[10px] opacity-45 mt-0.5">Decay Risk</div>
+        </div>
+      </div>
+
+      {/* Portfolio insight */}
+      <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        {portfolio.portfolioInsight}
+      </p>
+
+      {/* Surging skills */}
+      {portfolio.surgingSkills.length > 0 && (
+        <div className="mb-2.5">
+          <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: '#10b981' }}>
+            <TrendingUp className="w-3 h-3" /> SURGING DEMAND
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {portfolio.surgingSkills.slice(0, 4).map(s => (
+              <span key={s.skill} className="text-[10px] px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+                {s.skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Declining skills */}
+      {portfolio.decliningSkills.length > 0 && (
+        <div className="mb-2.5">
+          <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: '#ef4444' }}>
+            <TrendingDown className="w-3 h-3" /> DECLINING SKILLS
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {portfolio.decliningSkills.slice(0, 3).map(s => (
+              <span key={s.skill} className="text-[10px] px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(239,68,68,0.10)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}>
+                {s.skill} ({s.halfLifeYears.toFixed(1)}yr)
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Retool priority */}
+      {portfolio.retoolPriority.length > 0 && (
+        <div>
+          <div className="text-[10px] font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            RETOOL PRIORITY
+          </div>
+          <div className="space-y-1">
+            {portfolio.retoolPriority.slice(0, 3).map((skill, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-[10px] font-bold w-4" style={{ color: 'rgba(255,255,255,0.30)' }}>{i + 1}.</span>
+                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>{skill}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+export default SkillPortfolioPanel;

@@ -24,8 +24,12 @@ import { ScoreConfidenceInterval } from "./ScoreConfidenceInterval";
 import { WhatIfSkillSimulator } from "./WhatIfSkillSimulator";
 import { KeyRiskDriversPanel } from "./KeyRiskDriversPanel";
 import { LayoffAuditDashboard } from "./LayoffAuditDashboard";
+import { LayoffAuditDashboardV3, isTabsV3Enabled } from "../AuditTabs/v3/LayoffAuditDashboardV3";
 import { mapToHybridResult } from "../../utils/hybridResultMapper";
 import { resolveCompanyData } from "../../data/companyIntelligenceBridge";
+import { markCompanyRecentlyAudited } from "../audit/RealtimeSignalToast";
+import { triggerScraperForCompany, checkDataFreshness } from "../../services/scraperTrigger";
+import { LiveScraperGate } from "../audit/LiveScraperGate";
 import { COMPANY_INTELLIGENCE_DB } from "../../data/companyIntelligenceDB";
 import { CompanyData } from "../../data/companyDatabase";
 import { getCompanySync as getCompanyByName, getAllIndustryRisk } from "../../services/db/staticDataService";
@@ -147,6 +151,12 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   // ── Force-refresh state — set by CachedResultBanner "Recalculate" button ──
   const [isForceRefreshing, setIsForceRefreshing] = useState(false);
 
+  // ── Live Scraper Gate — shown on first audit when company data is stale ────
+  // The gate triggers live scraping, polls for completion, then calls the
+  // resolve function so handleCalculate continues into the audit pipeline.
+  const [scraperGateActive, setScraperGateActive] = useState(false);
+  const scraperGateResolveRef = useRef<(() => void) | null>(null);
+
   // ── Supabase Realtime for breaking_news_events is handled by useCompanySignalSubscription
   // inside LayoffAuditDashboard (rendered when hasCompletedAssessment=true). That hook
   // does client-side name matching (Realtime doesn't support ilike filters), injects into
@@ -205,6 +215,12 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const runAuditPipelineDrivenCalculation = async (
     forceRefresh = false,
   ): Promise<void> => {
+    // Mark this company as "recently audited" so the Realtime toast watcher
+    // fires for any breaking_news_events INSERT against it in the next 24h.
+    if (state.companyName && state.companyName.trim().length >= 2) {
+      markCompanyRecentlyAudited(state.companyName.trim());
+    }
+
     const roleTitle = state.roleTitle || "Employee";
     const resolvedRole = resolveRoleInput(roleTitle, { oracleKey: state.oracleKey });
     const effectiveOracleKey = resolvedRole.canonicalKey ?? state.oracleKey ?? null;
@@ -512,6 +528,30 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     // ── BUG FIX: Prevent concurrent submissions ────────────────────────────
     if (isSubmitting.current) return;
     isSubmitting.current = true;
+
+    // ── Live Scraper Gate ──────────────────────────────────────────────────
+    // On first-run (not forceRefresh), check whether this company was scraped
+    // recently. If not, trigger the scraper and show the gate UI — the audit
+    // pipeline only starts once the gate calls onReady (jobs done or timeout).
+    // This guarantees the first result is based on live data, not stale cache.
+    const company = (state.companyName ?? '').trim();
+    if (!forceRefresh && company.length >= 2) {
+      const isFresh = await checkDataFreshness(company).catch(() => false);
+      if (!isFresh) {
+        // Trigger scraper (fire-and-forget — gate polls independently)
+        void triggerScraperForCompany(company).then(r => {
+          if (r.state === 'queued') console.info(`[Gate] queued ${r.jobsBuilt} jobs for ${company}`);
+          else if (r.state === 'error') console.info('[Gate] scraper unreachable (gate will timeout gracefully):', r.message);
+        });
+
+        // Show gate and wait for it to call onReady
+        await new Promise<void>(resolve => {
+          scraperGateResolveRef.current = resolve;
+          setScraperGateActive(true);
+        });
+        setScraperGateActive(false);
+      }
+    }
 
     dispatch({ type: "SET_CALCULATING", payload: true });
     setEnsembleStage(0);
@@ -1222,7 +1262,18 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         </>
       )}
 
-      {state.isCalculating && (
+      {scraperGateActive && (
+        <LiveScraperGate
+          company={state.companyName ?? ''}
+          roleTitle={state.roleTitle ?? ''}
+          onReady={() => {
+            scraperGateResolveRef.current?.();
+            scraperGateResolveRef.current = null;
+          }}
+        />
+      )}
+
+      {state.isCalculating && !scraperGateActive && (
         <SpyLoadingState
           stage={ensembleStage}
           companyName={state.companyName}
@@ -1258,28 +1309,27 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
       {state.hasCompletedAssessment &&
         state.scoreResult &&
-        !state.isCalculating && (
-          <LayoffAuditDashboard
-            result={mapToHybridResult(
-              state.scoreResult,
-              state.companyData || (state.scoreResult as any).companyData || { name: state.companyName || "Unknown", industry: "Technology", region: "GLOBAL", employeeCount: 500, isPublic: false, revenuePerEmployee: 150000, aiInvestmentSignal: "medium", source: "Fallback", lastUpdated: new Date().toISOString() },
-              {
-                roleTitle: state.roleTitle || "",
-                department: state.department || "",
-                tenureYears: state.userFactors?.tenureYears || 3,
-                oracleKey: state.oracleKey,
-                experience: deriveExperience(state.userFactors?.careerYears ?? state.userFactors?.tenureYears ?? 3)
-              },
-              dataQuality,
-              liveSignalCount,
-              heuristicSignalCount,
-            )}
-            companyData={
-              state.companyData || (state.scoreResult as any).companyData || { name: state.companyName || "Unknown", industry: "Technology", region: "GLOBAL", employeeCount: 500, isPublic: false, revenuePerEmployee: 150000, aiInvestmentSignal: "medium", source: "Fallback", lastUpdated: new Date().toISOString() }
-            }
-            onRetake={handleRetake}
-          />
-        )}
+        !state.isCalculating && (() => {
+          const hybridResult = mapToHybridResult(
+            state.scoreResult,
+            state.companyData || (state.scoreResult as any).companyData || { name: state.companyName || "Unknown", industry: "Technology", region: "GLOBAL", employeeCount: 500, isPublic: false, revenuePerEmployee: 150000, aiInvestmentSignal: "medium", source: "Fallback", lastUpdated: new Date().toISOString() },
+            {
+              roleTitle: state.roleTitle || "",
+              department: state.department || "",
+              tenureYears: state.userFactors?.tenureYears || 3,
+              oracleKey: state.oracleKey,
+              experience: deriveExperience(state.userFactors?.careerYears ?? state.userFactors?.tenureYears ?? 3)
+            },
+            dataQuality,
+            liveSignalCount,
+            heuristicSignalCount,
+          );
+          const companyDataFallback = state.companyData || (state.scoreResult as any).companyData || { name: state.companyName || "Unknown", industry: "Technology", region: "GLOBAL", employeeCount: 500, isPublic: false, revenuePerEmployee: 150000, aiInvestmentSignal: "medium", source: "Fallback", lastUpdated: new Date().toISOString() };
+          const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake };
+          return isTabsV3Enabled()
+            ? <LayoffAuditDashboardV3 {...commonProps} />
+            : <LayoffAuditDashboard {...commonProps} />;
+        })()}
 
       {showShareCard && state.scoreResult && (
         <LayoffShareCard

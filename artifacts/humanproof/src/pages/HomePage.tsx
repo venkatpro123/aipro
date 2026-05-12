@@ -70,14 +70,19 @@ export default function HomePage() {
 /* ─────────── HERO ─────────── */
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden hero-mesh-bg">
       <div aria-hidden className="absolute inset-0 bg-hero-glow glow-drift" />
-      <div aria-hidden className="absolute inset-0 bg-grid opacity-60" />
+      <div aria-hidden className="absolute inset-0 bg-grid opacity-40" />
+
+      {/* Animated mesh orbs */}
+      <div aria-hidden className="pointer-events-none absolute -top-32 left-[10%] h-[500px] w-[500px] rounded-full opacity-100" style={{ background: "radial-gradient(ellipse, rgba(0,212,224,0.10) 0%, transparent 70%)", animation: "orb-drift-1 14s ease-in-out infinite alternate" }} />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 right-[5%] h-[420px] w-[420px] rounded-full opacity-100" style={{ background: "radial-gradient(ellipse, rgba(124,58,237,0.08) 0%, transparent 70%)", animation: "orb-drift-2 18s ease-in-out infinite alternate" }} />
+      <div aria-hidden className="pointer-events-none absolute top-[40%] left-[60%] h-[300px] w-[300px] rounded-full opacity-100" style={{ background: "radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%)", animation: "orb-drift-3 22s ease-in-out infinite alternate" }} />
 
       {/* Cinematic network background */}
       <AmbientBackdrop
         image={networkGrid}
-        imageOpacity={28}
+        imageOpacity={22}
         particles
         scanline
         fade="edges"
@@ -88,7 +93,7 @@ function Hero() {
         src={heroVisual}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute -right-32 top-0 h-[640px] w-[640px] max-w-none rotate-3 object-cover opacity-25 mix-blend-screen blur-[1px] ken-burns"
+        className="pointer-events-none absolute -right-32 top-0 h-[640px] w-[640px] max-w-none rotate-3 object-cover opacity-20 mix-blend-screen blur-[1px] ken-burns"
       />
 
       {/* Slow rotating radar accent */}
@@ -96,19 +101,21 @@ function Hero() {
         src={radarRings}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute -left-40 bottom-0 h-[420px] w-[420px] opacity-20 mix-blend-screen slow-spin"
+        className="pointer-events-none absolute -left-40 bottom-0 h-[420px] w-[420px] opacity-15 mix-blend-screen slow-spin"
       />
 
-      <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-24 pt-20 lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:pb-32 lg:pt-28">
+      <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-28 pt-24 lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:pb-36 lg:pt-32 xl:grid-cols-[1fr_1fr] xl:gap-16 2xl:max-w-[1600px] 2xl:gap-24">
         <Reveal>
-          <RiskBadge tone="critical" pulse>
-            <AlertTriangle className="h-3 w-3" />
+          {/* Premium eyebrow badge */}
+          <div className="section-eyebrow float-up">
+            <span className="status-dot status-dot-live" />
             Early warning · Live signals
-          </RiskBadge>
-          <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+          </div>
+
+          <h1 className="display-1 mt-6 float-up stagger-float-1">
             Know your career risk{" "}
             <span className="relative inline-block">
-              <span className="text-gradient-risk">before it happens.</span>
+              <span className="text-gradient-hero gradient-text-animate">before it happens.</span>
               <svg
                 aria-hidden
                 viewBox="0 0 300 12"
@@ -116,44 +123,45 @@ function Hero() {
               >
                 <path
                   d="M2 8 Q 80 2, 150 6 T 298 4"
-                  stroke="var(--risk-critical)"
+                  stroke="var(--cyan)"
                   strokeWidth="2"
                   fill="none"
                   strokeLinecap="round"
                   strokeDasharray="320"
                   strokeDashoffset="320"
                   style={{ animation: "draw-line 1.6s var(--transition-smooth) 0.6s forwards" }}
-                  opacity="0.7"
+                  opacity="0.6"
                 />
               </svg>
             </span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg text-muted-foreground">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed float-up stagger-float-2" style={{ color: "var(--text-2)" }}>
             Real-time monitoring of your company, role, and market signals —
             with predictive risk alerts and 30–90 day forecasts.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-10 flex flex-wrap items-center gap-4 float-up stagger-float-3">
             <a
               href="#cta"
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-foreground px-5 py-3 text-sm font-medium text-background transition hover:opacity-90 shimmer-sweep"
+              className="btn btn-cyan btn-lg shimmer-sweep cta-glow-btn"
+              style={{ textDecoration: "none" }}
             >
               Check My Risk
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight size={18} style={{ flexShrink: 0 }} />
             </a>
             <a
               href="#system"
-              className="inline-flex items-center gap-2 rounded-xl border border-border surface-1 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-surface-2 hover:border-foreground/20"
+              className="btn btn-secondary btn-lg"
+              style={{ textDecoration: "none" }}
             >
-              <Eye className="h-4 w-4" />
-              See How It Works
+              <Eye size={17} style={{ flexShrink: 0 }} />
+              How It Works
             </a>
           </div>
 
-          <p className="mt-6 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            <Radar className="h-3 w-3 text-risk-stable" />
-            <span className="h-1.5 w-1.5 rounded-full bg-risk-stable pulse-dot" />
-            Tracking live signals across companies, roles & market trends
+          <p className="mt-8 flex items-center gap-2 float-up stagger-float-4" style={{ fontFamily: "var(--font-mono)", fontSize: "0.68rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-3)" }}>
+            <span className="status-dot status-dot-live" />
+            Tracking live signals · 47,000+ companies monitored
           </p>
         </Reveal>
 
@@ -280,31 +288,31 @@ function SystemIntro() {
         <div className="mt-14 grid gap-5 lg:grid-cols-3">
           {blocks.map((b, i) => (
             <Reveal key={b.title} delay={i * 100}>
-              <div className="glass-info lift-card group relative h-full overflow-hidden rounded-[2rem] border p-8 transition hover:border-foreground/20">
+              <div className="card-premium-v2 group relative h-full overflow-hidden rounded-[2rem] p-8 transition">
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition group-hover:opacity-60"
-                  style={{ background: "color-mix(in oklab, var(--risk-info) 35%, transparent)" }}
+                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition group-hover:opacity-50"
+                  style={{ background: "rgba(0,212,224,0.25)" }}
                 />
                 <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-risk-info/10 text-risk-info transition group-hover:scale-110">
-                    <b.icon className="h-5 w-5" />
+                  <span className="feature-icon-circle transition group-hover:scale-110">
+                    <b.icon size={20} style={{ color: "var(--cyan)" }} />
                   </span>
-                  <RiskBadge tone="info" pulse>
-                    Monitoring
-                  </RiskBadge>
+                  <span className="badge badge-cyan">
+                    <span className="status-dot status-dot-live" style={{ width: 5, height: 5 }} />
+                    Active
+                  </span>
                 </div>
-                <p className="mt-5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Layer 0{i + 1}
-                </p>
-                <h3 className="mt-1 text-xl font-semibold">{b.title}</h3>
+                <p className="mt-5 label-xs">Layer 0{i + 1}</p>
+                <h3 className="mt-1 h3">{b.title}</h3>
                 <ul className="mt-5 space-y-2.5">
                   {b.points.map((p) => (
                     <li
                       key={p}
-                      className="flex items-center gap-2.5 text-sm text-foreground/85"
+                      className="flex items-center gap-2.5"
+                      style={{ fontSize: "0.875rem", color: "var(--text-2)" }}
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 text-risk-info" />
+                      <CheckCircle2 size={13} style={{ color: "var(--emerald)", flexShrink: 0 }} />
                       {p}
                     </li>
                   ))}
@@ -889,45 +897,45 @@ function Pricing() {
           </Reveal>
 
           <Reveal delay={120}>
-            <div className="glass-critical lift-card relative h-full overflow-hidden rounded-[2rem] border p-8 glow-critical">
+            <div className="card-hero pricing-featured lift-card relative h-full overflow-hidden rounded-[2rem] p-8">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl glow-drift"
-                style={{ background: "color-mix(in oklab, var(--risk-critical) 35%, transparent)" }}
+                style={{ background: "rgba(0,212,224,0.15)" }}
               />
               <div className="relative flex items-center justify-between">
-                <h3 className="inline-flex items-center gap-2 text-lg font-semibold">
-                  <Rocket className="h-4 w-4 text-risk-critical" /> Pulse Pro
+                <h3 className="inline-flex items-center gap-2 font-display text-lg font-bold" style={{ fontFamily: "var(--font-display)" }}>
+                  <Rocket className="h-4 w-4" style={{ color: "var(--cyan)" }} /> Pulse Pro
                 </h3>
-                <RiskBadge tone="critical" pulse>
+                <span className="badge badge-cyan shimmer-btn">
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--cyan)", display: "inline-block", boxShadow: "0 0 6px var(--cyan)" }} />
                   Recommended
-                </RiskBadge>
-              </div>
-              <p className="relative mt-4 text-4xl font-semibold">
-                $19
-                <span className="text-base font-normal text-muted-foreground">
-                  /mo
                 </span>
+              </div>
+              <p className="relative mt-5" style={{ fontFamily: "var(--font-display)", fontWeight: 900, letterSpacing: "-0.04em" }}>
+                <span className="text-gradient-cyan" style={{ fontSize: "clamp(2.5rem,6vw,3.5rem)" }}>$19</span>
+                <span style={{ fontSize: "1rem", fontWeight: 400, color: "var(--text-3)", marginLeft: 4 }}>/mo</span>
               </p>
-              <ul className="relative mt-6 space-y-2.5 text-sm">
+              <ul className="relative mt-6 space-y-3" style={{ fontSize: "0.875rem" }}>
                 {[
                   "Continuous monitoring",
                   "30 / 60 / 90-day predictions",
                   "Real-time alerts & action engine",
                   "Full signal coverage",
                 ].map((t) => (
-                  <li key={t} className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-risk-critical" />
+                  <li key={t} className="flex items-center gap-2.5" style={{ color: "var(--text)" }}>
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" style={{ color: "var(--cyan)" }} />
                     {t}
                   </li>
                 ))}
               </ul>
               <a
                 href="#cta"
-                className="relative mt-7 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition hover:opacity-90 shimmer-sweep"
+                className="btn btn-cyan btn-full mt-7 shimmer-sweep"
+                style={{ textDecoration: "none" }}
               >
                 Upgrade to Pro
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight size={16} />
               </a>
             </div>
           </Reveal>
@@ -966,27 +974,29 @@ function FinalCTA() {
       />
       <div className="relative mx-auto max-w-4xl px-6 py-28 text-center lg:py-36">
         <Reveal>
-          <RiskBadge tone="critical" pulse className="mx-auto">
-            <Bell className="h-3 w-3" />
-            Risk updated recently
-          </RiskBadge>
-          <h2 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+          <div className="section-eyebrow" style={{ margin: "0 auto var(--space-5)" }}>
+            <Bell size={12} />
+            Risk signals updated now
+          </div>
+          <h2 className="display-2 text-gradient-hero mt-4">
             Don’t wait to find out.
           </h2>
-          <p className="mt-5 text-xl text-muted-foreground">
-            Know before it happens.
+          <p className="mt-5 mx-auto max-w-lg" style={{ fontSize: "1.15rem", lineHeight: 1.7, color: "var(--text-2)" }}>
+            Know before it happens. Real-time signals, 90-day forecasts, and
+            an AI-powered action engine — all working for you.
           </p>
-          <div className="mt-10 flex justify-center">
+          <div className="mt-10 flex justify-center gap-4">
             <a
               href="#"
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-foreground px-6 py-3.5 text-base font-medium text-background transition hover:opacity-90 shimmer-sweep"
+              className="btn btn-cyan btn-xl shimmer-sweep cta-glow-btn"
+              style={{ textDecoration: "none" }}
             >
               Check My Risk Now
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight size={20} style={{ flexShrink: 0 }} />
             </a>
           </div>
-          <p className="mt-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            <Sparkles className="h-3 w-3 text-risk-critical" />
+          <p className="mt-6 inline-flex items-center gap-2" style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-3)" }}>
+            <Sparkles size={11} style={{ color: "var(--cyan)" }} />
             Early signals change everything.
           </p>
         </Reveal>

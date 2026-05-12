@@ -2,6 +2,11 @@ import { createContext, useContext, useReducer, useEffect, useState, useCallback
 import { saveScore } from '../utils/scoreStorage';
 import { KEY_REGISTRY } from '../data/riskData';
 import { assessmentAPI } from '../utils/apiClient';
+import {
+  fetchUserProfile,
+  upsertUserProfile,
+  type UserProfile,
+} from '../services/userProfileService';
 
 interface SkillEntry {
   id: number;
@@ -157,6 +162,14 @@ interface HumanProofContextValue {
   isHydrated: boolean;
   // BUG-C1 FIX: saveAssessment was called in CalculatorPage but never existed on context
   saveAssessment: (data: AssessmentData) => Promise<void>;
+  // v15.0 personalization profile (salary band, visa, metro, tenure).
+  // Null until the profile setup modal is completed; null if unauthenticated.
+  userProfile: UserProfile | null;
+  setUserProfile: (profile: UserProfile | null) => void;
+  refreshUserProfile: () => Promise<void>;
+  saveUserProfile: (
+    patch: Parameters<typeof upsertUserProfile>[0],
+  ) => Promise<UserProfile | null>;
 }
 
 const HumanProofContext = createContext<HumanProofContextValue | null>(null);
@@ -184,6 +197,21 @@ function LoadingScreen() {
 export function HumanProofProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, defaultState);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  const refreshUserProfile = useCallback(async () => {
+    const profile = await fetchUserProfile();
+    setUserProfile(profile);
+  }, []);
+
+  const saveUserProfile = useCallback(
+    async (patch: Parameters<typeof upsertUserProfile>[0]) => {
+      const updated = await upsertUserProfile(patch);
+      if (updated) setUserProfile(updated);
+      return updated;
+    },
+    [],
+  );
 
   useEffect(() => {
     const hydrateLocal = () => {
@@ -251,7 +279,8 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
 
     hydrateLocal();
     hydrateCloud();
-  }, []);
+    refreshUserProfile();
+  }, [refreshUserProfile]);
 
   // BUG-C1 FIX: saveAssessment method — was called in CalculatorPage but missing from context
   // Saves to localStorage via dispatch and attempts API persist (silent fail if not authed)
@@ -281,7 +310,18 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
   if (!isHydrated) return <LoadingScreen />;
 
   return (
-    <HumanProofContext.Provider value={{ state, dispatch, isHydrated, saveAssessment }}>
+    <HumanProofContext.Provider
+      value={{
+        state,
+        dispatch,
+        isHydrated,
+        saveAssessment,
+        userProfile,
+        setUserProfile,
+        refreshUserProfile,
+        saveUserProfile,
+      }}
+    >
       {children}
     </HumanProofContext.Provider>
   );

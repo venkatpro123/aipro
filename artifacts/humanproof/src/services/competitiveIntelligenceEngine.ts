@@ -33,8 +33,10 @@ export interface CompetitiveIntelligenceResult {
   marketTightness: TalentMarketTightness;
   /** Time-to-first-offer under current competition level (weeks) */
   estimatedWeeksToOffer: number;
-  /** Salary preservation probability (0–100%) under this competition level */
-  salaryPreservationPct: number;
+  /** Expected salary as % of current salary in this market (55–125%).
+   *  Values >100 indicate the market allows commanding a salary increase.
+   *  Formerly misnamed "salaryPreservationPct"; renamed in v13.0 for semantic accuracy. */
+  salaryPreservationPct: number; // kept for backward compat — represents expectedSalaryPct
   /** Whether the user has a competitive edge (rare skills, certifications, domain depth) */
   hasCompetitiveEdge: boolean;
   /** User's competitive position percentile among competing candidates */
@@ -250,30 +252,36 @@ function estimateWeeksToOffer(
   return Math.round(base * speedMultiplier);
 }
 
-// ─── Salary preservation under competition ───────────────────────────────────
+// ─── Expected salary outcome as % of current salary ──────────────────────────
+// This function is intentionally named "expectedSalaryPct" to avoid the
+// semantic violation of a "preservation probability" exceeding 100%.
+// Values > 100 mean the market allows the candidate to command a salary
+// *increase* over their current rate — not that they "preserved" more than all.
+// Consumer UI should render: "You are likely to land at 102% of current salary."
+// Range: [55, 125] — tight markets with strong candidates can yield 25% salary growth.
 
-function computeSalaryPreservationPct(
+function computeExpectedSalaryPct(
   marketTightness: TalentMarketTightness,
   competitivePositionPct: number,
   hasAiSkills: boolean,
 ): number {
-  const basePreservation: Record<TalentMarketTightness, number> = {
-    EXTREMELY_TIGHT: 110, // can command premium above current salary
+  const baseExpected: Record<TalentMarketTightness, number> = {
+    EXTREMELY_TIGHT: 110, // tight market → can command above current
     TIGHT: 102,
     BALANCED: 95,
     LOOSE: 85,
     FLOODED: 72,
   };
 
-  let preservation = basePreservation[marketTightness];
+  let expected = baseExpected[marketTightness];
 
-  // Above-median candidates can preserve/grow salary
-  if (competitivePositionPct >= 80) preservation += 8;
-  else if (competitivePositionPct <= 35) preservation -= 10;
+  // Above-median candidates leverage scarcity for better outcomes
+  if (competitivePositionPct >= 80) expected += 8;
+  else if (competitivePositionPct <= 35) expected -= 10;
 
-  if (hasAiSkills) preservation += 5;
+  if (hasAiSkills) expected += 5;
 
-  return Math.max(55, Math.min(125, preservation));
+  return Math.max(55, Math.min(125, expected));
 }
 
 // ─── Main computation ────────────────────────────────────────────────────────
@@ -281,7 +289,12 @@ function computeSalaryPreservationPct(
 export function computeCompetitiveIntelligence(
   inputs: CompetitiveIntelligenceInputs,
 ): CompetitiveIntelligenceResult {
-  const baseSupplyIndex = ROLE_SUPPLY_INDEX[inputs.oracleKey] ?? ROLE_SUPPLY_INDEX["generic"];
+  // Guard: if oracleKey is not in the map, fall back to "generic" (35).
+  // A secondary numeric guard prevents NaN from propagating if the map is ever
+  // modified and the "generic" key is accidentally removed.
+  const baseSupplyIndex = ROLE_SUPPLY_INDEX[inputs.oracleKey]
+    ?? ROLE_SUPPLY_INDEX["generic"]
+    ?? 35;
   const regionMultiplier = REGION_SUPPLY_MULTIPLIER[inputs.region] ?? 1.0;
   const seniorityMultiplier = getSeniorityMultiplier(inputs.tenureYears);
 
@@ -325,7 +338,7 @@ export function computeCompetitiveIntelligence(
   // role-specific). Fall back to the internal model when unavailable.
   const salaryPreservationPct = inputs.externalSalaryPreservationPct !== undefined
     ? Math.max(55, Math.min(125, inputs.externalSalaryPreservationPct))
-    : computeSalaryPreservationPct(
+    : computeExpectedSalaryPct(
         marketTightness,
         competitivePositionPercentile,
         inputs.hasAiSkills ?? false,

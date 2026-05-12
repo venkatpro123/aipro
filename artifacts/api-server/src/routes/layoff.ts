@@ -85,7 +85,7 @@ router.get('/company/search', async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('company_intelligence')
       .select('*')
-      .or(`company_name.ilike.%${safeQuery}%,ticker.ilike.${safeQuery}`)
+      .ilike('company_name', `%${safeQuery}%`)
       .order('confidence_score', { ascending: false })
       .limit(Number(limit));
 

@@ -138,7 +138,8 @@ function extractCount(text: string): number | null {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
-serve(async () => {
+serve(async (_req) => {
+  const runStart = Date.now();
   try {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -190,8 +191,17 @@ serve(async () => {
 
     const percentCut = extractPercent(`${item.title} ${item.description}`);
     const affectedCount = extractCount(`${item.title} ${item.description}`);
-    const confidence = item.source === 'Economic Times' || item.source === 'Moneycontrol'
-      ? 'medium' : 'low';
+    // Confidence tier based on source provenance:
+    //   high   — regulatory filings (SEC, WARN Act) — ground-truth, triggers auto-recalc
+    //   medium — established financial press (ET, Moneycontrol, Bloomberg, Reuters)
+    //   low    — RSS aggregators, HN, less-established sources
+    const confidence: 'high' | 'medium' | 'low' =
+      item.source === 'SEC EDGAR' || item.source === 'WARN Act'
+        ? 'high'
+        : item.source === 'Economic Times' || item.source === 'Moneycontrol' ||
+          item.source === 'Bloomberg' || item.source === 'Reuters'
+        ? 'medium'
+        : 'low';
 
     const { error: insertErr } = await supabase
       .from('breaking_news_events')
@@ -233,7 +243,22 @@ serve(async () => {
     }
   }
 
-  console.log(`[BreakingNewsScan] ${inserted} events inserted, ${invalidated} caches invalidated`);
+  const durationMs = Date.now() - runStart;
+  console.log(`[BreakingNewsScan] ${inserted} events inserted, ${invalidated} caches invalidated (${durationMs}ms)`);
+
+  // Write structured health record so pipeline monitoring can track this function
+  await supabase.from('pipeline_health_log').insert({
+    pipeline_name:    'breaking-news-scan',
+    run_at:           new Date().toISOString(),
+    duration_ms:      durationMs,
+    records_processed: watchList.length,
+    records_updated:  inserted,
+    null_count:       0,
+    total_count:      watchList.length,
+    status:           'ok',
+    triggered_by:     'pg_cron',
+    notes:            `inserted=${inserted} invalidated=${invalidated}`,
+  }).catch(() => {}); // non-blocking — don't fail the scan if health log is unavailable
 
   return new Response(JSON.stringify({ inserted, invalidated, watchListSize: watchList.length }), { headers: CORS });
 
@@ -243,6 +268,23 @@ serve(async () => {
     // but logs nothing useful). This catch should only fire for programmer errors or
     // infrastructure failures (env vars missing, Supabase unavailable).
     console.error('[BreakingNewsScan] Fatal error:', e?.message ?? e);
+
+    // Attempt to log the failure even on fatal error
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      await supabase.from('pipeline_health_log').insert({
+        pipeline_name: 'breaking-news-scan',
+        run_at:        new Date().toISOString(),
+        duration_ms:   Date.now() - runStart,
+        status:        'error',
+        triggered_by:  'pg_cron',
+        notes:         e?.message ?? 'Unknown error',
+      });
+    } catch { /* ignore logging errors */ }
+
     return new Response(
       JSON.stringify({ error: e?.message ?? 'Unknown error', inserted: 0, invalidated: 0 }),
       { status: 500, headers: CORS },

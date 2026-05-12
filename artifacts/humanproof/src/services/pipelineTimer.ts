@@ -81,6 +81,12 @@ export type CheckpointLabel =
   | 'map_to_hybrid_end'
   // First dashboard render (React paint)
   | 'first_render'
+  // Intelligence upgrade layers (v9.0+)
+  | 'intelligence_upgrade_start'
+  | 'intelligence_upgrade_end'
+  // Alpha Vantage proxy (liveDataService — proxy-live-signals EF)
+  | 'alphavantage_start'
+  | 'alphavantage_end'
   // Total
   | 'pipeline_end';
 

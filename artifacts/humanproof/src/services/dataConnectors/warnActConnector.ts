@@ -1,69 +1,49 @@
 // warnActConnector.ts
 // US Worker Adjustment and Retraining Notification (WARN) Act notices.
 //
-// WARN requires US employers with ≥100 employees to give 60 days' notice
-// before mass layoffs or plant closings. Notices are filed with each state's
-// labor department, which means there is no single nationwide JSON API. The
-// data ecosystem looks like this:
+// DATA FLOW (three-tier, in priority order):
 //
-//   • California EDD     — XLSX export, updated weekly
-//   • New York DOL       — HTML page, no API
-//   • Washington ESD     — CSV export
-//   • Texas TWC          — PDF / quarterly report
-//   • ~40 other states   — varying mix of HTML/PDF/CSV
+//  Tier 1 — Supabase `warn_filings` table (PRIMARY)
+//    Populated by the `warn-act-fetch` Edge Function (runs every 6 hours via
+//    pg_cron). Covers CA, NY, WA, TX, NJ — approximately 56% of US tech
+//    employment. When the Edge Function has run recently, this is the fastest
+//    and most complete path.
 //
-// Building a per-state scraper for each is well beyond a single connector.
-// Pragmatic free-tier alternative: layoffs.fyi already aggregates WARN feeds
-// into its dataset (see `layoffsFyiConnector`), and Layoffs Tracker
-// (https://layoffstracker.com) republishes the rolled-up state notices via a
-// public JSON endpoint. We use the layoffstracker JSON as the WARN proxy and
-// fall back to a configurable mirror URL list — the same pattern as
-// `layoffsFyiConnector` — so the source can be swapped without code changes.
+//  Tier 2 — External mirror URLs (FALLBACK)
+//    Configurable via VITE_WARN_DATA_URLS (comma-separated list). Intended for
+//    self-hosted mirrors of the aggregated WARN dataset. Skipped when the list
+//    is empty (default), but present for deployments that maintain their own
+//    WARN data mirror.
 //
-// Set `VITE_WARN_DATA_URLS` (comma-separated) to override the default mirror.
+//  Tier 3 — Not-configured (HONEST FAILURE)
+//    When both tiers fail, returns `warnDataReachable: false` explicitly.
+//    Callers display a "WARN data unavailable" badge rather than silently
+//    treating absence of filings as "no layoffs". This is intentional — it
+//    distinguishes "no WARN filing found" from "WARN DB unreachable".
+
+import { supabase } from '../../utils/supabase';
 
 export interface WarnNotice {
-  /** Company display name as filed. */
   companyName: string;
-  /** ISO date the notice was filed (YYYY-MM-DD). */
   filedAt: string;
-  /** Effective layoff date (YYYY-MM-DD), often 60 days after `filedAt`. */
   effectiveDate: string | null;
-  /** Number of affected workers, when disclosed. */
   affectedCount: number | null;
-  /** US state code where filed. */
   state: string;
-  /** Source feed name. */
   source: string;
 }
 
 export interface WarnSummary {
   company: string;
   notices: WarnNotice[];
-  /** Most recent notice's filing date, or null when none found. */
   mostRecentFiling: string | null;
-  /** Sum of `affectedCount` across all matched notices (null entries skipped). */
   totalAffected: number;
-  /** True only when at least one mirror URL responded. */
   warnDataReachable: boolean;
-  /** Mirror URL that produced the result (for diagnostics). */
   sourceUrl: string | null;
   fetchedAt: string;
 }
 
-// v7.0 Fix: removed 'warn-mirror.humanproof.ai/notices.json' — this URL was a
-// placeholder that never existed, causing an 8-second DNS timeout on every audit.
-// Configure VITE_WARN_DATA_URLS to point to your own WARN data mirror, or leave
-// empty to skip WARN checks entirely (warnDataReachable: false is returned honestly).
-//
-// WARN data sources (all require server-side scraping — not directly fetchable):
-//   • California WARN: https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/
-//   • New York DOL: https://dol.ny.gov/worker-adjustment-and-retraining-notification-warn
-//   • Washington ESD: https://esd.wa.gov/newsroom/layoff-notification-database
-//   • Texas TWC: https://twc.texas.gov/businesses/employer-information/mass-claims-warn
-// A server-side worker that scrapes these into layoffs.json and hosts it at a public URL
-// is required. Set VITE_WARN_DATA_URLS to that URL.
-const DEFAULT_WARN_URLS: string[] = [];  // empty → fail fast, warnDataReachable: false
+// ── Tier 2: mirror URL list ───────────────────────────────────────────────────
+const DEFAULT_WARN_URLS: string[] = [];
 
 function getWarnUrls(): string[] {
   try {
@@ -73,38 +53,31 @@ function getWarnUrls(): string[] {
         return env.split(',').map((s: string) => s.trim()).filter(Boolean);
       }
     }
-  } catch {
-    // Non-Vite runtimes (Node test, Deno) — fall through to defaults.
-  }
+  } catch { /* non-Vite runtime */ }
   return DEFAULT_WARN_URLS;
 }
 
+// ── Name matching ─────────────────────────────────────────────────────────────
 function companyNameMatch(noticeCompany: string, query: string): boolean {
   const a = noticeCompany.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').trim();
   const b = query.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').trim();
   if (b.length < 4) return false;
-  // Word-boundary-ish: require the query to appear as a whole token sequence
-  // surrounded by either start-of-string, end-of-string, or whitespace. WARN
-  // filings often use full legal names ("Apple Inc.") so we check b ⊂ a, but
-  // refuse trivial substring hits like "Snapple" matching "Apple".
-  const re = new RegExp(`(^|\\s)${b.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}(\\s|$)`);
+  const re = new RegExp(`(^|\\s)${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
   return re.test(a);
 }
 
 function parseNotices(raw: any, query: string, sourceUrl: string): WarnNotice[] {
-  // Accept either an array at the top level or a `{notices: []}` envelope.
   const arr: any[] = Array.isArray(raw) ? raw : Array.isArray(raw?.notices) ? raw.notices : [];
   const out: WarnNotice[] = [];
   for (const n of arr) {
     const company = String(n?.company ?? n?.companyName ?? '');
     if (!company || !companyNameMatch(company, query)) continue;
     const affectedRaw = n?.affected ?? n?.affectedCount ?? n?.workers;
-    const affected = typeof affectedRaw === 'number' ? affectedRaw : null;
     out.push({
       companyName: company,
       filedAt: String(n?.filedAt ?? n?.noticeDate ?? '').slice(0, 10),
       effectiveDate: n?.effectiveDate ? String(n.effectiveDate).slice(0, 10) : null,
-      affectedCount: affected,
+      affectedCount: typeof affectedRaw === 'number' ? affectedRaw : null,
       state: String(n?.state ?? '').toUpperCase(),
       source: String(n?.source ?? sourceUrl),
     });
@@ -112,42 +85,96 @@ function parseNotices(raw: any, query: string, sourceUrl: string): WarnNotice[] 
   return out;
 }
 
+// ── Tier 1: read from warn_filings Supabase table ─────────────────────────────
+async function fetchFromDatabase(company: string): Promise<{ notices: WarnNotice[]; reachable: boolean }> {
+  try {
+    // Use ilike with word-boundary-ish pattern. The WARN filings table stores
+    // the legal company name as filed (e.g. "Apple Inc.", "Meta Platforms Inc").
+    // We search for the company name as a substring; short names (<4 chars)
+    // are skipped to avoid false positives.
+    if (company.trim().length < 4) return { notices: [], reachable: false };
+
+    const { data, error } = await supabase
+      .from('warn_filings')
+      .select('company_name, filing_state, filed_date, layoff_date, affected_count, source_url')
+      .ilike('company_name', `%${company.replace(/[%_]/g, '\\$&')}%`)
+      .order('filed_date', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      // Table may not exist yet if warn-act-fetch EF hasn't run; not a hard error.
+      console.info('[WarnAct] warn_filings query failed (table may not exist yet):', error.message);
+      return { notices: [], reachable: false };
+    }
+
+    // Map DB rows to WarnNotice shape. `layoff_date` from warn_filings is the
+    // planned effective layoff date; expose it under WarnNotice.effectiveDate
+    // to keep the existing contract with callers stable.
+    const notices: WarnNotice[] = (data ?? []).map((row: any) => ({
+      companyName:  row.company_name,
+      filedAt:      String(row.filed_date ?? '').slice(0, 10),
+      effectiveDate: row.layoff_date ? String(row.layoff_date).slice(0, 10) : null,
+      affectedCount: typeof row.affected_count === 'number' ? row.affected_count : null,
+      state:        String(row.filing_state ?? '').toUpperCase(),
+      source:       String(row.source_url ?? 'warn_filings'),
+    }));
+
+    return { notices, reachable: true };
+  } catch (err: any) {
+    console.info('[WarnAct] DB read failed:', err?.message);
+    return { notices: [], reachable: false };
+  }
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
 export async function fetchWarnNotices(company: string): Promise<WarnSummary> {
+  const fetchedAt = new Date().toISOString();
+
+  // ── Tier 1: Supabase warn_filings table ───────────────────────────────────
+  const { notices: dbNotices, reachable: dbReachable } = await fetchFromDatabase(company);
+  if (dbReachable && dbNotices.length >= 0) {
+    // "reachable: true" means the table responded even if there are 0 rows.
+    // Return immediately — DB is authoritative and avoids extra network calls.
+    dbNotices.sort((a, b) => (a.filedAt < b.filedAt ? 1 : -1));
+    const totalAffected = dbNotices.reduce((sum, n) => sum + (n.affectedCount ?? 0), 0);
+    return {
+      company,
+      notices: dbNotices.slice(0, 25),
+      mostRecentFiling: dbNotices[0]?.filedAt ?? null,
+      totalAffected,
+      warnDataReachable: true,
+      sourceUrl: 'supabase:warn_filings',
+      fetchedAt,
+    };
+  }
+
+  // ── Tier 2: external mirror URLs ─────────────────────────────────────────
   const urls = getWarnUrls();
+  if (urls.length === 0) {
+    return {
+      company, notices: [], mostRecentFiling: null, totalAffected: 0,
+      warnDataReachable: false, sourceUrl: null, fetchedAt,
+    };
+  }
+
   let warnDataReachable = false;
   let sourceUrl: string | null = null;
   let notices: WarnNotice[] = [];
 
-  // v7.0 Fix: fail fast when no URLs configured (avoids 8s DNS timeout per audit).
-  if (urls.length === 0) {
-    return {
-      company, notices: [], mostRecentFiling: null, totalAffected: 0,
-      warnDataReachable: false, sourceUrl: null,
-      fetchedAt: new Date().toISOString(),
-    };
-  }
-
   for (const url of urls) {
     try {
-      // Reduced timeout from 8000 → 5000ms — WARN data mirrors are static files
       const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       if (!res.ok) continue;
       warnDataReachable = true;
       sourceUrl = url;
       const json = await res.json();
       notices = parseNotices(json, company, url);
-      // First reachable mirror wins — they're meant to be equivalent
       break;
-    } catch {
-      // Try next mirror
-    }
+    } catch { /* try next mirror */ }
   }
 
   notices.sort((a, b) => (a.filedAt < b.filedAt ? 1 : -1));
-  const totalAffected = notices.reduce(
-    (sum, n) => sum + (n.affectedCount ?? 0),
-    0,
-  );
+  const totalAffected = notices.reduce((sum, n) => sum + (n.affectedCount ?? 0), 0);
 
   return {
     company,
@@ -156,7 +183,7 @@ export async function fetchWarnNotices(company: string): Promise<WarnSummary> {
     totalAffected,
     warnDataReachable,
     sourceUrl,
-    fetchedAt: new Date().toISOString(),
+    fetchedAt,
   };
 }
 

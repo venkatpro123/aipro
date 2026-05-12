@@ -1,5 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { KNOWN_HEADCOUNTS } from "../_shared/knownHeadcounts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,17 +103,10 @@ const extractEmployeeCount = (row: JsonObject): number => {
   const fromSize = sizeMap[String(row.company_size || "").toLowerCase()];
   if (fromSize) return fromSize;
 
-  // Well-known global companies — hard-coded floor to prevent the 1K default
-  // from being displayed when financial_signals.employee_count is missing.
-  const KNOWN_HEADCOUNTS: Record<string, number> = {
-    google: 182000, alphabet: 182000,
-    microsoft: 228000, amazon: 1540000,
-    meta: 72000, facebook: 72000,
-    apple: 164000, tesla: 140000,
-    netflix: 13000, nvidia: 36000,
-    salesforce: 73000, oracle: 164000,
-    ibm: 288000, intel: 124000,
-  };
+  // Well-known global companies — canonical floor sourced from _shared/knownHeadcounts.ts
+  // (same map as artifacts/humanproof/src/data/companyIntelligenceBridge.ts).
+  // The previous inline map drifted: had Salesforce at 73k in bridge but missing
+  // in edge function → default 5k for Salesforce searches. Single source now.
   const nameLower = String(row.company_name || "").toLowerCase();
   for (const [key, count] of Object.entries(KNOWN_HEADCOUNTS)) {
     if (nameLower.includes(key)) return count;
@@ -302,21 +296,34 @@ const tryFetchLayoffNews = async (
   });
   if (matched.length === 0) return { hasLayoffNews: false, layoffs: [] };
 
-  // Extract a percent_cut from the article only if the headline/description
-  // actually states one. Never default to a hardcoded percentage — that
-  // fabricates a layoff event from a single news mention.
+  // Extract percent_cut ONLY when the headline explicitly names a workforce % reduction.
+  // A loose regex like /(\d+)%/ matches interest rates, earnings beats, discount codes —
+  // all of which are common in news articles and would fabricate layoff severity.
+  // Rules:
+  //   1. Only match from the title (headlines are precise; descriptions are noisy).
+  //   2. Require the % to appear adjacent to workforce-reduction language.
+  //   3. Discard unrealistic values: < 0.5% (rounding) or > 35% (mass-event only).
+  const WORKFORCE_PCT_RE =
+    /(\d+(?:\.\d+)?)\s*%\s*(?:of\s+(?:its\s+)?(?:global\s+)?(?:workforce|employees|staff|headcount|jobs|roles|workers|positions))|(?:cut|cuts|lay(?:ed)?\s*off|reduc(?:e|ed|ing)|eliminat(?:e|ed)|slash(?:ed)?|trim(?:med)?)\s+(?:\w+\s+){0,4}(\d+(?:\.\d+)?)\s*%/i;
+
   const layoffs = matched.slice(0, 3).map((a: Record<string, unknown>) => {
     const title = String(a.title ?? "");
-    const desc  = String(a.description ?? "");
-    const text  = `${title} ${desc}`;
-    const pctMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
     const sourceObj = typeof a.source === "object" && a.source !== null
       ? (a.source as Record<string, unknown>)
       : {};
     const sourceName = typeof sourceObj.name === "string" ? sourceObj.name : "NewsAPI";
+
+    // Only extract percent from the headline, not description — descriptions
+    // often contain contextual percentages (stock moves, earnings) unrelated to cuts.
+    const m = title.match(WORKFORCE_PCT_RE);
+    const raw = m ? parseFloat(m[1] ?? m[2] ?? "0") : null;
+    // Sanity-gate: 0.5–35% covers realistic RIF events; outside this range is
+    // almost certainly a mis-parse (rate, growth, margin, discount).
+    const pct = raw != null && raw >= 0.5 && raw <= 35 ? raw : null;
+
     return {
       date: String(a.publishedAt || new Date().toISOString()),
-      percent_cut: pctMatch ? parseFloat(pctMatch[1]) : null,
+      percent_cut: pct,
       headline: title,
       source: sourceName,
     };
@@ -361,34 +368,74 @@ Deno.serve(async (req) => {
       : Infinity;
 
     // Serve from cache when it's fresh (< STALE_HOURS) and has the key financial fields.
+    // Fix C-2: the cache table never stored layoff fields (layoff_rounds, recent_layoffs,
+    // last_layoff_percent). Returning hardcoded zeros from the cache path caused audits
+    // to show zero layoff history for 24h after enrichment — even when layoffs were just
+    // confirmed live. We now load the layoff_history sub-object from company_intelligence
+    // for cache hits so those fields are always accurate.
     if (cached && cacheAge < STALE_HOURS && cached.employee_count != null) {
+      // Supplement the cache with layoff_history from the source table (lightweight query —
+      // only one JSONB column). If the company_intelligence row is missing, layoff fields
+      // fall back to safe zeros rather than serving stale fabricated data.
+      let cachedLayoffs: ReturnType<typeof normalizeFromCompanyIntel>["recent_layoffs"] = [];
+      let cachedLayoffRounds = 0;
+      let cachedLastLayoffPct: number | null = null;
+      let cachedRecentLayoffNews = cached.recent_layoff_news ?? false;
+
+      const { data: intelLayoff } = await supabaseClient
+        .from("company_intelligence")
+        .select("layoff_history, hiring_signals")
+        .ilike("company_name", cached.company_name)
+        .maybeSingle();
+
+      if (intelLayoff) {
+        const lh = intelLayoff.layoff_history ?? {};
+        cachedLayoffs = Array.isArray(lh.recent_layoffs) ? lh.recent_layoffs : [];
+        cachedLayoffRounds =
+          typeof lh.layoff_rounds === "number"
+            ? lh.layoff_rounds
+            : typeof lh.rounds === "number"
+              ? lh.rounds
+              : 0;
+        cachedLastLayoffPct =
+          typeof lh.last_layoff_percent === "number" ? lh.last_layoff_percent : null;
+        if (!cachedRecentLayoffNews && Array.isArray(lh.recent_layoffs) && lh.recent_layoffs.length > 0) {
+          cachedRecentLayoffNews = true;
+        }
+      }
+
+      const aiSignal =
+        intelLayoff?.hiring_signals?.ai_investment_signal ??
+        intelLayoff?.hiring_signals?.financial?.ai_investment_signal ??
+        "medium";
+
       return new Response(
         JSON.stringify({
           companyName: cached.company_name,
           data: {
-            company_name:       cached.company_name,
-            is_public:          cached.is_public ?? false,
-            industry:           cached.industry ?? "Technology",
-            region:             "GLOBAL",
-            employee_count:     cached.employee_count,
-            revenue_yoy:        cached.revenue_yoy ?? null,
-            stock_90d_change:   cached.stock_90d_change ?? null,
-            recent_layoff_news: cached.recent_layoff_news ?? false,
-            recent_layoffs:     [],
-            layoff_rounds:      0,
-            last_layoff_percent: null,
-            ai_investment_signal: "medium",
-            last_updated:       cached.last_updated,
-            source:             "cached_company_intelligence",
+            company_name:        cached.company_name,
+            is_public:           cached.is_public ?? false,
+            industry:            cached.industry ?? "Technology",
+            region:              "GLOBAL",
+            employee_count:      cached.employee_count,
+            revenue_yoy:         cached.revenue_yoy ?? null,
+            stock_90d_change:    cached.stock_90d_change ?? null,
+            recent_layoff_news:  cachedRecentLayoffNews,
+            recent_layoffs:      cachedLayoffs,
+            layoff_rounds:       cachedLayoffRounds,
+            last_layoff_percent: cachedLastLayoffPct,
+            ai_investment_signal: aiSignal,
+            last_updated:        cached.last_updated,
+            source:              "cached_company_intelligence",
           },
-          source:         "cached_company_intelligence",
-          sourcePath:     "edge_exact",
+          source:          "cached_company_intelligence",
+          sourcePath:      "edge_exact",
           matchConfidence: 1.0,
-          matchType:      "exact",
+          matchType:       "exact",
           authoritativeSignals: {},
-          conflicts:      [],
-          dataQuality:    "LIVE_OR_REFRESHED",
-          dataFreshness:  { lastUpdated: cached.last_updated, stale: false, staleThresholdHours: STALE_HOURS },
+          conflicts:       [],
+          dataQuality:     "LIVE_OR_REFRESHED",
+          dataFreshness:   { lastUpdated: cached.last_updated, stale: false, staleThresholdHours: STALE_HOURS },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -668,12 +715,18 @@ Deno.serve(async (req) => {
       );
     }
     if (merged.revenue_yoy !== null) {
+      // Fix H-3: revenue_yoy was incorrectly attributed to alpha_vantage when
+      // hasLiveStockProvenance was true. AlphaVantage TIME_SERIES_DAILY_ADJUSTED
+      // returns only daily price data — no revenue figures. Revenue YoY always
+      // originates from the company_intelligence DB row. Decoupling the source
+      // label from stock-data provenance prevents inflated confidence (0.74→0.92)
+      // on a value that was never actually refreshed from a live source.
       authoritativeSignals.revenue_yoy = createSignal(
         "revenue_yoy",
         merged.revenue_yoy,
-        hasLiveStockProvenance ? "live" : intelRow ? "db" : "heuristic",
-        hasLiveStockProvenance ? "alpha_vantage" : baselineMerged.source || "company_intelligence",
-        hasLiveStockProvenance ? signalObservedAt : dbObservedAt,
+        intelRow ? "db" : "heuristic",
+        baselineMerged.source || "company_intelligence",
+        dbObservedAt,
         signalObservedAt,
       );
     }

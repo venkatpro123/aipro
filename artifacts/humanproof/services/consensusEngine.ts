@@ -213,12 +213,27 @@ export class ConsensusEngine {
     // perfectly good data on everything except, say, MCA filings. Arithmetic
     // mean degrades smoothly: one zero among N signals costs ~1/N, which is the
     // correct penalty when sources are roughly equally weighted.)
-    const sumConf = allResolved.reduce((sum, r) => sum + r.confidence, 0);
+    //
+    // Two additional factors layer on the base mean:
+    //   • Per-signal staleness: a fresh signal contributes its full confidence,
+    //     a 45-day-old signal contributes 30% of it (linear in between, clamped
+    //     at 0.3). Previously stalenessDays was computed but never affected the
+    //     score — a 45-day-old layoffs history signal carried the same weight
+    //     as today's stock close.
+    //   • Heuristic-share penalty: when every signal fell back to DB defaults
+    //     (revenueGrowth ?? 0.5 etc), the aggregate is artificially propped up
+    //     by neutral midpoints. Subtract a flat penalty proportional to how
+    //     much of the consensus was heuristic (max -10% at 100% heuristic).
+    const sumConf = allResolved.reduce(
+      (sum, r) => sum + r.confidence * Math.max(0.3, 1 - r.stalenessDays / 45),
+      0,
+    );
     const baseConf = allResolved.length > 0 ? sumConf / allResolved.length : 0.5;
-    const conflictPenalty = allConflicts.length * 0.08; // -8% per conflict
+    const conflictPenalty  = allConflicts.length * 0.08; // -8% per conflict
+    const heuristicPenalty = percentHeuristic * 0.10;     // up to -10% at 100% heuristic
     const overallConfidence = Math.max(
       0.1,
-      Math.min(0.95, baseConf - conflictPenalty),
+      Math.min(0.95, baseConf - conflictPenalty - heuristicPenalty),
     );
 
     return {

@@ -93,9 +93,14 @@ async function fetchOpeningCount(
 serve(async (req) => {
   const startMs = Date.now();
   let dryRun = false;
+  let triggeredBy = 'manual';
   try {
     const body = await req.json().catch(() => ({}));
-    dryRun = body?.dryRun === true;
+    dryRun      = body?.dryRun === true;
+    // Detect invocation source: pg_cron sends no body; manual/CI callers may pass triggered_by
+    triggeredBy = body?.triggered_by
+      ?? (req.headers.get('x-triggered-by') ?? null)
+      ?? (Object.keys(body).length === 0 ? 'pg_cron' : 'manual');
   } catch { /* ignore */ }
 
   const supabase = createClient(
@@ -206,7 +211,7 @@ serve(async (req) => {
       error_count:      errorCount,
       error_details:    errorDetails.length > 0 ? errorDetails : null,
       serper_available: serperKey != null,
-      triggered_by:     'pg_cron',
+      triggered_by:     triggeredBy,
       notes:            isDegraded
         ? `Degraded: ${nullRatePct}% null, ${errorCount} errors`
         : `OK: ${liveCount}/${ROLES.length} live`,

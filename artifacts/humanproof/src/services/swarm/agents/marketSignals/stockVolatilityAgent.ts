@@ -1,14 +1,17 @@
 // stockVolatilityAgent.ts
 // Market Signal — 90-day stock price volatility index.
-// LIVE: Alpha Vantage TIME_SERIES_DAILY (60 req/min free) with heuristic fallback.
+//
+// SECURITY FIX: AlphaVantage is now called via the proxy-live-signals Edge
+// Function (server-side). The VITE_ALPHAVANTAGE_KEY is no longer read from
+// import.meta.env — that embedded the key in the JS bundle, exposing it to
+// anyone who opened DevTools. All stock requests now route through the EF
+// which holds the key in Supabase Secrets.
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
-
-const ALPHA_BASE = 'https://www.alphavantage.co/query';
+import { supabase } from '../../../../utils/supabase';
 
 const heuristicVolatility = (input: SwarmInput): number => {
   const cd = input.companyData;
-  // Use stock90DayChange from companyData as proxy for volatility
   const change = cd.stock90DayChange ?? 0;
   if (Math.abs(change) > 30) return 0.90;
   if (Math.abs(change) > 20) return 0.75;
@@ -17,71 +20,82 @@ const heuristicVolatility = (input: SwarmInput): number => {
   return 0.25;
 };
 
-const calcVolatilityFromPrices = (closes: number[]): number => {
-  if (closes.length < 10) return 0.50;
-  const returns = closes.slice(1).map((p, i) => Math.log(p / closes[i]));
-  const mean    = returns.reduce((a, b) => a + b, 0) / returns.length;
-  const variance = returns.reduce((a, r) => a + Math.pow(r - mean, 2), 0) / returns.length;
-  const stdDev  = Math.sqrt(variance);
-  const annualised = stdDev * Math.sqrt(252);
-  // Map annualised volatility (0–60%+) to risk signal
-  if (annualised > 0.60) return 0.95;
-  if (annualised > 0.45) return 0.80;
-  if (annualised > 0.30) return 0.62;
-  if (annualised > 0.20) return 0.42;
-  if (annualised > 0.12) return 0.25;
+const mapVolatilityToSignal = (annualisedVol: number): number => {
+  if (annualisedVol > 0.60) return 0.95;
+  if (annualisedVol > 0.45) return 0.80;
+  if (annualisedVol > 0.30) return 0.62;
+  if (annualisedVol > 0.20) return 0.42;
+  if (annualisedVol > 0.12) return 0.25;
   return 0.12;
 };
 
 const run = async (input: SwarmInput): Promise<AgentSignal> => {
-  const apiKey = (import.meta as any).env?.VITE_ALPHAVANTAGE_KEY;
+  const ticker = input.companyData.stockTicker ?? (input.companyData as any).ticker ?? null;
 
-  // ── Live API path ──────────────────────────────────────────────────────────
-  if (apiKey && input.companyData.isPublic) {
-    // Phase 2 fix: use real ticker from DB (set by bridge) — never guess from company name
-    const ticker = input.companyData.stockTicker
-      ?? input.companyData.ticker
-      ?? null;  // do NOT fall back to name.slice(0,4) — produces wrong tickers (Apple→'APPL' not 'AAPL')
+  // ── Live path via server-side proxy (no key in browser) ──────────────────
+  if (ticker && input.companyData.isPublic) {
+    try {
+      const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+        body: { action: 'stock', companyName: input.companyName, ticker },
+      });
 
-    if (ticker) {
-      try {
-        const url = `${ALPHA_BASE}?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=compact&apikey=${apiKey}`;
-        const res  = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-        const json = await res.json();
-        const series = json['Time Series (Daily)'];
-        if (series) {
-          const closes = Object.values(series)
-            .slice(0, 90)
-            .map((d: any) => parseFloat(d['4. close']));
-          const signal = calcVolatilityFromPrices(closes);
+      if (!error && data?.stockData) {
+        const sd = data.stockData;
+
+        // Prefer pre-computed annualised volatility when the EF provides it.
+        const annualisedVol: number | null = sd.stockVolatility ?? sd.annualisedVolatility ?? null;
+        if (annualisedVol !== null && Number.isFinite(annualisedVol)) {
           return {
             agentId:    'stockVolatilityAgent',
             category:   'market',
-            signal,
+            signal:     mapVolatilityToSignal(annualisedVol),
             confidence: 0.87,
             sourceType: 'live-api',
             ageInDays:  0,
-            metadata:   { ticker, dataPoints: closes.length, source: 'AlphaVantage' },
+            metadata:   { ticker, annualisedVol, source: 'proxy-live-signals/AlphaVantage' },
           };
         }
-      } catch (e: any) {
-        console.warn('[stockVolatilityAgent] API failed, falling back to heuristic:', e.message);
+
+        // Fall back to 90-day return from the EF if volatility not available.
+        const change90d: number | null = sd.stock90DayChange ?? sd.returnPct90d ?? null;
+        if (change90d !== null && Number.isFinite(change90d)) {
+          const approxVol = Math.abs(change90d) / 100 / Math.sqrt(90 / 252);
+          return {
+            agentId:    'stockVolatilityAgent',
+            category:   'market',
+            signal:     mapVolatilityToSignal(approxVol),
+            confidence: 0.78,
+            sourceType: 'live-api',
+            ageInDays:  0,
+            metadata:   { ticker, change90d, approxVol, source: 'proxy-live-signals/AlphaVantage', note: 'vol derived from 90d return' },
+          };
+        }
+
+        if (data.stockData.rateLimited) {
+          console.warn('[stockVolatilityAgent] AlphaVantage rate-limited — heuristic fallback');
+        }
       }
-    } else {
-      console.info('[stockVolatilityAgent] No ticker available for', input.companyName, '— heuristic only');
+
+      if (error) {
+        console.warn('[stockVolatilityAgent] proxy-live-signals error:', error.message);
+      }
+    } catch (e: any) {
+      console.warn('[stockVolatilityAgent] proxy call failed:', e?.message);
     }
   }
 
-  // ── Heuristic fallback ─────────────────────────────────────────────────────
+  // ── Heuristic fallback (lower confidence explicitly signalled) ────────────
   const signal = heuristicVolatility(input);
   return {
     agentId:    'stockVolatilityAgent',
     category:   'market',
     signal,
-    confidence: input.companyData.isPublic ? 0.55 : 0.35,
+    // Confidence is lower when company is public but we could not get live data
+    // (suggests rate-limit or key misconfiguration) vs simply being private.
+    confidence: input.companyData.isPublic ? 0.42 : 0.30,
     sourceType: 'heuristic',
     ageInDays:  1,
-    metadata:   { usedField: 'stock90DayChange', fallback: true },
+    metadata:   { usedField: 'stock90DayChange', fallback: true, ticker: ticker ?? 'none' },
   };
 };
 

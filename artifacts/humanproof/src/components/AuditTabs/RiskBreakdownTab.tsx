@@ -17,10 +17,13 @@ import { SectionHeader } from "./common/SectionHeader";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { ProvenancePopover } from "@/components/ProvenancePopover";
 import { buildDimensionProvenance } from "../../services/dimensionProvenance";
+import { formatLayerNarrativeOrFallback } from "../../utils/layerNarrativeFormatter";
+import { SignalFreshnessDot } from "../SignalFreshnessDot";
 import type { CompanyData } from "../../data/companyDatabase";
 import type { TabProps } from "./common/types";
 // v12.0
 import { CareerPortfolioPanel } from "./common/CareerPortfolioPanel";
+import { SignalAttributionWaterfall } from "./common/SignalAttributionWaterfall";
 
 // ---------------------------------------------------------------------------
 // Dimension metadata — labels + weights + narrative generators
@@ -38,7 +41,7 @@ interface DimMeta {
   label: string;
   fullLabel: string;
   weight: number;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   narrativeLow: string;
   narrativeMid: string;
   narrativeHigh: string;
@@ -208,6 +211,20 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
     [dim.key, score, result, companyData],
   );
 
+  // v15.0: Replace static low/mid/high narrative with one composed from the
+  // actual top driver signals when provenance is available. The original
+  // hardcoded narrative remains the graceful fallback so the UI never blanks.
+  const composedNarrative = meta
+    ? formatLayerNarrativeOrFallback(
+        dim.key,
+        meta.fullLabel,
+        score,
+        narrative ?? '',
+        provenance,
+        companyData?.name ?? (result as any).companyName ?? undefined,
+      )
+    : narrative;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -293,6 +310,17 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
               {verdictLabel}
             </span>
             <ProvenancePopover provenance={provenance} fullLabel={meta?.fullLabel ?? dim.label} />
+            {/* v15.0 — Per-layer freshness dot summarising signal age. */}
+            {provenance && provenance.subSignals.length > 0 && (() => {
+              const stale = provenance.subSignals.some((s) =>
+                /(\d+)\s*day/.test(s.ageLabel) && Number(RegExp.$1) >= 30,
+              );
+              const aging = provenance.subSignals.some((s) =>
+                /(\d+)\s*day/.test(s.ageLabel) && Number(RegExp.$1) >= 14,
+              );
+              const cls = stale ? 'stale' : aging ? 'mid' : 'fresh';
+              return <SignalFreshnessDot freshnessClass={cls} />;
+            })()}
           </div>
         </div>
 
@@ -306,7 +334,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
           opacity: 0.7,
           transition: "opacity 0.2s",
         }} className="group-hover:opacity-100">
-          <Icon className="w-4 h-4" style={{ color: dimColor } as React.CSSProperties} />
+          <Icon className="w-4 h-4" style={{ color: dimColor }} />
         </div>
       </div>
 
@@ -348,7 +376,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
           paddingTop: "var(--space-3)",
           marginTop: "2px",
         }}>
-          {narrative}
+          {composedNarrative}
         </p>
       )}
     </motion.div>
@@ -693,6 +721,11 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
         {/* v12.0: Career Portfolio — risk concentration visualization */}
         <div className="mt-6">
           <CareerPortfolioPanel result={result} />
+        </div>
+
+        {/* v17.0: Signal Attribution Waterfall — which signals drove the final score */}
+        <div className="mt-6">
+          <SignalAttributionWaterfall result={result} />
         </div>
 
       </motion.div>

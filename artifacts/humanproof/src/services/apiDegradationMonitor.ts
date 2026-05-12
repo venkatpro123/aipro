@@ -17,9 +17,8 @@
 //   transient errors (timeout, network): 10 minutes
 //   auth_error: 24 hours
 
-// 'yahoo_finance' tracks calls made via proxy-live-signals (Yahoo Finance, no key required).
-// 'alphavantage' is kept for the localhost direct-key fallback path only.
-export type ApiService = 'alphavantage' | 'yahoo_finance' | 'newsapi' | 'serper' | 'openrouter' | 'supabase_osint';
+// 'alphavantage' covers all stock proxy calls — proxy-live-signals EF uses ALPHAVANTAGE_API_KEY.
+export type ApiService = 'alphavantage' | 'newsapi' | 'serper' | 'openrouter' | 'supabase_osint';
 
 export interface DegradationEvent {
   service: ApiService;
@@ -31,8 +30,7 @@ export interface DegradationEvent {
 // Per-API daily quota thresholds (free tier)
 // When session_request_count / DAILY_QUOTA >= WARN_FRACTION, show proactive warning.
 export const DAILY_QUOTAS: Partial<Record<ApiService, number>> = {
-  alphavantage:  25,  // Alpha Vantage free tier: 25 requests/day (localhost fallback only)
-  yahoo_finance: 50,  // Yahoo Finance via proxy — per-user safety rail (no hard cap, but be polite)
+  alphavantage:  25,  // Alpha Vantage free tier: 25 requests/day
   newsapi:       100, // NewsAPI free tier: 100 requests/day
   serper:        100, // Serper free tier varies; 100 is conservative
 };
@@ -43,6 +41,14 @@ const COUNTER_KEY    = 'hp_api_request_counts';
 const MAX_EVENTS     = 50;
 const TRANSIENT_WINDOW_MS  = 10  * 60 * 1000;  // 10 minutes for timeouts/network
 const RATE_LIMIT_WINDOW_MS = 24  * 60 * 60 * 1000; // 24 hours for quota events
+
+// Circuit-breaker bridge — these four services have a cross-session circuit
+// breaker that writes to the shared `api_circuit_status` table. Recording a
+// degradation event for one of them also advances the breaker state so other
+// sessions and Edge Functions immediately know the API is unhealthy.
+const CIRCUIT_BACKED_SERVICES: ReadonlySet<ApiService> = new Set([
+  'alphavantage', 'newsapi', 'serper',
+]);
 
 // ── Record a failure ──────────────────────────────────────────────────────────
 
@@ -57,6 +63,18 @@ export function recordApiDegradation(
     events.push({ service, reason, timestamp: Date.now(), detail });
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
   } catch { /* storage unavailable */ }
+
+  // v22.0 — feed the cross-session circuit breaker for services it covers.
+  // Lazy-require to avoid an import cycle (apiCircuitBreaker imports from
+  // utils/supabase, which doesn't depend on this module).
+  if (CIRCUIT_BACKED_SERVICES.has(service)) {
+    try {
+      // Dynamic import resolves at module-load time; no top-level dep cycle.
+      void import('./apiCircuitBreaker').then(({ recordFailure }) => {
+        recordFailure(service as 'alphavantage' | 'newsapi' | 'serper', detail);
+      }).catch(() => { /* import failure non-fatal */ });
+    } catch { /* dynamic-import unsupported runtime — non-fatal */ }
+  }
 }
 
 // ── Per-session request counter ───────────────────────────────────────────────
@@ -124,8 +142,7 @@ export interface DegradationState {
 }
 
 const serviceLabels: Record<ApiService, string> = {
-  alphavantage:   'Alpha Vantage (stock data, localhost fallback)',
-  yahoo_finance:  'Stock proxy (Yahoo Finance via Edge Function)',
+  alphavantage:   'Alpha Vantage (stock data via proxy-live-signals EF, 25/day)',
   newsapi:        'NewsAPI (layoff news, 100/day free)',
   serper:         'Serper (hiring data)',
   openrouter:     'Multi-model LLM',
@@ -203,6 +220,33 @@ export function getDegradationState(): DegradationState {
 
 export function clearDegradationHistory(): void {
   try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+}
+
+// v21.0 — Sweep stale "feature-unconfigured" events that earlier builds wrote.
+// Two prior code paths recorded supabase_osint degradation for opt-in features
+// (WARN URLs not set, proxy-macro not deployed) that should be treated as
+// info-only. Those events now persist for 10 minutes and surface as
+// "Company Intelligence DB error" on every audit. Remove them on startup.
+const FEATURE_UNCONFIGURED_DETAILS = [
+  'warn_unconfigured',
+  'proxy-macro: not configured',
+  'proxy-macro: FRED_API_KEY',
+  'proxy-macro: 404',
+  'proxy-macro: not found',
+];
+export function pruneFeatureUnconfiguredEvents(): void {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const events: DegradationEvent[] = JSON.parse(raw);
+    const cleaned = events.filter((e) => {
+      const d = (e.detail ?? '').toLowerCase();
+      return !FEATURE_UNCONFIGURED_DETAILS.some((m) => d.includes(m.toLowerCase()));
+    });
+    if (cleaned.length !== events.length) {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(cleaned));
+    }
+  } catch { /* ignore */ }
 }
 
 export function isRateLimitError(error: any): boolean {

@@ -496,9 +496,18 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
 
   // ── Company search with debounce — queries Supabase 2000-company table first ──
   // Resolution order: Supabase (2000 companies) → local bridge (50) → Clearbit (name/logo only)
+  // v13.0 fix: AbortController cancels in-flight requests when the query changes,
+  // preventing stale results from a slow previous request from overwriting fresh ones.
   useEffect(() => {
+    const controller = new AbortController();
     const tid = setTimeout(async () => {
       if (!companySearch || companySearch.length < 2 || selectedCompany) {
+        setSearchResults([]);
+        return;
+      }
+      // Reject queries that are pure whitespace or excessively long (prevents ILIKE abuse)
+      const trimmed = companySearch.trim();
+      if (trimmed.length === 0 || trimmed.length > 100) {
         setSearchResults([]);
         return;
       }
@@ -587,9 +596,15 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         } catch (_) { /* Clearbit unavailable */ }
       }
 
-      setSearchResults(merged.slice(0, 10));
+      // Only update state if this request was not cancelled by a newer search
+      if (!controller.signal.aborted) {
+        setSearchResults(merged.slice(0, 10));
+      }
     }, 300);
-    return () => clearTimeout(tid);
+    return () => {
+      clearTimeout(tid);
+      controller.abort(); // cancel any in-flight async operations from this effect
+    };
   }, [companySearch, selectedCompany]);
 
 

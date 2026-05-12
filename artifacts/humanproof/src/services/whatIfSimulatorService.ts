@@ -51,6 +51,10 @@ export interface WhatIfSimulationInputs {
   currentScore: number;
   breakdown: ScoreBreakdown;
   activeLevers: ActiveLever[];
+  /** D8 value from breakdown — used to compute the uncontrollable AI-efficiency gap */
+  d8Value?: number;
+  /** Age in days of the oldest signal in the breakdown — triggers freshness warning when >30 */
+  dataFreshnessAgeInDays?: number;
 }
 
 export interface DimensionImpact {
@@ -71,6 +75,11 @@ export interface WhatIfSimulationResult {
   /** 0–100: how achievable are the selected lever improvements? */
   feasibilityScore: number;
   estimatedTimeToAchieve: string;
+  /** Score pts from D8 (AI-efficiency restructuring) that personal actions cannot reduce.
+   *  Present when D8 is elevated (>0.3); undefined otherwise. */
+  d8Gap?: number;
+  /** Warning when signal data is stale (>30 days old) */
+  dataFreshnessWarning?: string;
 }
 
 // Dimension labels for display
@@ -183,6 +192,16 @@ export function computeWhatIf(inputs: WhatIfSimulationInputs): WhatIfSimulationR
     })[0] ?? '3–6 months';
   }
 
+  // D8 gap: score points from AI-efficiency restructuring that no personal action can reduce.
+  // D8 uses COMPOSITE_FORMULA_WEIGHTS.D8 = 0.05; compute direct contribution as d8Raw × 0.05 × 100.
+  const d8Raw = inputs.d8Value ?? (inputs.breakdown as any).D8 ?? 0;
+  const d8Gap = d8Raw > 0.3 ? Math.round(d8Raw * 0.05 * 100) : undefined;
+
+  // Data freshness warning when signal data is stale
+  const dataFreshnessWarning = (inputs.dataFreshnessAgeInDays != null && inputs.dataFreshnessAgeInDays > 30)
+    ? `Signal data is ${inputs.dataFreshnessAgeInDays} days old — simulated improvements may not reflect current conditions.`
+    : undefined;
+
   return {
     simulatedScore,
     scoreDelta,
@@ -192,5 +211,7 @@ export function computeWhatIf(inputs: WhatIfSimulationInputs): WhatIfSimulationR
     dimensionImpacts,
     feasibilityScore,
     estimatedTimeToAchieve: longestTime || 'Under 3 months',
+    d8Gap,
+    dataFreshnessWarning,
   };
 }

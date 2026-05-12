@@ -38,6 +38,7 @@ export interface PersonalizedActionSet {
   riskLevel: RiskLevel;
   actions: Array<Partial<ActionPlanItem>>;
   indiaSpecificContext?: string;
+  companyContextNote?: string;   // v13.0: company-type strategic frame
 }
 
 // ─── Role Prefix → Group Mapping ─────────────────────────────────────────────
@@ -1701,6 +1702,40 @@ ACTION_DB.support_engineer = compactPool(
   },
 );
 
+// ─── Company context injection ────────────────────────────────────────────────
+// v13.0 accuracy fix: action plans previously had zero company differentiation.
+// Injecting an archetype-based context note that surfaces the RIGHT strategic
+// frame for each company situation BEFORE the role-specific actions.
+// This does NOT restructure the ACTION_DB (too costly), but adds meaningful
+// framing so a Google engineer in "maintain" mode gets different guidance than
+// a startup engineer in "exit urgency" mode.
+
+export type CompanyActionContext =
+  | 'ai_efficiency_restructuring'  // Profitable company cutting via AI (Meta, Google 2024–2025)
+  | 'financial_distress'           // Revenue decline, cash burn, or stock drop >20%
+  | 'sector_wave'                  // 3+ peer companies cut in last 90 days
+  | 'startup_runway_critical'      // Early-stage with <12 months runway
+  | 'stable_top_employer'          // Low risk, well-resourced, high-brand company
+  | 'stable_growth'                // Healthy mid-size, growing revenue, no layoffs
+  | 'unknown';
+
+const COMPANY_CONTEXT_GUIDANCE: Record<CompanyActionContext, (score: number, company?: string) => string> = {
+  ai_efficiency_restructuring: (score, company) =>
+    `AI efficiency context at ${company ?? 'your company'}: This type of restructuring targets roles with high task automatability, not financial distress. Your first priority is demonstrating AI co-creation skills — build and ship one AI-augmented artifact in your domain within 30 days. Engineers who automate their own work survive these cycles; those who don't often don't.`,
+  financial_distress: (score, company) =>
+    `Financial distress context at ${company ?? 'your company'}: When revenue is declining, companies cut fast and broadly. ${score >= 70 ? 'With your current risk score, do not wait for an announcement — begin your job search in parallel with your current role today.' : 'Monitor the signals closely and have your resume and LinkedIn updated within the week.'}`,
+  sector_wave: (_score, company) =>
+    `Sector contagion context: Multiple peers of ${company ?? 'your company'} have cut headcount recently. Sector waves typically complete within 90 days of the first announcement. Candidates who enter the market BEFORE the wave's peak compete against fewer people. If you are considering a move, the best window is now — not after your company announces.`,
+  startup_runway_critical: (_score, company) =>
+    `Startup context at ${company ?? 'your company'}: With limited runway, the calculus is different from large-company layoffs — roles can disappear with 30 days notice or less. Do not wait for official signals. Update your CV and begin warm outreach to your network this week. Target companies with confirmed Series B+ funding or profitable growth.`,
+  stable_top_employer: (_score, company) =>
+    `Stable employer context at ${company ?? 'your company'}: Your risk score is elevated for a company of this stability, suggesting the risk is concentrated in your specific role or department rather than company-wide. Focus on demonstrating irreplaceable contribution at the team level and proactively transition toward AI-adjacent work. Do not panic-exit — the grass is rarely greener.`,
+  stable_growth: (_score, company) =>
+    `Growth company context at ${company ?? 'your company'}: Company-level signals are stable. If your risk score is elevated, the risk is in your specific role (automation trend) or performance tier. Prioritize skill differentiation over job search — a proactive internal transition or skill upgrade is higher ROI than jumping ship in a healthy company.`,
+  unknown: (_score, company) =>
+    `Note: ${company ? `Detailed intelligence on ${company} is limited` : 'Company data is limited'} — the score reflects sector and role baselines rather than company-specific signals. Treat this as a directional estimate; verify recent news about your company before acting.`,
+};
+
 // ─── Main entry point ─────────────────────────────────────────────────────────
 
 export function getPersonalizedActions(
@@ -1708,6 +1743,8 @@ export function getPersonalizedActions(
   seniorityBracket: SeniorityBracket,
   score: number,
   region?: string,
+  companyContext?: CompanyActionContext,
+  companyName?: string,
 ): PersonalizedActionSet {
   const roleGroup = resolveRoleGroup(roleTitle);
   const riskLevel = scoreToRiskLevel(score);
@@ -1716,6 +1753,10 @@ export function getPersonalizedActions(
   const bracketPool = ACTION_DB[roleGroup] ?? ACTION_DB['swe'];
   const seniorityPool = bracketPool[seniorityBracket] ?? bracketPool['mid'];
   const actions = (seniorityPool[riskLevel] ?? seniorityPool['high'] ?? []).slice(0, 3);
+
+  // Company context guidance note — injected as first priority action when present
+  const contextGuidanceFn = COMPANY_CONTEXT_GUIDANCE[companyContext ?? 'unknown'];
+  const companyContextNote = contextGuidanceFn(score, companyName);
 
   // India-specific context note appended to the action set
   let indiaSpecificContext: string | undefined;
@@ -1734,6 +1775,7 @@ export function getPersonalizedActions(
     riskLevel,
     actions: actions as Array<Partial<ActionPlanItem>>,
     indiaSpecificContext,
+    companyContextNote,
   };
 }
 

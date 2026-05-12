@@ -16,7 +16,7 @@
 
 import type { CompetitiveIntelligenceResult } from './competitiveIntelligenceEngine';
 import type { FinancialRunwayResult } from './financialRunwayIntelligence';
-import type { RunwayTier } from './financialRunwayIntelligence';
+
 
 export interface NegotiationIntelligenceInputs {
   competitiveIntelligence: CompetitiveIntelligenceResult;
@@ -133,7 +133,7 @@ export function computeNegotiationIntelligence(
   else if (leverageScore >= 25) leverageRating = 'WEAK';
   else leverageRating = 'NONE';
 
-  const batnaStrength = buildBatnaStrength(marketTightness, competitiveIntelligence.weeksToOffer);
+  const batnaStrength = buildBatnaStrength(marketTightness, (competitiveIntelligence as any).estimatedWeeksToOffer ?? 8);
   const { tactic, specificAsk } = buildTacticAndAsk(leverageRating, marketTightness, runwayTier, performanceTier, industry, tenureYears);
   const timingWindow = buildTimingWindow(runwayTier, leverageRating, performanceTier);
   const scripts = buildScripts(leverageRating, specificAsk, marketTightness, tenureYears);

@@ -1,17 +1,32 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import { motion } from "framer-motion";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Link,
-  NavLink,
   useNavigate,
   useLocation,
 } from "react-router-dom";
-// import "./index.css"; // Removed to prevent PostCSS @import duplication
 import { LiquidAIBackground } from "./components/LiquidAIBackground";
+import {
+  Search,
+  LayoutDashboard,
+  TrendingUp,
+  Sparkles,
+  MoreHorizontal,
+  ShieldCheck,
+  GraduationCap,
+  Award,
+  Settings,
+  LogOut,
+  LogIn,
+  Sun,
+  Moon,
+  ArrowUpRight,
+} from "lucide-react";
 
-// Pages — critical loads (no intelligence data, renders fast on mobile)
+// Pages — critical loads
 import HomePage from "./pages/HomePage";
 import PricingPage from "./pages/PricingPage";
 import { AboutPage } from "./pages/AboutPage";
@@ -23,27 +38,18 @@ import NotFoundPage from "./pages/not-found";
 import SettingsPage from "./pages/SettingsPage";
 import TeamDashboardPage from "./pages/TeamDashboardPage";
 
-// Pages — lazy-loaded
-// AuditTerminalPage pulls the full intelligence module (371 roles, 842KB raw / 187KB gzip).
-// Lazy-loading it removes that data from the initial bundle, saving ~430ms p95 TTI
-// on 4G India. The Suspense fallback below shows a spinner until the chunk arrives.
+// Pages — lazy-loaded (career-intelligence chunk 187KB gzip)
 const AuditTerminalPage = lazy(() => import("./pages/AuditTerminalPage"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const SafeCareersPage = lazy(() =>
-  import("./pages/SafeCareersPage").then((m) => ({
-    default: m.SafeCareersPage,
-  })),
+  import("./pages/SafeCareersPage").then((m) => ({ default: m.SafeCareersPage })),
 );
 const CareerDetailPage = lazy(() =>
-  import("./pages/CareerDetailPage").then((m) => ({
-    default: m.CareerDetailPage,
-  })),
+  import("./pages/CareerDetailPage").then((m) => ({ default: m.CareerDetailPage })),
 );
 const LearningHubPage = lazy(() =>
-  import("./pages/LearningHubPage").then((m) => ({
-    default: m.LearningHubPage,
-  })),
+  import("./pages/LearningHubPage").then((m) => ({ default: m.LearningHubPage })),
 );
 const AuditLogPage = lazy(() =>
   import("./pages/AuditLogPage").then((m) => ({ default: m.AuditLogPage })),
@@ -56,12 +62,14 @@ const IntelligenceReportPage = lazy(() => import("./pages/IntelligenceReportPage
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
+import { ProfileSetupModal } from "./components/ProfileSetupModal";
 import { LayoffProvider } from "./context/LayoffContext";
 import { AuthProvider } from "./context/AuthContext";
 import { digestAPI } from "./utils/apiClient";
 import { useAuth } from "./context/AuthContext";
 import { AuthModal } from "./components/AuthModal";
 import { ToastProvider } from "./components/Toast";
+import { RealtimeSignalToast } from "./components/audit/RealtimeSignalToast";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
 import { useCloudSync } from "./hooks/useCloudSync";
 import { useBreakingNewsPoller } from "./hooks/useBreakingNewsPoller";
@@ -70,27 +78,26 @@ import { getScoreHistory } from "./utils/scoreStorage";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { LanguageSelector } from "./components/LanguageSelector";
 import { applyWhiteLabelCssVars, getWhiteLabelConfig } from "./services/whiteLabelService";
-import { track, page as trackPage, identify } from "./services/analyticsService";
-import { getVariant, trackExposure } from "./services/experimentsService";
+import { page as trackPage, identify } from "./services/analyticsService";
 import { Toaster as SonnerToaster } from "./components/ui/sonner";
 
-// ─── Page Loader ──────────────────────────────────────────────────────────────
+// ─── Page Loader ─────────────────────────────────────────────────────────────
 function PageLoader() {
   return (
     <div className="min-h-[50vh] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="spinner" />
-        <span className="label-xs text-[var(--text-3)]">Loading module...</span>
+        <span className="label-xs" style={{ color: "var(--text-3)" }}>Loading module…</span>
       </div>
     </div>
   );
 }
 
-// ─── Scroll To Top on route change ───────────────────────────────────────────
+// ─── Scroll To Top ────────────────────────────────────────────────────────────
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
   return null;
 }
@@ -113,49 +120,65 @@ function NavigationBridge() {
     return () => window.removeEventListener("navigate", handleNav);
   }, [navigate]);
 
-  // Scroll reveal observer
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach(
-          (e) => e.isIntersecting && e.target.classList.add("vis"),
-        ),
+      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("vis")),
       { threshold: 0.08 },
     );
-
     const observe = () =>
-      document
-        .querySelectorAll(".reveal:not(.vis)")
-        .forEach((el) => observer.observe(el));
+      document.querySelectorAll(".reveal:not(.vis)").forEach((el) => observer.observe(el));
     observe();
     setTimeout(observe, 400);
-
     const main = document.querySelector("main") || document.body;
     const mo = new MutationObserver(observe);
     mo.observe(main, { childList: true, subtree: true });
-
-    return () => {
-      observer.disconnect();
-      mo.disconnect();
-    };
+    return () => { observer.disconnect(); mo.disconnect(); };
   }, [location.pathname]);
 
   return null;
 }
 
-// ─── Particle Canvas hook removed — replaced by LiquidAIBackground WebGL component ──
-
-// ─── App Navigation ───────────────────────────────────────────────────────────
+// ─── Nav helpers ──────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { to: "/", label: "Research" },
-  { to: "/terminal", label: "My Dashboard" },
-  { to: "/leaderboard", label: "Risk Index" },
-  { to: "/intelligence", label: "Intel" },
-  { to: "/safe-careers", label: "Safe List" },
-  { to: "/learning-hub", label: "Upskill" },
-  { to: "/certification", label: "Certify" },
+  { to: "/",            label: "Research"    },
+  { to: "/terminal",    label: "Dashboard"   },
+  { to: "/leaderboard", label: "Risk Index"  },
+  { to: "/intelligence",label: "Intel"       },
+  { to: "/safe-careers",label: "Safe List"   },
+  { to: "/learning-hub",label: "Upskill"     },
+  { to: "/certification",label: "Certify"   },
 ];
 
+const MOBILE_PRIMARY = [
+  { to: "/",            label: "Research",  Icon: Search         },
+  { to: "/terminal",    label: "Dashboard", Icon: LayoutDashboard},
+  { to: "/leaderboard", label: "Risk",      Icon: TrendingUp     },
+  { to: "/intelligence",label: "Intel",     Icon: Sparkles       },
+];
+
+const MOBILE_MORE = [
+  { to: "/safe-careers", label: "Safe List", Icon: ShieldCheck      },
+  { to: "/learning-hub", label: "Upskill",   Icon: GraduationCap    },
+  { to: "/certification",label: "Certify",   Icon: Award            },
+];
+
+function useIsActive() {
+  const location = useLocation();
+  return (to: string) => {
+    if (to === "/" && location.pathname === "/") return true;
+    if (to !== "/" && location.pathname.startsWith(to)) return true;
+    return false;
+  };
+}
+
+// ─── Theme Toggle Icon ────────────────────────────────────────────────────────
+function ThemeIcon({ isDark }: { isDark: boolean }) {
+  return isDark
+    ? <Sun size={15} strokeWidth={2} />
+    : <Moon size={15} strokeWidth={2} />;
+}
+
+// ─── Desktop/Tablet Navigation ────────────────────────────────────────────────
 function AppNav({
   isDark,
   toggleTheme,
@@ -166,9 +189,9 @@ function AppNav({
   onAuthOpen: () => void;
 }) {
   const { user, signOut } = useAuth();
-  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const isActive = useIsActive();
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -176,47 +199,43 @@ function AppNav({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => setMobileOpen(false), [location.pathname]);
-
-  const isActive = (to: string) => {
-    if (to === "/" && location.pathname === "/") return true;
-    if (to !== "/" && location.pathname.startsWith(to)) return true;
-    return false;
-  };
-
   return (
     <header className="nav-root" style={{ zIndex: 1000 }}>
-      <nav className={`nav-inner${scrolled ? ' scrolled' : ''}`}>
+      <nav className={`nav-inner${scrolled ? " scrolled" : ""}`}>
+        {/* Logo */}
         <Link to="/" className="nav-logo" style={{ textDecoration: "none" }}>
           <span className="nav-logo-dot" />
           HumanShield
         </Link>
 
-        {/* Desktop nav */}
-        <ul
-          className="nav-links"
-          style={{
-            listStyle: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
-          {NAV_ITEMS.map((item) => (
-            <li key={item.to}>
-              <Link
-                to={item.to}
-                className={`nav-link ${isActive(item.to) ? "active" : ""}`}
-                style={{ textDecoration: "none" }}
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
+        {/* Desktop nav links */}
+        <ul className="nav-links" style={{ listStyle: "none", display: "flex", alignItems: "center", gap: "2px" }}>
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.to);
+            return (
+              <li key={item.to} style={{ position: "relative" }}>
+                {/* Framer Motion layoutId pill — slides between nav items */}
+                {active && (
+                  <motion.div
+                    layoutId="nav-active-pill"
+                    className="nav-active-pill"
+                    transition={{ type: "spring", stiffness: 380, damping: 36 }}
+                  />
+                )}
+                <Link
+                  to={item.to}
+                  className={`nav-link${active ? " active" : ""}`}
+                  style={{ textDecoration: "none", position: "relative", zIndex: 1 }}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="nav-actions">
-          {/* Desktop-only items */}
+          {/* Desktop actions */}
           <div className="nav-desktop-actions">
             <LanguageSelector />
             <button
@@ -225,94 +244,241 @@ function AppNav({
               title={isDark ? "Switch to light mode" : "Switch to dark mode"}
               aria-label="Toggle theme"
             >
-              {isDark ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
+              <ThemeIcon isDark={isDark} />
             </button>
             {user ? (
               <>
-                <span className="nav-user-email">{user.email?.split("@")[0]}</span>
-                <Link to="/settings" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>Settings</Link>
-                <button onClick={() => signOut()} className="btn btn-secondary btn-sm">Sign out</button>
+                {/* Premium user avatar pill */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "4px 12px 4px 4px",
+                  borderRadius: "var(--radius-full)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.09)",
+                }}>
+                  <div style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, var(--cyan) 0%, #7c3aed 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.65rem",
+                    fontWeight: 800,
+                    color: "#000",
+                    flexShrink: 0,
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "-0.02em",
+                  }}>
+                    {(user.email?.[0] ?? "U").toUpperCase()}
+                  </div>
+                  <span className="nav-user-email" style={{ margin: 0 }}>
+                    {user.email?.split("@")[0]}
+                  </span>
+                </div>
+                <Link to="/settings" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
+                  Settings
+                </Link>
+                <button onClick={() => signOut()} className="btn btn-ghost btn-sm">
+                  Sign out
+                </button>
               </>
             ) : (
-              <button onClick={onAuthOpen} className="btn btn-primary btn-sm">Get Access</button>
+              <button onClick={onAuthOpen} className="btn btn-primary btn-sm shimmer-sweep">
+                Get Access
+              </button>
             )}
           </div>
 
-          {/* Mobile: theme + hamburger only */}
+          {/* Mobile compact bar — theme + auth pill only (bottom nav handles routing) */}
           <div className="nav-mobile-actions">
             <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
-              {isDark ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                </svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
+              <ThemeIcon isDark={isDark} />
             </button>
-            <button
-              className="theme-toggle"
-              id="mobile-menu-btn"
-              onClick={() => setMobileOpen((p) => !p)}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={mobileOpen}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                {mobileOpen ? (
-                  <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
-                ) : (
-                  <><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></>
-                )}
-              </svg>
-            </button>
+            {user ? (
+              <Link
+                to="/settings"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 34,
+                  height: 34,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, var(--cyan) 0%, #7c3aed 100%)",
+                  color: "#000",
+                  textDecoration: "none",
+                  fontSize: "0.7rem",
+                  fontWeight: 800,
+                  fontFamily: "var(--font-display)",
+                }}
+                aria-label="Settings"
+              >
+                {(user.email?.[0] ?? "U").toUpperCase()}
+              </Link>
+            ) : (
+              <button
+                onClick={onAuthOpen}
+                className="btn btn-primary btn-sm"
+                style={{ height: 34, padding: "0 14px", fontSize: "0.78rem" }}
+              >
+                Sign in
+              </button>
+            )}
           </div>
         </div>
       </nav>
+    </header>
+  );
+}
 
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="mobile-drawer" role="navigation" aria-label="Mobile navigation">
-          {NAV_ITEMS.map((item) => (
-            <Link key={item.to} to={item.to} className={`nav-link ${isActive(item.to) ? 'active' : ''}`} style={{ textDecoration: 'none' }}>
-              {item.label}
+// ─── Mobile Bottom Navigation ─────────────────────────────────────────────────
+function MobileBottomNav({
+  isDark,
+  toggleTheme,
+  onAuthOpen,
+}: {
+  isDark: boolean;
+  toggleTheme: () => void;
+  onAuthOpen: () => void;
+}) {
+  const { user, signOut } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const isActive = useIsActive();
+  const location = useLocation();
+
+  useEffect(() => { setMoreOpen(false); }, [location.pathname]);
+
+  return (
+    <>
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        {MOBILE_PRIMARY.map(({ to, label, Icon }) => {
+          const active = isActive(to);
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={`bottom-nav-item${active ? " active" : ""}`}
+              style={{ textDecoration: "none" }}
+              onClick={() => {
+                if (navigator.vibrate) navigator.vibrate(8);
+              }}
+            >
+              <motion.div
+                className="bottom-nav-icon-wrap"
+                animate={active ? { scale: 1.10, y: -3 } : { scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 420, damping: 22 }}
+              >
+                <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+              </motion.div>
+              <span className="bottom-nav-label">{label}</span>
             </Link>
-          ))}
-          <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          );
+        })}
+        <button
+          className={`bottom-nav-item${moreOpen ? " active" : ""}`}
+          onClick={() => {
+            setMoreOpen((p) => !p);
+            if (navigator.vibrate) navigator.vibrate(8);
+          }}
+          aria-label="More navigation"
+          aria-expanded={moreOpen}
+        >
+          <motion.div
+            className="bottom-nav-icon-wrap"
+            animate={moreOpen ? { scale: 1.10, y: -3 } : { scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 420, damping: 22 }}
+          >
+            <MoreHorizontal size={20} strokeWidth={1.8} />
+          </motion.div>
+          <span className="bottom-nav-label">More</span>
+        </button>
+      </nav>
+
+      {/* More Sheet Overlay */}
+      {moreOpen && (
+        <>
+          <div
+            className="more-overlay"
+            onClick={() => setMoreOpen(false)}
+            aria-hidden
+          />
+          <div className="more-sheet" role="dialog" aria-label="More options">
+            <div className="more-sheet-handle" />
+            <p className="more-sheet-title">More pages</p>
+
+            {/* Icon grid — secondary nav items */}
+            <div className="more-sheet-grid">
+              {MOBILE_MORE.map(({ to, label, Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`more-sheet-icon-item${isActive(to) ? " active" : ""}`}
+                  style={{ textDecoration: "none" }}
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <Icon size={22} strokeWidth={1.8} />
+                  <span>{label}</span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="more-sheet-divider" />
+            <p className="more-sheet-title" style={{ paddingBottom: 8 }}>Settings</p>
+
+            {/* Theme row */}
+            <button className="more-sheet-row" onClick={toggleTheme}>
+              {isDark
+                ? <Sun size={18} strokeWidth={1.8} style={{ color: "var(--amber)", flexShrink: 0 }} />
+                : <Moon size={18} strokeWidth={1.8} style={{ color: "var(--cyan)", flexShrink: 0 }} />
+              }
+              <span style={{ flex: 1 }}>{isDark ? "Light mode" : "Dark mode"}</span>
+            </button>
+
+            {/* Auth rows */}
             {user ? (
               <>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0 4px' }}>{user.email}</span>
-                <Link to="/settings" className="nav-link" style={{ textDecoration: 'none' }} onClick={() => setMobileOpen(false)}>Settings</Link>
-                <button onClick={() => { signOut(); setMobileOpen(false); }} className="nav-link" style={{ textAlign: 'left', cursor: 'pointer' }}>Sign out</button>
+                <Link
+                  to="/settings"
+                  className="more-sheet-row"
+                  style={{ textDecoration: "none" }}
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <Settings size={18} strokeWidth={1.8} style={{ color: "var(--text-3)", flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>Settings</span>
+                  <ArrowUpRight size={14} style={{ color: "var(--text-3)" }} />
+                </Link>
+                <button
+                  className="more-sheet-row"
+                  onClick={() => { signOut(); setMoreOpen(false); }}
+                >
+                  <LogOut size={18} strokeWidth={1.8} style={{ color: "var(--red)", flexShrink: 0 }} />
+                  <span style={{ flex: 1, color: "var(--red)" }}>Sign out</span>
+                </button>
               </>
             ) : (
-              <button onClick={() => { onAuthOpen(); setMobileOpen(false); }} className="btn btn-primary btn-sm" style={{ width: '100%' }}>Get Access</button>
+              <button
+                className="more-sheet-row"
+                onClick={() => { onAuthOpen(); setMoreOpen(false); }}
+              >
+                <LogIn size={18} strokeWidth={1.8} style={{ color: "var(--cyan)", flexShrink: 0 }} />
+                <span style={{ flex: 1, color: "var(--cyan)" }}>Sign in / Get Access</span>
+              </button>
             )}
           </div>
-        </div>
+        </>
       )}
-    </header>
+    </>
   );
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function AppFooter() {
   const [email, setEmail] = useState("");
-  const [subStatus, setSubStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
+  const [subStatus, setSubStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,133 +495,127 @@ function AppFooter() {
     }
   };
 
+  const footerLinks = {
+    platform: [
+      { to: "/terminal",     label: "Risk Oracle"   },
+      { to: "/learning-hub", label: "Learning Hub"  },
+      { to: "/safe-careers", label: "Safe Careers"  },
+      { to: "/leaderboard",  label: "Risk Index"    },
+      { to: "/about",        label: "About"         },
+    ],
+    legal: [
+      { to: "/privacy",   label: "Privacy Policy" },
+      { to: "/terms",     label: "Terms of Use"   },
+      { to: "/audit-log", label: "Audit Log"      },
+      { to: "/blog",      label: "Blog"           },
+      { to: "/contact",   label: "Contact"        },
+    ],
+  };
+
   return (
     <footer className="footer-root">
       <div className="container">
+        {/* Top divider with gradient */}
+        <div style={{
+          height: 1,
+          background: "linear-gradient(90deg, transparent, rgba(0,212,224,0.2) 30%, rgba(255,255,255,0.06) 50%, rgba(0,212,224,0.2) 70%, transparent)",
+          marginBottom: 56,
+        }} />
+
         <div
           className="footer-grid"
           style={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr',
-            gap: '48px',
-            marginBottom: '48px',
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr 1fr",
+            gap: "48px",
+            marginBottom: "48px",
           }}
         >
-          {/* Brand */}
+          {/* Brand col */}
           <div>
-            <div
+            <Link
+              to="/"
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                marginBottom: "16px",
+                gap: 8,
+                marginBottom: 16,
+                textDecoration: "none",
               }}
             >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  background: "var(--cyan)",
-                  borderRadius: "50%",
-                  display: "block",
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 900,
-                  fontSize: "1rem",
-                  color: "var(--text)",
-                  letterSpacing: "-0.04em",
-                }}
-              >
+              <span style={{
+                width: 8,
+                height: 8,
+                background: "var(--cyan)",
+                borderRadius: "50%",
+                display: "block",
+                boxShadow: "0 0 10px var(--cyan)",
+              }} />
+              <span style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 900,
+                fontSize: "1.05rem",
+                color: "var(--text)",
+                letterSpacing: "-0.04em",
+              }}>
                 HumanShield
               </span>
-            </div>
-            <p
-              style={{
-                color: "var(--text-2)",
-                fontSize: "0.875rem",
-                lineHeight: 1.7,
-                maxWidth: "320px",
-                marginBottom: "24px",
-              }}
-            >
+            </Link>
+            <p style={{
+              color: "var(--text-2)",
+              fontSize: "0.875rem",
+              lineHeight: 1.75,
+              maxWidth: 300,
+              marginBottom: 24,
+            }}>
               The high-fidelity standard for career protection in the AI era.
-              Powered by state-of-the-art frontier AI systems and verified
-              global research.
+              Powered by frontier AI systems and verified global research.
             </p>
-            <form
-              onSubmit={handleSubscribe}
-              style={{ display: "flex", maxWidth: "320px", gap: "8px" }}
-            >
+
+            {/* Newsletter form */}
+            <form onSubmit={handleSubscribe} style={{ display: "flex", maxWidth: 300, gap: 8 }}>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 className="input"
-                style={{ flex: 1, fontSize: "0.8rem", padding: "10px 14px" }}
+                style={{ flex: 1, fontSize: "0.82rem", height: 42, padding: "0 14px" }}
               />
               <button
                 type="submit"
-                className="btn btn-black"
                 disabled={subStatus === "loading"}
                 style={{
-                  background:
-                    subStatus === "success" ? "var(--emerald)" : "var(--text)",
+                  background: subStatus === "success" ? "var(--emerald)" : "var(--text)",
                   color: "var(--bg)",
-                  padding: "10px 16px",
-                  borderRadius: "12px",
+                  padding: "0 16px",
+                  height: 42,
+                  borderRadius: "var(--radius-lg)",
                   fontWeight: 700,
-                  fontSize: "0.75rem",
+                  fontSize: "0.78rem",
                   cursor: "pointer",
                   border: "none",
                   flexShrink: 0,
-                  transition: "all 250ms",
+                  transition: "all 250ms var(--ease-out)",
+                  letterSpacing: "-0.01em",
                 }}
               >
-                {subStatus === "loading"
-                  ? "..."
-                  : subStatus === "success"
-                    ? "✓"
-                    : "Subscribe"}
+                {subStatus === "loading" ? "…" : subStatus === "success" ? "✓ Done" : "Subscribe"}
               </button>
             </form>
             {subStatus === "error" && (
-              <p
-                style={{
-                  color: "var(--red)",
-                  fontSize: "0.75rem",
-                  marginTop: "8px",
-                }}
-              >
-                Failed. Try again.
+              <p style={{ color: "var(--red)", fontSize: "0.75rem", marginTop: 8 }}>
+                Failed. Please try again.
               </p>
             )}
           </div>
 
-          {/* Protocol links */}
+          {/* Platform links */}
           <div>
-            <h4 className="label-xs" style={{ marginBottom: "20px" }}>
-              Platform
-            </h4>
-            <ul
-              style={{
-                listStyle: "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              {[
-              { to: "/terminal", label: "Risk Oracle" },
-                { to: "/terminal", label: "Audit Terminal" },
-                { to: "/learning-hub", label: "Learning Hub" },
-                { to: "/safe-careers", label: "Safe Careers" },
-                { to: "/about", label: "About" },
-              ].map((l) => (
-                <li key={l.to}>
+            <h4 className="label-xs" style={{ marginBottom: 20, color: "var(--text-3)" }}>Platform</h4>
+            <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
+              {footerLinks.platform.map((l) => (
+                <li key={l.label}>
                   <Link
                     to={l.to}
                     style={{
@@ -463,14 +623,13 @@ function AppFooter() {
                       textDecoration: "none",
                       fontSize: "0.875rem",
                       fontWeight: 500,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
                       transition: "color 150ms",
                     }}
-                    onMouseEnter={(e) =>
-                      ((e.target as any).style.color = "var(--text)")
-                    }
-                    onMouseLeave={(e) =>
-                      ((e.target as any).style.color = "var(--text-2)")
-                    }
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text)")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-2)")}
                   >
                     {l.label}
                   </Link>
@@ -479,27 +638,12 @@ function AppFooter() {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Legal links */}
           <div>
-            <h4 className="label-xs" style={{ marginBottom: "20px" }}>
-              Legal
-            </h4>
-            <ul
-              style={{
-                listStyle: "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              {[
-                { to: "/privacy", label: "Privacy Policy" },
-                { to: "/terms", label: "Terms of Use" },
-                { to: "/audit-log", label: "Audit Log" },
-                { to: "/blog", label: "Blog" },
-                { to: "/contact", label: "Contact" },
-              ].map((l) => (
-                <li key={l.to}>
+            <h4 className="label-xs" style={{ marginBottom: 20, color: "var(--text-3)" }}>Legal</h4>
+            <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
+              {footerLinks.legal.map((l) => (
+                <li key={l.label}>
                   <Link
                     to={l.to}
                     style={{
@@ -509,12 +653,8 @@ function AppFooter() {
                       fontWeight: 500,
                       transition: "color 150ms",
                     }}
-                    onMouseEnter={(e) =>
-                      ((e.target as any).style.color = "var(--text)")
-                    }
-                    onMouseLeave={(e) =>
-                      ((e.target as any).style.color = "var(--text-2)")
-                    }
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text)")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-2)")}
                   >
                     {l.label}
                   </Link>
@@ -524,29 +664,24 @@ function AppFooter() {
           </div>
         </div>
 
-        <div
-          style={{
-            borderTop: "1px solid var(--border)",
-            paddingTop: "24px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        {/* Bottom bar */}
+        <div style={{
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          paddingTop: 24,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
+        }}>
           <span style={{ color: "var(--text-3)", fontSize: "0.8rem" }}>
-            © {new Date().getFullYear()} HumanShield. All rights reserved.
+            © {new Date().getFullYear()} HumanShield · All rights reserved
           </span>
-          <div className="badge badge-cyan">
-            <span
-              style={{
-                width: 4,
-                height: 4,
-                background: "var(--cyan)",
-                borderRadius: "50%",
-                display: "inline-block",
-              }}
-            />
-            Live · Q1 2026 Dataset
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="badge badge-cyan">
+              <span style={{ width: 5, height: 5, background: "var(--cyan)", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 4px var(--cyan)" }} />
+              Live · Q1 2026 Dataset
+            </div>
           </div>
         </div>
       </div>
@@ -560,14 +695,10 @@ function AppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
 
-  useEffect(() => {
-    applyWhiteLabelCssVars(getWhiteLabelConfig());
-  }, []);
+  useEffect(() => { applyWhiteLabelCssVars(getWhiteLabelConfig()); }, []);
 
   useEffect(() => {
-    if (user?.id) {
-      identify(user.id, { email: user.email });
-    }
+    if (user?.id) identify(user.id, { email: user.email });
   }, [user?.id]);
 
   useEffect(() => {
@@ -575,15 +706,10 @@ function AppContent() {
     trackPage(location, { path: location });
   }, []);
 
-  // Speculative prefetch of the audit chunk after 3s of idle time.
-  // AuditTerminalPage is lazy-loaded, so the career-intelligence chunk (187KB gzip)
-  // is not part of the initial bundle. On 4G India the download takes ~430ms —
-  // prefetching it during idle time means the chunk is already in cache when the
-  // user navigates to /calculator, eliminating the wait.
-  // Uses requestIdleCallback when available (Chrome/Android); setTimeout fallback.
+  // Speculative prefetch of audit chunk after idle
   useEffect(() => {
     const prefetch = () => { import("./pages/AuditTerminalPage"); };
-    if (typeof requestIdleCallback !== 'undefined') {
+    if (typeof requestIdleCallback !== "undefined") {
       const id = requestIdleCallback(prefetch, { timeout: 3000 });
       return () => cancelIdleCallback(id);
     }
@@ -591,21 +717,10 @@ function AppContent() {
     return () => clearTimeout(id);
   }, []);
 
-  // Background cloud sync for scores
-  useCloudSync({
-    userId: user?.id,
-    enabled: !!user,
-    scoreEntries: getScoreHistory(),
-  });
-
-  // Breaking news RSS poll — runs on every page load (self-throttled to 15min).
+  useCloudSync({ userId: user?.id, enabled: !!user, scoreEntries: getScoreHistory() });
   useBreakingNewsPoller();
-
-  // Sync circuit breaker state from Supabase once per page load.
-  // Inherits any OPEN circuits triggered by other sessions or Edge Functions
-  // (e.g. Alpha Vantage quota hit by another user → circuit already OPEN for us).
   useEffect(() => {
-    syncCircuitStateFromSupabase().catch(() => { /* non-fatal */ });
+    syncCircuitStateFromSupabase().catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleTheme = () => {
@@ -616,46 +731,43 @@ function AppContent() {
     });
   };
 
+  const openAuth = () => setIsAuthOpen(true);
+
   return (
-    <div style={{ minHeight: '100vh', color: 'var(--text)', position: 'relative' }}>
-      {/* Background: static CSS gradient — no animation, no WebGL */}
+    <div style={{ minHeight: "100vh", color: "var(--text)", position: "relative" }}>
       <LiquidAIBackground />
       <ScrollToTop />
       <NavigationBridge />
 
-      <AppNav
-        isDark={isDark}
-        toggleTheme={toggleTheme}
-        onAuthOpen={() => setIsAuthOpen(true)}
-      />
+      <AppNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
 
       <main style={{ position: "relative", zIndex: 1 }}>
         <GlobalErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/calculator" element={<AuditTerminalPage />} />
-              <Route path="/terminal" element={<ToolsPage />} />
-              <Route path="/safe-careers" element={<SafeCareersPage />} />
-              <Route path="/career/:id" element={<CareerDetailPage />} />
-              <Route path="/learning-hub" element={<LearningHubPage />} />
-              <Route path="/audit-log" element={<AuditLogPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/blog" element={<BlogPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/team" element={<TeamDashboardPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/predictions" element={<PredictionLedgerPage />} />
-              <Route path="/intelligence" element={<CommunityIntelligencePage />} />
-              <Route path="/intelligence/report" element={<IntelligenceReportPage />} />
-              <Route path="/intelligence/report/:yearMonth" element={<IntelligenceReportPage />} />
-              <Route path="/certification" element={<CertificationPage />} />
-              <Route path="*" element={<NotFoundPage />} />
+              <Route path="/"                              element={<HomePage />} />
+              <Route path="/calculator"                    element={<AuditTerminalPage />} />
+              <Route path="/terminal"                      element={<ToolsPage />} />
+              <Route path="/safe-careers"                  element={<SafeCareersPage />} />
+              <Route path="/career/:id"                    element={<CareerDetailPage />} />
+              <Route path="/learning-hub"                  element={<LearningHubPage />} />
+              <Route path="/audit-log"                     element={<AuditLogPage />} />
+              <Route path="/products"                      element={<ProductsPage />} />
+              <Route path="/pricing"                       element={<PricingPage />} />
+              <Route path="/about"                         element={<AboutPage />} />
+              <Route path="/contact"                       element={<ContactPage />} />
+              <Route path="/privacy"                       element={<PrivacyPage />} />
+              <Route path="/terms"                         element={<TermsPage />} />
+              <Route path="/blog"                          element={<BlogPage />} />
+              <Route path="/settings"                      element={<SettingsPage />} />
+              <Route path="/team"                          element={<TeamDashboardPage />} />
+              <Route path="/leaderboard"                   element={<LeaderboardPage />} />
+              <Route path="/predictions"                   element={<PredictionLedgerPage />} />
+              <Route path="/intelligence"                  element={<CommunityIntelligencePage />} />
+              <Route path="/intelligence/report"           element={<IntelligenceReportPage />} />
+              <Route path="/intelligence/report/:yearMonth"element={<IntelligenceReportPage />} />
+              <Route path="/certification"                 element={<CertificationPage />} />
+              <Route path="*"                              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </GlobalErrorBoundary>
@@ -664,9 +776,10 @@ function AppContent() {
       <PWAInstallPrompt />
       <AppFooter />
 
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      {/* Mobile bottom nav — hidden on ≥769px via CSS */}
+      <MobileBottomNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
 
-      {/* Sonner toast portal — used by useCompanySignalSubscription for action-button toasts */}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <SonnerToaster position="bottom-right" richColors closeButton />
     </div>
   );
@@ -678,8 +791,12 @@ function App() {
     <Router>
       <AuthProvider>
         <HumanProofProvider>
+          <ProfileSetupModal />
           <LayoffProvider>
             <ToastProvider>
+              {/* Listens to breaking_news_events INSERTs and toasts the user
+                  when a recently-audited company has a new layoff event. */}
+              <RealtimeSignalToast />
               <AppContent />
             </ToastProvider>
           </LayoffProvider>

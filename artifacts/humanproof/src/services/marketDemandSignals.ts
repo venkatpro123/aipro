@@ -215,7 +215,7 @@ export function getMarketDemandSignals(
 
   // Adjust demand score based on company region
   const region = companyData.region ?? 'US';
-  const isIndia = region === 'IN' || region === 'India';
+  const isIndia = region === 'IN';
 
   return {
     ...baseData,

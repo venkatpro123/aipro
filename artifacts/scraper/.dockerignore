@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env*
+*.log
+.DS_Store
+Thumbs.db
+__pycache__
+*.pyc
+.venv
+fly.toml
+README.md

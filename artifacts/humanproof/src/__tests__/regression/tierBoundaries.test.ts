@@ -109,18 +109,24 @@ describe("Regression Tests - Tier Boundaries", () => {
     });
 
     it('Score 75-100 should be "High risk"', () => {
-      // Maximally distressed inputs: multiple layoff rounds, extreme revenue contraction,
-      // highest-displacement role, zero personal protection, sub-threshold tenure.
-      // The calibrated engine (L2 ×1.11, L3 ×0.93) reaches ~76 with these signals.
+      // Maximally distressed public company: severe revenue contraction (-50%),
+      // stock crash (-45%), 4 layoff rounds, zero personal protection, highest-
+      // displacement role. Three signals added in v17.1 to compensate for the
+      // D3 weight reduction (0.11→0.09):
+      //   1. isPublic: true  — activates the -45% stock signal in L1 (+~1.6 pts)
+      //   2. aiInvestmentSignal: "very_high" — maxes D2 AI tool maturity (+~0.8 pts)
+      //   3. liveHiringSignal frozen — pushes calibrated L3 to its ceiling (+~1.2 pts)
+      // Combined brings the score from ~71 (where the private-company variant lands)
+      // to ~75–77, firmly in the "High risk" tier.
       const inputs: ScoreInputs = {
         companyData: {
           name: "Collapsing Startup",
-          isPublic: false,
+          isPublic: true,               // activates stock90DayChange in L1 calculation
           industry: "Startups (pre-seed)",
           region: "US",
-          employeeCount: 500,           // overstaffing signal fires harder with headcount
+          employeeCount: 500,
           revenueGrowthYoY: -50,        // -50% YoY — severe contraction
-          stock90DayChange: -45,        // steep stock decline
+          stock90DayChange: -45,        // -45% crash → calibratedStockTrendRisk = 0.92
           layoffsLast24Months: [
             { date: "2026-03-01", percentCut: 40 },
             { date: "2025-09-01", percentCut: 25 },
@@ -128,9 +134,12 @@ describe("Regression Tests - Tier Boundaries", () => {
           layoffRounds: 4,
           lastLayoffPercent: 40,
           revenuePerEmployee: 30000,    // well below sector floor
-          aiInvestmentSignal: "high",   // AI replacing roles actively
+          aiInvestmentSignal: "very_high", // maxes D2 AI tool maturity
+          ceoTenureMonths: 3,           // new CEO — leadership instability (D7 signal 1)
+          cSuiteChanges12m: 4,          // mass executive exodus (D7 signal 2)
+          glassdoorTrendDirection: 'falling' as const, // deteriorating sentiment (D7 signal 4)
           source: "Test",
-          lastUpdated: "2026-04-01",
+          lastUpdated: "2026-05-10",
         },
         industryData: industryRiskData["Startups (pre-seed)"],
         roleTitle: "Data Entry Specialist",
@@ -143,6 +152,11 @@ describe("Regression Tests - Tier Boundaries", () => {
           hasRecentPromotion: false,
           hasKeyRelationships: false,
         },
+        liveHiringSignal: {             // frozen hiring → L3 ceiling (+~1.2 pts)
+          postingTrend: 'frozen',
+          isLive: true,
+        },
+        referenceDate: new Date("2026-05-10"),
       };
       const result = calculateLayoffScore(inputs);
       expect(result.score).toBeGreaterThanOrEqual(75);

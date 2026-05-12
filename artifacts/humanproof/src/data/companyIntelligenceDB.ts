@@ -1138,36 +1138,36 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
     companyName: 'Tata Consultancy Services (TCS)',
     industry: 'IT Services',
     companySize: 'enterprise',
-    stage: 'mature',
+    stage: 'restructuring',
     financialSignals: {
-      revenueTrend: 'growing',
+      revenueTrend: 'stable',
       fundingStage: 'public',
       monthsSinceLastFunding: 0,
       burnRateEstimate: 'low',
     },
     layoffHistory: {
-      totalLayoffs: 0,
-      lastLayoffDate: 'none',
-      layoffFrequency: 'none',
-      affectedDepartments: [],
+      totalLayoffs: 12000,
+      lastLayoffDate: '2025-03-15',
+      layoffFrequency: 'moderate',
+      affectedDepartments: ['engineering', 'operations', 'support', 'qa'],
     },
     hiringSignals: {
-      hiringVelocity: 'moderate',
-      hiringFreezeScore: 0.30,
+      hiringVelocity: 'slow',
+      hiringFreezeScore: 0.48,
     },
     roleRiskMap: {
-      softwareEngineer: 0.38,
-      productManager: 0.35,
-      dataScientist: 0.35,
-      designer: 0.40,
-      hrRecruiter: 0.50,
-      sales: 0.42,
+      softwareEngineer: 0.42,
+      productManager: 0.38,
+      dataScientist: 0.38,
+      designer: 0.42,
+      hrRecruiter: 0.62,
+      sales: 0.48,
     },
-    aiExposureIndex: 0.58,
-    marketRiskScore: 0.35,
-    companyRiskScore: 0.38,
+    aiExposureIndex: 0.60,
+    marketRiskScore: 0.38,
+    companyRiskScore: 0.48,
     confidenceScore: 0.90,
-    lastUpdated: '2026-04-16',
+    lastUpdated: '2026-05-01',
   },
 
   infosys: {
@@ -1182,28 +1182,28 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       burnRateEstimate: 'low',
     },
     layoffHistory: {
-      totalLayoffs: 0,
-      lastLayoffDate: 'none',
-      layoffFrequency: 'none',
-      affectedDepartments: [],
+      totalLayoffs: 7500,
+      lastLayoffDate: '2025-01-10',
+      layoffFrequency: 'moderate',
+      affectedDepartments: ['engineering', 'support', 'qa', 'operations'],
     },
     hiringSignals: {
       hiringVelocity: 'slow',
-      hiringFreezeScore: 0.48,
+      hiringFreezeScore: 0.52,
     },
     roleRiskMap: {
-      softwareEngineer: 0.42,
+      softwareEngineer: 0.44,
       productManager: 0.40,
-      dataScientist: 0.38,
-      designer: 0.42,
-      hrRecruiter: 0.55,
-      sales: 0.45,
+      dataScientist: 0.40,
+      designer: 0.44,
+      hrRecruiter: 0.68,
+      sales: 0.50,
     },
-    aiExposureIndex: 0.60,
-    marketRiskScore: 0.38,
-    companyRiskScore: 0.45,
+    aiExposureIndex: 0.62,
+    marketRiskScore: 0.40,
+    companyRiskScore: 0.50,
     confidenceScore: 0.90,
-    lastUpdated: '2026-04-16',
+    lastUpdated: '2026-05-01',
   },
 
   wipro: {
@@ -1218,28 +1218,28 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       burnRateEstimate: 'low',
     },
     layoffHistory: {
-      totalLayoffs: 3000,
-      lastLayoffDate: '2023-06-15',
-      layoffFrequency: 'moderate',
-      affectedDepartments: ['engineering', 'support', 'operations'],
+      totalLayoffs: 10500,
+      lastLayoffDate: '2025-02-20',
+      layoffFrequency: 'frequent',
+      affectedDepartments: ['engineering', 'support', 'operations', 'hr'],
     },
     hiringSignals: {
       hiringVelocity: 'frozen',
-      hiringFreezeScore: 0.80,
+      hiringFreezeScore: 0.82,
     },
     roleRiskMap: {
-      softwareEngineer: 0.48,
-      productManager: 0.45,
-      dataScientist: 0.42,
-      designer: 0.48,
-      hrRecruiter: 0.72,
-      sales: 0.58,
+      softwareEngineer: 0.52,
+      productManager: 0.48,
+      dataScientist: 0.46,
+      designer: 0.52,
+      hrRecruiter: 0.78,
+      sales: 0.62,
     },
-    aiExposureIndex: 0.62,
-    marketRiskScore: 0.45,
-    companyRiskScore: 0.62,
+    aiExposureIndex: 0.64,
+    marketRiskScore: 0.50,
+    companyRiskScore: 0.68,
     confidenceScore: 0.88,
-    lastUpdated: '2026-04-16',
+    lastUpdated: '2026-05-01',
   },
 
   // ── CONSUMER TECH / MEDIA ─────────────────────────────────────────────────
@@ -3647,13 +3647,106 @@ export const getCompanyProfile = (companyKey: string): CompanyProfile | null => 
   return COMPANY_INTELLIGENCE_DB[key] || null;
 };
 
-/** Fuzzy search by company display name */
+// Aliases for common brand/legal name variants that don't match DB keys exactly.
+// Handles "Google LLC" → "google", "Infosys Limited" → "infosys", etc.
+//
+// EXPORTED — this is the canonical alias map. Two other files (layoffNewsCache.ts
+// and dataConnectors/layoffsFyiConnector.ts) used to keep their own duplicate
+// inverted (primary → [aliases]) maps; they now consume `getCompanyAliases()`
+// below, which derives the inverted view at module load.
+export const COMPANY_ALIASES: Record<string, string> = {
+  'google llc': 'google',
+  'alphabet': 'google',
+  'alphabet inc': 'google',
+  'meta platforms': 'meta',
+  'facebook': 'meta',
+  'x corp': 'twitter_x',
+  'twitter': 'twitter_x',
+  'x.com': 'twitter_x',
+  'amazon web services': 'amazon',
+  'aws': 'amazon',
+  'amazon.com': 'amazon',
+  'microsoft corporation': 'microsoft',
+  'apple inc': 'apple',
+  'infosys limited': 'infosys',
+  'infosys bpo': 'infosys',
+  'tata consultancy': 'tcs',
+  'tata consultancy services': 'tcs',
+  'tcs india': 'tcs',
+  'wipro limited': 'wipro',
+  'wipro technologies': 'wipro',
+  'hcl technologies': 'hcl_tech',
+  'hcl tech': 'hcl_tech',
+  'hcltech': 'hcl_tech',
+  'tech mahindra': 'tech_mahindra',
+  'techmahindra': 'tech_mahindra',
+  'cognizant technology': 'cognizant',
+  'cognizant technology solutions': 'cognizant',
+  'cts': 'cognizant',
+  'capgemini india': 'capgemini',
+  'dxc': 'dxc_technology',
+  'openai inc': 'openai',
+  // Sibling brands of parent companies — needed for news lookup ("Instagram
+  // layoffs" should match Meta-filed events, "Slack layoffs" should match
+  // Salesforce-filed events). Sourced from the now-deleted dicts in
+  // layoffNewsCache.ts and dataConnectors/layoffsFyiConnector.ts.
+  'instagram': 'meta',
+  'whatsapp': 'meta',
+  'msft': 'microsoft',
+  'slack': 'salesforce',
+  'google inc': 'google',
+  'apple inc.': 'apple',
+  'amazon.com inc': 'amazon',
+  'tata consultancy services limited': 'tcs',
+};
+
+// ── Inverted alias view: primary → [aliases] ─────────────────────────────────
+// Derived from COMPANY_ALIASES at module load. Used by layoffNewsCache.ts and
+// dataConnectors/layoffsFyiConnector.ts for fuzzy news lookup ("if you query
+// 'Google', also check entries filed under 'Alphabet'").
+const ALIASES_BY_PRIMARY: Record<string, string[]> = (() => {
+  const out: Record<string, string[]> = {};
+  for (const [alias, primary] of Object.entries(COMPANY_ALIASES)) {
+    if (!out[primary]) out[primary] = [];
+    out[primary].push(alias);
+  }
+  return out;
+})();
+
+/**
+ * Return all known alias strings for a company name (input + canonical name +
+ * sibling aliases). Bidirectional: querying "Google" returns ["google",
+ * "alphabet", "google llc", ...]; querying "Alphabet" returns the same set.
+ *
+ * Output is lowercased and de-duplicated.
+ */
+export const getCompanyAliases = (name: string | null | undefined): string[] => {
+  if (!name || typeof name !== 'string') return [];
+  const lower = name.toLowerCase().trim();
+  if (!lower) return [];
+
+  // Direct lookup: input is itself an alias → primary key
+  const primaryFromAlias = COMPANY_ALIASES[lower];
+  // Inverted lookup: input might already be a primary key
+  const aliasesIfPrimary = ALIASES_BY_PRIMARY[lower] ?? [];
+  // If we discovered a primary via alias map, fetch its full alias list
+  const aliasesViaPrimary = primaryFromAlias ? (ALIASES_BY_PRIMARY[primaryFromAlias] ?? []) : [];
+
+  const all = new Set<string>([lower]);
+  if (primaryFromAlias) all.add(primaryFromAlias);
+  for (const a of aliasesIfPrimary) all.add(a);
+  for (const a of aliasesViaPrimary) all.add(a);
+  return Array.from(all);
+};
+
+/** Fuzzy search by company display name — bidirectional substring match. */
 export const searchCompanyProfiles = (query: string): CompanyProfile[] => {
   if (!query || query.length < 2) return [];
   const q = query.toLowerCase().trim();
-  return Object.values(COMPANY_INTELLIGENCE_DB).filter(p =>
-    p.companyName.toLowerCase().includes(q)
-  );
+  return Object.values(COMPANY_INTELLIGENCE_DB).filter(p => {
+    const name = p.companyName.toLowerCase();
+    return name.includes(q) || q.includes(name);
+  });
 };
 
 /**
@@ -3682,16 +3775,27 @@ export const getCompanyProfileCount = (): number =>
 
 /**
  * Resolve company name string (from user input) to a CompanyProfile.
- * Tries: (1) normalized key, (2) fuzzy name match.
+ * Tries: (1) normalized key, (2) alias map, (3) bidirectional fuzzy name match.
  */
 export const resolveCompanyProfile = (name: string): CompanyProfile | null => {
   if (!name || name.length < 2) return null;
 
-  // 1. Try normalized key
+  // 1. Try normalized key ("Infosys" → "infosys", "HCL Tech" → "hcl_tech")
   const direct = getCompanyProfile(name);
   if (direct) return direct;
 
-  // 2. Fuzzy name match — return best single match
+  // 2. Alias map — handles legal name variants ("Infosys Limited", "TCS India")
+  const aliasKey = COMPANY_ALIASES[name.toLowerCase().trim()];
+  if (aliasKey) {
+    const aliased = COMPANY_INTELLIGENCE_DB[aliasKey];
+    if (aliased) return aliased;
+  }
+
+  // 3. Bidirectional fuzzy name match — return best (shortest-name) match
   const results = searchCompanyProfiles(name);
-  return results.length > 0 ? results[0] : null;
+  if (results.length === 0) return null;
+  // Prefer the entry whose companyName is most specific (shortest name wins
+  // when multiple partial matches exist — avoids "Stripe Atlas" matching "Stripe")
+  results.sort((a, b) => a.companyName.length - b.companyName.length);
+  return results[0];
 };

@@ -134,7 +134,7 @@ export function computeInternalMobility(inputs: InternalMobilityInputs): Interna
   if (hasAiSkills) viabilityScore += 8;
 
   // Current department risk — high-risk department = stronger transfer motivation
-  if (departmentRisk && departmentRisk.exposureScore >= 0.7) viabilityScore += 5;
+  if (departmentRisk && (departmentRisk as any).D9Score >= 0.7) viabilityScore += 5;
 
   // Score cap: if company is very healthy, internal transfer is less urgent
   if (currentScore < 40) viabilityScore -= 15;
@@ -199,7 +199,7 @@ export function computeInternalMobility(inputs: InternalMobilityInputs): Interna
   const estimatedTransferTimelineWeeks = viabilityScore >= 65 ? 6 : viabilityScore >= 45 ? 10 : 14;
 
   const riskReductionIfTransferred = Math.round(
-    (departmentRisk?.exposureScore ?? 0.5) * 20 + 5
+    ((departmentRisk as any)?.D9Score ?? 0.5) * 20 + 5
   );
 
   // BUG-FIX: Simplified from confusing `0.003 * 100` to direct `0.3`.

@@ -83,7 +83,20 @@ Deno.serve(async (req) => {
 
   try {
     const result = calculateHybridScore(payload);
-    return json({ result, schemaVersion: 'hybrid-score@2' });
+    // v15.0: Surface a stable confidence contract alongside the existing result.
+    // The CI itself is computed inside calculateHybridScore (consensus residual
+    // band + conflict/override/cap penalties). The block below is a flat,
+    // versioned view that frontend score displays read directly to render
+    // "{score} ±N" without traversing result.confidenceInterval.
+    const confidence = {
+      pointEstimate: result.score,
+      low: result.confidenceInterval.low,
+      high: result.confidenceInterval.high,
+      range: result.confidenceInterval.range,
+      method: 'consensus_residual_band' as const,
+      isEstimate: result.confidenceInterval.isEstimate,
+    };
+    return json({ result, confidence, schemaVersion: 'hybrid-score@2' });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';
     return json(

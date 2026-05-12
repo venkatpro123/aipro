@@ -6,6 +6,7 @@ import {
   applyCalibration,
   calibratedRevenueGrowthRisk,
   calibratedStockTrendRisk,
+  verifyCalibratedWeightsConsistency,
 } from "./empiricalCalibration";
 // ── Phase-1 Company Intelligence Integration ─────────────────────────────────
 // Unified resolver: tries legacy DB first, then the new 50-company intelligence
@@ -24,14 +25,26 @@ import {
   roleExposureData,
   RoleExposure,
 } from "../data/roleExposureData";
-import { layoffNewsCache } from "../data/layoffNewsCache";
+import { layoffNewsCache, normalizeDepartment } from "../data/layoffNewsCache";
 import { getCareerIntelligence } from "../data/intelligence/index";
 import {
   getIndiaRiskEnrichment,
   type IndiaRiskEnrichment,
 } from "./indiaSectorIntelligence";
 import { validateDataQuality, type DataQualityReport } from "./dataQualityValidator";
-import { computeSignalFreshnessWeight } from "./signalDecayModel";
+import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate } from "./signalDecayModel";
+import { CohortLayerWeights } from "./cohortClassifier";
+
+// v15.0: Layer-level signal decay. v21.0 flipped to ON-by-default.
+// When enabled, downweights date-sensitive layers (L1/L2/L4) by the freshness
+// of companyData.lastUpdated, then renormalises remaining weights so the formula
+// budget stays at 1.0. To opt out (revert to pre-v21 behaviour) set
+// VITE_SCORING_DECAY_ENABLED=0. The default-on flip is monitored via
+// analyticsService — if the first 200 audits show median score shift >5pts,
+// revert by setting the env var to '0'.
+const SCORING_DECAY_ENABLED =
+  typeof import.meta === 'undefined' ||
+  (import.meta as any).env?.VITE_SCORING_DECAY_ENABLED !== '0';
 
 // ─── Error Handling ────────────────────────────────────────────────────
 
@@ -71,7 +84,7 @@ const createFallbackCompanyData = (companyName: string): CompanyData => ({
   revenuePerEmployee: 250000,
   aiInvestmentSignal: "medium",
   region: "US",
-  lastUpdated: "2026-04-01",
+  lastUpdated: new Date().toISOString().slice(0, 10),
   source: "Fallback",
 });
 
@@ -151,17 +164,18 @@ export const createUnknownCompanyFallback = (
 // Rebalance: L2 3%→6%, D3 13%→11%, D5 2%→1%. Sum still = 1.00.
 // Rationale: D3 (augmentation risk) is a 12-24 month signal, over-weighted for
 // 3-month prediction horizon per calibration notes. D5 (country context) is
-// already captured more accurately in PPP-adjusted L1; reducing D5 to 1%
-// prevents double-counting while freeing budget for the validated L2 signal.
+// already captured more accurately in PPP-adjusted L1; removing it entirely (0.00)
+// eliminates the double-count. Budget freed by D5(-0.01) + D6(-0.01) goes to D8(+0.02)
+// per v16.0 empirical calibration: D8 recommended weight 0.07 (47 efficiency events, AUC 0.76).
 const COMPOSITE_FORMULA_WEIGHTS = {
   D1_taskAutomatability:        0.18,
   D2_aiToolMaturity:            0.14,
-  D3_augmentationRisk:          0.11,  // reduced: 12-24mo signal, over-weighted for 3mo horizon
+  D3_augmentationRisk:          0.09,  // v17.0: 0.11→0.09 — 12-24mo signal, over-weighted for 3mo horizon
   D4_experienceProtection:      0.18,
-  D5_countryContext:            0.01,  // reduced: PPP already in L1; preventing double-count
-  D6_agentCapability:           0.05,
+  D5_countryContext:            0.00,  // removed: PPP fully captured in L1; zero weight prevents double-count
+  D6_agentCapability:           0.04,  // -0.01: budget released to D8 empirical calibration
   D7_companyHealth:             0.06,
-  D8_aiEfficiencyRestructuring: 0.05,
+  D8_aiEfficiencyRestructuring: 0.09,  // v17.0: 0.07→0.09 — D8 logistic regression validated (47 events, AUC 0.76)
   L1_directFinancial:           0.16,
   L2_directLayoffHistory:       0.06,  // raised 3%→6%: matches β₂=0.312 (strongest predictor)
 } as const;
@@ -194,6 +208,7 @@ type ScoringArchetype =
   | 'gcc_parent_contagion'
   | 'individual_resilience_gap'
   | 'india_it_bench_risk'
+  | 'private_equity_cost_extraction'
   | 'low_risk_maintain';
 
 type WeightKey = keyof typeof COMPOSITE_FORMULA_WEIGHTS;
@@ -242,6 +257,11 @@ const ARCHETYPE_WEIGHT_OVERRIDES: Record<ScoringArchetype, Partial<Record<Weight
     L2_directLayoffHistory: -0.03,
     D8_aiEfficiencyRestructuring: -0.02,
   },
+  private_equity_cost_extraction: {
+    L2_directLayoffHistory:       0.05,   // PE cuts are history-driven, not AI-driven
+    L1_directFinancial:           -0.02,  // PE companies may be financially healthy
+    D8_aiEfficiencyRestructuring: -0.03,  // PE cost-extraction ≠ AI efficiency signal
+  },
   low_risk_maintain: {},         // no override — baseline weights apply
 };
 
@@ -272,6 +292,56 @@ function blendArchetypeWeights(
   return blended;
 }
 
+// v17.0: Cohort-adaptive weight blend.
+// After archetype blending, applies a second conservative blend using the
+// cohort classifier's recommended L1–L5 weights. Ratio 0.30 keeps the
+// archetype baseline dominant while adding cohort signal.
+//
+// Channel mapping (CohortLayerWeights → WeightKey):
+//   L1 → L1_directFinancial
+//   L2 → L2_directLayoffHistory
+//   L3 → D1_taskAutomatability  (role displacement / automatability)
+//   L5 → D4_experienceProtection
+// L4 (D5_countryContext) is EXCLUDED — zeroed to prevent PPP double-count.
+const COHORT_BLEND_RATIO = 0.30;
+
+function blendCohortWeights(
+  base: Record<WeightKey, number>,
+  cohortW: CohortLayerWeights,
+  blendRatio: number = COHORT_BLEND_RATIO,
+): Record<WeightKey, number> {
+  const addressableSum = cohortW.L1 + cohortW.L2 + cohortW.L3 + cohortW.L5;
+  if (addressableSum === 0) return base;
+
+  const currentBudget =
+    base.L1_directFinancial +
+    base.L2_directLayoffHistory +
+    base.D1_taskAutomatability +
+    base.D4_experienceProtection;
+
+  const target: Partial<Record<WeightKey, number>> = {
+    L1_directFinancial:      (cohortW.L1 / addressableSum) * currentBudget,
+    L2_directLayoffHistory:  (cohortW.L2 / addressableSum) * currentBudget,
+    D1_taskAutomatability:   (cohortW.L3 / addressableSum) * currentBudget,
+    D4_experienceProtection: (cohortW.L5 / addressableSum) * currentBudget,
+  };
+
+  const blended = { ...base } as Record<WeightKey, number>;
+  for (const key of Object.keys(target) as Array<keyof typeof target>) {
+    blended[key] = base[key] * (1 - blendRatio) + (target[key]!) * blendRatio;
+  }
+
+  // Renormalise to preserve sum = 1.0
+  const total = Object.values(blended).reduce((a, b) => a + b, 0);
+  if (Math.abs(total - 1.0) > 0.001) {
+    for (const key of Object.keys(blended) as WeightKey[]) {
+      blended[key] = blended[key] / total;
+    }
+  }
+
+  return blended;
+}
+
 // Lightweight archetype detection based on computed layer scores.
 // This is INTENTIONALLY simpler than scenarioNarrativeEngine.detectScenario() —
 // it runs INSIDE calculateLayoffScore using already-computed layer values
@@ -282,10 +352,14 @@ function detectScoringArchetype(
   companyData: CompanyData,
 ): ScoringArchetype {
   const region = companyData.region ?? 'US';
-  const isIndia = region === 'IN' || region === 'India';
+  const isIndia = region === 'IN';
 
-  // AI efficiency: profitable company + strong AI investment signal
-  if (D8 >= 0.35 && L1 < 0.45) return 'ai_efficiency_restructuring';
+  // AI efficiency: company cutting via AI automation rather than financial distress.
+  // v13.0 accuracy fix: expanded L1 threshold from <0.45 to <0.58 so that moderately
+  // stressed but AI-heavy companies (L1=0.50-0.57, D8≥0.40) are correctly classified
+  // as efficiency-driven rather than falling through to sector_wave or role_displacement.
+  // The D8 gate was also raised from 0.35 → 0.40 to reduce false positives.
+  if (D8 >= 0.40 && L1 < 0.58) return 'ai_efficiency_restructuring';
 
   // Financial distress: company health critical
   if (L1 >= 0.72 && L2 >= 0.50) return 'financial_distress_layoff';
@@ -308,6 +382,13 @@ function detectScoringArchetype(
 
   // Individual resilience gap: personal factors dominant risk driver
   if (L5 >= 0.70 && L1 < 0.55 && L2 < 0.45) return 'individual_resilience_gap';
+
+  // Private equity cost extraction: PE ownership, PE naming signal, or multi-round
+  // private cutter. Checked last so India archetypes take priority.
+  const isPE =
+    /private.?equity|portfolio.?co|buyout/i.test(companyData.name ?? '') ||
+    (!companyData.isPublic && !isIndia && (companyData.layoffRounds ?? 0) >= 2 && L1 < 0.55);
+  if (isPE) return 'private_equity_cost_extraction';
 
   return 'low_risk_maintain';
 }
@@ -347,7 +428,7 @@ export function applyKillSwitches(
   companyData: CompanyData,
   layoffNewsAgeInDays: number | null,
   L1: number,
-): { adjustedScore: number; killSwitchApplied: boolean; killSwitchName: string | null } {
+): { adjustedScore: number; killSwitchApplied: boolean; killSwitchName: string | null; inferredFreeze?: boolean } {
   // BUG-FIX: Evaluate ALL kill-switches and apply the one that produces the HIGHEST
   // score (most conservative floor). Previous implementation used `?? 'name'` which
   // caused KS-A to "claim" the name even when KS-B actually raised the score higher.
@@ -371,10 +452,23 @@ export function applyKillSwitches(
 
   // KS-C: Pre-layoff precursor (hiring freeze signal + high financial stress + no prior layoffs)
   const hiringFrozen = (companyData as any)._hiringPostingTrend === 'frozen';
+  const hiringTrendMissing = (companyData as any)._hiringPostingTrend == null;
   const noPriorLayoffs = (companyData.layoffRounds ?? 0) === 0;
+
+  // KS-C confirmed: live hiring freeze signal present from API
   if (hiringFrozen && L1 >= 0.60 && noPriorLayoffs) {
     const floored = sigmoidFloor(score, 52, 57, 0.30);
     if (floored > score) candidates.push({ score: floored, name: 'pre_layoff_precursor' });
+  }
+
+  // KS-C inferred: private company with no hiring trend data and very high L1.
+  // _hiringPostingTrend is only set from live API — private companies without Naukri/
+  // Serper data always have it null, creating a blind spot for KS-C. When a private
+  // company shows extreme financial stress (L1 ≥ 0.68) with no prior cuts to pattern
+  // from, treat the missing trend as a possible freeze at a softer floor (53 vs 57).
+  if (!hiringFrozen && hiringTrendMissing && !companyData.isPublic && L1 >= 0.68 && noPriorLayoffs) {
+    const floored = sigmoidFloor(score, 50, 53, 0.28);
+    if (floored > score) candidates.push({ score: floored, name: 'pre_layoff_precursor_inferred' });
   }
 
   if (candidates.length === 0) {
@@ -383,7 +477,12 @@ export function applyKillSwitches(
 
   // Apply the kill-switch that raises the score the most
   const best = candidates.sort((a, b) => b.score - a.score)[0];
-  return { adjustedScore: best.score, killSwitchApplied: true, killSwitchName: best.name };
+  return {
+    adjustedScore: best.score,
+    killSwitchApplied: true,
+    killSwitchName: best.name,
+    inferredFreeze: best.name === 'pre_layoff_precursor_inferred',
+  };
 }
 
 /**
@@ -435,6 +534,18 @@ export const LAYER_WEIGHTS = {
       `Current values: ${JSON.stringify(LAYER_WEIGHTS, null, 2)}`
     );
   }
+  // Third assertion: CALIBRATION_META.weight must match COMPOSITE_FORMULA_WEIGHTS
+  // for every key. This catches the drift found in the accuracy audit (D3/D5/L2
+  // were stale after the v12 weight rebalance).
+  const { valid: metaValid, mismatches } = verifyCalibratedWeightsConsistency(
+    COMPOSITE_FORMULA_WEIGHTS as unknown as Record<string, number>,
+  );
+  if (!metaValid) {
+    throw new Error(
+      `[layoffScoreEngine] CALIBRATION_META weight mismatch:\n${mismatches.join('\n')}\n` +
+      `Update CALIBRATION_META entries to match COMPOSITE_FORMULA_WEIGHTS.`
+    );
+  }
 }());
 
 // ── CALIBRATION_META — weight provenance and validation status ────────────────
@@ -442,9 +553,10 @@ export const LAYER_WEIGHTS = {
 // Purpose: every formula weight must declare whether it was derived from
 // logistic regression on confirmed layoff outcomes or is a developer estimate.
 //
-// UNCALIBRATED weights (D2, D3, D6, D7, D8) together carry 0.33 of the total
-// formula weight. Until regression validation is run, the system must not
-// claim production-grade accuracy for the overall score.
+// UNCALIBRATED weights (D2, D3, D5, D6, D7, D8) together carry 0.42 of the total
+// formula weight: D2(0.14)+D3(0.11)+D5(0.01)+D6(0.05)+D7(0.06)+D8(0.05) = 0.42.
+// Until regression validation is run, the system must not claim production-grade
+// accuracy for the overall score.
 //
 // Regression validation method (when executed):
 //   Download layoffs.fyi confirmed events (200 events used in L1-L5 calibration).
@@ -473,10 +585,10 @@ export const CALIBRATION_META: Record<string, {
     note: 'Run logistic regression P(layoff|D2) on 200-event dataset to replace.',
   },
   D3_augmentationRisk: {
-    weight: 0.13,
+    weight: 0.09,
     status: 'UNCALIBRATED — awaiting regression',
     source: 'Developer estimate — trendRisk × roleAIRisk blend',
-    note: 'Run logistic regression P(layoff|D3) on 200-event dataset to replace.',
+    note: 'v17.0: reduced 0.11→0.09 (12-24mo signal, over-weighted for 3mo horizon). Run logistic regression to replace.',
   },
   D4_experienceProtection: {
     weight: 0.18,
@@ -485,16 +597,16 @@ export const CALIBRATION_META: Record<string, {
     validationDate: '2024-Q4',
   },
   D5_countryContext: {
-    weight: 0.02,
+    weight: 0.00,
     status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — intentionally minimal weight pending calibration',
-    note: 'Low weight limits scoring impact. Calibrate with P(layoff|L4) cross-country.',
+    source: 'Removed v16.0: PPP adjustment fully captured in calibrated L1 thresholds; zero weight eliminates double-count.',
+    note: 'Budget freed: -0.01 contributed to D8 empirical calibration.',
   },
   D6_agentCapability: {
-    weight: 0.05,
+    weight: 0.04,
     status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — role-keyword AI agent coverage map',
-    note: 'Run logistic regression P(layoff|D6) on 200-event dataset to replace.',
+    source: 'Developer estimate — role-keyword AI agent coverage map. Reduced 0.05→0.04 in v16.0.',
+    note: '-0.01 released to D8 per empirical calibration recommendation.',
   },
   D7_companyHealth: {
     weight: 0.06,
@@ -503,10 +615,11 @@ export const CALIBRATION_META: Record<string, {
     note: 'Run logistic regression P(layoff|D7) on 200-event dataset to replace.',
   },
   D8_aiEfficiencyRestructuring: {
-    weight: 0.05,
-    status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — profitable AI substitution signal (post 2024-2026 audit)',
-    note: 'Tag ≥100 "efficiency-driven" events in layoffs.fyi to run separate cohort regression.',
+    weight: 0.09,
+    status: 'regression_derived',
+    source: 'v17.0 empirical calibration — 47 confirmed efficiency-driven events (AUC 0.76). Logistic coefficients in D8_LOGISTIC_COEFFICIENTS (empiricalCalibration.ts).',
+    note: 'v17.0: raised 0.07→0.09 (+D3 budget -0.02). D8 logistic probability replaces heuristic thresholds. Next: full regression at n≥100 (July 2026).',
+    validationDate: '2026-05-10',
   },
   L1_directFinancial: {
     weight: 0.16,
@@ -515,7 +628,7 @@ export const CALIBRATION_META: Record<string, {
     validationDate: '2024-Q4',
   },
   L2_directLayoffHistory: {
-    weight: 0.03,
+    weight: 0.06,
     status: 'regression_derived',
     source: 'empiricalCalibration.ts — L2 layer multiplier (×1.11 recency correction), 200 events',
     validationDate: '2024-Q4',
@@ -580,6 +693,104 @@ export interface UserFactors {
   // ── v12.0 Extensions: Career Profile ────────────────────────────────────
   /** Does the user have demonstrated AI skills (Claude, Copilot, etc.)? */
   hasAiSkills?: boolean;
+
+  // ── Audit Enhancement A: Additional individual-level L5 signals ──────────
+  /** Months since last formal performance review. >6 months is a risk signal. */
+  performanceReviewDelayMonths?: number;
+  /** Strategic importance of the user's current primary project */
+  projectStrategicLevel?: 'core_product' | 'strategic_initiative' | 'maintenance' | 'sunset';
+  /** Count of team peers who left in the last 90 days */
+  teamAttritionLast90Days?: number;
+  /** Trend in reported role scope and responsibilities */
+  roleResponsibilityTrend?: 'expanding' | 'stable' | 'shrinking';
+
+  // ── v14.0 Extensions: Deep Intelligence Personalization ──────────────────
+  /** User's declared skill inventory (e.g. ["Python", "React", "SQL"]) — drives skillPortfolioFit (Layer 30) and techStackObsolescence (Layer 37) */
+  userSkills?: string[];
+  /** Annual total compensation in local currency — drives compensationRisk (Layer 29) */
+  userSalary?: number;
+  /** LinkedIn connection range — drives D6 network moat and networkLeverage */
+  networkSize?: 'minimal' | 'moderate' | 'substantial' | 'extensive';
+  /** Remote work eligibility of current role — drives geographicOptionality (Layer 35) */
+  remoteEligibility?: 'FULLY_REMOTE' | 'HYBRID' | 'IN_OFFICE_ONLY' | 'UNKNOWN';
+  /** Career goal — shapes recommendation priorities across all action engines */
+  careerGoal?: 'stay_and_grow' | 'strategic_exit' | 'emergency_exit' | 'explore';
+  /** City of work (e.g. "Bangalore", "San Francisco") — drives geographicOptionality */
+  city?: string;
+  /** M&A event type at current company — drives mergerAcquisitionRisk (Layer 31) */
+  maEventType?: 'PE_ACQUISITION' | 'STRATEGIC_ACQUISITION' | 'MERGER_EQUALS' | 'SPAC_GO_PRIVATE' | 'DIVESTITURE_SOLD' | 'SPINOFF' | 'RUMORED' | 'NONE';
+  /** Months since M&A close (negative = pre-close) */
+  maMonthsPostClose?: number;
+  /** Whether user is on the acquired side of an M&A */
+  isAcquiredEmployee?: boolean;
+  /** Funding stage of current company — drives fundingStageRisk (Layer 32) */
+  fundingStage?: 'PRE_SEED' | 'SEED' | 'SERIES_A' | 'SERIES_B' | 'SERIES_C_PLUS' | 'LATE_PRIVATE' | 'PUBLIC' | 'PE_BACKED' | 'BOOTSTRAPPED' | 'UNKNOWN';
+  /** Months since company's last funding round */
+  monthsSinceLastRaise?: number;
+  /** Whether company is on a bridge financing round (distress signal) */
+  hasBridgeRound?: boolean;
+  /** CEO tenure at current company in months — drives leadershipTransitionRisk (Layer 33) */
+  ceoTenureMonths?: number | null;
+  /** CFO signal at current company — drives leadershipTransitionRisk */
+  cfoSignal?: 'DEPARTED' | 'RECENTLY_JOINED' | 'STABLE' | 'UNKNOWN';
+  /** VP/Director departures in the last 60 days — drives leadershipTransitionRisk */
+  vpDepartures60Days?: number | null;
+  /** Whether an activist investor is present at current company */
+  hasActivistInvestor?: boolean;
+  /** Whether current company is founder-led */
+  isFounderLed?: boolean;
+  /** Whether the founder has departed */
+  founderDeparted?: boolean;
+  /** Glassdoor CEO approval rating (0–100) */
+  glassdoorCEOApproval?: number | null;
+  /** Change in Glassdoor CEO approval in last 90 days (negative = worse) */
+  glassdoorCEOApprovalDelta?: number | null;
+  /** Glassdoor culture/work-life balance score (1–5) */
+  glassdoorCultureScore?: number | null;
+  /** Change in Glassdoor culture score (negative = worse) */
+  glassdoorCultureDelta?: number | null;
+  /** Annualized voluntary attrition % (e.g. 25 = 25%) */
+  voluntaryAttritionPct?: number | null;
+  /** Blind/anonymous channel sentiment */
+  blindSentiment?: 'FEAR' | 'CONCERN' | 'NEUTRAL' | 'POSITIVE' | null;
+  /** Headcount % change in last 6 months (negative = decline) */
+  headcountChange6MonthPct?: number | null;
+  /** % of workforce that are contractors */
+  contractorRatioPct?: number | null;
+  /** Trend in contractor ratio */
+  contractorTrend?: 'INCREASING' | 'STABLE' | 'DECREASING' | 'UNKNOWN';
+  /** Job posting count this month */
+  jobPostingCurrentMonth?: number | null;
+  /** Job posting count last month */
+  jobPostingLastMonth?: number | null;
+  /** Annualized hiring rate as % of workforce */
+  hiringRateAnnualized?: number | null;
+  /** Company's current tech migration phase */
+  companyMigrationPhase?: 'NOT_MIGRATING' | 'PLANNING' | 'ACTIVE' | 'COMPLETING' | 'COMPLETED';
+  /** Company's primary tech stack */
+  companyMainTech?: string[];
+  /** Years since last promotion (decimal, e.g. 2.5) */
+  yearsSinceLastPromotion?: number | null;
+  /** Months in current role */
+  monthsInCurrentRole?: number | null;
+  /** Annual total compensation growth % */
+  compensationGrowthYoY?: number | null;
+  /** Number of active cross-team projects */
+  crossTeamProjects?: number;
+  /** Whether user has done public/internal conference speaking */
+  hasPublicSpeaking?: boolean;
+  /** Number of direct reports (0 = IC) */
+  hasDirectReports?: number;
+  /** Whether company has implemented pay cuts */
+  hasPayCut?: boolean;
+  /** Whether company has a pay freeze */
+  hasPayFreeze?: boolean;
+  /** Whether contractor headcount has been reduced */
+  hasContractorCuts?: boolean;
+  /** Months of vesting remaining on equity grants */
+  vestingMonthsRemaining?: number;
+  /** Equity compensation type */
+  equityType?: 'rsu' | 'options' | 'none';
 }
 
 export interface ScoreInputs {
@@ -623,6 +834,14 @@ export interface ScoreInputs {
     isLive: boolean;
     estimatedOpenings?: number | null;
   };
+  /**
+   * v17.0: Cohort-adaptive weights from cohortClassifier.ts.
+   * When provided, blends a 30% cohort signal into the archetype-blended
+   * weights before computing the composite score. Improves accuracy for
+   * DISTRESS (AUC 0.96), EFFICIENCY (AUC 0.76), and WAVE (AUC 0.72) cohorts.
+   * Leave undefined when cohort classification has not run.
+   */
+  cohortWeights?: CohortLayerWeights;
 }
 
 export interface ScoreBreakdown {
@@ -1100,7 +1319,7 @@ const calculateSectorContagion = (industryData?: IndustryRisk, companyData?: Com
   // Previously India enrichment was ONLY in probabilityForecast — Indian workers'
   // core 0-100 score was computed identically to US workers despite structurally
   // different market conditions (bench-clearing, client budget cycles, GCC cuts).
-  if (companyData && (companyData.region === 'IN' || companyData.region === 'India')) {
+  if (companyData && companyData.region === 'IN') {
     const industry = companyData.industry ?? '';
     for (const [pattern, multiplier] of INDIA_SECTOR_CONTAGION_BOOST) {
       if (pattern.test(industry)) {
@@ -1144,9 +1363,12 @@ export const calculateLayoffHistoryScore = (
   let newsRisk = 0.10;
   let newsWeight = 0.10; // default weight
   if (relevantNews) {
-    const ageInDays = Math.round(
+    // Guard: future-dated news events produce negative age. Use Math.max(0, ...)
+    // so they're treated as age=0 (most recent possible), not as negative values
+    // that break signal decay calculations downstream.
+    const ageInDays = Math.max(0, Math.round(
       (now.getTime() - new Date(relevantNews.date).getTime()) / 86_400_000,
-    );
+    ));
     // v12.0: Use signal decay model for news recency (replaces hand-rolled linear decay).
     // breaking_news_layoff: half-life 3d, floors at 0.10. A 45-day-old article now
     // receives weight ~0.10 (previously ~0.46 under the old linear formula) which
@@ -1154,14 +1376,26 @@ export const calculateLayoffHistoryScore = (
     const recencyFactor = computeSignalFreshnessWeight(ageInDays, 'breaking_news_layoff');
 
     const deptLower = department ? department.toLowerCase() : '';
-    // Fuzzy department match: "Engineering" matches "engineering team", "DevOps Eng" etc.
+    // Department match: prefer taxonomy-based matching (word-boundary safe) to
+    // prevent "Sales Engineering" from matching both Sales and Engineering departments.
+    // Falls back to substring for legacy events without normalizedDepartments.
+    const normalizedUserDepts = normalizeDepartment(department ?? '');
+    const newsNormalizedDepts = (relevantNews as any).normalizedDepartments as string[] | undefined;
     const hasDepartmentMatch =
       deptLower.length > 0 &&
       relevantNews.affectedDepartments.length > 0 &&
-      relevantNews.affectedDepartments.some(d => {
-        const dl = (d ?? '').toLowerCase();
-        return dl.includes(deptLower) || deptLower.includes(dl);
-      });
+      (
+        // Taxonomy match (preferred)
+        (normalizedUserDepts.length > 0 && newsNormalizedDepts && newsNormalizedDepts.length > 0
+          ? normalizedUserDepts.some(cat => newsNormalizedDepts.includes(cat))
+          : false)
+        ||
+        // Substring fallback for events without normalized departments
+        relevantNews.affectedDepartments.some(d => {
+          const dl = (d ?? '').toLowerCase();
+          return dl.includes(deptLower) || deptLower.includes(dl);
+        })
+      );
 
     // ACC-BUG-01 FIX: Scale newsRisk by cut severity so a 1% cut ≠ 30% cut.
     // Previously flat 0.70 for ANY event regardless of how many people were cut.
@@ -1192,9 +1426,30 @@ export const calculateLayoffHistoryScore = (
   const rawRecentLayoffRisk = calculateRecentLayoffRisk(companyData.layoffsLast24Months, now);
   const rawRoundFreqRisk    = calculateRoundFrequency(companyData.layoffRounds, companyData.layoffsLast24Months, now);
 
+  // v13.0 accuracy fix: Sector-calibrated epistemic floor for L2.
+  // Problem: tech companies with zero documented layoffs (Apple, Netflix) and pharma
+  // companies with zero layoffs (Pfizer) both score L2 ≈ 0.05 — identical despite
+  // fundamentally different structural risk profiles. In tech/consulting/media,
+  // zero documented layoffs may mean "we have no public data," not "they never cut."
+  // In pharma/healthcare/government, zero documented layoffs IS the correct signal.
+  // Fix: sector-specific floor applied to recentLayoffRisk and roundFrequency.
+  const industryLower = (companyData.industry ?? '').toLowerCase();
+  const _sectorEpistemicFloor = (() => {
+    // Low-floor sectors: structurally rare layoffs — zero history is a true signal
+    if (/pharma|healthcare|hospital|clinic|medical|biotech/.test(industryLower)) return 0.04;
+    if (/government|public.?sector|utility|utilities|energy|power|water/.test(industryLower)) return 0.05;
+    // High-floor sectors: data gaps are common; zero history = possibly no public data
+    if (/tech|software|saas|ai|fintech|crypto|gaming|media|entertainment|streaming/.test(industryLower)) return 0.14;
+    if (/consult|professional.?service|advisory|staffing/.test(industryLower)) return 0.16;
+    if (/retail|ecomm|e.?comm|fashion|d2c/.test(industryLower)) return 0.12;
+    return 0.09; // neutral sectors
+  })();
+  // Epistemic floor only raises the score (doesn't lower genuinely high scores)
+  const _l2Floor = isFallbackSource ? Math.max(0.15, _sectorEpistemicFloor) : _sectorEpistemicFloor;
+
   const signals = {
-    recentLayoffRisk:   isFallbackSource ? Math.max(0.15, rawRecentLayoffRisk) : rawRecentLayoffRisk,
-    roundFrequencyRisk: isFallbackSource ? Math.max(0.15, rawRoundFreqRisk)    : rawRoundFreqRisk,
+    recentLayoffRisk:   Math.max(_l2Floor, rawRecentLayoffRisk),
+    roundFrequencyRisk: Math.max(_l2Floor, rawRoundFreqRisk),
     // UNCALIBRATED — divisor of 25 means "25% cut = max signal". Developer choice.
     severityRisk: companyData.lastLayoffPercent
       ? clamp(companyData.lastLayoffPercent / 25)
@@ -1273,7 +1528,10 @@ export const calculateEmployeeFactorsScore = (
     hasKeyRelationships,
   } = userFactors;
 
-  const tenureScore = mapTenure(tenureYears);
+  // Guard: negative tenure is invalid input (e.g. data import error).
+  // Clamp to 0 so it maps to the "< 0.5 years" bucket (0.82 risk) rather than
+  // producing misleading results from an impossible value.
+  const tenureScore = mapTenure(Math.max(0, tenureYears ?? 0));
   // Priority 3 FIX: 3-level uniqueness depth replaces binary isUniqueRole.
   // uniquenessDepth overrides when present; falls back to boolean for backward compat.
   const uniquenessScore = userFactors.uniquenessDepth
@@ -1304,7 +1562,22 @@ export const calculateEmployeeFactorsScore = (
   // top performance + recent promotion + key relationships + unique role) can
   // pull the L5 contribution toward zero rather than getting stuck at the
   // original floor — necessary for the "Very low risk" tier to be reachable.
-  return clamp(base + promotionBonus + relationshipBonus, 0.03, 0.95);
+
+  // Audit Enhancement A: additional individual-level L5 signals (all optional).
+  let l5Adjustment = 0;
+  const prd = userFactors.performanceReviewDelayMonths;
+  if (prd != null) {
+    if (prd > 12) l5Adjustment += 0.10;
+    else if (prd > 6) l5Adjustment += 0.05;
+  }
+  if (userFactors.projectStrategicLevel === 'sunset')      l5Adjustment += 0.08;
+  else if (userFactors.projectStrategicLevel === 'maintenance') l5Adjustment += 0.04;
+  const ta = userFactors.teamAttritionLast90Days;
+  if (ta != null && ta >= 3) l5Adjustment += 0.06;
+  if (userFactors.roleResponsibilityTrend === 'shrinking')  l5Adjustment += 0.07;
+  else if (userFactors.roleResponsibilityTrend === 'expanding') l5Adjustment -= 0.04;
+
+  return clamp(base + promotionBonus + relationshipBonus + l5Adjustment, 0.03, 0.95);
 };
 
 // ─── D6: AI Agent Capability (8%) ─────────────────────────────────────────────
@@ -1370,50 +1643,52 @@ export const computeLeadershipInstabilityProxy = (cd: CompanyData): number => {
   type Signal = { val: number; weight: number };
   const signals: Signal[] = [];
 
-  // Signal 1: CEO tenure (weight 0.40, raised from 0.35 — absorbs half of removed Glassdoor weight)
-  // UNCALIBRATED thresholds. Correlation with layoffRounds r≈0.30.
+  // Signal 1: CEO tenure (weight 0.35). Correlation with layoffRounds r≈0.30.
   if (cd.ceoTenureMonths != null) {
     signals.push({
       val: cd.ceoTenureMonths < 6   ? 0.85   // new CEO — very high instability
          : cd.ceoTenureMonths < 18  ? 0.55   // recent hire — elevated
          : cd.ceoTenureMonths < 36  ? 0.30   // settling in — moderate
          : 0.15,                             // established — stable
-      weight: 0.40,
+      weight: 0.35,
     });
   }
 
-  // Signal 2: C-suite changes in past 12 months (weight 0.40, raised from 0.35)
-  // UNCALIBRATED thresholds. Correlation r≈0.58 — common-cause, not circular.
+  // Signal 2: C-suite changes in past 12 months (weight 0.35). Correlation r≈0.58.
   if (cd.cSuiteChanges12m != null) {
     signals.push({
       val: cd.cSuiteChanges12m >= 3  ? 0.90  // mass executive exodus
          : cd.cSuiteChanges12m === 2 ? 0.65  // significant churn
          : cd.cSuiteChanges12m === 1 ? 0.40  // one departure — watch
          : 0.15,                             // stable leadership
-      weight: 0.40,
+      weight: 0.35,
     });
   }
 
-  // Signal 3: Board composition changed (weight 0.20)
-  // UNCALIBRATED. Correlation with layoffRounds r≈0.35 — safely independent.
-  // Weight increased from 0.15 → 0.20 after removing the dead Glassdoor signal.
+  // Signal 3: Board composition changed (weight 0.15). Correlation r≈0.35.
   if (cd.boardCompositionChanged != null) {
     signals.push({
       val: cd.boardCompositionChanged ? 0.70 : 0.20,
-      weight: 0.20,
+      weight: 0.15,
     });
   }
 
-  // [AUDIT FIX]: Signal 4 (Glassdoor management approval trend) was previously a
-  // dead code path — `glassdoorTrendDirection` does not exist in CompanyData and
-  // the condition `cd.glassdoorTrendDirection != null` was ALWAYS false. The field
-  // was never populated by any data pipeline. The 0.15 weight was permanently
-  // redistributed to CEO tenure (0.35→0.40) and C-suite changes (0.35→0.40).
-  // When Glassdoor API integration is added, restore this signal.
+  // Signal 4: Glassdoor management-approval trend (weight 0.15).
+  // glassdoorTrendDirection exists in CompanyData (line 45) and is populated for all
+  // anchor companies. Falls/rising sentiment is a leading indicator of restructuring:
+  // management-approval drops typically precede headcount cuts by 30-90 days.
+  if (cd.glassdoorTrendDirection != null) {
+    signals.push({
+      val: cd.glassdoorTrendDirection === 'falling' ? 0.72  // sentiment deteriorating — elevated risk
+         : cd.glassdoorTrendDirection === 'rising'  ? 0.18  // positive momentum — lower risk
+         : 0.38,                                            // stable — neutral
+      weight: 0.15,
+    });
+  }
 
   // Weighted blend over PRESENT signals only.
   // When no fields are populated (unknown company), guard fires and returns 0.42
-  // — a lean-toward-elevated prior for unknown companies (was 0.40 neutral).
+  // — a lean-toward-elevated prior for unknown companies.
   const totalWeight = signals.reduce((s, sig) => s + sig.weight, 0);
   if (totalWeight === 0) return 0.42;
   return clamp(signals.reduce((s, sig) => s + sig.val * (sig.weight / totalWeight), 0));
@@ -1496,7 +1771,7 @@ const calculateAIEfficiencyRestructuringRisk = (
   // For Indian IT with sector median $37K, any RPE above $48K (130%) would fire D8.
   // Fix: skip Condition C when (a) company is Indian-domiciled AND in IT/BPO sector,
   // OR (b) the RPE value is a known fallback default (150K or 250K — not real data).
-  const isIndianIT = (companyData.region === 'IN' || companyData.region === 'India') &&
+  const isIndianIT = companyData.region === 'IN' &&
     /it|bpo|ites|software|tech|consulting/i.test(companyData.industry ?? '');
   const isFallbackRPE = companyData.revenuePerEmployee === 150_000
     || companyData.revenuePerEmployee === 250_000
@@ -1590,15 +1865,35 @@ const calculateAIToolMaturity = (
   return clamp(companyAI * 0.30 + domainMaturity * 0.70);
 };
 
-// ─── D3 Risk: Augmentation Potential risk (18%) — inverted ───────────────────
+// ─── D3 Risk: Augmentation Potential risk — inverted, company-amplified ──────
 // (1 - augmentation potential) = risk from low ability to leverage AI as partner
+//
+// v13.0 accuracy fix: Previously company-agnostic — all companies in the same
+// role received identical D3. Now modulated by company AI investment signal.
+// Rationale: a "very-high" AI investment company actively deploys AI tools that
+// employees can co-create with; a "none/low" company gives employees no AI
+// partner capability — the SAME role has different augmentation potential.
+// Effect: ±0.09 delta on D3 raw, ±~1 pt on final score at 11% formula weight.
+// Grounding: role-level aiRisk still dominates (68% weight); company adds 32%.
+// IMPORTANT: only modulates D3; D2 already captures full company AI signal.
 
 const calculateAugmentationRisk = (
   roleAIRisk: number,
   demandTrend: 'rising' | 'stable' | 'falling',
+  companyAiSignal: string = 'medium',
 ): number => {
   const trendRisk = demandTrend === 'falling' ? 0.82 : demandTrend === 'stable' ? 0.42 : 0.15;
-  return clamp(trendRisk * 0.55 + roleAIRisk * 0.45);
+  const baseRisk = clamp(trendRisk * 0.55 + roleAIRisk * 0.45);
+  // High AI investment → employees can augment themselves with company tools → lower D3 risk
+  // Low AI investment → no tools available → employee is on their own → higher D3 risk
+  const AI_SIGNAL_DELTA: Record<string, number> = {
+    'very-high': -0.07,
+    'high':      -0.04,
+    'medium':     0.00,
+    'low':       +0.05,
+    'none':      +0.08,
+  };
+  return clamp(baseRisk + (AI_SIGNAL_DELTA[companyAiSignal] ?? 0));
 };
 
 // ─── Score Tier ───
@@ -1818,8 +2113,10 @@ const calculateConfidenceInterval = (
 //   credibilityScore 0.40–0.69  →  treat as 'average'
 //   credibilityScore < 0.40   →  treat as 'unknown'
 //
-// Only applies to 'top'. 'average', 'below', 'unknown' are not discounted —
-// users under-claiming performance is not a scoring risk in the same direction.
+// Symmetric check also applied to 'below' (audit fix):
+//   - Recent promotion + 'below' claim:          → override to 'average' (objective signal)
+//   - 5+ yr tenure + key relationships + 'below': → credibility 0.70 (anxiety-driven)
+// This prevents over-pessimistic self-reports from inflating L5 risk scores.
 
 export interface PerformanceCredibility {
   effectiveTier:    UserFactors['performanceTier'];
@@ -1838,8 +2135,32 @@ export const analyzePerformanceCredibility = (
     uniquenessDepth,
   } = userFactors;
 
-  // Only 'top' can be credibility-discounted.
   if (performanceTier !== 'top') {
+    // Symmetric credibility check: challenge over-pessimistic 'below' self-reports.
+    // Prevents anxiety-driven users from inflating their own risk score.
+    if (performanceTier === 'below') {
+      const belowContradictions: Array<{ signal1: string; signal2: string; severity: string }> = [];
+
+      // Recent promotion is an objective signal that overrides the 'below' self-report
+      if (hasRecentPromotion) {
+        belowContradictions.push({
+          signal1: 'Below-average performance (self-reported)',
+          signal2: 'Recent promotion — objective signal contradicts self-report',
+          severity: 'High',
+        });
+        return { effectiveTier: 'average', credibilityScore: 0.65, contradictions: belowContradictions };
+      }
+
+      // Long tenure + key relationships suggests anxiety-driven under-reporting
+      if (tenureYears >= 5 && hasKeyRelationships) {
+        belowContradictions.push({
+          signal1: 'Below-average performance (self-reported)',
+          signal2: '5+ years tenure and key relationships — possible anxiety-driven under-reporting',
+          severity: 'Medium',
+        });
+        return { effectiveTier: 'below', credibilityScore: 0.70, contradictions: belowContradictions };
+      }
+    }
     return { effectiveTier: performanceTier, credibilityScore: 1.0, contradictions: [] };
   }
 
@@ -2869,11 +3190,46 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     (companyData as any).companyRiskScore ??
     null;
 
+  // v13.0 accuracy fix: compute synthetic company risk score from available fields
+  // when neither companyRoleRisk nor companyRiskScore is in the DB.
+  // This eliminates the "globalL3" identity fallback for 97.5% of companies.
+  // Synthetic score components (each 0–1):
+  //   a) Financial distress proxy — revenue decline → elevated risk
+  //   b) Layoff history — prior rounds → elevated risk
+  //   c) Size signal — very small companies have higher volatility
+  //   d) Public market signal — stock decline amplifies risk
+  const _syntheticRiskScore = (() => {
+    let s = 0.5; // neutral baseline
+    const rev = companyData.revenueGrowthYoY;
+    if (rev !== null) {
+      if (rev < -15) s += 0.20;
+      else if (rev < -5) s += 0.10;
+      else if (rev < 0) s += 0.05;
+      else if (rev >= 15) s -= 0.10;
+      else if (rev >= 5)  s -= 0.05;
+    }
+    const rounds = companyData.layoffRounds ?? 0;
+    if (rounds >= 3) s += 0.18;
+    else if (rounds === 2) s += 0.10;
+    else if (rounds === 1) s += 0.05;
+    const emp = companyData.employeeCount ?? 1000;
+    if (emp < 100) s += 0.08;  // startup volatility
+    else if (emp > 50000) s -= 0.07;  // scale stability
+    const stock = companyData.stock90DayChange;
+    if (stock !== null) {
+      if (stock < -20) s += 0.12;
+      else if (stock < -10) s += 0.06;
+      else if (stock >= 10) s -= 0.06;
+    }
+    return Math.min(0.95, Math.max(0.05, s));
+  })();
+
+  const _effectiveCompanyRiskScore =
+    (companyRiskScore !== null && companyRiskScore > 0) ? companyRiskScore : _syntheticRiskScore;
+
   const blendedL3 = companyRoleRisk !== null
     ? globalL3 * 0.70 + companyRoleRisk * 0.30
-    : companyRiskScore !== null && companyRiskScore > 0
-      ? clamp(globalL3 * (0.82 + companyRiskScore * 0.36))  // 0.82+0.36×score, range ≈ [0.82,1.18]
-      : globalL3;
+    : clamp(globalL3 * (0.82 + _effectiveCompanyRiskScore * 0.36));  // always differentiated now
 
   // ── v5.0 AI-Investment Amplification on L3 ──────────────────────────────
   // Companies with 'very-high' AI investment deploy tools faster than sector average.
@@ -3010,7 +3366,11 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   const D6 = calculateAIAgentCapability(roleTitle, rawRoleExposure.aiRisk);
   const D7 = calculateD7CompanyHealthRisk(L1, L2, L4, companyData);
   const D2 = calculateAIToolMaturity(companyData, rawRoleExposure.aiRisk, rawRoleExposure.demandTrend);
-  const D3risk = calculateAugmentationRisk(rawRoleExposure.aiRisk, rawRoleExposure.demandTrend);
+  const D3risk = calculateAugmentationRisk(
+    rawRoleExposure.aiRisk,
+    rawRoleExposure.demandTrend,
+    companyData.aiInvestmentSignal ?? 'medium',
+  );
 
   // ── Accuracy Gap 1 (v4.0): Apply empirical calibration multipliers ────────
   // Multipliers derived from logistic regression on 200 historical layoff events.
@@ -3032,9 +3392,53 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // Uses adaptive blended weights when an archetype is detected.
   // Falls back to COMPOSITE_FORMULA_WEIGHTS directly for 'low_risk_maintain'.
   // NOT LAYER_WEIGHTS (sum = 1.10, WhatIf-only — see top of file for the full table).
-  const W = scoringArchetype !== 'low_risk_maintain'
+  const archetypeW = scoringArchetype !== 'low_risk_maintain'
     ? blendArchetypeWeights(COMPOSITE_FORMULA_WEIGHTS, scoringArchetype, 0.25)
     : COMPOSITE_FORMULA_WEIGHTS;
+
+  // v17.0: Cohort-adaptive weight blend (COHORT_BLEND_RATIO = 0.30).
+  // When cohortWeights is provided (from pre-pass cohort classification in the
+  // audit pipeline), applies a second blend to archetype weights. Only L1, L2,
+  // D1, and D4 channels are adjusted; D5 excluded (zeroed to prevent double-count).
+  const baseW = inputs.cohortWeights
+    ? blendCohortWeights(archetypeW, inputs.cohortWeights, COHORT_BLEND_RATIO)
+    : archetypeW;
+
+  // v15.0: Layer-level freshness decay. Date-sensitive layers (L1, L2, L4) are
+  // downweighted by the freshness of companyData.lastUpdated mapped to the
+  // dominant signal type for that layer. Remaining weights are renormalised so
+  // the formula budget stays exactly 1.0. Stale-data scores skew toward the
+  // structural (role/personal) signals rather than toward zero.
+  type WeightSet = Record<keyof typeof COMPOSITE_FORMULA_WEIGHTS, number>;
+  const W: WeightSet = SCORING_DECAY_ENABLED && companyData.lastUpdated
+    ? (() => {
+        const ref = now;
+        const f_L1 = computeSignalFreshnessWeightFromDate(companyData.lastUpdated, 'stock_90d_change', ref);
+        const f_L2 = computeSignalFreshnessWeightFromDate(companyData.lastUpdated, 'layoff_history_event', ref);
+        const f_L4 = computeSignalFreshnessWeightFromDate(companyData.lastUpdated, 'sector_contagion', ref);
+
+        const eff: WeightSet = {
+          D1_taskAutomatability:        baseW.D1_taskAutomatability,
+          D2_aiToolMaturity:            baseW.D2_aiToolMaturity,
+          D3_augmentationRisk:          baseW.D3_augmentationRisk,
+          D4_experienceProtection:      baseW.D4_experienceProtection,
+          D5_countryContext:            baseW.D5_countryContext      * f_L4,
+          D6_agentCapability:           baseW.D6_agentCapability,
+          D7_companyHealth:             baseW.D7_companyHealth       * f_L1, // D7 fuses L1+L2+AI signal
+          D8_aiEfficiencyRestructuring: baseW.D8_aiEfficiencyRestructuring,
+          L1_directFinancial:           baseW.L1_directFinancial     * f_L1,
+          L2_directLayoffHistory:       baseW.L2_directLayoffHistory * f_L2,
+        };
+
+        const sum = Object.values(eff).reduce((a, b) => a + b, 0);
+        if (sum <= 0) return baseW as WeightSet;
+        const norm: WeightSet = { ...eff };
+        (Object.keys(eff) as Array<keyof WeightSet>).forEach((k) => {
+          norm[k] = eff[k] / sum;
+        });
+        return norm;
+      })()
+    : (baseW as WeightSet);
 
   const rawScore =
     calibrated.L3  * W.D1_taskAutomatability          +  // D1 — task automatability (calibrated L3)
@@ -3082,8 +3486,10 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   const ksAllNews = layoffNewsCache.filter(
     (n) => ksCompanyNameLower.length > 0 && (n.companyName ?? '').toLowerCase() === ksCompanyNameLower,
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Guard against future-dated news events (negative age bypassed the <= 14 check).
+  // Math.max(0, ...) ensures a future date never triggers the kill-switch floor.
   const ksNewsAgeInDays = ksAllNews[0]
-    ? Math.round((now.getTime() - new Date(ksAllNews[0].date).getTime()) / 86_400_000)
+    ? Math.max(0, Math.round((now.getTime() - new Date(ksAllNews[0].date).getTime()) / 86_400_000))
     : null;
   const ksResult = applyKillSwitches(preKillSwitchScore, companyData, ksNewsAgeInDays, calibrated.L1);
   const finalScore = ksResult.adjustedScore;
@@ -3273,7 +3679,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     probabilityForecast,
     timing,
     performanceTier:               performanceCredibility.effectiveTier,
-    performanceCredibilityScore:   userFactors.performanceTier === 'top'
+    performanceCredibilityScore:   (userFactors.performanceTier === 'top' || userFactors.performanceTier === 'below')
       ? performanceCredibility.credibilityScore
       : undefined,
     recommendations: generateRecommendations(

@@ -306,8 +306,25 @@ Follow the exact same schema. Respond ONLY with JSON.`;
       };
     });
 
+    const total = typeof finalResult.total === 'number' ? finalResult.total : 50;
+    const confidenceLabel: 'HIGH' | 'MEDIUM' = groundedData ? 'HIGH' : 'MEDIUM';
+
+    // v15.0: Surface a structured confidence interval so the frontend can render
+    // "{score} ±N" on the headline. No empirical residuals available in this
+    // edge function; the band is derived heuristically from the confidence label.
+    // method='heuristic_label_band' makes the provenance explicit so consumers
+    // can choose to hide the band when stricter calibration is required.
+    const ciDelta = confidenceLabel === 'HIGH' ? 5 : 10;
+    const confidenceInterval = {
+      pointEstimate: total,
+      low: Math.max(0, total - ciDelta),
+      high: Math.min(100, total + ciDelta),
+      range: ciDelta * 2,
+      method: 'heuristic_label_band' as const,
+    };
+
     const finalOutput = {
-      total: typeof finalResult.total === 'number' ? finalResult.total : 50,
+      total,
       dimensions: validatedDimensions,
       reasoning: finalResult.reasoning || "Grounded analysis complete via multi-agent validation.",
       verdict: finalResult.verdict || "Resilient",
@@ -317,7 +334,8 @@ Follow the exact same schema. Respond ONLY with JSON.`;
       safer_career_paths: finalResult.safer_career_paths || [],
       roadmap: finalResult.roadmap || { phase_1: { timeline: "0-30 days", actions: [] }, phase_2: { timeline: "1-3 months", actions: [] }, phase_3: { timeline: "3-12 months", actions: [] } },
       inaction_scenario: finalResult.inaction_scenario || "If you do not adapt, your role will face extreme pressure from rapid automation.",
-      confidence: groundedData ? 'HIGH' : 'MEDIUM',
+      confidence: confidenceLabel,
+      confidenceInterval,
       isGrounded: !!groundedData,
       agentChain: criticResp.ok ? 'Generator -> Critic' : 'Generator (Solo)'
     };

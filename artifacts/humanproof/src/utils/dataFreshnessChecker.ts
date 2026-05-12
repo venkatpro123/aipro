@@ -11,6 +11,30 @@ export interface DataFreshnessAssessment {
   needsUpdate: boolean;
 }
 
+// v15.0 — Compact freshness class used by the per-signal dot indicators in
+// the Analysis tab driver list and Intelligence tab signal panels.
+//   fresh: <14d  (green dot)
+//   mid:   <30d  (amber dot)
+//   stale: >=30d (red  dot)
+export type SignalFreshnessClass = 'fresh' | 'mid' | 'stale';
+
+export function classifySignalFreshness(ageInDays: number): SignalFreshnessClass {
+  if (ageInDays < 14) return 'fresh';
+  if (ageInDays < 30) return 'mid';
+  return 'stale';
+}
+
+export function classifySignalFreshnessFromDate(
+  lastUpdated: string | undefined | null,
+  nowMs: number = Date.now(),
+): SignalFreshnessClass | null {
+  if (!lastUpdated) return null;
+  const t = new Date(lastUpdated).getTime();
+  if (isNaN(t)) return null;
+  const ageInDays = Math.max(0, Math.floor((nowMs - t) / 86_400_000));
+  return classifySignalFreshness(ageInDays);
+}
+
 /**
  * Calculates how stale data is and provides appropriate warnings
  * @param lastUpdatedDate - Date when data was last updated

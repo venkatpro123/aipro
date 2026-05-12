@@ -60,6 +60,10 @@ export interface SurvivalPredictorInputs {
   temporalAmplifier?: number;      // from temporalRiskAmplifier
   hasLayoffHistory?: boolean;       // company has documented layoffs in past 24mo
   collapseStage?: 1 | 2 | 3 | null;
+  /** Detected scoring archetype — used to apply archetype-specific probability modifier */
+  scoringArchetype?: string;
+  /** Score confidence (0–100) — when <50, adds a caveat to the probability narrative */
+  confidencePercent?: number;
 }
 
 // ─── Actuarial calibration tables ────────────────────────────────────────────
@@ -150,27 +154,43 @@ const REGIONAL_PROBABILITY_MULTIPLIER: Record<string, number> = {
   "NL": 0.82,    // European protections
   "FR": 0.75,    // strong labor law — difficult to cut
   "GLOBAL": 1.0,
+  // Audit Gap E: additional regions
+  "BR": 0.95,    // Brazil — some labour protections
+  "MX": 0.98,    // Mexico
+  "IL": 1.08,    // Israel — tech-heavy, similar exposure to US
+  "JP": 0.72,    // Japan — strong lifetime-employment norms
+  "KR": 0.80,    // South Korea — moderate employment protections
+  "SE": 0.78,    // Sweden — strong labour market regulations
+  "CH": 0.80,    // Switzerland — stable employment norms
+  "AE": 1.05,    // UAE/Dubai — at-will employment, limited severance norms
+  "PH": 1.02,    // Philippines — tech-heavy outsourcing exposure
+  "PL": 0.88,    // Poland — European protections
 };
 
 // ─── Industry multipliers ────────────────────────────────────────────────────
-// Based on sector-level layoff frequency vs. overall workforce 2020–2026
+// These multipliers represent the MARGINAL industry effect NOT already captured
+// in L4 (market conditions layer, 12% of composite formula). The score already
+// reflects base sector risk through L4; applying a 1.35× multiplier on top of
+// an already-elevated tech score double-counts the industry effect.
+// Values corrected downward to represent only the marginal probability adjustment
+// beyond what the calibrated score already encodes.
 
 const INDUSTRY_PROBABILITY_MULTIPLIER: Record<string, number> = {
-  "technology": 1.35,
-  "software": 1.35,
-  "internet": 1.40,
-  "social_media": 1.45,
-  "fintech": 1.28,
-  "startup": 1.55,
+  "technology": 1.12,     // was 1.35 — L4 already captures base tech sector risk
+  "software": 1.12,       // was 1.35
+  "internet": 1.15,       // was 1.40
+  "social_media": 1.18,   // was 1.45
+  "fintech": 1.10,        // was 1.28
+  "startup": 1.20,        // was 1.55 — startup fragility partially in L1/L2
   "retail": 0.95,
-  "healthcare": 0.75,
-  "government": 0.42,
-  "education": 0.68,
-  "finance": 0.90,
+  "healthcare": 0.92,     // was 0.75 — over-correction; L4 already reflects protection
+  "government": 0.72,     // was 0.42 — same over-correction issue
+  "education": 0.80,      // was 0.68
+  "finance": 0.92,        // was 0.90
   "consulting": 1.05,
-  "media": 1.15,
-  "telecommunications": 1.10,
-  "manufacturing": 0.85,
+  "media": 1.10,          // was 1.15
+  "telecommunications": 1.08, // was 1.10
+  "manufacturing": 0.88,  // was 0.85
   "real_estate": 1.02,
 };
 
@@ -194,7 +214,19 @@ function getRegionalMultiplier(region: string): number {
     .replace("GERMANY", "DE")
     .replace("FRANCE", "FR")
     .replace("CANADA", "CA")
-    .replace("NETHERLANDS", "NL");
+    .replace("NETHERLANDS", "NL")
+    .replace("ISRAEL", "IL")
+    .replace("JAPAN", "JP")
+    .replace("SOUTH KOREA", "KR")
+    .replace("KOREA", "KR")
+    .replace("UAE", "AE")
+    .replace("UNITED ARAB EMIRATES", "AE")
+    .replace("SWEDEN", "SE")
+    .replace("SWITZERLAND", "CH")
+    .replace("BRAZIL", "BR")
+    .replace("MEXICO", "MX")
+    .replace("PHILIPPINES", "PH")
+    .replace("POLAND", "PL");
   return REGIONAL_PROBABILITY_MULTIPLIER[normalised] ?? 1.0;
 }
 
@@ -265,38 +297,69 @@ function buildProbabilityNarrative(
   currentScore: number,
   dominantFactor: string,
   cohortDescription: string,
+  confidencePercent?: number,
 ): string {
   const pctStr = `${Math.round(probability12m * 100)}%`;
 
+  let narrative: string;
   if (riskTier === "CRITICAL") {
-    return `Based on your ${currentScore}/100 risk profile, historical data shows a ${pctStr} probability of experiencing a layoff within 12 months. The primary driver is ${dominantFactor}. ${cohortDescription}. Immediate action is warranted — the probability does not diminish with time unless the underlying signals change.`;
+    narrative = `Based on your ${currentScore}/100 risk profile, historical data shows a ${pctStr} probability of experiencing a layoff within 12 months. The primary driver is ${dominantFactor}. ${cohortDescription}. Immediate action is warranted — the probability does not diminish with time unless the underlying signals change.`;
+  } else if (riskTier === "HIGH") {
+    narrative = `At ${currentScore}/100, your 12-month layoff probability is modelled at ${pctStr}. This is statistically significant — roughly 1 in ${Math.round(1 / probability12m)} people in comparable situations lost their jobs in our observation dataset. The dominant factor is ${dominantFactor}. Active risk mitigation this quarter is recommended.`;
+  } else if (riskTier === "ELEVATED") {
+    narrative = `Estimated 12-month layoff probability: ${pctStr}. At ${currentScore}/100, you are above the average workforce risk level. The primary contributing factor is ${dominantFactor}. This level of probability warrants proactive positioning — passive monitoring is not sufficient.`;
+  } else if (riskTier === "MODERATE") {
+    narrative = `Estimated 12-month layoff probability: ${pctStr} — near the industry average. Your ${currentScore}/100 score reflects a balanced risk profile. Continue monitoring and maintain career optionality as a precaution. No immediate action required but complacency has a cost.`;
+  } else {
+    narrative = `Low estimated layoff probability: ${pctStr}. Your ${currentScore}/100 score reflects strong structural protection. Maintain your current advantages and use this stability window to build longer-term resilience.`;
   }
-  if (riskTier === "HIGH") {
-    return `At ${currentScore}/100, your 12-month layoff probability is modelled at ${pctStr}. This is statistically significant — roughly 1 in ${Math.round(1 / probability12m)} people in comparable situations lost their jobs in our observation dataset. The dominant factor is ${dominantFactor}. Active risk mitigation this quarter is recommended.`;
+
+  // Enhancement C: add data-quality caveat when confidence is low
+  if (confidencePercent != null && confidencePercent < 50) {
+    narrative += ` Note: this estimate is based on limited data (confidence: ${confidencePercent}%) — treat as an indicative range, not a precise figure.`;
   }
-  if (riskTier === "ELEVATED") {
-    return `Estimated 12-month layoff probability: ${pctStr}. At ${currentScore}/100, you are above the average workforce risk level. The primary contributing factor is ${dominantFactor}. This level of probability warrants proactive positioning — passive monitoring is not sufficient.`;
-  }
-  if (riskTier === "MODERATE") {
-    return `Estimated 12-month layoff probability: ${pctStr} — near the industry average. Your ${currentScore}/100 score reflects a balanced risk profile. Continue monitoring and maintain career optionality as a precaution. No immediate action required but complacency has a cost.`;
-  }
-  return `Low estimated layoff probability: ${pctStr}. Your ${currentScore}/100 score reflects strong structural protection. Maintain your current advantages and use this stability window to build longer-term resilience.`;
+
+  return narrative;
 }
+
+// ─── Archetype probability modifiers ─────────────────────────────────────────
+// Marginal probability adjustment by detected scoring archetype. Applied AFTER
+// industry and regional multipliers to capture scenario-specific hazard patterns
+// not fully expressed in sector-level statistics.
+const ARCHETYPE_PROBABILITY_MODIFIER: Record<string, number> = {
+  financial_distress_layoff:         1.15,  // distress-driven companies cut faster
+  ai_efficiency_restructuring:       0.88,  // profitable companies — more selective cuts
+  sector_wave:                       1.10,  // contagion accelerates individual risk
+  role_displacement:                 1.05,  // targeted role elimination
+  individual_resilience_gap:         0.92,  // company OK — personal factors drive it
+  private_equity_cost_extraction:    1.22,  // PE-backed aggressive cost targets
+  gcc_parent_contagion:              1.08,  // parent company budget cuts cascade
+  india_it_bench_risk:               1.06,  // bench clearing accelerates in sector downturns
+};
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
 export function predictLayoffSurvival(
   inputs: SurvivalPredictorInputs,
 ): SurvivalProbabilityResult {
-  const { currentScore, industry, region, collapseStage, temporalAmplifier = 1.0, hasLayoffHistory = false } = inputs;
+  const {
+    currentScore, industry, region, collapseStage,
+    temporalAmplifier = 1.0, hasLayoffHistory = false,
+  } = inputs;
 
   const band = SCORE_BANDS.find((b) => currentScore >= b.min && currentScore <= b.max)
     ?? SCORE_BANDS[SCORE_BANDS.length - 1];
 
   let probability12m = band.baseRate12m;
 
-  // Apply industry multiplier
+  // Apply industry multiplier (marginal effect beyond L4's sector risk contribution)
   probability12m *= getIndustryMultiplier(industry);
+
+  // Apply archetype modifier — scenario-specific hazard beyond industry/region statistics
+  if (inputs.scoringArchetype) {
+    const archetypeMod = ARCHETYPE_PROBABILITY_MODIFIER[inputs.scoringArchetype] ?? 1.0;
+    probability12m = Math.min(0.92, probability12m * archetypeMod);
+  }
 
   // Apply regional multiplier — employment law, market structure, volatility norms
   probability12m = Math.min(0.92, probability12m * getRegionalMultiplier(region));
@@ -316,9 +379,12 @@ export function predictLayoffSurvival(
 
   probability12m = Math.min(0.92, Math.max(0.01, probability12m));
 
-  // Derive shorter timeframes (6mo = ~60% of 12mo, 1mo = ~10% of 12mo)
-  const probability6m = Math.min(0.85, probability12m * 0.60);
-  const probability1m = Math.min(0.40, probability12m * 0.095);
+  // Derive shorter timeframes using exponential survival model: P(t) = 1 - exp(-λ × t/12)
+  // This replaces the arbitrary 0.60 / 0.095 constants with a mathematically grounded
+  // constant-hazard assumption that preserves monotonicity across all probability levels.
+  const lambda = -Math.log(Math.max(0.001, 1 - probability12m));
+  const probability6m = Math.min(0.85, 1 - Math.exp(-lambda * 0.5));
+  const probability1m = Math.min(0.40, 1 - Math.exp(-lambda / 12));
 
   const { low, high } = computeConfidenceInterval(probability12m, currentScore);
 
@@ -347,6 +413,7 @@ export function predictLayoffSurvival(
       currentScore,
       dominantFactor,
       band.cohortDescription,
+      inputs.confidencePercent,
     ),
     dominantRiskFactor: dominantFactor,
     inactionProbability12m: Math.round(inactionProbability12m * 1000) / 1000,

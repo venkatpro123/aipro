@@ -71,7 +71,9 @@ export interface ResilienceInputs {
 // ─── Pillar 1: Financial Buffer ───────────────────────────────────────────────
 
 function scoreFinancialBuffer(inputs: ResilienceInputs): ResiliencePillar {
-  const { financialRunwayMonths, hasAlternativeIncome } = inputs;
+  // Guard: clamp negative values to 0 (invalid input should not produce misleading insight)
+  const financialRunwayMonths = Math.max(0, inputs.financialRunwayMonths ?? 0);
+  const { hasAlternativeIncome } = inputs;
 
   let score = 0;
   let insight = "";

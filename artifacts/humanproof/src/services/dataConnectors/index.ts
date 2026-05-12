@@ -2,7 +2,10 @@
 // Unified data connector orchestrator — combines BSE, NSE, layoffs.fyi, MCA, Naukri, RSS.
 // All sources are free-tier; degrades gracefully when unavailable.
 
-import { fetchBSECompanyData, findBSEScripCode } from './bseConnector';
+// bseProxyConnector routes through the 'fetch-bse-data' Edge Function which
+// runs server-side and therefore avoids CORS. The direct bseConnector makes
+// browser-to-api.bseindia.com requests that are always blocked by CORS headers.
+import { fetchBSEDataViaProxy, findBSEScripCodeViaProxy } from './bseProxyConnector';
 import { fetchNSECompanyData, deriveRangePositionFromNSE } from './nsConnector';
 import { getCompanyLayoffs, getSectorLayoffCount, isLayoffsDatasetAvailable } from './layoffsFyiConnector';
 import { fetchMCACompanyInfo } from './mcaConnector';
@@ -92,14 +95,14 @@ export async function enrichCompanySignals(
   // This is the correct primitive for a "best-effort multi-source enrichment"
   // pattern. Each connector is independently optional; none is on the critical path.
   const settled = await Promise.allSettled([
-    findBSEScripCode(companyName),       // 0: bseCode
-    getCompanyLayoffs(companyName),      // 1: layoffData
-    fetchMCACompanyInfo(companyName),    // 2: mcaData
+    findBSEScripCodeViaProxy(companyName), // 0: bseCode (proxy — avoids CORS)
+    getCompanyLayoffs(companyName),        // 1: layoffData
+    fetchMCACompanyInfo(companyName),      // 2: mcaData
     fetchRoleDemandSignal(roleTitle, companyName), // 3: roleData
-    fetchCompanyNewsSignals(companyName), // 4: newsData
-    fetchIndiaPressSignals(companyName), // 5: indiaPressData
-    fetchSecEdgar8KSignals(companyName), // 6: secData
-    fetchWarnNotices(companyName),       // 7: warnData
+    fetchCompanyNewsSignals(companyName),  // 4: newsData
+    fetchIndiaPressSignals(companyName),   // 5: indiaPressData
+    fetchSecEdgar8KSignals(companyName),   // 6: secData
+    fetchWarnNotices(companyName),         // 7: warnData
   ]);
 
   // Extract values — rejected connectors fall back to null or their empty-state type.
@@ -119,32 +122,39 @@ export async function enrichCompanySignals(
   const secData       = unwrap(settled[6], 'fetchSecEdgar8KSignals',  { company: companyName, filingCount: 0, distinctEventDates: 0, mostRecentFiling: null, hits: [], edgarReachable: false, fetchedAt: new Date().toISOString() });
   const warnData      = unwrap(settled[7], 'fetchWarnNotices',        { company: companyName, notices: [], totalAffected: 0, mostRecentFiling: null, warnDataReachable: false, sourceUrl: null, fetchedAt: new Date().toISOString() });
 
-  // BSE + NSE — attempt after scrip code resolved.
-  // We track stock90DayChange (true quarterly return — null until a real chart
-  // API is wired up) separately from rangePosition52w (current price vs 52-week
-  // range), so the scoring engine doesn't conflate price *level* with price
-  // *change*. Both connectors only expose the 52-week endpoints today, so the
-  // stock90DayChange field stays null and the orchestrator should fall back to
-  // the proxy-live-signals Supabase Edge Function (Yahoo v8 chart) for tickers.
+  // BSE + NSE — only for Indian-listed companies.
+  // US/global companies (Google, Meta, Apple, etc.) are not on BSE/NSE so these
+  // connectors always return null for them. Stock and revenue data for US companies
+  // flows through liveDataService.ts via Yahoo Finance (TICKER_MAP + Edge Function proxy).
+  // revenueYoY is intentionally left null here — it is populated by liveDataService
+  // via QuarterlyRevenueGrowthYOY from Alpha Vantage / Yahoo Finance, not by BSE/NSE.
   let stock90d: number | null = null;
   let rangePosition52w: number | null = null;
-  const revenueYoY: number | null = null;
+  const revenueYoY: number | null = null; // populated by liveDataService, not connectors
   let marketCap: number | null = null;
   let pe: number | null = null;
 
+  // BSE data — fetched via server-side Edge Function proxy to avoid CORS.
+  // The proxy connector accepts the company name directly; it resolves the
+  // scrip code internally using BSE_SCRIP_CODES or the bse_scrip_codes table.
   if (bseCode) {
-    const bse = await fetchBSECompanyData(bseCode);
-    if (bse) {
-      stock90d = bse.stock90DayChange; // currently null — see comment above
+    const bse = await fetchBSEDataViaProxy(companyName);
+    if (bse && bse.source !== 'fallback') {
+      stock90d        = bse.stock90DayChange;
       rangePosition52w = bse.stock52wRangePosition;
-      marketCap = bse.marketCap;
-      pe = bse.peRatio;
+      marketCap       = bse.marketCapCr;
+      pe              = bse.peRatio;
       sourcesUsed.push('BSE India');
     }
   }
 
-  // NSE — supplements with range-position when BSE failed
-  if (rangePosition52w === null) {
+  // NSE — Indian companies only. Only attempt when BSE already confirmed a
+  // listing (bseCode !== null). Do NOT attempt for US names — they don't
+  // trade on NSE and the request just wastes a round-trip.
+  // NOTE: NSE's API also has CORS restrictions in some browser environments.
+  // If fetchNSECompanyData silently fails, the bseCode guard prevents wasted
+  // requests for non-Indian companies.
+  if (rangePosition52w === null && bseCode !== null) {
     const nseTicker = companyName.toUpperCase().replace(/\s+/g, '');
     const nse = await fetchNSECompanyData(nseTicker);
     if (nse) {

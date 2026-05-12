@@ -448,8 +448,18 @@ export const runFullEnsembleAnalysis = async (
 
     // ── Role-specific personalized action (v8.0 addition) ────────────────────
     // Replace the 5 generic bracket actions with the 47-role action pool.
+    // v13.0: map scenario archetype → company action context for differentiated guidance
+    const _archetypeToContext = (arch: string | undefined): import('../actionPersonalizationEngine').CompanyActionContext => {
+      if (!arch) return 'unknown';
+      if (arch.includes('ai_efficiency')) return 'ai_efficiency_restructuring';
+      if (arch.includes('financial_distress') || arch.includes('distress')) return 'financial_distress';
+      if (arch.includes('sector_wave') || arch.includes('contagion')) return 'sector_wave';
+      if (arch.includes('low_risk') || arch.includes('stable')) return 'stable_growth';
+      return 'unknown';
+    };
+    const _companyContext = _archetypeToContext(scenario.archetype);
     const seniorityBracket = deriveSeniorityBracket(tenureYears, 'average', uniquenessDepth, undefined);
-    const personalizedSet = getPersonalizedActions(role, seniorityBracket, score, cd.region);
+    const personalizedSet = getPersonalizedActions(role, seniorityBracket, score, cd.region, _companyContext, cd.name);
     // Null-safe: actions array may be empty if no pool matched (should not happen after v8.0 additions)
     const topPersonalizedAction = personalizedSet?.actions?.[0];
     const oneActionThisWeek = topPersonalizedAction?.description

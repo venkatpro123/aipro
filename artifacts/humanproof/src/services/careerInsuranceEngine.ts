@@ -575,7 +575,7 @@ function buildInternalConversation(
       'What does success look like in my role over the next 6 months?',
       'Which of my current projects are highest priority for the team?',
       'Are there new areas or responsibilities I should be building toward?',
-      'How is the team's headcount planning looking for the next two quarters?',
+      "How is the team's headcount planning looking for the next two quarters?",
       ...(hasLayoffs ? [`Given the recent restructuring, how has ${company}'s priorities for our team evolved?`] : []),
     ],
     signsOfRisk: [

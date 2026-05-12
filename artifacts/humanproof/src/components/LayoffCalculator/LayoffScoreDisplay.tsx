@@ -625,11 +625,18 @@ const AIInsightCards: React.FC<{
 };
 
 // Animated counter for score reveal
+//
+// v15.0: Optional ciDelta surfaces the confidence interval directly on the
+// hero ring as "{score}% ±N". When isEstimate is true (signal conflict, low
+// freshness) the pill is replaced with "directional estimate" microcopy so
+// users do not over-trust a precise number.
 const AnimatedScore: React.FC<{
   target: number;
   color: string;
   size: number;
-}> = ({ target, color, size }) => {
+  ciDelta?: number;
+  isEstimate?: boolean;
+}> = ({ target, color, size, ciDelta, isEstimate }) => {
   const [current, setCurrent] = useState(0);
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -733,6 +740,35 @@ const AnimatedScore: React.FC<{
         >
           layoff risk
         </span>
+        {isEstimate ? (
+          <span
+            title="Signal conflicts or stale data widened the band — treat as directional"
+            style={{
+              marginTop: 6,
+              fontSize: "0.7rem",
+              color: "#f59e0b",
+              letterSpacing: "0.5px",
+              textTransform: "uppercase",
+            }}
+          >
+            directional estimate
+          </span>
+        ) : ciDelta != null && ciDelta > 0 ? (
+          <span
+            title={`Best estimate ${target}; with ~90% confidence the true value falls between ${Math.max(0, target - ciDelta)} and ${Math.min(100, target + ciDelta)}.`}
+            style={{
+              marginTop: 6,
+              padding: "2px 8px",
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.08)",
+              fontSize: "0.78rem",
+              color: "#cbd5e1",
+              fontFamily: "var(--mono, ui-monospace, monospace)",
+            }}
+          >
+            ±{ciDelta}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -1058,7 +1094,17 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
       )}
 
       <div style={{ textAlign: "center", marginBottom: "16px" }}>
-        <AnimatedScore target={score} color={tier.color} size={220} />
+        <AnimatedScore
+          target={score}
+          color={tier.color}
+          size={220}
+          ciDelta={(() => {
+            const ci = (result as any)?.confidenceInterval;
+            if (!ci || typeof ci.low !== 'number' || typeof ci.high !== 'number') return undefined;
+            return Math.round((ci.high - ci.low) / 2);
+          })()}
+          isEstimate={Boolean((result as any)?.confidenceInterval?.isEstimate)}
+        />
         {/* ENHANCEMENT: Confidence interval below ring — epistemic honesty */}
         <ScoreConfidenceInterval
           score={score}

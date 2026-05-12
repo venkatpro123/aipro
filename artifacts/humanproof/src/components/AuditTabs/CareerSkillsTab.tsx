@@ -24,6 +24,15 @@ import {
   Brain, Heart, Lightbulb, Users, Zap, Target, ChevronRight,
   ArrowRight, BarChart3, Clock, UserCheck,
 } from "lucide-react";
+// v14.0 intelligence panels
+import SkillPortfolioPanel from "./common/SkillPortfolioPanel";
+import CareerVelocityPanel from "./common/CareerVelocityPanel";
+// v16.0 intelligence panels
+import RoleMarketDemandPanel from "./common/RoleMarketDemandPanel";
+import UserFinancialRunwayPanel from "./common/UserFinancialRunwayPanel";
+// v17.0 intelligence panels
+import SkillGapIntelligencePanel from "./common/SkillGapIntelligencePanel";
+import PersonalizedTimelinePanel from "./common/PersonalizedTimelinePanel";
 
 // ---------------------------------------------------------------------------
 // FALLBACK INTEL — used when role has no seeded data
@@ -933,6 +942,46 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
             )}
           </div>
         </CollapsibleSection>
+
+        {/* v14.0: Skill Portfolio Fit — shown when user has declared skills */}
+        {(result as any).skillPortfolioFit && (
+          <div className="mt-6">
+            <SectionHeader
+              title="Skill Portfolio Intelligence"
+              description="Your declared skills scored against 2026 Q1 market demand — identifies surging, stable, and declining skills with forward-looking decay projections."
+            />
+            <SkillPortfolioPanel portfolio={(result as any).skillPortfolioFit} />
+          </div>
+        )}
+
+        {/* v14.0: Career Velocity — always shown */}
+        {(result as any).careerVelocity && (
+          <div className="mt-6">
+            <SectionHeader
+              title="Career Velocity Intelligence"
+              description="Promotion velocity, plateau risk, and internal visibility scoring — research shows plateaued performers are first-cut candidates in any restructuring."
+            />
+            <CareerVelocityPanel velocity={(result as any).careerVelocity} />
+          </div>
+        )}
+
+        {/* v16.0: Role market demand and personal financial runway */}
+        <div className="mt-6 space-y-3">
+          <RoleMarketDemandPanel roleMarketDemand={(result as any).roleMarketDemand} />
+          <UserFinancialRunwayPanel userFinancialRunway={(result as any).userFinancialRunway} />
+        </div>
+
+        {/* v17.0: Skill Gap Intelligence — market-demand-scored gap analysis */}
+        <div className="mt-6">
+          <SkillGapIntelligencePanel skillGapIntelligence={(result as any).skillGapIntelligence} />
+        </div>
+
+        {/* v17.0: Personalized Timeline — critical date countdown and milestones */}
+        {(result as any).personalizedTimeline && (
+          <div className="mt-4">
+            <PersonalizedTimelinePanel personalizedTimeline={(result as any).personalizedTimeline} />
+          </div>
+        )}
 
         {/* ── Career Twin Contribution CTA ── */}
         <div className="mt-6 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-5">

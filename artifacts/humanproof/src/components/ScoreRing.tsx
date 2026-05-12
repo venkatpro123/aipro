@@ -63,16 +63,68 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
       role="img"
       aria-label={`Risk score: ${score} out of 100`}
     >
-      {/* Background glow disc — blurred color behind ring */}
+      {/* Halo pulse rings — concentric animated rings */}
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
-          width: size * 0.7,
-          height: size * 0.7,
+          width: size + 16,
+          height: size + 16,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${color}22 0%, transparent 70%)`,
-          filter: "blur(24px)",
+          border: `1px solid ${color}4d`,
+          animation: "halo-pulse 3s ease-in-out infinite",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          width: size + 40,
+          height: size + 40,
+          borderRadius: "50%",
+          border: `1px solid ${color}29`,
+          animation: "halo-pulse-2 3s ease-in-out 0.5s infinite",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          width: size + 72,
+          height: size + 72,
+          borderRadius: "50%",
+          border: `1px solid ${color}14`,
+          animation: "halo-pulse-3 3s ease-in-out 1s infinite",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Outer ambient disc — wide, soft glow that bleeds out to panel edges */}
+      <div
+        aria-hidden="true"
+        className="score-ambient-breathe"
+        style={{
+          position: "absolute",
+          width: size * 2.0,
+          height: size * 2.0,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${color}18 0%, transparent 65%)`,
+          filter: "blur(48px)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Inner glow disc — tighter, more vibrant */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          width: size * 0.90,
+          height: size * 0.90,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${color}32 0%, transparent 70%)`,
+          filter: "blur(22px)",
           pointerEvents: "none",
         }}
       />
@@ -167,15 +219,20 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
 
       {/* Center content */}
       <div style={{ position: "absolute", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
-        {/* Score number */}
+        {/* Score number — display font for impact */}
         <motion.div
           className="score-massive"
           initial={{ opacity: 0, scale: 0.6, filter: "blur(8px)" }}
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           transition={{ duration: 0.55, delay: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-          style={{ fontSize, color: start }}
+          style={{
+            fontSize,
+            color: start,
+            fontFamily: "var(--font-display)",
+            textShadow: `0 0 30px ${start}55`,
+          }}
         >
-          {score}
+          {Math.round(score)}
         </motion.div>
 
         {/* Risk tier label */}

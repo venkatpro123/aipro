@@ -24,6 +24,11 @@ import type { TabProps } from "./common/types";
 import type { SignalQuality, ConsensusSnapshot } from "../../types/hybridResult";
 // v12.0
 import { SignalAttributionWaterfall } from "./common/SignalAttributionWaterfall";
+// v13.0
+import PeerContagionPanel from "./common/PeerContagionPanel";
+import ModelCalibrationPanel from "./common/ModelCalibrationPanel";
+// v17.0
+import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
 import { CALIBRATION_META } from "../../services/empiricalCalibration";
 import { getCircuitSnapshot } from "../../services/apiCircuitBreaker";
 import { PatternMatchCard } from "../PatternMatchCard";
@@ -398,13 +403,14 @@ const SourceProvenanceTable: React.FC<{
 const CALIBRATION_WARNING_DAYS = 120;
 
 const CalibrationFreshnessPanel: React.FC = () => {
-  const calibratedAt     = new Date(CALIBRATION_META.calibrated_at);
-  const nextAt           = new Date(CALIBRATION_META.next_recalibration_at);
-  const now              = new Date();
-  const ageInDays        = Math.floor((now.getTime() - calibratedAt.getTime()) / 86_400_000);
-  const daysUntilNext    = Math.floor((nextAt.getTime() - now.getTime()) / 86_400_000);
-  const isApproachingAge = ageInDays >= CALIBRATION_WARNING_DAYS;
-  const isOverdue        = daysUntilNext < 0;
+  const calibratedAt          = new Date(CALIBRATION_META.calibrated_at);
+  const nextAt                = new Date(CALIBRATION_META.next_recalibration_at);
+  const now                   = new Date();
+  const ageInDays             = Math.floor((now.getTime() - calibratedAt.getTime()) / 86_400_000);
+  const daysUntilNext         = Math.floor((nextAt.getTime() - now.getTime()) / 86_400_000);
+  const isApproachingAge      = ageInDays >= CALIBRATION_WARNING_DAYS;
+  const isOverdue             = daysUntilNext < 0;
+  const monthsSinceCalibration = Math.floor(ageInDays / 30);
 
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -420,6 +426,28 @@ const CalibrationFreshnessPanel: React.FC = () => {
               {isOverdue
                 ? `Calibration is overdue — the scheduled recalibration date (${fmtDate(nextAt)}) has passed. Scores may reflect market conditions from ${fmtDate(calibratedAt)} rather than current dynamics. A recalibration run is recommended.`
                 : `Calibration is approaching its review date (${daysUntilNext} days remaining). Scores may be less accurate for market conditions that have shifted since ${fmtDate(calibratedAt)}.`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Calibration age warning — amber at >6 months, red at >12 months */}
+      {monthsSinceCalibration > 6 && monthsSinceCalibration <= 12 && !isOverdue && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-300 leading-relaxed">
+              Calibration data is {monthsSinceCalibration} months old — scores for emerging AI restructuring patterns may be less accurate.
+            </p>
+          </div>
+        </div>
+      )}
+      {monthsSinceCalibration > 12 && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/8 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-red-300 leading-relaxed">
+              Calibration data is {monthsSinceCalibration} months old — accuracy for recent market conditions is significantly reduced. Recalibration overdue.
             </p>
           </div>
         </div>
@@ -1265,6 +1293,97 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
         <div className="mt-6">
           <SignalAttributionWaterfall result={result} />
         </div>
+
+        {/* v13.0: Peer Contagion — sector wave propagation status */}
+        {(result as any).peerContagion && (
+          <div className="mt-6">
+            <PeerContagionPanel contagion={(result as any).peerContagion} />
+          </div>
+        )}
+
+        {/* v13.0: Model Calibration — engine accuracy and trust metrics */}
+        {(result as any).modelCalibration && (
+          <div className="mt-6">
+            <ModelCalibrationPanel calibration={(result as any).modelCalibration} />
+          </div>
+        )}
+
+        {/* v17.0: Historical Accuracy — community prediction accuracy by score tier */}
+        {(result as any).modelCalibration && (
+          <div className="mt-6">
+            <HistoricalAccuracyPanel
+              calibration={(result as any).modelCalibration}
+              currentScore={result.total}
+            />
+          </div>
+        )}
+
+        {/* v14.0: Bayesian Credible Interval — proper uncertainty quantification */}
+        {(result as any).bayesianCI && (
+          <div className="mt-6">
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.18)' }}>
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Bayesian Credible Interval</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.25)' }}>
+                  TIER {(result as any).bayesianCI.dataQualityTier} · σ={((result as any).bayesianCI.sigma).toFixed(1)}pts
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="text-sm font-bold" style={{ color: '#60a5fa' }}>
+                    {(result as any).bayesianCI.ci80_low}–{(result as any).bayesianCI.ci80_high}
+                  </div>
+                  <div className="text-[10px] opacity-45 mt-0.5">80% Credible Interval</div>
+                </div>
+                <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    {(result as any).bayesianCI.ci95_low}–{(result as any).bayesianCI.ci95_high}
+                  </div>
+                  <div className="text-[10px] opacity-45 mt-0.5">95% Credible Interval</div>
+                </div>
+              </div>
+              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {(result as any).bayesianCI.interpretation}
+              </p>
+              <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                σ_total = √(σ_data² + σ_calibration²). Calibration σ=3.5pts from AUC-ROC=0.81 at n=200 events.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* v14.0: Segmented Calibration — per-segment score adjustment */}
+        {(result as any).segmentCalibration && (result as any).segmentCalibration.adjustmentDelta !== 0 && (
+          <div className="mt-6">
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Segmented Calibration</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}>
+                  {(result as any).segmentCalibration.calibrationStatus.replace('_', ' ')}
+                </span>
+              </div>
+              <p className="text-[11px] mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {(result as any).segmentCalibration.segmentLabel}
+              </p>
+              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                {(result as any).segmentCalibration.segmentInsight}
+              </p>
+              {(result as any).segmentCalibration.adjustmentDelta !== 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Segment adjustment:</span>
+                  <span className="text-[10px] font-bold" style={{ color: (result as any).segmentCalibration.adjustmentDelta > 0 ? '#ef4444' : '#10b981' }}>
+                    {(result as any).segmentCalibration.adjustmentDelta > 0 ? '+' : ''}{(result as any).segmentCalibration.adjustmentDelta}pts
+                  </span>
+                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    (segment base rate: {Math.round((result as any).segmentCalibration.baseLayoffRate * 100)}% vs. global 22%)
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </motion.div>
     </section>

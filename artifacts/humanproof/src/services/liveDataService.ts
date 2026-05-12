@@ -251,6 +251,7 @@ const fetchAlphaVantageOverview = async (
     };
   } catch (e: any) {
     console.warn('[LiveDataService] Alpha Vantage failed:', e.message);
+    recordApiDegradation('alphavantage', isRateLimitError(e) ? 'rate_limited' : 'network_error', e.message);
     return null;
   }
 };
@@ -280,24 +281,31 @@ const fetchNewsAPIHeadlines = async (
     const articles: any[] = data.articles || [];
     const recentHeadlineCount = articles.length;
 
-    // Detect a layoff event from headlines
+    // Detect a layoff event from headlines.
+    // Only emit a discrete event when the headline explicitly states a workforce
+    // % cut. Without an explicit %, treat as a headline-only signal (counted in
+    // recentHeadlineCount + sentimentSignal) but do not fabricate severity.
     let latestLayoffEvent: LayoffNewsEvent | null = null;
     for (const article of articles) {
-      const title = (article.title || '').toLowerCase();
+      const rawTitle = article.title || '';
+      const title = rawTitle.toLowerCase();
       const isLayoff = LAYOFF_KEYWORDS.some(kw => title.includes(kw));
-      if (isLayoff && article.publishedAt) {
-        const event: LayoffNewsEvent = {
-          companyName,
-          date: article.publishedAt.slice(0, 10),
-          headline: article.title,
-          percentCut: extractPercentFromText(article.title + ' ' + (article.description || '')),
-          source: article.source?.name || 'NewsAPI',
-          url: article.url || '',
-          affectedDepartments: extractDepartmentsFromText(article.title + ' ' + (article.description || '')),
-        };
-        injectLayoffEvent(event);  // inject into live cache
-        if (!latestLayoffEvent) latestLayoffEvent = event;
-      }
+      if (!isLayoff || !article.publishedAt) continue;
+
+      const pct = extractWorkforcePercent(rawTitle);
+      if (pct === null) continue; // skip — no fabricated 5% default
+
+      const event: LayoffNewsEvent = {
+        companyName,
+        date: article.publishedAt.slice(0, 10),
+        headline: rawTitle,
+        percentCut: pct,
+        source: article.source?.name || 'NewsAPI',
+        url: article.url || '',
+        affectedDepartments: extractDepartmentsFromText(rawTitle + ' ' + (article.description || '')),
+      };
+      injectLayoffEvent(event);
+      if (!latestLayoffEvent) latestLayoffEvent = event;
     }
 
     // Sentiment: more articles = higher risk signal
@@ -312,15 +320,36 @@ const fetchNewsAPIHeadlines = async (
     };
   } catch (e: any) {
     console.warn('[LiveDataService] NewsAPI failed:', e.message);
+    recordApiDegradation('newsapi', isRateLimitError(e) ? 'rate_limited' : 'network_error', e.message);
     return null;
   }
 };
 
 // ── Text extraction helpers ───────────────────────────────────────────────────
 
-const extractPercentFromText = (text: string): number => {
-  const match = text.match(/(\d+(?:\.\d+)?)\s*%/);
-  return match ? parseFloat(match[1]) : 5;  // default 5% if not stated
+// Strict workforce-% extractor — mirrors WORKFORCE_PCT_RE in the
+// fetch-company-data Edge Function, with an extra gate: the headline must
+// ALSO contain a workforce keyword somewhere. The previous loose `/(\d+)%/`
+// regex would match interest rates, discounts, stock moves and fabricate a
+// 5% default — corrupting L2 severity scoring.
+//
+// Rules:
+//   1. Match only headlines (passed in) — descriptions add noise.
+//   2. Headline must contain a workforce keyword (workforce/employees/staff/...).
+//   3. Match a % near a workforce noun OR near a cut/reduce verb.
+//   4. Sanity-gate to 0.5–35% — outside this band almost certainly mis-parsed.
+const WORKFORCE_KEYWORD_RE =
+  /\b(workforce|employees|staff|headcount|jobs|roles|workers|positions|layoffs?|head\s*count|workforce\s+reduction|job\s*cuts)\b/i;
+const WORKFORCE_PCT_RE =
+  /(\d+(?:\.\d+)?)\s*%\s*(?:of\s+(?:its\s+)?(?:global\s+)?(?:workforce|employees|staff|headcount|jobs|roles|workers|positions))|(?:cut|cuts|lay(?:ed)?\s*off|reduc(?:e|ed|ing)|eliminat(?:e|ed)|slash(?:ed)?|trim(?:med)?)\s+(?:\w+\s+){0,4}(\d+(?:\.\d+)?)\s*%/i;
+
+const extractWorkforcePercent = (headline: string): number | null => {
+  if (!WORKFORCE_KEYWORD_RE.test(headline)) return null;
+  const m = headline.match(WORKFORCE_PCT_RE);
+  if (!m) return null;
+  const raw = parseFloat(m[1] ?? m[2] ?? '0');
+  if (!Number.isFinite(raw) || raw < 0.5 || raw > 35) return null;
+  return raw;
 };
 
 const DEPT_KEYWORDS: Record<string, string> = {
@@ -359,7 +388,7 @@ export const fetchLiveCompanyData = async (
   const errors: string[] = [];
   let liveCount = 0;
   let heuristicCount = 0;
-  const derivedLayoffEvents: { date: string; percentCut: number; source: string }[] = [];
+  const derivedLayoffEvents: { date: string; percentCut: number; source: string; affectedCount?: number }[] = [];
   const degradedSignalClasses: string[] = [];
   const hardFailures: string[] = [];
   let connectorSignals: any = null;
@@ -393,6 +422,9 @@ export const fetchLiveCompanyData = async (
     hcl: 'HCLTECH.NS', 'tech mahindra': 'TECHM.NS',
     'hcl technologies': 'HCLTECH.NS',
     'mphasis': 'MPHASIS.NS', 'persistent': 'PERSISTENT.NS',
+    'ltimindtree': 'LTIM.NS', 'lti': 'LTIM.NS',
+    // India-origin US-listed
+    cognizant: 'CTSH', accenture: 'ACN',
     // China / APAC — ADRs
     alibaba: 'BABA', 'jd.com': 'JD', baidu: 'BIDU',
     // Europe
@@ -411,17 +443,17 @@ export const fetchLiveCompanyData = async (
   let newsData: NewsLiveData | null = null;
 
   // ── Gate 1: per-session quota guard ──────────────────────────────────────
-  // proxy-live-signals uses Yahoo Finance (no key) for stock, NOT Alpha Vantage.
-  // Track it under 'yahoo_finance' so real AV quota (localhost fallback) stays accurate.
-  const yFinanceExhausted = isQuotaExhausted('yahoo_finance');
+  // proxy-live-signals EF uses ALPHAVANTAGE_API_KEY and calls the Alpha Vantage API.
+  // Track it under 'alphavantage' to correctly monitor the 25-call/day AV free quota.
+  const yFinanceExhausted = isQuotaExhausted('alphavantage');
   const newsExhausted     = isQuotaExhausted('newsapi');
 
-  if (yFinanceExhausted || isApproachingQuota('yahoo_finance')) {
+  if (yFinanceExhausted || isApproachingQuota('alphavantage')) {
     errors.push(yFinanceExhausted
-      ? 'Stock proxy (Yahoo Finance): session quota exhausted (50/day). Heuristic fallback active.'
-      : 'Stock proxy (Yahoo Finance): approaching daily quota. Remaining requests limited.');
+      ? 'Stock proxy (Alpha Vantage): session quota exhausted (25/day). Heuristic fallback active.'
+      : 'Stock proxy (Alpha Vantage): approaching daily quota. Remaining requests limited.');
     if (yFinanceExhausted) {
-      recordApiDegradation('yahoo_finance', 'rate_limited', 'Session quota exhausted');
+      recordApiDegradation('alphavantage', 'rate_limited', 'Session quota exhausted');
       heuristicCount += 2;
     }
   }
@@ -434,19 +466,24 @@ export const fetchLiveCompanyData = async (
   // ── Gate 2: circuit breaker ───────────────────────────────────────────────
   // OPEN circuit = 3+ consecutive failures in the last 5 minutes.
   // Each service is gated independently — stock open does NOT block news.
-  const yFinanceCircuitOpen = !isCallAllowed('yahoo_finance');
+  const yFinanceCircuitOpen = !isCallAllowed('alphavantage');
   const newsCircuitOpen     = !isCallAllowed('newsapi');
 
   if (yFinanceCircuitOpen) {
-    const yfSnap  = getCircuitSnapshot('yahoo_finance');
-    const yfCache = getCachedResponse<StockLiveData>('yahoo_finance');
+    const yfSnap  = getCircuitSnapshot('alphavantage');
+    const yfCache = getCachedResponse<StockLiveData>('alphavantage');
     if (yfCache) {
+      // Serve stale cache as a degraded signal — do NOT count as live. The cached
+      // data is potentially hours/days old and counting it as a real live signal
+      // inflates the live_signal_count and falsely boosts overallConfidence.
       stockData = { ...yfCache.data, fetchedAt: new Date(yfCache.cachedAt).toISOString() };
       errors.push(`Stock proxy circuit OPEN — using cached data from ${yfSnap.cachedAgeLabel ?? 'earlier'}.`);
-      liveCount += 1;
+      heuristicCount += 1;
+      degradedSignalClasses.push('financial');
     } else {
       errors.push(`Stock proxy circuit OPEN (${yfSnap.consecutiveFailures} failures). No cached data — heuristic fallback.`);
       heuristicCount += 2;
+      degradedSignalClasses.push('financial');
     }
   }
 
@@ -456,10 +493,12 @@ export const fetchLiveCompanyData = async (
     if (newsCache) {
       newsData = { ...newsCache.data, fetchedAt: new Date(newsCache.cachedAt).toISOString() };
       errors.push(`NewsAPI circuit OPEN — using cached data from ${newsSnap.cachedAgeLabel ?? 'earlier'}.`);
-      liveCount += 1;
+      heuristicCount += 1;
+      degradedSignalClasses.push('layoffs');
     } else {
       errors.push(`NewsAPI circuit OPEN (${newsSnap.consecutiveFailures} failures). No cached data — heuristic fallback.`);
       heuristicCount += 1;
+      degradedSignalClasses.push('layoffs');
     }
   }
 
@@ -476,22 +515,22 @@ export const fetchLiveCompanyData = async (
 
   if (proxyAction) {
     try {
-      if (stockNeeded && resolvedTicker) incrementRequestCount('yahoo_finance');
+      if (stockNeeded && resolvedTicker) incrementRequestCount('alphavantage');
       if (newsNeeded)                    incrementRequestCount('newsapi');
 
-      if (stockNeeded) _timer?.mark('yahoo_finance_start');
+      if (stockNeeded) _timer?.mark('alphavantage_start');
       if (newsNeeded)  _timer?.mark('newsapi_start');
 
       const proxyResult = await fetchViaProxy(companyName, resolvedTicker, proxyAction);
 
-      if (stockNeeded) _timer?.mark('yahoo_finance_end');
+      if (stockNeeded) _timer?.mark('alphavantage_end');
       if (newsNeeded)  _timer?.mark('newsapi_end');
 
       errors.push(...proxyResult.errors);
 
       const flags = (proxyResult as any).rateLimitFlags ?? {};
-      if (flags.avRateLimited || flags.yahooRateLimited) {
-        recordApiDegradation('yahoo_finance', 'rate_limited', 'Stock proxy rate limited');
+      if (flags.avRateLimited) {
+        recordApiDegradation('alphavantage', 'rate_limited', 'Alpha Vantage rate limited');
       }
       if (flags.newsRateLimited) {
         recordApiDegradation('newsapi', 'rate_limited', 'NewsAPI rateLimited response');
@@ -499,7 +538,7 @@ export const fetchLiveCompanyData = async (
 
       if (stockNeeded) {
         const ps = proxyResult.stockData;
-        const stockBlocked = flags.avRateLimited || flags.yahooRateLimited;
+        const stockBlocked = flags.avRateLimited;
         if (ps && ps.price90DayChange !== undefined && !stockBlocked) {
           stockData = {
             price90DayChange: ps.price90DayChange ?? null,
@@ -510,13 +549,13 @@ export const fetchLiveCompanyData = async (
             source: 'alphavantage', // keep schema-compatible source label
             fetchedAt: new Date().toISOString(),
           };
-          circuitSuccess('yahoo_finance', stockData);
+          circuitSuccess('alphavantage', stockData);
           if (ps.price90DayChange != null) liveCount += 1; else heuristicCount += 1;
           if (ps.revenueGrowthYoY != null) liveCount += 1; else heuristicCount += 1;
         } else {
           if (resolvedTicker && !stockBlocked) {
             errors.push(`Stock proxy: no data for ${resolvedTicker}`);
-            circuitFailure('yahoo_finance', `no data for ${resolvedTicker}`);
+            circuitFailure('alphavantage', `no data for ${resolvedTicker}`);
           } else if (!resolvedTicker) {
             errors.push('No ticker — stock signals unavailable (private/unknown company)');
           }
@@ -549,7 +588,7 @@ export const fetchLiveCompanyData = async (
       }
     } catch (proxyErr: any) {
       errors.push(`proxy-live-signals: ${proxyErr.message}`);
-      if (stockNeeded) { heuristicCount += 2; circuitFailure('yahoo_finance', proxyErr.message); }
+      if (stockNeeded) { heuristicCount += 2; circuitFailure('alphavantage', proxyErr.message); }
       if (newsNeeded)  { heuristicCount += 1; circuitFailure('newsapi',       proxyErr.message); }
       if (isRateLimitError(proxyErr)) {
         recordApiDegradation('supabase_osint', 'rate_limited', proxyErr.message);
@@ -561,11 +600,21 @@ export const fetchLiveCompanyData = async (
       const newsKey  = (import.meta as any).env?.VITE_NEWSAPI_KEY as string | undefined;
       if (alphaKey && resolvedTicker && !yFinanceExhausted) {
         stockData = await fetchAlphaVantageOverview(resolvedTicker, alphaKey);
-        if (stockData?.source === 'alphavantage') { liveCount += 2; heuristicCount -= 2; }
+        if (stockData?.source === 'alphavantage') {
+          liveCount += 2; heuristicCount -= 2;
+        } else {
+          errors.push('Alpha Vantage localhost fallback returned no data');
+          degradedSignalClasses.push('financial');
+        }
       }
       if (newsKey && !newsExhausted) {
         newsData = await fetchNewsAPIHeadlines(companyName, newsKey);
-        if (newsData?.source === 'newsapi') { liveCount += 1; heuristicCount -= 1; }
+        if (newsData?.source === 'newsapi') {
+          liveCount += 1; heuristicCount -= 1;
+        } else {
+          errors.push('NewsAPI localhost fallback returned no data');
+          degradedSignalClasses.push('layoffs');
+        }
       }
     }
   }
@@ -804,7 +853,7 @@ export const fetchLiveCompanyData = async (
   const genuineLiveApiSignals =
     (stockData?.source === 'alphavantage' && stockData.price90DayChange != null ? 1 : 0) +
     (stockData?.source === 'alphavantage' && stockData.revenueGrowthYoY != null ? 1 : 0) +
-    (newsData?.source === 'newsapi' || newsData?.source === 'gnews' || newsData?.source === 'google-news-rss' ? 1 : 0) +
+    (newsData?.source === 'newsapi' ? 1 : 0) +
     (hiringData?.isLive === true ? 1 : 0);
 
   return {

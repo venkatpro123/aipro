@@ -319,15 +319,19 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
     overrides.push('Financial distress triad: revenue↓ stock↓ cash↓');
   }
 
-  // Kill-switch C: pre-layoff precursor — financial stress + clean history (recency > 0.7 = distant).
+  // Kill-switch C: pre-layoff precursor — established company under financial stress with no
+  // recent layoffs (quiet-before-the-storm pattern). The floor layoffFrequency > 0.05 guards
+  // against growth-stage startups that satisfy funding/revenue thresholds by design (burn rate
+  // is normal, zero layoff history is expected — they shouldn't fire this kill-switch).
   if (
     consensus.revenueGrowth.value < 0.7 &&
     consensus.fundingHealth.value > 0.5 &&
     consensus.recentLayoffRecency.value > 0.7 &&
+    consensus.layoffFrequency.value > 0.05 &&
     consensus.layoffFrequency.value < 0.3
   ) {
     rawScore = Math.max(rawScore, 0.55);
-    overrides.push('Pre-layoff precursor: financial stress + hiring freeze + clean history');
+    overrides.push('Pre-layoff precursor: financial stress + no recent layoffs (stealth risk)');
   }
 
   // Kill-switch D: severe DB-vs-live conflict — confidence widens but score unchanged.
@@ -356,10 +360,15 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
     Math.max(8, baseRange * 100 + conflictPenalty + overridePenalty + capPenalty + failurePenalty),
   );
 
+  // Clamp CI bounds first, then derive range from the clamped values so that
+  // a score of 5 with half-range 20 correctly reports [0, 25] range=25, not
+  // the pre-clamp totalRange=40 which is misleadingly wide for boundary scores.
+  const ciLow  = Math.max(0,   finalScore - Math.round(totalRange / 2));
+  const ciHigh = Math.min(100, finalScore + Math.round(totalRange / 2));
   const confidenceInterval = {
-    low: Math.max(0, finalScore - Math.round(totalRange / 2)),
-    high: Math.min(100, finalScore + Math.round(totalRange / 2)),
-    range: Math.round(totalRange),
+    low:  ciLow,
+    high: ciHigh,
+    range: ciHigh - ciLow,
     isEstimate:
       consensus.conflictLevel !== 'none' || consensus.freshnessReport.percentLive < 0.5,
   };

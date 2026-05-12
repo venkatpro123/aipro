@@ -27,7 +27,7 @@ const ALLOWED_MODELS = new Set([
   'openai/gpt-3.5-turbo',
   'openai/gpt-4o-mini',
   'anthropic/claude-3-haiku',
-  'anthropic/claude-3-5-haiku',
+  'anthropic/claude-haiku-4-5-20251001',
 ]);
 
 serve(async (req) => {

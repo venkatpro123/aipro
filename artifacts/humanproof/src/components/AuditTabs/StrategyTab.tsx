@@ -1,0 +1,646 @@
+// StrategyTab.tsx — v14.0
+// Career Strategy Command Center — 7th tab.
+// Synthesizes ALL intelligence layers into a single strategic command view.
+// Layout: urgency banner → v14.0 signal alerts → phase plan → network leverage → confidence pillars → offer eval modal
+
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Target, Zap, Shield, Clock, ArrowRight, CheckCircle2,
+  Circle, AlertTriangle, TrendingUp, Users, Brain, DollarSign,
+  ChevronDown, ChevronRight, Building2, Globe, Briefcase, Star,
+} from "lucide-react";
+import type { HybridResult } from "@/types/hybridResult";
+import type { CompanyData } from "@/data/companyDatabase";
+import type { StrategyAction, StrategicPlan } from "@/services/strategySynthesisEngine";
+import type { OfferEvaluationInputs } from "@/services/offerEvaluationEngine";
+import { evaluateJobOffer } from "@/services/offerEvaluationEngine";
+// v17.0
+import IntelligenceBriefPanel from "./common/IntelligenceBriefPanel";
+
+interface StrategyTabProps {
+  result: HybridResult;
+  companyData: CompanyData;
+}
+
+// ── Strategy color system ─────────────────────────────────────────────────────
+const STRATEGY_COLORS: Record<string, { bg: string; border: string; text: string; accent: string }> = {
+  EMERGENCY_EXIT:      { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.35)',   text: '#ef4444',  accent: '#ef4444' },
+  ACCELERATE_EXIT:     { bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.35)',  text: '#f97316',  accent: '#f97316' },
+  PROTECT_AND_WAIT:    { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.35)',  text: '#f59e0b',  accent: '#f59e0b' },
+  STRENGTHEN_POSITION: { bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.35)',   text: '#00d4e0',  accent: '#00d4e0' },
+  OPPORTUNISTIC_MOVE:  { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.35)',  text: '#10b981',  accent: '#10b981' },
+};
+
+const URGENCY_COLORS: Record<string, string> = {
+  CRITICAL: '#ef4444',
+  HIGH:     '#f97316',
+  MODERATE: '#f59e0b',
+  LOW:      '#10b981',
+};
+
+const PHASE_ICONS = {
+  PHASE_0_EMERGENCY:  AlertTriangle,
+  PHASE_1_IMMEDIATE:  Zap,
+  PHASE_2_SHORT_TERM: TrendingUp,
+  PHASE_3_LONG_TERM:  Shield,
+};
+
+const PHASE_COLORS: Record<string, string> = {
+  PHASE_0_EMERGENCY:  '#ef4444',
+  PHASE_1_IMMEDIATE:  '#f97316',
+  PHASE_2_SHORT_TERM: '#00d4e0',
+  PHASE_3_LONG_TERM:  '#10b981',
+};
+
+// ── Action card ───────────────────────────────────────────────────────────────
+const ActionCard: React.FC<{
+  action: StrategyAction;
+  index: number;
+  phaseColor: string;
+  completed: boolean;
+  onToggle: () => void;
+}> = ({ action, index, phaseColor, completed, onToggle }) => (
+  <motion.div
+    initial={{ opacity: 0, x: -12 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: index * 0.06 }}
+    className="flex gap-3 p-3 rounded-xl cursor-pointer group"
+    style={{
+      background: completed ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)',
+      border: `1px solid ${completed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.07)'}`,
+      transition: 'all 200ms ease',
+    }}
+    onClick={onToggle}
+    whileHover={{ background: 'rgba(255,255,255,0.06)' }}
+  >
+    <button className="mt-0.5 flex-shrink-0" onClick={onToggle}>
+      {completed
+        ? <CheckCircle2 className="w-4 h-4" style={{ color: '#10b981' }} />
+        : <Circle className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity" />
+      }
+    </button>
+    <div className="flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-medium leading-snug" style={{
+          color: completed ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.9)',
+          textDecoration: completed ? 'line-through' : 'none',
+        }}>
+          {action.title}
+        </p>
+        {action.isUrgent && !completed && (
+          <span className="text-[10px] font-bold tracking-widest flex-shrink-0 px-1.5 py-0.5 rounded-full"
+            style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+            URGENT
+          </span>
+        )}
+      </div>
+      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        {action.description}
+      </p>
+      <div className="flex items-center gap-3 mt-2">
+        <span className="text-[10px] tracking-wider" style={{ color: phaseColor, opacity: 0.8 }}>
+          {action.timeHorizon}
+        </span>
+        <span className="text-[10px] opacity-30">·</span>
+        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          ROI {action.roiScore}/100
+        </span>
+        <span className="text-[10px] opacity-30">·</span>
+        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          {action.sourceLayer}
+        </span>
+      </div>
+    </div>
+  </motion.div>
+);
+
+// ── Phase card ─────────────────────────────────────────────────────────────────
+const PhaseCard: React.FC<{
+  plan: StrategicPlan;
+  completedIds: Set<string>;
+  onToggleAction: (id: string) => void;
+}> = ({ plan, completedIds, onToggleAction }) => {
+  const [expanded, setExpanded] = useState(plan.phase === 'PHASE_0_EMERGENCY' || plan.phase === 'PHASE_1_IMMEDIATE');
+  const Icon = PHASE_ICONS[plan.phase];
+  const color = PHASE_COLORS[plan.phase];
+  const completedCount = plan.actions.filter(a => completedIds.has(a.id)).length;
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{
+      border: `1px solid ${color}25`,
+      background: `${color}06`,
+    }}>
+      <button
+        className="w-full flex items-center gap-3 p-4 text-left"
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{
+          background: `${color}18`,
+          border: `1px solid ${color}35`,
+        }}>
+          <Icon className="w-4 h-4" style={{ color }} />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              {plan.phaseLabel}
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{
+              background: `${color}18`, color, border: `1px solid ${color}30`,
+            }}>
+              {plan.timeframe}
+            </span>
+          </div>
+          <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            {plan.phaseObjective}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color }}>
+            {completedCount}/{plan.actions.length}
+          </span>
+          {expanded
+            ? <ChevronDown className="w-4 h-4 opacity-40" />
+            : <ChevronRight className="w-4 h-4 opacity-40" />
+          }
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-2">
+              {plan.actions.map((action, i) => (
+                <ActionCard
+                  key={action.id}
+                  action={action}
+                  index={i}
+                  phaseColor={color}
+                  completed={completedIds.has(action.id)}
+                  onToggle={() => onToggleAction(action.id)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ── Offer evaluation modal ────────────────────────────────────────────────────
+const OfferModal: React.FC<{
+  currentScore: number;
+  currentSalary?: number;
+  onClose: () => void;
+}> = ({ currentScore, currentSalary = 0, onClose }) => {
+  const [offerSalary, setOfferSalary] = useState('');
+  const [offerCompany, setOfferCompany] = useState('');
+  const [offerIndustry, setOfferIndustry] = useState('');
+  const [offerSize, setOfferSize] = useState<OfferEvaluationInputs['offerCompanySize']>('mid');
+  const [hasRecentLayoffs, setHasRecentLayoffs] = useState(false);
+  const [offerResult, setOfferResult] = useState<ReturnType<typeof evaluateJobOffer> | null>(null);
+
+  const evaluate = () => {
+    if (!offerSalary || !offerCompany) return;
+    const result = evaluateJobOffer({
+      currentScore,
+      currentSalary: currentSalary || parseInt(offerSalary) * 0.85,
+      currentTenureYears: 3,
+      currentIndustry: '',
+      offerCompanyName: offerCompany,
+      offerCompanyIndustry: offerIndustry,
+      offerCompanySize: offerSize,
+      offerCompanyRecentLayoffs: hasRecentLayoffs,
+      offerBaseSalary: parseInt(offerSalary) || 0,
+    });
+    setOfferResult(result);
+  };
+
+  const REC_COLORS: Record<string, string> = {
+    STRONG_ACCEPT: '#10b981', ACCEPT: '#10b981', NEGOTIATE: '#f59e0b',
+    NEGOTIATE_HARD: '#f97316', DECLINE: '#ef4444', INVESTIGATE_MORE: '#00d4e0',
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto max-h-[90vh]"
+        style={{ background: '#0f1117', border: '1px solid rgba(0,212,224,0.2)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-base font-bold" style={{ color: '#00d4e0' }}>Offer Evaluation</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Score any job offer against your risk profile</p>
+          </div>
+          <button onClick={onClose} className="text-xs px-3 py-1.5 rounded-lg"
+            style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+            Close
+          </button>
+        </div>
+
+        {!offerResult ? (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offer Company Name</label>
+              <input value={offerCompany} onChange={e => setOfferCompany(e.target.value)}
+                placeholder="e.g. Google, Stripe, Razorpay"
+                className="w-full px-3 py-2 rounded-lg text-sm"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offered Base Salary (annual)</label>
+              <input value={offerSalary} onChange={e => setOfferSalary(e.target.value)}
+                placeholder="e.g. 1500000 (in your currency)"
+                type="number"
+                className="w-full px-3 py-2 rounded-lg text-sm"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Company Size</label>
+              <select value={offerSize} onChange={e => setOfferSize(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-lg text-sm"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }}>
+                <option value="startup">Startup (&lt;50)</option>
+                <option value="smb">SMB (50–500)</option>
+                <option value="mid">Mid (500–5,000)</option>
+                <option value="large">Large (5,000–50,000)</option>
+                <option value="enterprise">Enterprise (50,000+)</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-3">
+              <input type="checkbox" id="recentLayoffs" checked={hasRecentLayoffs}
+                onChange={e => setHasRecentLayoffs(e.target.checked)}
+                className="w-4 h-4 rounded" />
+              <label htmlFor="recentLayoffs" className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                This company has had recent layoffs
+              </label>
+            </div>
+            <button
+              onClick={evaluate}
+              disabled={!offerSalary || !offerCompany}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: offerSalary && offerCompany ? 'linear-gradient(135deg, #00d4e0, #0099a8)' : 'rgba(255,255,255,0.08)',
+                color: offerSalary && offerCompany ? '#fff' : 'rgba(255,255,255,0.3)',
+              }}>
+              Evaluate Offer →
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-center py-4">
+              <div className="text-5xl font-black mb-1" style={{ color: REC_COLORS[offerResult.recommendation] }}>
+                {offerResult.overallScore}
+              </div>
+              <div className="text-sm font-bold" style={{ color: REC_COLORS[offerResult.recommendation] }}>
+                {offerResult.recommendation.replace(/_/g, ' ')}
+              </div>
+              <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{offerResult.keyInsight}</p>
+            </div>
+
+            <div className="space-y-2">
+              {offerResult.dimensions.map(dim => (
+                <div key={dim.id} className="flex items-center gap-3">
+                  <span className="text-xs w-32 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.55)' }}>{dim.name}</span>
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <div className="h-full rounded-full transition-all"
+                      style={{ width: `${dim.score}%`, background: dim.score >= 70 ? '#10b981' : dim.score >= 45 ? '#f59e0b' : '#ef4444' }} />
+                  </div>
+                  <span className="text-xs w-8 text-right" style={{ color: 'rgba(255,255,255,0.5)' }}>{dim.score}</span>
+                </div>
+              ))}
+            </div>
+
+            {offerResult.negotiationPoints.length > 0 && (
+              <div className="rounded-xl p-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                <p className="text-xs font-semibold mb-2" style={{ color: '#f59e0b' }}>Negotiation Points</p>
+                {offerResult.negotiationPoints.slice(0, 2).map((pt, i) => (
+                  <p key={i} className="text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    <span className="font-medium" style={{ color: '#f59e0b' }}>{pt.priority.replace(/_/g, ' ')}: </span>
+                    {pt.lever}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            <button onClick={() => setOfferResult(null)} className="w-full py-2 rounded-lg text-xs"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+              ← Evaluate Another Offer
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ── Main component ─────────────────────────────────────────────────────────────
+const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
+  const synthesis = (result as any).strategySynthesis;
+  const confidence = (result as any).careerConfidence;
+  const network = (result as any).networkLeverage;
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [showOfferModal, setShowOfferModal] = useState(false);
+
+  const toggleAction = (id: string) => {
+    setCompletedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  if (!synthesis) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Strategy synthesis not available for this audit.</p>
+      </div>
+    );
+  }
+
+  const strategyColors = STRATEGY_COLORS[synthesis.overallStrategy] ?? STRATEGY_COLORS.PROTECT_AND_WAIT;
+  const urgencyColor = URGENCY_COLORS[synthesis.urgencyLevel] ?? '#f59e0b';
+  const allActions = (synthesis.phases ?? []).flatMap((p: StrategicPlan) => p.actions);
+  const completedCount = allActions.filter((a: StrategyAction) => completedIds.has(a.id)).length;
+  const progressPct = allActions.length > 0 ? Math.round((completedCount / allActions.length) * 100) : 0;
+
+  return (
+    <div className="space-y-5 px-1">
+      {/* v17.0: AI Intelligence Brief — top of strategy tab, skeleton while loading */}
+      <IntelligenceBriefPanel intelligenceBrief={(result as any).intelligenceBrief} />
+
+      {/* Strategy banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl p-5"
+        style={{ background: strategyColors.bg, border: `1px solid ${strategyColors.border}` }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full"
+                style={{ background: `${urgencyColor}18`, color: urgencyColor, border: `1px solid ${urgencyColor}30` }}>
+                {synthesis.urgencyLevel} URGENCY
+              </span>
+              <span className="text-[10px] tracking-wider opacity-50">STRATEGY v14.0</span>
+            </div>
+            <h2 className="text-lg font-black mb-1" style={{ color: strategyColors.text }}>
+              {synthesis.overallStrategy.replace(/_/g, ' ')}
+            </h2>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              {synthesis.strategyRationale}
+            </p>
+          </div>
+          <div className="text-center flex-shrink-0">
+            <div className="text-3xl font-black" style={{ color: urgencyColor }}>
+              {synthesis.estimatedSafetyWindowDays}
+            </div>
+            <div className="text-[10px] tracking-wider opacity-60">DAYS</div>
+            <div className="text-[10px] opacity-45">safety window</div>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex justify-between mb-1.5">
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              {completedCount} of {allActions.length} actions completed
+            </span>
+            <span className="text-xs font-semibold" style={{ color: strategyColors.text }}>
+              {progressPct}%
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <motion.div className="h-full rounded-full"
+              style={{ background: `linear-gradient(90deg, ${strategyColors.accent}, ${strategyColors.text})` }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.5 }} />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* v14.0: Active Signal Alerts — surface critical signals from new layers */}
+      {(() => {
+        const careerVel = (result as any).careerVelocity;
+        const compRisk  = (result as any).compensationRisk;
+        const maRisk    = (result as any).maRisk;
+        const sentiment = (result as any).employeeSentiment;
+        const leadership = (result as any).leadershipTransitionRisk;
+        const alerts: Array<{ icon: string; text: string; color: string }> = [];
+
+        if (careerVel?.plateauRisk === 'HIGH') alerts.push({ icon: '⚠', text: `Career plateau risk — ${careerVel.promotionNote?.split('.')[0]}`, color: '#f59e0b' });
+        if (compRisk?.cascadeStage === 'PAY_FREEZE' || compRisk?.cascadeStage === 'PAY_CUT' || compRisk?.cascadeStage === 'PRE_LAYOFF') {
+          alerts.push({ icon: '🔴', text: `${compRisk.cascadeStageLabel}`, color: '#ef4444' });
+        }
+        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'In M&A peak restructuring window (months 6–18)', color: '#ef4444' });
+        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: `Sentiment early warning — ${sentiment.sentimentLeadTimeEstimate}`, color: '#f59e0b' });
+        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: leadership.vpClusteringNote?.split('.')[0] ?? 'VP departure cluster detected', color: '#f97316' });
+        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'CFO departure — strongest 90-day layoff predictor', color: '#ef4444' });
+
+        if (alerts.length === 0) return null;
+        return (
+          <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+            <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              v14.0 SIGNAL ALERTS ({alerts.length})
+            </div>
+            {alerts.map((a, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="text-xs flex-shrink-0">{a.icon}</span>
+                <span className="text-[11px] leading-relaxed" style={{ color: a.color }}>{a.text}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Top priority + competitive position */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-xl p-4" style={{ background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.18)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Star className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>TOP PRIORITY NOW</span>
+          </div>
+          <p className="text-sm font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
+            {synthesis.topPriorityAction?.title}
+          </p>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            {synthesis.topPriorityAction?.timeHorizon}
+          </p>
+        </div>
+
+        <div className="rounded-xl p-4" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#10b981' }}>BIGGEST OPPORTUNITY</span>
+          </div>
+          <p className="text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.75)' }}>
+            {synthesis.singleBiggestOpportunity}
+          </p>
+        </div>
+      </div>
+
+      {/* Offer evaluation CTA */}
+      <motion.button
+        onClick={() => setShowOfferModal(true)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+        whileHover={{ background: 'rgba(255,255,255,0.07)' }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{
+            background: 'rgba(0,212,224,0.12)', border: '1px solid rgba(0,212,224,0.25)',
+          }}>
+            <DollarSign className="w-4 h-4" style={{ color: '#00d4e0' }} />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Evaluate a Job Offer</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Score any offer against your risk profile in 60 seconds</p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 opacity-40" />
+      </motion.button>
+
+      {/* Strategic phases */}
+      <div>
+        <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          YOUR STRATEGIC PLAN
+        </p>
+        <div className="space-y-3">
+          {(synthesis.phases ?? []).map((plan: StrategicPlan) => (
+            <PhaseCard
+              key={plan.phase}
+              plan={plan}
+              completedIds={completedIds}
+              onToggleAction={toggleAction}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Network leverage summary */}
+      {network && (
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4" style={{ color: '#00d4e0' }} />
+              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Network Leverage</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black" style={{ color: '#00d4e0' }}>{network.networkScore}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
+                background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.25)',
+              }}>
+                {network.networkTier.replace(/_/g, ' ')}
+              </span>
+            </div>
+          </div>
+          <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>{network.networkHeadline}</p>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center">
+              <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.estimatedWarmContacts}</div>
+              <div className="text-[10px] opacity-40">warm contacts</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.referralAccessScore}</div>
+              <div className="text-[10px] opacity-40">referral score</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                {network.applicationChannelSplit.warmReferral}%
+              </div>
+              <div className="text-[10px] opacity-40">via referrals</div>
+            </div>
+          </div>
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>ACTIVATION PLAN</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{network.activationPlan[0]}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Career confidence summary */}
+      {confidence && (
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4" style={{ color: '#a78bfa' }} />
+              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Readiness Profile</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
+              background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)',
+            }}>
+              {confidence.confidenceTier.replace(/_/g, ' ')}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {confidence.pillars.map((pillar: any) => (
+              <div key={pillar.id} className="flex items-center gap-3">
+                <span className="text-xs w-28 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.55)' }}>{pillar.name}</span>
+                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  <div className="h-full rounded-full"
+                    style={{
+                      width: `${pillar.score}%`,
+                      background: pillar.score >= 70 ? '#10b981' : pillar.score >= 45 ? '#f59e0b' : '#ef4444',
+                    }} />
+                </div>
+                <span className="text-xs w-8 text-right" style={{ color: 'rgba(255,255,255,0.4)' }}>{pillar.score}</span>
+              </div>
+            ))}
+          </div>
+          {confidence.criticalGap && (
+            <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <span className="font-semibold" style={{ color: '#ef4444' }}>Critical gap: </span>
+                {confidence.criticalGap.topAction}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Competitive position + risks */}
+      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>YOUR POSITION</p>
+        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.competitivePositionStatement}</p>
+        <div className="mt-3 pt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div>
+            <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: 'rgba(239,68,68,0.8)' }}>BIGGEST RISK</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{synthesis.singleBiggestRisk}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Offer modal */}
+      <AnimatePresence>
+        {showOfferModal && (
+          <OfferModal
+            currentScore={result.total}
+            onClose={() => setShowOfferModal(false)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default StrategyTab;

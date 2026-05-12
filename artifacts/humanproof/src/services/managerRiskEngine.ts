@@ -8,12 +8,16 @@
  * past 60 days is a substantially stronger predictor of the employee's layoff risk
  * than any company-wide financial metric.
  *
- * Empirical grounding (LinkedIn layoff pattern data, 2022–2026):
- *   - 78% of employees who reported manager departure 30–60 days before a layoff
+ * Practitioner estimates (based on HR industry literature, not independently validated):
+ *   - ~78% of employees who reported manager departure 30–60 days before a layoff
  *     announcement were included in the subsequent round.
- *   - 89% when BOTH manager and skip-level departed within 60 days ("exodus signal").
- *   - 1-on-1 cadence stopping with no reorg explanation: 71% correlation with
- *     subsequent managed-out or RIF inclusion within 90 days.
+ *   - ~89% when BOTH manager and skip-level departed within 60 days ("exodus signal").
+ *   - ~71% correlation with subsequent managed-out or RIF inclusion within 90 days
+ *     when 1-on-1 cadence stops with no reorg explanation.
+ *
+ * These percentages are informed by HR practitioner experience and published anecdotal
+ * research. They have NOT been validated against a controlled layoff outcome dataset.
+ * Treat as directional signal weights, not calibrated actuarial figures.
  *
  * All inputs are self-reported; confidence is capped accordingly.
  */
@@ -58,6 +62,8 @@ export interface ManagerRiskResult {
   recommendedActions: string[];
   /** Whether the manager departure is within the high-risk 60-day window */
   isInHighRiskWindow: boolean;
+  /** Provenance of empirical percentages used — not independently validated */
+  readonly calibrationStatus: 'practitioner_estimate';
 }
 
 // ── Scoring constants (UNCALIBRATED — developer estimates) ─────────────────
@@ -104,6 +110,7 @@ export function computeManagerRisk(inputs: ManagerRiskInputs): ManagerRiskResult
       timeToActionDays: 90,
       recommendedActions: [],
       isInHighRiskWindow: false,
+      calibrationStatus: 'practitioner_estimate' as const,
     };
   }
 
@@ -213,6 +220,7 @@ export function computeManagerRisk(inputs: ManagerRiskInputs): ManagerRiskResult
     timeToActionDays,
     recommendedActions,
     isInHighRiskWindow,
+    calibrationStatus: 'practitioner_estimate' as const,
   };
 }
 
@@ -226,14 +234,14 @@ function buildInterpretation(
 
   switch (patternType) {
     case 'exodus_signal':
-      return `Leadership exodus detected: both your direct manager and skip-level departed within 60 days. This pattern precedes layoff announcements in 89% of documented cases. The ${pctUplift}% probability uplift is the highest individual-level signal in the scoring model. Treat this as an immediate action trigger.`;
+      return `Leadership exodus detected: both your direct manager and skip-level departed within 60 days. This pattern precedes layoff announcements in ~89% of documented cases (practitioner estimate). The ${pctUplift}% probability uplift is the highest individual-level signal in the scoring model. Treat this as an immediate action trigger.`;
 
     case 'high_risk': {
       const deptPhrase = inputs.managerDepartureDaysAgo
         ? `${inputs.managerDepartureDaysAgo} days ago`
         : 'recently';
       const typeLabel = inputs.managerDepartureType === 'recent_layoff' ? 'laid off' : 'forced out';
-      return `Your direct manager was ${typeLabel} ${deptPhrase}. Data shows 78% of employees who reported this pattern in a ${isInHighRiskWindow ? '30–60 day' : '60–120 day'} window were included in the subsequent RIF. This adds ${pctUplift}% to your layoff probability estimate.`;
+      return `Your direct manager was ${typeLabel} ${deptPhrase}. Practitioner data suggests ~78% of employees who reported this pattern in a ${isInHighRiskWindow ? '30–60 day' : '60–120 day'} window were included in the subsequent RIF. This adds ${pctUplift}% to your layoff probability estimate.`;
     }
 
     case 'concerning': {

@@ -233,11 +233,37 @@ export const aggregateSwarmResults = (
   const swarmRiskScore = Math.max(2, Math.min(97, Math.round(rawScore * 100)));
 
   // ── Confidence from live API usage + resolution rate ─────────────────────
-  const liveCount     = signals.filter(s => s.sourceType === 'live-api').length;
-  const resolutionPct = (resolvedCount / totalAgents) * 100;
-  const liveBonus     = liveCount * 3;
-  const avgConfidence = signals.reduce((a, s) => a + s.confidence, 0) / signals.length;
-  const swarmConfidence = Math.round(Math.min(95, (avgConfidence * 100 * 0.6) + (resolutionPct * 0.25) + liveBonus));
+  //
+  // FIX: confidence was inflated when all agents ran on static/heuristic data.
+  // Agents with hardcoded confidence values (0.65–0.85) from static DB fields
+  // produced ~61% swarm confidence even with zero live signals — actively misleading.
+  //
+  // New formula:
+  //   1. Base = resolution rate (% of agents that ran vs. failed).
+  //   2. Each live-API agent adds +4 pts; each heuristic agent subtracts −1 pt.
+  //      Net: a fully-heuristic pool drives the score down, not up.
+  //   3. HARD CAP at 45% when liveCount === 0 — a fully-heuristic swarm cannot
+  //      claim more than 45% confidence regardless of how many agents ran.
+  //   4. Generic-fallback penalty (−15 pts): company not in the DB means all
+  //      agents received the same neutral default — signals are correlated noise.
+  const liveCount      = signals.filter(s => s.sourceType === 'live-api').length;
+  const heuristicCount = signals.length - liveCount;
+  const resolutionPct  = (resolvedCount / totalAgents) * 100;
+
+  // Generic-fallback detection: company not in DB → every heuristic agent got
+  // the same neutral defaults → high apparent confidence but zero real signal.
+  const genericFallbackDetected = liveCount === 0 &&
+    signals.filter(s => s.confidence >= 0.70 && s.sourceType === 'heuristic').length >= 5;
+
+  const liveBonus       = liveCount * 4;
+  const heuristicPenalty = heuristicCount * 1;
+  const fallbackPenalty  = genericFallbackDetected ? 15 : 0;
+
+  const rawConfidence = Math.round(
+    (resolutionPct * 0.40) + liveBonus - heuristicPenalty - fallbackPenalty,
+  );
+  const confidenceCap   = liveCount === 0 ? 45 : 90;
+  const swarmConfidence = Math.max(5, Math.min(confidenceCap, rawConfidence));
 
   // ── Classify signals ──────────────────────────────────────────────────────
   const dominantSignals = signals.filter(s => s.signal > 0.62).sort((a, b) => b.signal - a.signal);
@@ -250,7 +276,22 @@ export const aggregateSwarmResults = (
   const stdDev = Math.sqrt(signalValues.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / signalValues.length);
   const outlierAgents = signals.filter(s => Math.abs(s.signal - mean) > 2 * stdDev && stdDev > 0.1);
   outlierAgents.forEach(a => anomalies.push(`${a.agentId}: outlier signal ${(a.signal * 100).toFixed(0)}% (avg ${(mean * 100).toFixed(0)}%)`));
-  if (liveCount === 0) anomalies.push('No live-API agents ran — add VITE_ALPHAVANTAGE_KEY, VITE_NEWSAPI_KEY, VITE_FRED_API_KEY for real-time signals');
+  if (liveCount === 0) {
+    // Distinguish "keys not configured" from "quota exhausted" — both produce
+    // liveCount === 0 but have different remediation paths.
+    anomalies.push(
+      'No live-API signals — all 30 agents ran on heuristic/static data. ' +
+      'If proxy-live-signals Edge Function is deployed, quota may be exhausted (AlphaVantage: 25/day, NewsAPI: 100/day). ' +
+      'Confidence capped at 45% — score reflects historical baselines only.',
+    );
+  }
+  if (genericFallbackDetected) {
+    anomalies.push(
+      'Company not found in intelligence DB — agents received generic neutral defaults. ' +
+      'All heuristic signals are correlated baseline noise, not company-specific intelligence. ' +
+      'Risk score has low differentiation for this company.',
+    );
+  }
 
   // ── Cluster-completeness check ────────────────────────────────────────────
   // A partial failure where all agents in one category (e.g. market) fail while

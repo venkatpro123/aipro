@@ -193,11 +193,39 @@ export const calculateHybridLayoffScore = async (
   // every time a signal was added or removed from `ConsensusSignalSet`, and
   // surfaced fractional rounding artefacts to the UI ("9 live signals" when
   // only 8 actually were live).
+  //
+  // missingDataFallbacks lists the human-readable names of every consensus
+  // signal that resolved without a live source. UI uses this to disclose
+  // which inputs are heuristic / cached so a 22%-confidence score doesn't
+  // look the same as a 22%-confidence score where every signal was live.
+  const signalsByLabel: Array<[string, { primarySource: "live" | "db" | "hybrid" }]> = [
+    ["Revenue growth", consensus.revenueGrowth],
+    ["Stock trend (90d)", consensus.stockTrend],
+    ["Funding health", consensus.fundingHealth],
+    ["Overstaffing ratio", consensus.overstaffing],
+    ["Company size", consensus.companySize],
+    ["Recent layoff recency", consensus.recentLayoffRecency],
+    ["Layoff frequency", consensus.layoffFrequency],
+    ["Layoff severity", consensus.layoffSeverity],
+    ["Sector contagion", consensus.sectorContagion],
+    ["Department-specific news", consensus.departmentNews],
+    ["Task automatability", consensus.automationRisk],
+    ["AI tool maturity", consensus.aiToolMaturity],
+    ["Human amplification", consensus.humanAmplification],
+    ["Industry baseline", consensus.industryBaseline],
+    ["AI adoption rate", consensus.aiAdoptionRate],
+    ["Growth outlook", consensus.growthOutlook],
+    ["Average tenure", consensus.averageTenure],
+  ];
+  const missingDataFallbacks: string[] = signalsByLabel
+    .filter(([, sig]) => sig.primarySource !== "live")
+    .map(([label]) => label);
+
   const signalQuality = {
     hasConflicts: consensus.conflictLevel !== "none",
     // Use full SignalConflict objects for detailed disclosure
     conflictingSignals: consensus.allConflicts,
-    missingDataFallbacks: [] as string[], // TODO: detect when heuristics used
+    missingDataFallbacks,
     liveSignals: consensus.freshnessReport.liveSignalCount,
     heuristicSignals: consensus.freshnessReport.heuristicSignalCount,
   };

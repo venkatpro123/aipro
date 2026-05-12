@@ -108,9 +108,15 @@ export function formatTimeAgo(date: Date): string {
 }
 
 // ── Session throttle ───────────────────────────────────────────────────────
+// v22.0 — the browser poller is now a single-shot safety net. The authoritative
+// path is the server-side `ingest-news` Edge Function (pg_cron every 10 min →
+// `breaking_news_events` table → Supabase Realtime push). When the server has
+// inserted a row in the last 15 minutes for any company, the browser poll is
+// redundant and we skip it. The 15-minute hard floor below catches the case
+// where the server cron is misconfigured or `breaking_news_events` is empty.
 
 const SESSION_POLL_KEY   = 'hp_breaking_news_last_poll';
-const MIN_POLL_INTERVAL  = 15 * 60 * 1_000; // 15 minutes
+const MIN_POLL_INTERVAL  = 15 * 60 * 1_000; // 15 minutes — safety-net floor
 
 function shouldPoll(): boolean {
   try {

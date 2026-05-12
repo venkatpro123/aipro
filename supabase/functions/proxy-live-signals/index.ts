@@ -3,6 +3,8 @@
 // News:  NewsAPI (primary) → GNews API (fallback) → Google News RSS (last resort)
 // Cross-match filter: title-match required (description optional) to eliminate false positives.
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -25,22 +27,77 @@ const YAHOO_HEADERS = {
   "Origin": "https://finance.yahoo.com",
 };
 
-// ── STOCK: Yahoo Finance crumb auth (required for v10 quoteSummary fundamentals) ─
-// The crumb flow (consent cookie → crumb endpoint) is fragile in server environments;
-// Yahoo changes it periodically. We attempt it but catch failures gracefully so the
-// chart-based 90-day price change (which needs NO crumb) always succeeds.
+// ── STOCK: Yahoo Finance crumb auth ───────────────────────────────────────────
+// Fix H-6: Previously the crumb was stored in module-level variables that reset
+// on every Deno cold start. High concurrency caused burst consent-cookie requests,
+// hitting Yahoo's rate limits and cascading to stockData=null for all users.
+// The crumb is now persisted in the `edge_crumb_cache` Supabase table (20-min TTL)
+// so all isolates share the same crumb even across cold starts.
+// The in-memory variable is kept as a fast path within a single isolate lifetime.
 
 interface YahooCrumb { crumb: string; cookies: string }
 
 let _crumbCache: YahooCrumb | null = null;
 let _crumbFetchedAt = 0;
 const CRUMB_TTL_MS = 20 * 60 * 1000; // 20 min
+const CRUMB_CACHE_KEY = "yahoo_finance_crumb";
+
+async function loadCrumbFromDb(): Promise<YahooCrumb | null> {
+  try {
+    const supabaseUrl  = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !supabaseKey) return null;
+
+    const sb = createClient(supabaseUrl, supabaseKey);
+    const { data } = await sb
+      .from("edge_crumb_cache")
+      .select("value, cookies, expires_at")
+      .eq("key", CRUMB_CACHE_KEY)
+      .maybeSingle();
+
+    if (!data) return null;
+    if (new Date(data.expires_at).getTime() < Date.now()) return null; // expired
+    return { crumb: data.value, cookies: data.cookies ?? "" };
+  } catch {
+    return null;
+  }
+}
+
+async function saveCrumbToDb(crumb: YahooCrumb): Promise<void> {
+  try {
+    const supabaseUrl  = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    if (!supabaseUrl || !supabaseKey) return;
+
+    const sb = createClient(supabaseUrl, supabaseKey);
+    const expiresAt = new Date(Date.now() + CRUMB_TTL_MS).toISOString();
+    await sb.from("edge_crumb_cache").upsert({
+      key: CRUMB_CACHE_KEY,
+      value: crumb.crumb,
+      cookies: crumb.cookies,
+      fetched_at: new Date().toISOString(),
+      expires_at: expiresAt,
+    }, { onConflict: "key" });
+  } catch {
+    // Non-fatal — in-memory cache still works for this isolate's lifetime
+  }
+}
 
 async function getYahooCrumb(): Promise<YahooCrumb> {
   const now = Date.now();
+
+  // Fast path: in-memory (same isolate)
   if (_crumbCache && now - _crumbFetchedAt < CRUMB_TTL_MS) return _crumbCache;
 
-  // Strategy 1: consent-cookie flow (standard)
+  // DB path: shared across isolates (survives cold starts)
+  const dbCrumb = await loadCrumbFromDb();
+  if (dbCrumb) {
+    _crumbCache = dbCrumb;
+    _crumbFetchedAt = now;
+    return dbCrumb;
+  }
+
+  // Fetch fresh crumb — Strategy 1: consent-cookie flow (standard)
   try {
     const consentRes = await fetch("https://guce.yahoo.com/consent?sessionId=1&lang=en-US&inline=false", {
       headers: YAHOO_HEADERS,
@@ -57,16 +114,18 @@ async function getYahooCrumb(): Promise<YahooCrumb> {
     if (crumbRes.ok) {
       const crumb = await crumbRes.text();
       if (crumb && !crumb.startsWith("{")) {
-        _crumbCache = { crumb: crumb.trim(), cookies: cookieStr };
+        const result: YahooCrumb = { crumb: crumb.trim(), cookies: cookieStr };
+        _crumbCache = result;
         _crumbFetchedAt = now;
-        return _crumbCache;
+        await saveCrumbToDb(result);
+        return result;
       }
     }
   } catch {
     // fall through to strategy 2
   }
 
-  // Strategy 2: direct getcrumb without consent cookies (works in some regions/versions)
+  // Strategy 2: direct getcrumb without consent cookies
   const crumbRes2 = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
     headers: YAHOO_HEADERS,
     signal: AbortSignal.timeout(6_000),
@@ -75,9 +134,11 @@ async function getYahooCrumb(): Promise<YahooCrumb> {
   const crumb2 = await crumbRes2.text();
   if (!crumb2 || crumb2.startsWith("{")) throw new Error("Yahoo crumb: all strategies failed");
 
-  _crumbCache = { crumb: crumb2.trim(), cookies: "" };
+  const result2: YahooCrumb = { crumb: crumb2.trim(), cookies: "" };
+  _crumbCache = result2;
   _crumbFetchedAt = now;
-  return _crumbCache;
+  await saveCrumbToDb(result2);
+  return result2;
 }
 
 // ── STOCK: Yahoo Finance v10 quoteSummary (detailed fundamentals) ─────────────

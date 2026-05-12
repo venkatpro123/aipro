@@ -136,7 +136,7 @@ async function fetchNews(companyName: string, apiKey: string) {
           companyName,
           date:        art.publishedAt.slice(0, 10),
           headline:    art.title,
-          percentCut:  pct ? parseFloat(pct[1]) : 5,
+          percentCut:  pct ? parseFloat(pct[1]) : 0,
           source:      art.source?.name ?? 'NewsAPI',
           url:         art.url ?? '',
           affectedDepartments: [],

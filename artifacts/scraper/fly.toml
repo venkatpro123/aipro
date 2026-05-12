@@ -1,0 +1,63 @@
+# fly.toml — Real-Time Intelligence Scraper (Fly.io deployment)
+#
+# Provisioned manually with:
+#   fly apps create humansheild-scraper --org <your-org>
+#   fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+#     REDIS_URL=... HMAC_SHARED_SECRET=... GEMINI_API_KEY=... \
+#     MEILISEARCH_HOST=... MEILISEARCH_API_KEY=... GITHUB_TOKEN=... \
+#     REDDIT_CLIENT_ID=... REDDIT_CLIENT_SECRET=...
+#   fly volumes create scraper_cache --region bom --size 1
+#   fly deploy
+
+app           = "humansheild-scraper"
+primary_region = "bom"                       # closest to Supabase ap-south-1
+kill_signal   = "SIGTERM"
+kill_timeout  = "30s"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[experimental]
+  auto_rollback = true
+
+# ── Compute ──────────────────────────────────────────────────────────────────
+[[vm]]
+  size              = "shared-cpu-2x"        # 2 vCPU shared
+  memory            = "2gb"                  # ~$5.70/mo
+  cpu_kind          = "shared"
+
+# ── HTTP service ─────────────────────────────────────────────────────────────
+[[services]]
+  internal_port = 8080
+  protocol      = "tcp"
+  auto_stop_machines  = "stop"               # scale-to-zero when idle
+  auto_start_machines = true                 # wake on incoming request
+  min_machines_running = 0                   # cold-start acceptable
+
+  [[services.ports]]
+    port     = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port     = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval     = "30s"
+    timeout      = "5s"
+    grace_period = "10s"
+    method       = "get"
+    path         = "/health"
+    protocol     = "http"
+
+# ── Persistent volume (Playwright cache + Crawl4AI artifacts) ───────────────
+[mounts]
+  source      = "scraper_cache"
+  destination = "/home/scraper/.cache/scraper-data"
+
+# ── Process groups ───────────────────────────────────────────────────────────
+# Single process: the Hono server also runs BullMQ workers in the same Node
+# event loop. This keeps the budget under $25 (one machine, not two).
+[processes]
+  app = "node dist/server.js"

@@ -188,21 +188,38 @@ export const AuditDashboardLayout: React.FC<AuditDashboardLayoutProps> = ({
   useCompanySignalSubscription(result.companyName ?? null, onRecalculate);
 
   return (
-    <div className="audit-dashboard space-y-8" data-testid="audit-dashboard">
+    <div className="audit-dashboard space-y-6" data-testid="audit-dashboard">
       <LiveSignalStatusBar status={liveStatus} />
       <OutcomeFeedbackPrompt companyRoleKey={companyRoleKey} predictionDate={result.meta.timestamp} />
 
-      {/* Header / Breadcrumb — Sophisticated & Minimal */}
-      <nav
-        aria-label="Breadcrumb"
-        className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground/60"
-      >
-        <span className="opacity-50">HumanShield</span>
-        <span className="opacity-20">/</span>
-        <span className="opacity-50">Audit Terminal</span>
-        <span className="opacity-20">/</span>
-        <span className="text-cyan">{roleLabel}{companySuffix}</span>
-      </nav>
+      {/* Premium Header Row — sticky with blur */}
+      <div style={{
+        position: "sticky",
+        top: "calc(var(--nav-h) + 8px)",
+        zIndex: 29,
+        paddingBottom: 8,
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <nav
+            aria-label="Breadcrumb"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: "0.70rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--text-3)" }}
+          >
+            <span style={{ opacity: 0.5 }}>HumanShield</span>
+            <span style={{ opacity: 0.25, fontSize: "0.5rem" }}>◆</span>
+            <span style={{ opacity: 0.5 }}>Audit Terminal</span>
+            <span style={{ opacity: 0.25, fontSize: "0.5rem" }}>◆</span>
+            <span style={{ color: "var(--cyan)", opacity: 0.9, textShadow: "0 0 12px rgba(0,212,224,0.35)" }}>{roleLabel}{companySuffix}</span>
+          </nav>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="status-dot status-dot-live" />
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text-3)" }}>Live</span>
+          </div>
+        </div>
+      </div>
 
       {/* Main Tabbed Interface */}
       <PremiumTabs
@@ -254,17 +271,24 @@ export const AuditDashboardLayout: React.FC<AuditDashboardLayoutProps> = ({
  */
 const TabSkeleton: React.FC = () => {
   return (
-    <div className="space-y-6 py-6" aria-busy="true" aria-live="polite">
-      <div className="h-8 w-48 bg-muted/50 rounded animate-pulse" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="h-64 bg-muted/30 rounded-xl animate-pulse" />
-        <div className="space-y-4">
-          <div className="h-20 bg-muted/30 rounded-xl animate-pulse" />
-          <div className="h-20 bg-muted/30 rounded-xl animate-pulse" />
-          <div className="h-20 bg-muted/30 rounded-xl animate-pulse" />
+    <div className="space-y-5 py-6" aria-busy="true" aria-live="polite">
+      {/* Header row skeleton */}
+      <div className="skeleton-panel" style={{ height: 36, width: 220 }} />
+      {/* Main 2-col layout */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div className="skeleton-panel" style={{ height: 280 }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="skeleton-panel"
+              style={{ height: 80, animationDelay: `${i * 120}ms` }}
+            />
+          ))}
         </div>
       </div>
-      <div className="h-40 bg-muted/30 rounded-xl animate-pulse" />
+      {/* Bottom panel */}
+      <div className="skeleton-panel" style={{ height: 160 }} />
     </div>
   );
 };

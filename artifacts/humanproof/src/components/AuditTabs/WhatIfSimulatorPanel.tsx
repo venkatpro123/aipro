@@ -60,7 +60,7 @@ function SimulatedScoreRing({ score, color }: { score: number; color: string }) 
           className="text-lg font-bold leading-none"
           style={{ color }}
         >
-          {score}
+          {Math.round(score)}
         </motion.div>
       </div>
     </div>
@@ -88,6 +88,8 @@ export function WhatIfSimulatorPanel({ result }: Props) {
     currentScore: result.total,
     breakdown: result.breakdown,
     activeLevers,
+    d8Value: (result.breakdown as any).D8,
+    dataFreshnessAgeInDays: result.dataFreshness?.ageInDays,
   });
 
   const simColor = TIER_COLORS[simResult.simulatedTier.color] ?? '#10b981';
@@ -174,6 +176,22 @@ export function WhatIfSimulatorPanel({ result }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* D8 gap notice — shows when AI efficiency restructuring risk cannot be reduced */}
+      {simResult.d8Gap != null && simResult.d8Gap > 3 && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-amber-950/20 border border-amber-500/15">
+          <p className="text-[11px] text-amber-300">
+            Your score includes {simResult.d8Gap} pts from AI-efficiency restructuring at your company — this cannot be reduced by personal actions.
+          </p>
+        </div>
+      )}
+
+      {/* Data freshness warning */}
+      {simResult.dataFreshnessWarning && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600/20">
+          <p className="text-[11px] text-gray-400">{simResult.dataFreshnessWarning}</p>
+        </div>
+      )}
 
       {/* Lever sliders */}
       <div className="space-y-3">

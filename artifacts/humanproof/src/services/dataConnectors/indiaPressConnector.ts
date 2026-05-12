@@ -42,13 +42,23 @@ export interface IndiaPressSummary {
 
 const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
-const FEEDS: Record<string, string> = {
-  moneycontrol: 'https://www.moneycontrol.com/rss/business.xml',
-  livemintCompanies: 'https://www.livemint.com/rss/companies',
-  inc42: 'https://inc42.com/feed/',
-  yourStory: 'https://yourstory.com/feed',
-  businessStandardTech: 'https://www.business-standard.com/rss/technology-108.rss',
+// Feeds whose XML endpoints are directly CORS-accessible (tested May 2026).
+// These are tried with a raw fetch before falling back to rss2json.com so that
+// the 100-req/day rss2json quota is not consumed when direct access works.
+const DIRECT_FEEDS: Record<string, string> = {
+  inc42:               'https://inc42.com/feed/',
+  yourStory:           'https://yourstory.com/feed',
 };
+
+// Feeds that require the rss2json proxy (CORS-blocked for direct browser fetch)
+const PROXIED_FEEDS: Record<string, string> = {
+  moneycontrol:        'https://www.moneycontrol.com/rss/business.xml',
+  livemintCompanies:   'https://www.livemint.com/rss/companies',
+  businessStandardTech:'https://www.business-standard.com/rss/technology-108.rss',
+};
+
+// Union of all feeds — preserved for downstream callers that reference FEEDS directly
+const FEEDS: Record<string, string> = { ...DIRECT_FEEDS, ...PROXIED_FEEDS };
 
 const LAYOFF_KEYWORDS = [
   'layoff', 'laid off', 'lays off', 'fires', 'firing', 'job cut', 'job cuts',
@@ -67,7 +77,40 @@ const POSITIVE_KEYWORDS = [
   'launch', 'partnership', 'acquired', 'funded', 'funding round', 'ipo',
 ];
 
-async function fetchFeed(url: string): Promise<any[]> {
+// Minimal RSS XML → item-array parser for direct-fetch path
+function parseRSSXml(xml: string): any[] {
+  const items: any[] = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = itemRegex.exec(xml)) !== null) {
+    const block = m[1];
+    const title       = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block)
+                        ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1]?.trim() ?? '';
+    const link        = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1]?.trim() ?? '';
+    const description = (/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/i.exec(block)
+                        ?? /<description>([\s\S]*?)<\/description>/i.exec(block))?.[1]?.trim() ?? '';
+    const pubDate     = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1]?.trim() ?? '';
+    if (title || link) items.push({ title, link, description, pubDate });
+  }
+  return items;
+}
+
+async function fetchFeedDirect(url: string): Promise<any[] | null> {
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(5000),
+      headers: { Accept: 'application/rss+xml, application/xml, text/xml' },
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    const items = parseRSSXml(text);
+    return items.length > 0 ? items : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchFeedViaProxy(url: string): Promise<any[]> {
   try {
     const res = await fetch(`${RSS_PROXY}${encodeURIComponent(url)}`, {
       signal: AbortSignal.timeout(5000),
@@ -79,6 +122,17 @@ async function fetchFeed(url: string): Promise<any[]> {
   } catch {
     return [];
   }
+}
+
+async function fetchFeed(feedName: string, feedUrl: string): Promise<any[]> {
+  // For feeds categorised as direct-accessible, try the raw URL first to
+  // avoid consuming the rss2json quota. Fall back to the proxy on any failure.
+  if (feedName in DIRECT_FEEDS) {
+    const direct = await fetchFeedDirect(feedUrl);
+    if (direct) return direct;
+  }
+  // Proxy path (default for CORS-blocked feeds and fallback for direct-accessible)
+  return fetchFeedViaProxy(feedUrl);
 }
 
 // Word-boundary match — same shape as the proxy-live-signals matcher so
@@ -125,7 +179,7 @@ export async function fetchIndiaPressSignals(
   const feedSettled = await Promise.allSettled(
     feedNames.map(async (name) => ({
       name,
-      items: await fetchFeed(FEEDS[name]),
+      items: await fetchFeed(name, FEEDS[name]),
     })),
   );
   const feedResults = feedSettled

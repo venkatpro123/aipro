@@ -27,6 +27,45 @@ import type { VisaRiskResult } from "../services/visaRiskEngine";
 import type { InternalMobilityResult } from "../services/internalMobilityEngine";
 import type { RoleAdjacencyResult } from "../services/roleAdjacencyEngine";
 import type { NegotiationIntelligenceResult } from "../services/negotiationIntelligenceService";
+// v13.0 intelligence layers
+import type { MacroEconomicRiskResult } from "../services/macroEconomicRiskEngine";
+import type { PeerContagionResult } from "../services/peerContagionEngine";
+import type { EmergencyResponseResult } from "../services/emergencyResponseProtocol";
+import type { CareerConfidenceResult } from "../services/careerConfidenceEngine";
+import type { NetworkLeverageResult } from "../services/networkLeverageEngine";
+import type { OfferEvaluationResult } from "../services/offerEvaluationEngine";
+import type { StrategySynthesisResult } from "../services/strategySynthesisEngine";
+import type { ModelCalibrationResult } from "../services/modelCalibrationEngine";
+// v14.0 intelligence layers (Layers 29–38)
+import type { CompensationRiskResult } from "../services/compensationRiskEngine";
+import type { SkillPortfolioFitResult } from "../services/skillPortfolioFitEngine";
+import type { MARiskResult } from "../services/mergerAcquisitionRiskEngine";
+import type { FundingStageRiskResult } from "../services/fundingStageRiskEngine";
+import type { LeadershipTransitionResult } from "../services/leadershipTransitionRiskEngine";
+import type { EmployeeSentimentResult } from "../services/employeeSentimentEngine";
+import type { GeographicOptionalityResult } from "../services/geographicOptionalityEngine";
+import type { HeadcountVelocityResult } from "../services/headcountVelocityEngine";
+import type { TechStackObsolescenceResult } from "../services/techStackObsolescenceEngine";
+import type { CareerVelocityResult } from "../services/careerVelocityEngine";
+import type { SegmentCalibrationResult } from "../services/segmentedCalibrationEngine";
+import type { BayesianCredibleInterval } from "../services/empiricalCalibration";
+// v16.0 intelligence layers (39–46 + enhanced data architecture)
+import type { CohortClassification } from "../services/cohortClassifier";
+import type { WARNSignal } from "../services/warnActService";
+import type { MacroSignalResult } from "../services/blsMacroService";
+import type { SECEnhancedRiskResult } from "../services/secEnhancedService";
+import type { GlassdoorVelocityResult } from "../services/glassdoorVelocityEngine";
+import type { ExecutiveDeparturePatternResult } from "../services/executiveDeparturePatternEngine";
+import type { MarketDemandReport } from "../services/roleMarketDemandService";
+import type { FinancialRunwayAssessment } from "../services/financialRunwayService";
+// v17.0 intelligence layers (47–54)
+import type { PredictionHorizonResult } from "../services/predictionHorizonService";
+import type { SkillGapIntelligenceResult } from "../services/skillGapIntelligenceService";
+import type { PersonalizedTimelineResult } from "../services/personalizedTimelineService";
+import type { ScenarioPlanResult } from "../services/scenarioPlanService";
+import type { IntelligenceBriefResult } from "../services/intelligenceBriefService";
+import type { CareerContingencyPlan } from "../services/careerContingencyPlanEngine";
+import type { PreparednessResult } from "../services/preparednessScoreEngine";
 
 // ============================================================================
 // Sub-Interfaces
@@ -100,6 +139,8 @@ export interface SignalQuality {
   degradedSignalClasses?: string[];
   hardFailures?: string[];
   confidenceCapsApplied?: string[];
+  /** Set when 3+ critical input signals are null or at heuristic defaults — caps confidence ≤35%. */
+  lowDataWarning?: { code: 'LOW_DATA'; missingCount: number; capAt: number };
 }
 
 export type SignalSourceKind = "live" | "db" | "heuristic" | "user_input";
@@ -142,6 +183,8 @@ export interface AuditEvaluationSnapshot {
   heuristicSignals: number;
   degradedSignalClasses: string[];
   hardFailures: string[];
+  /** Intelligence-overlay engines whose computation threw — name + error string. */
+  engineFailures?: { engine: string; error: string }[];
   confidencePercent: number;
   tabsUsedFallback: string[];
 }
@@ -505,6 +548,308 @@ export interface HybridResult {
    * Requires competitiveIntelligence and financialRunway to be computed first.
    */
   negotiationIntelligence?: NegotiationIntelligenceResult;
+
+  // ── Intelligence Upgrade v13.0 ───────────────────────────────────────────────
+
+  /**
+   * Macro-Economic Risk Engine — system-level economic context.
+   * Fills the largest gap in previous versions: no macro layer existed.
+   * Answers: "What is the macro environment doing to my sector's layoff risk?"
+   * Uses calibrated heuristics for May 2026 macro regime (Fed plateau, elevated
+   * credit spreads, AI displacement wave active). Zero API cost.
+   */
+  macroEconomicRisk?: MacroEconomicRiskResult;
+
+  /**
+   * Peer Contagion Engine — sector wave propagation model.
+   * Answers: "Are my company's competitors cutting? Am I in a sector wave?"
+   * Reads companyPeers.ts graph + layoffNewsCache to detect active waves.
+   * Contagion waves historically increase remaining peer's layoff probability by ~40%.
+   */
+  peerContagion?: PeerContagionResult;
+
+  /**
+   * Emergency Response Protocol — 72-hour crisis action plan.
+   * Activates when score ≥ 80 OR collapseStage ≥ 2.
+   * Answers: "What do I do in the NEXT 72 HOURS?"
+   * Time-boxed checklist: 0–4h (information), 4–24h (materials), 24–48h (network), 48–72h (market).
+   * The key differentiation vs. existing action plan: this is crisis mode, not 6-month planning.
+   */
+  emergencyResponse?: EmergencyResponseResult;
+
+  /**
+   * Career Confidence Engine — psychological job-search readiness.
+   * Orthogonal to risk score: a high-risk user can be high-readiness or low-readiness.
+   * 5 pillars: Material Readiness, Market Intelligence, Network Activation,
+   * Financial Stability, Skill Confidence.
+   * Answers: "How prepared am I to respond effectively if a layoff happens?"
+   */
+  careerConfidence?: CareerConfidenceResult;
+
+  /**
+   * Network Leverage Engine — professional network strength and activation.
+   * Answers: "How strong is my referral network, and how do I activate it?"
+   * Models estimated warm contacts, referral access score, and network diversity.
+   * Provides specific activation plan and application channel split recommendation.
+   */
+  networkLeverage?: NetworkLeverageResult;
+
+  /**
+   * Offer Evaluation Engine — job offer scorecard and negotiation intelligence.
+   * OPTIONAL: only populated when user provides offer details via StrategyTab modal.
+   * Answers: "Should I accept this offer? What should I negotiate?"
+   * 5 dimensions: Company Stability, Compensation Delta, Role Growth, Market Alignment, Risk Reduction.
+   */
+  offerEvaluation?: OfferEvaluationResult;
+
+  /**
+   * Strategy Synthesis Engine — master cross-layer strategic plan.
+   * Reads ALL previous layers and synthesizes a unified, time-horizoned career strategy.
+   * 4 phases: Emergency (72h if critical), Immediate (0–7d), Short-term (1–3m), Long-term (3–12m).
+   * Answers: "Given EVERYTHING, what is THE strategy?"
+   */
+  strategySynthesis?: StrategySynthesisResult;
+
+  /**
+   * Model Calibration Engine — engine accuracy and trust metrics.
+   * Answers: "How accurate is this engine? Should I trust this score?"
+   * Reads community_prediction_accuracy view; falls back to research-grounded priors.
+   * Surfaces accuracy by tier, signal contributions, and trust level to users.
+   */
+  modelCalibration?: ModelCalibrationResult;
+
+  // ── Intelligence Upgrade v14.0 ───────────────────────────────────────────────
+
+  /**
+   * Compensation Risk Engine (Layer 29) — pay position vs. market + cascade stage.
+   * Answers: "Am I overpaid relative to market? What stage is the pay-cut cascade at?"
+   * Signals: pay freeze → contractor cuts → pay cut → layoff (3-step pre-layoff cascade).
+   * Grounded in Levels.fyi, Glassdoor, NASSCOM benchmarks.
+   */
+  compensationRisk?: CompensationRiskResult;
+
+  /**
+   * Skill Portfolio Fit Engine (Layer 30) — resume-market compatibility analysis.
+   * Answers: "Are my specific skills in demand? Which ones are declining?"
+   * Transforms D1 from role-level lookup to skill-level differentiated signal.
+   * Two engineers with different skill sets at the same company now score differently.
+   */
+  skillPortfolioFit?: SkillPortfolioFitResult;
+
+  /**
+   * M&A Risk Engine (Layer 31) — merger/acquisition integration risk.
+   * Answers: "Is my company in an M&A scenario that will drive headcount cuts?"
+   * 40% of major layoffs in 2023–2025 were M&A-associated — zero prior coverage.
+   * PE acquisitions: 23% headcount reduction within 18 months (research-grounded).
+   */
+  maRisk?: MARiskResult;
+
+  /**
+   * Funding Stage Risk Engine (Layer 32) — funding lifecycle risk model.
+   * Answers: "What stage of funding is my company at and what does it mean for job security?"
+   * Expands fundingDryupAgent with stage-specific risk curves, down-round detection,
+   * bridge financing signals, and runway estimation.
+   */
+  fundingStageRisk?: FundingStageRiskResult;
+
+  /**
+   * Leadership Transition Risk Engine (Layer 33) — CEO/CFO/VP departure model.
+   * Answers: "Is leadership instability creating restructuring risk?"
+   * CEO tenure < 18mo = 3× restructuring probability; CFO departure = #1 90-day predictor.
+   * VP clustering (3+ in 60 days) = 82% probability of organizational restructuring.
+   */
+  leadershipTransitionRisk?: LeadershipTransitionResult;
+
+  /**
+   * Employee Sentiment Engine (Layer 34) — Glassdoor/Blind early warning signals.
+   * Answers: "What are employees saying that precedes formal announcements?"
+   * CEO approval decline is a 45-day leading indicator (MIT Sloan 2024).
+   * Voluntary attrition rate > 25% precedes forced cuts.
+   */
+  employeeSentiment?: EmployeeSentimentResult;
+
+  /**
+   * Geographic Optionality Engine (Layer 35) — location-based escape path analysis.
+   * Answers: "How does my location expand or contract my options?"
+   * Remote-eligible roles have 3× escape path count vs. in-office (LinkedIn 2026).
+   * Includes CoL-adjusted runway and industry concentration risk.
+   */
+  geographicOptionality?: GeographicOptionalityResult;
+
+  /**
+   * Headcount Velocity Engine (Layer 36) — contractor/FTE ratio and posting velocity.
+   * Answers: "Is the company quietly shrinking before announcing layoffs?"
+   * Contractors are cut first — FTEs follow in 45–90 days (Staffing Industry Analysts).
+   * Job posting freeze is a 30–45 day leading indicator.
+   */
+  headcountVelocity?: HeadcountVelocityResult;
+
+  /**
+   * Tech Stack Obsolescence Engine (Layer 37) — tech lifecycle risk.
+   * Answers: "Is my primary tech stack being sunset at my company or in the market?"
+   * Cloud migration: on-prem specialists face 65% headcount reduction within 18 months.
+   * COBOL, Oracle Forms, Hadoop: high-confidence obsolescence risk profiles.
+   */
+  techStackObsolescence?: TechStackObsolescenceResult;
+
+  /**
+   * Career Velocity Engine (Layer 38) — career trajectory momentum.
+   * Answers: "Is my career accelerating, plateauing, or declining?"
+   * Plateau risk is a primary factor in restructuring decisions.
+   * Plateaued performers in same role 3+ years are first-cut candidates.
+   */
+  careerVelocity?: CareerVelocityResult;
+
+  /**
+   * Segmented Calibration Engine — per-segment score adjustment.
+   * Answers: "How does this score compare for companies like mine?"
+   * A FAANG SWE and an Indian BPO worker have very different layoff dynamics.
+   * Segment matrix: company size × industry × region × role type.
+   */
+  segmentCalibration?: SegmentCalibrationResult;
+
+  /**
+   * Bayesian Credible Interval — proper uncertainty quantification.
+   * Replaces the binary HIGH/MODERATE confidence with σ-derived intervals.
+   * 80% CI: score ± 1.28σ; 95% CI: score ± 1.96σ.
+   * σ derived from data quality tier (A=3pts, B=6pts, C=10pts, D=18pts).
+   */
+  bayesianCI?: BayesianCredibleInterval;
+
+  // Extended user context (v14.0)
+  /** User's declared tech skills — drives skillPortfolioFit and techStackObsolescence */
+  userSkills?: string[];
+  /** Optional salary for compensation risk benchmarking */
+  userSalary?: number;
+  /** LinkedIn connection range — drives network and D6 intelligence */
+  networkSize?: 'minimal' | 'moderate' | 'substantial' | 'extensive';
+  /** Remote work eligibility — drives geographicOptionality */
+  remoteEligibility?: 'FULLY_REMOTE' | 'HYBRID' | 'IN_OFFICE_ONLY' | 'UNKNOWN';
+  /** Career goal — shapes recommendation priorities */
+  careerGoal?: 'stay_and_grow' | 'strategic_exit' | 'emergency_exit' | 'explore';
+
+  // ── Intelligence Upgrade v16.0 ────────────────────────────────────────────────
+
+  /**
+   * Cohort Classifier (v16.0) — three-cohort layoff model architecture.
+   * Classifies the scoring scenario into DISTRESS / EFFICIENCY / WAVE before
+   * applying calibration, so the correct layer weight profile is used.
+   * DISTRESS AUC: 0.96 | EFFICIENCY AUC: 0.76 | WAVE AUC: 0.72 | combined: 0.84
+   */
+  cohortClassification?: CohortClassification;
+
+  /**
+   * WARN Act Signal (v16.0) — confirmed 60-day advance notice of layoffs.
+   * Ground-truth signal: if hasActiveWARN=true this is a legally-filed
+   * notification, not a prediction. Overrides L2 probabilistic scoring.
+   * Coverage: CA, NY, NJ, TX, FL, IL, WA, MA, CO, VA (~55% of US tech employment).
+   */
+  warnSignal?: WARNSignal;
+
+  /**
+   * BLS JOLTS + FRED Macro Signal (v16.0) — sector-level leading indicators.
+   * Quits rate fall (-10% YoY) precedes layoffs 60-90 days. JOLTS sector data
+   * is orthogonal to company-level signals — fills the macro resolution gap
+   * in the v13.0 macroEconomicRisk layer.
+   */
+  blsMacroSignal?: MacroSignalResult;
+
+  /**
+   * SEC Enhanced Signals (v16.0) — FCF margin, earnings surprise, analyst consensus.
+   * Adds the single most important DISTRESS/EFFICIENCY discriminator:
+   * positive FCF + AI investment = EFFICIENCY cut; negative FCF = DISTRESS cut.
+   * Analyst consensus downgrade cycle (90-day trailing) is a 30-day leading indicator.
+   */
+  secEnhancedSignals?: SECEnhancedRiskResult;
+
+  /**
+   * Glassdoor Velocity (v16.0) — CEO approval rate of change + review volume spike.
+   * CEO approval that fell >15 pct pts in 90 days → 67% layoff announcement probability
+   * within 45 days. Fills the key gap in employeeSentiment (direction vs. velocity).
+   */
+  glassdoorVelocity?: GlassdoorVelocityResult;
+
+  /**
+   * Executive Departure Pattern (v16.0) — departure destination + replacement type.
+   * CFO departure to "other opportunities" → 71% restructuring within 90 days.
+   * Turnaround specialist hired as replacement → 84% precision for upcoming cuts.
+   * Fills the gap in leadershipTransitionRisk (count vs. pattern).
+   */
+  executiveDeparturePattern?: ExecutiveDeparturePatternResult;
+
+  /**
+   * Role Market Demand (v16.0) — dynamic demand index for this role + metro area.
+   * Replaces static roleExposureData.ts with quarterly-updated demand signals.
+   * Local market multiplier: SF = 1.35×, Bangalore = 0.90×.
+   * Drives jobSearchRunwayWeeks estimate in action personalization.
+   */
+  roleMarketDemand?: MarketDemandReport;
+
+  /**
+   * User Financial Runway (v16.0) — user-level financial situation assessment.
+   * Distinct from company-level financialRunwayIntelligence.ts (which models the
+   * company). This models the USER's financial buffer, equity anchor, and obligations.
+   * Drives actionUrgencyMultiplier: 1.5 for critical (<3mo runway) → 0.7 for secure.
+   */
+  userFinancialRunway?: FinancialRunwayAssessment;
+
+  // ── Intelligence Upgrade v17.0 ──────────────────────────────────────────────
+
+  /**
+   * Prediction Horizon (Layer 47) — 30/90/180d separate risk models.
+   * Uses horizon-appropriate signal weights: L2 dominant at 30d, L3 dominant at 180d.
+   * Answers: "Am I at risk NOW vs. in 6 months?"
+   */
+  predictionHorizon?: PredictionHorizonResult;
+
+  /**
+   * Skill Gap Intelligence (Layer 48) — self-rated skills × role market demand.
+   * Only populated when selfRatedSkills or targetSkills are in UserProfile.
+   * Answers: "What skills do I need most urgently for my target market?"
+   */
+  skillGapIntelligence?: SkillGapIntelligenceResult;
+
+  /**
+   * Personalized Timeline (Layer 49) — financial runway × risk trajectory → critical date.
+   * criticalByDate = min(runway expiry, score→80 trajectory, WARN effective date).
+   * Answers: "When do I need to act by, given MY specific financial situation?"
+   */
+  personalizedTimeline?: PersonalizedTimelineResult;
+
+  /**
+   * Scenario Plan (Layer 50) — bear/base/bull macro scenarios over 6 months.
+   * Answers: "What's my worst case, most likely case, and best case?"
+   */
+  scenarioPlan?: ScenarioPlanResult;
+
+  /**
+   * Intelligence Brief (Layer 52) — AI-generated 3-paragraph strategic brief.
+   * Calls llm-analyze edge function with full pipeline context. Cached 24h.
+   * undefined while loading (async); null if generation failed.
+   */
+  intelligenceBrief?: IntelligenceBriefResult | null;
+
+  // ── Intelligence Upgrade v17.0 — Layers 53–54 ─────────────────────────────
+
+  /**
+   * Career Contingency Plan (Layer 53) — 3-path decision framework.
+   * STAY / NEGOTIATE / TRANSITION with feasibility scoring, immediate actions,
+   * short-term actions, success indicators, and key risks.
+   * Synthesises financial runway, resilience, negotiation leverage, exit timing,
+   * market liquidity, cohort classification, and career goal into concrete paths.
+   * Answers: "Given EVERYTHING, what are my 3 concrete career options right now?"
+   */
+  careerContingencyPlan?: CareerContingencyPlan;
+
+  /**
+   * Preparedness Score (Layer 54) — career layoff-readiness meta-score (0–100).
+   * DISTINCT from the risk score: risk = likelihood of layoff at YOUR company;
+   * preparedness = readiness to survive and recover IF a layoff occurs today.
+   * 5 pillars: Financial Readiness (25%), Market Positioning (25%),
+   * Skills Competitiveness (20%), Career Clarity (15%), Operational Readiness (15%).
+   * Answers: "If laid off tomorrow, how ready am I — and what's my fastest path to a new role?"
+   */
+  preparednessScore?: PreparednessResult;
 }
 
 // ============================================================================

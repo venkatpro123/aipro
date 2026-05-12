@@ -46,14 +46,82 @@ const BURN_RATE_TO_REV_PER_EMP: Record<
 // All valid companySize values must be covered — an undefined lookup produces
 // NaN employee counts that silently corrupt layoff % calculations in L2.
 const SIZE_TO_EMPLOYEE_COUNT: Record<string, number> = {
-  startup:    20,     // very early stage
+  startup:    20,
   small:      60,
   mid:        500,
-  medium:     2000,   // alias used by some DB seeds
+  medium:     2000,
   large:      10000,
-  enterprise: 60000,
-  mega:       200000, // was missing — caused NaN pct for large IT/enterprise companies
+  enterprise: 50000,  // matches edge function sizeMap for consistency
+  mega:       200000,
 };
+
+// ── Actual employee counts for well-known companies ───────────────────────────
+// SIZE_TO_EMPLOYEE_COUNT is a rough proxy — it's 10× off for large IT/services
+// firms (TCS 613k, Infosys 343k, Accenture 774k all get 50k without this map).
+// Keyed by companyIntelligenceDB key; sourced from FY2024-25 public filings.
+//
+// EXPORTED — this is the canonical headcount source of truth. The Edge Function
+// `fetch-company-data` previously kept a duplicate (smaller, drifted) map;
+// that duplicate has been deleted and now mirrors this via
+// `supabase/functions/_shared/knownHeadcounts.ts`.
+export const KNOWN_HEADCOUNTS: Record<string, number> = {
+  // Big Tech
+  amazon:             1_540_000,
+  microsoft:            228_000,
+  google:               182_000,
+  alphabet:             182_000,
+  apple:                164_000,
+  meta:                  72_000,
+  facebook:              72_000,
+  nvidia:                36_000,
+  netflix:               13_000,
+  tesla:                140_000,
+  intel:                124_000,
+  ibm:                  288_000,
+  oracle:               164_000,
+  cisco:                 84_000,
+  qualcomm:              51_000,
+  salesforce:            73_000,
+  sap:                  108_000,
+  adobe:                 30_000,
+  // India IT
+  tcs:                  613_000,
+  infosys:              343_000,
+  wipro:                230_000,
+  hcl_tech:             218_000,
+  hcltech:              218_000,
+  tech_mahindra:        152_000,
+  cognizant:            344_000,
+  accenture:            774_000,
+  capgemini:            342_000,
+  ltimindtree:           86_000,
+  lti:                   86_000,
+  mphasis:               35_000,
+  // Other India
+  tata_motors:           84_000,
+  tata_steel:            78_000,
+  // Mid-tier
+  palantir:               3_700,
+  snowflake:              7_000,
+  datadog:                6_500,
+  cloudflare:             4_000,
+  crowdstrike:            7_900,
+  zoom:                   7_400,
+  shopify:               11_600,
+  airbnb:                 6_900,
+  uber:                  32_000,
+  lyft:                   4_600,
+  spotify:               10_500,
+  stripe:                 8_000,
+  atlassian:             13_000,
+  twilio:                 5_600,
+  docusign:               6_700,
+  dropbox:                2_700,
+  peloton:                3_700,
+};
+
+// Internal alias retained for backwards compatibility within this module.
+const KNOWN_ACTUAL_HEADCOUNTS = KNOWN_HEADCOUNTS;
 
 // ── Hiring Freeze Score → Stock 90-Day Change Proxy ──────────────────────────
 // Converts the 0–1 freeze signal to a ±% stock delta that the engine understands
@@ -141,21 +209,25 @@ export const companyProfileToData = (
 
   const isPublic = financialSignals.fundingStage === 'public';
 
+  // Use real known headcount first, then fall back to size proxy.
+  // SIZE_TO_EMPLOYEE_COUNT['enterprise'] = 50k, but TCS = 613k, Oracle = 164k —
+  // using the proxy would make layoff % calculations wildly wrong for large IT firms.
+  const actualEmployeeCount =
+    KNOWN_ACTUAL_HEADCOUNTS[companyKey] ??
+    SIZE_TO_EMPLOYEE_COUNT[companySize] ??
+    SIZE_TO_EMPLOYEE_COUNT['mid'];
+
   // Build layoff rounds array for L2 calculation
   const layoffRounds: { date: string; percentCut: number }[] = [];
   if (layoffHistory.totalLayoffs > 0 && layoffHistory.lastLayoffDate !== 'none') {
-    // Use actual last layoff date; estimate percent from total vs size proxy.
-    // Guard against unknown companySize values that would return undefined and produce NaN.
-    const empCount = SIZE_TO_EMPLOYEE_COUNT[companySize] ?? SIZE_TO_EMPLOYEE_COUNT['mid'];
-    const rawPct = (layoffHistory.totalLayoffs / empCount) * 100;
+    const rawPct = (layoffHistory.totalLayoffs / actualEmployeeCount) * 100;
     const pct = Number.isFinite(rawPct) ? Math.round(rawPct * 10) / 10 : 0;
     layoffRounds.push({
       date: layoffHistory.lastLayoffDate,
-      percentCut: Math.min(pct, 40),  // cap at 40% — realistic ceiling
+      percentCut: Math.min(pct, 40),
     });
     // Add a second round signal for frequent layoff companies
-    if (layoffHistory.layoffFrequency === 'frequent' && pct > 5) {
-      // Synthetic prior round 14 months before last to reflect the pattern
+    if (layoffHistory.layoffFrequency === 'frequent' && pct > 3) {
       const priorDate = new Date(layoffHistory.lastLayoffDate);
       priorDate.setMonth(priorDate.getMonth() - 14);
       layoffRounds.push({
@@ -174,7 +246,7 @@ export const companyProfileToData = (
     isPublic,
     industry:         profile.industry,
     region:           COMPANY_KEY_TO_REGION[companyKey] ?? 'US',
-    employeeCount:    SIZE_TO_EMPLOYEE_COUNT[companySize] ?? SIZE_TO_EMPLOYEE_COUNT['mid'],
+    employeeCount:    actualEmployeeCount,
     revenueGrowthYoY: REVENUE_TREND_TO_YOY[financialSignals.revenueTrend],
     // Phase 4 fix: use real stockTicker with live proxy fallback instead of name-guessing
     stock90DayChange: isPublic

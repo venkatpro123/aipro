@@ -454,15 +454,17 @@ serve(async (req) => {
 
   if (!keyRecord) return json({ error: 'Invalid or inactive API key' }, 401);
 
-  // Rate limit check
+  // Rate limit check — sum actual request_count values for today across all endpoints
   const today = new Date().toISOString().slice(0, 10);
-  const { count } = await supabaseClient
+  const { data: usageRows } = await supabaseClient
     .from('api_usage')
-    .select('*', { count: 'exact', head: true })
+    .select('request_count')
     .eq('key_id', keyRecord.id)
     .eq('date', today);
 
-  if ((count ?? 0) >= keyRecord.daily_limit) {
+  const totalRequests = (usageRows ?? []).reduce((sum: number, r: any) => sum + (r.request_count ?? 0), 0);
+
+  if (totalRequests >= keyRecord.daily_limit) {
     return json({ error: 'Daily rate limit exceeded', limit: keyRecord.daily_limit }, 429);
   }
 
@@ -478,11 +480,12 @@ serve(async (req) => {
   else if (endpoint === 'company-intel') response = await handleCompanyIntel(body, supabaseClient);
   else response = json({ error: `Unknown endpoint: ${endpoint}. Use role-risk, team-risk, or company-intel.` }, 400);
 
-  // Log usage (fire-and-forget)
-  supabaseClient.from('api_usage').upsert(
-    { key_id: keyRecord.id, date: today, endpoint: endpoint ?? 'unknown', request_count: 1 },
-    { onConflict: 'key_id,date,endpoint' }
-  ).then(() =>
+  // Log usage — increment request_count for existing row, insert with 1 for new rows
+  supabaseClient.rpc('increment_api_usage', {
+    p_key_id:  keyRecord.id,
+    p_date:    today,
+    p_endpoint: endpoint ?? 'unknown',
+  }).then(() =>
     supabaseClient.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
   ).catch(() => {});
 

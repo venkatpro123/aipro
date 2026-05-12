@@ -8,6 +8,7 @@ import type {
   ReconciledCompanySignals,
   ReconciliationSummary,
   SignalConflict,
+  SignalSourceKind,
 } from './liveDataService';
 import type { UserFactors } from './layoffScoreEngine';
 
@@ -46,6 +47,8 @@ interface ConsensusSignalSet {
   overallConfidence: number;
   conflictLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
   allConflicts: SignalConflict[];
+  /** Set when 3+ critical input signals (stock, revenue, employee count, layoff history, hiring trend) are null or at their heuristic default. */
+  lowDataWarning?: { code: 'LOW_DATA'; missingCount: number; capAt: number };
   freshnessReport: {
     oldestSignalAge: number;
     avgSignalAge: number;
@@ -189,12 +192,17 @@ const calculateRoundFrequency = (
   layoffs: Array<{ date: string; percentCut: number }> | undefined,
   now: Date,
 ): number => {
-  if (!rounds || rounds === 0) return 0.05;
+  // v21.0 WARN cross-validation: when WARN/SEC/news events populate the
+  // layoffs array but the static DB row says rounds = 0, trust the regulatory
+  // evidence over the DB. Previously this returned 0.05 (essentially "no
+  // layoffs"), letting the DB silently override a confirmed WARN filing.
+  const effectiveRounds = Math.max(rounds | 0, layoffs?.length ?? 0);
+  if (effectiveRounds === 0) return 0.05;
 
   let base = 0.05;
-  if (rounds === 1) base = 0.42;
-  else if (rounds === 2) base = 0.68;
-  else if (rounds === 3) base = 0.85;
+  if (effectiveRounds === 1) base = 0.42;
+  else if (effectiveRounds === 2) base = 0.68;
+  else if (effectiveRounds === 3) base = 0.85;
   else base = 0.95;
 
   if (layoffs && layoffs.length > 0) {
@@ -559,10 +567,36 @@ export function buildHybridScorePayload({
     0.1,
     0.95,
   );
-  const overallConfidence =
-    reconciled.confidenceCap != null
+
+  // ── LOW_DATA floor ─────────────────────────────────────────────────────────
+  // When 3+ critical signals are null OR at their heuristic default sentinel,
+  // cap confidence at 0.35. Without this, an all-null input set (e.g. unknown
+  // private company) produces a 55-65 score with 70% confidence — the most
+  // damaging UX bug because it looks authoritative.
+  const isCriticalSignalMissing = (
+    sig: { source: SignalSourceKind; value: unknown },
+    defaultSentinels: unknown[],
+  ): boolean => {
+    if (sig.source !== 'live' && sig.source !== 'db') return true;
+    return sig.value === null || sig.value === undefined || defaultSentinels.includes(sig.value);
+  };
+
+  const missingCriticalCount = [
+    isCriticalSignalMissing(stockSignal, [0]),
+    isCriticalSignalMissing(revenueSignal, [5]),
+    isCriticalSignalMissing(employeeSignal, [1000]),
+    Array.isArray(layoffEventsSignal.value) && (layoffEventsSignal.value as unknown[]).length === 0,
+    isCriticalSignalMissing(hiringTrendSignal, ['stable']),
+  ].filter(Boolean).length;
+
+  const lowDataCap = missingCriticalCount >= 3 ? 0.35 : null;
+  const overallConfidence = (() => {
+    let value = reconciled.confidenceCap != null
       ? Math.min(computedConfidence, reconciled.confidenceCap)
       : computedConfidence;
+    if (lowDataCap != null) value = Math.min(value, lowDataCap);
+    return value;
+  })();
 
   const liveSignalCount = resolvedSignals.filter((signal) => signal.primarySource === 'live').length;
   const heuristicSignalCount = resolvedSignals.length - liveSignalCount;
@@ -594,6 +628,9 @@ export function buildHybridScorePayload({
       overallConfidence,
       conflictLevel: computeConflictLevel(reconciled.conflicts),
       allConflicts: reconciled.conflicts,
+      lowDataWarning: lowDataCap != null
+        ? { code: 'LOW_DATA' as const, missingCount: missingCriticalCount, capAt: lowDataCap }
+        : undefined,
       freshnessReport: {
         oldestSignalAge: Math.max(...ages),
         avgSignalAge: Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length),

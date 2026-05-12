@@ -45,6 +45,14 @@ import { computePeerPercentile, getLivePeerPercentile, formatPercentile, type Pe
 import { ManagerRiskCard } from "./common/ManagerRiskCard";
 import { VisaRiskPanel } from "./common/VisaRiskPanel";
 import { WhatIfSimulatorPanel } from "./WhatIfSimulatorPanel";
+// v13.0 new panels
+import MacroRiskPanel from "./common/MacroRiskPanel";
+import EmergencyProtocolPanel from "./common/EmergencyProtocolPanel";
+// v16.0 new panels
+import WARNSignalPanel from "./common/WARNSignalPanel";
+// v17.0 new panels
+import EmergencyModeHeader from "../../components/EmergencyModeHeader";
+import PredictionHorizonPanel from "./common/PredictionHorizonPanel";
 
 // ── Collapse stage-to-urgency multiplier ──────────────────────────────────────
 // The score gives the role-baseline timeline. Company collapse stage compresses it.
@@ -339,10 +347,12 @@ const STAT_ACCENT_COLORS = [
 
 const QuickStatsRow: React.FC<{
   stats: Array<{ label: string; value: string | number; icon: React.ComponentType<{ className?: string }>; hint?: string }>;
-}> = ({ stats }) => (
+}> = ({ stats }) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  return (
   <div style={{
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
+    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
     gap: 'var(--space-3)',
   }}>
     {stats.map((s, i) => {
@@ -428,7 +438,8 @@ const QuickStatsRow: React.FC<{
       );
     })}
   </div>
-);
+  );
+};
 
 const InactionPanel: React.FC<{ scenario: string; score: number }> = ({ scenario, score }) => {
   const color = score >= 70 ? '#ef4444' : score >= 50 ? '#f59e0b' : '#00d4e0';
@@ -1715,7 +1726,20 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onRecalculate,
 }) => {
   const isMobile = useAdaptiveSystem().width < 768;
-  const scoreColor = getScoreColor(result.total);
+
+  // Guard: if the engine returned NaN/null for any reason, clamp to a safe
+  // neutral value rather than rendering "NaN%" or crashing on downstream math.
+  const safeTotal = (typeof result.total === 'number' && isFinite(result.total))
+    ? Math.max(0, Math.min(100, result.total))
+    : 50;
+  const safeResult = safeTotal !== result.total ? { ...result, total: safeTotal } : result;
+
+  // Guard: ensure recommendations is always an array for .map() / .filter() calls
+  if (!Array.isArray(safeResult.recommendations)) {
+    (safeResult as any).recommendations = [];
+  }
+
+  const scoreColor = getScoreColor(safeResult.total);
   const [feedbackSent, setFeedbackSent] = useState<'correct' | 'incorrect' | null>(null);
 
   const handleFeedback = (outcome: 'correct' | 'incorrect') => {
@@ -1731,17 +1755,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   };
 
   // Phase-aware urgency: apply collapse stage multiplier to base timeline
-  const collapseStage = (result.collapseStage ?? null) as CollapseStage;
+  const collapseStage = (safeResult.collapseStage ?? null) as CollapseStage;
   const phaseUrgency = useMemo(
-    () => computePhaseAwareUrgency(result.total, collapseStage),
-    [result.total, collapseStage],
+    () => computePhaseAwareUrgency(safeResult.total, collapseStage),
+    [safeResult.total, collapseStage],
   );
 
   // Load financial context — passed to Stage3EmergencyProtocol to adapt its content
   const financialCtxForStage3 = useMemo(() => loadFinancialContext(), []);
   const financialProfileForStage3 = useMemo(
-    () => financialCtxForStage3 ? deriveFinancialProfile(financialCtxForStage3, result.total) : null,
-    [financialCtxForStage3, result.total],
+    () => financialCtxForStage3 ? deriveFinancialProfile(financialCtxForStage3, safeResult.total) : null,
+    [financialCtxForStage3, safeResult.total],
   );
 
   // Score delta attribution for returning users
@@ -1913,6 +1937,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     <section aria-labelledby="overview-heading" className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
+        {/* v17.0: Emergency mode header — pulsing banner when score ≥ 80 */}
+        <EmergencyModeHeader
+          score={safeResult.total}
+          onScrollToProtocol={() => {
+            document.getElementById('emergency-protocol-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        />
+
         {/* v6.0 Audit Fix: Null-data false precision warning.
             When both stock and revenue are null, L1 defaults to 0.5 — not a real signal.
             The score is still displayed but with explicit L1 null disclosure. */}
@@ -2020,13 +2052,38 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         ) : (
           <>
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: 'var(--space-8)', marginTop: 'var(--space-6)' }}>
-            {/* Score ring — with optional ±uncertainty overlay (Fix 6) */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
+          {/* v20.0 Full-bleed score hero — ambient glow matches risk color */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: 'var(--radius-xl)',
+              padding: isMobile ? 'var(--space-6) var(--space-5)' : 'var(--space-10) var(--space-8)',
+              background: 'var(--elevation-1)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              boxShadow: 'var(--shadow-elev-2)',
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '220px 1fr',
+              gap: isMobile ? 'var(--space-6)' : 'var(--space-8)',
+              alignItems: 'center',
+              marginTop: 'var(--space-2)',
+            }}
+          >
+            {/* Color-matched radial backdrop — lights ring from behind */}
+            <div aria-hidden style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: `radial-gradient(ellipse 60% 80% at 15% 50%, ${scoreColor}12 0%, transparent 60%)`,
+            }} />
+
+            {/* Score ring — centered in its column */}
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
               <ScoreRing
-                score={result.total}
+                score={safeResult.total}
                 color={scoreColor}
-                size={isMobile ? 140 : 200}
+                size={isMobile ? 150 : 215}
                 isMobile={isMobile}
                 velocityPtsPerMonth={(result as any).scoreTrajectory?.velocityPtsPerMonth ?? null}
               />
@@ -2047,7 +2104,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               )}
             </div>
 
-            <div style={{ textAlign: isMobile ? 'center' : 'left', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', flex: 1 }}>
+            {/* Verdict + Timeline meta */}
+            <div style={{ position: 'relative', textAlign: isMobile ? 'center' : 'left', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
               <VerdictBadge score={result.total} />
 
               {/* v7.0 Fix 2: Score velocity badge — only shown for returning users with measurable velocity */}
@@ -2085,7 +2143,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <TimelineCard score={result.total} phaseUrgency={phaseUrgency} collapseStage={collapseStage} />
               <div className="text-xs text-muted-foreground font-mono opacity-60">{tierContext}</div>
             </div>
-          </div>
+          </motion.div>
 
           {/* v7.0 Fix 5: Specific calendar date timing banner — only when re-cut window is approaching */}
           {recutCalendarDate && timingData && (timingData.windowStatus === 'approaching-window' || timingData.windowStatus === 'in-window') && (
@@ -2122,6 +2180,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           )}
           </>
+        )}
+
+        {/* v16.0: WARN Signal — highest-priority ground-truth signal, shown prominently after score ring */}
+        {(result as any).warnSignal && (
+          <div className="mt-4">
+            <WARNSignalPanel warnSignal={(result as any).warnSignal} />
+          </div>
         )}
 
         {/* Conflict-widened confidence disclosure
@@ -2302,6 +2367,26 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
         {/* v11.0: Signal Contradictions — trust calibration when signals conflict */}
         <SignalContradictionPanel result={result} />
+
+        {/* v13.0: Emergency Protocol — 72-hour crisis plan (score ≥ 80 or collapse stage ≥ 2) */}
+        {(result as any).emergencyResponse?.isActive && (
+          <div id="emergency-protocol-section">
+            <EmergencyProtocolPanel emergency={(result as any).emergencyResponse} />
+          </div>
+        )}
+
+        {/* v17.0: Prediction Horizons — 30d/90d/180d risk with horizon-appropriate weights */}
+        {(result as any).predictionHorizon && (
+          <PredictionHorizonPanel
+            predictionHorizon={(result as any).predictionHorizon}
+            currentScore={safeResult.total}
+          />
+        )}
+
+        {/* v13.0: Macro-Economic Risk — always shown; provides systemic context */}
+        {(result as any).macroEconomicRisk && (
+          <MacroRiskPanel macro={(result as any).macroEconomicRisk} />
+        )}
 
         {/* v12.0: Manager Risk — direct manager/skip-level departure signal */}
         {(result as any).managerRisk && (result as any).managerRisk.patternType !== 'clean' && (

@@ -85,13 +85,13 @@ export function computeScoreTrajectory(inputs: ScoreTrajectoryInputs): ScoreTraj
       velocityPtsPerMonth += managerRisk.patternType === 'exodus_signal' ? 3.5 : 1.8;
       velocityDrivers.push(`Manager risk (${managerRisk.patternType})`);
     }
-    if (hiringSignal && hiringSignal.patternType === 'SUDDEN_FREEZE') {
+    if (hiringSignal && (hiringSignal as any).riskPattern === 'SUDDEN_FREEZE') {
       velocityPtsPerMonth += 2.5;
       velocityDrivers.push('Hiring freeze signal');
-    } else if (hiringSignal && hiringSignal.patternType === 'AGGRESSIVE_REVERSAL') {
+    } else if (hiringSignal && (hiringSignal as any).riskPattern === 'AGGRESSIVE_REVERSAL') {
       velocityPtsPerMonth += 3.0;
       velocityDrivers.push('Aggressive hiring reversal');
-    } else if (hiringSignal && hiringSignal.patternType === 'SUSTAINED_DECLINE') {
+    } else if (hiringSignal && (hiringSignal as any).riskPattern === 'SUSTAINED_DECLINE') {
       velocityPtsPerMonth += 1.5;
       velocityDrivers.push('Sustained hiring decline');
     }

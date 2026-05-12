@@ -1,4 +1,6 @@
 // layoffsFyiConnector.ts
+import { getCompanyAliases } from '../../data/companyIntelligenceDB';
+import { supabase } from '../../utils/supabase';
 // Aggregated global layoffs dataset.
 //
 // IMPORTANT: layoffs.fyi itself does not publish a stable public JSON feed —
@@ -167,35 +169,66 @@ export async function isLayoffsDatasetAvailable(): Promise<boolean> {
   return cache.available;
 }
 
-// Well-known parent/subsidiary aliases: if a user searches "Google" the dataset
-// often records the layoff under "Alphabet". Bidirectional — either direction matches.
-const COMPANY_ALIASES: Record<string, string[]> = {
-  google:    ['alphabet', 'google llc', 'alphabet inc'],
-  alphabet:  ['google', 'google llc'],
-  facebook:  ['meta', 'meta platforms'],
-  meta:      ['facebook', 'meta platforms'],
-  instagram: ['meta', 'facebook'],
-  whatsapp:  ['meta', 'facebook'],
-  twitter:   ['x corp', 'x.com'],
-  x:         ['twitter'],
-  microsoft: ['msft'],
-  amazon:    ['aws', 'amazon web services'],
-  salesforce: ['slack'],
-  slack:     ['salesforce'],
-};
-
+// Alias resolution delegates to the canonical map in companyIntelligenceDB.ts.
+// Previously this file kept a duplicate dict that drifted (e.g. it included
+// "instagram"/"whatsapp" → "meta" mappings absent from the canonical map).
+// Bidirectional matching is preserved via getCompanyAliases.
 function getAliases(name: string): string[] {
-  const lower = name.toLowerCase();
-  for (const [key, aliases] of Object.entries(COMPANY_ALIASES)) {
-    if (lower === key || lower.includes(key) || key.includes(lower)) {
-      return [key, ...aliases];
-    }
+  return getCompanyAliases(name);
+}
+
+// ── Tier 0: read from breaking_news_events Supabase table ─────────────────
+// The breaking-news-scan Edge Function runs every 2 hours and writes confirmed
+// layoff events to this table — much fresher than the 24h GitHub mirror cache.
+// We merge these DB records with the static dataset so very recent events
+// (last 7 days) are always visible even before they appear in layoffs.fyi.
+async function fetchRecentLayoffsFromDB(company: string): Promise<LayoffRecord[]> {
+  try {
+    if (company.trim().length < 3) return [];
+    const { data, error } = await supabase
+      .from('breaking_news_events')
+      .select('company_name, event_date, percent_cut, affected_count, industry, confidence, source')
+      .ilike('company_name', `%${company.replace(/[%_]/g, '\\$&')}%`)
+      .gte('event_date', new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10))
+      .order('event_date', { ascending: false })
+      .limit(20);
+
+    if (error || !data) return [];
+
+    return data.map((row: any): LayoffRecord => ({
+      company:    row.company_name,
+      headcount:  typeof row.affected_count === 'number' ? row.affected_count : null,
+      percentCut: typeof row.percent_cut === 'number' ? row.percent_cut : null,
+      date:       String(row.event_date ?? '').slice(0, 10),
+      industry:   String(row.industry ?? 'Unknown'),
+      country:    'Unknown',
+      stage:      'Unknown',
+      sources:    [String(row.source ?? 'breaking_news_events')],
+    })).filter(r => r.date.length >= 8);
+  } catch (err: any) {
+    console.info('[LayoffsFyi] breaking_news_events query failed:', err?.message);
+    return [];
   }
-  return [];
 }
 
 export async function getCompanyLayoffs(companyName: string): Promise<CompanyLayoffSummary | null> {
+  // Tier 0: near-real-time records from Supabase (populated every 2h by EF)
+  const dbRecords = await fetchRecentLayoffsFromDB(companyName);
+
   const { records } = await loadDataset();
+  // If static dataset unavailable but DB has recent records, return those alone.
+  if (records.length === 0 && dbRecords.length > 0) {
+    const sorted = [...dbRecords].sort((a, b) => b.date.localeCompare(a.date));
+    return {
+      company: companyName,
+      totalLayoffs: dbRecords.reduce((s, r) => s + (r.headcount ?? 0), 0),
+      rounds: dbRecords.length,
+      mostRecentDate: sorted[0].date,
+      mostRecentPct: sorted[0].percentCut,
+      records: sorted,
+      peerCount: 0,
+    };
+  }
   if (records.length === 0) return null;
   const name = companyName.toLowerCase();
   const aliases = getAliases(name);
@@ -214,19 +247,29 @@ export async function getCompanyLayoffs(companyName: string): Promise<CompanyLay
     );
   };
 
-  const matches = records.filter((r) => nameMatches(r.company.toLowerCase()));
-  if (matches.length === 0) return null;
+  const staticMatches = records.filter((r) => nameMatches(r.company.toLowerCase()));
 
-  const sorted = [...matches].sort((a, b) => b.date.localeCompare(a.date));
-  const industry = sorted[0].industry;
+  // Merge DB records (Tier 0) with static dataset matches (Tier 1).
+  // Deduplicate by date + approximate headcount to avoid double-counting events
+  // that appear in both the DB and the static dataset.
+  const seenKeys = new Set(staticMatches.map(r => `${r.date}|${r.headcount ?? 'x'}`));
+  const freshDbOnly = dbRecords.filter(r => !seenKeys.has(`${r.date}|${r.headcount ?? 'x'}`));
+  const allMatches = [...freshDbOnly, ...staticMatches];
+
+  if (allMatches.length === 0) return null;
+
+  const sorted = [...allMatches].sort((a, b) => b.date.localeCompare(a.date));
+  // Prefer industry from the freshest record (DB records often have better metadata)
+  const industry = sorted[0].industry !== 'Unknown' ? sorted[0].industry
+    : staticMatches[0]?.industry ?? sorted[0].industry;
   const peerCount = records.filter((r) =>
     r.industry === industry && r.company.toLowerCase() !== name,
   ).length;
 
   return {
     company: companyName,
-    totalLayoffs: matches.reduce((s, r) => s + (r.headcount ?? 0), 0),
-    rounds: matches.length,
+    totalLayoffs: allMatches.reduce((s, r) => s + (r.headcount ?? 0), 0),
+    rounds: allMatches.length,
     mostRecentDate: sorted[0].date,
     mostRecentPct: sorted[0].percentCut,
     records: sorted,

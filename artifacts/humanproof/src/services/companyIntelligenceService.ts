@@ -61,25 +61,30 @@ function rowToProfile(row: CIRow): CompanyProfile {
     stockTicker: row.stock_ticker ?? undefined,
 
     financialSignals: {
-      revenueTrend: (fin.revenueTrend ?? row.revenue_trend ?? 'stable') as CompanyProfile['financialSignals']['revenueTrend'],
+      // JSONB keys from MIGRATE_COMPANIES_SQL_EDITOR.sql are snake_case.
+      // Read snake_case first (from JSONB), then camelCase (TypeScript DB seeds),
+      // then flat column fallback, then hard default.
+      revenueTrend: (fin.revenue_trend ?? fin.revenueTrend ?? row.revenue_trend ?? 'stable') as CompanyProfile['financialSignals']['revenueTrend'],
       // Infer isPublic from row.stage so it mirrors fetch-company-data logic.
       // Previously defaulted to 'public' for all missing rows — incorrectly marked
       // private companies as listed and triggered failed stock lookups.
-      fundingStage: (fin.fundingStage ?? (row.stage === 'public' ? 'public' : row.funding_stage ?? 'series_d')) as CompanyProfile['financialSignals']['fundingStage'],
-      burnRateEstimate: (fin.burnRateEstimate ?? row.burn_rate_estimate ?? 'moderate') as CompanyProfile['financialSignals']['burnRateEstimate'],
-      lastFundingDate: fin.lastFundingDate ?? row.last_funding_date,
+      fundingStage: (fin.funding_stage ?? fin.fundingStage ?? (row.stage === 'public' ? 'public' : row.funding_stage ?? 'series_d')) as CompanyProfile['financialSignals']['fundingStage'],
+      burnRateEstimate: (fin.burn_rate ?? fin.burnRateEstimate ?? row.burn_rate_estimate ?? 'moderate') as CompanyProfile['financialSignals']['burnRateEstimate'],
+      lastFundingDate: fin.last_funding_date ?? fin.lastFundingDate ?? row.last_funding_date,
     },
 
     layoffHistory: {
-      totalLayoffs: lay.totalLayoffs ?? row.total_layoffs ?? 0,
-      lastLayoffDate: lay.lastLayoffDate ?? row.last_layoff_date ?? 'none',
-      layoffFrequency: (lay.layoffFrequency ?? row.layoff_frequency ?? 'none') as CompanyProfile['layoffHistory']['layoffFrequency'],
-      affectedDepartments: lay.affectedDepartments ?? row.affected_departments ?? [],
+      // JSONB uses snake_case: total_layoffs, last_layoff_date, layoff_frequency
+      totalLayoffs: lay.total_layoffs ?? lay.totalLayoffs ?? row.total_layoffs ?? 0,
+      lastLayoffDate: lay.last_layoff_date ?? lay.lastLayoffDate ?? row.last_layoff_date ?? 'none',
+      layoffFrequency: (lay.layoff_frequency ?? lay.layoffFrequency ?? row.layoff_frequency ?? 'none') as CompanyProfile['layoffHistory']['layoffFrequency'],
+      affectedDepartments: lay.affected_departments ?? lay.affectedDepartments ?? row.affected_departments ?? [],
     },
 
     hiringSignals: {
-      hiringVelocity: (hire.hiringVelocity ?? row.hiring_velocity ?? 'moderate') as CompanyProfile['hiringSignals']['hiringVelocity'],
-      hiringFreezeScore: hire.hiringFreezeScore ?? row.hiring_freeze_score ?? 0.3,
+      // JSONB uses snake_case: hiring_velocity, hiring_freeze_score
+      hiringVelocity: (hire.hiring_velocity ?? hire.hiringVelocity ?? row.hiring_velocity ?? 'moderate') as CompanyProfile['hiringSignals']['hiringVelocity'],
+      hiringFreezeScore: hire.hiring_freeze_score ?? hire.hiringFreezeScore ?? row.hiring_freeze_score ?? 0.3,
     },
 
     roleRiskMap: {

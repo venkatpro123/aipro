@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useState, useEffect, useCallback, useRef } from 
 import * as Tabs from "@radix-ui/react-tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, BarChart3, Building2, Brain, ListChecks, Shield,
+  LayoutDashboard, BarChart3, Building2, Brain, ListChecks, Shield, Compass,
 } from "lucide-react";
 import { HybridResult } from "../../types/hybridResult";
 import { CompanyData } from "../../data/companyDatabase";
@@ -10,6 +10,8 @@ import { GlobalErrorBoundary } from "../GlobalErrorBoundary";
 import { getDegradationState, type DegradationState } from "../../services/apiDegradationMonitor";
 import { useCompanySignalSubscription } from "../../hooks/useCompanySignalSubscription";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
+import WARNAlertBanner from "../WARNAlertBanner";
+import FreshnessBadge from "../FreshnessBadge";
 
 // Lazy-loaded tab modules for performance
 const OverviewTab = lazy(() => import("../AuditTabs/OverviewTab"));
@@ -18,6 +20,7 @@ const CompanyProfileTab = lazy(() => import("../AuditTabs/CompanyProfileTab"));
 const CareerSkillsTab = lazy(() => import("../AuditTabs/CareerSkillsTab"));
 const ActionPlanTab = lazy(() => import("../AuditTabs/ActionPlanTab"));
 const TransparencyTab = lazy(() => import("../AuditTabs/TransparencyTab"));
+const StrategyTab = lazy(() => import("../AuditTabs/StrategyTab"));
 
 interface Props {
   result: HybridResult;
@@ -46,6 +49,7 @@ const TAB_CONFIG = [
   { value: 'career_skills',   label: 'Career',        Icon: Brain,           shortLabel: 'Career' },
   { value: 'action_plan',     label: 'Action Plan',   Icon: ListChecks,      shortLabel: 'Actions' },
   { value: 'transparency',    label: 'Transparency',  Icon: Shield,          shortLabel: 'Data' },
+  { value: 'strategy',        label: 'Strategy',      Icon: Compass,         shortLabel: 'Strategy' },
 ] as const;
 
 type TabValue = typeof TAB_CONFIG[number]['value'];
@@ -71,6 +75,12 @@ function getTabBadge(value: TabValue, result: HybridResult): { count: number; co
     case 'transparency': {
       const conflicts = result.signalQuality?.conflictingSignals?.length ?? 0;
       return conflicts > 0 ? { count: conflicts, color: '#f59e0b' } : null;
+    }
+    case 'strategy': {
+      const urgency = (result as any).strategySynthesis?.urgencyLevel;
+      if (urgency === 'CRITICAL') return { count: 1, color: '#ef4444' };
+      if (urgency === 'HIGH') return { count: 1, color: '#f97316' };
+      return null;
     }
     default:
       return null;
@@ -228,6 +238,38 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
 
   return (
     <div className="w-full max-w-7xl mx-auto pb-[var(--space-16)]" style={{ padding: '0 var(--space-6)' }}>
+
+      {/* v22.0: real-time freshness badge — confirms continuous intelligence
+          ingestion is feeding this company's score. Hidden when no recent
+          events exist (i.e. the company has no breaking_news_events activity). */}
+      <div className="mb-3 flex items-center justify-end">
+        <FreshnessBadge companyName={result.companyName ?? companyData.name} />
+      </div>
+
+      {/* v17.0: WARN Act alert banner — sticky above all tabs when ground-truth filing is active */}
+      {(result as any).warnSignal?.hasActiveWARN && (
+        <WARNAlertBanner
+          warnSignal={(result as any).warnSignal}
+          companyName={result.companyName ?? companyData.name}
+        />
+      )}
+
+      {/* v21.0: LOW_DATA banner — surfaces when 3+ critical signals are null or
+          at heuristic defaults. Without this, an all-null input set yields a
+          confident-looking MODERATE score (false positive). */}
+      {result.signalQuality?.lowDataWarning && (
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/6 px-4 py-3 flex items-start gap-3">
+          <span className="text-amber-400 text-sm flex-shrink-0 mt-0.5">⚠</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-amber-300">
+              Low data confidence — {result.signalQuality.lowDataWarning.missingCount} critical signals are missing or unverified.
+            </p>
+            <p className="text-[10px] text-amber-400/70 mt-1">
+              Confidence capped at {Math.round(result.signalQuality.lowDataWarning.capAt * 100)}%. The score uses sector and role baselines with limited company-specific evidence. Treat the result as directional, not definitive.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* [AUDIT FIX]: Stale data / fallback source banner — surfaced prominently so
           users know when the score is based on outdated DB snapshots rather than
@@ -425,6 +467,21 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <TransparencyTab result={result} companyData={companyData} />
+                </motion.div>
+              </Suspense>
+            </GlobalErrorBoundary>
+          </Tabs.Content>
+
+          <Tabs.Content value="strategy" className="outline-none">
+            <GlobalErrorBoundary>
+              <Suspense fallback={<TabLoader />}>
+                <motion.div
+                  key="strategy"
+                  initial={{ opacity: 0, x: slideDirection * 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <StrategyTab result={result} companyData={companyData} />
                 </motion.div>
               </Suspense>
             </GlobalErrorBoundary>

@@ -67,9 +67,13 @@ describe("Role Exposure Data", () => {
     });
 
     it("should return fallback for completely unknown role", () => {
+      // "xyz123 not a real role" has 4 words (all > 2 chars), triggering the
+      // ACC-BUG-09 specialist-complexity discount: 0.40 - 0.06 = 0.34.
+      // This is the correct behaviour — long multi-word unknown titles receive a
+      // small specialist discount vs. single-word generalist unknowns.
       const result = inferRoleRisk("xyz123 not a real role");
-      expect(result.aiRisk).toBe(0.4);
-      expect(result.layoffRisk).toBe(0.4);
+      expect(result.aiRisk).toBe(0.34);
+      expect(result.layoffRisk).toBe(0.34);
     });
   });
 

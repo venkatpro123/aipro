@@ -1,4 +1,5 @@
 // layoffNewsCache.ts
+import { COMPANY_ALIASES, getCompanyAliases } from './companyIntelligenceDB';
 // Layoff event store — seeded with major known events, dynamically expandable at runtime via OSINT.
 //
 // Breaking-news cache invalidation: injectLayoffEvent() calls invalidateForCompany() so that
@@ -14,6 +15,49 @@ export interface LayoffNewsEvent {
   source: string;
   url: string;
   affectedDepartments: string[];
+  /** Canonical department keys from DEPARTMENT_TAXONOMY — auto-populated on inject */
+  normalizedDepartments?: string[];
+  /** Industry of the company — used for sector contagion events */
+  industry?: string;
+  /** Region of the company — used for sector contagion events */
+  region?: string;
+}
+
+// ─── Department taxonomy ─────────────────────────────────────────────────────
+// Maps raw department strings to canonical category keys using word-boundary
+// matching. Prevents "Sales Engineering" from matching both SALES_ORG and
+// ENGINEERING via simple substring — only the more specific match wins.
+const DEPARTMENT_TAXONOMY: Record<string, string[]> = {
+  SALES_ORG:   ['sales', 'revenue', 'gtm', 'business development', 'account', 'growth'],
+  ENGINEERING: ['engineering', 'software', 'platform', 'infrastructure', 'sre', 'devops', 'data eng'],
+  PRODUCT:     ['product', 'ux', 'design', 'research'],
+  OPERATIONS:  ['operations', 'ops', 'supply chain', 'logistics', 'facilities'],
+  HR_ADMIN:    ['hr', 'human resources', 'people ops', 'recruiting', 'finance', 'legal', 'admin'],
+  MARKETING:   ['marketing', 'communications', 'brand', 'pr'],
+  AI_ML:       ['ai', 'ml', 'machine learning', 'data science', 'nlp'],
+};
+
+/**
+ * Map a raw department string to canonical taxonomy keys.
+ * Returns an array because some department names span multiple categories.
+ * Uses word-boundary regex to prevent substring contamination.
+ */
+export function normalizeDepartment(dept: string): string[] {
+  if (!dept || typeof dept !== 'string') return [];
+  const lower = dept.toLowerCase().trim();
+  const matched: string[] = [];
+  for (const [canonicalKey, keywords] of Object.entries(DEPARTMENT_TAXONOMY)) {
+    for (const keyword of keywords) {
+      // Word-boundary check — 'sales' must not match inside 'pre-sales' accidentally
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`);
+      if (regex.test(lower)) {
+        matched.push(canonicalKey);
+        break; // only match each canonical key once per dept string
+      }
+    }
+  }
+  return [...new Set(matched)];
 }
 
 // ── Fallback seeded events (loaded from curated_layoff_events Supabase table at runtime) ──
@@ -84,14 +128,16 @@ export const loadCuratedLayoffEvents = async (): Promise<void> => {
         return canonicalName(e.companyName) === canon &&
           (e.date ?? '').slice(0, 10) === dateKey;
       });
+      const rawDepts = Array.isArray(row.affected_departments) ? row.affected_departments : [];
       const curatedEvent: LayoffNewsEvent = {
-        companyName:         row.company_name,
-        date:                dateKey,
-        headline:            row.headline ?? '',
-        percentCut:          typeof row.percent_cut === 'number' ? row.percent_cut : 0,
-        source:              row.source ?? 'curated_layoff_events',
-        url:                 row.source_url ?? '',
-        affectedDepartments: Array.isArray(row.affected_departments) ? row.affected_departments : [],
+        companyName:          row.company_name,
+        date:                 dateKey,
+        headline:             row.headline ?? '',
+        percentCut:           typeof row.percent_cut === 'number' ? row.percent_cut : 0,
+        source:               row.source ?? 'curated_layoff_events',
+        url:                  row.source_url ?? '',
+        affectedDepartments:  rawDepts,
+        normalizedDepartments: rawDepts.flatMap((d: string) => normalizeDepartment(d)),
       };
       if (existingIdx >= 0) {
         layoffNewsCache[existingIdx] = curatedEvent; // override seeded/stale entry
@@ -118,6 +164,24 @@ export const onNewLayoffEvent = (fn: NewsListener): (() => void) => {
   };
 };
 
+/** Sector contagion event — emitted when a new layoff is injected so peer-company
+ *  components can suggest a recalculation for workers in the same industry/region. */
+export interface SectorContagionEvent {
+  industry: string;
+  region: string;
+  companyName: string;
+  date: string;
+}
+type ContagionListener = (event: SectorContagionEvent) => void;
+const _contagionListeners: ContagionListener[] = [];
+export const onSectorContagionDetected = (fn: ContagionListener): (() => void) => {
+  _contagionListeners.push(fn);
+  return () => {
+    const i = _contagionListeners.indexOf(fn);
+    if (i !== -1) _contagionListeners.splice(i, 1);
+  };
+};
+
 /**
  * Normalise a company name to a canonical form for deduplication.
  * Maps known aliases to a single canonical key so "Google" and "Alphabet"
@@ -126,10 +190,11 @@ export const onNewLayoffEvent = (fn: NewsListener): (() => void) => {
 function canonicalName(name: string | null | undefined): string {
   if (!name || typeof name !== 'string') return '';
   const lower = name.toLowerCase().trim();
-  // Resolve aliases to their primary name
-  for (const [primary, aliases] of Object.entries(COMPANY_ALIASES)) {
-    if (lower === primary || aliases.includes(lower)) return primary;
-  }
+  // Resolve aliases via the canonical COMPANY_ALIASES map (alias → primary).
+  // getCompanyAliases returns the input plus all siblings; the first non-input
+  // entry that maps back to a primary key is the canonical name.
+  const canonical = COMPANY_ALIASES[lower];
+  if (canonical) return canonical;
   // Strip common suffixes for dedup (Google LLC → google)
   return lower.replace(/\s+(inc|llc|ltd|limited|corp|corporation|technologies|technology|services|pvt|group|holdings)\.?$/i, '').trim();
 }
@@ -155,15 +220,30 @@ export const injectLayoffEvent = (event: LayoffNewsEvent): void => {
     return `${eCanon}::${(e.date ?? '').slice(0, 10)}` === key;
   });
   if (!exists) {
-    layoffNewsCache.push(event);
+    // Auto-populate normalizedDepartments using taxonomy (Gap A fix)
+    const enrichedEvent: LayoffNewsEvent = {
+      ...event,
+      normalizedDepartments: (event.affectedDepartments ?? []).flatMap(d => normalizeDepartment(d)),
+    };
+    layoffNewsCache.push(enrichedEvent);
     // Invalidate analysis cache so the next submit sees the new event in scoring.
     // Lazy import avoids a circular dependency (analysisCache → supabase → ... → layoffNewsCache).
     import('../services/cache/analysisCache').then(({ invalidateForCompany }) => {
-      invalidateForCompany(event.companyName);
+      invalidateForCompany(enrichedEvent.companyName);
     }).catch(() => { /* non-fatal */ });
     // Notify listeners (e.g. BreakingNewsBanner component)
     _listeners.forEach(fn => {
-      try { fn(event); } catch { /* listener errors must not break injection */ }
+      try { fn(enrichedEvent); } catch { /* listener errors must not break injection */ }
+    });
+    // Emit sector contagion signal for peer-company awareness (Gap D fix)
+    const contagionPayload: SectorContagionEvent = {
+      industry: enrichedEvent.industry ?? 'unknown',
+      region: enrichedEvent.region ?? 'GLOBAL',
+      companyName: enrichedEvent.companyName,
+      date: enrichedEvent.date,
+    };
+    _contagionListeners.forEach(fn => {
+      try { fn(contagionPayload); } catch { /* non-fatal */ }
     });
   }
 };
@@ -210,29 +290,11 @@ export const refreshFromNewsAPI = async (companyName: string): Promise<number> =
   }
 };
 
-// Common subsidiary/parent name aliases so "Google" finds "Alphabet" events and vice versa.
-const COMPANY_ALIASES: Record<string, string[]> = {
-  google:    ['alphabet', 'google llc', 'google inc'],
-  alphabet:  ['google', 'google llc'],
-  facebook:  ['meta', 'meta platforms'],
-  meta:      ['facebook', 'meta platforms'],
-  microsoft: ['microsoft corporation', 'msft'],
-  amazon:    ['amazon.com', 'amazon web services', 'aws'],
-  tcs:       ['tata consultancy services', 'tata consultancy'],
-  infosys:   ['infosys limited', 'infosys bpo'],
-  wipro:     ['wipro limited', 'wipro technologies'],
-};
-
+// Alias resolution delegates to the canonical map in companyIntelligenceDB.ts
+// (`COMPANY_ALIASES` + `getCompanyAliases`). The previous duplicate dict here
+// drifted from that one — adding "wipro" but missing "salesforce/slack", etc.
 function resolveAliases(name: string | null | undefined): string[] {
-  if (!name || typeof name !== 'string') return [];
-  const lower = name.toLowerCase().trim();
-  if (!lower) return [];
-  const aliases = COMPANY_ALIASES[lower] ?? [];
-  // Also check if the name is itself an alias
-  const reverseMatches = Object.entries(COMPANY_ALIASES)
-    .filter(([, vals]) => vals.includes(lower))
-    .map(([key]) => key);
-  return [lower, ...aliases, ...reverseMatches];
+  return getCompanyAliases(name);
 }
 
 /**

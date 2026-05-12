@@ -47,14 +47,23 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
   try {
     const raw = localStorage.getItem(`hp_ensemble_${key}`);
     if (raw) {
-      const { data, timestamp } = JSON.parse(raw);
-      if (Date.now() - timestamp < LOCAL_TTL_MS) {
+      const parsed = JSON.parse(raw);
+      const { data, timestamp } = parsed ?? {};
+      // Guard: timestamp must be a valid finite positive number. If it's
+      // undefined (old format), NaN (corrupted), or 0 (epoch default), treat
+      // the entry as expired rather than returning indefinitely-stale data.
+      const isValidTimestamp = typeof timestamp === 'number' && isFinite(timestamp) && timestamp > 0;
+      if (isValidTimestamp && Date.now() - timestamp < LOCAL_TTL_MS) {
         console.log('[Cache] HIT localStorage:', key);
         return data;
       }
+      // Expired or invalid — proactively evict to keep storage clean
+      if (!isValidTimestamp) {
+        try { localStorage.removeItem(`hp_ensemble_${key}`); } catch { /* ignore */ }
+      }
     }
   } catch {
-    // ignore parse errors
+    // ignore parse/access errors (corrupted storage, private browsing, quota)
   }
 
   // ── Layer 2: Supabase (shared across devices) ──

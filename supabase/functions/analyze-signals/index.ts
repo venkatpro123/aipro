@@ -74,6 +74,7 @@ Do not include markdown or preamble.`;
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { responseMimeType: "application/json" }
         }),
+        signal: AbortSignal.timeout(15_000),
       },
     );
 

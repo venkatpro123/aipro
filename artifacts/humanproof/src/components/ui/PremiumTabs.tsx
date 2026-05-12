@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-/**
- * PremiumTabs — A high-fidelity, accessible tab component.
- * Combines Radix UI's accessible primitives with Framer Motion animations.
- */
 
 interface TabItem {
   value: string;
@@ -29,7 +24,6 @@ export const PremiumTabs: React.FC<PremiumTabsProps> = ({
   onTabChange,
   children,
   className,
-  mobilePillMode = true,
 }) => {
   return (
     <TabsPrimitive.Root
@@ -37,17 +31,11 @@ export const PremiumTabs: React.FC<PremiumTabsProps> = ({
       onValueChange={onTabChange}
       className={cn("w-full", className)}
     >
+      {/* Premium tab strip with layoutId sliding pill */}
       <div className="relative mb-8">
-        {/* Desktop & Mobile Tab List */}
         <TabsPrimitive.List
-          className={cn(
-            "flex items-center gap-1 p-1 border-b border-white/5",
-            mobilePillMode ? "overflow-x-auto no-scrollbar scroll-smooth" : "flex-wrap"
-          )}
-          style={{
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
+          className="dashboard-tabs-strip"
+          aria-label="Dashboard sections"
         >
           {tabs.map((tab) => {
             const isActive = activeTab === tab.value;
@@ -55,42 +43,68 @@ export const PremiumTabs: React.FC<PremiumTabsProps> = ({
               <TabsPrimitive.Trigger
                 key={tab.value}
                 value={tab.value}
-                className={cn(
-                  "relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors outline-none",
-                  "hover:text-white/80 focus-visible:ring-2 focus-visible:ring-cyan/50 rounded-md",
-                  isActive ? "text-cyan" : "text-muted-foreground"
-                )}
+                className={cn("dashboard-tab-btn", isActive && "active")}
                 aria-label={`Switch to ${tab.label}`}
+                style={{ position: "relative" }}
               >
-                {tab.icon && (
-                  <span className={cn("transition-transform duration-300", isActive ? "scale-110" : "opacity-70")}>
-                    {tab.icon}
-                  </span>
-                )}
-                <span className="whitespace-nowrap">{tab.label}</span>
-
-                {/* Animated active indicator */}
+                {/* Framer Motion sliding background pill — animates between tabs */}
                 {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-cyan shadow-[0_0_8px_rgba(0,212,224,0.5)]"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  <motion.span
+                    layoutId="tab-active-bg"
+                    transition={{ type: "spring", stiffness: 380, damping: 36 }}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "var(--radius-full)",
+                      background: "rgba(255,255,255,0.13)",
+                      boxShadow:
+                        "0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.10) inset, 0 0 14px rgba(0,212,224,0.10)",
+                      zIndex: 0,
+                    }}
                   />
                 )}
+
+                {/* Icon — springs on activation */}
+                {tab.icon && (
+                  <motion.span
+                    animate={{
+                      scale: isActive ? 1.18 : 1,
+                      filter: isActive ? "brightness(1.3)" : "brightness(1)",
+                    }}
+                    transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      position: "relative",
+                      zIndex: 1,
+                      opacity: isActive ? 1 : 0.65,
+                    }}
+                  >
+                    {tab.icon}
+                  </motion.span>
+                )}
+
+                {/* Label */}
+                <span
+                  className="tab-label-text whitespace-nowrap"
+                  style={{ position: "relative", zIndex: 1 }}
+                >
+                  {tab.label}
+                </span>
               </TabsPrimitive.Trigger>
             );
           })}
         </TabsPrimitive.List>
       </div>
 
-      {/* Tab Panels with AnimatePresence for smooth content switching */}
+      {/* Tab content with smooth directional transition */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 10, scale: 0.99 }}
+          initial={{ opacity: 0, y: 10, scale: 0.994 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -5, scale: 0.99 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          exit={{ opacity: 0, y: -6, scale: 0.994 }}
+          transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
           className="focus-visible:outline-none"
         >
           {children}

@@ -64,10 +64,13 @@ import {
   type CareerPathMarket,
 } from "@/services/careerPathMarket";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
+import { useHumanProof } from "@/context/HumanProofContext";
+import { rankAndUnwrap } from "@/services/actionRankingService";
 import type { TabProps } from "./common/types";
 import type { ActionPlanItem } from "@/types/hybridResult";
 // v12.0 panels
 import { NegotiationIntelligencePanel } from "./common/NegotiationIntelligencePanel";
+import CompensationRiskPanel from "./common/CompensationRiskPanel";
 
 // ---------------------------------------------------------------------------
 // Role-aware recommendation generator
@@ -168,6 +171,21 @@ export function buildDynamicActions(
     }],
   }));
 
+  // v13.0: Company-type strategic context note — injected as top action when archetype is known
+  // This is the key accuracy fix: different companies get different strategic framing
+  if (personalizedSet.companyContextNote && !personalizedSet.companyContextNote.includes('limited')) {
+    personalizedActions.unshift({
+      id: 'company_context_strategy',
+      title: 'Company-Type Strategic Context',
+      description: personalizedSet.companyContextNote,
+      priority: score >= 70 ? 'Critical' : score >= 50 ? 'High' : 'Medium',
+      layerFocus: 'D7 · Company Health',
+      riskReductionPct: 8,
+      deadline: 'Read first',
+      evidence: [{ signal: 'Scenario archetype detection', source: 'scenarioNarrativeEngine v13.0', confidence: 'medium' as const }],
+    });
+  }
+
   // India-specific context note as a visible action item when present
   if (personalizedSet.indiaSpecificContext && region === 'IN') {
     personalizedActions.push({
@@ -178,7 +196,7 @@ export function buildDynamicActions(
       layerFocus: 'L4 · Market Conditions',
       riskReductionPct: 5,
       deadline: 'Ongoing',
-      evidence: [{ signal: 'India sector intelligence', source: 'indiaSectorIntelligence v8.0', confidence: 'medium' }],
+      evidence: [{ signal: 'India sector intelligence', source: 'indiaSectorIntelligence v8.0', confidence: 'medium' as const }],
     });
   }
 
@@ -933,6 +951,7 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: Fina
 
 export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   const { width } = useAdaptiveSystem();
+  const { userProfile } = useHumanProof();
   const rolePrefix = getPrefix(result.workTypeKey);
 
   // Priority 4: Load financial context from localStorage (set by FinancialContextInput)
@@ -1069,15 +1088,19 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   }, [filteredItems, trackConfig.maxActions, performanceOverride]);
 
   const sortedItems = useMemo(() => {
-    const pw: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-    return [...trackLimitedItems].sort((a, b) => {
-      const aC = completedItems[a.id] || false;
-      const bC = completedItems[b.id] || false;
-      if (aC !== bC) return aC ? 1 : -1;
-      if (!aC) return (pw[a.priority] ?? 2) - (pw[b.priority] ?? 2);
-      return 0;
-    });
-  }, [trackLimitedItems, completedItems]);
+    // v15.0: Within the pending group, rank by impact ÷ effort × profile
+    // multipliers (salary band, visa, tenure). Completed items remain pinned
+    // to the bottom so users see actionable work first.
+    const pending = trackLimitedItems.filter((it) => !completedItems[it.id]);
+    const completed = trackLimitedItems.filter((it) => completedItems[it.id]);
+    const rankingContext = {
+      hasDependents: userProfile?.hasDependents,
+      runwaySituation: (result as any).userFinancialRunway?.runwaySituation ?? null,
+      careerConfidenceScore: (result as any).careerConfidence?.overallScore ?? null,
+    };
+    const rankedPending = rankAndUnwrap(pending, userProfile, rankingContext) as ActionPlanItem[];
+    return [...rankedPending, ...completed];
+  }, [trackLimitedItems, completedItems, userProfile]);
 
   const completedCount = useMemo(
     () => sortedItems.filter(item => completedItems[item.id]).length,
@@ -1510,6 +1533,17 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
         {(result as any).negotiationIntelligence?.shouldDisplay && (
           <div className="mt-6">
             <NegotiationIntelligencePanel negotiation={(result as any).negotiationIntelligence} />
+          </div>
+        )}
+
+        {/* v14.0: Compensation Risk — pay cascade stage and market position */}
+        {(result as any).compensationRisk && (
+          <div className="mt-6">
+            <SectionHeader
+              title="Compensation Risk Intelligence"
+              description="Your pay position vs. market and the 5-stage pay-cut cascade model — salary freeze → contractor cuts → pay freeze → pay cut → layoff."
+            />
+            <CompensationRiskPanel compensation={(result as any).compensationRisk} />
           </div>
         )}
       </motion.div>

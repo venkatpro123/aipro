@@ -1,0 +1,13 @@
+# Real-Time Intelligence Scraper — Python deps (Crawl4AI subprocess)
+# Locked to known-good versions as of 2026-05-15. Update with care; Crawl4AI
+# ships breaking changes in minor releases.
+
+crawl4ai==0.6.3
+beautifulsoup4==4.12.3
+lxml==5.3.0
+# crawl4ai pulls playwright as a transitive — pin so Python and Node match
+playwright==1.48.2
+# Lightweight HTTP for non-browser scrapes
+httpx==0.27.2
+# JSON-schema enforcement on extracted output
+jsonschema==4.23.0

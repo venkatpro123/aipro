@@ -49,15 +49,26 @@ export const DataQualityBanner: React.FC<Props> = ({
     return null; // No banner needed — data is clean
   }
 
+  const borderAccent = isLow || isStale ? "rgba(245,158,11,0.30)" : "rgba(0,212,224,0.20)";
+  const leftAccent   = isLow || isStale ? "var(--amber)" : "var(--cyan)";
+
   return (
     <div
-      className="flex flex-wrap gap-3 p-4 rounded-xl border mb-4"
-      style={{
-        background:     isLow || isStale ? "rgba(245,158,11,0.06)" : "rgba(0,212,224,0.04)",
-        borderColor:    isLow || isStale ? "rgba(245,158,11,0.25)" : "rgba(0,212,224,0.15)",
-      }}
       role="status"
       aria-label="Data quality summary"
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 12,
+        padding: "12px 16px",
+        borderRadius: "var(--radius-xl)",
+        border: `1px solid ${borderAccent}`,
+        borderLeft: `3px solid ${leftAccent}`,
+        background: isLow || isStale ? "rgba(245,158,11,0.05)" : "rgba(0,212,224,0.04)",
+        backdropFilter: "blur(12px)",
+        marginBottom: 16,
+        alignItems: "center",
+      }}
     >
       {/* Confidence pill */}
       <div className="flex items-center gap-2 text-xs font-semibold">

@@ -53,12 +53,27 @@ export function useCompanySignalSubscription(
     refresh?.();
   }, [refresh]);
 
-  const fireToast = useCallback((label: string) => {
+  // v22.0 — when `autoRecalc` is true (only for high-confidence events) the
+  // toast is informational and the score recomputes silently. For lower
+  // confidence events the user still chooses to apply via "Recalculate", which
+  // preserves the no-surprise-mutations trust contract.
+  const fireToast = useCallback((label: string, autoRecalc = false) => {
     const now = Date.now();
     if (now - lastToastAt.current < DEBOUNCE_MS) return;
     lastToastAt.current = now;
 
     const toastId = `ci_signal_${companyName}`;
+
+    if (autoRecalc && refresh) {
+      stableRefresh();
+      toast.success(`Score updated for ${companyName}`, {
+        id: toastId,
+        description: label,
+        duration: 10_000,
+      });
+      return;
+    }
+
     if (refresh) {
       toast.info(`New signal detected for ${companyName}`, {
         id: toastId,
@@ -107,11 +122,17 @@ export function useCompanySignalSubscription(
       .subscribe();
 
     // Channel 2: breaking_news_events INSERTs (intra-day breaking layoff announcements)
-    // Realtime doesn't support ilike in filters, so we subscribe to all new rows
-    // on the table and filter by company name in the handler.
-    const bnChannelId = `bn_signal_${companyName.toLowerCase().replace(/\W+/g, '_')}`;
+    // When dbCompanyName is known, use a server-side eq filter so only rows for
+    // this company are broadcast to this client. Previously ALL breaking_news_events
+    // INSERTs were broadcast globally and filtered client-side — at scale that means
+    // every active user session receives every other company's events.
+    // Server-side eq filter reduces WebSocket traffic O(n_users × n_events) → O(1).
+    const bnChannelId = `bn_signal_${dbCompanyName.toLowerCase().replace(/\W+/g, '_')}`;
     const companyLower = companyName.toLowerCase();
     const dbLower      = dbCompanyName.toLowerCase();
+    // Use server-side eq filter on dbCompanyName (exact match stored by breaking-news-scan).
+    // Client-side fuzzy check retained as safety net for aliased company names.
+    const bnFilter = `company_name=eq.${dbCompanyName}`;
     const bnChannel = supabase
       .channel(bnChannelId)
       .on(
@@ -120,6 +141,7 @@ export function useCompanySignalSubscription(
           event: 'INSERT',
           schema: 'public',
           table: 'breaking_news_events',
+          filter: bnFilter,
         },
         (payload: any) => {
           const row = payload?.new ?? {};
@@ -138,7 +160,17 @@ export function useCompanySignalSubscription(
               url:                 row.source_url ?? '',
               affectedDepartments: [],
             });
-            fireToast('Breaking layoff news detected — recalculate to include in your score.');
+            // v22.0 — auto-recalc only on high-confidence events (SEC filing,
+            // WARN notice, company press release). Lower confidence requires
+            // user click to mutate the score.
+            const isHighConfidence = row.confidence === 'high';
+            const headline = row.headline ? `: ${String(row.headline).slice(0, 90)}` : '';
+            fireToast(
+              isHighConfidence
+                ? `High-confidence layoff event detected${headline}.`
+                : 'Breaking layoff news detected — recalculate to include in your score.',
+              isHighConfidence,
+            );
           }
         },
       )

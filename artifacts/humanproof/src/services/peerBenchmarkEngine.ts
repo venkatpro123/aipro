@@ -231,7 +231,7 @@ function buildFallbackPeers(companyData: CompanyData): PeerCompany[] {
   if (/bpo|ites|call.?cent/i.test(industry) || region === 'IN') {
     return FALLBACK_PEERS.india_it ?? [];
   }
-  if (/it.?service|software.?service/i.test(industry) && region === 'IN') {
+  if (/it.?service|software.?service/i.test(industry) && (region as string) === 'IN') {
     return FALLBACK_PEERS.india_it ?? [];
   }
   if (/finance|banking|fintech|payment/i.test(industry)) return FALLBACK_PEERS.finance ?? [];
