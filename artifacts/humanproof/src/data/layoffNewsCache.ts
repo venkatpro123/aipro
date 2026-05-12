@@ -21,6 +21,10 @@ export interface LayoffNewsEvent {
   industry?: string;
   /** Region of the company — used for sector contagion events */
   region?: string;
+  /** True for hardcoded fallback seeds — treated with lower confidence than curated/live data */
+  _seeded?: boolean;
+  /** Signal confidence 0–1; seeded fallbacks default to 0.40, curated events to 0.90 */
+  confidence?: number;
 }
 
 // ─── Department taxonomy ─────────────────────────────────────────────────────
@@ -74,6 +78,8 @@ export const layoffNewsCache: LayoffNewsEvent[] = [
     source: 'Crunchbase News (seeded fallback — verify via curated_layoff_events)',
     url: 'https://news.crunchbase.com/',
     affectedDepartments: ['Sales', 'Marketing', 'HR', 'Finance'],
+    _seeded: true,
+    confidence: 0.40,
   },
   {
     companyName: 'Amazon',
@@ -83,6 +89,8 @@ export const layoffNewsCache: LayoffNewsEvent[] = [
     source: 'TechCrunch (seeded fallback — verify via curated_layoff_events)',
     url: 'https://techcrunch.com/',
     affectedDepartments: ['Management', 'Sales', 'Operations'],
+    _seeded: true,
+    confidence: 0.40,
   },
   {
     companyName: 'Meta',
@@ -92,6 +100,8 @@ export const layoffNewsCache: LayoffNewsEvent[] = [
     source: 'InformationWeek (seeded fallback — verify via curated_layoff_events)',
     url: 'https://www.informationweek.com/',
     affectedDepartments: ['VR/AR', 'Engineering', 'Research'],
+    _seeded: true,
+    confidence: 0.40,
   },
 ];
 
@@ -215,6 +225,15 @@ export const injectLayoffEvent = (event: LayoffNewsEvent): void => {
   if (!canon) return; // empty company name after canonicalisation — skip
 
   const key = `${canon}::${(event.date ?? '').slice(0, 10)}`;
+  const existingIdx = layoffNewsCache.findIndex(e => {
+    const eCanon = canonicalName(e.companyName);
+    return `${eCanon}::${(e.date ?? '').slice(0, 10)}` === key;
+  });
+  // Replace a seeded fallback with an authoritative curated/live event for the same date
+  if (existingIdx !== -1 && layoffNewsCache[existingIdx]._seeded && !event._seeded) {
+    layoffNewsCache.splice(existingIdx, 1);
+  }
+  // Re-check existence after potential splice
   const exists = layoffNewsCache.some(e => {
     const eCanon = canonicalName(e.companyName);
     return `${eCanon}::${(e.date ?? '').slice(0, 10)}` === key;

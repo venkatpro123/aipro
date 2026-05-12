@@ -36,6 +36,12 @@ export interface RoleDemandSignal {
   /** Disclosure text for tooltip when isLive = false. */
   disclosure: string;
   fetchedAt: string;
+  /** True when data is from the static Q1 2026 baseline (not live) */
+  _stale?: boolean;
+  /** Reason code for falling back to static baseline */
+  _fallbackReason?: 'serper_unavailable' | 'serper_quota_exceeded' | 'serper_error';
+  /** ISO date of the static baseline snapshot */
+  _baselineDate?: string;
 }
 
 // ── Static priors — last manual review: Q1 2026 ──────────────────────────────
@@ -72,7 +78,11 @@ export function matchRole(roleTitle: string): { trend: 'rising' | 'stable' | 'fa
 }
 
 /** Heuristic fallback — always available, never live. */
-function heuristicSignal(roleTitle: string, company: string): RoleDemandSignal {
+function heuristicSignal(
+  roleTitle: string,
+  company: string,
+  fallbackReason: RoleDemandSignal['_fallbackReason'] = 'serper_unavailable',
+): RoleDemandSignal {
   const base = matchRole(roleTitle);
   return {
     roleTitle,
@@ -87,7 +97,10 @@ function heuristicSignal(roleTitle: string, company: string): RoleDemandSignal {
     disclosure:
       'Static heuristic baseline (Q1 2026 review). Hiring data is not refreshed per-request. ' +
       'Configure SERPER_API_KEY in Supabase Edge Function secrets to enable live Naukri/LinkedIn job counts.',
-    fetchedAt: new Date().toISOString(),
+    fetchedAt:      new Date().toISOString(),
+    _stale:         true,
+    _fallbackReason: fallbackReason,
+    _baselineDate:  '2026-01-01',
   };
 }
 
@@ -99,7 +112,7 @@ export async function fetchRoleDemandSignal(
   // Quota guard: skip if this session has already exhausted the Serper daily limit.
   if (isQuotaExhausted('serper')) {
     return {
-      ...heuristicSignal(roleTitle, company),
+      ...heuristicSignal(roleTitle, company, 'serper_quota_exceeded'),
       disclosure: 'Serper daily quota exhausted this session. Hiring data is a heuristic baseline until quota resets.',
     };
   }
@@ -115,7 +128,7 @@ export async function fetchRoleDemandSignal(
       // Check if the Edge Function itself detected a Serper rate-limit
       if (h.serperRateLimited) {
         recordApiDegradation('serper', 'rate_limited', 'Serper 429 from proxy-live-signals');
-        return heuristicSignal(roleTitle, company);
+        return heuristicSignal(roleTitle, company, 'serper_quota_exceeded');
       }
       return {
         roleTitle,
@@ -218,7 +231,7 @@ export async function fetchRoleDemandSignal(
     }
   }
 
-  return heuristicSignal(roleTitle, company);
+  return heuristicSignal(roleTitle, company, 'serper_error');
 }
 
 // ── Hiring freeze detection from job-posting delta ───────────────────────────

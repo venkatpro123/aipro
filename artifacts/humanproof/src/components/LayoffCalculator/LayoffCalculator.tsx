@@ -58,7 +58,9 @@ import { detectCollapseStage } from "../../services/collapsePredictor";
 import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
+import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName } from "../../services/apiCircuitBreaker";
 import { fetchAuditData } from "../../services/auditDataPipeline";
+import { startBackgroundRefresh } from "../../services/liveRefreshService";
 import { resolveRoleInput } from "../../services/roleResolution";
 import { HybridResult } from "../../types/hybridResult";
 
@@ -150,6 +152,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
   // ── Force-refresh state — set by CachedResultBanner "Recalculate" button ──
   const [isForceRefreshing, setIsForceRefreshing] = useState(false);
+  const [apiQuotaStatus, setApiQuotaStatus] = useState<Record<CircuitApiName, ApiQuotaStatus> | null>(null);
 
   // ── Live Scraper Gate — shown on first audit when company data is stale ────
   // The gate triggers live scraping, polls for completion, then calls the
@@ -202,6 +205,30 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
+  // Refresh circuit breaker status after each completed assessment so the banner is accurate
+  React.useEffect(() => {
+    if (state.hasCompletedAssessment) {
+      setApiQuotaStatus(getApiQuotaStatus());
+    }
+  }, [state.hasCompletedAssessment, state.scoreResult]);
+
+  // Background refresh — re-audits every 30 minutes while result is on screen
+  React.useEffect(() => {
+    if (!state.hasCompletedAssessment || !state.companyName || !state.roleTitle || !state.userFactors) return;
+    const inputs = {
+      companyName: state.companyName,
+      roleTitle:   state.roleTitle,
+      department:  state.department || '',
+      userFactors: state.userFactors,
+    };
+    const cancel = startBackgroundRefresh(inputs, ({ result }) => {
+      dispatch({ type: 'SET_SCORE_RESULT', payload: result });
+      setApiQuotaStatus(getApiQuotaStatus());
+    });
+    return cancel;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.hasCompletedAssessment, state.companyName, state.roleTitle]);
 
   const handleForceRefresh = async () => {
     setIsForceRefreshing(true);
@@ -1319,6 +1346,28 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           />
         </div>
       )}
+
+      {/* Circuit-open banner — shown when live APIs are unavailable (circuit OPEN) */}
+      {state.hasCompletedAssessment &&
+        !state.isCalculating &&
+        apiQuotaStatus &&
+        Object.entries(apiQuotaStatus).some(([, s]) => s.state === 'OPEN') && (
+          <div className="max-w-4xl mx-auto px-4 mb-3">
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              <span className="mt-0.5 text-base">⚠</span>
+              <div>
+                <span className="font-semibold text-amber-100">Live market data temporarily unavailable</span>
+                <span className="ml-2 text-amber-300/80">
+                  {Object.entries(apiQuotaStatus)
+                    .filter(([, s]) => s.state === 'OPEN')
+                    .map(([api, s]) =>
+                      `${api}${s.cachedAgeLabel ? ` (cached ${s.cachedAgeLabel})` : ''}`
+                    ).join(', ')} — showing cached intelligence. Resets automatically.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
       {state.hasCompletedAssessment &&
         state.scoreResult &&

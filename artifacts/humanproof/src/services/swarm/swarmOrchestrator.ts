@@ -64,6 +64,42 @@ const AGENT_REGISTRY = [
   geoPoliticalRiskAgent, regulatoryRiskAgent, peerCompanyAgent,
 ] as const;
 
+// ── Per-agent timeout ─────────────────────────────────────────────────────────
+// Prevents a single slow agent (e.g., rate-limited API) from blocking the entire swarm.
+const AGENT_TIMEOUT_MS = 6_000;
+
+type AgentRunResult = {
+  agentId: string;
+  status: 'fulfilled' | 'timeout';
+  value: Awaited<ReturnType<(typeof AGENT_REGISTRY)[number]['run']>> & { _agentMs: number; _agentId: string } | null;
+  reason?: string;
+};
+
+const runWithTimeout = (
+  agent: (typeof AGENT_REGISTRY)[number],
+  input: SwarmInput,
+): Promise<AgentRunResult> => {
+  const agentId = (agent as unknown as { id?: string }).id ?? 'unknown';
+  return Promise.race([
+    (async () => {
+      const agentStart = Date.now();
+      const result = await agent.run(input);
+      const agentMs = Date.now() - agentStart;
+      return {
+        agentId,
+        status: 'fulfilled' as const,
+        value: { ...result, _agentMs: agentMs, _agentId: agentId },
+      };
+    })(),
+    new Promise<AgentRunResult>(resolve =>
+      setTimeout(
+        () => resolve({ agentId, status: 'timeout', value: null, reason: `timed out after ${AGENT_TIMEOUT_MS}ms` }),
+        AGENT_TIMEOUT_MS,
+      )
+    ),
+  ]);
+};
+
 // ── Master Runner ─────────────────────────────────────────────────────────────
 
 export const runSwarmLayer = async (
@@ -84,28 +120,36 @@ export const runSwarmLayer = async (
   console.log(`[Swarm] Firing ${AGENT_REGISTRY.length} agents in parallel...`);
   const startTime = Date.now();
 
-  // ── Fire all 30 agents with per-agent timing — no single failure blocks ───
-  const settled = await Promise.allSettled(
-    AGENT_REGISTRY.map(async (agent) => {
-      const agentStart = Date.now();
-      const result = await agent.run(input);
-      const agentMs = Date.now() - agentStart;
-      return { ...result, _agentMs: agentMs, _agentId: (agent as any).agentId ?? agent.constructor?.name };
-    })
+  // ── Fire all agents with 6s per-agent timeout — no single agent blocks the swarm ───
+  const agentRuns = await Promise.allSettled(
+    AGENT_REGISTRY.map(agent => runWithTimeout(agent, input))
   );
 
-  const elapsed    = Date.now() - startTime;
-  const fulfilled  = settled.filter(r => r.status === 'fulfilled').length;
-  const rejected   = settled.filter(r => r.status === 'rejected').length;
+  const elapsed     = Date.now() - startTime;
+  const resolved    = agentRuns.filter(r => r.status === 'fulfilled' && r.value.status === 'fulfilled').length;
+  const timedOut    = agentRuns.filter(r => r.status === 'fulfilled' && r.value.status === 'timeout').length;
+  const rejected    = agentRuns.filter(r => r.status === 'rejected').length;
+
+  // Flatten to the same shape as before for downstream consumers
+  const settled = agentRuns.map(r => {
+    if (r.status === 'rejected') return { status: 'rejected' as const, reason: r.reason };
+    if (r.value.status === 'timeout') return { status: 'rejected' as const, reason: r.value.reason };
+    return { status: 'fulfilled' as const, value: r.value.value! };
+  });
+
+  const fulfilled = resolved;
 
   // Log per-agent timings so the slowest agent is identifiable
-  const agentTimings = settled
-    .filter(r => r.status === 'fulfilled')
-    .map(r => ({ id: (r as any).value?._agentId ?? '?', ms: (r as any).value?._agentMs ?? 0 }))
+  const agentTimings = agentRuns
+    .filter(r => r.status === 'fulfilled' && r.value.status === 'fulfilled')
+    .map(r => {
+      const v = (r as PromiseFulfilledResult<AgentRunResult>).value.value!;
+      return { id: v._agentId ?? '?', ms: v._agentMs ?? 0 };
+    })
     .sort((a, b) => b.ms - a.ms);
   const slowest = agentTimings[0];
   console.log(
-    `[Swarm] ${fulfilled}/${AGENT_REGISTRY.length} agents resolved (${rejected} failed) in ${elapsed}ms` +
+    `[Swarm] ${resolved}/${AGENT_REGISTRY.length} agents resolved (${timedOut} timed out, ${rejected} failed) in ${elapsed}ms` +
     (slowest ? ` | slowest: ${slowest.id} ${slowest.ms}ms` : ''),
   );
   // Surface timing data for the percentile report
@@ -113,7 +157,7 @@ export const runSwarmLayer = async (
     try {
       const key = 'hp_swarm_agent_timings';
       const prev = JSON.parse(sessionStorage.getItem(key) ?? '[]');
-      prev.unshift({ ts: Date.now(), totalMs: elapsed, agents: agentTimings.slice(0, 5) });
+      prev.unshift({ ts: Date.now(), totalMs: elapsed, agents: agentTimings.slice(0, 5), timedOut });
       sessionStorage.setItem(key, JSON.stringify(prev.slice(0, 20)));
     } catch { /* quota exceeded */ }
   }

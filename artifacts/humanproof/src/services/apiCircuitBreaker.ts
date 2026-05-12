@@ -372,6 +372,34 @@ export async function withCircuitBreaker<T>(
   }
 }
 
+export interface ApiQuotaStatus {
+  state: CircuitState;
+  consecutiveFailures: number;
+  msUntilProbe: number;
+  hasCachedData: boolean;
+  cachedAgeLabel: string | null;
+}
+
+/**
+ * Returns the current circuit state for all tracked APIs.
+ * Used by LayoffCalculator to show a banner when any circuit is OPEN.
+ */
+export function getApiQuotaStatus(): Record<CircuitApiName, ApiQuotaStatus> {
+  const apis: CircuitApiName[] = ['alphavantage', 'newsapi', 'serper'];
+  const result = {} as Record<CircuitApiName, ApiQuotaStatus>;
+  for (const api of apis) {
+    const snap = getCircuitSnapshot(api);
+    result[api] = {
+      state:               snap.state,
+      consecutiveFailures: snap.consecutiveFailures,
+      msUntilProbe:        snap.msUntilProbe,
+      hasCachedData:       snap.hasCachedData,
+      cachedAgeLabel:      snap.cachedAgeLabel,
+    };
+  }
+  return result;
+}
+
 /**
  * Reset a circuit to CLOSED (admin use / testing only).
  */

@@ -885,9 +885,18 @@ const toIso = (value: string | undefined, fallback: string): string => {
 const computeFreshnessDays = (iso: string, now: Date): number =>
   Math.max(0, Math.floor((now.getTime() - new Date(iso).getTime()) / DAY_MS));
 
+// Live API signals: < 4h = fresh, 4h–72h = degraded, > 72h = invalid
 const classifyFreshness = (days: number): SignalFreshnessState => {
+  const hours = days * 24;
+  if (hours > 72) return 'invalid';
+  if (hours > 4)  return 'degraded';
+  return 'fresh';
+};
+
+// DB / heuristic signals: < 7d = fresh, 7d–30d = degraded, > 30d = invalid
+const classifyDbFreshness = (days: number): SignalFreshnessState => {
   if (days > 30) return 'invalid';
-  if (days > 7) return 'degraded';
+  if (days > 7)  return 'degraded';
   return 'fresh';
 };
 
@@ -955,7 +964,10 @@ const createSignal = <T>(
   now: Date,
 ): ProvenancedSignal<T> => {
   const freshnessDays = computeFreshnessDays(observedAt, now);
-  const freshnessState = classifyFreshness(freshnessDays);
+  // Live API signals use tight hour-based thresholds; DB/heuristic use day-based thresholds
+  const freshnessState = source === 'live'
+    ? classifyFreshness(freshnessDays)
+    : classifyDbFreshness(freshnessDays);
   return {
     key,
     value,
@@ -1053,10 +1065,12 @@ const chooseAuthoritativeSignal = <T>({
           'Use the fresher live signal and cap confidence until the database is refreshed.',
         );
       }
-    } else if (!dbUsable) {
-      chosen = liveSignal;
-    } else {
+    } else if (dbSignal!.freshnessState === 'fresh') {
+      // Live is degraded but DB is fresh — DB is more recent, keep DB
       summary.ignoredLiveKeys = [...(summary.ignoredLiveKeys ?? []), key];
+    } else {
+      // Both degraded (7-30 days): prefer live as the most recent external fetch
+      chosen = liveSignal;
     }
   }
 
@@ -1416,6 +1430,18 @@ export const reconcileCompanySignals = (
     summary.liveWonKeys.length > 0
       ? `${base.source || 'company_intelligence'} + Live Reconciled`
       : base.source;
+  // Compute _dataFreshnessScore (0–1): ratio of fresh live signals to total chosen signals.
+  // Used downstream by hybridConsensusBuilder to cap confidence when data is mostly static.
+  const allSignals = Object.values(signals);
+  const totalSignals = allSignals.length;
+  const freshLiveCount = allSignals.filter(
+    s => s.source === 'live' && s.freshnessState === 'fresh',
+  ).length;
+  const liveWonRatio = totalSignals > 0 ? summary.liveWonKeys.length / totalSignals : 0;
+  const dataFreshnessScore = totalSignals > 0
+    ? Math.round(((freshLiveCount / totalSignals) * 0.7 + liveWonRatio * 0.3) * 100) / 100
+    : 0;
+
   active._informativeLiveSignals = informativeLiveSignalCount;
   active._authoritativeSignals = signals;
   active._reconciliationSummary = summary;
@@ -1423,6 +1449,7 @@ export const reconcileCompanySignals = (
   active._confidenceCapsApplied = confidenceCapsApplied;
   active._hardFailures = hardFailures;
   active._degradedSignalClasses = Array.from(degradedSet);
+  active._dataFreshnessScore = dataFreshnessScore;
 
   summary.confidenceCapsApplied = confidenceCapsApplied;
   summary.hardFailures = hardFailures;

@@ -238,16 +238,18 @@ export const companyDatabase: CompanyData[] = [
     isPublic: true,
     industry: 'Technology',
     region: 'IN',
-    employeeCount: 615000,
-    revenueGrowthYoY: 10,
-    stock90DayChange: 15,
-    layoffsLast24Months: [],
-    layoffRounds: 0,
-    lastLayoffPercent: null,
+    employeeCount: 601000,       // FY2025 Q4 headcount (down from 615k peak)
+    revenueGrowthYoY: 5,
+    stock90DayChange: -8,        // IT sector headwinds + workforce restructuring in 2025
+    layoffsLast24Months: [
+      { date: '2025-03-01', percentCut: 2 },  // ~12k associates, March 2025 restructuring
+    ],
+    layoffRounds: 2,
+    lastLayoffPercent: 2,
     revenuePerEmployee: 35000,   // ~₹29 lakh, accurate for Indian IT
     aiInvestmentSignal: 'high',
     source: 'Crunchbase',
-    lastUpdated: '2026-04-01',
+    lastUpdated: '2025-03-01',
     ceoTenureMonths: 34,     // K Krithivasan, MD&CEO since Jun 2023 — moderate tenure
     cSuiteChanges12m: 0,
     glassdoorTrendDirection: 'stable',

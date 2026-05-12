@@ -16,8 +16,8 @@
 
 import { supabase } from '../../utils/supabase';
 
-const LOCAL_TTL_MS  = 1000 * 60 * 60 * 1;       // 1 hour  (was 24h)
-const REMOTE_TTL_MS = 1000 * 60 * 60 * 24;      // 24 hours (was 7 days)
+const LOCAL_TTL_MS  = 1000 * 60 * 10;            // 10 minutes (was 1h — live-first: re-fetch after brief session)
+const REMOTE_TTL_MS = 1000 * 60 * 60 * 2;       // 2 hours    (was 24h — avoid yesterday's stale analysis)
 
 // BUG-09 FIX: strip heavy swarm visualization data before caching to prevent
 // localStorage quota overflow (~80KB → ~5KB per entry)

@@ -497,6 +497,37 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Ticker-based fallback: handles abbreviations like "TCS" → "Tata Consultancy Services"
+    // The name query above uses ILIKE '%TCS%' which won't match "Tata Consultancy Services".
+    if (!intelRow && companyName.length <= 6 && /^[A-Z0-9]+$/i.test(companyName.trim())) {
+      const tickerUpper = companyName.trim().toUpperCase();
+      const { data: tickerRows } = await supabaseClient
+        .from("company_intelligence")
+        .select("*")
+        .filter("financial_signals->>ticker", "ilike", tickerUpper)
+        .limit(3);
+
+      if (Array.isArray(tickerRows) && tickerRows.length > 0) {
+        intelRow = tickerRows[0];
+        matchConfidence = 0.90;
+        matchType = "exact";
+        matchedCompanyName = String(tickerRows[0].company_name || "");
+        sourcePath = "edge_exact";
+      }
+    }
+
+    // Staleness gate: mark DB rows > 7 days old so the pipeline can demote to 'stale_db'
+    // instead of treating aged rows as authoritative live data.
+    if (intelRow) {
+      const rowLastUpdated = intelRow.last_updated ?? intelRow.updated_at ?? null;
+      const rowAgeDays = rowLastUpdated
+        ? (Date.now() - new Date(String(rowLastUpdated)).getTime()) / (1000 * 60 * 60 * 24)
+        : 999;
+      if (rowAgeDays > 7) {
+        Object.assign(intelRow, { _staleDb: true, _ageDays: Math.round(rowAgeDays) });
+      }
+    }
+
     const merged = intelRow
       ? normalizeFromCompanyIntel(intelRow)
       : {
@@ -788,6 +819,8 @@ Deno.serve(async (req) => {
           lastUpdated: merged.last_updated,
           stale,
           staleThresholdHours: STALE_HOURS,
+          _staleDb: (intelRow as Record<string, unknown> | null)?._staleDb ?? false,
+          _ageDays:  (intelRow as Record<string, unknown> | null)?._ageDays  ?? null,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },

@@ -78,7 +78,7 @@ export const KNOWN_HEADCOUNTS: Record<string, number> = {
   tesla:                140_000,
   intel:                124_000,
   ibm:                  288_000,
-  oracle:               164_000,
+  oracle:               143_000,
   cisco:                 84_000,
   qualcomm:              51_000,
   salesforce:            73_000,
@@ -237,6 +237,13 @@ export const companyProfileToData = (
     }
   }
 
+  const region = COMPANY_KEY_TO_REGION[companyKey] ?? 'US';
+
+  // India IT companies have ~$35k RPE; the global 'low' burn-rate proxy of $550k
+  // would flag them as massively overstaffed when they are not. Override when India.
+  const rpeProxy = BURN_RATE_TO_REV_PER_EMP[financialSignals.burnRateEstimate];
+  const revenuePerEmployee = (region === 'IN' && rpeProxy > 200_000) ? 35_000 : rpeProxy;
+
   return {
     // Guard against undefined companyName — the score engine calls .toLowerCase()
     // on CompanyData.name without a null check (line 789 of layoffScoreEngine.ts).
@@ -245,7 +252,7 @@ export const companyProfileToData = (
     stockTicker:      profile.stockTicker,  // for swarm market agents
     isPublic,
     industry:         profile.industry,
-    region:           COMPANY_KEY_TO_REGION[companyKey] ?? 'US',
+    region,
     employeeCount:    actualEmployeeCount,
     revenueGrowthYoY: REVENUE_TREND_TO_YOY[financialSignals.revenueTrend],
     // Phase 4 fix: use real stockTicker with live proxy fallback instead of name-guessing
@@ -255,7 +262,7 @@ export const companyProfileToData = (
     layoffsLast24Months:  layoffRounds,
     layoffRounds:         FREQ_TO_ROUNDS[layoffHistory.layoffFrequency],
     lastLayoffPercent:    layoffRounds.length > 0 ? layoffRounds[0].percentCut : null,
-    revenuePerEmployee:   BURN_RATE_TO_REV_PER_EMP[financialSignals.burnRateEstimate],
+    revenuePerEmployee,
     aiInvestmentSignal:   aiIndexToSignal(aiExposureIndex),
     // Phase 4 fix: source attribution with proxy signal tags for downstream transparency
     source:               profile.stockTicker
@@ -328,32 +335,39 @@ export function getCompanyRoleRisk(companyData: CompanyData, roleTitle: string |
 /**
  * resolveCompanyData — The single lookup entry point for the scoring engine.
  *
- * Resolution priority:
- *   1. Legacy companyDatabase (exact name match) — highest fidelity historical data
- *   2. COMPANY_INTELLIGENCE_DB (new 50-company Phase 1 set) — via key or name
- *   3. null — caller must handle missing company gracefully
+ * Resolution priority (live-data-first):
+ *   1. COMPANY_INTELLIGENCE_DB by normalized key (50-company set — richer, newer data)
+ *   2. Fuzzy name search through intelligence DB
+ *   3. Legacy companyDatabase — ONLY when preferDb=true (emergency fallback, explicit)
+ *   4. null — caller must handle missing company gracefully
  *
- * @param query  Company name (e.g. "Oracle") or intelligence key (e.g. "oracle")
+ * @param query     Company name (e.g. "Oracle") or intelligence key (e.g. "oracle")
+ * @param preferDb  When true, also try legacy companyDatabase as a last resort.
+ *                  Set this only in the pipeline's emergency fallback step.
  */
-export const resolveCompanyData = (query: string): CompanyData | null => {
+export const resolveCompanyData = (query: string, preferDb = false): CompanyData | null => {
   if (!query || query.length < 2) return null;
 
-  // ── Step 1: Try legacy companyDatabase first (exact historical data wins) ──
-  const legacy = getCompanyByName(query);
-  if (legacy) return legacy;
-
-  // ── Step 2: Try new intelligence DB by normalized key ────────────────────
+  // ── Step 1: Try intelligence DB by normalized key (primary) ──────────────
   const key = query.toLowerCase().replace(/[\s.&()/]+/g, '_').replace(/[^a-z0-9_]/g, '');
   const profileByKey = COMPANY_INTELLIGENCE_DB[key];
   if (profileByKey) return companyProfileToData(profileByKey, key);
 
-  // ── Step 3: Fuzzy name search through intelligence DB ─────────────────────
+  // ── Step 2: Fuzzy name search through intelligence DB ────────────────────
   const fuzzyProfile = resolveCompanyProfile(query);
   if (fuzzyProfile) {
     const matchedKey = Object.entries(COMPANY_INTELLIGENCE_DB).find(
       ([, p]) => p === fuzzyProfile
     )?.[0] ?? '';
     return companyProfileToData(fuzzyProfile, matchedKey);
+  }
+
+  // ── Step 3: Legacy companyDatabase — emergency fallback only ─────────────
+  // Only reached when preferDb=true (explicit caller opt-in for last-resort lookup).
+  // This keeps the 18 legacy companies from shadowing Supabase / intelligence DB results.
+  if (preferDb) {
+    const legacy = getCompanyByName(query);
+    if (legacy) return legacy;
   }
 
   return null;

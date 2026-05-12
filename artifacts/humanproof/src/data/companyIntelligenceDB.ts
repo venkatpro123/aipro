@@ -598,8 +598,8 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       burnRateEstimate: 'low',
     },
     layoffHistory: {
-      totalLayoffs: 18000,
-      lastLayoffDate: '2024-04-01',
+      totalLayoffs: 30000,         // 21% of ~143k workforce (April 2026 restructuring)
+      lastLayoffDate: '2026-04-01',
       layoffFrequency: 'frequent',
       affectedDepartments: ['engineering', 'sales', 'hr', 'operations', 'support'],
     },

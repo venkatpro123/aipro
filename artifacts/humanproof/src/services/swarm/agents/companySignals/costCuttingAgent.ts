@@ -1,15 +1,20 @@
 // costCuttingAgent.ts
 // Company Signal — Real cost-cutting and hiring freeze language in news.
-// LIVE: NewsAPI.org search for cost-cut language with heuristic fallback.
+// SECURE: NewsAPI is called via the proxy-live-signals Edge Function (server-side).
+// No VITE_NEWSAPI_KEY in the browser bundle.
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
+import { supabase } from '../../../../utils/supabase';
 
-const NEWSAPI_BASE = 'https://newsapi.org/v2/everything';
-const COST_TERMS   = ['hiring freeze', 'cost cut', 'belt tighten', 'spending cut', 'budget cut', 'axe', 'slash costs'];
+const COST_TERMS = ['hiring freeze', 'cost cut', 'belt tighten', 'spending cut', 'budget cut', 'slash costs', 'cost reduction'];
+
+const hasCostLanguage = (title: string, description: string): boolean => {
+  const text = `${title} ${description}`.toLowerCase();
+  return COST_TERMS.some(term => text.includes(term));
+};
 
 const heuristicCostCut = (input: SwarmInput): number => {
   const cd = input.companyData;
-  // Infer cost-cutting pressure from revenue decline and layoff patterns
   const revenueDecline = (cd.revenueGrowthYoY ?? 0) < -5;
   const hasLayoffs     = (cd.layoffsLast24Months?.length ?? 0) > 0;
   const stockDrop      = (cd.stock90DayChange ?? 0) < -15;
@@ -22,37 +27,34 @@ const heuristicCostCut = (input: SwarmInput): number => {
 };
 
 const run = async (input: SwarmInput): Promise<AgentSignal> => {
-  const apiKey = (import.meta as any).env?.VITE_NEWSAPI_KEY;
+  try {
+    const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+      body: { action: 'news', companyName: input.companyName },
+    });
 
-  if (apiKey) {
-    try {
-      const from  = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const query = `"${input.companyName}" (${COST_TERMS.slice(0, 4).join(' OR ')})`;
-      const url   = `${NEWSAPI_BASE}?q=${encodeURIComponent(query)}&from=${from}&language=en&pageSize=10&apiKey=${apiKey}`;
-      const res   = await fetch(url);
-      const json  = await res.json();
+    if (!error && data?.newsData) {
+      const articles: any[] = data.newsData.articles ?? data.newsData.items ?? [];
+      const costArticles = articles.filter(a => hasCostLanguage(a.title ?? '', a.description ?? a.content ?? ''));
+      const count = costArticles.length;
 
-      if (json.status === 'ok') {
-        const count = json.totalResults ?? 0;
-        let signal: number;
-        if (count >= 5)      signal = 0.90;
-        else if (count >= 3) signal = 0.72;
-        else if (count >= 1) signal = 0.52;
-        else                 signal = 0.15;
+      let signal: number;
+      if (count >= 5)      signal = 0.90;
+      else if (count >= 3) signal = 0.72;
+      else if (count >= 1) signal = 0.52;
+      else                 signal = 0.15;
 
-        return {
-          agentId:    'costCuttingAgent',
-          category:   'company',
-          signal,
-          confidence: 0.78,
-          sourceType: 'live-api',
-          ageInDays:  0,
-          metadata:   { articlesFound: count, windowDays: 30 },
-        };
-      }
-    } catch (e: any) {
-      console.warn('[costCuttingAgent] API failed:', e.message);
+      return {
+        agentId:    'costCuttingAgent',
+        category:   'company',
+        signal,
+        confidence: 0.78,
+        sourceType: 'live-api',
+        ageInDays:  0,
+        metadata:   { articlesFound: count, totalFetched: articles.length, windowDays: 30 },
+      };
     }
+  } catch (e: any) {
+    console.warn('[costCuttingAgent] proxy failed:', e.message);
   }
 
   const signal = heuristicCostCut(input);

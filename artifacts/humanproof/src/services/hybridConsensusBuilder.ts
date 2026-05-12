@@ -73,6 +73,7 @@ export interface HybridScorePayload {
   hardFailures: string[];
   confidenceCap?: number;
   confidenceCapsApplied?: string[];
+  _dataFreshnessScore?: number;
 }
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -601,11 +602,27 @@ export function buildHybridScorePayload({
   ].filter(Boolean).length;
 
   const lowDataCap = missingCriticalCount >= 3 ? 0.35 : null;
+
+  // Gate confidence on data freshness: fully static data → cap 35%, mostly stale → cap 55%
+  const dataFreshnessScore = (companyData as any)._dataFreshnessScore as number | undefined;
+  let freshnessConfidenceCap: number | null = null;
+  const freshnessNotes: string[] = [];
+  if (dataFreshnessScore != null) {
+    if (dataFreshnessScore < 0.1) {
+      freshnessConfidenceCap = 0.35;
+      freshnessNotes.push('Static data only — all live sources unavailable');
+    } else if (dataFreshnessScore < 0.4) {
+      freshnessConfidenceCap = 0.55;
+      freshnessNotes.push('Limited live data — majority of signals from DB cache');
+    }
+  }
+
   const overallConfidence = (() => {
     let value = reconciled.confidenceCap != null
       ? Math.min(computedConfidence, reconciled.confidenceCap)
       : computedConfidence;
     if (lowDataCap != null) value = Math.min(value, lowDataCap);
+    if (freshnessConfidenceCap != null) value = Math.min(value, freshnessConfidenceCap);
     return value;
   })();
 
@@ -658,6 +675,10 @@ export function buildHybridScorePayload({
     degradedSignalClasses: reconciled.degradedSignalClasses,
     hardFailures: reconciled.hardFailures,
     confidenceCap: reconciled.confidenceCap,
-    confidenceCapsApplied: reconciled.confidenceCapsApplied,
+    confidenceCapsApplied: [
+      ...(reconciled.confidenceCapsApplied ?? []),
+      ...freshnessNotes,
+    ],
+    _dataFreshnessScore: dataFreshnessScore,
   };
 }

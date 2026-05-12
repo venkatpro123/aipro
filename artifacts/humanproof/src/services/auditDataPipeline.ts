@@ -246,7 +246,7 @@ function mapToHybridResult(
   engineResult: ScoreResult, 
   companyData: CompanyData, 
   inputs: AuditInputs,
-  source: 'live' | 'db' | 'fallback',
+  source: 'live' | 'db' | 'stale_db' | 'fallback',
   trueLiveSignals: number,
   trueHeuristicSignals: number,
 ): HybridResult {
@@ -321,7 +321,7 @@ function mapConsensusScoreToHybridResult(
   shadowEngineResult: ScoreResult,
   companyData: CompanyData,
   inputs: AuditInputs,
-  source: 'live' | 'db' | 'fallback',
+  source: 'live' | 'db' | 'stale_db' | 'fallback',
 ): HybridResult {
   const breakdownAny = hybridScore.breakdown as Record<string, number | undefined>;
   const dimensions = [
@@ -468,7 +468,7 @@ function attachAuditMetadata(
 export async function fetchAuditData(inputs: AuditInputs): Promise<{
   result: HybridResult;
   companyData: CompanyData;
-  source: 'live' | 'db' | 'fallback';
+  source: 'live' | 'db' | 'stale_db' | 'fallback';
   _timer?: PipelineTimerInstance;
 }> {
   // ── Input validation ─────────────────────────────────────────────────────────
@@ -528,7 +528,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   loadCuratedLayoffEvents().catch(() => {});
 
   let companyData: CompanyData | null = null;
-  let dataSource: 'live' | 'db' | 'fallback' = 'db';
+  let dataSource: 'live' | 'db' | 'stale_db' | 'fallback' = 'db';
   let trueLiveSignals = 0;
   let trueHeuristicSignals = 0;
   let reconciledSignals: ReconciledCompanySignals | null = null;
@@ -571,7 +571,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       companyMatchType = (fetchRes.matchType ?? "exact") as typeof companyMatchType;
       if (!isFallback && matchConfidence >= 0.7) {
         companyData = mapOsintToCompanyData(fetchRes.data, fetchRes.source);
-        dataSource = 'live';
+        // Demote to 'stale_db' when the DB row is older than 7 days (Phase D)
+        dataSource = fetchRes.dataFreshness?._staleDb ? 'stale_db' : 'live';
         const d = fetchRes.data;
         trueLiveSignals =
           (d.stock_90d_change        != null ? 1 : 0) +
@@ -652,9 +653,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // emit "Financial signals missing" even though the bridge has proxy values
   // (freeze score → stock proxy, revenue trend → YoY proxy) for the same key.
   // This second pass guarantees the proxies are applied regardless of source.
+  // preferDb=true: at this stage all live sources are exhausted — use legacy DB too.
   if (companyData && dataSource !== 'fallback' && (companyData.stock90DayChange === null || companyData.revenueGrowthYoY === null || companyData.revenuePerEmployee === null)) {
     try {
-      const bridge = resolveCompanyData(companyData.name);
+      const bridge = resolveCompanyData(companyData.name, true);
       if (bridge) {
         companyData.stock90DayChange   = companyData.stock90DayChange   ?? bridge.stock90DayChange;
         companyData.revenueGrowthYoY   = companyData.revenueGrowthYoY   ?? bridge.revenueGrowthYoY;

@@ -29,6 +29,8 @@ import PeerContagionPanel from "./common/PeerContagionPanel";
 import ModelCalibrationPanel from "./common/ModelCalibrationPanel";
 // v17.0
 import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
+// live-data-first
+import { DataFreshnessPanel } from "../audit/DataFreshnessPanel";
 import { CALIBRATION_META } from "../../services/empiricalCalibration";
 import { getCircuitSnapshot } from "../../services/apiCircuitBreaker";
 import { PatternMatchCard } from "../PatternMatchCard";
@@ -1288,6 +1290,17 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             />
           </div>
         </CollapsibleSection>
+
+        {/* Data freshness: live signal coverage bar + static fallback badge */}
+        <div className="mt-6">
+          <DataFreshnessPanel
+            dataFreshnessScore={(result as any)._dataFreshnessScore}
+            reconciliationSummary={(result as any).reconciliationSummary}
+            lastUpdated={(result as any).companyData?.lastUpdated}
+            staleDb={(result as any).companyData?._staleDb}
+            dbAgeDays={(result as any).companyData?._ageDays}
+          />
+        </div>
 
         {/* v12.0: Signal Attribution Waterfall — how each signal built the final score */}
         <div className="mt-6">
