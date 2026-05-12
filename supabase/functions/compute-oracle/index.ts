@@ -69,6 +69,7 @@ const INDUSTRY_ADOPTION: Record<string, number> = {
 };
 
 const INDUSTRY_KEY_MAP: Record<string, string> = {
+  // Oracle key format (lowercase) → display name
   it_software: "Technology", it_web: "Technology", it_mobile: "Technology",
   it_saas: "Technology", it_ai_ml: "Technology", it_cybersec: "Cybersecurity",
   it_devops: "Technology", finance: "Financial Services", fintech: "Financial Services",
@@ -82,6 +83,24 @@ const INDUSTRY_KEY_MAP: Record<string, string> = {
   construction: "Construction", energy: "Energy", retail: "Retail",
   ecommerce: "E-commerce", government: "Government", ngo: "Nonprofit",
   agriculture: "Agriculture", gaming: "Gaming",
+  // Display name format (title-case) → same display name (identity entries so
+  // calcD1/calcD2 find the correct INDUSTRY_ADOPTION rate for non-oracle inputs)
+  Technology: "Technology", "Financial Services": "Financial Services",
+  "Media & Publishing": "Media & Publishing", Healthcare: "Healthcare",
+  Legal: "Legal", Consulting: "Consulting", Education: "Education",
+  Manufacturing: "Manufacturing", Transportation: "Transportation",
+  "E-commerce": "E-commerce", "Biotech/Pharma": "Biotech/Pharma",
+  Cybersecurity: "Cybersecurity", Retail: "Retail", Government: "Government",
+  Nonprofit: "Nonprofit", Agriculture: "Agriculture", Gaming: "Gaming",
+  Insurance: "Insurance", Hospitality: "Hospitality", Construction: "Construction",
+  Energy: "Energy",
+  // Common alternate display names from company_intelligence DB
+  "Information Technology": "Technology", "IT Services": "Technology",
+  "Software": "Technology", "SaaS": "Technology", "FinTech": "Financial Services",
+  "Pharma": "Biotech/Pharma", "Pharmaceuticals": "Biotech/Pharma",
+  "E-Commerce": "E-commerce", "Ecommerce": "E-commerce",
+  "Media": "Media & Publishing", "Publishing": "Media & Publishing",
+  "Logistics": "Transportation", "Supply Chain": "Transportation",
 };
 
 // D2 role category maturity (0-1)
@@ -120,9 +139,25 @@ const COUNTRY_D5: Record<string, number> = {
   malaysia: 63, vietnam: 67, thailand: 63,
 };
 
+// Resolve raw industry string (oracle key OR display name, any case) to the
+// canonical display-name key used by INDUSTRY_ADOPTION.
+function resolveIndustryKey(industry: string): string {
+  if (!industry) return "Technology";
+  // Exact lookup (handles oracle keys and display names with identity entries)
+  const exact = INDUSTRY_KEY_MAP[industry];
+  if (exact) return exact;
+  // Lowercase lookup (handles oracle keys passed in any capitalisation)
+  const lc = industry.toLowerCase();
+  const fromLc = INDUSTRY_KEY_MAP[lc];
+  if (fromLc) return fromLc;
+  // Direct lookup in INDUSTRY_ADOPTION (already a valid display name, just odd casing)
+  if (INDUSTRY_ADOPTION[industry] !== undefined) return industry;
+  return "Technology";
+}
+
 // ── D1: Task Automatability (0-100) ──────────────────────────────────────────
 function calcD1(roleKey: string, industry: string, country = "usa"): number {
-  const indKey = INDUSTRY_KEY_MAP[industry] ?? "Technology";
+  const indKey = resolveIndustryKey(industry);
   const adoptionRate = INDUSTRY_ADOPTION[indKey] ?? 0.60;
   const complexity = ROLE_COMPLEXITY_MAP[roleKey] ?? 0.55;
   const base = Math.min(100, Math.max(0, Math.round((adoptionRate * 40) + (complexity * 60))));
@@ -134,7 +169,7 @@ function calcD1(roleKey: string, industry: string, country = "usa"): number {
 
 // ── D2: AI Tool Maturity (0-100) ─────────────────────────────────────────────
 function calcD2(roleKey: string, industry: string): number {
-  const indKey = INDUSTRY_KEY_MAP[industry] ?? "Technology";
+  const indKey = resolveIndustryKey(industry);
   const adoptionRate = INDUSTRY_ADOPTION[indKey] ?? 0.55;
   const prefix = roleKey.split("_")[0];
   const categoryMaturity = D2_CATEGORY[prefix] ?? D2_CATEGORY[roleKey] ?? 0.55;
@@ -172,16 +207,25 @@ function calcD6(roleKey: string): number {
 
 // ── Dynamic weights by industry ───────────────────────────────────────────────
 function getWeights(industry: string) {
-  if (["healthcare", "mental_health", "nursing"].includes(industry))
+  // Normalize to lowercase so both oracle keys ("healthcare") and display names
+  // ("Healthcare", "Health Care") match the same branch.
+  const lc = (industry ?? "").toLowerCase().trim();
+  if (lc.includes("health") || lc === "mental_health" || lc === "nursing" || lc === "pharma" || lc.includes("biotech"))
     return { d1: 0.18, d2: 0.12, d3: 0.30, d4: 0.22, d5: 0.08, d6: 0.10 };
-  if (["bpo", "admin"].includes(industry))
+  if (lc === "bpo" || lc === "admin" || lc.includes("outsourc") || lc.includes("bpo"))
     return { d1: 0.35, d2: 0.28, d3: 0.12, d4: 0.12, d5: 0.08, d6: 0.05 };
-  if (["content", "media", "design", "animation", "music"].includes(industry))
+  if (lc === "content" || lc === "media" || lc.includes("publishing") || lc === "design" || lc === "animation" || lc === "music" || lc.includes("media & pub"))
     return { d1: 0.25, d2: 0.20, d3: 0.28, d4: 0.12, d5: 0.07, d6: 0.08 };
-  if (["legal", "consulting"].includes(industry))
+  if (lc === "legal" || lc === "consulting" || lc.includes("legal") || lc.includes("consult"))
     return { d1: 0.20, d2: 0.18, d3: 0.20, d4: 0.20, d5: 0.08, d6: 0.14 };
-  if (industry.startsWith("it_") || industry === "fintech")
+  if (lc.startsWith("it_") || lc === "fintech" || lc === "technology" || lc.includes("software") || lc.includes("saas") || lc.includes("information technology") || lc.includes("it services") || lc === "cybersecurity")
     return { d1: 0.28, d2: 0.20, d3: 0.18, d4: 0.16, d5: 0.09, d6: 0.09 };
+  if (lc.includes("financ") || lc.includes("banking") || lc.includes("insurance") || lc.includes("invest"))
+    return { d1: 0.26, d2: 0.20, d3: 0.22, d4: 0.16, d5: 0.07, d6: 0.09 };
+  if (lc.includes("manufactur") || lc.includes("automotive") || lc.includes("engineer"))
+    return { d1: 0.28, d2: 0.18, d3: 0.18, d4: 0.18, d5: 0.08, d6: 0.10 };
+  if (lc.includes("retail") || lc.includes("ecommerce") || lc.includes("e-commerce"))
+    return { d1: 0.30, d2: 0.22, d3: 0.16, d4: 0.14, d5: 0.08, d6: 0.10 };
   return { d1: 0.26, d2: 0.18, d3: 0.20, d4: 0.16, d5: 0.09, d6: 0.11 };
 }
 
@@ -210,7 +254,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { roleKey, industry = "it_software", experience = "5-10", country = "india" } = await req.json();
+    const { roleKey, industry = "it_software", experience = "5-10", country = "usa" } = await req.json();
     if (!roleKey) return json({ error: "roleKey required" }, 400);
 
     const w = getWeights(industry);

@@ -35,10 +35,12 @@ export default defineConfig({
           if (id.includes('/data/intelligence/') || id.includes('/data/oracleRoleIndex')) {
             return 'career-intelligence';
           }
-          // Vendor libs — split for long-term cache stability
+          // Vendor libs — framer-motion is split for lazy-load savings;
+          // everything else stays in one vendor chunk to avoid the circular
+          // vendor <-> vendor-react initialization order crash
+          // (React.forwardRef undefined on Radix/router init).
           if (id.includes('node_modules')) {
             if (id.includes('framer-motion')) return 'vendor-motion';
-            if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) return 'vendor-react';
             return 'vendor';
           }
         },
