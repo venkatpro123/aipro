@@ -1,5 +1,5 @@
-.replit-artifact/
-dist/
+# Exclude Express API dir — static-site Vercel deployment only
+api/
+src/
 build-local/
-node_modules/
-.env
+dist/

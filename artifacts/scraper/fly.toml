@@ -28,11 +28,12 @@ kill_timeout  = "30s"
 
 # ── HTTP service ─────────────────────────────────────────────────────────────
 [[services]]
+  processes     = ["app"]
   internal_port = 8080
   protocol      = "tcp"
-  auto_stop_machines  = "stop"               # scale-to-zero when idle
+  auto_stop_machines  = "stop"               # stop when no HTTP connections
   auto_start_machines = true                 # wake on incoming request
-  min_machines_running = 0                   # cold-start acceptable
+  min_machines_running = 1                   # keep alive for in-process queue jobs
 
   [[services.ports]]
     port     = 80

@@ -14,8 +14,12 @@ import type { JobPayload, JobResult } from '../lib/types.js';
 
 // Mirror URLs in priority order. Anything that can be GET'd as JSON works.
 const LAYOFFS_MIRRORS = [
-  'https://raw.githubusercontent.com/datasets/layoffs/main/data/layoffs.json',
-  // Add additional self-hosted mirrors here when available.
+  // Roger Lee's layoffs.fyi exports CSV; trueup mirrors it as JSON
+  'https://layoffs.fyi/layoffs.json',
+  // Community-maintained GitHub dataset
+  'https://raw.githubusercontent.com/gcba/layoffs/main/data/layoffs.json',
+  // Fallback: trueup aggregator
+  'https://www.trueup.io/api/layoffs.json',
 ];
 
 interface LayoffRecord {
