@@ -1,8 +1,0 @@
-{
-  "buildCommand": "pnpm --filter @workspace/humanproof run build",
-  "outputDirectory": "artifacts/humanproof/dist",
-  "installCommand": "pnpm install",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
