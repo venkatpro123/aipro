@@ -3,7 +3,7 @@
 // Phase 1 Fix 4: liveSignalCount is now truthful (was hardcoded 5 even when source was DB).
 // Phase 2: Integrates fetchLiveCompanyData for Alpha Vantage + NewsAPI enrichment.
 
-import { CompanyData } from "../data/companyDatabase";
+import { CompanyData, normalizeRegion } from "../data/companyDatabase";
 import { getCompanySync as getCompanyByName } from "./db/staticDataService";
 import { HybridResult, DEFAULT_HYBRID_RESULT } from "../types/hybridResult";
 import {
@@ -94,6 +94,94 @@ import {
 const safeLower = (value: unknown, fallback = ""): string =>
   typeof value === "string" && value.trim().length > 0 ? value.toLowerCase() : fallback;
 
+// Maps common industry name variants (from DB / OSINT) to canonical keys used in industryRiskData.
+// Without this, "Information Technology", "Software", "BFSI", etc. miss the lookup entirely
+// and all industry-sensitive calculations fall back to neutral 0.5 defaults.
+const INDUSTRY_ALIAS_MAP: Record<string, string> = {
+  'information technology': 'Technology',
+  'information technology services': 'IT Services',
+  'software': 'Technology',
+  'software development': 'Technology',
+  'saas': 'Technology',
+  'technology services': 'IT Services',
+  'tech': 'Technology',
+  'it': 'IT Services',
+  'engineering it services': 'IT Services',
+  'bfsi': 'Financial Services',
+  'financial services & banking': 'Financial Services',
+  'financial services and banking': 'Financial Services',
+  'finance': 'Financial Services',
+  'banking & finance': 'Banking',
+  'banking and finance': 'Banking',
+  'banking & financial services': 'Banking',
+  'bank': 'Banking',
+  'pharma': 'Biotech/Pharma',
+  'pharmaceuticals': 'Biotech/Pharma',
+  'pharmaceutical': 'Biotech/Pharma',
+  'life sciences': 'Biotech/Pharma',
+  'healthcare services': 'Healthcare',
+  'health': 'Healthcare',
+  'health tech': 'HealthTech',
+  'media': 'Media',
+  'publishing': 'Media & Publishing',
+  'media and publishing': 'Media & Publishing',
+  'e-commerce': 'E-commerce',
+  'ecommerce': 'E-commerce',
+  'beauty e-commerce': 'E-commerce',
+  'online retail': 'E-commerce',
+  'logistics': 'Logistics',
+  'supply chain': 'Logistics',
+  'freight': 'Logistics',
+  'automotive': 'Manufacturing',
+  'auto': 'Manufacturing',
+  'consumer goods': 'Retail',
+  'consumer electronics': 'Technology',
+  'defense': 'Government',
+  'aerospace': 'Manufacturing',
+  'food tech': 'Food Tech',
+  'foodtech': 'Food Tech',
+  'quick commerce': 'Quick Commerce',
+  'q-commerce': 'Quick Commerce',
+  'fintech': 'FinTech',
+  'financial technology': 'FinTech',
+  'edtech': 'EdTech',
+  'education technology': 'EdTech',
+  'healthtech': 'HealthTech',
+  'agritech': 'AgriTech',
+  'agriculture technology': 'AgriTech',
+  'proptech': 'PropTech',
+  'real estate technology': 'PropTech',
+  'mobility': 'Mobility',
+  'ride sharing': 'Mobility',
+  'electric vehicles': 'Mobility',
+};
+
+function resolveIndustryData(
+  industry: string | undefined | null,
+  industryMap: Record<string, IndustryRisk>,
+): IndustryRisk | undefined {
+  if (!industry) return undefined;
+  const key = industry.trim();
+  if (!key) return undefined;
+
+  // 1. Direct match (most keys are already title-cased)
+  if (industryMap[key]) return industryMap[key];
+
+  // 2. Title-case variant ("information technology" → "Information Technology")
+  const titled = key.replace(/\b\w/g, (c) => c.toUpperCase());
+  if (industryMap[titled]) return industryMap[titled];
+
+  // 3. Lowercase alias lookup
+  const lower = key.toLowerCase();
+  if (industryMap[lower]) return industryMap[lower];
+
+  // 4. Alias map (handles DB variants like "BFSI", "Software", "Information Technology", etc.)
+  const alias = INDUSTRY_ALIAS_MAP[lower];
+  if (alias && industryMap[alias]) return industryMap[alias];
+
+  return undefined;
+}
+
 export interface AuditInputs {
   companyName: string;
   roleTitle: string;
@@ -135,7 +223,7 @@ function mapOsintToCompanyData(osintData: any, sourceName?: string): CompanyData
     stockTicker: osintData.ticker ?? osintData.stock_ticker,
     isPublic: resolvedIsPublic,
     industry: osintData.industry || "Technology",
-    region: osintData.region ?? osintData.country_code ?? "GLOBAL",
+    region: normalizeRegion(osintData.region ?? osintData.country_code),
     employeeCount: osintData.employee_count || 500,
     revenueGrowthYoY: osintData.revenue_yoy ?? null,
     stock90DayChange: osintData.stock_90d_change ?? null,
@@ -659,12 +747,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
   }
 
-  const industryKey = companyData.industry?.trim();
   const _industryMap = getAllIndustryRisk();
-  const industryData: IndustryRisk | undefined = industryKey
-    ? _industryMap[industryKey] ??
-      _industryMap[industryKey.replace(/\b\w/g, (c) => c.toUpperCase())]
-    : undefined;
+  const industryData: IndustryRisk | undefined = resolveIndustryData(companyData.industry, _industryMap);
 
   // Shadow path: keep the legacy engine running for regression comparison and
   // to preserve auxiliary fields that the UI still consumes directly.

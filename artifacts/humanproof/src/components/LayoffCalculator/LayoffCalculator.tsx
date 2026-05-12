@@ -280,14 +280,27 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       userFactors?.careerYears ?? userFactors.tenureYears;
     const oracleExp = deriveExperience(careerExp);
     const d5CountryKey = countryCodeToD5Key(companyData.region || "GLOBAL");
-    // Case-insensitive industry lookup with title-case fallback so "technology"
-    // and "Technology" both resolve correctly against the risk map keys.
     const _industryMap = getAllIndustryRisk();
-    const _industryRaw = companyData.industry?.trim() ?? '';
+    const _industryRaw = (companyData.industry ?? '').trim();
+    // Alias map for common DB/OSINT industry name variants that don't match
+    // the canonical keys in industryRiskData (e.g. "Information Technology" → "Technology")
+    const _industryAliases: Record<string, string> = {
+      'information technology': 'Technology', 'software': 'Technology',
+      'saas': 'Technology', 'technology services': 'IT Services',
+      'engineering it services': 'IT Services', 'bfsi': 'Financial Services',
+      'finance': 'Financial Services', 'banking & finance': 'Banking',
+      'banking and finance': 'Banking', 'pharma': 'Biotech/Pharma',
+      'pharmaceuticals': 'Biotech/Pharma', 'healthcare services': 'Healthcare',
+      'e-commerce': 'E-commerce', 'ecommerce': 'E-commerce',
+      'fintech': 'FinTech', 'edtech': 'EdTech', 'healthtech': 'HealthTech',
+      'food tech': 'Food Tech', 'quick commerce': 'Quick Commerce',
+    };
+    const _lc = _industryRaw.toLowerCase();
     const industryData: IndustryRisk | undefined =
       _industryMap[_industryRaw] ??
       _industryMap[_industryRaw.replace(/\b\w/g, c => c.toUpperCase())] ??
-      _industryMap[_industryRaw.toLowerCase()];
+      _industryMap[_lc] ??
+      (_industryAliases[_lc] ? _industryMap[_industryAliases[_lc]] : undefined);
     const oracleBody = {
       roleKey: effectiveOracleKey || "generic",
       industry: companyData.industry,

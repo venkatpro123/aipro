@@ -125,22 +125,33 @@ const mapCompanySize = (count: number): number => {
 const INDIA_SECTOR_RPE_MEDIANS: Record<string, number> = {
   Technology: 40_000,
   'IT Services': 35_000,
+  'Information Technology': 40_000,
+  Software: 40_000,
   Finance: 60_000,
+  'Financial Services': 60_000,
   Banking: 55_000,
   Healthcare: 30_000,
   'E-commerce': 85_000,
+  Ecommerce: 85_000,
   BPO: 22_000,
-  Software: 55_000,
+  ITES: 28_000,
+  FinTech: 65_000,
   Media: 25_000,
+  'Media & Publishing': 25_000,
   _default: 38_000,
 };
+
+// India-region check: accept both the canonical 'IN' code and the
+// raw strings that may come through before normalizeRegion runs.
+const isIndiaRegion = (region: string): boolean =>
+  region === 'IN' || region.toLowerCase() === 'india' || region.toLowerCase() === 'ind';
 
 const mapOverstaffing = (
   revenuePerEmp: number,
   region: string = 'US',
   industry?: string,
 ): number => {
-  if (region === 'IN') {
+  if (isIndiaRegion(region)) {
     const median =
       INDIA_SECTOR_RPE_MEDIANS[industry ?? '_default'] ??
       INDIA_SECTOR_RPE_MEDIANS._default;
