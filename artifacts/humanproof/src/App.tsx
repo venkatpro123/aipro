@@ -734,6 +734,7 @@ function AppContent() {
   const openAuth = () => setIsAuthOpen(true);
 
   return (
+    <GlobalErrorBoundary>
     <div style={{ minHeight: "100vh", color: "var(--text)", position: "relative" }}>
       <LiquidAIBackground />
       <ScrollToTop />
@@ -782,6 +783,7 @@ function AppContent() {
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <SonnerToaster position="bottom-right" richColors closeButton />
     </div>
+    </GlobalErrorBoundary>
   );
 }
 
@@ -789,19 +791,17 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <HumanProofProvider>
-          <ProfileSetupModal />
-          <LayoffProvider>
-            <ToastProvider>
-              {/* Listens to breaking_news_events INSERTs and toasts the user
-                  when a recently-audited company has a new layoff event. */}
-              <RealtimeSignalToast />
-              <AppContent />
-            </ToastProvider>
-          </LayoffProvider>
-        </HumanProofProvider>
-      </AuthProvider>
+      <HumanProofProvider>
+        <ProfileSetupModal />
+        <LayoffProvider>
+          <ToastProvider>
+            {/* Listens to breaking_news_events INSERTs and toasts the user
+                when a recently-audited company has a new layoff event. */}
+            <RealtimeSignalToast />
+            <AppContent />
+          </ToastProvider>
+        </LayoffProvider>
+      </HumanProofProvider>
     </Router>
   );
 }

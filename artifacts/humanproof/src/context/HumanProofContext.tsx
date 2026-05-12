@@ -199,6 +199,13 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
+  // Safety timeout: if localStorage hydration stalls for any reason, unblock
+  // the render after 3 s so the app is never permanently stuck on LoadingScreen.
+  useEffect(() => {
+    const id = setTimeout(() => setIsHydrated(true), 3000);
+    return () => clearTimeout(id);
+  }, []);
+
   const refreshUserProfile = useCallback(async () => {
     const profile = await fetchUserProfile();
     setUserProfile(profile);
