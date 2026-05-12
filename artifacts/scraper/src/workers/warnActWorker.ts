@@ -1,63 +1,90 @@
 // warnActWorker.ts
-// Fetches WARN Act filings for a target US state and persists matches to
-// public.warn_filings. The existing supabase Edge Function `warn-act-fetch`
-// covers CA, NY, WA, TX, NJ — this worker is a complement, not a replacement,
-// triggered by the scraper when an on-demand check is needed (e.g. when a
-// news article mentions a company we don't have WARN data for yet).
+// Downloads the CA EDD WARN Act XLSX (updated weekly, ~130KB) and matches
+// the target company. Returns rows for the warn_filings table.
 //
-// For MVP, this worker scrapes California's EDD HTML page (most US tech
-// layoffs filed here). Other states stay with the Edge Function which already
-// handles their bespoke formats. Add more state handlers here in Phase 5.
+// The HTML page at /layoff_services_warn/ is JavaScript-rendered (IIS/ASP.NET)
+// so a plain fetch gets no table data. The XLSX linked from that page IS
+// statically hosted and always fresh — last-modified is confirmed server-side.
+//
+// XLSX format (CA EDD warn_report1.xlsx, as of 2026):
+//   Col A: Notice Date  (MM/DD/YYYY)
+//   Col B: Effective Date
+//   Col C: Received Date
+//   Col D: Company
+//   Col E: City
+//   Col F: No. Of Employees Affected
+//   Col G: Layoff/Closure
+//   Col H: Union
+//   Col I: Temp/Perm
+//   Col J: WARN Id
+//   Col K: Industry
+//   Col L: Remarks
 
+import * as XLSX from 'xlsx';
 import { getSupabase } from '../lib/supabaseClient.js';
 import { dedupeKey } from '../lib/dedupe.js';
 import type { JobPayload, JobResult } from '../lib/types.js';
 
-const CA_WARN_URL = 'https://edd.ca.gov/en/jobs_and_training/layoff_services_warn/';
+const EDD_XLSX_URL = 'https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx';
 
-interface ParsedNotice {
-  companyName: string;
-  state: string;
-  filedDate: string;        // YYYY-MM-DD
-  layoffDate: string | null;
-  affectedCount: number | null;
-  locations: string[];
-  sourceUrl: string;
+interface WarnRow {
+  noticeDate:    string;   // YYYY-MM-DD
+  effectiveDate: string | null;
+  company:       string;
+  city:          string;
+  affected:      number | null;
+  eventType:     string;   // 'Layoff' | 'Closure' | ...
 }
 
-/**
- * Best-effort regex-based extraction from CA EDD's HTML. EDD changes the page
- * structure occasionally — when the parser breaks we record `parse_error` so
- * operators see it in the block-rate alarm and update the regex.
- */
-function parseCaliforniaHtml(html: string): ParsedNotice[] {
-  const out: ParsedNotice[] = [];
-  // EDD publishes a year-by-year XLSX link near the top; failure to find any
-  // table rows is normal until the page is re-rendered with current data.
-  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = rowRegex.exec(html)) !== null) {
-    const cells = Array.from(m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi))
-      .map(c => c[1].replace(/<[^>]+>/g, '').trim());
-    if (cells.length < 4) continue;
-    const company = cells.find(c => /\b(inc|llc|corp|co\.|company|ltd)\b/i.test(c)) ?? cells[1];
-    const dateMatch = cells.find(c => /\d{1,2}\/\d{1,2}\/\d{4}/.test(c));
-    if (!company || !dateMatch) continue;
-    const dmm = dateMatch.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (!dmm) continue;
-    const filedDate = `${dmm[3]}-${dmm[1].padStart(2, '0')}-${dmm[2].padStart(2, '0')}`;
-    const countMatch = cells.find(c => /^\d{2,5}$/.test(c.replace(/,/g, '')));
-    out.push({
-      companyName:   company,
-      state:         'CA',
-      filedDate,
-      layoffDate:    null,
-      affectedCount: countMatch ? parseInt(countMatch.replace(/,/g, ''), 10) : null,
-      locations:     [],
-      sourceUrl:     CA_WARN_URL,
-    });
+function excelDateToISO(val: any): string | null {
+  if (!val) return null;
+  // Excel serial number → JS Date
+  if (typeof val === 'number') {
+    const d = XLSX.SSF.parse_date_code(val);
+    if (!d) return null;
+    return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
   }
-  return out;
+  // Already a string like "01/15/2026"
+  if (typeof val === 'string') {
+    const m = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  }
+  return null;
+}
+
+function parseXlsx(buffer: ArrayBuffer): WarnRow[] {
+  const wb = XLSX.read(buffer, { type: 'array', cellDates: false });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  if (!sheet) return [];
+
+  // sheet_to_json uses first row as headers; rawDates:false keeps serial numbers
+  const raw = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: '' });
+
+  return raw.map((r): WarnRow | null => {
+    // Normalise header names — EDD header row has some variation year to year
+    const keys = Object.keys(r);
+    const get = (patterns: RegExp) =>
+      r[keys.find(k => patterns.test(k.toLowerCase())) ?? ''] ?? '';
+
+    const company    = String(get(/company|employer/)).trim();
+    const noticeDateRaw = get(/notice.?date/);
+    const noticeDate = excelDateToISO(noticeDateRaw);
+    const effRaw     = get(/effective.?date/);
+    const affRaw     = get(/affected|employees/);
+    const city       = String(get(/city/)).trim();
+    const eventType  = String(get(/layoff|closure|type/)).trim() || 'Layoff';
+
+    if (!company || !noticeDate) return null;
+
+    return {
+      noticeDate,
+      effectiveDate: excelDateToISO(effRaw),
+      company,
+      city,
+      affected: affRaw !== '' ? parseInt(String(affRaw).replace(/,/g, ''), 10) || null : null,
+      eventType,
+    };
+  }).filter((r): r is WarnRow => r !== null);
 }
 
 export async function warnActWorker(payload: JobPayload): Promise<JobResult> {
@@ -66,63 +93,74 @@ export async function warnActWorker(payload: JobPayload): Promise<JobResult> {
     return { ok: false, errorKind: 'parse_error', errorMessage: 'companyName too short' };
   }
 
-  // For on-demand triggers, scrape California (largest tech state) first.
+  // 1. Download the XLSX (statically hosted — CDN-cached, fast)
+  let buffer: ArrayBuffer;
   try {
-    const res = await fetch(CA_WARN_URL, {
+    const res = await fetch(EDD_XLSX_URL, {
       headers: { 'User-Agent': 'humansheild-scraper (contact@humanproof.ai)' },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(20_000),
     });
-    if (!res.ok) return { ok: false, errorKind: 'network_error', errorMessage: `CA EDD HTTP ${res.status}` };
-    const html = await res.text();
-    const all = parseCaliforniaHtml(html);
-
-    // Filter to matches of this company. Word-boundary-ish match to avoid
-    // "Apple" matching "Snapple".
-    const escaped = company.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(`(^|\\s)${escaped}(\\s|$|,)`, 'i');
-    const matches = all.filter(n => re.test(n.companyName.toLowerCase()));
-
-    if (matches.length === 0) {
-      return { ok: true, summary: `no CA WARN matches for ${company}`, rowsWritten: 0 };
+    if (!res.ok) {
+      return { ok: false, errorKind: 'network_error', errorMessage: `EDD XLSX HTTP ${res.status}` };
     }
-
-    const sb = getSupabase();
-    const rows = matches.map(n => ({
-      company_name:   n.companyName,
-      filing_state:   n.state,
-      filed_date:     n.filedDate,
-      layoff_date:    n.layoffDate,
-      affected_count: n.affectedCount,
-      locations:      n.locations,
-      is_confirmed:   true,
-      source_url:     n.sourceUrl,
-      raw_text:       null,
-    }));
-
-    const { error, data } = await sb
-      .from('warn_filings')
-      // No native unique constraint covers (company, filed_date, state); rely
-      // on the application-level dedupe_key in scrape_jobs to short-circuit
-      // retries within 24h.
-      .insert(rows)
-      .select('id');
-
-    if (error) {
-      return { ok: false, errorKind: 'parse_error', errorMessage: error.message };
-    }
-
-    payload.dedupeKey = dedupeKey({
-      company, source: 'warn_ca',
-      date: new Date().toISOString().slice(0, 10),
-    });
-
-    return {
-      ok: true,
-      summary: `${matches.length} CA WARN notices written`,
-      rowsWritten: data?.length ?? 0,
-    };
+    buffer = await res.arrayBuffer();
   } catch (err: any) {
     if (err?.name === 'TimeoutError') return { ok: false, errorKind: 'timeout', errorMessage: err.message };
     return { ok: false, errorKind: 'network_error', errorMessage: err?.message ?? String(err) };
   }
+
+  // 2. Parse
+  let all: WarnRow[];
+  try {
+    all = parseXlsx(buffer);
+  } catch (err: any) {
+    return { ok: false, errorKind: 'parse_error', errorMessage: `XLSX parse failed: ${err?.message}` };
+  }
+
+  if (all.length === 0) {
+    return { ok: false, errorKind: 'parse_error', errorMessage: 'XLSX parsed to 0 rows — format may have changed' };
+  }
+
+  // 3. Match company — word-boundary style to avoid "Apple" matching "Snapple"
+  const escaped = company.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(^|[\\s,/]|inc|llc|corp)${escaped}([\\s,/]|inc|llc|corp|$)`, 'i');
+  const matches = all.filter(n => re.test(n.company) || n.company.toLowerCase() === company.toLowerCase());
+
+  if (matches.length === 0) {
+    return { ok: true, summary: `no CA WARN matches for ${company} in ${all.length} rows`, rowsWritten: 0 };
+  }
+
+  // 4. Write to warn_filings
+  const sb = getSupabase();
+  const rows = matches.map(n => ({
+    company_name:   n.company,
+    filing_state:   'CA',
+    filed_date:     n.noticeDate,
+    layoff_date:    n.effectiveDate,
+    affected_count: n.affected,
+    locations:      n.city ? [n.city] : [],
+    is_confirmed:   true,
+    source_url:     EDD_XLSX_URL,
+    raw_text:       null,
+  }));
+
+  const { error, data } = await sb
+    .from('warn_filings')
+    .upsert(rows, { onConflict: 'company_name,filed_date,filing_state', ignoreDuplicates: true })
+    .select('id');
+
+  if (error) {
+    return { ok: false, errorKind: 'parse_error', errorMessage: error.message };
+  }
+
+  payload.dedupeKey = dedupeKey({
+    company, source: 'warn_ca_xlsx',
+    date: new Date().toISOString().slice(0, 10),
+  });
+
+  return {
+    ok:          true,
+    summary:     `${matches.length} CA WARN matches → ${data?.length ?? 0} new rows (${all.length} total in XLSX)`,
+    rowsWritten: data?.length ?? 0,
+  };
 }
