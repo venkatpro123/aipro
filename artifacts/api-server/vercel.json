@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "cleanUrls": true,
+  "outputDirectory": "../humanproof/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index.ts" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

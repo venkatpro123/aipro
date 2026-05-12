@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm run build && node --env-file=.env ./build-local/index.mjs",
     "build": "node ./build.mjs",
-    "vercel-build": "ls",
+    "vercel-build": "pnpm --filter @workspace/humanproof run build",
     "deploy": "npx wrangler deploy",
     "dev:worker": "npx wrangler dev src/worker.ts",
     "start": "node --enable-source-maps ./build-local/index.mjs",
