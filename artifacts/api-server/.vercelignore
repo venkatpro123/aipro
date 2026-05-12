@@ -1,5 +1,7 @@
-# Exclude Express API dir — static-site Vercel deployment only
-api/
-src/
-build-local/
-dist/
+# Anchored paths (leading /) match only inside artifacts/api-server, not the whole repo.
+# Without /, gitignore-style patterns match any directory at any depth — which would
+# incorrectly delete artifacts/humanproof/src/ and break the Vite build.
+/api/
+/src/
+/build-local/
+/dist/
