@@ -38,7 +38,7 @@ export default defineConfig({
           // Vendor libs — split for long-term cache stability
           if (id.includes('node_modules')) {
             if (id.includes('framer-motion')) return 'vendor-motion';
-            if (id.includes('react-dom') || id.includes('/react/')) return 'vendor-react';
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) return 'vendor-react';
             return 'vendor';
           }
         },
