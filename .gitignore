@@ -64,3 +64,5 @@ lib/db/.env
 
 # Scratch data
 scratch/
+
+.vercel

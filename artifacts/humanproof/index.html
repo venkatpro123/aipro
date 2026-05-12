@@ -27,5 +27,33 @@
       }
     </style>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // If React hasn't replaced #hs-boot within 12 seconds, show a recovery UI.
+      // This catches silent mount failures (missing chunk, unhandled throw) so
+      // users aren't stuck on the loading spinner indefinitely.
+      (function () {
+        var t = setTimeout(function () {
+          var boot = document.getElementById('hs-boot');
+          if (!boot) return; // React mounted — nothing to do
+          boot.innerHTML =
+            '<div style="text-align:center;padding:32px;max-width:400px;">' +
+            '<p style="font-size:0.9rem;color:rgba(240,240,245,0.7);margin:0 0 16px">Failed to load. Check your internet connection or try a hard refresh.</p>' +
+            '<button onclick="location.reload(true)" style="background:#00d4e0;color:#000;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:0.875rem;font-weight:600">Refresh</button>' +
+            '</div>';
+        }, 12000);
+        // Cancel the timeout if React mounts and removes hs-boot from the DOM
+        var obs = new MutationObserver(function () {
+          if (!document.getElementById('hs-boot')) { clearTimeout(t); obs.disconnect(); }
+        });
+        obs.observe(document.getElementById('root'), { childList: true, subtree: false });
+        // Log JS errors to the console so they show up in Vercel logs / browser devtools
+        window.addEventListener('error', function (e) {
+          console.error('[hs-boot error]', e.message, e.filename, e.lineno);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          console.error('[hs-boot unhandledrejection]', e.reason);
+        });
+      })();
+    </script>
   </body>
 </html>

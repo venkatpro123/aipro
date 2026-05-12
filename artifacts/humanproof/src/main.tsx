@@ -41,10 +41,17 @@ registerServiceWorker();
 // instantly. Falls back to bundled TypeScript arrays if Supabase is offline.
 preloadStaticData().catch(() => { /* fallback already handled inside */ });
 
-createRoot(document.getElementById("root")!).render(
-  <I18nProvider>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </I18nProvider>
-);
+try {
+  createRoot(document.getElementById("root")!).render(
+    <I18nProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </I18nProvider>
+  );
+} catch (err: any) {
+  // Synchronous render failure — log clearly so it shows in Vercel build/runtime logs
+  // and surfaces in the browser console. The 12-second hs-boot fallback in index.html
+  // will show a refresh prompt to the user.
+  console.error('[main] createRoot.render() failed:', err?.message ?? err);
+}
