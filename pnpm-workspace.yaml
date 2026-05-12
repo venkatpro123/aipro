@@ -35,7 +35,8 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
 
 packages:
-  - artifacts/*
+  - 'artifacts/*'
+  - '!artifacts/scraper'   # Fly.io Docker service — has its own npm install in Dockerfile
   - lib/*
   - lib/integrations/*
   - scripts
