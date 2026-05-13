@@ -39,7 +39,7 @@ interface SignalConflict {
   recommendedResolution?: string;
 }
 
-const STALE_HOURS = 24;
+const STALE_HOURS = 4;  // Reduced from 24h — live company events (layoffs, stock) break hourly
 const STALE_DAYS_DEGRADED = 7;
 const STALE_DAYS_INVALID = 30;
 
@@ -90,30 +90,29 @@ const normalizeCompanyName = (name: string): string =>
   name.trim().toLowerCase();
 
 const extractEmployeeCount = (row: JsonObject): number => {
-  const fromSignals = row.financial_signals?.employee_count;
+  // Priority 1: direct DB column (workforce_count — the authoritative HR field)
+  if (typeof row.workforce_count === "number" && row.workforce_count > 0) return row.workforce_count;
+
+  // Priority 2: financial_signals sub-document variants
+  const fin = row.financial_signals ?? {};
+  const fromSignals = fin.employee_count ?? fin.headcount ?? fin.workforce_count;
   if (typeof fromSignals === "number" && fromSignals > 0) return fromSignals;
 
-  const sizeMap: Record<string, number> = {
-    small: 60,
-    mid: 500,
-    large: 5000,
-    enterprise: 50000,
-    mega: 150000,
-  };
-  const fromSize = sizeMap[String(row.company_size || "").toLowerCase()];
-  if (fromSize) return fromSize;
-
-  // Well-known global companies — canonical floor sourced from _shared/knownHeadcounts.ts
-  // (same map as artifacts/humanproof/src/data/companyIntelligenceBridge.ts).
-  // The previous inline map drifted: had Salesforce at 73k in bridge but missing
-  // in edge function → default 5k for Salesforce searches. Single source now.
+  // Priority 3: KNOWN_HEADCOUNTS canonical map (updated quarterly)
   const nameLower = String(row.company_name || "").toLowerCase();
   for (const [key, count] of Object.entries(KNOWN_HEADCOUNTS)) {
     if (nameLower.includes(key)) return count;
   }
 
-  // Unknown company — use 5000 as a neutral mid-range default rather than 1000
-  // which displays as "1K" and misleads users into thinking it's a tiny startup.
+  // Priority 4: size-class proxy (last resort — wide buckets)
+  const sizeMap: Record<string, number> = {
+    micro: 10, startup: 25, small: 60, mid: 500, medium: 2000,
+    large: 10000, enterprise: 50000, mega: 150000,
+  };
+  const fromSize = sizeMap[String(row.company_size || "").toLowerCase()];
+  if (fromSize) return fromSize;
+
+  // Unknown — use industry-neutral 5k rather than 1k (misleads as tiny startup)
   return 5000;
 };
 
@@ -129,11 +128,14 @@ const normalizeFromCompanyIntel = (row: JsonObject) => {
   return {
     company_name: row.company_name,
     ticker:
-      financial.ticker || financial.stock_ticker || financial.symbol || null,
+      financial.ticker || financial.stock_ticker || financial.symbol ||
+      row.stock_ticker || null,
     is_public:
       row.stage === "public" ||
       financial.is_public === true ||
-      financial.public === true,
+      financial.public === true ||
+      financial.funding_stage === "public" ||
+      row.funding_stage === "public",
     industry: row.industry || "Technology",
     region: financial.region || financial.country_code || "GLOBAL",
     employee_count: extractEmployeeCount(row),
@@ -165,13 +167,26 @@ const normalizeFromCompanyIntel = (row: JsonObject) => {
         ? layoffs.layoff_rounds
         : typeof layoffs.rounds === "number"
           ? layoffs.rounds
-          : 0,
+          // DB schema stores total_layoffs (headcount) not layoff_rounds (event count).
+          // Derive a round count: 1 round if any layoffs exist, 2 if frequent pattern.
+          : typeof layoffs.total_layoffs === "number" && layoffs.total_layoffs > 0
+            ? (layoffs.layoff_frequency === "frequent" ? 2 : 1)
+            : Array.isArray(layoffs.recent_layoffs) && layoffs.recent_layoffs.length > 0
+              ? layoffs.recent_layoffs.length
+              : 0,
+    total_layoffs:
+      typeof layoffs.total_layoffs === "number" ? layoffs.total_layoffs : null,
+    last_layoff_date:
+      typeof layoffs.last_layoff_date === "string" ? layoffs.last_layoff_date : null,
     last_layoff_percent:
       typeof layoffs.last_layoff_percent === "number"
         ? layoffs.last_layoff_percent
-        : null,
+        : typeof layoffs.total_layoffs === "number" && layoffs.total_layoffs > 0
+          ? null   // will be computed from total_layoffs / employee_count downstream
+          : null,
     recent_layoff_news:
       layoffs.recent_layoff_news === true ||
+      (typeof layoffs.total_layoffs === "number" && layoffs.total_layoffs > 0) ||
       (Array.isArray(layoffs.recent_layoffs) &&
         layoffs.recent_layoffs.length > 0),
     ai_investment_signal:
@@ -409,6 +424,43 @@ Deno.serve(async (req) => {
         intelLayoff?.hiring_signals?.financial?.ai_investment_signal ??
         "medium";
 
+      // Even on a cache hit, always check breaking_news_events for events in
+      // the last 7 days — this catches same-day layoff announcements that the
+      // static company_intelligence table won't have for up to STALE_HOURS.
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+        const { data: breakingRows } = await supabaseClient
+          .from("breaking_news_events")
+          .select("company_name, event_date, percent_cut, affected_count, source")
+          .ilike("company_name", `%${normalise(cached.company_name).replace(/[%_]/g, "\\$&")}%`)
+          .gte("event_date", sevenDaysAgo)
+          .order("event_date", { ascending: false })
+          .limit(5);
+
+        if (Array.isArray(breakingRows) && breakingRows.length > 0) {
+          // Merge: add breaking_news events not already in the cached layoff list
+          const existingDates = new Set(
+            (cachedLayoffs as Array<{ date?: string }>).map((l) => String(l.date ?? "").slice(0, 10)),
+          );
+          for (const row of breakingRows) {
+            const rowDate = String(row.event_date ?? "").slice(0, 10);
+            if (!existingDates.has(rowDate)) {
+              cachedLayoffs.unshift({ date: rowDate, percentCut: row.percent_cut ?? 5, source: `breaking_news (${row.source ?? "newsapi"})` });
+              existingDates.add(rowDate);
+              cachedLayoffRounds = Math.max(cachedLayoffRounds, 1);
+              cachedRecentLayoffNews = true;
+              if (row.percent_cut !== null && cachedLastLayoffPct === null) {
+                cachedLastLayoffPct = row.percent_cut;
+              }
+            }
+          }
+          // Re-sort by date desc after merge
+          (cachedLayoffs as Array<{ date?: string }>).sort(
+            (a, b) => String(b.date ?? "").localeCompare(String(a.date ?? "")),
+          );
+        }
+      } catch { /* non-fatal — best-effort breaking news merge */ }
+
       return new Response(
         JSON.stringify({
           companyName: cached.company_name,
@@ -444,11 +496,18 @@ Deno.serve(async (req) => {
     // Primary source: company_intelligence with the same confidence gate used
     // by the frontend lookup. Weak word-overlap matches must not silently seed
     // the audit with the wrong company.
-    const { data: intelExact } = await supabaseClient
+    // Use limit(1) + order by confidence_score DESC to handle duplicate company
+    // rows (maybeSingle() throws PGRST116 when >1 row matches).
+    const { data: intelExactRows } = await supabaseClient
       .from("company_intelligence")
       .select("*")
       .ilike("company_name", companyName)
-      .maybeSingle();
+      .order("confidence_score", { ascending: false })
+      .limit(1);
+
+    const intelExact = Array.isArray(intelExactRows) && intelExactRows.length > 0
+      ? intelExactRows[0]
+      : null;
 
     let intelRow = intelExact;
     let matchConfidence = intelExact ? 1.0 : 0.0;
@@ -606,8 +665,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    const shouldEnrichNews =
-      !merged.recent_layoff_news || isStale(merged.last_updated);
+    // Always re-run news enrichment when data is stale — even if recent_layoff_news
+    // was previously true, that flag could reflect an old event. Skipping on
+    // recent_layoff_news=true caused new May 2026 layoff signals to be silently dropped
+    // for companies that had a prior unrelated layoff in their DB record.
+    const shouldEnrichNews = isStale(merged.last_updated);
     if (shouldEnrichNews && newsKey) {
       try {
         const layoffNews = await tryFetchLayoffNews(

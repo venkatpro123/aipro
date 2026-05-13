@@ -798,7 +798,11 @@ export const fetchLiveCompanyData = async (
         if (!alreadyInDerived) {
           derivedLayoffEvents.push({
             date:       row.event_date,
-            percentCut: row.percent_cut ?? 0,
+            // Use 5% as minimum floor when percent_cut is null — aligns with
+            // injectLayoffEvent default below and prevents "Undisclosed minor"
+            // display in the UI (null??0 was causing severity:"minor" and
+            // the "Undisclosed" label even for confirmed documented layoffs).
+            percentCut: row.percent_cut ?? 5,
             source:     `breaking_news_events (${row.source})`,
           });
           // Also inject into the in-memory cache so the score engine's newsRisk fires
@@ -1069,8 +1073,22 @@ const chooseAuthoritativeSignal = <T>({
       // Live is degraded but DB is fresh — DB is more recent, keep DB
       summary.ignoredLiveKeys = [...(summary.ignoredLiveKeys ?? []), key];
     } else {
-      // Both degraded (7-30 days): prefer live as the most recent external fetch
-      chosen = liveSignal;
+      // Both degraded (7-30 days): blend numeric values at 0.5/0.5 rather than
+      // always picking live — neither source is more trustworthy when both are stale.
+      const lv = liveSignal!.value;
+      const dv = dbSignal!.value;
+      if (typeof lv === 'number' && typeof dv === 'number') {
+        const blended: ProvenancedSignal<T> = {
+          ...liveSignal!,
+          value: ((lv + dv) / 2) as unknown as T,
+          sourceName: `blend(${liveSignal!.sourceName},${dbSignal!.sourceName})`,
+          confidence: Math.min(liveSignal!.confidence, dbSignal!.confidence),
+          supersedes: [dbSignal!.sourceName],
+        };
+        chosen = blended;
+      } else {
+        chosen = liveSignal;
+      }
     }
   }
 
@@ -1173,8 +1191,10 @@ export const reconcileCompanySignals = (
   const liveLayoffEvents = mergeLayoffEvents(
     [],
     live.derivedLayoffEvents.map((event) => {
+      // Recompute from affectedCount when percentCut is at the default floor (<=5)
+      // and we actually have both count and headcount to derive the real %.
       const computedPct =
-        event.percentCut === 0 &&
+        event.percentCut <= 5 &&
         typeof event.affectedCount === 'number' &&
         event.affectedCount > 0 &&
         baseEmployeeCount

@@ -578,6 +578,7 @@ interface LayoffEvent {
   percentage: number;
   department?: string;
   severity: "minor" | "moderate" | "major";
+  isEstimated?: boolean;   // true when % is a default floor, not a confirmed figure
 }
 
 const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> = ({ events, companyName }) => {
@@ -677,10 +678,17 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                           {formatDate(event.date)}
                         </div>
                         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.8rem', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)', lineHeight: 1.2, marginBottom: '4px' }}>
-                          {event.percentage > 0
-                            ? `${event.percentage}% cut`
-                            : 'Undisclosed'}
+                          {event.isEstimated
+                            ? 'Documented'
+                            : event.percentage > 0
+                              ? `${event.percentage}% cut`
+                              : 'Undisclosed'}
                         </div>
+                        {event.isEstimated && (
+                          <div className="data-label" style={{ opacity: 0.55, fontSize: '0.6rem', marginBottom: '4px' }}>
+                            scale undisclosed
+                          </div>
+                        )}
                         {event.count > 0 && (
                           <div className="data-label" style={{ opacity: 0.6 }}>{event.count.toLocaleString()} roles</div>
                         )}
@@ -694,7 +702,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                           background: `${sColor}15`, color: sColor,
                           display: 'inline-block', textTransform: 'uppercase', letterSpacing: '0.08em',
                         }}>
-                          {event.severity}
+                          {event.isEstimated ? 'confirmed' : event.severity}
                         </div>
                       </div>
                     </motion.div>
@@ -1097,7 +1105,10 @@ const buildIntelligentSignals = (
     | { date: string; percentCut: number; source?: string } | undefined;
   if (lastLayoff) {
     const dateLabel = new Date(lastLayoff.date).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const cutPhrase = lastLayoff.percentCut > 0 ? `${lastLayoff.percentCut}% of staff` : "headcount (size undisclosed)";
+    const isEstimatedPct = typeof lastLayoff.source === 'string' && lastLayoff.source.includes('breaking_news') && lastLayoff.percentCut <= 5;
+    const cutPhrase = isEstimatedPct ? "headcount (scale undisclosed — workforce reduction confirmed)"
+      : lastLayoff.percentCut > 0 ? `${lastLayoff.percentCut}% of staff`
+      : "headcount (size undisclosed)";
     const totalRounds = companyData.layoffRounds ?? 1;
     const pattern = totalRounds >= 3
       ? `Pattern: ${totalRounds} rounds in 24 months — chronic restructuring`
@@ -1253,20 +1264,29 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
 
   const layoffEvents: LayoffEvent[] = useMemo(() => {
     if (!companyData.layoffsLast24Months?.length) return [];
-    return companyData.layoffsLast24Months.map((l: any) => ({
-      date: l.date,
-      // Only compute a headcount when we actually know the percentage.
-      // Avoid showing "(0 roles cut)" for events where % is unknown.
-      count: l.percentCut > 0 && companyData.employeeCount
-        ? Math.round(companyData.employeeCount * (l.percentCut / 100))
-        : 0,
-      percentage: l.percentCut,
-      severity: l.percentCut > 10 ? "major" : l.percentCut > 3 ? "moderate" : "minor",
-      // Pass through affected departments when the DB/connectors provided them
-      department: Array.isArray(l.affectedDepartments) && l.affectedDepartments.length
-        ? l.affectedDepartments.join(', ')
-        : typeof l.department === 'string' ? l.department : undefined,
-    }));
+    return companyData.layoffsLast24Months.map((l: any) => {
+      // Events from breaking_news_events with null percent_cut default to 5%
+      // floor — flag these as estimated so the UI shows "Documented · % undisclosed"
+      // rather than a misleading precise figure.
+      const isBreakingNews = typeof l.source === 'string' && l.source.includes('breaking_news');
+      const isEstimated = isBreakingNews && l.percentCut <= 5;
+      const displayPct = isEstimated ? 0 : l.percentCut;  // 0 triggers "Documented" label in JSX
+      return {
+        date: l.date,
+        count: l.percentCut > 5 && companyData.employeeCount
+          ? Math.round(companyData.employeeCount * (l.percentCut / 100))
+          : 0,
+        percentage: displayPct,
+        severity: isEstimated ? "moderate"
+          : l.percentCut > 10 ? "major"
+          : l.percentCut > 3  ? "moderate"
+          : "minor",
+        isEstimated,
+        department: Array.isArray(l.affectedDepartments) && l.affectedDepartments.length
+          ? l.affectedDepartments.join(', ')
+          : typeof l.department === 'string' ? l.department : undefined,
+      };
+    });
   }, [companyData]);
 
   const bench = getBenchmark(companyData.industry);

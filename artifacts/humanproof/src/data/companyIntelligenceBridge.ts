@@ -179,6 +179,23 @@ const COMPANY_KEY_TO_REGION: Record<string, CompanyData['region']> = {
   twilio:             'US', docusign:           'US', dropbox:            'US',
   stripe_atlas:       'US', bytedance:          'APAC', samsung:          'APAC',
   unity:              'US',
+  // Indian IT / BPO / KPO companies
+  hcl:                'IN', hcltech:            'IN', hcl_technologies:   'IN',
+  cognizant:          'US', // US-listed, but Indian-origin; keep US for RPE purposes
+  hexaware:           'IN', mphasis:            'IN', persistent:         'IN',
+  persistent_systems: 'IN', mindtree:           'IN', mphasis_ltd:        'IN',
+  ltimindtree:        'IN', l_t_mindtree:       'IN', coforge:            'IN',
+  zensar:             'IN', hexaware_tech:      'IN', mastech:            'IN',
+  kpit:               'IN', cyient:             'IN', niit:               'IN',
+  eclerx:             'IN', firstsource:        'IN', mflex:              'IN',
+  // Indian startups / unicorns
+  byjus:              'IN', byju:               'IN', ola:                'IN',
+  oyo:                'IN', zomato:             'IN', swiggy:             'IN',
+  paytm:              'IN', meesho:             'IN', razorpay:           'IN',
+  phonepe:            'IN', cred:               'IN', zepto:              'IN',
+  unacademy:          'IN', vedantu:            'IN', upgrad:             'IN',
+  // Indian legacy conglomerates with IT arms
+  mahindra:           'IN', tata:               'IN', reliance:          'IN',
 };
 
 // ── AI Investment Signal inference ───────────────────────────────────────────
@@ -239,10 +256,12 @@ export const companyProfileToData = (
 
   const region = COMPANY_KEY_TO_REGION[companyKey] ?? 'US';
 
-  // India IT companies have ~$35k RPE; the global 'low' burn-rate proxy of $550k
-  // would flag them as massively overstaffed when they are not. Override when India.
+  // India IT companies have ~$35k RPE; any global burn-rate proxy would flag them
+  // as overstaffed. Apply India median for ALL India-region companies regardless
+  // of the burn-rate estimate (fixes high-burn-rate companies like Byju's being
+  // evaluated at $550k RPE instead of $35k).
   const rpeProxy = BURN_RATE_TO_REV_PER_EMP[financialSignals.burnRateEstimate];
-  const revenuePerEmployee = (region === 'IN' && rpeProxy > 200_000) ? 35_000 : rpeProxy;
+  const revenuePerEmployee = region === 'IN' ? 35_000 : rpeProxy;
 
   return {
     // Guard against undefined companyName — the score engine calls .toLowerCase()

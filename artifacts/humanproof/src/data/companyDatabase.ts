@@ -11,6 +11,8 @@
 export interface LayoffRound {
   date: string;
   percentCut: number;
+  source?: string;        // e.g. "breaking_news_events (newsapi)", "SEC EDGAR 8-K"
+  affectedDepartments?: string[];
 }
 
 export interface CompanyData {

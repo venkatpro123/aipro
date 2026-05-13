@@ -154,6 +154,19 @@ const INDUSTRY_ALIAS_MAP: Record<string, string> = {
   'mobility': 'Mobility',
   'ride sharing': 'Mobility',
   'electric vehicles': 'Mobility',
+  'ites': 'IT Services',
+  'it enabled services': 'IT Services',
+  'bpo': 'IT Services',
+  'business process outsourcing': 'IT Services',
+  'kpo': 'IT Services',
+  'knowledge process outsourcing': 'IT Services',
+  'lpo': 'IT Services',
+  'legal process outsourcing': 'IT Services',
+  'hro': 'IT Services',
+  'hr outsourcing': 'IT Services',
+  'managed services': 'IT Services',
+  'it consulting': 'IT Services',
+  'application outsourcing': 'IT Services',
 };
 
 function resolveIndustryData(

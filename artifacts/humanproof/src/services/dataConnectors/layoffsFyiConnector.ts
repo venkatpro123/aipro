@@ -187,7 +187,7 @@ async function fetchRecentLayoffsFromDB(company: string): Promise<LayoffRecord[]
     if (company.trim().length < 3) return [];
     const { data, error } = await supabase
       .from('breaking_news_events')
-      .select('company_name, event_date, percent_cut, affected_count, industry, confidence, source')
+      .select('company_name, event_date, percent_cut, affected_count, confidence, source')
       .ilike('company_name', `%${company.replace(/[%_]/g, '\\$&')}%`)
       .gte('event_date', new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10))
       .order('event_date', { ascending: false })

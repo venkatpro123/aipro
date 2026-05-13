@@ -78,8 +78,30 @@ export interface HybridScorePayload {
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 
-const mapRevenueGrowth = (yoyPercent: number | null): number => {
-  if (yoyPercent === null) return 0.5;
+// Industry-calibrated revenue growth defaults when actual value is null.
+// Using fixed 0.5 for all nulls masked real sector differences (e.g. declining
+// Media at -5% YoY vs growing EdTech at +18% YoY both looked "neutral").
+const INDUSTRY_REVENUE_NULL_DEFAULT: Record<string, number> = {
+  Technology:          0.42,  // ~8% YoY median growth
+  'IT Services':       0.45,  // ~6% median
+  FinTech:             0.40,  // ~10% median
+  EdTech:              0.38,  // ~12% median
+  HealthTech:          0.40,  // ~9% median
+  'Biotech/Pharma':    0.45,  // ~5% median
+  Media:               0.60,  // ~-3% median (declining)
+  'Media & Publishing': 0.62, // ~-5% median
+  Retail:              0.50,  // ~0% median
+  Manufacturing:       0.48,  // ~2% median
+  Banking:             0.47,  // ~3% median
+  'Financial Services': 0.46, // ~4% median
+  Logistics:           0.50,  // ~0% median
+};
+
+const mapRevenueGrowth = (yoyPercent: number | null, industry?: string): number => {
+  if (yoyPercent === null) {
+    // Use industry-calibrated null default instead of universal 0.5
+    return INDUSTRY_REVENUE_NULL_DEFAULT[industry ?? ''] ?? 0.50;
+  }
   if (yoyPercent < -20) return 0.95;
   if (yoyPercent < -10) return 0.85;
   if (yoyPercent < 0) return 0.72;
@@ -90,8 +112,11 @@ const mapRevenueGrowth = (yoyPercent: number | null): number => {
   return 0.1;
 };
 
-const mapStockTrend = (change90Day: number | null): number => {
-  if (change90Day === null) return 0.5;
+const mapStockTrend = (change90Day: number | null, isPublic?: boolean): number => {
+  // For private companies, null stock data is expected — use a lower neutral (0.40)
+  // rather than 0.5, because private companies have no market-driven distress signals.
+  // For public companies, null stock is a data gap → treat as higher uncertainty (0.50).
+  if (change90Day === null) return isPublic ? 0.50 : 0.40;
   if (change90Day < -30) return 0.95;
   if (change90Day < -15) return 0.8;
   if (change90Day < -5) return 0.6;
@@ -203,13 +228,18 @@ const calculateRoundFrequency = (
   rounds: number,
   layoffs: Array<{ date: string; percentCut: number }> | undefined,
   now: Date,
+  isFallbackSource = false,
 ): number => {
   // v21.0 WARN cross-validation: when WARN/SEC/news events populate the
   // layoffs array but the static DB row says rounds = 0, trust the regulatory
   // evidence over the DB. Previously this returned 0.05 (essentially "no
   // layoffs"), letting the DB silently override a confirmed WARN filing.
   const effectiveRounds = Math.max(rounds | 0, layoffs?.length ?? 0);
-  if (effectiveRounds === 0) return 0.05;
+  if (effectiveRounds === 0) {
+    // 0.05 = confirmed safe (live signal verified zero layoffs).
+    // 0.25 = uncertain (fallback/heuristic: "no data" ≠ "no layoffs").
+    return isFallbackSource ? 0.25 : 0.05;
+  }
 
   let base = 0.05;
   if (effectiveRounds === 1) base = 0.42;
@@ -380,9 +410,16 @@ export function buildHybridScorePayload({
     Math.max(1, companyData.employeeCount || 1000),
     'company headcount baseline',
   );
+  // RPE null: use industry-calibrated median rather than fixed 250k.
+  // For India IT (35k median), using 250k incorrectly signals "high overstaffing."
+  const _rpeIndustryFallback = isIndiaRegion(companyData.region ?? 'US')
+    ? (INDIA_SECTOR_RPE_MEDIANS[companyData.industry ?? '_default'] ?? INDIA_SECTOR_RPE_MEDIANS._default)
+    : 250_000;
   const revenuePerEmployeeSignal = getSignal<number>(
     'revenuePerEmployee',
-    Math.max(1, companyData.revenuePerEmployee || 250_000),
+    companyData.revenuePerEmployee != null
+      ? Math.max(1, companyData.revenuePerEmployee)
+      : _rpeIndustryFallback,
     'company revenue-per-employee baseline',
   );
   const aiInvestmentSignal = getSignal<string>(
@@ -436,13 +473,13 @@ export function buildHybridScorePayload({
   const revenueGrowth = buildResolvedSignal(
     'revenueGrowthYoY',
     revenueSignal,
-    mapRevenueGrowth((revenueSignal.value as number | null) ?? null),
+    mapRevenueGrowth((revenueSignal.value as number | null) ?? null, companyData.industry),
     reconciled.conflicts,
   );
   const stockTrend = buildResolvedSignal(
     'stock90DayChange',
     stockSignal,
-    mapStockTrend((stockSignal.value as number | null) ?? null),
+    mapStockTrend((stockSignal.value as number | null) ?? null, companyData.isPublic),
     reconciled.conflicts,
   );
   const fundingHealth = buildResolvedSignal(
@@ -483,6 +520,7 @@ export function buildHybridScorePayload({
       Number(layoffRoundsSignal.value ?? companyData.layoffRounds ?? 0),
       (layoffEventsSignal.value as Array<{ date: string; percentCut: number }>) ?? [],
       now,
+      (companyData as any)._dataFreshnessScore === 0,
     ),
     reconciled.conflicts,
   );
@@ -581,10 +619,10 @@ export function buildHybridScorePayload({
   );
 
   // ── LOW_DATA floor ─────────────────────────────────────────────────────────
-  // When 3+ critical signals are null OR at their heuristic default sentinel,
-  // cap confidence at 0.35. Without this, an all-null input set (e.g. unknown
-  // private company) produces a 55-65 score with 70% confidence — the most
-  // damaging UX bug because it looks authoritative.
+  // When 2+ critical signals are null OR at their heuristic default sentinel,
+  // cap confidence at 0.35. The previous threshold of 3 was too lenient: a company
+  // with null revenue AND null stock still showed 65–75% confidence even though
+  // 40% of critical financial data was missing. Lowering to 2 catches this case.
   const isCriticalSignalMissing = (
     sig: { source: SignalSourceKind; value: unknown },
     defaultSentinels: unknown[],
@@ -601,7 +639,7 @@ export function buildHybridScorePayload({
     isCriticalSignalMissing(hiringTrendSignal, ['stable']),
   ].filter(Boolean).length;
 
-  const lowDataCap = missingCriticalCount >= 3 ? 0.35 : null;
+  const lowDataCap = missingCriticalCount >= 2 ? 0.35 : null;
 
   // Gate confidence on data freshness: fully static data → cap 35%, mostly stale → cap 55%
   const dataFreshnessScore = (companyData as any)._dataFreshnessScore as number | undefined;

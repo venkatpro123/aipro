@@ -75,13 +75,17 @@ const createFallbackCompanyData = (companyName: string): CompanyData => ({
   name: companyName,
   industry: "technology",
   isPublic: false,
-  employeeCount: 1000,
+  // 5000 is the industry-neutral mid-range proxy (matches EF default).
+  // Previously 1000 which displayed as "1K" and misled users into thinking this
+  // was a tiny startup — also caused mapOverstaffing() to fire at 0.85 for any
+  // company with estimated revenue > $95M and no actual headcount data.
+  employeeCount: 5000,
   revenueGrowthYoY: null,
   stock90DayChange: null,
   layoffRounds: 0,
   layoffsLast24Months: [],
   lastLayoffPercent: null,
-  revenuePerEmployee: 250000,
+  revenuePerEmployee: null,  // null forces mapOverstaffing to skip rather than assume
   aiInvestmentSignal: "medium",
   region: "US",
   lastUpdated: new Date().toISOString().slice(0, 10),
@@ -93,6 +97,9 @@ export const createUnknownCompanyFallback = (
 ): CompanyData => {
   const fallback = createFallbackCompanyData(companyName);
   fallback.source = "Fallback - Unknown Company";
+  // Explicitly mark as zero freshness so hybridConsensusBuilder's freshness cap
+  // fires and clamps confidence to 0.35 — matching the LOW_DATA_WARNING behaviour.
+  (fallback as any)._dataFreshnessScore = 0;
   return fallback;
 };
 
@@ -1219,16 +1226,14 @@ export const calculateCompanyHealthScore = (
     weights.overstaffingRisk = archetype === 'gcc' ? 0.08 : 0.15;
   }
 
-  // ACC-BUG-04 FIX: When no financial signals are available (truly unknown company),
-  // return 0.62 instead of 0.50 (neutral). Epistemic uncertainty principle: when we
-  // don't know a company's financial health, assume somewhat elevated risk, not neutral.
-  // 0.50 makes unknown companies look as safe as documented ones with mixed signals.
+  // When no financial signals are available (zero weight), return strict neutral 0.50.
+  // The previous 0.62 "elevated unknown" heuristic caused unknown companies to display
+  // as "Moderate Risk" (score ~58) despite having zero company-specific data — a false
+  // precision that users treated as an actionable signal. The LOW_DATA_WARNING cap
+  // (triggered at >= 2 missing critical signals) already gates confidence at 0.35,
+  // which is the correct signal for data absence. Don't double-penalise via L1.
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
-  if (totalWeight === 0) {
-    const isFallback = (companyData.source ?? '').toLowerCase().includes('fallback')
-      || (companyData.source ?? '').toLowerCase().includes('unknown');
-    return isFallback ? 0.62 : 0.50;
-  }
+  if (totalWeight === 0) return 0.50;
 
   return weightedAverage(signals, weights);
 };
