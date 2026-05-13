@@ -413,7 +413,7 @@ export default function ToolsPage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             style={{
-              position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+              position: 'fixed', bottom: 'var(--toast-bottom, 32px)', left: '50%', transform: 'translateX(-50%)',
               zIndex: 10000, padding: '12px 24px',
               background: 'var(--text)', color: 'var(--bg)',
               borderRadius: 'var(--radius-full)',

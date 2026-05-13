@@ -63,7 +63,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       </p>
 
       {/* Key metrics row */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
             {REGIME_LABEL[macro.regime] ?? macro.regime}

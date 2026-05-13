@@ -70,7 +70,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
       </div>
 
       {/* Key metrics */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: plateau.bg }}>
           <div className="text-[10px] font-bold" style={{ color: plateau.text }}>
             {velocity.plateauRisk}

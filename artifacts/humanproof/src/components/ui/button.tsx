@@ -22,7 +22,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-[var(--tap-min)] px-[var(--space-4)]", /* 48px height, 16px padding */
-        sm: "h-10 rounded-[var(--radius-sm)] px-[var(--space-4)] text-xs", /* 40px height */
+        sm: "h-11 rounded-[var(--radius-sm)] px-[var(--space-4)] text-xs", /* 44px height — WCAG touch target */
         lg: "h-[var(--tap-min)] rounded-[var(--radius-lg)] px-[var(--space-6)] text-base",
         icon: "h-[var(--tap-min)] w-[var(--tap-min)]",
       },

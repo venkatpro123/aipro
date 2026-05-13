@@ -53,7 +53,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
 
       {/* Metrics row */}
       {!noData && (
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
           <div className="text-center rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
             <div className="text-sm font-black" style={{ color: contagion.directCompetitorCuts > 0 ? colors.text : 'rgba(255,255,255,0.7)' }}>
               {contagion.directCompetitorCuts}

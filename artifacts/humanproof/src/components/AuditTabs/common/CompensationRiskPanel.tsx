@@ -86,7 +86,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
       </div>
 
       {/* Metrics row */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-sm font-bold" style={{ color: layoffProbPct >= 50 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
             {layoffProbPct}%

@@ -191,7 +191,8 @@ const AuditTerminalPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ fontFamily: 'var(--font-sans)' }}>
+    <div className="page-wrap" style={{ fontFamily: 'var(--font-sans)' }}>
+      <div className="container" style={{ maxWidth: 1100 }}>
 
       {/* ── Input Form ─────────────────────────────────────────────────────── */}
       <div style={{
@@ -381,7 +382,7 @@ const AuditTerminalPage: React.FC = () => {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   style={{
-                    padding: '8px 16px', borderRadius: '6px', border: 'none',
+                    padding: '10px 16px', minHeight: '44px', borderRadius: '6px', border: 'none',
                     background: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.05)',
                     color: activeTab === tab.key ? '#000' : 'rgba(255,255,255,0.5)',
                     fontWeight: 700, fontSize: '0.75rem', fontFamily: 'var(--font-mono)',
@@ -525,6 +526,7 @@ const AuditTerminalPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };

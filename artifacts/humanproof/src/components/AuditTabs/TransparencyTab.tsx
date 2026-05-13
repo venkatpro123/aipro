@@ -1477,7 +1477,7 @@ const ActionCoveragePanel: React.FC = () => {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           {[
             { label: 'Total roles',         value: r.totalRoles.toString(),            sub: 'in corpus' },
             { label: 'Roles with specific', value: r.specificRoles.toString(),          sub: `${r.coveredPrefixes.length} prefixes covered` },

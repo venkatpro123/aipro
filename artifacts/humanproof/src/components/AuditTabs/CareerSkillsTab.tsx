@@ -133,7 +133,7 @@ const SkillRiskGauge: React.FC<SkillRiskGaugeProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 w-full mt-6 pt-4 border-t border-white/5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full mt-6 pt-4 border-t border-white/5">
         <div className="flex flex-col items-center gap-1">
           <span className="text-xl font-black tracking-tight text-[var(--emerald)]">{safeCriticalSkills}</span>
           <span className="label-xs text-muted-foreground opacity-60">IMMUNE</span>

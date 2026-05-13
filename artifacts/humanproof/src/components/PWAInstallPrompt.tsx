@@ -46,7 +46,7 @@ export const PWAInstallPrompt: React.FC = () => {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '20px',
+      bottom: 'calc(var(--toast-bottom, 20px))',
       right: '20px',
       maxWidth: '320px',
       background: '#0b1020',

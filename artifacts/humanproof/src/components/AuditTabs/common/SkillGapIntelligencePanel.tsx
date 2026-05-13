@@ -115,7 +115,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
 
       <div className="p-5">
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
           {/* Gap score */}
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: gapScore >= 60 ? '#ef4444' : gapScore >= 35 ? '#f59e0b' : '#10b981' }}>

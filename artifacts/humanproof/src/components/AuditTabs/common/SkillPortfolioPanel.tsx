@@ -52,7 +52,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       </div>
 
       {/* Score + delta */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-sm font-bold" style={{ color: colors.text }}>{portfolio.fitScore}</div>
           <div className="text-[10px] opacity-45 mt-0.5">Fit Score</div>

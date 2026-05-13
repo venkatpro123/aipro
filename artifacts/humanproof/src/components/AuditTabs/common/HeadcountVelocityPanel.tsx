@@ -54,7 +54,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       </p>
 
       {/* 3-signal row */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-[11px] font-bold" style={{ color: TREND_COLOR[headcount.headcountTrend] }}>
             {headcount.headcountTrend.replace('_', ' ')}

@@ -707,7 +707,7 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         )}
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
           <div>
             <div className="data-label mb-1">Peak Month</div>
             <div className="text-xs font-bold" style={{ color: temporal.peakAmplifier > 1.10 ? '#ef4444' : '#f59e0b' }}>
@@ -1059,7 +1059,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
           })}
         </div>
         {/* Best scenario projections */}
-        <div className="mt-3 pt-3 border-t border-white/[0.05] grid grid-cols-3 gap-2">
+        <div className="mt-3 pt-3 border-t border-white/[0.05] grid grid-cols-2 sm:grid-cols-3 gap-2">
           {[
             { label: '1 lever', score: sensitivity.bestSingleLeverScore },
             { label: '2 levers', score: sensitivity.bestTwoLeverScore },
@@ -1173,7 +1173,7 @@ const SurvivalProbabilityPanel: React.FC<{ result: HybridResult }> = ({ result }
 
       {/* Probability bars */}
       <div className="px-4 pt-3 pb-2">
-        <div className="grid grid-cols-3 gap-3 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           {[
             { label: '1-Month', value: pct1m },
             { label: '6-Month', value: pct6m },
@@ -1547,7 +1547,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         </div>
 
         {/* Key metrics */}
-        <div className="grid grid-cols-3 gap-2 mb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
             <div className="text-xs font-bold" style={{ color: optimalColor }}>
               {et.optimalDepartureWindow.compositeScore}/100
@@ -1641,7 +1641,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
           </p>
         )}
         <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{runway.keyInsight}</p>
-        <div className="grid grid-cols-3 gap-2 mb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
             <div className="text-xs font-bold" style={{ color }}>{runway.safeSearchMonths}mo</div>
             <div className="text-[9px] text-muted-foreground mt-0.5">Safe search window</div>
@@ -2249,7 +2249,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               style={{ left: `calc(${Math.min(98, Math.max(2, peerPercentile.percentile))}% - 4px)` }}
             />
           </div>
-          <div className="grid grid-cols-4 gap-2 mb-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
             {[
               { label: 'Bottom 25%', value: `<${peerPercentile.p25Score}`, color: 'text-emerald-400' },
               { label: 'Median', value: String(peerPercentile.p50Score), color: 'text-amber-400' },

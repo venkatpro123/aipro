@@ -848,7 +848,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           exit={{ opacity: 0, x: -10 }}
           transition={{ duration: 0.3 }}
           className="glass-panel"
-          style={{ padding: '32px', borderRadius: 'var(--radius-xl)' }}
+          style={{ padding: 'clamp(20px, 5vw, 32px)', borderRadius: 'var(--radius-xl)' }}
         >
           {step === 1 ? (
              <div>
