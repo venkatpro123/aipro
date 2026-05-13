@@ -32,6 +32,7 @@ export interface ScrapedCompanyEnrichment {
 
 export async function fetchScrapedEnrichment(
   companyName: string,
+  timeoutMs?: number,
 ): Promise<ScrapedCompanyEnrichment> {
   const empty: ScrapedCompanyEnrichment = {
     wikiEmployeeCount: null, careerHiringActive: null, careerJobCount: null,
@@ -42,7 +43,7 @@ export async function fetchScrapedEnrichment(
 
   try {
     const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
-      body: { action: 'scrape', companyName },
+      body: { action: 'scrape', companyName, timeoutMs },
     });
 
     if (error) {

@@ -108,22 +108,40 @@ const INDUSTRY_RPE_FALLBACK: Record<string, { IN: number; US: number; EU: number
 
 // ── Source reliability scores ─────────────────────────────────────────────
 const SOURCE_CONFIDENCE: Record<string, number> = {
-  'AlphaVantage': 0.95,
-  'Live OSINT Database': 0.90,
-  'NSE': 0.90,
-  'Nasdaq': 0.92,
-  'NYSE': 0.92,
-  'BSE': 0.88,
-  'Crunchbase + Layoffs.fyi': 0.82,
-  'Crunchbase': 0.78,
-  'Layoffs.fyi': 0.85,
-  'Supabase Intelligence': 0.80,
-  'CompanyIntelligenceDB': 0.78,
-  'NASSCOM': 0.75,
-  'Fallback': 0.20,
+  // Live scraped sources (highest confidence — real-time observations)
+  'yahoo-finance':              0.95,  // Yahoo Finance chart API — scraped, no key
+  'Yahoo Finance':              0.95,
+  'AlphaVantage':               0.93,  // Alpha Vantage API — key-gated fallback
+  'alphavantage':               0.93,
+  'bse-india':                  0.88,  // BSE India API — no key
+  'nse-india':                  0.88,  // NSE India API — no key
+  'NSE':                        0.90,
+  'BSE':                        0.88,
+  'SEC EDGAR':                  0.95,  // Regulatory — highest confidence for US layoff data
+  'WARN Act':                   0.95,  // Regulatory — legally required filing
+  'Naukri+Indeed+LinkedIn':     0.82,  // Direct job board scraping — live
+  'Serper API':                 0.82,  // Serper API fallback
+  'Google News':                0.78,
+  'Bing News':                  0.76,
+  'Reddit':                     0.55,  // Reddit — useful but lower confidence
+  // Database sources
+  'Live OSINT Database':        0.90,
+  'Seeded Intelligence DB':     0.68,  // Seeded DB — accurate at seed time, may be stale
+  'company_intelligence:exact': 0.70,
+  'company_intelligence:fuzzy': 0.60,
+  'Nasdaq':                     0.92,
+  'NYSE':                       0.92,
+  'Crunchbase + Layoffs.fyi':   0.82,
+  'Crunchbase':                 0.78,
+  'Layoffs.fyi':                0.85,
+  'Supabase Intelligence':      0.72,
+  'CompanyIntelligenceDB':      0.70,
+  'NASSCOM':                    0.75,
+  // Fallback sources (lowest confidence)
   'Fallback - Unknown Company': 0.10,
-  'User Input': 0.45,
-  'default': 0.60,
+  'Fallback':                   0.20,
+  'User Input':                 0.45,
+  'default':                    0.60,
 };
 
 function getSourceConfidence(source: string | undefined): number {
@@ -225,10 +243,20 @@ export function validateDataQuality(companyData: CompanyData): DataQualityReport
   }
   const overallConfidence = totalWeight > 0 ? weightedConf / totalWeight : 0.3;
 
-  // Reliability tier
+  // Reliability tier — accounts for unknown/startup companies separately.
+  // A private startup with scraping-based live news + hiring signals should NOT be Tier D
+  // just because it lacks stock data (structurally absent for private cos, not a gap).
   let tier: DataQualityReport['reliabilityTier'];
   let expectedVariance: number;
-  if (isFallback || overallConfidence < 0.25) {
+  const hasLiveSignals = Boolean(
+    (companyData as any)._informativeLiveSignals > 0 ||
+    (companyData as any)._liveDataCoverage?.genuineApiSignals > 0,
+  );
+  if (isFallback && !hasLiveSignals) {
+    tier = 'D'; expectedVariance = 18;  // Unknown company, no live signals
+  } else if (isFallback && hasLiveSignals) {
+    tier = 'C'; expectedVariance = 12;  // Unknown company but live news/hiring signals present
+  } else if (overallConfidence < 0.25) {
     tier = 'D'; expectedVariance = 18;
   } else if (overallConfidence < 0.50 || completeness < 0.50) {
     tier = 'C'; expectedVariance = 10;
@@ -244,13 +272,23 @@ export function validateDataQuality(companyData: CompanyData): DataQualityReport
 
   const suggestedActions: string[] = [];
   if (missingCritical.includes('revenueGrowthYoY')) {
-    suggestedActions.push('Add revenue growth data to improve L1 (Company Health) accuracy');
+    suggestedActions.push(
+      companyData.isPublic
+        ? 'Revenue growth missing — configure Yahoo Finance or Alpha Vantage in proxy-live-signals for live quarterly data'
+        : 'Private company: revenue growth unavailable publicly — L1 weight redistributed to funding age and employee efficiency',
+    );
   }
   if (missingCritical.includes('stock90DayChange') && companyData.isPublic) {
-    suggestedActions.push('Configure Alpha Vantage in proxy-live-signals for live stock data');
+    suggestedActions.push('Stock 90-day return missing — Yahoo Finance scraping is the primary source (no API key needed); check proxy-live-signals EF deployment');
   }
-  if (completeness < 0.75) {
-    suggestedActions.push(`Only ${Math.round(completeness * 100)}% of critical fields present — score variance is ±${expectedVariance} pts`);
+  if (isFallback) {
+    suggestedActions.push(
+      hasLiveSignals
+        ? `Company not in database — score uses live scraped signals (news/hiring) + industry baselines. Variance ±${expectedVariance} pts.`
+        : `Company not in database and no live signals obtained — score is sector/role estimate only. Variance ±${expectedVariance} pts. Try re-running to trigger fresh scraping.`,
+    );
+  } else if (completeness < 0.75) {
+    suggestedActions.push(`${Math.round(completeness * 100)}% of critical fields present — score variance is ±${expectedVariance} pts`);
   }
 
   return {

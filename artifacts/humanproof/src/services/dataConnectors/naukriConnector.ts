@@ -108,23 +108,30 @@ export async function fetchRoleDemandSignal(
   roleTitle: string,
   company: string,
 ): Promise<RoleDemandSignal> {
-  // ── Primary: Serper via proxy-live-signals Edge Function (key server-side) ─
-  // Quota guard: skip if this session has already exhausted the Serper daily limit.
+  // ── Primary: Direct scraping via proxy-live-signals EF (no API key needed) ─
+  // The EF tries Naukri+Indeed+LinkedIn direct scraping first; Serper is its fallback.
+  // We do NOT pre-increment the Serper counter — we only count it when the EF
+  // actually used Serper (scrapeSource === 'serper'). Pre-incrementing was inflating
+  // the Serper quota counter on every audit even when direct scraping succeeded.
   if (isQuotaExhausted('serper')) {
     return {
       ...heuristicSignal(roleTitle, company, 'serper_quota_exceeded'),
-      disclosure: 'Serper daily quota exhausted this session. Hiring data is a heuristic baseline until quota resets.',
+      disclosure: 'Serper daily quota exhausted this session. Primary: Naukri+Indeed+LinkedIn direct scraping (no key).',
     };
   }
 
   try {
-    incrementRequestCount('serper');
     const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
       body: { action: 'hiring', roleTitle, companyName: company },
     });
 
     if (!error && data?.hiringData?.isLive) {
       const h = data.hiringData;
+      // Only track Serper quota when the EF actually USED Serper as fallback.
+      // Direct scraping (Naukri+Indeed+LinkedIn) has no quota to track.
+      if (h.scrapeSource === 'serper') {
+        incrementRequestCount('serper');
+      }
       // Check if the Edge Function itself detected a Serper rate-limit
       if (h.serperRateLimited) {
         recordApiDegradation('serper', 'rate_limited', 'Serper 429 from proxy-live-signals');

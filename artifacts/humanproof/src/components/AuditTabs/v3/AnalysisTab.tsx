@@ -1,13 +1,14 @@
-// v3/AnalysisTab.tsx — v17.0
-// True redesign (not a wrapper). Hero intelligence surface for the v3 dashboard.
+// v3/AnalysisTab.tsx — v28.0 UX redesign
+// "Risk Analysis" tab — the second tab in the 4-tab v3 dashboard.
+// Shows the quantitative risk picture: dual gauge, risk dimensions, prediction, scenarios.
+// The executive brief / score hero lives in SummaryTab (first tab).
 //
 // Layout (top → bottom):
-//   1. Intelligence Brief — AI-generated strategic paragraph (hero, always visible)
-//   2. Score + Preparedness dual gauge — risk score vs. readiness side-by-side
-//   3. Prediction Horizon — 30d / 90d / 180d bar chart
-//   4. Scenario Plan — bear / base / bull fan
-//   5. Risk Dimensions — L1–L5 breakdown (collapsed by default)
-//   6. Confidence & Bayesian CI — data quality and uncertainty (collapsed)
+//   1. Dual Gauge — Risk vs. Preparedness (hero for this tab)
+//   2. Risk Dimensions — L1–L5 breakdown (always visible bar chart)
+//   3. Prediction Horizon — 30d / 90d / 180d compact strip
+//   4. Scenario Fan — bear / base / bull (collapsible)
+//   5. Full score & confidence deep dive (collapsible → RiskBreakdownTab only, NOT OverviewTab)
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +22,6 @@ import type { PredictionHorizonResult } from '../../../services/predictionHorizo
 import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
 import type { IntelligenceBriefResult } from '../../../services/intelligenceBriefService';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
-import { OverviewTab } from '../OverviewTab';
 import { RiskBreakdownTab } from '../RiskBreakdownTab';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -411,40 +411,38 @@ const Collapsible: React.FC<CollapsibleProps> = ({ title, icon: Icon, defaultOpe
 export const AnalysisTab: React.FC<TabProps> = ({ result, companyData }) => {
   const r = result as any;
 
+  const horizon: PredictionHorizonResult | undefined   = r.predictionHorizon;
+  const scenario: ScenarioPlanResult | undefined       = r.scenarioPlan;
+  const preparedness: PreparednessResult | undefined   = r.preparednessScore;
   const brief: IntelligenceBriefResult | null | undefined = r.intelligenceBrief;
   const urgencyLevel = brief?.urgencyLevel ?? (result.total >= 75 ? 'HIGH' : result.total >= 55 ? 'MODERATE' : 'LOW');
-  const horizon: PredictionHorizonResult | undefined = r.predictionHorizon;
-  const scenario: ScenarioPlanResult | undefined = r.scenarioPlan;
-  const preparedness: PreparednessResult | undefined = r.preparednessScore;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
 
-      {/* 1. Intelligence Brief — always visible hero */}
-      <IntelligenceBriefHero brief={brief} urgencyLevel={urgencyLevel} />
-
-      {/* 2. Dual Gauge — Risk vs. Preparedness */}
+      {/* 1. Dual Gauge — Risk vs. Readiness hero for this tab */}
       <DualGaugePanel
         riskScore={result.total}
         preparedness={preparedness}
         urgencyLevel={urgencyLevel}
       />
 
-      {/* 3. Prediction Horizon — 30d / 90d / 180d */}
-      {horizon && <PredictionHorizonPanelMini horizon={horizon} />}
-
-      {/* 4. Scenario Fan — bear / base / bull */}
-      {scenario && <ScenarioFan scenario={scenario} />}
-
-      {/* 5. Full score overview — collapsed */}
-      <Collapsible title="Detailed score overview" icon={Shield}>
-        <OverviewTab result={result} companyData={companyData} />
-      </Collapsible>
-
-      {/* 6. Risk dimensions — collapsed */}
-      <Collapsible title="Risk dimensions & confidence" icon={TrendingUp}>
+      {/* 2. Risk Dimensions — always visible; this IS the purpose of this tab */}
+      <Collapsible title="Risk dimensions breakdown" icon={BarChart2} defaultOpen>
         <RiskBreakdownTab result={result} companyData={companyData} />
       </Collapsible>
+
+      {/* 3. Prediction Horizon */}
+      {horizon && <PredictionHorizonPanelMini horizon={horizon} />}
+
+      {/* 4. Scenario Fan — collapsed by default; users expand when they want depth */}
+      {scenario && (
+        <Collapsible title="6-month scenario planning" icon={Activity}>
+          <div className="p-4">
+            <ScenarioFan scenario={scenario} />
+          </div>
+        </Collapsible>
+      )}
 
     </div>
   );

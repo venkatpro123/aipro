@@ -223,10 +223,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       department:  state.department || '',
       userFactors: state.userFactors,
     };
+    // Use faster refresh cadence for unknown companies — their only non-heuristic
+    // signals come from live scraping, so retrying sooner improves accuracy.
+    const isUnknownCo = (state.scoreResult as any)?._liveDataCoverage?.overallSource === 'heuristic'
+      || ((state.companyData as any)?.source ?? '').includes('Fallback');
     const cancel = startBackgroundRefresh(inputs, ({ result }) => {
       dispatch({ type: 'SET_SCORE_RESULT', payload: result });
       setApiQuotaStatus(getApiQuotaStatus());
-    });
+    }, isUnknownCo);
     return cancel;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.hasCompletedAssessment, state.companyName, state.roleTitle]);
@@ -1348,22 +1352,34 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         </div>
       )}
 
-      {/* Circuit-open banner — shown when live APIs are unavailable (circuit OPEN) */}
+      {/* Circuit-open banner — only shown when ALL live sources failed (genuineApiSignals=0).
+          alphavantage / newsapi / serper are now FALLBACK-only APIs; their circuits being OPEN
+          does not indicate an outage since Yahoo Finance + RSS scraping + Naukri direct are primary.
+          We only warn if the liveDataCoverage shows zero genuine signals from any source. */}
       {state.hasCompletedAssessment &&
         !state.isCalculating &&
         apiQuotaStatus &&
-        Object.entries(apiQuotaStatus).some(([, s]) => s.state === 'OPEN') && (
+        (() => {
+          const coverage = (state.scoreResult as any)?._liveDataCoverage;
+          const genuineSignals = coverage?.genuineApiSignals ?? null;
+          const openAPIs = Object.entries(apiQuotaStatus).filter(([, s]) => s.state === 'OPEN');
+          // Only show the banner when primary scraped sources also failed (no genuine live signals)
+          // AND old fallback APIs are open. If scraped sources worked, the open-API circuits
+          // are irrelevant — they're fallbacks that weren't needed.
+          const primaryAlsoFailed = genuineSignals === 0 || genuineSignals === null;
+          return openAPIs.length > 0 && primaryAlsoFailed;
+        })() && (
           <div className="max-w-4xl mx-auto px-4 mb-3">
             <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
               <span className="mt-0.5 text-base">⚠</span>
               <div>
-                <span className="font-semibold text-amber-100">Live market data temporarily unavailable</span>
+                <span className="font-semibold text-amber-100">Paid API fallbacks unavailable</span>
                 <span className="ml-2 text-amber-300/80">
                   {Object.entries(apiQuotaStatus)
                     .filter(([, s]) => s.state === 'OPEN')
                     .map(([api, s]) =>
                       `${api}${s.cachedAgeLabel ? ` (cached ${s.cachedAgeLabel})` : ''}`
-                    ).join(', ')} — showing cached intelligence. Resets automatically.
+                    ).join(', ')} — primary scraped sources (Yahoo Finance, RSS, Naukri direct) are still active.
                 </span>
               </div>
             </div>

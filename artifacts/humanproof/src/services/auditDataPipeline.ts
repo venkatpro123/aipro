@@ -676,10 +676,52 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
   }
 
-  // Step 4: Unknown fallback — honest ±30pt warning; capture to discovery queue
+  // Step 4: Unknown fallback — honest ±30pt warning; capture to discovery queue.
+  // Infer industry from company name + role title when the company isn't in the DB
+  // so sector-level signals (L4 market conditions, L2 sector contagion, epistemic
+  // floor) are calibrated to a plausible sector rather than always defaulting to
+  // generic "technology".
   if (!companyData) {
     companyData = createUnknownCompanyFallback(inputs.companyName);
     dataSource = 'fallback';
+
+    // Industry inference from company name signals
+    const nameL = inputs.companyName.toLowerCase();
+    const roleL = (inputs.roleTitle ?? '').toLowerCase();
+    const inferredIndustry = (() => {
+      if (/bank|financial|finance|capital|invest|wealth|insurance|nbfc|credit/i.test(nameL)) return 'Financial Services';
+      if (/health|pharma|hospital|clinic|medic|bio|life.?science|diagnostic/i.test(nameL)) return 'Healthcare';
+      if (/retail|fashion|ecomm|shop|mart|store|bazaar|d2c/i.test(nameL)) return 'E-commerce';
+      if (/logistics|delivery|supply|freight|cargo|transport|fleet/i.test(nameL)) return 'Logistics';
+      if (/media|news|publish|content|entertainment|streaming|studio/i.test(nameL)) return 'Media';
+      if (/edu|learn|school|tutor|coaching|academy/i.test(nameL)) return 'EdTech';
+      if (/food|restaurant|café|kitchen|chef|recipe|meal/i.test(nameL)) return 'Food Tech';
+      if (/real.?estate|property|realty|proptech|housing/i.test(nameL)) return 'PropTech';
+      if (/consult|advisory|solution|services|outsourc|bpo|kpo/i.test(nameL)) return 'IT Services';
+      if (/travel|hotel|hospitality|airline|tourism/i.test(nameL)) return 'Travel';
+      if (/auto|vehicle|ev|electric.?vehicle|motor|mobility|ride/i.test(nameL)) return 'Mobility';
+      // Role-title inference as secondary signal
+      if (/nurse|doctor|therapist|dentist|clinical/i.test(roleL)) return 'Healthcare';
+      if (/banker|trader|analyst.*finance|underwriter/i.test(roleL)) return 'Financial Services';
+      if (/teacher|instructor|curriculum|tutor/i.test(roleL)) return 'EdTech';
+      return null; // keep "technology" default
+    })();
+    if (inferredIndustry) {
+      companyData.industry = inferredIndustry;
+      (companyData as any)._industryInferred = true;
+    }
+
+    // Region inference from company name for major India-headquartered keywords
+    const regionInferred = (() => {
+      if (/pvt\.?\s*ltd|private\s+limited|\bltd\b/i.test(inputs.companyName)) return 'IN';
+      if (/india|bengaluru|bangalore|mumbai|delhi|hyderabad|pune|chennai/i.test(nameL)) return 'IN';
+      return null;
+    })();
+    if (regionInferred && companyData.region === 'US') {
+      companyData.region = regionInferred as CompanyData['region'];
+      (companyData as any)._regionInferred = true;
+    }
+
     // Fire-and-forget — never blocks the audit
     saveToDiscoveryQueue(
       inputs.companyName,
@@ -763,6 +805,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
           _timer,
           inputs.roleTitle,
           companyData.industry,
+          dataSource === 'fallback',  // unknown company → extended scraping timeout
         );
         // Merge: use supplemented stock/revenue data, keep everything else from early run
         if (supplemented.stockData !== null) {
@@ -772,9 +815,19 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
 
     if (!liveData) {
-      // Early live scraping failed — fall through to DB-only scoring with low confidence
+      // Early live scraping failed — fall through to DB-only scoring with low confidence.
+      // Set _dataFreshnessScore = 0 so hybridConsensusBuilder's Tier 0 freshness cap
+      // (30%) fires correctly. Without this, the field stays undefined and the cap
+      // is silently skipped, producing over-confident scores for unknown companies.
       trueLiveSignals      = 0;
       trueHeuristicSignals = 7;
+      (companyData as any)._dataFreshnessScore = 0;
+      (companyData as any)._liveDataCoverage = {
+        liveWonKeys: [], dbWonKeys: [], liveRatio: 0,
+        genuineApiSignals: 0, overallSource: 'heuristic',
+        degradedSignalClasses: [], hardFailures: ['live_data_null'],
+        fetchedAt: new Date().toISOString(),
+      };
     } else {
       reconciledSignals = reconcileCompanySignals(companyData as CompanyData, liveData);
       companyData = reconciledSignals.active;

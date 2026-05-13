@@ -55,14 +55,21 @@ function careerSignalsToFreezeScore(signals: string[], jobCount: number | null):
 export async function runScrapingPipeline(
   companyName: string,
   existingHeadcount: number | null,
+  options?: { isUnknownCompany?: boolean },
 ): Promise<ScrapingOrchestratorResult> {
   const fetchedAt = new Date().toISOString();
 
+  // Unknown companies get a higher-priority scraping pass: Wikipedia headcount and
+  // career-page signals are the ONLY non-heuristic data available, so we give them
+  // an extended timeout (12s vs 8s default) to maximise the chance of returning data.
+  const timeoutMs = options?.isUnknownCompany ? 12_000 : 8_000;
+
   // Launch enrichment scraping (career page + Wikipedia + Glassdoor)
-  const enrichment = await fetchScrapedEnrichment(companyName).catch((): ScrapedCompanyEnrichment => ({
+  const enrichment = await fetchScrapedEnrichment(companyName, timeoutMs).catch((): ScrapedCompanyEnrichment => ({
     wikiEmployeeCount: null, careerHiringActive: null, careerJobCount: null,
     careerSignals: [], glassdoorRating: null, glassdoorReviews: null,
-    glassdoorCeoApproval: null, hasData: false, fetchedAt, errors: ['scrape timeout'],
+    glassdoorCeoApproval: null, hasData: false, fetchedAt,
+    errors: [options?.isUnknownCompany ? 'scrape timeout (unknown company)' : 'scrape timeout'],
   }));
 
   // Headcount resolution: Wikipedia > existing DB value

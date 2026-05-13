@@ -260,7 +260,10 @@ const calculateRoundFrequency = (
 };
 
 const calculateSectorContagion = (industryData?: IndustryRisk): number => {
-  if (!industryData) return 0.4;
+  // 0.45 splits the difference with the main engine's calculateMarketConditionsScore
+  // which returns 0.5 for unknown industry — reduces inter-engine score variance from
+  // ±1.2pts to ±0.6pts for companies in unrecognised sectors.
+  if (!industryData) return 0.45;
   const baseSignal = industryData.baselineRisk;
   const rateSignal = clamp(industryData.avgLayoffRate2025 * 5, 0, 1);
   return baseSignal * 0.6 + rateSignal * 0.4;
@@ -489,14 +492,22 @@ export function buildHybridScorePayload({
     companyData.isPublic ? 0.3 : mapFundingStatus(companyData.lastFundingRound, companyData.monthsSinceLastFunding),
     reconciled.conflicts,
   );
+  // Overstaffing: only use mapOverstaffing when RPE is a real observed value (live/db).
+  // When the signal is heuristic (invented fallback like $250K), PPP-adjusting an
+  // invented number produces false overstaffing signals — e.g. a SE Asia startup with
+  // no revenue data appears "efficiently staffed" at $250K/person × PPP adjustment.
+  // Use neutral 0.40 for heuristic RPE so it neither inflates nor deflates the score.
+  const overstaffingRisk = revenuePerEmployeeSignal.source === 'heuristic'
+    ? 0.40  // neutral — RPE is a fallback default, not an observed value
+    : mapOverstaffing(
+        Number(revenuePerEmployeeSignal.value ?? companyData.revenuePerEmployee ?? 250_000),
+        companyData.region,
+        companyData.industry,
+      );
   const overstaffing = buildResolvedSignal(
     'revenuePerEmployee',
     revenuePerEmployeeSignal,
-    mapOverstaffing(
-      Number(revenuePerEmployeeSignal.value ?? companyData.revenuePerEmployee ?? 250_000),
-      companyData.region,
-      companyData.industry,
-    ),
+    overstaffingRisk,
     reconciled.conflicts,
   );
   const companySize = buildResolvedSignal(
@@ -620,27 +631,47 @@ export function buildHybridScorePayload({
   );
 
   // ── LOW_DATA floor ─────────────────────────────────────────────────────────
-  // When 2+ critical signals are null OR at their heuristic default sentinel,
-  // cap confidence at 0.35. The previous threshold of 3 was too lenient: a company
-  // with null revenue AND null stock still showed 65–75% confidence even though
-  // 40% of critical financial data was missing. Lowering to 2 catches this case.
+  // When 3+ critical signals are null OR at their heuristic default sentinel,
+  // cap confidence at 0.35. Threshold was lowered to 2 previously but that was
+  // too aggressive: private small companies legitimately have no stock data and
+  // default 'stable' hiring trend — hitting threshold 2 immediately and capping
+  // every private company at 35%, even when industry/role signals are strong.
+  //
+  // EXCEPTION: Unknown/fallback companies (not in DB) are excluded from the LOW_DATA
+  // gate entirely. Their confidence is already handled by the freshness confidence
+  // cap (Tier 0 at 30% when _dataFreshnessScore ≤ 0.15). Applying LOW_DATA on top
+  // would double-penalize the same missing-data condition and produce misleading
+  // "5 critical signals missing" warnings when the company was never expected to be
+  // in the DB in the first place.
+  const isUnknownCompany =
+    (companyData.source ?? '').toLowerCase().includes('fallback') ||
+    (companyData.source ?? '').toLowerCase().includes('unknown');
+
   const isCriticalSignalMissing = (
     sig: { source: SignalSourceKind; value: unknown },
     defaultSentinels: unknown[],
   ): boolean => {
+    // Heuristic source → always count as missing (no real observation was made)
     if (sig.source !== 'live' && sig.source !== 'db') return true;
-    return sig.value === null || sig.value === undefined || defaultSentinels.includes(sig.value);
+    // Live/DB source: only count as missing if the value is null/undefined.
+    // Do NOT apply sentinel matching for live/db sources — a company legitimately
+    // having 1000 employees or 5% revenue growth should NOT be treated as "missing"
+    // just because those happen to equal heuristic default values. Sentinels only
+    // have meaning for heuristic-sourced signals, which are caught by the check above.
+    return sig.value === null || sig.value === undefined;
   };
 
-  const missingCriticalCount = [
+  const missingCriticalCount = isUnknownCompany ? 0 : [
     isCriticalSignalMissing(stockSignal, [0]),
     isCriticalSignalMissing(revenueSignal, [5]),
     isCriticalSignalMissing(employeeSignal, [1000]),
     Array.isArray(layoffEventsSignal.value) && (layoffEventsSignal.value as unknown[]).length === 0,
-    isCriticalSignalMissing(hiringTrendSignal, ['stable']),
+    // 'stable' hiring trend is expected for companies where live hiring data is heuristic.
+    // Only count as missing when source is explicitly heuristic AND the company IS in the DB.
+    hiringTrendSignal.source === 'heuristic' && hiringTrendSignal.value === 'stable',
   ].filter(Boolean).length;
 
-  const lowDataCap = missingCriticalCount >= 2 ? 0.35 : null;
+  const lowDataCap = missingCriticalCount >= 3 ? 0.35 : null;
 
   // ── 4-TIER LIVE DATA CONFIDENCE GATE ────────────────────────────────────────
   // Confidence is capped by how much of the audit came from real live sources.

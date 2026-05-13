@@ -1165,6 +1165,45 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
+          {/* Unknown company inference disclosure — shown when industry/region were
+              inferred from the company name because the company wasn't in the DB. */}
+          {(() => {
+            const cd = (result as any).companyData ?? (result._engineResult as any)?.companyData;
+            const industryInferred = cd?._industryInferred;
+            const regionInferred   = cd?._regionInferred;
+            const l2Floor          = cd?._l2EpistemicFloor;
+            const isUnknown        = (cd?.source ?? '').includes('Fallback') || (cd?.source ?? '').includes('Unknown');
+            if (!isUnknown && !l2Floor) return null;
+            return (
+              <div className="mb-6 p-4 rounded-xl border border-blue-500/25 bg-blue-500/08 text-blue-200">
+                <div className="flex gap-3">
+                  <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1.5">
+                    <h4 className="font-semibold text-blue-300 text-sm">Intelligence Inference Applied</h4>
+                    {isUnknown && (
+                      <p className="text-xs text-blue-200/80 leading-relaxed">
+                        <span className="font-semibold">Company not in database.</span>{' '}
+                        Score uses industry/sector baselines and live scraped signals only.
+                        {industryInferred && <> Industry inferred as <span className="font-mono font-bold">{cd?.industry}</span> from company name.</>}
+                        {regionInferred   && <> Region inferred as <span className="font-mono font-bold">{cd?.region}</span> from company name patterns.</>}
+                        {' '}Accuracy improves if you add the company manually or wait for it to be indexed.
+                      </p>
+                    )}
+                    {l2Floor && (
+                      <p className="text-xs text-blue-200/80 leading-relaxed">
+                        <span className="font-semibold">L2 epistemic floor {Math.round(l2Floor.floor * 100)}% applied</span>{' '}
+                        ({l2Floor.reason === 'layoffs_dataset_unavailable' ? 'layoffs.fyi unreachable' :
+                          l2Floor.reason === 'unknown_company_fallback' ? 'company not in DB' : 'sector uncertainty floor'}).
+                        Raw signals — recency: {Math.round(l2Floor.rawRecency * 100)}%, frequency: {Math.round(l2Floor.rawFrequency * 100)}%.
+                        Floor prevents interpreting absent data as "confirmed clean" layoff history.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Performance credibility disclosure — shown when the self-reported 'top'
               tier was discounted. performanceCredibilityScore is only present when
               the claim was scrutinised (i.e. original tier = 'top') and

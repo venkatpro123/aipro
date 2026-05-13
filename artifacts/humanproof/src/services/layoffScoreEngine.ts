@@ -88,7 +88,9 @@ const createFallbackCompanyData = (companyName: string): CompanyData => ({
   revenuePerEmployee: null,  // null forces mapOverstaffing to skip rather than assume
   aiInvestmentSignal: "medium",
   region: "US",
-  lastUpdated: new Date().toISOString().slice(0, 10),
+  // Use a clearly-old date so classifyDbFreshness → 'invalid' and live signals
+  // always supersede the fallback defaults in reconcileCompanySignals.
+  lastUpdated: '2025-01-01',
   source: "Fallback",
 });
 
@@ -97,9 +99,13 @@ export const createUnknownCompanyFallback = (
 ): CompanyData => {
   const fallback = createFallbackCompanyData(companyName);
   fallback.source = "Fallback - Unknown Company";
-  // Explicitly mark as zero freshness so hybridConsensusBuilder's freshness cap
-  // fires and clamps confidence to 0.35 — matching the LOW_DATA_WARNING behaviour.
-  (fallback as any)._dataFreshnessScore = 0;
+  // Do NOT force _dataFreshnessScore=0 here — auditDataPipeline will compute it
+  // from actual live signal coverage (news scraping, hiring data, etc.) after
+  // reconcileCompanySignals runs. Pre-setting to 0 causes a double-cap:
+  //   freshness cap (Tier 0 at 30%) + LOW_DATA_WARNING (35%) both fire,
+  //   even when RSS news + hiring signals ARE available for the company.
+  // The pipeline's Math.max(existingFreshness, pipelineFreshnessScore) will
+  // correctly set the freshness score once live signals are processed.
   return fallback;
 };
 
@@ -479,13 +485,15 @@ export function applyKillSwitches(
   }
 
   if (candidates.length === 0) {
-    return { adjustedScore: score, killSwitchApplied: false, killSwitchName: null };
+    return { adjustedScore: Math.max(0, Math.min(100, score)), killSwitchApplied: false, killSwitchName: null };
   }
 
-  // Apply the kill-switch that raises the score the most
+  // Apply the kill-switch that raises the score the most.
+  // Clamp to [0, 100]: sigmoidFloor can produce fractional values above 100 in rare
+  // edge cases where multiple kill-switches overlap near score = 95–98.
   const best = candidates.sort((a, b) => b.score - a.score)[0];
   return {
-    adjustedScore: best.score,
+    adjustedScore: Math.max(0, Math.min(100, best.score)),
     killSwitchApplied: true,
     killSwitchName: best.name,
     inferredFreeze: best.name === 'pre_layoff_precursor_inferred',
@@ -1428,6 +1436,11 @@ export const calculateLayoffHistoryScore = (
   // documented ones with zero layoffs.
   const isFallbackSource = (companyData.source ?? '').toLowerCase().includes('fallback')
     || (companyData.source ?? '').toLowerCase().includes('unknown');
+  // DATASET-UNAVAILABLE FIX: when layoffs.fyi was unreachable during this audit,
+  // empty layoff history means "we couldn't check" not "confirmed clean". Apply an
+  // additional epistemic floor of 0.25 to L2 signals so the score doesn't show the
+  // same low risk as a verified clean company while the dataset was down.
+  const layoffsDatasetUnavailable = Boolean((companyData as any)._layoffsDatasetUnavailable);
   const rawRecentLayoffRisk = calculateRecentLayoffRisk(companyData.layoffsLast24Months, now);
   const rawRoundFreqRisk    = calculateRoundFrequency(companyData.layoffRounds, companyData.layoffsLast24Months, now);
 
@@ -1449,8 +1462,32 @@ export const calculateLayoffHistoryScore = (
     if (/retail|ecomm|e.?comm|fashion|d2c/.test(industryLower)) return 0.12;
     return 0.09; // neutral sectors
   })();
-  // Epistemic floor only raises the score (doesn't lower genuinely high scores)
-  const _l2Floor = isFallbackSource ? Math.max(0.15, _sectorEpistemicFloor) : _sectorEpistemicFloor;
+  // Epistemic floor only raises the score (doesn't lower genuinely high scores).
+  // Dataset-unavailable compounds the fallback floor — cannot confirm clean history.
+  const _l2Floor = (() => {
+    const sectorFloor = _sectorEpistemicFloor;
+    if (layoffsDatasetUnavailable) return Math.max(0.25, sectorFloor);  // unknown: can't confirm safe
+    if (isFallbackSource) return Math.max(0.15, sectorFloor);            // fallback: epistemic uncertainty
+    return sectorFloor;
+  })();
+
+  // Record whether the epistemic floor was applied and by how much — surfaced in
+  // signal quality breakdown so TransparencyTab can show the honest "floor applied"
+  // note instead of silently displaying a floor-adjusted value as if observed.
+  const epistemicFloorApplied =
+    rawRecentLayoffRisk < _l2Floor || rawRoundFreqRisk < _l2Floor;
+  if (epistemicFloorApplied) {
+    (companyData as any)._l2EpistemicFloor = {
+      floor: _l2Floor,
+      reason: layoffsDatasetUnavailable
+        ? 'layoffs_dataset_unavailable'
+        : isFallbackSource
+          ? 'unknown_company_fallback'
+          : 'sector_epistemic_floor',
+      rawRecency: rawRecentLayoffRisk,
+      rawFrequency: rawRoundFreqRisk,
+    };
+  }
 
   const signals = {
     recentLayoffRisk:   Math.max(_l2Floor, rawRecentLayoffRisk),
@@ -2035,10 +2072,17 @@ const calculateConfidencePercent = (
     percent = Math.min(percent, 25);
   }
 
-  // Phase 3 fix: Unknown company caps confidence to 40%
+  // Unknown company: confidence cap depends on whether live signals were obtained.
+  // With no live signals (pure fallback): cap at 30% — score is sector+role estimate only.
+  // With live signals (scraped news/hiring): cap at 45% — directional but not precise.
+  // Previously fixed at 30% regardless, which was too pessimistic when RSS news or
+  // Naukri/Indeed scraping did return real current-state intelligence for the company.
   const isUnknown = companyData?.source?.includes('Fallback') || companyData?.source?.includes('Unknown');
   if (isUnknown) {
-    percent = Math.min(percent, 30);
+    const informativeLive = (companyData as any)?._informativeLiveSignals as number | undefined;
+    const genuineApiSigs  = (companyData as any)?._liveDataCoverage?.genuineApiSignals as number | undefined;
+    const hasLiveSignals  = (informativeLive ?? 0) > 0 || (genuineApiSigs ?? 0) > 0;
+    percent = Math.min(percent, hasLiveSignals ? 45 : 30);
   }
 
   if (dataQuality.reliabilityTier === 'C') {
@@ -2351,12 +2395,31 @@ const analyzeSignalQuality = (
     if ((companyData as any)._layoffsDatasetUnavailable) {
       missingFallbacks.push(
         '⚠ layoffs.fyi dataset unreachable — L2 layoff history signal defaults to 0 rounds. ' +
-        'This may understate risk for companies with documented cuts. Check again when the dataset recovers.',
+        'Epistemic uncertainty floor (25%) applied so score does not treat missing data as "confirmed clean". ' +
+        'Check again when the dataset recovers.',
       );
     } else {
       missingFallbacks.push('Layoff history (using sector baseline)');
     }
     heuristicSignals++;
+  }
+  // Surface epistemic floor application in signal quality breakdown.
+  // Previously the floor was silently applied and the Transparency tab showed
+  // raw 0.05 values while the engine used 0.15–0.25 — a display/engine mismatch.
+  const l2Floor = (companyData as any)._l2EpistemicFloor as
+    { floor: number; reason: string; rawRecency: number; rawFrequency: number } | undefined;
+  if (l2Floor) {
+    const floorPct = Math.round(l2Floor.floor * 100);
+    const reasonLabel = l2Floor.reason === 'layoffs_dataset_unavailable'
+      ? 'layoffs.fyi unreachable'
+      : l2Floor.reason === 'unknown_company_fallback'
+        ? 'company not in database'
+        : 'sector epistemic floor';
+    missingFallbacks.push(
+      `ℹ L2 epistemic floor ${floorPct}% applied (${reasonLabel}). ` +
+      `Raw signals: recency=${Math.round(l2Floor.rawRecency * 100)}%, frequency=${Math.round(l2Floor.rawFrequency * 100)}%. ` +
+      `Floor prevents "confirmed clean" interpretation when data is absent.`,
+    );
   }
 
   // Source attribution — prefer canonical provenance when available.

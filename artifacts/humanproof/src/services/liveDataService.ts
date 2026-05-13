@@ -395,6 +395,7 @@ export const fetchLiveCompanyData = async (
   _timer?: PipelineTimerInstance,
   roleTitle?: string,
   industry?: string,
+  isUnknownCompany?: boolean,
 ): Promise<LiveDataResult> => {
   const errors: string[] = [];
   let liveCount = 0;
@@ -410,7 +411,7 @@ export const fetchLiveCompanyData = async (
   // a fake ticker like 'STRIP' triggers Yahoo Finance fetch failures, which trip
   // the circuit breaker and block stock signals for all subsequent companies.
   const TICKER_MAP: Record<string, string> = {
-    // US public — NYSE / NASDAQ
+    // ── US public — NYSE / NASDAQ ──────────────────────────────────────────
     amazon: 'AMZN', google: 'GOOGL', alphabet: 'GOOGL',
     microsoft: 'MSFT', apple: 'AAPL', meta: 'META', facebook: 'META',
     tesla: 'TSLA', netflix: 'NFLX', nvidia: 'NVDA',
@@ -420,31 +421,107 @@ export const fetchLiveCompanyData = async (
     spotify: 'SPOT', shopify: 'SHOP', adobe: 'ADBE', snap: 'SNAP',
     palantir: 'PLTR', snowflake: 'SNOW', coinbase: 'COIN',
     datadog: 'DDOG', cloudflare: 'NET', twilio: 'TWLO',
-    samsara: 'IOT',
-    okta: 'OKTA', crowdstrike: 'CRWD', zscaler: 'ZS',
-    servicenow: 'NOW', workday: 'WDAY',
-    zoom: 'ZM', dropbox: 'DBX',
+    samsara: 'IOT', okta: 'OKTA', crowdstrike: 'CRWD', zscaler: 'ZS',
+    servicenow: 'NOW', workday: 'WDAY', zoom: 'ZM', dropbox: 'DBX',
     'paycom software': 'PAYC', paycom: 'PAYC',
     intuit: 'INTU', autodesk: 'ADSK', veeva: 'VEEV',
-    'mongodb': 'MDB', 'gitlab': 'GTLB', 'hashicorp': 'HCP',
-    // India — NSE / BSE
-    infosys: 'INFY', wipro: 'WIT',
+    mongodb: 'MDB', gitlab: 'GTLB', hashicorp: 'HCP',
+    // Additional US tech
+    'c3.ai': 'AI', 'c3 ai': 'AI',
+    splunk: 'SPLK', 'palo alto': 'PANW', fortinet: 'FTNT',
+    'elastic': 'ESTC', confluent: 'CFLT', 'unity software': 'U',
+    roblox: 'RBLX', robinhood: 'HOOD', affirm: 'AFRM',
+    'toast': 'TOST', 'bill.com': 'BILL', braze: 'BRZE',
+    hubspot: 'HUBS', zendesk: 'ZEN', 'box': 'BOX',
+    'mongodb atlas': 'MDB',
+    twitch: 'AMZN', // amazon subsidiary
+    'x.com': 'N/A', // private
+    linkedin: 'MSFT', // microsoft subsidiary
+    github: 'MSFT',  // microsoft subsidiary
+    slack: 'CRM',    // salesforce subsidiary
+    // US Financial / Fintech
+    stripe: 'N/A',   // private — must NOT map to a fake ticker
+    'square': 'XYZ', // now Block
+    block: 'XYZ', 'cash app': 'XYZ',
+    'sofi': 'SOFI', 'nubank': 'NU',
+    visa: 'V', mastercard: 'MA',
+    'american express': 'AXP', amex: 'AXP',
+    jpmorgan: 'JPM', 'bank of america': 'BAC',
+    goldman: 'GS', 'morgan stanley': 'MS', wells: 'WFC',
+    // US Healthcare / Biotech
+    johnson: 'JNJ', pfizer: 'PFE', 'abbvie': 'ABBV',
+    'unitedhealth': 'UNH', cvs: 'CVS', 'cigna': 'CI',
+    moderna: 'MRNA', biontech: 'BNTX',
+    // US Media / Retail
+    disney: 'DIS', 'comcast': 'CMCSA', 'paramount': 'PARA',
+    walmart: 'WMT', target: 'TGT', 'home depot': 'HD',
+    costco: 'COST', kroger: 'KR', 'dollar tree': 'DLTR',
+    // US Manufacturing / Auto / EV
+    ford: 'F', 'general motors': 'GM', gm: 'GM',
+    rivian: 'RIVN', lucid: 'LCID',
+    boeing: 'BA', lockheed: 'LMT', raytheon: 'RTX',
+    // ── India — NSE (suffix .NS for Yahoo Finance) ─────────────────────────
+    infosys: 'INFY',                    // US-listed ADR; INFY.NS on NSE
+    wipro: 'WIT',                       // US-listed ADR
     'tata consultancy': 'TCS.NS', tcs: 'TCS.NS',
-    hcl: 'HCLTECH.NS', 'tech mahindra': 'TECHM.NS',
-    'hcl technologies': 'HCLTECH.NS',
-    'mphasis': 'MPHASIS.NS', 'persistent': 'PERSISTENT.NS',
-    'ltimindtree': 'LTIM.NS', 'lti': 'LTIM.NS',
+    hcl: 'HCLTECH.NS', 'hcl technologies': 'HCLTECH.NS',
+    'tech mahindra': 'TECHM.NS',
+    mphasis: 'MPHASIS.NS',
+    persistent: 'PERSISTENT.NS',
+    ltimindtree: 'LTIM.NS', lti: 'LTIM.NS',
+    coforge: 'COFORGE.NS',
+    hexaware: 'HEXAWARE.NS',
+    'l&t technology': 'LTTS.NS', ltts: 'LTTS.NS',
+    kpit: 'KPITTECH.NS', 'kpit technologies': 'KPITTECH.NS',
+    'zensar': 'ZENSARTECH.NS',
+    mindtree: 'LTIM.NS',  // merged into LTIMindtree
+    // India Banks & Finance
+    hdfc: 'HDFCBANK.NS', 'hdfc bank': 'HDFCBANK.NS',
+    icici: 'ICICIBANK.NS', 'icici bank': 'ICICIBANK.NS',
+    'axis bank': 'AXISBANK.NS', axis: 'AXISBANK.NS',
+    sbi: 'SBIN.NS', 'state bank': 'SBIN.NS',
+    kotak: 'KOTAKBANK.NS', 'kotak mahindra': 'KOTAKBANK.NS',
+    bajajfinserv: 'BAJAJFINSV.NS', 'bajaj finserv': 'BAJAJFINSV.NS',
+    'bajaj finance': 'BAJFINANCE.NS',
+    paytm: 'ONE97.NS', 'one97': 'ONE97.NS',
+    policybazaar: 'POLICYBZR.NS',
+    nykaa: 'FSN.NS',
+    // India Telecom / Consumer
+    'reliance': 'RELIANCE.NS', jio: 'RELIANCE.NS',
+    airtel: 'BHARTIARTL.NS', 'bharti airtel': 'BHARTIARTL.NS',
+    tata: 'TCS.NS',  // resolve to TCS as most common Tata tech search
+    // India E-commerce / Logistics
+    zomato: 'ZOMATO.NS',
+    swiggy: 'N/A',   // recently listed, may not have data yet
+    'delhivery': 'DELHIVERY.NS',
+    'indiamart': 'INDIAMART.NS',
     // India-origin US-listed
     cognizant: 'CTSH', accenture: 'ACN',
-    // China / APAC — ADRs
-    alibaba: 'BABA', 'jd.com': 'JD', baidu: 'BIDU',
-    // Europe
-    'sap': 'SAP', 'nokia': 'NOK',
+    // ── China / APAC — ADRs ──────────────────────────────────────────────
+    alibaba: 'BABA', 'jd.com': 'JD', jd: 'JD',
+    baidu: 'BIDU', tencent: '0700.HK',
+    'sea limited': 'SE', sea: 'SE',
+    grab: 'GRAB', 'goto': 'N/A',
+    samsung: '005930.KS',
+    // ── Europe ───────────────────────────────────────────────────────────
+    sap: 'SAP', nokia: 'NOK', asml: 'ASML',
+    siemens: 'SIEGY', 'siemens energy': 'SMEGF',
+    'capgemini': 'CAPMF', 'atos': 'ATOSY',
+    'deutsche telekom': 'DTEGY',
+    // ── Global Consulting ─────────────────────────────────────────────────
+    mckinsey: 'N/A', bcg: 'N/A', bain: 'N/A',  // private
+    deloitte: 'N/A', pwc: 'N/A', ey: 'N/A', kpmg: 'N/A',  // private
+    capgemini: 'CAPMF',
   };
   const resolvedTicker = ticker ?? (() => {
     const lower = companyName.toLowerCase();
     for (const [key, t] of Object.entries(TICKER_MAP)) {
-      if (lower.includes(key) || key.includes(lower)) return t;
+      if (lower.includes(key) || key.includes(lower)) {
+        // 'N/A' marks confirmed private companies — never attempt a ticker fetch
+        // since that would hit Yahoo Finance with a bogus symbol, trip the circuit
+        // breaker, and block stock signals for all subsequent companies.
+        return t === 'N/A' ? null : t;
+      }
     }
     return null;
   })();
@@ -453,7 +530,12 @@ export const fetchLiveCompanyData = async (
   // Career page + Wikipedia + Glassdoor scraping runs concurrently while
   // the main DB + API fetch chain proceeds. No API keys required.
   // Result applied to companyData after reconciliation (in auditDataPipeline).
-  const _scrapingPipelinePromise = runScrapingPipeline(companyName, null).catch(() => null);
+  // Unknown companies get a higher-priority, extended-timeout scraping pass since
+  // Wikipedia headcount + career-page freeze are their only non-heuristic signals.
+  const _scrapingPipelinePromise = runScrapingPipeline(
+    companyName, null,
+    isUnknownCompany ? { isUnknownCompany: true } : undefined,
+  ).catch(() => null);
 
   // ── Stock + News via server-side proxy (API keys stay on server) ──────────
   let stockData: StockLiveData | null = null;
