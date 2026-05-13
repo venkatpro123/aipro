@@ -62,6 +62,7 @@ import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName } from "../../service
 import { fetchAuditData } from "../../services/auditDataPipeline";
 import { startBackgroundRefresh } from "../../services/liveRefreshService";
 import { resolveRoleInput } from "../../services/roleResolution";
+import { LiveSignalStatusBanner } from "../audit/LiveSignalStatusBanner";
 import { HybridResult } from "../../types/hybridResult";
 
 interface Props {
@@ -1366,6 +1367,18 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
                 </span>
               </div>
             </div>
+          </div>
+        )}
+
+      {/* Live signal status banner — shows data coverage tier and live vs DB breakdown */}
+      {state.hasCompletedAssessment &&
+        state.scoreResult &&
+        !state.isCalculating && (state.scoreResult as any)._liveDataCoverage && (
+          <div className="max-w-4xl mx-auto px-4 mb-3">
+            <LiveSignalStatusBanner
+              coverage={(state.scoreResult as any)._liveDataCoverage}
+              freshnessScore={(state.scoreResult as any)._dataFreshnessScore}
+            />
           </div>
         )}
 

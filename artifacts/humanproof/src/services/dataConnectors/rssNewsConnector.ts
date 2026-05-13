@@ -45,17 +45,23 @@ export interface NewsSummary {
 const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
 // Google News RSS: company-targeted, no API key, publically accessible.
-// Returns recent news articles matching the company name.
 function googleNewsRssUrl(company: string): string {
   return `https://news.google.com/rss/search?q=${encodeURIComponent(company + ' layoff OR restructuring OR job cut')}&hl=en-IN&gl=IN&ceid=IN:en`;
+}
+
+// Bing News RSS: no API key, company-targeted
+function bingNewsRssUrl(company: string): string {
+  return `https://www.bing.com/news/search?q=${encodeURIComponent('"' + company + '" layoff OR restructuring')}&format=RSS`;
+}
+
+// Yahoo Finance News RSS: ticker-targeted, no API key
+function yahooFinanceRssUrl(ticker: string): string {
+  return `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
 }
 
 const STATIC_FEEDS = {
   economicTimes: 'https://economictimes.indiatimes.com/tech/tech-bytes/rssfeeds/78570561.cms',
   hnTop: 'https://hnrss.org/frontpage',
-  // NOTE: Glassdoor press RSS was removed. The URL glassdoor.com/about-us/press/rss
-  // returns Glassdoor's own corporate news, not employee reviews. A company-
-  // specific Glassdoor signal requires the Glassdoor API (partner access).
 };
 
 const LAYOFF_KEYWORDS = [
@@ -136,6 +142,86 @@ async function fetchGoogleNewsRSS(company: string): Promise<any[]> {
   }
 }
 
+// Bing News RSS — no API key, company-targeted (CORS-permissive GET endpoint)
+async function fetchBingNewsRSS(company: string): Promise<any[]> {
+  try {
+    const url = bingNewsRssUrl(company);
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+    const text = await res.text();
+    const items: any[] = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = itemRegex.exec(text)) !== null) {
+      const block = m[1];
+      const title   = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block) ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1] ?? '';
+      const link    = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1] ?? '';
+      const pubDate = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1] ?? '';
+      if (title) items.push({ title: title.trim(), link: link.trim(), pubDate: pubDate.trim() });
+    }
+    return items;
+  } catch {
+    return [];
+  }
+}
+
+// Yahoo Finance News RSS — no API key, ticker-targeted
+async function fetchYahooFinanceRSS(ticker: string): Promise<any[]> {
+  try {
+    const url = yahooFinanceRssUrl(ticker);
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+    const text = await res.text();
+    const items: any[] = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+    let m: RegExpExecArray | null;
+    while ((m = itemRegex.exec(text)) !== null) {
+      const block = m[1];
+      const title   = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block) ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1] ?? '';
+      const link    = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1] ?? '';
+      const pubDate = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1] ?? '';
+      if (title) items.push({ title: title.trim(), link: link.trim(), pubDate: pubDate.trim() });
+    }
+    return items;
+  } catch {
+    return [];
+  }
+}
+
+// Reddit search — no API key, company layoff mentions
+async function fetchRedditMentions(company: string): Promise<NewsSignal[]> {
+  try {
+    const q = encodeURIComponent(company + ' layoff');
+    const res = await fetch(
+      `https://www.reddit.com/search.json?q=${q}&sort=new&limit=15&t=month`,
+      {
+        headers: { 'User-Agent': 'HumanProofIntelligence/1.0 (layoff research; non-commercial)' },
+        signal: AbortSignal.timeout(5000),
+      },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data?.data?.children ?? []).map((post: any): NewsSignal => {
+      const d = post?.data ?? {};
+      const title = d.title ?? '';
+      const lower = title.toLowerCase();
+      const negated = isNegated(lower);
+      return {
+        title,
+        source: `Reddit r/${d.subreddit ?? 'layoffs'}`,
+        url: d.url ?? `https://reddit.com${d.permalink ?? ''}`,
+        publishedAt: d.created_utc ? new Date(d.created_utc * 1000).toISOString() : '',
+        sentiment: negated ? 'neutral' : detectSentiment(lower),
+        layoffMentioned: !negated && LAYOFF_KEYWORDS.some(kw => lower.includes(kw)),
+        companyMentioned: true,
+        negationDetected: negated,
+      };
+    }).filter((s: NewsSignal) => s.title.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 async function fetchHNMentions(company: string): Promise<NewsSignal[]> {
   try {
     const res = await fetch(
@@ -164,7 +250,13 @@ async function fetchHNMentions(company: string): Promise<NewsSignal[]> {
   }
 }
 
-export async function fetchCompanyNewsSignals(company: string): Promise<NewsSummary> {
+/**
+ * fetchCompanyNewsSignals — scraping-first, no API key required.
+ * Sources: Google News RSS + Bing News RSS + Yahoo Finance RSS (if ticker) +
+ *          Reddit JSON + Economic Times RSS + Hacker News Algolia API.
+ * All sources are free-tier with no daily quotas.
+ */
+export async function fetchCompanyNewsSignals(company: string, ticker?: string): Promise<NewsSummary> {
   const emptyResult: NewsSummary = {
     company, signals: [], negativeCount: 0, layoffSignalCount: 0,
     sentimentScore: 0, fetchedAt: new Date().toISOString(),
@@ -172,15 +264,25 @@ export async function fetchCompanyNewsSignals(company: string): Promise<NewsSumm
   try {
     const companyLower = company.toLowerCase();
 
-    const [etItems, gnItems, hnSignals] = await Promise.allSettled([
-      fetchRSSViaProxy(STATIC_FEEDS.economicTimes),
-      fetchGoogleNewsRSS(company),
-      fetchHNMentions(company),
-    ]).then(results => [
-      results[0].status === 'fulfilled' ? results[0].value : [] as any[],
-      results[1].status === 'fulfilled' ? results[1].value : [] as any[],
-      results[2].status === 'fulfilled' ? results[2].value : [] as NewsSignal[],
-    ]);
+    // Launch all scraped sources concurrently — no API keys, no quotas
+    const fetches: Promise<any>[] = [
+      fetchRSSViaProxy(STATIC_FEEDS.economicTimes),  // 0: Economic Times
+      fetchGoogleNewsRSS(company),                    // 1: Google News
+      fetchHNMentions(company),                       // 2: Hacker News
+      fetchBingNewsRSS(company),                      // 3: Bing News
+      fetchRedditMentions(company),                   // 4: Reddit
+    ];
+    if (ticker) fetches.push(fetchYahooFinanceRSS(ticker)); // 5: Yahoo Finance RSS (ticker-only)
+
+    const settled = await Promise.allSettled(fetches);
+    const [etItems, gnItems, hnSignals, bingItems, redditSignals] = [
+      settled[0].status === 'fulfilled' ? settled[0].value : [] as any[],
+      settled[1].status === 'fulfilled' ? settled[1].value : [] as any[],
+      settled[2].status === 'fulfilled' ? settled[2].value : [] as NewsSignal[],
+      settled[3].status === 'fulfilled' ? settled[3].value : [] as any[],
+      settled[4].status === 'fulfilled' ? settled[4].value : [] as NewsSignal[],
+    ];
+    const yfItems = ticker && settled[5]?.status === 'fulfilled' ? settled[5].value as any[] : [];
 
     const seenUrls = new Set<string>();
     const seenFingerprints = new Set<string>();
@@ -231,6 +333,18 @@ export async function fetchCompanyNewsSignals(company: string): Promise<NewsSumm
       if (sig) allSignals.push(sig);
     }
 
+    // Process Bing News items
+    for (const item of bingItems) {
+      const sig = processItem(item, 'Bing News');
+      if (sig) allSignals.push(sig);
+    }
+
+    // Process Yahoo Finance RSS items (already company-specific via ticker)
+    for (const item of yfItems) {
+      const sig = processItem(item, 'Yahoo Finance');
+      if (sig) allSignals.push(sig);
+    }
+
     // Process HN items (already typed as NewsSignal)
     for (const hn of hnSignals as NewsSignal[]) {
       const url = hn.url;
@@ -240,6 +354,17 @@ export async function fetchCompanyNewsSignals(company: string): Promise<NewsSumm
       if (url) seenUrls.add(url);
       if (fp) seenFingerprints.add(fp);
       allSignals.push(hn);
+    }
+
+    // Process Reddit items (already typed as NewsSignal)
+    for (const r of redditSignals as NewsSignal[]) {
+      const url = r.url;
+      const fp = titleFingerprint(r.title);
+      if (url && seenUrls.has(url)) continue;
+      if (fp.length > 8 && seenFingerprints.has(fp)) continue;
+      if (url) seenUrls.add(url);
+      if (fp) seenFingerprints.add(fp);
+      allSignals.push(r);
     }
 
     const negCount = allSignals.filter(s => s.sentiment === 'negative').length;

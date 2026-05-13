@@ -14,6 +14,7 @@ import {
   createUnknownCompanyFallback
 } from "./layoffScoreEngine";
 import { fetchLiveCompanyData, reconcileCompanySignals, type ReconciledCompanySignals } from "./liveDataService";
+import { applyScrapingEnrichment } from "./scrapingOrchestrator";
 import { buildHybridScorePayload } from "./hybridConsensusBuilder";
 import { queryCompanyIntelligenceWithMatch, saveToDiscoveryQueue } from "./companyIntelligenceService";
 import { supabase } from "../utils/supabase";
@@ -203,11 +204,17 @@ export interface AuditInputs {
   oracleKey?: string;
   country?: string;
   financialRunwayMonths?: number;  // v10.0: months of expenses covered (0 = not provided)
+  industry?: string;
 }
+
+// Seeded records without a real last_updated get this sentinel so freshnessDays > 30
+// → classifyDbFreshness → 'invalid' → live signals ALWAYS supersede seeded data.
+const STALE_SEED_DATE = '2025-01-01T00:00:00.000Z';
 
 /**
  * mapOsintToCompanyData
  * Converts raw OSINT Edge Function response to CompanyData schema.
+ * The EF queries company_intelligence (seeded DB) — data is NOT live scraped.
  */
 function mapOsintToCompanyData(osintData: any, sourceName?: string): CompanyData {
   const resolvedIsPublic = Boolean(
@@ -245,8 +252,11 @@ function mapOsintToCompanyData(osintData: any, sourceName?: string): CompanyData
     lastLayoffPercent: osintData.last_layoff_percent ?? (resolvedLayoffs.length > 0 ? resolvedLayoffs[0].percentCut : null),
     revenuePerEmployee: resolvedRevPerEmp,
     aiInvestmentSignal: osintData.ai_investment_signal ?? "medium",
-    source: sourceName || "Live OSINT Database",
-    lastUpdated: osintData.last_updated ?? new Date().toISOString(),
+    source: sourceName || "Seeded Intelligence DB",
+    // Read both snake_case (EF v1 still returned only last_updated) and camelCase (EF v2+).
+    // Fall back to STALE_SEED_DATE — NOT new Date() — so classifyDbFreshness marks seeded
+    // records as 'invalid' (>30 days old) and live signals always supersede them.
+    lastUpdated: osintData.last_updated ?? osintData.lastUpdated ?? STALE_SEED_DATE,
   };
 }
 
@@ -540,6 +550,23 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Fire-and-forget — non-fatal if Supabase is unavailable; seeded fallbacks remain.
   loadCuratedLayoffEvents().catch(() => {});
 
+  // ── LIVE-FIRST ARCHITECTURE ─────────────────────────────────────────────────
+  // Start live scraping IMMEDIATELY — in parallel with DB resolution steps below.
+  // Live signals are the primary source of truth; DB/static data fills gaps only.
+  // The promise is awaited later (after DB resolution) so both run concurrently,
+  // eliminating the sequential 2-3s delay that caused stale data to be used as base.
+  const _liveDataPromise: Promise<Awaited<ReturnType<typeof fetchLiveCompanyData>> | null> =
+    fetchLiveCompanyData(
+      inputs.companyName,
+      null,                             // ticker: resolved via TICKER_MAP internally or post-EF
+      _timer,
+      inputs.roleTitle ?? 'Software Engineer',
+      inputs.industry ?? undefined,
+    ).catch((err: unknown) => {
+      console.warn('[AuditPipeline] Concurrent live scraping failed:', err);
+      return null;
+    });
+
   let companyData: CompanyData | null = null;
   let dataSource: 'live' | 'db' | 'stale_db' | 'fallback' = 'db';
   let trueLiveSignals = 0;
@@ -569,7 +596,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     engineFailures.push(...warnings);
   }).catch(() => { /* health check non-fatal */ });
 
-  // Step 1: Try Live OSINT (Supabase Edge Function)
+  // Step 1: Seeded company_intelligence lookup via Edge Function.
+  // NOTE: fetch-company-data queries the seeded company_intelligence DB table —
+  // it is NOT a live scrape. Data is static/seeded; live enrichment happens in Step 5.
+  // dataSource is correctly set to 'db', not 'live', regardless of EF label.
   try {
     const { data: fetchRes, error } = await supabase.functions.invoke("fetch-company-data", {
       body: { companyName: inputs.companyName }
@@ -584,16 +614,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       companyMatchType = (fetchRes.matchType ?? "exact") as typeof companyMatchType;
       if (!isFallback && matchConfidence >= 0.7) {
         companyData = mapOsintToCompanyData(fetchRes.data, fetchRes.source);
-        // Demote to 'stale_db' when the DB row is older than 7 days (Phase D)
-        dataSource = fetchRes.dataFreshness?._staleDb ? 'stale_db' : 'live';
-        const d = fetchRes.data;
-        trueLiveSignals =
-          (d.stock_90d_change        != null ? 1 : 0) +
-          (d.revenue_growth_yoy      != null ? 1 : 0) +
-          (d.recent_layoff_news               ? 1 : 0) +
-          (d.employee_count          != null ? 1 : 0) +
-          (d.revenue_per_employee    != null ? 1 : 0);
-        trueHeuristicSignals = Math.max(0, 7 - trueLiveSignals);
+        // EF response is seeded-DB-sourced — mark as db/stale_db, NEVER live.
+        // trueLiveSignals will be updated only after fetchLiveCompanyData reconciliation.
+        dataSource = fetchRes.dataFreshness?._staleDb ? 'stale_db' : 'db';
+        trueLiveSignals = 0;  // DB fields are NOT live signals
+        trueHeuristicSignals = 7;
+        // Tag so the reconciler knows this baseline came from the seeded DB.
+        (companyData as any)._isSeededBaseline = true;
       } else if (!isFallback && matchConfidence < 0.7) {
         console.info(
           `[AuditPipeline] fetch-company-data match rejected for scoring: confidence=${matchConfidence.toFixed(2)} type=${fetchRes.matchType ?? 'unknown'}`,
@@ -620,15 +647,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     } catch { /* non-fatal */ }
   }
 
-  // Step 2: Supabase company_intelligence table (2000+ companies)
-  // Use queryCompanyIntelligenceWithMatch so match confidence is captured in
-  // evaluationSnapshot — previously the simplified wrapper discarded this metadata.
+  // Step 2: Seeded company_intelligence table direct client query (2000+ companies).
+  // EF in Step 1 may have failed or returned low confidence — this is the same seeded DB.
   if (!companyData) {
     try {
       const supabaseResult = await queryCompanyIntelligenceWithMatch(inputs.companyName);
       if (supabaseResult) {
         companyData = supabaseResult.companyData;
         dataSource = 'db';
+        (companyData as any)._isSeededBaseline = true;
         if (companyMatchConfidence === 0) {
           companyMatchConfidence = supabaseResult.matchConfidence;
           companyMatchType = supabaseResult.matchType as typeof companyMatchType;
@@ -639,12 +666,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
   }
 
-  // Step 3: Legacy companyDatabase (18 companies) — final code-side fallback
+  // Step 3: Legacy companyDatabase (18 companies) — static code-side fallback.
   if (!companyData) {
     const legacy = getCompanyByName(inputs.companyName);
     if (legacy) {
       companyData = legacy;
       dataSource = 'db';
+      (companyData as any)._isSeededBaseline = true;
     }
   }
 
@@ -708,42 +736,117 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     userAllowedLiveCalls = true; // quota check failed — fail open
   }
 
-  // Live-vs-DB reconciliation is authoritative: fresh live beats stale DB,
-  // conflicts are surfaced, and heuristic substitution is never silent.
+  // ── LIVE-FIRST RECONCILIATION ───────────────────────────────────────────────
+  // Await the concurrent live scraping promise started at pipeline entry.
+  // By now it has been running in parallel with all DB resolution steps, so
+  // it either completed already or is nearly done — not starting fresh.
   try {
-    const ticker = (companyData as any).ticker ?? (companyData as any).stockTicker ?? null;
-    const liveData = await fetchLiveCompanyData(
-      inputs.companyName,
-      userAllowedLiveCalls ? ticker : null,
-      _timer,
-      inputs.roleTitle,        // enables role-specific Serper/Naukri job-count signals
-      companyData.industry,    // enables sector-level layoff count from layoffs.fyi
-    );
+    const efTicker = (companyData as any).ticker ?? (companyData as any).stockTicker ?? null;
+    // Await the early-started promise. If it succeeded, use it.
+    // If EF gave us a ticker that wasn't in TICKER_MAP (stock data null), fire a
+    // targeted supplement. Otherwise use the already-resolved promise directly.
+    let liveData = await _liveDataPromise;
 
-    reconciledSignals = reconcileCompanySignals(companyData as CompanyData, liveData);
-    companyData = reconciledSignals.active;
-    trueLiveSignals = reconciledSignals.liveSignalCount;
-    trueHeuristicSignals = Math.max(0, 7 - Math.min(7, reconciledSignals.informativeLiveSignalCount));
-    if (reconciledSignals.summary.liveWonKeys.length > 0 || trueLiveSignals >= 2) {
-      dataSource = 'live';
+    // Supplement: if early live scraping produced no stock data BUT the EF gave us
+    // a ticker and quota allows it, do a quick targeted stock-only fetch.
+    if (
+      liveData &&
+      userAllowedLiveCalls &&
+      efTicker &&
+      liveData.stockData === null &&
+      liveData.genuineLiveApiSignals < 1
+    ) {
+      try {
+        const supplemented = await fetchLiveCompanyData(
+          inputs.companyName,
+          efTicker,
+          _timer,
+          inputs.roleTitle,
+          companyData.industry,
+        );
+        // Merge: use supplemented stock/revenue data, keep everything else from early run
+        if (supplemented.stockData !== null) {
+          liveData = { ...liveData, stockData: supplemented.stockData };
+        }
+      } catch { /* non-fatal — early result still used */ }
     }
 
-    // Patch layoffs dataset availability onto companyData so the transparency
-    // layer can distinguish a genuine clean history from source unavailability.
-    const connectorResult = liveData._connectorSignals;
-    if (connectorResult && connectorResult.layoffsDatasetAvailable === false) {
-      (companyData as any)._layoffsDatasetUnavailable = true;
-    }
+    if (!liveData) {
+      // Early live scraping failed — fall through to DB-only scoring with low confidence
+      trueLiveSignals      = 0;
+      trueHeuristicSignals = 7;
+    } else {
+      reconciledSignals = reconcileCompanySignals(companyData as CompanyData, liveData);
+      companyData = reconciledSignals.active;
+      trueLiveSignals = reconciledSignals.liveSignalCount;
+      trueHeuristicSignals = Math.max(0, 7 - Math.min(7, reconciledSignals.informativeLiveSignalCount));
 
-    if (reconciledSignals.missingDataFallbacks.length > 0) {
-      console.info('[AuditPipeline] Live data gaps:', reconciledSignals.missingDataFallbacks);
+      // Source label: live only when real external APIs contributed
+      const totalKeys = reconciledSignals.summary.liveWonKeys.length + reconciledSignals.summary.dbWonKeys.length;
+      const liveRatio = totalKeys > 0 ? reconciledSignals.summary.liveWonKeys.length / totalKeys : 0;
+      if (liveRatio >= 0.5) {
+        dataSource = 'live';
+      } else if (liveRatio > 0) {
+        dataSource = dataSource === 'fallback' ? 'fallback' : 'db';
+      }
+
+      // Propagate real live data coverage score (0–1) — used by confidence gating
+      // in hybridConsensusBuilder. Based on actual external API wins, not DB fields.
+      const genuineApiSignals = liveData.genuineLiveApiSignals ?? 0;
+      const derivedSignals    = liveData.derivedLayoffEvents.length > 0 ? 1 : 0;
+      const hiringSignal      = liveData.hiringData?.isLive === true ? 1 : 0;
+      const rawCoverage = Math.min(1, (genuineApiSignals + derivedSignals + hiringSignal) / 5);
+      const pipelineFreshnessScore = Math.round(rawCoverage * 100) / 100;
+      // Preserve reconciliation's per-signal freshness score (set in reconcileCompanySignals).
+      // The reconciliation score = fraction of signal-slots won by fresh live data.
+      // The pipeline score = fraction of API-call slots that returned data.
+      // Take the max so the higher-quality metric wins; neither silently drops to 0.
+      const reconciliationFreshnessScore = (companyData as any)._dataFreshnessScore ?? 0;
+      (companyData as any)._dataFreshnessScore = Math.max(reconciliationFreshnessScore, pipelineFreshnessScore);
+      (companyData as any)._liveDataCoverage = {
+        liveWonKeys:   reconciledSignals.summary.liveWonKeys,
+        dbWonKeys:     reconciledSignals.summary.dbWonKeys,
+        liveRatio:     Math.round(liveRatio * 100) / 100,
+        genuineApiSignals,
+        overallSource: liveData.overallSource,
+        degradedSignalClasses: liveData.degradedSignalClasses,
+        hardFailures:          liveData.hardFailures ?? [],
+        fetchedAt:             liveData.fetchedAt,
+      };
+
+      // Apply scraping enrichment (Wikipedia headcount, career page freeze, Glassdoor)
+      // The scraping pipeline was launched concurrently at fetchLiveCompanyData entry
+      // and has been running in parallel — by this point it is complete.
+      const scrapingResult = (liveData as any)._scrapingResult;
+      if (scrapingResult) {
+        applyScrapingEnrichment(companyData, scrapingResult);
+        if (scrapingResult.activeSources.length > 0) {
+          console.info('[AuditPipeline] Scraping enrichment applied:', scrapingResult.activeSources.join(', '));
+        }
+      }
+
+      // Patch layoffs dataset availability onto companyData
+      const connectorResult = liveData._connectorSignals;
+      if (connectorResult && connectorResult.layoffsDatasetAvailable === false) {
+        (companyData as any)._layoffsDatasetUnavailable = true;
+      }
+
+      if (reconciledSignals.missingDataFallbacks.length > 0) {
+        console.info('[AuditPipeline] Live data gaps:', reconciledSignals.missingDataFallbacks);
+      }
     }
   } catch (liveErr) {
     console.warn('[AuditPipeline] Live enrichment failed:', liveErr);
-    if (dataSource !== 'live') {
-      trueLiveSignals      = 0;
-      trueHeuristicSignals = 7;
-    }
+    trueLiveSignals      = 0;
+    trueHeuristicSignals = 7;
+    // Mark as zero live coverage so confidence caps fire
+    (companyData as any)._dataFreshnessScore = 0;
+    (companyData as any)._liveDataCoverage = {
+      liveWonKeys: [], dbWonKeys: [], liveRatio: 0,
+      genuineApiSignals: 0, overallSource: 'heuristic',
+      degradedSignalClasses: [], hardFailures: ['live_enrichment_threw'],
+      fetchedAt: new Date().toISOString(),
+    };
   }
 
   // End OSINT phase — everything from here is synchronous or internal

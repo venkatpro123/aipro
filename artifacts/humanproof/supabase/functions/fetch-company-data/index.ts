@@ -126,6 +126,9 @@ function mapCIRowToData(row: Record<string, unknown>) {
     isPublic:             row.is_public ?? false,
     region:               row.region ?? 'US',
     confidenceScore:      row.confidence_score ?? null,
+    // Return BOTH field name forms so callers reading either case get the real timestamp.
+    // mapOsintToCompanyData reads last_updated (snake_case); this ensures no fallback to new Date().
+    last_updated:         row.last_updated ?? null,
     lastUpdated:          row.last_updated ?? null,
   };
 }

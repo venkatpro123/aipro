@@ -31,6 +31,7 @@ import ModelCalibrationPanel from "./common/ModelCalibrationPanel";
 import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
 // live-data-first
 import { DataFreshnessPanel } from "../audit/DataFreshnessPanel";
+import { LiveDataCoveragePanel } from "../audit/LiveDataCoveragePanel";
 import { CALIBRATION_META } from "../../services/empiricalCalibration";
 import { getCircuitSnapshot } from "../../services/apiCircuitBreaker";
 import { PatternMatchCard } from "../PatternMatchCard";
@@ -1301,6 +1302,17 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             dbAgeDays={(result as any).companyData?._ageDays}
           />
         </div>
+
+        {/* live-data-first: per-signal source attribution (live/db/static/degraded) */}
+        {(result as any)._liveDataCoverage && (
+          <div className="mt-6">
+            <LiveDataCoveragePanel
+              coverage={(result as any)._liveDataCoverage}
+              freshnessScore={(result as any)._dataFreshnessScore}
+              companyName={result.companyName}
+            />
+          </div>
+        )}
 
         {/* v12.0: Signal Attribution Waterfall — how each signal built the final score */}
         <div className="mt-6">

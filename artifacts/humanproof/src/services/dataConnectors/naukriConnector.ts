@@ -26,7 +26,7 @@ export interface RoleDemandSignal {
   linkedinOpenings: number | null;
   demandTrend: 'rising' | 'stable' | 'falling';
   hiringFreezeScore: number;
-  source: 'Naukri Heuristic' | 'Serper API';
+  source: 'Naukri Heuristic' | 'Serper API' | 'Naukri+Indeed+LinkedIn (scraped)';
   /**
    * true  — values came from a real-time Serper API call (server-side).
    * false — ROLE_DEMAND_BASE static prior (Q1 2026 manual review, not refreshed per-request).
@@ -95,8 +95,8 @@ function heuristicSignal(
     source:            'Naukri Heuristic',
     isLive:            false,
     disclosure:
-      'Static heuristic baseline (Q1 2026 review). Hiring data is not refreshed per-request. ' +
-      'Configure SERPER_API_KEY in Supabase Edge Function secrets to enable live Naukri/LinkedIn job counts.',
+      'Static heuristic baseline (Q1 2026 review). Live hiring signals use direct Naukri/Indeed/LinkedIn ' +
+      'scraping (no API key required). This fallback activates only when all scraped sources return zero results.',
     fetchedAt:      new Date().toISOString(),
     _stale:         true,
     _fallbackReason: fallbackReason,
@@ -130,6 +130,14 @@ export async function fetchRoleDemandSignal(
         recordApiDegradation('serper', 'rate_limited', 'Serper 429 from proxy-live-signals');
         return heuristicSignal(roleTitle, company, 'serper_quota_exceeded');
       }
+      // scrapeSource tells us which path delivered the data:
+      //   naukri+linkedin+indeed = scraped (no API key)
+      //   serper                 = Serper API fallback
+      // scrapeSource: 'scraped' = Naukri+Indeed+LinkedIn direct scraping (no API key)
+      //               'serper'  = Serper paid API fallback
+      const liveSource = h.scrapeSource === 'scraped'
+        ? 'Naukri+Indeed+LinkedIn (scraped)' as const
+        : 'Serper API' as const;
       return {
         roleTitle,
         company,
@@ -138,9 +146,11 @@ export async function fetchRoleDemandSignal(
         linkedinOpenings:  h.linkedinOpenings ?? null,
         demandTrend:       h.demandTrend,
         hiringFreezeScore: h.hiringFreezeScore,
-        source:            'Serper API',
+        source:            liveSource,
         isLive:            true,
-        disclosure:        '',
+        disclosure:        h.scrapeSource === 'scraped'
+          ? ''
+          : 'Hiring data from Serper API (paid fallback). Primary path: Naukri+Indeed+LinkedIn direct scraping.',
         fetchedAt:         h.fetchedAt ?? new Date().toISOString(),
       };
     }

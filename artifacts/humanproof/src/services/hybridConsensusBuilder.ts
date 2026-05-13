@@ -74,6 +74,7 @@ export interface HybridScorePayload {
   confidenceCap?: number;
   confidenceCapsApplied?: string[];
   _dataFreshnessScore?: number;
+  _liveDataCoverage?: unknown;
 }
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -641,18 +642,27 @@ export function buildHybridScorePayload({
 
   const lowDataCap = missingCriticalCount >= 2 ? 0.35 : null;
 
-  // Gate confidence on data freshness: fully static data → cap 35%, mostly stale → cap 55%
+  // ── 4-TIER LIVE DATA CONFIDENCE GATE ────────────────────────────────────────
+  // Confidence is capped by how much of the audit came from real live sources.
+  // Tier 0 (0–15% live)   → cap 30%  — Emergency Static Fallback
+  // Tier 1 (16–40% live)  → cap 50%  — Primarily Database
+  // Tier 2 (41–70% live)  → cap 70%  — Partially Live
+  // Tier 3 (71–100% live) → no cap   — Live Intelligence Active
   const dataFreshnessScore = (companyData as any)._dataFreshnessScore as number | undefined;
   let freshnessConfidenceCap: number | null = null;
   const freshnessNotes: string[] = [];
   if (dataFreshnessScore != null) {
-    if (dataFreshnessScore < 0.1) {
-      freshnessConfidenceCap = 0.35;
-      freshnessNotes.push('Static data only — all live sources unavailable');
-    } else if (dataFreshnessScore < 0.4) {
-      freshnessConfidenceCap = 0.55;
-      freshnessNotes.push('Limited live data — majority of signals from DB cache');
+    if (dataFreshnessScore <= 0.15) {
+      freshnessConfidenceCap = 0.30;
+      freshnessNotes.push('Emergency static fallback — no live sources responded. Score reflects DB baseline only.');
+    } else if (dataFreshnessScore <= 0.40) {
+      freshnessConfidenceCap = 0.50;
+      freshnessNotes.push('Primarily database data — fewer than 40% of signals came from live APIs.');
+    } else if (dataFreshnessScore <= 0.70) {
+      freshnessConfidenceCap = 0.70;
+      freshnessNotes.push('Partially live — some signals from database cache. Refresh in 4h for full accuracy.');
     }
+    // Tier 3: > 70% live — no cap applied
   }
 
   const overallConfidence = (() => {
@@ -718,5 +728,6 @@ export function buildHybridScorePayload({
       ...freshnessNotes,
     ],
     _dataFreshnessScore: dataFreshnessScore,
+    _liveDataCoverage: (companyData as any)._liveDataCoverage ?? null,
   };
 }

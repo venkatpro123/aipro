@@ -1,9 +1,12 @@
 // liveDataService.ts
-// Central live data fetcher — all API keys held server-side in Edge Functions.
-// Browser NEVER holds Alpha Vantage, NewsAPI, or OpenRouter keys.
-// Hierarchy: proxy-live-signals EF (stock+news) → free data connectors → heuristic fallback
+// Central live data fetcher — scraping-first, APIs as backup only.
+// PRIORITY: Yahoo Finance (no key) → Bing/Google/HN/Reddit RSS (no key) →
+//           Naukri API + Indeed + LinkedIn direct scraping (no key) →
+//           GNews (100/day) → NewsAPI (100/day) → Serper (paid, last resort)
+// Browser NEVER holds any API keys — all key-gated calls go through Edge Functions.
 
 import { injectLayoffEvent, LayoffNewsEvent } from '../data/layoffNewsCache';
+import { runScrapingPipeline, applyScrapingEnrichment } from './scrapingOrchestrator';
 import type { CompanyData } from '../data/companyDatabase';
 import { enrichCompanySignals } from './dataConnectors/index';
 import { supabase as _supabase } from '../utils/supabase';
@@ -32,7 +35,14 @@ export interface StockLiveData {
   peRatio: number | null;
   /** Full-time employee count from Yahoo Finance assetProfile.fullTimeEmployees */
   employeeCount: number | null;
-  source: 'alphavantage' | 'heuristic';
+  /**
+   * yahoo-finance = scraped directly from Yahoo Finance API (no key, no limit) — PRIMARY
+   * alphavantage  = Alpha Vantage API (25/day key-gated) — fallback only
+   * bse-india     = BSE India API (no key, India-listed companies)
+   * nse-india     = NSE India API (no key, India-listed companies)
+   * heuristic     = static baseline (no live data available)
+   */
+  source: 'alphavantage' | 'yahoo-finance' | 'bse-india' | 'nse-india' | 'heuristic';
   fetchedAt: string;
 }
 
@@ -40,7 +50,7 @@ export interface NewsLiveData {
   latestLayoffEvent: LayoffNewsEvent | null;
   recentHeadlineCount: number;  // layoff-related articles in last 30 days
   sentimentSignal: number;      // 0–1, higher = more negative/risky
-  source: 'newsapi' | 'static-cache';
+  source: 'newsapi' | 'static-cache' | 'google-news-rss' | 'bing-news-rss' | 'hackernews' | 'reddit' | 'gnews' | 'none';
   fetchedAt: string;
 }
 
@@ -162,6 +172,7 @@ export interface LiveDataResult {
   degradedSignalClasses: string[];
   hardFailures: string[];
   _connectorSignals?: any;
+  _scrapingResult?:   any;
 }
 
 // ── Server-side proxy call (Alpha Vantage + NewsAPI — keys never in browser) ──
@@ -438,29 +449,35 @@ export const fetchLiveCompanyData = async (
     return null;
   })();
 
+  // ── Concurrent scraping pipeline — launches before all API calls ────────────
+  // Career page + Wikipedia + Glassdoor scraping runs concurrently while
+  // the main DB + API fetch chain proceeds. No API keys required.
+  // Result applied to companyData after reconciliation (in auditDataPipeline).
+  const _scrapingPipelinePromise = runScrapingPipeline(companyName, null).catch(() => null);
+
   // ── Stock + News via server-side proxy (API keys stay on server) ──────────
   let stockData: StockLiveData | null = null;
   let newsData: NewsLiveData | null = null;
 
   // ── Gate 1: per-session quota guard ──────────────────────────────────────
-  // proxy-live-signals EF uses ALPHAVANTAGE_API_KEY and calls the Alpha Vantage API.
-  // Track it under 'alphavantage' to correctly monitor the 25-call/day AV free quota.
-  const yFinanceExhausted = isQuotaExhausted('alphavantage');
+  // Stock now uses Yahoo Finance (unlimited, no key) via proxy-live-signals.
+  // The `alphavantage` circuit breaker is kept for the localhost dev fallback path
+  // where VITE_ALPHAVANTAGE_KEY may be set. NewsAPI is still key-gated (100/day),
+  // but the proxy tries Google+Bing+Reddit first — NewsAPI is only last resort.
+  const yFinanceExhausted = isQuotaExhausted('alphavantage');  // localhost AV dev path only
   const newsExhausted     = isQuotaExhausted('newsapi');
 
-  if (yFinanceExhausted || isApproachingQuota('alphavantage')) {
-    errors.push(yFinanceExhausted
-      ? 'Stock proxy (Alpha Vantage): session quota exhausted (25/day). Heuristic fallback active.'
-      : 'Stock proxy (Alpha Vantage): approaching daily quota. Remaining requests limited.');
-    if (yFinanceExhausted) {
-      recordApiDegradation('alphavantage', 'rate_limited', 'Session quota exhausted');
-      heuristicCount += 2;
-    }
+  if (yFinanceExhausted) {
+    errors.push('Stock proxy: localhost Alpha Vantage quota exhausted. Using Yahoo Finance path.');
+    recordApiDegradation('alphavantage', 'rate_limited', 'Session quota exhausted');
+    heuristicCount += 2;
   }
   if (newsExhausted) {
-    errors.push('NewsAPI: daily quota exhausted this session (100/day). Heuristic fallback active.');
+    // NOTE: newsExhausted only blocks the legacy direct-NewsAPI path.
+    // The proxy-live-signals EF now uses Google RSS + Bing RSS first.
+    // Real news scraping continues regardless of this gate.
+    errors.push('NewsAPI session quota exhausted — scraping-first news (Google RSS + Bing RSS) remains active.');
     recordApiDegradation('newsapi', 'rate_limited', 'Session quota exhausted');
-    heuristicCount += 1;
   }
 
   // ── Gate 2: circuit breaker ───────────────────────────────────────────────
@@ -540,13 +557,16 @@ export const fetchLiveCompanyData = async (
         const ps = proxyResult.stockData;
         const stockBlocked = flags.avRateLimited;
         if (ps && ps.price90DayChange !== undefined && !stockBlocked) {
+          // The EF now uses Yahoo Finance (primary) or Alpha Vantage (fallback).
+          // Preserve the source label returned by the EF so the UI shows the correct source.
+          const resolvedSource = (ps.source === 'yahoo-finance' ? 'yahoo-finance' : 'alphavantage') as StockLiveData['source'];
           stockData = {
             price90DayChange: ps.price90DayChange ?? null,
             revenueGrowthYoY: ps.revenueGrowthYoY ?? null,
             marketCap: ps.marketCap ?? null,
             peRatio: ps.peRatio ?? null,
             employeeCount: typeof ps.employeeCount === 'number' && ps.employeeCount > 0 ? ps.employeeCount : null,
-            source: 'alphavantage', // keep schema-compatible source label
+            source: resolvedSource,
             fetchedAt: new Date().toISOString(),
           };
           circuitSuccess('alphavantage', stockData);
@@ -668,8 +688,8 @@ export const fetchLiveCompanyData = async (
       isLive:            hiringIsLive,
       disclosure:        hiringIsLive
         ? ''
-        : 'Static heuristic baseline (Q1 2026 review) — Serper API key not configured server-side. ' +
-          'Set SERPER_API_KEY in Supabase Edge Function secrets to enable live Naukri/LinkedIn counts.',
+        : 'Static heuristic baseline (Q1 2026 review). Live hiring uses direct Naukri/Indeed/LinkedIn ' +
+          'scraping (no API key). This fallback activates only when all scraped sources return zero results.',
       source:   hiringIsLive ? 'supabase-osint' : 'heuristic',
       fetchedAt: connectorSignals.fetchedAt,
     };
@@ -850,15 +870,23 @@ export const fetchLiveCompanyData = async (
     ));
   }
 
-  // genuineLiveApiSignals: count only signals that came from real external API calls
-  // in this session — not stale DB values or heuristic fallbacks.
-  // Stock via Yahoo Finance = up to 2 (price + revenue), news via NewsAPI/GNews = 1,
-  // hiring via Serper = 1 if live. Breaking news DB = 1 if rows found.
+  // genuineLiveApiSignals: count only signals from real external network calls this session.
+  // Primary: Yahoo Finance (scraping, no key, unlimited) — counts fully as live.
+  // Fallback: Alpha Vantage (API key, 25/day) — also live when it works.
+  // News via any scraped source (Google RSS, Bing RSS, HN, Reddit, Yahoo RSS) = 1.
+  // Hiring via Naukri+Indeed scraping OR Serper = 1.
+  const stockIsLive = stockData?.source === 'yahoo-finance' || stockData?.source === 'alphavantage'
+                   || stockData?.source === 'bse-india' || stockData?.source === 'nse-india';
+  const newsIsLive  = newsData != null && newsData.source !== 'none';
   const genuineLiveApiSignals =
-    (stockData?.source === 'alphavantage' && stockData.price90DayChange != null ? 1 : 0) +
-    (stockData?.source === 'alphavantage' && stockData.revenueGrowthYoY != null ? 1 : 0) +
-    (newsData?.source === 'newsapi' ? 1 : 0) +
+    (stockIsLive && stockData!.price90DayChange != null ? 1 : 0) +
+    (stockIsLive && stockData!.revenueGrowthYoY != null ? 1 : 0) +
+    (newsIsLive ? 1 : 0) +
     (hiringData?.isLive === true ? 1 : 0);
+
+  // Await the concurrent scraping pipeline — it was launched at the top of this
+  // function and has been running in parallel with all API/DB fetch steps.
+  const scrapingResult = await _scrapingPipelinePromise;
 
   return {
     stockData,
@@ -875,6 +903,8 @@ export const fetchLiveCompanyData = async (
     degradedSignalClasses: Array.from(new Set(degradedSignalClasses)),
     hardFailures,
     _connectorSignals: connectorSignals,
+    // Scraping enrichment: career page, Wikipedia headcount, Glassdoor — no API keys
+    _scrapingResult: scrapingResult,
   };
 };
 
@@ -1070,18 +1100,32 @@ const chooseAuthoritativeSignal = <T>({
         );
       }
     } else if (dbSignal!.freshnessState === 'fresh') {
-      // Live is degraded but DB is fresh — DB is more recent, keep DB
-      summary.ignoredLiveKeys = [...(summary.ignoredLiveKeys ?? []), key];
+      // Live is degraded (4-72h old) but DB appears fresh (< 7 days).
+      // Exception: known seeded/baseline DB sources use an arbitrary recent timestamp
+      // (e.g., the seeding run date) — they are NOT genuinely recent observations.
+      // For these, prefer live over the seeded baseline regardless of DB freshness label.
+      const dbIsSeededBaseline = /seeded|intelligence|company_intelligence|static|fallback/i.test(
+        dbSignal!.sourceName,
+      );
+      if (dbIsSeededBaseline) {
+        // Seeded DB "fresh" timestamp reflects when the seed script ran, not when the
+        // signal was observed in the real world. Live degraded beats seeded fresh.
+        chosen = liveSignal;
+      } else {
+        // Genuinely recent DB record (scraper-written within 7 days) beats degraded live cache.
+        summary.ignoredLiveKeys = [...(summary.ignoredLiveKeys ?? []), key];
+      }
     } else {
-      // Both degraded (7-30 days): blend numeric values at 0.5/0.5 rather than
-      // always picking live — neither source is more trustworthy when both are stale.
+      // Both degraded (7-30 days): blend at 70/30 live-weighted.
+      // Live data reflects actual market conditions even when slightly stale;
+      // DB may hold months-old seeded values that fall within the 30-day window.
       const lv = liveSignal!.value;
       const dv = dbSignal!.value;
       if (typeof lv === 'number' && typeof dv === 'number') {
         const blended: ProvenancedSignal<T> = {
           ...liveSignal!,
-          value: ((lv + dv) / 2) as unknown as T,
-          sourceName: `blend(${liveSignal!.sourceName},${dbSignal!.sourceName})`,
+          value: (lv * 0.7 + dv * 0.3) as unknown as T,
+          sourceName: `blend(live×0.7,${dbSignal!.sourceName}×0.3)`,
           confidence: Math.min(liveSignal!.confidence, dbSignal!.confidence),
           supersedes: [dbSignal!.sourceName],
         };

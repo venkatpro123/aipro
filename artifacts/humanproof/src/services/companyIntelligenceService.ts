@@ -8,6 +8,11 @@ import { CompanyProfile } from '../data/companyIntelligenceDB';
 import { companyProfileToData } from '../data/companyIntelligenceBridge';
 import type { CompanyData } from '../data/companyDatabase';
 
+// Seeded records without a last_updated timestamp are treated as pre-2026 baseline
+// data. classifyDbFreshness(500+ days) → 'invalid', so live signals ALWAYS supersede them
+// instead of a null timestamp defaulting to new Date() and appearing "just-fetched fresh".
+const STALE_SEED_DATE = '2025-01-01T00:00:00.000Z';
+
 // ── Row shape from Supabase company_intelligence table ────────────────────────
 // Supports both jsonb-nested and flat column layouts — reads whichever is present.
 interface CIRow {
@@ -100,7 +105,10 @@ function rowToProfile(row: CIRow): CompanyProfile {
     marketRiskScore: row.market_risk_score ?? 0.4,
     companyRiskScore: row.company_risk_score ?? 0.4,
     confidenceScore: row.confidence_score ?? 0.5,
-    lastUpdated: row.last_updated ?? new Date().toISOString(),
+    // CRITICAL: null last_updated means record was seeded without a timestamp.
+    // Use STALE_SEED_DATE so freshnessDays > 30 → classifyDbFreshness → 'invalid',
+    // preventing seeded data from being treated as fresh and overriding live signals.
+    lastUpdated: row.last_updated ?? STALE_SEED_DATE,
   };
 }
 

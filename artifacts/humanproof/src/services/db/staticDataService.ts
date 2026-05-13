@@ -36,7 +36,7 @@ import {
 // ── Cache config ──────────────────────────────────────────────────────────────
 
 const CACHE_KEY     = 'hp_static_data_v2';
-const CACHE_TTL_MS  = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL_MS  = 2 * 60 * 60 * 1000; // 2 hours — live-first: company list refreshes sooner
 const LOAD_TIMEOUT  = 8_000; // 8-second Supabase timeout
 
 // ── In-memory state (populated on preload) ────────────────────────────────────
