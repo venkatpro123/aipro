@@ -39,7 +39,12 @@ interface SignalConflict {
   recommendedResolution?: string;
 }
 
-const STALE_HOURS = 4;  // Reduced from 24h — live company events (layoffs, stock) break hourly
+// R7 fix: reduced from 4h → 0.5h (30 min). The 4h TTL meant a layoff announced at 13:00
+// would be invisible to audits until 17:00 even when ingest-news already wrote the
+// breaking_news_events row. The cache-hit path still merges breaking_news_events inline,
+// but with a 30-min TTL the EF goes back to fully live enrichment soon enough that
+// AlphaVantage / NewsAPI / Yahoo Finance signals stay current.
+const STALE_HOURS = 0.5;
 const STALE_DAYS_DEGRADED = 7;
 const STALE_DAYS_INVALID = 30;
 

@@ -38,6 +38,10 @@ interface JobPayload {
   cik?:        string;
   targetUrl?:  string;
   dedupeKey?:  string;
+  /** 'background' (cron polls) or 'audit_blocking' (user-triggered audit-time scrape).
+   *  audit_blocking gets BullMQ priority=1 and 5-attempt/3s-backoff retries (vs the
+   *  background default of 3 attempts at 60s backoff). */
+  priority?:   'background' | 'audit_blocking';
   metadata?:   Record<string, unknown>;
 }
 
@@ -132,12 +136,16 @@ Deno.serve(async (req) => {
     );
   }
 
-  // ── Optional override body: { companies: [...] } lets ops re-poll specific companies on demand
+  // ── Optional override body: { companies: [...], priority?: 'background'|'audit_blocking' }
+  // The audit pipeline passes priority='audit_blocking' so BullMQ workers prioritize
+  // and use the faster retry schedule (5 attempts, 3s exponential backoff).
   let overrideCompanies: string[] | null = null;
+  let requestedPriority: 'background' | 'audit_blocking' = 'background';
   try {
     if (req.method === 'POST' && req.headers.get('content-type')?.includes('application/json')) {
       const body = await req.json();
       if (Array.isArray(body?.companies)) overrideCompanies = body.companies;
+      if (body?.priority === 'audit_blocking') requestedPriority = 'audit_blocking';
     }
   } catch { /* ignore */ }
 
@@ -226,6 +234,49 @@ Deno.serve(async (req) => {
 
   if (jobs.length === 0) {
     return Response.json({ ok: true, queued: 0, message: 'no jobs generated' });
+  }
+
+  // v32: stamp every job with the requested priority. The Fly.io worker reads
+  // this in queues.ts to pick BullMQ priority + retry config.
+  for (const job of jobs) {
+    job.priority = requestedPriority;
+    // Compute dedupe key client-side so we can insert the queued scrape_jobs row
+    // BEFORE the worker picks the job up. Without a dedupe key, the queued row
+    // would orphan and the awaitLiveQuorum poller would never see queued/running
+    // states (only terminal). The worker-side dedupe logic already handles same-key
+    // upserts so this is safe.
+    if (!job.dedupeKey) {
+      const today = new Date().toISOString().slice(0, 10);
+      job.dedupeKey = `${job.type}|${job.companyName}|${today}|${requestedPriority}`;
+    }
+  }
+
+  // v32: insert `queued` scrape_jobs rows immediately so awaitLiveQuorum can see
+  // progress before workers even start. ignoreDuplicates: a re-enqueue within the
+  // same day won't overwrite an existing running/terminal row.
+  if (requestedPriority === 'audit_blocking') {
+    try {
+      const queuedRows = jobs.map(j => ({
+        job_type:       j.type,
+        company_name:   j.companyName,
+        target_url:     j.targetUrl ?? null,
+        status:         'queued',
+        error_kind:     null,
+        duration_ms:    null,
+        enqueued_at:    new Date().toISOString(),
+        started_at:     null,
+        finished_at:    null,
+        priority:       'audit_blocking',
+        result_summary: null,
+        dedupe_key:     j.dedupeKey,
+      }));
+      await sb
+        .from('scrape_jobs')
+        .upsert(queuedRows, { onConflict: 'dedupe_key', ignoreDuplicates: true });
+    } catch (e) {
+      // Best-effort: never fail the enqueue because the progress row didn't write.
+      console.warn('[scraper-enqueue] queued-row insert failed:', e instanceof Error ? e.message : String(e));
+    }
   }
 
   // ── HMAC-sign and POST to Fly.io scraper ──────────────────────────────────

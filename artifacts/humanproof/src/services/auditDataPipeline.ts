@@ -567,6 +567,19 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       return null;
     });
 
+  // v32: live signal quorum wait. The scraper trigger (BullMQ on Fly.io) was
+  // fire-and-forget in v31 with an 8s readiness wait. v32 blocks until every
+  // signal CLASS (workforce, layoffs, financial, hiring) reaches its minimum
+  // source count — up to a 45s hard ceiling. On ceiling-hit we proceed with
+  // `_liveUnavailable=true` (the confidence model then caps at 45% with an
+  // explicit "Live intelligence unavailable" UI state).
+  const _liveQuorumPromise = import('./scraperTrigger').then(({ awaitLiveQuorum }) =>
+    awaitLiveQuorum(inputs.companyName, {
+      ceilingMs:      45_000,
+      pollIntervalMs: 500,
+    }).catch(() => null),
+  ).catch(() => null);
+
   let companyData: CompanyData | null = null;
   let dataSource: 'live' | 'db' | 'stale_db' | 'fallback' = 'db';
   let trueLiveSignals = 0;
@@ -778,16 +791,24 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     userAllowedLiveCalls = true; // quota check failed — fail open
   }
 
-  // ── LIVE-FIRST RECONCILIATION ───────────────────────────────────────────────
-  // Await the concurrent live scraping promise started at pipeline entry.
-  // By now it has been running in parallel with all DB resolution steps, so
-  // it either completed already or is nearly done — not starting fresh.
+  // ── v32: LIVE-FIRST RECONCILIATION WITH QUORUM GATE ────────────────────────
+  // Await:
+  //   1. The concurrent live scraping promise (Yahoo Finance, RSS news, inline scrape)
+  //   2. The 45s live signal quorum (Fly.io BullMQ workers writing to scrape_jobs)
+  // Both have been running in parallel with all DB resolution steps. The audit
+  // blocks here until the quorum spec is satisfied OR the ceiling fires. When
+  // the ceiling fires without quorum, the audit proceeds with `_liveUnavailable=true`
+  // and the confidence model surfaces an explicit "Live intelligence unavailable"
+  // state — never a misleading high-confidence score from stale data.
+  let liveQuorum: import('./scraperTrigger').AwaitLiveQuorumResult | null = null;
   try {
     const efTicker = (companyData as any).ticker ?? (companyData as any).stockTicker ?? null;
-    // Await the early-started promise. If it succeeded, use it.
-    // If EF gave us a ticker that wasn't in TICKER_MAP (stock data null), fire a
-    // targeted supplement. Otherwise use the already-resolved promise directly.
-    let liveData = await _liveDataPromise;
+    const [liveDataResolved, quorumResolved] = await Promise.all([
+      _liveDataPromise,
+      _liveQuorumPromise,
+    ]);
+    let liveData = liveDataResolved;
+    liveQuorum = quorumResolved;
 
     // Supplement: if early live scraping produced no stock data BUT the EF gave us
     // a ticker and quota allows it, do a quick targeted stock-only fetch.
@@ -822,6 +843,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       trueLiveSignals      = 0;
       trueHeuristicSignals = 7;
       (companyData as any)._dataFreshnessScore = 0;
+      (companyData as any)._liveFreshnessScore = 0;
+      (companyData as any)._dbFreshnessScore   = 0;
       (companyData as any)._liveDataCoverage = {
         liveWonKeys: [], dbWonKeys: [], liveRatio: 0,
         genuineApiSignals: 0, overallSource: 'heuristic',
@@ -829,6 +852,93 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         fetchedAt: new Date().toISOString(),
       };
     } else {
+      // CRITICAL v30.0 FIX: Apply scraping enrichment BEFORE reconciliation.
+      //
+      // Previously the scraping result (Wikipedia headcount, Glassdoor, career page)
+      // was applied AFTER reconcileCompanySignals — this meant the reconciliation
+      // saw the stale seeded employeeCount as the "base DB value" and arbitrated
+      // against Yahoo Finance only. Wikipedia headcount never participated in the
+      // authoritative signal chain.
+      //
+      // After this fix:
+      //   1. Scraping enrichment writes Wikipedia headcount into companyData first
+      //   2. Reconciliation now sees the live Wikipedia value as the base
+      //   3. Yahoo Finance fullTimeEmployees can still override Wikipedia via the
+      //      normal live-signal arbitration path
+      //
+      // Promoting Wikipedia into liveData.stockData.employeeCount lets it ALSO
+      // flow as a true live signal so confidence reflects it correctly.
+      const scrapingResultEarly = (liveData as any)._scrapingResult;
+      if (scrapingResultEarly) {
+        applyScrapingEnrichment(companyData, scrapingResultEarly);
+      }
+
+      // ── v32.1: HEADCOUNT CONSENSUS ─────────────────────────────────────────
+      // The v32 headcountConsensus module is now wired into the audit pipeline.
+      // Previously, reconciliation chose a single headcount source via the standard
+      // chooseAuthoritativeSignal path — usually Yahoo's fullTimeEmployees or
+      // Wikipedia, never both. The consensus fuses up to 6 sources, drops outliers,
+      // and returns a confidence-weighted median.
+      //
+      // When the consensus produces a value with confidence >= 0.7, it is promoted
+      // as the authoritative headcount AND propagated into liveData.stockData so
+      // it flows through reconciliation as a genuine live signal. Below 0.7,
+      // we fall back to the prior single-source path.
+      const { consensusFromSignals } = await import('./headcountConsensus');
+      const wikiEmp = scrapingResultEarly?.enrichment?.wikiEmployeeCount ?? null;
+      const yahooFte = liveData.stockData?.employeeCount ?? null;
+      const intelDb = (companyData.employeeCount && companyData.employeeCount > 0)
+        ? companyData.employeeCount
+        : null;
+      const consensus = consensusFromSignals({
+        wikipedia: wikiEmp,
+        yahooFte,
+        intelDb: (companyData as any)._isSeededBaseline ? intelDb : null,
+      });
+
+      if (consensus.value != null && consensus.confidence >= 0.5) {
+        // Promote consensus into liveData.stockData so reconciliation sees a
+        // live-source signal even when Yahoo's assetProfile was null.
+        if (!liveData.stockData) {
+          liveData.stockData = {
+            price90DayChange: null, revenueGrowthYoY: null, marketCap: null,
+            peRatio: null, employeeCount: consensus.value,
+            source: 'yahoo-finance',
+            fetchedAt: scrapingResultEarly?.fetchedAt ?? new Date().toISOString(),
+          };
+        } else {
+          liveData.stockData.employeeCount = consensus.value;
+        }
+        if (consensus.contributingSources.length >= 2) {
+          // Multi-source agreement counts as a genuine live signal for the
+          // freshness gate, AND records the consensus result so the UI can
+          // surface "headcount agreed by 3 sources" in the confidence tooltip.
+          (liveData as any).genuineLiveApiSignals = (liveData.genuineLiveApiSignals ?? 0) + 1;
+        }
+        (companyData as any)._headcountConsensus = {
+          value: consensus.value,
+          confidence: consensus.confidence,
+          agreement: consensus.agreement,
+          contributingSources: consensus.contributingSources,
+          rejectedSources: consensus.rejectedSources,
+          perSource: consensus.perSource,
+        };
+      } else if (wikiEmp && wikiEmp >= 10 && !yahooFte) {
+        // Single-source Wikipedia path — preserved for back-compat when consensus
+        // confidence is too low (e.g. only Wikipedia returned anything).
+        if (!liveData.stockData) {
+          liveData.stockData = {
+            price90DayChange: null, revenueGrowthYoY: null, marketCap: null,
+            peRatio: null, employeeCount: wikiEmp,
+            source: 'yahoo-finance',
+            fetchedAt: scrapingResultEarly?.fetchedAt ?? new Date().toISOString(),
+          };
+        } else if (!liveData.stockData.employeeCount) {
+          liveData.stockData.employeeCount = wikiEmp;
+        }
+        (liveData as any).genuineLiveApiSignals = (liveData.genuineLiveApiSignals ?? 0) + 1;
+      }
+
       reconciledSignals = reconcileCompanySignals(companyData as CompanyData, liveData);
       companyData = reconciledSignals.active;
       trueLiveSignals = reconciledSignals.liveSignalCount;
@@ -843,19 +953,24 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         dataSource = dataSource === 'fallback' ? 'fallback' : 'db';
       }
 
-      // Propagate real live data coverage score (0–1) — used by confidence gating
-      // in hybridConsensusBuilder. Based on actual external API wins, not DB fields.
+      // v32: propagate quorum status + live-unavailable flag into companyData
+      // so the evidence-based confidence model in hybridConsensusBuilder can
+      // read them directly. Drop the v31 pipelineCoverageScore — the confidence
+      // model uses quorum classes + agreement instead of pipeline-timing proxies.
       const genuineApiSignals = liveData.genuineLiveApiSignals ?? 0;
-      const derivedSignals    = liveData.derivedLayoffEvents.length > 0 ? 1 : 0;
-      const hiringSignal      = liveData.hiringData?.isLive === true ? 1 : 0;
-      const rawCoverage = Math.min(1, (genuineApiSignals + derivedSignals + hiringSignal) / 5);
-      const pipelineFreshnessScore = Math.round(rawCoverage * 100) / 100;
-      // Preserve reconciliation's per-signal freshness score (set in reconcileCompanySignals).
-      // The reconciliation score = fraction of signal-slots won by fresh live data.
-      // The pipeline score = fraction of API-call slots that returned data.
-      // Take the max so the higher-quality metric wins; neither silently drops to 0.
-      const reconciliationFreshnessScore = (companyData as any)._dataFreshnessScore ?? 0;
-      (companyData as any)._dataFreshnessScore = Math.max(reconciliationFreshnessScore, pipelineFreshnessScore);
+      const reconciliationLiveScore = (companyData as any)._liveFreshnessScore
+                                      ?? (companyData as any)._dataFreshnessScore
+                                      ?? 0;
+      (companyData as any)._liveFreshnessScore = reconciliationLiveScore;
+      (companyData as any)._dataFreshnessScore = reconciliationLiveScore;
+      if (liveQuorum) {
+        (companyData as any)._liveQuorumStatus = liveQuorum.status;
+        (companyData as any)._liveQuorumReached = liveQuorum.reached;
+        (companyData as any)._liveUnavailable   = liveQuorum.timedOut && !liveQuorum.reached;
+        (companyData as any)._liveQuorumWaitedMs = liveQuorum.waitedMs;
+      } else {
+        (companyData as any)._liveUnavailable = true;
+      }
       (companyData as any)._liveDataCoverage = {
         liveWonKeys:   reconciledSignals.summary.liveWonKeys,
         dbWonKeys:     reconciledSignals.summary.dbWonKeys,
@@ -867,15 +982,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         fetchedAt:             liveData.fetchedAt,
       };
 
-      // Apply scraping enrichment (Wikipedia headcount, career page freeze, Glassdoor)
-      // The scraping pipeline was launched concurrently at fetchLiveCompanyData entry
-      // and has been running in parallel — by this point it is complete.
-      const scrapingResult = (liveData as any)._scrapingResult;
-      if (scrapingResult) {
-        applyScrapingEnrichment(companyData, scrapingResult);
-        if (scrapingResult.activeSources.length > 0) {
-          console.info('[AuditPipeline] Scraping enrichment applied:', scrapingResult.activeSources.join(', '));
-        }
+      // Scraping enrichment was already applied above (BEFORE reconciliation in v30.0)
+      // so Wikipedia headcount could participate as a live signal in the arbitration.
+      // Log active sources for observability.
+      if (scrapingResultEarly?.activeSources?.length > 0) {
+        console.info('[AuditPipeline] Scraping enrichment applied (pre-reconciliation):',
+          scrapingResultEarly.activeSources.join(', '));
       }
 
       // Patch layoffs dataset availability onto companyData
@@ -1052,6 +1164,24 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     hybridResult.signalQuality = {
       ...hybridResult.signalQuality,
       lowDataWarning: hybridPayload.consensusData.lowDataWarning,
+    };
+  }
+
+  // v32: REMOVED the v31 first-audit 45% cap. The audit pipeline now waits for
+  // live quorum upstream (up to 45s) — by the time we reach this point, either
+  // quorum was met (full confidence) or the ceiling fired and the confidence
+  // model has already applied the live-unavailable cap. We do attach the quorum
+  // result as a positive diagnostic so the UI can render per-stage status.
+  if (liveQuorum) {
+    const sq: any = hybridResult.signalQuality ?? {};
+    hybridResult.signalQuality = {
+      ...sq,
+      liveQuorum: {
+        reached:  liveQuorum.reached,
+        timedOut: liveQuorum.timedOut,
+        waitedMs: liveQuorum.waitedMs,
+        perClass: liveQuorum.status.perClass,
+      },
     };
   }
   _timer.mark('map_to_hybrid_end');

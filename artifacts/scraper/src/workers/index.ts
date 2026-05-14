@@ -15,7 +15,7 @@
 import type { Job, Worker } from 'bullmq';
 import { QUEUE_MODE, enqueueJob, createBullmqWorker } from '../queues.js';
 import { config } from '../lib/config.js';
-import { logJobResult, markCompanyScraped } from '../lib/scrapeJobLog.js';
+import { logJobResult, logJobRunning, markCompanyScraped } from '../lib/scrapeJobLog.js';
 import { registerHandler as registerInProcess, drainAll as drainInProcess } from '../lib/inProcessQueue.js';
 import type { JobPayload, JobType, JobResult } from '../lib/types.js';
 
@@ -59,6 +59,12 @@ const HANDLERS: Record<JobType, HandlerConfig> = {
 function buildWrappedHandler(name: JobType, cfg: HandlerConfig): RawHandler {
   return async (payload: JobPayload): Promise<JobResult> => {
     const startedAt = Date.now();
+    const priority = payload.priority ?? 'background';
+
+    // Promote the queued row to `running` so the audit pipeline's quorum poller
+    // sees real-time progress (queued → running → terminal). Best-effort.
+    await logJobRunning(payload);
+
     let result: JobResult;
     try {
       result = await cfg.fn(payload);
@@ -70,8 +76,9 @@ function buildWrappedHandler(name: JobType, cfg: HandlerConfig): RawHandler {
       };
     }
 
-    // Always log to scrape_jobs — best-effort, never throws
-    await logJobResult(payload, result, startedAt);
+    // Always log to scrape_jobs — best-effort, never throws. Forwards priority
+    // so audit-blocking jobs are queryable by the awaitLiveQuorum poller.
+    await logJobResult(payload, result, startedAt, priority);
 
     if (result.ok) {
       if (payload.companyName) await markCompanyScraped(payload.companyName);
@@ -79,6 +86,9 @@ function buildWrappedHandler(name: JobType, cfg: HandlerConfig): RawHandler {
         await enqueueJob({
           type:        'signalCompose',
           companyName: payload.companyName,
+          // Forward priority — if a user-triggered raw scrape succeeds during
+          // an audit, its compose follow-up should also jump the queue.
+          priority,
           metadata:    { triggeredBy: name },
         }).catch(err => console.warn('[workers] follow-up enqueue failed:', err?.message));
       }

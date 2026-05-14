@@ -1,37 +1,39 @@
-// LiveScraperGate.tsx
-// Shown INSTEAD of the normal loading state when a company has no fresh scrape
-// data (<30 min). The gate:
+// LiveScraperGate.tsx — v32 staged intelligence progress.
+// The audit pipeline blocks here until the live-quorum spec is satisfied or the
+// 45s hard ceiling fires. v32 reverses the v31 "fast render + later enrichment"
+// model: the FIRST audit IS the definitive audit. No 45% cap, no re-audit hint.
 //
-//   1. Shows animated per-source progress matching the SpyLoadingState theme.
-//   2. Polls scrape_jobs every 3 s for real completion counts.
-//   3. Calls onReady when all jobs finish OR after MAX_WAIT_MS (90 s).
-//   4. Shows a "Skip — use available data" escape hatch after SKIP_AFTER_MS (15 s).
-//
-// This ensures the very first audit result is based on live-scraped data, not
-// stale snapshots. Accuracy over speed — the user waits ~30–60 s once, then
-// every re-audit within 30 min hits the freshness cache and runs instantly.
+//   1. Show 6 named stages matching the v32 redesign requirement.
+//   2. Poll scrape_jobs every 1.5 s for real completion counts (queued/running/terminal).
+//   3. Call onReady when quorum is reached OR after MAX_WAIT_MS (45 s).
+//   4. Show a late-arriving "Continue with current evidence" escape valve only
+//      after SKIP_AFTER_MS (30 s) — most audits should never see it.
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { pollScrapeProgress } from '../../services/scraperTrigger';
 
-const MAX_WAIT_MS   = 90_000;  // hard ceiling before we give up and proceed
-const SKIP_AFTER_MS = 15_000;  // when the "Skip" button appears
-const POLL_MS       =  3_000;  // scrape_jobs poll interval
+const MAX_WAIT_MS   = 45_000;  // v32 ceiling — matches awaitLiveQuorum default
+const SKIP_AFTER_MS = 30_000;  // when the "Continue with current evidence" valve appears
+const POLL_MS       =  1_500;  // tighter cadence so per-stage transitions feel live
 
 interface Source {
   key:    string;
   label:  string;
   icon:   string;
   color:  string;
-  delay:  number; // ms after gate opens before this source starts animating
+  delay:  number; // ms after gate opens before this stage starts animating
 }
 
+// v32: the 6 named stages from the redesign requirement. Each maps loosely to
+// a worker job_type so the scrape_jobs poll can advance the visible state
+// (though stages 0/3/5 are pipeline phases, not single worker jobs).
 const SOURCES: Source[] = [
-  { key: 'newsExtract',    label: 'Google News',        icon: '📰', color: '#7c3aed', delay:  1000 },
-  { key: 'redditMentions', label: 'Reddit Signals',     icon: '💬', color: '#ef4444', delay:  3000 },
-  { key: 'layoffTracker',  label: 'Layoffs.fyi Tracker',icon: '📊', color: '#f59e0b', delay:  5000 },
-  { key: 'secEdgarPoll',   label: 'SEC EDGAR Filings',  icon: '🏛️', color: '#06b6d4', delay:  8000 },
-  { key: 'warnActFetch',   label: 'WARN Act Registry',  icon: '⚠️', color: '#10b981', delay: 12000 },
+  { key: 'identity',       label: 'Resolving company identity',     icon: '🔎', color: '#7c3aed', delay:     0 },
+  { key: 'newsExtract',    label: 'Acquiring workforce intelligence', icon: '👥', color: '#06b6d4', delay:  1500 },
+  { key: 'careerPageScrape', label: 'Validating hiring signals',    icon: '📥', color: '#f59e0b', delay:  4000 },
+  { key: 'layoffTracker',  label: 'Reconciling live market signals',icon: '📡', color: '#ef4444', delay:  7000 },
+  { key: 'secEdgarPoll',   label: 'Cross-validating layoffs',       icon: '⚖️', color: '#10b981', delay: 11000 },
+  { key: 'finalize',       label: 'Finalizing confidence model',    icon: '✓',  color: '#34d399', delay: 18000 },
 ];
 
 type SourceState = 'pending' | 'loading' | 'done';
@@ -195,7 +197,8 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         )}
       </div>
 
-      {/* Why this matters — trust message */}
+      {/* v32: trust message — the audit blocks here for live quorum, never falls
+          through to "partially loaded" state. */}
       <div style={{
         background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)',
         borderRadius: '8px', padding: '12px 14px', marginBottom: '24px',
@@ -204,11 +207,11 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>🛡️</span>
         <div>
           <div style={{ color: '#10b981', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '3px' }}>
-            FIRST-RUN ACCURACY GUARANTEE
+            AUTHORITATIVE LIVE INTELLIGENCE
           </div>
           <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.68rem', lineHeight: '1.5' }}>
-            Fetching live signals now so your first result reflects real-time data —
-            not a stale snapshot. This runs once; all re-audits within 30 min are instant.
+            Acquiring live evidence across workforce, hiring, financial, and layoff sources.
+            The audit will complete only when sources cross-validate — no provisional results.
           </div>
         </div>
       </div>
@@ -222,7 +225,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.16em',
           color: 'rgba(0,245,255,0.55)', marginBottom: '12px', textTransform: 'uppercase',
         }}>
-          ◈ Live Source Fetch Status
+          ◈ Stage Progress
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {SOURCES.map(src => {
@@ -265,7 +268,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
             borderTop: '1px solid rgba(255,255,255,0.06)',
             fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em',
           }}>
-            {realDone}/{realTotal} scrape jobs complete
+            {realDone}/{realTotal} live sources reconciled
           </div>
         )}
       </div>
@@ -277,7 +280,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           marginBottom: '7px', fontSize: '0.65rem',
         }}>
           <span style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '1px' }}>
-            LIVE DATA GATHERED
+            LIVE EVIDENCE ACQUIRED
           </span>
           <span style={{ color: '#00F5FF', fontWeight: 600 }}>
             {Math.round(progress)}%
@@ -331,7 +334,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
               (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)';
             }}
           >
-            Skip — use available data
+            Continue with current evidence
           </button>
         )}
       </div>

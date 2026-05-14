@@ -110,10 +110,38 @@ export function applyScrapingEnrichment(
   companyData: CompanyData,
   result: ScrapingOrchestratorResult,
 ): void {
-  // Apply Wikipedia headcount only when current value is null or zero
-  if (result.resolvedHeadcount != null && (!companyData.employeeCount || companyData.employeeCount < 1)) {
-    (companyData as any)._wikiHeadcountApplied = true;
-    companyData.employeeCount = result.resolvedHeadcount;
+  // Apply Wikipedia headcount as authoritative source over seeded DB values.
+  //
+  // CRITICAL FIX (v30.0): Previously only fired when employeeCount was null/0,
+  // which meant ANY seeded company (TCS: 600k, Oracle: 150k) had their stale
+  // seeded headcount preserved instead of the live Wikipedia value. Now:
+  //
+  //   1. If DB has no headcount → use Wikipedia
+  //   2. If DB headcount differs from Wikipedia by ≥15% AND Wikipedia value is
+  //      plausible (≥ 10 employees) → trust Wikipedia (it's actively edited;
+  //      Wikipedia infobox numbers are updated within days of company announcements)
+  //   3. Otherwise keep DB value (Wikipedia agrees, no need to swap)
+  //
+  // The scraping pipeline returns null when Wikipedia fetch fails, so this branch
+  // never fires unless Wikipedia genuinely returned a parsed employee count.
+  const wiki = result.enrichment.wikiEmployeeCount;
+  const dbCount = companyData.employeeCount;
+  if (wiki != null && wiki >= 10) {
+    if (!dbCount || dbCount < 1) {
+      (companyData as any)._wikiHeadcountApplied = true;
+      (companyData as any)._wikiHeadcountSource = 'wikipedia-no-db-value';
+      companyData.employeeCount = wiki;
+    } else {
+      const ratio = wiki / dbCount;
+      if (ratio < 0.85 || ratio > 1.15) {
+        // Materially different — Wikipedia wins (more current than seeded DB)
+        (companyData as any)._wikiHeadcountApplied = true;
+        (companyData as any)._wikiHeadcountSource = 'wikipedia-overrode-db';
+        (companyData as any)._wikiPreviousDbValue = dbCount;
+        companyData.employeeCount = wiki;
+      }
+      // else: values agree within ±15%, keep DB value
+    }
   }
 
   // Attach Glassdoor sentiment for downstream scoring layers

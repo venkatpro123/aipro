@@ -1,0 +1,231 @@
+// layoffsFyiConnector.ts
+import { getCompanyAliases } from '../../data/companyIntelligenceDB';
+// Aggregated global layoffs dataset.
+//
+// IMPORTANT: layoffs.fyi itself does not publish a stable public JSON feed —
+// the underlying Google Sheet ID changes and the rogerh2/datasets/layoffs
+// GitHub mirror referenced by the previous version of this file no longer
+// resolves (DNS / 404). Calling those URLs silently returned `[]`, which the
+// pipeline then treated as "company has no layoff history" — a false negative
+// that under-reported risk.
+//
+// The fix: try a list of candidate mirrors (configurable via VITE_LAYOFFS_DATA_URLS),
+// surface the connector's *availability* state to callers, and never fabricate
+// records when every source fails.
+
+export interface LayoffRecord {
+  company: string;
+  headcount: number | null;
+  percentCut: number | null;
+  date: string;            // ISO date
+  industry: string;
+  country: string;
+  stage: string;           // e.g. "Post-IPO", "Series B"
+  sources: string[];
+}
+
+export interface CompanyLayoffSummary {
+  company: string;
+  totalLayoffs: number;
+  rounds: number;
+  mostRecentDate: string;
+  mostRecentPct: number | null;
+  records: LayoffRecord[];
+  peerCount: number;       // companies in same industry that also laid off
+}
+
+// Sources tried in order. Override via VITE_LAYOFFS_DATA_URLS (comma-separated).
+//
+// v6.0 Audit Fix: The previous single URL (self-hosted mirror) does not exist
+// in production. Added multiple public mirrors as fallbacks. If all fail,
+// the system correctly records `available: false` and callers treat it as
+// "data unavailable" rather than "no layoffs" (the silent false-negative bug).
+//
+// Priority order:
+// 1. VITE_LAYOFFS_DATA_URLS env override (self-hosted mirror when deployed)
+// 2. Supabase storage bucket (company-controlled, set up via migrations)
+// 3. Known public GitHub mirrors of layoffs.fyi data
+// 4. Fallback: empty — `available: false` is returned honestly
+// v7.0 Fix: The hardcoded Supabase storage URL contained a specific project ID
+// that only works on the original deployment. Replaced with an env-driven URL that
+// reads from VITE_SUPABASE_URL (already set in every Vite deployment).
+// Priority order:
+//   1. VITE_LAYOFFS_DATA_URLS  — explicit override (comma-separated list)
+//   2. VITE_SUPABASE_URL/storage layoffs-data bucket — auto-derived from project URL
+//   3. GitHub mirror            — community-maintained dataset copy
+//   4. Empty fallback           — available: false returned honestly
+
+function getDatasetUrls(): string[] {
+  try {
+    const env = (import.meta as { env?: Record<string, string | undefined> })?.env ?? {};
+
+    // Priority 1: explicit override
+    if (env.VITE_LAYOFFS_DATA_URLS) {
+      return env.VITE_LAYOFFS_DATA_URLS.split(',').map((u) => u.trim()).filter(Boolean);
+    }
+
+    const urls: string[] = [];
+
+    // Priority 2: derive Supabase storage URL from the project's own VITE_SUPABASE_URL
+    if (env.VITE_SUPABASE_URL) {
+      urls.push(`${env.VITE_SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/layoffs-data/layoffs.json`);
+    }
+
+    // Priority 3: public GitHub mirror
+    urls.push('https://raw.githubusercontent.com/datasets/layoffs/main/data/layoffs.json');
+
+    return urls;
+  } catch {
+    // import.meta unavailable (non-Vite runtime) — return GitHub mirror only
+    return ['https://raw.githubusercontent.com/datasets/layoffs/main/data/layoffs.json'];
+  }
+}
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface DatasetCache {
+  records: LayoffRecord[];
+  ts: number;
+  source: string | null;
+  available: boolean;
+}
+
+// Module-scoped cache works in browser, Node, and Deno without depending on
+// `localStorage` (which threw under SSR / edge runtimes).
+let memCache: DatasetCache | null = null;
+
+function safeLocalStorageGet(): DatasetCache | null {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const stored = localStorage.getItem('hp_layoffs_fyi_cache');
+    if (!stored) return null;
+    return JSON.parse(stored) as DatasetCache;
+  } catch { return null; }
+}
+
+function safeLocalStorageSet(value: DatasetCache): void {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem('hp_layoffs_fyi_cache', JSON.stringify(value));
+  } catch { /* quota / disabled */ }
+}
+
+async function fetchOneSource(url: string): Promise<LayoffRecord[] | null> {
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(tid);
+    if (!res.ok) return null;
+    const raw = await res.json();
+    if (!Array.isArray(raw)) return null;
+    return raw.map((r: Record<string, unknown>) => ({
+      company: String(r.Company ?? r.company ?? ''),
+      headcount: typeof r['Laid_Off_Count'] === 'number'
+        ? (r['Laid_Off_Count'] as number)
+        : typeof r.headcount === 'number' ? (r.headcount as number) : null,
+      percentCut: r.Percentage ? parseFloat(String(r.Percentage)) : null,
+      date: String(r.Date ?? r.date ?? ''),
+      industry: String(r.Industry ?? r.industry ?? 'Unknown'),
+      country: String(r.Country ?? r.country ?? 'Unknown'),
+      stage: String(r.Stage ?? r.stage ?? 'Unknown'),
+      sources: r.Source ? [String(r.Source)] : [],
+    })).filter((r) => r.company && r.date);
+  } catch {
+    return null;
+  }
+}
+
+async function loadDataset(): Promise<DatasetCache> {
+  if (memCache && Date.now() - memCache.ts < CACHE_TTL_MS) return memCache;
+
+  const stored = safeLocalStorageGet();
+  if (stored && Date.now() - stored.ts < CACHE_TTL_MS) {
+    memCache = stored;
+    return stored;
+  }
+
+  for (const url of getDatasetUrls()) {
+    const records = await fetchOneSource(url);
+    if (records && records.length > 0) {
+      const cache: DatasetCache = { records, ts: Date.now(), source: url, available: true };
+      memCache = cache;
+      safeLocalStorageSet(cache);
+      return cache;
+    }
+  }
+
+  // Every source failed — record the failure so callers can disclose it
+  // ("data unavailable") rather than silently treating it as "no layoffs".
+  const empty: DatasetCache = { records: [], ts: Date.now(), source: null, available: false };
+  memCache = empty;
+  return empty;
+}
+
+/** Whether the layoffs dataset was reachable on the last fetch. */
+export async function isLayoffsDatasetAvailable(): Promise<boolean> {
+  const cache = await loadDataset();
+  return cache.available;
+}
+
+// Parent/subsidiary alias resolution delegates to the canonical COMPANY_ALIASES
+// map in companyIntelligenceDB.ts. Previously this file maintained its own
+// drifted duplicate (had "instagram/whatsapp" but missing "tcs/infosys/wipro").
+function getAliases(name: string): string[] {
+  return getCompanyAliases(name);
+}
+
+export async function getCompanyLayoffs(companyName: string): Promise<CompanyLayoffSummary | null> {
+  const { records } = await loadDataset();
+  if (records.length === 0) return null;
+  const name = companyName.toLowerCase();
+  const aliases = getAliases(name);
+
+  // Word-boundary-ish match: avoid "ai" matching every company that contains
+  // "ai" anywhere (Adobe, Saint-Gobain, etc).
+  const nameMatches = (c: string): boolean => {
+    if (!c) return false;
+    if (c === name) return true;
+    // Allow inclusion in either direction only when the shorter side is at least 4 chars.
+    if (name.length >= 4 && c.includes(name)) return true;
+    if (c.length >= 4 && name.includes(c)) return true;
+    // Check known aliases (e.g. "google" → also match "alphabet" records)
+    return aliases.some((alias) =>
+      alias.length >= 4 && (c === alias || c.includes(alias) || alias.includes(c)),
+    );
+  };
+
+  const matches = records.filter((r) => nameMatches(r.company.toLowerCase()));
+  if (matches.length === 0) return null;
+
+  const sorted = [...matches].sort((a, b) => b.date.localeCompare(a.date));
+  const industry = sorted[0].industry;
+  const peerCount = records.filter((r) =>
+    r.industry === industry && r.company.toLowerCase() !== name,
+  ).length;
+
+  return {
+    company: companyName,
+    totalLayoffs: matches.reduce((s, r) => s + (r.headcount ?? 0), 0),
+    rounds: matches.length,
+    mostRecentDate: sorted[0].date,
+    mostRecentPct: sorted[0].percentCut,
+    records: sorted,
+    peerCount,
+  };
+}
+
+export async function getSectorLayoffCount(industry: string, days = 180): Promise<number> {
+  const { records } = await loadDataset();
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  return records.filter((r) =>
+    r.industry.toLowerCase().includes(industry.toLowerCase()) &&
+    r.date >= cutoff,
+  ).length;
+}
+
+export async function getRecentLayoffs(days = 90): Promise<LayoffRecord[]> {
+  const { records } = await loadDataset();
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  return records.filter((r) => r.date >= cutoff).sort((a, b) => b.date.localeCompare(a.date));
+}

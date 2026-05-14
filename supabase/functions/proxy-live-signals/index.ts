@@ -254,11 +254,98 @@ function companyWordBoundaryMatch(text: string, companyLower: string): boolean {
   return re.test(text);
 }
 
+// R15 fix: alias expansion for canonical company names. The strict word-boundary
+// match drops articles that use a short alias (e.g. "TCS" instead of "Tata
+// Consultancy Services") or vice versa. Returning the full set of aliases lets
+// `articleMatchesCompany` accept any of them. Aliases are intentionally short
+// and high-precision — common-word aliases (e.g. "Apple" → "AAPL") are skipped.
+// v32: expanded alias graph — includes subsidiaries so a search for "Infosys"
+// also catches news about "Infosys BPM" or "EdgeVerve", and a search for
+// "Alphabet" catches news about "Google", "YouTube", "Waymo", "DeepMind".
+const COMPANY_ALIASES: Record<string, string[]> = {
+  // ── India IT Services ──
+  "tata consultancy services":           ["tcs", "tata consultancy", "tata cs"],
+  "tcs":                                  ["tata consultancy services", "tata consultancy"],
+  "infosys":                              ["infy", "infosys limited", "infosys ltd", "infosys bpm", "edgeverve"],
+  "infosys bpm":                          ["infosys", "infosys business process management"],
+  "wipro":                                ["wit", "wipro limited", "wipro ltd"],
+  "hcl technologies":                     ["hcl", "hcltech", "hcl tech"],
+  "tech mahindra":                        ["techm", "tech m"],
+  "ltimindtree":                          ["ltim", "lti mindtree", "lti", "mindtree"],
+
+  // ── US Big Tech + subsidiaries ──
+  "oracle":                               ["oracle corporation", "oracle corp", "orcl", "oracle india", "netsuite"],
+  "oracle india":                         ["oracle", "oracle corporation"],
+  "alphabet":                             ["google", "googl", "goog", "youtube", "waymo", "deepmind", "alphabet inc"],
+  "google":                               ["alphabet", "googl", "youtube", "google llc", "google inc"],
+  "youtube":                              ["google", "alphabet", "youtube llc"],
+  "meta":                                 ["facebook", "fb", "instagram", "whatsapp", "meta platforms"],
+  "facebook":                             ["meta", "meta platforms", "instagram"],
+  "instagram":                            ["meta", "facebook"],
+  "microsoft":                            ["msft", "linkedin", "github", "microsoft corporation"],
+  "linkedin":                             ["microsoft", "linkedin corporation"],
+  "github":                               ["microsoft", "github inc"],
+  "amazon":                               ["amzn", "aws", "amazon web services", "amazon.com", "twitch"],
+  "twitch":                               ["amazon", "amazon.com"],
+  "apple":                                ["aapl", "apple inc"],
+  "netflix":                              ["nflx"],
+  "nvidia":                               ["nvda"],
+  "intel":                                ["intc", "intel corporation"],
+  "amd":                                  ["advanced micro devices"],
+  "tesla":                                ["tsla"],
+
+  // ── IT Services (global) ──
+  "international business machines":      ["ibm", "red hat", "ibm corporation"],
+  "ibm":                                  ["international business machines", "red hat"],
+  "red hat":                              ["ibm", "redhat"],
+  "cognizant":                            ["cognizant technology solutions", "ctsh"],
+  "accenture":                            ["accenture plc", "acn"],
+  "capgemini":                            ["capgemini se", "capg"],
+  "salesforce":                           ["salesforce.com", "crm", "slack", "tableau", "mulesoft"],
+  "slack":                                ["salesforce"],
+  "block":                                ["square", "block inc", "cash app"],
+  "alphabet inc":                         ["google", "googl", "youtube"],
+
+  // ── India banking / conglomerate ──
+  "reliance industries":                  ["reliance", "ril", "jio", "reliance jio"],
+  "jio":                                  ["reliance", "reliance industries", "reliance jio"],
+  "bharti airtel":                        ["airtel"],
+  "icici bank":                           ["icici"],
+  "hdfc bank":                            ["hdfc"],
+  "state bank of india":                  ["sbi", "state bank"],
+  "kotak mahindra bank":                  ["kotak", "kotak mahindra"],
+  "axis bank":                            ["axis"],
+  "tata group":                           ["tata", "tata sons", "tata consultancy services", "tcs"],
+};
+
+function aliasesForCompany(companyLower: string): string[] {
+  const canonical = companyLower.trim();
+  const direct = COMPANY_ALIASES[canonical] ?? [];
+  // Also expand if the query IS an alias of a canonical name
+  const reverse: string[] = [];
+  for (const [k, aliases] of Object.entries(COMPANY_ALIASES)) {
+    if (aliases.includes(canonical)) reverse.push(k);
+  }
+  // Dedupe and exclude the query itself
+  return Array.from(new Set([...direct, ...reverse])).filter(a => a !== canonical && a.length >= 2);
+}
+
 function articleMatchesCompany(a: Record<string, unknown>, companyLower: string): boolean {
   const title = ((a.title as string) || "").toLowerCase();
   const desc = ((a.description as string) || "").toLowerCase();
+  // Primary: word-boundary match on canonical name
   if (companyWordBoundaryMatch(title, companyLower)) return true;
   if (companyWordBoundaryMatch(desc, companyLower) && LAYOFF_KEYWORDS.some((kw) => desc.includes(kw))) return true;
+  // Secondary: try aliases. Only accept a layoff-keyword in title for short
+  // aliases (≤4 chars) to prevent "fb is at it again" type false positives.
+  for (const alias of aliasesForCompany(companyLower)) {
+    const aliasIsShort = alias.length <= 4;
+    if (companyWordBoundaryMatch(title, alias)) {
+      if (!aliasIsShort) return true;
+      if (LAYOFF_KEYWORDS.some(kw => title.includes(kw))) return true;
+    }
+    if (companyWordBoundaryMatch(desc, alias) && LAYOFF_KEYWORDS.some((kw) => desc.includes(kw))) return true;
+  }
   return false;
 }
 
@@ -487,27 +574,14 @@ async function getNaukriJobCount(roleTitle: string, companyName: string): Promis
   } catch { return null; }
 }
 
-// ── HIRING SOURCE 2 (PRIMARY): Bing web search for job counts — no key ───────
-// Searches Bing for "{role} jobs at {company} site:linkedin.com/jobs" and
-// parses the result count from the HTML meta tags.
-async function getBingJobCount(roleTitle: string, companyName: string, board: "linkedin" | "indeed"): Promise<number | null> {
-  try {
-    const siteFilter = board === "linkedin" ? "site:linkedin.com/jobs" : "site:indeed.com/viewjob";
-    const q = encodeURIComponent(`"${roleTitle}" "${companyName}" ${siteFilter}`);
-    const url = `https://www.bing.com/search?q=${q}&count=10&setlang=en`;
-    const res = await fetchWithRetry(url, {
-      headers: stealthHeaders("https://www.bing.com/"),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    // Bing shows "X results" or "About X,XXX results" in the result count span
-    const countMatch = html.match(/(\d[\d,]+)\s+results?/i);
-    if (countMatch) return parseInt(countMatch[1].replace(/,/g, ""), 10);
-    // Count organic result items as fallback
-    const resultItems = html.match(/<li\s+class="b_algo"/g);
-    return resultItems ? resultItems.length : null;
-  } catch { return null; }
+// R16 fix: Bing job-count parser disabled. Bing removed the "About X results"
+// span (~2024) and the organic-result count was a noisy upper bound of 3–10.
+// The previous wiring inflated hiring-freeze signals (counts of 0–3 mark
+// companies as "frozen" even when LinkedIn shows 200+ live openings). The
+// function now returns null so the downstream orchestrator falls back to
+// Naukri direct + Indeed direct (and, when configured, Serper) instead.
+function getBingJobCount(_roleTitle: string, _companyName: string, _board: "linkedin" | "indeed"): Promise<number | null> {
+  return Promise.resolve(null);
 }
 
 // ── HIRING SOURCE 3 (PRIMARY): Indeed job count via HTML scraping ─────────────
@@ -670,6 +744,40 @@ async function scrapeCareerPage(companyName: string): Promise<{ hiringActive: bo
   }
 }
 
+// v32: structured infobox parser. Handles {{nowrap|601,546}}, {{plainlist|*N}},
+// {{official_website}}, [[approximately]] N, year-suffixed values like
+// `601,546 (March 2024)`, and multi-line infobox fields. Picks the LARGEST
+// plausible candidate (10 ≤ N ≤ 5M) inside the num_employees field block.
+function extractWikipediaInfoboxField(content: string, fieldNames: string[]): number | null {
+  for (const field of fieldNames) {
+    // Match field block: `| field_name = ...` up to the next infobox row or end of infobox.
+    // Wikitext allows multi-line values; we keep scanning until we hit a new `|` at line start.
+    const fieldRe = new RegExp(
+      `\\|\\s*${field}\\s*=([^\\n|]+(?:\\n(?![|\\s*}}])[^\\n|]+)*)`,
+      'i',
+    );
+    const m = content.match(fieldRe);
+    if (!m) continue;
+    const body = m[1];
+    const candidates: number[] = [];
+    const numericRe = /(\d{1,3}(?:,\d{3})+|\d{2,7})/g;
+    let nm: RegExpExecArray | null;
+    while ((nm = numericRe.exec(body)) !== null) {
+      const raw = nm[1].replace(/[^\d]/g, '');
+      const n = parseInt(raw, 10);
+      if (!Number.isFinite(n) || n < 10 || n > 5_000_000) continue;
+      // Skip 4-digit years adjacent to year markers (e.g. "(2024)" suffixes).
+      if (n >= 1900 && n <= 2099) {
+        const ctx = body.slice(Math.max(0, nm.index - 4), Math.min(body.length, nm.index + raw.length + 8));
+        if (/\b(20\d{2}|19\d{2})\b/.test(ctx) && !/(employees?|staff|headcount|workforce)/i.test(ctx)) continue;
+      }
+      candidates.push(n);
+    }
+    if (candidates.length > 0) return Math.max(...candidates);
+  }
+  return null;
+}
+
 async function scrapeWikipediaEmployeeCount(companyName: string): Promise<number | null> {
   try {
     // Wikipedia API — free, high reliability
@@ -686,37 +794,70 @@ async function scrapeWikipediaEmployeeCount(companyName: string): Promise<number
     const slots = (revision.slots as Record<string, unknown>) ?? {};
     const mainSlot = (slots.main as Record<string, unknown>) ?? {};
     const content = (mainSlot.content as string) ?? "";
-    // Extract employee count from Wikipedia infobox
-    const empMatch = content.match(/\|\s*num_employees\s*=\s*([\d,]+(?:\s*\(.*?\))?)/i)
-      ?? content.match(/employees?\s*[|:=]\s*([\d,]+)/i);
-    if (empMatch) return parseInt(empMatch[1].replace(/[^\d]/g, ""), 10) || null;
-    return null;
+
+    // v32: Try the structured infobox extractor first. It handles {{nowrap}},
+    // {{plainlist}}, year suffixes, and multi-line fields — variants where the
+    // v31 regex still failed for TCS, Infosys (with refs), and Capgemini.
+    const structured = extractWikipediaInfoboxField(content, [
+      'num_employees', 'employees', 'staff', 'num_staff', 'workforce',
+    ]);
+    if (structured != null) return structured;
+
+    // Fall through to the v31 regex (kept as safety net for edge layouts).
+    // R4 fix: extract employee count from Wikipedia infobox with template support.
+    // Real infoboxes use `{{nowrap|601,546}}`, `{{plainlist|*601,546}}`, `<ref>...</ref>`,
+    // and `[[approximately]] 601,546`. The previous regex required digits IMMEDIATELY
+    // after `=`, which fails on every templated infobox. Strategy:
+    //   1. Find the num_employees field block (up to the next `|` line in the wikitext)
+    //   2. Inside that block, find the FIRST plausible employee count (>= 10).
+    //   3. Reject 4-digit years (1900-2099) when followed by typical year tokens.
+    //
+    // Plausibility range: 10 ≤ N ≤ 5,000,000.
+    const fieldMatch = content.match(/\|\s*num_employees\s*=([^\n|]+(?:\n(?![|\s])[^\n|]+)*)/i)
+      ?? content.match(/\|\s*employees\s*=([^\n|]+(?:\n(?![|\s])[^\n|]+)*)/i);
+    if (!fieldMatch) {
+      // Fallback: free-form match anywhere in the article (last resort)
+      const freeMatch = content.match(/(?:num_)?employees?\s*[|:=]\s*(?:\{\{[^}|]*\|)?\s*([\d,]{2,})/i);
+      if (freeMatch) {
+        const n = parseInt(freeMatch[1].replace(/[^\d]/g, ""), 10);
+        if (n >= 10 && n <= 5_000_000) return n;
+      }
+      return null;
+    }
+    const fieldBody = fieldMatch[1];
+    // Find all numeric candidates in the field body, ignoring 4-digit years adjacent to year markers.
+    const candidates: number[] = [];
+    const numericRe = /(\d{1,3}(?:,\d{3})+|\d{2,7})/g;
+    let m: RegExpExecArray | null;
+    while ((m = numericRe.exec(fieldBody)) !== null) {
+      const raw = m[1].replace(/[^\d]/g, "");
+      const n = parseInt(raw, 10);
+      if (!Number.isFinite(n)) continue;
+      if (n < 10 || n > 5_000_000) continue;
+      // Skip likely years: 1900–2099 when not preceded/followed by employee-context numbers
+      if (n >= 1900 && n <= 2099) {
+        const tail = fieldBody.slice(Math.max(0, m.index - 4), Math.min(fieldBody.length, m.index + raw.length + 8));
+        if (/\b(20\d{2}|19\d{2})\b/.test(tail) && !/(employees?|staff|headcount)/i.test(tail)) continue;
+      }
+      candidates.push(n);
+    }
+    // Prefer the LARGEST candidate in the field block — companies usually list a single big
+    // number; smaller numbers in the same line are usually fiscal year fragments.
+    if (candidates.length === 0) return null;
+    const best = Math.max(...candidates);
+    return best >= 10 ? best : null;
   } catch { return null; }
 }
 
-async function scrapeGlassdoorCompany(companyName: string): Promise<{ rating: number | null; reviewCount: number | null; ceoApproval: number | null }> {
-  try {
-    const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    // Glassdoor uses structured JSON-LD on their overview pages
-    const url = `https://www.glassdoor.co.in/Overview/Working-at-${slug}-EI_IE.htm`;
-    const res = await fetchWithRetry(url, {
-      headers: stealthHeaders("https://www.glassdoor.co.in/"),
-      signal: AbortSignal.timeout(9_000),
-    });
-    if (!res.ok) return { rating: null, reviewCount: null, ceoApproval: null };
-    const html = await res.text();
-    // Extract rating from JSON-LD or meta
-    const ratingMatch = html.match(/"ratingValue"\s*:\s*"?([\d.]+)"?/)
-      ?? html.match(/overallRating['"]\s*:\s*["']?([\d.]+)["']?/i);
-    const reviewMatch = html.match(/reviewCount['"]\s*:\s*["']?(\d[\d,]*)["']?/i)
-      ?? html.match(/(\d[\d,]+)\s+reviews/i);
-    const ceoMatch = html.match(/(?:CEO|ceoApproval)[^"]*['"]([\d.]+)%?['"]/i);
-    return {
-      rating: ratingMatch ? parseFloat(ratingMatch[1]) : null,
-      reviewCount: reviewMatch ? parseInt(reviewMatch[1].replace(/,/g, ""), 10) : null,
-      ceoApproval: ceoMatch ? parseFloat(ceoMatch[1]) : null,
-    };
-  } catch { return { rating: null, reviewCount: null, ceoApproval: null }; }
+// R3 fix: inline Glassdoor removed. The previous URL scheme
+// `https://www.glassdoor.co.in/Overview/Working-at-${slug}-EI_IE.htm` is invalid —
+// real Glassdoor URLs require the company's `EI_IE{ID}` numeric ID, so this 404s
+// for every company. Cloudflare also gates anonymous traffic with a JS challenge
+// that the inline regex can never satisfy. The Playwright-based `glassdoorWorker`
+// is the only path that actually works; it runs out-of-band and writes to
+// `glassdoor_snapshots`. Returning a fixed null here keeps the existing shape.
+function scrapeGlassdoorCompany(_companyName: string): Promise<{ rating: number | null; reviewCount: number | null; ceoApproval: number | null }> {
+  return Promise.resolve({ rating: null, reviewCount: null, ceoApproval: null });
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────

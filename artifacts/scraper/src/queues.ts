@@ -70,6 +70,17 @@ const DEFAULT_JOB_OPTIONS: QueueOptions['defaultJobOptions'] = {
   removeOnFail:     { count: 500,  age: 7 * 86_400 },
 };
 
+// Audit-blocking jobs run while a human is actively waiting on the audit pipeline.
+// More attempts (anti-bot retries) but TIGHT backoff so we don't burn the
+// quorum-wait budget on idle delays. BullMQ priority=1 (lower number = higher).
+const AUDIT_BLOCKING_JOB_OPTIONS: QueueOptions['defaultJobOptions'] = {
+  attempts: 5,
+  backoff:  { type: 'exponential', delay: 3_000 },
+  priority: 1,
+  removeOnComplete: { count: 1000, age: 86_400 },
+  removeOnFail:     { count: 500,  age: 7 * 86_400 },
+};
+
 async function getQueue(name: JobType): Promise<Queue<JobPayload>> {
   if (QUEUE_MODE !== 'bullmq') {
     throw new Error('getQueue() called in in-process mode');
@@ -98,7 +109,15 @@ export async function enqueueJob(payload: JobPayload): Promise<void> {
     return;
   }
   const q = await getQueue(payload.type);
-  const opts = payload.dedupeKey ? { jobId: payload.dedupeKey } : {};
+  // Audit-blocking jobs get faster retries + queue-jump priority so the user
+  // doesn't sit on a 60s backoff while their audit waits for quorum.
+  const baseOpts = payload.priority === 'audit_blocking'
+    ? AUDIT_BLOCKING_JOB_OPTIONS
+    : undefined;
+  const opts = {
+    ...(baseOpts ?? {}),
+    ...(payload.dedupeKey ? { jobId: payload.dedupeKey } : {}),
+  };
   await q.add(`${payload.type}:${payload.companyName}`, payload, opts);
 }
 

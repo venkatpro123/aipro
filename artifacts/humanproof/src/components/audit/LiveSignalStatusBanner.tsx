@@ -52,18 +52,21 @@ const TIER_CONFIG: Record<Tier, {
     border: 'rgba(245, 158, 11, 0.25)',
     text:   '#f59e0b',
   },
+  // v32: 'db' and 'static' tiers now map to "live-partial" + "live-unavailable" —
+  // the audit pipeline blocks for live quorum, so anything reaching the user
+  // either has live evidence or explicitly cannot be acquired live.
   db: {
-    dot:    '#f97316',
-    label:  'Primarily Database Data',
-    sub:    'Live APIs limited or unavailable — most signals from database. Accuracy reduced.',
-    bg:     'rgba(249, 115, 22, 0.07)',
-    border: 'rgba(249, 115, 22, 0.30)',
-    text:   '#f97316',
+    dot:    '#f59e0b',
+    label:  'Live Intelligence (Partial)',
+    sub:    'Some signal classes were satisfied by absence of evidence rather than positive confirmation.',
+    bg:     'rgba(245, 158, 11, 0.07)',
+    border: 'rgba(245, 158, 11, 0.30)',
+    text:   '#f59e0b',
   },
   static: {
     dot:    '#ef4444',
-    label:  'Static Fallback Active',
-    sub:    'No live sources responded. Score uses pre-seeded database data only — treat as indicative.',
+    label:  'Live Intelligence Unavailable',
+    sub:    'Live sources could not be reached for this company. Score reflects best-available evidence.',
     bg:     'rgba(239, 68, 68, 0.08)',
     border: 'rgba(239, 68, 68, 0.35)',
     text:   '#ef4444',

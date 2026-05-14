@@ -15,6 +15,8 @@ export type JobType =
 
 export type SourceAuthority = 1.0 | 0.75 | 0.55 | 0.35 | 0.20;
 
+export type JobPriority = 'background' | 'audit_blocking';
+
 export interface JobPayload {
   type: JobType;
   companyName: string;
@@ -23,6 +25,12 @@ export interface JobPayload {
   targetUrl?: string;
   /** sha256(company|source|date|content_hash) — BullMQ rejects duplicates within 24h */
   dedupeKey?: string;
+  /**
+   * 'background'     — cron-driven poll. Default 3 attempts, 60s exponential backoff.
+   * 'audit_blocking' — user-triggered, audit pipeline is actively waiting for this.
+   *                    5 attempts, 3s exponential backoff. BullMQ priority=1.
+   */
+  priority?: JobPriority;
   metadata?: Record<string, unknown>;
 }
 

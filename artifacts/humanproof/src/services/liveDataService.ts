@@ -511,7 +511,7 @@ export const fetchLiveCompanyData = async (
     // ── Global Consulting ─────────────────────────────────────────────────
     mckinsey: 'N/A', bcg: 'N/A', bain: 'N/A',  // private
     deloitte: 'N/A', pwc: 'N/A', ey: 'N/A', kpmg: 'N/A',  // private
-    capgemini: 'CAPMF',
+    // capgemini already mapped above under Europe section (CAPMF) — duplicate removed
   };
   const resolvedTicker = ticker ?? (() => {
     const lower = companyName.toLowerCase();
@@ -678,6 +678,17 @@ export const fetchLiveCompanyData = async (
           circuitSuccess('newsapi', newsData);
           if (pn.latestLayoffEvent) {
             injectLayoffEvent(pn.latestLayoffEvent as LayoffNewsEvent);
+            // CRITICAL v30.0 FIX: Also push into derivedLayoffEvents so the event
+            // affects L2.recentLayoffRisk (20–30% of L2 weight), not just newsRisk
+            // (10–30%). Previously news-detected layoffs only triggered newsRisk —
+            // L2.recentLayoffRisk stayed at the sector epistemic floor (0.05–0.14),
+            // dramatically understating the impact of a fresh layoff announcement.
+            // Reconciliation will merge this with any DB-stored events.
+            derivedLayoffEvents.push({
+              date: pn.latestLayoffEvent.date,
+              percentCut: pn.latestLayoffEvent.percentCut ?? 0,
+              source: `news (${pn.latestLayoffEvent.source ?? 'live'})`,
+            });
           }
           liveCount += 1;
         } else {
@@ -1078,12 +1089,21 @@ const createSignal = <T>(
   observedAt: string,
   fetchedAt: string,
   now: Date,
+  opts?: { seededBaseline?: boolean },
 ): ProvenancedSignal<T> => {
   const freshnessDays = computeFreshnessDays(observedAt, now);
-  // Live API signals use tight hour-based thresholds; DB/heuristic use day-based thresholds
-  const freshnessState = source === 'live'
+  // Live API signals use tight hour-based thresholds; DB/heuristic use day-based thresholds.
+  let freshnessState = source === 'live'
     ? classifyFreshness(freshnessDays)
     : classifyDbFreshness(freshnessDays);
+  // R5 fix: a seeded-baseline DB signal is NEVER genuinely fresh. The recorded
+  // `lastUpdated` reflects when the seeding/ingest script wrote the row — not when
+  // the underlying real-world value was observed. Demote `fresh` → `degraded` so
+  // chooseAuthoritativeSignal does not silently prefer it over a slightly-stale
+  // live observation.
+  if (opts?.seededBaseline && source === 'db' && freshnessState === 'fresh') {
+    freshnessState = 'degraded';
+  }
   return {
     key,
     value,
@@ -1260,9 +1280,16 @@ export const reconcileCompanySignals = (
   const baseObservedAt = toIso(base.lastUpdated, now.toISOString());
   const baseSourceKind = inferBaseSourceKind(base.source);
   const baseSourceName = base.source || 'company_intelligence';
+  // R5 fix: explicit seeded-baseline detection. The flag is set in auditDataPipeline
+  // when a row comes from fetch-company-data EF / company_intelligence table / legacy
+  // hardcoded DB. We also defensively pattern-match the source label so externally
+  // computed CompanyData objects (tests, scripts) still benefit from demotion.
+  const isSeededBaseline = (base as any)._isSeededBaseline === true
+    || /seeded|intelligence|company_intelligence|static|cached_company_intelligence|fallback/i.test(baseSourceName);
+  const dbOpts = { seededBaseline: isSeededBaseline };
 
   const dbStock = base.stock90DayChange != null
-    ? createSignal('stock90DayChange', base.stock90DayChange, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now)
+    ? createSignal('stock90DayChange', base.stock90DayChange, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now, dbOpts)
     : null;
   const liveStock = live.stockData?.price90DayChange != null
     ? createSignal('stock90DayChange', live.stockData.price90DayChange, 'live', live.stockData.source, live.stockData.fetchedAt, live.stockData.fetchedAt, now)
@@ -1286,7 +1313,7 @@ export const reconcileCompanySignals = (
   }
 
   const dbRevenue = base.revenueGrowthYoY != null
-    ? createSignal('revenueGrowthYoY', base.revenueGrowthYoY, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now)
+    ? createSignal('revenueGrowthYoY', base.revenueGrowthYoY, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now, dbOpts)
     : null;
   const liveRevenue = live.stockData?.revenueGrowthYoY != null
     ? createSignal('revenueGrowthYoY', live.stockData.revenueGrowthYoY, 'live', live.stockData.source, live.stockData.fetchedAt, live.stockData.fetchedAt, now)
@@ -1341,6 +1368,7 @@ export const reconcileCompanySignals = (
     baseObservedAt,
     baseObservedAt,
     now,
+    dbOpts,
   );
   const liveLayoffSignal = liveLayoffEvents.length > 0
     ? createSignal('layoffsLast24Months', liveLayoffEvents, 'live', 'regulatory/news live signals', live.fetchedAt, live.fetchedAt, now)
@@ -1389,7 +1417,7 @@ export const reconcileCompanySignals = (
   }
 
   const liveLayoffRoundsValue = liveLayoffEvents.length > 0 ? liveLayoffEvents.length : null;
-  const dbLayoffRounds = createSignal('layoffRounds', base.layoffRounds ?? 0, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now);
+  const dbLayoffRounds = createSignal('layoffRounds', base.layoffRounds ?? 0, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now, dbOpts);
   const liveLayoffRounds = liveLayoffRoundsValue != null
     ? createSignal('layoffRounds', liveLayoffRoundsValue, 'live', 'regulatory/news live signals', live.fetchedAt, live.fetchedAt, now)
     : null;
@@ -1421,7 +1449,7 @@ export const reconcileCompanySignals = (
     .filter((value) => typeof value === 'number' && value > 0)
     .sort((a, b) => b - a)[0] ?? null;
   const dbLastLayoffPercent = base.lastLayoffPercent != null
-    ? createSignal('lastLayoffPercent', base.lastLayoffPercent, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now)
+    ? createSignal('lastLayoffPercent', base.lastLayoffPercent, baseSourceKind, baseSourceName, baseObservedAt, baseObservedAt, now, dbOpts)
     : null;
   const liveLastLayoffPercent = liveLastLayoffPercentValue != null
     ? createSignal('lastLayoffPercent', liveLastLayoffPercentValue, 'live', 'regulatory/news live signals', live.fetchedAt, live.fetchedAt, now)
@@ -1453,6 +1481,7 @@ export const reconcileCompanySignals = (
     liveEmployeeCount != null ? live.stockData!.fetchedAt : baseObservedAt,
     liveEmployeeCount != null ? live.stockData!.fetchedAt : baseObservedAt,
     now,
+    liveEmployeeCount != null ? undefined : dbOpts,
   );
   if (liveEmployeeCount != null) {
     active.employeeCount = liveEmployeeCount;
@@ -1471,6 +1500,7 @@ export const reconcileCompanySignals = (
     baseObservedAt,
     baseObservedAt,
     now,
+    dbOpts,
   );
   signals.revenuePerEmployee = revenuePerEmployeeSignal;
 
@@ -1482,11 +1512,12 @@ export const reconcileCompanySignals = (
     baseObservedAt,
     baseObservedAt,
     now,
+    dbOpts,
   );
   signals.aiInvestmentSignal = aiInvestmentSignal;
 
   const dbHiringTrend = active._hiringPostingTrend
-    ? createSignal('hiringTrend', active._hiringPostingTrend, inferBaseSourceKind(active._hiringSource), active._hiringSource ?? baseSourceName, baseObservedAt, baseObservedAt, now)
+    ? createSignal('hiringTrend', active._hiringPostingTrend, inferBaseSourceKind(active._hiringSource), active._hiringSource ?? baseSourceName, baseObservedAt, baseObservedAt, now, dbOpts)
     : null;
   const liveHiringTrend = live.hiringData?.postingTrend && live.hiringData.postingTrend !== 'unknown'
     ? createSignal('hiringTrend', live.hiringData.postingTrend, live.hiringData.isLive ? 'live' : 'heuristic', live.hiringData.source, live.hiringData.fetchedAt, live.hiringData.fetchedAt, now)
@@ -1576,15 +1607,35 @@ export const reconcileCompanySignals = (
     summary.liveWonKeys.length > 0
       ? `${base.source || 'company_intelligence'} + Live Reconciled`
       : base.source;
-  // Compute _dataFreshnessScore (0–1): ratio of fresh live signals to total chosen signals.
-  // Used downstream by hybridConsensusBuilder to cap confidence when data is mostly static.
+  // R13 fix: split into _liveFreshnessScore (live-only) and _dbFreshnessScore (DB-only).
+  // The previous combined score blended `liveWonRatio` (live-vs-DB wins) with the live
+  // freshness ratio, which let a "fresh" seeded DB inflate the score past the Tier 0 cap.
+  // Downstream consumers now use the live-only score for the Tier gate so confidence is
+  // capped strictly by what the live pipeline produced.
+  //
+  // Definitions:
+  //   liveFreshnessScore = (fresh live signals) / (total signal slots)
+  //     → 1.0 means every signal was live AND fresh; 0.0 means nothing live landed.
+  //   dbFreshnessScore   = (live-won keys + fresh-DB keys) / (total signal slots)
+  //     → broader metric kept for UI badges and DataFreshnessPanel.
+  //   _dataFreshnessScore (legacy alias) = liveFreshnessScore (the strict measure)
   const allSignals = Object.values(signals);
   const totalSignals = allSignals.length;
   const freshLiveCount = allSignals.filter(
     s => s.source === 'live' && s.freshnessState === 'fresh',
   ).length;
+  const freshDbCount = allSignals.filter(
+    s => s.source === 'db' && s.freshnessState === 'fresh',
+  ).length;
   const liveWonRatio = totalSignals > 0 ? summary.liveWonKeys.length / totalSignals : 0;
-  const dataFreshnessScore = totalSignals > 0
+
+  const liveFreshnessScore = totalSignals > 0
+    ? Math.round((freshLiveCount / totalSignals) * 100) / 100
+    : 0;
+  const dbFreshnessScore = totalSignals > 0
+    ? Math.round(((freshDbCount + summary.liveWonKeys.length) / totalSignals) * 100) / 100
+    : 0;
+  const combinedFreshnessScore = totalSignals > 0
     ? Math.round(((freshLiveCount / totalSignals) * 0.7 + liveWonRatio * 0.3) * 100) / 100
     : 0;
 
@@ -1595,7 +1646,15 @@ export const reconcileCompanySignals = (
   active._confidenceCapsApplied = confidenceCapsApplied;
   active._hardFailures = hardFailures;
   active._degradedSignalClasses = Array.from(degradedSet);
-  active._dataFreshnessScore = dataFreshnessScore;
+  // STRICT freshness metric — used by the Tier gate in hybridConsensusBuilder.
+  active._liveFreshnessScore = liveFreshnessScore;
+  // Broader metric — used by UI freshness badges + DataFreshnessPanel.
+  active._dbFreshnessScore   = dbFreshnessScore;
+  // Backwards-compatible alias: now equals the strict live score so the existing
+  // Tier 0 cap (≤ 0.15 → 30%) fires correctly on DB-dominated audits.
+  active._dataFreshnessScore = liveFreshnessScore;
+  // Preserve the legacy combined score for callers that explicitly want the blend.
+  active._combinedFreshnessScore = combinedFreshnessScore;
 
   summary.confidenceCapsApplied = confidenceCapsApplied;
   summary.hardFailures = hardFailures;

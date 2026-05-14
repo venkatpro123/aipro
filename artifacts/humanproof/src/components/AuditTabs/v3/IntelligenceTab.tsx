@@ -1,41 +1,36 @@
-// v3/IntelligenceTab.tsx — v28.0 UX redesign
-// Live intelligence hub. Each signal group is now collapsible so users see
-// the group headers at a glance and expand only what they care about.
+// v3/IntelligenceTab.tsx — v33 UX redesign
 //
-// Priority order (open by default → closed by default):
-//   1. Ground Truth Signals     — WARN Act, SEC, BLS (RED, open if any active)
-//   2. Company Signals          — executive, Glassdoor, headcount (ORANGE, open)
-//   3. Market Signals           — role demand, contagion, macro (AMBER, closed)
-//   4. Career & Personal        — skills, velocity, visa, runway (GREEN, closed)
-//   5. Company deep profile     — collapsed
-//   6. Methodology & transparency — collapsed
+// IMPORTANT: in v33 this tab is repurposed as the *Intelligence & Transparency*
+// tab (5th tab in the new IA). Career-focused signals (skills, velocity, visa,
+// runway) moved to ProtectionTab. Company-facing intelligence is consolidated
+// into the new WorkforceStabilityCard + FinancialHealthCard signal-compression
+// blocks at the top.
+//
+// Priority order:
+//   1. Workforce Stability     — compressed (was: hiring/layoffs/headcount/glassdoor)
+//   2. Financial Health        — compressed (was: stock/revenue/funding/SEC)
+//   3. Ground Truth Signals    — WARN, SEC, BLS (RED, open if any active)
+//   4. Market Signals          — role demand, peer contagion, macro
+//   5. Cross-source event search
+//   6. Methodology & transparency — collapsed (deep-tier)
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronDown, ChevronUp, Search,
-  ShieldAlert, Building2, TrendingUp, User, Layers,
+  Search, ShieldAlert, TrendingUp, ChevronDown,
 } from 'lucide-react';
 import type { TabProps } from '../common/types';
-import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
-import PreparednessScorePanel from '../common/PreparednessScorePanel';
 import WARNSignalPanel from '../common/WARNSignalPanel';
 import SECEnhancedPanel from '../common/SECEnhancedPanel';
 import BLSMacroPanel from '../common/BLSMacroPanel';
-import ExecutiveDeparturePatternPanel from '../common/ExecutiveDeparturePatternPanel';
-import GlassdoorVelocityPanel from '../common/GlassdoorVelocityPanel';
-import HeadcountVelocityPanel from '../common/HeadcountVelocityPanel';
 import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
 import PeerContagionPanel from '../common/PeerContagionPanel';
 import MacroRiskPanel from '../common/MacroRiskPanel';
-import SkillGapIntelligencePanel from '../common/SkillGapIntelligencePanel';
-import CareerVelocityPanel from '../common/CareerVelocityPanel';
-import { VisaRiskPanel } from '../common/VisaRiskPanel';
-import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 import { CollapsibleSection } from '../common/CollapsibleSection';
 import { TransparencyTab } from '../TransparencyTab';
-import CompanyProfileTab from '../CompanyProfileTab';
 import { EventSearchPanel } from '../../audit/EventSearchPanel';
+import WorkforceStabilityCard from '../common/WorkforceStabilityCard';
+import FinancialHealthCard from '../common/FinancialHealthCard';
 
 // ── Collapsible signal group ──────────────────────────────────────────────────
 
@@ -56,7 +51,7 @@ const CollapsibleSignalGroup: React.FC<SignalGroupProps> = ({
   groupId, title, subtitle, accentColor, icon: Icon,
   defaultOpen, badge, badgeColor, children, empty,
 }) => {
-  const [open, setOpen] = useState(defaultOpen && !empty);
+  const [open, setOpen] = React.useState(defaultOpen && !empty);
 
   return (
     <div
@@ -143,30 +138,19 @@ const CollapsibleSignalGroup: React.FC<SignalGroupProps> = ({
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const IntelligenceTab: React.FC<TabProps> = (props) => {
-  const { result, companyData } = props;
+  const { result } = props;
   const r = result as any;
 
-  const preparedness: PreparednessResult | undefined = r.preparednessScore;
   const warnSignal     = r.warnSignal;
   const secEnhanced    = r.secEnhancedSignals;
   const blsMacro       = r.blsMacroSignal;
-  const execDeparture  = r.executiveDeparturePattern;
-  const glassdoor      = r.glassdoorVelocity;
-  const headcount      = r.headcountVelocity;
   const roleMarket     = r.roleMarketDemand;
   const peerContagion  = r.peerContagion;
   const macroRisk      = r.macroEconomicRisk;
-  const skillGap       = r.skillGapIntelligence;
-  const careerVelocity = r.careerVelocity;
-  const visaRisk       = r.visaRisk;
-  const userRunway     = r.userFinancialRunway;
 
   const hasGroundTruth  = Boolean(warnSignal?.hasActiveWARN || secEnhanced || blsMacro);
-  const hasCompany      = Boolean(execDeparture || glassdoor || headcount);
   const hasMarket       = Boolean(roleMarket || peerContagion || macroRisk);
-  const hasCareer       = Boolean(skillGap || careerVelocity || visaRisk || userRunway);
 
-  // WARN active count — used for badge
   const warnActiveCount = warnSignal?.hasActiveWARN ? 1 : 0;
   const groundTruthBadge = hasGroundTruth
     ? (warnActiveCount > 0 ? `${warnActiveCount} WARN ACTIVE` : 'REGULATORY')
@@ -175,32 +159,17 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
   return (
     <div className="flex flex-col gap-3">
 
-      {/* ── Preparedness meta-score ──────────────────────────────────────── */}
-      {preparedness && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <PreparednessScorePanel preparedness={preparedness} />
-        </motion.div>
-      )}
+      {/* ── v33: Workforce Stability (signal-compressed block) ────────────── */}
+      {/* Consolidates hiring freeze + layoffs + headcount + Glassdoor velocity
+         into one expandable verdict card. Drill-down reveals each underlying
+         signal so power users still reach the same data, faster. */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+        <WorkforceStabilityCard result={result} defaultOpen={false} />
+      </motion.div>
 
-      {/* ── Cross-source event search ─────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        <div className="px-4 py-3 flex items-center gap-2">
-          <Search className="w-3.5 h-3.5" style={{ color: 'rgba(0,212,224,0.6)' }} />
-          <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.60)' }}>
-            Cross-Source Event Search
-          </span>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="p-3">
-            <EventSearchPanel />
-          </div>
-        </div>
+      {/* ── v33: Financial Health (signal-compressed block) ──────────────── */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
+        <FinancialHealthCard result={result} defaultOpen={false} />
       </motion.div>
 
       {/* ── Ground Truth Signals ──────────────────────────────────────────── */}
@@ -222,23 +191,6 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
         </CollapsibleSignalGroup>
       </motion.div>
 
-      {/* ── Company Signals ───────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
-        <CollapsibleSignalGroup
-          groupId="company"
-          title="Company Signals"
-          subtitle="Executive movement, culture velocity, workforce structure"
-          accentColor="#f97316"
-          icon={Building2}
-          defaultOpen={hasCompany}
-          empty={!hasCompany}
-        >
-          {execDeparture && <ExecutiveDeparturePatternPanel executiveDeparturePattern={execDeparture} />}
-          {glassdoor     && <GlassdoorVelocityPanel glassdoorVelocity={glassdoor} />}
-          {headcount     && <HeadcountVelocityPanel headcount={headcount} />}
-        </CollapsibleSignalGroup>
-      </motion.div>
-
       {/* ── Market Signals ────────────────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
         <CollapsibleSignalGroup
@@ -256,38 +208,33 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
         </CollapsibleSignalGroup>
       </motion.div>
 
-      {/* ── Career & Personal ─────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}>
-        <CollapsibleSignalGroup
-          groupId="career"
-          title="Career & Personal Signals"
-          subtitle="Skill demand, trajectory, financial runway, visa status"
-          accentColor="#10b981"
-          icon={User}
-          defaultOpen={false}
-          empty={!hasCareer}
-        >
-          {skillGap      && <SkillGapIntelligencePanel skillGapIntelligence={skillGap} />}
-          {careerVelocity && <CareerVelocityPanel velocity={careerVelocity} />}
-          {visaRisk && visaRisk.dependencyScore > 10 && <VisaRiskPanel visaRisk={visaRisk} />}
-          {userRunway    && <UserFinancialRunwayPanel userFinancialRunway={userRunway} />}
-        </CollapsibleSignalGroup>
+      {/* ── Cross-source event search ─────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18 }}
+        className="rounded-2xl overflow-hidden"
+        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div className="px-4 py-3 flex items-center gap-2">
+          <Search className="w-3.5 h-3.5" style={{ color: 'rgba(0,212,224,0.6)' }} />
+          <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            Cross-Source Event Search
+          </span>
+        </div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="p-3">
+            <EventSearchPanel />
+          </div>
+        </div>
       </motion.div>
 
-      {/* ── Deep dives (always collapsed) ────────────────────────────────── */}
+      {/* ── Methodology & transparency (deep tier, collapsed) ────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.20 }}
         className="space-y-2"
       >
-        <CollapsibleSection
-          title="Company deep profile"
-          description="All company signals, live data feed, and historical context"
-          defaultOpen={false}
-        >
-          <CompanyProfileTab {...props} />
-        </CollapsibleSection>
-
         <CollapsibleSection
           title="Methodology & transparency"
           description="Data quality, signal provenance, calibration, model agreement"

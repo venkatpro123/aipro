@@ -583,8 +583,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     if (!forceRefresh && company.length >= 2) {
       const isFresh = await checkDataFreshness(company).catch(() => false);
       if (!isFresh) {
-        // Trigger scraper (fire-and-forget — gate polls independently)
-        void triggerScraperForCompany(company).then(r => {
+        // v32: trigger scraper with audit_blocking priority so the Fly.io
+        // workers jump the BullMQ queue (priority=1) and use 5-attempt/3s-backoff
+        // retries. Without this flag, audit-time scrapes share a queue with
+        // 10-min cron polls and inherit 60s backoffs — burning the 45s budget.
+        void triggerScraperForCompany(company, { priority: 'audit_blocking' }).then(r => {
           if (r.state === 'queued') console.info(`[Gate] queued ${r.jobsBuilt} jobs for ${company}`);
           else if (r.state === 'error') console.info('[Gate] scraper unreachable (gate will timeout gracefully):', r.message);
         });

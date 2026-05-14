@@ -23,6 +23,11 @@ import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
 import type { IntelligenceBriefResult } from '../../../services/intelligenceBriefService';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { RiskBreakdownTab } from '../RiskBreakdownTab';
+// v33: Methodology / transparency lives at the bottom of the Intelligence tab
+// (which uses AnalysisTab as its renderer) so power users can drill into how
+// the score was actually computed without leaving the tab.
+import { TransparencyTab } from '../TransparencyTab';
+import { CollapsibleSection } from '../common/CollapsibleSection';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -443,6 +448,15 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         </Collapsible>
       )}
+
+      {/* v33: 5. Methodology & transparency — deep tier (always collapsed) */}
+      <CollapsibleSection
+        title="Methodology & transparency"
+        description="Data quality, signal provenance, calibration, model agreement"
+        defaultOpen={false}
+      >
+        <TransparencyTab result={result} companyData={companyData} />
+      </CollapsibleSection>
 
     </div>
   );

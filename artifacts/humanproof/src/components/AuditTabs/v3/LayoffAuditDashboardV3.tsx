@@ -1,10 +1,15 @@
-// LayoffAuditDashboardV3.tsx — v28.0 UX redesign
+// LayoffAuditDashboardV3.tsx — v33 UX redesign
 //
-// 4-tab structure (was 3). Priority-ordered:
-//   1. Summary    — executive hero: score, brief, quick stats, horizon [NEW]
-//   2. Risk       — analysis: dimensions, dual gauge, scenarios
-//   3. Actions    — contingency plan + priority action matrix
-//   4. Signals    — live intelligence hub (WARN, SEC, company, market, career)
+// 5-tab "decision-driven intelligence flow" structure:
+//   1. Summary       — Tier 1 critical intel: score, drivers, immediate actions, horizon
+//   2. Company       — Workforce stability, financial health, ground-truth signals (compressed)
+//   3. Protection    — Personal career intelligence: preparedness, skills, mobility, market
+//   4. Action Plan   — Contingency plan + priority action matrix
+//   5. Intelligence  — Live signals + sources + confidence + methodology
+//
+// Adaptive UX:
+//   • Critical-risk users (score ≥ 75) land on Action Plan first — they need to act
+//   • Other users land on Summary (default)
 //
 // Mobile UX:
 //   • Fixed bottom navigation bar on screens ≤ 639px — icon + 1-word label
@@ -18,13 +23,17 @@
 
 import React, { Suspense, lazy, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, BarChart3, Zap, Radio } from 'lucide-react';
+import { TrendingUp, Building2, Shield, Zap, Radio } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
 
+// Lazy-load each tab. Code-splitting is critical for first-paint perf — the
+// Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
+// scenario / contingency engines and animation surface.
 const SummaryTab      = lazy(() => import('./SummaryTab').then(m => ({ default: m.SummaryTab ?? m.default })));
 const AnalysisTab     = lazy(() => import('./AnalysisTab').then(m => ({ default: m.AnalysisTab })));
+const ProtectionTab   = lazy(() => import('./ProtectionTab').then(m => ({ default: m.ProtectionTab })));
 const ActionsTab      = lazy(() => import('./ActionsTab').then(m => ({ default: m.ActionsTab })));
 const IntelligenceTab = lazy(() => import('./IntelligenceTab').then(m => ({ default: m.IntelligenceTab })));
 
@@ -36,7 +45,7 @@ interface Props {
   onRecalculate?: () => void;
 }
 
-type TabValue = 'summary' | 'risk' | 'actions' | 'signals';
+type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel';
 
 // ── Score color helpers ───────────────────────────────────────────────────────
 const riskColor = (s: number) =>
@@ -76,18 +85,35 @@ const TAB_CONFIG: TabConfig[] = [
     },
   },
   {
-    value: 'risk',
-    label: 'Risk Analysis',
-    shortLabel: 'Risk',
-    Icon: BarChart3,
-    getBadge: (r) => {
-      const dims = r.dimensions?.length ?? 0;
-      return dims > 0 ? { text: `${dims} dims`, color: 'rgba(0,212,224,0.7)' } : null;
+    value: 'company',
+    label: 'Company',
+    shortLabel: 'Co.',
+    Icon: Building2,
+    getBadge: (r: any) => {
+      const warnActive = r.warnSignal?.hasActiveWARN === true;
+      if (warnActive) return { text: 'WARN', color: '#dc2626' };
+      const rounds = r.companyData?.layoffRounds ?? 0;
+      if (rounds >= 2) return { text: `${rounds}× layoffs`, color: '#f97316' };
+      const hiringFreeze = r.hiringSignal?.trend === 'frozen' || r.companyData?._hiringPostingTrend === 'frozen';
+      if (hiringFreeze) return { text: 'frozen', color: '#f97316' };
+      return null;
+    },
+  },
+  {
+    value: 'protection',
+    label: 'Protection',
+    shortLabel: 'You',
+    Icon: Shield,
+    getBadge: (r: any) => {
+      const p = r.preparednessScore?.overallScore;
+      if (typeof p !== 'number') return null;
+      const color = p >= 75 ? '#10b981' : p >= 55 ? '#22d3ee' : p >= 35 ? '#f59e0b' : '#f97316';
+      return { text: `${p}`, color };
     },
   },
   {
     value: 'actions',
-    label: 'Actions',
+    label: 'Action Plan',
     shortLabel: 'Act',
     Icon: Zap,
     getBadge: (r) => {
@@ -96,8 +122,8 @@ const TAB_CONFIG: TabConfig[] = [
     },
   },
   {
-    value: 'signals',
-    label: 'Signals',
+    value: 'intel',
+    label: 'Intelligence',
     shortLabel: 'Intel',
     Icon: Radio,
     getBadge: (r) => {
@@ -106,6 +132,13 @@ const TAB_CONFIG: TabConfig[] = [
     },
   },
 ];
+
+// v33: Adaptive default tab. Critical-risk users land on Action Plan — they
+// need to act, not browse. Everyone else starts on Summary.
+function pickDefaultTab(result: HybridResult): TabValue {
+  if (result.total >= 75) return 'actions';
+  return 'summary';
+}
 
 // ── Sticky company header ─────────────────────────────────────────────────────
 const StickyCompanyHeader: React.FC<{
@@ -245,10 +278,10 @@ const MobileBottomNav: React.FC<{
 // ── Main dashboard ────────────────────────────────────────────────────────────
 export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const { result, companyData } = props;
-  const [activeTab, setActiveTab] = useState<TabValue>('summary');
+  const [activeTab, setActiveTab] = useState<TabValue>(() => pickDefaultTab(result));
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const lastTabRef = useRef<TabValue>('summary');
+  const lastTabRef = useRef<TabValue>(activeTab);
 
   // Show sticky header once user scrolls past ~80px
   useEffect(() => {
@@ -310,9 +343,22 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 <SummaryTab {...tabProps} />
               </Suspense>
             )}
-            {activeTab === 'risk' && (
+            {/* v33 routing:
+                 'company'    → IntelligenceTab (rebuilt — company-facing live intel +
+                                Workforce/Financial compressed cards + Ground Truth +
+                                Market signals)
+                 'protection' → ProtectionTab (new — career-protection signals)
+                 'actions'    → ActionsTab (unchanged)
+                 'intel'      → AnalysisTab (risk-math: dimensions, dual gauge,
+                                prediction horizon, scenario fan + methodology) */}
+            {activeTab === 'company' && (
               <Suspense fallback={<TabLoader />}>
-                <AnalysisTab {...tabProps} />
+                <IntelligenceTab {...tabProps} />
+              </Suspense>
+            )}
+            {activeTab === 'protection' && (
+              <Suspense fallback={<TabLoader />}>
+                <ProtectionTab {...tabProps} />
               </Suspense>
             )}
             {activeTab === 'actions' && (
@@ -320,9 +366,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 <ActionsTab {...tabProps} />
               </Suspense>
             )}
-            {activeTab === 'signals' && (
+            {activeTab === 'intel' && (
               <Suspense fallback={<TabLoader />}>
-                <IntelligenceTab {...tabProps} />
+                <AnalysisTab {...tabProps} />
               </Suspense>
             )}
           </motion.div>

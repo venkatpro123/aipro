@@ -631,6 +631,214 @@ async function fetchHiringSerper(roleTitle: string, companyName: string, serperK
   };
 }
 
+// ── 4. SCRAPE — Wikipedia + Career Page + Glassdoor (no key, server-side) ─────
+//
+// CRITICAL: This handler was silently dropped during the v27.0 rewrite, breaking
+// ALL company enrichment scraping (Wikipedia headcount, career page freeze,
+// Glassdoor sentiment) since May 2026. Restored in v30.0 with all 3 parsers
+// hardened against current DOM structures.
+
+interface ScrapeResult {
+  wikiEmployeeCount: number | null;
+  careerPage: { hiringActive: boolean; jobCount: number | null; signals: string[] } | null;
+  glassdoor:  { rating: number | null; reviewCount: number | null; ceoApproval: number | null } | null;
+  fetchedAt:  string;
+  errors:     string[];
+}
+
+// Slugify company name for Wikipedia + career page URLs (e.g. "Tata Consultancy Services" → "Tata_Consultancy_Services")
+const wikiSlug = (name: string) =>
+  name.trim().replace(/\s+/g, '_').replace(/[^\w._-]/g, '');
+
+// Career page URL inference — try the most common patterns
+const careerUrls = (companyName: string): string[] => {
+  const slug = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return [
+    `https://www.${slug}.com/careers`,
+    `https://${slug}.com/careers`,
+    `https://www.${slug}.com/jobs`,
+    `https://careers.${slug}.com`,
+  ];
+};
+
+// Glassdoor Overview URL inference (works for most companies)
+const glassdoorUrl = (companyName: string): string => {
+  const slug = companyName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+  return `https://www.glassdoor.com/Overview/Working-at-${slug}-EI_IE0.htm`;
+};
+
+// Wikipedia employee count extraction — parses infobox JSON via Wikipedia API
+async function fetchWikipediaHeadcount(companyName: string): Promise<number | null> {
+  try {
+    const slug = wikiSlug(companyName);
+    // Use Wikipedia REST API to get page content (no key required)
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(6_000),
+    });
+    if (!res.ok) return null;
+    const summary = await res.json();
+    if (summary.type === 'disambiguation') return null;
+
+    // Wikipedia REST summary doesn't include infobox data. Fetch wikitext for infobox parsing.
+    const wikitextUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(slug)}&prop=wikitext&format=json&origin=*`;
+    const wtRes = await fetch(wikitextUrl, {
+      headers: { 'User-Agent': UA(), 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(7_000),
+    });
+    if (!wtRes.ok) return null;
+    const wtData = await wtRes.json();
+    const wikitext: string = wtData?.parse?.wikitext?.['*'] ?? '';
+
+    // Parse infobox "num_employees" — formats:
+    //   | num_employees = 614,795 (2023)
+    //   | num_employees = {{circa|600000}} (2024)
+    //   | num_employees = ~500,000
+    const empMatch = wikitext.match(/\|\s*num_employees\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s]+)/i);
+    if (!empMatch) return null;
+
+    const raw = empMatch[1].replace(/[,\s]/g, '');
+    const n = parseInt(raw, 10);
+    // Sanity: 10 ≤ employees ≤ 5M (rules out abuse)
+    if (!isFinite(n) || n < 10 || n > 5_000_000) return null;
+    return n;
+  } catch {
+    return null;
+  }
+}
+
+// Career page scraping — detect hiring freeze and job count
+async function fetchCareerPage(companyName: string): Promise<ScrapeResult['careerPage']> {
+  const signals: string[] = [];
+  let hiringActive = true;
+  let jobCount: number | null = null;
+
+  for (const url of careerUrls(companyName)) {
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+        signal: AbortSignal.timeout(7_000),
+        redirect: 'follow',
+      });
+      if (!res.ok) continue;
+      const html = await res.text();
+
+      // Freeze signals — page-level keywords
+      const freezeKw = /\b(hiring\s+(?:freeze|paused|on\s+hold)|no\s+(?:open\s+)?positions|currently\s+not\s+hiring|workforce\s+reduction)\b/i;
+      if (freezeKw.test(html)) {
+        signals.push('freeze_detected');
+        hiringActive = false;
+      }
+
+      // Job count extraction — patterns:
+      //   "247 open positions", "1,234 jobs", "showing 50 of 320 results", JSON-LD aggregateRating
+      const jobCountPatterns = [
+        /(\d[\d,]+)\s+(?:open\s+)?(?:positions?|roles?|jobs?|openings?|opportunities)/i,
+        /showing\s+\d+\s+(?:of\s+)?(\d[\d,]+)/i,
+        /"totalJobCount"\s*:\s*(\d+)/,
+        /"numberOfJobs"\s*:\s*(\d+)/,
+      ];
+      for (const pat of jobCountPatterns) {
+        const m = html.match(pat);
+        if (m) {
+          const n = parseInt(m[1].replace(/,/g, ''), 10);
+          if (isFinite(n) && n < 100_000) {
+            jobCount = n;
+            break;
+          }
+        }
+      }
+
+      // No-openings detection
+      if (jobCount === 0 || /no\s+open(?:ings)?(?:\s+at\s+(?:this\s+)?time)?/i.test(html)) {
+        signals.push('no_openings');
+        hiringActive = false;
+      } else if (jobCount !== null && jobCount < 10) {
+        signals.push('very_low_postings');
+      }
+
+      // Found a working career page — stop trying other URL patterns
+      return { hiringActive, jobCount, signals };
+    } catch {
+      // Try next URL pattern
+      continue;
+    }
+  }
+
+  // All career URL patterns failed
+  return null;
+}
+
+// Glassdoor scraping — rating, review count, CEO approval
+async function fetchGlassdoor(companyName: string): Promise<ScrapeResult['glassdoor']> {
+  try {
+    // Use Glassdoor company search API endpoint (public, no key)
+    const searchUrl = `https://www.glassdoor.com/Search/results.htm?keyword=${encodeURIComponent(companyName)}`;
+    const res = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': UA(),
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      signal: AbortSignal.timeout(8_000),
+      redirect: 'follow',
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // Glassdoor embeds rating data in JSON-LD or data attributes
+    // Pattern 1: "ratingValue":4.1,"reviewCount":12345
+    const ratingMatch = html.match(/"ratingValue"\s*:\s*"?(\d+(?:\.\d+)?)"?/);
+    const reviewMatch = html.match(/"reviewCount"\s*:\s*"?(\d[\d,]*)"?/);
+    // Pattern 2: data-test="rating-info"
+    const altRatingMatch = html.match(/data-test=["']rating-info["'][^>]*>([\d.]+)/);
+    // Pattern 3: CEO approval — "ceoApproval":85 or "ceoApprovalRating":85
+    const ceoMatch = html.match(/"ceoApprovalR?at?i?n?g?"?\s*:\s*(\d+)/);
+
+    const rating = ratingMatch ? parseFloat(ratingMatch[1])
+                 : altRatingMatch ? parseFloat(altRatingMatch[1])
+                 : null;
+    const reviewCount = reviewMatch ? parseInt(reviewMatch[1].replace(/,/g, ''), 10) : null;
+    const ceoApproval = ceoMatch ? parseInt(ceoMatch[1], 10) : null;
+
+    // Sanity checks
+    const validRating = rating && rating >= 1 && rating <= 5 ? rating : null;
+    const validReview = reviewCount && reviewCount > 0 && reviewCount < 1_000_000 ? reviewCount : null;
+    const validCeo    = ceoApproval && ceoApproval >= 0 && ceoApproval <= 100 ? ceoApproval : null;
+
+    if (validRating == null && validReview == null && validCeo == null) return null;
+    return { rating: validRating, reviewCount: validReview, ceoApproval: validCeo };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchScrapeData(companyName: string, timeoutMs?: number): Promise<ScrapeResult> {
+  const errors: string[] = [];
+  const start = Date.now();
+
+  // Run all 3 scrapers concurrently — independent, no dependencies
+  const [wiki, career, glassdoor] = await Promise.all([
+    fetchWikipediaHeadcount(companyName).catch(e => { errors.push(`wiki: ${e?.message}`); return null; }),
+    fetchCareerPage(companyName).catch(e => { errors.push(`career: ${e?.message}`); return null; }),
+    fetchGlassdoor(companyName).catch(e => { errors.push(`glassdoor: ${e?.message}`); return null; }),
+  ]);
+
+  const elapsed = Date.now() - start;
+  if (timeoutMs && elapsed > timeoutMs) {
+    errors.push(`scrape elapsed ${elapsed}ms exceeded budget ${timeoutMs}ms`);
+  }
+
+  return {
+    wikiEmployeeCount: wiki,
+    careerPage:        career,
+    glassdoor:         glassdoor,
+    fetchedAt:         new Date().toISOString(),
+    errors,
+  };
+}
+
 // ── Main handler ───────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -643,6 +851,20 @@ serve(async (req) => {
     const avKey     = Deno.env.get('ALPHAVANTAGE_API_KEY') ?? Deno.env.get('ALPHAVANTAGE_KEY') ?? null;
     const newsKey   = Deno.env.get('NEWS_API_KEY') ?? Deno.env.get('NEWSAPI_KEY') ?? null;
     const serperKey = Deno.env.get('SERPER_API_KEY') ?? null;
+
+    // ── scrape action ──────────────────────────────────────────────────────────
+    // Wikipedia + career page + Glassdoor scraping. No API keys. Server-side
+    // execution bypasses browser CORS restrictions. Restored in v30.0 — was
+    // silently dropped during v27.0 rewrite, breaking all enrichment scraping.
+    if (action === 'scrape') {
+      const company = (companyName ?? '').trim();
+      if (!company) {
+        return json({ scrapeData: null, errors: ['companyName required'] });
+      }
+      const customTimeout = typeof body.timeoutMs === 'number' ? body.timeoutMs : undefined;
+      const scrapeData = await fetchScrapeData(company, customTimeout);
+      return json({ scrapeData, fetchedAt: scrapeData.fetchedAt, errors: scrapeData.errors });
+    }
 
     // ── hiring action ──────────────────────────────────────────────────────────
     if (action === 'hiring') {

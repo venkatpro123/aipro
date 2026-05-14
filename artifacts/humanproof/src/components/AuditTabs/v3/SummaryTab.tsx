@@ -22,6 +22,124 @@ import type { PredictionHorizonResult } from '../../../services/predictionHorizo
 import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 
+// ── v33: Tier-1 critical-intel components ────────────────────────────────────
+// Surface the top risk drivers and top immediate actions in the FIRST viewport
+// so the user sees "what is moving the score" + "what should I do this week"
+// without scrolling. Both blocks are intentionally compact (≤3 rows) and use
+// "Read more" affordances for deep detail rather than rendering everything.
+
+interface DriverItem {
+  key:    string;
+  label:  string;
+  score:  number;       // 0–100 dimension score (higher = more risk)
+  why:    string;       // one-line rationale for the user
+}
+
+interface ActionItem {
+  priority: string;
+  title:    string;
+  timeline: string;
+  step?:    string;
+}
+
+const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
+  if (drivers.length === 0) return null;
+  const top = drivers.slice(0, 3);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12 }}
+      className="rounded-2xl p-3"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+    >
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
+        <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          TOP RISK DRIVERS
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {top.map(d => (
+          <div key={d.key} className="flex items-start gap-2.5">
+            <div className="flex-shrink-0 px-1.5 py-0.5 rounded-md min-w-[36px] text-center"
+              style={{
+                background: riskColor(d.score) + '22',
+                border: `1px solid ${riskColor(d.score)}38`,
+              }}>
+              <span className="text-[11px] font-black" style={{ color: riskColor(d.score) }}>
+                {d.score}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold leading-tight"
+                style={{ color: 'rgba(255,255,255,0.85)' }}>{d.label}</p>
+              <p className="text-[10px] leading-snug truncate"
+                style={{ color: 'rgba(255,255,255,0.50)' }}>{d.why}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+const ImmediateActionsStrip: React.FC<{ actions: ActionItem[] }> = ({ actions }) => {
+  if (actions.length === 0) return null;
+  const top = actions.slice(0, 3);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.14 }}
+      className="rounded-2xl p-3"
+      style={{
+        background: 'rgba(0,212,224,0.04)',
+        border: '1px solid rgba(0,212,224,0.18)',
+      }}
+    >
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1.5">
+          <Zap className="w-3.5 h-3.5" style={{ color: 'var(--cyan,#00d4e0)' }} />
+          <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(0,212,224,0.85)' }}>
+            DO THIS WEEK
+          </span>
+        </div>
+        <span className="text-[9px] font-semibold" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          {actions.length > 3 ? `+${actions.length - 3} more in Action Plan` : ''}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {top.map((a, i) => (
+          <div key={`${a.priority}-${i}`} className="flex items-start gap-2.5">
+            <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+              style={{
+                background: a.priority === 'Critical' ? '#dc262622'
+                  : a.priority === 'High' ? '#f9731622' : '#06b6d422',
+                border: `1px solid ${a.priority === 'Critical' ? '#dc262648'
+                  : a.priority === 'High' ? '#f9731648' : '#06b6d448'}`,
+              }}>
+              <span className="text-[10px] font-black"
+                style={{
+                  color: a.priority === 'Critical' ? '#dc2626'
+                    : a.priority === 'High' ? '#f97316' : '#06b6d4',
+                }}>{i + 1}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold leading-tight"
+                style={{ color: 'rgba(255,255,255,0.90)' }}>{a.title}</p>
+              <p className="text-[10px] leading-snug truncate"
+                style={{ color: 'rgba(255,255,255,0.45)' }}>
+                {a.timeline}{a.step ? ` · ${a.step}` : ''}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
 // ── Colour helpers ────────────────────────────────────────────────────────────
 
 const riskColor = (s: number) =>
@@ -439,7 +557,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const preparedness: PreparednessResult | undefined      = r.preparednessScore;
 
   const urgency  = brief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
-  const confPct  = result.confidencePercent ?? Math.round((result.confidence ?? 0.5) * 100);
+  const confPct  = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
   const conflictCount = result.signalQuality?.conflictingSignals?.length ?? 0;
@@ -455,6 +573,36 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const velocityColor = r.scoreDelta?.direction === 'worsening'
     ? '#dc2626' : r.scoreDelta?.direction === 'improving'
     ? '#10b981' : 'rgba(255,255,255,0.35)';
+
+  // v33: Tier-1 — derive top 3 risk drivers from the result dimensions, sorted by raw
+  // dimension score. Each driver gets a one-line "why" pulled from breakdown.reason
+  // when available, falling back to a heuristic.
+  const dimensions: any[] = Array.isArray(result.dimensions) ? result.dimensions : [];
+  const topDrivers: DriverItem[] = dimensions
+    .filter(d => typeof d.score === 'number' && d.score >= 35)
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    .slice(0, 3)
+    .map(d => ({
+      key:   String(d.key ?? d.label ?? 'driver'),
+      label: String(d.label ?? d.key ?? 'Risk dimension'),
+      score: Math.round(d.score ?? 0),
+      why:   String(d.reason ?? d.rationale ?? d.evidenceSummary ?? d.summary ?? 'Multiple contributing signals'),
+    }));
+
+  // v33: Tier-1 — derive top 3 actions from result.recommendations sorted by priority.
+  const recommendations: any[] = Array.isArray(result.recommendations) ? result.recommendations : [];
+  const priorityWeight = (p: string) =>
+    p === 'Critical' ? 0 : p === 'High' ? 1 : p === 'Medium' ? 2 : 3;
+  const topActions: ActionItem[] = recommendations
+    .slice()
+    .sort((a, b) => priorityWeight(a.priority) - priorityWeight(b.priority))
+    .slice(0, 3)
+    .map(rec => ({
+      priority: String(rec.priority ?? 'Medium'),
+      title:    String(rec.title ?? rec.action ?? rec.text ?? 'Take action'),
+      timeline: String(rec.timeline ?? rec.timeframe ?? 'This week'),
+      step:     rec.steps?.[0] ? String(rec.steps[0]) : undefined,
+    }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -527,11 +675,18 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       </motion.div>
 
+      {/* ── v33: Tier-1 critical intelligence (above the fold) ──────────── */}
+      {/* Top risk drivers — answers "WHY is my score where it is?" */}
+      <TopDriversStrip drivers={topDrivers} />
+
+      {/* Immediate actions — answers "WHAT should I do this week?" */}
+      <ImmediateActionsStrip actions={topActions} />
+
       {/* ── Intelligence Brief ───────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.18 }}
       >
         <BriefCard brief={brief} urgency={urgency} />
       </motion.div>

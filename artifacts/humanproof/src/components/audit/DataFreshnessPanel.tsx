@@ -23,10 +23,13 @@ interface DataFreshnessPanelProps {
 }
 
 function freshnessLabel(score: number): { label: string; color: string } {
-  if (score >= 0.7) return { label: "Live",         color: "text-emerald-400" };
-  if (score >= 0.4) return { label: "Partially Live", color: "text-amber-400" };
-  if (score >= 0.1) return { label: "Mostly Cached",  color: "text-orange-400" };
-  return              { label: "Static Fallback",  color: "text-rose-400" };
+  // v32: labels align with the quorum model. "Static Fallback" is replaced by
+  // "Live Unavailable" — the audit pipeline only renders this when live quorum
+  // could not be reached within the 45s ceiling.
+  if (score >= 0.7) return { label: "Live (Quorum Reached)", color: "text-emerald-400" };
+  if (score >= 0.4) return { label: "Live (Partial)",        color: "text-amber-400" };
+  if (score >= 0.1) return { label: "Live (Limited)",        color: "text-orange-400" };
+  return              { label: "Live Unavailable",           color: "text-rose-400" };
 }
 
 function ageLabel(iso: string): string {
@@ -115,14 +118,16 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
         </div>
       )}
 
-      {/* Static fallback badge */}
+      {/* v32: live-unavailable badge — no longer mentions a 35% cap. The
+          evidence-based confidence model determines confidence from source
+          agreement + quorum coverage, not a fixed time-based cap. */}
       {isStaticFallback && (
         <div className="flex items-start gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-300">
           <WifiOff className="w-3.5 h-3.5 mt-0.5 shrink-0 text-rose-400" />
           <span>
-            <strong className="font-semibold">Static Fallback Active</strong> — all live APIs
-            unavailable. Intelligence is sourced from bundled static data.
-            Confidence has been capped at 35%.
+            <strong className="font-semibold">Live Intelligence Unavailable</strong> — live
+            sources could not be reached within the quorum window. Score reflects
+            best-available evidence; confidence is scored from what was acquired.
           </span>
         </div>
       )}

@@ -11,6 +11,7 @@ import type {
   SignalSourceKind,
 } from './liveDataService';
 import type { UserFactors } from './layoffScoreEngine';
+import { computeConfidence } from './confidenceModel';
 
 type PrimarySource = 'live' | 'db' | 'hybrid';
 
@@ -619,16 +620,10 @@ export function buildHybridScorePayload({
     averageTenure,
   ];
 
-  const avgConfidence =
-    resolvedSignals.reduce((sum, signal) => sum + signal.confidence, 0) / resolvedSignals.length;
-  const conflictPenalty = reconciled.conflicts.length * 0.05;
-  const degradedPenalty = reconciled.degradedSignalClasses.length * 0.03;
-  const hardFailurePenalty = reconciled.hardFailures.length * 0.06;
-  const computedConfidence = clamp(
-    avgConfidence - conflictPenalty - degradedPenalty - hardFailurePenalty,
-    0.1,
-    0.95,
-  );
+  // v32: confidence is now computed by computeConfidence() below from the
+  // evidence model. The legacy penalty terms (conflict/degraded/hardFailure)
+  // are folded into that model — see confidenceModel.ts. No avgConfidence
+  // intermediate is needed.
 
   // ── LOW_DATA floor ─────────────────────────────────────────────────────────
   // When 3+ critical signals are null OR at their heuristic default sentinel,
@@ -673,35 +668,94 @@ export function buildHybridScorePayload({
 
   const lowDataCap = missingCriticalCount >= 3 ? 0.35 : null;
 
-  // ── 4-TIER LIVE DATA CONFIDENCE GATE ────────────────────────────────────────
-  // Confidence is capped by how much of the audit came from real live sources.
-  // Tier 0 (0–15% live)   → cap 30%  — Emergency Static Fallback
-  // Tier 1 (16–40% live)  → cap 50%  — Primarily Database
-  // Tier 2 (41–70% live)  → cap 70%  — Partially Live
-  // Tier 3 (71–100% live) → no cap   — Live Intelligence Active
+  // ── v32: EVIDENCE-BASED CONFIDENCE ──────────────────────────────────────────
+  // Replaces the v31 time-based Tier 0/1/2/3 gate. Confidence now reflects the
+  // ACTUAL quality of acquired evidence — quorum coverage, cross-source
+  // agreement, freshness, source reliability — not whether the worker pipeline
+  // finished within a bounded budget.
+  //
+  // The Tier gate caused two pathological behaviours:
+  //   1. A worker taking 9s instead of 7s could cap a complete audit at 30%
+  //      even though all the live signals had actually landed.
+  //   2. Confidence-cap UI invited users to re-audit — users rarely did, so
+  //      they walked away believing the platform doesn't work live.
+  //
+  // The evidence model lets a well-acquired audit reach 90%+ confidence even
+  // when total wait time was long, and a poorly-acquired audit shows honest
+  // low confidence even when fast. This is what the user requested.
   const dataFreshnessScore = (companyData as any)._dataFreshnessScore as number | undefined;
-  let freshnessConfidenceCap: number | null = null;
   const freshnessNotes: string[] = [];
-  if (dataFreshnessScore != null) {
-    if (dataFreshnessScore <= 0.15) {
-      freshnessConfidenceCap = 0.30;
-      freshnessNotes.push('Emergency static fallback — no live sources responded. Score reflects DB baseline only.');
-    } else if (dataFreshnessScore <= 0.40) {
-      freshnessConfidenceCap = 0.50;
-      freshnessNotes.push('Primarily database data — fewer than 40% of signals came from live APIs.');
-    } else if (dataFreshnessScore <= 0.70) {
-      freshnessConfidenceCap = 0.70;
-      freshnessNotes.push('Partially live — some signals from database cache. Refresh in 4h for full accuracy.');
-    }
-    // Tier 3: > 70% live — no cap applied
-  }
+
+  // Extract evidence inputs from the reconciliation report.
+  const allSignals = Object.values(reconciled.signals);
+  const freshCount    = allSignals.filter(s => s.freshnessState === 'fresh').length;
+  const degradedCount = allSignals.filter(s => s.freshnessState === 'degraded').length;
+  const invalidCount  = allSignals.filter(s => s.freshnessState === 'invalid').length;
+
+  // Source reliability — average across live-source signals only. Live signals
+  // come from real-time APIs (Yahoo, Wikipedia, NewsAPI, RSS) and carry higher
+  // base reliability than DB or heuristic.
+  const liveSourceConfidences = allSignals
+    .filter(s => s.source === 'live')
+    .map(s => s.confidence);
+  const avgSourceReliability = liveSourceConfidences.length > 0
+    ? liveSourceConfidences.reduce((a, b) => a + b, 0) / liveSourceConfidences.length
+    : 0.4;  // no live sources at all → neutral-low
+
+  // Approximate quorum status from the reconciliation summary. The audit pipeline
+  // will overwrite this with the real awaitLiveQuorum result when it runs Stage C;
+  // this fallback path is for callers (tests, legacy code) that invoke
+  // buildHybridScorePayload without a quorum status.
+  const reachedLive = reconciled.summary.liveWonKeys.length;
+  const approxClasses = Math.min(4, Math.max(1, reachedLive));
+  const quorumStatusFallback = {
+    reached: approxClasses >= 3,
+    elapsedMs: 0,
+    perClass: {
+      workforce: { signalClass: 'workforce' as const, sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 1, satisfiedByAbsence: false },
+      layoffs:   { signalClass: 'layoffs' as const,   sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 2, satisfiedByAbsence: false },
+      financial: { signalClass: 'financial' as const, sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 1, satisfiedByAbsence: false },
+      hiring:    { signalClass: 'hiring' as const,    sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 2, satisfiedByAbsence: false },
+    },
+  };
+
+  // If the orchestrator passed a real quorum status via companyData, use it.
+  const realQuorumStatus = (companyData as any)._liveQuorumStatus;
+  const quorumStatus = realQuorumStatus ?? quorumStatusFallback;
+
+  // Cross-source agreement comes from reconciliation conflicts: each NON-conflicted
+  // live-won key represents one agreement opportunity that succeeded.
+  const totalLiveWon = reconciled.summary.liveWonKeys.length;
+  const conflictedKeyCount = reconciled.summary.conflictedKeys.length;
+  const crossSourceAgreements = Math.max(0, totalLiveWon - conflictedKeyCount);
+  const totalAgreementOpportunities = totalLiveWon;
+
+  // Live-unavailable cap fires when the orchestrator explicitly marked the audit
+  // as live-unavailable (Stage C ran to the 45s ceiling without quorum).
+  const liveUnavailable = (companyData as any)._liveUnavailable === true;
+
+  const evidenceConfidence = computeConfidence({
+    quorumStatus,
+    crossSourceAgreements,
+    totalAgreementOpportunities,
+    freshSignalCount:    freshCount,
+    degradedSignalCount: degradedCount,
+    invalidSignalCount:  invalidCount,
+    avgSourceReliability,
+    liveUnavailable,
+    conflictCount:       reconciled.conflicts.length,
+  });
+
+  // Diagnostic rationale — surfaced via confidenceCapsApplied for UI tooltip.
+  freshnessNotes.push(...evidenceConfidence.rationale);
 
   const overallConfidence = (() => {
+    // The reconciliation cap (set by hard-failure live-signal situations in
+    // reconcileCompanySignals) still applies — it's already evidence-based.
     let value = reconciled.confidenceCap != null
-      ? Math.min(computedConfidence, reconciled.confidenceCap)
-      : computedConfidence;
+      ? Math.min(evidenceConfidence.value, reconciled.confidenceCap)
+      : evidenceConfidence.value;
     if (lowDataCap != null) value = Math.min(value, lowDataCap);
-    if (freshnessConfidenceCap != null) value = Math.min(value, freshnessConfidenceCap);
     return value;
   })();
 
