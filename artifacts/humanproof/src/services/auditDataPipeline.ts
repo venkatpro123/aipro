@@ -845,6 +845,21 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       (companyData as any)._dataFreshnessScore = 0;
       (companyData as any)._liveFreshnessScore = 0;
       (companyData as any)._dbFreshnessScore   = 0;
+      // Audit v35: also write _liveQuorumStatus + _liveUnavailable so the
+      // hybridConsensusBuilder uses real (failed) quorum state — not the
+      // optimistic fallback that infers reach from reconciliation.summary.
+      (companyData as any)._liveUnavailable    = true;
+      (companyData as any)._liveQuorumReached  = false;
+      (companyData as any)._liveQuorumStatus = liveQuorum?.status ?? {
+        reached: false,
+        elapsedMs: 0,
+        perClass: {
+          workforce: { signalClass: 'workforce', sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+          layoffs:   { signalClass: 'layoffs',   sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+          financial: { signalClass: 'financial', sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+          hiring:    { signalClass: 'hiring',    sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+        },
+      };
       (companyData as any)._liveDataCoverage = {
         liveWonKeys: [], dbWonKeys: [], liveRatio: 0,
         genuineApiSignals: 0, overallSource: 'heuristic',

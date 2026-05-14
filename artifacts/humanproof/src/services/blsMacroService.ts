@@ -97,6 +97,13 @@ export interface MacroSignalResult {
   calibrationNote: string;
   joltsSnapshot: JOLTSSnapshot | null;
   fredSnapshot: FREDSnapshot | null;
+  /**
+   * Audit v35 fix: explicit heuristic flag. True when JOLTS or FRED data was
+   * unavailable and the engine fell back to May 2026 calibrated baselines.
+   * Consumers (BLSMacroPanel, intelligenceBriefService, confidence model) must
+   * treat this signal as a heuristic estimate, NOT live economic data.
+   */
+  isHeuristic: boolean;
 }
 
 // ── Baseline Values (May 2026 calibration) ─────────────────────────────────────
@@ -483,5 +490,9 @@ export function computeMacroSignal(
     calibrationNote,
     joltsSnapshot: jolts,
     fredSnapshot: fred ?? FRED_BASELINE,
+    // Audit v35: explicit heuristic flag. Either JOLTS or FRED falling back to
+    // baseline means the macro signal is partially or fully heuristic — the
+    // UI must surface this so users don't trust it as real-time BLS data.
+    isHeuristic: jolts === null || fred === null,
   };
 }

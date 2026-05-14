@@ -1150,6 +1150,18 @@ const pushConflict = (
   });
 };
 
+// Audit v35: centralized seeded-baseline source-name pattern. Previously each
+// site (3 in this file + 1 in createSignal opts) had its own regex; the patterns
+// drifted apart and missed actual source names from the company_intelligence
+// table (`verified_live_market_data`, `OSINT Database`, `live_market_data`).
+// This single source of truth catches every seeded source label currently in
+// the DB. Update ONCE here when adding new seeded sources.
+const SEEDED_BASELINE_SOURCE_RE = /seeded|intelligence|company_intelligence|cached_company_intelligence|static|fallback|verified_live_market|verified_market|verified_data|live_market_data|osint|baseline|preseed/i;
+
+function isSeededBaselineSource(sourceName: string | null | undefined): boolean {
+  return !!sourceName && SEEDED_BASELINE_SOURCE_RE.test(sourceName);
+}
+
 const chooseAuthoritativeSignal = <T>({
   key,
   dbSignal,
@@ -1178,9 +1190,7 @@ const chooseAuthoritativeSignal = <T>({
   // a seeded baseline, the default `chosen = dbSignal` means the seeded value wins
   // silently with no audit trail. Log it so the TransparencyTab can surface it.
   if (!liveUsable && chosen?.source === 'db') {
-    const sourceIsSeeded = /seeded|intelligence|company_intelligence|static|fallback/i.test(
-      chosen.sourceName,
-    );
+    const sourceIsSeeded = isSeededBaselineSource(chosen.sourceName);
     if (sourceIsSeeded) {
       summary.dbWonKeys.push(`${key}[seeded-default-no-live]`);
     } else {
@@ -1220,9 +1230,7 @@ const chooseAuthoritativeSignal = <T>({
       // Exception: known seeded/baseline DB sources use an arbitrary recent timestamp
       // (e.g., the seeding run date) — they are NOT genuinely recent observations.
       // For these, prefer live over the seeded baseline regardless of DB freshness label.
-      const dbIsSeededBaseline = /seeded|intelligence|company_intelligence|static|fallback/i.test(
-        dbSignal!.sourceName,
-      );
+      const dbIsSeededBaseline = isSeededBaselineSource(dbSignal!.sourceName);
       if (dbIsSeededBaseline) {
         // Seeded DB "fresh" timestamp reflects when the seed script ran, not when the
         // signal was observed in the real world. Live degraded beats seeded fresh.
@@ -1299,7 +1307,7 @@ export const reconcileCompanySignals = (
   // hardcoded DB. We also defensively pattern-match the source label so externally
   // computed CompanyData objects (tests, scripts) still benefit from demotion.
   const isSeededBaseline = (base as any)._isSeededBaseline === true
-    || /seeded|intelligence|company_intelligence|static|cached_company_intelligence|fallback/i.test(baseSourceName);
+    || isSeededBaselineSource(baseSourceName);
   const dbOpts = { seededBaseline: isSeededBaseline };
 
   const dbStock = base.stock90DayChange != null

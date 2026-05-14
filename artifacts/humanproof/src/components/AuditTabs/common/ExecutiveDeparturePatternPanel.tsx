@@ -111,6 +111,25 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
         )}
       </div>
 
+      {/* Audit v35: SEC EDGAR ingestion-lag transparency. Users must understand
+          that "no recent departures" can mean "departures occurred in the last
+          4–7 days but haven't appeared in EDGAR yet." */}
+      {executiveDeparturePattern.secFilingLagDays && (
+        <div className="flex items-start gap-1.5 mb-2 px-2 py-1 rounded-md" style={{
+          background: 'rgba(148,163,184,0.06)',
+          border: '1px solid rgba(148,163,184,0.18)',
+        }}>
+          <Clock className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(148,163,184,0.7)' }} />
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(148,163,184,0.7)' }}>
+            SEC Form 4 ingestion lag: typically{' '}
+            {executiveDeparturePattern.secFilingLagDays.typicalMin}–
+            {executiveDeparturePattern.secFilingLagDays.typicalMax} days from
+            departure to EDGAR availability. Departures in the last week may not
+            yet be reflected.
+          </p>
+        </div>
+      )}
+
       {/* Calibration note */}
       <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
         {executiveDeparturePattern.calibrationNote}

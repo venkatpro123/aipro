@@ -63,6 +63,26 @@ export interface ExecutiveDeparturePatternResult {
   /** Estimated days until restructuring announcement, null if below MODERATE */
   leadTimeEstimateDays: number | null;
   calibrationNote: string;
+
+  /**
+   * Audit v35: SEC Form 4 filing lag transparency.
+   *
+   * SEC Form 4 (insider transactions) must be filed within 2 business days of
+   * the transaction, but the SEC EDGAR system has additional ingestion lag
+   * (typically 1–4 business days) before the filing is searchable. The total
+   * end-to-end lag from a real-world departure to this engine seeing it via
+   * SEC EDGAR is roughly 4–7 days.
+   *
+   * UI must surface this so users understand: "no recent departures detected"
+   * does NOT mean "no departures occurred in the last 7 days" — it means
+   * "no departures have appeared in SEC EDGAR yet within our lookback window."
+   */
+  secFilingLagDays: { typicalMin: number; typicalMax: number };
+  /**
+   * The lookback window the engine evaluated (typically 365 days). Departures
+   * older than this don't influence pattern scoring.
+   */
+  lookbackWindowDays: number;
 }
 
 // ─── Internal scoring constants ───────────────────────────────────────────────
@@ -154,6 +174,9 @@ export function computeExecutiveDeparturePattern(
       estimatedRestructuringProbability: 0,
       leadTimeEstimateDays: null,
       calibrationNote: 'Insufficient departure data. Engine defaulting to NONE.',
+      // Audit v35: SEC EDGAR end-to-end ingestion lag (filing-required + EDGAR processing).
+      secFilingLagDays: { typicalMin: 4, typicalMax: 7 },
+      lookbackWindowDays: 365,
     };
   }
 
@@ -300,6 +323,7 @@ export function computeExecutiveDeparturePattern(
       : 'Overall risk score below HIGH — executive pattern is an independent early warning.',
   ].join(' ');
 
+
   return {
     patternRiskScore,
     patternRiskTier,
@@ -311,5 +335,7 @@ export function computeExecutiveDeparturePattern(
     estimatedRestructuringProbability,
     leadTimeEstimateDays,
     calibrationNote,
+    secFilingLagDays: { typicalMin: 4, typicalMax: 7 },
+    lookbackWindowDays: 365,
   };
 }

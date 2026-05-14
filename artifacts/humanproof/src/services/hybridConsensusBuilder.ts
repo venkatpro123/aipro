@@ -703,19 +703,25 @@ export function buildHybridScorePayload({
     : 0.4;  // no live sources at all → neutral-low
 
   // Approximate quorum status from the reconciliation summary. The audit pipeline
-  // will overwrite this with the real awaitLiveQuorum result when it runs Stage C;
-  // this fallback path is for callers (tests, legacy code) that invoke
-  // buildHybridScorePayload without a quorum status.
-  const reachedLive = reconciled.summary.liveWonKeys.length;
-  const approxClasses = Math.min(4, Math.max(1, reachedLive));
+  // writes the real awaitLiveQuorum result onto companyData._liveQuorumStatus —
+  // this fallback only fires for legacy callers (tests, background-refresh paths
+  // that bypass Stage C).
+  //
+  // Audit v35 fix: the previous fallback was OPTIMISTICALLY biased — it called
+  // a class "satisfied" whenever reconciliation had liveWonKeys.length >= some
+  // threshold, even though liveWonKeys can include scrape-as-live (Wikipedia,
+  // RSS) which inflates the count without being real API quorum. The corrected
+  // fallback is PESSIMISTICALLY honest: when no real quorum status was passed,
+  // assume nothing reached quorum so the confidence model surfaces the
+  // liveUnavailable cap (0.45). Better honest-low than dishonest-high.
   const quorumStatusFallback = {
-    reached: approxClasses >= 3,
+    reached: false,
     elapsedMs: 0,
     perClass: {
-      workforce: { signalClass: 'workforce' as const, sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 1, satisfiedByAbsence: false },
-      layoffs:   { signalClass: 'layoffs' as const,   sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 2, satisfiedByAbsence: false },
-      financial: { signalClass: 'financial' as const, sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 1, satisfiedByAbsence: false },
-      hiring:    { signalClass: 'hiring' as const,    sourcesReached: [], sourcesPending: [], satisfied: reachedLive >= 2, satisfiedByAbsence: false },
+      workforce: { signalClass: 'workforce' as const, sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+      layoffs:   { signalClass: 'layoffs' as const,   sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+      financial: { signalClass: 'financial' as const, sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
+      hiring:    { signalClass: 'hiring' as const,    sourcesReached: [], sourcesPending: [], satisfied: false, satisfiedByAbsence: false },
     },
   };
 

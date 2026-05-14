@@ -44,6 +44,17 @@ export interface PillarScore {
   status: 'strong' | 'good' | 'fair' | 'weak' | 'critical';
   signals: string[]; // what drove this score
   quickWins: string[]; // highest-ROI improvements
+  /**
+   * Audit v35: true when the pillar relied on heuristic priors (e.g. neutral
+   * 50 fallback) for ANY input. UI must badge the pillar so the user knows
+   * the score reflects defaults, not personalized live data.
+   */
+  isHeuristic?: boolean;
+  /**
+   * Names of inputs that fell back to heuristic priors (e.g. ["jobMarketLiquidity",
+   * "networkSize"]). UI uses this to render a tooltip explaining what's missing.
+   */
+  heuristicInputs?: string[];
 }
 
 export interface PreparednessResult {
@@ -157,9 +168,17 @@ function computeFinancialPillar(input: PreparednessInput): PillarScore {
 
 function computeMarketPillar(input: PreparednessInput): PillarScore {
   const networkMap = { minimal: 20, moderate: 50, substantial: 70, extensive: 90 };
-  const networkBase = networkMap[input.networkSize ?? 'moderate'] ?? 50;
-  const leverageScore = input.networkLeverage?.networkScore ?? 50;
-  const liquidity = input.jobMarketLiquidity?.score ?? 50;
+  // Audit v35: track which inputs are heuristic vs personalized.
+  // Each `??` fallback substitutes a Q1 2026 prior; we surface this so the
+  // UI can show a "based on industry priors, not live signals" badge.
+  const heuristicInputs: string[] = [];
+  const networkBase = input.networkSize
+    ? (networkMap[input.networkSize] ?? 50)
+    : (heuristicInputs.push('networkSize'), 50);
+  const leverageScore = input.networkLeverage?.networkScore
+    ?? (heuristicInputs.push('networkLeverage'), 50);
+  const liquidity = input.jobMarketLiquidity?.score
+    ?? (heuristicInputs.push('jobMarketLiquidity'), 50);
   const priorChanges = input.priorJobChanges ?? 0;
 
   let score = Math.round(networkBase * 0.35 + leverageScore * 0.35 + liquidity * 0.30);
@@ -196,6 +215,14 @@ function computeMarketPillar(input: PreparednessInput): PillarScore {
     quickWins.push('Update your LinkedIn headline and About section in the next 24 hours — recruiters are searching now');
   }
 
+  // Audit v35: pillar is heuristic when 2+ of 3 core inputs (network, leverage,
+  // liquidity) fell back to neutral priors. With 0–1 fallbacks the personalized
+  // signals still dominate; with 2+ the score is mostly Q1 2026 priors.
+  const isHeuristic = heuristicInputs.length >= 2;
+  if (isHeuristic) {
+    signals.push('Market positioning based largely on industry priors — provide profile data for live assessment.');
+  }
+
   return {
     key: 'market',
     label: 'Market Positioning',
@@ -205,6 +232,8 @@ function computeMarketPillar(input: PreparednessInput): PillarScore {
     status: toStatus(score),
     signals,
     quickWins: quickWins.slice(0, 2),
+    isHeuristic,
+    heuristicInputs,
   };
 }
 

@@ -115,6 +115,21 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
             <div className="flex items-center justify-between mb-1">
               <span className="text-[12px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {pillar.label}
+                {/* Audit v35: heuristic badge — surfaced when 2+ inputs were
+                    industry priors rather than personalized live data. */}
+                {pillar.isHeuristic && (
+                  <span
+                    className="ml-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded"
+                    style={{
+                      background: 'rgba(245,158,11,0.15)',
+                      color: '#f59e0b',
+                      border: '1px solid rgba(245,158,11,0.30)',
+                    }}
+                    title={`Heuristic: ${(pillar.heuristicInputs ?? []).join(', ') || 'industry priors'}`}
+                  >
+                    PRIORS
+                  </span>
+                )}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-black" style={{ color: statusColor }}>

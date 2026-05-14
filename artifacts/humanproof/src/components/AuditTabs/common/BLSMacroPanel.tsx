@@ -113,6 +113,21 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
         </div>
       )}
 
+      {/* Audit v35: explicit heuristic disclosure when isHeuristic = true.
+          The calibration note alone (30% opacity paragraph) was passive and
+          users assumed live data was driving the score. */}
+      {blsMacroSignal.isHeuristic && (
+        <div className="flex items-center gap-1.5 mb-2 px-2 py-1 rounded-md" style={{
+          background: 'rgba(245,158,11,0.08)',
+          border: '1px solid rgba(245,158,11,0.25)',
+        }}>
+          <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
+          <p className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
+            Heuristic baseline · Live BLS/FRED data unavailable for this audit
+          </p>
+        </div>
+      )}
+
       {/* Calibration note */}
       <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.30)' }}>
         {blsMacroSignal.calibrationNote}

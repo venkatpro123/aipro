@@ -131,6 +131,24 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           </p>
         </div>
       )}
+
+      {/* Audit v35: provenance disclosure — show what live data actually fed
+          the result vs which fields fell back to defaults. */}
+      {headcount.isHeuristic ? (
+        <div className="flex items-center gap-1.5 mt-2.5 px-2 py-1 rounded-md" style={{
+          background: 'rgba(245,158,11,0.08)',
+          border: '1px solid rgba(245,158,11,0.25)',
+        }}>
+          <span className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
+            ⚠ No live workforce data — neutral baseline shown
+          </span>
+        </div>
+      ) : headcount.inputsProvided && headcount.inputsProvided.length < 4 ? (
+        <p className="text-[10px] mt-2.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          Based on {headcount.inputsProvided.length} of 7 input fields ·
+          missing fields default to neutral
+        </p>
+      ) : null}
     </motion.div>
   );
 };

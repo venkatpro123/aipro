@@ -54,6 +54,20 @@ export interface HeadcountVelocityResult {
   headcountActions: HeadcountAction[];
 
   calibrationStatus: 'research_grounded';
+
+  /**
+   * Audit v35: signal provenance. True when ALL inputs were null and the
+   * engine returned the UNKNOWN/STABLE neutral result. UI should display a
+   * "no live workforce data" badge instead of presenting the result as a
+   * confirmed reading. Note: even when SOME inputs are present, the result
+   * is partially heuristic if the missing fields default to neutral values.
+   */
+  isHeuristic: boolean;
+  /**
+   * List of input fields that had non-null values fed into the engine.
+   * Helps the UI show "based on: contractor ratio + posting velocity" tooltips.
+   */
+  inputsProvided: string[];
 }
 
 export interface HeadcountAction {
@@ -260,6 +274,17 @@ export function computeHeadcountVelocity(
       : headcountRiskScore >= 30 ? 'Monitoring — early headcount stress signals'
       : 'Stable — no significant headcount contraction detected';
 
+    // Audit v35: enumerate which inputs were ACTUALLY provided (not null).
+    // The result is heuristic when zero inputs were available (all defaults).
+    const inputsProvided: string[] = [];
+    if (headcountChange6MonthPct !== null) inputsProvided.push('headcountChange6MonthPct');
+    if (contractorRatioPct !== null)       inputsProvided.push('contractorRatioPct');
+    if (contractorTrend !== 'UNKNOWN')     inputsProvided.push('contractorTrend');
+    if (jobPostingCurrentMonth !== null)   inputsProvided.push('jobPostingCurrentMonth');
+    if (jobPostingLastMonth !== null)      inputsProvided.push('jobPostingLastMonth');
+    if (hiringRateAnnualized !== null)     inputsProvided.push('hiringRateAnnualized');
+    if (voluntaryAttritionPct !== null)    inputsProvided.push('voluntaryAttritionPct');
+
     return {
       headcountRiskScore,
       headcountRiskLabel: riskLabel,
@@ -280,6 +305,8 @@ export function computeHeadcountVelocity(
       estimatedLayoffLeadTimeDays: leadTimeDays,
       headcountActions: getHeadcountActions(headcountRiskScore, headcountClassification.trend, contractorClassification.risk, postingClassification.velocity),
       calibrationStatus: 'research_grounded',
+      isHeuristic: inputsProvided.length === 0,
+      inputsProvided,
     };
   } catch {
     return {
@@ -302,6 +329,8 @@ export function computeHeadcountVelocity(
       estimatedLayoffLeadTimeDays: null,
       headcountActions: [],
       calibrationStatus: 'research_grounded',
+      isHeuristic: true,
+      inputsProvided: [],
     };
   }
 }
