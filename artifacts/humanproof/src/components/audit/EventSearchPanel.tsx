@@ -33,6 +33,12 @@ const MEILI_INDEX = 'company_events';
 
 const isMeiliConfigured = Boolean(MEILI_HOST && MEILI_KEY);
 
+/** Exported so callers can hide the entire panel + its containing block when
+ *  Meilisearch isn't provisioned. Showing a "configuration error" callout in
+ *  production reads as "the platform is broken" — better to omit the surface
+ *  entirely until the env vars are set. */
+export const isEventSearchAvailable = (): boolean => isMeiliConfigured;
+
 async function searchEvents(query: string, signal: AbortSignal): Promise<EventHit[]> {
   if (!isMeiliConfigured) return [];
   const res = await fetch(`${MEILI_HOST!.replace(/\/$/, '')}/indexes/${MEILI_INDEX}/search`, {

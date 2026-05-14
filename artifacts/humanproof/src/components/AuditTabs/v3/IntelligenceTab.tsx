@@ -24,7 +24,7 @@ import BLSMacroPanel from '../common/BLSMacroPanel';
 import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
 import PeerContagionPanel from '../common/PeerContagionPanel';
 import MacroRiskPanel from '../common/MacroRiskPanel';
-import { EventSearchPanel } from '../../audit/EventSearchPanel';
+import { EventSearchPanel, isEventSearchAvailable } from '../../audit/EventSearchPanel';
 import CompanyPulseCard from '../common/CompanyPulseCard';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 
@@ -94,20 +94,27 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
       </motion.div>
 
       {/* ── T3: Cross-source event search ──────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-        <AdaptiveBlock
-          title="Cross-source event search"
-          subtitle="Raw timeline of company events from news + filings + signals"
-          icon={Search}
-          tier={3}
-          accentColor="#22d3ee"
-          defaultOpen={false}
-        >
-          <div className="px-1">
-            <EventSearchPanel />
-          </div>
-        </AdaptiveBlock>
-      </motion.div>
+      {/* Hidden when Meilisearch isn't provisioned. The panel itself renders a
+          "Set VITE_MEILISEARCH_HOST..." config callout when missing, but that
+          callout reads as "the platform is broken" to end users. Omit the whole
+          block until Meilisearch is configured — operators get the env-var hint
+          via the panel's own dev-mode rendering elsewhere. */}
+      {isEventSearchAvailable() && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+          <AdaptiveBlock
+            title="Cross-source event search"
+            subtitle="Raw timeline of company events from news + filings + signals"
+            icon={Search}
+            tier={3}
+            accentColor="#22d3ee"
+            defaultOpen={false}
+          >
+            <div className="px-1">
+              <EventSearchPanel />
+            </div>
+          </AdaptiveBlock>
+        </motion.div>
+      )}
 
     </div>
   );
