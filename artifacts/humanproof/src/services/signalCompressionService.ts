@@ -8,9 +8,16 @@
 //   • carries a tier (1–5) for adaptive ordering
 //   • carries a severity (0–100) for sort-by-urgency
 //
-// This service is pure (no I/O). Reads only from HybridResult.
+// This service is pure (no I/O). Reads from HybridResult + CompanyData.
+//
+// IMPORTANT: `companyData` is intentionally a separate argument rather than
+// being read from `result.companyData`. The audit pipeline returns them as
+// two separate fields (result + companyData) and they are passed to the dashboard
+// as two separate props. Reading from `result.companyData` was the v34 bug
+// that produced empty verdicts on every audit.
 
 import type { HybridResult } from '../types/hybridResult';
+import type { CompanyData } from '../data/companyDatabase';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -76,11 +83,12 @@ function take<T>(arr: T[], n: number): T[] {
 // ── Workforce Stability compression ──────────────────────────────────────────
 // Subsumes: WARN, layoffs, hiring trend, headcount velocity, Glassdoor velocity
 
-export function compressWorkforceSignal(result: HybridResult): CompressedSignal {
+export function compressWorkforceSignal(result: HybridResult, companyData?: CompanyData): CompressedSignal {
   const r = result as any;
+  const cd = (companyData ?? (r.companyData as CompanyData | undefined)) as any;
   const warnActive     = r.warnSignal?.hasActiveWARN === true;
-  const layoffRounds   = r.companyData?.layoffRounds ?? r.layoffRounds ?? 0;
-  const hiringTrend    = r.hiringSignal?.trend ?? r.companyData?._hiringPostingTrend;
+  const layoffRounds   = cd?.layoffRounds ?? r.layoffRounds ?? 0;
+  const hiringTrend    = r.hiringSignal?.trend ?? cd?._hiringPostingTrend;
   const headcountDelta = r.headcountVelocity?.deltaPct90d ?? r.headcountVelocity?.delta90Day ?? null;
   const glassdoorTrend = r.glassdoorVelocity?.ratingTrend ?? null;
 
@@ -133,13 +141,14 @@ export function compressWorkforceSignal(result: HybridResult): CompressedSignal 
 // ── Financial Health compression ─────────────────────────────────────────────
 // Subsumes: stock 90d, revenue YoY, funding, SEC enhanced signals
 
-export function compressFinancialSignal(result: HybridResult): CompressedSignal {
+export function compressFinancialSignal(result: HybridResult, companyData?: CompanyData): CompressedSignal {
   const r = result as any;
-  const stock           = r.companyData?.stock90DayChange ?? null;
-  const revYoy          = r.companyData?.revenueGrowthYoY ?? null;
-  const isPublic        = r.companyData?.isPublic === true;
-  const monthsSinceRaise = r.companyData?.monthsSinceLastRaise ?? null;
-  const fundingStage    = r.companyData?.lastFundingStage ?? null;
+  const cd = (companyData ?? (r.companyData as CompanyData | undefined)) as any;
+  const stock           = cd?.stock90DayChange ?? null;
+  const revYoy          = cd?.revenueGrowthYoY ?? null;
+  const isPublic        = cd?.isPublic === true;
+  const monthsSinceRaise = cd?.monthsSinceLastRaise ?? null;
+  const fundingStage    = cd?.lastFundingStage ?? null;
   const secMaterial     = r.secEnhancedSignals?.has8kMaterialEvent === true
                        || r.secEnhancedSignals?.goingConcernFlag === true;
 
@@ -198,7 +207,7 @@ export function compressFinancialSignal(result: HybridResult): CompressedSignal 
 // ── Market Pressure compression ─────────────────────────────────────────────
 // Subsumes: role-market demand, peer contagion, macro economic risk
 
-export function compressMarketSignal(result: HybridResult): CompressedSignal {
+export function compressMarketSignal(result: HybridResult, _companyData?: CompanyData): CompressedSignal {
   const r = result as any;
   const roleDemand    = r.roleMarketDemand;
   const peerContagion = r.peerContagion;
@@ -264,7 +273,7 @@ export function compressMarketSignal(result: HybridResult): CompressedSignal {
 // ── Career Resilience compression ───────────────────────────────────────────
 // Subsumes: preparedness, career-confidence, career resilience
 
-export function compressCareerSignal(result: HybridResult): CompressedSignal {
+export function compressCareerSignal(result: HybridResult, _companyData?: CompanyData): CompressedSignal {
   const r = result as any;
   const prep       = r.preparednessScore;
   const confidence = r.careerConfidence;
@@ -337,11 +346,11 @@ export interface CompressedIntel {
   hasTier1Critical: boolean;
 }
 
-export function compressAllSignals(result: HybridResult): CompressedIntel {
-  const workforce = compressWorkforceSignal(result);
-  const financial = compressFinancialSignal(result);
-  const market    = compressMarketSignal(result);
-  const career    = compressCareerSignal(result);
+export function compressAllSignals(result: HybridResult, companyData?: CompanyData): CompressedIntel {
+  const workforce = compressWorkforceSignal(result, companyData);
+  const financial = compressFinancialSignal(result, companyData);
+  const market    = compressMarketSignal(result, companyData);
+  const career    = compressCareerSignal(result, companyData);
 
   const all = [workforce, financial, market, career];
   const ordered = [...all].sort((a, b) => {

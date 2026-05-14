@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, ChevronDown, Users, LineChart } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
+import type { CompanyData } from '../../../data/companyDatabase';
 import {
   compressWorkforceSignal,
   compressFinancialSignal,
@@ -29,6 +30,10 @@ import TierBadge from './TierBadge';
 
 interface Props {
   result: HybridResult;
+  /** Audit result includes companyData as a sibling field, NOT nested.
+   *  Pass it here so the compressors can read the actual headcount /
+   *  layoffRounds / stock / etc. — without it the verdict is always "No data". */
+  companyData?: CompanyData;
   defaultOpen?: boolean;
 }
 
@@ -111,10 +116,10 @@ const ChipRow: React.FC<{ signal: CompressedSignal }> = ({ signal }) =>
     </div>
   );
 
-export const CompanyPulseCard: React.FC<Props> = ({ result, defaultOpen = false }) => {
+export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
-  const workforce = React.useMemo(() => compressWorkforceSignal(result), [result]);
-  const financial = React.useMemo(() => compressFinancialSignal(result), [result]);
+  const workforce = React.useMemo(() => compressWorkforceSignal(result, companyData), [result, companyData]);
+  const financial = React.useMemo(() => compressFinancialSignal(result, companyData), [result, companyData]);
   const headline  = pickHeadline(workforce, financial);
 
   // ring percentage = max severity of the two

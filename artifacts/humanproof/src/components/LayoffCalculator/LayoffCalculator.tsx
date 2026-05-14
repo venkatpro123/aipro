@@ -1195,7 +1195,12 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         /* quota exceeded — ignore */
       }
     } catch (e) {
-      console.error(e);
+      // Verbose primary error log — the previous behaviour was a bare `console.error(e)`
+      // which printed `Error` with no context. We now log the message, stack, and
+      // a tagged prefix so the browser console search can find these quickly.
+      const primaryMsg = e instanceof Error ? e.message : String(e);
+      const primaryStack = e instanceof Error ? e.stack : undefined;
+      console.error('[AuditPipeline] PRIMARY path failed:', { message: primaryMsg, stack: primaryStack, error: e });
 
       // ── HIERARCHICAL FALLBACK: Post-Generation Recovery ──────────────
       // If the cloud ensemble fails, we attempt a seamless fallback to the
@@ -1222,7 +1227,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         dispatch({ type: "SET_SCORE_RESULT", payload: fallbackResult });
         setDataQuality("fallback");
         setEnsembleStage(3);
-        
+
         dispatch({
           type: "SHOW_TOAST",
           payload: {
@@ -1232,10 +1237,24 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         });
         return;
       } catch (fallbackError) {
+        // Both primary AND fallback failed — surface BOTH so users can diagnose.
+        const fbMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        const fbStack = fallbackError instanceof Error ? fallbackError.stack : undefined;
+        console.error('[AuditPipeline] FALLBACK path also failed:', {
+          fallbackMessage: fbMsg,
+          fallbackStack: fbStack,
+          fallbackError,
+          // Repeat primary context here so users only need to copy ONE log entry.
+          primaryMessage: primaryMsg,
+          primaryStack,
+        });
         dispatch({
           type: "SHOW_TOAST",
           payload: {
-            message: "Analysis failed — please try again.",
+            // Surface the actual underlying error so the user can either fix
+            // (e.g. network issue) or copy the message into a bug report.
+            // Truncate aggressively — the full stack lives in the console.
+            message: `Analysis failed: ${fbMsg.slice(0, 140)}`,
             type: "error",
           },
         });

@@ -284,7 +284,7 @@ const MobileBottomNav: React.FC<{
 
 export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const { result, companyData } = props;
-  const adaptation = useDashboardAdaptation(result);
+  const adaptation = useDashboardAdaptation(result, companyData);
   const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

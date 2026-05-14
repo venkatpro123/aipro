@@ -172,11 +172,11 @@ const NoContingencyFallback: React.FC = () => (
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const ActionsTab: React.FC<TabProps> = (props) => {
-  const { result } = props;
+  const { result, companyData } = props;
   const r = result as any;
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
-  const adaptation = useDashboardAdaptation(result);
+  const adaptation = useDashboardAdaptation(result, companyData);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>

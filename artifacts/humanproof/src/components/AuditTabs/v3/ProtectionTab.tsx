@@ -40,9 +40,9 @@ type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const ProtectionTab: React.FC<TabProps> = (props) => {
-  const { result } = props;
+  const { result, companyData } = props;
   const r = result as any;
-  const adaptation = useDashboardAdaptation(result);
+  const adaptation = useDashboardAdaptation(result, companyData);
 
   const preparedness:  PreparednessResult | undefined = r.preparednessScore;
   const skillGap                                = r.skillGapIntelligence;

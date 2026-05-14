@@ -11,6 +11,7 @@
 
 import { useMemo } from 'react';
 import type { HybridResult } from '../types/hybridResult';
+import type { CompanyData } from '../data/companyDatabase';
 import { compressAllSignals, type CompressedIntel } from '../services/signalCompressionService';
 
 export type DashboardMode =
@@ -84,9 +85,12 @@ function pickDefaultTab(mode: DashboardMode): TabKey {
   }
 }
 
-export function useDashboardAdaptation(result: HybridResult): AdaptationProfile {
+export function useDashboardAdaptation(
+  result: HybridResult,
+  companyData?: CompanyData,
+): AdaptationProfile {
   return useMemo(() => {
-    const intel = compressAllSignals(result);
+    const intel = compressAllSignals(result, companyData);
     const mode  = pickMode(result, intel);
     const defaultTab = pickDefaultTab(mode);
     const confPct = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
@@ -100,7 +104,7 @@ export function useDashboardAdaptation(result: HybridResult): AdaptationProfile 
       showLowConfidenceCallout: confPct < 50,
       intel,
     };
-  }, [result]);
+  }, [result, companyData]);
 }
 
 // ── Tier ordering helpers ────────────────────────────────────────────────────

@@ -331,7 +331,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const score = result.total;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
-  const adaptation = useDashboardAdaptation(result);
+  const adaptation = useDashboardAdaptation(result, companyData);
 
   const brief                                              = r.intelligenceBrief;
   const preparedness: PreparednessResult | undefined       = r.preparednessScore;
@@ -486,7 +486,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18 }}
       >
-        <CompanyPulseCard result={result} defaultOpen={false} />
+        <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
       </motion.div>
 
       {/* Reading hint */}

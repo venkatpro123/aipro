@@ -31,7 +31,7 @@ import AdaptiveBlock from '../common/AdaptiveBlock';
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const IntelligenceTab: React.FC<TabProps> = (props) => {
-  const { result } = props;
+  const { result, companyData } = props;
   const r = result as any;
 
   const warnSignal     = r.warnSignal;
@@ -54,7 +54,7 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
 
       {/* ── T1: Unified Company Pulse (Workforce + Financial verdict) ────── */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-        <CompanyPulseCard result={result} defaultOpen={false} />
+        <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
       </motion.div>
 
       {/* ── T2: Ground Truth Signals ──────────────────────────────────────── */}
