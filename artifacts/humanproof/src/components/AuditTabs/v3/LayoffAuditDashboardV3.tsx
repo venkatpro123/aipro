@@ -1,32 +1,39 @@
-// LayoffAuditDashboardV3.tsx — v33 UX redesign
+// LayoffAuditDashboardV3.tsx — v34.0 UX redesign
 //
-// 5-tab "decision-driven intelligence flow" structure:
-//   1. Summary       — Tier 1 critical intel: score, drivers, immediate actions, horizon
-//   2. Company       — Workforce stability, financial health, ground-truth signals (compressed)
-//   3. Protection    — Personal career intelligence: preparedness, skills, mobility, market
-//   4. Action Plan   — Contingency plan + priority action matrix
-//   5. Intelligence  — Live signals + sources + confidence + methodology
+// 5-tab "decision-driven intelligence flow":
+//   1. Summary       — Tier-1 critical intel (score, drivers, actions, pulse)
+//   2. Company       — Pulse card + ground truth + market signals
+//   3. Protection    — Personal career intelligence with adaptive ordering
+//   4. Action Plan   — Contingency + matrix + emergency mode
+//   5. Intelligence  — Risk math + scenarios + methodology / transparency
 //
-// Adaptive UX:
-//   • Critical-risk users (score ≥ 75) land on Action Plan first — they need to act
-//   • Other users land on Summary (default)
+// New in v34:
+//   • Adaptive default tab driven by useDashboardAdaptation (Emergency Mode
+//     → actions, low-confidence → intel, stable → protection, otherwise →
+//     summary)
+//   • Persistent Emergency Mode banner pinned above tabs when score ≥ 75 or
+//     WARN active
+//   • First-audit detection inside Summary tab (FirstAuditWelcome)
+//   • Each tab badge updates from the compressed-signal layer (CompanyPulse
+//     verdict, preparedness score, critical action count, live signals)
 //
 // Mobile UX:
-//   • Fixed bottom navigation bar on screens ≤ 639px — icon + 1-word label
+//   • Fixed bottom navigation bar — 5 icons + 1-word labels
 //   • Sticky top bar with company name + score chip while scrolling
-//   • Tab content receives bottom padding to clear the fixed nav
+//   • Emergency banner stays visible above tabs (sticky behaviour)
 //
 // Desktop UX:
-//   • Sticky horizontal pill tabs below the sticky header bar
-//   • Score badge per tab
-//   • Smooth opacity/Y transition between tabs
+//   • Sticky pill tabs below sticky header
+//   • Per-tab badge updates live based on signal state
 
-import React, { Suspense, lazy, useState, useRef, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Building2, Shield, Zap, Radio } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
+import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
+import EmergencyModeBanner from '../common/EmergencyModeBanner';
 
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
@@ -48,6 +55,7 @@ interface Props {
 type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel';
 
 // ── Score color helpers ───────────────────────────────────────────────────────
+
 const riskColor = (s: number) =>
   s >= 75 ? '#dc2626' : s >= 55 ? '#f97316' : s >= 35 ? '#f59e0b' : '#10b981';
 
@@ -55,6 +63,7 @@ const riskLabel = (s: number) =>
   s >= 75 ? 'CRITICAL' : s >= 55 ? 'HIGH' : s >= 35 ? 'MODERATE' : 'LOW';
 
 // ── Tab loader ────────────────────────────────────────────────────────────────
+
 const TabLoader: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-16">
     <div className="w-8 h-8 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan,#00d4e0)] animate-spin mb-4" />
@@ -65,12 +74,13 @@ const TabLoader: React.FC = () => (
 );
 
 // ── Tab configuration ─────────────────────────────────────────────────────────
+
 interface TabConfig {
-  value:     TabValue;
-  label:     string;
-  shortLabel: string;   // mobile label (1 word)
-  Icon:      React.ElementType;
-  getBadge?: (r: HybridResult) => { text: string; color: string } | null;
+  value:      TabValue;
+  label:      string;
+  shortLabel: string;
+  Icon:       React.ElementType;
+  getBadge?:  (r: HybridResult) => { text: string; color: string } | null;
 }
 
 const TAB_CONFIG: TabConfig[] = [
@@ -133,14 +143,8 @@ const TAB_CONFIG: TabConfig[] = [
   },
 ];
 
-// v33: Adaptive default tab. Critical-risk users land on Action Plan — they
-// need to act, not browse. Everyone else starts on Summary.
-function pickDefaultTab(result: HybridResult): TabValue {
-  if (result.total >= 75) return 'actions';
-  return 'summary';
-}
-
 // ── Sticky company header ─────────────────────────────────────────────────────
+
 const StickyCompanyHeader: React.FC<{
   companyName: string;
   score: number;
@@ -181,6 +185,7 @@ const StickyCompanyHeader: React.FC<{
 };
 
 // ── Desktop pill tab bar ──────────────────────────────────────────────────────
+
 const DesktopTabBar: React.FC<{
   active: TabValue;
   onChange: (v: TabValue) => void;
@@ -201,11 +206,11 @@ const DesktopTabBar: React.FC<{
         <button
           key={value}
           onClick={() => onChange(value)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap relative"
           style={{
             background: isActive ? 'rgba(0,212,224,0.12)' : 'transparent',
             border: `1px solid ${isActive ? 'rgba(0,212,224,0.30)' : 'transparent'}`,
-            color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.45)',
+            color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.50)',
           }}
         >
           <Icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -225,6 +230,7 @@ const DesktopTabBar: React.FC<{
 );
 
 // ── Mobile bottom navigation ──────────────────────────────────────────────────
+
 const MobileBottomNav: React.FC<{
   active: TabValue;
   onChange: (v: TabValue) => void;
@@ -242,7 +248,7 @@ const MobileBottomNav: React.FC<{
     {TAB_CONFIG.map(({ value, shortLabel, Icon, getBadge }) => {
       const isActive = value === active;
       const badge    = getBadge?.(result);
-      const color    = isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.35)';
+      const color    = isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.45)';
       return (
         <button
           key={value}
@@ -250,7 +256,6 @@ const MobileBottomNav: React.FC<{
           className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 relative transition-colors"
           style={{ color }}
         >
-          {/* Active indicator dot */}
           {isActive && (
             <motion.div
               layoutId="mobile-nav-active"
@@ -276,12 +281,13 @@ const MobileBottomNav: React.FC<{
 );
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
+
 export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const { result, companyData } = props;
-  const [activeTab, setActiveTab] = useState<TabValue>(() => pickDefaultTab(result));
+  const adaptation = useDashboardAdaptation(result);
+  const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const lastTabRef = useRef<TabValue>(activeTab);
 
   // Show sticky header once user scrolls past ~80px
   useEffect(() => {
@@ -297,33 +303,44 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   }, []);
 
   const handleTabChange = (val: TabValue) => {
-    lastTabRef.current = activeTab;
     setActiveTab(val);
-    // Scroll to top of content on tab switch (mobile UX)
     scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const tabProps = { result, companyData, onRetake: props.onRetake, onDownload: props.onDownload, onRecalculate: props.onRecalculate };
+  const tabProps = useMemo(() => ({
+    result, companyData,
+    onRetake: props.onRetake,
+    onDownload: props.onDownload,
+    onRecalculate: props.onRecalculate,
+  }), [result, companyData, props.onRetake, props.onDownload, props.onRecalculate]);
 
   return (
     <GlobalErrorBoundary>
       <div className="flex flex-col" ref={scrollRef}>
 
-        {/* ── Sticky company header (appears after scroll) ──────────────── */}
+        {/* ── Sticky company header + tab bar ──────────────────────────────── */}
         <div className="sticky top-0 z-40">
           <StickyCompanyHeader
             companyName={companyData?.name ?? result.companyName ?? 'Company'}
             score={result.total}
             visible={showStickyHeader}
           />
-
-          {/* ── Desktop tab bar ──────────────────────────────────────────── */}
           <DesktopTabBar
             active={activeTab}
             onChange={handleTabChange}
             result={result}
           />
         </div>
+
+        {/* ── Emergency banner — pinned above tab content ──────────────────── */}
+        {adaptation.showEmergencyBanner && (
+          <div className="px-4 pt-3 sm:px-0">
+            <EmergencyModeBanner
+              result={result}
+              onJumpToActions={() => handleTabChange('actions')}
+            />
+          </div>
+        )}
 
         {/* ── Tab content ──────────────────────────────────────────────────── */}
         <AnimatePresence mode="wait">
@@ -333,8 +350,6 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.18 }}
-            // On mobile, add bottom padding to clear the fixed bottom nav (56px)
-            // and additional safe-area inset
             className="px-4 pt-4 sm:px-0 sm:pt-0"
             style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
           >
@@ -343,14 +358,6 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 <SummaryTab {...tabProps} />
               </Suspense>
             )}
-            {/* v33 routing:
-                 'company'    → IntelligenceTab (rebuilt — company-facing live intel +
-                                Workforce/Financial compressed cards + Ground Truth +
-                                Market signals)
-                 'protection' → ProtectionTab (new — career-protection signals)
-                 'actions'    → ActionsTab (unchanged)
-                 'intel'      → AnalysisTab (risk-math: dimensions, dual gauge,
-                                prediction horizon, scenario fan + methodology) */}
             {activeTab === 'company' && (
               <Suspense fallback={<TabLoader />}>
                 <IntelligenceTab {...tabProps} />
@@ -374,7 +381,6 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── Mobile bottom nav ────────────────────────────────────────────── */}
         <MobileBottomNav
           active={activeTab}
           onChange={handleTabChange}
@@ -387,7 +393,14 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
 
 export default LayoffAuditDashboardV3;
 
-// Convenience flag — kept for backwards-compat with callers
-export const isTabsV3Enabled = (): boolean =>
-  typeof import.meta !== 'undefined' &&
-  (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_TABS_V3 === '1';
+// v34 visibility fix:
+// The v3 dashboard has been the active design target since v17, with
+// v17→v34 of redesigns layered on top of it. The original env-gate
+// (`VITE_TABS_V3 === '1'`) silently fell through to the legacy v1
+// dashboard whenever the env var was missing or '0' — which is what
+// happened in `.env` (`VITE_TABS_V3=0`), making every redesign
+// invisible in dev and on Vercel. The gate is now hardcoded to true.
+// Removing the call site is a follow-up; keeping the export with
+// the new return value preserves back-compat for any caller still
+// referencing it.
+export const isTabsV3Enabled = (): boolean => true;

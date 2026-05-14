@@ -1,24 +1,22 @@
-// v3/IntelligenceTab.tsx — v33 UX redesign
+// v3/IntelligenceTab.tsx — v34.0 UX redesign
 //
-// IMPORTANT: in v33 this tab is repurposed as the *Intelligence & Transparency*
-// tab (5th tab in the new IA). Career-focused signals (skills, velocity, visa,
-// runway) moved to ProtectionTab. Company-facing intelligence is consolidated
-// into the new WorkforceStabilityCard + FinancialHealthCard signal-compression
-// blocks at the top.
+// COMPANY tab (the 2nd tab in the v34 IA). Despite the filename, this tab is
+// the company-facing intelligence surface. Renamed in the IA as "Company".
 //
-// Priority order:
-//   1. Workforce Stability     — compressed (was: hiring/layoffs/headcount/glassdoor)
-//   2. Financial Health        — compressed (was: stock/revenue/funding/SEC)
-//   3. Ground Truth Signals    — WARN, SEC, BLS (RED, open if any active)
-//   4. Market Signals          — role demand, peer contagion, macro
-//   5. Cross-source event search
-//   6. Methodology & transparency — collapsed (deep-tier)
+// Render order (decision-driven, Tier-labeled):
+//   1. CompanyPulseCard            (T1)  ← unified Workforce + Financial verdict
+//   2. Ground Truth Signals        (T2)  ← WARN, SEC, BLS — open if any active
+//   3. Market Environment          (T3)  ← role demand, peer contagion, macro
+//   4. Cross-source event search   (T3)  ← raw event timeline
+//
+// The previous standalone WorkforceStabilityCard + FinancialHealthCard are now
+// merged into CompanyPulseCard at the top. Methodology / transparency moved to
+// the Intelligence tab where it belongs (it's a transparency surface, not a
+// company surface).
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search, ShieldAlert, TrendingUp, ChevronDown,
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, ShieldAlert, TrendingUp } from 'lucide-react';
 import type { TabProps } from '../common/types';
 import WARNSignalPanel from '../common/WARNSignalPanel';
 import SECEnhancedPanel from '../common/SECEnhancedPanel';
@@ -26,114 +24,9 @@ import BLSMacroPanel from '../common/BLSMacroPanel';
 import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
 import PeerContagionPanel from '../common/PeerContagionPanel';
 import MacroRiskPanel from '../common/MacroRiskPanel';
-import { CollapsibleSection } from '../common/CollapsibleSection';
-import { TransparencyTab } from '../TransparencyTab';
 import { EventSearchPanel } from '../../audit/EventSearchPanel';
-import WorkforceStabilityCard from '../common/WorkforceStabilityCard';
-import FinancialHealthCard from '../common/FinancialHealthCard';
-
-// ── Collapsible signal group ──────────────────────────────────────────────────
-
-interface SignalGroupProps {
-  groupId:      string;
-  title:        string;
-  subtitle:     string;
-  accentColor:  string;
-  icon:         React.ElementType;
-  defaultOpen:  boolean;
-  badge?:       string;    // e.g. "2 active" or "LIVE"
-  badgeColor?:  string;
-  children:     React.ReactNode;
-  empty?:       boolean;   // when no data; renders a muted "no data" state
-}
-
-const CollapsibleSignalGroup: React.FC<SignalGroupProps> = ({
-  groupId, title, subtitle, accentColor, icon: Icon,
-  defaultOpen, badge, badgeColor, children, empty,
-}) => {
-  const [open, setOpen] = React.useState(defaultOpen && !empty);
-
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: `1px solid ${open ? accentColor + '35' : 'rgba(255,255,255,0.08)'}`,
-        transition: 'border-color 0.2s',
-      }}
-    >
-      {/* Header — always visible, tap to toggle */}
-      <button
-        onClick={() => !empty && setOpen(o => !o)}
-        disabled={empty}
-        className="w-full px-4 py-3.5 flex items-center gap-3 text-left"
-        style={{ cursor: empty ? 'default' : 'pointer' }}
-      >
-        {/* Accent bar */}
-        <div className="w-1 h-7 rounded-full flex-shrink-0"
-          style={{ background: empty ? 'rgba(255,255,255,0.12)' : accentColor }} />
-
-        {/* Icon + text */}
-        <Icon className="w-4 h-4 flex-shrink-0"
-          style={{ color: empty ? 'rgba(255,255,255,0.20)' : accentColor + 'cc' }} />
-        <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-bold leading-tight"
-            style={{ color: empty ? 'rgba(255,255,255,0.30)' : 'rgba(255,255,255,0.80)' }}>
-            {title}
-          </p>
-          <p className="text-[10px] leading-tight mt-0.5"
-            style={{ color: 'rgba(255,255,255,0.30)' }}>
-            {empty ? 'No data available for this company' : subtitle}
-          </p>
-        </div>
-
-        {/* Badge */}
-        {badge && !empty && (
-          <span className="text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
-            style={{
-              background: (badgeColor ?? accentColor) + '22',
-              color: badgeColor ?? accentColor,
-              border: `1px solid ${badgeColor ?? accentColor}35`,
-            }}>
-            {badge}
-          </span>
-        )}
-
-        {/* Chevron */}
-        {!empty && (
-          <motion.div
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={{ duration: 0.18 }}
-            className="flex-shrink-0"
-          >
-            <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-          </motion.div>
-        )}
-      </button>
-
-      {/* Expanded content */}
-      <AnimatePresence initial={false}>
-        {open && !empty && (
-          <motion.div
-            key={`${groupId}-content`}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="px-3 pb-3 space-y-3"
-              style={{ borderTop: `1px solid ${accentColor}20` }}>
-              <div className="pt-3">
-                {children}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
+import CompanyPulseCard from '../common/CompanyPulseCard';
+import AdaptiveBlock from '../common/AdaptiveBlock';
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
@@ -153,33 +46,25 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
 
   const warnActiveCount = warnSignal?.hasActiveWARN ? 1 : 0;
   const groundTruthBadge = hasGroundTruth
-    ? (warnActiveCount > 0 ? `${warnActiveCount} WARN ACTIVE` : 'REGULATORY')
+    ? (warnActiveCount > 0 ? 'WARN ACTIVE' : 'REGULATORY')
     : undefined;
 
   return (
     <div className="flex flex-col gap-3">
 
-      {/* ── v33: Workforce Stability (signal-compressed block) ────────────── */}
-      {/* Consolidates hiring freeze + layoffs + headcount + Glassdoor velocity
-         into one expandable verdict card. Drill-down reveals each underlying
-         signal so power users still reach the same data, faster. */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-        <WorkforceStabilityCard result={result} defaultOpen={false} />
+      {/* ── T1: Unified Company Pulse (Workforce + Financial verdict) ────── */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+        <CompanyPulseCard result={result} defaultOpen={false} />
       </motion.div>
 
-      {/* ── v33: Financial Health (signal-compressed block) ──────────────── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
-        <FinancialHealthCard result={result} defaultOpen={false} />
-      </motion.div>
-
-      {/* ── Ground Truth Signals ──────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-        <CollapsibleSignalGroup
-          groupId="ground-truth"
-          title="Ground Truth Signals"
+      {/* ── T2: Ground Truth Signals ──────────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <AdaptiveBlock
+          title="Ground truth signals"
           subtitle="Legally filed or regulatory-sourced — highest confidence"
-          accentColor="#dc2626"
           icon={ShieldAlert}
+          tier={2}
+          accentColor={warnActiveCount > 0 ? '#dc2626' : '#f97316'}
           defaultOpen={hasGroundTruth}
           badge={groundTruthBadge}
           badgeColor={warnActiveCount > 0 ? '#dc2626' : '#f97316'}
@@ -188,62 +73,44 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           {warnSignal   && <WARNSignalPanel warnSignal={warnSignal} />}
           {secEnhanced  && <SECEnhancedPanel secEnhancedSignals={secEnhanced} />}
           {blsMacro     && <BLSMacroPanel blsMacroSignal={blsMacro} />}
-        </CollapsibleSignalGroup>
+        </AdaptiveBlock>
       </motion.div>
 
-      {/* ── Market Signals ────────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-        <CollapsibleSignalGroup
-          groupId="market"
-          title="Market Signals"
-          subtitle="Role demand, sector contagion, macro environment"
-          accentColor="#f59e0b"
+      {/* ── T3: Market Environment ─────────────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <AdaptiveBlock
+          title="Market environment"
+          subtitle="Role demand, peer-sector contagion, macroeconomic risk"
           icon={TrendingUp}
+          tier={3}
+          accentColor="#f59e0b"
           defaultOpen={false}
           empty={!hasMarket}
         >
           {roleMarket    && <RoleMarketDemandPanel roleMarketDemand={roleMarket} />}
           {peerContagion && <PeerContagionPanel contagion={peerContagion} />}
           {macroRisk     && <MacroRiskPanel macro={macroRisk} />}
-        </CollapsibleSignalGroup>
+        </AdaptiveBlock>
       </motion.div>
 
-      {/* ── Cross-source event search ─────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18 }}
-        className="rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        <div className="px-4 py-3 flex items-center gap-2">
-          <Search className="w-3.5 h-3.5" style={{ color: 'rgba(0,212,224,0.6)' }} />
-          <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.60)' }}>
-            Cross-Source Event Search
-          </span>
-        </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="p-3">
-            <EventSearchPanel />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ── Methodology & transparency (deep tier, collapsed) ────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.20 }}
-        className="space-y-2"
-      >
-        <CollapsibleSection
-          title="Methodology & transparency"
-          description="Data quality, signal provenance, calibration, model agreement"
+      {/* ── T3: Cross-source event search ──────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+        <AdaptiveBlock
+          title="Cross-source event search"
+          subtitle="Raw timeline of company events from news + filings + signals"
+          icon={Search}
+          tier={3}
+          accentColor="#22d3ee"
           defaultOpen={false}
         >
-          <TransparencyTab {...props} />
-        </CollapsibleSection>
+          <div className="px-1">
+            <EventSearchPanel />
+          </div>
+        </AdaptiveBlock>
       </motion.div>
 
     </div>
   );
 };
+
+export default IntelligenceTab;

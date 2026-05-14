@@ -1,21 +1,22 @@
-// v3/AnalysisTab.tsx — v28.0 UX redesign
-// "Risk Analysis" tab — the second tab in the 4-tab v3 dashboard.
-// Shows the quantitative risk picture: dual gauge, risk dimensions, prediction, scenarios.
-// The executive brief / score hero lives in SummaryTab (first tab).
+// v3/AnalysisTab.tsx — v34.0 UX redesign
 //
-// Layout (top → bottom):
-//   1. Dual Gauge — Risk vs. Preparedness (hero for this tab)
-//   2. Risk Dimensions — L1–L5 breakdown (always visible bar chart)
-//   3. Prediction Horizon — 30d / 90d / 180d compact strip
-//   4. Scenario Fan — bear / base / bull (collapsible)
-//   5. Full score & confidence deep dive (collapsible → RiskBreakdownTab only, NOT OverviewTab)
+// INTELLIGENCE tab (the 5th tab in v34 IA). Lives at the end of the IA because
+// it answers "tell me MORE" not "what do I do". Contains the deep risk math
+// and transparency surfaces — all behind progressive disclosure.
+//
+// Render order (Tier-labeled, all collapsed by default except dimensions):
+//   1. Intelligence Brief (T2)        ← AI-generated synthesis (was duplicated
+//                                       in Summary v33 — now lives only here)
+//   2. Dual Gauge: Risk vs Ready (T2)
+//   3. Risk Dimensions breakdown (T2) ← open by default — this IS the tab's job
+//   4. Prediction Horizon (T3)
+//   5. Scenario Fan (T3)
+//   6. Methodology & Transparency (T4)← data quality, calibration, provenance
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Brain, TrendingUp, ChevronDown, ChevronRight,
-  Zap, AlertTriangle, CheckCircle2, Clock, BarChart2,
-  Activity, Shield,
+  Brain, Zap, BarChart2, Activity, BookOpen, Compass,
 } from 'lucide-react';
 import type { TabProps } from '../common/types';
 import type { PredictionHorizonResult } from '../../../services/predictionHorizonService';
@@ -23,11 +24,8 @@ import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
 import type { IntelligenceBriefResult } from '../../../services/intelligenceBriefService';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { RiskBreakdownTab } from '../RiskBreakdownTab';
-// v33: Methodology / transparency lives at the bottom of the Intelligence tab
-// (which uses AnalysisTab as its renderer) so power users can drill into how
-// the score was actually computed without leaving the tab.
 import { TransparencyTab } from '../TransparencyTab';
-import { CollapsibleSection } from '../common/CollapsibleSection';
+import AdaptiveBlock from '../common/AdaptiveBlock';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -39,31 +37,29 @@ function scoreColor(score: number): string {
 }
 
 function readinessColor(label: string): string {
-  const map: Record<string, string> = {
+  return {
     READY: '#10b981',
     MOSTLY_READY: '#22d3ee',
     PARTIAL: '#f59e0b',
     UNDERPREPARED: '#f97316',
     NOT_READY: '#dc2626',
-  };
-  return map[label] ?? '#f59e0b';
+  }[label] ?? '#f59e0b';
 }
 
-// ── Intelligence Brief ────────────────────────────────────────────────────────
+// ── Intelligence Brief (compact, no duplication of Summary) ─────────────────
 
-interface IntelligenceBriefHeroProps {
+const IntelligenceBriefBlock: React.FC<{
   brief: IntelligenceBriefResult | null | undefined;
-  urgencyLevel: string;
-}
+  urgency: string;
+}> = ({ brief, urgency }) => {
+  const [expanded, setExpanded] = useState(false);
 
-const IntelligenceBriefHero: React.FC<IntelligenceBriefHeroProps> = ({ brief, urgencyLevel }) => {
-  const urgencyColors: Record<string, { color: string; bg: string; border: string }> = {
+  const uc = {
     CRITICAL: { color: '#dc2626', bg: 'rgba(220,38,38,0.10)', border: 'rgba(220,38,38,0.30)' },
     HIGH:     { color: '#f97316', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' },
     MODERATE: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
     LOW:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
-  };
-  const uc = urgencyColors[urgencyLevel] ?? urgencyColors.MODERATE;
+  }[urgency] ?? { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' };
 
   if (!brief) {
     return (
@@ -86,9 +82,12 @@ const IntelligenceBriefHero: React.FC<IntelligenceBriefHeroProps> = ({ brief, ur
     );
   }
 
+  const first = brief.paragraphs[0] ?? '';
+  const rest  = brief.paragraphs.slice(1);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl p-4"
       style={{ background: uc.bg, border: `1px solid ${uc.border}` }}
@@ -100,28 +99,29 @@ const IntelligenceBriefHero: React.FC<IntelligenceBriefHeroProps> = ({ brief, ur
             INTELLIGENCE BRIEF
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full"
-            style={{ background: uc.color + '22', color: uc.color, border: `1px solid ${uc.color}40` }}
-          >
-            {urgencyLevel}
-          </span>
-          {brief.fromCache && (
-            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>cached</span>
-          )}
+        <span
+          className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full"
+          style={{ background: uc.color + '22', color: uc.color, border: `1px solid ${uc.color}40` }}
+        >
+          {urgency}
+        </span>
+      </div>
+
+      <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+        {first}
+      </p>
+
+      {expanded && rest.length > 0 && (
+        <div className="space-y-2 mt-2">
+          {rest.map((p, i) => (
+            <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              {p}
+            </p>
+          ))}
         </div>
-      </div>
+      )}
 
-      <div className="space-y-3">
-        {brief.paragraphs.map((paragraph, i) => (
-          <p key={i} className="text-[12px] leading-relaxed" style={{ color: i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.65)' }}>
-            {paragraph}
-          </p>
-        ))}
-      </div>
-
-      {brief.topActionThisWeek && (
+      {brief.topActionThisWeek && expanded && (
         <div
           className="mt-3 p-3 rounded-xl flex items-start gap-2"
           style={{ background: uc.color + '12', border: `1px solid ${uc.color}25` }}
@@ -137,21 +137,26 @@ const IntelligenceBriefHero: React.FC<IntelligenceBriefHeroProps> = ({ brief, ur
           </div>
         </div>
       )}
+
+      {(rest.length > 0 || brief.topActionThisWeek) && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-3 text-[10px] font-semibold tracking-wide"
+          style={{ color: uc.color + 'cc' }}
+        >
+          {expanded ? '↑ Show less' : '↓ Read full analysis'}
+        </button>
+      )}
     </motion.div>
   );
 };
 
-// ── Dual Gauge ────────────────────────────────────────────────────────────────
+// ── Mini Gauge ───────────────────────────────────────────────────────────────
 
-interface MiniGaugeProps {
-  score: number;
-  color: string;
-  label: string;
-  sublabel: string;
-  size?: number;
-}
-
-const MiniGauge: React.FC<MiniGaugeProps> = ({ score, color, label, sublabel, size = 80 }) => {
+const MiniGauge: React.FC<{
+  score: number; color: string; label: string; sublabel: string;
+}> = ({ score, color, label, sublabel }) => {
+  const size = 80;
   const r = (size - 10) / 2;
   const circ = 2 * Math.PI * r;
   return (
@@ -160,17 +165,12 @@ const MiniGauge: React.FC<MiniGaugeProps> = ({ score, color, label, sublabel, si
         <svg width={size} height={size} className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={7} />
           <motion.circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke={color}
-            strokeWidth={7}
-            strokeLinecap="round"
+            cx={size / 2} cy={size / 2} r={r} fill="none"
+            stroke={color} strokeWidth={7} strokeLinecap="round"
             strokeDasharray={circ}
             initial={{ strokeDashoffset: circ }}
             animate={{ strokeDashoffset: circ - (score / 100) * circ }}
-            transition={{ duration: 1.1, ease: 'easeOut' }}
+            transition={{ duration: 1.0, ease: 'easeOut' }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -184,18 +184,14 @@ const MiniGauge: React.FC<MiniGaugeProps> = ({ score, color, label, sublabel, si
   );
 };
 
-interface DualGaugePanelProps {
+const DualGaugePanel: React.FC<{
   riskScore: number;
   preparedness: PreparednessResult | undefined;
-  urgencyLevel: string;
-}
-
-const DualGaugePanel: React.FC<DualGaugePanelProps> = ({ riskScore, preparedness, urgencyLevel }) => {
+}> = ({ riskScore, preparedness }) => {
   const rColor = scoreColor(riskScore);
   const pColor = preparedness ? readinessColor(preparedness.readinessLabel) : '#f59e0b';
   const pScore = preparedness?.overallScore ?? 0;
 
-  // Interpretation of the combination
   const combo = riskScore >= 65 && pScore < 50
     ? { label: 'Critical Gap', color: '#dc2626', desc: 'High risk + low readiness — immediate action required' }
     : riskScore >= 65 && pScore >= 50
@@ -206,16 +202,14 @@ const DualGaugePanel: React.FC<DualGaugePanelProps> = ({ riskScore, preparedness
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
       className="rounded-2xl p-4"
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>
         RISK vs. READINESS
       </p>
-
       <div className="flex items-end justify-center gap-8 mb-3">
         <MiniGauge score={riskScore} color={rColor} label="Layoff Risk" sublabel="probability index" />
         <div className="pb-10 flex flex-col items-center">
@@ -223,7 +217,6 @@ const DualGaugePanel: React.FC<DualGaugePanelProps> = ({ riskScore, preparedness
         </div>
         <MiniGauge score={pScore} color={pColor} label="Preparedness" sublabel="readiness index" />
       </div>
-
       <div
         className="flex items-center gap-2 rounded-xl p-2.5"
         style={{ background: combo.color + '12', border: `1px solid ${combo.color}25` }}
@@ -238,17 +231,11 @@ const DualGaugePanel: React.FC<DualGaugePanelProps> = ({ riskScore, preparedness
   );
 };
 
-// ── Prediction Horizon ────────────────────────────────────────────────────────
+// ── Horizon (compact bars) ───────────────────────────────────────────────────
 
-interface HorizonBarProps {
-  label: string;
-  score: number;
-  confidence: number;
-  dominantSignal: string;
-  isActive?: boolean;
-}
-
-const HorizonBar: React.FC<HorizonBarProps> = ({ label, score, confidence, dominantSignal, isActive }) => {
+const HorizonBar: React.FC<{
+  label: string; score: number; confidence: number; isActive?: boolean;
+}> = ({ label, score, confidence, isActive }) => {
   const color = scoreColor(score);
   return (
     <div className="flex items-center gap-3">
@@ -260,7 +247,7 @@ const HorizonBar: React.FC<HorizonBarProps> = ({ label, score, confidence, domin
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${score}%` }}
-            transition={{ duration: 0.9, ease: 'easeOut' }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
             className="h-5 rounded-lg flex items-center pl-2"
             style={{ background: color + (isActive ? 'dd' : '88') }}
           >
@@ -275,86 +262,41 @@ const HorizonBar: React.FC<HorizonBarProps> = ({ label, score, confidence, domin
   );
 };
 
-interface PredictionHorizonPanelMiniProps {
-  horizon: PredictionHorizonResult;
-}
-
-const PredictionHorizonPanelMini: React.FC<PredictionHorizonPanelMiniProps> = ({ horizon }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.2 }}
-    className="rounded-2xl p-4"
-    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-  >
-    <div className="flex items-center gap-2 mb-3">
-      <BarChart2 className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.7)' }} />
-      <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.40)' }}>
-        PREDICTION HORIZON
-      </p>
-      {horizon.groundTruthOverride && (
-        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full ml-auto" style={{ background: 'rgba(220,38,38,0.20)', color: '#dc2626' }}>
-          WARN OVERRIDE
-        </span>
-      )}
-    </div>
+const HorizonContent: React.FC<{ horizon: PredictionHorizonResult }> = ({ horizon }) => (
+  <div>
     <div className="space-y-2 mb-3">
-      <HorizonBar label="30d" score={horizon.horizon30d.score} confidence={horizon.horizon30d.confidence} dominantSignal={horizon.horizon30d.dominantSignal} isActive />
-      <HorizonBar label="90d" score={horizon.horizon90d.score} confidence={horizon.horizon90d.confidence} dominantSignal={horizon.horizon90d.dominantSignal} />
-      <HorizonBar label="180d" score={horizon.horizon180d.score} confidence={horizon.horizon180d.confidence} dominantSignal={horizon.horizon180d.dominantSignal} />
+      <HorizonBar label="30d" score={horizon.horizon30d.score} confidence={horizon.horizon30d.confidence} isActive />
+      <HorizonBar label="90d" score={horizon.horizon90d.score} confidence={horizon.horizon90d.confidence} />
+      <HorizonBar label="180d" score={horizon.horizon180d.score} confidence={horizon.horizon180d.confidence} />
     </div>
     <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
       {horizon.trajectoryNarrative}
     </p>
-  </motion.div>
+  </div>
 );
 
-// ── Scenario Fan ──────────────────────────────────────────────────────────────
+// ── Scenario fan ──────────────────────────────────────────────────────────────
 
-interface ScenarioFanProps {
-  scenario: ScenarioPlanResult;
-}
-
-const ScenarioFan: React.FC<ScenarioFanProps> = ({ scenario }) => {
+const ScenarioContent: React.FC<{ scenario: ScenarioPlanResult }> = ({ scenario }) => {
   const cases = [
-    { label: 'Bear', score: scenario.worstCase.score, prob: scenario.worstCase.probability, color: '#dc2626', actions: scenario.worstCase.recommendedActions.slice(0, 2) },
-    { label: 'Base', score: scenario.baseCase.score, prob: scenario.baseCase.probability, color: '#f59e0b', actions: scenario.baseCase.recommendedActions.slice(0, 2) },
-    { label: 'Bull', score: scenario.bestCase.score, prob: scenario.bestCase.probability, color: '#10b981', actions: scenario.bestCase.recommendedActions.slice(0, 2) },
+    { label: 'Bear', score: scenario.worstCase.score, prob: scenario.worstCase.probability, color: '#dc2626' },
+    { label: 'Base', score: scenario.baseCase.score,  prob: scenario.baseCase.probability,  color: '#f59e0b' },
+    { label: 'Bull', score: scenario.bestCase.score,  prob: scenario.bestCase.probability,  color: '#10b981' },
   ];
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="rounded-2xl p-4"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-    >
-      <div className="flex items-center gap-2 mb-3">
-        <Activity className="w-4 h-4" style={{ color: 'rgba(245,158,11,0.7)' }} />
-        <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.40)' }}>
-          6-MONTH SCENARIOS
-        </p>
-      </div>
-
+    <div>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {cases.map(({ label, score, prob, color }) => (
-          <div
-            key={label}
-            className="rounded-xl p-2.5 text-center"
-            style={{ background: color + '12', border: `1px solid ${color}28` }}
-          >
+          <div key={label} className="rounded-xl p-2.5 text-center"
+            style={{ background: color + '12', border: `1px solid ${color}28` }}>
             <p className="text-[9px] font-bold tracking-wider mb-1" style={{ color: color + 'cc' }}>{label.toUpperCase()}</p>
             <p className="text-xl font-black mb-0.5" style={{ color }}>{score}</p>
             <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.40)' }}>{Math.round(prob * 100)}% likely</p>
           </div>
         ))}
       </div>
-
-      <div
-        className="rounded-xl p-2.5"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-      >
+      <div className="rounded-xl p-2.5"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <p className="text-[10px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.50)' }}>
           KEY UNCERTAINTY
         </p>
@@ -362,51 +304,6 @@ const ScenarioFan: React.FC<ScenarioFanProps> = ({ scenario }) => {
           {scenario.dominantUncertainty}
         </p>
       </div>
-    </motion.div>
-  );
-};
-
-// ── Collapsible Section ───────────────────────────────────────────────────────
-
-interface CollapsibleProps {
-  title: string;
-  icon: React.ElementType;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}
-
-const Collapsible: React.FC<CollapsibleProps> = ({ title, icon: Icon, defaultOpen = false, children }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full px-4 py-3 flex items-center justify-between"
-      >
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.40)' }} />
-          <span className="text-[12px] font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>{title}</span>
-        </div>
-        {open
-          ? <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
-          : <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
-        }
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
@@ -423,41 +320,70 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData }) => {
   const urgencyLevel = brief?.urgencyLevel ?? (result.total >= 75 ? 'HIGH' : result.total >= 55 ? 'MODERATE' : 'LOW');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
+    <div className="flex flex-col gap-3">
 
-      {/* 1. Dual Gauge — Risk vs. Readiness hero for this tab */}
-      <DualGaugePanel
-        riskScore={result.total}
-        preparedness={preparedness}
-        urgencyLevel={urgencyLevel}
-      />
+      {/* ── T2: Intelligence Brief — full text lives here only ─────────────── */}
+      <IntelligenceBriefBlock brief={brief} urgency={urgencyLevel} />
 
-      {/* 2. Risk Dimensions — always visible; this IS the purpose of this tab */}
-      <Collapsible title="Risk dimensions breakdown" icon={BarChart2} defaultOpen>
+      {/* ── T2: Dual Gauge — Risk vs Readiness ─────────────────────────────── */}
+      <DualGaugePanel riskScore={result.total} preparedness={preparedness} />
+
+      {/* ── T2: Risk dimensions breakdown — open by default; this is the tab's job */}
+      <AdaptiveBlock
+        title="Risk dimensions breakdown"
+        subtitle="How each L1–L54 layer contributes to your score"
+        icon={BarChart2}
+        tier={2}
+        accentColor="#22d3ee"
+        defaultOpen
+      >
         <RiskBreakdownTab result={result} companyData={companyData} />
-      </Collapsible>
+      </AdaptiveBlock>
 
-      {/* 3. Prediction Horizon */}
-      {horizon && <PredictionHorizonPanelMini horizon={horizon} />}
-
-      {/* 4. Scenario Fan — collapsed by default; users expand when they want depth */}
-      {scenario && (
-        <Collapsible title="6-month scenario planning" icon={Activity}>
-          <div className="p-4">
-            <ScenarioFan scenario={scenario} />
-          </div>
-        </Collapsible>
+      {/* ── T3: Prediction Horizon ─────────────────────────────────────────── */}
+      {horizon && (
+        <AdaptiveBlock
+          title="Prediction horizon"
+          subtitle="30 / 90 / 180-day score forecasts with confidence intervals"
+          icon={Compass}
+          tier={3}
+          accentColor="#f59e0b"
+          defaultOpen={false}
+          badge={horizon.groundTruthOverride ? 'WARN OVERRIDE' : undefined}
+          badgeColor={horizon.groundTruthOverride ? '#dc2626' : undefined}
+        >
+          <HorizonContent horizon={horizon} />
+        </AdaptiveBlock>
       )}
 
-      {/* v33: 5. Methodology & transparency — deep tier (always collapsed) */}
-      <CollapsibleSection
+      {/* ── T3: Scenario Fan ───────────────────────────────────────────────── */}
+      {scenario && (
+        <AdaptiveBlock
+          title="6-month scenarios"
+          subtitle="Bear / base / bull outcomes with key uncertainties"
+          icon={Activity}
+          tier={3}
+          accentColor="#f59e0b"
+          defaultOpen={false}
+        >
+          <ScenarioContent scenario={scenario} />
+        </AdaptiveBlock>
+      )}
+
+      {/* ── T4: Methodology & Transparency ────────────────────────────────── */}
+      <AdaptiveBlock
         title="Methodology & transparency"
-        description="Data quality, signal provenance, calibration, model agreement"
+        subtitle="Data quality, signal provenance, calibration, model agreement"
+        icon={BookOpen}
+        tier={4}
+        accentColor="#94a3b8"
         defaultOpen={false}
       >
         <TransparencyTab result={result} companyData={companyData} />
-      </CollapsibleSection>
+      </AdaptiveBlock>
 
     </div>
   );
 };
+
+export default AnalysisTab;
