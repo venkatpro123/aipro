@@ -748,31 +748,79 @@ async function scrapeCareerPage(companyName: string): Promise<{ hiringActive: bo
 // {{official_website}}, [[approximately]] N, year-suffixed values like
 // `601,546 (March 2024)`, and multi-line infobox fields. Picks the LARGEST
 // plausible candidate (10 ≤ N ≤ 5M) inside the num_employees field block.
+/**
+ * Template-aware Wikipedia infobox field extractor.
+ *
+ * Root cause of TCS/Infosys headcount failures (audit v35):
+ * The previous regex `([^\n|]+)` stopped at ANY pipe character, including the
+ * pipe INSIDE wikitext templates like `{{nowrap|601,546}}`. For TCS the capture
+ * was `{{nowrap` (only 3 chars), producing headcount = 601 instead of 601,546.
+ *
+ * Fix strategy (4 passes):
+ *   1. Extract the RAW infobox line (using line-oriented search, not pipe-stop).
+ *   2. Strip all wikitext markup: templates `{{...}}`, refs `<ref...>`, wikilinks `[[...]]`.
+ *   3. Apply the numeric candidate extractor on the cleaned string.
+ *   4. Skip 4-digit year-like numbers with adjacent year context.
+ */
 function extractWikipediaInfoboxField(content: string, fieldNames: string[]): number | null {
   for (const field of fieldNames) {
-    // Match field block: `| field_name = ...` up to the next infobox row or end of infobox.
-    // Wikitext allows multi-line values; we keep scanning until we hit a new `|` at line start.
-    const fieldRe = new RegExp(
-      `\\|\\s*${field}\\s*=([^\\n|]+(?:\\n(?![|\\s*}}])[^\\n|]+)*)`,
-      'i',
+    // 1. Find the field line. Use a line-based scan so we don't stop at pipes
+    //    inside template expressions like {{nowrap|601,546}}.
+    const lines = content.split('\n');
+    const fieldLineIdx = lines.findIndex(l =>
+      new RegExp(`^\\|\\s*${field}\\s*=`, 'i').test(l.trim()),
     );
-    const m = content.match(fieldRe);
-    if (!m) continue;
-    const body = m[1];
+    if (fieldLineIdx === -1) continue;
+
+    // Collect the field line PLUS any continuation lines (lines that do NOT start
+    // with a new infobox key `|` or the infobox closing `}}`).
+    let fieldText = lines[fieldLineIdx];
+    for (let i = fieldLineIdx + 1; i < lines.length; i++) {
+      const next = lines[i];
+      if (/^\s*[\|}{]/.test(next)) break;
+      fieldText += ' ' + next;
+    }
+
+    // 2. Extract the VALUE portion (after the `=`).
+    const eqIdx = fieldText.indexOf('=');
+    if (eqIdx === -1) continue;
+    let body = fieldText.slice(eqIdx + 1);
+
+    // 3. Strip wikitext markup on the body:
+    //    a. Remove <ref ...>...</ref> tags (including self-closing).
+    body = body.replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, ' ');
+    body = body.replace(/<ref[^>]*\/>/gi, ' ');
+    //    b. Flatten templates like {{nowrap|601,546}} → "601,546"
+    //       by repeatedly replacing `{{anyword|content}}` with just `content`.
+    //       Multiple passes handle nesting (e.g. {{nowrap|{{increase}}601,546}}).
+    for (let pass = 0; pass < 4; pass++) {
+      body = body.replace(/\{\{[A-Za-z_ -]+\|([^{}]+)\}\}/g, '$1');
+    }
+    //    c. Remove any remaining `{{...}}` template stubs (no-arg templates like
+    //       {{increase}}, {{decrease}}, {{steady}}).
+    body = body.replace(/\{\{[^{}]+\}\}/g, ' ');
+    //    d. Strip wikilinks [[link|display]] → "display" (or [[link]] → "link").
+    body = body.replace(/\[\[(?:[^\]|]+\|)?([^\]]+)\]\]/g, '$1');
+    //    e. Strip HTML tags and parenthetical date suffixes like "(March 2024)".
+    body = body.replace(/<[^>]+>/g, ' ');
+    body = body.replace(/\([^)]*\d{4}[^)]*\)/g, ' ');
+
+    // 4. Extract numeric candidates from the cleaned body.
     const candidates: number[] = [];
-    const numericRe = /(\d{1,3}(?:,\d{3})+|\d{2,7})/g;
+    const numericRe = /(\d{1,3}(?:,\d{3})+|\d{4,7})/g;
     let nm: RegExpExecArray | null;
     while ((nm = numericRe.exec(body)) !== null) {
       const raw = nm[1].replace(/[^\d]/g, '');
       const n = parseInt(raw, 10);
       if (!Number.isFinite(n) || n < 10 || n > 5_000_000) continue;
-      // Skip 4-digit years adjacent to year markers (e.g. "(2024)" suffixes).
+      // Skip 4-digit years still present in context.
       if (n >= 1900 && n <= 2099) {
-        const ctx = body.slice(Math.max(0, nm.index - 4), Math.min(body.length, nm.index + raw.length + 8));
-        if (/\b(20\d{2}|19\d{2})\b/.test(ctx) && !/(employees?|staff|headcount|workforce)/i.test(ctx)) continue;
+        const ctx = body.slice(Math.max(0, nm.index - 6), Math.min(body.length, nm.index + raw.length + 8));
+        if (/\b(20\d{2}|19\d{2})\b/.test(ctx)) continue;
       }
       candidates.push(n);
     }
+    // Return the LARGEST plausible number (TCS: 601546 > any fragment).
     if (candidates.length > 0) return Math.max(...candidates);
   }
   return null;

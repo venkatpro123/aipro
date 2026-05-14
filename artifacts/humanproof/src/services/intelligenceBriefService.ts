@@ -140,13 +140,33 @@ function buildSignalContext(hybridResult: Record<string, unknown>): string {
   if (cohort?.primaryCohort) ctx.push(`Cohort: ${cohort.primaryCohort}`);
 
   const macro = hybridResult.blsMacroSignal as { riskTier?: string } | undefined;
-  if (macro?.riskTier) ctx.push(`Macro risk tier: ${macro.riskTier}`);
+  // Audit v35: tag macro as heuristic in the LLM prompt so the model knows it
+  // CANNOT draw real-time macro conclusions from it.
+  if (macro?.riskTier) ctx.push(`Macro risk tier: ${macro.riskTier} (HEURISTIC — May 2026 calibrated constant, not live BLS/FRED data)`);
 
   const glassdoor = hybridResult.glassdoorVelocity as { tier?: string } | undefined;
   if (glassdoor?.tier) ctx.push(`Glassdoor velocity: ${glassdoor.tier}`);
 
   const scenario = hybridResult.scenarioPlan as { dominantUncertainty?: string } | undefined;
   if (scenario?.dominantUncertainty) ctx.push(`Key uncertainty: ${scenario.dominantUncertainty}`);
+
+  // Audit v35: inject live-signal provenance so the model knows which signals are
+  // grounded in real-time data vs. seeded/heuristic baselines. This prevents
+  // hallucination of "real-time macro headwinds" or "live Glassdoor deterioration"
+  // when those signals are actually static calibrated constants.
+  const sq = hybridResult.signalQuality as Record<string, unknown> | undefined;
+  const liveSignals = typeof sq?.liveSignals === 'number' ? sq.liveSignals : 0;
+  const heuristicSignals = typeof sq?.heuristicSignals === 'number' ? sq.heuristicSignals : 7;
+  const dataSource = hybridResult.dataSource as string | undefined;
+
+  ctx.push(
+    `Signal provenance: ${liveSignals} live API signals, ${heuristicSignals} heuristic/seeded signals.`
+    + (dataSource === 'live'
+      ? ' Intelligence is primarily live-sourced.'
+      : dataSource === 'db' || dataSource === 'stale_db'
+        ? ' Intelligence is primarily from the company intelligence database (not real-time). Do NOT imply real-time data in the narrative.'
+        : ' Intelligence is from fallback/heuristic defaults. Only state what can be confirmed from the score breakdown; do not speculate about company-specific live signals.'),
+  );
 
   return ctx.join('. ');
 }

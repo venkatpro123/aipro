@@ -110,14 +110,22 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
   value -= conflictPenalty;
   value = clamp(value, 0.10, 0.95);
 
-  // ── Live-unavailable hard cap (decided in plan) ─────────────────────────
+  // ── Live-unavailable hard cap ────────────────────────────────────────────
+  // Audit v35 fix: the cap must ALWAYS fire when liveUnavailable=true,
+  // regardless of whether the blend dropped below the cap on its own.
+  // The bug: when ALL quorum classes fail (quorumCoverage=0) and all signals
+  // are stale/heuristic (sourceReliability=0.4), the blend falls to ~0.30
+  // and `value > cap` is false — cap silently skipped, output stays ~0.30
+  // which LOOKS low but is STILL misleading: the pipeline ran to ceiling and
+  // found nothing, and 30% confidence implies evidence was collected at some
+  // level. The correct UX: always surface the explicit liveUnavailable state.
   let liveUnavailableFloor: number | null = null;
   if (inputs.liveUnavailable) {
     const cap = 0.45;
-    if (value > cap) {
-      value = cap;
-      liveUnavailableFloor = cap;
-    }
+    // Force cap regardless of direction (ceiling AND floor so the value is
+    // always exactly 0.45 when live is unavailable — unambiguous for the UI).
+    value = cap;
+    liveUnavailableFloor = cap;
   }
 
   // ── Rationale ────────────────────────────────────────────────────────────

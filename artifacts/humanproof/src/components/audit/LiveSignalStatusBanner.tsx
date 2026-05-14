@@ -25,11 +25,23 @@ interface Props {
 
 type Tier = 'live' | 'partial' | 'db' | 'static';
 
+// Audit v35 fix: tier MUST be anchored to genuineApiSignals (real network calls
+// this session), not liveRatio alone. liveRatio includes Wikipedia scraping and
+// RSS news counted as "live", which inflates the live-coverage claim. The critical
+// guard: if genuineApiSignals === 0 the tier can never be 'live', regardless of
+// any ratio derived from seeded-DB freshness or scrape wins.
 function getTier(liveRatio: number, genuineApiSignals: number): Tier {
-  if (genuineApiSignals === 0 && liveRatio === 0) return 'static';
-  if (liveRatio <= 0.40) return 'db';
-  if (liveRatio <= 0.70) return 'partial';
-  return 'live';
+  // Zero real API calls → never claim live intelligence regardless of ratios.
+  if (genuineApiSignals === 0) {
+    // Some scraping happened (liveRatio > 0 from scrape-as-"live" sources) →
+    // 'db' tier (DB-backed with some scraping supplement).
+    // No scraping → 'static' (fully seeded / heuristic).
+    return liveRatio > 0 ? 'db' : 'static';
+  }
+  // Real API calls landed — now grade by how many live sources won arbitration.
+  if (liveRatio <= 0.40) return 'db';       // most signals from DB
+  if (liveRatio <= 0.70) return 'partial';  // mixed live + DB
+  return 'live';                            // majority live
 }
 
 const TIER_CONFIG: Record<Tier, {
@@ -76,7 +88,11 @@ const TIER_CONFIG: Record<Tier, {
 export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, className }) => {
   const [dismissed, setDismissed] = useState(false);
 
-  const liveRatio        = coverage?.liveRatio ?? (freshnessScore ?? 0);
+  // Audit v35: use liveRatio from coverage ONLY — never fall back to freshnessScore.
+  // freshnessScore reflects seeded-DB staleness and has nothing to do with live APIs;
+  // using it as a fallback caused the banner to show "Live Intelligence Active" when
+  // all data came from a fresh (< 7d) seeded row. If coverage is null, tier is 'static'.
+  const liveRatio        = coverage?.liveRatio ?? 0;
   const genuineApiSigs   = coverage?.genuineApiSignals ?? 0;
   const tier             = getTier(liveRatio, genuineApiSigs);
   const cfg              = TIER_CONFIG[tier];

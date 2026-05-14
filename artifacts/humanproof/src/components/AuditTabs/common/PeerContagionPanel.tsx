@@ -148,6 +148,16 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
           </span>
         </div>
       )}
+      {/* Audit v35: static-cache disclosure */}
+      <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md" style={{
+        background: 'rgba(148,163,184,0.06)',
+        border: '1px solid rgba(148,163,184,0.18)',
+      }}>
+        <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(148,163,184,0.6)' }} />
+        <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.7)' }}>
+          Static peer graph · Curated layoff cache · Not real-time peer monitoring
+        </p>
+      </div>
     </div>
   );
 };

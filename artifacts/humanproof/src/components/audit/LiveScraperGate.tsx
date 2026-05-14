@@ -255,7 +255,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
                   color: isDone ? '#10b981' : isLoading ? src.color : 'rgba(255,255,255,0.2)',
                   minWidth: '52px', textAlign: 'right',
                 }}>
-                  {isDone ? '✓ DONE' : isLoading ? 'LIVE' : 'QUEUED'}
+                  {isDone ? '✓ DONE' : isLoading ? 'ACQUIRING' : 'QUEUED'}
                 </span>
               </div>
             );

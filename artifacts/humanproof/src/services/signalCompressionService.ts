@@ -124,6 +124,25 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
     };
   }
 
+  // Audit v35 fix: "Stable" and "No data" are NOT the same.
+  // When severity=0 AND chips=[] the engine has no confirmable live signal —
+  // e.g. hiringTrend='stable' (heuristic baseline) but no WARN, no layoff rounds,
+  // no headcount delta, no Glassdoor trend. Showing "Stable" implies the engine
+  // checked and confirmed stability; the honest answer is "no live evidence yet."
+  if (severity === 0 && chips.length === 0) {
+    return {
+      id: 'workforce',
+      tier: 2,
+      severity: 0,
+      verdict: 'unknown',
+      headline: 'Workforce Stability',
+      rationale: 'No actionable workforce signals confirmed by live sources.',
+      chips: [],
+      tone: VERDICT_TONE.unknown,
+      group: 'company',
+    };
+  }
+
   const verdict = verdictFromSeverity(severity);
   return {
     id: 'workforce',
@@ -131,7 +150,7 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
     severity,
     verdict,
     headline: 'Workforce Stability',
-    rationale: reasons.length ? take(reasons, 3).join(' · ') : 'No distress signals.',
+    rationale: reasons.length ? take(reasons, 3).join(' · ') : 'No distress signals confirmed.',
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'company',
@@ -184,6 +203,23 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
       verdict: 'unknown',
       headline: 'Financial Health',
       rationale: 'Live financial signals unavailable.',
+      chips: [],
+      tone: VERDICT_TONE.unknown,
+      group: 'company',
+    };
+  }
+
+  // Audit v35 fix: same stable-vs-unknown issue as workforce.
+  // A public company with stock between -5% and +10% and revYoy between 0–10%
+  // produces severity=0 and chips=[] — looks fine but no chip confirms it.
+  if (severity === 0 && chips.length === 0) {
+    return {
+      id: 'financial',
+      tier: 2,
+      severity: 0,
+      verdict: 'unknown',
+      headline: 'Financial Health',
+      rationale: 'Financial signals present but within normal range — no distress confirmed.',
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'company',

@@ -128,9 +128,18 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
         </div>
       )}
 
-      <p className="text-[10px] mt-3 italic" style={{ color: 'rgba(255,255,255,0.2)' }}>
-        Calibrated May 2026 · Zero API cost · Updated quarterly
-      </p>
+      {/* Audit v35: explicit heuristic disclosure — previously 20% opacity, invisible.
+          Macro signals are calibrated constants (May 2026), NOT live BLS/FRED data.
+          Users must understand these are baseline assumptions, not real-time readings. */}
+      <div className="flex items-center gap-1.5 mt-3 px-2 py-1 rounded-md" style={{
+        background: 'rgba(245,158,11,0.08)',
+        border: '1px solid rgba(245,158,11,0.25)',
+      }}>
+        <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
+        <p className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
+          Heuristic baseline · Calibrated May 2026 · Not real-time BLS/FRED data
+        </p>
+      </div>
     </div>
   );
 };

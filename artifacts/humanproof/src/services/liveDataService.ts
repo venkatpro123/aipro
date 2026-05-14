@@ -1174,6 +1174,20 @@ const chooseAuthoritativeSignal = <T>({
 
   let chosen = dbSignal ?? heuristicSignal ?? null;
 
+  // Audit v35: when liveSignal is null (scraper returned nothing) AND dbSignal is
+  // a seeded baseline, the default `chosen = dbSignal` means the seeded value wins
+  // silently with no audit trail. Log it so the TransparencyTab can surface it.
+  if (!liveUsable && chosen?.source === 'db') {
+    const sourceIsSeeded = /seeded|intelligence|company_intelligence|static|fallback/i.test(
+      chosen.sourceName,
+    );
+    if (sourceIsSeeded) {
+      summary.dbWonKeys.push(`${key}[seeded-default-no-live]`);
+    } else {
+      summary.dbWonKeys.push(key);
+    }
+  }
+
   if (liveUsable) {
     if (!dbUsable) {
       chosen = liveSignal;
