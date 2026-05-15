@@ -1153,20 +1153,16 @@ html {
 }
 
 @media (max-width: 768px) {
-  .nav-links {
-    display: none;
-  }
-  #mobile-menu-btn {
-    display: flex !important;
+  /* Mobile uses the bottom tab bar only. The top nav is fully hidden to
+     remove the duplicate-navigation overlap. Collapsing --nav-h to 0 keeps
+     every layout offset that subtracted the nav height (.page-wrap top
+     padding, sticky dashboard tabs) honest now that there is nothing above. */
+  :root {
+    --nav-h: 0px;
   }
   .nav-root {
-    width: calc(100% - 24px);
+    display: none !important;
   }
-  .nav-inner {
-    padding: 0 16px;
-    height: 62px;
-  }
-  --nav-h: 62px;
 }
 
 /* Mobile drawer */
