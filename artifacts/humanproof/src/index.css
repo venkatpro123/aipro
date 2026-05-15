@@ -1,5 +1,5 @@
-/* ── Premium Font Import ─────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* ── Premium Font Imports ────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
 
 :root {
   --radius: 0.75rem;
@@ -3498,4 +3498,432 @@ select.input:focus {
   background: var(--emerald);
   box-shadow: 0 0 6px rgba(16,185,129,0.5);
   animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   PREMIUM ENHANCEMENTS — v35.2 (May 2026)
+   Mobile-first responsiveness · Touch UX · Scrollbars · Skeletons · A11y
+   ============================================================================ */
+
+/* ── iOS / Android base fixes ───────────────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--nav-h) + 24px);
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  /* Prevent horizontal overflow on mobile without hiding vertical scroll */
+  overflow-x: hidden;
+  /* Stable layout — no content shift when scrollbar appears */
+  scrollbar-gutter: stable;
+}
+
+/* ── Touch interaction improvements ─────────────────────────────────────── */
+/* Remove 300ms tap delay on all interactive elements */
+a, button, [role="button"], input, select, textarea,
+.btn, .nav-link, .bottom-nav-item, .card-hover,
+.more-sheet-row, .more-sheet-icon-item {
+  touch-action: manipulation;
+}
+
+/* Prevent long-press callout on interactive elements (iOS) */
+button, a, [role="button"] {
+  -webkit-touch-callout: none;
+}
+
+/* ── Custom scrollbar — dark premium ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.10) transparent;
+}
+
+/* ── Focus-visible — keyboard navigation ───────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Overscroll — prevent bounce propagation on scroll containers ────────── */
+.scroll-container,
+[data-scroll-container],
+.more-sheet,
+.audit-tab-content {
+  overscroll-behavior: contain;
+}
+
+/* Prevent pull-to-refresh on the whole page causing jitter */
+body {
+  overscroll-behavior-y: none;
+}
+
+/* ── Skeleton / Loading states ──────────────────────────────────────────── */
+@keyframes skeleton-wave {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0px,
+    rgba(255,255,255,0.08) 80px,
+    rgba(255,255,255,0.04) 160px
+  );
+  background-size: 800px 100%;
+  animation: skeleton-wave 1.6s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+  height: 0.875rem;
+  border-radius: 4px;
+}
+.skeleton-text-lg {
+  height: 1.25rem;
+  border-radius: 4px;
+}
+.skeleton-circle {
+  border-radius: 50%;
+}
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--radius-xl);
+}
+.skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* react-loading-skeleton theme override */
+:root {
+  --react-loading-skeleton-base-color: rgba(255,255,255,0.04);
+  --react-loading-skeleton-highlight-color: rgba(255,255,255,0.10);
+}
+
+/* ── Tablet breakpoints (769–1024px) — previously missing ───────────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+
+  /* Show desktop nav on tablet, hide mobile bottom nav */
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+  :root {
+    --nav-h: 72px;
+  }
+
+  /* Responsive grid adjustments */
+  .tablet\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .tablet\:grid-cols-1 { grid-template-columns: 1fr; }
+
+  /* Dashboard tab strip on tablet */
+  .dashboard-tabs-strip {
+    gap: 4px;
+  }
+  .dashboard-tab-btn {
+    padding: 10px 16px;
+    font-size: 0.82rem;
+  }
+
+  /* Card padding tighter on tablet */
+  .card {
+    padding: var(--space-6);
+  }
+
+  /* Footer grid collapses to 2 columns */
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ── Small phone breakpoints (≤ 390px) — iPhone SE / compact phones ─────── */
+@media (max-width: 390px) {
+  h1, .h1 { font-size: 2rem; }
+  .display-1 { font-size: 2.25rem; }
+  .display-2 { font-size: 1.75rem; }
+  .btn-lg { height: 48px; padding: 0 24px; font-size: 0.95rem; }
+  .card { padding: var(--space-5); }
+}
+
+/* ── Large phone / phablet (391–600px) ─────────────────────────────────── */
+@media (min-width: 391px) and (max-width: 600px) {
+  .display-1 { font-size: clamp(2.5rem, 9vw, 3.2rem); }
+}
+
+/* ── Safe area padding for notched devices ──────────────────────────────── */
+.page-wrap {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ── Reduced motion — respect user preference ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .shimmer-btn::after,
+  .shimmer-sweep::after,
+  .cta-glow-btn {
+    animation: none !important;
+  }
+}
+
+/* ── Performance: promote animated elements to GPU compositor ───────────── */
+.nav-root,
+.mobile-bottom-nav,
+.more-sheet,
+.card-hover {
+  will-change: transform;
+}
+
+/* Reset will-change after animation to free GPU memory */
+.card-hover:not(:hover) {
+  will-change: auto;
+}
+
+/* ── Image rendering optimization ───────────────────────────────────────── */
+img {
+  max-width: 100%;
+  height: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* ── Text rendering ─────────────────────────────────────────────────────── */
+p, span, li, td, th {
+  text-rendering: optimizeLegibility;
+}
+
+/* Prevent FOUT flicker on font load */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-display: swap;
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  font-display: swap;
+}
+
+/* ── Micro-interaction: button press ripple ─────────────────────────────── */
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.5; }
+  to   { transform: scale(4); opacity: 0; }
+}
+
+/* ── Section eyebrow badge (used in landing) ────────────────────────────── */
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(0,212,224,0.08);
+  border: 1px solid rgba(0,212,224,0.18);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+/* ── Premium card variants ──────────────────────────────────────────────── */
+.card-premium {
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.015) 100%
+  );
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    var(--shadow-elev-2);
+  transition:
+    box-shadow 0.35s var(--ease-out),
+    border-color 0.35s var(--ease-out),
+    transform 0.35s var(--ease-out);
+}
+.card-premium:hover {
+  border-color: rgba(255,255,255,0.14);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.07) inset,
+    var(--shadow-elev-3),
+    0 0 30px rgba(0,212,224,0.05);
+  transform: translateY(-2px);
+}
+
+/* ── Divider with gradient ──────────────────────────────────────────────── */
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 30%,
+    rgba(0,212,224,0.15) 50%,
+    rgba(255,255,255,0.08) 70%,
+    transparent 100%
+  );
+  border: none;
+}
+
+/* ── Tooltip base (works with Radix Tooltip) ────────────────────────────── */
+[data-radix-popper-content-wrapper] {
+  z-index: 10000 !important;
+}
+.tooltip-content {
+  background: oklch(0.26 0.019 260);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-lg);
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* ── Animated gradient text (hero headlines) ────────────────────────────── */
+.text-gradient-hero {
+  background: linear-gradient(
+    135deg,
+    var(--cyan) 0%,
+    #a855f7 40%,
+    var(--cyan) 80%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-animate {
+  animation: gradient-text-shift 6s ease-in-out infinite;
+}
+
+/* ── Draw-line SVG animation (hero underline) ───────────────────────────── */
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Spinner — loading indicator ────────────────────────────────────────── */
+@keyframes spin-smooth {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.08);
+  border-top-color: var(--cyan);
+  animation: spin-smooth 0.75s linear infinite;
+}
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+}
+
+/* ── Progress bar — determinate ─────────────────────────────────────────── */
+.progress-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), #a855f7);
+  transition: width 0.6s var(--ease-out);
+  box-shadow: 0 0 8px rgba(0,212,224,0.4);
+}
+
+/* ── Reveal animation (used with react-intersection-observer) ───────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.55s var(--ease-out),
+    transform 0.55s var(--ease-out);
+}
+.reveal.vis,
+.reveal[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger for reveal groups */
+.reveal:nth-child(1) { transition-delay: 0ms; }
+.reveal:nth-child(2) { transition-delay: 80ms; }
+.reveal:nth-child(3) { transition-delay: 160ms; }
+.reveal:nth-child(4) { transition-delay: 240ms; }
+.reveal:nth-child(5) { transition-delay: 320ms; }
+.reveal:nth-child(6) { transition-delay: 400ms; }
+
+/* ── High-DPI / Retina enhancements ─────────────────────────────────────── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .nav-inner {
+    border-width: 0.5px;
+  }
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+/* ── Print styles ───────────────────────────────────────────────────────── */
+@media print {
+  .nav-root,
+  .mobile-bottom-nav,
+  .more-overlay,
+  .more-sheet,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: black;
+  }
 }

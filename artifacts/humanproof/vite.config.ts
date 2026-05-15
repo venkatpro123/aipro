@@ -41,6 +41,10 @@ export default defineConfig({
           // (React.forwardRef undefined on Radix/router init).
           if (id.includes('node_modules')) {
             if (id.includes('framer-motion')) return 'vendor-motion';
+            // Gesture + intersection libs are small but only needed on interactive pages
+            if (id.includes('@use-gesture') || id.includes('react-intersection-observer')) return 'vendor-interaction';
+            // Skeleton loader — tiny, separate for cache stability
+            if (id.includes('react-loading-skeleton')) return 'vendor-ui';
             return 'vendor';
           }
         },
