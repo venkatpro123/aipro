@@ -18,6 +18,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -264,7 +266,8 @@ function renderHtmlEmail(
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
-serve(async (req: Request) => {
+serve((req: Request) =>
+  withRun('send-monthly-report', req, async (_run) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
@@ -360,4 +363,4 @@ serve(async (req: Request) => {
     console.error('[MonthlyReport] Unhandled error:', e.message);
     return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
-});
+  }));

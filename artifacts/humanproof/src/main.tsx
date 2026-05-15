@@ -6,6 +6,14 @@ import { AuthProvider } from "./context/AuthContext";
 import { I18nProvider } from "./i18n";
 import { registerServiceWorker } from "./services/pwaService";
 import { preloadStaticData } from "./services/db/staticDataService";
+// DEBT-5 — install the OTLP HTTP log sink. No-op when
+// VITE_OTEL_EXPORTER_OTLP_ENDPOINT is absent, so this is safe in every
+// environment. When the env is set, every structured log record from
+// shared/logger.ts is batched + POSTed to the configured collector.
+import { installOtlpSinkIfConfigured } from "./infrastructure/otlpExporter";
+import { primeFlags } from "./config/featureFlags";
+import { resolveTenantId } from "./config/tenantContext";
+import { createLogger } from "./shared/logger";
 
 // v21.0 — Sweep stale "feature unconfigured" degradation events from prior
 // builds that incorrectly attributed opt-in features (WARN, proxy-macro) as
@@ -35,6 +43,24 @@ const assertRequiredEnv = (): void => {
 assertRequiredEnv();
 
 registerServiceWorker();
+
+// ── Production-readiness bootstrap ────────────────────────────────────────
+//
+// Order matters:
+//   1. OTLP sink BEFORE any logger.info() so the first structured logs
+//      ship.
+//   2. primeFlags() so the first audit doesn't pay the snapshot-fetch
+//      cost AND the OTel SDK has flag state if it needs to sample
+//      conditionally.
+//   3. resolveTenantId() fire-and-forget so the tenant cache is warm
+//      before the user opens the audit form.
+installOtlpSinkIfConfigured();
+const bootLog = createLogger({ service: 'app-bootstrap' });
+bootLog.info('app.boot.start', {
+  release: ((import.meta as { env?: { VITE_RELEASE_VERSION?: string } }).env?.VITE_RELEASE_VERSION) ?? 'unknown',
+});
+void primeFlags().catch((err) => bootLog.warn('app.boot.prime_flags_failed', { error: err }));
+void resolveTenantId().catch(() => undefined);
 
 // Fire-and-forget: loads companies, industries, roles from Supabase into the
 // in-memory cache so all synchronous getters (getCompanySync etc.) work

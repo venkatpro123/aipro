@@ -51,6 +51,10 @@ import { getLayoffScoreHistory } from "./scoreStorageService";
 // v13.0 intelligence layers
 import { computeMacroEconomicRisk } from "./macroEconomicRiskEngine";
 import { computePeerContagion } from "./peerContagionEngine";
+// WS3 — Live peer contagion adapter. Internally falls through to
+// `computePeerContagion` when the ws3_peer_contagion_live flag is off,
+// so unconditional use here is safe.
+import { computePeerContagionLive } from "./peerContagionLiveAdapter";
 import { computeEmergencyResponse } from "./emergencyResponseProtocol";
 import { computeCareerConfidence } from "./careerConfidenceEngine";
 import { computeNetworkLeverage } from "./networkLeverageEngine";
@@ -75,6 +79,10 @@ import { computeWARNSignal } from "./warnActService";
 import { computeMacroSignal, fetchLiveMacroSnapshot } from "./blsMacroService";
 import { computeSECEnhancedRisk } from "./secEnhancedService";
 import { computeGlassdoorVelocity } from "./glassdoorVelocityEngine";
+// WS7 — Consolidated workforce velocity. Falls through to passthrough
+// (both legacy sub-results, no unified verdict) when ws7_layer_consolidation
+// flag is off, so calling it unconditionally is safe.
+import { computeWorkforceVelocity } from "./workforceVelocityEngine";
 import { computeExecutiveDeparturePattern } from "./executiveDeparturePatternEngine";
 import { computeMarketDemandReport } from "./roleMarketDemandService";
 import { assessFinancialRunway } from "./financialRunwayService";
@@ -91,6 +99,30 @@ import {
   checkEdgeFunctionHealth,
   getEFDegradationWarnings,
 } from "./edgeFunctionRegistry";
+// WS3/WS4/WS5 integrations — additive, flag-gated.
+import { getMacroRecessionSignalForCohortClassifier } from "./macroSnapshot";
+import { computeConformalCI, type ConformalCohort } from "./conformalCI";
+import { detectStealthLayoff, applyStealthFloor } from "./stealthLayoffDetector";
+import { detectAcquisitionPremium } from "./mergerAcquisitionRiskEngine";
+import { evaluateFlagSync } from "../config/featureFlags";
+// DEBT-5 — structured logging.
+import { createLogger } from "../shared/logger";
+const auditPipelineLog = createLogger({ service: "audit-pipeline" });
+// DEBT-1 — DAG phase runner. Executes all layers registered via
+// registerLayer() against a shared AuditContext. Currently runs ALONGSIDE
+// the legacy try/catch blocks below; layers migrate one at a time and
+// their corresponding legacy block is deleted when each is ported.
+import { runDagPhase } from "../domain/pipeline/hybridOrchestrator";
+import type { AuditContext } from "../domain/pipeline/auditContext";
+// WS11 — every supabase.functions.invoke() call goes through invokeEdgeFunction
+// so the per-audit request_id propagates via x-request-id header. Without
+// this, the edge function's pipeline_runs row has request_id=NULL and an
+// audit trace cannot be reconstructed across the browser/edge boundary.
+import { invokeEdgeFunction } from "../infrastructure/requestId";
+// WS10 — markFallback writes to layer_fallback_log so the quorum/scraping
+// failure paths become visible on the SLO dashboard instead of being lost
+// in `.catch(() => null)`.
+import { markFallback } from "./observability/withFallback";
 
 const safeLower = (value: unknown, fallback = ""): string =>
   typeof value === "string" && value.trim().length > 0 ? value.toLowerCase() : fallback;
@@ -207,9 +239,17 @@ export interface AuditInputs {
   industry?: string;
 }
 
-// Seeded records without a real last_updated get this sentinel so freshnessDays > 30
-// → classifyDbFreshness → 'invalid' → live signals ALWAYS supersede seeded data.
-const STALE_SEED_DATE = '2025-01-01T00:00:00.000Z';
+// Seeded records without a real last_updated get this sentinel so
+// freshnessDays > 30 → classifyDbFreshness → 'invalid' → live signals
+// ALWAYS supersede seeded data.
+//
+// WS12 — was a hardcoded 2025-01-01. That ages correctly TODAY but leaves
+// a latent bug: if the constant is forgotten on 2027-01-01 the system
+// keeps working, but the staleness margin shrinks year over year. The
+// failure mode is "seeded data masquerading as fresh." Use a relative
+// 365-days-ago anchor instead so the sentinel is GUARANTEED > 30 days
+// stale forever, with no maintenance.
+const STALE_SEED_DATE = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
 
 /**
  * mapOsintToCompanyData
@@ -548,7 +588,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
 
   // Load admin-curated layoff events from Supabase, overriding hardcoded seeds.
   // Fire-and-forget — non-fatal if Supabase is unavailable; seeded fallbacks remain.
-  loadCuratedLayoffEvents().catch(() => {});
+  loadCuratedLayoffEvents().catch(() => {}); // arch-allow:R2 fire-and-forget data prefetch; seeded fallbacks cover failure
 
   // ── LIVE-FIRST ARCHITECTURE ─────────────────────────────────────────────────
   // Start live scraping IMMEDIATELY — in parallel with DB resolution steps below.
@@ -573,12 +613,41 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // source count — up to a 45s hard ceiling. On ceiling-hit we proceed with
   // `_liveUnavailable=true` (the confidence model then caps at 45% with an
   // explicit "Live intelligence unavailable" UI state).
-  const _liveQuorumPromise = import('./scraperTrigger').then(({ awaitLiveQuorum }) =>
-    awaitLiveQuorum(inputs.companyName, {
-      ceilingMs:      45_000,
-      pollIntervalMs: 500,
-    }).catch(() => null),
-  ).catch(() => null);
+  //
+  // WS6 — `_forceLiveUnavailable` short-circuit. The Tier-A fast path passes
+  // this private flag so the pipeline skips the live-quorum wait entirely
+  // and returns a DB-only response inside the Tier-A budget. The subsequent
+  // tier_a_upgraded pass runs WITHOUT this flag and DOES wait for quorum.
+  const _forceLiveUnavailable = (inputs as AuditInputs & { _forceLiveUnavailable?: boolean })._forceLiveUnavailable === true;
+  // WS10 — null is a legitimate "no quorum" signal that downstream code
+  // handles, but the FACT that quorum failed is observability-worthy
+  // (it indicates either a slow scraper, a stuck job, or an unknown
+  // company without any signals). markFallback writes one row to
+  // layer_fallback_log so the SLO dashboard surfaces a spike.
+  const _liveQuorumPromise = _forceLiveUnavailable
+    ? Promise.resolve(null)
+    : import('./scraperTrigger').then(({ awaitLiveQuorum }) =>
+        awaitLiveQuorum(inputs.companyName, {
+          ceilingMs:      45_000,
+          pollIntervalMs: 500,
+        }).catch((err) => {
+          markFallback({
+            layerId: 'auditDataPipeline.awaitLiveQuorum',
+            reason: 'timeout',
+            companyCanonical: inputs.companyName,
+            rationale: err instanceof Error ? err.message : String(err),
+          });
+          return null;
+        }),
+      ).catch((err) => {
+        markFallback({
+          layerId: 'auditDataPipeline.scraperTrigger.import',
+          reason: 'exception',
+          companyCanonical: inputs.companyName,
+          rationale: err instanceof Error ? err.message : String(err),
+        });
+        return null;
+      });
 
   let companyData: CompanyData | null = null;
   let dataSource: 'live' | 'db' | 'stale_db' | 'fallback' = 'db';
@@ -614,9 +683,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // it is NOT a live scrape. Data is static/seeded; live enrichment happens in Step 5.
   // dataSource is correctly set to 'db', not 'live', regardless of EF label.
   try {
-    const { data: fetchRes, error } = await supabase.functions.invoke("fetch-company-data", {
-      body: { companyName: inputs.companyName }
-    });
+    // WS11 — invokeEdgeFunction injects x-request-id so the audit trace
+    // joins across browser → edge → DB. Wide `any` matches the legacy
+    // invoke ergonomics — the response body has many optional fields.
+    const { data: fetchRes, error } = await invokeEdgeFunction<any>(
+      "fetch-company-data",
+      { body: { companyName: inputs.companyName } },
+    );
 
     if (fetchRes && !error && fetchRes.data) {
       // A 'fallback' provenance means the company isn't in company_intelligence.
@@ -740,7 +813,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       inputs.companyName,
       companyData.industry ?? 'unknown',
       inputs.roleTitle,
-    ).catch(() => {});
+    ).catch(() => {}); // arch-allow:R2 fire-and-forget company-discovery enqueue
   }
 
   // Step 4b: Post-resolution financial backfill from companyIntelligenceBridge.
@@ -784,7 +857,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         console.info('[AuditPipeline] Per-user Alpha Vantage quota exhausted for today — heuristic fallback');
         import('./apiDegradationMonitor').then(({ recordApiDegradation }) => {
           recordApiDegradation('alphavantage', 'rate_limited', 'Per-user daily budget exhausted (25/day)');
-        }).catch(() => {});
+        }).catch(() => {}); // arch-allow:R2 fire-and-forget telemetry note
       }
     }
   } catch {
@@ -1065,8 +1138,22 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // the 3-cohort adaptive weights can be applied to the main score computation.
   // Uses only company data available at this point (no SEC/peer/macro yet).
   // The full-quality cohort classification runs again at step 42 for UI display.
+  //
+  // WS5 — Audit Issue #3 (cohort classifier ↔ macroRecessionAgent cycle):
+  //   The legacy hardcoded `macroRecessionSignal: 0.3` was a stub that
+  //   structurally under-detected the WAVE cohort. We now read from
+  //   macroSnapshot.ts — the same source the macroRecessionAgent uses at
+  //   Layer 26 — so the classifier and the agent agree on the value
+  //   without the agent's verdict being an input to the classifier.
+  //   When ws5_source_independent_swarm is off, the helper still returns
+  //   0 to preserve the legacy stub behaviour.
   let preCohortWeights: CohortLayerWeights | undefined;
+  // WS4 — Pre-pass cohort label kept in scope so the conformalCI post-process
+  // (below) can route lookup to the same cohort scope without re-running
+  // classification.
+  let preCohortLabel: 'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN' | 'GLOBAL' = 'GLOBAL';
   try {
+    const macroRecessionSignal = getMacroRecessionSignalForCohortClassifier() || 0.3;
     const preCohortResult = classifyCohort({
       revenueGrowthYoY: shadowCompanyData.revenueGrowthYoY ?? null,
       stock90DayChange: shadowCompanyData.stock90DayChange ?? null,
@@ -1074,12 +1161,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       aiInvestmentSignal: shadowCompanyData.aiInvestmentSignal ?? null,
       layoffRounds: shadowCompanyData.layoffRounds ?? 0,
       peerLayoffEventsLast90d: 0,
-      macroRecessionSignal: 0.3,
+      macroRecessionSignal,
       cashRunwayMonths: null,
       industry: shadowCompanyData.industry ?? 'technology',
       isPublic: shadowCompanyData.isPublic ?? false,
     });
     preCohortWeights = preCohortResult.recommendedLayerWeights;
+    preCohortLabel = preCohortResult.primaryCohort ?? 'GLOBAL';
   } catch (e) {
     // Pre-pass cohort failure is non-fatal; engine uses flat weights
   }
@@ -1097,6 +1185,174 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   _timer.mark('engine_start');
   const shadowScoreResult = calculateLayoffScore(shadowScoreInputs);
   _timer.mark('engine_end');
+
+  // ── DAG phase ─────────────────────────────────────────────────────────
+  //
+  // Builds the AuditContext, emits `core` (engine score + confidence),
+  // and runs every layer registered in domain/pipeline/layers/. Migrated
+  // layers (macro_snapshot, cohort_class, stealth_layoff, acquisition_
+  // premium, conformal_ci) execute here with parallelism, typed outputs,
+  // and structured spans. Their outputs are read downstream via
+  // ctx.read(...) where the legacy `companyData as any._x` channel has
+  // been replaced.
+  //
+  // The legacy try/catch blocks below (for layers not yet migrated)
+  // continue to run unchanged. The two paths share the same companyData,
+  // so a partially-migrated pipeline is correct.
+  let dagContext: AuditContext | null = null;
+  try {
+    const dagPhase = await runDagPhase(inputs, companyData, {});
+    dagContext = dagPhase.ctx;
+    // Emit `core` after the engine so dependent layers (conformal_ci)
+    // can read it via ctx.require('core'). This is the bridge moment —
+    // once the scoring layer itself is ported, the engine call moves
+    // INTO the DAG and this manual emit goes away.
+    dagContext.emit('core', {
+      total: shadowScoreResult.score,
+      confidencePercent: shadowScoreResult.confidencePercent ?? 0,
+    });
+    // Surface DAG outputs onto the legacy private-field channel so
+    // unmigrated downstream layers keep reading what they used to.
+    // This is the legacy-compat bridge; deletes itself as each consumer
+    // migrates to ctx.read(...).
+    const legacyBag = companyData as unknown as Record<string, unknown>;
+    const stealth = dagContext.read('stealth_layoff');
+    if (stealth) legacyBag._stealthSignal = stealth;
+    const acquisition = dagContext.read('acquisition_premium');
+    if (acquisition?.detected) legacyBag._acquisitionPremium = acquisition;
+    const conformal = dagContext.read('conformal_ci');
+    if (conformal) legacyBag._conformalBundle = conformal;
+
+    auditPipelineLog.info('dag.phase.complete', {
+      requestId: dagContext.requestId,
+      layers: dagPhase.registryResult.records.length,
+      successes: dagPhase.registryResult.records.filter((r) => r.status === 'success').length,
+      durationMs: dagPhase.registryResult.totalMs,
+    });
+  } catch (err) {
+    // DAG-phase failure must not break the audit. Legacy try/catch blocks
+    // below provide the fallback compute path.
+    auditPipelineLog.warn('dag.phase.failed', {
+      company: inputs.companyName,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // WS4 — Conformal CI post-processing (Audit Issue #26).
+  //
+  // When `ws4_conformal_ci` is on AND a cohort calibration set with
+  // ≥80 outcomes exists, override the heuristic `confidenceInterval`
+  // on the engine result with the empirically-calibrated conformal
+  // interval. Internally `computeConformalCI` falls back to the
+  // legacy heuristic widths when calibration data is insufficient,
+  // so this call is always safe.
+  //
+  // The full ConformalBundle is stashed on companyData via the
+  // `_conformalBundle` private channel so the empiricalConfidenceModel
+  // can read it (downstream in hybridConsensusBuilder) without
+  // re-computing.
+  try {
+    const ws4Flag = evaluateFlagSync('ws4_conformal_ci');
+    if (ws4Flag.isActive || ws4Flag.isShadow) {
+      const cohortLabel: ConformalCohort = preCohortLabel as ConformalCohort;
+      const bundle = await computeConformalCI(shadowScoreResult.score, { cohort: cohortLabel });
+      (companyData as any)._conformalBundle = bundle;
+      // Only override the engine's CI when conformal returned a calibrated
+      // interval (not the heuristic fallback) — preserves legacy widths
+      // until calibration accumulates.
+      if (bundle.source === 'conformal') {
+        const i90 = bundle.intervals.find((i) => Math.abs(i.nominalCoverage - 0.9) < 0.01);
+        if (i90) {
+          shadowScoreResult.confidenceInterval = {
+            low: i90.low,
+            high: i90.high,
+            range: i90.high - i90.low,
+            isEstimate: true,
+          } as typeof shadowScoreResult.confidenceInterval;
+        }
+      }
+    }
+  } catch (err) {
+    // Telemetry; never block scoring on confidence post-processing.
+    auditPipelineLog.warn('conformal_ci.post_process_failed', {
+      company: inputs.companyName,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // WS3 — Stealth layoff detector (Audit Issue #24).
+  //
+  // Reads LinkedIn workforce_snapshots to detect 6-month headcount
+  // contractions that never surfaced as an announced layoff round.
+  // Applies a graduated score floor when stealth contraction is
+  // detected with no offsetting announced round. Flag-gated; no-op
+  // when the workforce_snapshots table is empty.
+  try {
+    const stealthFlag = evaluateFlagSync('ws3_stealth_layoff_detector');
+    if (stealthFlag.isActive || stealthFlag.isShadow) {
+      const canonical =
+        (companyData as unknown as { canonicalName?: string }).canonicalName
+        ?? companyData.name
+        ?? inputs.companyName;
+      const stealthSignal = await detectStealthLayoff({
+        companyCanonicalName: canonical,
+        companyDisplayName: companyData.name,
+      });
+      if (stealthSignal.flagged) {
+        const oldScore = shadowScoreResult.score;
+        shadowScoreResult.score = applyStealthFloor(oldScore, stealthSignal);
+        (companyData as any)._stealthSignal = stealthSignal;
+        // Surface in transparency.
+        shadowScoreResult.signalQuality?.missingDataFallbacks?.push(
+          `WS3 stealth floor applied: ${oldScore} → ${shadowScoreResult.score} (${stealthSignal.rationale})`,
+        );
+      } else {
+        (companyData as any)._stealthSignal = stealthSignal;
+      }
+    }
+  } catch (err) {
+    auditPipelineLog.warn('stealth_layoff.detection_failed', {
+      company: inputs.companyName,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // WS3 — Acquisition premium correction (Audit Issue #22).
+  //
+  // When the company is the target of an announced acquisition and the
+  // stock has surged on deal premium, the legacy L1 reads that surge as
+  // health and LOWERS risk. We neutralise the stock-derived health
+  // benefit so the score is not masked by deal premium.
+  //
+  // M&A context is read directly from `inputs.userFactors` (set by the
+  // audit form when the user discloses an active M&A event). This is
+  // the SAME source `computeMARisk` reads at step 31; reading it here
+  // ensures the premium-correction signal is available when the score
+  // is computed, not after.
+  try {
+    const evidenceFlag = evaluateFlagSync('ws3_evidence_hierarchy');
+    if (evidenceFlag.isActive || evidenceFlag.isShadow) {
+      const uf = inputs.userFactors as unknown as Record<string, unknown> | undefined;
+      const maEventType = (uf?.maEventType ?? 'NONE') as Parameters<typeof detectAcquisitionPremium>[0]['maEventType'];
+      const premium = detectAcquisitionPremium({
+        maEventType,
+        monthsPostClose: typeof uf?.maMonthsPostClose === 'number' ? (uf.maMonthsPostClose as number) : undefined,
+        isAcquiredEmployee: typeof uf?.isAcquiredEmployee === 'boolean' ? (uf.isAcquiredEmployee as boolean) : true,
+        stock90DayChange: companyData.stock90DayChange ?? null,
+      });
+      if (premium.detected) {
+        (companyData as any)._acquisitionPremium = premium;
+        shadowScoreResult.signalQuality?.missingDataFallbacks?.push(
+          `WS3 acquisition premium: ${premium.rationale}`,
+        );
+      }
+    }
+  } catch (err) {
+    auditPipelineLog.warn('acquisition_premium.check_failed', {
+      company: inputs.companyName,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   const accuracyMetrics = computeAccuracyMetrics(shadowScoreResult.score, dqReport);
   (shadowScoreResult as any)._dataQuality = {
@@ -1140,7 +1396,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
 
   let hybridScoreResult: any | null = null;
   try {
-    const { data: hybridRes, error: hybridErr } = await supabase.functions.invoke(
+    // WS11 — invokeEdgeFunction injects x-request-id so the calculate-hybrid-risk
+    // pipeline_runs row joins to the originating audit by request_id.
+    const { data: hybridRes, error: hybridErr } = await invokeEdgeFunction<any>(
       "calculate-hybrid-risk",
       { body: hybridPayload },
     );
@@ -1618,9 +1876,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     noteEngineFailure('macroEconomicRisk', e);
   }
 
-  // 22. Peer Contagion — sector wave propagation model
+  // 22. Peer Contagion — sector wave propagation model.
+  //
+  // DEBT-1 migration: if the DAG already computed peer_contagion in its
+  // earlier phase, reuse that output. Otherwise (legacy path / DAG
+  // failed) fall back to a direct invocation. Reading the DAG result
+  // first avoids the duplicate I/O during the migration period.
   try {
-    const peerContagion = computePeerContagion({
+    const fromDag = dagContext?.read('peer_contagion');
+    const peerContagion = fromDag ?? await computePeerContagionLive({
       companyName: companyData.name,
       industry: companyData.industry ?? 'technology',
       currentScore: hybridResult.total,
@@ -2055,6 +2319,31 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (hybridResult as any).glassdoorVelocity = glassdoorVelocity;
   } catch (e) {
     noteEngineFailure('glassdoorVelocity', e);
+  }
+
+  // 43.5 — WS7 Layer consolidation: unified workforce velocity.
+  //
+  // Combines the just-computed headcountVelocity (step 36) + glassdoor
+  // Velocity (step 43) into a single consolidated workforce verdict.
+  // When ws7_layer_consolidation flag is off, returns passthrough mode
+  // (direction='UNKNOWN', isPassthrough=true) so legacy panels keep
+  // displaying both legacy sub-results unchanged.
+  try {
+    const workforceVelocity = computeWorkforceVelocity({
+      headcount: {
+        headcountChange6MonthPct: uf14.headcountChange6MonthPct ?? null,
+        contractorRatioPct: uf14.contractorRatioPct ?? null,
+        contractorTrend: uf14.contractorTrend ?? 'UNKNOWN',
+        jobPostingCurrentMonth: uf14.jobPostingCurrentMonth ?? hiringSignalResult?.estimatedOpenings ?? null,
+        jobPostingLastMonth: uf14.jobPostingLastMonth ?? null,
+        hiringRateAnnualized: uf14.hiringRateAnnualized ?? null,
+        voluntaryAttritionPct: uf14.voluntaryAttritionPct ?? null,
+      },
+      sentimentHistory: _v16GlassdoorHistory,
+    });
+    (hybridResult as any).workforceVelocity = workforceVelocity;
+  } catch (e) {
+    noteEngineFailure('workforceVelocity', e);
   }
 
   // 44. Executive Departure Pattern — departure destination + replacement archetype

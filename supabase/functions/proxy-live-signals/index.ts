@@ -7,6 +7,8 @@
 // APIs are BACKUP ONLY — system works fully without any API key configured.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+// WS10 — withRun stamps pipeline_runs with the x-request-id from invokeEdgeFunction.
+import { withRun } from "../_shared/otel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -910,9 +912,13 @@ function scrapeGlassdoorCompany(_companyName: string): Promise<{ rating: number 
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+Deno.serve((req) =>
+  // WS10 — withRun wraps every invocation. It handles OPTIONS preflight
+  // and error capture; the inner handler below contains only the
+  // business logic. _run is unused for now but available if the proxy
+  // later wants to call run.setItemsIn / recordFallback on specific
+  // source failures.
+  withRun("proxy-live-signals", req, async (_run) => {
   try {
     const { companyName, ticker, action, roleTitle } = await req.json() as Record<string, string>;
     if (!action) return json({ error: "action required (stock|news|both|hiring|scrape)" }, 400);
@@ -1062,4 +1068,4 @@ Deno.serve(async (req) => {
     console.error("[proxy-live-signals] Fatal:", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }
-});
+  }));

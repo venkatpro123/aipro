@@ -20,6 +20,39 @@
 //   3. Return median of remaining sources, with `agreement` = fraction of
 //      sources within ±15% of the median.
 
+// WS9 — count-multiplier table sourced from engine_calibration_constants.
+import { getConstant } from './calibration/calibrationConstants';
+
+interface CountMultipliers {
+  singleSource: number;            // 1 source — penalty for no cross-check
+  twoSourceAgree: number;          // 2 sources within ±15%
+  twoSourceDisagree: number;       // 2 sources outside ±15%
+  threePlusAllAgree: number;       // 3+, every accepted source within ±15%
+  threePlusNoneRejected: number;   // 3+, no outliers dropped
+  threePlusOneRejected: number;    // 3+, 1 outlier dropped
+  threePlusMultiRejected: number;  // 3+, 2+ outliers dropped
+}
+
+const BOOTSTRAP_COUNT_MULTIPLIERS: CountMultipliers = {
+  singleSource:           0.80,
+  twoSourceAgree:         1.00,
+  twoSourceDisagree:      0.70,
+  threePlusAllAgree:      1.00,
+  threePlusNoneRejected:  0.95,
+  threePlusOneRejected:   0.90,
+  threePlusMultiRejected: 0.75,
+};
+
+function resolveCountMultipliers(): CountMultipliers {
+  const r = getConstant<CountMultipliers>(
+    'headcountConsensus.countMultipliers',
+    BOOTSTRAP_COUNT_MULTIPLIERS,
+  );
+  return (r.value && typeof r.value === 'object')
+    ? { ...BOOTSTRAP_COUNT_MULTIPLIERS, ...r.value }  // shallow merge so partial overrides are safe
+    : BOOTSTRAP_COUNT_MULTIPLIERS;
+}
+
 export type HeadcountSourceKey =
   | 'wikipedia'
   | 'yahoo-fte'
@@ -71,6 +104,82 @@ const median = (xs: number[]): number => {
     : sorted[mid];
 };
 
+// ── Symmetric outlier detection (WS3 fix for Audit Issue #9) ────────────────
+//
+// The legacy rule "reject ratio > 10 or < 0.1" is technically symmetric in the
+// ratio sense, but in absolute headcount terms a 6× downward miss is far more
+// damaging than a 10× upward miss because the consensus median can be pulled
+// below the true value by a single subsidiary career-page mention
+// ("we are 50,000+ professionals" inside the parent's group of 317,000).
+//
+// We replace it with the Modified Z-Score using MAD (Median Absolute
+// Deviation). MAD is robust to outliers because the threshold itself is not
+// inflated by the values being judged. Threshold k = 3.5 follows the standard
+// Iglewicz–Hoaglin convention.
+//
+//   modZ_i = 0.6745 × (x_i − median) / MAD
+//   reject when |modZ_i| > 3.5
+//
+// Edge cases:
+//   * n = 1 or 2 — MAD is unreliable; we fall back to the legacy 10× ratio
+//                  rule, which is more permissive but the only sensible
+//                  choice with so few points.
+//   * MAD = 0    — all retained values are identical; outliers from the
+//                  filtered set are anything that disagrees at all. We use a
+//                  fixed 25% fractional tolerance in that case.
+
+interface OutlierClassification {
+  accepted: HeadcountSourceInput[];
+  rejected: HeadcountSourceInput[];
+}
+
+function classifyOutliersMAD(plausible: HeadcountSourceInput[]): OutlierClassification {
+  if (plausible.length <= 2) {
+    // MAD with 1-2 data points is meaningless. Use legacy 10× ratio rule.
+    const ref = median(plausible.map((s) => s.value));
+    const accepted: HeadcountSourceInput[] = [];
+    const rejected: HeadcountSourceInput[] = [];
+    for (const s of plausible) {
+      const ratio = s.value / ref;
+      if (plausible.length === 1 || (ratio <= 10 && ratio >= 0.1)) {
+        accepted.push(s);
+      } else {
+        rejected.push(s);
+      }
+    }
+    return { accepted, rejected };
+  }
+
+  const values = plausible.map((s) => s.value);
+  const med = median(values);
+  const absDevs = values.map((v) => Math.abs(v - med));
+  const mad = median(absDevs);
+
+  const accepted: HeadcountSourceInput[] = [];
+  const rejected: HeadcountSourceInput[] = [];
+
+  if (mad === 0) {
+    // All values identical or near-identical: reject anything > 25% off.
+    for (const s of plausible) {
+      const ratio = med === 0 ? 1 : s.value / med;
+      if (ratio >= 0.75 && ratio <= 1.25) accepted.push(s);
+      else rejected.push(s);
+    }
+    return { accepted, rejected };
+  }
+
+  const threshold = 3.5;
+  for (const s of plausible) {
+    const modZ = (0.6745 * (s.value - med)) / mad;
+    if (Math.abs(modZ) > threshold) {
+      rejected.push(s);
+    } else {
+      accepted.push(s);
+    }
+  }
+  return { accepted, rejected };
+}
+
 /**
  * Fuse multiple headcount sources into a single confidence-weighted value.
  *
@@ -99,24 +208,13 @@ export function computeHeadcountConsensus(
     };
   }
 
-  // Outlier rejection: drop any source whose value is > 10× the median or < 1/10×.
-  // Use median of the OTHER sources as the reference so a single outlier doesn't
-  // poison the threshold.
-  const allValues = plausible.map(s => s.value);
-  const globalMedian = median(allValues);
-  const accepted: HeadcountSourceInput[] = [];
-  const rejected: HeadcountSourceKey[] = [];
-
-  for (const s of plausible) {
-    const ratio = s.value / globalMedian;
-    // Single-source case: never reject.
-    if (plausible.length === 1) { accepted.push(s); continue; }
-    if (ratio > 10 || ratio < 0.1) {
-      rejected.push(s.source);
-    } else {
-      accepted.push(s);
-    }
-  }
+  // Symmetric outlier rejection via Modified Z-Score (MAD). Catches both
+  // high-side outliers ("LinkedIn 5M" for a 10k company) and the more common
+  // low-side case ("career page mentions a 50k subsidiary at a 317k parent").
+  // See classifyOutliersMAD for edge-case behaviour.
+  const classification = classifyOutliersMAD(plausible);
+  const accepted = classification.accepted;
+  const rejected: HeadcountSourceKey[] = classification.rejected.map((s) => s.source);
 
   if (accepted.length === 0) {
     // All sources were considered outliers vs each other — return the highest-
@@ -147,13 +245,18 @@ export function computeHeadcountConsensus(
 
   // Confidence: combine max source reliability with source count and agreement.
   const maxReliability = Math.max(...accepted.map(s => SOURCE_RELIABILITY[s.source] ?? 0.4));
+  // WS9 — the count×agreement multiplier table is sourced from
+  // engine_calibration_constants under
+  // 'headcountConsensus.countMultipliers'. Bootstrap fallback preserves
+  // the legacy behaviour exactly. recalibrate-engine target.
+  const multipliers = resolveCountMultipliers();
   const countMultiplier =
-    accepted.length === 1 ? 0.80
-    : accepted.length === 2 ? (agreement === 1 ? 1.00 : 0.70)
-    : agreement === 1        ? 1.00
-    : rejected.length === 0  ? 0.95   // 3+ sources, all retained
-    : rejected.length === 1  ? 0.90
-    : 0.75;
+    accepted.length === 1 ? multipliers.singleSource
+    : accepted.length === 2 ? (agreement === 1 ? multipliers.twoSourceAgree : multipliers.twoSourceDisagree)
+    : agreement === 1        ? multipliers.threePlusAllAgree
+    : rejected.length === 0  ? multipliers.threePlusNoneRejected
+    : rejected.length === 1  ? multipliers.threePlusOneRejected
+    : multipliers.threePlusMultiRejected;
   const confidence = Math.min(1, maxReliability * countMultiplier);
 
   return {

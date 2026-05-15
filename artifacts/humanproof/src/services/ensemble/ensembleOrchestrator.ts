@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { supabase } from "../../utils/supabase";
+import { invokeEdgeFunction } from "../../infrastructure/requestId";
 import {
   aggregateEnsembleResults,
   AggregateResult,
@@ -850,7 +851,7 @@ export const runFullEnsembleAnalysis = async (
 
     try {
       _timer?.mark('llm_start');
-      const { data: llmData, error: llmError } = await supabase.functions.invoke('llm-analyze', {
+      const { data: llmData, error: llmError } = await invokeEdgeFunction<any>('llm-analyze', {
         body: {
           companyName,
           roleTitle,

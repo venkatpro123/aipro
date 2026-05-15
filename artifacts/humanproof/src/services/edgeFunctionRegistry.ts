@@ -12,6 +12,7 @@
 // Registry is authoritative — add an entry here when deploying a new EF.
 
 import { supabase } from '../utils/supabase';
+import { invokeEdgeFunction } from '../infrastructure/requestId';
 
 export interface EFRegistryEntry {
   /** Supabase function name (matches supabase/functions/<name>/index.ts) */
@@ -138,7 +139,7 @@ export async function checkEdgeFunctionHealth(
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 3_000);
 
-        const { error } = await supabase.functions.invoke(entry.name, {
+        const { error } = await invokeEdgeFunction(entry.name, {
           body: { _healthCheck: true },
         });
 

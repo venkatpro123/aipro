@@ -1,6 +1,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 import { TASK_AUTO, DISRUPTION_VELOCITY, AUGMENTATION, NETWORK_MOAT, EXP_SENSITIVITY, EXP_RISK_BASE, COUNTRY_DATA, INDUSTRY_KEY_MULT, D3_CURVE_EXPONENT } from './riskData.ts';
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,11 +10,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+Deno.serve((req) =>
+  withRun('calculate-grounded-risk', req, async (_run) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -353,4 +352,4 @@ Follow the exact same schema. Respond ONLY with JSON.`;
     });
   }
 
-});
+  }));

@@ -1,0 +1,60 @@
+# CODEOWNERS — automated reviewer routing.
+#
+# GitHub uses this file to auto-request reviews when a PR touches a
+# matching path. The first matching rule wins, so list specific paths
+# BEFORE generic ones. Treat the @teams here as the source of truth
+# for "who must approve a PR touching X."
+#
+# Sync any team-rename here in the same PR as the GitHub change — a
+# missing team becomes a silent "no reviewer required."
+
+# ── Default: the platform team gets pinged on anything not otherwise routed.
+*                                                       @platform
+
+# ── Security-critical surfaces — two approvals required (configured at the
+# repo-level branch protection rule; CODEOWNERS just routes the requests).
+/supabase/migrations/                                   @platform @data-eng
+/supabase/migrations/*RLS*                              @platform @data-eng @security
+/supabase/migrations/*POLICY*                           @platform @data-eng @security
+/supabase/migrations/*tenants*                          @platform @data-eng @security
+/supabase/functions/                                    @platform
+/supabase/functions/_shared/                            @platform
+
+# ── Auth / RLS code paths
+/artifacts/humanproof/src/repositories/                 @platform
+/artifacts/humanproof/src/infrastructure/               @platform
+/artifacts/humanproof/src/__tests__/integration/rlsIsolation.test.ts  @platform @security
+
+# ── Scoring engine — the empirical-trust surface
+/artifacts/humanproof/src/services/empiricalCalibration.ts     @ml-eng
+/artifacts/humanproof/src/services/calibrationBacktester.ts    @ml-eng
+/artifacts/humanproof/src/services/conformalCI.ts              @ml-eng
+/artifacts/humanproof/src/services/confidenceModel.ts          @ml-eng
+/artifacts/humanproof/src/services/segmentedCalibrationEngine.ts @ml-eng
+/artifacts/humanproof/src/services/strategyArchetypes.ts       @ml-eng
+/artifacts/humanproof/src/domain/pipeline/                     @platform @ml-eng
+
+# ── Frontend
+/artifacts/humanproof/src/components/                   @frontend
+/artifacts/humanproof/src/pages/                        @frontend
+/artifacts/humanproof/src/styles/                       @frontend
+/artifacts/humanproof/index.html                        @frontend
+
+# ── Docs — anyone on platform can approve, but docs/adr/ specifically
+# needs the architect role to keep ADRs from drifting from reality.
+/artifacts/humanproof/docs/adr/                         @platform @architect
+/artifacts/humanproof/docs/runbooks/                    @platform @oncall
+/artifacts/humanproof/docs/DISASTER_RECOVERY.md         @platform @oncall
+
+# ── CI + tooling
+/.github/                                               @platform
+/.github/workflows/                                     @platform @devops
+/scripts/                                               @platform @devops
+/CONTRIBUTING.md                                        @platform
+/CODEOWNERS                                             @platform
+
+# ── Scraper service (Fly.io)
+/artifacts/scraper/                                     @data-eng
+
+# ── Lib (shared between browser + edge)
+/lib/                                                   @platform

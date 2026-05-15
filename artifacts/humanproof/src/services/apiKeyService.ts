@@ -79,7 +79,7 @@ export function createApiKey(input: CreateKeyInput): CreatedApiKey {
   keys.push(newKey);
   // Persist without fullKey — UI is responsible for showing it once.
   writeKeys(keys.map(k => (k.id === newKey.id ? { ...k, fullKey: undefined } : k)));
-  shadowSync(newKey).catch(() => undefined);
+  shadowSync(newKey).catch(() => undefined); // arch-allow:R2 fire-and-forget shadow-write; canonical state already saved locally
   track('api_key_created', { scopes: newKey.scopes, label: newKey.label });
   return newKey as CreatedApiKey;
 }
@@ -90,13 +90,13 @@ export function revokeApiKey(id: string): void {
   );
   writeKeys(keys);
   track('api_key_revoked', { id });
-  fetch(`${API}/${id}`, { method: 'DELETE' }).catch(() => undefined);
+  fetch(`${API}/${id}`, { method: 'DELETE' }).catch(() => undefined); // arch-allow:R2 fire-and-forget server cleanup; local state authoritative
 }
 
 export function deleteApiKey(id: string): void {
   writeKeys(readKeys().filter(k => k.id !== id));
   track('api_key_deleted', { id });
-  fetch(`${API}/${id}?hard=true`, { method: 'DELETE' }).catch(() => undefined);
+  fetch(`${API}/${id}?hard=true`, { method: 'DELETE' }).catch(() => undefined); // arch-allow:R2 fire-and-forget server cleanup; local state authoritative
 }
 
 async function shadowSync(key: ApiKey): Promise<void> {

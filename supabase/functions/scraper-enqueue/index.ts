@@ -10,6 +10,8 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { encodeHex } from 'jsr:@std/encoding/hex';
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
 
 interface DueCompany {
   company_name:    string;
@@ -124,7 +126,8 @@ function jobsForCompany(c: DueCompany): JobPayload[] {
   return jobs;
 }
 
-Deno.serve(async (req) => {
+Deno.serve((req) =>
+  withRun('scraper-enqueue', req, async (_run) => {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return new Response('method not allowed', { status: 405 });
   }
@@ -318,4 +321,4 @@ Deno.serve(async (req) => {
       { status: 503 },
     );
   }
-});
+  }));

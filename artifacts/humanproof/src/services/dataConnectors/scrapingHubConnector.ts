@@ -8,6 +8,7 @@
 // Called concurrently with other data fetches in liveDataService.
 
 import { supabase } from '../../utils/supabase';
+import { invokeEdgeFunction } from '../../infrastructure/requestId';
 
 export interface ScrapedCompanyEnrichment {
   /** Headcount from Wikipedia infobox — reliable for large public companies */
@@ -42,7 +43,7 @@ export async function fetchScrapedEnrichment(
   };
 
   try {
-    const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+    const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
       body: { action: 'scrape', companyName, timeoutMs },
     });
 

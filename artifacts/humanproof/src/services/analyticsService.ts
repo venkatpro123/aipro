@@ -1,5 +1,12 @@
 // analyticsService.ts
 // Posthog-compatible analytics client with localStorage buffering and fire-and-forget sync.
+//
+// WS10 — bounded in-memory buffer + observable drop counter. The
+// previous implementation pushed onto bufferedEvents without bound; a
+// long-lived tab whose flush endpoint was returning 5xx could grow the
+// array to thousands of entries before reload cleared it. Now the
+// in-memory array is hard-capped; overflow drops oldest and bumps
+// bufferedEventsDropped which the audit pipeline can read.
 
 const DISTINCT_ID_KEY = 'humanproof_distinct_id';
 const SESSION_ID_KEY = 'humanproof_session_id';
@@ -12,6 +19,11 @@ let sessionId: string | null = null;
 let bufferedEvents: Array<{event: string; properties: Record<string, any>}> = [];
 let flushTimer: ReturnType<typeof setInterval> | null = null;
 let lastFlush = 0;
+// WS10 — count of events dropped due to bounded buffer overflow. The
+// audit pipeline reads this on each flush; a sustained non-zero value
+// indicates the analytics endpoint is failing and the SLO dashboard
+// should surface it.
+let bufferedEventsDropped = 0;
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -83,7 +95,7 @@ function sendBeaconOrFetch(data: string): void {
         headers: { 'Content-Type': 'application/json' },
         keepalive: true,
         signal: AbortSignal.timeout(3000),
-      }).catch(() => undefined);
+      }).catch(() => undefined); // arch-allow:R2 fire-and-forget analytics beacon
     }
   } catch {}
 }
@@ -91,6 +103,13 @@ function sendBeaconOrFetch(data: string): void {
 export function track(event: string, properties: Record<string, any> = {}): void {
   const entry = { event, properties: { ...properties, timestamp: new Date().toISOString() } };
   bufferedEvents.push(entry);
+  // WS10 — enforce the cap on the in-memory array too (not just at
+  // localStorage write time). Drop oldest, count the drop.
+  if (bufferedEvents.length > MAX_BUFFER_SIZE) {
+    const overflow = bufferedEvents.length - MAX_BUFFER_SIZE;
+    bufferedEvents.splice(0, overflow);
+    bufferedEventsDropped += overflow;
+  }
   saveBufferedEvents();
 }
 
@@ -141,6 +160,23 @@ export function getBufferedEvents() {
   return [...bufferedEvents];
 }
 
+/** WS10 — observable counter for SLO dashboard. */
+export function getBufferedEventsDropped(): number {
+  return bufferedEventsDropped;
+}
+
+/**
+ * WS10 — explicit teardown. The flushTimer setInterval is never cleared
+ * on its own; long-lived SPAs with HMR can accumulate timers across
+ * remounts. Tests + cleanup-aware hosts call this on unmount.
+ */
+export function shutdown(): void {
+  if (flushTimer) {
+    clearInterval(flushTimer);
+    flushTimer = null;
+  }
+}
+
 export const analytics = {
   track,
   page,
@@ -149,6 +185,8 @@ export const analytics = {
   reset,
   getDistinctId,
   getBufferedEvents,
+  getBufferedEventsDropped,
+  shutdown,
 };
 
 if (typeof window !== 'undefined') {

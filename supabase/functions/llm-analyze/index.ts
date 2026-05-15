@@ -4,6 +4,8 @@ import {
   normalizeModelResponse,
   validateModelResponse,
 } from './promptFramework.ts';
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -182,9 +184,8 @@ async function handleNewsExtraction(req: Request, openrouterKey: string): Promis
   return json({ success: false, error: errors.join(' | ') });
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
+Deno.serve((req) =>
+  withRun('llm-analyze', req, async (_run) => {
   // Branch on mode BEFORE consuming the body in the legacy path.
   // Note: we must peek without consuming, so clone the request.
   let mode: string | undefined;
@@ -271,4 +272,4 @@ Deno.serve(async (req) => {
     console.error('[llm-analyze] Fatal:', message);
     return json({ success: false, fallback: true, error: message }, 500);
   }
-});
+  }));

@@ -10,6 +10,7 @@ import { runScrapingPipeline, applyScrapingEnrichment } from './scrapingOrchestr
 import type { CompanyData } from '../data/companyDatabase';
 import { enrichCompanySignals } from './dataConnectors/index';
 import { supabase as _supabase } from '../utils/supabase';
+import { invokeEdgeFunction } from '../infrastructure/requestId';
 import {
   recordApiDegradation,
   isRateLimitError,
@@ -25,6 +26,13 @@ import {
   getCircuitSnapshot,
 } from './apiCircuitBreaker';
 import type { PipelineTimerInstance } from './pipelineTimer';
+// WS3 — Evidence hierarchy veto for reconcileCompanySignals (Audit Issue #7).
+import { classifySourceToTier, shouldVetoOverride } from './evidenceHierarchy';
+import { evaluateFlagSync } from '../config/featureFlags';
+// WS9 + WS10 — confidence caps come from DB (with bootstrap fallback),
+// and the "we capped you" event is observable in layer_fallback_log.
+import { getConstant } from './calibration/calibrationConstants';
+import { markFallback } from './observability/withFallback';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -184,7 +192,7 @@ const fetchViaProxy = async (
 ): Promise<{ stockData: any; newsData: any; errors: string[] }> => {
   if (!_supabase) return { stockData: null, newsData: null, errors: ['Supabase client not initialised'] };
 
-  const { data, error } = await _supabase.functions.invoke('proxy-live-signals', {
+  const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
     body: { companyName, ticker, action },
   });
 
@@ -532,10 +540,24 @@ export const fetchLiveCompanyData = async (
   // Result applied to companyData after reconciliation (in auditDataPipeline).
   // Unknown companies get a higher-priority, extended-timeout scraping pass since
   // Wikipedia headcount + career-page freeze are their only non-heuristic signals.
+  // WS10 — null is the legitimate "scrape pipeline failed/timed out"
+  // signal that downstream reconciliation handles, but the FACT that
+  // scraping failed is observability-worthy. markFallback writes one
+  // row to layer_fallback_log so a sudden spike in scrape failures
+  // (Glassdoor anti-bot, Naukri rate-limit, Wikipedia parser drift) is
+  // visible on the SLO dashboard instead of being silently masked.
   const _scrapingPipelinePromise = runScrapingPipeline(
     companyName, null,
     isUnknownCompany ? { isUnknownCompany: true } : undefined,
-  ).catch(() => null);
+  ).catch((err: unknown) => {
+    markFallback({
+      layerId: 'liveDataService.runScrapingPipeline',
+      reason: 'exception',
+      companyCanonical: companyName,
+      rationale: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  });
 
   // ── Stock + News via server-side proxy (API keys stay on server) ──────────
   let stockData: StockLiveData | null = null;
@@ -1260,6 +1282,45 @@ const chooseAuthoritativeSignal = <T>({
     }
   }
 
+  // WS3 — Evidence-hierarchy veto (Audit Issue #7).
+  //
+  // The legacy logic above prefers a fresher live source even when it is from
+  // a lower-authority tier than the incumbent DB source. We now check whether
+  // the chosen source would violate the evidence hierarchy: if it is two or
+  // more tiers below an available alternative, the higher-tier source wins
+  // regardless of freshness.
+  //
+  // This is gated behind `ws3_evidence_hierarchy` — when off, behaviour is
+  // unchanged from the legacy freshness-only path.
+  if (chosen) {
+    const flag = evaluateFlagSync('ws3_evidence_hierarchy');
+    if (flag.isActive || flag.isShadow) {
+      // Build the candidate list for tier comparison.
+      const rawCandidates: Array<{ tag: 'db' | 'live' | 'heuristic'; signal: ProvenancedSignal<T> | null }> = [
+        { tag: 'db' as const,        signal: dbSignal },
+        { tag: 'live' as const,      signal: liveSignal },
+        { tag: 'heuristic' as const, signal: heuristicSignal ?? null },
+      ];
+      const candidates = rawCandidates.filter((c): c is { tag: 'db' | 'live' | 'heuristic'; signal: ProvenancedSignal<T> } => c.signal != null);
+
+      const chosenTier = classifySourceToTier(chosen.sourceName ?? '');
+      for (const c of candidates) {
+        if (c.signal === chosen) continue;
+        const candidateTier = classifySourceToTier(c.signal.sourceName ?? '');
+        if (shouldVetoOverride(candidateTier, chosenTier)) {
+          // The chosen signal is too far below the alternative on the
+          // authority ladder; the alternative wins.
+          summary.confidenceCapsApplied = [
+            ...(summary.confidenceCapsApplied ?? []),
+            `${key}[evidence-hierarchy-veto: ${chosen.sourceName}→${c.signal.sourceName}]`,
+          ];
+          chosen = c.signal;
+          break;
+        }
+      }
+    }
+  }
+
   if (chosen?.source === 'live') {
     summary.liveWonKeys.push(key);
     chosen.supersedes = dbSignal ? [dbSignal.sourceName] : undefined;
@@ -1611,12 +1672,34 @@ export const reconcileCompanySignals = (
     !stockSignal &&
     !revenueSignal;
   if (criticalFinancialGap) {
-    confidenceCap = 0.35;
-    confidenceCapsApplied.push('Critical live financial signal failure with no direct substitute. Confidence capped at 35%.');
+    // WS9 — cap value now comes from a versioned constant (provenance='manual_seed',
+    // bootstrap 0.35 if the DB row is missing). WS10 — the cap event is recorded
+    // in layer_fallback_log so SLO dashboards can detect a sudden rise in
+    // critical-financial-gap audits (Alpha Vantage outage, ticker resolution bug, …).
+    const cap = getConstant<number>('liveDataService.confidenceCap.criticalFinancialGap', 0.35);
+    confidenceCap = typeof cap.value === 'number' ? cap.value : 0.35;
+    confidenceCapsApplied.push(`Critical live financial signal failure with no direct substitute. Confidence capped at ${Math.round(confidenceCap * 100)}%.`);
     hardFailures.push('Critical financial live signals unavailable for a public company and no direct DB substitute exists.');
+    markFallback({
+      layerId: 'liveDataService.criticalFinancialGap',
+      reason: 'null_input',
+      fallbackValue: confidenceCap,
+      layerKind: 'intelligence_layer',
+      companyCanonical: base.name ?? null,
+      rationale: `cap=${confidenceCap} (provenance=${cap.provenance}, key=${cap.key})`,
+    });
   } else if (failedClassRatio > 0.4) {
-    confidenceCap = 0.55;
-    confidenceCapsApplied.push('More than 40% of intended live signal classes failed. Confidence capped at 55%.');
+    const cap = getConstant<number>('liveDataService.confidenceCap.failedClassRatio', 0.55);
+    confidenceCap = typeof cap.value === 'number' ? cap.value : 0.55;
+    confidenceCapsApplied.push(`More than 40% of intended live signal classes failed. Confidence capped at ${Math.round(confidenceCap * 100)}%.`);
+    markFallback({
+      layerId: 'liveDataService.failedClassRatio',
+      reason: 'null_input',
+      fallbackValue: confidenceCap,
+      layerKind: 'intelligence_layer',
+      companyCanonical: base.name ?? null,
+      rationale: `cap=${confidenceCap}, failedClassRatio=${failedClassRatio.toFixed(2)} (provenance=${cap.provenance})`,
+    });
   }
 
   const newestChosenAt = Object.values(signals)

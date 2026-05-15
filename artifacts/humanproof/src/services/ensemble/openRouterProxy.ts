@@ -14,6 +14,7 @@
 // it must be REMOVED from production builds.
 
 import { supabase } from '../../utils/supabase';
+import { invokeEdgeFunction } from '../../infrastructure/requestId';
 import { recordApiDegradation, isRateLimitError } from '../apiDegradationMonitor';
 
 export interface OpenRouterProxyRequest {
@@ -42,7 +43,7 @@ export async function callOpenRouterProxy(
 ): Promise<OpenRouterProxyResponse> {
   // ── Production path: Edge Function holds the key ───────────────────────
   try {
-    const { data, error } = await supabase.functions.invoke('multi-model-analyze', {
+    const { data, error } = await invokeEdgeFunction<any>('multi-model-analyze', {
       body: {
         model:          req.model,
         prompt:         req.prompt,

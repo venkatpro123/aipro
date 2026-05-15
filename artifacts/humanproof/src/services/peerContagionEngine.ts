@@ -25,6 +25,10 @@
 
 import { COMPANY_PEERS_DB as COMPANY_PEERS, PeerRelationship } from '../data/companyPeers';
 import { layoffNewsCache } from '../data/layoffNewsCache';
+// WS9 — peer contribution + recency-decay weights are uncalibrated
+// developer estimates. Routed through getConstant so the recalibrate
+// cron can replace them with empirical regression values.
+import { getConstant } from './calibration/calibrationConstants';
 
 export type ContagionWaveIntensity =
   | 'NONE'        // 0 peers cut in last 180 days
@@ -73,22 +77,47 @@ export interface PeerContagionInputs {
 
 // ── Contagion wave scoring constants ─────────────────────────────────────────
 
-// How much each peer type contributes to the wave score per cut event
-const PEER_CONTRIBUTION_WEIGHT: Record<PeerRelationship['relationshipType'], number> = {
+// WS9 — uncalibrated developer-estimate weights. The bootstrap defaults
+// preserve legacy behaviour exactly; the DB constant 'peerContagionEngine.contributionWeights'
+// can override the entire record (recalibrate-engine target).
+const BOOTSTRAP_PEER_CONTRIBUTION_WEIGHT: Record<PeerRelationship['relationshipType'], number> = {
   direct_competitor:      1.0,   // Full weight — same product market
   adjacent_market:        0.65,  // Partial weight — same sector, different buyer
   same_sector_large_cap:  0.50,  // Sector-level signal
   same_sector_mid_cap:    0.35,  // Weaker signal
 };
 
-// Recency decay: cuts in last 30 days > 90 days (exponential decay)
+function getPeerContributionWeight(type: PeerRelationship['relationshipType']): number {
+  const resolved = getConstant<Record<PeerRelationship['relationshipType'], number>>(
+    'peerContagionEngine.contributionWeights',
+    BOOTSTRAP_PEER_CONTRIBUTION_WEIGHT,
+  );
+  const map = (resolved.value && typeof resolved.value === 'object')
+    ? resolved.value
+    : BOOTSTRAP_PEER_CONTRIBUTION_WEIGHT;
+  return map[type] ?? BOOTSTRAP_PEER_CONTRIBUTION_WEIGHT[type] ?? 0;
+}
+
+// WS9 — recency decay thresholds. Each band is a (max-days, weight) pair.
+// Same override mechanism as the contribution weights.
+const BOOTSTRAP_RECENCY_DECAY: ReadonlyArray<[number, number]> = [
+  [14,  1.00],
+  [30,  0.90],
+  [60,  0.70],
+  [90,  0.50],
+  [180, 0.25],
+];
+
 function recencyWeight(daysAgo: number): number {
-  if (daysAgo <= 14) return 1.00;
-  if (daysAgo <= 30) return 0.90;
-  if (daysAgo <= 60) return 0.70;
-  if (daysAgo <= 90) return 0.50;
-  if (daysAgo <= 180) return 0.25;
-  return 0.0;
+  const resolved = getConstant<ReadonlyArray<[number, number]>>(
+    'peerContagionEngine.recencyDecayBands',
+    BOOTSTRAP_RECENCY_DECAY,
+  );
+  const bands = Array.isArray(resolved.value) ? resolved.value : BOOTSTRAP_RECENCY_DECAY;
+  for (const [maxDays, weight] of bands) {
+    if (daysAgo <= maxDays) return weight;
+  }
+  return 0;
 }
 
 function computeWaveIntensity(directCuts: number, adjacentCuts: number, daysWindow: number): ContagionWaveIntensity {
@@ -229,7 +258,7 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
     const layoffData = checkPeerLayoffsFromCache(peer.peerCompanyId);
     if (!layoffData.found) continue;
 
-    const weight = PEER_CONTRIBUTION_WEIGHT[peer.relationshipType];
+    const weight = getPeerContributionWeight(peer.relationshipType);
     const decay = recencyWeight(layoffData.daysAgo);
     const contribution = weight * decay;
 

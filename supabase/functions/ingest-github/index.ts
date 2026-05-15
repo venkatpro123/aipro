@@ -20,6 +20,8 @@
 // ON CONFLICT DO NOTHING.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from "../_shared/otel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -112,9 +114,8 @@ async function fetchOrgVelocity(
   return { recent30d, prior90d, reposChecked: active.length };
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+Deno.serve((req) =>
+  withRun('ingest-github', req, async (_run) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SERVICE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN") ?? undefined;
@@ -211,4 +212,4 @@ Deno.serve(async (req) => {
   }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-});
+  }));

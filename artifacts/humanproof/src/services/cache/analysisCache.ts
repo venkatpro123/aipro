@@ -1,23 +1,32 @@
 // analysisCache.ts
-// Dual-layer cache: localStorage (1h) → Supabase (24h TTL)
+// Dual-layer cache: localStorage (30min) → Supabase (30min TTL).
 //
-// TTL rationale:
-//   1 hour local:  short enough that a breaking layoff event within the same session
-//                  will be picked up when the user re-submits after an hour. The
-//                  previous 24h TTL meant stale cached results persisted through the
-//                  entire working day, hiding intra-day news events.
-//   24h remote:    cross-device deduplication; expired entries are stale enough that
-//                  a fresh fetch is warranted.
+// WS12 — TTL collapsed to a single 30-min value (cacheConfig.ts).
+// Previously this file held its own LOCAL_TTL_MS (10min) and
+// REMOTE_TTL_MS (2h) which combined with scraperTrigger's
+// FRESH_WINDOW_MS (30min) gate produced an inconsistent "fresh" rule:
+// a Supabase entry 1h45m old could be served while the gate believed
+// the cache was fresh. cacheConfig.CACHE_TTL_MS is the new single
+// source of truth.
 //
-// Breaking-news invalidation: invalidateForCompany() below clears cache entries for a
-// specific company key so that injectLayoffEvent() can force fresh scoring immediately.
+// WS12 — local-cache timestamp bug fixed. The legacy code stamped
+// `timestamp: Date.now()` when promoting a Supabase hit to local
+// storage. That reset the local TTL on every remote hit, so a
+// long-lived tab could keep a 2h-stale Supabase entry "fresh" forever.
+// Now the original `created_at` from the Supabase row is preserved.
 //
-// Table required: layoff_analysis_cache (id UUID, key TEXT UNIQUE, data JSONB, created_at TIMESTAMPTZ)
+// Breaking-news invalidation: invalidateForCompany() below clears
+// cache entries for a specific company key so injectLayoffEvent() can
+// force fresh scoring immediately.
+//
+// Table required: layoff_analysis_cache (id UUID, key TEXT UNIQUE,
+// data JSONB, created_at TIMESTAMPTZ).
 
 import { supabase } from '../../utils/supabase';
+import { LOCAL_CACHE_TTL_MS, REMOTE_CACHE_TTL_MS } from './cacheConfig';
 
-const LOCAL_TTL_MS  = 1000 * 60 * 10;            // 10 minutes (was 1h — live-first: re-fetch after brief session)
-const REMOTE_TTL_MS = 1000 * 60 * 60 * 2;       // 2 hours    (was 24h — avoid yesterday's stale analysis)
+const LOCAL_TTL_MS  = LOCAL_CACHE_TTL_MS;   // WS12: from cacheConfig
+const REMOTE_TTL_MS = REMOTE_CACHE_TTL_MS;  // WS12: from cacheConfig
 
 // BUG-09 FIX: strip heavy swarm visualization data before caching to prevent
 // localStorage quota overflow (~80KB → ~5KB per entry)
@@ -76,11 +85,15 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
 
     if (data && (Date.now() - new Date(data.created_at).getTime()) < REMOTE_TTL_MS) {
       console.log('[Cache] HIT Supabase:', key);
-      // Promote to localStorage for faster next access
+      // WS12 — promote to localStorage WITHOUT bumping the timestamp.
+      // Use the original Supabase created_at so the local TTL ages
+      // correctly. The legacy `Date.now()` here was the source of the
+      // "indefinite freshness" bug.
       try {
+        const originalMs = new Date(data.created_at).getTime();
         localStorage.setItem(
           `hp_ensemble_${key}`,
-          JSON.stringify({ data: data.data, timestamp: Date.now() })
+          JSON.stringify({ data: data.data, timestamp: originalMs })
         );
       } catch { /* storage full */ }
       return data.data;

@@ -17,6 +17,7 @@
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
 import { supabase } from '../../../../utils/supabase';
+import { invokeEdgeFunction } from '../../../../infrastructure/requestId';
 
 const NEGATION_PHRASES = [
   'denies layoff', 'deny layoff', 'no layoff', 'no plans to lay off',
@@ -79,7 +80,7 @@ function signalFromCount(count: number, maxPercentCut: number): number {
 const run = async (input: SwarmInput): Promise<AgentSignal> => {
   // ── Live path via server-side proxy (no NewsAPI key in browser) ───────────
   try {
-    const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+    const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
       body: { action: 'news', companyName: input.companyName },
     });
 

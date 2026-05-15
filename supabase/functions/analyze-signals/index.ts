@@ -1,5 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,11 +9,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+Deno.serve((req) =>
+  withRun('analyze-signals', req, async (_run) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -147,4 +146,4 @@ Do not include markdown or preamble.`;
       status: 500,
     });
   }
-});
+  }));

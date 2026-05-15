@@ -2,6 +2,9 @@
 // Replaces the dead localhost:8787 endpoint. All lookup tables embedded server-side.
 // Browser sends: roleKey, industry, experience, country, companyName (optional)
 
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -250,9 +253,8 @@ function getUrgency(score: number) {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+Deno.serve((req) =>
+  withRun('compute-oracle', req, async (_run) => {
   try {
     const { roleKey, industry = "it_software", experience = "5-10", country = "usa" } = await req.json();
     if (!roleKey) return json({ error: "roleKey required" }, 400);
@@ -335,4 +337,4 @@ Deno.serve(async (req) => {
     console.error("[compute-oracle] Error:", err.message);
     return json({ error: err.message }, 500);
   }
-});
+  }));

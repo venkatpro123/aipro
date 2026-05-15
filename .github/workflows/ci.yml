@@ -1,0 +1,165 @@
+name: CI
+
+# Required check on every PR + every push to main/master.
+# Four gates:
+#   1. typecheck — tsc clean across the frontend workspace
+#   2. tests     — full vitest suite green
+#   3. migration drift — no source migrations missing from staging
+#   4. edge functions — deno check + lint against every supabase/functions/*
+#
+# Gates 1, 2, 4 are mandatory; merging is blocked when any fails.
+# Gate 3 is mandatory ONLY when supabase/migrations/ was touched.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Gate 1 + 2: type-check + unit tests ─────────────────────────────
+  typecheck-and-test:
+    name: Typecheck + tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck (frontend)
+        run: pnpm --filter humanproof typecheck
+
+      - name: Run unit tests (frontend)
+        run: pnpm --filter humanproof test
+        env:
+          CI: 'true'
+
+      # v35.1 architecture-rules — replaces what would otherwise be five
+      # custom ESLint plugins with a focused regex-based audit. Hard
+      # rules (R1, R2-strict, R3, R5) fail CI; soft rules (R2, R4) emit
+      # advisories. Cheap and zero-dependency.
+      - name: Architecture rules
+        working-directory: artifacts/humanproof
+        run: node scripts/check-architecture-rules.mjs
+
+  # ── Gate 3: migration drift ─────────────────────────────────────────
+  # Runs only when a migration file changed. Compares
+  # supabase/migrations/*.sql against the live staging
+  # schema_migrations table and fails if drift exists.
+  migration-drift:
+    name: Migration drift (staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      github.event_name == 'push' ||
+      contains(toJson(github.event.pull_request.changed_files), 'supabase/migrations/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install root deps (script needs @supabase/supabase-js)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migration drift check
+        run: node scripts/check-migration-drift.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+
+  # ── Gate 4: edge function typecheck + lint ──────────────────────────
+  # The frontend tsc clean does not cover Deno code under
+  # supabase/functions/. Without this gate, a regression in a
+  # _shared/ module ships unnoticed until the function fails to
+  # deploy. `deno check` is fast (<30s for the whole directory).
+  edge-functions:
+    name: Edge functions (Deno check + lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Only when the edge functions or their shared modules changed.
+    if: |
+      github.event_name == 'push' ||
+      contains(toJson(github.event.pull_request.changed_files), 'supabase/functions/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Deno fmt check (style)
+        working-directory: supabase/functions
+        run: deno fmt --check
+        # Style failures emit a warning, not a hard fail — the team
+        # has not yet committed to enforcing fmt on every PR.
+        continue-on-error: true
+
+      - name: Deno lint (recommended rules)
+        working-directory: supabase/functions
+        run: deno lint
+
+      - name: Deno typecheck — every function entrypoint
+        working-directory: supabase/functions
+        # Skip _shared (no entrypoint), deno.json, and anything starting
+        # with a dot. Each function has an index.ts entrypoint; check
+        # them all in one invocation so type errors fail loudly.
+        run: |
+          ENTRYPOINTS=$(find . -mindepth 2 -maxdepth 2 -name 'index.ts' -not -path './_shared/*' -not -path './.*')
+          if [ -z "$ENTRYPOINTS" ]; then
+            echo "::error::no edge function entrypoints found — did the layout change?"
+            exit 1
+          fi
+          echo "Type-checking:"
+          echo "$ENTRYPOINTS"
+          deno check $ENTRYPOINTS
+
+  # ── Optional: SQL migration syntax check ─────────────────────────────
+  # Fast feedback — parses every .sql file with sqlfluff to catch
+  # obvious syntax errors before the drift check tries to apply them.
+  sql-syntax:
+    name: SQL syntax check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      github.event_name == 'push' ||
+      contains(toJson(github.event.pull_request.changed_files), 'supabase/migrations/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff==3.0.5
+
+      - name: Lint migrations
+        run: |
+          sqlfluff lint supabase/migrations/ \
+            --dialect postgres \
+            --rules LT01,LT02,LT05,LT12,CV05,CV06 \
+            --exclude-rules LT05 \
+            || echo "::warning::sqlfluff found lint issues; review before merge"

@@ -1,16 +1,16 @@
 
 
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+Deno.serve((req) =>
+  withRun('generate-adaptive-quiz', req, async (_run) => {
   try {
     const { roleKey, mode } = await req.json();
     const gemmaKey = Deno.env.get("GEMMA_API_KEY");
@@ -71,4 +71,4 @@ Do not include markdown or other text.`;
       status: 500,
     });
   }
-});
+  }));

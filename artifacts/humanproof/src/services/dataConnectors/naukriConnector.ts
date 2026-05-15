@@ -9,6 +9,7 @@
 //             as heuristic so the UI never presents them as live job-market data.
 
 import { supabase } from '../../utils/supabase';
+import { invokeEdgeFunction } from '../../infrastructure/requestId';
 import {
   recordApiDegradation,
   isRateLimitError,
@@ -121,7 +122,7 @@ export async function fetchRoleDemandSignal(
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+    const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
       body: { action: 'hiring', roleTitle, companyName: company },
     });
 

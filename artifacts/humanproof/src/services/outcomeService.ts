@@ -4,6 +4,7 @@
 // swarm prediction_outcomes table (service-role only, no user-id).
 
 import { supabase } from '../utils/supabase';
+import { invokeEdgeFunction } from '../infrastructure/requestId';
 
 export type OutcomeLabel = 'layoff_occurred' | 'no_layoff' | 'voluntarily_left' | 'other';
 
@@ -21,7 +22,7 @@ export interface DuePrompt {
 
 export async function fetchDuePrompts(): Promise<DuePrompt[]> {
   try {
-    const { data, error } = await supabase.functions.invoke('schedule-outcome-prompts');
+    const { data, error } = await invokeEdgeFunction<any>('schedule-outcome-prompts');
     if (error || !data) return [];
     return (data.due_prompts ?? []) as DuePrompt[];
   } catch {

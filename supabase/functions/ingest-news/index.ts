@@ -23,6 +23,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { parseRssXml, type ParsedFeedItem } from "../_shared/rssParse.ts";
 import { canonicaliseCompanyName } from "../_shared/companyAliases.ts";
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from "../_shared/otel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,9 +149,8 @@ async function extractWithLlm(
 }
 
 // ── Main ingest pipeline ──────────────────────────────────────────────────────
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+Deno.serve((req) =>
+  withRun('ingest-news', req, async (_run) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
   const SERVICE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!SUPABASE_URL || !SERVICE_KEY) {
@@ -303,4 +304,4 @@ Deno.serve(async (req) => {
   }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-});
+  }));

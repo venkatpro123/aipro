@@ -9,6 +9,7 @@
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
 import { supabase } from '../../../../utils/supabase';
+import { invokeEdgeFunction } from '../../../../infrastructure/requestId';
 
 const heuristicVolatility = (input: SwarmInput): number => {
   const cd = input.companyData;
@@ -35,7 +36,7 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
   // ── Live path via server-side proxy (no key in browser) ──────────────────
   if (ticker && input.companyData.isPublic) {
     try {
-      const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+      const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
         body: { action: 'stock', companyName: input.companyName, ticker },
       });
 

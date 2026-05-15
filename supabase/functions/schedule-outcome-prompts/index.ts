@@ -21,6 +21,8 @@
 //     outcome_reported, outcome_date, ...)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from '../_shared/otel.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,9 +56,8 @@ interface DuePrompt {
   prompt_milestone: 30 | 90 | 180;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
+Deno.serve((req) =>
+  withRun('schedule-outcome-prompts', req, async (_run) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -116,4 +117,4 @@ Deno.serve(async (req) => {
     const message = err instanceof Error ? err.message : 'unknown error';
     return json({ error: message, code: 'UNCAUGHT' }, 500);
   }
-});
+  }));

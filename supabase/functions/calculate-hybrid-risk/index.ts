@@ -22,6 +22,9 @@
 
 import { calculateHybridScore } from '../_shared/hybridScoringMath.ts';
 import type { HybridScoreInputs } from '../_shared/scoringTypes.ts';
+// WS10 — withRun stamps pipeline_runs with the x-request-id from
+// invokeEdgeFunction so an audit's scoring step joins the trace.
+import { withRun } from '../_shared/otel.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -52,11 +55,10 @@ function isHybridScoreInputs(v: unknown): v is HybridScoreInputs {
   return true;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+Deno.serve((req) =>
+  // WS10 — withRun owns OPTIONS preflight + span emission. Inner handler
+  // contains the original POST-only logic.
+  withRun('calculate-hybrid-risk', req, async (_run) => {
   if (req.method !== 'POST') {
     return json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' }, 405);
   }
@@ -104,4 +106,4 @@ Deno.serve(async (req) => {
       500,
     );
   }
-});
+  }));

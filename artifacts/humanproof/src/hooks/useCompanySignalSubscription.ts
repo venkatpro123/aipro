@@ -21,6 +21,11 @@ import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../utils/supabase';
 import { injectLayoffEvent } from '../data/layoffNewsCache';
+// WS6 — broker multiplexes breaking_news_events subscriptions across users
+// and auto-downgrades to polling when subscriber count exceeds the threshold.
+// Gated by `ws6_realtime_fanout`; when off the legacy direct-channel path runs.
+import { subscribeBreakingNews, type BreakingNewsEvent } from '../services/breakingNewsBroker';
+import { evaluateFlagSync } from '../config/featureFlags';
 
 const DEBOUNCE_MS = 60_000;
 
@@ -121,64 +126,62 @@ export function useCompanySignalSubscription(
       )
       .subscribe();
 
-    // Channel 2: breaking_news_events INSERTs (intra-day breaking layoff announcements)
-    // When dbCompanyName is known, use a server-side eq filter so only rows for
-    // this company are broadcast to this client. Previously ALL breaking_news_events
-    // INSERTs were broadcast globally and filtered client-side — at scale that means
-    // every active user session receives every other company's events.
-    // Server-side eq filter reduces WebSocket traffic O(n_users × n_events) → O(1).
-    const bnChannelId = `bn_signal_${dbCompanyName.toLowerCase().replace(/\W+/g, '_')}`;
+    // Channel 2: breaking_news_events.
+    //
+    // WS6 path: route through breakingNewsBroker so concurrent users for the
+    // same company share a single underlying transport (realtime channel or
+    // polling fallback). Avoids the per-component channel proliferation that
+    // saturates Supabase realtime fan-out at scale.
+    //
+    // Legacy path (flag off): per-component supabase.channel() as before.
     const companyLower = companyName.toLowerCase();
     const dbLower      = dbCompanyName.toLowerCase();
-    // Use server-side eq filter on dbCompanyName (exact match stored by breaking-news-scan).
-    // Client-side fuzzy check retained as safety net for aliased company names.
-    const bnFilter = `company_name=eq.${dbCompanyName}`;
-    const bnChannel = supabase
-      .channel(bnChannelId)
-      .on(
-        'postgres_changes' as any,
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'breaking_news_events',
-          filter: bnFilter,
-        },
-        (payload: any) => {
-          const row = payload?.new ?? {};
-          const rowName = (row.company_name ?? '').toLowerCase();
-          if (rowName.includes(companyLower) || rowName.includes(dbLower) ||
-              companyLower.includes(rowName)) {
-            // Inject into layoffNewsCache so the NEXT recalculate incorporates the event
-            // into L2 newsRisk scoring. Previously the toast fired but the score didn't
-            // change because the event was never added to the in-memory cache.
-            injectLayoffEvent({
-              companyName:         row.company_name ?? companyName ?? '',
-              date:                row.event_date ?? new Date().toISOString().slice(0, 10),
-              headline:            row.headline ?? 'Breaking layoff news',
-              percentCut:          typeof row.percent_cut === 'number' ? row.percent_cut : 0,
-              source:              row.source ?? 'breaking_news_events',
-              url:                 row.source_url ?? '',
-              affectedDepartments: [],
-            });
-            // v22.0 — auto-recalc only on high-confidence events (SEC filing,
-            // WARN notice, company press release). Lower confidence requires
-            // user click to mutate the score.
-            const isHighConfidence = row.confidence === 'high';
-            const headline = row.headline ? `: ${String(row.headline).slice(0, 90)}` : '';
-            fireToast(
-              isHighConfidence
-                ? `High-confidence layoff event detected${headline}.`
-                : 'Breaking layoff news detected — recalculate to include in your score.',
-              isHighConfidence,
-            );
-          }
-        },
-      )
-      .subscribe();
+    const fanoutFlag = evaluateFlagSync('ws6_realtime_fanout');
+    const handleBreakingNewsRow = (row: BreakingNewsEvent | (BreakingNewsEvent & { source_url?: string })) => {
+      const rowName = (row.company_name ?? '').toLowerCase();
+      if (rowName.includes(companyLower) || rowName.includes(dbLower) || companyLower.includes(rowName)) {
+        injectLayoffEvent({
+          companyName:         row.company_name ?? companyName ?? '',
+          date:                row.event_date ?? new Date().toISOString().slice(0, 10),
+          headline:            row.headline ?? 'Breaking layoff news',
+          percentCut:          typeof row.percent_cut === 'number' ? row.percent_cut : 0,
+          source:              row.source ?? 'breaking_news_events',
+          url:                 (row as { source_url?: string }).source_url ?? '',
+          affectedDepartments: [],
+        });
+        const isHighConfidence = row.confidence === 'high';
+        const headlineText = row.headline ? `: ${String(row.headline).slice(0, 90)}` : '';
+        fireToast(
+          isHighConfidence
+            ? `High-confidence layoff event detected${headlineText}.`
+            : 'Breaking layoff news detected — recalculate to include in your score.',
+          isHighConfidence,
+        );
+      }
+    };
+
+    let unsubBreakingNews: (() => void) | null = null;
+    let bnChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    if (fanoutFlag.isActive || fanoutFlag.isShadow) {
+      unsubBreakingNews = subscribeBreakingNews(dbCompanyName, handleBreakingNewsRow);
+    } else {
+      const bnChannelId = `bn_signal_${dbCompanyName.toLowerCase().replace(/\W+/g, '_')}`;
+      const bnFilter = `company_name=eq.${dbCompanyName}`;
+      bnChannel = supabase
+        .channel(bnChannelId)
+        .on(
+          'postgres_changes' as any,
+          { event: 'INSERT', schema: 'public', table: 'breaking_news_events', filter: bnFilter },
+          (payload: any) => handleBreakingNewsRow(payload?.new ?? {}),
+        )
+        .subscribe();
+    }
 
     return () => {
       supabase.removeChannel(ciChannel);
-      supabase.removeChannel(bnChannel);
+      if (unsubBreakingNews) unsubBreakingNews();
+      if (bnChannel) supabase.removeChannel(bnChannel);
     };
   }, [companyName, dbCompanyName, fireToast]);
 }

@@ -1,17 +1,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+// WS10 — withRun writes pipeline_runs + propagates x-request-id.
+import { withRun } from "../_shared/otel.ts";
 
 // Edge Function to automatically generate Learning Paths using OpenAI / LLM
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      },
-    });
-  }
+Deno.serve((req: Request) =>
+  withRun('generate-learning-paths', req, async (_run) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -140,4 +134,4 @@ Only respond with the FINAL validated JSON.`;
       status: 500,
     });
   }
-});
+  }));

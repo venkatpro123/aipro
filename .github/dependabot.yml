@@ -1,0 +1,110 @@
+# Dependabot configuration — gap #17 fix.
+#
+# Watches every package.json in the monorepo for outdated deps + known
+# vulnerabilities. Updates land as PRs (one per package per week), so
+# the CI gate (typecheck + tests + migration drift) verifies them
+# before a human reviewer.
+#
+# Why per-workspace ecosystems and not a single root config:
+#   pnpm workspaces have one lockfile but multiple package.json's.
+#   Dependabot needs each ecosystem entry to point at the workspace
+#   root that owns its dependencies.
+
+version: 2
+
+updates:
+  # ── Root monorepo manifest ────────────────────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    labels: ['dependencies', 'monorepo']
+    commit-message:
+      prefix: 'deps'
+      include: 'scope'
+    # Group patch + minor versions of the same package into one PR.
+    groups:
+      typescript-and-tooling:
+        patterns: ['typescript', 'tsx', 'vite*', '@types/*', 'vitest*']
+        update-types: ['minor', 'patch']
+      eslint-and-formatting:
+        patterns: ['eslint*', 'prettier*']
+        update-types: ['minor', 'patch']
+
+  # ── Frontend application ─────────────────────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/artifacts/humanproof'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    labels: ['dependencies', 'frontend']
+    commit-message:
+      prefix: 'deps(humanproof)'
+    groups:
+      react-and-runtime:
+        patterns: ['react', 'react-dom', '@vitejs/*']
+        update-types: ['minor', 'patch']
+      supabase:
+        patterns: ['@supabase/*']
+        update-types: ['minor', 'patch']
+      ui-libs:
+        patterns: ['@radix-ui/*', 'lucide-react', 'framer-motion', 'sonner']
+        update-types: ['minor', 'patch']
+
+  # ── API server ───────────────────────────────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/artifacts/api-server'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 3
+    labels: ['dependencies', 'api-server']
+    commit-message:
+      prefix: 'deps(api)'
+
+  # ── Scraper (Fly.io Docker service) ──────────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/artifacts/scraper'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 3
+    labels: ['dependencies', 'scraper']
+    commit-message:
+      prefix: 'deps(scraper)'
+
+  # ── Mockup sandbox (lower priority) ─────────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/artifacts/mockup-sandbox'
+    schedule:
+      interval: 'monthly'
+    open-pull-requests-limit: 2
+    labels: ['dependencies', 'sandbox']
+    commit-message:
+      prefix: 'deps(sandbox)'
+
+  # ── GitHub Actions ──────────────────────────────────────────────────────
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+    open-pull-requests-limit: 3
+    labels: ['dependencies', 'ci']
+    commit-message:
+      prefix: 'deps(ci)'
+
+  # ── Docker (scraper image) ──────────────────────────────────────────────
+  - package-ecosystem: 'docker'
+    directory: '/artifacts/scraper'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 2
+    labels: ['dependencies', 'docker', 'scraper']
+    commit-message:
+      prefix: 'deps(docker)'

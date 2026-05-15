@@ -33,6 +33,8 @@ import {
 } from "./indiaSectorIntelligence";
 import { validateDataQuality, type DataQualityReport } from "./dataQualityValidator";
 import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate } from "./signalDecayModel";
+// WS9 — uncalibrated sector floors now routed through DB.
+import { getConstant } from "./calibration/calibrationConstants";
 import { CohortLayerWeights } from "./cohortClassifier";
 
 // v15.0: Layer-level signal decay. v21.0 flipped to ON-by-default.
@@ -88,9 +90,11 @@ const createFallbackCompanyData = (companyName: string): CompanyData => ({
   revenuePerEmployee: null,  // null forces mapOverstaffing to skip rather than assume
   aiInvestmentSignal: "medium",
   region: "US",
-  // Use a clearly-old date so classifyDbFreshness → 'invalid' and live signals
-  // always supersede the fallback defaults in reconcileCompanySignals.
-  lastUpdated: '2025-01-01',
+  // WS12 — Use a computed 365-days-ago timestamp so classifyDbFreshness →
+  // 'invalid' regardless of when this code runs. The old hardcoded
+  // '2025-01-01' worked TODAY but had a latent issue: the staleness
+  // margin shrinks year over year. Computed value is maintenance-free.
+  lastUpdated: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
   source: "Fallback",
 });
 
@@ -280,18 +284,32 @@ const ARCHETYPE_WEIGHT_OVERRIDES: Record<ScoringArchetype, Partial<Record<Weight
 
 // Blends base weights with archetype override at a conservative ratio.
 // The sum of blended weights must equal 1.0 — enforced by normalisation.
+//
+// WS7 Audit Issue #12 — pre-norm clamp:
+//   The legacy implementation added archetype deltas without checking for
+//   negative pre-norm weights. With aggressive deltas (e.g. private equity
+//   archetype subtracts 0.03 from D8_aiEfficiencyRestructuring) stacked on a
+//   small base weight, the pre-norm value can fall to (near-)zero or negative.
+//   Normalisation then maps that to a silently-near-zero post-norm weight,
+//   effectively disabling that dimension's contribution to the composite.
+//
+//   The clamp at MIN_WEIGHT_FLOOR keeps every dimension materially active.
+//   0.001 is small enough not to distort the archetype boost effect but
+//   above the "silent disablement" floor.
 function blendArchetypeWeights(
   base: typeof COMPOSITE_FORMULA_WEIGHTS,
   archetype: ScoringArchetype,
   blendRatio: number = 0.25,
 ): Record<WeightKey, number> {
+  const MIN_WEIGHT_FLOOR = 0.001;
   const overrides = ARCHETYPE_WEIGHT_OVERRIDES[archetype];
   const blended = {} as Record<WeightKey, number>;
 
-  // Apply delta overrides
+  // Apply delta overrides, clamping at MIN_WEIGHT_FLOOR pre-normalization
+  // to prevent silent dimension disablement.
   for (const key of Object.keys(base) as WeightKey[]) {
     const delta = (overrides[key] ?? 0) * blendRatio;
-    blended[key] = base[key] + delta;
+    blended[key] = Math.max(MIN_WEIGHT_FLOOR, base[key] + delta);
   }
 
   // Normalise to preserve sum = 1.0
@@ -339,9 +357,17 @@ function blendCohortWeights(
     D4_experienceProtection: (cohortW.L5 / addressableSum) * currentBudget,
   };
 
+  // WS7 Audit Issue #12 — symmetric pre-norm clamp on cohort blend too.
+  const MIN_WEIGHT_FLOOR = 0.001;
   const blended = { ...base } as Record<WeightKey, number>;
   for (const key of Object.keys(target) as Array<keyof typeof target>) {
-    blended[key] = base[key] * (1 - blendRatio) + (target[key]!) * blendRatio;
+    const post = base[key] * (1 - blendRatio) + (target[key]!) * blendRatio;
+    blended[key] = Math.max(MIN_WEIGHT_FLOOR, post);
+  }
+  // Also clamp the untouched keys (defence-in-depth: archetype pass should
+  // already have floored them, but cohort blend should not assume that).
+  for (const key of Object.keys(blended) as WeightKey[]) {
+    blended[key] = Math.max(MIN_WEIGHT_FLOOR, blended[key]);
   }
 
   // Renormalise to preserve sum = 1.0
@@ -1466,8 +1492,17 @@ export const calculateLayoffHistoryScore = (
   // Dataset-unavailable compounds the fallback floor — cannot confirm clean history.
   const _l2Floor = (() => {
     const sectorFloor = _sectorEpistemicFloor;
-    if (layoffsDatasetUnavailable) return Math.max(0.25, sectorFloor);  // unknown: can't confirm safe
-    if (isFallbackSource) return Math.max(0.15, sectorFloor);            // fallback: epistemic uncertainty
+    // WS9 — the unknown-data and fallback-source floors are DB-sourced
+    // uncalibrated placeholders. Bootstrap fallbacks preserve legacy
+    // behaviour (0.25 / 0.15) when the DB row is missing.
+    if (layoffsDatasetUnavailable) {
+      const f = getConstant<number>('layoffScoreEngine.sectorFloor.unknownData', 0.25).value as number;
+      return Math.max(f, sectorFloor);
+    }
+    if (isFallbackSource) {
+      const f = getConstant<number>('layoffScoreEngine.sectorFloor.fallbackSource', 0.15).value as number;
+      return Math.max(f, sectorFloor);
+    }
     return sectorFloor;
   })();
 

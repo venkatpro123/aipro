@@ -3,6 +3,9 @@
 // Outputs a full SwarmReport with categoryBreakdown and visualizationGraph.
 
 import { AgentSignal, AgentCategory, SwarmReport, RiskCluster, GraphNode, GraphEdge } from './swarmTypes';
+// WS9 — confidence caps now sourced from engine_calibration_constants
+// so the recalibrate cron can produce empirical values.
+import { getConstant } from '../calibration/calibrationConstants';
 
 // ── Category impact weights ───────────────────────────────────────────────────
 const CATEGORY_WEIGHTS: Record<AgentCategory, number> = {
@@ -262,7 +265,14 @@ export const aggregateSwarmResults = (
   const rawConfidence = Math.round(
     (resolutionPct * 0.40) + liveBonus - heuristicPenalty - fallbackPenalty,
   );
-  const confidenceCap   = liveCount === 0 ? 45 : 90;
+  // WS9 — the 45/90 ceilings are manual_seed ops choices, NOT regression
+  // outputs. Sourcing from DB lets ops adjust them without a code deploy
+  // when the audit pipeline's calibration coverage proves the choice was
+  // wrong. Legacy values 45 (no-live) and 90 (with-live) are bootstrap
+  // fallbacks if the DB rows are absent.
+  const confidenceCap = liveCount === 0
+    ? (getConstant<number>('swarmAggregator.confidenceCap.noLiveSignals', 45).value as number)
+    : (getConstant<number>('swarmAggregator.confidenceCap.withLiveSignals', 90).value as number);
   const swarmConfidence = Math.max(5, Math.min(confidenceCap, rawConfidence));
 
   // ── Classify signals ──────────────────────────────────────────────────────

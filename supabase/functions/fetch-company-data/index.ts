@@ -1,6 +1,10 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { KNOWN_HEADCOUNTS } from "../_shared/knownHeadcounts.ts";
+// WS10 — withRun writes a pipeline_runs row + propagates the x-request-id
+// header carried from the SPA via invokeEdgeFunction so the audit trace
+// joins across browser → edge → DB.
+import { withRun } from "../_shared/otel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -352,11 +356,13 @@ const tryFetchLayoffNews = async (
   return { hasLayoffNews: true, layoffs };
 };
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
+Deno.serve((req) =>
+  // WS10 — every invocation writes a pipeline_runs row stamped with the
+  // x-request-id sent by the SPA's invokeEdgeFunction wrapper.
+  // withRun handles OPTIONS preflight, error capture, and finalisation;
+  // the handler body below is the original logic, minus the redundant
+  // OPTIONS branch and outermost try/catch (both subsumed by withRun).
+  withRun("fetch-company-data", req, async (_run) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -898,4 +904,4 @@ Deno.serve(async (req) => {
       status: 500,
     });
   }
-});
+  }));

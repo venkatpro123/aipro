@@ -18,6 +18,11 @@
 //     EF would reject them too but failing client-side is cheaper.
 
 import { supabase } from '../utils/supabase';
+import { invokeEdgeFunction } from '../infrastructure/requestId';
+// WS6 — server-side dedup against in-flight scrape_jobs rows.
+import { resolveScrapeEnqueueDecision } from './serverAuthoritativeScrapeDedup';
+// DEBT-10 — token-bucket rate limit on scrape triggers.
+import { consumeToken } from '../infrastructure/rateLimiter';
 
 const TRIGGER_LS_KEY  = 'hp_scraper_triggers';
 // R11 fix: dedup window reduced from 5 min → 60 s. Previously a silent first-trigger
@@ -182,12 +187,70 @@ export async function triggerScraperForCompany(
     return { state: 'deduped', message: `triggered within last ${Math.round(DEDUP_WINDOW_MS / 1000)} s` };
   }
 
+  // DEBT-10 — Per-user rate limit on scrape triggers.
+  //
+  // Scrape triggers are expensive: each one queues 10+ scrape_jobs, hits
+  // anti-bot-protected sites, and writes telemetry. A misbehaving client
+  // that fires triggers in a loop can saturate the BullMQ worker pool
+  // and bot-block every data source within minutes. The token-bucket
+  // policy in rate_limit_policies.scrape_trigger limits this to 5 burst
+  // / 1 per 20s sustained per user.
+  //
+  // Subject identifier: try the authenticated user first; fall back to
+  // a stable anon id so the same browser session shares a budget.
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const subject = session?.user?.id
+      ?? (typeof window !== 'undefined' ? (window.localStorage.getItem('hp_anon_id') ?? 'anon_fallback') : 'anon_no_window');
+    const gate = await consumeToken('scrape_trigger', subject);
+    if (!gate.allowed) {
+      return {
+        state: 'deduped',
+        message: `rate limited (${gate.retryAfterMs}ms backoff)`,
+      };
+    }
+  } catch {
+    // Rate limiter unavailable — fail open. The token bucket is defence
+    // in depth, not the primary correctness mechanism.
+  }
+
+  // WS6 — Server-authoritative dedup (Audit Issue #15).
+  //
+  // The client-local recentlyTriggered() above is per-browser and cannot see
+  // concurrent triggers from other users. At 10k concurrent users for the
+  // same company on a news day, every browser independently believes "no
+  // dedup needed" and 10k scraper jobs fire, bot-blocking every data
+  // source within seconds.
+  //
+  // checkServerAuthoritativeDedup queries scrape_jobs for any row with the
+  // same deterministic dedupe_key still in queued/running state. When the
+  // ws6_server_auth_dedup flag is on AND such a row exists, we skip the
+  // enqueue. The UNIQUE (dedupe_key) constraint on scrape_jobs is the
+  // final safety net.
+  try {
+    const dedup = await resolveScrapeEnqueueDecision(
+      { companyCanonical: company, jobType: 'signalCompose' },
+      { shouldEnqueue: true, reason: 'client-local check already passed' },
+    );
+    if (!dedup.shouldEnqueue) {
+      // A concurrent user's job is in flight; we will get its results via
+      // the existing scrape_jobs realtime / poll path. No need to enqueue.
+      return {
+        state: 'deduped',
+        message: `server dedup: ${dedup.reason}`,
+      };
+    }
+  } catch {
+    // Dedup check failed open: proceed with enqueue (UNIQUE constraint
+    // is the last line of defence).
+  }
+
   // Record BEFORE the network call so a concurrent submit short-circuits too.
   // Mark inflight so a stalled call doesn't block retries past STALE_INFLIGHT_MS.
   recordTrigger(company, true);
 
   try {
-    const { data, error } = await supabase.functions.invoke('scraper-enqueue', {
+    const { data, error } = await invokeEdgeFunction<any>('scraper-enqueue', {
       body: { companies: [company], priority: opts?.priority ?? 'background' },
     });
     if (error) {
@@ -362,9 +425,9 @@ export async function awaitLiveQuorum(
         escalationFired = true;
         // Fire-and-forget — never block the quorum poll itself. The dedup window
         // in triggerScraperForCompany was tightened to 60s in v31; we side-step
-        // it here by calling supabase.functions.invoke directly. The EF handles
+        // it here by calling invokeEdgeFunction directly. The EF handles
         // dedupe at the BullMQ level so a recently-attempted job won't double-fire.
-        supabase.functions.invoke('scraper-enqueue', {
+        invokeEdgeFunction<any>('scraper-enqueue', {
           body: { companies: [companyName], priority: 'audit_blocking' },
         }).catch(() => { /* best-effort; quorum wait continues regardless */ });
       }

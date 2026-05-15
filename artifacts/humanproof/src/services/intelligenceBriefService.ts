@@ -5,6 +5,7 @@
 // the base score shifts more than 5 points.
 
 import { supabase } from '../utils/supabase';
+import { invokeEdgeFunction } from '../infrastructure/requestId';
 
 export interface IntelligenceBriefResult {
   paragraphs: [string, string, string];
@@ -213,7 +214,7 @@ export async function fetchIntelligenceBrief(
 
   // Call llm-analyze edge function
   try {
-    const { data, error } = await supabase.functions.invoke('llm-analyze', {
+    const { data, error } = await invokeEdgeFunction<any>('llm-analyze', {
       body: {
         companyName,
         roleTitle,
@@ -231,7 +232,7 @@ export async function fetchIntelligenceBrief(
     const brief = mapLlmResponseToBrief(data as LlmAnalyzeResponse, data.model ?? 'llm-analyze');
 
     // Persist to cache (non-blocking)
-    saveToCache(userId, companyName, roleTitle, currentScore, brief).catch(() => {});
+    saveToCache(userId, companyName, roleTitle, currentScore, brief).catch(() => {}); // arch-allow:R2 fire-and-forget cache-write; next call re-computes on miss
 
     return brief;
   } catch (e) {

@@ -5,6 +5,7 @@
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
 import { supabase } from '../../../../utils/supabase';
+import { invokeEdgeFunction } from '../../../../infrastructure/requestId';
 
 const COST_TERMS = ['hiring freeze', 'cost cut', 'belt tighten', 'spending cut', 'budget cut', 'slash costs', 'cost reduction'];
 
@@ -28,7 +29,7 @@ const heuristicCostCut = (input: SwarmInput): number => {
 
 const run = async (input: SwarmInput): Promise<AgentSignal> => {
   try {
-    const { data, error } = await supabase.functions.invoke('proxy-live-signals', {
+    const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
       body: { action: 'news', companyName: input.companyName },
     });
 

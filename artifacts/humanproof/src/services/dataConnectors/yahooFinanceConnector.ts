@@ -13,6 +13,8 @@
 // the server-side call and returns the parsed result.
 
 import { supabase } from '../../utils/supabase';
+// WS11 — request-id propagation via invokeEdgeFunction wrapper.
+import { invokeEdgeFunction } from '../../infrastructure/requestId';
 
 export interface YahooStockData {
   ticker:            string;
@@ -50,7 +52,7 @@ export async function fetchYahooStockViaProxy(
   }
 
   try {
-    const { data: proxyResult, error } = await supabase.functions.invoke('proxy-live-signals', {
+    const { data: proxyResult, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
       body: { action: 'stock', ticker, companyName: companyName ?? ticker },
     });
 

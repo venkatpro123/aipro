@@ -49,6 +49,18 @@ export interface CircuitCallResult<T> {
   fromCircuitBreaker:  boolean;  // true = returned from cache, not live
   cachedAt:            number | null;  // unix ms of last successful fetch
   state:               CircuitState;
+  // WS12 — age disclosure for stale-cache returns. When
+  // fromCircuitBreaker=true, callers MUST surface dataAgeSeconds in the
+  // UI (badge / freshness panel) and the audit pipeline MUST multiply
+  // the contributing layer's confidence by freshness_decay(age) so a
+  // 7-day-stale Alpha Vantage cache cannot win against a 5-minute-fresh
+  // Yahoo signal. Set to null when fromCircuitBreaker=false.
+  dataAgeSeconds:      number | null;
+  // WS12 — the failure reason that caused the breaker to serve cache.
+  // Useful for the SLO dashboard: a sustained `circuit_open` reason for
+  // alphavantage means we're paying Alpha Vantage but burning quota
+  // through retries — switch to backup provider.
+  servedReason:        'fresh' | 'cached_open' | 'cached_failure' | null;
 }
 
 // ── Configuration ─────────────────────────────────────────────────────────────
@@ -346,11 +358,16 @@ export async function withCircuitBreaker<T>(
   if (!isCallAllowed(api)) {
     // Circuit is OPEN — return cached data if available
     const cache = getCachedResponse<T>(api);
+    const cachedAt = cache?.cachedAt ?? null;
     return {
       data:               cache?.data ?? null,
       fromCircuitBreaker: true,
-      cachedAt:           cache?.cachedAt ?? null,
+      cachedAt,
       state:              snap.state,
+      // WS12 — quantify the staleness so downstream layers can decay
+      // confidence proportionally and the UI can show an age badge.
+      dataAgeSeconds:     cachedAt ? Math.floor((Date.now() - cachedAt) / 1000) : null,
+      servedReason:       'cached_open',
     };
   }
 
@@ -358,16 +375,30 @@ export async function withCircuitBreaker<T>(
     const result = await fn();
     if (result !== null) recordSuccess(api, result);
     // null result (e.g. no data for this ticker) is not a failure
-    return { data: result, fromCircuitBreaker: false, cachedAt: null, state: 'CLOSED' };
+    return {
+      data: result,
+      fromCircuitBreaker: false,
+      cachedAt: null,
+      state: 'CLOSED',
+      dataAgeSeconds: null,
+      servedReason: 'fresh',
+    };
   } catch (err: any) {
     recordFailure(api, err?.message ?? String(err));
     // On failure: return cached data as fallback
     const cache = getCachedResponse<T>(api);
+    const cachedAt = cache?.cachedAt ?? null;
     return {
       data:               cache?.data ?? null,
       fromCircuitBreaker: true,
-      cachedAt:           cache?.cachedAt ?? null,
+      cachedAt,
       state:              getCircuitSnapshot(api).state,
+      // WS12 — same disclosure on the failure-fallback path. Callers
+      // distinguish 'cached_open' (we never tried this call — breaker
+      // already open) from 'cached_failure' (we tried, it failed, this
+      // is the cached fallback). Different cohorts for SLO views.
+      dataAgeSeconds:     cachedAt ? Math.floor((Date.now() - cachedAt) / 1000) : null,
+      servedReason:       'cached_failure',
     };
   }
 }

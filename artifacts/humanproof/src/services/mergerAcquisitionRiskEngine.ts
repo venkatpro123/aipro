@@ -284,3 +284,80 @@ export function computeMARisk(input: MARiskInput): MARiskResult {
     };
   }
 }
+
+// ─── WS3 Audit Issue #22 — Acquisition premium correction ─────────────────────
+//
+// When a company is the TARGET of an announced acquisition, its stock price
+// typically jumps 20–40% on the announcement (the takeover premium). The
+// legacy L1 health calculation reads a positive stock90DayChange as a sign
+// of company strength and *reduces* the audit's risk score. For acquired-
+// side employees this is exactly backwards — the stock surge is the deal
+// premium, not corporate vitality, and they are about to enter the highest-
+// risk 6–18 month restructuring window in any scenario.
+//
+// `detectAcquisitionPremium` returns a structured signal callers (specifically
+// layoffScoreEngine's L1 computation) can use to neutralize the stock-derived
+// health benefit. It does NOT directly modify the score; the caller decides
+// whether to apply the correction based on the flag `ws3_evidence_hierarchy`.
+//
+// Detection rule:
+//   * isAcquiredEmployee = true
+//   * maEventType ∈ { PE_ACQUISITION, STRATEGIC_ACQUISITION, MERGER_EQUALS, SPAC_GO_PRIVATE }
+//   * monthsPostClose ≤ 0 (pre-close) OR ≤ 3 (deal still very recent)
+//   * stock90DayChange ≥ +15%
+//
+// The 15% threshold is conservative: typical deal premia are 25–40%, but
+// some strategic deals close at 5–10% premia. 15% catches the cases where
+// stock-derived L1 health would be most materially misleading.
+
+export interface AcquisitionPremiumSignal {
+  detected: boolean;
+  /** When detected, the stock90DayChange the engine should USE for L1 (overrides upward swing). */
+  correctedStock90DayChange: number | null;
+  /** Plain-language rationale, surfaced in transparency panel. */
+  rationale: string;
+}
+
+const ACQUIRED_SIDE_ELIGIBLE_TYPES = new Set<MAEventType>([
+  'PE_ACQUISITION',
+  'STRATEGIC_ACQUISITION',
+  'MERGER_EQUALS',
+  'SPAC_GO_PRIVATE',
+  'DIVESTITURE_SOLD',
+]);
+
+export function detectAcquisitionPremium(args: {
+  maEventType: MAEventType;
+  monthsPostClose: number | undefined;
+  isAcquiredEmployee: boolean;
+  stock90DayChange: number | null;
+}): AcquisitionPremiumSignal {
+  const { maEventType, monthsPostClose, isAcquiredEmployee, stock90DayChange } = args;
+
+  if (!isAcquiredEmployee) {
+    return { detected: false, correctedStock90DayChange: stock90DayChange, rationale: '' };
+  }
+  if (!ACQUIRED_SIDE_ELIGIBLE_TYPES.has(maEventType)) {
+    return { detected: false, correctedStock90DayChange: stock90DayChange, rationale: '' };
+  }
+  if (stock90DayChange == null || stock90DayChange < 15) {
+    return { detected: false, correctedStock90DayChange: stock90DayChange, rationale: '' };
+  }
+  // Within deal-premium window: pre-close OR within 3 months post-close.
+  if (monthsPostClose !== undefined && monthsPostClose > 3) {
+    return { detected: false, correctedStock90DayChange: stock90DayChange, rationale: '' };
+  }
+
+  // Neutralize the upward stock signal: cap stock90DayChange at 0 for L1
+  // purposes. This is symmetric — we do not assert the company is unhealthy,
+  // just that its stock surge is M&A-attributable and should not lower risk.
+  return {
+    detected: true,
+    correctedStock90DayChange: 0,
+    rationale:
+      `Stock +${stock90DayChange.toFixed(1)}% over 90 days appears to be M&A deal premium ` +
+      `(${maEventType}, acquired-side, monthsPostClose=${monthsPostClose ?? 'pre-close'}). ` +
+      `Stock-derived L1 health benefit neutralized to prevent acquisition-premium ` +
+      `masking of post-close restructuring risk.`,
+  };
+}

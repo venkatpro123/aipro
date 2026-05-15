@@ -93,7 +93,7 @@ export const recordOutcome = (
 
     // ── Phase 2: Supabase cross-user outcome persistence ─────────────────────
     const [companyPart] = companyRole.split('::');
-    persistOutcomeToSupabase(pred, actualOutcome, companyPart).catch(() => {});
+    persistOutcomeToSupabase(pred, actualOutcome, companyPart).catch(() => {}); // arch-allow:R2 fire-and-forget cross-user outcome persistence; in-memory state authoritative
   } catch { /* ignore */ }
 };
 
@@ -119,7 +119,7 @@ async function persistOutcomeToSupabase(
   }
   // Nudge company confidence score: accurate predictions +0.02, inaccurate -0.05
   const delta = accuracy >= 0.7 ? 0.02 : -0.05;
-  await updateCompanyConfidence(companyName, delta).catch(() => {});
+  await updateCompanyConfidence(companyName, delta).catch(() => {}); // arch-allow:R2 fire-and-forget confidence nudge; failure leaves prior value
 }
 
 /** Save a full prediction record (called by swarmOrchestrator). */

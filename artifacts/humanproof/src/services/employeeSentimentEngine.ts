@@ -16,6 +16,10 @@
 //
 // Calibration: research_grounded
 
+// WS9 — risk-weight thresholds sourced from engine_calibration_constants
+// so recalibrate-engine can replace them with regression-derived values.
+import { getConstant } from './calibration/calibrationConstants';
+
 export type SentimentTrend = 'IMPROVING' | 'STABLE' | 'DECLINING' | 'DECLINING_SHARPLY' | 'UNKNOWN';
 
 export interface EmployeeSentimentResult {
@@ -58,8 +62,14 @@ export interface SentimentAction {
   urgency: 'immediate' | 'within_30d' | 'within_90d';
 }
 
-// Weighted thresholds for sentiment risk score contribution
-const CEO_APPROVAL_RISK: Record<SentimentTrend, number> = {
+// WS9 — uncalibrated developer-estimate risk thresholds. Bootstrap
+// fallbacks preserve legacy behaviour exactly when the DB rows are
+// absent; the constants
+//   employeeSentimentEngine.ceoApprovalRisk
+//   employeeSentimentEngine.cultureScoreRisk
+//   employeeSentimentEngine.attritionRisk
+// are recalibrate-engine targets.
+const BOOTSTRAP_CEO_APPROVAL_RISK: Record<SentimentTrend, number> = {
   IMPROVING:        5,
   STABLE:          15,
   DECLINING:       55,
@@ -67,7 +77,7 @@ const CEO_APPROVAL_RISK: Record<SentimentTrend, number> = {
   UNKNOWN:         30,
 };
 
-const CULTURE_SCORE_RISK: Record<SentimentTrend, number> = {
+const BOOTSTRAP_CULTURE_SCORE_RISK: Record<SentimentTrend, number> = {
   IMPROVING:        5,
   STABLE:          15,
   DECLINING:       45,
@@ -75,12 +85,33 @@ const CULTURE_SCORE_RISK: Record<SentimentTrend, number> = {
   UNKNOWN:         25,
 };
 
-const ATTRITION_RISK: Record<EmployeeSentimentResult['attritionPressure'], number> = {
+const BOOTSTRAP_ATTRITION_RISK: Record<EmployeeSentimentResult['attritionPressure'], number> = {
   HIGH:    70,
   MODERATE: 35,
   LOW:     10,
   UNKNOWN: 25,
 };
+
+function resolveRecord<T extends string>(
+  key: string,
+  bootstrap: Record<T, number>,
+): Record<T, number> {
+  const r = getConstant<Record<T, number>>(key, bootstrap);
+  return (r.value && typeof r.value === 'object') ? r.value : bootstrap;
+}
+
+function getCeoApprovalRisk(trend: SentimentTrend): number {
+  const map = resolveRecord<SentimentTrend>('employeeSentimentEngine.ceoApprovalRisk', BOOTSTRAP_CEO_APPROVAL_RISK);
+  return map[trend] ?? BOOTSTRAP_CEO_APPROVAL_RISK[trend] ?? 0;
+}
+function getCultureScoreRisk(trend: SentimentTrend): number {
+  const map = resolveRecord<SentimentTrend>('employeeSentimentEngine.cultureScoreRisk', BOOTSTRAP_CULTURE_SCORE_RISK);
+  return map[trend] ?? BOOTSTRAP_CULTURE_SCORE_RISK[trend] ?? 0;
+}
+function getAttritionRisk(level: EmployeeSentimentResult['attritionPressure']): number {
+  const map = resolveRecord<EmployeeSentimentResult['attritionPressure']>('employeeSentimentEngine.attritionRisk', BOOTSTRAP_ATTRITION_RISK);
+  return map[level] ?? BOOTSTRAP_ATTRITION_RISK[level] ?? 0;
+}
 
 function classifyCEOApprovalTrend(
   delta90Days: number | null,
@@ -229,9 +260,9 @@ export function computeEmployeeSentiment(
     };
 
     // Composite risk score
-    const ceoRisk = CEO_APPROVAL_RISK[ceo.trend];
-    const cultureRisk = CULTURE_SCORE_RISK[culture.trend];
-    const attritionRisk = ATTRITION_RISK[attrition.level];
+    const ceoRisk = getCeoApprovalRisk(ceo.trend);
+    const cultureRisk = getCultureScoreRisk(culture.trend);
+    const attritionRisk = getAttritionRisk(attrition.level);
     const blindRisk = blindSentiment === 'FEAR' ? 30 : blindSentiment === 'CONCERN' ? 15 : 0;
 
     const sentimentRiskScore = Math.min(100, Math.round(

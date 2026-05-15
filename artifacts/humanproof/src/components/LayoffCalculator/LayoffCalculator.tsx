@@ -45,6 +45,10 @@ import { RecommendationPanel } from "./RecommendationPanel";
 import { MissionBriefing, recommendationsToMissions } from "./MissionBriefing";
 import { SpyLoadingState } from "./SpyLoadingState";
 import { supabase } from "../../utils/supabase";
+// WS11 + WS14 — every edge invocation carries the per-audit request_id
+// via x-request-id. runAudit mints a fresh id at the entry point so
+// all invokeEdgeFunction calls inside the pipeline reach the same trace.
+import { invokeEdgeFunction, runAudit } from "../../infrastructure/requestId";
 import { scoreSyncService } from "../../services/scoreSyncService";
 import {
   getCareerIntelligence,
@@ -59,7 +63,16 @@ import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
 import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName } from "../../services/apiCircuitBreaker";
-import { fetchAuditData } from "../../services/auditDataPipeline";
+// WS0 — shadow runner gates legacy-vs-candidate engine comparison behind
+// `ws0_shadow_runner` flag. Internally invokes auditDataPipeline.fetchAuditData
+// when the flag is off, so downstream consumers see the legacy shape.
+import { runWithShadow } from "../../services/engineShadowRunner";
+// WS7 — server-authoritative score trajectory. Falls through when
+// `ws7_server_score_trajectory` flag is off.
+import { appendScoreEntry } from "../../services/serverScoreTrajectory";
+// DEBT-10 — per-user token-bucket rate limit on audit submissions.
+import { consumeToken } from "../../infrastructure/rateLimiter";
+import { toast } from "sonner";
 import { startBackgroundRefresh } from "../../services/liveRefreshService";
 import { resolveRoleInput } from "../../services/roleResolution";
 import { LiveSignalStatusBanner } from "../audit/LiveSignalStatusBanner";
@@ -284,14 +297,68 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     }
 
     setEnsembleStage(1);
-    const { result: pipelineResult, companyData, source } = await fetchAuditData({
-      companyName: state.companyName || "Unknown",
-      roleTitle,
-      department: effectiveDepartment,
-      userFactors,
-      oracleKey: effectiveOracleKey ?? undefined,
-      financialRunwayMonths: (userFactors as any).financialRunwayMonths ?? 0,
-    });
+
+    // WS0 — Resolve user id non-blockingly for the shadow runner. The runner
+    // writes an audit_shadow_comparison row when ws0_shadow_runner is in
+    // shadow/canary/production mode; user_id is used solely for RLS scoping
+    // (anonymous audits write user_id=NULL and rely on service_role reads).
+    let shadowUserId: string | null = null;
+    try {
+      const { data: { session: shadowSession } } = await supabase.auth.getSession();
+      shadowUserId = shadowSession?.user?.id ?? null;
+    } catch {
+      // Ignore — anonymous flow still proceeds via legacy passthrough.
+    }
+
+    // DEBT-10 — Rate-limit gate.
+    //
+    // Token-bucket per (audit bucket, user). Anonymous sessions use a
+    // stable browser-local anon id so a single misbehaving tab cannot
+    // burn through the shared pool. Authenticated users get full
+    // capacity per the policy in rate_limit_policies.
+    //
+    // On rejection we show a toast with the retry hint and abort the
+    // submission BEFORE running the heavy pipeline.
+    const rateLimitSubject =
+      shadowUserId ??
+      (() => {
+        try {
+          let anon = localStorage.getItem('hp_anon_id');
+          if (!anon) {
+            anon = `anon_${Math.random().toString(36).slice(2, 12)}`;
+            localStorage.setItem('hp_anon_id', anon);
+          }
+          return anon;
+        } catch {
+          return 'anon_fallback';
+        }
+      })();
+    const rateResult = await consumeToken('audit', rateLimitSubject);
+    if (!rateResult.allowed) {
+      const wait = Math.max(1, Math.ceil(rateResult.retryAfterMs / 1000));
+      toast.warning('Too many audits', {
+        description: `Please wait ${wait}s before submitting again.`,
+        duration: 6000,
+      });
+      setEnsembleStage(0);
+      return;
+    }
+
+    const shadowRun = await runWithShadow(
+      {
+        companyName: state.companyName || "Unknown",
+        roleTitle,
+        department: effectiveDepartment,
+        userFactors,
+        oracleKey: effectiveOracleKey ?? undefined,
+        financialRunwayMonths: (userFactors as any).financialRunwayMonths ?? 0,
+      },
+      { userId: shadowUserId },
+    );
+
+    const pipelineResult = shadowRun.userFacingResult;
+    const companyData = shadowRun.companyData;
+    const source = shadowRun.source;
 
     dispatch({ type: "SET_COMPANY_DATA", payload: companyData });
     setLiveSignalCount(pipelineResult.signalQuality.liveSignals ?? 0);
@@ -532,6 +599,32 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           allow_community_share: allowCommunityShare,
         });
 
+        // WS7 — Server-authoritative score trajectory (Audit Issue #13).
+        //
+        // Persists this audit to the score_trajectory table so the trajectory
+        // engine can compute direction signals from a stable, device-
+        // independent history. Gated by `ws7_server_score_trajectory`;
+        // appendScoreEntry returns early when the flag is off, so the
+        // legacy localStorage path runs unchanged.
+        void appendScoreEntry({
+          userId: session.user.id,
+          companyCanonicalName: (companyData as { canonicalName?: string }).canonicalName ?? companyData.name ?? state.companyName,
+          auditSessionId: null,
+          score: mergedResult.total,
+          tier: mergedResult.tier.label,
+          confidencePct: mergedResult.confidencePercent ?? null,
+          cohort: ((mergedResult as unknown) as { cohortClassification?: { primaryCohort?: string } }).cohortClassification?.primaryCohort ?? null,
+          archetype: ((mergedResult as unknown) as { archetype?: string }).archetype ?? null,
+          engineVersion: 'v35.0',
+          inputs: {
+            roleTitle: state.roleTitle ?? '',
+            department: effectiveDepartment ?? '',
+            country: (userFactors as { country?: string }).country ?? '',
+          },
+        }).catch(() => {
+          // Trajectory append is non-blocking — its failure must not affect audit UX.
+        });
+
         scoreSyncService.setUserId(session.user.id);
         scoreSyncService.syncFromLocal([{
           source: "layoff",
@@ -613,7 +706,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
     try {
       try {
-        await runAuditPipelineDrivenCalculation(forceRefresh);
+        // WS14 — wrap the pipeline execution in runAudit so every edge
+        // function call inside (fetch-company-data, compute-oracle,
+        // calculate-hybrid-risk, proxy-live-signals, …) sees the same
+        // request_id via currentRequestId() → invokeEdgeFunction →
+        // x-request-id header → edge withRun → pipeline_runs.
+        await runAudit('user-calculate', async () => {
+          await runAuditPipelineDrivenCalculation(forceRefresh);
+        });
         return;
       } catch (pipelineError) {
         console.warn(
@@ -634,7 +734,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           reqBody.industry = state.companyData.industry;
         }
 
-        const { data, error } = await supabase.functions.invoke(
+        // WS11 — request_id propagation via invokeEdgeFunction wrapper.
+        // Response shape is wide and partially undocumented (legacy EF
+        // returns data + source + dataFreshness + …) — `any` matches the
+        // legacy `supabase.functions.invoke()` ergonomics.
+        const { data, error } = await invokeEdgeFunction<any>(
           "fetch-company-data",
           { body: reqBody },
         );
@@ -938,7 +1042,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         ? Promise.resolve(cachedOracleResult)
         : (() => {
             _calcTimer.mark('oracle_start');
-            return supabase.functions.invoke('compute-oracle', { body: oracleBody })
+            // WS11 — request_id propagation via invokeEdgeFunction.
+            // OracleResult body shape — typed as `any` to match the
+            // legacy ergonomics; downstream cast to OracleResult.
+            return invokeEdgeFunction<any>('compute-oracle', { body: oracleBody })
               .then(({ data, error }) => {
                 _calcTimer.mark('oracle_end');
                 if (error || !data || !Array.isArray(data.dimensions)) {

@@ -22,6 +22,7 @@
 // Until the Edge Function is deployed, this module falls back to the static DB.
 
 import { supabase } from "../../utils/supabase";
+import { invokeEdgeFunction } from "../../infrastructure/requestId";
 
 export interface BSECompanyData {
   scripCode: string;
@@ -83,8 +84,8 @@ export async function fetchBSEDataViaProxy(companyName: string): Promise<BSEComp
   }
 
   try {
-    // Route through Supabase Edge Function to avoid CORS
-    const { data, error } = await supabase.functions.invoke('fetch-bse-data', {
+    // Route through Supabase Edge Function to avoid CORS (and propagate request_id for tracing)
+    const { data, error } = await invokeEdgeFunction<any>('fetch-bse-data', {
       body: { scrip_code: scripCode },
     });
 

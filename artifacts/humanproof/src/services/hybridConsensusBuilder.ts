@@ -11,7 +11,15 @@ import type {
   SignalSourceKind,
 } from './liveDataService';
 import type { UserFactors } from './layoffScoreEngine';
-import { computeConfidence } from './confidenceModel';
+// WS4 — Empirical confidence model. Reproduces the legacy `computeConfidence`
+// weights internally when `ws4_conformal_ci` flag is off, so unconditional
+// use is safe. When on, conformal CI quality + evidence presence gate +
+// swarm n_eff are folded into the score.
+import { computeEmpiricalConfidence } from './empiricalConfidenceModel';
+// WS9 — spread thresholds are uncalibrated developer estimates; route
+// through DB so the recalibrate cron can replace them and v_uncalibrated_exposure
+// can quantify how many audits depend on them.
+import { getConstant } from './calibration/calibrationConstants';
 
 type PrimarySource = 'live' | 'db' | 'hybrid';
 
@@ -301,7 +309,22 @@ const aiInvestmentWeight = (signal?: CompanyData['aiInvestmentSignal']): number 
 };
 
 const buildInterval = (value: number, confidence: number, isHeuristic: boolean) => {
-  const spread = isHeuristic ? 0.28 : confidence >= 0.85 ? 0.08 : confidence >= 0.65 ? 0.14 : 0.22;
+  // WS9 — spread thresholds were hardcoded uncalibrated values. Each
+  // bucket is now sourced from engine_calibration_constants with the
+  // legacy literal as bootstrap fallback. Routing through getConstant()
+  // ALSO means each lookup writes a row to engine_constant_resolutions,
+  // so v_uncalibrated_exposure can quantify what fraction of audits
+  // these uncalibrated values still touch.
+  let spread: number;
+  if (isHeuristic) {
+    spread = getConstant<number>('hybridConsensusBuilder.spread.heuristic', 0.28).value as number;
+  } else if (confidence >= 0.85) {
+    spread = getConstant<number>('hybridConsensusBuilder.spread.highConfidence', 0.08).value as number;
+  } else if (confidence >= 0.65) {
+    spread = getConstant<number>('hybridConsensusBuilder.spread.mediumConfidence', 0.14).value as number;
+  } else {
+    spread = getConstant<number>('hybridConsensusBuilder.spread.lowConfidence', 0.22).value as number;
+  }
   return {
     low: clamp(value - spread / 2),
     high: clamp(value + spread / 2),
@@ -740,7 +763,12 @@ export function buildHybridScorePayload({
   // as live-unavailable (Stage C ran to the 45s ceiling without quorum).
   const liveUnavailable = (companyData as any)._liveUnavailable === true;
 
-  const evidenceConfidence = computeConfidence({
+  // WS4 — Route through the empirical confidence model. When
+  // `ws4_conformal_ci` is off, computeEmpiricalConfidence internally
+  // applies legacy weights, so the output shape and value are equivalent
+  // to the legacy `computeConfidence`. When the flag is on, conformal
+  // CI quality + evidence presence gate + swarm n_eff are folded in.
+  const evidenceConfidence = computeEmpiricalConfidence({
     quorumStatus,
     crossSourceAgreements,
     totalAgreementOpportunities,
@@ -750,6 +778,12 @@ export function buildHybridScorePayload({
     avgSourceReliability,
     liveUnavailable,
     conflictCount:       reconciled.conflicts.length,
+    // The three optional inputs are passed when upstream stages have
+    // computed them. They default to null — empiricalConfidenceModel
+    // handles the null case gracefully.
+    conformal:         (companyData as any)._conformalBundle ?? null,
+    swarmIndependence: (companyData as any)._swarmIndependence ?? null,
+    evidencePerClass:  (companyData as any)._evidencePresence ?? undefined,
   });
 
   // Diagnostic rationale — surfaced via confidenceCapsApplied for UI tooltip.

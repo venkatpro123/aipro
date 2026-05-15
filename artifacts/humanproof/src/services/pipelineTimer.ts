@@ -149,7 +149,7 @@ export class PipelineTimer implements PipelineTimerInstance {
     const t = new PipelineTimer(companyName);
     t.mark('pipeline_start');
     // Probe network condition in background — does not block pipeline
-    probeNetworkCondition().then(c => { t.networkCondition = c; }).catch(() => {});
+    probeNetworkCondition().then(c => { t.networkCondition = c; }).catch(() => {}); // arch-allow:R2 fire-and-forget network probe
     return t;
   }
 

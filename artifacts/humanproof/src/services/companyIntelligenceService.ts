@@ -11,7 +11,10 @@ import type { CompanyData } from '../data/companyDatabase';
 // Seeded records without a last_updated timestamp are treated as pre-2026 baseline
 // data. classifyDbFreshness(500+ days) → 'invalid', so live signals ALWAYS supersede them
 // instead of a null timestamp defaulting to new Date() and appearing "just-fetched fresh".
-const STALE_SEED_DATE = '2025-01-01T00:00:00.000Z';
+// WS12 — computed 365 days ago instead of a hardcoded calendar date,
+// so the sentinel is GUARANTEED > 30 days stale forever without
+// per-year maintenance. See auditDataPipeline.ts for the same fix.
+const STALE_SEED_DATE = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
 
 // ── Row shape from Supabase company_intelligence table ────────────────────────
 // Supports both jsonb-nested and flat column layouts — reads whichever is present.

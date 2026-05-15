@@ -251,6 +251,21 @@ export interface UIDimension {
  * - `recommendations` are sorted by priority (Critical → Low)
  * - All timestamps are ISO strings
  */
+/**
+ * WS6 — Tier-A two-stage response phase.
+ *
+ *   tier_a            Immediate response built from cached + DB-resident
+ *                     signals. Conformal CI is calibrated against the
+ *                     partial-coverage state, so the displayed confidence
+ *                     is honest about the limited evidence.
+ *   tier_a_upgraded   Live-scrape signals have landed and the result has
+ *                     been recomputed. Subscribers receive this via
+ *                     realtime channel; the UI animates the delta.
+ *   complete          Single-pass pipeline ran to completion (the legacy
+ *                     path when ws6_tier_a_response is off).
+ */
+export type AuditPhase = 'tier_a' | 'tier_a_upgraded' | 'complete';
+
 export interface HybridResult {
   // ── Core Score ────────────────────────────────────────────────────────────
   total: number; // 0–100 composite risk index
@@ -259,6 +274,14 @@ export interface HybridResult {
   confidence: "High" | "Medium" | "Low";
   confidencePercent: number; // 0–100
   confidenceInterval: ConfidenceInterval;
+
+  // ── WS6 Tier-A two-stage response (Audit Issue #17) ─────────────────────
+  /** Current response phase. `complete` for legacy single-pass audits. */
+  auditPhase?: AuditPhase;
+  /** Server-generated id correlating tier_a and tier_a_upgraded payloads. */
+  auditRequestId?: string;
+  /** Wall-clock ms taken to produce THIS payload (not including any prior phase). */
+  phaseDurationMs?: number;
 
   // ── Derived for UI (computed client-side from breakdown) ─────────────────
   dimensions: UIDimension[]; // ordered L1→L5 with labels & 0–100 scores

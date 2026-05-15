@@ -142,6 +142,7 @@ const FRED_BASELINE: FREDSnapshot = {
 // "macro signals stale" instead of pretending the baseline is current.
 
 import { supabase } from '../utils/supabase';
+import { invokeEdgeFunction } from '../infrastructure/requestId';
 import { recordApiDegradation } from './apiDegradationMonitor';
 
 let macroFetchInflight: Promise<{ joltsSnapshot: JOLTSSnapshot | null; fredSnapshot: FREDSnapshot | null } | null> | null = null;
@@ -163,7 +164,7 @@ export async function fetchLiveMacroSnapshot(): Promise<{ joltsSnapshot: JOLTSSn
   if (macroFetchInflight) return macroFetchInflight;
   macroFetchInflight = (async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('proxy-macro', { body: {} });
+      const { data, error } = await invokeEdgeFunction<any>('proxy-macro', { body: {} });
 
       // Function not deployed (404) or key not configured (503 with error msg) —
       // this is an "opt-in feature not set up" state, NOT a runtime error.

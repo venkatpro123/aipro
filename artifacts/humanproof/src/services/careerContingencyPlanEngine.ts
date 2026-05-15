@@ -15,6 +15,10 @@ import type { NegotiationIntelligenceResult } from './negotiationIntelligenceSer
 import type { ExitTimingResult } from './exitTimingOptimizer';
 import type { JobMarketLiquidityResult } from './jobMarketLiquidityService';
 import type { MarketDemandReport } from './roleMarketDemandService';
+// WS9 — bare-arithmetic confidence (`0.55 + 0.30 · margin`) routed
+// through DB constants. Both addends are uncalibrated placeholders
+// pending regression on user_prediction_outcomes.
+import { getConstant } from './calibration/calibrationConstants';
 import type { ScenarioPlanResult } from './scenarioPlanService';
 import type { VisaRiskResult } from './visaRiskEngine';
 import type { FinancialRunwayAssessment } from './financialRunwayService';
@@ -391,7 +395,14 @@ function selectRecommendedPath(
 
   const winner = scores[0];
   const margin = winner.ev - scores[1].ev;
-  const confidence = 0.55 + Math.min(0.30, margin / 100);
+  // WS9 — both terms are DB-sourced uncalibrated placeholders. The
+  // recalibrate cron will eventually replace them with regression on
+  // (path-correctness vs margin) from user_prediction_outcomes. Until
+  // then, the legacy 0.55 base + 0.30 max-margin-gain values are the
+  // bootstrap fallbacks.
+  const base       = getConstant<number>('careerContingencyPlanEngine.confidence.base', 0.55).value as number;
+  const marginGain = getConstant<number>('careerContingencyPlanEngine.confidence.marginGain', 0.30).value as number;
+  const confidence = base + Math.min(marginGain, margin / 100);
 
   return { path: winner.path, confidence: Math.round(confidence * 100) / 100 };
 }
