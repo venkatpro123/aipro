@@ -10,7 +10,6 @@ import {
 } from "react-router-dom";
 import { LiquidAIBackground } from "./components/LiquidAIBackground";
 import {
-  Search,
   LayoutDashboard,
   TrendingUp,
   Sparkles,
@@ -139,8 +138,11 @@ function NavigationBridge() {
 }
 
 // ─── Nav helpers ──────────────────────────────────────────────────────────────
+// "Research" (root path "/") removed from the visible nav per product
+// decision. The root route still works for direct-URL hits and brand-logo
+// clicks; it just doesn't get an explicit nav entry. If brought back later,
+// re-add the matching entry to BOTH lists below.
 const NAV_ITEMS = [
-  { to: "/",            label: "Research"    },
   { to: "/terminal",    label: "Dashboard"   },
   { to: "/leaderboard", label: "Risk Index"  },
   { to: "/intelligence",label: "Intel"       },
@@ -150,7 +152,6 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_PRIMARY = [
-  { to: "/",            label: "Research",  Icon: Search         },
   { to: "/terminal",    label: "Dashboard", Icon: LayoutDashboard},
   { to: "/leaderboard", label: "Risk",      Icon: TrendingUp     },
   { to: "/intelligence",label: "Intel",     Icon: Sparkles       },
