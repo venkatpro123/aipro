@@ -45,6 +45,10 @@ export default defineConfig({
             if (id.includes('@use-gesture') || id.includes('react-intersection-observer')) return 'vendor-interaction';
             // Skeleton loader — tiny, separate for cache stability
             if (id.includes('react-loading-skeleton')) return 'vendor-ui';
+            // Animation & virtualization libs — loaded on demand
+            if (id.includes('@number-flow') || id.includes('number-flow')) return 'vendor-animation';
+            if (id.includes('@tanstack/react-virtual')) return 'vendor-virtual';
+            if (id.includes('@formkit/auto-animate')) return 'vendor-animation';
             return 'vendor';
           }
         },

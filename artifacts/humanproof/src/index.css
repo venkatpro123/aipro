@@ -3927,3 +3927,532 @@ p, span, li, td, th {
     color: black;
   }
 }
+
+/* ============================================================================
+   PREMIUM ENHANCEMENTS — v36.0 (May 2026)
+   color-scheme · contain · number-flow · text-balance · interaction polish
+   ============================================================================ */
+
+/* ── System-level dark mode integration ─────────────────────────────────── */
+:root {
+  color-scheme: dark;
+}
+
+/* ── GPU-safe contain for card performance ──────────────────────────────── */
+.card,
+.card-v2,
+.card-premium,
+.card-premium-v2,
+.card-hero,
+.card-elev-1,
+.card-elev-2,
+.card-elev-3,
+.card-elev-4,
+.intelligence-panel,
+.metric-card,
+.insight-card {
+  contain: layout style;
+}
+
+/* ── Text balance for headlines — prevents awkward single-word last lines ─ */
+h1, h2, h3, .h1, .h2, .h3,
+.display-1, .display-2, .display-3,
+.section-eyebrow, .label-xs, .label-sm {
+  text-wrap: balance;
+}
+
+/* ── Caret color in inputs — brand accent ──────────────────────────────── */
+input, textarea, [contenteditable] {
+  caret-color: var(--cyan);
+}
+
+/* ── Pointer cursor on all interactive elements ─────────────────────────── */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+summary {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* ── number-flow — animated digit component integration ─────────────────── */
+/* The @number-flow/react library animates digits via CSS transitions.
+   These tokens wire it into our premium type system. */
+number-flow,
+[data-number-flow] {
+  --number-flow-char-height: 1em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.03em;
+}
+
+/* Inherit score ring styles for animated score numbers */
+.score-animated number-flow,
+.score-animated [data-number-flow] {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+/* ── @formkit/auto-animate — smooth list reorder CSS ───────────────────── */
+/* auto-animate handles its own JS-driven animations; we set timing tokens */
+[data-auto-animate] {
+  --auto-animate-duration: var(--dur-normal);
+  --auto-animate-easing: var(--ease-spring);
+}
+
+/* ── Horizontal scroll container (mobile carousels) ─────────────────────── */
+.scroll-x {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.scroll-x::-webkit-scrollbar { display: none; }
+.scroll-x > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Fade-out scroll hints at edges */
+.scroll-x-fade {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 85%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black 85%,
+    transparent 100%
+  );
+}
+
+/* ── Aspect-ratio utilities ─────────────────────────────────────────────── */
+.aspect-video  { aspect-ratio: 16 / 9; }
+.aspect-square { aspect-ratio: 1 / 1;  }
+.aspect-card   { aspect-ratio: 4 / 3;  }
+
+/* ── Gradient border utility (premium outlined cards) ───────────────────── */
+.gradient-border {
+  position: relative;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--cyan), rgba(124,58,237,0.6), rgba(0,212,224,0.3));
+  z-index: -1;
+  opacity: 0.5;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* ── Truncate helpers ───────────────────────────────────────────────────── */
+.truncate-1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── View Transitions API — smooth page-to-page navigation ─────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: 220ms var(--ease-in-out) both fade-out;
+  }
+  ::view-transition-new(root) {
+    animation: 280ms var(--ease-out) both float-up;
+  }
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+/* ── VirtualList container — used with @tanstack/react-virtual ──────────── */
+.virtual-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.virtual-list-inner {
+  position: relative;
+  width: 100%;
+}
+.virtual-list-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+/* ── Interactive list item — base pattern for virtual rows ──────────────── */
+.list-item-interactive {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-spring);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.list-item-interactive:hover {
+  background: rgba(255,255,255,0.035);
+  border-color: rgba(255,255,255,0.07);
+}
+.list-item-interactive:active {
+  transform: scale(0.99);
+}
+
+/* ── Tab content transitions — directional slide ────────────────────────── */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: none; }
+}
+.tab-enter-right { animation: slide-in-right 260ms var(--ease-out) both; }
+.tab-enter-left  { animation: slide-in-left  260ms var(--ease-out) both; }
+
+/* ── Premium metric display — tabular nums with glow ────────────────────── */
+.metric-value {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text);
+}
+.metric-value-cyan  { color: var(--cyan); text-shadow: 0 0 20px rgba(0,212,224,0.3); }
+.metric-value-amber { color: var(--amber); text-shadow: 0 0 20px rgba(245,158,11,0.3); }
+.metric-value-red   { color: var(--red); text-shadow: 0 0 20px rgba(239,68,68,0.3); }
+.metric-value-green { color: var(--emerald); text-shadow: 0 0 20px rgba(16,185,129,0.3); }
+
+/* ── Pill chips — compact badge used in intelligence panels ─────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-2);
+  white-space: nowrap;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+.chip:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.16);
+}
+.chip-cyan   { background: var(--cyan-dim); border-color: rgba(0,212,224,0.25); color: var(--cyan); }
+.chip-amber  { background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.22); color: var(--amber); }
+.chip-red    { background: rgba(239,68,68,0.10); border-color: rgba(239,68,68,0.22); color: var(--red); }
+.chip-green  { background: var(--emerald-dim); border-color: rgba(16,185,129,0.22); color: var(--emerald); }
+
+/* ── Floating label input (advanced form design) ────────────────────────── */
+.input-float-wrap {
+  position: relative;
+  padding-top: 16px;
+}
+.input-float-wrap .input {
+  padding-top: 8px;
+}
+.input-float-label {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  font-size: 0.95rem;
+  color: var(--text-3);
+  pointer-events: none;
+  transition:
+    top var(--dur-fast) var(--ease-out),
+    font-size var(--dur-fast) var(--ease-out),
+    color var(--dur-fast);
+}
+.input-float-wrap:focus-within .input-float-label,
+.input-float-wrap.has-value .input-float-label {
+  top: 8px;
+  font-size: 0.65rem;
+  color: var(--cyan);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Icon button — uniform circular icon-only action ────────────────────── */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast),
+    border-color var(--dur-fast),
+    color var(--dur-fast),
+    transform var(--dur-fast) var(--ease-spring);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.14);
+  color: var(--text);
+  transform: scale(1.06);
+}
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn-cyan:hover {
+  background: var(--cyan-dim);
+  border-color: rgba(0,212,224,0.30);
+  color: var(--cyan);
+}
+
+/* ── Premium table ──────────────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-2);
+  vertical-align: middle;
+}
+.data-table tbody tr {
+  transition: background var(--dur-fast);
+}
+.data-table tbody tr:hover {
+  background: rgba(255,255,255,0.025);
+}
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Timeline / step list ───────────────────────────────────────────────── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--cyan), rgba(0,212,224,0.1));
+}
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  padding-bottom: var(--space-6);
+  position: relative;
+}
+.timeline-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid rgba(0,212,224,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 12px rgba(0,212,224,0.15);
+}
+.timeline-dot.active {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px rgba(0,212,224,0.35);
+}
+
+/* ── Floating action button (FAB) ───────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: calc(var(--nav-bottom-h) + 20px + env(safe-area-inset-bottom, 0px));
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--cyan-bright), var(--cyan));
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    0 4px 20px rgba(0,212,224,0.40),
+    0 2px 8px rgba(0,0,0,0.3);
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    box-shadow var(--dur-base) var(--ease-out);
+  z-index: 200;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.fab:hover {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow:
+    0 8px 32px rgba(0,212,224,0.55),
+    0 4px 12px rgba(0,0,0,0.35);
+}
+.fab:active {
+  transform: scale(0.94);
+}
+@media (min-width: 769px) {
+  .fab {
+    bottom: 24px;
+  }
+}
+
+/* ── Notification dot — unread indicator ────────────────────────────────── */
+.notification-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  border: 2px solid var(--bg-deep, var(--background));
+  box-shadow: 0 0 6px rgba(239,68,68,0.5);
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* ── Keyboard shortcut badge ─────────────────────────────────────────────── */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-bottom-width: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ── Masonry-like auto-flow grid ─────────────────────────────────────────── */
+.masonry-grid {
+  column-count: 3;
+  column-gap: var(--space-5);
+}
+.masonry-grid > * {
+  break-inside: avoid;
+  margin-bottom: var(--space-5);
+}
+@media (max-width: 1024px) {
+  .masonry-grid { column-count: 2; }
+}
+@media (max-width: 640px) {
+  .masonry-grid { column-count: 1; }
+}
+
+/* ── Drag handle indicator ───────────────────────────────────────────────── */
+.drag-handle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  cursor: grab;
+  transition: color var(--dur-fast);
+  flex-shrink: 0;
+}
+.drag-handle:hover { color: var(--text-2); }
+.drag-handle:active { cursor: grabbing; }
+
+/* ── Global animation performance hints (v36.0) ─────────────────────────── */
+.motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform var(--dur-base) var(--ease-out),
+                opacity var(--dur-base) var(--ease-out);
+  }
+}
+.motion-safe-spring {
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform var(--dur-normal) var(--ease-spring),
+                opacity var(--dur-base) var(--ease-out);
+  }
+}
+
+/* ── Backdrop blur toggle for low-power mode ────────────────────────────── */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel,
+  .glass-panel-heavy,
+  .glass-enhanced,
+  .nav-inner,
+  .mobile-bottom-nav,
+  .more-sheet,
+  .dashboard-tabs-strip {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: oklch(0.13 0.012 260) !important;
+  }
+}
