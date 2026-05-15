@@ -127,10 +127,27 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
   const tone    = headline.tone;
   const verdict = VERDICT_LABEL[headline.verdict];
 
+  // v35.1.1 — distinguish "live signals attempted but empty" from "platform
+  // never tried." Both render verdict='unknown', but the empty-but-attempted
+  // case is typically a Yahoo / RSS / Glassdoor rate-limit or anti-bot block
+  // — NOT a platform fault. Showing the same "NO DATA — we do not yet have
+  // live company signals" copy in both states reads as "the platform is
+  // broken" to users.
+  //
+  // Detection signal: liveDataService populates missingDataFallbacks /
+  // degradedSignalClasses whenever a live class was attempted but returned
+  // empty. Either array having entries means we DID try; the upstream just
+  // returned nothing.
+  const fallbackCount = result.signalQuality?.missingDataFallbacks?.length ?? 0;
+  const degradedCount = result.signalQuality?.degradedSignalClasses?.length ?? 0;
+  const liveAttemptedButEmpty = headline.verdict === 'unknown' && (fallbackCount > 0 || degradedCount > 0);
+
   // One-line summary that captures both signals
-  const summary = headline.verdict === 'unknown'
-    ? 'We do not yet have live company signals for this company.'
-    : `Workforce: ${VERDICT_LABEL[workforce.verdict]} · Financial: ${VERDICT_LABEL[financial.verdict]}`;
+  const summary = headline.verdict !== 'unknown'
+    ? `Workforce: ${VERDICT_LABEL[workforce.verdict]} · Financial: ${VERDICT_LABEL[financial.verdict]}`
+    : liveAttemptedButEmpty
+      ? 'Live sources attempted, none returned — typically a rate-limit or anti-bot block. Retry in 5 minutes.'
+      : 'We do not yet have live company signals for this company.';
 
   return (
     <div
