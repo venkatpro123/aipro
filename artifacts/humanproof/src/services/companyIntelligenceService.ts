@@ -420,24 +420,27 @@ export async function updateCompanyConfidence(
 export async function searchCompanies(
   query: string,
   limit = 10,
-): Promise<{ name: string; industry: string; riskScore: number }[]> {
+): Promise<{ name: string; industry: string; riskScore: number; nDuplicates?: number }[]> {
   try {
+    // v35.1.3: query the canonical view so the dropdown shows ONE row per
+    // entity (not 5 Oracle rows). The view's search_haystack column lets
+    // short-form queries like "TCS" or "ORCL" hit the canonical row even
+    // when the canonical display name is the long form.
+    const escaped = query.replace(/[%,()]/g, '');
     const { data, error } = await supabase
-      .from('company_intelligence')
-      .select('company_name, industry, company_risk_score')
-      .ilike('company_name', `%${query}%`)
+      .from('v_company_canonical')
+      .select('company_name, industry, company_risk_score, n_duplicates')
+      .or(`company_name.ilike.%${escaped}%,search_haystack.ilike.%${escaped}%`)
       .limit(limit);
 
     if (error || !data) return [];
-    // Filter rows where company_name is null/empty — these would cause
-    // "Cannot read properties of undefined (reading 'toLowerCase')" in the
-    // LayoffInputForm autocomplete filter at line 511.
     return (data as any[])
       .filter(r => r.company_name && typeof r.company_name === 'string' && r.company_name.trim().length > 0)
       .map(r => ({
         name: r.company_name as string,
         industry: r.industry ?? 'Unknown',
         riskScore: Math.round((r.company_risk_score ?? 0.4) * 100),
+        nDuplicates: typeof r.n_duplicates === 'number' ? r.n_duplicates : undefined,
       }));
   } catch {
     return [];
