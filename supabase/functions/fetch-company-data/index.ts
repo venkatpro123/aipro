@@ -98,20 +98,61 @@ const toIsoDate = (value: unknown): string => {
 const normalizeCompanyName = (name: string): string =>
   name.trim().toLowerCase();
 
+/**
+ * Find a KNOWN_HEADCOUNTS key that matches this company name.
+ * Returns the longest matching key (so "tata consultancy" beats "tata" when
+ * both keys exist) so the most-specific canonical value wins.
+ *
+ * The longest-match rule matters: "Tata Steel" should NOT match the
+ * "tata consultancy" key just because "tata" is a substring. We require
+ * the KNOWN_HEADCOUNTS key to be a substring of the company name AND
+ * pick the LONGEST such match.
+ */
+const findKnownHeadcountKey = (companyName: string): string | null => {
+  const nameLower = companyName.toLowerCase();
+  let bestKey: string | null = null;
+  for (const key of Object.keys(KNOWN_HEADCOUNTS)) {
+    if (nameLower.includes(key) && (!bestKey || key.length > bestKey.length)) {
+      bestKey = key;
+    }
+  }
+  return bestKey;
+};
+
 const extractEmployeeCount = (row: JsonObject): number => {
+  const nameLower = String(row.company_name || "").toLowerCase();
+  const knownKey = findKnownHeadcountKey(nameLower);
+  const knownCount = knownKey ? KNOWN_HEADCOUNTS[knownKey] : null;
+
+  // v35.1.2 — sanity-check DB workforce_count against KNOWN_HEADCOUNTS.
+  // The DB contains stale snapshots for famous companies (e.g. "Oracle" row
+  // shows 51k; real Oracle has ~164k per KNOWN_HEADCOUNTS). When the DB
+  // value differs from the curated canonical by >2x, trust the curated
+  // value — it's hand-maintained from public 10-K filings.
+  // The 2x band tolerates legitimate workforce changes (layoffs, growth)
+  // while catching obviously-wrong stale rows.
+  const sanityCheck = (candidate: number): number => {
+    if (knownCount === null) return candidate;
+    if (candidate <= 0) return knownCount;
+    const ratio = candidate / knownCount;
+    if (ratio < 0.5 || ratio > 2.0) return knownCount;
+    return candidate;
+  };
+
   // Priority 1: direct DB column (workforce_count — the authoritative HR field)
-  if (typeof row.workforce_count === "number" && row.workforce_count > 0) return row.workforce_count;
+  if (typeof row.workforce_count === "number" && row.workforce_count > 0) {
+    return sanityCheck(row.workforce_count);
+  }
 
   // Priority 2: financial_signals sub-document variants
   const fin = row.financial_signals ?? {};
   const fromSignals = fin.employee_count ?? fin.headcount ?? fin.workforce_count;
-  if (typeof fromSignals === "number" && fromSignals > 0) return fromSignals;
+  if (typeof fromSignals === "number" && fromSignals > 0) {
+    return sanityCheck(fromSignals);
+  }
 
   // Priority 3: KNOWN_HEADCOUNTS canonical map (updated quarterly)
-  const nameLower = String(row.company_name || "").toLowerCase();
-  for (const [key, count] of Object.entries(KNOWN_HEADCOUNTS)) {
-    if (nameLower.includes(key)) return count;
-  }
+  if (knownCount !== null) return knownCount;
 
   // Priority 4: size-class proxy (last resort — wide buckets)
   const sizeMap: Record<string, number> = {
@@ -504,31 +545,85 @@ Deno.serve((req) =>
       );
     }
 
-    // Primary source: company_intelligence with the same confidence gate used
-    // by the frontend lookup. Weak word-overlap matches must not silently seed
-    // the audit with the wrong company.
-    // Use limit(1) + order by confidence_score DESC to handle duplicate company
-    // rows (maybeSingle() throws PGRST116 when >1 row matches).
-    const { data: intelExactRows } = await supabaseClient
-      .from("company_intelligence")
-      .select("*")
-      .ilike("company_name", companyName)
-      .order("confidence_score", { ascending: false })
-      .limit(1);
+    // v35.1.2 — CANONICAL-AWARE row selection.
+    //
+    // The DB contains multiple snapshot rows for famous companies (Oracle: 5
+    // rows with workforce 9k–166k, Infosys: 3 rows with 50k–328k, TCS: 2 rows
+    // with 49k–604k). The legacy ilike(exact) path picks the FIRST row matching
+    // the user's input — for "Oracle" that's the row literally named 'Oracle'
+    // (workforce 51k, STALE) instead of 'ORACLE CORP' (162k, current).
+    //
+    // Fix: when the user's input maps to a KNOWN_HEADCOUNTS canonical key,
+    // search broadly for ALL rows containing that key, then pick the one
+    // whose workforce_count is CLOSEST to the curated KNOWN_HEADCOUNTS value.
+    // This consistently resolves to the most-accurate snapshot regardless of
+    // exact name match.
+    //
+    // Only triggers for well-known companies (the KNOWN_HEADCOUNTS map). For
+    // long-tail companies the original ilike-exact path runs unchanged.
+    let intelExact: JsonObject | null = null;
+    let sourcePath:
+      | "edge_canonical"
+      | "edge_exact"
+      | "edge_prefix"
+      | "edge_contains"
+      | "edge_fallback" = "edge_fallback";
 
-    const intelExact = Array.isArray(intelExactRows) && intelExactRows.length > 0
-      ? intelExactRows[0]
-      : null;
+    const canonicalKey = findKnownHeadcountKey(companyName.toLowerCase());
+    if (canonicalKey) {
+      const canonicalCount = KNOWN_HEADCOUNTS[canonicalKey];
+      const { data: candidateRows } = await supabaseClient
+        .from("company_intelligence")
+        .select("*")
+        .ilike("company_name", `%${canonicalKey}%`)
+        .limit(20);
+      if (Array.isArray(candidateRows) && candidateRows.length > 0) {
+        // Pick the row whose workforce_count is closest to KNOWN_HEADCOUNTS
+        // (proportional distance, so 162k vs 164k beats 51k vs 164k).
+        let bestRow: JsonObject | null = null;
+        let bestDistance = Infinity;
+        for (const row of candidateRows) {
+          const wc = typeof row.workforce_count === "number" ? row.workforce_count : 0;
+          // Skip rows with obviously-broken workforce (< 100) — they're
+          // partial-ingestion artifacts that can't be the canonical record.
+          if (wc < 100) continue;
+          const distance = Math.abs(wc - canonicalCount) / canonicalCount;
+          if (distance < bestDistance) {
+            bestRow = row;
+            bestDistance = distance;
+          }
+        }
+        if (bestRow) {
+          intelExact = bestRow;
+          sourcePath = "edge_canonical";
+          console.log(
+            `[fetch-company-data] Canonical-aware pick: "${companyName}" → "${bestRow.company_name}" ` +
+              `(workforce=${bestRow.workforce_count}, canonical=${canonicalCount}, distance=${bestDistance.toFixed(2)})`,
+          );
+        }
+      }
+    }
+
+    // Fallback: legacy ilike(exact) path for companies NOT in KNOWN_HEADCOUNTS
+    // OR when the canonical search returned no plausible candidates.
+    if (!intelExact) {
+      const { data: intelExactRows } = await supabaseClient
+        .from("company_intelligence")
+        .select("*")
+        .ilike("company_name", companyName)
+        .order("confidence_score", { ascending: false })
+        .limit(1);
+      intelExact = Array.isArray(intelExactRows) && intelExactRows.length > 0
+        ? intelExactRows[0]
+        : null;
+      if (intelExact) sourcePath = "edge_exact";
+    }
 
     let intelRow = intelExact;
     let matchConfidence = intelExact ? 1.0 : 0.0;
     let matchType: MatchType = intelExact ? "exact" : "none";
     let matchedCompanyName: string | null = intelExact?.company_name ?? null;
-    let sourcePath:
-      | "edge_exact"
-      | "edge_prefix"
-      | "edge_contains"
-      | "edge_fallback" = intelExact ? "edge_exact" : "edge_fallback";
+    if (!intelExact) sourcePath = "edge_fallback";
 
     if (!intelRow) {
       const { data: intelFuzzyRows } = await supabaseClient
