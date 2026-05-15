@@ -33,6 +33,9 @@
 
 import { supabase } from '../utils/supabase';
 import { evaluateFlagSync } from '../config/featureFlags';
+// WS9 — MIN_CALIBRATION_POINTS sourced from engine_calibration_constants
+// so ops can adjust the conformal-stability floor without a code deploy.
+import { getConstant } from './calibration/calibrationConstants';
 
 // ── Public types ────────────────────────────────────────────────────────────
 
@@ -65,7 +68,14 @@ export interface ConformalBundle {
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
-const MIN_CALIBRATION_POINTS = 80;
+// WS9 — read once at module scope (getConstant() is cheap thanks to the
+// 30-min snapshot cache, but module-scope-once preserves the simple
+// constant-feel for the value's many call sites). 80 is the legacy
+// bootstrap fallback; ops can override via engine_calibration_constants.
+const MIN_CALIBRATION_POINTS = (() => {
+  const r = getConstant<number>('conformalCI.minCalibrationPoints', 80);
+  return typeof r.value === 'number' ? r.value : 80;
+})();
 const DEFAULT_NOMINAL_LEVELS = [0.5, 0.8, 0.9] as const;
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const CALIBRATION_LOOKBACK_DAYS = 365;

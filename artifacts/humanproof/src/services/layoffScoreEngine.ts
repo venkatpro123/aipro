@@ -1286,19 +1286,25 @@ const calculateRecentLayoffRisk = (
   layoffs: { date: string; percentCut: number }[],
   now: Date,
 ): number => {
-  if (!layoffs || layoffs.length === 0) return 0.05;
+  // WS9 — every band now sources from engine_calibration_constants with the
+  // legacy literal as bootstrap fallback. Each lookup writes one row to
+  // engine_constant_resolutions tagged with the audit's request_id so
+  // v_uncalibrated_exposure can quantify how many audits touch these bands.
+  if (!layoffs || layoffs.length === 0) {
+    return getConstant<number>('layoffScoreEngine.recentLayoffRisk.noLayoffs', 0.05).value as number;
+  }
   const sorted = [...layoffs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
   const mostRecent = sorted[0];
   const monthsAgo = monthsDifference(mostRecent.date, now);
 
-  if (monthsAgo < 3) return 0.95;   // UNCALIBRATED
-  if (monthsAgo < 6) return 0.8;    // UNCALIBRATED
-  if (monthsAgo < 12) return 0.62;  // UNCALIBRATED
-  if (monthsAgo < 18) return 0.42;  // UNCALIBRATED
-  if (monthsAgo < 24) return 0.28;  // UNCALIBRATED
-  return 0.15;                       // UNCALIBRATED
+  if (monthsAgo < 3)  return getConstant<number>('layoffScoreEngine.recentLayoffRisk.lt3months',  0.95).value as number;
+  if (monthsAgo < 6)  return getConstant<number>('layoffScoreEngine.recentLayoffRisk.lt6months',  0.80).value as number;
+  if (monthsAgo < 12) return getConstant<number>('layoffScoreEngine.recentLayoffRisk.lt12months', 0.62).value as number;
+  if (monthsAgo < 18) return getConstant<number>('layoffScoreEngine.recentLayoffRisk.lt18months', 0.42).value as number;
+  if (monthsAgo < 24) return getConstant<number>('layoffScoreEngine.recentLayoffRisk.lt24months', 0.28).value as number;
+  return getConstant<number>('layoffScoreEngine.recentLayoffRisk.gte24months', 0.15).value as number;
 };
 
 // BUG-DA4 FIX: Round frequency now considers recency alongside count.
@@ -1308,16 +1314,18 @@ const calculateRoundFrequency = (
   layoffs: { date: string; percentCut: number }[] | undefined,
   now: Date,
 ): number => {
-  if (!rounds || rounds === 0) return 0.05;
+  if (!rounds || rounds === 0) {
+    return getConstant<number>('layoffScoreEngine.layoffRoundRisk.noRounds', 0.05).value as number;
+  }
 
-  // UNCALIBRATED — developer estimates.
-  // Round count → base risk mapping has not been validated against regression data.
-  // Calibration method: cross-tab P(Nth round | had N-1 rounds) from layoffs.fyi.
-  let base = 0.05;
-  if (rounds === 1) base = 0.42;   // UNCALIBRATED
-  else if (rounds === 2) base = 0.68; // UNCALIBRATED
-  else if (rounds === 3) base = 0.85; // UNCALIBRATED
-  else base = 0.95;                  // UNCALIBRATED
+  // WS9 — bands sourced from engine_calibration_constants with the legacy
+  // literals as bootstrap fallback. Calibration target: cross-tab
+  // P(Nth round | had N-1 rounds) from user_prediction_outcomes.
+  let base: number;
+  if (rounds === 1)      base = getConstant<number>('layoffScoreEngine.layoffRoundRisk.1round',  0.42).value as number;
+  else if (rounds === 2) base = getConstant<number>('layoffScoreEngine.layoffRoundRisk.2rounds', 0.68).value as number;
+  else if (rounds === 3) base = getConstant<number>('layoffScoreEngine.layoffRoundRisk.3rounds', 0.85).value as number;
+  else                   base = getConstant<number>('layoffScoreEngine.layoffRoundRisk.4plus',   0.95).value as number;
 
   // Recency weighting: if most layoffs are old (>18 months), reduce score by up to 20%
   if (layoffs && layoffs.length > 0) {
@@ -1858,16 +1866,19 @@ const calculateAIEfficiencyRestructuringRisk = (
 
   if (!hasPriorCuts && !hasCollapseSignal && !isOverstaffedVsAI) return 0;
 
-  // AI investment strength — only meaningful at high/very-high levels
+  // AI investment strength — only meaningful at high/very-high levels.
+  // WS9 — each signal level sourced from engine_calibration_constants with
+  // the legacy literal as bootstrap fallback. The very_high alias preserves
+  // backward compatibility with earlier data that used underscore form.
+  const veryHighValue = getConstant<number>('layoffScoreEngine.aiInvestmentSignal.veryHigh', 0.80).value as number;
   const aiStrengthMap: Record<string, number> = {
-    low:       0.00,
-    medium:    0.12,
-    high:      0.52,
-    'very-high': 0.80,
-    // backward compat alias
-    very_high: 0.80,
+    low:       getConstant<number>('layoffScoreEngine.aiInvestmentSignal.low',    0.00).value as number,
+    medium:    getConstant<number>('layoffScoreEngine.aiInvestmentSignal.medium', 0.12).value as number,
+    high:      getConstant<number>('layoffScoreEngine.aiInvestmentSignal.high',   0.52).value as number,
+    'very-high': veryHighValue,
+    very_high: veryHighValue,  // backward compat alias
   };
-  const aiStr = aiStrengthMap[companyData.aiInvestmentSignal ?? 'medium'] ?? 0.12;
+  const aiStr = aiStrengthMap[companyData.aiInvestmentSignal ?? 'medium'] ?? aiStrengthMap.medium;
   if (aiStr === 0) return 0;
 
   // Revenue growth factor — confirms non-distress motivation.
