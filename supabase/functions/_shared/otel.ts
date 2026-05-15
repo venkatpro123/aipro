@@ -145,17 +145,26 @@ export class Run {
     if (!client) return;
 
     // Best-effort writes — never throw from telemetry.
+    //
+    // NOTE: pipeline_runs.duration_ms is a GENERATED ALWAYS STORED column;
+    //       INSERTing it produces "cannot insert into generated column" and
+    //       the whole row is rejected. Do NOT include duration_ms here —
+    //       Postgres derives it from (finished_at - started_at).
+    //
+    // WS14: pipeline_runs.request_id is a first-class column (migration
+    //       20260620000001). Include it here so per-audit drilldown joins
+    //       to layer_fallback_log + engine_constant_resolutions work.
     const pipelineRunRow = {
       function_name: this.functionName,
       run_id: this.runId,
       started_at: this.startedAt.toISOString(),
       finished_at: finishedAt.toISOString(),
-      duration_ms: durationMs,
       items_in: this.itemsIn,
       items_out: this.itemsOut,
       error_code: errorCode,
       cost_usd: this.cost > 0 ? this.cost : null,
-      meta: { ...this.meta, error_message: errorMessage ?? null },
+      meta: { ...this.meta, error_message: errorMessage ?? null, duration_ms_observed: durationMs },
+      request_id: this.requestId,
     };
 
     try {
