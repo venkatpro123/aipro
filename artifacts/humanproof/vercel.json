@@ -1,4 +1,7 @@
 {
+  "installCommand": "npm install -g pnpm@10 && cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm --filter @workspace/humanproof run build",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
