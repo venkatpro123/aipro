@@ -47,7 +47,6 @@ import radarRings from "@/assets/radar-rings.jpg";
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SiteHeader />
       <main>
         <Hero />
         <SignalTicker />

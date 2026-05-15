@@ -17,6 +17,7 @@ import ScoreDriftTracker, {
   PlotScoreInversionBanner,
 } from "../components/ScoreDriftTracker";
 import { LayoffCalculator } from "../components/LayoffCalculator/LayoffCalculator";
+import AuditTerminalPage from "./AuditTerminalPage";
 import UpskillingRoadmap from "../components/UpskillingRoadmap";
 import HumanEdgeJournal from "../components/HumanEdgeJournal";
 import ResilienceBadge from "../components/ResilienceBadge";
@@ -66,27 +67,29 @@ class TabErrorBoundary extends Component<
   }
 }
 
+// v35.1.4 — dashboard pared to the two primary surfaces. The other tools
+// (Skill Health, Human Value, Action Plan, Journal, Progress, Forecast)
+// are still routable elsewhere in the app; they are simply not surfaced
+// on this dashboard. Reintroduce here when the product needs them back.
 const TABS = [
-  { id: "risk-calculators", label: "Risk Tools", icon: "🎯", desc: "Oracle + Audit" },
-  { id: "skill-matrix",     label: "Skill Health", icon: "🧠", desc: "Threat matrix" },
-  { id: "hii",              label: "Human Value", icon: "✨", desc: "Irreplaceability" },
-  { id: "protocol",         label: "Action Plan", icon: "🗺️", desc: "Upskill roadmap" },
-  { id: "edge-log",         label: "Journal", icon: "📓", desc: "Daily log" },
-  { id: "drift",            label: "Progress", icon: "📈", desc: "Score drift" },
-  { id: "forecast",         label: "Forecast", icon: "📡", desc: "Future risk" },
+  { id: "layoff-audit", label: "Layoff Audit", icon: "📉", desc: "Company-specific risk audit" },
+  { id: "risk-oracle",  label: "Risk Oracle",  icon: "🎯", desc: "6-dimension role displacement" },
 ];
+
+const VALID_TAB_IDS = new Set(TABS.map(t => t.id));
 
 const STALE_DAYS = 90;
 const SESSION_DRIFT_KEY = "hp_drift_banner_seen_session";
 
 export default function ToolsPage() {
   const { state, dispatch } = useHumanProof();
-  const [activeTab, setActiveTab] = useState<string>(
-    state.activeToolTab || "risk-calculators",
-  );
-  const [mountedTabs, setMountedTabs] = useState<Set<string>>(
-    new Set([state.activeToolTab || "risk-calculators"]),
-  );
+  // v35.1.4 — if a user's persisted tab points to a removed surface, fall
+  // back to the new default so the dashboard never renders an empty pane.
+  const initialTab = state.activeToolTab && VALID_TAB_IDS.has(state.activeToolTab)
+    ? state.activeToolTab
+    : "layoff-audit";
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [mountedTabs, setMountedTabs] = useState<Set<string>>(new Set([initialTab]));
   const [showDriftBannerState, setShowDriftBannerState] = useState(false);
   const [showStalenessBanner, setShowStalenessBanner] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -162,31 +165,6 @@ export default function ToolsPage() {
       (x) => x !== null,
     ).length;
   const completionPct = Math.round((completionCount / 3) * 100);
-
-  const QUICK_ACTIONS = [
-    {
-      id: "risk-oracle",
-      tab: "risk-calculators",
-      icon: "🎯",
-      title: "Risk Oracle",
-      subtitle: "6-Dimension AI Displacement Analysis",
-      desc: "Analyze your role across automation potential, market headwinds, industry exposure, and 3 more vectors.",
-      color: "var(--cyan)",
-      colorDim: "rgba(0,213,224,0.08)",
-      colorBorder: "rgba(0,213,224,0.2)",
-    },
-    {
-      id: "layoff-audit",
-      tab: "risk-calculators",
-      icon: "📉",
-      title: "Layoff Audit",
-      subtitle: "Company-Specific Risk Assessment",
-      desc: "Run a 30-agent swarm intelligence audit on any company to surface real layoff probability signals.",
-      color: "var(--amber)",
-      colorDim: "rgba(245,158,11,0.07)",
-      colorBorder: "rgba(245,158,11,0.2)",
-    },
-  ];
 
   return (
     <div className="page-wrap" style={{ background: "var(--bg)" }}>
@@ -288,43 +266,6 @@ export default function ToolsPage() {
           </div>
         </motion.div>
 
-        {/* ── Quick Launch Cards ────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="quick-launch-grid"
-        >
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              key={action.id}
-              onClick={() => switchTab(action.tab)}
-              className="quick-launch-card"
-              style={{
-                '--ql-color': action.color,
-                '--ql-dim': action.colorDim,
-                '--ql-border': action.colorBorder,
-              } as React.CSSProperties}
-            >
-              <div className="quick-launch-icon">{action.icon}</div>
-              <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 900, fontSize: '1rem', letterSpacing: '-0.02em', color: 'var(--text)' }}>
-                    {action.title}
-                  </span>
-                  <span style={{ fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: action.color, opacity: 0.9 }}>
-                    {action.subtitle}
-                  </span>
-                </div>
-                <p style={{ color: 'var(--text-3)', fontSize: '0.8rem', lineHeight: 1.55, margin: 0 }}>
-                  {action.desc}
-                </p>
-              </div>
-              <div className="quick-launch-arrow" style={{ color: action.color }}>→</div>
-            </button>
-          ))}
-        </motion.div>
-
         {/* ── System Banners ────────────────────────────────────────────── */}
         {(showStalenessBanner || showDriftBannerState || showLegacyVersionBanner) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
@@ -372,28 +313,10 @@ export default function ToolsPage() {
                 >
                   {mountedTabs.has(tab.id) && (
                     <TabErrorBoundary tabId={tab.id}>
-                      {tab.id === "risk-calculators" && (
-                        <RiskCalculatorsView onSwitchTab={switchTab} />
-                      )}
                       {tab.id === "layoff-audit" && (
                         <LayoffCalculator onSwitchTab={switchTab} />
                       )}
-                      {tab.id === "skill-matrix" && (
-                        <SkillRiskCalculator onNavigate={switchTab} />
-                      )}
-                      {tab.id === "hii" && <HumanIrreplacibilityIndex />}
-                      {tab.id === "protocol" && <UpskillingRoadmap />}
-                      {tab.id === "edge-log" && <HumanEdgeJournal />}
-                      {tab.id === "drift" && (
-                        <>
-                          <PlotScoreInversionBanner />
-                          <ResilienceBadge />
-                          <ScoreDriftTracker />
-                        </>
-                      )}
-                      {tab.id === "forecast" && (
-                        <DisplacementForecast onNavigate={switchTab} />
-                      )}
+                      {tab.id === "risk-oracle" && <AuditTerminalPage />}
                     </TabErrorBoundary>
                   )}
                 </motion.div>
@@ -402,8 +325,6 @@ export default function ToolsPage() {
           </AnimatePresence>
         </div>
       </div>
-
-      <DailyChallenge onNavigateJournal={() => switchTab("edge-log")} />
 
       {/* Toast */}
       <AnimatePresence>

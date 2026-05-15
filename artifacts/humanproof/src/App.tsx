@@ -142,26 +142,21 @@ function NavigationBridge() {
 // decision. The root route still works for direct-URL hits and brand-logo
 // clicks; it just doesn't get an explicit nav entry. If brought back later,
 // re-add the matching entry to BOTH lists below.
+// Navigation simplified to two primary surfaces only.
+// Other routes (/intelligence, /safe-careers, /learning-hub, /certification)
+// remain accessible via direct URL but are no longer surfaced in the nav.
 const NAV_ITEMS = [
-  { to: "/terminal",    label: "Dashboard"   },
-  { to: "/leaderboard", label: "Risk Index"  },
-  { to: "/intelligence",label: "Intel"       },
-  { to: "/safe-careers",label: "Safe List"   },
-  { to: "/learning-hub",label: "Upskill"     },
-  { to: "/certification",label: "Certify"   },
+  { to: "/terminal",    label: "Layoff Audit" },
+  { to: "/leaderboard", label: "Risk Oracle"  },
 ];
 
 const MOBILE_PRIMARY = [
-  { to: "/terminal",    label: "Dashboard", Icon: LayoutDashboard},
-  { to: "/leaderboard", label: "Risk",      Icon: TrendingUp     },
-  { to: "/intelligence",label: "Intel",     Icon: Sparkles       },
+  { to: "/terminal",    label: "Layoff Audit", Icon: LayoutDashboard },
+  { to: "/leaderboard", label: "Risk Oracle",  Icon: TrendingUp      },
 ];
 
-const MOBILE_MORE = [
-  { to: "/safe-careers", label: "Safe List", Icon: ShieldCheck      },
-  { to: "/learning-hub", label: "Upskill",   Icon: GraduationCap    },
-  { to: "/certification",label: "Certify",   Icon: Award            },
-];
+// Empty — no overflow items; "More" button is suppressed when this is empty.
+const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [];
 
 function useIsActive() {
   const location = useLocation();
@@ -379,24 +374,26 @@ function MobileBottomNav({
             </Link>
           );
         })}
-        <button
-          className={`bottom-nav-item${moreOpen ? " active" : ""}`}
-          onClick={() => {
-            setMoreOpen((p) => !p);
-            if (navigator.vibrate) navigator.vibrate(8);
-          }}
-          aria-label="More navigation"
-          aria-expanded={moreOpen}
-        >
-          <motion.div
-            className="bottom-nav-icon-wrap"
-            animate={moreOpen ? { scale: 1.10, y: -3 } : { scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 420, damping: 22 }}
+        {MOBILE_MORE.length > 0 && (
+          <button
+            className={`bottom-nav-item${moreOpen ? " active" : ""}`}
+            onClick={() => {
+              setMoreOpen((p) => !p);
+              if (navigator.vibrate) navigator.vibrate(8);
+            }}
+            aria-label="More navigation"
+            aria-expanded={moreOpen}
           >
-            <MoreHorizontal size={20} strokeWidth={1.8} />
-          </motion.div>
-          <span className="bottom-nav-label">More</span>
-        </button>
+            <motion.div
+              className="bottom-nav-icon-wrap"
+              animate={moreOpen ? { scale: 1.10, y: -3 } : { scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 420, damping: 22 }}
+            >
+              <MoreHorizontal size={20} strokeWidth={1.8} />
+            </motion.div>
+            <span className="bottom-nav-label">More</span>
+          </button>
+        )}
       </nav>
 
       {/* More Sheet Overlay */}
