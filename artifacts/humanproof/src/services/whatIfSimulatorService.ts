@@ -16,6 +16,8 @@
 import { LAYER_WEIGHTS } from './layoffScoreEngine';
 import type { ScoreBreakdown } from './layoffScoreEngine';
 import type { ScoreTier } from './layoffScoreEngine';
+// WS9 — dimension feasibility map sourced from engine_calibration_constants.
+import { getConstant } from './calibration/calibrationConstants';
 
 // Score tier thresholds (matches getScoreTier() in layoffScoreEngine.ts)
 function getSimulatedTier(score: number): ScoreTier {
@@ -88,8 +90,14 @@ const DIMENSION_LABELS: Record<string, string> = {
   L4: 'Market Conditions', L5: 'Employee Protection', D6: 'AI Agent Coverage', D7: 'Company Risk',
 };
 
-// Feasibility estimates per dimension (UNCALIBRATED)
-const DIMENSION_FEASIBILITY: Record<string, { score: number; timeLabel: string }> = {
+// WS9 — feasibility map sourced from engine_calibration_constants under
+// 'whatIfSimulatorService.dimensionFeasibility'. Each entry is the user-
+// achievable score uplift for that dimension within the timeLabel window.
+// Bootstrap fallbacks preserve legacy values; ops can replace the whole
+// map via a single JSONB DB row, or recalibrate-engine can produce it
+// from outcomes once users report which levers actually moved their
+// situation.
+const BOOTSTRAP_DIMENSION_FEASIBILITY: Record<string, { score: number; timeLabel: string }> = {
   L1: { score: 30, timeLabel: '12–18 months (company switch required)' },
   L2: { score: 35, timeLabel: '12–24 months (company switch + track record)' },
   L3: { score: 60, timeLabel: '3–6 months (skill building + AI adoption)' },
@@ -98,6 +106,16 @@ const DIMENSION_FEASIBILITY: Record<string, { score: number; timeLabel: string }
   D6: { score: 65, timeLabel: '2–4 months (AI tool adoption)' },
   D7: { score: 35, timeLabel: '12–18 months (company or role change)' },
 };
+
+const DIMENSION_FEASIBILITY: Record<string, { score: number; timeLabel: string }> = (() => {
+  const r = getConstant<Record<string, { score: number; timeLabel: string }>>(
+    'whatIfSimulatorService.dimensionFeasibility',
+    BOOTSTRAP_DIMENSION_FEASIBILITY,
+  );
+  return (r.value && typeof r.value === 'object')
+    ? { ...BOOTSTRAP_DIMENSION_FEASIBILITY, ...r.value }
+    : BOOTSTRAP_DIMENSION_FEASIBILITY;
+})();
 
 /**
  * Computes the simulated score given a set of active dimension improvements.

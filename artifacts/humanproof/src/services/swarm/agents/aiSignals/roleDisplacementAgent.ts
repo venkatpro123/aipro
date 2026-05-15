@@ -19,10 +19,14 @@
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
 import { getCareerIntelligence } from '../../../../data/intelligence/index';
+// WS9 — fallback keyword table sourced from engine_calibration_constants.
+import { getConstant } from '../../../calibration/calibrationConstants';
 
-// Best single-table fallback (Oxford-derived + WEF 2025 update)
-// UNCALIBRATED — developer estimate. Use only when no intelligence record exists.
-const ROLE_DISPLACEMENT_FALLBACK: Record<string, number> = {
+// Best single-table fallback (Oxford-derived + WEF 2025 update).
+// WS9 — values pulled from engine_calibration_constants under
+// 'roleDisplacementAgent.fallbackKeywordTable'. Bootstrap preserves
+// legacy behaviour when DB row is absent.
+const BOOTSTRAP_ROLE_DISPLACEMENT_FALLBACK: Record<string, number> = {
   'data entry':       0.97, 'cashier':          0.90, 'telemarketer':     0.88,
   'bookkeeper':       0.85, 'translator':       0.82, 'customer service': 0.75,
   'paralegal':        0.72, 'content writer':   0.72, 'copywriter':       0.68,
@@ -37,6 +41,16 @@ const ROLE_DISPLACEMENT_FALLBACK: Record<string, number> = {
   'teacher':          0.18, 'researcher':       0.35, 'scientist':        0.30,
   'default':          0.45,
 };
+
+const ROLE_DISPLACEMENT_FALLBACK: Record<string, number> = (() => {
+  const r = getConstant<Record<string, number>>(
+    'roleDisplacementAgent.fallbackKeywordTable',
+    BOOTSTRAP_ROLE_DISPLACEMENT_FALLBACK,
+  );
+  return (r.value && typeof r.value === 'object')
+    ? { ...BOOTSTRAP_ROLE_DISPLACEMENT_FALLBACK, ...r.value }
+    : BOOTSTRAP_ROLE_DISPLACEMENT_FALLBACK;
+})();
 
 const run = async (input: SwarmInput): Promise<AgentSignal> => {
   // ── Primary: CareerIntelligence record (richer than keyword table) ──────────

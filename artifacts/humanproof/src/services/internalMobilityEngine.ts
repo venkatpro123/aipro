@@ -17,6 +17,8 @@
  */
 
 import type { DepartmentRiskResult } from './departmentRiskEngine';
+// WS9 — viability scores sourced from engine_calibration_constants.
+import { getConstant } from './calibration/calibrationConstants';
 
 export interface InternalMobilityInputs {
   department: string;
@@ -117,12 +119,19 @@ export function computeInternalMobility(inputs: InternalMobilityInputs): Interna
     };
   }
 
-  // Compute base viability from company size
-  const sizeViabilityBase: Record<string, number> = {
-    mid: 45,
-    large: 65,
-    mega: 78,
-  };
+  // Compute base viability from company size.
+  // WS9 — sourced from engine_calibration_constants. Recalibration target:
+  // regression on (P(successful_internal_transfer) | company_size, tenure,
+  // has_ai_skills) from user_prediction_outcomes once transfer outcomes
+  // accumulate.
+  const BOOTSTRAP_SIZE_VIABILITY: Record<string, number> = { mid: 45, large: 65, mega: 78 };
+  const resolvedSizeViability = getConstant<Record<string, number>>(
+    'internalMobilityEngine.sizeViabilityBase',
+    BOOTSTRAP_SIZE_VIABILITY,
+  );
+  const sizeViabilityBase = (resolvedSizeViability.value && typeof resolvedSizeViability.value === 'object')
+    ? { ...BOOTSTRAP_SIZE_VIABILITY, ...resolvedSizeViability.value }
+    : BOOTSTRAP_SIZE_VIABILITY;
   let viabilityScore = sizeViabilityBase[companySize] ?? 50;
 
   // Tenure bonus — internal transfers require political capital and relationships

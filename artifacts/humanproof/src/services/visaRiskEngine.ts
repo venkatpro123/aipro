@@ -33,6 +33,11 @@ export type VisaStatus =
   | 'other_work_auth'
   | 'not_applicable';
 
+// WS9 — score-amplifier values sourced from engine_calibration_constants
+// so the recalibrate cron can replace these developer estimates with
+// regression-derived values once visa-cohort outcomes accumulate.
+import { getConstant } from './calibration/calibrationConstants';
+
 export interface VisaRiskInputs {
   visaStatus: VisaStatus;
   /** Months until current visa expires (0 = already expired, undefined = unknown) */
@@ -172,27 +177,28 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     overallVisaRisk = tnAmplification[overallVisaRisk];
   }
 
-  // Score amplifier (UNCALIBRATED — developer estimates)
+  // WS9 — score-amplifier values sourced from engine_calibration_constants.
+  // Bootstrap fallbacks preserve legacy 1.40 / 1.05 / 1.35 / 1.25 / 1.20 / 1.10.
   let scoreAmplifier: number;
   let amplifierRationale: string;
 
   if (isGcLockIn) {
-    scoreAmplifier = 1.40;
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.gcLockIn', 1.40).value as number;
     amplifierRationale = `Green card application in progress (${greenCardStageMonths}mo) without AC21 portability. A layoff would reset the GC process and require re-filing at a new employer, adding 18–36 months of additional wait time.`;
   } else if (portabilityProtected && isGcInProgress) {
-    scoreAmplifier = 1.05;
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.gcPortable', 1.05).value as number;
     amplifierRationale = `GC in progress but AC21 portability applies (>180 days pending). Can transfer employer without restarting the GC process.`;
   } else if (currentScore >= 60 && (visaStatus === 'h1b' || visaStatus === 'l1')) {
-    scoreAmplifier = 1.35;
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.h1bL1HighRisk', 1.35).value as number;
     amplifierRationale = `H1B/L1 holder at elevated risk score (${currentScore}/100). A 60-day grace period is insufficient for most job searches in this market.`;
   } else if (visaStatus === 'tn') {
-    scoreAmplifier = 1.25;
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.tn', 1.25).value as number;
     amplifierRationale = 'TN status has no grace period — status ends immediately on termination. Transfer requires border crossing which adds logistical risk.';
   } else if (currentScore >= 45) {
-    scoreAmplifier = 1.20;
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.moderateRisk', 1.20).value as number;
     amplifierRationale = `${visaStatus.toUpperCase()} holder with moderate-to-elevated risk. The 60-day clock adds urgency that citizens/PRs don't face.`;
   } else {
-    scoreAmplifier = 1.10;
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.baseline', 1.10).value as number;
     amplifierRationale = `${visaStatus.toUpperCase()} work authorization adds an employment-law constraint that increases the cost of a layoff vs. a citizen.`;
   }
 

@@ -11,10 +11,15 @@
  * Formula: weight = max(minWeight, exp(-ln(2) / halfLife × ageInDays))
  * This is the standard exponential decay with half-life parameterisation.
  *
- * All half-lives are developer estimates (UNCALIBRATED) chosen to match
- * the typical information shelf-life for each signal type based on financial
- * data reporting cycles and market repricing behaviour.
+ * Half-lives + minimum weights are developer estimates. WS9 routes them
+ * through engine_calibration_constants:
+ *   signalDecayModel.halfLives.<signalType>   — exponential decay constant
+ *   signalDecayModel.minWeights.<signalType>  — floor below which decay stops
+ * Bootstrap fallbacks preserve legacy behaviour when DB rows are absent.
  */
+
+// WS9 — half-lives + min weights routed through DB.
+import { getConstant } from './calibration/calibrationConstants';
 
 export type SignalDecayType =
   | 'breaking_news_layoff'   // actual layoff announcements — time-critical
@@ -25,16 +30,9 @@ export type SignalDecayType =
   | 'layoff_history_event'   // past event still matters, but historical weight decays
   | 'sector_contagion';      // index-level signals move faster than company-level
 
-// Half-lives in days for each signal type (UNCALIBRATED — developer estimates).
-// Rationale:
-//   breaking_news_layoff: 3d — market reacts within 24-72 hours; news cycle fades fast
-//   stock_90d_change: 7d — rolling window reprices; week-old stock data still relevant
-//   executive_departure: 14d — structural but announcement impact fades over 2 weeks
-//   hiring_posting_trend: 10d — job boards update weekly; trends shift within 2 weeks
-//   revenue_growth_yoy: 90d — quarterly report; a 90-day-old figure is at its stale edge
-//   layoff_history_event: 30d — the event itself is permanent; recency weight decays over a month
-//   sector_contagion: 21d — index-level signals reprice in ~3 weeks
-const HALF_LIVES_IN_DAYS: Record<SignalDecayType, number> = {
+// Half-lives in days for each signal type. Bootstrap fallbacks preserve
+// legacy behaviour; DB override key: signalDecayModel.halfLives.<type>.
+const BOOTSTRAP_HALF_LIVES: Record<SignalDecayType, number> = {
   breaking_news_layoff:  3,
   stock_90d_change:      7,
   executive_departure:   14,
@@ -44,16 +42,35 @@ const HALF_LIVES_IN_DAYS: Record<SignalDecayType, number> = {
   sector_contagion:      21,
 };
 
-// Minimum weight floors — even very stale signals retain some information
-const MIN_WEIGHTS: Record<SignalDecayType, number> = {
-  breaking_news_layoff:  0.10,  // very old news still indicates something happened
+// Minimum weight floors — even very stale signals retain some information.
+const BOOTSTRAP_MIN_WEIGHTS: Record<SignalDecayType, number> = {
+  breaking_news_layoff:  0.10,
   stock_90d_change:      0.15,
   executive_departure:   0.20,
   hiring_posting_trend:  0.15,
-  revenue_growth_yoy:    0.30,  // annual revenue is still meaningful even if 6mo old
-  layoff_history_event:  0.25,  // permanent record — never fully discounted
+  revenue_growth_yoy:    0.30,
+  layoff_history_event:  0.25,
   sector_contagion:      0.20,
 };
+
+// WS9 — record-shaped DB overrides. Single getConstant lookup returns
+// the whole map; shallow-merge with bootstrap so partial DB overrides
+// (e.g. ops adjusts only breaking_news_layoff) still work.
+function resolveDecayMap(
+  key: string,
+  bootstrap: Record<SignalDecayType, number>,
+): Record<SignalDecayType, number> {
+  const r = getConstant<Record<SignalDecayType, number>>(key, bootstrap);
+  return (r.value && typeof r.value === 'object')
+    ? { ...bootstrap, ...r.value }
+    : bootstrap;
+}
+
+const HALF_LIVES_IN_DAYS: Record<SignalDecayType, number> =
+  resolveDecayMap('signalDecayModel.halfLives', BOOTSTRAP_HALF_LIVES);
+
+const MIN_WEIGHTS: Record<SignalDecayType, number> =
+  resolveDecayMap('signalDecayModel.minWeights', BOOTSTRAP_MIN_WEIGHTS);
 
 /**
  * Returns a freshness weight in [minWeight, 1.0] for a signal that is

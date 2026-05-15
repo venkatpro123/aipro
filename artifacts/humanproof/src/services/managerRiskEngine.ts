@@ -66,16 +66,30 @@ export interface ManagerRiskResult {
   readonly calibrationStatus: 'practitioner_estimate';
 }
 
-// ── Scoring constants (UNCALIBRATED — developer estimates) ─────────────────
-// The base probabilities below are anchored to the empirical grounding above.
-// They represent probability uplift OVER the company-level score's implicit probability.
-const DEPARTURE_PROBABILITY_UPLIFT: Record<ManagerRiskInputs['managerDepartureType'], number> = {
+// ── Scoring constants ──────────────────────────────────────────────────────
+// WS9 — base probabilities sourced from engine_calibration_constants under
+// 'managerRiskEngine.departureUplift'. Bootstrap fallbacks preserve legacy
+// behaviour. Each value is probability uplift OVER the company-level score's
+// implicit probability — recalibration target as visa/manager cohorts grow.
+import { getConstant } from './calibration/calibrationConstants';
+
+const BOOTSTRAP_DEPARTURE_PROBABILITY_UPLIFT: Record<ManagerRiskInputs['managerDepartureType'], number> = {
   none:             0.00,
-  unknown:          0.05,   // slight uplift for uncertainty
-  recent_voluntary: 0.10,   // voluntary leave reduces risk (not forced = company not cutting)
-  recent_forced:    0.28,   // forced out — restructuring signal
-  recent_layoff:    0.35,   // laid off — confirmed company cut signal at leadership level
+  unknown:          0.05,
+  recent_voluntary: 0.10,
+  recent_forced:    0.28,
+  recent_layoff:    0.35,
 };
+
+const DEPARTURE_PROBABILITY_UPLIFT: Record<ManagerRiskInputs['managerDepartureType'], number> = (() => {
+  const r = getConstant<Record<ManagerRiskInputs['managerDepartureType'], number>>(
+    'managerRiskEngine.departureUplift',
+    BOOTSTRAP_DEPARTURE_PROBABILITY_UPLIFT,
+  );
+  return (r.value && typeof r.value === 'object')
+    ? { ...BOOTSTRAP_DEPARTURE_PROBABILITY_UPLIFT, ...r.value }
+    : BOOTSTRAP_DEPARTURE_PROBABILITY_UPLIFT;
+})();
 
 // Days window within which a manager departure is "recent" for scoring purposes
 const HIGH_RISK_WINDOW_DAYS = 60;
