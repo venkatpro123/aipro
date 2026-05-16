@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install -g pnpm@10 && cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm --filter @workspace/humanproof run build",
+  "buildCommand": "cd ../.. && NODE_OPTIONS=--max-old-space-size=6144 pnpm --filter @workspace/humanproof run build",
   "outputDirectory": "dist",
   "rewrites": [
     {
