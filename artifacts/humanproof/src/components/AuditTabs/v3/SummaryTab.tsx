@@ -353,14 +353,18 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
     ? '#dc2626' : r.scoreDelta?.direction === 'improving'
     ? '#10b981' : 'rgba(255,255,255,0.35)';
 
-  // Derive Tier-1 drivers from result dimensions (memoised — these don't change
-  // between rerenders unless the audit result changes).
+  // v39.0 F4 — Tier-1 drivers strip.
+  // Lowered the visibility threshold from score ≥ 35 to ≥ 15 so smaller
+  // contributors are no longer silently suppressed. Cap at 5 (not 3) so
+  // the user sees the full driver picture. The "View all signal weights"
+  // link below the strip routes to the Methodology tab for the complete
+  // breakdown.
   const topDrivers: DriverItem[] = useMemo(() => {
     const dimensions: any[] = Array.isArray(result.dimensions) ? result.dimensions : [];
     return dimensions
-      .filter(d => typeof d.score === 'number' && d.score >= 35)
+      .filter(d => typeof d.score === 'number' && d.score >= 15)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-      .slice(0, 3)
+      .slice(0, 5)
       .map(d => ({
         key:   String(d.key ?? d.label ?? 'driver'),
         label: String(d.label ?? d.key ?? 'Risk dimension'),
@@ -398,11 +402,59 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         <FirstAuditWelcome
           liveSignalCount={liveCount}
           criticalActionCount={criticalActionCount}
+          // v39.0 F3: confidence + profile completeness drive the step labels
+          confidencePercent={result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100)}
+          profileFieldsFilled={(() => {
+            const uf = (result as any).userFactors ?? {};
+            const fields = ['visaStatus', 'savingsMonthsRunway', 'hasDependents', 'dualIncomeHousehold',
+              'priorLayoffSurvived', 'hasEquityVesting', 'equityVestMonths', 'metroArea',
+              'tenureYears', 'careerYears', 'performanceTier', 'monthlySalaryUsd',
+              'industryYears', 'priorJobChanges', 'selfRatedSkills'];
+            return fields.filter(f => uf[f] != null && uf[f] !== '' && uf[f] !== 'unknown').length;
+          })()}
         />
       )}
 
+      {/* v39.0 F2 — Emergency callout PRECEDES the score hero in emergency
+          mode. Previously the user saw a number and had to interpret risk
+          themselves; now the alert framing comes first so the score is read
+          in the right emotional context. */}
+      {adaptation.mode === 'emergency' && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="rounded-xl px-4 py-3 flex items-start gap-3"
+          style={{
+            background: 'rgba(220, 38, 38, 0.10)',
+            border: '1px solid rgba(220, 38, 38, 0.35)',
+          }}
+        >
+          <div
+            className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+            style={{ background: '#dc2626', boxShadow: '0 0 8px #dc2626' }}
+          />
+          <div className="flex-1">
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: '#dc2626' }}>
+              Emergency Mode · Action Plan Tab Primary
+            </div>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              {(result as any).warnSignal?.hasActiveWARN
+                ? 'A WARN Act filing has been detected — this is a legally-confirmed layoff signal. Open the Action Plan tab immediately.'
+                : `Risk score ${score} sits in the critical band. The Action Plan tab has been promoted; review immediate-7-day actions first, score-context second.`}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Tier-1: Score Hero ─────────────────────────────────────────────── */}
+      {/* v39.0 F6: key={score} forces re-mount when the score changes, so the
+          ring's stroke-dash animation replays. Previously a profile change
+          that shifted the score by 5+ pts would silently update the number
+          without re-animating the ring, breaking the "you moved the needle"
+          feedback loop. */}
       <motion.div
+        key={`score-hero-${score}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl p-5 flex flex-col items-center text-center relative overflow-hidden"
@@ -475,6 +527,29 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <TopDriversStrip drivers={topDrivers} />
+      {/* v39.0 F4 — deep-dive link to the full signal-weight breakdown.
+          We deliberately use a subtle inline link rather than a button to
+          avoid pulling attention from the score hero above. */}
+      {topDrivers.length > 0 && (
+        <div className="flex justify-end -mt-2 px-1">
+          <a
+            href="#methodology"
+            onClick={(e) => {
+              e.preventDefault();
+              // Find the dashboard's "transparency" tab and switch to it.
+              // Uses a custom event so we don't tightly couple SummaryTab
+              // to the dashboard's tab state machine.
+              try {
+                window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'transparency' } }));
+              } catch { /* SSR / event-disallowed envs */ }
+            }}
+            className="text-[10px] font-mono uppercase tracking-wider hover:opacity-100 transition-opacity"
+            style={{ color: 'rgba(34,211,238,0.70)', opacity: 0.85 }}
+          >
+            View all signal weights &nbsp;&rarr;
+          </a>
+        </div>
+      )}
 
       {/* ── Tier-1: Immediate actions ──────────────────────────────────────── */}
       <ImmediateActionsStrip actions={topActions} total={recommendations.length} />
@@ -490,9 +565,11 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
       </motion.div>
 
-      {/* GAP A: Personal Risk Modifier — guard against empty object from failed pipeline step */}
-      {(result as any).personalRiskModifier?.rawModifier != null &&
-        Math.abs((result as any).personalRiskModifier.rawModifier) >= 2 && (
+      {/* v39.0 A5: render the panel whenever the modifier object is present;
+          the panel itself handles the |delta| < 0.5 honest empty state.
+          Previously the >= 2 gate hid sub-2pt adjustments silently and broke
+          the v35.0 transparency contract. */}
+      {(result as any).personalRiskModifier?.rawModifier != null && (
         <PersonalRiskModifierPanel modifier={(result as any).personalRiskModifier} />
       )}
 

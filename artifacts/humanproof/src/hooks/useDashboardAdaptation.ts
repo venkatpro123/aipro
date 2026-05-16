@@ -23,6 +23,19 @@ export type DashboardMode =
 
 export type TabKey = 'summary' | 'company' | 'protection' | 'actions' | 'intel';
 
+/**
+ * v39.0 F2 — Panel keys SummaryTab can reorder based on mode.
+ * Each key matches a render block inside SummaryTab.
+ */
+export type SummaryPanelKey =
+  | 'emergencyCallout'
+  | 'scoreHero'
+  | 'immediateActions'
+  | 'topDrivers'
+  | 'horizonStrip'
+  | 'companyPulse'
+  | 'personalRisk';
+
 export interface AdaptationProfile {
   /** High-level UX mode driving most adaptations. */
   mode: DashboardMode;
@@ -36,6 +49,19 @@ export interface AdaptationProfile {
   showLowConfidenceCallout: boolean;
   /** Compressed intelligence — passed through for downstream re-use. */
   intel: CompressedIntel;
+  /**
+   * v39.0 F2 — Mode-specific panel render order for SummaryTab.
+   *
+   * Emergency mode    → callout + immediate actions first, drivers and pulse follow.
+   * Elevated mode     → score hero first, then drivers + immediate actions.
+   * Monitoring mode   → score hero + drivers (calmer order, build/grow content emphasised).
+   * Stable mode       → score hero + horizon strip + pulse (long-view emphasis).
+   * Low-confidence    → score hero + personal risk + drivers (transparency upfront).
+   *
+   * SummaryTab renders panels in this order. Keys absent from the array render last
+   * (legacy fallback) so adding new panels doesn't break the layout.
+   */
+  summaryPanelOrder: SummaryPanelKey[];
 }
 
 const FIRST_AUDIT_KEY = 'hp.v34.firstAuditSeen';
@@ -84,6 +110,37 @@ function pickDefaultTab(mode: DashboardMode): TabKey {
   }
 }
 
+/**
+ * v39.0 F2 — Mode-specific SummaryTab panel order.
+ *
+ * The default v34.0 layout was scoreHero → topDrivers → companyPulse →
+ * immediateActions → horizon → personalRisk regardless of urgency. Now
+ * emergency mode leads with the callout and immediate actions; monitoring
+ * mode keeps the calmer score-first layout.
+ */
+function pickSummaryPanelOrder(mode: DashboardMode): SummaryPanelKey[] {
+  switch (mode) {
+    case 'emergency':
+      // Urgency-first: callout above the score so the user sees the alert
+      // before they have a chance to interpret a number.
+      return ['emergencyCallout', 'immediateActions', 'scoreHero', 'topDrivers', 'companyPulse', 'personalRisk', 'horizonStrip'];
+    case 'low-confidence':
+      // Transparency-first: lead with score + personal-risk drivers, defer
+      // pulse (which is most affected by data quality issues).
+      return ['scoreHero', 'personalRisk', 'topDrivers', 'horizonStrip', 'companyPulse', 'immediateActions'];
+    case 'elevated':
+      // Standard order with immediate-actions promoted ahead of pulse.
+      return ['scoreHero', 'topDrivers', 'immediateActions', 'horizonStrip', 'companyPulse', 'personalRisk'];
+    case 'monitoring':
+      // Calmer scan: score → drivers → horizon → pulse → actions/personal.
+      return ['scoreHero', 'topDrivers', 'horizonStrip', 'companyPulse', 'immediateActions', 'personalRisk'];
+    case 'stable':
+      // Build/grow emphasis: score → horizon (forward outlook) → pulse, then
+      // actions and personal risk modulators.
+      return ['scoreHero', 'horizonStrip', 'companyPulse', 'topDrivers', 'immediateActions', 'personalRisk'];
+  }
+}
+
 export function useDashboardAdaptation(
   result: HybridResult,
   companyData?: CompanyData,
@@ -102,6 +159,7 @@ export function useDashboardAdaptation(
       showFirstAuditWelcome: !seenBefore,
       showLowConfidenceCallout: confPct < 50,
       intel,
+      summaryPanelOrder: pickSummaryPanelOrder(mode),
     };
   }, [result, companyData]);
 }

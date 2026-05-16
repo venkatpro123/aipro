@@ -23,10 +23,25 @@
 // data JSONB, created_at TIMESTAMPTZ).
 
 import { supabase } from '../../utils/supabase';
-import { LOCAL_CACHE_TTL_MS, REMOTE_CACHE_TTL_MS } from './cacheConfig';
+import { LOCAL_CACHE_TTL_MS, REMOTE_CACHE_TTL_MS, CACHE_HARD_KILL_MS } from './cacheConfig';
 
 const LOCAL_TTL_MS  = LOCAL_CACHE_TTL_MS;   // WS12: from cacheConfig
 const REMOTE_TTL_MS = REMOTE_CACHE_TTL_MS;  // WS12: from cacheConfig
+
+/**
+ * v39.0 D6 — SWR metadata wrapper.
+ *
+ * When a caller wants stale-while-revalidate semantics, they use
+ * `getCachedAnalysisWithMetadata` instead of `getCachedAnalysis`. The
+ * returned `isStale` flag tells the caller whether to fire-and-forget a
+ * background refresh while still serving the cached value immediately.
+ */
+export interface CachedAnalysisWithMetadata {
+  data: any;
+  ageMs: number;
+  isStale: boolean;       // true when ageMs > LOCAL_TTL_MS (cache still served)
+  source: 'local' | 'remote';
+}
 
 // BUG-09 FIX: strip heavy swarm visualization data before caching to prevent
 // localStorage quota overflow (~80KB → ~5KB per entry)
@@ -172,4 +187,83 @@ export const invalidateForCompany = (companyName: string): void => {
     .then(({ error }) => {
       if (error) console.warn('[Cache] Remote invalidation failed:', error.message);
     });
+};
+
+/**
+ * v39.0 D6 — SWR getter with hard kill switch.
+ *
+ * Resolution order:
+ *   1. localStorage fresh (age < LOCAL_TTL_MS)           → return {data, isStale:false}
+ *   2. Supabase fresh    (age < REMOTE_TTL_MS)           → return {data, isStale:false}
+ *   3. localStorage stale (TTL < age < HARD_KILL_MS)     → return {data, isStale:true}  ← caller schedules refresh
+ *   4. Supabase stale    (TTL < age < HARD_KILL_MS)      → return {data, isStale:true}
+ *   5. > HARD_KILL_MS                                    → evict + return null
+ *
+ * Callers should:
+ *   - Render the returned data immediately (no UI blocking)
+ *   - When isStale: true, fire-and-forget a background refresh
+ *   - When null: compute fresh as today
+ */
+export const getCachedAnalysisWithMetadata = async (
+  key: string,
+): Promise<CachedAnalysisWithMetadata | null> => {
+  // ── Layer 1: localStorage ──
+  try {
+    const raw = localStorage.getItem(`hp_ensemble_${key}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const { data, timestamp } = parsed ?? {};
+      const validTs = typeof timestamp === 'number' && isFinite(timestamp) && timestamp > 0;
+      if (validTs) {
+        const age = Date.now() - timestamp;
+        if (age < CACHE_HARD_KILL_MS) {
+          return {
+            data,
+            ageMs: age,
+            isStale: age >= LOCAL_TTL_MS,
+            source: 'local',
+          };
+        }
+        // Past hard kill — evict
+        try { localStorage.removeItem(`hp_ensemble_${key}`); } catch { /* ignore */ }
+      } else {
+        try { localStorage.removeItem(`hp_ensemble_${key}`); } catch { /* ignore */ }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // ── Layer 2: Supabase ──
+  try {
+    const { data } = await supabase
+      .from('layoff_analysis_cache')
+      .select('data, created_at')
+      .eq('key', key)
+      .single();
+
+    if (data) {
+      const age = Date.now() - new Date(data.created_at).getTime();
+      if (age < CACHE_HARD_KILL_MS) {
+        // Promote to localStorage preserving ORIGINAL timestamp
+        try {
+          const ts = new Date(data.created_at).getTime();
+          localStorage.setItem(`hp_ensemble_${key}`, JSON.stringify({ data: data.data, timestamp: ts }));
+        } catch { /* storage full */ }
+        return {
+          data: data.data,
+          ageMs: age,
+          isStale: age >= REMOTE_TTL_MS,
+          source: 'remote',
+        };
+      }
+      // Past hard kill — evict remotely too (fire-and-forget)
+      supabase.from('layoff_analysis_cache').delete().eq('key', key)
+        .then(() => undefined, () => undefined);
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
 };

@@ -21,6 +21,7 @@
 import type { ActionPlanItem } from "@/types/hybridResult";
 import type { SeniorityBracket } from "./seniorityActionEngine";
 import { canonicalKeyToActionGroup, resolveRoleInput } from "./roleResolution";
+import { getRoleOverride } from "./roleIntelligenceClient";
 // v37.0 multi-industry action pool imports
 import { ACTION_DB_HEALTHCARE_LEGAL } from "../data/actions/healthcare_legal_actions";
 import { ACTION_DB_CONSULTING_MARKETING_CX } from "../data/actions/consulting_marketing_cx_actions";
@@ -75,6 +76,122 @@ export interface PersonalizedActionSet {
   actions: Array<Partial<ActionPlanItem>>;
   indiaSpecificContext?: string;
   companyContextNote?: string;   // v13.0: company-type strategic frame
+  // v39.0 A1: DB-backed override layer status (admin-curated content present?)
+  isDbOverride?: boolean;
+  // v39.0 B6: honest signal when the role isn't in our 412-specialised database
+  isGenericFallback?: boolean;
+  fallbackReason?: 'role_not_in_specialized_database';
+  // v39.0 B1: profile-personalized framing + signal classifications.
+  /** One short paragraph that opens the action plan with profile-specific context. */
+  profileContextNote?: string;
+  /**
+   * Classification flags downstream consumers (brief, negotiation, contingency,
+   * action ranking) can read to apply profile-aware logic without re-deriving
+   * the classifications themselves. Examples:
+   *   'visa_critical', 'visa_elevated', 'runway_critical', 'runway_elevated',
+   *   'family_anchor', 'dual_income_cushion', 'resilient_repeat'.
+   */
+  profileSignals?: string[];
+}
+
+/**
+ * v39.0 B1 — Profile signals derived from UserProfile.
+ *
+ * Computed once at action selection so downstream layers (brief, negotiation,
+ * scenario, contingency) can read the same classifications instead of each
+ * recomputing them from raw profile fields. This keeps the personalization
+ * consistent across the dashboard.
+ */
+export interface ProfileSignalSummary {
+  visaUrgency: 'critical' | 'elevated' | 'none';
+  runwayTier: 'critical' | 'elevated' | 'comfortable' | 'unknown';
+  familyAnchor: boolean;
+  dualIncomeCushion: boolean;
+  resilientRepeat: boolean;
+  flags: string[];
+}
+
+export interface UserProfileLike {
+  visaStatus?: 'citizen' | 'permanent_resident' | 'h1b' | 'l1' | 'opt' | 'other' | 'na' | null;
+  savingsMonthsRunway?: number | null;
+  hasDependents?: boolean | null;
+  dualIncomeHousehold?: boolean | null;
+  priorLayoffSurvived?: boolean | null;
+  hasEquityVesting?: boolean | null;
+  equityVestMonths?: number | null;
+  metroArea?: string | null;
+}
+
+export function deriveProfileSignals(
+  profile: UserProfileLike | null | undefined,
+  score: number,
+): ProfileSignalSummary {
+  const flags: string[] = [];
+
+  // Visa urgency: visa-dependent users facing elevated risk have shorter
+  // optimal job-search runways (60-day grace period after termination).
+  const visaDependent = profile?.visaStatus === 'h1b' || profile?.visaStatus === 'l1' || profile?.visaStatus === 'opt';
+  const visaUrgency: ProfileSignalSummary['visaUrgency'] =
+    visaDependent && score >= 55 ? 'critical' :
+    visaDependent             ? 'elevated' :
+                                'none';
+  if (visaUrgency !== 'none') flags.push(`visa_${visaUrgency}`);
+
+  // Runway tier: drives action urgency and negotiation aggression.
+  const r = profile?.savingsMonthsRunway;
+  const runwayTier: ProfileSignalSummary['runwayTier'] =
+    r == null         ? 'unknown'    :
+    r < 3             ? 'critical'   :
+    r < 6             ? 'elevated'   :
+                        'comfortable';
+  if (runwayTier !== 'unknown' && runwayTier !== 'comfortable') flags.push(`runway_${runwayTier}`);
+
+  // Family anchor: dependents WITHOUT a dual-income cushion = stability premium.
+  const familyAnchor = !!profile?.hasDependents && !profile?.dualIncomeHousehold;
+  if (familyAnchor) flags.push('family_anchor');
+
+  // Dual-income cushion: reduces urgency, expands risk tolerance.
+  const dualIncomeCushion = !!profile?.dualIncomeHousehold;
+  if (dualIncomeCushion) flags.push('dual_income_cushion');
+
+  // Resilient repeat: previously survived a layoff → calmer framing.
+  const resilientRepeat = !!profile?.priorLayoffSurvived;
+  if (resilientRepeat) flags.push('resilient_repeat');
+
+  return { visaUrgency, runwayTier, familyAnchor, dualIncomeCushion, resilientRepeat, flags };
+}
+
+function buildProfileContextNote(
+  signals: ProfileSignalSummary,
+  score: number,
+  companyName?: string,
+): string | undefined {
+  const parts: string[] = [];
+  const co = companyName ?? 'your current employer';
+
+  if (signals.visaUrgency === 'critical') {
+    parts.push(`Visa-dependent context: An H-1B/L-1/OPT holder facing elevated risk has a 60-day grace period after termination — that is your hard timing constraint. Begin outreach to companies with documented H1B sponsorship history (Google, Meta, Microsoft, Amazon, Citadel, Stripe, Goldman) NOW, not after an announcement.`);
+  } else if (signals.visaUrgency === 'elevated') {
+    parts.push(`Visa-dependent context: While current risk is moderate, the 60-day post-termination grace period means your "wait and see" window is shorter than a citizen's. Build a sponsorship-history target list in parallel with monitoring.`);
+  }
+
+  if (signals.runwayTier === 'critical') {
+    parts.push(`Financial runway is short (<3 months). The optimal strategy compresses: skip long-term skill bets, prioritise actions with cash-on-offer in ≤8 weeks (warm-network roles, contract-to-hire, accept-with-counter), and start the conversation BEFORE the runway hits 6 weeks.`);
+  } else if (signals.runwayTier === 'elevated') {
+    parts.push(`Financial runway is 3-6 months. You have room for ONE strategic bet (a high-leverage skill cert or a targeted role pivot) but not two. Choose the bet that compounds with your existing strengths.`);
+  }
+
+  if (signals.familyAnchor) {
+    parts.push(`Family-anchored decision frame: With dependents and no dual-income cushion, the cost of a wrong move is asymmetric. Bias toward stability premiums (stay+negotiate over transition), confirm health-insurance continuity (COBRA cost vs. spouse coverage) before any move, and keep at least 4 months of expenses unencumbered.`);
+  } else if (signals.dualIncomeCushion) {
+    parts.push(`Dual-income cushion: Your household has a financial buffer that increases your risk tolerance — you can take a single-cycle pay-step-back for a higher-trajectory role, where a single-income household typically cannot.`);
+  }
+
+  if (signals.resilientRepeat && score >= 55) {
+    parts.push(`Resilience context: You have successfully landed after a prior layoff. That experience is itself a hiring signal — surface it explicitly in conversations with recruiters ("I have rebuilt from a downturn before; here is what I did") rather than treating it as a gap.`);
+  }
+
+  return parts.length > 0 ? parts.join(' ') : undefined;
 }
 
 // ─── Role Prefix → Group Mapping ─────────────────────────────────────────────
@@ -2923,6 +3040,9 @@ export function getPersonalizedActions(
   region?: string,
   companyContext?: CompanyActionContext,
   companyName?: string,
+  // v39.0 B1: full user profile feeds into selection + framing, not just
+  // re-ranking. Callers that don't have a profile yet pass null safely.
+  userProfile?: UserProfileLike | null,
 ): PersonalizedActionSet {
   const roleGroup = resolveRoleGroup(roleTitle);
   const riskLevel = scoreToRiskLevel(score);
@@ -2942,9 +3062,29 @@ export function getPersonalizedActions(
     'solution_architect', 'support_engineer',
   ].includes(roleGroup);
   const fallbackPool = isEngineeringAdjacent ? ACTION_DB['swe'] : ACTION_DB['professional_services'];
-  const bracketPool = ACTION_DB[roleGroup] ?? fallbackPool;
-  const seniorityPool = bracketPool[seniorityBracket] ?? bracketPool['mid'];
-  const actions = (seniorityPool[riskLevel] ?? seniorityPool['high'] ?? []).slice(0, 3);
+  const staticPoolHit = ACTION_DB[roleGroup];
+  const bracketPool = staticPoolHit ?? fallbackPool;
+  // v39.0 B6: honest fallback signal — surface this so the UI can warn the user
+  // that the guidance is generic-tech/services rather than role-specialised.
+  const isGenericFallback = !staticPoolHit;
+
+  // v39.0 A1: DB role-override layer — admin-curated overrides win over static.
+  // `ensureRoleIntelligenceLoaded()` is fired at pipeline startup; this is a
+  // synchronous in-memory lookup. If no override exists, we transparently
+  // fall back to the static pool.
+  const dbOverride = getRoleOverride(roleGroup);
+  const dbActionPool = dbOverride?.actions?.action_pool;
+  const dbSeniorityCell = (dbActionPool?.[seniorityBracket] ?? dbActionPool?.['mid']) as
+    | Record<string, Array<Partial<ActionPlanItem>>> | undefined;
+  const dbActions = dbSeniorityCell?.[riskLevel] ?? dbSeniorityCell?.['high'];
+
+  const staticSeniorityPool = bracketPool[seniorityBracket] ?? bracketPool['mid'];
+  const staticActions = (staticSeniorityPool[riskLevel] ?? staticSeniorityPool['high'] ?? []) as Array<Partial<ActionPlanItem>>;
+
+  // DB override wins ONLY if it produced a non-empty cell — otherwise we keep
+  // the static pool entry. This protects against partially-seeded DB rows.
+  const isDbOverride = Boolean(dbActions && dbActions.length > 0);
+  const actions = (isDbOverride ? dbActions! : staticActions).slice(0, 3);
 
   // Company context guidance note — injected as first priority action when present
   const contextGuidanceFn = COMPANY_CONTEXT_GUIDANCE[companyContext ?? 'unknown'];
@@ -2960,6 +3100,13 @@ export function getPersonalizedActions(
     }
   }
 
+  // v39.0 B1: derive profile signal classifications + framing once. These
+  // are surfaced on the result so downstream consumers (brief, negotiation,
+  // contingency, ranking) read the same canonical values rather than each
+  // recomputing them from raw profile fields.
+  const profileSummary = deriveProfileSignals(userProfile, score);
+  const profileContextNote = buildProfileContextNote(profileSummary, score, companyName);
+
   return {
     roleGroup,
     rolePrefixMatch: roleTitle,
@@ -2968,6 +3115,11 @@ export function getPersonalizedActions(
     actions: actions as Array<Partial<ActionPlanItem>>,
     indiaSpecificContext,
     companyContextNote,
+    isDbOverride,
+    isGenericFallback,
+    fallbackReason: isGenericFallback ? 'role_not_in_specialized_database' : undefined,
+    profileContextNote,
+    profileSignals: profileSummary.flags,
   };
 }
 

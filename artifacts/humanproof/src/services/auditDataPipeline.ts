@@ -88,6 +88,16 @@ import { computeGlassdoorVelocity } from "./glassdoorVelocityEngine";
 import { computeWorkforceVelocity } from "./workforceVelocityEngine";
 import { computeExecutiveDeparturePattern } from "./executiveDeparturePatternEngine";
 import { computeMarketDemandReport } from "./roleMarketDemandService";
+// v39.0 B6: pipeline-level call to get the personalized action set so the
+// v3 ActionsTab can surface isGenericFallback + profileContextNote + the
+// honest "using generic guidance" notice when the user's role isn't in our
+// 412-specialised database.
+import { getPersonalizedActions } from "./actionPersonalizationEngine";
+// v39.0 D2: unified freshness verdict
+import { computeUnifiedFreshness } from "./freshnessUnifier";
+import { getIndustryRiskAgeDays } from "../data/industryRiskData";
+// v39.0 E1: live calibration backfill from user_prediction_outcomes
+import { getLiveCalibrationStatus } from "./empiricalCalibration";
 import { assessFinancialRunway } from "./financialRunwayService";
 // v17.0 intelligence layers (47–54)
 import { computePredictionHorizon } from "./predictionHorizonService";
@@ -628,6 +638,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Warm the DB-backed role intelligence cache (demand overrides, aliases, seniority benchmarks).
   // Fire-and-forget — static in-memory data is the fallback if Supabase is unavailable.
   ensureRoleIntelligenceLoaded().catch(() => {});
+  // v39.0 E1: prime the live calibration backfill cache (1h TTL) so the UI
+  // can surface "X labelled outcomes collected so far" without blocking.
+  // Fire-and-forget — bootstrap status is the fallback.
+  getLiveCalibrationStatus().catch(() => {});
 
   // ── LIVE-FIRST ARCHITECTURE ─────────────────────────────────────────────────
   // Start live scraping IMMEDIATELY — in parallel with DB resolution steps below.
@@ -807,7 +821,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // floor) are calibrated to a plausible sector rather than always defaulting to
   // generic "technology".
   if (!companyData) {
-    companyData = createUnknownCompanyFallback(inputs.companyName);
+    // v39.0 A2: role + industry context lets the fallback infer a plausible
+    // head-count rather than a fabricated 5000.
+    companyData = createUnknownCompanyFallback(inputs.companyName, inputs.roleTitle, inputs.industry);
     dataSource = 'fallback';
 
     // Industry inference from company name signals
@@ -1239,8 +1255,24 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // continue to run unchanged. The two paths share the same companyData,
   // so a partially-migrated pipeline is correct.
   let dagContext: AuditContext | null = null;
+  // v39.0 D1: kill-switch. Flag absent / not 'off' → DAG runs (legacy
+  // behaviour preserved). Explicit 'off' in the engine_feature_flags
+  // table → skip the DAG and let pure legacy try/catch blocks handle
+  // every layer. Safety net for a production duplicate-write incident.
+  const dagFlag = (() => {
+    try { return evaluateFlagSync('v39_dag_runner_active'); }
+    catch { return { isActive: false, isShadow: false, mode: 'off' as const }; }
+  })();
+  const dagDisabled = dagFlag.mode === 'off' || (dagFlag.mode as any) === 'deprecated';
   try {
-    const dagPhase = await runDagPhase(inputs, companyData, {});
+    if (dagDisabled) {
+      auditPipelineLog.info('dag.phase.disabled_by_flag', { company: inputs.companyName });
+    }
+    const dagPhase = dagDisabled ? null : await runDagPhase(inputs, companyData, {});
+    if (!dagPhase) {
+      // Skip the dagContext.emit / bridge block — legacy paths cover all layers.
+      throw new Error('__dag_disabled__'); // routes to the catch below WITHOUT logging a failure
+    }
     dagContext = dagPhase.ctx;
     // Emit `core` after the engine so dependent layers (conformal_ci)
     // can read it via ctx.require('core'). This is the bridge moment —
@@ -1269,12 +1301,16 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       durationMs: dagPhase.registryResult.totalMs,
     });
   } catch (err) {
-    // DAG-phase failure must not break the audit. Legacy try/catch blocks
-    // below provide the fallback compute path.
-    auditPipelineLog.warn('dag.phase.failed', {
-      company: inputs.companyName,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    const msg = err instanceof Error ? err.message : String(err);
+    // v39.0 D1: the kill-switch sentinel routes through here intentionally
+    // (cleaner control flow than a parallel branch). Only log when it's a
+    // real failure.
+    if (msg !== '__dag_disabled__') {
+      auditPipelineLog.warn('dag.phase.failed', {
+        company: inputs.companyName,
+        error: msg,
+      });
+    }
   }
 
   // WS4 — Conformal CI post-processing (Audit Issue #26).
@@ -1495,8 +1531,52 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         perClass: liveQuorum.status.perClass,
       },
     };
+
+    // v39.0 A3 — Live-quorum timeout confidence cap.
+    // When the 45s scrape ceiling fires WITHOUT reaching quorum, we proceeded
+    // with heuristic / DB-only data. Previously the UI showed the same
+    // confidence as a full-live audit. Cap finalConfidence at 60% and surface
+    // the degradation reason so the banner can explain the cap to the user.
+    const quorumDegraded = liveQuorum.timedOut && !liveQuorum.reached;
+    if (quorumDegraded) {
+      const currentConf = hybridResult.confidencePercent ?? 70;
+      if (currentConf > 60) {
+        hybridResult.confidencePercent = 60;
+      }
+      (hybridResult as any).degradationReason = 'live_quorum_timeout';
+      (hybridResult as any).degradationDetail = `Live scrape ceiling hit after ${Math.round((liveQuorum.waitedMs ?? 0) / 1000)}s — confidence capped at 60%.`;
+      const caps: string[] = Array.isArray((hybridResult.signalQuality as any)?.confidenceCapsApplied)
+        ? [...((hybridResult.signalQuality as any).confidenceCapsApplied)]
+        : [];
+      if (!caps.includes('live_quorum_timeout')) caps.push('live_quorum_timeout');
+      (hybridResult.signalQuality as any).confidenceCapsApplied = caps;
+      try {
+        markFallback({
+          layerId: 'auditDataPipeline.liveQuorum',
+          reason: 'live_quorum_timeout' as any,
+          fallbackValue: { waitedMs: liveQuorum.waitedMs ?? 0, perClass: liveQuorum.status.perClass },
+        });
+      } catch { /* observability is best-effort */ }
+    }
   }
   _timer.mark('map_to_hybrid_end');
+
+  // ── v39.0 D2: Unified freshness score ───────────────────────────────────────
+  // Consolidate the 4+ scattered freshness signals into a single canonical
+  // verdict. All UI surfaces should read hybridResult.unifiedFreshness rather
+  // than recomputing from raw companyData fields.
+  try {
+    const unifiedFreshness = computeUnifiedFreshness({
+      companyData,
+      macroSignal: (hybridResult as any).blsMacroSignal,
+      industryRiskAgeDays: getIndustryRiskAgeDays(),
+      liveDataCoverage: (hybridResult as any)._liveDataCoverage ?? (companyData as any)._liveDataCoverage,
+    });
+    (hybridResult as any).unifiedFreshness = unifiedFreshness;
+  } catch (e) {
+    // Non-fatal — the legacy underscore fields still flow through.
+    noteEngineFailure('unifiedFreshness', e);
+  }
 
   // ── Intelligence Upgrade v9.0: inject 4 new intelligence layers ─────────────
   // All 4 are synchronous and zero-cost (no API calls).
@@ -1886,6 +1966,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const compIntel = (hybridResult as any).competitiveIntelligence;
     const runway = (hybridResult as any).financialRunway;
     if (compIntel && runway) {
+      const ufNego = inputs.userFactors as any;
       const negotiationIntelligence = computeNegotiationIntelligence({
         competitiveIntelligence: compIntel,
         financialRunway: runway,
@@ -1894,6 +1975,16 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         performanceTier: inputs.userFactors.performanceTier ?? 'average',
         industry: companyData.industry ?? 'technology',
         workTypeKey: resolvedRole.canonicalKey ?? 'default', // GAP J: role-specific scripts
+        // v39.0 B3: profile signals (visa, family, equity vesting) modulate
+        // walk-away framing, urgency, and red-line risks.
+        userProfile: {
+          visaStatus: ufNego.visaStatus ?? null,
+          hasDependents: ufNego.hasDependents ?? null,
+          dualIncomeHousehold: ufNego.dualIncomeHousehold ?? null,
+          priorLayoffSurvived: ufNego.priorLayoffSurvived ?? null,
+          hasEquityVesting: ufNego.hasEquityVesting ?? null,
+          equityVestMonths: ufNego.equityVestMonths ?? null,
+        },
       });
       (hybridResult as any).negotiationIntelligence = negotiationIntelligence;
     }
@@ -2444,10 +2535,50 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const uf16 = inputs.userFactors as any;
     const workTypeKey = resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'sw_backend';
     const metro: string | undefined = (uf16.metroArea ?? (uf14 as any).city) || undefined;
-    const roleMarketDemand = computeMarketDemandReport(workTypeKey, metro);
+    // v39.0 A1: pass region so the DB demand override layer can resolve
+    // region-specific snapshots (e.g. India-specific demand for Indian users).
+    const demandRegion: string | undefined = (companyData?.region ?? (uf16 as any).region ?? undefined)?.toString().toLowerCase();
+    const roleMarketDemand = computeMarketDemandReport(workTypeKey, metro, demandRegion);
     (hybridResult as any).roleMarketDemand = roleMarketDemand;
   } catch (e) {
     noteEngineFailure('roleMarketDemand', e);
+  }
+
+  // 45b. v39.0 B6 — Personalized action set: surface roleGroup + isDbOverride
+  //      + isGenericFallback + profileContextNote to the v3 ActionsTab so it
+  //      can render the "generic fallback" honesty notice and the
+  //      profile-specific framing line.
+  try {
+    const seniorityBracketRaw = deriveSeniorityBracket(
+      inputs.userFactors.tenureYears ?? 0,
+      resolvedRole?.canonicalKey ?? inputs.oracleKey ?? null,
+    );
+    // Map scenario-plan bracket vocab → action-engine bracket vocab.
+    const seniorityBracket45b: 'junior' | 'mid' | 'senior' | 'principal' =
+      seniorityBracketRaw === 'staff_plus' ? 'principal' :
+      (seniorityBracketRaw as 'junior' | 'mid' | 'senior' | 'principal');
+    const uf45b = inputs.userFactors as any;
+    const personalizedActionSet = getPersonalizedActions(
+      inputs.roleTitle ?? resolvedRole.canonicalKey ?? 'software_engineer',
+      seniorityBracket45b,
+      hybridResult.total,
+      (companyData?.region ?? uf45b.region) || undefined,
+      undefined, // companyContext — not yet wired in this layer
+      companyData?.name,
+      {
+        visaStatus:          uf45b.visaStatus ?? null,
+        savingsMonthsRunway: uf45b.savingsMonthsRunway ?? null,
+        hasDependents:       uf45b.hasDependents ?? null,
+        dualIncomeHousehold: uf45b.dualIncomeHousehold ?? null,
+        priorLayoffSurvived: uf45b.priorLayoffSurvived ?? null,
+        hasEquityVesting:    uf45b.hasEquityVesting ?? null,
+        equityVestMonths:    uf45b.equityVestMonths ?? null,
+        metroArea:           uf45b.metroArea ?? null,
+      },
+    );
+    (hybridResult as any).personalizedActionSet = personalizedActionSet;
+  } catch (e) {
+    noteEngineFailure('personalizedActionSet', e);
   }
 
   // 46. User Financial Runway — personal financial situation assessment
@@ -2544,7 +2675,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const uf50 = inputs.userFactors as any;
     const userRunway50 = (hybridResult as any).userFinancialRunway;
 
-    // GAP C + v37.0: build personalization context including role category
+    // GAP C + v37.0 + v39.0 B4: build personalization context including
+    // role category AND region (drives localized outreach channels)
     const personalizationContext: ScenarioPlanPersonalizationContext = {
       visaStatus: uf50.visaStatus ?? undefined,
       financialRunwaySituation: userRunway50?.situation ?? undefined,
@@ -2552,6 +2684,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       hasEquityVesting: uf50.hasEquityVesting ?? undefined,
       equityType: uf50.equityType ?? undefined,
       roleCategory: (hybridResult as any).roleIndustryComposite?.roleCategory ?? undefined,
+      region: companyData?.region ?? uf50.region ?? null,
     };
 
     const scenarioPlan = computeScenarioPlan({

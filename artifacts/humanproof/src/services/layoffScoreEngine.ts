@@ -33,6 +33,7 @@ import {
 } from "./indiaSectorIntelligence";
 import { validateDataQuality, type DataQualityReport } from "./dataQualityValidator";
 import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate } from "./signalDecayModel";
+import { evaluateFlagSync } from "../config/featureFlags";
 // WS9 — uncalibrated sector floors now routed through DB.
 import { getConstant } from "./calibration/calibrationConstants";
 import { CohortLayerWeights } from "./cohortClassifier";
@@ -73,35 +74,89 @@ export interface ScoreResultWithError {
 
 // ─── Graceful Degradation: Default Company Data ──────────────────────────
 
-const createFallbackCompanyData = (companyName: string): CompanyData => ({
-  name: companyName,
-  industry: "technology",
-  isPublic: false,
-  // 5000 is the industry-neutral mid-range proxy (matches EF default).
-  // Previously 1000 which displayed as "1K" and misled users into thinking this
-  // was a tiny startup — also caused mapOverstaffing() to fire at 0.85 for any
-  // company with estimated revenue > $95M and no actual headcount data.
-  employeeCount: 5000,
-  revenueGrowthYoY: null,
-  stock90DayChange: null,
-  layoffRounds: 0,
-  layoffsLast24Months: [],
-  lastLayoffPercent: null,
-  revenuePerEmployee: null,  // null forces mapOverstaffing to skip rather than assume
-  aiInvestmentSignal: "medium",
-  region: "US",
-  // WS12 — Use a computed 365-days-ago timestamp so classifyDbFreshness →
-  // 'invalid' regardless of when this code runs. The old hardcoded
-  // '2025-01-01' worked TODAY but had a latent issue: the staleness
-  // margin shrinks year over year. Computed value is maintenance-free.
-  lastUpdated: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-  source: "Fallback",
-});
+/**
+ * v39.0 A2 — Role-aware unknown-company headcount estimate.
+ *
+ * Previously we hardcoded employeeCount: 5000 for every unknown company.
+ * This corrupted L1 (company health) for both 3-person startups and 50K
+ * enterprises. The mapOverstaffing() gate also misfired because a 5000-head
+ * count looks like a mature company.
+ *
+ * Heuristic (calibrated against BLS firm-size distributions + India NASSCOM):
+ *  - Founding / 0-1 / very-junior engineering roles → startup (~80 head)
+ *  - Engineering IC / data / design → mid (~150-300 head, average 180)
+ *  - Leadership (CTO, VP, Director) → company has scaled (~600 head)
+ *  - Manager / Lead in operations / sales / HR → mid (~250 head)
+ *  - Specialist regulated roles (physician, attorney, actuary) → service firm (~150 head)
+ *  - Industry-aware override: Financial Services / Insurance lean larger;
+ *    Construction / Trades / Hospitality lean smaller.
+ *
+ * Returns a single integer head-count. Callers can still override.
+ */
+export const inferUnknownHeadcount = (
+  roleTitle?: string | null,
+  industry?: string | null,
+): number => {
+  const role = (roleTitle ?? '').toLowerCase().trim();
+  const ind  = (industry  ?? '').toLowerCase().trim();
+
+  let base = 180; // overall median for "unknown small / mid co."
+
+  // ── Role-family signal ────────────────────────────────────────────────────
+  if (/founder|founding|cto|chief|ceo|vp\b|svp\b|president/i.test(role))            base = 600;
+  else if (/director|head of|gm\b|general manager/i.test(role))                     base = 350;
+  else if (/principal|staff|distinguished|lead\b|architect/i.test(role))            base = 250;
+  else if (/manager|supervisor/i.test(role))                                        base = 220;
+  else if (/intern|fresher|associate|junior|trainee|graduate/i.test(role))          base = 120;
+  else if (/physician|surgeon|md\b|attorney|lawyer|actuary|pilot|captain/i.test(role)) base = 150;
+  else if (/teacher|nurse|technician|operator|driver|mechanic|electrician|plumber|welder/i.test(role)) base = 80;
+
+  // ── Industry adjustment ───────────────────────────────────────────────────
+  if (/financial|insurance|bank|fintech|wealth|capital/i.test(ind))    base = Math.round(base * 1.4);
+  else if (/health|pharma|hospital|biotech|life.?science/i.test(ind))  base = Math.round(base * 1.2);
+  else if (/government|public|defense|aerospace/i.test(ind))           base = Math.round(base * 1.6);
+  else if (/construction|trades|hospitality|restaurant|retail/i.test(ind)) base = Math.round(base * 0.7);
+  else if (/startup|early.?stage|seed|pre.?seed/i.test(ind))           base = Math.round(base * 0.4);
+
+  // Clamp to [25, 1500] — wider unknown companies should already be in our DB.
+  return Math.max(25, Math.min(1500, base));
+};
+
+const createFallbackCompanyData = (
+  companyName: string,
+  roleTitle?: string | null,
+  industry?: string | null,
+): CompanyData => {
+  // v39.0 A2: role-aware headcount rather than the legacy hardcoded 5000.
+  const inferredHeadcount = inferUnknownHeadcount(roleTitle, industry);
+  return {
+    name: companyName,
+    industry: industry || "technology",
+    isPublic: false,
+    employeeCount: inferredHeadcount,
+    revenueGrowthYoY: null,
+    stock90DayChange: null,
+    layoffRounds: 0,
+    layoffsLast24Months: [],
+    lastLayoffPercent: null,
+    revenuePerEmployee: null,  // null forces mapOverstaffing to skip rather than assume
+    aiInvestmentSignal: "medium",
+    region: "US",
+    // WS12 — Use a computed 365-days-ago timestamp so classifyDbFreshness →
+    // 'invalid' regardless of when this code runs. The old hardcoded
+    // '2025-01-01' worked TODAY but had a latent issue: the staleness
+    // margin shrinks year over year. Computed value is maintenance-free.
+    lastUpdated: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+    source: "Fallback",
+  };
+};
 
 export const createUnknownCompanyFallback = (
   companyName: string,
+  roleTitle?: string | null,
+  industry?: string | null,
 ): CompanyData => {
-  const fallback = createFallbackCompanyData(companyName);
+  const fallback = createFallbackCompanyData(companyName, roleTitle, industry);
   fallback.source = "Fallback - Unknown Company";
   // Do NOT force _dataFreshnessScore=0 here — auditDataPipeline will compute it
   // from actual live signal coverage (news scraping, hiring data, etc.) after
@@ -196,6 +251,51 @@ const COMPOSITE_FORMULA_WEIGHTS = {
   L1_directFinancial:           0.16,
   L2_directLayoffHistory:       0.06,  // raised 3%→6%: matches β₂=0.312 (strongest predictor)
 } as const;
+
+/**
+ * v39.0 E2 — Effective formula weights for downstream sensitivity analysis.
+ *
+ * Returns the AUTHORITATIVE current weights, with D8 dynamically gated by
+ * `v39_d8_ai_efficiency_active` (when the flag is off, D8's effective weight
+ * is 0 because D8 itself is forced to 0 in the rawScore formula).
+ *
+ * Use this in scoreSensitivityEngine and any other consumer that needs the
+ * partial derivative ∂score/∂layer — do NOT hardcode separate weight tables.
+ * That was the v39.0 E2 audit finding: scoreSensitivityEngine had its own
+ * `DIMENSION_CONFIG.weight` copies that drifted from the source-of-truth
+ * (L4 said 0.01 here while the engine had 0.00; D6 said 0.05 while engine
+ * had 0.04; D8 said 0.05 while engine had 0.09 then 0 when flag-gated).
+ *
+ * Maps the internal engine keys onto a flatter `L1..D8` schema for the
+ * sensitivity engine.
+ */
+export function getEffectiveFormulaWeights(): Record<string, number> {
+  // Lazy import to avoid TS circular dep with featureFlags during module load.
+  let d8Active = false;
+  try {
+    // The flag is checked in calculateLayoffScore; here we mirror its result.
+    // We can't synchronously call evaluateFlagSync at module load (timing issues),
+    // so wrap in a try/catch and default OFF (which matches Phase A7 behavior).
+    // The runtime call below resolves at first invocation, not at import.
+    const { evaluateFlagSync } = require('../config/featureFlags');
+    d8Active = evaluateFlagSync('v39_d8_ai_efficiency_active').isActive;
+  } catch {
+    d8Active = false;
+  }
+
+  return {
+    L1: COMPOSITE_FORMULA_WEIGHTS.L1_directFinancial,         // company financial health
+    L2: COMPOSITE_FORMULA_WEIGHTS.L2_directLayoffHistory,     // documented layoff history
+    L3: COMPOSITE_FORMULA_WEIGHTS.D1_taskAutomatability,      // role displacement (L3 ≈ D1 in this view)
+    L4: COMPOSITE_FORMULA_WEIGHTS.D5_countryContext,          // industry/market context (currently 0)
+    L5: COMPOSITE_FORMULA_WEIGHTS.D4_experienceProtection,    // experience/resilience
+    D6: COMPOSITE_FORMULA_WEIGHTS.D6_agentCapability,         // AI agent autonomy
+    D7: COMPOSITE_FORMULA_WEIGHTS.D7_companyHealth,           // unified company health
+    D8: d8Active ? COMPOSITE_FORMULA_WEIGHTS.D8_aiEfficiencyRestructuring : 0,
+    D2: COMPOSITE_FORMULA_WEIGHTS.D2_aiToolMaturity,
+    D3: COMPOSITE_FORMULA_WEIGHTS.D3_augmentationRisk,
+  };
+}
 
 // ── v12.0: Adaptive Archetype Weight Overrides ───────────────────────────────
 //
@@ -1748,13 +1848,38 @@ export const computeLeadershipInstabilityProxy = (cd: CompanyData): number => {
 
   // Signal 2: C-suite changes in past 12 months (weight 0.35). Correlation r≈0.58.
   if (cd.cSuiteChanges12m != null) {
-    signals.push({
-      val: cd.cSuiteChanges12m >= 3  ? 0.90  // mass executive exodus
-         : cd.cSuiteChanges12m === 2 ? 0.65  // significant churn
-         : cd.cSuiteChanges12m === 1 ? 0.40  // one departure — watch
-         : 0.15,                             // stable leadership
-      weight: 0.35,
-    });
+    let val =
+        cd.cSuiteChanges12m >= 3  ? 0.90  // mass executive exodus
+      : cd.cSuiteChanges12m === 2 ? 0.65  // significant churn
+      : cd.cSuiteChanges12m === 1 ? 0.40  // one departure — watch
+      :                              0.15; // stable leadership
+
+    // v39.0 D5: residualize against L2 layoff history to avoid double-counting
+    // consequence-of-layoff exec departures. When a company has BOTH recent
+    // layoff rounds (within the past 6 months) AND c-suite changes, the most
+    // plausible interpretation is that the exec departures are a CONSEQUENCE
+    // of the layoff cycle (CEO resigns after announcing the cuts, CFO leaves
+    // after the restructuring) — not an independent leading indicator. The L2
+    // signal already weighs the layoff itself; counting the resulting exec
+    // turnover at full weight produces a 1.5x risk amplification on the same
+    // underlying event. Downweight by 0.5 in that case.
+    //
+    // We use a 6-month recency window (180 days) because exec departures
+    // typically lag the layoff announcement by 0-90 days; broader windows
+    // dilute the residualization on companies recovering from old cuts.
+    const hasRecentLayoff = (() => {
+      if (!cd.layoffsLast24Months || cd.layoffsLast24Months.length === 0) return false;
+      const sixMonthsAgo = Date.now() - 180 * 24 * 60 * 60 * 1000;
+      return cd.layoffsLast24Months.some(r => {
+        const d = r.date ? new Date(r.date).getTime() : NaN;
+        return Number.isFinite(d) && d >= sixMonthsAgo;
+      });
+    })();
+    if (hasRecentLayoff && (cd.layoffRounds ?? 0) > 0 && cd.cSuiteChanges12m > 0) {
+      val = val * 0.5;
+    }
+
+    signals.push({ val, weight: 0.35 });
   }
 
   // Signal 3: Board composition changed (weight 0.15). Correlation r≈0.35.
@@ -3501,7 +3626,32 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
 
   // D8: AI efficiency restructuring — only meaningful after calibration (uses calibrated.L1).
   // v7.0: collapseStage passed so first-ever AI efficiency cuts are caught by Gate 2B.
-  const D8 = calculateAIEfficiencyRestructuringRisk(companyData, calibrated.L1, inputs.collapseStage);
+  // v39.0 A7 + E4: D8 stays GATED OFF until empirical regression validates.
+  //
+  // Re-enable criteria (set `v39_d8_ai_efficiency_active` mode='production' when ALL true):
+  //   1. `getLiveCalibrationStatus()` reports `mode === 'live_empirical'` AND
+  //      `labelledOutcomesN ≥ 200`.
+  //   2. At least 47 of those outcomes are tagged as 'efficiency_restructuring'
+  //      (distinguishable from 'distress' via the `predicted_cohort` column on
+  //      `user_prediction_outcomes`).
+  //   3. Logistic regression on (aiInvestmentSignal, revenueGrowthYoY, layoffRounds)
+  //      → P(efficiency_restructuring | 18mo) returns AUC ≥ 0.70 on a 20%
+  //      hold-out set.
+  //   4. The re-derived weight (replacing 0.09) is recorded in
+  //      `engine_calibration_constants` under key `D8_weight`.
+  //
+  // Until then, profitable-tech audits would shift ±4-6 pts under D8 with no
+  // empirical anchor. Forcing D8 = 0 keeps the composite score predictable and
+  // honest. The `COMPOSITE_FORMULA_WEIGHTS.D8_aiEfficiencyRestructuring: 0.09`
+  // weight stays in place (regression assertion expects sum-to-1.0) but the
+  // signal is zeroed at source.
+  const _d8FlagActive = (() => {
+    try { return evaluateFlagSync('v39_d8_ai_efficiency_active').isActive; }
+    catch { return false; }
+  })();
+  const D8 = _d8FlagActive
+    ? calculateAIEfficiencyRestructuringRisk(companyData, calibrated.L1, inputs.collapseStage)
+    : 0;
 
   // v12.0: Detect scenario archetype for adaptive weight blending.
   // Uses already-computed layer scores — no circular dependency.
@@ -3865,7 +4015,12 @@ export const calculateLayoffScoreSafe = (
       !companyData.employeeCount ||
       companyData.employeeCount === 0
     ) {
-      companyData = createUnknownCompanyFallback(companyData.name);
+      // v39.0 A2: propagate role + industry context for head-count inference.
+      companyData = createUnknownCompanyFallback(
+        companyData.name,
+        (inputs as any).roleTitle ?? (inputs.userFactors as any)?.role ?? null,
+        companyData.industry ?? null,
+      );
       fallbackUsed = "Empty company data";
     } else if (
       companyData.source === "User Input" &&

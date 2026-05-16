@@ -155,7 +155,21 @@ export function buildDynamicActions(
   // specific to this exact role, seniority, risk level, and region combination.
   const region = (result as any).region ?? (result as any).companyRegion;
   const roleTitle = (result as any).roleTitle ?? result.workTypeKey ?? '';
-  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region);
+  // v39.0 B1: pull profile signals from userFactors. handleCalculate already
+  // merges UserProfile into userFactors at audit time, so the live profile
+  // is available here without an extra context lookup.
+  const uf = (result as any).userFactors ?? {};
+  const userProfileLike = {
+    visaStatus:         uf.visaStatus ?? null,
+    savingsMonthsRunway: uf.savingsMonthsRunway ?? null,
+    hasDependents:      uf.hasDependents ?? null,
+    dualIncomeHousehold: uf.dualIncomeHousehold ?? null,
+    priorLayoffSurvived: uf.priorLayoffSurvived ?? null,
+    hasEquityVesting:   uf.hasEquityVesting ?? null,
+    equityVestMonths:   uf.equityVestMonths ?? null,
+    metroArea:          uf.metroArea ?? null,
+  };
+  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike);
   const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a, i) => ({
     id: `personalized_${i}`,
     title: a.title ?? 'Action',
@@ -1242,7 +1256,16 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
               const roleGroup = resolveRoleGroup(roleTitle);
               const riskLevel = scoreToRiskLevel(result.total);
               const region = (result as any).region ?? (result as any).companyRegion;
-              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region);
+              // v39.0 B1: profile-aware action selection
+              const uf2 = (result as any).userFactors ?? {};
+              const userProfileLike2 = {
+                visaStatus:         uf2.visaStatus ?? null,
+                savingsMonthsRunway: uf2.savingsMonthsRunway ?? null,
+                hasDependents:      uf2.hasDependents ?? null,
+                dualIncomeHousehold: uf2.dualIncomeHousehold ?? null,
+                priorLayoffSurvived: uf2.priorLayoffSurvived ?? null,
+              };
+              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2);
               return (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>

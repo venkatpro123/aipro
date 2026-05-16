@@ -186,14 +186,21 @@ const ActionList: React.FC<ActionListProps> = ({ title, actions, accentColor, ur
   </div>
 );
 
+/**
+ * v39.0 B5: pass through the engine's pathConfidence so the panel can surface
+ * "BEST FIT" with a confidence chip (e.g. "82% match") rather than a flat
+ * RECOMMENDED label. Users see WHY we recommend this path, not just that we do.
+ */
 interface PathCardProps {
   path: ContingencyPath;
   isRecommended: boolean;
   isExpanded: boolean;
   onToggle: () => void;
+  /** v39.0 B5: 0–1 confidence the engine has in this path being the right choice. */
+  pathConfidence?: number;
 }
 
-const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, onToggle }) => {
+const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, onToggle, pathConfidence }) => {
   const config = PATH_CONFIG[path.pathId];
   const { Icon, accentColor, borderColor, bgColor, badgeBg } = config;
 
@@ -233,7 +240,12 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                     className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full"
                     style={{ background: accentColor + '25', color: accentColor, border: `1px solid ${accentColor}50` }}
                   >
-                    RECOMMENDED
+                    {/* v39.0 B5: confidence-aware "best fit" label */}
+                    {pathConfidence != null && pathConfidence >= 0.7
+                      ? `BEST FIT FOR YOU · ${Math.round(pathConfidence * 100)}%`
+                      : pathConfidence != null && pathConfidence >= 0.5
+                        ? `RECOMMENDED · ${Math.round(pathConfidence * 100)}%`
+                        : 'RECOMMENDED'}
                   </span>
                 )}
               </div>
@@ -435,6 +447,8 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
             isRecommended={path.pathId === contingencyPlan.recommendedPath}
             isExpanded={expandedPath === path.pathId}
             onToggle={() => togglePath(path.pathId)}
+            // v39.0 B5: confidence drives "BEST FIT" vs "RECOMMENDED" copy
+            pathConfidence={path.pathId === contingencyPlan.recommendedPath ? contingencyPlan.pathConfidence : undefined}
           />
         ))}
       </div>

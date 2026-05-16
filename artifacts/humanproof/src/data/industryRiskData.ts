@@ -116,3 +116,56 @@ export const industryRiskData: Record<string, IndustryRisk> = {
   'Biotech':               { baselineRisk: 0.38, aiAdoptionRate: 0.55, growthOutlook: 'volatile',  avgLayoffRate2025: 0.05 },
   'Healthcare Technology': { baselineRisk: 0.32, aiAdoptionRate: 0.65, growthOutlook: 'growing',   avgLayoffRate2025: 0.02 },
 };
+
+// ─── v39.0 C5: Industry risk staleness metadata ────────────────────────────────
+//
+// The baselines above are calibrated against Q1 2026 layoff data. They should
+// refresh quarterly. Until live BLS/JOLTS ingestion is wired, the UI uses
+// `getIndustryRiskAgeDays` + `getIndustryRiskStalenessLabel` to render an
+// honest age badge on CompanyPulseCard.
+
+/** ISO date — the day the baselines above were last calibrated. */
+export const INDUSTRY_RISK_DATA_AS_OF = '2026-02-15';
+export const INDUSTRY_RISK_DATA_QUARTER = 'Q1 2026';
+
+/** Days since `INDUSTRY_RISK_DATA_AS_OF`. Pure function — safe to call anywhere. */
+export function getIndustryRiskAgeDays(): number {
+  const asOf = new Date(INDUSTRY_RISK_DATA_AS_OF).getTime();
+  return Math.max(0, Math.round((Date.now() - asOf) / (24 * 60 * 60 * 1000)));
+}
+
+export interface IndustryRiskFreshness {
+  ageDays: number;
+  isStale: boolean;
+  /** Render-ready label for UI badges. */
+  label: string;
+  /** ISO calibration date for tooltip / detail views. */
+  dataAsOf: string;
+  /** Human-readable quarter (e.g. 'Q1 2026'). */
+  dataQuarter: string;
+}
+
+/**
+ * v39.0 C5 — Return a UI-ready freshness verdict for the industry baseline data.
+ *
+ *   < 60 days  → fresh
+ *   60-120     → "Refreshing soon" (yellow chip)
+ *   > 120 days → "Stale — pending update" (orange chip)
+ *
+ * Consumers (CompanyPulseCard, TransparencyTab) read `label` directly.
+ */
+export function getIndustryRiskStalenessLabel(): IndustryRiskFreshness {
+  const ageDays = getIndustryRiskAgeDays();
+  const isStale = ageDays > 60;
+  const label =
+    ageDays < 60   ? `Industry data: ${INDUSTRY_RISK_DATA_QUARTER}` :
+    ageDays < 120  ? `Industry data: ${INDUSTRY_RISK_DATA_QUARTER} — refresh due` :
+                     `Industry data: ${INDUSTRY_RISK_DATA_QUARTER} — stale (${Math.floor(ageDays / 30)} mo old)`;
+  return {
+    ageDays,
+    isStale,
+    label,
+    dataAsOf: INDUSTRY_RISK_DATA_AS_OF,
+    dataQuarter: INDUSTRY_RISK_DATA_QUARTER,
+  };
+}

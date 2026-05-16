@@ -218,12 +218,53 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
   const adaptation = useDashboardAdaptation(result, companyData);
+  // v39.0 B6: surface honest "generic guidance" notice when the user's role
+  // isn't in our 412-specialised database. Also surface the profile context
+  // note so the action plan opens with profile-specific framing.
+  const personalizedSet = r.personalizedActionSet as
+    | { isGenericFallback?: boolean; isDbOverride?: boolean; profileContextNote?: string; roleGroup?: string }
+    | undefined;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
 
       {/* T1: Emergency callout — only in emergency mode */}
       {adaptation.mode === 'emergency' && <EmergencyCallout score={result.total} />}
+
+      {/* v39.0 B1+B6: profile-aware framing + honest fallback notice */}
+      {personalizedSet?.profileContextNote && (
+        <div
+          className="rounded-2xl p-4"
+          style={{
+            background: 'rgba(34, 211, 238, 0.06)',
+            border: '1px solid rgba(34, 211, 238, 0.20)',
+          }}
+        >
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: '#22d3ee' }}>
+            Tailored to your situation
+          </div>
+          <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.78)' }}>
+            {personalizedSet.profileContextNote}
+          </p>
+        </div>
+      )}
+      {personalizedSet?.isGenericFallback && (
+        <div
+          className="rounded-xl px-3 py-2 flex items-start gap-2"
+          style={{
+            background: 'rgba(245, 158, 11, 0.07)',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+          }}
+        >
+          <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+          <div className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+            <span style={{ color: '#f59e0b', fontWeight: 600 }}>Generic guidance.</span>{' '}
+            Your role is not yet specialised in our database — actions below are drawn from a general
+            tech / professional services pool. The recommendations are still calibrated to your seniority
+            and score, but role-specific certifications, salary bands, and outreach targets may differ.
+          </div>
+        </div>
+      )}
 
       {/* T1: Career Contingency Plan — status-aware rendering */}
       {contingencyStatus === 'ready' && contingencyPlan

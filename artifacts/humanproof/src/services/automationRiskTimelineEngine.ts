@@ -20,6 +20,8 @@ import {
   getDisplacementProbabilityByYear,
   type AutomationTimeline,
 } from "../data/automationTimelineData";
+// v39.0 A1: DB-backed role intelligence override layer
+import { getRoleOverride } from "./roleIntelligenceClient";
 
 export type { TechStackObsolescenceResult };
 
@@ -210,16 +212,40 @@ export function computeAutomationRisk(input: AutomationRiskInput): AutomationRis
     companyMainTech: input.companyMainTech ?? [],
   });
 
-  const roleTimeline = input.roleKey ? getAutomationTimeline(input.roleKey) : null;
-  const roleTier = input.roleKey ? getAutomationRiskTier(input.roleKey) : null;
+  const staticTimeline = input.roleKey ? getAutomationTimeline(input.roleKey) : null;
+  const staticTier = input.roleKey ? getAutomationRiskTier(input.roleKey) : null;
+
+  // v39.0 A1: DB role_automation_timeline override layer. Admins can ship a
+  // refreshed automation curve (e.g. after a new BLS study) without a code
+  // deploy.
+  const dbAutomation = input.roleKey ? getRoleOverride(input.roleKey)?.automation : null;
+  const roleTimeline: AutomationTimeline | null = dbAutomation
+    ? {
+        roleKey: input.roleKey ?? staticTimeline?.roleKey ?? 'unknown',
+        augmentationProbability: dbAutomation.augmentation_probability,
+        displacementProbability2032: dbAutomation.displacement_2032,
+        displacementByYear: {
+          2026: dbAutomation.displacement_2026,
+          2028: dbAutomation.displacement_2028,
+          2030: dbAutomation.displacement_2030,
+          2032: dbAutomation.displacement_2032,
+        },
+        topTasksAtRisk: dbAutomation.top_tasks_at_risk ?? staticTimeline?.topTasksAtRisk ?? [],
+        humanEssentialTasks: dbAutomation.human_essential_tasks ?? staticTimeline?.humanEssentialTasks ?? [],
+        automationDrivers: dbAutomation.automation_drivers ?? staticTimeline?.automationDrivers ?? [],
+        impactTimeline: dbAutomation.impact_timeline ?? staticTimeline?.impactTimeline ?? 'medium',
+        riskTier: dbAutomation.risk_tier ?? staticTimeline?.riskTier ?? 'moderate',
+      }
+    : staticTimeline;
+  const roleTier = dbAutomation?.risk_tier ?? staticTier;
 
   const roleBaseScore = roleTier ? TIER_BASE_SCORE[roleTier] : 40;
   const blended = blendScores(roleBaseScore, techStack.stackObsolescenceScore);
 
-  const displacementBy2026 = input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2026) : 0.05;
-  const displacementBy2028 = input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2028) : 0.10;
-  const displacementBy2030 = input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2030) : 0.15;
-  const displacementBy2032 = input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2032) : 0.20;
+  const displacementBy2026 = dbAutomation?.displacement_2026 ?? (input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2026) : 0.05);
+  const displacementBy2028 = dbAutomation?.displacement_2028 ?? (input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2028) : 0.10);
+  const displacementBy2030 = dbAutomation?.displacement_2030 ?? (input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2030) : 0.15);
+  const displacementBy2032 = dbAutomation?.displacement_2032 ?? (input.roleKey ? getDisplacementProbabilityByYear(input.roleKey, 2032) : 0.20);
 
   const augProb = roleTimeline?.augmentationProbability ?? 0.45;
   const label: AutomationRiskLabel = roleTimeline

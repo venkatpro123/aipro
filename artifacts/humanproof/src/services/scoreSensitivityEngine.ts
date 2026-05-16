@@ -24,6 +24,10 @@
 //             which drops your overall score by ~5 pts — more than any other single move."
 
 import type { ScoreBreakdown } from './layoffScoreEngine';
+// v39.0 E2: use the authoritative formula weights instead of the duplicated
+// DIMENSION_CONFIG.weight values (which had drifted: L4 0.01 vs engine 0.00,
+// D6 0.05 vs engine 0.04, D8 0.05 vs engine 0.09 then 0 when flag-gated).
+import { getEffectiveFormulaWeights } from './layoffScoreEngine';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -216,6 +220,12 @@ export function computeScoreSensitivity(inputs: SensitivityInputs): ScoreSensiti
     };
   }
 
+  // v39.0 E2: pull the AUTHORITATIVE weights from the score engine so the
+  // displayed score-drop matches what would actually happen if the user
+  // moved that dimension. Falls back to DIMENSION_CONFIG.weight only if a
+  // dimension isn't in the engine's keys (e.g. a UI-only display field).
+  const effectiveWeights = getEffectiveFormulaWeights();
+
   // ── Compute levers ─────────────────────────────────────────────────────────
   const levers: SensitivityLever[] = dimEntries
     .map(({ key, rawScore }) => {
@@ -226,8 +236,10 @@ export function computeScoreSensitivity(inputs: SensitivityInputs): ScoreSensiti
       const improvementTarget = Math.max(0, displayScore - 25);
       // If current score is already below 25, improvement is bounded by the score itself
       const actualImprovement = Math.min(0.25, rawScore);
-      const scoreDropIfImproved = Math.round(actualImprovement * cfg.weight * 100 * 10) / 10;
-      const percentOfTotalRisk = Math.round((rawScore * cfg.weight * 100 / Math.max(1, currentScore)) * 100);
+      // v39.0 E2: gradient = effective formula weight; drop = ΔL × weight × 100
+      const weight = effectiveWeights[key] ?? cfg.weight;
+      const scoreDropIfImproved = Math.round(actualImprovement * weight * 100 * 10) / 10;
+      const percentOfTotalRisk = Math.round((rawScore * weight * 100 / Math.max(1, currentScore)) * 100);
 
       return {
         dimension: key,

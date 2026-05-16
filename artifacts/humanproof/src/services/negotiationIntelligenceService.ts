@@ -52,6 +52,8 @@ import { NEGOTIATION_ADDITIONS_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_r
 import { NEGOTIATION_ADDITIONS_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
 import { NEGOTIATION_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
 import { NEGOTIATION_ADDITIONS_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
+// v39.0 A1: DB-backed role intelligence override layer
+import { getRoleOverride } from "./roleIntelligenceClient";
 
 
 export interface NegotiationIntelligenceInputs {
@@ -63,6 +65,19 @@ export interface NegotiationIntelligenceInputs {
   industry: string;
   /** GAP J: role canonical key for role-specific negotiation scripts */
   workTypeKey?: string;
+  /**
+   * v39.0 B3: profile signals modulate urgency, walk-away framing, and risk
+   * tolerance. Visa-dependent users surface timing pressure; family-anchored
+   * users get stability-premium framing.
+   */
+  userProfile?: {
+    visaStatus?: 'citizen' | 'permanent_resident' | 'h1b' | 'l1' | 'opt' | 'other' | 'na' | null;
+    hasDependents?: boolean | null;
+    dualIncomeHousehold?: boolean | null;
+    priorLayoffSurvived?: boolean | null;
+    hasEquityVesting?: boolean | null;
+    equityVestMonths?: number | null;
+  } | null;
 }
 
 export type NegotiationLeverageRating = 'STRONG' | 'MODERATE' | 'WEAK' | 'NONE';
@@ -175,8 +190,16 @@ export function computeNegotiationIntelligence(
   const { tactic, specificAsk } = buildTacticAndAsk(leverageRating, marketTightness, runwayTier, performanceTier, industry, tenureYears);
   const timingWindow = buildTimingWindow(runwayTier, leverageRating, performanceTier);
   // GAP J: pass workTypeKey for role-specific scripts
-  const scripts = buildRoleSpecificScripts(leverageRating, specificAsk, marketTightness, tenureYears, inputs.workTypeKey ?? 'default');
-  const { risks, redLines } = buildRisksAndRedLines(leverageRating, currentScore, runwayTier);
+  // v39.0 B3: thread userProfile into script building for visa/family/equity modulation
+  const scripts = buildRoleSpecificScripts(
+    leverageRating,
+    specificAsk,
+    marketTightness,
+    tenureYears,
+    inputs.workTypeKey ?? 'default',
+    inputs.userProfile ?? null,
+  );
+  const { risks, redLines } = buildRisksAndRedLines(leverageRating, currentScore, runwayTier, inputs.userProfile ?? null);
 
   return {
     leverageRating,
@@ -603,9 +626,30 @@ function buildRoleSpecificScripts(
   tightness: MarketTightness,
   tenureYears: number,
   workTypeKey: string,
+  userProfile?: NegotiationIntelligenceInputs['userProfile'],
 ): string[] {
   const scripts: string[] = [];
-  const variant = ROLE_SCRIPT_VARIANTS[workTypeKey] ?? ROLE_SCRIPT_VARIANTS['default'];
+  const staticVariant = ROLE_SCRIPT_VARIANTS[workTypeKey] ?? ROLE_SCRIPT_VARIANTS['default'];
+  // v39.0 A1: DB role_negotiation_scripts override layer wins when present.
+  // Admins can ship a refreshed leverage line / counter without code deploy.
+  const dbNego = getRoleOverride(workTypeKey)?.negotiation;
+  const variant = dbNego
+    ? {
+        strongOpener: dbNego.strong_opener ?? staticVariant.strongOpener,
+        leverageContext: dbNego.leverage_context ?? staticVariant.leverageContext,
+        countersScript: dbNego.counters_script ?? staticVariant.countersScript,
+        walkAwayLine: dbNego.walk_away_line ?? staticVariant.walkAwayLine,
+      }
+    : staticVariant;
+
+  // v39.0 B3: profile signal classifications drive optional appendices to
+  // the role-specific scripts. We do NOT overwrite the role text; we add
+  // a focused profile-specific line at the right place in the conversation.
+  const visaDependent = userProfile?.visaStatus === 'h1b'
+                     || userProfile?.visaStatus === 'l1'
+                     || userProfile?.visaStatus === 'opt';
+  const familyAnchored = !!userProfile?.hasDependents && !userProfile?.dualIncomeHousehold;
+  const equityAnchor   = !!userProfile?.hasEquityVesting && (userProfile?.equityVestMonths ?? 0) > 0 && (userProfile?.equityVestMonths ?? 0) <= 12;
 
   if (leverageRating === 'STRONG') {
     scripts.push(variant.strongOpener);
@@ -626,13 +670,24 @@ function buildRoleSpecificScripts(
     scripts.push(variant.countersScript);
   }
 
-  return scripts.slice(0, 3);
+  // v39.0 B3: profile-aware appendix lines. We deliberately cap at 4 total
+  // (3 core + 1 profile line) so the panel stays scannable.
+  const baseSlice = scripts.slice(0, 3);
+  if (visaDependent && leverageRating !== 'NONE') {
+    baseSlice.push(`"For context: I'm on a visa that has a 60-day post-termination grace period, so I have to be deliberate about timing. I'm raising this conversation now rather than later to give us both room to align."`);
+  } else if (familyAnchored && leverageRating !== 'NONE') {
+    baseSlice.push(`"Outside of comp, the thing I value most is stability and predictability — I have family commitments that make timing certainty more important than the last 5% on the offer."`);
+  } else if (equityAnchor && (leverageRating === 'STRONG' || leverageRating === 'MODERATE')) {
+    baseSlice.push(`"I have a meaningful vesting milestone in the next year. If we can structure either an accelerator on that or a sign-on that offsets the cliff, it changes my calculus significantly."`);
+  }
+  return baseSlice.slice(0, 4);
 }
 
 function buildRisksAndRedLines(
   leverageRating: NegotiationLeverageRating,
   currentScore: number,
   runwayTier: RunwayTier,
+  userProfile?: NegotiationIntelligenceInputs['userProfile'],
 ): { risks: string[]; redLines: string[] } {
   const risks: string[] = [];
   const redLines: string[] = [];
@@ -647,10 +702,24 @@ function buildRisksAndRedLines(
     risks.push('Limited runway: negotiation that signals you might leave + leave soon is less effective than being seen as a stable choice');
   }
 
+  // v39.0 B3: profile-specific risk callouts
+  const visaDependent = userProfile?.visaStatus === 'h1b'
+                     || userProfile?.visaStatus === 'l1'
+                     || userProfile?.visaStatus === 'opt';
+  if (visaDependent && currentScore >= 55) {
+    risks.push('Visa-dependent risk: an aggressive ask at a company already considering cuts shortens your runway from 60 days to 0 if it triggers an early termination. Soften the wording; keep stability framing primary.');
+  }
+  if (userProfile?.hasDependents && !userProfile?.dualIncomeHousehold && currentScore >= 55) {
+    risks.push('Family-anchored risk: single-income household means the cost of a misjudged ask is amplified. Negotiate for stability or scope, not raw comp percentage.');
+  }
+
   redLines.push('Do not mention competing offers unless they are real, written, and time-constrained');
   redLines.push('Do not escalate to HR without a manager champion — HR\'s job is company risk management, not your advocacy');
   if (currentScore >= 55) {
     redLines.push('Do not ask for anything that signals you are "checking out" (remote upgrade, reduced responsibility, part-time) at a company with high risk signals');
+  }
+  if (visaDependent) {
+    redLines.push('Do not invoke "I can walk to another offer" framing without a written, sponsor-confirmed offer in hand — bluffing on a visa is a one-way door');
   }
 
   return { risks, redLines };

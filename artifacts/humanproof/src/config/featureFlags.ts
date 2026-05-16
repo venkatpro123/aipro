@@ -68,7 +68,21 @@ export type FlagKey =
   | 'ws11_dag_write_versioning'
   | 'ws12_age_aware_cache'
   | 'ws13_breaker_mesh'
-  | 'ws14_request_id_context';
+  | 'ws14_request_id_context'
+  // v39.0 A7: gate D8 (AI efficiency restructuring) until its 47-event
+  // regression dataset is validated. Default OFF — re-enable in v40 once
+  // empirical calibration has confirmed weight 0.09 doesn't bias profitable
+  // tech audits by ±4-6pt against ground truth labels.
+  | 'v39_d8_ai_efficiency_active'
+  // v39.0 D1: kill-switch for the DAG orchestrator. The DAG runner shares
+  // `hybridResult` + `companyData` with the legacy try/catch blocks; only
+  // ~15 of 54 layers have been migrated. The bridge writes legacy underscore
+  // fields after each DAG layer so unmigrated consumers keep reading what
+  // they used to. This works but creates a dual-source-of-truth risk. The
+  // kill-switch lets ops disable the DAG runner entirely if a duplicate-write
+  // bug ships. Default ON to preserve v38.0 behaviour. Flip to 'off' to fall
+  // back to pure legacy compute.
+  | 'v39_dag_runner_active';
 
 /**
  * The user-facing result of evaluating a flag for the current user.

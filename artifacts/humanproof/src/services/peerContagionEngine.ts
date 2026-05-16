@@ -71,6 +71,19 @@ export interface PeerContagionResult {
    *  developer-estimated. Calibration requires same-sector layoff co-occurrence data within 90 days. */
   readonly multipliersCalibrationStatus: 'developer_estimate';
   readonly multipliersCalibrationNote: string;
+  /**
+   * v39.0 D4 — Machine-readable confidence tier for the sector multipliers
+   * applied to the contagion score.
+   *
+   *   'bootstrap'  → developer-estimated weights (current default).
+   *   'calibrated' → validated against same-sector co-occurrence data (≥50 paired events).
+   *
+   * Downstream consumers (intelligence brief, transparency tab, model
+   * calibration metrics) should DOWNWEIGHT contagion contributions when this
+   * is 'bootstrap'. Today every result returns 'bootstrap' until the empirical
+   * regression in Phase E1 completes.
+   */
+  readonly multiplierConfidence: 'bootstrap' | 'calibrated';
 }
 
 export interface PeerContagionInputs {
@@ -250,6 +263,7 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
       calibrationStatus: 'documented_wave_analysis',
       multipliersCalibrationStatus: 'developer_estimate',
       multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
+      multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
     };
   }
 
@@ -330,5 +344,6 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
     calibrationStatus: 'documented_wave_analysis',
     multipliersCalibrationStatus: 'developer_estimate',
     multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
+    multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
   };
 }

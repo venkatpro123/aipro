@@ -27,6 +27,8 @@ import {
   type VerdictLabel,
 } from '../../../services/signalCompressionService';
 import TierBadge from './TierBadge';
+// v39.0 C5: industry baseline freshness label
+import { getIndustryRiskStalenessLabel } from '../../../data/industryRiskData';
 
 interface Props {
   result: HybridResult;
@@ -131,8 +133,6 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
 
   // ring percentage = max severity of the two
   const ringPct = Math.max(workforce.severity, financial.severity);
-  const tone    = headline.tone;
-  const verdict = VERDICT_LABEL[headline.verdict];
 
   // v35.1.1 — distinguish "live signals attempted but empty" from "platform
   // never tried." Both render verdict='unknown', but the empty-but-attempted
@@ -149,12 +149,21 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
   const degradedCount = result.signalQuality?.degradedSignalClasses?.length ?? 0;
   const liveAttemptedButEmpty = headline.verdict === 'unknown' && (fallbackCount > 0 || degradedCount > 0);
 
+  // v39.0 F1 — When the platform attempted live signals but got nothing back,
+  // shift the verdict label from "No data" (slate, reads as platform fault)
+  // to "Data unavailable" (amber, reads as upstream rate-limit).
+  // The CompressedSignal still carries verdict='unknown' for downstream
+  // logic; we only swap the LABEL + TONE for the chip render here.
+  const displayVerdict: VerdictLabel = liveAttemptedButEmpty ? 'data-unavailable' : headline.verdict;
+  const tone = liveAttemptedButEmpty ? '#f59e0b' : headline.tone;
+  const verdict = VERDICT_LABEL[displayVerdict];
+
   // One-line summary that captures both signals
   const summary = headline.verdict !== 'unknown'
     ? `Workforce: ${VERDICT_LABEL[workforce.verdict]} · Financial: ${VERDICT_LABEL[financial.verdict]}`
     : liveAttemptedButEmpty
-      ? 'Live sources attempted, none returned — typically a rate-limit or anti-bot block. Retry in 5 minutes.'
-      : 'We do not yet have live company signals for this company.';
+      ? 'Attempted live + DB — no signal returned. Likely upstream rate-limit; retrying in background.'
+      : 'No attempt made — company isn\'t in our intelligence layer yet.';
 
   return (
     <div
@@ -203,6 +212,27 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         <SubVerdictChip signal={workforce} icon={Users} />
         <SubVerdictChip signal={financial} icon={LineChart} />
       </div>
+
+      {/* v39.0 C5: industry baseline data freshness — only render when ≥ 60d old */}
+      {(() => {
+        const freshness = getIndustryRiskStalenessLabel();
+        if (!freshness.isStale) return null;
+        const color = freshness.ageDays > 120 ? '#f97316' : '#f59e0b';
+        return (
+          <div
+            className="mx-3 mb-3 px-2.5 py-1.5 rounded-lg flex items-center gap-2"
+            style={{ background: color + '12', border: `1px solid ${color}30` }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ background: color }}
+            />
+            <span className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              {freshness.label}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Drill-down */}
       <AnimatePresence initial={false}>

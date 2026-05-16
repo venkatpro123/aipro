@@ -28,6 +28,11 @@ export interface ScenarioPlanPersonalizationContext {
   equityType?: 'rsu' | 'options' | 'none';
   /** v37.0: broad role category — drives profession-specific scenario actions */
   roleCategory?: 'tech' | 'healthcare' | 'finance' | 'legal' | 'sales_ops' | 'creative' | 'service' | 'physical_labor' | 'education' | 'government';
+  /**
+   * v39.0 B4: region drives localized outreach channels (Naukri vs LinkedIn,
+   * region-specific recruiter agencies, regional pay-band benchmarks).
+   */
+  region?: 'US' | 'IN' | 'EU' | 'UK' | 'MENA' | 'APAC' | string | null;
 }
 
 export interface ScenarioPlanInput {
@@ -127,7 +132,31 @@ function buildBearActions(ctx: ScenarioPlanPersonalizationContext, urgencyMultip
     }
   }
 
+  // v39.0 B4: region-specific outreach channel guidance
+  const regionAction = buildRegionalOutreachAction(ctx.region);
+  if (regionAction) actions.push(regionAction);
+
   return actions.slice(0, 5);
+}
+
+function buildRegionalOutreachAction(region: ScenarioPlanPersonalizationContext['region']): string | null {
+  const r = (region ?? '').toString().toUpperCase();
+  if (r === 'IN' || r === 'INDIA') {
+    return 'India outreach channel: prioritise Naukri.com + LinkedIn India + Hirist (tech) for active postings; use Cutshort and InstaHyre for warm-intro pipelines. GCC roles (Goldman, JPMorgan, Google India) pay 30–50% above IT services for equivalent levels.';
+  }
+  if (r === 'EU' || r === 'GERMANY' || r === 'FRANCE' || r === 'NETHERLANDS') {
+    return 'EU outreach: LinkedIn EU + StepStone (DACH) + Welcome to the Jungle (France) are highest-yield. Visa/work-permit timing: most EU countries require 4–8 week processing, so begin paperwork in parallel with applications.';
+  }
+  if (r === 'UK') {
+    return 'UK outreach: LinkedIn UK + CWJobs (tech) + Reed.co.uk are primary; high-leverage executive search firms (Egon Zehnder, Spencer Stuart) handle the £150K+ band. Confirm Skilled Worker visa sponsor list (gov.uk register) before target shortlisting.';
+  }
+  if (r === 'MENA' || r === 'UAE' || r === 'SAUDI') {
+    return 'MENA outreach: Bayt.com + LinkedIn Middle East + Naukrigulf are the primary boards; tier-1 roles are heavily referral-driven via existing networks within the region.';
+  }
+  if (r === 'APAC' || r === 'SINGAPORE' || r === 'HK' || r === 'AU') {
+    return 'APAC outreach: LinkedIn APAC + JobsDB (HK) + SEEK (AU/SG) for active postings; regional executive search at the senior+ band is dominated by Heidrick, Korn Ferry, and Boyden.';
+  }
+  return null;
 }
 
 function buildBearRoleCategoryAction(
@@ -335,6 +364,20 @@ export function computeScenarioPlan(input: ScenarioPlanInput): ScenarioPlanResul
   const baseScore  = clampScore(input.currentScore + baseDelta);
   const bestScore  = clampScore(input.currentScore - bullDelta);
 
+  // v39.0 B4: runway-aware planning horizon. The default 6 months is
+  // appropriate for comfortable runway; critical runway compresses to 2
+  // months because the actionable window IS the runway. Strong runway
+  // expands to 9 months because there's room for longer-trajectory bets.
+  const planningHorizonMonths = (() => {
+    switch (ctx.financialRunwaySituation) {
+      case 'critical':    return 2;
+      case 'tight':       return 4;
+      case 'comfortable': return 6;
+      case 'strong':      return 9;
+      default:            return 6;
+    }
+  })();
+
   return {
     worstCase: {
       score: worstScore,
@@ -360,6 +403,6 @@ export function computeScenarioPlan(input: ScenarioPlanInput): ScenarioPlanResul
     },
     scenarioSpread: worstScore - bestScore,
     dominantUncertainty: deriveDominantUncertainty(input),
-    planningHorizonMonths: 6,
+    planningHorizonMonths,
   };
 }

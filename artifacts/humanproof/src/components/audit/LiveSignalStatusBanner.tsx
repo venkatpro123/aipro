@@ -20,6 +20,9 @@ export interface LiveDataCoverage {
 interface Props {
   coverage:     LiveDataCoverage | null | undefined;
   freshnessScore?: number | null;
+  /** v39.0 A3 — surface the live-quorum timeout cap reason to the user. */
+  degradationReason?: string | null;
+  degradationDetail?: string | null;
   className?:   string;
 }
 
@@ -85,7 +88,7 @@ const TIER_CONFIG: Record<Tier, {
   },
 };
 
-export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, className }) => {
+export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, className }) => {
   const [dismissed, setDismissed] = useState(false);
 
   // Audit v35: use liveRatio from coverage ONLY — never fall back to freshnessScore.
@@ -178,6 +181,15 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
               {hardFails.length > 0 && tier !== 'static' && (
                 <span style={{ marginLeft: '4px', color: '#ef4444' }}>
                   API failures: {hardFails.length}.
+                </span>
+              )}
+              {/* v39.0 A3: surface live-quorum timeout cap */}
+              {degradationReason === 'live_quorum_timeout' && (
+                <span style={{
+                  display: 'block', marginTop: '4px',
+                  color: '#f59e0b', fontWeight: 600,
+                }}>
+                  {degradationDetail ?? 'Live scrape ceiling hit — confidence capped at 60%.'}
                 </span>
               )}
             </div>

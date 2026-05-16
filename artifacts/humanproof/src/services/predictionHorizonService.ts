@@ -39,6 +39,24 @@ export interface PredictionHorizonResult {
     '90d':  DominantSignalInfo;
     '180d': DominantSignalInfo;
   };
+  /**
+   * v39.0 E3 — Confidence-aware max horizon.
+   *
+   * Predictions past this many days are flagged as speculative. As overall
+   * confidence drops, the useful horizon compresses:
+   *   ≥ 85% confidence → 545d (~18 months)
+   *   ≥ 70%            → 365d (~12 months)
+   *   ≥ 55%            → 270d (~9 months)
+   *   ≥ 40%            → 180d (~6 months)
+   *   < 40%            → 90d  (~3 months)
+   *
+   * Consumers (SummaryTab horizon strip, scenarioPlanService) should not
+   * extrapolate past this horizon, and the TransparencyTab should display
+   * a "useful prediction horizon: N days" badge.
+   */
+  maxConfidentHorizonDays: number;
+  /** Why the horizon was set at this length — for tooltips. */
+  horizonRationale: string;
 }
 
 // Horizon-appropriate layer weight tables.
@@ -169,6 +187,25 @@ export function computePredictionHorizon(input: PredictionHorizonInput): Predict
 
   const dominantSignalPerHorizon = { '30d': dom30d, '90d': dom90d, '180d': dom180d };
 
+  // v39.0 E3: confidence-aware horizon. WARN Act filings extend the useful
+  // horizon back to ~12 months (legal certainty), otherwise the curve compresses
+  // as confidence drops.
+  const conf = overallConfidence;
+  const maxConfidentHorizonDays = warnSignalActive
+    ? 365
+    : conf >= 85 ? 545
+    : conf >= 70 ? 365
+    : conf >= 55 ? 270
+    : conf >= 40 ? 180
+    :              90;
+  const horizonRationale = warnSignalActive
+    ? 'WARN Act filing provides legal certainty out to ~12 months.'
+    : conf >= 85 ? `Confidence ${conf}% supports an 18-month useful horizon.`
+    : conf >= 70 ? `Confidence ${conf}% supports a 12-month useful horizon.`
+    : conf >= 55 ? `Confidence ${conf}% compresses the useful horizon to 9 months — past that, signals decay below decision-relevance.`
+    : conf >= 40 ? `Confidence ${conf}% compresses the useful horizon to 6 months. Decisions past that should be revisited as new signals arrive.`
+    :              `Confidence ${conf}% compresses the useful horizon to 3 months. Treat anything beyond as speculative.`;
+
   return {
     horizon30d: {
       score: final30d,
@@ -191,5 +228,7 @@ export function computePredictionHorizon(input: PredictionHorizonInput): Predict
     trajectoryNarrative: buildTrajectoryNarrative(final30d, score90d, score180d, warnSignalActive, dominantSignalPerHorizon),
     groundTruthOverride: warnSignalActive,
     dominantSignalPerHorizon,
+    maxConfidentHorizonDays,
+    horizonRationale,
   };
 }

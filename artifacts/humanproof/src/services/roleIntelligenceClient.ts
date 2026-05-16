@@ -84,12 +84,30 @@ export interface DbAutomationTimeline {
   risk_tier: 'very_high' | 'high' | 'moderate' | 'low' | 'very_low';
 }
 
+export interface DbDemandOverride {
+  role_key: string;
+  region: string;
+  demand_index: number;
+  demand_trend: string;
+  job_openings_trend: string;
+  salary_trend: string;
+  ai_substitution_risk: number | null;
+  time_to_fill_days: number | null;
+  yoy_job_openings_change: number | null;
+  top_hiring_locations: string[] | null;
+  data_quarter: string;
+  data_source: string | null;
+  calibration_note: string | null;
+}
+
 export interface RoleOverride {
   role?: DbRoleRow;
   actions?: DbRoleAction;
   compensation?: DbCompensationBand[];
   negotiation?: DbNegotiationScript;
   automation?: DbAutomationTimeline;
+  /** v39.0 A1: demand overrides keyed by region. 'global' is the default fallback. */
+  demand?: Record<string, DbDemandOverride>;
 }
 
 // ─── Cache ─────────────────────────────────────────────────────────────────────
@@ -129,6 +147,7 @@ async function fetchAllRoleIntelligence(): Promise<void> {
       { data: comp, error: compErr },
       { data: nego, error: negoErr },
       { data: automation, error: autoErr },
+      { data: demand, error: demandErr },
     ] = await Promise.all([
       supabase.from('roles').select('*').eq('is_active', true),
       supabase.from('role_aliases').select('*'),
@@ -136,6 +155,8 @@ async function fetchAllRoleIntelligence(): Promise<void> {
       supabase.from('role_compensation_bands').select('*'),
       supabase.from('role_negotiation_scripts').select('*'),
       supabase.from('role_automation_timeline').select('*'),
+      // v39.0 A1: pull demand overrides into the unified cache
+      supabase.from('role_demand_overrides').select('*').eq('is_active', true),
     ]);
 
     // If any fundamental query failed, mark unavailable but don't crash
@@ -188,6 +209,19 @@ async function fetchAllRoleIntelligence(): Promise<void> {
       (automation ?? []).forEach((a: DbAutomationTimeline) => {
         const existing = _cache.roleOverrides.get(a.role_key) ?? {};
         _cache.roleOverrides.set(a.role_key, { ...existing, automation: a });
+      });
+    }
+    // v39.0 A1: ingest demand overrides keyed by region
+    if (!demandErr) {
+      const byRole = new Map<string, Record<string, DbDemandOverride>>();
+      (demand ?? []).forEach((d: DbDemandOverride) => {
+        const regionMap = byRole.get(d.role_key) ?? {};
+        regionMap[d.region] = d;
+        byRole.set(d.role_key, regionMap);
+      });
+      byRole.forEach((regionMap, key) => {
+        const existing = _cache.roleOverrides.get(key) ?? {};
+        _cache.roleOverrides.set(key, { ...existing, demand: regionMap });
       });
     }
 

@@ -1,15 +1,25 @@
-// crossIndustryTransitionMap.ts — v37.0 Phase 4
+// crossIndustryTransitionMap.ts — v37.0 Phase 4 + v39.0 Phase C1 sparse fallback
 // Maps (sourceRole, targetIndustry) → transition difficulty, skill gap, and timeline.
 //
 // This is role-specific (not just role-family), covering the most common career pivots.
 // It answers: "I am a petroleum engineer — can I move into renewable energy?"
 // with specific skill gaps and a calibrated timeline.
 //
+// v39.0 C1: only 38 explicit pairs exist for 412 roles × ~30 industries (over
+// 12,000 possible pairs). When no explicit mapping exists, `resolveCrossIndustryTransition`
+// falls back to a family-pair heuristic computed via the rolePortabilityMatrix.
+//
 // Difficulty scale:
 //   'easy'      — 0–6 months, high portability, skill overlap is strong
 //   'moderate'  — 6–18 months, achievable with focused upskilling
 //   'hard'      — 18–36 months, significant credential or skill gap
 //   'very_hard' — 36+ months, near-restart required
+
+import {
+  getRoleFamilyForKey,
+  getPortabilityEntry,
+  type RoleFamily,
+} from './rolePortabilityMatrix';
 
 export type TransitionDifficulty = 'easy' | 'moderate' | 'hard' | 'very_hard';
 
@@ -412,4 +422,172 @@ export function getTransitionsToIndustry(targetIndustry: string): CrossIndustryT
 /** List all source roles that have transition data. */
 export function listMappedSourceRoles(): string[] {
   return [...new Set(Object.values(TRANSITION_MAP).map(t => t.sourceRole))];
+}
+
+// ─── v39.0 C1: Sparse-fallback resolver ───────────────────────────────────────
+//
+// Two layers above the explicit map:
+//   (1) Industry → RoleFamily inference (so "pharma_biotech" industry maps to
+//       the 'pharma_biotech' role family for portability lookup)
+//   (2) Family-pair portability heuristic (uses rolePortabilityMatrix scores
+//       + family-bridge skill defaults)
+//
+// Returns null only when the source role has no family mapping at all (i.e. a
+// completely unknown role key). All known roles get at least a directional
+// estimate.
+
+const INDUSTRY_TO_FAMILY: Record<string, RoleFamily> = {
+  tech:              'tech',
+  software:          'tech',
+  saas:              'tech',
+  cybersecurity:     'cybersecurity',
+  finance:           'finance',
+  banking:           'finance',
+  fintech:           'fintech',
+  accounting:        'accounting',
+  insurance:         'finance',
+  healthcare:        'healthcare_clinical',
+  healthcare_clinical: 'healthcare_clinical',
+  healthcare_admin:  'healthcare_admin',
+  pharma:            'pharma_biotech',
+  pharma_biotech:    'pharma_biotech',
+  biotech:           'pharma_biotech',
+  manufacturing:     'manufacturing',
+  energy:            'energy',
+  renewable_energy:  'energy',
+  construction:      'construction',
+  retail:            'retail',
+  ecommerce:         'retail',
+  logistics:         'logistics',
+  supply_chain:      'logistics',
+  agriculture:       'agriculture',
+  automotive:        'automotive',
+  telecom:           'telecom',
+  government:        'government',
+  public_sector:     'government',
+  education:         'education',
+  media:             'media_creative',
+  entertainment:     'media_creative',
+  hospitality:       'hospitality',
+  travel:            'hospitality',
+  real_estate:       'real_estate',
+  veterinary:        'veterinary',
+  public_health:     'public_health',
+  aviation:          'aviation',
+  consulting:        'consulting',
+  legal:             'legal',
+};
+
+function familyForIndustryString(industry: string): RoleFamily | null {
+  const key = industry.toLowerCase().trim().replace(/\s+/g, '_');
+  return INDUSTRY_TO_FAMILY[key] ?? null;
+}
+
+function difficultyFromMonths(months: number): TransitionDifficulty {
+  if (months <= 6)  return 'easy';
+  if (months <= 18) return 'moderate';
+  if (months <= 36) return 'hard';
+  return 'very_hard';
+}
+
+/**
+ * v39.0 C1 — Family-heuristic fallback when no explicit (role, industry) pair exists.
+ *
+ * Strategy:
+ *   1. Map source role → role family
+ *   2. Map target industry → role family (best-effort)
+ *   3. Use rolePortabilityMatrix to derive score, months, and key_bridges
+ *   4. Return a synthetic CrossIndustryTransition with `_isHeuristic = true`
+ */
+function buildHeuristicTransition(
+  sourceRole: string,
+  targetIndustry: string,
+): (CrossIndustryTransition & { _isHeuristic: true }) | null {
+  const sourceFamily = getRoleFamilyForKey(sourceRole);
+  if (!sourceFamily) return null;
+
+  const targetFamily = familyForIndustryString(targetIndustry);
+  if (!targetFamily) return null;
+
+  // Self-family transition (e.g. nurse → healthcare): trivially compatible.
+  if (sourceFamily === targetFamily) {
+    return {
+      sourceRole,
+      targetIndustry,
+      difficulty: 'easy',
+      timelineWeeks: 12,
+      skillGaps: ['Industry vocabulary alignment', 'Target-employer interview preparation'],
+      transferableStrengths: ['Domain expertise directly transfers within the same family', 'Existing professional network covers most target employers'],
+      targetRoleSuggestions: [`${sourceRole} (lateral move within ${targetIndustry})`],
+      note: `Within-family transition — your existing skills cover the target. Focus is on company-specific interview prep, not skill rebuild.`,
+      _isHeuristic: true,
+    };
+  }
+
+  const entry = getPortabilityEntry(sourceFamily, targetFamily);
+  if (!entry) {
+    // No mapped portability pair — return a conservative "hard" estimate so
+    // the user gets directional guidance instead of silence.
+    return {
+      sourceRole,
+      targetIndustry,
+      difficulty: 'hard',
+      timelineWeeks: 96,
+      skillGaps: [
+        `${targetFamily.replace(/_/g, ' ')} domain fundamentals`,
+        `Credentials commonly required in ${targetIndustry}`,
+        'Industry-specific tooling and vocabulary',
+        'Network rebuild within target industry',
+      ],
+      transferableStrengths: [
+        'Cross-domain analytical and problem-solving skills',
+        'Project execution and stakeholder management',
+        'Track record of successful adaptation',
+      ],
+      targetRoleSuggestions: [`Entry/bridge role within ${targetIndustry} sector`],
+      note: 'No specific portability data for this exact family pair — directional estimate. A focused informational interview with someone already in the target industry will clarify the realistic timeline more than this heuristic.',
+      _isHeuristic: true,
+    };
+  }
+
+  return {
+    sourceRole,
+    targetIndustry,
+    difficulty: difficultyFromMonths(entry.typical_months),
+    timelineWeeks: Math.round(entry.typical_months * 4.33),
+    skillGaps: entry.key_bridges.length > 0 ? entry.key_bridges : [
+      `${targetFamily.replace(/_/g, ' ')} fundamentals`,
+      `Industry-specific credentials`,
+    ],
+    transferableStrengths: [
+      `Existing ${sourceFamily.replace(/_/g, ' ')} expertise`,
+      'Cross-domain analytical and execution skills',
+      'Existing professional network (partial reuse)',
+    ],
+    targetRoleSuggestions: [`Bridge role in ${targetIndustry}`],
+    note: entry.note + ' (Family-heuristic estimate — explicit role-pair data not yet available.)',
+    _isHeuristic: true,
+  };
+}
+
+/**
+ * v39.0 C1 — Public resolver that ALWAYS returns guidance when possible.
+ *
+ * Order of resolution:
+ *   1. Explicit `${sourceRole}::${targetIndustry}` entry from TRANSITION_MAP (35 pairs)
+ *   2. Family-heuristic fallback via rolePortabilityMatrix
+ *   3. null only when source role is completely unknown
+ *
+ * The returned object includes `_isHeuristic` when the result was synthesised.
+ */
+export function resolveCrossIndustryTransition(
+  sourceRole: string,
+  targetIndustry: string,
+): (CrossIndustryTransition & { _isHeuristic?: boolean }) | null {
+  // 1. Explicit hit
+  const explicit = TRANSITION_MAP[`${sourceRole}::${targetIndustry}`];
+  if (explicit) return explicit;
+
+  // 2. Family-heuristic fallback
+  return buildHeuristicTransition(sourceRole, targetIndustry);
 }

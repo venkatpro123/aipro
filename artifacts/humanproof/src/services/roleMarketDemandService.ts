@@ -46,6 +46,8 @@ import { DEMAND_ADDITIONS_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_resear
 import { DEMAND_ADDITIONS_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
 import { DEMAND_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
 import { DEMAND_ADDITIONS_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
+// v39.0 A1: DB-backed role intelligence override layer
+import { getRoleOverride } from "./roleIntelligenceClient";
 
 // ─── Public types ────────────────────────────────────────────────────────────
 
@@ -1451,8 +1453,36 @@ type IndustryDemandAddition = {
 export function computeMarketDemandReport(
   roleKey: string,
   metro?: string,
+  region?: string,
 ): MarketDemandReport {
-  const snapshot = ROLE_DEMAND_DB[roleKey] ?? { ...UNKNOWN_ROLE_FALLBACK, roleKey };
+  const staticSnapshot = ROLE_DEMAND_DB[roleKey] ?? { ...UNKNOWN_ROLE_FALLBACK, roleKey };
+
+  // v39.0 A1: DB override layer wins. We look up the region-specific override
+  // first (e.g. 'us', 'india'), then fall back to 'global', then static.
+  const dbOverride = getRoleOverride(roleKey);
+  const regionKey = (region ?? 'global').toLowerCase();
+  const dbDemand = dbOverride?.demand?.[regionKey] ?? dbOverride?.demand?.['global'];
+  const snapshot: RoleDemandSnapshot = dbDemand
+    ? {
+        ...staticSnapshot,
+        demandIndex: dbDemand.demand_index,
+        demandTrend: dbDemand.demand_trend as DemandTrend,
+        jobOpeningsTrend: dbDemand.job_openings_trend as DemandTrend,
+        salaryTrend: dbDemand.salary_trend as 'rising' | 'stable' | 'falling',
+        timeToFillDays: dbDemand.time_to_fill_days ?? staticSnapshot.timeToFillDays,
+        yoyJobOpeningsChange: dbDemand.yoy_job_openings_change ?? staticSnapshot.yoyJobOpeningsChange,
+        topHiringLocations: dbDemand.top_hiring_locations ?? staticSnapshot.topHiringLocations,
+        aiSubstitutionRisk: dbDemand.ai_substitution_risk ?? staticSnapshot.aiSubstitutionRisk,
+        dataQuarter: dbDemand.data_quarter ?? staticSnapshot.dataQuarter,
+        calibrationNote: dbDemand.calibration_note ?? staticSnapshot.calibrationNote,
+        // honour DB-curated display name when present
+        roleName: dbOverride?.role?.display_name ?? staticSnapshot.roleName,
+      }
+    : {
+        ...staticSnapshot,
+        roleName: dbOverride?.role?.display_name ?? staticSnapshot.roleName,
+      };
+
   const localMarketMultiplier = getLocalMultiplier(metro);
   const adjustedDemandIndex  = Math.min(100, Math.round(snapshot.demandIndex * localMarketMultiplier));
   const jobSearchRunwayWeeks = demandIndexToRunwayWeeks(adjustedDemandIndex);

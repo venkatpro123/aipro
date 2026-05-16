@@ -170,6 +170,13 @@ interface HumanProofContextValue {
   saveUserProfile: (
     patch: Parameters<typeof upsertUserProfile>[0],
   ) => Promise<UserProfile | null>;
+  /**
+   * v39.0 A4 — monotonic counter that increments each time `saveUserProfile`
+   * commits a change. Components like the Layoff Audit dashboard can subscribe
+   * to this (useEffect deps) to retrigger a fresh audit when the user's
+   * personal factors (visa, runway, dependents, region) change.
+   */
+  profileVersion: number;
 }
 
 const HumanProofContext = createContext<HumanProofContextValue | null>(null);
@@ -198,6 +205,8 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, defaultState);
   const [isHydrated, setIsHydrated] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // v39.0 A4 — bumps each time the user's profile is saved
+  const [profileVersion, setProfileVersion] = useState(0);
 
   // Safety timeout: if localStorage hydration stalls for any reason, unblock
   // the render after 3 s so the app is never permanently stuck on LoadingScreen.
@@ -214,7 +223,15 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
   const saveUserProfile = useCallback(
     async (patch: Parameters<typeof upsertUserProfile>[0]) => {
       const updated = await upsertUserProfile(patch);
-      if (updated) setUserProfile(updated);
+      if (updated) {
+        setUserProfile(updated);
+        // v39.0 A4 — signal downstream consumers (LayoffCalculator) that the
+        // profile changed so they can retrigger a fresh audit. We bump on
+        // every successful save, even no-op confirmations, since the cost
+        // of an extra audit (with cache hits) is small and the cost of
+        // showing a stale dashboard after a profile change is large.
+        setProfileVersion(v => v + 1);
+      }
       return updated;
     },
     [],
@@ -327,6 +344,7 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
         setUserProfile,
         refreshUserProfile,
         saveUserProfile,
+        profileVersion,
       }}
     >
       {children}

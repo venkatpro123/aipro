@@ -21,11 +21,19 @@ interface Props {
   liveSignalCount: number;
   /** Critical-actions count — drives the "actionable" line. */
   criticalActionCount: number;
+  /**
+   * v39.0 F3 — confidence percent for the welcome card. When < 60, the third
+   * step changes copy to explicitly call out the lower-confidence read so
+   * the user doesn't anchor on a falsely-precise framing.
+   */
+  confidencePercent?: number;
+  /** v39.0 F3 — number of profile fields the user has filled (out of ~15). */
+  profileFieldsFilled?: number;
   onDismiss?: () => void;
 }
 
 export const FirstAuditWelcome: React.FC<Props> = ({
-  liveSignalCount, criticalActionCount, onDismiss,
+  liveSignalCount, criticalActionCount, confidencePercent, profileFieldsFilled, onDismiss,
 }) => {
   const [open, setOpen] = React.useState(true);
 
@@ -35,11 +43,32 @@ export const FirstAuditWelcome: React.FC<Props> = ({
     onDismiss?.();
   };
 
+  // v39.0 F3 — step 1 subtitle now reflects how complete the user's profile
+  // is, step 2 reflects live signals (existing), step 3 reflects confidence
+  // OR action count (whichever is more useful right now).
+  const profileSub = profileFieldsFilled != null
+    ? profileFieldsFilled >= 10
+      ? `Your profile (${profileFieldsFilled}/15 fields) gives us deep personalisation.`
+      : profileFieldsFilled >= 5
+        ? `We have ${profileFieldsFilled}/15 profile fields — useful, more accurate with all 15.`
+        : `Only ${profileFieldsFilled}/15 profile fields filled — score is still directional. Update your profile for sharper analysis.`
+    : 'We mixed your profile with company-specific risk signals.';
+
+  const confidenceLabel = confidencePercent != null
+    ? confidencePercent >= 75
+      ? `${confidencePercent}% confidence · ${criticalActionCount > 0 ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'}` : 'No critical actions'}`
+      : confidencePercent >= 50
+        ? `${confidencePercent}% confidence · ${criticalActionCount > 0 ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'} (treat as directional)` : 'Directional read'}`
+        : `${confidencePercent}% confidence · LOW — open Methodology tab for caveats`
+    : criticalActionCount > 0
+      ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'} this week`
+      : 'Actionable, not just analytical';
+
   const steps: Array<{ icon: React.ElementType; label: string; sub: string; color: string }> = [
     {
       icon:  Brain,
       label: 'Tailored to your role',
-      sub:   'We mixed your profile with company-specific risk signals.',
+      sub:   profileSub,
       color: '#22d3ee',
     },
     {
@@ -50,11 +79,9 @@ export const FirstAuditWelcome: React.FC<Props> = ({
     },
     {
       icon:  Zap,
-      label: criticalActionCount > 0
-        ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'} this week`
-        : 'Actionable, not just analytical',
+      label: confidenceLabel,
       sub:   'Every signal is paired with a concrete step you can take.',
-      color: '#f59e0b',
+      color: confidencePercent != null && confidencePercent < 50 ? '#f97316' : '#f59e0b',
     },
   ];
 

@@ -112,6 +112,130 @@ including 2024-2026 dataset, with distress vs efficiency cohort separation.`,
 // and derive empirical coefficients. The current weight (0.05) and factor
 // values should be replaced with regression-derived values at that point.
 
+// ── v39.0 E1: Live calibration backfill from user_prediction_outcomes ───────
+//
+// The static `CALIBRATION_META` is the 2026-01-15 published calibration. Once
+// our own users opt into outcome reporting, we should also surface the LIVE
+// calibration status — i.e. how many labelled outcomes we have collected
+// since launch, and whether the count is sufficient to validate the static
+// calibration.
+//
+// `getLiveCalibrationStatus()` returns a runtime summary the UI can show
+// alongside the static methodology block. When live N < 200 we honestly
+// label as `'bootstrap'` so users know the empirical anchor is the 2026-01
+// historical dataset, NOT their cohort's own outcomes.
+
+const MIN_LIVE_OUTCOMES_FOR_EMPIRICAL = 200;
+const LIVE_CALIBRATION_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+export interface LiveCalibrationStatus {
+  /** Confidence label for the LIVE (runtime-backfilled) calibration. */
+  mode: 'live_empirical' | 'live_developing' | 'bootstrap';
+  /** Total labelled outcomes counted in `user_prediction_outcomes`. */
+  labelledOutcomesN: number;
+  /** Out of those, how many reported a layoff. */
+  positiveOutcomesN: number;
+  /** Last time we re-queried Supabase. ISO string. */
+  fetchedAt: string;
+  /** UI-ready one-liner. */
+  summary: string;
+}
+
+let _liveCalibrationCache: { status: LiveCalibrationStatus; fetchedAt: number } | null = null;
+let _liveCalibrationInflight: Promise<LiveCalibrationStatus> | null = null;
+
+/**
+ * v39.0 E1 — Pull the live calibration backfill from Supabase.
+ *
+ * Returns a `'bootstrap'` status when fewer than 200 labelled outcomes exist
+ * (most early-launch states). Once the row count exceeds the threshold AND
+ * positive outcomes are ≥ 30 (otherwise binary regression is unstable),
+ * the mode upgrades to `'live_empirical'`.
+ *
+ * Failure of the Supabase query is non-fatal — returns `'bootstrap'` with N=0.
+ */
+export async function getLiveCalibrationStatus(): Promise<LiveCalibrationStatus> {
+  if (_liveCalibrationCache && Date.now() - _liveCalibrationCache.fetchedAt < LIVE_CALIBRATION_CACHE_TTL_MS) {
+    return _liveCalibrationCache.status;
+  }
+  if (_liveCalibrationInflight) return _liveCalibrationInflight;
+
+  _liveCalibrationInflight = (async () => {
+    try {
+      // Lazy-import to avoid a circular dep with utils/supabase
+      const { supabase } = await import('../utils/supabase');
+      const { count: totalCount, error: totalErr } = await supabase
+        .from('user_prediction_outcomes')
+        .select('*', { count: 'exact', head: true })
+        .not('outcome_reported', 'is', null);
+      if (totalErr) throw totalErr;
+
+      const { count: positiveCount, error: posErr } = await supabase
+        .from('user_prediction_outcomes')
+        .select('*', { count: 'exact', head: true })
+        .eq('outcome_reported', 'layoff_occurred');
+      if (posErr) throw posErr;
+
+      const N = totalCount ?? 0;
+      const positives = positiveCount ?? 0;
+
+      const mode: LiveCalibrationStatus['mode'] =
+        N >= MIN_LIVE_OUTCOMES_FOR_EMPIRICAL && positives >= 30 ? 'live_empirical' :
+        N >= 50                                                  ? 'live_developing' :
+                                                                    'bootstrap';
+
+      const summary =
+        mode === 'live_empirical'
+          ? `Live calibration active: ${N} labelled outcomes (${positives} layoffs).`
+          : mode === 'live_developing'
+            ? `Live calibration developing: ${N}/${MIN_LIVE_OUTCOMES_FOR_EMPIRICAL} labelled outcomes collected; static 2026-01 anchor still in use.`
+            : `Bootstrap calibration: only ${N} labelled outcomes so far; predictions backed by 2026-01-15 published regression (n=200).`;
+
+      const status: LiveCalibrationStatus = {
+        mode,
+        labelledOutcomesN: N,
+        positiveOutcomesN: positives,
+        fetchedAt: new Date().toISOString(),
+        summary,
+      };
+      _liveCalibrationCache = { status, fetchedAt: Date.now() };
+      return status;
+    } catch {
+      // Supabase unavailable / table missing in offline-dev — return safe bootstrap.
+      const status: LiveCalibrationStatus = {
+        mode: 'bootstrap',
+        labelledOutcomesN: 0,
+        positiveOutcomesN: 0,
+        fetchedAt: new Date().toISOString(),
+        summary: 'Live calibration unavailable (Supabase query failed) — using static 2026-01-15 anchor.',
+      };
+      _liveCalibrationCache = { status, fetchedAt: Date.now() };
+      return status;
+    } finally {
+      _liveCalibrationInflight = null;
+    }
+  })();
+
+  return _liveCalibrationInflight;
+}
+
+/** Sync accessor — returns cached value or a conservative bootstrap default. */
+export function getLiveCalibrationStatusSync(): LiveCalibrationStatus {
+  return _liveCalibrationCache?.status ?? {
+    mode: 'bootstrap',
+    labelledOutcomesN: 0,
+    positiveOutcomesN: 0,
+    fetchedAt: new Date(0).toISOString(),
+    summary: 'Live calibration not yet primed — using static 2026-01-15 anchor.',
+  };
+}
+
+/** Forget the cached live calibration so the next call re-queries Supabase. */
+export function resetLiveCalibrationCacheForTesting(): void {
+  _liveCalibrationCache = null;
+  _liveCalibrationInflight = null;
+}
+
 // Revenue growth threshold table — calibrated against outcomes
 // Previously: < -20% → 0.95. Calibration shows this was correct within ±0.03.
 // The thresholds below reflect the empirical P(layoff) at each band.

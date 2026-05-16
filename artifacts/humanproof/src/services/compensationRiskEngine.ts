@@ -48,6 +48,8 @@ import { COMPENSATION_ADDITIONS_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_
 import { COMPENSATION_ADDITIONS_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
 import { COMPENSATION_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
 import { COMPENSATION_ADDITIONS_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
+// v39.0 A1: DB-backed role intelligence override layer
+import { getRoleOverride } from "./roleIntelligenceClient";
 
 export type CompensationCascadeStage =
   | 'NORMAL'         // 0 — no indicators
@@ -334,6 +336,23 @@ function estimateMarketMedian(
   experience: string,
   region: string,
 ): number {
+  // v39.0 A1: DB role_compensation_bands override layer. Admins can override
+  // medians per (role_key, region, exp_band) without a code deploy. The DB row
+  // ships base_low_usd + base_high_usd; we use their midpoint as the median.
+  const dbOverride = getRoleOverride(workTypeKey);
+  const dbBands = dbOverride?.compensation;
+  if (dbBands && dbBands.length > 0) {
+    const regionKey = (region ?? 'us').toLowerCase();
+    // Prefer exact (region, exp) match; fall back to (region, '5-10'); then to global.
+    const matchExact = dbBands.find(b => b.region.toLowerCase() === regionKey && b.exp_band === experience);
+    const matchRegion = matchExact ?? dbBands.find(b => b.region.toLowerCase() === regionKey && b.exp_band === '5-10');
+    const matchGlobal = matchRegion ?? dbBands.find(b => b.region.toLowerCase() === 'global' && b.exp_band === experience);
+    const chosen = matchExact ?? matchRegion ?? matchGlobal;
+    if (chosen?.base_low_usd != null && chosen?.base_high_usd != null) {
+      return Math.round((chosen.base_low_usd + chosen.base_high_usd) / 2);
+    }
+  }
+
   // Direct lookup first — canonical keys now map to specific entries
   const directMatch = MARKET_MEDIANS_USD[workTypeKey];
   if (directMatch) {

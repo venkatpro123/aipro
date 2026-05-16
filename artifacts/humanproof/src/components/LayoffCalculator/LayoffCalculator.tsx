@@ -143,7 +143,11 @@ const Toast: React.FC<{
 
 export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const { state, dispatch } = useLayoff();
-  const { userProfile } = useHumanProof();
+  const { userProfile, profileVersion } = useHumanProof();
+  // v39.0 A4 — track the profileVersion observed at the time of the latest
+  // audit. When the live `profileVersion` exceeds this, the profile has
+  // changed since the last audit and we should refresh.
+  const lastAuditedProfileVersionRef = React.useRef<number | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
   const [lastScoreInputs, setLastScoreInputs] = useState<ScoreInputs | null>(
     null,
@@ -258,6 +262,34 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       setIsForceRefreshing(false);
     }
   };
+
+  // v39.0 A4 — Profile-save → re-audit trigger.
+  // When the user updates their profile (visa, runway, dependents, region)
+  // in `ProfileSetupModal`, the context bumps `profileVersion`. We retrigger
+  // the audit IFF an audit has already completed, the user-factors-bearing
+  // inputs are still present, and the modal is closed. Without this,
+  // profile changes silently failed to update the dashboard.
+  React.useEffect(() => {
+    if (lastAuditedProfileVersionRef.current === null) {
+      // First mount — record the version observed at the time of the next
+      // audit (set inside handleCalculate / runAuditPipelineDrivenCalculation).
+      lastAuditedProfileVersionRef.current = profileVersion;
+      return;
+    }
+    if (
+      profileVersion > lastAuditedProfileVersionRef.current &&
+      state.hasCompletedAssessment &&
+      !state.isCalculating &&
+      state.companyName &&
+      state.roleTitle
+    ) {
+      lastAuditedProfileVersionRef.current = profileVersion;
+      // Force a fresh fetch so the new profile signal is reflected in
+      // personalRiskAdjuster, careerContingencyPlan, scenarioPlan, etc.
+      void handleCalculate(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileVersion]);
 
   const runAuditPipelineDrivenCalculation = async (
     forceRefresh = false,
@@ -1325,7 +1357,8 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       // local 2000+ company intelligence database before giving up.
       try {
         console.log("[AuditPipeline] Ensemble failed, attempting local DB fallback...");
-        const fallbackCD = resolveCompanyData(state.companyName || "") || createUnknownCompanyFallback(state.companyName || "Unknown");
+        const fallbackCD = resolveCompanyData(state.companyName || "")
+          || createUnknownCompanyFallback(state.companyName || "Unknown", state.roleTitle ?? null, (state as any).industry ?? null);
         const engineOnly = calculateLayoffScore({
           companyData: fallbackCD,
           roleTitle: state.roleTitle || "Unknown",
@@ -1534,6 +1567,8 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             <LiveSignalStatusBanner
               coverage={(state.scoreResult as any)._liveDataCoverage}
               freshnessScore={(state.scoreResult as any)._dataFreshnessScore}
+              degradationReason={(state.scoreResult as any).degradationReason ?? null}
+              degradationDetail={(state.scoreResult as any).degradationDetail ?? null}
             />
           </div>
         )}

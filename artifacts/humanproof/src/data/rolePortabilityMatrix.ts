@@ -295,6 +295,101 @@ export const ROLE_PORTABILITY_MATRIX: Partial<Record<RoleFamily, Partial<Record<
     government:         entry(0.45, 12, ['public administration', 'tourism policy'], 'Tourism and convention authority roles value hospitality experience.'),
     marketing:          entry(0.62, 6,  ['brand management', 'digital marketing', 'customer journey'], 'Hospitality marketing to broader brand marketing is accessible.'),
   },
+
+  // ─── v39.0 C3: Source rows for previously-missing families ───────────────────
+  // Each family below is BOTH used as a target elsewhere AND mapped here as a
+  // source, closing the bidirectional gap that left most specialized roles
+  // with no outbound portability data.
+
+  cybersecurity: {
+    tech:               entry(0.78, 4,  ['broader SWE breadth', 'system design beyond security'], 'Security engineers move back to SWE easily — production code skills are intact.'),
+    devops_infra:       entry(0.85, 2,  ['cloud cert refresh', 'IaC tooling'], 'DevSecOps is essentially the same role with one specialty added.'),
+    consulting:         entry(0.74, 5,  ['client framing', 'security advisory packaging', 'compliance frameworks (SOC2/ISO27001)'], 'Cyber consulting (Big4, Mandiant, CrowdStrike services) actively recruits practitioners.'),
+    government:         entry(0.72, 6,  ['security clearance', 'federal compliance frameworks (FISMA, FedRAMP)'], 'Defense / DHS / CISA roles actively hire experienced security engineers.'),
+    finance:            entry(0.62, 8,  ['financial product knowledge', 'fraud detection systems', 'risk modeling'], 'Bank cyber + fraud teams are a high-paying bridge.'),
+    ml_ai:              entry(0.55, 9,  ['ML for security', 'anomaly detection mathematical foundation'], 'Security data scientists exist; threat-detection ML is the bridge.'),
+    legal:              entry(0.35, 36, ['JD or CIPP-style privacy credential', 'cyber law specialization'], 'Cyber law / privacy practice requires a JD or extensive privacy certification.'),
+  },
+
+  accounting: {
+    finance:            entry(0.82, 3,  ['financial modeling depth', 'investor-facing presentation skills'], 'Accountants move to FP&A and corporate finance very naturally.'),
+    consulting:         entry(0.72, 6,  ['advisory framing', 'client skills', 'PowerPoint narrative'], 'Big4 audit to advisory consulting is a well-trodden path.'),
+    legal:              entry(0.45, 30, ['JD with tax specialization', 'bar exam'], 'Tax attorneys often start as CPAs; requires legal credential.'),
+    government:         entry(0.65, 6,  ['public sector accounting (GASB)', 'government contracts knowledge'], 'Federal / state auditor and treasury roles directly value CPAs.'),
+    fintech:            entry(0.68, 5,  ['startup culture', 'product context'], 'Fintech finance/controller roles value Big4-trained CPAs.'),
+    education:          entry(0.55, 8,  ['teaching credential (optional for college)', 'curriculum development'], 'Accounting faculty and CPA exam prep instructor roles are accessible.'),
+  },
+
+  agriculture: {
+    manufacturing:      entry(0.62, 8,  ['lean process knowledge', 'food/ag manufacturing context'], 'Agricultural ops bridges to food manufacturing operations.'),
+    energy:             entry(0.55, 10, ['biofuels expertise', 'rural energy infrastructure'], 'Bioenergy and rural utility roles bridge from ag.'),
+    government:         entry(0.68, 6,  ['USDA / state ag agency context', 'land use policy'], 'USDA, state agricultural agencies, and conservation roles bridge directly.'),
+    consulting:         entry(0.50, 10, ['ag-tech consulting', 'sustainability advisory'], 'Ag-tech and sustainability consulting are growing target areas.'),
+    logistics:          entry(0.65, 6,  ['cold chain logistics', 'supply chain certifications'], 'Ag supply chain to broader logistics is a natural pivot.'),
+    education:          entry(0.55, 8,  ['extension education', 'curriculum for ag colleges'], 'Cooperative extension and ag college roles directly value field experience.'),
+  },
+
+  automotive: {
+    manufacturing:      entry(0.85, 2,  ['cross-industry manufacturing context'], 'Automotive manufacturing skills transfer directly to other industrial manufacturing.'),
+    energy:             entry(0.65, 8,  ['battery technology', 'EV / charging infrastructure'], 'EV transition makes automotive engineers high-value for battery/grid companies.'),
+    tech:               entry(0.55, 10, ['software-defined vehicle (SDV) context', 'embedded software'], 'Automotive software engineers bridge to broader tech; mechanical engineers harder.'),
+    aviation:           entry(0.70, 6,  ['aerospace certifications', 'higher safety/redundancy standards'], 'Mechanical and electrical engineers move to aerospace with regulatory uplift.'),
+    consulting:         entry(0.58, 9,  ['automotive industry advisory', 'strategy framing'], 'Roland Berger, AlixPartners, BCG automotive practices actively recruit.'),
+    logistics:          entry(0.62, 7,  ['automotive supply chain', 'inventory + JIT'], 'Automotive supply chain knowledge transfers to broader logistics.'),
+  },
+
+  telecom: {
+    tech:               entry(0.72, 5,  ['cloud-native skills (away from on-prem network gear)', 'general SWE'], 'Network engineers with cloud certs bridge to tech infra teams quickly.'),
+    devops_infra:       entry(0.85, 2,  ['cloud certs (AWS/GCP/Azure)', 'IaC tools'], 'Network engineering and devops/SRE share most fundamentals.'),
+    cybersecurity:      entry(0.78, 4,  ['security certs (CISSP, OSCP)', 'network security focus'], 'Network telcom engineers transition to cyber via network security roles.'),
+    consulting:         entry(0.55, 9,  ['telecom advisory', 'client framing'], 'Telecom advisory (Bell Labs, Accenture Communications) actively recruits.'),
+    government:         entry(0.60, 8,  ['federal communications context (FCC, NTIA)', 'public-sector procurement'], 'FCC, NTIA, and federal-contractor telecom roles bridge directly.'),
+    energy:             entry(0.55, 9,  ['smart grid', 'utility networks'], 'Smart grid and utility comms are growing target areas.'),
+  },
+
+  real_estate: {
+    finance:            entry(0.72, 6,  ['CRE finance (REIT, CMBS)', 'financial modeling beyond cap-rate math'], 'Real estate finance to corporate or investment finance is a natural bridge.'),
+    construction:       entry(0.78, 4,  ['project construction context', 'GC/owner-side experience'], 'Real estate development and construction management share most operational skills.'),
+    consulting:         entry(0.62, 7,  ['real estate strategy advisory', 'client framing'], 'CBRE, JLL, Cushman advisory practices actively hire experienced operators.'),
+    hospitality:        entry(0.70, 5,  ['hotel-specific operations vs. generic property'], 'Hotel real estate is a natural pivot for property managers.'),
+    government:         entry(0.60, 8,  ['public-sector property management', 'housing policy'], 'HUD, state housing finance agencies, and local development authorities bridge.'),
+  },
+
+  veterinary: {
+    healthcare_clinical: entry(0.55, 12, ['human medicine certification', 'patient communication shift'], 'Veterinarians can pivot to allied human-health roles but pure clinical requires retraining.'),
+    pharma_biotech:     entry(0.72, 5,  ['GLP/GCP for veterinary trials', 'animal model expertise'], 'Veterinary clinical research and animal model SMEs are highly valued in pharma R&D.'),
+    public_health:      entry(0.78, 4,  ['MPH (optional)', 'zoonotic disease focus', 'One Health framework'], 'One Health is the explicit veterinary → public health bridge — actively recruited.'),
+    education:          entry(0.65, 6,  ['DVM teaching credential', 'curriculum development'], 'Veterinary school faculty roles are direct bridges for experienced practitioners.'),
+    agriculture:        entry(0.82, 3,  ['large-animal practice', 'food safety frameworks'], 'Large-animal vets cross directly into agricultural production and food safety.'),
+    government:         entry(0.72, 5,  ['USDA APHIS, FDA CVM context', 'epidemiology basics'], 'USDA APHIS, FDA Center for Veterinary Medicine, and state agencies actively hire DVMs.'),
+  },
+
+  public_health: {
+    healthcare_clinical: entry(0.55, 15, ['clinical credential (MD/RN if not held)', 'patient care experience'], 'Pure clinical roles require a clinical credential; community health roles bridge.'),
+    healthcare_admin:   entry(0.78, 4,  ['MHA basics', 'hospital operations exposure'], 'Public health epidemiologists and program managers bridge to health administration easily.'),
+    government:         entry(0.85, 3,  ['federal/state public health context'], 'CDC, state health departments, HHS, and WHO are the natural employers.'),
+    pharma_biotech:     entry(0.68, 6,  ['regulatory affairs', 'clinical trial epidemiology'], 'Pharma epidemiology and real-world evidence teams actively hire PH practitioners.'),
+    consulting:         entry(0.62, 7,  ['health policy advisory', 'strategy framing'], 'Public health consulting (Abt, RTI, ICF) is a natural bridge.'),
+    education:          entry(0.70, 5,  ['public health teaching', 'graduate-level instruction'], 'MPH faculty and instructor roles are direct bridges for experienced practitioners.'),
+  },
+
+  aviation: {
+    tech:               entry(0.45, 14, ['SWE skills', 'avionics-software bridge'], 'Avionics engineers bridge to tech via embedded/safety-critical software roles.'),
+    automotive:         entry(0.65, 7,  ['ADAS / autonomous vehicle context'], 'Aviation engineers are highly sought in autonomous vehicle programs.'),
+    energy:             entry(0.55, 10, ['rotating-machinery overlap (turbines)', 'industrial gas turbine context'], 'Gas turbine engineers cross to power generation; airframe engineers harder.'),
+    consulting:         entry(0.62, 8,  ['aviation advisory practices', 'client framing'], 'Oliver Wyman aviation, ICF, and Roland Berger actively recruit airline executives.'),
+    manufacturing:      entry(0.72, 5,  ['cross-industry manufacturing', 'aerospace-grade quality systems'], 'Aerospace engineering skills transfer to other regulated manufacturing (medical devices, defense).'),
+    government:         entry(0.70, 6,  ['FAA / EASA / DGCA context', 'aviation safety regulation'], 'Federal aviation regulators directly hire experienced airline operations + maintenance leaders.'),
+  },
+
+  healthcare_admin: {
+    consulting:         entry(0.72, 5,  ['healthcare consulting practices (Huron, Sg2, Advisory Board)', 'PowerPoint narrative'], 'Healthcare admin → consulting is one of the strongest pivots in the sector.'),
+    healthcare_clinical: entry(0.30, 36, ['clinical credential', 'patient-care experience'], 'Pure clinical practice requires re-credentialing; this is a near-restart.'),
+    pharma_biotech:     entry(0.65, 7,  ['commercial pharma operations', 'market access context'], 'Hospital admin to pharma commercial/market-access is a natural bridge.'),
+    finance:            entry(0.55, 10, ['healthcare finance focus', 'CFO-track via MHA'], 'Healthcare CFO-track and revenue-cycle finance roles bridge directly.'),
+    government:         entry(0.68, 6,  ['CMS / state health agency context', 'public health policy'], 'CMS, HRSA, and state Medicaid leadership are direct targets.'),
+    tech:               entry(0.40, 18, ['health IT context', 'product / clinical-informatics fluency'], 'Health-IT product and operations roles bridge; pure SWE requires reskilling.'),
+  },
 };
 
 // ─── Public API ───────────────────────────────────────────────────────────────

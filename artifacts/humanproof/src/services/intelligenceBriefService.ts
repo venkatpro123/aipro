@@ -52,17 +52,28 @@ async function checkCache(
   currentScore: number,
   warnFilingDate?: string | null,
   currentCohort?: string | null,
+  // v39.0 B2: profile signature ensures two users at the same company + role
+  // don't share a brief if their personal circumstances differ.
+  profileSignature?: string | null,
 ): Promise<IntelligenceBriefResult | null> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('intelligence_briefs')
       .select('*')
       .eq('company_name', companyName.toLowerCase())
       .eq('role_title', roleTitle.toLowerCase())
       .gt('expires_at', new Date().toISOString())
       .order('generated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    // Only require matching profile_signature when one is provided. Audits
+    // without a profile (anonymous / pre-profile-setup) still benefit from
+    // the shared cache.
+    if (profileSignature) {
+      query = query.eq('profile_signature', profileSignature);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) return null;
 
@@ -104,6 +115,8 @@ async function saveToCache(
   roleTitle: string,
   score: number,
   brief: IntelligenceBriefResult,
+  profileSignature?: string | null,
+  cohort?: string | null,
 ): Promise<void> {
   try {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -122,10 +135,38 @@ async function saveToCache(
       model_used: brief.modelUsed,
       generated_at: brief.generatedAt,
       expires_at: expiresAt,
+      // v39.0 B2 — profile-aware cache keys
+      profile_signature: profileSignature ?? null,
+      cohort_at_generation: cohort ?? null,
     });
   } catch {
     // Cache write failure is non-fatal
   }
+}
+
+/**
+ * v39.0 B2 — Compact profile signature for cache keying.
+ *
+ * Format: `v:{visa},r:{runwayTier},dep:{0|1},dim:{0|1},res:{0|1}`
+ *
+ * Example: `v:h1b,r:critical,dep:1,dim:0,res:0` for an H-1B holder with
+ * <3mo runway, dependents, single income, no prior layoff survival.
+ *
+ * Stable across runs for the same profile inputs. Returned as null when
+ * the user has no profile signals (anonymous / pre-setup audits).
+ */
+export function buildProfileSignature(uf: Record<string, any> | null | undefined): string | null {
+  if (!uf) return null;
+  const visa = uf.visaStatus ?? 'na';
+  const r = uf.savingsMonthsRunway;
+  const runwayTier = r == null ? 'u' : r < 3 ? 'c' : r < 6 ? 'e' : 'k';
+  const dep = uf.hasDependents ? 1 : 0;
+  const dim = uf.dualIncomeHousehold ? 1 : 0;
+  const res = uf.priorLayoffSurvived ? 1 : 0;
+  // If literally nothing is set, treat as no-signature so anonymous audits
+  // can share the cache.
+  if (visa === 'na' && runwayTier === 'u' && !dep && !dim && !res) return null;
+  return `v:${visa},r:${runwayTier},dep:${dep},dim:${dim},res:${res}`;
 }
 
 function buildEngineBreakdown(hybridResult: Record<string, unknown>): string {
@@ -296,8 +337,17 @@ export async function fetchIntelligenceBrief(
   const warnFilingDate: string | null = warnSignalAny?.filingDate ?? warnSignalAny?.effectiveDate ?? null;
   const currentCohort: string | null = (hybridResult.cohortClassification as any)?.primaryCohort ?? null;
 
-  // Check cache first — also invalidates on new WARN filing or cohort change.
-  const cached = await checkCache(userId, companyName, roleTitle, currentScore, warnFilingDate, currentCohort);
+  // v39.0 B2: compute the profile signature from the user-factors snapshot
+  // attached to the hybrid result. This drives both the cache key (so two
+  // different users at the same company + role don't share a brief) and
+  // the LLM prompt (so the brief is written for THIS user's situation).
+  const uf = (hybridResult as any).userFactors ?? {};
+  const profileSignature = buildProfileSignature(uf);
+  const profileContextBlock = buildProfileContextForLlm(uf);
+
+  // Check cache first — keyed by profile signature so different profiles get
+  // different briefs. Also invalidates on new WARN filing or cohort change.
+  const cached = await checkCache(userId, companyName, roleTitle, currentScore, warnFilingDate, currentCohort, profileSignature);
   if (cached) return cached;
 
   // Call llm-analyze edge function
@@ -313,9 +363,13 @@ export async function fetchIntelligenceBrief(
         // GAP D: specific signal details — WARN locations, affected counts, cohort reason,
         // vulnerable/protective signals. LLM should cite these instead of being generic.
         structuredContext,
+        // v39.0 B2: profile context block tells the LLM about the specific
+        // user's circumstances (visa, runway, dependents, prior layoff) so
+        // the brief is framed for THEIR situation, not a templated one.
+        userProfileContext: profileContextBlock,
         analysisInstructions: structuredContext
-          ? 'Be specific: use exact numbers and signal names from structuredContext. Name the cohort and explain why. List 1–2 specific vulnerable signals and 1–2 protective signals. Avoid generic phrases like "multiple risk factors identified". CRITICAL: if a specific number, location, or date is not present in structuredContext, do NOT estimate or infer it — use "data unavailable" instead. Never fabricate statistics.'
-          : 'State only what the score breakdown confirms. Do not speculate about live signals. Never fabricate statistics or specific numbers not present in the provided data.',
+          ? `Be specific: use exact numbers and signal names from structuredContext. Name the cohort and explain why. List 1–2 specific vulnerable signals and 1–2 protective signals. Avoid generic phrases like "multiple risk factors identified". ${profileContextBlock ? 'The user profile context above is the user you are writing FOR — frame timing constraints (visa grace period, financial runway), recommended risk posture (family-anchored vs. dual-income), and resilience framing accordingly.' : ''} CRITICAL: if a specific number, location, or date is not present in structuredContext, do NOT estimate or infer it — use "data unavailable" instead. Never fabricate statistics.`
+          : `State only what the score breakdown confirms. Do not speculate about live signals. ${profileContextBlock ? 'Frame the brief around the user profile context above — visa grace periods, runway tier, family situation.' : ''} Never fabricate statistics or specific numbers not present in the provided data.`,
       },
     });
 
@@ -326,12 +380,56 @@ export async function fetchIntelligenceBrief(
 
     const brief = mapLlmResponseToBrief(data as LlmAnalyzeResponse, data.model ?? 'llm-analyze');
 
-    // Persist to cache (non-blocking)
-    saveToCache(userId, companyName, roleTitle, currentScore, brief).catch(() => {}); // arch-allow:R2 fire-and-forget cache-write; next call re-computes on miss
+    // Persist to cache (non-blocking) — keyed by profile_signature + cohort.
+    saveToCache(userId, companyName, roleTitle, currentScore, brief, profileSignature, currentCohort).catch(() => {}); // arch-allow:R2 fire-and-forget cache-write; next call re-computes on miss
 
     return brief;
   } catch (e) {
     console.warn('[intelligenceBriefService] fetch failed:', e);
     return null;
   }
+}
+
+/**
+ * v39.0 B2 — Build a profile context block for the LLM prompt.
+ *
+ * Returns a human-readable description of the user's situation that the
+ * LLM can use to frame the brief. Null when the user has no profile signals.
+ */
+function buildProfileContextForLlm(uf: Record<string, any> | null | undefined): string | null {
+  if (!uf) return null;
+  const parts: string[] = [];
+
+  const visa = uf.visaStatus;
+  if (visa === 'h1b' || visa === 'l1' || visa === 'opt') {
+    parts.push(`Visa status: ${visa.toUpperCase()} (60-day post-termination grace period applies — timing-sensitive).`);
+  } else if (visa === 'permanent_resident') {
+    parts.push('Visa status: Permanent Resident (no employer-tied constraints).');
+  }
+
+  const r = uf.savingsMonthsRunway;
+  if (typeof r === 'number') {
+    if (r < 3)        parts.push(`Financial runway: ${r.toFixed(1)} months — CRITICAL (cash-on-offer within 8 weeks is the operative timeline).`);
+    else if (r < 6)   parts.push(`Financial runway: ${r.toFixed(1)} months — elevated (room for one strategic bet, not two).`);
+    else if (r >= 12) parts.push(`Financial runway: ${r.toFixed(1)} months — comfortable (strategic patience available).`);
+    else              parts.push(`Financial runway: ${r.toFixed(1)} months.`);
+  }
+
+  if (uf.hasDependents && !uf.dualIncomeHousehold) {
+    parts.push('Household: dependents present, single income — asymmetric downside cost, bias toward stability premiums.');
+  } else if (uf.hasDependents && uf.dualIncomeHousehold) {
+    parts.push('Household: dependents present, dual income — financial cushion expands risk tolerance.');
+  } else if (uf.dualIncomeHousehold) {
+    parts.push('Household: dual income — additional risk tolerance for single-cycle pay step-back.');
+  }
+
+  if (uf.priorLayoffSurvived) {
+    parts.push('Prior layoff successfully navigated — resilient repeat (frame recovery experience as a hiring signal).');
+  }
+
+  if (uf.hasEquityVesting && uf.equityVestMonths) {
+    parts.push(`Equity vesting: ${uf.equityVestMonths} months until next significant cliff — retention anchor; quantify before considering exit.`);
+  }
+
+  return parts.length > 0 ? `User profile: ${parts.join(' ')}` : null;
 }

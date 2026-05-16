@@ -58,6 +58,16 @@ export interface ConformalInterval {
   calibrationN: number;
   /** Why the loader chose this cohort/widths combination. */
   rationale: string;
+  /**
+   * v39.0 D3 — When pool-up fires, this records the ORIGINALLY REQUESTED
+   * cohort (the user's actual classification). `resolvedCohort` records the
+   * cohort the CI was actually built from. When the two differ, the UI should
+   * label the interval as "CI estimated from pooled global outcomes" rather
+   * than presenting the empirical coverage as cohort-specific.
+   *
+   * null when no pool-up occurred (resolvedCohort === requestedCohort).
+   */
+  pooledFromCohort: ConformalCohort | null;
 }
 
 export interface ConformalBundle {
@@ -242,8 +252,11 @@ function buildIntervalFromSet(
     empiricalCoverage: empirical,
     lastCalibratedAt: set.lastCalibratedAt,
     calibrationN: set.nonconformities.length,
+    // v39.0 D3: record the ORIGINALLY REQUESTED cohort so the UI can distinguish
+    // pool-up CI from native CI. null when no pool-up occurred.
+    pooledFromCohort: pooledUp ? requestedCohort : null,
     rationale: pooledUp
-      ? `${requestedCohort} cohort has < ${MIN_CALIBRATION_POINTS} calibration points; pooled to ${set.cohort}.`
+      ? `${requestedCohort} cohort has < ${MIN_CALIBRATION_POINTS} calibration points; pooled to ${set.cohort}. Empirical coverage shown is measured on ${set.cohort} outcomes, not ${requestedCohort}.`
       : `Conformal CI from ${set.nonconformities.length} ${set.cohort} calibration points.`,
   };
 }
@@ -301,6 +314,7 @@ export async function computeConformalCI(
         empiricalCoverage: null,
         lastCalibratedAt: null,
         calibrationN: 0,
+        pooledFromCohort: null, // v39.0 D3 — heuristic fallback isn't a pool-up
         rationale:
           `Insufficient calibration data (< ${MIN_CALIBRATION_POINTS} outcomes). ` +
           `Width is a HEURISTIC fallback, not empirically validated. UI should ` +
@@ -350,6 +364,7 @@ export function computeConformalCISync(
       empiricalCoverage: null,
       lastCalibratedAt: null,
       calibrationN: 0,
+      pooledFromCohort: null, // v39.0 D3 — sync heuristic fallback isn't a pool-up
       rationale: 'Cache miss; heuristic fallback used (sync path).',
     };
   });

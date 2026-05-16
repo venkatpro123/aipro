@@ -60,3 +60,21 @@ export const FRESH_WINDOW_MS = CACHE_TTL_MS;
  * user is told the data is stale.
  */
 export const STALE_BADGE_THRESHOLD_SECONDS = 60 * 60; // 1 hour
+
+/**
+ * v39.0 D6 — Hard cache kill switch.
+ *
+ * Cache entries older than this are NEVER served, not even as stale-while-
+ * revalidate. The 24h ceiling protects against:
+ *   - users serving a 3-day-old audit result without realising it
+ *   - the upstream OSINT pipeline silently failing for days while cached
+ *     data continues to render
+ *   - score drift past empirical-calibration bounds (CI metadata becomes
+ *     misleading at >24h since the calibration set itself may have shifted)
+ *
+ * Within [CACHE_TTL_MS, CACHE_HARD_KILL_MS] the cache is served as STALE
+ * and the caller is expected to fire-and-forget a background refresh.
+ * Beyond CACHE_HARD_KILL_MS the entry is evicted and the caller must
+ * compute fresh.
+ */
+export const CACHE_HARD_KILL_MS = 24 * 60 * 60 * 1000; // 24 hours

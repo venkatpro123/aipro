@@ -28,7 +28,7 @@
 
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Building2, Shield, Zap, Radio } from 'lucide-react';
+import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
@@ -43,6 +43,9 @@ const AnalysisTab     = lazy(() => import('./AnalysisTab').then(m => ({ default:
 const ProtectionTab   = lazy(() => import('./ProtectionTab').then(m => ({ default: m.ProtectionTab })));
 const ActionsTab      = lazy(() => import('./ActionsTab').then(m => ({ default: m.ActionsTab })));
 const IntelligenceTab = lazy(() => import('./IntelligenceTab').then(m => ({ default: m.IntelligenceTab })));
+// v39.0 A6: TransparencyTab — methodology / data provenance surface. Previously
+// orphan-imported in AnalysisTab but never rendered. Wired as the 6th nav tab.
+const TransparencyTab = lazy(() => import('../TransparencyTab').then(m => ({ default: m.TransparencyTab })));
 
 interface Props {
   result: HybridResult;
@@ -53,7 +56,7 @@ interface Props {
   auditStage?: string;
 }
 
-type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel';
+type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'transparency';
 
 // ── Score color helpers ───────────────────────────────────────────────────────
 
@@ -142,6 +145,18 @@ const TAB_CONFIG: TabConfig[] = [
       return live > 0 ? { text: `${live} live`, color: '#10b981' } : null;
     },
   },
+  // v39.0 A6: Transparency / methodology — answers "how was this calculated?"
+  {
+    value: 'transparency',
+    label: 'Methodology',
+    shortLabel: 'How?',
+    Icon: Info,
+    getBadge: (r: any) => {
+      const conf = r.confidencePercent ?? 0;
+      if (conf < 60) return { text: 'low conf', color: '#f97316' };
+      return null;
+    },
+  },
 ];
 
 // ── Sticky company header ─────────────────────────────────────────────────────
@@ -167,7 +182,15 @@ const StickyCompanyHeader: React.FC<{
             borderBottom: '1px solid rgba(255,255,255,0.07)',
           }}
         >
-          <p className="text-[13px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          {/* v39.0 F7: native title attribute reveals the full company name
+              on hover/long-press when the text truncates. Lightweight tooltip
+              that works on mobile (long-press menu) without pulling in a
+              Tooltip component dependency. */}
+          <p
+            className="text-[13px] font-semibold truncate"
+            style={{ color: 'rgba(255,255,255,0.85)' }}
+            title={companyName}
+          >
             {companyName}
           </p>
           <div
@@ -305,6 +328,24 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     return () => (el as EventTarget).removeEventListener('scroll', onScroll);
   }, []);
 
+  // v39.0 F4 — listen for cross-tab navigation events so child panels (e.g.
+  // SummaryTab's "View all signal weights" link) can request a tab switch
+  // without taking a direct dependency on the dashboard's setActiveTab.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.tab && typeof detail.tab === 'string') {
+        const tab = detail.tab as TabValue;
+        // Only accept known tab values; ignore stray events.
+        if (['summary', 'company', 'protection', 'actions', 'intel', 'transparency'].includes(tab)) {
+          setActiveTab(tab);
+        }
+      }
+    };
+    window.addEventListener('hp.dashboard.navigate', handler as EventListener);
+    return () => window.removeEventListener('hp.dashboard.navigate', handler as EventListener);
+  }, []);
+
   const handleTabChange = (val: TabValue) => {
     setActiveTab(val);
     scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -380,6 +421,12 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             {activeTab === 'intel' && (
               <Suspense fallback={<TabLoader />}>
                 <AnalysisTab {...tabProps} />
+              </Suspense>
+            )}
+            {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
+            {activeTab === 'transparency' && (
+              <Suspense fallback={<TabLoader />}>
+                <TransparencyTab {...tabProps} />
               </Suspense>
             )}
           </motion.div>

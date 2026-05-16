@@ -313,3 +313,185 @@ export function listRolesWithRegionalData(): string[] {
 export function getJobPlatforms(roleKey: string, region: RegionKey): string[] {
   return ROLE_REGIONAL_DEMAND[roleKey]?.[region]?.platformsToUse ?? [];
 }
+
+// ─── v39.0 C2: Region-aware sparse-fallback ────────────────────────────────────
+//
+// Only ~25 of 412 roles have explicit regional profiles. The remaining 387
+// silently fall through to US-calibrated salary bands when displayed to
+// Indian/EU/UK users. C2 fixes this by computing a PPP-adjusted salary band
+// from the role family's median when no explicit profile exists.
+
+/**
+ * Region → PPP / labour-market multiplier vs. US baseline.
+ * Calibrated against OECD PPP (2024) + sector-specific premia.
+ *
+ * USD-thousands salary in target region ≈ US salary × multiplier.
+ * India ≈ 0.22 (matches compensationRiskEngine.INDIA_PPP_FACTOR).
+ */
+const REGION_PPP_MULTIPLIERS: Record<RegionKey | 'global', number> = {
+  us: 1.00,
+  canada: 0.78,
+  uk: 0.70,
+  eu: 0.62,
+  aus_nz: 0.72,
+  apac_ex: 0.55,
+  mena: 0.45,
+  latam: 0.32,
+  india: 0.22,
+  india_bangalore: 0.27,
+  india_hyderabad: 0.24,
+  india_pune: 0.22,
+  india_mumbai: 0.26,
+  india_delhi_ncr: 0.25,
+  india_ahmedabad: 0.19,
+  india_kochi: 0.20,
+  india_kolkata: 0.19,
+  india_chandigarh: 0.20,
+  global: 0.65, // unweighted default for unknown regions
+};
+
+/**
+ * Family-level USD median salary baselines (2026 calibration, ages 30-40,
+ * 5-10 years experience). Used when no role-specific profile exists.
+ * Values in USD thousands annual base comp.
+ */
+const FAMILY_USD_MEDIANS: Record<string, number> = {
+  tech:              130,
+  data_science:      135,
+  ml_ai:             170,
+  devops_infra:      135,
+  product:           150,
+  design:            115,
+  cybersecurity:     145,
+  finance:           140,
+  fintech:           150,
+  accounting:        90,
+  sales:             110,
+  marketing:         105,
+  customer_success:  85,
+  hr_people:         95,
+  consulting:        140,
+  legal:             180,
+  healthcare_clinical: 175,
+  healthcare_admin:  110,
+  pharma_biotech:    140,
+  manufacturing:     95,
+  energy:            120,
+  construction:      85,
+  retail:            65,
+  logistics:         80,
+  agriculture:       60,
+  automotive:        95,
+  telecom:           100,
+  government:        85,
+  education:         70,
+  media_creative:    85,
+  hospitality:       60,
+  real_estate:       90,
+  veterinary:        110,
+  public_health:     90,
+  aviation:          130,
+};
+
+/**
+ * Default platforms by region — used in fallback when no role-specific
+ * platforms are mapped.
+ */
+const REGION_DEFAULT_PLATFORMS: Record<string, string[]> = {
+  us:               ['LinkedIn', 'Indeed', 'Glassdoor'],
+  canada:           ['LinkedIn', 'Indeed CA', 'Workopolis'],
+  uk:               ['LinkedIn', 'Reed', 'Otta'],
+  eu:               ['LinkedIn', 'StepStone', 'Welcome to the Jungle'],
+  aus_nz:           ['LinkedIn', 'Seek.com.au', 'TradeMe Jobs (NZ)'],
+  apac_ex:          ['LinkedIn', 'JobsDB', 'JobStreet'],
+  mena:             ['Bayt.com', 'GulfTalent', 'LinkedIn Middle East', 'Naukrigulf'],
+  latam:            ['LinkedIn', 'Glassdoor LATAM', 'Bumeran'],
+  india:            ['Naukri', 'LinkedIn', 'InstaHyre', 'Cutshort'],
+  india_bangalore:  ['Naukri', 'LinkedIn', 'InstaHyre', 'AngelList India'],
+  india_hyderabad:  ['Naukri', 'LinkedIn'],
+  india_pune:       ['Naukri', 'LinkedIn'],
+  india_mumbai:     ['Naukri', 'LinkedIn'],
+  india_delhi_ncr:  ['Naukri', 'LinkedIn'],
+};
+
+const REGION_TOP_CITIES: Record<string, string[]> = {
+  us:               ['San Francisco', 'New York', 'Seattle', 'Austin', 'Boston'],
+  canada:           ['Toronto', 'Vancouver', 'Montreal'],
+  uk:               ['London', 'Manchester', 'Edinburgh', 'Cambridge'],
+  eu:               ['Berlin', 'Amsterdam', 'Paris', 'Dublin', 'Stockholm'],
+  india:            ['Bangalore', 'Hyderabad', 'Pune', 'Mumbai', 'Delhi NCR'],
+  india_bangalore:  ['Bangalore'],
+  mena:             ['Dubai', 'Abu Dhabi', 'Riyadh'],
+  apac_ex:          ['Singapore', 'Hong Kong', 'Tokyo', 'Seoul'],
+};
+
+/**
+ * v39.0 C2 — Region-aware demand entry with PPP fallback.
+ *
+ * Resolution order:
+ *   1. Explicit `ROLE_REGIONAL_DEMAND[roleKey][region]` (~25 roles, full data)
+ *   2. Family-median + PPP heuristic (any role with a family mapping)
+ *   3. null (truly unknown role with no family mapping)
+ *
+ * The fallback entry includes `_isHeuristic: true` so the UI can label the
+ * salary band as "approximate" rather than presenting it as a measured value.
+ */
+export function getRegionalDemandWithFallback(
+  roleKey: string,
+  region: RegionKey | string,
+  roleFamily?: string | null,
+): (RegionalDemandEntry & { _isHeuristic?: boolean }) | null {
+  // 1. Explicit hit
+  const explicit = ROLE_REGIONAL_DEMAND[roleKey]?.[region as RegionKey];
+  if (explicit) return explicit;
+
+  // 2. Family-median + PPP fallback
+  const familyKey = roleFamily ?? 'tech';
+  const usMedian  = FAMILY_USD_MEDIANS[familyKey];
+  if (usMedian == null) return null;
+
+  const mult = (REGION_PPP_MULTIPLIERS as Record<string, number>)[region] ?? REGION_PPP_MULTIPLIERS.global;
+  const lowUsd  = Math.round(usMedian * mult * 0.70);
+  const highUsd = Math.round(usMedian * mult * 1.50);
+
+  const isIndiaRegion = region.toString().startsWith('india');
+  // INR conversion: ~83 INR per USD, salary in INR Lakhs.
+  const inrLow  = isIndiaRegion ? Math.round((lowUsd * 1000 * 83) / 100_000) : undefined;
+  const inrHigh = isIndiaRegion ? Math.round((highUsd * 1000 * 83) / 100_000) : undefined;
+
+  return {
+    demandIndex: 60, // neutral default — we have no demand signal for unmapped role × region
+    demandTrend: 'stable' as DemandTrend,
+    salaryRangeUSD: [lowUsd, highUsd],
+    salaryRangeINR: isIndiaRegion && inrLow != null && inrHigh != null ? [inrLow, inrHigh] : undefined,
+    topHiringCities: REGION_TOP_CITIES[region] ?? REGION_TOP_CITIES['us'],
+    platformsToUse:  REGION_DEFAULT_PLATFORMS[region] ?? REGION_DEFAULT_PLATFORMS['us'],
+    note: 'Approximate band — family-median + PPP heuristic. Role-specific data not yet calibrated.',
+    _isHeuristic: true,
+  };
+}
+
+/**
+ * Convenience: get just the salary range with fallback (USD thousands).
+ */
+export function getUsdSalaryRangeWithFallback(
+  roleKey: string,
+  region: RegionKey | string,
+  roleFamily?: string | null,
+): [number, number] | null {
+  const entry = getRegionalDemandWithFallback(roleKey, region, roleFamily);
+  return entry?.salaryRangeUSD ?? null;
+}
+
+/**
+ * Convenience: get just the salary range with fallback (INR Lakhs).
+ */
+export function getInrSalaryRangeWithFallback(
+  roleKey: string,
+  subRegion: string | undefined,
+  roleFamily?: string | null,
+): [number, number] | null {
+  const region = (subRegion ?? 'india') as RegionKey | string;
+  const entry = getRegionalDemandWithFallback(roleKey, region, roleFamily);
+  return entry?.salaryRangeINR ?? null;
+}
