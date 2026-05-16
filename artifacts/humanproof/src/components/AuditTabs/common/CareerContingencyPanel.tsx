@@ -1,4 +1,4 @@
-// CareerContingencyPanel.tsx — v17.0
+// CareerContingencyPanel.tsx — v35.0
 // Renders the 3-path career contingency plan (STAY / NEGOTIATE / TRANSITION).
 // This is the most actionable output in the system — converts 54 intelligence
 // layers into concrete, immediately-executable decision pathways.
@@ -9,7 +9,7 @@ import {
   Shield, TrendingUp, ArrowRightLeft, ChevronDown, ChevronRight,
   AlertTriangle, Clock, CheckCircle2, XCircle, Zap,
 } from 'lucide-react';
-import type { CareerContingencyPlan, ContingencyPath, ContingencyPathId } from '../../../services/careerContingencyPlanEngine';
+import type { CareerContingencyPlan, ContingencyPath, ContingencyPathId, ContingencyPathFinancialProjection } from '../../../services/careerContingencyPlanEngine';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -64,12 +64,24 @@ interface FeasibilityBarProps {
   accentColor: string;
 }
 
-const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ score, accentColor }) => (
+const FeasibilityBar: React.FC<FeasibilityBarProps & { isEstimate?: boolean }> = ({ score, accentColor, isEstimate }) => (
   <div>
     <div className="flex justify-between items-center mb-1">
-      <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
-        FEASIBILITY
-      </span>
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          FEASIBILITY
+        </span>
+        {/* MED-8: show estimate indicator when feasibility is model-estimated */}
+        {isEstimate && (
+          <span
+            title="Feasibility score is model-estimated — pending outcome calibration"
+            className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+            style={{ background: 'rgba(245,158,11,0.15)', color: 'rgba(245,158,11,0.75)', border: '1px solid rgba(245,158,11,0.25)' }}
+          >
+            est.
+          </span>
+        )}
+      </div>
       <span className="text-[11px] font-black" style={{ color: accentColor }}>{score}%</span>
     </div>
     <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -83,6 +95,65 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ score, accentColor }) =
     </div>
   </div>
 );
+
+// GAP G: inline financial grounding row beneath the feasibility bar
+const FinancialProjectionRow: React.FC<{
+  projection: ContingencyPathFinancialProjection;
+  pathId: ContingencyPathId;
+  accentColor: string;
+}> = ({ projection, pathId, accentColor }) => {
+  const chips: { label: string; value: string; color?: string }[] = [];
+
+  if (projection.estimatedWeeksToHire != null) {
+    chips.push({ label: 'Search', value: `~${projection.estimatedWeeksToHire}w`, color: accentColor });
+  }
+  if (projection.estimatedNewSalaryPct != null) {
+    const pct = projection.estimatedNewSalaryPct;
+    chips.push({
+      label: 'Salary',
+      value: pct > 0 ? `+${pct}%` : pct < 0 ? `${pct}%` : 'flat',
+      color: pct >= 0 ? '#10b981' : '#f97316',
+    });
+  }
+  if (projection.runwayExhaustionDate) {
+    const months = Math.max(0, Math.round(
+      (new Date(projection.runwayExhaustionDate).getTime() - Date.now()) / (30 * 24 * 60 * 60 * 1000),
+    ));
+    chips.push({
+      label: pathId === 'TRANSITION' ? 'Post-search runway' : 'Runway',
+      value: `${months}mo`,
+      color: months < 3 ? '#dc2626' : months < 6 ? '#f97316' : '#10b981',
+    });
+  }
+  if (projection.costOfLivingAdjustment != null) {
+    chips.push({ label: 'CoL', value: `${projection.costOfLivingAdjustment.toFixed(1)}×` });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {chips.map((chip, i) => (
+        <div key={i} className="flex items-center gap-1">
+          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            {chip.label}
+          </span>
+          <span
+            className="text-[10px] font-black px-1.5 py-0.5 rounded"
+            style={{
+              background: (chip.color ?? accentColor) + '15',
+              color: chip.color ?? accentColor,
+              border: `1px solid ${chip.color ?? accentColor}30`,
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            {chip.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 interface ActionListProps {
   title: string;
@@ -191,7 +262,14 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
 
         {/* Feasibility bar */}
         <div className="mt-3">
-          <FeasibilityBar score={path.feasibilityScore} accentColor={accentColor} />
+          <FeasibilityBar score={path.feasibilityScore} accentColor={accentColor} isEstimate={path.feasibilityCalibrationStatus === 'developer_estimate'} />
+          {path.financialProjection && (
+            <FinancialProjectionRow
+              projection={path.financialProjection}
+              pathId={path.pathId}
+              accentColor={accentColor}
+            />
+          )}
         </div>
       </button>
 

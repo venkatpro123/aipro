@@ -77,6 +77,7 @@ import { startBackgroundRefresh } from "../../services/liveRefreshService";
 import { resolveRoleInput } from "../../services/roleResolution";
 import { LiveSignalStatusBanner } from "../audit/LiveSignalStatusBanner";
 import { HybridResult } from "../../types/hybridResult";
+import { useHumanProof } from "../../context/HumanProofContext";
 
 interface Props {
   /** Optional: passed from ToolsPage so action plan links can switch tabs */
@@ -142,6 +143,7 @@ const Toast: React.FC<{
 
 export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const { state, dispatch } = useLayoff();
+  const { userProfile } = useHumanProof();
   const [showShareCard, setShowShareCard] = useState(false);
   const [lastScoreInputs, setLastScoreInputs] = useState<ScoreInputs | null>(
     null,
@@ -272,7 +274,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     const effectiveDepartment =
       state.department ||
       (effectiveOracleKey ? getAutoDeducedDepartment(effectiveOracleKey) : "Operations");
-    const userFactors =
+    const _baseUserFactors =
       state.userFactors || {
         tenureYears: 1.5,
         careerYears: 1.5,
@@ -281,6 +283,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         hasRecentPromotion: false,
         hasKeyRelationships: false,
       };
+    // HIGH-10: inject profile-captured career years if present (overrides form default)
+    const userFactors = userProfile?.yearsExperience != null
+      ? { ..._baseUserFactors, careerYears: userProfile.yearsExperience }
+      : _baseUserFactors;
 
     dispatch({
       type: "SET_INPUTS",
@@ -967,13 +973,18 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         industryData,
         roleTitle: state.roleTitle || "Employee",
         department: state.department || "Operations",
-        userFactors: state.userFactors || {
-          tenureYears: 1.5,
-          isUniqueRole: false,
-          performanceTier: "average",
-          hasRecentPromotion: false,
-          hasKeyRelationships: false,
-        },
+        userFactors: (() => {
+          const base = state.userFactors || {
+            tenureYears: 1.5,
+            isUniqueRole: false,
+            performanceTier: "average",
+            hasRecentPromotion: false,
+            hasKeyRelationships: false,
+          };
+          return userProfile?.yearsExperience != null
+            ? { ...base, careerYears: userProfile.yearsExperience }
+            : base;
+        })(),
         roleExposureOverride: fetchedRoleExposure,
       };
       setLastScoreInputs(inputs);
@@ -1545,7 +1556,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             heuristicSignalCount,
           );
           const companyDataFallback = state.companyData || (state.scoreResult as any).companyData || { name: state.companyName || "Unknown", industry: "Technology", region: "GLOBAL", employeeCount: 500, isPublic: false, revenuePerEmployee: 150000, aiInvestmentSignal: "medium", source: "Fallback", lastUpdated: new Date().toISOString() };
-          const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake };
+          const STAGE_LABELS: Record<number, string> = {
+            1: 'Acquiring workforce intelligence…',
+            2: 'Reconciling live market signals…',
+          };
+          const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, auditStage: STAGE_LABELS[ensembleStage] };
           return isTabsV3Enabled()
             ? <LayoffAuditDashboardV3 {...commonProps} />
             : <LayoffAuditDashboard {...commonProps} />;

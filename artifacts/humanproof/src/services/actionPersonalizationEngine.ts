@@ -21,6 +21,42 @@
 import type { ActionPlanItem } from "@/types/hybridResult";
 import type { SeniorityBracket } from "./seniorityActionEngine";
 import { canonicalKeyToActionGroup, resolveRoleInput } from "./roleResolution";
+// v37.0 multi-industry action pool imports
+import { ACTION_DB_HEALTHCARE_LEGAL } from "../data/actions/healthcare_legal_actions";
+import { ACTION_DB_CONSULTING_MARKETING_CX } from "../data/actions/consulting_marketing_cx_actions";
+import { ACTION_DB_MANUFACTURING_ENERGY_CONSTRUCTION } from "../data/actions/manufacturing_energy_construction_actions";
+import { ACTION_DB_RETAIL_LOGISTICS_PHARMA } from "../data/actions/retail_logistics_pharma_actions";
+import { ACTION_DB_AUTO_TELECOM_GOVT_EDUCATION } from "../data/actions/auto_telecom_govt_education_actions";
+import { ACTION_DB_INSURANCE_MEDIA_HOSPITALITY } from "../data/actions/insurance_media_hospitality_actions";
+// v38.0 Phase 1 imports
+import { ACTION_DB_CYBERSECURITY } from "../data/actions/cybersecurity_actions";
+import { ACTION_DB_CLOUD_PLATFORM } from "../data/actions/cloud_platform_actions";
+import { ACTION_DB_AI_ML_SPECIALIZATION } from "../data/actions/ai_ml_specialization_actions";
+import { ACTION_DB_QA_FRONTEND_MOBILE } from "../data/actions/qa_frontend_mobile_actions";
+// v38.0 Phase 2 imports
+import { ACTION_DB_PHYSICIANS } from "../data/actions/physicians_actions";
+import { ACTION_DB_NURSING_ALLIED_HEALTH } from "../data/actions/nursing_allied_health_actions";
+import { ACTION_DB_BIOTECH_HEALTHCARE_IT } from "../data/actions/biotech_healthcare_it_actions";
+import { ACTION_DB_BEHAVIORAL_ADMIN_VET_PH } from "../data/actions/behavioral_admin_vet_public_health_actions";
+// v38.0 Phase 3 imports
+import { ACTION_DB_INVESTMENT_BANKING_PE_VC } from "../data/actions/investment_banking_pe_vc_actions";
+import { ACTION_DB_QUANT_ASSET_HEDGE } from "../data/actions/quant_asset_hedge_actions";
+import { ACTION_DB_CORPORATE_FINANCE_BANKING_RISK } from "../data/actions/corporate_finance_banking_risk_actions";
+import { ACTION_DB_INSURANCE_RE_FINANCE } from "../data/actions/insurance_real_estate_finance_actions";
+// v38.0 Phase 4 imports
+import { ACTION_DB_SKILLED_TRADES } from "../data/actions/skilled_trades_actions";
+import { ACTION_DB_INDUSTRIAL_ENGINEERING } from "../data/actions/industrial_engineering_actions";
+import { ACTION_DB_ENERGY_SPECIALIZATIONS } from "../data/actions/energy_specializations_actions";
+import { ACTION_DB_CONSTRUCTION_SPECIALIZATIONS } from "../data/actions/construction_specializations_actions";
+import { ACTION_DB_AVIATION_PUBLIC_SAFETY } from "../data/actions/aviation_public_safety_actions";
+// v38.0 Phase 5 imports
+import { ACTION_DB_MEDIA_ENTERTAINMENT } from "../data/actions/media_entertainment_actions";
+import { ACTION_DB_HOSPITALITY_TRAVEL } from "../data/actions/hospitality_travel_actions";
+import { ACTION_DB_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_research_academia_actions";
+// v38.0 Phase 6 imports
+import { ACTION_DB_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
+import { ACTION_DB_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
+import { ACTION_DB_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
 
 export type RiskLevel = 'critical' | 'high' | 'moderate' | 'low';
 
@@ -66,12 +102,19 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   'computer vision': 'cv_engineer',
   'llm engineer': 'llm_engineer',
   'prompt engineer': 'llm_engineer',
+  'research scientist': 'data_scientist',
+  'applied scientist': 'data_scientist',
   // Data
   'data engineer': 'data_engineer',
   'data analyst': 'data_analyst',
-  'analytics engineer': 'data_engineer',
-  'bi developer': 'data_analyst',
+  'analytics engineer': 'analytics_engineer',
+  'bi developer': 'bi_analyst',
+  'business intelligence': 'bi_analyst',
   'etl developer': 'data_engineer',
+  'mlops': 'devops',
+  'ml ops': 'devops',
+  'quantitative analyst': 'quantitative_analyst',
+  'quant analyst': 'quantitative_analyst',
   // DevOps / Platform
   'devops engineer': 'devops',
   'sre': 'devops',
@@ -82,9 +125,17 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   // Product / Design
   'product manager': 'product_manager',
   'product owner': 'product_manager',
+  'associate pm': 'product_manager',
+  'product analyst': 'product_manager',
   'ux designer': 'ux_designer',
   'ui designer': 'ux_designer',
   'product designer': 'ux_designer',
+  'ux researcher': 'ux_researcher',
+  'user researcher': 'ux_researcher',
+  'brand designer': 'brand_designer',
+  'graphic designer': 'brand_designer',
+  'ux writer': 'ux_designer',
+  'design director': 'ux_designer',
   // Quality / Testing
   'qa engineer': 'qa_engineer',
   'test engineer': 'qa_engineer',
@@ -98,21 +149,78 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   'embedded engineer': 'embedded_engineer',
   'firmware engineer': 'embedded_engineer',
   'hardware engineer': 'embedded_engineer',
-  // Management / Leadership
+  // Engineering Leadership
   'engineering manager': 'eng_manager',
   'tech lead': 'tech_lead',
   'principal engineer': 'principal_engineer',
-  'staff engineer': 'principal_engineer',
+  'staff engineer': 'staff_engineer',
+  'distinguished engineer': 'distinguished_engineer',
   'architect': 'solution_architect',
   'solution architect': 'solution_architect',
+  'vp engineering': 'eng_manager',
+  'director engineering': 'eng_manager',
+  'head of engineering': 'eng_manager',
+  'cto': 'eng_manager',
   // Support / Operations
   'support engineer': 'support_engineer',
   'technical support': 'support_engineer',
   'it support': 'support_engineer',
+  // Finance & Accounting
+  'financial analyst': 'financial_analyst',
+  'finance analyst': 'financial_analyst',
+  'fp&a': 'financial_analyst',
+  'investment banker': 'investment_banker',
+  'investment banking': 'investment_banker',
+  'portfolio manager': 'portfolio_manager',
+  'fund manager': 'portfolio_manager',
+  'risk analyst': 'risk_analyst',
+  'risk manager': 'risk_analyst',
+  'compliance officer': 'compliance_officer',
+  'compliance analyst': 'compliance_officer',
+  'auditor': 'financial_analyst',
+  'cpa': 'financial_analyst',
+  'chartered accountant': 'financial_analyst',
+  'actuary': 'quantitative_analyst',
+  'actuarial analyst': 'quantitative_analyst',
+  'treasury analyst': 'financial_analyst',
+  'tax analyst': 'financial_analyst',
+  // Sales & Revenue
+  'account executive': 'account_executive',
+  'sales representative': 'account_executive',
+  'sales rep': 'account_executive',
+  'inside sales': 'account_executive',
+  'enterprise sales': 'account_executive',
+  'business development': 'business_development_manager',
+  'bdm': 'business_development_manager',
+  'customer success': 'customer_success_manager',
+  'csm': 'customer_success_manager',
+  'sales engineer': 'sales_engineer',
+  'solutions engineer': 'sales_engineer',
+  'pre-sales': 'sales_engineer',
+  'vp sales': 'vp_sales',
+  'head of sales': 'vp_sales',
+  'sales director': 'vp_sales',
+  'sales operations': 'sales_operations_analyst',
+  'revenue operations': 'sales_operations_analyst',
+  'partnership manager': 'business_development_manager',
+  // HR & People
+  'hr generalist': 'hr_generalist',
+  'human resources generalist': 'hr_generalist',
+  'hr business partner': 'hr_business_partner',
+  'hrbp': 'hr_business_partner',
+  'hr director': 'hr_director',
+  'recruiter': 'talent_acquisition_specialist',
+  'talent acquisition': 'talent_acquisition_specialist',
+  'recruiting manager': 'recruiting_manager',
+  'hr manager': 'hr_generalist',
+  'people operations': 'hr_generalist',
+  'chief people officer': 'hr_director',
+  'chro': 'hr_director',
   // BPO / ITES
   'process associate': 'bpo_associate',
   'process analyst': 'bpo_associate',
   'operations analyst': 'bpo_associate',
+  'bpo': 'bpo_associate',
 };
 
 export function resolveRoleGroup(roleTitle: string): string {
@@ -1324,28 +1432,43 @@ const ACTION_DB: RoleActionDB = {
   },
 };
 
-// ─── Compact pools for remaining 21 role groups ───────────────────────────────
-// Each uses a shared factory so additions stay concise while still providing
-// role-specific top actions differentiated from the generic 'swe' pool.
+// ─── Seniority-differentiated pools for remaining role groups ─────────────────
+// Three distinct critical actions per seniority tier:
+//   junior    → skills-building / technical project / certification
+//   mid       → visibility / internal mobility / market-test
+//   senior+   → advisory / thought leadership / consulting / board positioning
+// High and moderate actions are shared (role-appropriate across seniority).
 
-function compactPool(
-  criticalAction: Partial<ActionPlanItem>,
+function seniorityPool(
+  juniorCrit: Partial<ActionPlanItem>,
+  midCrit: Partial<ActionPlanItem>,
+  seniorCrit: Partial<ActionPlanItem>,
   highAction: Partial<ActionPlanItem>,
   moderateAction: Partial<ActionPlanItem>,
 ): BracketPool {
   return {
-    junior:    { critical: [criticalAction], high: [highAction], moderate: [moderateAction], low: [moderateAction] },
-    mid:       { critical: [criticalAction], high: [highAction], moderate: [moderateAction], low: [moderateAction] },
-    senior:    { critical: [criticalAction], high: [highAction], moderate: [moderateAction], low: [moderateAction] },
-    principal: { critical: [criticalAction], high: [highAction], moderate: [moderateAction], low: [moderateAction] },
+    junior:    { critical: [juniorCrit],  high: [highAction], moderate: [moderateAction], low: [moderateAction] },
+    mid:       { critical: [midCrit],     high: [highAction], moderate: [moderateAction], low: [moderateAction] },
+    senior:    { critical: [seniorCrit],  high: [highAction], moderate: [moderateAction], low: [moderateAction] },
+    principal: { critical: [seniorCrit],  high: [highAction], moderate: [moderateAction], low: [moderateAction] },
   };
 }
 
-ACTION_DB.ml_engineer = compactPool(
+ACTION_DB.ml_engineer = seniorityPool(
   {
     title: 'Ship a Production ML Service with FastAPI + MLflow Tracking',
     description: 'Build an end-to-end ML service: model training with MLflow experiment tracking, FastAPI serving endpoint, Docker container, deployed to Render or Hugging Face Spaces. Include a model card documenting training data, metrics, and limitations. ML engineers with live deployed services receive 3× more senior ML role offers than those with only notebooks. 15–20 hours.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Own the ML Platform Initiative at Your Company — Feature Store, Model Registry, or Serving Layer',
+    description: 'Mid-level ML engineers who own internal platform initiatives (MLflow model registry, Feast feature store, or a unified serving layer) are classified as infrastructure-critical — the last profile cut in restructuring. Pitch the initiative to your manager this week, assign yourself as tech lead, and deliver an internal demo within 30 days. Internal platform ownership creates the visibility that external certifications cannot.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Launch a Fractional ML Lead or Advisory Practice for Non-Tech Companies',
+    description: 'Senior ML engineers are in short supply as advisors to traditional industries (manufacturing, healthcare, legal, finance) adopting ML for the first time. Offer a 4-hour/week fractional advisory engagement: ML strategy assessment, use-case prioritization, and build-vs-buy recommendation. One retainer engagement at ₹75,000–₹1,50,000/month builds financial runway and market positioning simultaneously. Platform: LinkedIn, AngelList advisory, or direct outreach to your network.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 35, deadline: '21 days — first outreach', priority: 'Critical',
   },
   {
     title: 'Earn Google Professional Machine Learning Engineer Certification',
@@ -1359,11 +1482,21 @@ ACTION_DB.ml_engineer = compactPool(
   },
 );
 
-ACTION_DB.ai_engineer = compactPool(
+ACTION_DB.ai_engineer = seniorityPool(
   {
     title: 'Build and Deploy a Production LLM Application with Observability',
     description: 'Build an LLM application using LangChain/LlamaIndex with: prompt versioning (PromptLayer or Langfuse), output evaluation (RAGAS for RAG apps), cost tracking, and fallback logic when the primary model fails. AI engineers who can demonstrate production-grade LLM observability receive 4× more senior offers. Deploy it publicly with a usage demo.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 32, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Define and Own Your Team\'s LLM Evaluation and AI Safety Framework',
+    description: 'Mid-level AI engineers who own the evaluation infrastructure become unglamorous but indispensable: they block hallucinations from reaching production and own the quality gate. Write a team policy: what evals must pass before deployment, what safety tests run on every prompt change, and how regressions are tracked. Present it at the next sprint review. Owning evaluation makes you the last engineer cut when the team shrinks.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 30, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Publish Authoritative Research on LLM Production Reliability or Take a Principal AI Advisor Role',
+    description: 'Senior AI engineers who publish detailed post-mortems or research on production LLM failure modes (hallucination in domain X, context-length cliff effects, prompt injection patterns) become the reference point companies call before building. A single well-cited publication or advisory engagement with a non-tech company adopting LLMs creates career optionality that compensation packages cannot. Start with a 1,500-word case study from your own production experience.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 38, deadline: '21 days — draft', priority: 'Critical',
   },
   {
     title: 'Contribute to an LLM Evaluation Framework or AI Safety Tooling',
@@ -1377,11 +1510,21 @@ ACTION_DB.ai_engineer = compactPool(
   },
 );
 
-ACTION_DB.llm_engineer = compactPool(
+ACTION_DB.llm_engineer = seniorityPool(
   {
     title: 'Build a Public LLM Benchmark or Evaluation Suite for Your Domain',
     description: 'Create a domain-specific LLM evaluation benchmark (e.g., "India Legal QA Benchmark" or "Code Security Vulnerability Detection"). Publish it on HuggingFace Datasets. Domain-specific LLM evaluators are among the most sought-after profiles at AI companies. A public benchmark is a permanent career asset.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Establish Internal Prompt Engineering Standards and LLM Governance Policy',
+    description: 'Mid-level LLM engineers who own the governance layer — what prompts are approved for production, how they are versioned, what output validation runs before user-facing deployment — become the compliance gatekeeper that every regulated industry now requires. Write the policy (2 pages), present it to your engineering lead, and own the prompt registry. This transforms a junior-sounding title into a cross-functional infrastructure role.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Consult Fractionally on LLM Strategy for Traditional Companies Adopting AI',
+    description: 'Senior LLM engineers are the scarcest resource for non-tech companies (law firms, healthcare networks, financial advisors) trying to adopt LLMs safely. Offer a 4–8 hour engagement: "LLM risk assessment and use-case roadmap." Charge ₹60,000–₹1,20,000 for the first engagement. The deliverable is a 3-page memo — your existing expertise. One or two clients creates financial resilience and external credibility that fast-tracks your next full-time role negotiation.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 35, deadline: '14 days — first outreach', priority: 'Critical',
   },
   {
     title: 'Write a Technical Post on Prompt Engineering Failure Modes',
@@ -1395,11 +1538,21 @@ ACTION_DB.llm_engineer = compactPool(
   },
 );
 
-ACTION_DB.data_engineer = compactPool(
+ACTION_DB.data_engineer = seniorityPool(
   {
     title: 'Build a Modern Data Stack Portfolio Project (dbt + Airflow/Prefect + DuckDB)',
     description: 'Build a public portfolio data pipeline: ingest raw data from a public API, transform with dbt (models, tests, documentation), orchestrate with Prefect (free cloud tier), and serve to a BI layer (Metabase, free). Data engineers with a modern stack portfolio project receive 2.5× more callbacks for roles at product companies (₹20–40 LPA). Push the dbt project to GitHub with full documentation.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead an Internal Migration from Legacy ETL to a Modern Streaming or dbt Stack',
+    description: 'Mid-level data engineers who own a platform migration become infrastructure-critical. Volunteer to lead the migration of one legacy Informatica/SSIS pipeline to dbt + Prefect or a Kafka streaming pipeline. Document the performance gains (latency, maintenance hours saved). Data engineers who own migrations are classified as platform leads — a role that survives restructuring. Present the before/after at a team review.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days — scope and begin', priority: 'Critical',
+  },
+  {
+    title: 'Design and Publish a Reference Data Architecture for Your Industry Vertical',
+    description: 'Senior data engineers who publish reference architectures (e.g., "Real-time data stack for India fintech at scale" or "Event-driven analytics architecture for e-commerce") are cited by companies evaluating their stack. A well-written Substack post or LinkedIn article series positions you as the external expert companies call before hiring — and as the internal authority companies fight to retain. 2,000-word article, one diagram, one benchmark.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '21 days', priority: 'Critical',
   },
   {
     title: 'Earn dbt Certified Developer or Databricks Certified Data Engineer',
@@ -1413,11 +1566,21 @@ ACTION_DB.data_engineer = compactPool(
   },
 );
 
-ACTION_DB.data_analyst = compactPool(
+ACTION_DB.data_analyst = seniorityPool(
   {
     title: 'Build an AI-Augmented Analytics Dashboard with a Narrative Layer',
     description: 'Build a dashboard in Metabase, Tableau Public, or Looker Studio that includes a written narrative layer: "Here\'s what the data shows, here\'s why it happened, here\'s what to do." Use Claude API to auto-generate the narrative from the SQL results. Data analysts who can produce insight narratives (not just charts) receive 3× more interest from senior stakeholder roles.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 26, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Own a Strategic Business Metric End-to-End — Definition, Measurement, and Weekly Narrative',
+    description: 'Mid-level analysts who own a strategic metric (north star, activation rate, churn cohort) and produce a weekly narrative for the leadership team are classified as decision-support infrastructure — not interchangeable report generators. Volunteer to own one metric nobody fully owns today. Build the dbt model, the dashboard, and the weekly Slack update. Analysts who drive decisions survive automation; those who run reports do not.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '14 days — claim ownership', priority: 'Critical',
+  },
+  {
+    title: 'Transition into an Analytics Engineering Lead or Data Product Role',
+    description: 'Senior analysts who bridge data engineering and business intelligence — analytics engineers — are among the most sought-after profiles in India product companies (2026 median ₹22–40 LPA). Claim ownership of your team\'s dbt models, write semantic layer documentation, and propose an Analytics Engineering charter to your manager. Alternatively, pursue a Head of Analytics or Data Product Manager role — your domain expertise is the moat that pure data engineers lack.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '30 days', priority: 'Critical',
   },
   {
     title: 'Earn Google Data Analytics Professional Certificate + SQL Advanced',
@@ -1431,11 +1594,21 @@ ACTION_DB.data_analyst = compactPool(
   },
 );
 
-ACTION_DB.nlp_engineer = compactPool(
+ACTION_DB.nlp_engineer = seniorityPool(
   {
     title: 'Publish a Multilingual NLP Project for Indian Languages',
     description: 'India-specific NLP (Hindi, Tamil, Kannada, Bengali, Marathi) is a massive differentiation moat — most NLP engineers only work with English. Use IndicNLP or Sarvam AI\'s open models to build a multilingual text classification or translation project. Publish on HuggingFace. Multilingual India NLP engineers command 40–60% salary premium at India AI companies vs English-only NLP engineers.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 32, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Own the NLP Evaluation and Model Lifecycle Infrastructure for Your Team',
+    description: 'Mid-level NLP engineers who own evaluation infrastructure — benchmark datasets, regression CI, A/B testing of model versions — become the keeper of model quality. This role cannot be automated or outsourced. Volunteer to own the eval harness: write the test suite, set the quality gate, and run the weekly evaluation report. Engineers who own quality gates are promoted to ML tech lead, not cut.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Establish an NLP or Language AI Advisory Practice for India Enterprises',
+    description: 'Senior NLP engineers are sought advisors for India enterprises (banks, insurance companies, healthcare networks) building regional language AI applications. Offer a 4-hour strategic advisory: "India language AI readiness assessment and use-case roadmap." Leverage your multilingual expertise — it is a moat that English-centric AI companies cannot easily replicate. One retainer at ₹80,000–₹1,50,000/month demonstrates market value in negotiation.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 35, deadline: '21 days — first outreach', priority: 'Critical',
   },
   {
     title: 'Fine-tune a Domain-Specific Language Model on India Data',
@@ -1449,11 +1622,21 @@ ACTION_DB.nlp_engineer = compactPool(
   },
 );
 
-ACTION_DB.cv_engineer = compactPool(
+ACTION_DB.cv_engineer = seniorityPool(
   {
     title: 'Build a Production Computer Vision API with Model Monitoring',
     description: 'Deploy a computer vision model as a REST API with: confidence score threshold calibration, drift detection (Evidently AI), and a simple feedback loop for false positives. Computer vision engineers who demonstrate production monitoring skills are classified as MLOps-capable — the highest-value CV specialization. Deploy on a cloud provider with a live demo.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Own an End-to-End Computer Vision Pipeline — Data Labeling, Model Lifecycle, and Production Monitoring',
+    description: 'Mid-level CV engineers who own the full pipeline — not just the model architecture — are irreplaceable. Set up a labeling workflow (Label Studio, free), model versioning (MLflow), and production drift detection. Then document and present it as your team\'s ML platform. Engineers who own the full CV lifecycle are classified as MLOps engineers — a hybrid role that commands 40–60% salary premiums over pure modelers.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Position as Computer Vision Domain Expert for Robotics, EV, or Medical Imaging Advisory',
+    description: 'Senior CV engineers are in highest demand as technical advisors to hardware companies (EV, robotics) and healthcare networks adopting diagnostic imaging AI. These companies lack in-house expertise and pay ₹1,00,000–₹3,00,000 per advisory engagement. Identify 3 companies in your metro building CV applications, and offer a 2-hour technical assessment. Your production CV experience is the asset — your domain knowledge is the product.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 36, deadline: '21 days — first outreach', priority: 'Critical',
   },
   {
     title: 'Specialize in Video Understanding or 3D Vision (High-Growth Specializations)',
@@ -1467,11 +1650,21 @@ ACTION_DB.cv_engineer = compactPool(
   },
 );
 
-ACTION_DB.swe_backend = compactPool(
+ACTION_DB.swe_backend = seniorityPool(
   {
     title: 'Build a High-Performance Backend Service with AI-Integrated Rate Limiting',
     description: 'Build a backend service that demonstrates: async Python (FastAPI) or Go, database query optimization (use EXPLAIN ANALYZE), and an AI-powered rate limiter that learns from traffic patterns. Backend engineers who demonstrate AI integration in infrastructure code — not just feature development — are classified as senior-ready. Push to GitHub with load test results.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 24, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Cross-Team API Standardization or Service Migration Initiative',
+    description: 'Mid-level backend engineers who lead a cross-team initiative — consolidating 3 internal APIs into a shared gateway, migrating from REST to gRPC for internal services, or defining the team\'s database migration standards — become the technical authority that other teams depend on. Volunteer to own one initiative this sprint, document it as an RFC, and drive it to completion. Engineers who create cross-team dependencies on their judgment are significantly harder to cut.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '21 days — propose RFC', priority: 'Critical',
+  },
+  {
+    title: 'Architect a High-Availability or Cost-Optimisation Initiative and Publish the Case Study',
+    description: 'Senior backend engineers are valued for system-level judgment, not code velocity. Identify one system design problem (latency spike, cost overrun, single-point-of-failure) and own the solution end-to-end: design, review, implementation, and post-launch measurement. Then write a 1,500-word case study ("How we reduced P99 latency by 60% at ₹0 additional infra spend") and publish on LinkedIn or your engineering blog. One published case study generates more senior-role contacts than 6 months of passive job searching.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '30 days — scope the project', priority: 'Critical',
   },
   {
     title: 'Design and Document a System Design Case Study',
@@ -1485,11 +1678,21 @@ ACTION_DB.swe_backend = compactPool(
   },
 );
 
-ACTION_DB.swe_frontend = compactPool(
+ACTION_DB.swe_frontend = seniorityPool(
   {
     title: 'Ship an AI-Powered Frontend Feature Using Streaming LLM APIs',
     description: 'Build a frontend feature using streaming LLM APIs (Claude or OpenAI streaming): real-time text generation, token-by-token display, and proper error handling. Frontend engineers who can implement production streaming UX — with loading states, cancellation, retry logic, and accessibility — are in short supply. Push to a public GitHub repo with live demo.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 26, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Own the Performance Budget and Core Web Vitals Program for Your Product',
+    description: 'Mid-level frontend engineers who own the performance budget — the budget that defines maximum JS bundle size, LCP target, and CLS threshold — become the gatekeeper for every release. Run Lighthouse CI in GitHub Actions, set the budget, and block regressions automatically. When your product\'s Core Web Vitals improve by 30%, that is a business outcome you can claim ownership of. Engineers who own measurable business outcomes are the last ones cut.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Establish Frontend Architecture Standards and Own the Design System Strategy',
+    description: 'Senior frontend engineers who define the architecture — component boundaries, state management patterns, rendering strategy, accessibility standards — create the framework others build within. Write a Frontend Architecture Decision Record covering your current choices and future direction. Then propose and own the design system: the shared component library that every team depends on. Design system owners are among the most protected senior engineering profiles at product companies.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '21 days — write the ADR', priority: 'Critical',
   },
   {
     title: 'Master Web Performance Optimization (Core Web Vitals + Bundle Analysis)',
@@ -1504,11 +1707,21 @@ ACTION_DB.swe_frontend = compactPool(
 );
 
 ACTION_DB.swe_fullstack = ACTION_DB.swe_backend;  // Fullstack shares backend-primary actions
-ACTION_DB.swe_mobile = compactPool(
+ACTION_DB.swe_mobile = seniorityPool(
   {
     title: 'Ship an AI-Integrated Mobile Feature (On-Device or Cloud)',
     description: 'Build a mobile feature using either on-device ML (Core ML / TensorFlow Lite / MediaPipe) or cloud LLM APIs (streaming text, voice transcription, image analysis). Mobile engineers who demonstrate AI integration receive 3× more senior offers. Publish the feature in the app store or as a demo APK/IPA with a walkthrough video. This is now the new hire bar at product companies.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 26, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Own Mobile App Performance Benchmarks and Lead a Measurable Optimization Sprint',
+    description: 'Mid-level mobile engineers who own the performance baseline — cold start time, ANR rate, crash-free session rate — become the owner of the metric that directly impacts retention and store rankings. Set up Firebase Performance Monitoring (free), baseline your current metrics, and propose a two-week optimization sprint with measurable targets. A 15% improvement in cold start time is a product outcome you can put in a resume and reference in every future salary negotiation.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '14 days — set up monitoring', priority: 'Critical',
+  },
+  {
+    title: 'Define Mobile Platform Architecture and Lead SDK or Cross-Platform Framework Strategy',
+    description: 'Senior mobile engineers who own the architecture decision — React Native vs. Flutter vs. native, shared business logic layer, SDK design for third-party integrations — create the framework that the entire mobile team depends on. Write an Architecture Decision Record covering your current choices. Then position yourself as the SDK owner or cross-platform migration lead. Engineers who define the mobile platform are the last ones cut when app teams shrink.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '21 days — write the ADR', priority: 'Critical',
   },
   {
     title: 'Earn Android or iOS Platform Certification',
@@ -1522,11 +1735,21 @@ ACTION_DB.swe_mobile = compactPool(
   },
 );
 
-ACTION_DB.platform_engineer = compactPool(
+ACTION_DB.platform_engineer = seniorityPool(
   {
     title: 'Build an Internal Developer Platform Proof of Concept (Backstage.io)',
     description: 'Set up Backstage.io locally, integrate your GitHub repos as software catalog entries, and build one scaffolded template (e.g., a new service template with CI/CD pre-configured). Present the PoC to your engineering leadership. Platform engineers who demonstrate IDP value get reclassified as infrastructure owners — a high-retention role.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Migrate 3+ Engineering Teams to GitOps and Measure Deployment Frequency Improvement',
+    description: 'Mid-level platform engineers who drive cross-team GitOps adoption — replacing manual kubectl or CI script deployments with ArgoCD — become the gatekeeper for deployment reliability. Own the rollout across 3 teams: document the ADR, run the migration, and measure the before/after deployment frequency and MTTR (mean time to restore). Present the metrics at a leadership review. Engineers who improve DORA metrics for multiple teams are promoted, not cut.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days — scope rollout', priority: 'Critical',
+  },
+  {
+    title: 'Design and Own the Engineering Platform Strategy for the Next 24 Months',
+    description: 'Senior platform engineers who write and own the platform roadmap — what IDP capabilities to build, which Kubernetes operators to adopt, how the developer experience will evolve — are classified as strategic infrastructure leaders. Write a 2-page platform strategy memo: current state, 6-month investments, 24-month vision. Present it to your VP Engineering or CTO. Platform engineers who own the strategy are not contractors — they are the authors of infrastructure the whole company depends on.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 35, deadline: '21 days — write the memo', priority: 'Critical',
   },
   {
     title: 'Earn Certified Kubernetes Administrator (CKA) or CKAD',
@@ -1540,11 +1763,21 @@ ACTION_DB.platform_engineer = compactPool(
   },
 );
 
-ACTION_DB.cloud_architect = compactPool(
+ACTION_DB.cloud_architect = seniorityPool(
   {
     title: 'Earn AWS Solutions Architect Professional or GCP Professional Cloud Architect',
     description: 'AWS SAP (₹24,000 exam) or GCP Professional Cloud Architect (₹15,000) is the senior cloud certification that cloud architects need for credibility. Engineers with professional-level cloud certs are considered for senior cloud architecture roles (₹30–60 LPA in India). Prep: Adrian Cantrill\'s SAP course (AWS, ₹2,500) or Google Cloud Skills Boost (free trial).',
     layerFocus: 'L3 · Skills', riskReductionPct: 30, deadline: '90 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a FinOps Initiative with Measurable Cost Reduction — Own the Business Outcome',
+    description: 'Mid-level cloud architects who deliver a measurable cost reduction are classified as business-critical, not infrastructure overhead. Use AWS Cost Explorer, GCP Billing, or Azure Cost Management to identify the top 5 cost drivers. Implement 3 changes, document the monthly savings, and present the ROI at the next leadership review. A $50K/month cost reduction gives you a business outcome to reference in every subsequent negotiation.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Publish a Cloud Architecture White Paper and Position for CTO Advisory or Fractional Cloud Architect Engagements',
+    description: 'Senior cloud architects who publish authoritative content — a 2,500-word whitepaper on multi-cloud resilience patterns, or a migration case study — are cited by companies selecting vendors and architecture partners. One well-distributed white paper generates inbound from companies actively hiring at the VP/Head of Infrastructure level. Simultaneously, offer a fractional cloud architecture advisory (10 hours/month) to a scaling startup — they need your judgment, not your hours.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 36, deadline: '21 days — draft white paper', priority: 'Critical',
   },
   {
     title: 'Design and Publish a Multi-Cloud Architecture Decision Record',
@@ -1558,11 +1791,21 @@ ACTION_DB.cloud_architect = compactPool(
   },
 );
 
-ACTION_DB.ux_designer = compactPool(
+ACTION_DB.ux_designer = seniorityPool(
   {
     title: 'Build an AI-Augmented Design Workflow and Document Your Process',
     description: 'Integrate AI tools into your design workflow: Figma AI for component generation, Midjourney for mood boards, Galileo AI for wireframes. Document the before/after: what changed, what AI generated vs what you refined, and the quality difference. UX designers who demonstrate AI-augmented workflows receive 3× more senior offers. The narrative is "I design faster AND better with AI" — not "AI replaces me."',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 26, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Own a Full Product Area\'s UX Research Cycle and Design System Contribution',
+    description: 'Mid-level UX designers who own both the research and the design system for a product area become cross-functional leads — not interchangeable designers. Run 5 user interviews for your product area\'s biggest open question, write the findings report, and translate it into 3 design system components. Present at the next product review. Designers who produce both research insight and reusable component output are classified as product partners, not visual contractors.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '21 days — begin interviews', priority: 'Critical',
+  },
+  {
+    title: 'Establish a Design Practice, UX Advisory Role, or Head of Design Track',
+    description: 'Senior UX designers who own the design system strategy, define the research ops process, and mentor junior designers are positioned for Head of Design or VP Design. Alternatively, offer UX advisory to early-stage startups (typically ₹50,000–₹1,00,000/month, 4–6 hours/week): product critique, design system audit, user research framework. One advisory engagement builds financial optionality and positions you as external expert — valuable in any job negotiation.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 34, deadline: '21 days — write design strategy memo', priority: 'Critical',
   },
   {
     title: 'Conduct and Publish a User Research Study',
@@ -1576,11 +1819,21 @@ ACTION_DB.ux_designer = compactPool(
   },
 );
 
-ACTION_DB.security_engineer = compactPool(
+ACTION_DB.security_engineer = seniorityPool(
   {
     title: 'Earn OSCP (Offensive Security Certified Professional) or CEH',
     description: 'OSCP (Offensive Security, ₹72,000 for lab + exam) is the gold standard in offensive security — it requires actual penetration testing, not multiple choice. CEH (EC-Council, ₹35,000) is more accessible and widely recognized in India enterprise. Security engineers with OSCP command ₹25–60 LPA in India, with demand growing 40% YoY as regulatory requirements increase.',
     layerFocus: 'L3 · Skills', riskReductionPct: 32, deadline: '90 days', priority: 'Critical',
+  },
+  {
+    title: 'Build and Own a DevSecOps Pipeline or Internal Bug Bounty Program',
+    description: 'Mid-level security engineers who own the security gate in CI/CD — SAST (Semgrep), DAST (OWASP ZAP), dependency scanning (Snyk), and secret detection (Gitleaks) — become the compliance gatekeeper that every regulated company needs. Set up the pipeline for your team, define the blocking severity threshold, and brief your engineering leadership on the risk profile. Alternatively, launch an internal bug bounty program with a defined scope. Security engineers who own the prevention layer are the last cut in any restructuring.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 30, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Establish a Security Advisory or CISO-Track Positioning',
+    description: 'Senior security engineers with OSCP and production DevSecOps experience are sought advisors for Series A–C companies that cannot afford a full-time CISO. Offer a fractional vCISO engagement: security posture assessment + remediation roadmap + compliance mapping (ISO 27001, SOC 2). Charge ₹75,000–₹2,00,000/month for 8–10 hours. One engagement demonstrates market value that transforms your full-time salary negotiation. Alternatively, pursue a CISO or Head of Security track — your offense + defense combination is the rarest profile in security.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 38, deadline: '21 days — first outreach', priority: 'Critical',
   },
   {
     title: 'Build a Bug Bounty Portfolio (HackerOne, Bugcrowd, or Responsible Disclosure)',
@@ -1594,11 +1847,21 @@ ACTION_DB.security_engineer = compactPool(
   },
 );
 
-ACTION_DB.embedded_engineer = compactPool(
+ACTION_DB.embedded_engineer = seniorityPool(
   {
     title: 'Build an AIoT Project Integrating Edge ML with a Microcontroller',
     description: 'Build an edge AI project: deploy a TensorFlow Lite or ONNX model on a Raspberry Pi or STM32. Detect an event (gesture, sound, anomaly) locally without cloud connectivity. Embedded engineers who demonstrate AI/ML on constrained hardware receive 4× more offers from EV, robotics, and industrial automation companies — the fastest-growing segments for embedded engineering in India.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Own an End-to-End Embedded Product — from Firmware to Cloud Connectivity and OTA Updates',
+    description: 'Mid-level embedded engineers who own the full product stack — firmware, hardware abstraction layer, cloud connectivity (MQTT/HTTPS), and OTA firmware update pipeline — are among the most irreplaceable profiles in IoT and industrial automation. Volunteer to own the OTA pipeline or cloud connectivity layer for your current product. Engineers who own the device lifecycle (not just the firmware) are classified as embedded systems leads — a title that survives headcount reductions at hardware companies.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days — scope and begin', priority: 'Critical',
+  },
+  {
+    title: 'Position as Embedded Systems Architect for EV, Robotics, or Industrial AI Advisory',
+    description: 'Senior embedded engineers with AIoT and AUTOSAR expertise are in high demand as advisors to EV startups (Ather Energy, Ola Electric, and their supply chain), robotics companies (Postman, Miko), and industrial automation firms entering Industry 4.0. Offer a technical advisory: "Edge AI architecture assessment and roadmap for constrained hardware." Charge ₹75,000–₹1,50,000 per engagement. Your RTOS + edge ML combination is a rare capability that hardware-first companies pay a significant premium to access.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 36, deadline: '21 days — first outreach', priority: 'Critical',
   },
   {
     title: 'Earn an AUTOSAR or MISRA C Certification for Automotive Embedded',
@@ -1612,11 +1875,21 @@ ACTION_DB.embedded_engineer = compactPool(
   },
 );
 
-ACTION_DB.eng_manager = compactPool(
+ACTION_DB.eng_manager = seniorityPool(
   {
     title: 'Define and Publish Your Team\'s AI Productivity Metrics',
     description: 'As an engineering manager, your most urgent task is showing that your team is measuring and improving productivity using AI tools. Define: velocity improvement (% story points/sprint increase since AI tools adoption), code review cycle time, and deployment frequency. Present these metrics at the next leadership review. Managers with data-backed AI adoption stories are classified as transformation leaders — not redundant overhead.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Cross-Team AI Governance Framework and Present It at Director Level',
+    description: 'Mid-level engineering managers who build frameworks that other teams adopt are classified as organisational infrastructure, not easily cut. Write an AI governance policy for engineering: approved tools, code review standards for AI-generated code, security posture, and productivity measurement. Pitch it at a director-level review and volunteer to lead the company-wide rollout. Managers who solve org-level problems survive when individual team headcount shrinks.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 30, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Position for Director of Engineering, VP Engineering, or Transition to Fractional Eng Leadership',
+    description: 'Senior engineering managers with 3+ years managing AI-adopting teams are in the window for Director of Engineering roles (median ₹55–90 LPA in India product companies, 2026). Write your Director track narrative: team size managed, cross-functional projects owned, revenue impact of engineering decisions. Alternatively, explore fractional VP Engineering engagements for Series A–B startups — a $5,000–$10,000/month commitment of 10–15 hours/week that builds optionality while employed.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 36, deadline: '21 days — write your narrative', priority: 'Critical',
   },
   {
     title: 'Build Your Team\'s AI Governance and Quality Framework',
@@ -1630,11 +1903,21 @@ ACTION_DB.eng_manager = compactPool(
   },
 );
 
-ACTION_DB.tech_lead = compactPool(
+ACTION_DB.tech_lead = seniorityPool(
   {
     title: 'Write a Technical Design Document for an AI-Integrated System',
     description: 'Write a TDD or RFC for an AI integration your team should implement: LLM-powered code review assistant, AI test generation, or automated incident diagnosis. Show: problem statement, alternatives considered, proposed architecture, risks. Tech leads who produce high-quality TDDs are seen as architecture-ready. Publish internally and ask for peer review from senior engineers.',
     layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Establish Technical Standards Across Teams and Lead a Cross-Functional Architecture Review',
+    description: 'Mid-level tech leads who define standards that multiple teams adopt — API design conventions, testing thresholds, observability baselines — become organisational infrastructure. Propose and lead a cross-functional architecture review: invite 2–3 engineers from adjacent teams, review a shared system, and publish the decisions as Architecture Decision Records. Tech leads who operate across team boundaries are classified as architecture-level contributors — significantly harder to cut than single-team contributors.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Track Record for Principal Engineer Track or Launch an Architectural Consulting Practice',
+    description: 'Senior tech leads in the principal engineer window should build an external visibility portfolio: publish 2 technical articles, submit a conference talk abstract (QCon, Rootconf, HasGeek), and engage with 2 senior engineers outside your company. Principal engineers with external visibility receive 3× more recruiter contacts for senior IC roles (₹45–80 LPA, 2026). Alternatively, take a fractional technical advisor role with a startup — your ability to set technical direction in a new context is the proof point a principal title requires.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 34, deadline: '21 days — publish first article', priority: 'Critical',
   },
   {
     title: 'Lead an On-Call Incident and Write a Blameless Post-Mortem',
@@ -1648,11 +1931,21 @@ ACTION_DB.tech_lead = compactPool(
   },
 );
 
-ACTION_DB.principal_engineer = compactPool(
+ACTION_DB.principal_engineer = seniorityPool(
   {
     title: 'Write and Publish an Engineering Strategy Document',
     description: 'Write a 2,000-word engineering strategy document: where the org\'s technology stack should be in 24 months, what bets to make, what to deprecate, and what the AI integration roadmap looks like. Send it to your VP Engineering or CTO. Principal engineers who propose and execute strategy are the most protected profile in any restructuring and the most sought after in the external market.',
     layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Cross-Org Technical Initiative with Measurable Engineering-Wide Outcomes',
+    description: 'Mid-level staff engineers who drive initiatives that span multiple teams — standardising the observability stack, migrating all services to a new internal API pattern, or owning the company\'s AI tooling strategy — demonstrate principal-level scope without needing the title first. Volunteer to own one cross-org initiative, write the proposal (1 page), and circulate it at the VP/director level. Staff engineers who demonstrate principal-scope work before the promotion conversation are promoted 2× faster than those who wait.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 32, deadline: '14 days — write proposal', priority: 'Critical',
+  },
+  {
+    title: 'Position for VP Engineering, CTO Advisory, or Distinguished Engineer Track — or Establish a Technical Consulting Practice',
+    description: 'Senior principal engineers are in the window for VP Engineering, Distinguished Engineer, or CTO at a smaller company. Build external visibility NOW: publish 2 strategy articles, speak at one conference, and engage with 3 VPs at companies you respect. Principals with external visibility receive direct CTO-track offers — not just lateral moves. Alternatively, offer fractional CTO advisory to 2 Series A companies (₹1,50,000–₹3,00,000/month, 10–15 hours). One engagement validates your strategic scope and makes the next full-time CTO conversation a confirmation, not an interview.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 40, deadline: '21 days — publish first article', priority: 'Critical',
   },
   {
     title: 'Submit a Talk Proposal to a Major Technical Conference',
@@ -1666,11 +1959,21 @@ ACTION_DB.principal_engineer = compactPool(
   },
 );
 
-ACTION_DB.solution_architect = compactPool(
+ACTION_DB.solution_architect = seniorityPool(
   {
     title: 'Build and Present an AI-Augmented Architecture Proposal',
     description: 'For your next client or internal project, produce an architecture proposal that explicitly evaluates AI/LLM components: where they add value, what risks they introduce, how they would be governed. Solutions architects who can evaluate AI components — not just suggest them — are positioned as strategic advisors. The narrative: you reduce AI implementation risk, not increase it.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Own the Technical Solution for a Strategic Account — End-to-End from Proposal to Delivery',
+    description: 'Mid-level solutions architects who own the full technical lifecycle — proposal, architecture design, client review, delivery governance, and post-launch optimisation — for one strategic account become the client-side technical authority. Request ownership of your highest-value client engagement. Solutions architects who own strategic accounts are the last people cut when services firms reduce headcount — their departure risks the revenue.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 30, deadline: '14 days — request account ownership', priority: 'Critical',
+  },
+  {
+    title: 'Launch an Independent Solutions Architecture Consulting Practice or Pursue CTO Advisory',
+    description: 'Senior solutions architects with a track record of enterprise architecture decisions are positioned to offer fractional CTO or independent consulting services to mid-market companies (₹500Cr–₹2,000Cr revenue) that need architectural direction without a full-time hire. One retainer at ₹1,50,000–₹3,00,000/month for 12 hours/week builds income security and positions you above the commoditised solutions architect market. Alternatively, pursue a Head of Architecture or CTO track — your cross-domain enterprise experience is the differentiator.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 38, deadline: '21 days — write your consulting proposition', priority: 'Critical',
   },
   {
     title: 'Earn AWS Solutions Architect Professional or Azure Solutions Expert',
@@ -1684,11 +1987,21 @@ ACTION_DB.solution_architect = compactPool(
   },
 );
 
-ACTION_DB.support_engineer = compactPool(
+ACTION_DB.support_engineer = seniorityPool(
   {
     title: 'Transition to Site Reliability Engineering or DevOps Using Your Production Knowledge',
     description: 'Technical support engineers have unique production knowledge — you know what fails, how, and why. This knowledge is the foundation for SRE. Start the CKA (Kubernetes) or AWS SysOps cert track. Apply to SRE/DevOps roles at the companies you currently support, using your issue history as the portfolio: "I diagnosed 200+ production incidents, here\'s the pattern I found." This is the highest-ROI transition for support engineers.',
     layerFocus: 'L3 · Role Displacement', riskReductionPct: 35, deadline: '60 days — start cert; 90 days — apply', priority: 'Critical',
+  },
+  {
+    title: 'Build Internal AI-Powered Troubleshooting Tooling and Train Your Team on It',
+    description: 'Mid-level support engineers who build and own the AI-powered troubleshooting tool — not just use it — become the platform owner who makes the rest of the team more productive. Use Claude or OpenAI APIs to build a tool: input a customer error message, output the 3 most likely root causes with fix steps, trained on your incident history. Deploy it, train the team, and measure the time-to-resolution improvement. Engineers who build tools the team depends on are infrastructure — not interchangeable support headcount.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Position as Technical Customer Success Lead, Engineering Enablement Specialist, or Support Engineering Manager',
+    description: 'Senior support engineers who have diagnosed hundreds of production issues across dozens of customer environments hold institutional knowledge that is genuinely rare. Position yourself for a Technical Customer Success Manager, Solutions Engineer, or Support Engineering Manager role — all pay 40–70% more than individual contributor support. Write a case study of your highest-complexity resolution, quantify the business impact (revenue at risk, SLA breach avoided), and present it to your manager as your case for a senior IC or management track.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 36, deadline: '14 days — write the case study', priority: 'Critical',
   },
   {
     title: 'Build Internal AI-Powered Troubleshooting Tooling',
@@ -1702,7 +2015,872 @@ ACTION_DB.support_engineer = compactPool(
   },
 );
 
-// ─── Company context injection ────────────────────────────────────────────────
+// ─── Professional services fallback pool ─────────────────────────────────────
+// MED-3: Roles not matching any tech pool (lawyer, nurse, teacher, accountant,
+// operations, finance, etc.) fall back to this pool — NOT 'swe'. Actions here
+// focus on licensing, certification, consulting, and professional networking,
+// which are meaningful across non-engineering knowledge-work roles.
+
+ACTION_DB.professional_services = seniorityPool(
+  {
+    title: 'Audit Your Professional Certifications and Renew or Upgrade the Most Market-Valued One',
+    description: 'In professional services, certifications are the primary signal of current competence. Identify the 2 most in-demand certifications in your field (ask your professional association or check job postings). If you hold them, renew or upgrade. If you don\'t, enroll in the highest-signal one within the next 2 weeks. Professionals with current, advanced credentials receive 35–50% more interview invitations in most professional services domains.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 28, deadline: '14 days — enroll', priority: 'Critical',
+  },
+  {
+    title: 'Build Visibility in Your Professional Community — Publish, Speak, or Lead a Working Group',
+    description: 'Mid-career professionals who publish in their field\'s trade journals, speak at industry associations, or chair a working group become the recognized name that gets called when an organisation needs senior professional expertise. Pick one channel: write a 1,200-word article for your industry publication, submit a talk to your professional association\'s next conference, or volunteer to lead a committee. One visible contribution generates more senior-level opportunities than 6 months of passive job applications.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '21 days — submit or publish', priority: 'Critical',
+  },
+  {
+    title: 'Launch a Consulting or Advisory Practice in Your Domain',
+    description: 'Senior professionals with 10+ years of domain expertise are in the strongest position to offer consulting services to organisations that cannot afford full-time expertise. Define your consulting proposition in 3 sentences: who you help, what outcome you deliver, and what you charge. Start with your existing network — 80% of first consulting engagements come from former colleagues or clients. One retainer engagement at ₹75,000–₹2,00,000/month provides financial resilience and demonstrates market-validated expertise in every subsequent salary negotiation.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 36, deadline: '14 days — write proposition', priority: 'Critical',
+  },
+  {
+    title: 'Activate Your Professional Network — 5 Conversations in 10 Days',
+    description: 'In professional services, opportunities flow through relationships more than job boards. Message 5 people in your network this week: former colleagues, clients, or mentors. The message: "Catching up — I\'d love to hear what you\'re working on." Do not ask for a job. 80% of professional services roles above ₹15 LPA are filled through referrals before they are posted. These 5 conversations are your highest-ROI career action.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '10 days', priority: 'High',
+  },
+  {
+    title: 'Adopt AI Tools to Amplify Your Professional Output — Document the Productivity Gain',
+    description: 'Professionals who demonstrate AI augmentation in their work — using Claude or ChatGPT for research, drafting, or analysis — position themselves as forward-looking, not replaceable. Pick one core workflow (contract drafting, financial modelling, lesson planning, patient documentation) and use an AI tool to complete it 40% faster. Document the time saved and the quality comparison. This narrative ("I use AI to deliver more, faster") is the most protective professional positioning available in 2026.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '14 days', priority: 'Medium',
+  },
+);
+
+// ─── Phase 1B: 60 New Role Groups (v37.0) ─────────────────────────────────────
+// Added roles: Product/Design (10), Data/Analytics (8), Engineering Leadership (6),
+// Finance (14), Sales (12), HR (10) = 60 explicit ACTION_DB entries.
+// These replace the generic professional_services fallback for all covered professions.
+
+// ── DevOps (explicit, replacing engineering-adjacent swe fallback) ─────────────
+ACTION_DB.devops = seniorityPool(
+  {
+    title: 'Build a GitOps-First Infrastructure Repo with Full CI/CD Observability',
+    description: 'Create a production-grade GitOps repo using ArgoCD or Flux with: multi-environment promotion, Prometheus + Grafana dashboards, PagerDuty/OpsGenie integration, and runbook documentation. Add a DORA metrics dashboard showing lead time and change failure rate. Junior DevOps engineers with demonstrable SLO ownership receive 3× more senior platform offers. Time: 15–20 hours.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn AWS/GCP/Azure DevOps Professional Certification + Kubernetes CKA',
+    description: 'The CKA (Certified Kubernetes Administrator) + a cloud provider professional-level DevOps cert is the combination that unlocks 40–60% salary premiums in platform roles. Study: 3 months, ₹15,000–30,000 total cost. Target roles: DevOps Lead, Platform Engineer, SRE Lead at product companies (Razorpay, Groww, CRED). Both certs together position you for ₹30–50 LPA roles.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 24, deadline: '90 days', priority: 'Critical',
+  },
+  {
+    title: 'Publish a Platform Engineering Blog Series and Speak at a DevOps Conference',
+    description: 'Write a 4-part technical blog series documenting your most complex infrastructure challenge: the problem, architecture decision record, implementation, and lessons learned. Submit to DevOpsDays, KubeCon, or HashiConf. Senior DevOps engineers who present at conferences command 25–40% salary premiums and receive direct recruiter outreach from FAANG/MAANG cloud teams.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '45 days — submit CFP', priority: 'High',
+  },
+  {
+    title: 'Migrate One Critical Workflow to Infrastructure-as-Code with Full Drift Detection',
+    description: 'Pick your company\'s most manual, ticket-driven infrastructure process. Automate it completely using Terraform + Atlantis (or Pulumi), with drift detection alerts and self-healing runbooks. Document the before/after metrics: time saved, incident reduction. Engineers who own IaC initiatives are 4× less likely to be cut in platform consolidations because their work is foundational.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Implement SLO-Based Alerting and Eliminate 80% of Alert Noise',
+    description: 'Error-budget-based SLO alerting (using OpenSLO or Sloth with Prometheus) eliminates the most common DevOps pain point: on-call fatigue from noisy alerts. Reduce alert volume by 80% and document the process. This is the highest-visibility operational win available — management notices when the on-call load drops.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 16, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── QA Engineer ────────────────────────────────────────────────────────────────
+ACTION_DB.qa_engineer = seniorityPool(
+  {
+    title: 'Build an AI-Augmented Test Suite with Autonomous Test Generation',
+    description: 'Use Copilot or GPT-4 to generate 200+ test cases from your existing codebase, then validate them against production bugs. Implement Playwright or Cypress visual regression testing as a baseline. Junior QA engineers who demonstrate AI test generation skills are repositioned as "quality automation engineers" — a role category with 40% less displacement risk than manual QA.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Shift-Left Quality Culture — Own DORA Metrics and Release Quality Scorecard',
+    description: 'Deploy a DORA metrics dashboard (deployment frequency, lead time, MTTR, change failure rate) and own the weekly quality scorecard that reports to engineering leadership. QA engineers who quantify their business impact through release quality metrics are classified as "platform risk managers" rather than "testers" — a category that survives headcount rationalization.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 25, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead the Shift to Continuous Quality — Performance Testing and Chaos Engineering Ownership',
+    description: 'Own performance testing (k6, Locust, or JMeter) and implement chaos engineering experiments (Chaos Monkey or LitmusChaos) for 3+ critical services. Senior QA engineers who own chaos engineering are reclassified as reliability engineers — a protected function. Present quarterly reliability reports to VP Engineering.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Earn ISTQB Advanced + API Automation Certification (Postman/RestAssured)',
+    description: 'ISTQB Advanced Test Analyst + Postman API Testing Certification is the most valued credentials combination for mid-career QA engineers targeting product companies. Study: 2 months, ₹8,000–12,000. Target roles: Senior SDET, QA Lead at product companies pay ₹18–28 LPA — 60% more than IT services QA roles at the same seniority.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 20, deadline: '60 days', priority: 'High',
+  },
+  {
+    title: 'Transition to Test Architecture — Define the Organization-Wide Test Strategy',
+    description: 'Write a comprehensive test strategy document covering: testing pyramid ratios, flaky test SLA, CI gate policy, visual regression coverage, and mutation testing targets. Present to the engineering team. QA engineers who own test architecture are the last to be cut in quality-focused engineering organizations.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Product Manager ─────────────────────────────────────────────────────────────
+ACTION_DB.product_manager = seniorityPool(
+  {
+    title: 'Ship One AI-Native Product Feature End-to-End with Full Metric Ownership',
+    description: 'Identify a customer problem that can be solved with an LLM-based feature. Write the PRD, work with engineering to ship it, and own the success metrics (adoption rate, task completion, user satisfaction). Junior PMs who have shipped AI-native features — not just "added AI to the roadmap" — receive 2.5× more senior PM interview invites. Document the full lifecycle: problem, hypothesis, build, learn.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build Your OKR/Impact Ownership Document — Quantify Revenue and Retention Impact',
+    description: 'Create a one-page product impact document: for each major initiative you led, quantify: revenue generated or protected (₹ or $), retention impact (% churn reduction), and user adoption (MAU/DAU change). Mid-level PMs who can cite verified business outcomes receive 35% higher offers and pass hiring screens 3× faster. This document is your negotiation asset.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Drive a Zero-to-One Product Initiative and Own the Business Case',
+    description: 'Senior PMs who have taken products from idea to revenue are in the top 10% of the market. Identify one new product opportunity in your company\'s space, write the business case (TAM, competitive landscape, 18-month revenue model), and either get it funded or use it as your next-company interview asset. Senior product candidates who pitch new product ideas during interviews are hired at ₹40–80 LPA vs ₹25–40 LPA for those who only describe past feature work.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn Product School / Reforge Product Management Certificate and Update LinkedIn',
+    description: 'Reforge PM certificate or General Assembly Product Management certification signals current methodology fluency. Complete the most relevant track to your next role target: Growth PM (Reforge Growth Series), Platform PM (Reforge Platform), or Core PM (Product School). PMs with current, named certifications receive 40% more recruiter contacts on LinkedIn.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '45 days', priority: 'High',
+  },
+  {
+    title: 'Conduct 10 Customer Discovery Interviews and Synthesize into a Published Insight',
+    description: 'Run 10 structured customer discovery interviews (Jobs-to-Be-Done framework) and write a customer insight document or LinkedIn article about the key findings. PMs who actively conduct customer research and publish insights are 60% more likely to receive leadership endorsement and external visibility that accelerates hiring.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── UX Researcher ──────────────────────────────────────────────────────────────
+ACTION_DB.ux_researcher = seniorityPool(
+  {
+    title: 'Build a Public Research Portfolio with 2 End-to-End Case Studies',
+    description: 'Document 2 research projects with full methodology: research question, method selection rationale, screener, guide, analysis approach (affinity mapping, thematic analysis), and business outcome. Host on Notion or a personal site. Junior UX researchers with documented impact portfolios receive 3× more interview invites than those with only deliverable screenshots.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Strategic Research Initiative that Directly Shaped Product Direction',
+    description: 'Identify an unresolved strategic question in your product area and propose a research plan to leadership. Conduct a mixed-methods study (qual + quant) that produces a decision recommendation with a measurable outcome. Mid-career researchers who can demonstrate "research → product decision → business outcome" triad are 4× less likely to face role elimination.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '45 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Research Repository and Democratize Insights Across the Organization',
+    description: 'Implement a research repository (Dovetail, Notion, or Airtable) that makes past research findable. Conduct quarterly research briefings for product leadership. Senior researchers who build organizational research infrastructure are reclassified from "project resource" to "strategic capability" — the difference between the first and last to be cut.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Earn Nielsen Norman Group UX Research Certification',
+    description: 'NNg UX Research certificate is the most recognized credential in the UX research market. The 5-course track costs approximately $1,500 and takes 2–3 months. Researchers with NNg certification command 20–35% salary premiums at product companies vs. IT services.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '60 days', priority: 'High',
+  },
+  {
+    title: 'Conduct an AI Usability Study and Publish the Findings',
+    description: 'Conduct a usability study on an AI product (your own or a public tool) and publish the key findings as a LinkedIn article or design community post. AI usability is the highest-demand research specialization in 2026 and researchers with published AI research experience receive 50% more recruiter outreach.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── Brand Designer ────────────────────────────────────────────────────────────
+ACTION_DB.brand_designer = seniorityPool(
+  {
+    title: 'Build a Live Design Portfolio with 3 Brand Case Studies on Behance/Dribbble',
+    description: 'Create 3 polished brand identity case studies: each showing brand strategy brief, moodboard exploration, final mark system, and application across touchpoints. Host on Behance with process documentation. Brand designers with well-documented process portfolios receive 4× more recruiter views than those with only final outputs.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Take on a Freelance Brand Identity Project to Build Revenue Resilience',
+    description: 'Secure 1–2 freelance brand identity clients through LinkedIn or design communities. A ₹30,000–₹1,00,000 project provides financial buffer and an external portfolio piece that demonstrates market-validated work. Brand designers with active freelance track records command 25% salary premiums in full-time hiring.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Full Brand Evolution Initiative — Visual Identity System at Scale',
+    description: 'Senior brand designers who own brand system evolution projects (design tokens, component libraries, brand voice + visual alignment) are classified as strategic business assets, not production design resources. Propose and lead one brand system initiative this quarter. Budget the time as 20–30% of your role.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Master AI Design Tools — Midjourney, Firefly, and DALL-E for Brand Ideation',
+    description: 'Designers who demonstrate AI tool fluency in concepting and moodboarding (Midjourney for style exploration, Adobe Firefly for asset generation) are repositioned as "AI-augmented creative directors" rather than production designers. Document your AI workflow and share it publicly.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '14 days', priority: 'High',
+  },
+  {
+    title: 'Get Adobe Certified Professional in Illustrator or Photoshop',
+    description: 'Adobe Certified Professional credentials are the primary market signal for brand designers at production companies. The exam costs approximately $180 and validates platform mastery. Designers with current Adobe certifications receive 20% more interview invites from agencies and product companies.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 12, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── Data Scientist (explicit entry; previously fell to swe via engineering adjacent) ──
+ACTION_DB.data_scientist = seniorityPool(
+  {
+    title: 'Deploy an End-to-End ML Model to Production with Full Monitoring',
+    description: 'Build and deploy a machine learning model that solves a real business problem: churn prediction, demand forecasting, or recommendation. Use MLflow for experiment tracking, FastAPI for serving, and Evidently or Whylogs for model drift monitoring. Junior data scientists who deploy to production are reclassified from "analysts with models" to "ML engineers" — a 40% higher-pay category.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Kaggle Top-10% Portfolio + Publish a Research-Quality Notebook',
+    description: 'Achieve top-10% in 2 Kaggle competitions in your specialisation (tabular, NLP, or computer vision) and publish a Gold Medal notebook with detailed methodology. Mid-career data scientists with competitive ML track records receive 3× more senior DS interview invites. Specifically, a public Kaggle Expert or Master profile unlocks FAANG DS screening.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '60 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a High-Impact Analytics Initiative and Present to C-Suite',
+    description: 'Propose and lead a company-level analytics initiative (customer segmentation, pricing model, market basket analysis) and present findings directly to VP or C-Suite. Senior data scientists who own business-facing analytics initiatives — not just model outputs — are classified as strategic decision support functions. This framing makes you the last person cut, not the first.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn Google Advanced Data Analytics or Databricks Certified ML Associate',
+    description: 'Databricks Certified Machine Learning Associate (₹15,000 exam) or Google Professional Machine Learning Engineer certification validates production ML competency. Target roles post-certification: Senior Data Scientist or ML Engineer at product companies (Meesho, Flipkart, Swiggy) pay ₹35–65 LPA vs ₹20–35 LPA at IT services.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 22, deadline: '60 days', priority: 'High',
+  },
+  {
+    title: 'Build a Public Data Story: Analyze and Visualize a Controversial Dataset',
+    description: 'Choose a high-visibility public dataset (economic data, social trends, sports analytics) and publish a comprehensive visual analysis that drives engagement. Data scientists with 500+ LinkedIn reactions on a published analysis receive 2× more recruiter outreach within 30 days. Tools: Python (Plotly/Altair), Flourish, or Observable.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Analytics Engineer ─────────────────────────────────────────────────────────
+ACTION_DB.analytics_engineer = seniorityPool(
+  {
+    title: 'Build a Public dbt + BigQuery/Snowflake Analytics Project',
+    description: 'Create an end-to-end analytics engineering project: source data ingestion, dbt transformation models with full lineage documentation, data quality tests (dbt-expectations), and a Looker/Metabase dashboard. Host on GitHub with README. Analytics engineers with documented dbt projects receive 4× more interview invites from product companies vs. IT services.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn dbt Analytics Engineering Certification + Snowflake SnowPro Core',
+    description: 'dbt Analytics Engineering Certification ($150) + Snowflake SnowPro Core ($175) is the credential pair that most directly unlocks analytics engineering roles at product companies. Mid-career analytics engineers with both certifications command ₹28–45 LPA vs ₹18–28 LPA without.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 24, deadline: '60 days', priority: 'Critical',
+  },
+  {
+    title: 'Implement a Semantic Layer and Own the Company Metrics Catalog',
+    description: 'Build a semantic layer (dbt Metrics, LookML, or AtScale) that becomes the single source of truth for all business metrics. Own the metrics catalog and governance process. Senior analytics engineers who own the semantic layer are the most difficult to replace in data organizations — the institutional knowledge is non-transferable.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Implement Data Observability across the Production Pipeline',
+    description: 'Deploy a data observability solution (Monte Carlo, Anomalo, or Great Expectations) across your 3 most critical data pipelines. Document the data SLAs and alert thresholds. Engineers who own data reliability reduce their displacement risk by demonstrating business continuity ownership.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Run a Self-Service Analytics Enablement Program',
+    description: 'Create a self-service analytics enablement program: SQL training materials, Looker/Metabase dashboard templates, and 1:1 coaching for 3 business stakeholders. Analytics engineers who demonstrate cross-functional impact — not just technical output — are classified as data product managers rather than technical contributors.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── BI Analyst ────────────────────────────────────────────────────────────────
+ACTION_DB.bi_analyst = seniorityPool(
+  {
+    title: 'Build an End-to-End BI Portfolio: From Raw Data to Executive Dashboard',
+    description: 'Create a complete BI project: load a public dataset (Kaggle or government data), build a transformation pipeline (Python + SQL), and publish a Power BI or Tableau dashboard with executive-level insights. Junior BI analysts with public portfolio projects receive 3× more interview invites than those with only work screenshots.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn Microsoft Power BI Data Analyst Associate (PL-300) or Tableau Desktop Specialist',
+    description: 'Power BI PL-300 ($165 exam) or Tableau Desktop Specialist ($250) is the primary market credential for BI roles. Mid-career BI analysts with current platform certifications receive 25–35% salary premiums. Target roles: Senior BI Developer, Data Analytics Lead at GCCs (HSBC, Barclays, JPMorgan India) pay ₹20–35 LPA.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 22, deadline: '45 days', priority: 'Critical',
+  },
+  {
+    title: 'Transition from Report Builder to Data Product Owner — Own the Business Dashboard Suite',
+    description: 'Shift from reactive reporting to owning the company\'s core business dashboards as data products: define SLAs, run stakeholder feedback cycles, and maintain a dashboard catalog. BI analysts who operate as data product owners are reclassified from "cost center" to "decision infrastructure" — a category that survives restructuring.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Learn Python for Data Analysis and Build an Automated Reporting Pipeline',
+    description: 'Replace one manual Excel/CSV reporting workflow with a Python + pandas automated pipeline that produces the report in < 5 minutes. BI analysts who automate their own manual work demonstrate productivity and aren\'t seen as automation targets — they\'re seen as automation agents.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Conduct a Dashboard Audit — Eliminate Unused Reports and Improve Key Dashboards',
+    description: 'Audit all existing dashboards: identify which are unused (< 2 views/month), which are duplicated, and which are highest-value. Deprecate the low-value ones and improve the top-3 dashboards with user feedback. BI analysts who govern data assets proactively are valued as data governance leads.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 12, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Quantitative Analyst ───────────────────────────────────────────────────────
+ACTION_DB.quantitative_analyst = seniorityPool(
+  {
+    title: 'Build and Backtest a Trading Strategy or Risk Model with Live Market Data',
+    description: 'Implement a quantitative strategy (pairs trading, momentum, mean-reversion) using Python (pandas, zipline, backtrader) with real market data. Produce a comprehensive backtest report: Sharpe ratio, max drawdown, turnover, transaction costs. Junior quants with public backtesting portfolios are screened in 4× more frequently for sell-side and buy-side roles.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn CFA Level 1 or FRM Part 1 — Begin the Credential Journey',
+    description: 'CFA Level 1 ($900 exam) or FRM Part 1 ($450 exam) is the credential that separates quant candidates. Mid-career quantitative analysts without CFA/FRM progression face significantly higher displacement risk as AI tools automate statistical model building. Enroll in the next exam sitting immediately.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 26, deadline: '90 days — enroll now', priority: 'Critical',
+  },
+  {
+    title: 'Lead Quantitative Research Initiative — Publish an Internal White Paper',
+    description: 'Identify an unresolved quantitative problem in your organization (pricing model enhancement, risk factor analysis, portfolio construction improvement) and write a research paper with findings. Senior quants who publish internal research establish irreplaceable institutional knowledge and are considered strategic assets.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '45 days', priority: 'High',
+  },
+  {
+    title: 'Learn Machine Learning for Finance — Apply ML to a Risk or Pricing Problem',
+    description: 'Apply gradient boosting (XGBoost/LightGBM) or neural networks to a financial problem you currently solve statistically. Demonstrate ML outperformance on backtested data. Quantitative analysts who integrate ML methods are classified as "quantitative ML engineers" — a hybrid category that commands 30% salary premiums.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 20, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Automate Your Most Time-Consuming Model Update Process',
+    description: 'Identify the model refit, data ingestion, or reporting process that consumes the most time and automate it completely using Python scheduling. Document the time saved and present to your manager. Quants who automate their own workflows are seen as productivity multipliers rather than automation targets.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 14, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Engineering Leadership roles ───────────────────────────────────────────────
+// Staff/Principal Engineer (separate from principal_engineer for career path clarity)
+ACTION_DB.staff_engineer = seniorityPool(
+  {
+    title: 'Publish a Technical Architecture Decision Record for a Major System Design',
+    description: 'Staff engineers\' primary value is technical judgment. Write a comprehensive ADR for the most complex system design decision you\'ve made in the last 6 months: problem, alternatives considered, decision, consequences, and 12-month outcome prediction. Publish internally and, where possible, as a technical blog post. Staff engineers who publish their reasoning receive 40% more VP/C-suite recognition.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Cross-Functional Technical Initiative — Resolve a System-Wide Bottleneck',
+    description: 'Identify the highest-impact system-wide technical bottleneck (reliability, performance, developer velocity, security posture). Own the proposal, cross-team alignment, and delivery. Staff engineers who drive org-wide technical improvements are classified as "technical infrastructure" — the last category to face cuts.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Become the External Technical Face — Present at a Conference or Write for Engineering Blog',
+    description: 'Distinguished engineers and staff ICs who represent their company externally (conference talks, engineering blog posts, open-source leadership) are company brand assets. Submit 2 conference proposals and write 1 engineering blog post this month. External visibility creates a gravity field that makes you nearly impossible to cut without PR implications.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build an Internal Engineering Mentorship Program',
+    description: 'Create a structured mentorship program for mid-level engineers: pair them with senior ICs, define mentorship goals, and track outcomes. Staff engineers who invest in engineering culture create organizational loyalty that protects them during restructuring.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Conduct an Engineering Health Audit and Publish Recommendations',
+    description: 'Assess your engineering organization\'s technical health: test coverage, deployment frequency, mean time to recovery, code complexity hotspots. Write a structured report with prioritized recommendations. Engineers who identify and frame systemic problems attract VP-level sponsorship.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '14 days', priority: 'Medium',
+  },
+);
+
+// Share between distinguished_engineer and staff_engineer (principal+ equivalent)
+ACTION_DB.distinguished_engineer = ACTION_DB.staff_engineer;
+
+// ── Financial Analyst ─────────────────────────────────────────────────────────
+ACTION_DB.financial_analyst = seniorityPool(
+  {
+    title: 'Build a Financial Modelling Portfolio — 3-Statement Model + DCF Valuation',
+    description: 'Build a fully linked 3-statement financial model (P&L, balance sheet, cash flow) with DCF valuation for a public company in your coverage sector. Include sensitivity analysis and scenario modelling. Post to a portfolio site or LinkedIn. Junior financial analysts with demonstrable modelling skills receive 3× more interview calls from top-tier banks and consulting firms.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Enroll in CFA Level 1 — Begin the Credential Journey Immediately',
+    description: 'CFA Level 1 ($900 exam) is the single highest-signal credential in finance. Mid-career financial analysts without CFA progression face 35% higher displacement risk as AI tools (Bloomberg AI, Microsoft Copilot for Excel) automate routine financial analysis. The CFA signals judgment, not just calculation — a distinction that matters in the AI era.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 30, deadline: '90 days — enroll now', priority: 'Critical',
+  },
+  {
+    title: 'Own the FP&A Business Partnership — Drive a P&L Owner Quarterly Review',
+    description: 'Senior financial analysts who own business partnerships with P&L leaders (not just report to them) are classified as "strategic finance business partners" — a protected category. Propose and lead a quarterly financial review session with your business partner. This repositioning from "report generator" to "decision partner" is the highest-leverage career action available.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Master Advanced Excel Modelling and Python for Finance',
+    description: 'Build a Python + pandas financial analysis tool that automates one of your most time-consuming Excel processes (variance analysis, budget vs. actuals, rolling forecasts). Document the time saved. Finance professionals who demonstrate Python automation are 50% less likely to face automation displacement — they become the automation deployers.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Build a Treasury Forecasting Dashboard to Improve Cash Visibility',
+    description: 'Create a rolling 13-week cash flow forecast model with automated variance analysis and bank balance reconciliation. Financial professionals who own cash management intelligence are classified as business-critical functions and face significantly lower displacement risk.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Investment Banker ──────────────────────────────────────────────────────────
+ACTION_DB.investment_banker = seniorityPool(
+  {
+    title: 'Build a Live Comparable Company Analysis and Present in an Interview or Internal Meeting',
+    description: 'Select 5–8 public companies in your target sector and build a comprehensive comps table: EV/Revenue, EV/EBITDA, P/E, growth rates, and margin profiles. Present to a mentor or use in your next interview. Junior bankers who demonstrate live model fluency receive significantly more callbacks at boutiques and middle-market banks.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn CFA Level 1 or FMVA Certification',
+    description: 'CFA Level 1 or FMVA (Financial Modelling & Valuation Analyst by CFI) are the most direct credentialing paths for mid-career bankers targeting buy-side transitions. Complete FMVA (8 courses, ~$497) within 60 days. This credential directly opens doors at private equity, family offices, and corporate development.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 26, deadline: '60 days', priority: 'Critical',
+  },
+  {
+    title: 'Own an Industry Coverage Vertical — Become the Go-To Expert',
+    description: 'Senior bankers who own deep sector expertise (healthcare M&A, fintech deals, infrastructure) command 40–60% fee premium and receive direct client calls. Write an 8-page sector report on your coverage area and distribute to 10 clients. Sector expertise is the primary moat against AI commoditisation of financial modelling.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build Your Deal Tracker and Quantify Your Revenue Contribution',
+    description: 'Document every deal you\'ve supported: mandate volume, deal size, your specific contribution (model built, client meeting, diligence process), and closing timeline. Senior bankers who can articulate revenue attribution in interviews receive 25–40% higher offers when transitioning firms.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '14 days', priority: 'High',
+  },
+  {
+    title: 'Learn Excel VBA + Python for Banking Automation',
+    description: 'Automate one repetitive banking workflow (pitch book template population, data scraping, model refresh) using Python or VBA. Investment bankers who automate analyst-level work are reclassified as process improvement specialists — a non-displaceable function when AI tools accelerate deal volume.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Portfolio Manager ──────────────────────────────────────────────────────────
+ACTION_DB.portfolio_manager = seniorityPool(
+  {
+    title: 'Build a Paper Portfolio with Documented Investment Thesis for Each Position',
+    description: 'Run a simulated $1M portfolio with 10–15 positions. For each, write a documented investment thesis: business quality assessment, competitive moat, valuation method, entry/exit criteria, position sizing rationale. Junior portfolio analysts who demonstrate structured investment process receive 3× more interviews at asset managers.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn CFA Level 2 — The Buy-Side Credential Gate',
+    description: 'CFA Level 2 is the inflection point that separates portfolio analysts from portfolio managers in the hiring market. The exam covers equity valuation, fixed income, derivatives, and portfolio management at a level that directly aligns with PM decision-making. Without CFA progression, buy-side advancement caps at analyst level.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 30, deadline: '90 days — enroll now', priority: 'Critical',
+  },
+  {
+    title: 'Develop a Proprietary Investment Framework — Publish an Investment Memo',
+    description: 'Write a comprehensive investment memo on a public company or sector: thesis, bear/base/bull scenarios, key risks, catalyst timing, and position sizing recommendation. Distribute to your professional network and LinkedIn. Senior PMs who publish investment thinking build market reputation that generates direct LP/investor conversations.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Integrate Quantitative Factors into Your Investment Process',
+    description: 'Add one quantitative screen to your investment process using Python: factor exposure analysis, earnings quality screen, or price momentum overlay. Document the backtest. PMs who integrate quant methods are 40% less likely to face displacement from systematic/quant fund competition.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Build LP/Client Communication Skills — Write a Quarterly Portfolio Letter',
+    description: 'Draft a quarterly portfolio review letter as if writing to LPs or clients: market context, performance attribution, key portfolio changes, and forward positioning. Client communication skills are the primary differentiator between PMs who retain AUM and those who don\'t during market volatility.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Medium',
+  },
+);
+
+// ── Risk Analyst ───────────────────────────────────────────────────────────────
+ACTION_DB.risk_analyst = seniorityPool(
+  {
+    title: 'Build a Credit Risk Model and Validate Against Historical Default Data',
+    description: 'Develop a credit scoring model (logistic regression or gradient boosting) trained on public lending data (Lending Club or Kaggle credit datasets). Include model documentation: variable selection rationale, Gini coefficient, KS statistic, and discrimination power. Risk analysts with public model portfolios receive 3× more interview invites from BFSI firms.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn FRM Part 1 — The Primary Risk Management Credential',
+    description: 'FRM Part 1 ($450 exam) covers quantitative analysis, risk management fundamentals, and financial markets. The FRM is the most recognized risk credential globally and directly unlocks roles at investment banks, asset managers, and regulatory bodies. Mid-career risk analysts with FRM Part 1 receive 30% salary premiums.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 28, deadline: '90 days — enroll now', priority: 'Critical',
+  },
+  {
+    title: 'Own Enterprise Risk Reporting to the Board — Build the Risk Dashboard',
+    description: 'Propose and build an enterprise risk dashboard that consolidates credit risk, market risk, operational risk, and liquidity risk into a single executive view. Senior risk analysts who own board-level reporting are classified as regulatory and governance functions — essentially immune to discretionary cuts.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Implement ML-Based Risk Scoring — Improve Model Performance by 15%+',
+    description: 'Replace or supplement one existing risk scoring model with a machine learning approach (XGBoost or random forest). Demonstrate performance improvement in Gini, KS, or AUC metrics. Risk analysts who integrate ML methods command 30–40% salary premiums over purely statistical risk professionals.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Conduct a Stress Testing Exercise for a Key Risk Portfolio',
+    description: 'Run scenario analysis and stress testing for your highest-exposure risk portfolio. Document the methodology, scenarios tested, and results. Present to senior risk leadership. Stress testing ownership demonstrates business continuity expertise that is regulatorily required — i.e., unfireable.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Compliance Officer ─────────────────────────────────────────────────────────
+ACTION_DB.compliance_officer = seniorityPool(
+  {
+    title: 'Complete a Regulatory Update Briefing and Distribute to Business Stakeholders',
+    description: 'Track the 3 most significant regulatory changes in your jurisdiction this quarter (RBI, SEBI, DPDP Act, or international equivalents). Write a one-page impact brief for each and distribute to business stakeholders. Junior compliance professionals who proactively communicate regulatory impact are classified as business enablers rather than gatekeepers — a key distinction in restructuring decisions.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn CAMS or CFE Certification — The Primary Compliance Credential',
+    description: 'CAMS (Certified Anti-Money Laundering Specialist, $695 exam) or CFE (Certified Fraud Examiner, $450) are the credentials that unlock 30–50% salary premiums in compliance. Mid-career compliance professionals with CAMS or CFE are actively recruited by banks and fintech during regulatory crackdown cycles.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 28, deadline: '90 days — enroll now', priority: 'Critical',
+  },
+  {
+    title: 'Own the Regulatory Exam or Audit Process — Demonstrate Zero Findings',
+    description: 'Volunteer to own the next regulatory examination or internal audit process end-to-end. Achieving zero regulatory findings is a career-defining achievement that makes compliance officers politically untouchable. Even partial ownership demonstrates regulatory depth that is difficult to replace.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Compliance Technology Stack — Implement RegTech Tools',
+    description: 'Propose and implement one RegTech tool that automates a manual compliance process (KYC automation, transaction monitoring, regulatory reporting). Compliance professionals who demonstrate technology adoption are reclassified as "compliance operations engineers" — a hybrid role with 40% higher market value.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Conduct a Compliance Risk Assessment for One Business Unit',
+    description: 'Run a structured compliance risk assessment for one business unit: identify top 5 compliance risks, current controls, control gaps, and remediation plan. Present to the compliance committee. Professionals who proactively identify risk are valued; those who only react to it are vulnerable.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Account Executive ──────────────────────────────────────────────────────────
+ACTION_DB.account_executive = seniorityPool(
+  {
+    title: 'Build Your Pipeline Dashboard and Quantify Your Revenue Attribution This Quarter',
+    description: 'Create a personal pipeline tracker: stage, ARR, probability, expected close date, and your specific contribution to each deal (who introduced it, your touches, competitive situation). The ability to cite verified pipeline value (₹X ARR in active pipeline, ₹Y closed this quarter) is the primary differentiator between AEs who get callbacks and those who don\'t.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '7 days', priority: 'Critical',
+  },
+  {
+    title: 'Activate 5 Warm Referrals This Week — Your Network Is Your Primary Pipeline',
+    description: 'Message 5 former colleagues, buyers, or champions from previous roles with a specific ask: "Would you have 20 minutes this week? I\'d love to catch up and learn what\'s top of mind at [company]." 70% of B2B sales roles above ₹18 LPA are filled through referrals before they are posted. Your warm network is worth more than 50 cold applications.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '7 days', priority: 'Critical',
+  },
+  {
+    title: 'Document Your 5 Biggest Deals — Recreate the Full Sales Process',
+    description: 'Write out the full story of your 5 biggest deals: initial contact, discovery process, stakeholder map, objections handled, competitive displacement strategy, and close. Senior AEs who can walk a new employer through a complex enterprise sale process are hired at ₹40–80 LPA vs ₹25–40 LPA for those who only cite quota attainment.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn Salesforce Certified Sales Cloud Consultant or HubSpot Sales Certification',
+    description: 'Salesforce Sales Cloud Consultant ($200 exam) or HubSpot Sales Certification (free) are the most market-recognized sales certifications. AEs with CRM certifications receive 25% more recruiter outreach and are considered for sales operations and revenue operations roles — a 30% higher-paying adjacent career path.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Build Your Target Account List — 50 Accounts with Full Research',
+    description: 'Research 50 companies that fit your ICP (industry, company size, technology stack, growth indicators). For each, identify the economic buyer, key contacts, and likely trigger event. AEs with well-researched account lists enter market 3× faster than those who rely solely on inbound. This list is your job-search pipeline.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Medium',
+  },
+);
+
+// ── Business Development Manager ───────────────────────────────────────────────
+ACTION_DB.business_development_manager = seniorityPool(
+  {
+    title: 'Build and Close 2 Partnership or Channel Agreements This Quarter',
+    description: 'BDMs who have active, documented partnerships are valued; those with "exploratory conversations" are vulnerable. Identify 3 high-potential partnership opportunities, build a partnership brief for each (mutual value, co-marketing plan, commercial terms), and push to signed MOU or agreement. Document the expected revenue contribution.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Quantify Your Partnership Revenue Attribution — Build the Impact Document',
+    description: 'For each active partnership, calculate the revenue generated or influenced in the last 12 months. Mid-career BDMs who can cite verified partnership revenue ($X ARR from partner channel, Y% of new logo from referral) receive 35% higher offers and are 3× more likely to pass hiring screens.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Strategic Partner Ecosystem — Own the 5-Year Partnership Strategy',
+    description: 'Senior BDMs who own ecosystem strategy (not just individual deals) are classified as "go-to-market architects" — a strategic function that reports to C-Suite and is protected from cuts. Write a 2-year partnership ecosystem strategy document with target partner categories, acquisition plan, and revenue model.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn PMP Certification or Executive Education in Strategic Partnerships',
+    description: 'PMP certification ($555 exam) or a named executive education program (Stanford LEAD, Wharton Online) signals strategic leadership capability beyond deal execution. Senior BDMs with PMP or executive education credentials receive 20–30% salary premiums in the transition to VP Business Development.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '60 days', priority: 'High',
+  },
+  {
+    title: 'Build a Partner Scorecard — Quantify the ROI of Each Partnership',
+    description: 'Create a partner ROI scorecard: leads generated, deals influenced, joint marketing spend, revenue attributed, support cost reduction. BDMs who can articulate partnership ROI are reclassified from "relationship managers" to "revenue architects" — a distinction that matters when budgets are cut.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '14 days', priority: 'Medium',
+  },
+);
+
+// ── Customer Success Manager ──────────────────────────────────────────────────
+ACTION_DB.customer_success_manager = seniorityPool(
+  {
+    title: 'Prevent 3 At-Risk Accounts from Churning — Document the Intervention',
+    description: 'Identify your 3 most at-risk accounts (usage decline, low NPS, sponsor departure). Execute a proactive save playbook: executive QBR, product training session, or escalation to product team. CSMs who can document save stories — "I prevented $X ARR from churning" — are the most protected in CS org restructuring.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Drive 3 Upsell or Expansion Opportunities — Become a Revenue Generator',
+    description: 'Identify 3 accounts where usage data indicates expansion potential. Build a business case for each and execute a commercial conversation. CSMs who are classified as "revenue-generating" rather than "support cost" survive restructuring at 4× the rate. Target: ₹X additional ARR from expansion conversations.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a CS Playbook and Scale Your Processes for 10× More Accounts',
+    description: 'Senior CSMs who build scalable customer success playbooks (onboarding templates, health score criteria, QBR frameworks, escalation processes) are reclassified as CS operations leaders. Create one comprehensive playbook that your team can use to handle 10× the account volume without proportionally increasing headcount.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn Gainsight Certified Admin or Salesforce Service Cloud Certification',
+    description: 'Gainsight Admin certification (free) or Salesforce Service Cloud Consultant ($200) are the most in-demand CS technology credentials. CSMs with CS platform certifications receive 25% salary premiums and qualify for CS Operations Manager roles — a higher-paying adjacent path.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 20, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Build a Customer Health Score Dashboard and Automate At-Risk Alerts',
+    description: 'Implement a customer health score model (using product usage, support tickets, NPS, and contract data) with automated at-risk alerts. CSMs who build systematic health monitoring are reclassified as "customer analytics specialists" — a data-adjacent role with higher market value.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Sales Engineer ─────────────────────────────────────────────────────────────
+ACTION_DB.sales_engineer = seniorityPool(
+  {
+    title: 'Build a Demo Environment that Closes Deals — Own the Technical Win',
+    description: 'Create a fully customized demo environment for your top 3 ICP segments: industry-specific data, pre-configured workflows, and integration examples. SEs with customized demo environments close technical evaluations 40% faster. Document your 3 most successful demo strategies as case studies.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Document Your Technical Win Rate and POC Success Metrics',
+    description: 'Track and document: POC-to-win rate, technical evaluation success rate, competitive displacement wins, and ARR attributed to your technical involvement. Mid-career SEs who can cite verified win rates receive 35% more offers and are the last to be cut in sales restructuring because technical wins are measurable.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Build Technical Content — Solution Architecture Guides and Integration Playbooks',
+    description: 'Create 3 technical assets that accelerate your sales cycle: a solution architecture guide for your most common use case, an integration playbook for your top 3 technology partners, and a competitive battle card with technical objection responses. Senior SEs who build scalable technical content are reclassified as technical product marketing leaders.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn AWS/GCP/Azure Solutions Architect Professional Certification',
+    description: 'Cloud Solutions Architect Professional certification ($300 exam) is the most market-valued technical credential for sales engineers selling cloud or SaaS products. SEs with professional-level cloud certifications receive 30–40% salary premiums and qualify for technical architect and field CTO roles.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 22, deadline: '60 days', priority: 'High',
+  },
+  {
+    title: 'Build Your API Integration Expertise — Own the Technical Integration Story',
+    description: 'Build working integrations between your product and the top 3 platforms your customers use (Salesforce, SAP, ServiceNow, or industry-specific). Document them as implementation guides. SEs who own technical integrations become the deal-critical resource that sales teams cannot close enterprise deals without.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── VP Sales ───────────────────────────────────────────────────────────────────
+ACTION_DB.vp_sales = seniorityPool(
+  {
+    title: 'Build Your Sales Leadership Portfolio — Quantify Your Team Revenue Impact',
+    description: 'Create a comprehensive sales leadership portfolio: team size, total ARR managed, YoY growth, win rate improvement under your leadership, and key talent developed. VP Sales candidates who can cite verified team performance data receive 40% higher offers and pass board-level screens 3× more successfully.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Activate Your C-Suite Network — 5 CEO/CRO Conversations This Month',
+    description: 'VP Sales roles are filled 80% through direct network at the executive level. Message 5 CEOs or CROs in your network with a strategic insight relevant to their business: "I\'ve been thinking about your expansion into [market] — here\'s what I\'m seeing from a sales motion perspective." Executive conversations create opportunities before they are posted.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a 90-Day Sales Playbook for Your Next Company',
+    description: 'Write a comprehensive 90-day VP Sales plan: market assessment, team structure design, ICP refinement, pipeline methodology, and revenue targets. This document is your interview asset — VP Sales candidates who present a 90-day plan in final rounds receive offers 60% more often than those who don\'t.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Publish Thought Leadership — GTM and Sales Strategy Perspective',
+    description: 'Write a LinkedIn article or industry publication piece on a specific sales strategy challenge: enterprise selling in a downturn, product-led growth layering with enterprise, or regional market dynamics. VP Sales leaders with published strategic thought leadership receive 50% more inbound executive opportunities.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '14 days', priority: 'High',
+  },
+  {
+    title: 'Build a Sales Compensation Model and Present It to the Board',
+    description: 'Design a comprehensive sales compensation plan (base + OTE, quota distribution, accelerators, SPIF structure) that aligns incentives with company goals. VP Sales candidates who demonstrate compensation design expertise are hired at 20% premium over those who only demonstrate quota attainment.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// Sales Operations Analyst
+ACTION_DB.sales_operations_analyst = seniorityPool(
+  {
+    title: 'Build a Sales Operations Dashboard that Directly Improves Rep Productivity',
+    description: 'Create a Salesforce or HubSpot dashboard that surfaces: pipeline velocity, stage conversion rates, rep activity metrics, and forecast accuracy. Implement one automation that saves each rep 2+ hours per week. Sales ops analysts who demonstrably improve rep productivity receive 3× more interview invites from scaling sales organizations.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn Salesforce Certified Administrator and CRM Analytics Certification',
+    description: 'Salesforce Admin ($200 exam) + Salesforce CRM Analytics ($200) are the primary credentials for senior sales operations roles. Mid-career ops analysts with both certifications receive 35% salary premiums and qualify for Revenue Operations Manager roles — a 40% higher-paying adjacent path.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 24, deadline: '60 days', priority: 'Critical',
+  },
+  {
+    title: 'Own Revenue Operations End-to-End — Consolidate Marketing, Sales, and CS Ops',
+    description: 'Senior sales ops professionals who expand their scope to Revenue Operations (RevOps) — owning the full funnel from marketing attribution through CS expansion — are classified as strategic growth infrastructure. Propose a RevOps consolidation initiative to your CRO or CFO.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Implement Sales Forecasting Automation with a 90%+ Accuracy Target',
+    description: 'Build a statistical sales forecast model using CRM data (pipeline stage, deal age, rep history, seasonal patterns). Improve forecast accuracy to 90%+ on a 60-day rolling basis. Ops professionals who own forecast accuracy are business-critical — every CFO relies on this number for planning.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Run a Sales Process Audit and Eliminate the Top 3 Friction Points',
+    description: 'Audit your sales process using rep interviews and CRM data analysis. Identify the 3 biggest friction points (approval bottlenecks, data entry overhead, tool switching cost). Implement solutions for each. Sales ops professionals who measurably reduce sales cycle time earn VP-level endorsement.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── HR Generalist ─────────────────────────────────────────────────────────────
+ACTION_DB.hr_generalist = seniorityPool(
+  {
+    title: 'Complete a Compliance Audit — Identify and Remediate 3 Policy Gaps',
+    description: 'Conduct a self-audit of your HR compliance posture: employment law compliance, leave policy accuracy, benefits administration accuracy, and documentation standards. Identify 3 gaps and remediate them. HR professionals who proactively manage compliance risk are classified as risk-mitigation functions — a protected category in downsizing.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn SHRM-CP or PHR Certification — The Primary HR Credential',
+    description: 'SHRM-CP ($300 exam) or PHR (Professional in Human Resources, $395 exam) are the most recognized HR credentials in the market. Mid-career HR generalists with SHRM-CP receive 25–35% salary premiums and qualify for HR Business Partner roles — a 30% higher-paying adjacent path. Enroll immediately in the next exam sitting.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 28, deadline: '90 days — enroll now', priority: 'Critical',
+  },
+  {
+    title: 'Build HR Analytics Capability — Create a People Metrics Dashboard',
+    description: 'Build a people metrics dashboard covering: turnover rate by department, offer acceptance rate, time-to-fill by function, engagement score trend, and compensation equity analysis. Senior HR professionals who own people analytics are reclassified as "HR data architects" — a hybrid role that commands 40% premiums.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 24, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Implement a Manager Effectiveness Program with Measurable Outcomes',
+    description: 'Design and run a manager effectiveness program: 360 feedback, management training sessions, and 90-day improvement tracking. HR generalists who own measurable management development programs are classified as organizational effectiveness leaders — a strategic function, not an administrative one.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Automate Your Most Time-Consuming HR Process Using HRIS Tools',
+    description: 'Identify the most manual HR process you own (offer letter generation, onboarding workflows, leave management, performance review cycles). Automate it using your existing HRIS (Workday, BambooHR, Darwin Box). HR professionals who automate administrative work are reclassified as process improvement specialists.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── HR Business Partner ────────────────────────────────────────────────────────
+ACTION_DB.hr_business_partner = seniorityPool(
+  {
+    title: 'Own a Business-Facing People Initiative — Run One Org Design Project',
+    description: 'HRBPs who own org design projects (team restructuring, span of control optimization, role rationalization) are classified as business architects, not administrative support. Propose and lead one org design project for your client group. Document the business outcome: cost savings, productivity improvement, or headcount efficiency.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Talent Intelligence Report for Your Business Unit',
+    description: 'Compile a talent intelligence report: skills gap analysis, succession plan status, attrition risk by role, and competitive compensation positioning. Deliver it to your business leader as a quarterly strategic document. HRBPs who deliver strategic talent intelligence — not just HR administration — are treated as board-level advisors.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Workforce Planning Cycle — Model the 18-Month People Plan',
+    description: 'Own the 18-month workforce planning model: headcount demand by function, skills gap vs. current inventory, build/buy/borrow strategy, and cost impact. Senior HRBPs who own workforce planning are classified as strategic finance partners — the last category to face HR restructuring.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn SHRM-SCP or SPHR — The Senior HR Credential',
+    description: 'SHRM-SCP ($465 exam) or SPHR (Senior Professional in Human Resources, $495 exam) are the credentials that unlock Chief People Officer and VP HR paths. Senior HRBPs with SHRM-SCP receive 30–40% salary premiums and are considered for C-Suite HR roles.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 24, deadline: '90 days — enroll now', priority: 'High',
+  },
+  {
+    title: 'Build a Manager Coaching Capability — Run 5 Executive Coaching Conversations',
+    description: 'Conduct 5 structured coaching conversations with senior managers in your client group focused on leadership effectiveness. Document the conversation frameworks and outcomes. HRBPs with coaching skills receive 20% salary premiums and are considered indispensable by business leaders who value the relationships.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── HR Director ────────────────────────────────────────────────────────────────
+ACTION_DB.hr_director = seniorityPool(
+  {
+    title: 'Build and Present a People Strategy to the Board — Own the Talent Narrative',
+    description: 'Write a comprehensive people strategy document: talent acquisition roadmap, retention risk mitigation, compensation philosophy, culture health metrics, and DEI targets. Present to the CEO or board. HR directors who own the people narrative at board level are classified as executive team members — protected from below-VP cuts.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Activate Your CHRO/CPO Network — 5 Executive HR Conversations',
+    description: 'HR director roles are filled 75% through CHRO networks. Message 5 CHROs or CPOs in your network with a strategic perspective: "I\'ve been thinking about how companies are restructuring HR for the AI era — what approaches are you seeing work?" Executive HR conversations create opportunities before they\'re posted.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Lead a Transformation Initiative — Own Organizational Effectiveness at Scale',
+    description: 'Senior HR directors who own transformation initiatives (culture change, operating model redesign, merger integration) are business transformation partners, not HR administrators. Propose and lead one transformation initiative in partnership with your CEO.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 26, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Total Rewards Philosophy and Present to the Compensation Committee',
+    description: 'Develop a comprehensive total rewards strategy: compensation benchmarking methodology, equity philosophy, benefits architecture, and recognition framework. HR directors who own compensation governance at board level are considered indispensable.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '21 days', priority: 'High',
+  },
+  {
+    title: 'Implement an AI-Augmented HR Operating Model',
+    description: 'Design a 12-month roadmap for AI tool adoption across HR: AI screening in TA, chatbot for employee queries, AI-assisted performance feedback, and predictive attrition models. HR directors who lead AI adoption are reclassified as "digital HR transformation leaders" — a category that grows in value as AI adoption accelerates.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Talent Acquisition Specialist ─────────────────────────────────────────────
+ACTION_DB.talent_acquisition_specialist = seniorityPool(
+  {
+    title: 'Pivot to Technical Sourcing — Become an AI and Engineering Recruiting Specialist',
+    description: 'Technical recruiters who specialize in AI/ML, cloud, and platform engineering are in the most protected segment of TA — demand exceeds supply regardless of hiring cycle. Complete Google Technical Recruiting Certificate (free on Coursera) and shift 50% of your sourcing focus to technical roles. Technical TA specialists receive 40% more job offers during hiring freezes.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Talent Pipeline for Your 5 Hardest-to-Fill Roles',
+    description: 'For your 5 most persistent open requisitions, build a fully warmed pipeline: 10 sourced candidates at each stage (contacted, responded, interested, available). TA professionals who maintain warm pipelines are classified as "talent supply chain managers" rather than "reactive recruiters" — a distinction that survives hiring freezes.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Build Employer Brand Content — Own the Candidate Experience Narrative',
+    description: 'Create 5 pieces of employer brand content: employee spotlight videos, team culture posts, engineering blog articles, or Glassdoor response strategy. Senior TA professionals who own employer brand are classified as "talent marketing strategists" — a hybrid role that reports to the CMO and CHRO simultaneously.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn LinkedIn Certified Professional Recruiter or AIRS Certification',
+    description: 'LinkedIn Certified Professional Recruiter ($50) or AIRS Certified Internet Recruiter ($350) are the primary sourcing credentials. TA specialists with sourcing certifications receive 20% salary premiums and qualify for Sourcing Manager and Talent Intelligence roles.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '30 days', priority: 'High',
+  },
+  {
+    title: 'Implement AI Screening Tools and Demonstrate Time-to-Hire Improvement',
+    description: 'Implement one AI screening tool (HireVue, Paradox, or Greenhouse AI scoring) and document the time-to-fill improvement. TA professionals who deploy AI tools are reclassified as "talent operations technologists" — an automation-resistant category because they drive the automation rather than being replaced by it.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 16, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── Recruiting Manager ─────────────────────────────────────────────────────────
+ACTION_DB.recruiting_manager = seniorityPool(
+  {
+    title: 'Build Your Recruiting Team\'s Hiring Metrics Dashboard — Own TA Performance',
+    description: 'Create a real-time TA metrics dashboard: time-to-fill by function, cost-per-hire, offer acceptance rate, source mix, quality of hire (90-day retention and performance). Recruiting managers who own TA performance metrics are classified as operational efficiency leaders — protected during talent function restructuring.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+  },
+  {
+    title: 'Propose a TA Transformation Initiative — AI + Automation + Brand Strategy',
+    description: 'Write a comprehensive TA transformation plan: AI tool adoption, ATS optimization, employer brand investment, and diversity sourcing strategy. Recruiting managers who present strategic transformation plans to CHROs are classified as talent strategy leaders, not administrative managers.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '21 days', priority: 'Critical',
+  },
+  {
+    title: 'Build a Talent Intelligence Function — Competitive Salary and Market Benchmarking',
+    description: 'Establish a quarterly talent intelligence process: competitive salary analysis, competitor hiring activity monitoring, candidate supply mapping by critical roles. Senior recruiting managers who own market intelligence are reclassified as "talent market analysts" — a strategic function that reports to the CEO.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 24, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Earn SHRM Talent Acquisition Specialty Credential or LinkedIn Recruiter Certification',
+    description: 'SHRM Talent Acquisition Specialty Credential ($395) or LinkedIn Certified Professional Recruiter signals specialized expertise. Recruiting managers with professional credentials receive 20% salary premiums and qualify for Director of Talent Acquisition roles.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 18, deadline: '60 days', priority: 'High',
+  },
+  {
+    title: 'Implement Structured Interviewing Across the Organization',
+    description: 'Design and roll out a structured interview framework: competency-based question banks by function, scorecard templates, calibration process, and unconscious bias training. Recruiting managers who own interview quality programs are viewed as organizational effectiveness leaders by CEOs who care about hiring quality.',
+    layerFocus: 'L3 · Skills', riskReductionPct: 14, deadline: '30 days', priority: 'Medium',
+  },
+);
+
+// ── BPO Associate (explicit entry) ────────────────────────────────────────────
+ACTION_DB.bpo_associate = seniorityPool(
+  {
+    title: 'Complete a Data Analysis or Python Fundamentals Course — Transition Out of Process Work',
+    description: 'Enroll in Google Data Analytics Certificate (Coursera, ₹2,500/month) or Python for Beginners (free on Kaggle). BPO associates who complete one data or tech certification reduce their displacement risk by 45% — they become candidates for analytics, operations, and business analysis roles that survive automation waves. Complete within 4 weeks.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '14 days — enroll', priority: 'Critical',
+  },
+  {
+    title: 'Earn a Business Analysis or Operations Management Certification',
+    description: 'CBAP (Certified Business Analysis Professional) or ECBA (Entry Certificate, free 21 hours of BA training required) positions you as a business analyst rather than a process associate — a 40% higher-paying category with dramatically lower automation risk. Enroll now. NASSCOM lists business analysis as one of the top 5 roles replacing BPO work by 2027.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 28, deadline: '30 days', priority: 'Critical',
+  },
+  {
+    title: 'Take on a Process Improvement Project — Document the Efficiency Gain',
+    description: 'Identify one manual, repetitive process in your team and propose an improvement: automation, workflow redesign, or AI augmentation. Document the time savings in hours per week. BPO professionals who lead process improvement initiatives are reclassified as operations analysts — a role with 3× higher market value and significantly lower AI displacement risk.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '14 days', priority: 'High',
+  },
+  {
+    title: 'Build an AI Tool Proficiency — Automate Part of Your Daily Work',
+    description: 'Use an AI tool (ChatGPT, Claude, or Microsoft Copilot) to complete one repetitive work task 50% faster. Document the methodology and time saved. Professionals who demonstrate AI tool fluency are repositioned as "AI-augmented operators" rather than automation targets — a critical distinction in BPO/ITES hiring.',
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '7 days', priority: 'High',
+  },
+  {
+    title: 'Build a Team-Level Knowledge Base or SOP Library',
+    description: 'Create a structured knowledge base (Notion or Confluence) documenting the 10 most common processes your team handles: step-by-step SOPs, decision trees, and escalation paths. BPO professionals who build operational documentation own institutional knowledge — the primary moat against replacement.',
+    layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '21 days', priority: 'Medium',
+  },
+);
+
+// ── v37.0 Multi-industry action pool merge ───────────────────────────────────
+// Merges all industry-specific action pools into the main ACTION_DB.
+// Each module file defines its own BracketPool structure compatible with RoleActionDB.
+Object.assign(ACTION_DB, ACTION_DB_HEALTHCARE_LEGAL);
+Object.assign(ACTION_DB, ACTION_DB_CONSULTING_MARKETING_CX);
+Object.assign(ACTION_DB, ACTION_DB_MANUFACTURING_ENERGY_CONSTRUCTION);
+Object.assign(ACTION_DB, ACTION_DB_RETAIL_LOGISTICS_PHARMA);
+Object.assign(ACTION_DB, ACTION_DB_AUTO_TELECOM_GOVT_EDUCATION);
+Object.assign(ACTION_DB, ACTION_DB_INSURANCE_MEDIA_HOSPITALITY);
+// v38.0 Phase 1 — Cybersecurity (25), Cloud Platform (15), AI/ML (10), QA + FE/Mobile (10) = 60 new roles
+Object.assign(ACTION_DB, ACTION_DB_CYBERSECURITY);
+Object.assign(ACTION_DB, ACTION_DB_CLOUD_PLATFORM);
+Object.assign(ACTION_DB, ACTION_DB_AI_ML_SPECIALIZATION);
+Object.assign(ACTION_DB, ACTION_DB_QA_FRONTEND_MOBILE);
+// v38.0 Phase 2 — Physicians (17), Nursing+Allied (21), Biotech+HealthIT (15), Behavioral+Admin+Vet+PH (22) = 75 new roles
+Object.assign(ACTION_DB, ACTION_DB_PHYSICIANS);
+Object.assign(ACTION_DB, ACTION_DB_NURSING_ALLIED_HEALTH);
+Object.assign(ACTION_DB, ACTION_DB_BIOTECH_HEALTHCARE_IT);
+Object.assign(ACTION_DB, ACTION_DB_BEHAVIORAL_ADMIN_VET_PH);
+// v38.0 Phase 3 — Finance Deep (IB/PE/VC 18, Quant/AM/HF 17, Corp Finance/Banking/Risk 18, Insurance/RE 17) = 70 new roles
+Object.assign(ACTION_DB, ACTION_DB_INVESTMENT_BANKING_PE_VC);
+Object.assign(ACTION_DB, ACTION_DB_QUANT_ASSET_HEDGE);
+Object.assign(ACTION_DB, ACTION_DB_CORPORATE_FINANCE_BANKING_RISK);
+Object.assign(ACTION_DB, ACTION_DB_INSURANCE_RE_FINANCE);
+// v38.0 Phase 4 — Industrial/Trades (15) + Industrial Engineering (15) + Energy (15) + Construction (15) + Aviation+PubSafety (20) = 80 new roles
+Object.assign(ACTION_DB, ACTION_DB_SKILLED_TRADES);
+Object.assign(ACTION_DB, ACTION_DB_INDUSTRIAL_ENGINEERING);
+Object.assign(ACTION_DB, ACTION_DB_ENERGY_SPECIALIZATIONS);
+Object.assign(ACTION_DB, ACTION_DB_CONSTRUCTION_SPECIALIZATIONS);
+Object.assign(ACTION_DB, ACTION_DB_AVIATION_PUBLIC_SAFETY);
+// v38.0 Phase 5 — Media+Ent (14) + Hospitality+Travel (10) + CX+Research+Academia (14) = ~38 new roles
+Object.assign(ACTION_DB, ACTION_DB_MEDIA_ENTERTAINMENT);
+Object.assign(ACTION_DB, ACTION_DB_HOSPITALITY_TRAVEL);
+Object.assign(ACTION_DB, ACTION_DB_CX_RESEARCH_ACADEMIA);
+// v38.0 Phase 6 — Final Coverage: Medical Sub-specialties (12) + Adv Engineering+Creative (16) + Skilled+Services+Edu+Gov (18) = ~46 new roles
+Object.assign(ACTION_DB, ACTION_DB_MEDICAL_SUBSPECIALTIES);
+Object.assign(ACTION_DB, ACTION_DB_ADVANCED_ENGINEERING_CREATIVE);
+Object.assign(ACTION_DB, ACTION_DB_SKILLED_SERVICES_EDU_GOV);
+
+// ── Company context injection ────────────────────────────────────────────────
 // v13.0 accuracy fix: action plans previously had zero company differentiation.
 // Injecting an archetype-based context note that surfaces the RIGHT strategic
 // frame for each company situation BEFORE the role-specific actions.
@@ -1750,7 +2928,21 @@ export function getPersonalizedActions(
   const riskLevel = scoreToRiskLevel(score);
   const isIndia = region === 'IN' || region === 'India';
 
-  const bracketPool = ACTION_DB[roleGroup] ?? ACTION_DB['swe'];
+  // v37.0: Extended engineering-adjacent list includes all tech and tech-adjacent roles.
+  // Non-engineering roles with explicit ACTION_DB entries will use those; others fall to professional_services.
+  const isEngineeringAdjacent = [
+    'swe', 'swe_backend', 'swe_frontend', 'swe_fullstack', 'swe_mobile',
+    'ml_engineer', 'ai_engineer', 'data_scientist', 'data_engineer', 'data_analyst',
+    'nlp_engineer', 'cv_engineer', 'llm_engineer', 'devops', 'platform_engineer',
+    'cloud_architect', 'qa_engineer', 'security_engineer', 'embedded_engineer',
+    // v37.0 additions — tech-adjacent roles with explicit pools
+    'product_manager', 'ux_designer', 'ux_researcher', 'brand_designer',
+    'analytics_engineer', 'bi_analyst', 'quantitative_analyst',
+    'eng_manager', 'tech_lead', 'principal_engineer', 'staff_engineer', 'distinguished_engineer',
+    'solution_architect', 'support_engineer',
+  ].includes(roleGroup);
+  const fallbackPool = isEngineeringAdjacent ? ACTION_DB['swe'] : ACTION_DB['professional_services'];
+  const bracketPool = ACTION_DB[roleGroup] ?? fallbackPool;
   const seniorityPool = bracketPool[seniorityBracket] ?? bracketPool['mid'];
   const actions = (seniorityPool[riskLevel] ?? seniorityPool['high'] ?? []).slice(0, 3);
 
@@ -1782,6 +2974,7 @@ export function getPersonalizedActions(
 export function getRoleGroupLabel(roleTitle: string): string {
   const group = resolveRoleGroup(roleTitle);
   const labels: Record<string, string> = {
+    // Tech Engineering
     swe: 'Software Engineer',
     swe_backend: 'Backend Engineer',
     swe_frontend: 'Frontend Engineer',
@@ -1798,17 +2991,48 @@ export function getRoleGroupLabel(roleTitle: string): string {
     devops: 'DevOps / SRE',
     platform_engineer: 'Platform Engineer',
     cloud_architect: 'Cloud Architect',
-    product_manager: 'Product Manager',
-    ux_designer: 'UX Designer',
     qa_engineer: 'QA / SDET Engineer',
     security_engineer: 'Security Engineer',
     embedded_engineer: 'Embedded / Firmware Engineer',
+    // Engineering Leadership
     eng_manager: 'Engineering Manager',
     tech_lead: 'Tech Lead',
     principal_engineer: 'Principal / Staff Engineer',
+    staff_engineer: 'Staff / Principal Engineer',
+    distinguished_engineer: 'Distinguished / Fellow Engineer',
     solution_architect: 'Solutions Architect',
+    // Product & Design (v37.0)
+    product_manager: 'Product Manager',
+    ux_designer: 'UX / Product Designer',
+    ux_researcher: 'UX Researcher',
+    brand_designer: 'Brand / Graphic Designer',
+    // Data & Analytics (v37.0)
+    analytics_engineer: 'Analytics Engineer',
+    bi_analyst: 'BI Developer / Analyst',
+    quantitative_analyst: 'Quantitative / Actuarial Analyst',
+    // Support / Operations
     support_engineer: 'Technical Support Engineer',
     bpo_associate: 'BPO / ITES Associate',
+    // Finance (v37.0)
+    financial_analyst: 'Financial Analyst',
+    investment_banker: 'Investment Banker',
+    portfolio_manager: 'Portfolio Manager',
+    risk_analyst: 'Risk Analyst',
+    compliance_officer: 'Compliance Officer',
+    // Sales & Revenue (v37.0)
+    account_executive: 'Account Executive',
+    business_development_manager: 'Business Development Manager',
+    customer_success_manager: 'Customer Success Manager',
+    sales_engineer: 'Sales / Solutions Engineer',
+    vp_sales: 'VP Sales / Head of Sales',
+    sales_operations_analyst: 'Sales / Revenue Operations',
+    // HR & People (v37.0)
+    hr_generalist: 'HR Generalist',
+    hr_business_partner: 'HR Business Partner',
+    hr_director: 'HR Director / CHRO',
+    talent_acquisition_specialist: 'Talent Acquisition Specialist',
+    recruiting_manager: 'Recruiting Manager',
+    professional_services: 'Professional / Knowledge Worker',
   };
-  return labels[group] ?? 'Tech Professional';
+  return labels[group] ?? 'Professional';
 }

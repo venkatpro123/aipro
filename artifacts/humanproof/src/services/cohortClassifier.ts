@@ -39,7 +39,32 @@ export interface CohortClassifierInput {
   industry: string;
   /** Whether the company is publicly traded. */
   isPublic: boolean;
+  // v37.0 Phase 6E: role context for role-enriched cohort labels
+  /** Canonical action group key for the user's role (e.g. 'ml_engineer', 'registered_nurse'). */
+  workTypeKey?: string | null;
+  /** Seniority bracket from seniorityActionEngine. */
+  seniorityBracket?: 'junior' | 'mid' | 'senior' | 'principal' | null;
+  /** Layoff score (0-100) already computed — used to gate displacement labels. */
+  currentScore?: number | null;
 }
+
+// v37.0 Phase 6E: Role-enriched cohort label type
+// Adds role-specific context on top of company cohort classification.
+export type RoleEnrichedCohortLabel =
+  | 'HIGH_RISK_LEGACY_TECH_SENIOR_IC'    // Senior IC in legacy tech getting AI-disrupted
+  | 'AI_EFFICIENCY_EXPOSED_MID_LEVEL'    // Mid-level in AI-efficiency restructuring company
+  | 'HEALTHCARE_LICENSED_STABLE'          // Licensed healthcare professional, high demand, low risk
+  | 'BPO_DISPLACEMENT_IMMINENT'          // BPO/operations role, high AI automation risk
+  | 'FINANCE_WAVE_EXPOSED_JUNIOR'        // Junior finance role in wave-cohort sector
+  | 'LICENSED_PROFESSION_PROTECTED'      // Attorney, actuary, pharmacist etc. — credential moat
+  | 'PHYSICAL_ROLE_AUTOMATION_DELAYED'   // Manufacturing/construction — displacement is 3-8yr
+  | 'TECH_STARTUP_RUNWAY_CRITICAL'       // Tech role at startup with critical runway
+  | 'DEFENSE_CLEARED_HIGHLY_PROTECTED'   // Cleared defense contractor — near-zero displacement risk
+  | 'CREATIVE_WAVE_EXPOSED'             // Journalist/content creator in AI-disrupted media
+  | 'SENIOR_LEADERSHIP_ACQUISITION_RISK' // C-suite at wave-cohort company — M&A leadership change
+  | 'EDUCATION_TENURED_PROTECTED'        // Tenured academic — institutional protection
+  | 'GENERAL_MODERATE_RISK'             // Default for roles not matching specific patterns
+  | null;
 
 /** Recommended L1–L5 weight allocation for the detected cohort (sum = 1.0). */
 export interface CohortLayerWeights {
@@ -63,6 +88,8 @@ export interface CohortWeights {
 export interface CohortClassification {
   /** The dominant cohort driving this company's layoff risk. */
   primaryCohort: 'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN';
+  /** v37.0: Role-enriched label combining role type + company cohort. Null if role unknown. */
+  roleEnrichedLabel: RoleEnrichedCohortLabel;
   /**
    * Confidence in the primary cohort assignment [0–1].
    * Equals max(cohortWeights). Below 0.40 → UNKNOWN is returned.
@@ -281,6 +308,121 @@ function normaliseToCohortWeights(
  * @returns CohortClassification with primary cohort, confidence, weights, and
  *          recommended layer weights for the scoring engine.
  */
+
+// ─── v37.0 Phase 6E: Role-enriched cohort label derivation ───────────────────
+// Combines company cohort (DISTRESS/EFFICIENCY/WAVE) + role type + score
+// to produce a specific label that drives differentiated intelligence brief summaries.
+function deriveRoleEnrichedLabel(
+  primaryCohort: 'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN',
+  workTypeKey: string | null | undefined,
+  seniorityBracket: string | null | undefined,
+  score: number | null | undefined,
+): RoleEnrichedCohortLabel {
+  if (!workTypeKey) return 'GENERAL_MODERATE_RISK';
+
+  const key = workTypeKey.toLowerCase();
+  const seniority = seniorityBracket ?? 'mid';
+  const s = score ?? 50;
+
+  // Defense / cleared — highest protection, override everything
+  if (key.includes('defense_contractor') || key.includes('cleared')) {
+    return 'DEFENSE_CLEARED_HIGHLY_PROTECTED';
+  }
+
+  // Tenured education — institutional protection
+  if (key === 'university_professor') {
+    return 'EDUCATION_TENURED_PROTECTED';
+  }
+
+  // Healthcare licensed — structurally protected
+  const healthcareLicensed = [
+    'registered_nurse', 'nurse_practitioner', 'physician_general_practitioner',
+    'specialist_physician', 'physician_assistant', 'pharmacist',
+    'physical_therapist', 'behavioral_health_therapist', 'radiologist',
+    'anesthesiologist',
+  ];
+  if (healthcareLicensed.some(r => key.includes(r))) {
+    return 'HEALTHCARE_LICENSED_STABLE';
+  }
+
+  // Licensed professions — credential moat protects across cohorts
+  const licensedProfessions = [
+    'attorney', 'general_counsel', 'paralegal', 'corporate_attorney',
+    'ip_attorney', 'employment_attorney', 'compliance_attorney',
+    'actuarial_analyst', 'customs_broker', 'regulatory_affairs_specialist_pharma',
+  ];
+  if (licensedProfessions.some(r => key.includes(r))) {
+    return 'LICENSED_PROFESSION_PROTECTED';
+  }
+
+  // BPO / operations — high automation risk regardless of cohort
+  if (key === 'bpo_associate' || key === 'customer_support_specialist' ||
+      key === 'cx_operations_manager' || key === 'seo_specialist' ||
+      key.includes('bpo') || key.includes('claims_adjuster')) {
+    return 'BPO_DISPLACEMENT_IMMINENT';
+  }
+
+  // Physical labor roles — automation timeline is long (3-8 years)
+  const physicalRoles = [
+    'manufacturing_engineer', 'process_engineer', 'quality_engineer',
+    'civil_engineer', 'construction_project_manager', 'architect',
+    'safety_hse_manager', 'lean_six_sigma_specialist', 'operations_manager',
+    'warehouse_automation_specialist', 'petroleum_engineer',
+  ];
+  if (physicalRoles.some(r => key.includes(r))) {
+    return 'PHYSICAL_ROLE_AUTOMATION_DELAYED';
+  }
+
+  // Creative/media — AI content disruption wave
+  if (key === 'journalist_reporter' || key === 'content_creator' ||
+      key === 'game_designer' || key.includes('media')) {
+    if (primaryCohort === 'EFFICIENCY' || primaryCohort === 'WAVE') {
+      return 'CREATIVE_WAVE_EXPOSED';
+    }
+  }
+
+  // Senior leadership at wave-cohort company — M&A / contagion acquisition risk
+  if ((seniority === 'principal' || seniority === 'senior') &&
+      (key.includes('director') || key.includes('vp_') || key.includes('chief') || key.includes('cto')) &&
+      primaryCohort === 'WAVE' && s >= 60) {
+    return 'SENIOR_LEADERSHIP_ACQUISITION_RISK';
+  }
+
+  // Tech startup runway critical
+  if (primaryCohort === 'DISTRESS' && s >= 65 &&
+      (key.includes('sw_') || key.includes('ml_') || key.includes('ai_') ||
+       key.includes('devops') || key.includes('product_manager'))) {
+    return 'TECH_STARTUP_RUNWAY_CRITICAL';
+  }
+
+  // Finance junior + wave cohort
+  const financeRoles = ['financial_analyst', 'investment_banker', 'risk_analyst',
+    'compliance_officer', 'portfolio_manager'];
+  if (financeRoles.some(r => key.includes(r)) &&
+      (seniority === 'junior' || seniority === 'mid') &&
+      primaryCohort === 'WAVE') {
+    return 'FINANCE_WAVE_EXPOSED_JUNIOR';
+  }
+
+  // AI efficiency exposed mid-level tech
+  if (primaryCohort === 'EFFICIENCY' && s >= 55 &&
+      (seniority === 'junior' || seniority === 'mid') &&
+      (key.includes('sw_') || key.includes('data_') || key.includes('qa_') ||
+       key.includes('support_engineer'))) {
+    return 'AI_EFFICIENCY_EXPOSED_MID_LEVEL';
+  }
+
+  // High risk legacy tech senior IC
+  if (primaryCohort === 'EFFICIENCY' && s >= 65 &&
+      (seniority === 'senior' || seniority === 'principal') &&
+      (key.includes('embedded') || key.includes('qa_') || key.includes('sw_') ||
+       key.includes('legacy') || key.includes('data_engineer'))) {
+    return 'HIGH_RISK_LEGACY_TECH_SENIOR_IC';
+  }
+
+  return 'GENERAL_MODERATE_RISK';
+}
+
 export function classifyCohort(input: CohortClassifierInput): CohortClassification {
   // 1. Compute raw sub-scores for each cohort
   const { score: rawDistress,   signals: distressSignals   } = computeDistressScore(input);
@@ -354,8 +496,16 @@ export function classifyCohort(input: CohortClassifierInput): CohortClassificati
   const calibrationAUC =
     COHORT_AUC[primaryCohort] ?? COHORT_AUC.UNKNOWN;
 
+  const roleEnrichedLabel = deriveRoleEnrichedLabel(
+    primaryCohort,
+    input.workTypeKey,
+    input.seniorityBracket,
+    input.currentScore,
+  );
+
   return {
     primaryCohort,
+    roleEnrichedLabel,
     cohortConfidence: Math.round(maxWeight * 1000) / 1000,
     cohortWeights: {
       distress:   Math.round(cohortWeights.distress   * 1000) / 1000,

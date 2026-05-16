@@ -85,6 +85,8 @@ export interface GlassdoorVelocityResult {
   /** True when CRITICAL or HIGH tier is active. */
   earlyWarningActive: boolean;
   calibrationNote: string;
+  /** Days since the most recent Glassdoor data point. > 60 → degrade confidence. */
+  _velocityDataAge?: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -419,10 +421,15 @@ export function computeGlassdoorVelocity(
   const { spike: reviewVolumeSpike, note: reviewVolumeSpikeNote } = classifyReviewVolumeTrend(sorted);
   const reviewSentimentBimodal = detectSentimentBimodal(latest);
 
-  const sentimentRiskScore = computeSentimentRiskScore(
+  const latestDate = parseDate(sorted[sorted.length - 1].date);
+  const _velocityDataAge = Math.floor((Date.now() - latestDate.getTime()) / (24 * 60 * 60 * 1000));
+
+  // When data is stale (> 60 days), degrade the risk score to reduce false positives.
+  const stalenessPenalty = _velocityDataAge > 60 ? 0.7 : 1.0;
+  const rawSentimentRiskScore = computeSentimentRiskScore(
     ceoApprovalRiskTier, ceoApprovalVelocity, reviewVolumeSpike, reviewSentimentBimodal, ceoApprovalCurrent,
   );
-
+  const sentimentRiskScore = Math.round(rawSentimentRiskScore * stalenessPenalty);
   const leadTimeEstimateDays = estimateLeadTimeDays(ceoApprovalRiskTier, ceoApprovalVelocity);
   const earlyWarningActive   = ceoApprovalRiskTier === 'CRITICAL' || ceoApprovalRiskTier === 'HIGH';
 
@@ -447,5 +454,6 @@ export function computeGlassdoorVelocity(
     leadTimeEstimateDays,
     earlyWarningActive,
     calibrationNote,
+    _velocityDataAge,
   };
 }

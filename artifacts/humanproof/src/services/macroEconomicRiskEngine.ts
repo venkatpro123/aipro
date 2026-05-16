@@ -78,6 +78,9 @@ export interface MacroEconomicRiskResult {
   };
 
   readonly calibrationStatus: 'heuristic_may2026';
+  /** True when MACRO_DATA_DATE is more than 2 months in the past. */
+  _macroDataStale?: boolean;
+  _macroStaleMonths?: number;
 }
 
 export interface MacroEconomicRiskInputs {
@@ -85,6 +88,15 @@ export interface MacroEconomicRiskInputs {
   region: string;     // 'US' | 'IN' | 'EU' | 'UK' | 'SG' | etc.
   companySize: number;
   currentScore: number;
+}
+
+// ── Staleness detection ───────────────────────────────────────────────────────
+const MACRO_DATA_DATE = '2026-05-01';
+
+function computeMacroStaleMonths(): number {
+  const dataMs = new Date(MACRO_DATA_DATE).getTime();
+  const nowMs  = Date.now();
+  return Math.floor((nowMs - dataMs) / (30 * 24 * 60 * 60 * 1000));
 }
 
 // ── Current Macro State (calibrated May 2026) ────────────────────────────────
@@ -320,6 +332,13 @@ export function computeMacroEconomicRisk(inputs: MacroEconomicRiskInputs): Macro
   // India-specific enrichment
   if (inputs.region === 'IN' || inputs.region === 'India' || inputs.region?.toLowerCase().includes('india')) {
     result.indiaSpecific = INDIA_MACRO_CONTEXT;
+  }
+
+  // Staleness flag — surfaces a warning in the UI when the snapshot is > 2 months old.
+  const staleMonths = computeMacroStaleMonths();
+  if (staleMonths > 2) {
+    result._macroDataStale = true;
+    result._macroStaleMonths = staleMonths;
   }
 
   return result;

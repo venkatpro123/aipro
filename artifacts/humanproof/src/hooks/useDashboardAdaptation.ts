@@ -63,16 +63,15 @@ function pickMode(result: HybridResult, intel: CompressedIntel): DashboardMode {
   const confPct = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
   const r = result as any;
 
-  // Emergency: critical risk or active legal filing
+  // Emergency always wins — must be evaluated before confidence gates so that
+  // a low-confidence read at high score still surfaces the emergency callout.
   if (score >= 75 || r.warnSignal?.hasActiveWARN === true || intel.hasTier1Critical) {
     return 'emergency';
   }
-  // Low-confidence override — even moderate scores should surface transparency
-  // when we are not sure about the read.
-  if (confPct < 45) return 'low-confidence';
-  if (score >= 55) return 'elevated';
-  if (score >= 35) return 'monitoring';
-  return 'stable';
+  // Low-confidence is conditional per tier — never overrides emergency.
+  if (score >= 60) return confPct < 45 ? 'low-confidence' : 'elevated';
+  if (score >= 40) return confPct < 45 ? 'low-confidence' : 'monitoring';
+  return confPct < 45 ? 'low-confidence' : 'stable';
 }
 
 function pickDefaultTab(mode: DashboardMode): TabKey {

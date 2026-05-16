@@ -29,7 +29,9 @@ export type VerdictLabel =
   | 'softening'
   | 'stable'
   | 'healthy'
-  | 'unknown';
+  | 'stable-confirmed'   // signals checked, none triggered → positive confirmation
+  | 'data-unavailable'   // live attempt made but no quorum / coverage → amber warning
+  | 'unknown';           // no attempt made — profile/company not found
 
 export interface SignalChip {
   label: string;
@@ -56,18 +58,36 @@ export interface CompressedSignal {
   tone: string;
   /** Group key for clustering with related blocks. */
   group: 'company' | 'career' | 'market' | 'meta';
+  /** Whether this signal came from a live API, the seeded DB, or a heuristic baseline. */
+  sourceKind: 'live' | 'db' | 'heuristic';
+  /** ISO timestamp when live data was fetched. Null for db/heuristic. */
+  fetchedAt: string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const VERDICT_TONE: Record<VerdictLabel, string> = {
-  critical:   '#dc2626',
-  distressed: '#f97316',
-  softening:  '#f59e0b',
-  stable:     '#10b981',
-  healthy:    '#10b981',
-  unknown:    '#64748b',
+  critical:         '#dc2626',
+  distressed:       '#f97316',
+  softening:        '#f59e0b',
+  stable:           '#10b981',
+  healthy:          '#10b981',
+  'stable-confirmed': '#10b981',
+  'data-unavailable': '#f59e0b',
+  unknown:          '#64748b',
 };
+
+/** Helper: derive sourceKind from companyData _liveDataCoverage */
+function deriveSourceKind(cd: any): 'live' | 'db' | 'heuristic' {
+  const overallSource: string = cd?._liveDataCoverage?.overallSource ?? '';
+  if (overallSource === 'live') return 'live';
+  if (overallSource === 'heuristic') return 'heuristic';
+  return 'db';
+}
+
+function deriveFetchedAt(cd: any): string | null {
+  return cd?._liveDataCoverage?.fetchedAt ?? null;
+}
 
 function verdictFromSeverity(severity: number): VerdictLabel {
   if (severity >= 60) return 'critical';
@@ -96,9 +116,23 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
   const reasons: string[] = [];
   const chips: SignalChip[] = [];
 
-  if (warnActive)              { severity += 40; reasons.push('Active WARN filing'); chips.push({ label: 'WARN', value: 'Active', tone: 'critical' }); }
-  if (layoffRounds >= 2)       { severity += 25; reasons.push(`${layoffRounds} layoff rounds`); chips.push({ label: 'Layoffs', value: `${layoffRounds}×`, tone: 'critical' }); }
-  else if (layoffRounds === 1) { severity += 15; reasons.push('Recent layoff round'); chips.push({ label: 'Layoffs', value: '1×', tone: 'warning' }); }
+  if (warnActive) { severity += 40; reasons.push('Active WARN filing'); chips.push({ label: 'WARN', value: 'Active', tone: 'critical' }); }
+
+  // Apply freshness decay to layoff history — rounds older than 12 months carry less signal weight.
+  const layoffRoundsArr: Array<{ date?: string }> = r.layoffRounds ?? [];
+  const mostRecentLayoffDate = layoffRoundsArr
+    .filter(lr => lr.date)
+    .map(lr => new Date(lr.date!).getTime())
+    .sort((a, b) => b - a)[0] ?? null;
+  const layoffAgeDays = mostRecentLayoffDate
+    ? Math.floor((Date.now() - mostRecentLayoffDate) / (24 * 60 * 60 * 1000))
+    : null;
+  const layoffFreshnessMult = layoffAgeDays != null && layoffAgeDays > 365 ? 0.5
+    : layoffAgeDays != null && layoffAgeDays > 180 ? 0.7
+    : 1.0;
+
+  if (layoffRounds >= 2)       { severity += Math.round(25 * layoffFreshnessMult); reasons.push(`${layoffRounds} layoff rounds`); chips.push({ label: 'Layoffs', value: `${layoffRounds}×`, tone: layoffFreshnessMult < 0.7 ? 'warning' : 'critical' }); }
+  else if (layoffRounds === 1) { severity += Math.round(15 * layoffFreshnessMult); reasons.push('Recent layoff round'); chips.push({ label: 'Layoffs', value: '1×', tone: 'warning' }); }
   if (hiringTrend === 'frozen')         { severity += 25; reasons.push('Hiring freeze active'); chips.push({ label: 'Hiring', value: 'Frozen', tone: 'critical' }); }
   else if (hiringTrend === 'declining') { severity += 12; reasons.push('Hiring slowdown'); chips.push({ label: 'Hiring', value: 'Slowing', tone: 'caution' }); }
   else if (hiringTrend === 'growing')   { chips.push({ label: 'Hiring', value: 'Active', tone: 'ok' }); }
@@ -108,6 +142,9 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
   }
   if (glassdoorTrend === 'falling-sharp') { severity += 12; reasons.push('Glassdoor falling sharply'); }
   else if (glassdoorTrend === 'falling')  { severity += 6;  reasons.push('Glassdoor softening'); }
+
+  const sourceKind = deriveSourceKind(cd);
+  const fetchedAt  = deriveFetchedAt(cd);
 
   const hasAnyData = warnActive || layoffRounds > 0 || hiringTrend || typeof headcountDelta === 'number' || glassdoorTrend;
   if (!hasAnyData) {
@@ -121,25 +158,30 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'company',
+      sourceKind,
+      fetchedAt,
     };
   }
 
-  // Audit v35 fix: "Stable" and "No data" are NOT the same.
-  // When severity=0 AND chips=[] the engine has no confirmable live signal —
-  // e.g. hiringTrend='stable' (heuristic baseline) but no WARN, no layoff rounds,
-  // no headcount delta, no Glassdoor trend. Showing "Stable" implies the engine
-  // checked and confirmed stability; the honest answer is "no live evidence yet."
+  // GAP I fix: distinguish "we checked live and found no distress" (stable-confirmed,
+  // green) from "live was unavailable / quorum not reached" (data-unavailable, amber).
   if (severity === 0 && chips.length === 0) {
+    const liveUnavailable = (cd as any)?._liveUnavailable === true || (cd as any)?._dataFreshnessScore === 0;
+    const gapIVerdict: VerdictLabel = liveUnavailable ? 'data-unavailable' : 'stable-confirmed';
     return {
       id: 'workforce',
       tier: 2,
       severity: 0,
-      verdict: 'unknown',
+      verdict: gapIVerdict,
       headline: 'Workforce Stability',
-      rationale: 'No actionable workforce signals confirmed by live sources.',
+      rationale: liveUnavailable
+        ? 'Unable to verify workforce status — treat as elevated until live data confirmed.'
+        : 'No distress signals found in live workforce data.',
       chips: [],
-      tone: VERDICT_TONE.unknown,
+      tone: VERDICT_TONE[gapIVerdict],
       group: 'company',
+      sourceKind,
+      fetchedAt,
     };
   }
 
@@ -154,6 +196,8 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'company',
+    sourceKind,
+    fetchedAt,
   };
 }
 
@@ -194,6 +238,9 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
   }
   if (secMaterial) { severity += 25; reasons.push('SEC material event filed'); chips.push({ label: 'SEC', value: 'Material', tone: 'critical' }); }
 
+  const sourceKind = deriveSourceKind(cd);
+  const fetchedAt  = deriveFetchedAt(cd);
+
   const hasAnyData = stock != null || revYoy != null || fundingStage != null || monthsSinceRaise != null || secMaterial;
   if (!hasAnyData) {
     return {
@@ -206,23 +253,29 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'company',
+      sourceKind,
+      fetchedAt,
     };
   }
 
-  // Audit v35 fix: same stable-vs-unknown issue as workforce.
-  // A public company with stock between -5% and +10% and revYoy between 0–10%
-  // produces severity=0 and chips=[] — looks fine but no chip confirms it.
+  // GAP I fix: normal-range financials are positive (stable-confirmed), not unknown.
   if (severity === 0 && chips.length === 0) {
+    const liveUnavailable = (cd as any)?._liveUnavailable === true || (cd as any)?._dataFreshnessScore === 0;
+    const gapIVerdict: VerdictLabel = liveUnavailable ? 'data-unavailable' : 'stable-confirmed';
     return {
       id: 'financial',
       tier: 2,
       severity: 0,
-      verdict: 'unknown',
+      verdict: gapIVerdict,
       headline: 'Financial Health',
-      rationale: 'Financial signals present but within normal range — no distress confirmed.',
+      rationale: liveUnavailable
+        ? 'Unable to verify financial status — treat as elevated until live data confirmed.'
+        : 'Financial signals within normal range — no distress confirmed.',
       chips: [],
-      tone: VERDICT_TONE.unknown,
+      tone: VERDICT_TONE[gapIVerdict],
       group: 'company',
+      sourceKind,
+      fetchedAt,
     };
   }
 
@@ -237,6 +290,8 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'company',
+    sourceKind,
+    fetchedAt,
   };
 }
 
@@ -277,6 +332,8 @@ export function compressMarketSignal(result: HybridResult, _companyData?: Compan
     chips.push({ label: 'Macro', value: `${macroScore}/100`, tone: macroScore >= 70 ? 'critical' : 'warning' });
   }
 
+  // Market signals (macro, peer contagion, role demand) are calibrated baselines
+  // not real-time API feeds — always marked as heuristic.
   const hasAnyData = roleDemand || peerContagion || macro;
   if (!hasAnyData) {
     return {
@@ -289,6 +346,8 @@ export function compressMarketSignal(result: HybridResult, _companyData?: Compan
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'market',
+      sourceKind: 'heuristic',
+      fetchedAt: null,
     };
   }
 
@@ -303,6 +362,8 @@ export function compressMarketSignal(result: HybridResult, _companyData?: Compan
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'market',
+    sourceKind: 'heuristic',
+    fetchedAt: null,
   };
 }
 
@@ -337,6 +398,8 @@ export function compressCareerSignal(result: HybridResult, _companyData?: Compan
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'career',
+      sourceKind: 'heuristic',
+      fetchedAt: null,
     };
   }
 
@@ -366,6 +429,8 @@ export function compressCareerSignal(result: HybridResult, _companyData?: Compan
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'career',
+    sourceKind: 'heuristic',
+    fetchedAt: null,
   };
 }
 

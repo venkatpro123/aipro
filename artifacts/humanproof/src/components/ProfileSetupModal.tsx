@@ -14,6 +14,19 @@ import type { SalaryBand, VisaStatus } from '../services/userProfileService';
 
 const SALARY_BANDS: SalaryBand[] = ['<50k', '50-100k', '100-150k', '150-250k', '250k+'];
 
+const INDUSTRY_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'technology',             label: 'Technology / Software' },
+  { value: 'finance',                label: 'Finance / Banking / Fintech' },
+  { value: 'healthcare',             label: 'Healthcare / Life Sciences' },
+  { value: 'retail',                 label: 'Retail / E-commerce' },
+  { value: 'media',                  label: 'Media / Entertainment' },
+  { value: 'manufacturing',          label: 'Manufacturing / Industrial' },
+  { value: 'consulting',             label: 'Consulting / Professional Services' },
+  { value: 'education',              label: 'Education / EdTech' },
+  { value: 'energy',                 label: 'Energy / Utilities' },
+  { value: 'telecom',                label: 'Telecom / Infrastructure' },
+];
+
 const VISA_OPTIONS: Array<{ value: VisaStatus; label: string }> = [
   { value: 'citizen',            label: 'Citizen' },
   { value: 'permanent_resident', label: 'Permanent resident / Green card' },
@@ -174,6 +187,11 @@ export function ProfileSetupModal() {
   const [selfRatedSkillsRaw, setSelfRatedSkillsRaw] = useState('');
   const [targetSkillsRaw, setTargetSkillsRaw] = useState('');
 
+  // Step 0 extension — Role identity (v36)
+  const [jobTitle, setJobTitle] = useState('');
+  const [industryKey, setIndustryKey] = useState('');
+  const [yearsExperience, setYearsExperience] = useState<string>('');
+
   // Bootstrap from existing profile
   useEffect(() => {
     if (!isHydrated || !user) return;
@@ -194,6 +212,9 @@ export function ProfileSetupModal() {
       setMetroArea(userProfile?.metroArea ?? '');
       setSelfRatedSkillsRaw(userProfile?.selfRatedSkills?.join(', ') ?? '');
       setTargetSkillsRaw(userProfile?.targetSkills?.join(', ') ?? '');
+      setJobTitle(userProfile?.jobTitle ?? '');
+      setIndustryKey(userProfile?.industryKey ?? '');
+      setYearsExperience(userProfile?.yearsExperience != null ? String(userProfile.yearsExperience) : '');
       setOpen(true);
     }
   }, [isHydrated, userProfile, user]);
@@ -219,12 +240,16 @@ export function ProfileSetupModal() {
     const rawToSkills = (raw: string): string[] | undefined =>
       raw.trim() ? raw.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
 
+    const yoe = yearsExperience === '' ? undefined : Number(yearsExperience);
     await saveUserProfile({
       salaryBand:          salaryBand || undefined,
       visaStatus:          visaStatus || undefined,
       metro:               metro || undefined,
       tenureYears:         Number.isFinite(tenure) ? tenure : undefined,
       confirm:             true,
+      jobTitle:            jobTitle.trim() || undefined,
+      industryKey:         industryKey || undefined,
+      yearsExperience:     Number.isFinite(yoe) ? yoe : undefined,
       monthlySalaryUsd:    salaryUsd,
       monthlySalaryInr:    salaryInr,
       monthlyExpensesUsd:  monthlyExpensesUsd !== '' ? Number(monthlyExpensesUsd) : undefined,
@@ -281,6 +306,25 @@ export function ProfileSetupModal() {
           <input className="input" type="number" min={0} max={60} step={0.5}
             value={tenureYears} onChange={(e) => setTenureYears(e.target.value)}
             placeholder="e.g. 3.5" />
+        </FieldGroup>
+
+        <FieldGroup label="Job title" helper="Helps us personalize actions and seniority recommendations">
+          <input className="input" type="text" value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+            placeholder="e.g. Senior Software Engineer, Product Manager" />
+        </FieldGroup>
+
+        <FieldGroup label="Industry">
+          <select className="input" value={industryKey} onChange={(e) => setIndustryKey(e.target.value)}>
+            <option value="">Select…</option>
+            {INDUSTRY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </FieldGroup>
+
+        <FieldGroup label="Total years of professional experience" helper="Across all employers — shapes your seniority bracket">
+          <input className="input" type="number" min={0} max={60} step={1}
+            value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)}
+            placeholder="e.g. 8" />
         </FieldGroup>
       </div>
     ),

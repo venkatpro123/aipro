@@ -9,4 +9,6 @@ export interface TabProps {
   companyData: CompanyData;
   onDownload?: () => void;
   onRecalculate?: () => void;
+  /** Current pipeline stage label — shown in AnalysisTab skeleton when brief is computing */
+  auditStage?: string;
 }

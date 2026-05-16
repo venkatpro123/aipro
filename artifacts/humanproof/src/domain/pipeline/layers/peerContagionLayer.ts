@@ -36,6 +36,8 @@ const FALLBACK_RESULT: PeerContagionResult = {
   waveNarrative: 'Peer contagion layer fell back — no data available.',
   actionImplication: 'Monitor sector news manually.',
   calibrationStatus: 'documented_wave_analysis',
+  multipliersCalibrationStatus: 'developer_estimate',
+  multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
 };
 
 export const peerContagionLayer: AuditLayer<'peer_contagion'> = {

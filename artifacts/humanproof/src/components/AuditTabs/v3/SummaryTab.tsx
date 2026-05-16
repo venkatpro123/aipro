@@ -31,6 +31,7 @@ import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { FirstAuditWelcome } from '../common/FirstAuditWelcome';
 import { CompanyPulseCard } from '../common/CompanyPulseCard';
+import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 
@@ -488,6 +489,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       >
         <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
       </motion.div>
+
+      {/* GAP A: Personal Risk Modifier — guard against empty object from failed pipeline step */}
+      {(result as any).personalRiskModifier?.rawModifier != null &&
+        Math.abs((result as any).personalRiskModifier.rawModifier) >= 2 && (
+        <PersonalRiskModifierPanel modifier={(result as any).personalRiskModifier} />
+      )}
 
       {/* Reading hint */}
       <div className="text-center pt-1 pb-2">

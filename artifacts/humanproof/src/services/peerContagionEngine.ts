@@ -67,6 +67,10 @@ export interface PeerContagionResult {
   waveNarrative: string;
   actionImplication: string;
   readonly calibrationStatus: 'documented_wave_analysis';
+  /** MED-6: sector contribution multipliers (direct_competitor=1.0, adjacent=0.65, etc.) are
+   *  developer-estimated. Calibration requires same-sector layoff co-occurrence data within 90 days. */
+  readonly multipliersCalibrationStatus: 'developer_estimate';
+  readonly multipliersCalibrationNote: string;
 }
 
 export interface PeerContagionInputs {
@@ -244,6 +248,8 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
       waveNarrative: `Insufficient peer data for ${inputs.companyName}. Sector contagion analysis unavailable.`,
       actionImplication: 'Monitor industry news manually for peer company announcements.',
       calibrationStatus: 'documented_wave_analysis',
+      multipliersCalibrationStatus: 'developer_estimate',
+      multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
     };
   }
 
@@ -322,5 +328,7 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
     waveNarrative: buildWaveNarrative(waveIntensity, directCuts, adjacentCuts, affectedPeers, inputs.companyName),
     actionImplication: buildActionImplication(propagationRisk),
     calibrationStatus: 'documented_wave_analysis',
+    multipliersCalibrationStatus: 'developer_estimate',
+    multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
   };
 }

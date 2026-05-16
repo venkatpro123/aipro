@@ -66,6 +66,8 @@ import type { ScenarioPlanResult } from "../services/scenarioPlanService";
 import type { IntelligenceBriefResult } from "../services/intelligenceBriefService";
 import type { CareerContingencyPlan } from "../services/careerContingencyPlanEngine";
 import type { PreparednessResult } from "../services/preparednessScoreEngine";
+// v35.0 intelligence layers (55)
+import type { PersonalRiskModifier } from "../services/personalRiskAdjusterService";
 
 // ============================================================================
 // Sub-Interfaces
@@ -224,6 +226,14 @@ export interface ActionPlanItem {
   learningWeeks?: { w2: number; w8: number; w20: number };
   /** Provenance evidence for this action item — which signals triggered it and their source. */
   evidence?: Array<{ signal: string; source: string; confidence: 'high' | 'medium' | 'low' }>;
+  /** GAP F: human-readable effort badge (e.g. '30 min', '2h', '2 weeks') */
+  effortBadge?: string;
+  /** GAP F: when in the job-search sequence this action belongs (day1/week1/month1/quarter1) */
+  sequencePhase?: 'day1' | 'week1' | 'month1' | 'quarter1';
+  /** GAP F: one-line outcome evidence stat for trust-building (e.g. "2.8× more recruiter contacts") */
+  evidenceStats?: string;
+  /** GAP F: which other action IDs this depends on (shown as sequencing constraint) */
+  dependsOn?: string[];
 }
 
 /**
@@ -401,6 +411,12 @@ export interface HybridResult {
    * Rendered in TransparencyTab's India Intelligence panel.
    */
   indiaRiskEnrichment?: IndiaRiskEnrichment;
+
+  // ── Score formula transparency ───────────────────────────────────────────────
+  /** MED-5: fraction of total formula weight that is regression-derived (0–1, e.g. 0.58). */
+  calibrationCoverage?: number;
+  /** LOW-1: all kill-switch names that fired this run (e.g. ['financial_distress_triad']). */
+  activatedKillSwitches?: string[];
 
   // ── Cache provenance ────────────────────────────────────────────────────────
   /**
@@ -863,6 +879,8 @@ export interface HybridResult {
    * Answers: "Given EVERYTHING, what are my 3 concrete career options right now?"
    */
   careerContingencyPlan?: CareerContingencyPlan;
+  /** Status of the career contingency plan computation. Drives ActionsTab UI state. */
+  contingencyPlanStatus?: 'loading' | 'ready' | 'failed' | 'unavailable';
 
   /**
    * Preparedness Score (Layer 54) — career layoff-readiness meta-score (0–100).
@@ -873,6 +891,13 @@ export interface HybridResult {
    * Answers: "If laid off tomorrow, how ready am I — and what's my fastest path to a new role?"
    */
   preparednessScore?: PreparednessResult;
+  /**
+   * v35.0 — Layer 55: Personal Risk Modifier.
+   * Signed ±10pt adjustment to the composite score based on user-specific
+   * circumstance factors (visa dependency, manager departure, skill fit,
+   * network strength, career velocity). Applied after all kill-switches.
+   */
+  personalRiskModifier?: PersonalRiskModifier;
 }
 
 // ============================================================================

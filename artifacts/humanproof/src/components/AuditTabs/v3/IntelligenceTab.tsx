@@ -17,6 +17,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Search, ShieldAlert, TrendingUp } from 'lucide-react';
+
+/** GAP H: Small freshness/source indicator shown beside heuristic signal blocks. */
+const HeuristicBadge: React.FC = () => (
+  <span
+    title="Estimated baseline — calibrated from May 2026 data, not a live API feed"
+    className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+    style={{ background: 'rgba(148,163,184,0.12)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.22)' }}
+  >
+    <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: '#94a3b8' }} />
+    est. baseline
+  </span>
+);
 import type { TabProps } from '../common/types';
 import WARNSignalPanel from '../common/WARNSignalPanel';
 import SECEnhancedPanel from '../common/SECEnhancedPanel';
@@ -41,7 +53,14 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
   const peerContagion  = r.peerContagion;
   const macroRisk      = r.macroEconomicRisk;
 
-  const hasGroundTruth  = Boolean(warnSignal?.hasActiveWARN || secEnhanced || blsMacro);
+  // Guard against empty objects from failed pipeline steps — {} is truthy but has no data.
+  const secHasContent = Boolean(
+    secEnhanced &&
+    typeof secEnhanced === 'object' &&
+    Object.keys(secEnhanced).length > 0 &&
+    ((secEnhanced as any).warnSignals?.length || (secEnhanced as any).layoffHistory?.length || (secEnhanced as any).fcfSignal),
+  );
+  const hasGroundTruth = Boolean(warnSignal?.hasActiveWARN || secHasContent || blsMacro);
   const hasMarket       = Boolean(roleMarket || peerContagion || macroRisk);
 
   const warnActiveCount = warnSignal?.hasActiveWARN ? 1 : 0;
@@ -70,9 +89,9 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           badgeColor={warnActiveCount > 0 ? '#dc2626' : '#f97316'}
           empty={!hasGroundTruth}
         >
-          {warnSignal   && <WARNSignalPanel warnSignal={warnSignal} />}
-          {secEnhanced  && <SECEnhancedPanel secEnhancedSignals={secEnhanced} />}
-          {blsMacro     && <BLSMacroPanel blsMacroSignal={blsMacro} />}
+          {warnSignal    && <WARNSignalPanel warnSignal={warnSignal} />}
+          {secHasContent && <SECEnhancedPanel secEnhancedSignals={secEnhanced} />}
+          {blsMacro      && <BLSMacroPanel blsMacroSignal={blsMacro} />}
         </AdaptiveBlock>
       </motion.div>
 
@@ -80,7 +99,7 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <AdaptiveBlock
           title="Market environment"
-          subtitle="Role demand, peer-sector contagion, macroeconomic risk"
+          subtitle={<span className="flex items-center gap-1.5">Role demand, peer contagion, macro risk <HeuristicBadge /></span>}
           icon={TrendingUp}
           tier={3}
           accentColor="#f59e0b"

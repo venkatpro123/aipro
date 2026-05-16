@@ -22,11 +22,21 @@ import { getConstant } from './calibration/calibrationConstants';
 import type { ScenarioPlanResult } from './scenarioPlanService';
 import type { VisaRiskResult } from './visaRiskEngine';
 import type { FinancialRunwayAssessment } from './financialRunwayService';
+import type { GeographicOptionalityResult } from './geographicOptionalityEngine';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ContingencyPathId = 'STAY' | 'NEGOTIATE' | 'TRANSITION';
 export type UrgencyLevel = 'IMMEDIATE' | 'URGENT' | 'PLANNED' | 'MONITOR';
+
+/** GAP G: financial grounding for each contingency path */
+export interface ContingencyPathFinancialProjection {
+  runwayExhaustionDate: string | null;   // ISO date when runway runs out
+  runwayMonthsConsumed: number;          // months consumed by this path's search/transition
+  estimatedNewSalaryPct: number | null;  // TRANSITION only: +/- % vs. current (e.g. -10 = 10% pay cut)
+  estimatedWeeksToHire: number | null;   // TRANSITION only: expected search duration
+  costOfLivingAdjustment: number | null; // CoL multiplier impact (1.3 = 30% more expensive)
+}
 
 export interface ContingencyPath {
   pathId: ContingencyPathId;
@@ -41,6 +51,9 @@ export interface ContingencyPath {
   successIndicators: string[];
   keyRisks: string[];
   leverageFactors: string[]; // What makes this path viable
+  financialProjection?: ContingencyPathFinancialProjection;
+  /** MED-8: base feasibility values are model-estimated, not regression-calibrated. */
+  feasibilityCalibrationStatus: 'developer_estimate';
 }
 
 export interface CareerContingencyPlan {
@@ -73,6 +86,11 @@ export interface CareerContingencyInput {
   priorJobChanges?: number | null;
   hasEquityVesting?: boolean | null;
   equityVestMonths?: number | null;
+  geographicOptionality?: GeographicOptionalityResult | null; // GAP G: for CoL adjustment in financial projection
+  /** v37.0: role leverage multiplier derived from role-industry composite (0.5–2.0).
+   *  Values >1.0 = higher leverage (surgeons, principal engineers, compliance officers).
+   *  Values <1.0 = lower leverage (BPO associates, junior admins, media analysts). */
+  roleLeverageMultiplier?: number | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -113,9 +131,12 @@ function computeStayFeasibility(input: CareerContingencyInput): number {
   else if (input.collapseStage === 2) score -= 20;
   else if (input.collapseStage === 1) score -= 10;
 
-  // Visa dependency amplifies STAY (fewer options)
-  const visaConstraint = (input.visaRisk?.dependencyScore ?? 0) > 0.5;
-  if (visaConstraint) score += 10; // Staying is more feasible due to constraints
+  // High visa risk makes STAY more dangerous — a layoff triggers the 60-day clock.
+  // Penalise STAY for HIGH/CRITICAL visa risk so TRANSITION surfaces correctly.
+  // Low visa dependency is neutral-to-positive for staying.
+  const visaRiskLevel = input.visaRisk?.overallVisaRisk;
+  if (visaRiskLevel === 'CRITICAL' || visaRiskLevel === 'HIGH') score -= 15;
+  else if ((input.visaRisk?.dependencyScore ?? 0) <= 0.3) score += 5;
 
   // Career goal alignment
   if (input.careerGoal === 'stay_and_grow') score += 10;
@@ -148,6 +169,17 @@ function computeNegotiateFeasibility(input: CareerContingencyInput): number {
   // DISTRESS cohort: company has less to offer
   if (input.primaryCohort === 'DISTRESS') score -= 15;
 
+  // High visa risk adds urgency — negotiation may stall and consume the grace period.
+  const negVisaRisk = input.visaRisk?.overallVisaRisk;
+  if (negVisaRisk === 'CRITICAL' || negVisaRisk === 'HIGH') score -= 10;
+
+  // v37.0: role leverage multiplier — surgeons/principal engineers negotiate from strength;
+  // BPO associates/junior admins have structurally limited leverage regardless of market.
+  if (input.roleLeverageMultiplier != null) {
+    const leverageDelta = Math.round((input.roleLeverageMultiplier - 1.0) * 20); // ±20 pts at extremes
+    score += Math.max(-20, Math.min(20, leverageDelta));
+  }
+
   return Math.min(90, Math.max(5, Math.round(score)));
 }
 
@@ -179,7 +211,77 @@ function computeTransitionFeasibility(input: CareerContingencyInput): number {
   if (input.careerGoal === 'emergency_exit' || input.careerGoal === 'strategic_exit') score += 15;
   if (input.careerGoal === 'stay_and_grow') score -= 10;
 
+  // v37.0: role portability modifier — cloud architects and data scientists are highly portable;
+  // lawyers and licensed healthcare workers face structural industry-transition constraints.
+  // Inverted from negotiate: high role leverage (>1) typically means specialist → lower cross-industry portability.
+  if (input.roleLeverageMultiplier != null && input.roleLeverageMultiplier > 1.3) {
+    // Highly specialized / regulated roles have lower TRANSITION portability
+    score -= Math.round((input.roleLeverageMultiplier - 1.3) * 15);
+  } else if (input.roleLeverageMultiplier != null && input.roleLeverageMultiplier < 0.9) {
+    // Commodity roles (BPO, junior admin) face difficult transition market regardless
+    score -= Math.round((0.9 - input.roleLeverageMultiplier) * 10);
+  }
+
   return Math.min(95, Math.max(5, Math.round(score)));
+}
+
+// GAP G: compute financial grounding for a contingency path
+function buildPathFinancialProjection(
+  pathId: ContingencyPathId,
+  input: CareerContingencyInput,
+): ContingencyPathFinancialProjection {
+  const runway = resolveRunwayMonths(input);
+  const colMultiplier = input.geographicOptionality?.costOfLivingMultiplier ?? null;
+
+  if (pathId === 'STAY') {
+    // STAY: runway is consumed at current burn rate; no salary change
+    const exhaustionDate = runway > 0
+      ? new Date(Date.now() + runway * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      : null;
+    return {
+      runwayExhaustionDate: exhaustionDate,
+      runwayMonthsConsumed: 0,
+      estimatedNewSalaryPct: null,
+      estimatedWeeksToHire: null,
+      costOfLivingAdjustment: colMultiplier,
+    };
+  }
+
+  if (pathId === 'NEGOTIATE') {
+    // NEGOTIATE: runway unchanged unless negotiation fails → fallback transition
+    const exhaustionDate = runway > 0
+      ? new Date(Date.now() + runway * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      : null;
+    return {
+      runwayExhaustionDate: exhaustionDate,
+      runwayMonthsConsumed: 0,
+      estimatedNewSalaryPct: null,
+      estimatedWeeksToHire: null,
+      costOfLivingAdjustment: colMultiplier,
+    };
+  }
+
+  // TRANSITION: runway consumed during search; salary delta + weeks to hire
+  const searchWeeks = input.roleMarketDemand?.jobSearchRunwayWeeks ?? 12;
+  const searchMonths = Math.ceil(searchWeeks / 4.3);
+  const remainingRunway = Math.max(0, runway - searchMonths);
+  const exhaustionDate = remainingRunway > 0
+    ? new Date(Date.now() + remainingRunway * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    : null; // runway exhausted during search
+
+  // Estimate salary delta from role market demand (negative = pay cut, positive = raise)
+  const demandIndex = input.roleMarketDemand?.adjustedDemandIndex ?? 50;
+  const estimatedNewSalaryPct = demandIndex >= 70 ? 5 :
+    demandIndex >= 50 ? 0 :
+    demandIndex >= 30 ? -10 : -20;
+
+  return {
+    runwayExhaustionDate: exhaustionDate,
+    runwayMonthsConsumed: searchMonths,
+    estimatedNewSalaryPct,
+    estimatedWeeksToHire: searchWeeks,
+    costOfLivingAdjustment: colMultiplier && colMultiplier !== 1.0 ? colMultiplier : null,
+  };
 }
 
 function buildStayActions(input: CareerContingencyInput): { immediate: string[]; shortTerm: string[] } {
@@ -295,6 +397,8 @@ function buildStayPath(input: CareerContingencyInput, feasibility: number): Cont
       'Deep institutional knowledge that takes 6–12 months to replace',
       input.hasEquityVesting ? `Unvested equity creates strong retention incentive` : 'Accumulated tenure and relationship network',
     ],
+    financialProjection: buildPathFinancialProjection('STAY', input),
+    feasibilityCalibrationStatus: 'developer_estimate',
   };
 }
 
@@ -331,6 +435,8 @@ function buildNegotiatePath(input: CareerContingencyInput, feasibility: number):
       leverage >= 60 ? 'Above-market demand for your role creates external BATNA' : 'Institutional knowledge and current project dependencies',
       input.hasEquityVesting ? `Unvested equity cliff within ${input.equityVestMonths} months is strong negotiating asset` : 'Transition timing flexibility',
     ],
+    financialProjection: buildPathFinancialProjection('NEGOTIATE', input),
+    feasibilityCalibrationStatus: 'developer_estimate',
   };
 }
 
@@ -370,6 +476,8 @@ function buildTransitionPath(input: CareerContingencyInput, feasibility: number)
       liquidity >= 60 ? 'Strong market demand for your role shortens expected search time' : 'Your role skills transfer to adjacent markets',
       (input.priorJobChanges ?? 0) >= 2 ? 'Prior job change experience means faster interview ramp' : 'Fresh perspective appealing to companies hiring for culture change',
     ],
+    financialProjection: buildPathFinancialProjection('TRANSITION', input),
+    feasibilityCalibrationStatus: 'developer_estimate',
   };
 }
 
@@ -379,18 +487,28 @@ function selectRecommendedPath(
   transitionEV: number,
   input: CareerContingencyInput,
 ): { path: ContingencyPathId; confidence: number } {
-  // Goal override takes priority
+  // Goal alignment adds an EV bonus to the preferred path rather than
+  // hardcoding a confidence value. This ensures runway, visa risk, and
+  // market conditions still constrain the recommendation.
+  const GOAL_BONUS = 8;
+  let adjStayEV = stayEV;
+  let adjNegEV  = negotiateEV;
+  let adjTransEV = transitionEV;
+
   if (input.careerGoal === 'emergency_exit' || input.collapseStage === 3) {
-    return { path: 'TRANSITION', confidence: 0.85 };
-  }
-  if (input.careerGoal === 'stay_and_grow' && stayEV >= 50) {
-    return { path: 'STAY', confidence: 0.75 };
+    adjTransEV += GOAL_BONUS * 2;
+  } else if (input.careerGoal === 'strategic_exit') {
+    adjTransEV += GOAL_BONUS;
+  } else if (input.careerGoal === 'stay_and_grow') {
+    adjStayEV += GOAL_BONUS;
+  } else if (input.careerGoal === 'explore') {
+    adjNegEV += GOAL_BONUS;
   }
 
   const scores = [
-    { path: 'STAY' as ContingencyPathId, ev: stayEV },
-    { path: 'NEGOTIATE' as ContingencyPathId, ev: negotiateEV },
-    { path: 'TRANSITION' as ContingencyPathId, ev: transitionEV },
+    { path: 'STAY' as ContingencyPathId, ev: adjStayEV },
+    { path: 'NEGOTIATE' as ContingencyPathId, ev: adjNegEV },
+    { path: 'TRANSITION' as ContingencyPathId, ev: adjTransEV },
   ].sort((a, b) => b.ev - a.ev);
 
   const winner = scores[0];

@@ -158,6 +158,18 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
           Static peer graph · Curated layoff cache · Not real-time peer monitoring
         </p>
       </div>
+      {/* MED-6: multiplier calibration disclosure */}
+      {contagion.multipliersCalibrationStatus === 'developer_estimate' && (
+        <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
+          background: 'rgba(245,158,11,0.05)',
+          border: '1px solid rgba(245,158,11,0.15)',
+        }}>
+          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(245,158,11,0.55)' }} />
+          <p className="text-[9px]" style={{ color: 'rgba(245,158,11,0.65)' }}>
+            Sector weights are developer estimates — pending co-occurrence calibration. {contagion.multipliersCalibrationNote.split('.')[0]}.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-// v3/ActionsTab.tsx — v34.0 UX redesign
+// v3/ActionsTab.tsx — v35.0
 //
 // ACTION PLAN tab (4th tab in v34 IA). Where decision-driven users land
 // directly in Emergency Mode.
@@ -93,11 +93,25 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                   <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     {item.description}
                   </p>
-                  <div className="flex items-center gap-3 mt-1.5">
+                  <div className="flex items-center flex-wrap gap-2 mt-1.5">
+                    {/* Sequence phase label */}
+                    {item.sequencePhase && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+                        {{ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' }[item.sequencePhase]}
+                      </span>
+                    )}
                     {item.deadline && (
                       <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                         <Clock className="w-2.5 h-2.5 inline mr-1" />
                         {item.deadline}
+                      </span>
+                    )}
+                    {/* Effort badge */}
+                    {item.effortBadge && (
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
+                        style={{ background: 'rgba(0,212,224,0.10)', color: 'rgba(0,212,224,0.65)', border: '1px solid rgba(0,212,224,0.20)' }}>
+                        {item.effortBadge}
                       </span>
                     )}
                     {item.riskReductionPct > 0 && (
@@ -107,6 +121,12 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                       </span>
                     )}
                   </div>
+                  {/* Evidence stat — collapsed "Why this works" one-liner */}
+                  {item.evidenceStats && (
+                    <p className="text-[10px] italic mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      {item.evidenceStats}
+                    </p>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -154,14 +174,34 @@ const EmergencyCallout: React.FC<{ score: number }> = ({ score }) => (
   </motion.div>
 );
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+// ── Contingency state renderers ───────────────────────────────────────────────
 
-const NoContingencyFallback: React.FC = () => (
+const ContingencyLoading: React.FC = () => (
+  <div className="rounded-2xl p-4 text-center"
+    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="w-6 h-6 mx-auto mb-2 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan,#00d4e0)] animate-spin" />
+    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.40)' }}>Analyzing your career paths…</p>
+  </div>
+);
+
+const ContingencyFailed: React.FC = () => (
+  <div className="rounded-2xl p-4 text-center"
+    style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)' }}>
+    <p className="text-[12px] font-semibold mb-1" style={{ color: 'rgba(245,158,11,0.85)' }}>
+      Could not compute contingency paths
+    </p>
+    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      An error occurred. Try refreshing or adding more profile data to retry.
+    </p>
+  </div>
+);
+
+const ContingencyUnavailable: React.FC = () => (
   <div className="rounded-2xl p-4 text-center"
     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
     <Shield className="w-8 h-8 mx-auto mb-2" style={{ color: 'rgba(255,255,255,0.20)' }} />
     <p className="text-[12px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
-      Contingency plan generating…
+      Contingency plan unavailable
     </p>
     <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
       Add your financial runway and career goal in Profile Setup to unlock personalised paths.
@@ -175,6 +215,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const { result, companyData } = props;
   const r = result as any;
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
+  const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
   const adaptation = useDashboardAdaptation(result, companyData);
 
@@ -184,10 +225,14 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
       {/* T1: Emergency callout — only in emergency mode */}
       {adaptation.mode === 'emergency' && <EmergencyCallout score={result.total} />}
 
-      {/* T1: Career Contingency Plan */}
-      {contingencyPlan
+      {/* T1: Career Contingency Plan — status-aware rendering */}
+      {contingencyStatus === 'ready' && contingencyPlan
         ? <CareerContingencyPanel contingencyPlan={contingencyPlan} />
-        : <NoContingencyFallback />
+        : contingencyStatus === 'loading'
+          ? <ContingencyLoading />
+          : contingencyStatus === 'failed'
+            ? <ContingencyFailed />
+            : <ContingencyUnavailable />
       }
 
       {/* T1: Action Priority Matrix */}

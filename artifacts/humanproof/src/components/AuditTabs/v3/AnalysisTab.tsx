@@ -13,7 +13,7 @@
 //   5. Scenario Fan (T3)
 //   6. Methodology & Transparency (T4)← data quality, calibration, provenance
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain, Zap, BarChart2, Activity, BookOpen, Compass,
@@ -51,7 +51,8 @@ function readinessColor(label: string): string {
 const IntelligenceBriefBlock: React.FC<{
   brief: IntelligenceBriefResult | null | undefined;
   urgency: string;
-}> = ({ brief, urgency }) => {
+  auditStage?: string;
+}> = ({ brief, urgency, auditStage }) => {
   const [expanded, setExpanded] = useState(false);
 
   const uc = {
@@ -78,6 +79,7 @@ const IntelligenceBriefBlock: React.FC<{
         <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
           AI analysis generating…
         </p>
+        <QuorumProgressBar stageLabel={auditStage} />
       </div>
     );
   }
@@ -308,9 +310,49 @@ const ScenarioContent: React.FC<{ scenario: ScenarioPlanResult }> = ({ scenario 
   );
 };
 
+// ── Quorum progress bar — shown inside brief skeleton during 45s wait ────────
+
+const QuorumProgressBar: React.FC<{ stageLabel?: string }> = ({ stageLabel }) => {
+  const [pct, setPct] = useState(0);
+
+  useEffect(() => {
+    const DURATION_MS = 45_000;
+    const TICK_MS = 250;
+    const startTime = Date.now();
+    const id = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const next = Math.min(100, Math.round((elapsed / DURATION_MS) * 100));
+      setPct(next);
+      if (next >= 100) clearInterval(id);
+    }, TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      {stageLabel && (
+        <p className="text-[10px] font-mono tracking-wide" style={{ color: 'rgba(0,212,224,0.55)' }}>
+          {stageLabel}
+        </p>
+      )}
+      <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <motion.div
+          className="h-1 rounded-full"
+          style={{ background: 'rgba(0,212,224,0.6)', width: `${pct}%` }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.25, ease: 'linear' }}
+        />
+      </div>
+      <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+        {pct}% · Intelligence pipeline running
+      </p>
+    </div>
+  );
+};
+
 // ── Main Export ───────────────────────────────────────────────────────────────
 
-export const AnalysisTab: React.FC<TabProps> = ({ result, companyData }) => {
+export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStage }) => {
   const r = result as any;
 
   const horizon: PredictionHorizonResult | undefined   = r.predictionHorizon;
@@ -323,7 +365,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData }) => {
     <div className="flex flex-col gap-3">
 
       {/* ── T2: Intelligence Brief — full text lives here only ─────────────── */}
-      <IntelligenceBriefBlock brief={brief} urgency={urgencyLevel} />
+      <IntelligenceBriefBlock brief={brief} urgency={urgencyLevel} auditStage={auditStage} />
 
       {/* ── T2: Dual Gauge — Risk vs Readiness ─────────────────────────────── */}
       <DualGaugePanel riskScore={result.total} preparedness={preparedness} />

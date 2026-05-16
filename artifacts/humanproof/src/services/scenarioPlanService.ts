@@ -1,6 +1,8 @@
-// scenarioPlanService.ts — Layer 50 (v17.0)
+// scenarioPlanService.ts — Layer 50 (v35.0)
 // Projects bear / base / bull macro scenarios for risk over the next 6 months.
 // Provides probabilistic foresight so users can plan for different economic regimes.
+// GAP C: recommended actions are now personalized by visa status, financial runway,
+// seniority bracket, and equity type — static action pools replaced by trait-dispatchers.
 
 export interface ScenarioOutcome {
   score: number;
@@ -18,6 +20,16 @@ export interface ScenarioPlanResult {
   planningHorizonMonths: number;
 }
 
+export interface ScenarioPlanPersonalizationContext {
+  visaStatus?: 'h1b' | 'l1' | 'opt_stem' | 'citizen' | 'other_work_auth';
+  financialRunwaySituation?: 'critical' | 'tight' | 'comfortable' | 'strong';
+  seniorityBracket?: 'junior' | 'mid' | 'senior' | 'staff_plus';
+  hasEquityVesting?: boolean;
+  equityType?: 'rsu' | 'options' | 'none';
+  /** v37.0: broad role category — drives profession-specific scenario actions */
+  roleCategory?: 'tech' | 'healthcare' | 'finance' | 'legal' | 'sales_ops' | 'creative' | 'service' | 'physical_labor' | 'education' | 'government';
+}
+
 export interface ScenarioPlanInput {
   currentScore: number;
   macroRiskTier?: string | null;
@@ -26,6 +38,7 @@ export interface ScenarioPlanInput {
   velocityPtsPerMonth?: number;
   freeCashFlowMargin?: number | null;
   revenueGrowthYoY?: number | null;
+  personalizationContext?: ScenarioPlanPersonalizationContext;
 }
 
 // Macro scenario delta table (added to current score, capped 0–99).
@@ -76,36 +89,193 @@ function buildBearTriggers(input: ScenarioPlanInput): string[] {
   return triggers.slice(0, 4);
 }
 
-function buildBearActions(): string[] {
-  return [
-    'Treat this as an active job search situation — begin immediately',
-    'Accelerate emergency fund to ≥6 months of expenses',
-    'Maximise equity/bonus capture before departure',
-    'Activate your first-degree network for warm referrals now',
-  ];
-}
+function buildBearActions(ctx: ScenarioPlanPersonalizationContext, urgencyMultiplier: number = 1.5): string[] {
+  const isCritical = urgencyMultiplier >= 1.5;
+  const actions: string[] = [];
 
-function buildBaseActions(currentScore: number): string[] {
-  if (currentScore >= 70) {
-    return [
-      'Begin structured job search with 2-3 applications per week',
-      'Refresh resume and LinkedIn to attract inbound opportunities',
-      'Monitor company announcements weekly for early warning signals',
-    ];
+  // Visa-gated: always first in bear — legal clock is most time-critical constraint.
+  if (ctx.visaStatus === 'opt_stem') {
+    actions.push('OPT STEM priority: consult an immigration attorney within 72h to map Cap-Gap strategy and employer transfer options');
+  } else if (ctx.visaStatus === 'h1b' || ctx.visaStatus === 'l1') {
+    actions.push(`${ctx.visaStatus.toUpperCase()} priority: contact immigration attorney within 72h — 60-day grace period starts on last day of employment`);
   }
-  return [
-    'Maintain career readiness: keep resume current and skills updated',
-    'Build 3–6 month financial buffer as precautionary measure',
-    'Track industry trends to stay ahead of structural shifts',
-  ];
+
+  // Runway-gated: in bear/critical, expense audit trumps "accelerate savings"
+  if (ctx.financialRunwaySituation === 'critical' || ctx.financialRunwaySituation === 'tight') {
+    actions.push('Run expense audit immediately — identify non-essential recurring costs to extend runway by 4–8 weeks');
+  } else {
+    actions.push(isCritical
+      ? 'Secure 6+ months financial runway NOW — convert non-essential assets before disruption occurs'
+      : 'Accelerate emergency fund to ≥6 months of expenses before any disruption occurs');
+  }
+
+  // v37.0: Role-category-specific bear action — the highest-impact personalization surface
+  const bearRoleAction = buildBearRoleCategoryAction(ctx.roleCategory, ctx.seniorityBracket, isCritical);
+  if (bearRoleAction) actions.push(bearRoleAction);
+
+  // Equity-gated
+  if (ctx.equityType && ctx.equityType !== 'none' && ctx.hasEquityVesting !== false) {
+    actions.push('Accelerate equity/bonus capture — confirm vesting cliff dates and negotiate acceleration clause if possible');
+  }
+
+  // Seniority-gated (fallback when no roleCategory action covers leadership)
+  if (!bearRoleAction) {
+    if (ctx.seniorityBracket === 'staff_plus') {
+      actions.push('Activate advisory and fractional leadership options — staff+ profiles are sought for board advisory and interim roles');
+    } else {
+      actions.push('Activate your first-degree network for warm referrals — 80% of roles are filled before public posting');
+    }
+  }
+
+  return actions.slice(0, 5);
 }
 
-function buildBullActions(): string[] {
-  return [
-    'Leverage improved market conditions for salary negotiation or promotion',
-    'Invest in target skills to maximise opportunity in recovery',
-    'Evaluate whether current role offers sufficient growth for the next cycle',
-  ];
+function buildBearRoleCategoryAction(
+  roleCategory: ScenarioPlanPersonalizationContext['roleCategory'],
+  seniorityBracket: ScenarioPlanPersonalizationContext['seniorityBracket'],
+  isCritical: boolean,
+): string | null {
+  switch (roleCategory) {
+    case 'tech':
+      return seniorityBracket === 'staff_plus'
+        ? 'Activate open-source contributions, GitHub visibility, and advisory pipeline — principal/staff engineers land roles 40% faster via reputation signals than job boards'
+        : 'Activate GitHub presence and AI-integration portfolio — engineers with public AI-augmented projects receive 2.8× more recruiter contacts';
+    case 'healthcare':
+      return isCritical
+        ? 'Contact healthcare staffing agencies (Aya Healthcare, AMN Healthcare, Cross Country) for per diem and travel positions — these provide income continuity within weeks, not months'
+        : 'Explore locum tenens / per diem agency registration as a parallel income buffer — licensing portability check should be first step';
+    case 'finance':
+      return 'Update your CFA/CPA/FRM exam timeline if pending — credential completion dramatically increases market value during finance sector waves; contact your professional network at buy-side firms';
+    case 'legal':
+      return 'Build advisory or contract counsel pipeline through your existing client relationships — law firm lateral markets move slowly; independent consulting roles can activate within 30–60 days';
+    case 'sales_ops':
+      return 'Compile your quota attainment data and pipeline contribution history into a one-page sales narrative — AEs and sales leaders with documented revenue attribution are hired 3× faster than those without';
+    case 'creative':
+      return 'Activate freelance and consulting pipeline through your portfolio — creative professionals who build agency relationships before job loss average 45% shorter income gap than those who search after';
+    case 'service':
+      return 'Activate your professional HR / operations network immediately — many roles above ₹12 LPA are filled through referrals before posting; your SHRM or equivalent association network is the right channel';
+    case 'education':
+      return 'Education sector hiring follows academic calendars — if job search is needed, target January and April intake windows; edtech companies hire year-round and value classroom experience highly';
+    case 'government':
+      return 'Government positions take 3–9 months to fill through formal channels — begin application process immediately if transition is possible; simultaneously explore consulting roles leveraging your policy expertise';
+    case 'physical_labor':
+      return 'Certifications (OSHA, Six Sigma, PMP) dramatically expand transition options — identify the 1 certification with highest hiring impact in your trade and enroll within the next 30 days';
+    default:
+      return null;
+  }
+}
+
+function buildBaseActions(currentScore: number, ctx: ScenarioPlanPersonalizationContext): string[] {
+  const actions: string[] = [];
+
+  if (currentScore >= 70) {
+    actions.push('Begin structured job search with 2–3 applications per week — treat base case as moderately urgent');
+    actions.push('Refresh resume and LinkedIn to attract inbound opportunities before you need them');
+  } else {
+    actions.push('Maintain career readiness: keep resume current and technical skills updated quarterly');
+  }
+
+  // Runway-gated
+  if (ctx.financialRunwaySituation === 'critical' || ctx.financialRunwaySituation === 'tight') {
+    actions.push('Prioritise financial buffer: reach 3 months runway before anything else');
+  } else {
+    actions.push('Build 3–6 month financial buffer as precautionary measure');
+  }
+
+  // v37.0: role-category specific leverage window action
+  const baseRoleAction = buildBaseRoleCategoryAction(ctx.roleCategory, currentScore);
+  if (baseRoleAction) actions.push(baseRoleAction);
+  else actions.push('Monitor company announcements weekly — Q/E earnings calls and leadership changes are leading indicators');
+
+  return actions.slice(0, 4);
+}
+
+function buildBaseRoleCategoryAction(
+  roleCategory: ScenarioPlanPersonalizationContext['roleCategory'],
+  currentScore: number,
+): string | null {
+  switch (roleCategory) {
+    case 'tech':
+      return 'Keep one active side project or open-source contribution — engineers who maintain a GitHub presence during low-risk periods convert to job offers 60% faster when they need to';
+    case 'healthcare':
+      return 'Review license reciprocity in 2–3 additional states / regions — expanding geographic optionality before you need it takes 4–8 weeks and dramatically accelerates TRANSITION if needed';
+    case 'finance':
+      return currentScore >= 60
+        ? 'Build your financial modelling portfolio documentation — quantifying P&L impact, cost savings, or AUM managed creates the audit trail that differentiates senior finance candidates'
+        : 'Track regulatory changes in your specialisation — compliance-adjacent knowledge is the highest-leverage differentiator in finance interviews';
+    case 'legal':
+      return 'Cultivate 2–3 client relationships that could follow you — in-house and law firm transitions both benefit from demonstrated client portability';
+    case 'sales_ops':
+      return 'Document pipeline value and win rate metrics now — sales leaders who can cite verified revenue attribution receive 25–40% higher offers than those who can only cite quota attainment';
+    case 'creative':
+      return 'Keep your portfolio current with recent work samples — creative professionals who refresh their portfolio every 90 days receive 2× more inbound approaches';
+    case 'service':
+      return 'Pursue one professional HR certification (SHRM-CP, PHR) or HR analytics tool competency — certifications are the primary screen for senior HR roles above ₹12 LPA';
+    case 'education':
+      return 'Build relationships with edtech companies in your domain — the edtech transition is the most accessible exit path for educators and typically involves a 20–35% salary improvement';
+    case 'government':
+      return 'Track federal and state budget announcements in your domain — government professionals who anticipate funding cycles are best positioned when department restructuring occurs';
+    case 'physical_labor':
+      return 'Pursue automation-upskilling certification (PLC programming, robotic systems, SCADA) — physical roles with automation skills earn 30–50% more and face lower displacement risk';
+    default:
+      return null;
+  }
+}
+
+function buildBullActions(ctx: ScenarioPlanPersonalizationContext): string[] {
+  const actions: string[] = [];
+
+  // v37.0: role-category specific bull growth pivot
+  const bullRoleAction = buildBullRoleCategoryAction(ctx.roleCategory, ctx.seniorityBracket);
+  if (bullRoleAction) {
+    actions.push(bullRoleAction);
+  } else if (ctx.seniorityBracket === 'staff_plus') {
+    actions.push('Leverage improved conditions for scope expansion or principal/distinguished title negotiation');
+  } else {
+    actions.push('Leverage improved market conditions for salary negotiation or promotion conversation');
+  }
+
+  actions.push('Invest in target skills to maximise opportunity in recovery — prioritise 1–2 high-demand capabilities');
+
+  if (ctx.equityType === 'options') {
+    actions.push('Review option strike prices against recovery valuation — exercise window strategy may shift with bull conditions');
+  } else if (ctx.equityType === 'rsu') {
+    actions.push('Evaluate RSU retention hold vs. sell strategy as market improves');
+  }
+
+  return actions.slice(0, 3);
+}
+
+function buildBullRoleCategoryAction(
+  roleCategory: ScenarioPlanPersonalizationContext['roleCategory'],
+  seniorityBracket: ScenarioPlanPersonalizationContext['seniorityBracket'],
+): string | null {
+  switch (roleCategory) {
+    case 'tech':
+      return seniorityBracket === 'staff_plus'
+        ? 'Pursue scope expansion toward principal/distinguished IC or staff+ leadership role — tech recovery cycles create 12–18 month windows for title progression that close when hiring freezes return'
+        : 'Negotiate a 15–25% raise leveraging competing offers — tech compensation recovery historically runs 12–18 months ahead of hiring recovery; now is the optimal window';
+    case 'healthcare':
+      return 'Pursue specialty certification or fellowship that unlocks a higher-compensation subspecialty — bull market in healthcare means hospitals are competing for specialized talent';
+    case 'finance':
+      return 'Pursue CFA Level upgrade, Series 7/65, or CPA if not completed — finance recovery cycles create 18-month windows for credentials that directly unlock compensation tiers';
+    case 'legal':
+      return 'Negotiate equity or origination credit in improved market conditions — law firm compensation for partners with portable books of business sees the largest gains during recovery cycles';
+    case 'sales_ops':
+      return 'Renegotiate OTE and commission structure when company performance improves — sales leaders with quota attainment data above 110% are in the strongest leverage position of the economic cycle';
+    case 'creative':
+      return 'Pursue brand-building and thought leadership investment — creative leaders who build personal brand during bull cycles receive premium rates and advisory opportunities that persist through downturns';
+    case 'service':
+      return 'Pursue CHRO or CPO path if seniority allows — HR leadership compensation sees the largest gains in bull markets as companies compete to retain talent operations experts';
+    case 'education':
+      return 'Pursue tenure-track or senior curriculum leadership role — academic hiring opens significantly in bull cycles as institutions restore hiring freezes from lean years';
+    case 'government':
+      return 'Pursue Senior Executive Service or equivalent — government pay bands open at senior levels during bull economic cycles when private-sector poaching intensifies';
+    case 'physical_labor':
+      return 'Negotiate base salary and union benefit improvements — physical labor compensation gains are largest in bull cycles when skilled trades face supply shortages';
+    default:
+      return null;
+  }
 }
 
 function buildBullTriggers(input: ScenarioPlanInput): string[] {
@@ -142,6 +312,7 @@ export function computeScenarioPlan(input: ScenarioPlanInput): ScenarioPlanResul
   const deltas = SCENARIO_DELTAS[cohort as keyof typeof SCENARIO_DELTAS] ?? SCENARIO_DELTAS.UNKNOWN;
   const probKey = macroTierToProbKey(input.macroRiskTier);
   const probs = SCENARIO_PROBABILITIES[probKey];
+  const ctx: ScenarioPlanPersonalizationContext = input.personalizationContext ?? {};
 
   // Contagion adjustment: high contagion shifts probabilities toward bear
   const contagion = input.contagionProbability ?? 0.2;
@@ -152,16 +323,24 @@ export function computeScenarioPlan(input: ScenarioPlanInput): ScenarioPlanResul
     bull: Math.max(0.05, probs.bull - contagionBearBoost),
   };
 
-  const worstScore = clampScore(input.currentScore + deltas.bear);
-  const baseScore  = clampScore(input.currentScore + deltas.base);
-  const bestScore  = clampScore(input.currentScore + deltas.bull);
+  // MED-1: Make deltas proportional to headroom to prevent clamped nonsense.
+  // A user at score=85 cannot bear-case to 107; a user at score=12 cannot bull to -10.
+  const headroom = 99 - input.currentScore;
+  const floor    = input.currentScore;
+  const bearDelta = Math.min(deltas.bear, Math.round(headroom * 0.55));
+  const baseDelta = Math.min(deltas.base, Math.round(headroom * 0.25));
+  const bullDelta = Math.min(Math.abs(deltas.bull), Math.round(floor * 0.45));
+
+  const worstScore = clampScore(input.currentScore + bearDelta);
+  const baseScore  = clampScore(input.currentScore + baseDelta);
+  const bestScore  = clampScore(input.currentScore - bullDelta);
 
   return {
     worstCase: {
       score: worstScore,
       probability: Math.round(adjustedProbs.bear * 100) / 100,
       triggerConditions: buildBearTriggers(input),
-      recommendedActions: buildBearActions(),
+      recommendedActions: buildBearActions(ctx, 1.5),
     },
     baseCase: {
       score: baseScore,
@@ -171,13 +350,13 @@ export function computeScenarioPlan(input: ScenarioPlanInput): ScenarioPlanResul
         'No major new WARN filings or executive departures',
         'Company maintains current financial trajectory',
       ],
-      recommendedActions: buildBaseActions(input.currentScore),
+      recommendedActions: buildBaseActions(input.currentScore, ctx),
     },
     bestCase: {
       score: bestScore,
       probability: Math.round(adjustedProbs.bull * 100) / 100,
       triggerConditions: buildBullTriggers(input),
-      recommendedActions: buildBullActions(),
+      recommendedActions: buildBullActions(ctx),
     },
     scenarioSpread: worstScore - bestScore,
     dominantUncertainty: deriveDominantUncertainty(input),

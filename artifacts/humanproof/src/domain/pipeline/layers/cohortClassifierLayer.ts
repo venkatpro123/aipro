@@ -26,6 +26,7 @@ const FALLBACK_COHORT: CohortClassification = {
   dominantSignals: [],
   recommendedLayerWeights: { L1: 0.22, L2: 0.20, L3: 0.20, L4: 0.20, L5: 0.18 },
   calibrationAUC: 0.81,
+  roleEnrichedLabel: null,
 };
 
 export const cohortClassifierLayer: AuditLayer<'cohort_class'> = {

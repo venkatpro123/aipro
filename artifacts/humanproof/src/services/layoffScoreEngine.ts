@@ -467,7 +467,7 @@ export function applyKillSwitches(
   companyData: CompanyData,
   layoffNewsAgeInDays: number | null,
   L1: number,
-): { adjustedScore: number; killSwitchApplied: boolean; killSwitchName: string | null; inferredFreeze?: boolean } {
+): { adjustedScore: number; killSwitchApplied: boolean; killSwitchName: string | null; inferredFreeze?: boolean; activatedKillSwitches: string[] } {
   // BUG-FIX: Evaluate ALL kill-switches and apply the one that produces the HIGHEST
   // score (most conservative floor). Previous implementation used `?? 'name'` which
   // caused KS-A to "claim" the name even when KS-B actually raised the score higher.
@@ -511,7 +511,7 @@ export function applyKillSwitches(
   }
 
   if (candidates.length === 0) {
-    return { adjustedScore: Math.max(0, Math.min(100, score)), killSwitchApplied: false, killSwitchName: null };
+    return { adjustedScore: Math.max(0, Math.min(100, score)), killSwitchApplied: false, killSwitchName: null, activatedKillSwitches: [] };
   }
 
   // Apply the kill-switch that raises the score the most.
@@ -523,6 +523,7 @@ export function applyKillSwitches(
     killSwitchApplied: true,
     killSwitchName: best.name,
     inferredFreeze: best.name === 'pre_layoff_precursor_inferred',
+    activatedKillSwitches: candidates.map(c => c.name),
   };
 }
 
@@ -1033,6 +1034,12 @@ export interface ScoreResult {
   killSwitchApplied?: boolean;
   /** v12.0: Which kill-switch fired (if any). */
   killSwitchName?: string | null;
+  /** MED-5: Fraction of total formula weight that is regression-derived (0–1).
+   *  Currently 0.58 — D2/D3/D6/D7 are developer estimates (0.42 of total weight). */
+  calibrationCoverage?: number;
+  /** LOW-1: Human-readable labels for each kill-switch that fired this run.
+   *  Surfaces in TransparencyTab as amber badges. */
+  activatedKillSwitches?: string[];
 }
 
 // ─── Utility ───
@@ -3812,6 +3819,17 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     scoringArchetype,
     killSwitchApplied: ksResult.killSwitchApplied,
     killSwitchName: ksResult.killSwitchName,
+    // MED-5: fraction of total formula weight that is regression-derived
+    calibrationCoverage: (() => {
+      const entries = Object.values(CALIBRATION_META);
+      const total = entries.reduce((s, e) => s + e.weight, 0);
+      const calibrated = entries
+        .filter(e => e.status === 'regression_derived')
+        .reduce((s, e) => s + e.weight, 0);
+      return total > 0 ? Math.round((calibrated / total) * 100) / 100 : 0;
+    })(),
+    // LOW-1: all kill-switch names that fired, for TransparencyTab badges
+    activatedKillSwitches: ksResult.activatedKillSwitches,
   };
 };
 

@@ -1,4 +1,4 @@
-// compensationRiskEngine.ts — Layer 29
+// compensationRiskEngine.ts — Layer 29 + v37.0 multi-industry compensation expansion
 // v14.0 Intelligence Upgrade
 //
 // Analyzes the user's compensation position vs. market benchmarks and models
@@ -11,6 +11,43 @@
 // Calibration status: research_grounded
 // Key data source: Levels.fyi, Glassdoor, NASSCOM benchmarks (India),
 //                  Robert Half Salary Guide 2026, LinkedIn Salary Insights
+
+// v37.0 multi-industry compensation additions
+import { COMPENSATION_ADDITIONS_HEALTHCARE_LEGAL } from "../data/actions/healthcare_legal_actions";
+import { COMPENSATION_ADDITIONS_CONSULTING_MARKETING_CX } from "../data/actions/consulting_marketing_cx_actions";
+import { COMPENSATION_ADDITIONS_MANUFACTURING_ENERGY_CONSTRUCTION } from "../data/actions/manufacturing_energy_construction_actions";
+import { COMPENSATION_ADDITIONS_RETAIL_LOGISTICS_PHARMA } from "../data/actions/retail_logistics_pharma_actions";
+import { COMPENSATION_ADDITIONS_AUTO_TELECOM_GOVT_EDUCATION } from "../data/actions/auto_telecom_govt_education_actions";
+import { COMPENSATION_ADDITIONS_INSURANCE_MEDIA_HOSPITALITY } from "../data/actions/insurance_media_hospitality_actions";
+// v38.0 Phase 1
+import { COMPENSATION_ADDITIONS_CYBERSECURITY } from "../data/actions/cybersecurity_actions";
+import { COMPENSATION_ADDITIONS_CLOUD_PLATFORM } from "../data/actions/cloud_platform_actions";
+import { COMPENSATION_ADDITIONS_AI_ML_SPECIALIZATION } from "../data/actions/ai_ml_specialization_actions";
+import { COMPENSATION_ADDITIONS_QA_FRONTEND_MOBILE } from "../data/actions/qa_frontend_mobile_actions";
+// v38.0 Phase 2
+import { COMPENSATION_ADDITIONS_PHYSICIANS } from "../data/actions/physicians_actions";
+import { COMPENSATION_ADDITIONS_NURSING_ALLIED_HEALTH } from "../data/actions/nursing_allied_health_actions";
+import { COMPENSATION_ADDITIONS_BIOTECH_HEALTHCARE_IT } from "../data/actions/biotech_healthcare_it_actions";
+import { COMPENSATION_ADDITIONS_BEHAVIORAL_ADMIN_VET_PH } from "../data/actions/behavioral_admin_vet_public_health_actions";
+// v38.0 Phase 3
+import { COMPENSATION_ADDITIONS_INVESTMENT_BANKING_PE_VC } from "../data/actions/investment_banking_pe_vc_actions";
+import { COMPENSATION_ADDITIONS_QUANT_ASSET_HEDGE } from "../data/actions/quant_asset_hedge_actions";
+import { COMPENSATION_ADDITIONS_CORPORATE_FINANCE_BANKING_RISK } from "../data/actions/corporate_finance_banking_risk_actions";
+import { COMPENSATION_ADDITIONS_INSURANCE_RE_FINANCE } from "../data/actions/insurance_real_estate_finance_actions";
+// v38.0 Phase 4
+import { COMPENSATION_ADDITIONS_SKILLED_TRADES } from "../data/actions/skilled_trades_actions";
+import { COMPENSATION_ADDITIONS_INDUSTRIAL_ENGINEERING } from "../data/actions/industrial_engineering_actions";
+import { COMPENSATION_ADDITIONS_ENERGY_SPECIALIZATIONS } from "../data/actions/energy_specializations_actions";
+import { COMPENSATION_ADDITIONS_CONSTRUCTION_SPECIALIZATIONS } from "../data/actions/construction_specializations_actions";
+import { COMPENSATION_ADDITIONS_AVIATION_PUBLIC_SAFETY } from "../data/actions/aviation_public_safety_actions";
+// v38.0 Phase 5
+import { COMPENSATION_ADDITIONS_MEDIA_ENTERTAINMENT } from "../data/actions/media_entertainment_actions";
+import { COMPENSATION_ADDITIONS_HOSPITALITY_TRAVEL } from "../data/actions/hospitality_travel_actions";
+import { COMPENSATION_ADDITIONS_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_research_academia_actions";
+// v38.0 Phase 6
+import { COMPENSATION_ADDITIONS_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
+import { COMPENSATION_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
+import { COMPENSATION_ADDITIONS_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
 
 export type CompensationCascadeStage =
   | 'NORMAL'         // 0 — no indicators
@@ -67,24 +104,155 @@ export interface CompensationAction {
 // All values are USD annual total comp (base + bonus, no equity).
 const MARKET_MEDIANS_USD: Record<string, Record<string, number>> = {
   // Software Engineering
-  sw_engineer: { "0-2": 95_000, "2-5": 130_000, "5-10": 165_000, "10-15": 195_000, "15+": 215_000 },
-  sw_senior: { "0-2": 140_000, "2-5": 165_000, "5-10": 190_000, "10-15": 210_000, "15+": 230_000 },
-  ml_engineer: { "0-2": 110_000, "2-5": 145_000, "5-10": 185_000, "10-15": 215_000, "15+": 240_000 },
-  data_scientist: { "0-2": 95_000, "2-5": 125_000, "5-10": 155_000, "10-15": 180_000, "15+": 200_000 },
-  product_manager: { "0-2": 100_000, "2-5": 135_000, "5-10": 165_000, "10-15": 190_000, "15+": 210_000 },
-  // Finance
-  fin_analyst: { "0-2": 75_000, "2-5": 95_000, "5-10": 120_000, "10-15": 145_000, "15+": 160_000 },
-  fin_manager: { "0-2": 90_000, "2-5": 115_000, "5-10": 140_000, "10-15": 165_000, "15+": 185_000 },
-  // Sales
-  sales_ae: { "0-2": 65_000, "2-5": 85_000, "5-10": 110_000, "10-15": 135_000, "15+": 155_000 },
-  // Operations/Admin
-  operations: { "0-2": 55_000, "2-5": 70_000, "5-10": 85_000, "10-15": 100_000, "15+": 115_000 },
-  admin: { "0-2": 45_000, "2-5": 55_000, "5-10": 65_000, "10-15": 75_000, "15+": 85_000 },
-  // BPO (India equivalent)
-  bpo_analyst: { "0-2": 8_000, "2-5": 12_000, "5-10": 18_000, "10-15": 25_000, "15+": 35_000 },
+  sw_engineer:     { "0-2": 95_000,  "2-5": 130_000, "5-10": 165_000, "10-15": 195_000, "15+": 215_000 },
+  sw_senior:       { "0-2": 140_000, "2-5": 165_000, "5-10": 190_000, "10-15": 210_000, "15+": 230_000 },
+  sw_backend:      { "0-2": 95_000,  "2-5": 130_000, "5-10": 162_000, "10-15": 192_000, "15+": 210_000 },
+  sw_frontend:     { "0-2": 85_000,  "2-5": 115_000, "5-10": 145_000, "10-15": 170_000, "15+": 190_000 },
+  sw_fullstack:    { "0-2": 88_000,  "2-5": 120_000, "5-10": 150_000, "10-15": 175_000, "15+": 195_000 },
+  sw_mobile:       { "0-2": 90_000,  "2-5": 122_000, "5-10": 155_000, "10-15": 180_000, "15+": 200_000 },
+  // AI / ML
+  ml_engineer:     { "0-2": 110_000, "2-5": 145_000, "5-10": 185_000, "10-15": 215_000, "15+": 240_000 },
+  ai_engineer:     { "0-2": 125_000, "2-5": 165_000, "5-10": 210_000, "10-15": 245_000, "15+": 275_000 },
+  llm_engineer:    { "0-2": 130_000, "2-5": 170_000, "5-10": 215_000, "10-15": 250_000, "15+": 280_000 },
+  nlp_engineer:    { "0-2": 115_000, "2-5": 150_000, "5-10": 190_000, "10-15": 220_000, "15+": 248_000 },
+  cv_engineer:     { "0-2": 110_000, "2-5": 145_000, "5-10": 185_000, "10-15": 215_000, "15+": 242_000 },
+  // Data
+  data_scientist:      { "0-2": 95_000,  "2-5": 125_000, "5-10": 155_000, "10-15": 180_000, "15+": 200_000 },
+  data_engineer:       { "0-2": 90_000,  "2-5": 120_000, "5-10": 150_000, "10-15": 175_000, "15+": 195_000 },
+  data_analyst:        { "0-2": 65_000,  "2-5": 85_000,  "5-10": 105_000, "10-15": 120_000, "15+": 135_000 },
+  analytics_engineer:  { "0-2": 88_000,  "2-5": 115_000, "5-10": 145_000, "10-15": 168_000, "15+": 188_000 },
+  bi_analyst:          { "0-2": 65_000,  "2-5": 82_000,  "5-10": 100_000, "10-15": 118_000, "15+": 132_000 },
+  ml_ops_engineer:     { "0-2": 105_000, "2-5": 138_000, "5-10": 172_000, "10-15": 200_000, "15+": 225_000 },
+  quantitative_analyst:{ "0-2": 110_000, "2-5": 148_000, "5-10": 195_000, "10-15": 240_000, "15+": 285_000 },
+  research_scientist:  { "0-2": 120_000, "2-5": 160_000, "5-10": 205_000, "10-15": 240_000, "15+": 270_000 },
+  // DevOps / Platform
+  devops_engineer:  { "0-2": 95_000,  "2-5": 125_000, "5-10": 158_000, "10-15": 185_000, "15+": 205_000 },
+  platform_engineer:{ "0-2": 100_000, "2-5": 132_000, "5-10": 168_000, "10-15": 195_000, "15+": 218_000 },
+  cloud_architect:  { "0-2": 110_000, "2-5": 145_000, "5-10": 182_000, "10-15": 210_000, "15+": 235_000 },
+  security_engineer:{ "0-2": 105_000, "2-5": 138_000, "5-10": 175_000, "10-15": 205_000, "15+": 230_000 },
+  embedded_engineer:{ "0-2": 88_000,  "2-5": 115_000, "5-10": 145_000, "10-15": 170_000, "15+": 192_000 },
+  qa_engineer:      { "0-2": 72_000,  "2-5": 92_000,  "5-10": 115_000, "10-15": 135_000, "15+": 150_000 },
+  // Engineering Leadership
+  eng_manager:         { "0-2": 130_000, "2-5": 165_000, "5-10": 200_000, "10-15": 235_000, "15+": 265_000 },
+  tech_lead:           { "0-2": 120_000, "2-5": 155_000, "5-10": 188_000, "10-15": 215_000, "15+": 240_000 },
+  staff_engineer:      { "0-2": 140_000, "2-5": 175_000, "5-10": 215_000, "10-15": 252_000, "15+": 285_000 },
+  principal_engineer:  { "0-2": 155_000, "2-5": 192_000, "5-10": 235_000, "10-15": 270_000, "15+": 305_000 },
+  distinguished_engineer:{ "0-2": 200_000,"2-5": 255_000,"5-10": 310_000,"10-15": 370_000,"15+": 430_000 },
+  solution_architect:  { "0-2": 105_000, "2-5": 140_000, "5-10": 175_000, "10-15": 205_000, "15+": 228_000 },
+  vp_engineering:      { "0-2": 180_000, "2-5": 225_000, "5-10": 270_000, "10-15": 320_000, "15+": 365_000 },
+  director_engineering:{ "0-2": 155_000, "2-5": 195_000, "5-10": 235_000, "10-15": 275_000, "15+": 315_000 },
+  cto:                 { "0-2": 200_000, "2-5": 270_000, "5-10": 340_000, "10-15": 420_000, "15+": 520_000 },
+  // Product & Design
+  product_manager:     { "0-2": 100_000, "2-5": 135_000, "5-10": 165_000, "10-15": 190_000, "15+": 210_000 },
+  product_director:    { "0-2": 150_000, "2-5": 185_000, "5-10": 225_000, "10-15": 265_000, "15+": 300_000 },
+  associate_pm:        { "0-2": 75_000,  "2-5": 95_000,  "5-10": 115_000, "10-15": 130_000, "15+": 145_000 },
+  ai_product_manager:  { "0-2": 120_000, "2-5": 158_000, "5-10": 200_000, "10-15": 238_000, "15+": 268_000 },
+  ux_designer:         { "0-2": 75_000,  "2-5": 100_000, "5-10": 128_000, "10-15": 155_000, "15+": 175_000 },
+  ux_researcher:       { "0-2": 78_000,  "2-5": 102_000, "5-10": 130_000, "10-15": 155_000, "15+": 175_000 },
+  brand_designer:      { "0-2": 55_000,  "2-5": 72_000,  "5-10": 90_000,  "10-15": 108_000, "15+": 122_000 },
+  // Finance & Accounting
+  fin_analyst:             { "0-2": 75_000,  "2-5": 95_000,  "5-10": 120_000, "10-15": 145_000, "15+": 160_000 },
+  fin_manager:             { "0-2": 90_000,  "2-5": 115_000, "5-10": 140_000, "10-15": 165_000, "15+": 185_000 },
+  financial_analyst:       { "0-2": 72_000,  "2-5": 92_000,  "5-10": 115_000, "10-15": 138_000, "15+": 155_000 },
+  fp_a_analyst:            { "0-2": 78_000,  "2-5": 100_000, "5-10": 126_000, "10-15": 152_000, "15+": 172_000 },
+  investment_banker:       { "0-2": 120_000, "2-5": 175_000, "5-10": 240_000, "10-15": 320_000, "15+": 420_000 },
+  portfolio_manager:       { "0-2": 110_000, "2-5": 155_000, "5-10": 210_000, "10-15": 285_000, "15+": 380_000 },
+  risk_analyst:            { "0-2": 80_000,  "2-5": 105_000, "5-10": 135_000, "10-15": 162_000, "15+": 185_000 },
+  compliance_officer:      { "0-2": 78_000,  "2-5": 102_000, "5-10": 130_000, "10-15": 158_000, "15+": 180_000 },
+  auditor_cpa:             { "0-2": 65_000,  "2-5": 85_000,  "5-10": 110_000, "10-15": 132_000, "15+": 152_000 },
+  controller:              { "0-2": 90_000,  "2-5": 115_000, "5-10": 145_000, "10-15": 175_000, "15+": 200_000 },
+  cfo:                     { "0-2": 150_000, "2-5": 210_000, "5-10": 280_000, "10-15": 370_000, "15+": 480_000 },
+  treasury_analyst:        { "0-2": 72_000,  "2-5": 92_000,  "5-10": 118_000, "10-15": 142_000, "15+": 162_000 },
+  tax_specialist:          { "0-2": 68_000,  "2-5": 88_000,  "5-10": 112_000, "10-15": 138_000, "15+": 158_000 },
+  actuarial_analyst:       { "0-2": 80_000,  "2-5": 108_000, "5-10": 142_000, "10-15": 178_000, "15+": 215_000 },
+  equity_researcher:       { "0-2": 85_000,  "2-5": 112_000, "5-10": 148_000, "10-15": 190_000, "15+": 230_000 },
+  quantitative_analyst_fin:{ "0-2": 110_000, "2-5": 148_000, "5-10": 195_000, "10-15": 250_000, "15+": 310_000 },
+  // Sales & Revenue
+  sales_ae:              { "0-2": 65_000,  "2-5": 85_000,  "5-10": 110_000, "10-15": 135_000, "15+": 155_000 },
+  account_executive:     { "0-2": 62_000,  "2-5": 82_000,  "5-10": 108_000, "10-15": 132_000, "15+": 152_000 },
+  enterprise_ae:         { "0-2": 90_000,  "2-5": 120_000, "5-10": 158_000, "10-15": 195_000, "15+": 225_000 },
+  sales_engineer:        { "0-2": 90_000,  "2-5": 118_000, "5-10": 150_000, "10-15": 180_000, "15+": 205_000 },
+  customer_success_manager:{ "0-2": 62_000,"2-5": 80_000,  "5-10": 102_000, "10-15": 122_000, "15+": 142_000 },
+  business_development_manager:{ "0-2": 70_000,"2-5": 90_000,"5-10": 115_000,"10-15": 140_000,"15+": 162_000 },
+  vp_sales:              { "0-2": 140_000, "2-5": 185_000, "5-10": 235_000, "10-15": 285_000, "15+": 335_000 },
+  sales_operations_analyst:{ "0-2": 68_000,"2-5": 88_000,  "5-10": 112_000, "10-15": 135_000, "15+": 155_000 },
+  sales_development_rep: { "0-2": 45_000,  "2-5": 58_000,  "5-10": 72_000,  "10-15": 85_000,  "15+": 95_000 },
+  chief_revenue_officer: { "0-2": 175_000, "2-5": 235_000, "5-10": 300_000, "10-15": 380_000, "15+": 475_000 },
+  // HR & People Operations
+  hr_generalist:              { "0-2": 52_000,  "2-5": 66_000,  "5-10": 82_000,  "10-15": 98_000,  "15+": 112_000 },
+  hr_business_partner:        { "0-2": 72_000,  "2-5": 92_000,  "5-10": 115_000, "10-15": 138_000, "15+": 158_000 },
+  hr_director:                { "0-2": 110_000, "2-5": 140_000, "5-10": 175_000, "10-15": 210_000, "15+": 248_000 },
+  talent_acquisition_specialist:{ "0-2": 48_000,"2-5": 62_000, "5-10": 78_000,  "10-15": 95_000,  "15+": 110_000 },
+  recruiting_manager:         { "0-2": 82_000,  "2-5": 105_000, "5-10": 132_000, "10-15": 158_000, "15+": 182_000 },
+  compensation_benefits_analyst:{ "0-2": 65_000,"2-5": 85_000,  "5-10": 108_000, "10-15": 130_000, "15+": 150_000 },
+  learning_development_manager: { "0-2": 70_000,"2-5": 90_000,  "5-10": 115_000, "10-15": 140_000, "15+": 160_000 },
+  chief_people_officer:       { "0-2": 150_000, "2-5": 205_000, "5-10": 265_000, "10-15": 335_000, "15+": 415_000 },
+  // Operations / Support
+  support_engineer:  { "0-2": 52_000,  "2-5": 68_000,  "5-10": 85_000,  "10-15": 100_000, "15+": 115_000 },
+  operations:        { "0-2": 55_000,  "2-5": 70_000,  "5-10": 85_000,  "10-15": 100_000, "15+": 115_000 },
+  admin:             { "0-2": 45_000,  "2-5": 55_000,  "5-10": 65_000,  "10-15": 75_000,  "15+": 85_000 },
+  // BPO (India equivalent, USD-denominated for PPP calc)
+  bpo_analyst:  { "0-2": 8_000,  "2-5": 12_000, "5-10": 18_000, "10-15": 25_000, "15+": 35_000 },
+  bpo_associate:{ "0-2": 7_500,  "2-5": 11_000, "5-10": 16_500, "10-15": 23_000, "15+": 32_000 },
   // General fallback by experience
   _default: { "0-2": 65_000, "2-5": 85_000, "5-10": 105_000, "10-15": 125_000, "15+": 140_000 },
 };
+
+// ─── v37.0 + v38.0 multi-industry compensation merge ──────────────────────────
+// Both v37.0 and v38.0 COMPENSATION_ADDITIONS use band keys '0-2','2-5','5-10','10-15','15+'
+// (the same shape as MARKET_MEDIANS_USD). Direct merge — no remap needed.
+(function mergeIndustryCompensation() {
+  // Cast each through unknown — both shapes (bands wrapper + direct map) are supported.
+  const asAny = (x: unknown) => x as Record<string, unknown>;
+  const allAdditions: Record<string, unknown> = {
+    ...asAny(COMPENSATION_ADDITIONS_HEALTHCARE_LEGAL),
+    ...asAny(COMPENSATION_ADDITIONS_CONSULTING_MARKETING_CX),
+    ...asAny(COMPENSATION_ADDITIONS_MANUFACTURING_ENERGY_CONSTRUCTION),
+    ...asAny(COMPENSATION_ADDITIONS_RETAIL_LOGISTICS_PHARMA),
+    ...asAny(COMPENSATION_ADDITIONS_AUTO_TELECOM_GOVT_EDUCATION),
+    ...asAny(COMPENSATION_ADDITIONS_INSURANCE_MEDIA_HOSPITALITY),
+    // v38.0 Phase 1
+    ...asAny(COMPENSATION_ADDITIONS_CYBERSECURITY),
+    ...asAny(COMPENSATION_ADDITIONS_CLOUD_PLATFORM),
+    ...asAny(COMPENSATION_ADDITIONS_AI_ML_SPECIALIZATION),
+    ...asAny(COMPENSATION_ADDITIONS_QA_FRONTEND_MOBILE),
+    // v38.0 Phase 2
+    ...asAny(COMPENSATION_ADDITIONS_PHYSICIANS),
+    ...asAny(COMPENSATION_ADDITIONS_NURSING_ALLIED_HEALTH),
+    ...asAny(COMPENSATION_ADDITIONS_BIOTECH_HEALTHCARE_IT),
+    ...asAny(COMPENSATION_ADDITIONS_BEHAVIORAL_ADMIN_VET_PH),
+    // v38.0 Phase 3
+    ...asAny(COMPENSATION_ADDITIONS_INVESTMENT_BANKING_PE_VC),
+    ...asAny(COMPENSATION_ADDITIONS_QUANT_ASSET_HEDGE),
+    ...asAny(COMPENSATION_ADDITIONS_CORPORATE_FINANCE_BANKING_RISK),
+    ...asAny(COMPENSATION_ADDITIONS_INSURANCE_RE_FINANCE),
+    // v38.0 Phase 4
+    ...asAny(COMPENSATION_ADDITIONS_SKILLED_TRADES),
+    ...asAny(COMPENSATION_ADDITIONS_INDUSTRIAL_ENGINEERING),
+    ...asAny(COMPENSATION_ADDITIONS_ENERGY_SPECIALIZATIONS),
+    ...asAny(COMPENSATION_ADDITIONS_CONSTRUCTION_SPECIALIZATIONS),
+    ...asAny(COMPENSATION_ADDITIONS_AVIATION_PUBLIC_SAFETY),
+    // v38.0 Phase 5
+    ...asAny(COMPENSATION_ADDITIONS_MEDIA_ENTERTAINMENT),
+    ...asAny(COMPENSATION_ADDITIONS_HOSPITALITY_TRAVEL),
+    ...asAny(COMPENSATION_ADDITIONS_CX_RESEARCH_ACADEMIA),
+    // v38.0 Phase 6
+    ...asAny(COMPENSATION_ADDITIONS_MEDICAL_SUBSPECIALTIES),
+    ...asAny(COMPENSATION_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE),
+    ...asAny(COMPENSATION_ADDITIONS_SKILLED_SERVICES_EDU_GOV),
+  };
+  for (const [roleKey, compRaw] of Object.entries(allAdditions)) {
+    const comp = compRaw as Record<string, number> & { bands?: Record<string, number> };
+    const bands = comp.bands ?? (comp as Record<string, number>);
+    MARKET_MEDIANS_USD[roleKey] = {
+      "0-2":   bands['0-2']   ?? bands['0-3']  ?? 0,
+      "2-5":   bands['2-5']   ?? bands['3-5']  ?? 0,
+      "5-10":  bands['5-10']  ?? bands['6-9']  ?? 0,
+      "10-15": bands['10-15'] ?? bands['10-14'] ?? 0,
+      "15+":   bands['15+'] ?? 0,
+    };
+  }
+})();
 
 // India PPP adjustment factor (INR/USD ≈ 83, but purchasing power parity ≈ 0.22)
 const INDIA_PPP_FACTOR = 0.22;
@@ -166,10 +334,27 @@ function estimateMarketMedian(
   experience: string,
   region: string,
 ): number {
+  // Direct lookup first — canonical keys now map to specific entries
+  const directMatch = MARKET_MEDIANS_USD[workTypeKey];
+  if (directMatch) {
+    const usdMedian = directMatch[experience] ?? directMatch["5-10"] ?? 100_000;
+    if (region === 'IN') return Math.round(usdMedian * INDIA_PPP_FACTOR);
+    if (region === 'EU') return Math.round(usdMedian * 0.85);
+    if (region === 'APAC') return Math.round(usdMedian * 0.70);
+    return usdMedian;
+  }
+
+  // Prefix-based fallback for legacy keys or partial matches
   const roleKey = workTypeKey.startsWith('sw_') ? 'sw_engineer'
     : workTypeKey.startsWith('ml_') ? 'ml_engineer'
+    : workTypeKey.startsWith('ai_') ? 'ai_engineer'
+    : workTypeKey.startsWith('llm_') ? 'llm_engineer'
     : workTypeKey.startsWith('data_') || workTypeKey.startsWith('ds_') ? 'data_scientist'
-    : workTypeKey.startsWith('fin_') ? 'fin_analyst'
+    : workTypeKey.startsWith('devops') ? 'devops_engineer'
+    : workTypeKey.startsWith('financial') || workTypeKey.startsWith('fin_') ? 'financial_analyst'
+    : workTypeKey.startsWith('investment') ? 'investment_banker'
+    : workTypeKey.startsWith('hr_') ? 'hr_generalist'
+    : workTypeKey.startsWith('sales_') ? 'account_executive'
     : workTypeKey.startsWith('bpo_') ? 'bpo_analyst'
     : workTypeKey.startsWith('adm_') ? 'admin'
     : '_default';

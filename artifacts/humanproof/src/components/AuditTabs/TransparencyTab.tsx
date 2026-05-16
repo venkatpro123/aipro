@@ -405,7 +405,7 @@ const SourceProvenanceTable: React.FC<{
 
 const CALIBRATION_WARNING_DAYS = 120;
 
-const CalibrationFreshnessPanel: React.FC = () => {
+const CalibrationFreshnessPanel: React.FC<{ calibrationCoverage?: number }> = ({ calibrationCoverage }) => {
   const calibratedAt          = new Date(CALIBRATION_META.calibrated_at);
   const nextAt                = new Date(CALIBRATION_META.next_recalibration_at);
   const now                   = new Date();
@@ -532,12 +532,21 @@ const CalibrationFreshnessPanel: React.FC = () => {
             AUC-ROC 0.81 was measured on {CALIBRATION_META.holdout_n ?? 40} held-out events (confidence interval ≈ ±0.10 at 95%).
             Training data is predominantly US public technology companies from layoffs.fyi — predictions for Indian IT, healthcare, manufacturing, and private companies have no empirical validation.
           </p>
-          {/* Honest calibration coverage — 8/10 dimensions are developer estimates */}
+          {/* MED-5: Calibration coverage — dynamic from score result */}
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
             <p className="text-[10px] text-amber-300/80 leading-relaxed">
-              <span className="font-bold text-amber-300">Calibration coverage: 4 of 10 formula dimensions</span> (D1, D4, L1, L2) are empirically validated via regression.
-              The remaining 6 dimensions (D2 AI Tool Maturity, D3 Augmentation Risk, D5 Country Context, D6 Agent Capability, D7 Company Health, D8 AI Efficiency) use developer-estimated thresholds — they are not validated against historical layoff outcome data.
-              This is disclosed so users can weight the score appropriately.
+              <span className="font-bold text-amber-300">
+                Calibration coverage:{' '}
+                {calibrationCoverage != null
+                  ? `${Math.round(calibrationCoverage * 100)}% of score weight`
+                  : '~58% of score weight'}
+              </span>{' '}
+              is calibrated to historical outcomes (D1, D4, L1, L2 — regression-derived).
+              {' '}{calibrationCoverage != null
+                ? `The remaining ${Math.round((1 - calibrationCoverage) * 100)}%`
+                : 'The remaining ~42%'}{' '}
+              uses initial developer estimates pending outcome regression (D2 AI Tool Maturity, D3 Augmentation Risk, D6 Agent Capability, D7 Company Health).
+              This is disclosed so you can weight the score appropriately.
             </p>
           </div>
         </div>
@@ -1122,6 +1131,40 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             </div>
           )}
 
+          {/* LOW-1: Kill-switch badges — shown when any kill-switch fired this run */}
+          {(result.activatedKillSwitches ?? []).length > 0 && (
+            <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/8">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-[11px] font-bold text-amber-300 mb-2 tracking-wide uppercase">Score Floor Active — Kill-Switch Fired</h4>
+                  <p className="text-[10px] text-amber-200/70 mb-2">
+                    One or more risk kill-switches raised your score to a minimum floor. These activate when signal combinations indicate risks that the base formula may underweight.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(result.activatedKillSwitches ?? []).map(ks => {
+                      const labels: Record<string, string> = {
+                        confirmed_recent_layoff_news: 'Confirmed Recent Layoff News',
+                        financial_distress_triad: 'Financial Distress Triad',
+                        pre_layoff_precursor: 'Pre-Layoff Precursor (Hiring Freeze)',
+                        pre_layoff_precursor_inferred: 'Pre-Layoff Precursor (Inferred)',
+                      };
+                      return (
+                        <span
+                          key={ks}
+                          className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(245,158,11,0.18)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.35)' }}
+                        >
+                          {labels[ks] ?? ks.replace(/_/g, ' ')}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Circuit breaker disclosure — shown when any API has OPEN/HALF_OPEN circuit */}
           {(() => {
             const avSnap   = getCircuitSnapshot('alphavantage');
@@ -1241,7 +1284,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             title="Model Calibration"
             description="When the scoring formula was last calibrated against real outcomes, and how accurate it is."
           />
-          <CalibrationFreshnessPanel />
+          <CalibrationFreshnessPanel calibrationCoverage={(result as any).calibrationCoverage} />
         </div>
 
         {/* v8.0: Per-dimension calibration status with backtester */}

@@ -50,6 +50,7 @@ interface Props {
   onRetake: () => void;
   onDownload?: () => void;
   onRecalculate?: () => void;
+  auditStage?: string;
 }
 
 type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel';
@@ -268,9 +269,11 @@ const MobileBottomNav: React.FC<{
             <Icon className="w-5 h-5" />
             {badge && (
               <span
-                className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full"
-                style={{ background: badge.color }}
-              />
+                className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center text-[9px] font-black"
+                style={{ background: badge.color, color: '#fff', lineHeight: 1 }}
+              >
+                {badge.text.replace(' critical', '').replace(' live', '')}
+              </span>
             )}
           </div>
           <span className="text-[10px] font-semibold">{shortLabel}</span>
@@ -312,7 +315,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     onRetake: props.onRetake,
     onDownload: props.onDownload,
     onRecalculate: props.onRecalculate,
-  }), [result, companyData, props.onRetake, props.onDownload, props.onRecalculate]);
+    auditStage: props.auditStage,
+  }), [result, companyData, props.onRetake, props.onDownload, props.onRecalculate, props.auditStage]);
 
   return (
     <GlobalErrorBoundary>

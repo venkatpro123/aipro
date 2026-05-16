@@ -38,17 +38,24 @@ interface Props {
 }
 
 const VERDICT_LABEL: Record<VerdictLabel, string> = {
-  critical:   'Critical',
-  distressed: 'Distressed',
-  softening:  'Softening',
-  stable:     'Stable',
-  healthy:    'Healthy',
-  unknown:    'No data',
+  critical:           'Critical',
+  distressed:         'Distressed',
+  softening:          'Softening',
+  stable:             'Stable',
+  healthy:            'Healthy',
+  'stable-confirmed': 'Stable',
+  'data-unavailable': 'Unverified',
+  unknown:            'No data',
 };
 
-// Pick the more severe of two signals — that drives the overall headline tone.
+// Pick the more severe of two signals for the headline.
+// Tie-break 1: live source wins over db/heuristic.
+// Tie-break 2: a (workforce) wins over b (financial).
 function pickHeadline(a: CompressedSignal, b: CompressedSignal): CompressedSignal {
-  return a.severity >= b.severity ? a : b;
+  if (a.severity !== b.severity) return a.severity > b.severity ? a : b;
+  if (a.sourceKind === 'live' && b.sourceKind !== 'live') return a;
+  if (b.sourceKind === 'live' && a.sourceKind !== 'live') return b;
+  return a; // workforce wins final tie
 }
 
 const Ring: React.FC<{ pct: number; color: string; size?: number }> = ({ pct, color, size = 60 }) => {

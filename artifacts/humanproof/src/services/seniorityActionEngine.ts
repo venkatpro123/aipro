@@ -11,6 +11,7 @@
 // actions calibrated to that bracket's reality — not a generic template.
 
 import type { ActionPlanItem } from "@/types/hybridResult";
+import { getSeniorityThresholds } from "../data/roleSeniorityBenchmarks";
 
 export type SeniorityBracket = 'junior' | 'mid' | 'senior' | 'principal';
 
@@ -18,31 +19,43 @@ export type SeniorityBracket = 'junior' | 'mid' | 'senior' | 'principal';
  * Derive seniority bracket from observable signals.
  * Does NOT ask the user — infers from tenure + performance + uniqueness.
  *
- * Signal logic:
- * - Principal: 12+ yr AND (top-performer OR critical_knowledge) OR 18+ yr any
- * - Senior:    7+ yr OR (5+ yr AND top-performer) OR critical_knowledge alone
- * - Mid:       3+ yr OR (1+ yr AND top-performer)
- * - Junior:    <3 yr default
+ * When roleFamily is provided, uses role-family-specific tenure thresholds
+ * (e.g., a physician at 8 years is "senior", not "mid" as tech benchmarks would say).
+ * Falls back to default (tech-calibrated) thresholds when roleFamily is not provided.
+ *
+ * Signal logic (applied after role-family threshold lookup):
+ * - Principal: principal_threshold+ years, OR 80% of threshold AND (top-performer OR critical_knowledge)
+ * - Senior:    senior_threshold+ years, OR (senior_threshold - 2) years AND top-performer
+ * - Mid:       mid_threshold+ years, OR (mid_threshold - 1) years AND top-performer
+ * - Junior:    below mid threshold
  */
 export function deriveSeniorityBracket(
   tenureYears: number,
   performanceTier: string,
   uniquenessDepth: string,
   careerYears?: number,
+  roleFamily?: string | null,
 ): SeniorityBracket {
   // Use career years (total career) if available, else tenure at current company
   const exp = careerYears ?? tenureYears;
   const isTop = performanceTier === 'top';
   const isCriticalKnowledge = uniquenessDepth === 'critical_knowledge';
 
-  if (exp >= 18) return 'principal';
-  if (exp >= 12 && (isTop || isCriticalKnowledge)) return 'principal';
-  if (exp >= 10) return 'senior';
-  if (exp >= 7) return 'senior';
-  if (exp >= 5 && isTop) return 'senior';
-  if (isCriticalKnowledge && exp >= 4) return 'senior';
-  if (exp >= 3) return 'mid';
-  if (exp >= 1 && isTop) return 'mid';
+  const thresholds = getSeniorityThresholds(roleFamily ?? 'default');
+
+  // Principal: at or above threshold, or 80% of threshold with outstanding signals
+  if (exp >= thresholds.principal) return 'principal';
+  if (exp >= Math.round(thresholds.principal * 0.80) && (isTop || isCriticalKnowledge)) return 'principal';
+
+  // Senior: at or above threshold, or (threshold - 2 years) with top performance
+  if (exp >= thresholds.senior) return 'senior';
+  if (exp >= thresholds.senior - 2 && isTop) return 'senior';
+  if (isCriticalKnowledge && exp >= thresholds.senior - 3) return 'senior';
+
+  // Mid: at or above threshold, or (threshold - 1 year) with top performance
+  if (exp >= thresholds.mid) return 'mid';
+  if (exp >= thresholds.mid - 1 && isTop) return 'mid';
+
   return 'junior';
 }
 

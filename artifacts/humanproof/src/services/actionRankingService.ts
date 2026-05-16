@@ -147,3 +147,19 @@ export function rankAndUnwrap(
 ): Array<Partial<ActionPlanItem>> {
   return rankActions(actions, profile, context).map((r) => r.action);
 }
+
+/** GAP F: convert raw effort-hours estimate to a human-readable badge */
+export function formatEffortBadge(hours: number): string {
+  if (hours <= 0.5) return '15 min';
+  if (hours <= 1) return '30 min';
+  if (hours <= 2) return '1–2h';
+  if (hours <= 8) return `${Math.round(hours)}h`;
+  if (hours <= 40) return `${Math.round(hours / 8)}d`;
+  const weeks = Math.round(hours / 40);
+  return weeks === 1 ? '1 week' : `${weeks} weeks`;
+}
+
+/** GAP F: compute effort badge from an ActionPlanItem's learningWeeks field */
+export function computeActionEffortBadge(action: Partial<ActionPlanItem>): string {
+  return formatEffortBadge(effortHours(action));
+}

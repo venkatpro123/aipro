@@ -51,6 +51,8 @@ import { getLayoffScoreHistory } from "./scoreStorageService";
 // v13.0 intelligence layers
 import { computeMacroEconomicRisk } from "./macroEconomicRiskEngine";
 import { computePeerContagion } from "./peerContagionEngine";
+import { computeRoleIndustryComposite, deriveRoleCategory } from "../data/roleIndustryRiskMatrix";
+import { getSeniorityFamilyForRole, getSeniorityThresholds } from "../data/roleSeniorityBenchmarks";
 // WS3 — Live peer contagion adapter. Internally falls through to
 // `computePeerContagion` when the ws3_peer_contagion_live flag is off,
 // so unconditional use here is safe.
@@ -69,7 +71,8 @@ import { computeLeadershipTransitionRisk } from "./leadershipTransitionRiskEngin
 import { computeEmployeeSentiment } from "./employeeSentimentEngine";
 import { computeGeographicOptionality } from "./geographicOptionalityEngine";
 import { computeHeadcountVelocity } from "./headcountVelocityEngine";
-import { computeTechStackObsolescence } from "./techStackObsolescenceEngine";
+import { computeAutomationRisk } from "./automationRiskTimelineEngine";
+import { computeCareerTransition } from "./careerTransitionIntelligenceEngine";
 import { computeCareerVelocity } from "./careerVelocityEngine";
 import { computeSegmentCalibration } from "./segmentedCalibrationEngine";
 import { computeBayesianCI, deriveDataQualityTier } from "./empiricalCalibration";
@@ -90,11 +93,14 @@ import { assessFinancialRunway } from "./financialRunwayService";
 import { computePredictionHorizon } from "./predictionHorizonService";
 import { computeSkillGapIntelligence } from "./skillGapIntelligenceService";
 import { computePersonalizedTimeline } from "./personalizedTimelineService";
-import { computeScenarioPlan } from "./scenarioPlanService";
+import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
+import { computeActionEffortBadge } from "./actionRankingService";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
 import { evaluateJobOffer } from "./offerEvaluationEngine";
 import { computeCareerContingencyPlan } from "./careerContingencyPlanEngine";
 import { computePreparednessScore } from "./preparednessScoreEngine";
+import { computePersonalRiskModifier } from "./personalRiskAdjusterService";
+import { ensureRoleIntelligenceLoaded } from "./roleIntelligenceClient";
 import {
   checkEdgeFunctionHealth,
   getEFDegradationWarnings,
@@ -360,7 +366,12 @@ function mapToHybridResult(
       priority: r.priority,
       layerFocus: r.layerFocus,
       riskReductionPct: r.riskReductionPct,
-      deadline: r.deadline
+      deadline: r.deadline,
+      learningWeeks: (r as any).learningWeeks,
+      effortBadge: computeActionEffortBadge(r as any),
+      sequencePhase: deriveSequencePhase(r.deadline ?? ''),
+      evidenceStats: (r as any).evidenceStats,
+      dependsOn: (r as any).dependsOn,
     })),
     workTypeKey: inputs.oracleKey || "generic",
     industryKey: safeLower(companyData.industry, "technology").replace(/\s+/g, "_"),
@@ -375,7 +386,9 @@ function mapToHybridResult(
       calculationMode: source === 'live' ? "ENCORE_LIVE" : source === 'db' ? "DB_FALLBACK" : "UNKNOWN_FALLBACK",
       timestamp: engineResult.calculatedAt
     },
-    _engineResult: engineResult
+    _engineResult: engineResult,
+    calibrationCoverage: engineResult.calibrationCoverage,
+    activatedKillSwitches: engineResult.activatedKillSwitches,
   };
 }
 
@@ -410,6 +423,11 @@ function mapConsensusScoreToHybridResult(
     layerFocus: item.layerFocus,
     riskReductionPct: item.riskReductionPct,
     deadline: item.deadline,
+    learningWeeks: item.learningWeeks,
+    effortBadge: item.effortBadge ?? computeActionEffortBadge(item),
+    sequencePhase: item.sequencePhase ?? deriveSequencePhase(item.deadline ?? ''),
+    evidenceStats: item.evidenceStats,
+    dependsOn: item.dependsOn,
   }));
 
   const consensusSnapshot = hybridScore.consensusSnapshot;
@@ -469,6 +487,24 @@ function deriveExperienceBracket(years: number): string {
   if (years < 10) return "5-10";
   if (years < 15) return "10-15";
   return "15+";
+}
+
+function deriveSeniorityBracket(years: number, roleKey?: string | null): 'junior' | 'mid' | 'senior' | 'staff_plus' {
+  const family = roleKey ? getSeniorityFamilyForRole(roleKey) : 'default';
+  const t = getSeniorityThresholds(family);
+  if (years < t.mid) return 'junior';
+  if (years < t.senior) return 'mid';
+  if (years < t.principal) return 'senior';
+  return 'staff_plus';
+}
+
+// GAP F: derive sequencePhase from the action's deadline string
+function deriveSequencePhase(deadline: string): 'day1' | 'week1' | 'month1' | 'quarter1' {
+  const dl = (deadline ?? '').toLowerCase();
+  if (dl.includes('24 hour') || dl.includes('today') || dl.includes('immediately') || dl.includes('now')) return 'day1';
+  if (dl.includes('3 day') || dl.includes('48 hour') || dl.includes('72 hour') || dl.includes('7 day') || dl.includes('1 week')) return 'week1';
+  if (dl.includes('14 day') || dl.includes('30 day') || dl.includes('2 week') || dl.includes('month')) return 'month1';
+  return 'quarter1';
 }
 
 function attachAuditMetadata(
@@ -589,6 +625,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Load admin-curated layoff events from Supabase, overriding hardcoded seeds.
   // Fire-and-forget — non-fatal if Supabase is unavailable; seeded fallbacks remain.
   loadCuratedLayoffEvents().catch(() => {}); // arch-allow:R2 fire-and-forget data prefetch; seeded fallbacks cover failure
+  // Warm the DB-backed role intelligence cache (demand overrides, aliases, seniority benchmarks).
+  // Fire-and-forget — static in-memory data is the fallback if Supabase is unavailable.
+  ensureRoleIntelligenceLoaded().catch(() => {});
 
   // ── LIVE-FIRST ARCHITECTURE ─────────────────────────────────────────────────
   // Start live scraping IMMEDIATELY — in parallel with DB resolution steps below.
@@ -1854,6 +1893,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         tenureYears: inputs.userFactors.tenureYears,
         performanceTier: inputs.userFactors.performanceTier ?? 'average',
         industry: companyData.industry ?? 'technology',
+        workTypeKey: resolvedRole.canonicalKey ?? 'default', // GAP J: role-specific scripts
       });
       (hybridResult as any).negotiationIntelligence = negotiationIntelligence;
     }
@@ -1892,6 +1932,23 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (hybridResult as any).peerContagion = peerContagion;
   } catch (e) {
     noteEngineFailure('peerContagion', e);
+  }
+
+  // 22.5. Role-Industry Composite — cross-role × industry risk modifier
+  // Resolves whether this specific role is protected or exposed in this industry.
+  // Result informs scenario plan roleCategory and contingency plan leverage.
+  try {
+    const riRoleGroup = (hybridResult as any).resolvedRoleGroup
+      ?? resolvedRole?.canonicalKey
+      ?? inputs.roleTitle
+      ?? 'swe';
+    const riComposite = computeRoleIndustryComposite(
+      riRoleGroup,
+      companyData.industry ?? 'technology',
+    );
+    (hybridResult as any).roleIndustryComposite = riComposite;
+  } catch (e) {
+    noteEngineFailure('roleIndustryComposite', e);
   }
 
   // 23. Emergency Response Protocol — 72-hour crisis plan (activates at score ≥ 80 or collapse stage ≥ 2)
@@ -2118,16 +2175,33 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     noteEngineFailure('headcountVelocity', e);
   }
 
-  // 37. Tech Stack Obsolescence — tech lifecycle risk
+  // 37. Automation Risk Timeline — role + tech stack displacement analysis (v37.0 upgrade)
   try {
-    const techStackObsolescence = computeTechStackObsolescence({
+    const automationRisk = computeAutomationRisk({
       primaryTechStack: uf14.userSkills ?? [],
       companyMigrationPhase: uf14.companyMigrationPhase ?? 'NOT_MIGRATING',
       companyMainTech: uf14.companyMainTech ?? [],
+      roleKey: resolvedRole?.canonicalKey ?? inputs.oracleKey ?? null,
     });
-    (hybridResult as any).techStackObsolescence = techStackObsolescence;
+    (hybridResult as any).techStackObsolescence = automationRisk.techStack;
+    (hybridResult as any).automationRisk = automationRisk;
   } catch (e) {
-    noteEngineFailure('techStackObsolescence', e);
+    noteEngineFailure('automationRisk', e);
+  }
+
+  // 37.5 Career Transition Intelligence — cross-role feasibility scoring (v37.0 Phase 6A)
+  try {
+    const careerTransition = computeCareerTransition({
+      currentRoleKey: resolvedRole?.canonicalKey ?? inputs.oracleKey ?? null,
+      seniorityBracket: (hybridResult as any).seniorityBracket ?? null,
+      financialRunwayMonths: (hybridResult as any).financialRunway?.monthsOfRunway ?? inputs.financialRunwayMonths ?? null,
+      tenureYears: inputs.userFactors.tenureYears ?? null,
+      geographicConstraint: 'open',
+      currentScore: (hybridResult as any).score ?? null,
+    });
+    (hybridResult as any).careerTransition = careerTransition;
+  } catch (e) {
+    noteEngineFailure('careerTransition', e);
   }
 
   // 38. Career Velocity — trajectory momentum analysis
@@ -2306,6 +2380,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       cashRunwayMonths: null,
       industry: companyData.industry ?? 'technology',
       isPublic: companyData.isPublic ?? false,
+      // v37.0 Phase 6E: role context for role-enriched cohort labels
+      workTypeKey: resolvedRole?.canonicalKey ?? inputs.oracleKey ?? null,
+      seniorityBracket: (hybridResult as any).seniorityBracket ?? null,
+      currentScore: (hybridResult as any).score ?? null,
     });
     (hybridResult as any).cohortClassification = cohortClassification;
   } catch (e) {
@@ -2463,6 +2541,19 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const cohortResult = (hybridResult as any).cohortClassification;
     const trajectoryRes = (hybridResult as any).scoreTrajectory;
     const secSigs = (hybridResult as any).secEnhancedSignals;
+    const uf50 = inputs.userFactors as any;
+    const userRunway50 = (hybridResult as any).userFinancialRunway;
+
+    // GAP C + v37.0: build personalization context including role category
+    const personalizationContext: ScenarioPlanPersonalizationContext = {
+      visaStatus: uf50.visaStatus ?? undefined,
+      financialRunwaySituation: userRunway50?.situation ?? undefined,
+      seniorityBracket: deriveSeniorityBracket(inputs.userFactors.tenureYears ?? 0, resolvedRole?.canonicalKey ?? inputs.oracleKey ?? null),
+      hasEquityVesting: uf50.hasEquityVesting ?? undefined,
+      equityType: uf50.equityType ?? undefined,
+      roleCategory: (hybridResult as any).roleIndustryComposite?.roleCategory ?? undefined,
+    };
+
     const scenarioPlan = computeScenarioPlan({
       currentScore: hybridResult.total,
       macroRiskTier: macroSig?.riskTier ?? null,
@@ -2471,6 +2562,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       velocityPtsPerMonth: trajectoryRes?.velocityPtsPerMonth ?? 0,
       freeCashFlowMargin: secSigs?.financialSignals?.freeCashFlowMargin ?? null,
       revenueGrowthYoY: companyData.revenueGrowthYoY ?? null,
+      personalizationContext,
     });
     (hybridResult as any).scenarioPlan = scenarioPlan;
   } catch (e) {
@@ -2525,6 +2617,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       priorJobChanges: uf17.priorJobChanges ?? null,
       hasEquityVesting: uf17.hasEquityVesting ?? null,
       equityVestMonths: uf17.equityVestMonths ?? null,
+      geographicOptionality: (hybridResult as any).geographicOptionality ?? null, // GAP G: CoL for financial projection
+      roleLeverageMultiplier: (hybridResult as any).roleIndustryComposite?.riskModifier != null
+        ? Math.max(0.5, Math.min(2.0, 1.0 - ((hybridResult as any).roleIndustryComposite.riskModifier / 40)))
+        : undefined, // v37.0: derive from role-industry composite (-15→+20 modifier maps to 0.5–2.0 leverage)
     });
     (hybridResult as any).careerContingencyPlan = careerContingencyPlan;
   } catch (e) {
@@ -2551,6 +2647,26 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (hybridResult as any).preparednessScore = preparednessScore;
   } catch (e) {
     noteEngineFailure('preparednessScore', e);
+  }
+
+  // 55. Personal Risk Modifier — user-circumstance signed adjustment (post-killswitch)
+  // Reads five already-computed layers (15 Manager, 17 Visa, 25 Network, 30 Skill,
+  // 38 Velocity) and produces a ±10pt signed delta applied to the final score.
+  try {
+    const personalRiskModifier = computePersonalRiskModifier({
+      baseScore: hybridResult.total,
+      visaRisk:          (hybridResult as any).visaRisk          ?? null,
+      managerRisk:       (hybridResult as any).managerRisk        ?? null,
+      networkLeverage:   (hybridResult as any).networkLeverage    ?? null,
+      skillPortfolioFit: (hybridResult as any).skillPortfolioFit  ?? null,
+      careerVelocity:    (hybridResult as any).careerVelocity     ?? null,
+    });
+    if (Math.abs(personalRiskModifier.rawModifier) >= 1) {
+      hybridResult.total = personalRiskModifier.adjustedScore;
+    }
+    (hybridResult as any).personalRiskModifier = personalRiskModifier;
+  } catch (e) {
+    noteEngineFailure('personalRiskModifier', e);
   }
 
   _timer.mark('intelligence_upgrade_end');

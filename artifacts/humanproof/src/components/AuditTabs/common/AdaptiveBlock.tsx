@@ -16,7 +16,7 @@ import TierBadge from './TierBadge';
 
 interface Props {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   icon?: React.ElementType;
   tier?: 1 | 2 | 3 | 4 | 5;
   accentColor?: string;
@@ -76,12 +76,12 @@ export const AdaptiveBlock: React.FC<Props> = ({
             {tier && !empty && <TierBadge tier={tier} />}
           </div>
           {(subtitle || empty) && (
-            <p
-              className="text-[10px] leading-tight mt-0.5 truncate"
+            <div
+              className="text-[10px] leading-tight mt-0.5 flex items-center gap-1"
               style={{ color: 'rgba(255,255,255,0.35)' }}
             >
               {empty ? 'No data available' : subtitle}
-            </p>
+            </div>
           )}
         </div>
         {badge && !empty && (

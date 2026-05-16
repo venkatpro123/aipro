@@ -1,4 +1,4 @@
-// roleMarketDemandService.ts — v16.0
+// roleMarketDemandService.ts — v16.0 + v37.0 multi-industry demand expansion
 // Dynamic role demand index — 2026-Q1 data for 30+ key roles.
 //
 // Replaces static roleExposureData.ts values with demand signals that can be
@@ -9,6 +9,43 @@
 //
 // All data is self-contained (no external API calls). The pipeline injects this
 // data via computeMarketDemandReport(); callers never reach out to a network.
+
+// v37.0 multi-industry demand additions
+import { DEMAND_ADDITIONS_HEALTHCARE_LEGAL } from "../data/actions/healthcare_legal_actions";
+import { DEMAND_ADDITIONS_CONSULTING_MARKETING_CX } from "../data/actions/consulting_marketing_cx_actions";
+import { DEMAND_ADDITIONS_MANUFACTURING_ENERGY_CONSTRUCTION } from "../data/actions/manufacturing_energy_construction_actions";
+import { DEMAND_ADDITIONS_RETAIL_LOGISTICS_PHARMA } from "../data/actions/retail_logistics_pharma_actions";
+import { DEMAND_ADDITIONS_AUTO_TELECOM_GOVT_EDUCATION } from "../data/actions/auto_telecom_govt_education_actions";
+import { DEMAND_ADDITIONS_INSURANCE_MEDIA_HOSPITALITY } from "../data/actions/insurance_media_hospitality_actions";
+// v38.0 Phase 1
+import { DEMAND_ADDITIONS_CYBERSECURITY } from "../data/actions/cybersecurity_actions";
+import { DEMAND_ADDITIONS_CLOUD_PLATFORM } from "../data/actions/cloud_platform_actions";
+import { DEMAND_ADDITIONS_AI_ML_SPECIALIZATION } from "../data/actions/ai_ml_specialization_actions";
+import { DEMAND_ADDITIONS_QA_FRONTEND_MOBILE } from "../data/actions/qa_frontend_mobile_actions";
+// v38.0 Phase 2
+import { DEMAND_ADDITIONS_PHYSICIANS } from "../data/actions/physicians_actions";
+import { DEMAND_ADDITIONS_NURSING_ALLIED_HEALTH } from "../data/actions/nursing_allied_health_actions";
+import { DEMAND_ADDITIONS_BIOTECH_HEALTHCARE_IT } from "../data/actions/biotech_healthcare_it_actions";
+import { DEMAND_ADDITIONS_BEHAVIORAL_ADMIN_VET_PH } from "../data/actions/behavioral_admin_vet_public_health_actions";
+// v38.0 Phase 3
+import { DEMAND_ADDITIONS_INVESTMENT_BANKING_PE_VC } from "../data/actions/investment_banking_pe_vc_actions";
+import { DEMAND_ADDITIONS_QUANT_ASSET_HEDGE } from "../data/actions/quant_asset_hedge_actions";
+import { DEMAND_ADDITIONS_CORPORATE_FINANCE_BANKING_RISK } from "../data/actions/corporate_finance_banking_risk_actions";
+import { DEMAND_ADDITIONS_INSURANCE_RE_FINANCE } from "../data/actions/insurance_real_estate_finance_actions";
+// v38.0 Phase 4
+import { DEMAND_ADDITIONS_SKILLED_TRADES } from "../data/actions/skilled_trades_actions";
+import { DEMAND_ADDITIONS_INDUSTRIAL_ENGINEERING } from "../data/actions/industrial_engineering_actions";
+import { DEMAND_ADDITIONS_ENERGY_SPECIALIZATIONS } from "../data/actions/energy_specializations_actions";
+import { DEMAND_ADDITIONS_CONSTRUCTION_SPECIALIZATIONS } from "../data/actions/construction_specializations_actions";
+import { DEMAND_ADDITIONS_AVIATION_PUBLIC_SAFETY } from "../data/actions/aviation_public_safety_actions";
+// v38.0 Phase 5
+import { DEMAND_ADDITIONS_MEDIA_ENTERTAINMENT } from "../data/actions/media_entertainment_actions";
+import { DEMAND_ADDITIONS_HOSPITALITY_TRAVEL } from "../data/actions/hospitality_travel_actions";
+import { DEMAND_ADDITIONS_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_research_academia_actions";
+// v38.0 Phase 6
+import { DEMAND_ADDITIONS_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
+import { DEMAND_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
+import { DEMAND_ADDITIONS_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
 
 // ─── Public types ────────────────────────────────────────────────────────────
 
@@ -46,6 +83,15 @@ export interface MarketDemandReport {
   /** Estimated weeks from starting active search to receiving an offer */
   jobSearchRunwayWeeks: number;
   actionRecommendations: string[];
+  /** Months since DATA_DATE. Set when > 3 so UI can surface a staleness warning. */
+  _staleMonths?: number;
+}
+
+// ─── Staleness detection ─────────────────────────────────────────────────────
+const ROLE_DEMAND_DATA_DATE = '2026-01-01'; // Q1 2026 snapshot
+
+function computeRoleDataStaleMonths(): number {
+  return Math.floor((Date.now() - new Date(ROLE_DEMAND_DATA_DATE).getTime()) / (30 * 24 * 60 * 60 * 1000));
 }
 
 // ─── Static demand database (2026-Q1) ────────────────────────────────────────
@@ -503,6 +549,692 @@ export const ROLE_DEMAND_DB: Record<string, RoleDemandSnapshot> = {
     dataQuarter: '2026-Q1',
     calibrationNote: 'EV + robotics + edge AI expanding demand for embedded/firmware talent.',
   },
+
+  // ── v37.0: Phase 1B new role demand entries ────────────────────────────────
+
+  // Engineering aliases (canonical key alignment)
+  devops_engineer: {
+    roleKey: 'devops_engineer',
+    roleName: 'DevOps / Site Reliability Engineer',
+    demandIndex: 75, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 35, yoyJobOpeningsChange: 21,
+    topHiringLocations: ['Seattle', 'San Francisco', 'Austin', 'Bangalore', 'Dublin'],
+    aiSubstitutionRisk: 0.16, dataQuarter: '2026-Q1',
+    calibrationNote: 'Platform/infra complexity growing faster than headcount; SRE shortage persists.',
+  },
+  platform_engineer: {
+    roleKey: 'platform_engineer',
+    roleName: 'Platform Engineer',
+    demandIndex: 78, demandTrend: 'surging', jobOpeningsTrend: 'surging', salaryTrend: 'rising',
+    timeToFillDays: 30, yoyJobOpeningsChange: 35,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Berlin'],
+    aiSubstitutionRisk: 0.12, dataQuarter: '2026-Q1',
+    calibrationNote: 'Platform engineering recognized as distinct discipline; demand growing rapidly.',
+  },
+  ai_engineer: {
+    roleKey: 'ai_engineer',
+    roleName: 'AI Engineer',
+    demandIndex: 92, demandTrend: 'surging', jobOpeningsTrend: 'surging', salaryTrend: 'rising',
+    timeToFillDays: 22, yoyJobOpeningsChange: 68,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Bangalore'],
+    aiSubstitutionRisk: 0.08, dataQuarter: '2026-Q1',
+    calibrationNote: 'Enterprise GenAI deployments creating acute AI engineer shortage.',
+  },
+  llm_engineer: {
+    roleKey: 'llm_engineer',
+    roleName: 'LLM / Prompt Engineer',
+    demandIndex: 90, demandTrend: 'surging', jobOpeningsTrend: 'surging', salaryTrend: 'rising',
+    timeToFillDays: 24, yoyJobOpeningsChange: 85,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Berlin', 'Bangalore'],
+    aiSubstitutionRisk: 0.15, dataQuarter: '2026-Q1',
+    calibrationNote: 'LLM production deployment expertise extremely scarce; demand unprecedented.',
+  },
+  nlp_engineer: {
+    roleKey: 'nlp_engineer',
+    roleName: 'NLP Engineer',
+    demandIndex: 84, demandTrend: 'surging', jobOpeningsTrend: 'surging', salaryTrend: 'rising',
+    timeToFillDays: 26, yoyJobOpeningsChange: 52,
+    topHiringLocations: ['San Francisco', 'New York', 'Boston', 'London', 'Bangalore'],
+    aiSubstitutionRisk: 0.10, dataQuarter: '2026-Q1',
+    calibrationNote: 'LLM era elevating NLP from niche to core; demand tracking AI adoption curve.',
+  },
+  cv_engineer: {
+    roleKey: 'cv_engineer',
+    roleName: 'Computer Vision Engineer',
+    demandIndex: 76, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 30, yoyJobOpeningsChange: 38,
+    topHiringLocations: ['San Francisco', 'Seattle', 'Munich', 'Seoul', 'Tel Aviv'],
+    aiSubstitutionRisk: 0.10, dataQuarter: '2026-Q1',
+    calibrationNote: 'Robotics, autonomous vehicles, and medical imaging driving CV demand.',
+  },
+  qa_engineer: {
+    roleKey: 'qa_engineer',
+    roleName: 'QA / Test Automation Engineer',
+    demandIndex: 52, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 48, yoyJobOpeningsChange: -12,
+    topHiringLocations: ['Bangalore', 'Hyderabad', 'Pune', 'Warsaw', 'Toronto'],
+    aiSubstitutionRisk: 0.52, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI code-gen reducing manual QA; automation SDET roles more resilient.',
+  },
+  eng_manager: {
+    roleKey: 'eng_manager',
+    roleName: 'Engineering Manager',
+    demandIndex: 58, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 60, yoyJobOpeningsChange: -15,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Berlin'],
+    aiSubstitutionRisk: 0.20, dataQuarter: '2026-Q1',
+    calibrationNote: 'Post-ZIRP flattening; span-of-control rationalization reducing EM headcount.',
+  },
+  tech_lead: {
+    roleKey: 'tech_lead',
+    roleName: 'Tech Lead',
+    demandIndex: 65, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 45, yoyJobOpeningsChange: 2,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'Bangalore', 'London'],
+    aiSubstitutionRisk: 0.18, dataQuarter: '2026-Q1',
+    calibrationNote: 'Demand stable; companies prefer IC-TL hybrid over dedicated TL.',
+  },
+  staff_engineer: {
+    roleKey: 'staff_engineer',
+    roleName: 'Staff / Principal Engineer',
+    demandIndex: 70, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 55, yoyJobOpeningsChange: 5,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.12, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior IC track resilient post-2025; companies investing in depth over breadth.',
+  },
+  solution_architect: {
+    roleKey: 'solution_architect',
+    roleName: 'Solutions Architect',
+    demandIndex: 68, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 50, yoyJobOpeningsChange: 4,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Singapore', 'Sydney'],
+    aiSubstitutionRisk: 0.20, dataQuarter: '2026-Q1',
+    calibrationNote: 'Enterprise cloud migration sustaining demand for solutions architects.',
+  },
+  support_engineer: {
+    roleKey: 'support_engineer',
+    roleName: 'Technical Support Engineer',
+    demandIndex: 48, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 42, yoyJobOpeningsChange: -18,
+    topHiringLocations: ['Bangalore', 'Hyderabad', 'Manila', 'Dublin', 'Austin'],
+    aiSubstitutionRisk: 0.60, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI-first support tools displacing Tier 1-2 support headcount rapidly.',
+  },
+  bpo_associate: {
+    roleKey: 'bpo_associate',
+    roleName: 'BPO / ITES Associate',
+    demandIndex: 38, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'falling',
+    timeToFillDays: 20, yoyJobOpeningsChange: -28,
+    topHiringLocations: ['Bangalore', 'Hyderabad', 'Noida', 'Pune', 'Manila'],
+    aiSubstitutionRisk: 0.78, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI automation accelerating BPO displacement; transition urgency high.',
+  },
+
+  // Analytics & Data (new canonical keys)
+  analytics_engineer: {
+    roleKey: 'analytics_engineer',
+    roleName: 'Analytics Engineer',
+    demandIndex: 72, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 38, yoyJobOpeningsChange: 26,
+    topHiringLocations: ['San Francisco', 'New York', 'Austin', 'London', 'Amsterdam'],
+    aiSubstitutionRisk: 0.22, dataQuarter: '2026-Q1',
+    calibrationNote: 'dbt ecosystem growth driving analytics engineering as distinct discipline.',
+  },
+  bi_analyst: {
+    roleKey: 'bi_analyst',
+    roleName: 'BI Developer / Analyst',
+    demandIndex: 54, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 44, yoyJobOpeningsChange: -3,
+    topHiringLocations: ['New York', 'Chicago', 'Dallas', 'Bangalore', 'London'],
+    aiSubstitutionRisk: 0.40, dataQuarter: '2026-Q1',
+    calibrationNote: 'Self-service BI tools (Looker, Tableau AI) compressing junior analyst demand.',
+  },
+  quantitative_analyst: {
+    roleKey: 'quantitative_analyst',
+    roleName: 'Quantitative Analyst',
+    demandIndex: 74, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 40, yoyJobOpeningsChange: 18,
+    topHiringLocations: ['New York', 'London', 'Hong Kong', 'Chicago', 'Singapore'],
+    aiSubstitutionRisk: 0.18, dataQuarter: '2026-Q1',
+    calibrationNote: 'Quants with ML expertise in demand; pure stat quants face AI compression.',
+  },
+  ml_ops_engineer: {
+    roleKey: 'ml_ops_engineer',
+    roleName: 'MLOps Engineer',
+    demandIndex: 82, demandTrend: 'surging', jobOpeningsTrend: 'surging', salaryTrend: 'rising',
+    timeToFillDays: 28, yoyJobOpeningsChange: 48,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Bangalore'],
+    aiSubstitutionRisk: 0.14, dataQuarter: '2026-Q1',
+    calibrationNote: 'Enterprise AI deployment creating MLOps as mandatory infrastructure role.',
+  },
+  data_governance_analyst: {
+    roleKey: 'data_governance_analyst',
+    roleName: 'Data Governance Analyst',
+    demandIndex: 60, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 46, yoyJobOpeningsChange: 22,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Singapore', 'Toronto'],
+    aiSubstitutionRisk: 0.28, dataQuarter: '2026-Q1',
+    calibrationNote: 'GDPR, AI Act, and enterprise data quality investments driving governance demand.',
+  },
+
+  // Product & Design (new canonical keys)
+  ux_researcher: {
+    roleKey: 'ux_researcher',
+    roleName: 'UX Researcher',
+    demandIndex: 55, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 52, yoyJobOpeningsChange: -10,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Amsterdam', 'Seattle'],
+    aiSubstitutionRisk: 0.30, dataQuarter: '2026-Q1',
+    calibrationNote: 'Post-ZIRP research team cuts; AI research synthesis tools compressing roles.',
+  },
+  brand_designer: {
+    roleKey: 'brand_designer',
+    roleName: 'Brand / Graphic Designer',
+    demandIndex: 45, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'falling',
+    timeToFillDays: 48, yoyJobOpeningsChange: -22,
+    topHiringLocations: ['New York', 'Los Angeles', 'London', 'Berlin', 'São Paulo'],
+    aiSubstitutionRisk: 0.58, dataQuarter: '2026-Q1',
+    calibrationNote: 'Generative AI (Midjourney, DALL-E, Firefly) significantly compressing brand design demand.',
+  },
+
+  // Finance & Accounting (new canonical keys)
+  financial_analyst: {
+    roleKey: 'financial_analyst',
+    roleName: 'Financial Analyst',
+    demandIndex: 58, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 46, yoyJobOpeningsChange: 0,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Hong Kong', 'Singapore'],
+    aiSubstitutionRisk: 0.38, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI financial modelling tools compressing junior analyst roles; senior FP&A resilient.',
+  },
+  investment_banker: {
+    roleKey: 'investment_banker',
+    roleName: 'Investment Banker',
+    demandIndex: 62, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 55, yoyJobOpeningsChange: 12,
+    topHiringLocations: ['New York', 'London', 'Hong Kong', 'Singapore', 'Dubai'],
+    aiSubstitutionRisk: 0.20, dataQuarter: '2026-Q1',
+    calibrationNote: 'M&A activity recovering 2026; relationship-driven senior banking highly resilient.',
+  },
+  portfolio_manager: {
+    roleKey: 'portfolio_manager',
+    roleName: 'Portfolio Manager',
+    demandIndex: 60, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 65, yoyJobOpeningsChange: 2,
+    topHiringLocations: ['New York', 'London', 'Hong Kong', 'Boston', 'Zurich'],
+    aiSubstitutionRisk: 0.22, dataQuarter: '2026-Q1',
+    calibrationNote: 'Quant fund growth offset by passive index expansion; active PM market stable.',
+  },
+  risk_analyst: {
+    roleKey: 'risk_analyst',
+    roleName: 'Risk Analyst',
+    demandIndex: 65, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 42, yoyJobOpeningsChange: 16,
+    topHiringLocations: ['New York', 'London', 'Singapore', 'Frankfurt', 'Toronto'],
+    aiSubstitutionRisk: 0.26, dataQuarter: '2026-Q1',
+    calibrationNote: 'Basel IV compliance and AI risk regulation driving risk analyst demand.',
+  },
+  compliance_officer: {
+    roleKey: 'compliance_officer',
+    roleName: 'Compliance Officer',
+    demandIndex: 68, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 44, yoyJobOpeningsChange: 20,
+    topHiringLocations: ['New York', 'London', 'Singapore', 'Frankfurt', 'Dublin'],
+    aiSubstitutionRisk: 0.20, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI regulation, crypto rules, and AML expansion driving compliance hiring.',
+  },
+  auditor_cpa: {
+    roleKey: 'auditor_cpa',
+    roleName: 'Auditor / CPA',
+    demandIndex: 62, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 50, yoyJobOpeningsChange: 4,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Bangalore', 'Sydney'],
+    aiSubstitutionRisk: 0.30, dataQuarter: '2026-Q1',
+    calibrationNote: 'Big-4 hiring steady; AI audit tools raising efficiency not headcount.',
+  },
+  controller: {
+    roleKey: 'controller',
+    roleName: 'Financial Controller',
+    demandIndex: 60, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 55, yoyJobOpeningsChange: 1,
+    topHiringLocations: ['New York', 'Chicago', 'San Francisco', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.28, dataQuarter: '2026-Q1',
+    calibrationNote: 'Controller demand stable; ERP automation reducing headcount growth.',
+  },
+  cfo: {
+    roleKey: 'cfo',
+    roleName: 'Chief Financial Officer',
+    demandIndex: 55, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 90, yoyJobOpeningsChange: -3,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Singapore', 'Toronto'],
+    aiSubstitutionRisk: 0.12, dataQuarter: '2026-Q1',
+    calibrationNote: 'CFO demand stable; AI-first finance orgs need CFOs who understand AI ROI.',
+  },
+  treasury_analyst: {
+    roleKey: 'treasury_analyst',
+    roleName: 'Treasury Analyst',
+    demandIndex: 58, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 48, yoyJobOpeningsChange: 3,
+    topHiringLocations: ['New York', 'London', 'Singapore', 'Frankfurt', 'Chicago'],
+    aiSubstitutionRisk: 0.32, dataQuarter: '2026-Q1',
+    calibrationNote: 'Treasury analytics automation compressing junior roles; senior treasury stable.',
+  },
+  tax_specialist: {
+    roleKey: 'tax_specialist',
+    roleName: 'Tax Specialist / Manager',
+    demandIndex: 64, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 44, yoyJobOpeningsChange: 10,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Bangalore', 'Toronto'],
+    aiSubstitutionRisk: 0.25, dataQuarter: '2026-Q1',
+    calibrationNote: 'Pillar Two global minimum tax complexity driving international tax specialist demand.',
+  },
+  actuarial_analyst: {
+    roleKey: 'actuarial_analyst',
+    roleName: 'Actuarial Analyst',
+    demandIndex: 70, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 42, yoyJobOpeningsChange: 14,
+    topHiringLocations: ['New York', 'Hartford', 'London', 'Toronto', 'Singapore'],
+    aiSubstitutionRisk: 0.20, dataQuarter: '2026-Q1',
+    calibrationNote: 'Climate risk and longevity modeling driving actuarial demand; credentials scarce.',
+  },
+  equity_researcher: {
+    roleKey: 'equity_researcher',
+    roleName: 'Equity Research Analyst',
+    demandIndex: 55, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 55, yoyJobOpeningsChange: -8,
+    topHiringLocations: ['New York', 'London', 'Hong Kong', 'Singapore', 'Mumbai'],
+    aiSubstitutionRisk: 0.40, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI research synthesis tools compressing sell-side research analyst headcount.',
+  },
+  senior_financial_analyst: {
+    roleKey: 'senior_financial_analyst',
+    roleName: 'Senior Financial Analyst',
+    demandIndex: 62, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 48, yoyJobOpeningsChange: 5,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Singapore', 'Toronto'],
+    aiSubstitutionRisk: 0.30, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior FA demand stable; AI automation selectively compressing junior roles.',
+  },
+  fp_a_analyst: {
+    roleKey: 'fp_a_analyst',
+    roleName: 'FP&A Analyst',
+    demandIndex: 65, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 44, yoyJobOpeningsChange: 12,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Singapore', 'Austin'],
+    aiSubstitutionRisk: 0.28, dataQuarter: '2026-Q1',
+    calibrationNote: 'Real-time financial intelligence driving FP&A evolution; strategic FP&A in demand.',
+  },
+
+  // Sales & Revenue (new canonical keys)
+  account_executive: {
+    roleKey: 'account_executive',
+    roleName: 'Account Executive',
+    demandIndex: 62, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 38, yoyJobOpeningsChange: -2,
+    topHiringLocations: ['San Francisco', 'New York', 'Chicago', 'London', 'Austin'],
+    aiSubstitutionRisk: 0.22, dataQuarter: '2026-Q1',
+    calibrationNote: 'Enterprise AE demand stable; SMB AE market compressing with AI sales tools.',
+  },
+  business_development_manager: {
+    roleKey: 'business_development_manager',
+    roleName: 'Business Development Manager',
+    demandIndex: 60, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 42, yoyJobOpeningsChange: 0,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Singapore', 'Dubai'],
+    aiSubstitutionRisk: 0.25, dataQuarter: '2026-Q1',
+    calibrationNote: 'Partnership and BD roles stable; AI lead-gen tools changing outbound motion.',
+  },
+  customer_success_manager: {
+    roleKey: 'customer_success_manager',
+    roleName: 'Customer Success Manager',
+    demandIndex: 58, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 40, yoyJobOpeningsChange: -8,
+    topHiringLocations: ['San Francisco', 'New York', 'Austin', 'London', 'Bangalore'],
+    aiSubstitutionRisk: 0.35, dataQuarter: '2026-Q1',
+    calibrationNote: 'Post-ZIRP CS team cuts; AI CS tools (Gainsight AI) compressing headcount.',
+  },
+  sales_engineer: {
+    roleKey: 'sales_engineer',
+    roleName: 'Sales / Solutions Engineer',
+    demandIndex: 72, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 36, yoyJobOpeningsChange: 20,
+    topHiringLocations: ['San Francisco', 'New York', 'Seattle', 'London', 'Austin'],
+    aiSubstitutionRisk: 0.15, dataQuarter: '2026-Q1',
+    calibrationNote: 'Technical complexity of enterprise AI products elevating SE importance.',
+  },
+  vp_sales: {
+    roleKey: 'vp_sales',
+    roleName: 'VP Sales / Head of Sales',
+    demandIndex: 55, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 70, yoyJobOpeningsChange: -5,
+    topHiringLocations: ['San Francisco', 'New York', 'Chicago', 'London', 'Austin'],
+    aiSubstitutionRisk: 0.15, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior sales leadership resilient; VP Sales tenure under pressure from missed targets.',
+  },
+  sales_operations_analyst: {
+    roleKey: 'sales_operations_analyst',
+    roleName: 'Sales / Revenue Operations',
+    demandIndex: 68, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 38, yoyJobOpeningsChange: 24,
+    topHiringLocations: ['San Francisco', 'New York', 'Chicago', 'London', 'Bangalore'],
+    aiSubstitutionRisk: 0.25, dataQuarter: '2026-Q1',
+    calibrationNote: 'RevOps emergence as strategic function; CRM AI complexity driving analyst demand.',
+  },
+  sales_development_rep: {
+    roleKey: 'sales_development_rep',
+    roleName: 'SDR / BDR',
+    demandIndex: 42, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'falling',
+    timeToFillDays: 28, yoyJobOpeningsChange: -30,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Dublin', 'Austin'],
+    aiSubstitutionRisk: 0.72, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI outbound tools (Clay, Apollo AI) dramatically compressing SDR/BDR headcount.',
+  },
+  senior_account_executive: {
+    roleKey: 'senior_account_executive',
+    roleName: 'Senior Account Executive',
+    demandIndex: 65, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 45, yoyJobOpeningsChange: 5,
+    topHiringLocations: ['San Francisco', 'New York', 'Chicago', 'London', 'Singapore'],
+    aiSubstitutionRisk: 0.18, dataQuarter: '2026-Q1',
+    calibrationNote: 'Enterprise senior AE demand stable; experienced sellers with AI knowledge valued.',
+  },
+  enterprise_ae: {
+    roleKey: 'enterprise_ae',
+    roleName: 'Enterprise Account Executive',
+    demandIndex: 68, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 50, yoyJobOpeningsChange: 12,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Singapore', 'Tokyo'],
+    aiSubstitutionRisk: 0.12, dataQuarter: '2026-Q1',
+    calibrationNote: 'Enterprise AI contract complexity requires experienced enterprise sellers.',
+  },
+  chief_revenue_officer: {
+    roleKey: 'chief_revenue_officer',
+    roleName: 'Chief Revenue Officer',
+    demandIndex: 52, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 90, yoyJobOpeningsChange: -2,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Austin', 'Chicago'],
+    aiSubstitutionRisk: 0.10, dataQuarter: '2026-Q1',
+    calibrationNote: 'CRO role under scrutiny post-ZIRP; AI GTM transformation creating demand for new profile.',
+  },
+  revenue_operations_manager: {
+    roleKey: 'revenue_operations_manager',
+    roleName: 'Revenue Operations Manager',
+    demandIndex: 70, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 40, yoyJobOpeningsChange: 28,
+    topHiringLocations: ['San Francisco', 'New York', 'Austin', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.22, dataQuarter: '2026-Q1',
+    calibrationNote: 'RevOps centralization and AI CRM adoption driving senior RevOps manager demand.',
+  },
+  partnership_manager: {
+    roleKey: 'partnership_manager',
+    roleName: 'Partnerships / Channel Manager',
+    demandIndex: 58, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 44, yoyJobOpeningsChange: 2,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Singapore', 'Amsterdam'],
+    aiSubstitutionRisk: 0.20, dataQuarter: '2026-Q1',
+    calibrationNote: 'Ecosystem-led growth strategy sustaining partnerships headcount.',
+  },
+
+  // HR & People Operations (new canonical keys)
+  hr_generalist: {
+    roleKey: 'hr_generalist',
+    roleName: 'HR Generalist',
+    demandIndex: 50, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 38, yoyJobOpeningsChange: -12,
+    topHiringLocations: ['New York', 'Chicago', 'London', 'Bangalore', 'Toronto'],
+    aiSubstitutionRisk: 0.42, dataQuarter: '2026-Q1',
+    calibrationNote: 'HR automation (Workday, BambooHR AI) compressing generalist headcount.',
+  },
+  hr_business_partner: {
+    roleKey: 'hr_business_partner',
+    roleName: 'HR Business Partner',
+    demandIndex: 58, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 45, yoyJobOpeningsChange: -4,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Amsterdam', 'Toronto'],
+    aiSubstitutionRisk: 0.28, dataQuarter: '2026-Q1',
+    calibrationNote: 'Strategic HRBP roles more resilient than generalists; advisory function in demand.',
+  },
+  hr_director: {
+    roleKey: 'hr_director',
+    roleName: 'HR Director / CHRO',
+    demandIndex: 52, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 70, yoyJobOpeningsChange: -6,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Singapore', 'Chicago'],
+    aiSubstitutionRisk: 0.15, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior HR leadership resilient; AI transformation driving CHRO agenda centrality.',
+  },
+  talent_acquisition_specialist: {
+    roleKey: 'talent_acquisition_specialist',
+    roleName: 'Talent Acquisition Specialist',
+    demandIndex: 44, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'falling',
+    timeToFillDays: 35, yoyJobOpeningsChange: -20,
+    topHiringLocations: ['Bangalore', 'Hyderabad', 'New York', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.50, dataQuarter: '2026-Q1',
+    calibrationNote: 'Hiring freezes + AI sourcing tools dramatically reducing TA headcount.',
+  },
+  recruiting_manager: {
+    roleKey: 'recruiting_manager',
+    roleName: 'Recruiting Manager',
+    demandIndex: 48, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 42, yoyJobOpeningsChange: -14,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Bangalore', 'Toronto'],
+    aiSubstitutionRisk: 0.38, dataQuarter: '2026-Q1',
+    calibrationNote: 'TA team rationalization; managers with AI sourcing expertise more resilient.',
+  },
+  executive_recruiter: {
+    roleKey: 'executive_recruiter',
+    roleName: 'Executive Recruiter / Headhunter',
+    demandIndex: 56, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 60, yoyJobOpeningsChange: 0,
+    topHiringLocations: ['New York', 'London', 'San Francisco', 'Singapore', 'Dubai'],
+    aiSubstitutionRisk: 0.25, dataQuarter: '2026-Q1',
+    calibrationNote: 'Executive search relationship-driven; AI tools augment but do not replace.',
+  },
+  compensation_benefits_analyst: {
+    roleKey: 'compensation_benefits_analyst',
+    roleName: 'Compensation & Benefits Analyst',
+    demandIndex: 58, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 46, yoyJobOpeningsChange: 4,
+    topHiringLocations: ['New York', 'San Francisco', 'Chicago', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.35, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI comp benchmarking tools evolving role toward strategy vs data entry.',
+  },
+  learning_development_manager: {
+    roleKey: 'learning_development_manager',
+    roleName: 'Learning & Development Manager',
+    demandIndex: 56, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 44, yoyJobOpeningsChange: 15,
+    topHiringLocations: ['New York', 'London', 'Singapore', 'Sydney', 'Toronto'],
+    aiSubstitutionRisk: 0.28, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI reskilling imperative driving L&D investment across enterprises.',
+  },
+  dei_program_manager: {
+    roleKey: 'dei_program_manager',
+    roleName: 'DEI Program Manager',
+    demandIndex: 38, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'falling',
+    timeToFillDays: 55, yoyJobOpeningsChange: -32,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Toronto', 'Chicago'],
+    aiSubstitutionRisk: 0.30, dataQuarter: '2026-Q1',
+    calibrationNote: 'Political and legal pressure causing widespread DEI team reductions 2025–2026.',
+  },
+  chief_people_officer: {
+    roleKey: 'chief_people_officer',
+    roleName: 'Chief People Officer / CHRO',
+    demandIndex: 50, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 90, yoyJobOpeningsChange: -5,
+    topHiringLocations: ['New York', 'San Francisco', 'London', 'Singapore', 'Austin'],
+    aiSubstitutionRisk: 0.10, dataQuarter: '2026-Q1',
+    calibrationNote: 'CPO role evolving; AI workforce transformation making people strategy critical.',
+  },
+
+  // Engineering leadership (new canonical keys)
+  vp_engineering: {
+    roleKey: 'vp_engineering',
+    roleName: 'VP Engineering',
+    demandIndex: 52, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 80, yoyJobOpeningsChange: -18,
+    topHiringLocations: ['San Francisco', 'New York', 'Seattle', 'London', 'Austin'],
+    aiSubstitutionRisk: 0.15, dataQuarter: '2026-Q1',
+    calibrationNote: 'Engineering leadership layers being compressed; VP Eng headcount rationalizing.',
+  },
+  director_engineering: {
+    roleKey: 'director_engineering',
+    roleName: 'Director of Engineering',
+    demandIndex: 55, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 65, yoyJobOpeningsChange: -12,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Austin'],
+    aiSubstitutionRisk: 0.18, dataQuarter: '2026-Q1',
+    calibrationNote: 'Mid-management rationalization; Directors with AI delivery experience valued.',
+  },
+  cto: {
+    roleKey: 'cto',
+    roleName: 'Chief Technology Officer',
+    demandIndex: 50, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 100, yoyJobOpeningsChange: -3,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Berlin', 'Singapore'],
+    aiSubstitutionRisk: 0.08, dataQuarter: '2026-Q1',
+    calibrationNote: 'CTO demand stable; AI transformation is CTOs\' primary agenda, raising strategic value.',
+  },
+  distinguished_engineer: {
+    roleKey: 'distinguished_engineer',
+    roleName: 'Distinguished / Fellow Engineer',
+    demandIndex: 60, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 120, yoyJobOpeningsChange: 2,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Cambridge'],
+    aiSubstitutionRisk: 0.06, dataQuarter: '2026-Q1',
+    calibrationNote: 'Distinguished engineer roles rare but highly resilient; scarcity creates protection.',
+  },
+  principal_engineer: {
+    roleKey: 'principal_engineer',
+    roleName: 'Principal Engineer',
+    demandIndex: 68, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 58, yoyJobOpeningsChange: 4,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.12, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior IC track gaining ground post-ZIRP; principals less exposed than managers.',
+  },
+
+  // Product & Design additional
+  sw_pm: {
+    roleKey: 'sw_pm',
+    roleName: 'Product Manager',
+    demandIndex: 62, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 49, yoyJobOpeningsChange: 1,
+    topHiringLocations: ['San Francisco', 'New York', 'Seattle', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.18, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior PM demand stable; APM programs being cut at post-ZIRP companies.',
+  },
+  associate_pm: {
+    roleKey: 'associate_pm',
+    roleName: 'Associate Product Manager',
+    demandIndex: 44, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 45, yoyJobOpeningsChange: -25,
+    topHiringLocations: ['San Francisco', 'New York', 'Seattle', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.30, dataQuarter: '2026-Q1',
+    calibrationNote: 'APM programs widely cancelled post-ZIRP; entry-level PM market highly compressed.',
+  },
+  product_analyst: {
+    roleKey: 'product_analyst',
+    roleName: 'Product Analyst',
+    demandIndex: 58, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 42, yoyJobOpeningsChange: 3,
+    topHiringLocations: ['San Francisco', 'New York', 'Austin', 'London', 'Singapore'],
+    aiSubstitutionRisk: 0.35, dataQuarter: '2026-Q1',
+    calibrationNote: 'Product analytics automation compressing role; SQL+data literacy raising floor.',
+  },
+  product_director: {
+    roleKey: 'product_director',
+    roleName: 'Director of Product / VP Product',
+    demandIndex: 55, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'rising',
+    timeToFillDays: 65, yoyJobOpeningsChange: -6,
+    topHiringLocations: ['San Francisco', 'New York', 'Seattle', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.12, dataQuarter: '2026-Q1',
+    calibrationNote: 'Senior product leadership stable; AI product expertise commanding premium.',
+  },
+  ai_product_manager: {
+    roleKey: 'ai_product_manager',
+    roleName: 'AI Product Manager',
+    demandIndex: 86, demandTrend: 'surging', jobOpeningsTrend: 'surging', salaryTrend: 'rising',
+    timeToFillDays: 28, yoyJobOpeningsChange: 72,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Berlin'],
+    aiSubstitutionRisk: 0.10, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI PM is 2026\'s highest-demand product role; ML+product hybrid extremely scarce.',
+  },
+  product_designer: {
+    roleKey: 'product_designer',
+    roleName: 'Product Designer',
+    demandIndex: 58, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 48, yoyJobOpeningsChange: -10,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Berlin', 'Amsterdam'],
+    aiSubstitutionRisk: 0.38, dataQuarter: '2026-Q1',
+    calibrationNote: 'Post-ZIRP design team cuts; AI design tools (Figma AI, v0) compressing headcount.',
+  },
+  ux_writer: {
+    roleKey: 'ux_writer',
+    roleName: 'UX Writer / Content Designer',
+    demandIndex: 46, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'falling',
+    timeToFillDays: 50, yoyJobOpeningsChange: -28,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Dublin', 'Amsterdam'],
+    aiSubstitutionRisk: 0.65, dataQuarter: '2026-Q1',
+    calibrationNote: 'LLM-based UX copy generation rapidly compressing UX writer headcount.',
+  },
+  design_director: {
+    roleKey: 'design_director',
+    roleName: 'Design Director / Head of Design',
+    demandIndex: 52, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 65, yoyJobOpeningsChange: -12,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Berlin', 'Amsterdam'],
+    aiSubstitutionRisk: 0.18, dataQuarter: '2026-Q1',
+    calibrationNote: 'Design leadership flattening; AI tools raising output-per-designer reducing headcount.',
+  },
+
+  // Additional SWE canonical keys
+  sw_software_engineer: {
+    roleKey: 'sw_software_engineer',
+    roleName: 'Software Engineer',
+    demandIndex: 65, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 40, yoyJobOpeningsChange: 2,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'Bangalore', 'Austin'],
+    aiSubstitutionRisk: 0.30, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI code-gen moderately compressing junior SWE; senior AI-fluent SWEs in demand.',
+  },
+  sw_fullstack: {
+    roleKey: 'sw_fullstack',
+    roleName: 'Full Stack Developer',
+    demandIndex: 62, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 42, yoyJobOpeningsChange: 0,
+    topHiringLocations: ['San Francisco', 'New York', 'London', 'Bangalore', 'Toronto'],
+    aiSubstitutionRisk: 0.32, dataQuarter: '2026-Q1',
+    calibrationNote: 'Full-stack demand stable; AI-assisted development increasing per-developer output.',
+  },
+  sw_mobile_crossplatform: {
+    roleKey: 'sw_mobile_crossplatform',
+    roleName: 'Mobile Developer (iOS/Android/React Native)',
+    demandIndex: 60, demandTrend: 'stable', jobOpeningsTrend: 'stable', salaryTrend: 'stable',
+    timeToFillDays: 44, yoyJobOpeningsChange: -2,
+    topHiringLocations: ['San Francisco', 'New York', 'Seoul', 'London', 'Bangalore'],
+    aiSubstitutionRisk: 0.28, dataQuarter: '2026-Q1',
+    calibrationNote: 'Mobile demand stable; cross-platform (Flutter, React Native) preferred over native.',
+  },
+  sw_dba: {
+    roleKey: 'sw_dba',
+    roleName: 'Database Administrator',
+    demandIndex: 52, demandTrend: 'declining', jobOpeningsTrend: 'declining', salaryTrend: 'stable',
+    timeToFillDays: 50, yoyJobOpeningsChange: -10,
+    topHiringLocations: ['New York', 'Chicago', 'Bangalore', 'London', 'Toronto'],
+    aiSubstitutionRisk: 0.45, dataQuarter: '2026-Q1',
+    calibrationNote: 'Cloud-managed DBs (RDS, Aurora, AlloyDB) reducing DBA headcount demand.',
+  },
+  research_scientist: {
+    roleKey: 'research_scientist',
+    roleName: 'Research Scientist',
+    demandIndex: 80, demandTrend: 'rising', jobOpeningsTrend: 'rising', salaryTrend: 'rising',
+    timeToFillDays: 60, yoyJobOpeningsChange: 30,
+    topHiringLocations: ['San Francisco', 'Seattle', 'New York', 'London', 'Cambridge'],
+    aiSubstitutionRisk: 0.08, dataQuarter: '2026-Q1',
+    calibrationNote: 'AI frontier research scientist demand led by labs (Anthropic, Google, Meta AI).',
+  },
 };
 
 // ─── Metro multiplier table ───────────────────────────────────────────────────
@@ -617,6 +1349,99 @@ const UNKNOWN_ROLE_FALLBACK: RoleDemandSnapshot = {
   calibrationNote: 'Role not found in demand database — using market-average estimates.',
 };
 
+// ─── v37.0 + v38.0 multi-industry demand merge ─────────────────────────────────
+// DEMAND_ADDITIONS_* shapes evolved across versions:
+//   - v37.0 files use: averageDaysToFill, dataAsOf, remoteWorkFeasibility
+//   - v38.0 files use: timeToFillDays, dataQuarter, yoyJobOpeningsChange, salaryTrend, roleName
+// We support both shapes — extract whichever field is present.
+type IndustryDemandAddition = {
+  demandIndex: number;
+  demandTrend: DemandTrend | string;
+  jobOpeningsTrend: DemandTrend | string;
+  aiSubstitutionRisk: number;
+  topHiringLocations: string[];
+  // v37.0 fields
+  averageDaysToFill?: number;
+  remoteWorkFeasibility?: 'high' | 'medium' | 'low';
+  dataAsOf?: string;
+  // v38.0 fields
+  timeToFillDays?: number;
+  yoyJobOpeningsChange?: number;
+  salaryTrend?: string;
+  dataQuarter?: string;
+  calibrationNote?: string;
+  roleName?: string;
+  roleKey?: string;
+};
+(function mergeIndustryDemand() {
+  // Cast each import through unknown to avoid TypeScript union inference issues.
+  const asDA = (x: unknown) => x as Record<string, IndustryDemandAddition>;
+  const allAdditions: Record<string, IndustryDemandAddition> = {
+    ...asDA(DEMAND_ADDITIONS_HEALTHCARE_LEGAL),
+    ...asDA(DEMAND_ADDITIONS_CONSULTING_MARKETING_CX),
+    ...asDA(DEMAND_ADDITIONS_MANUFACTURING_ENERGY_CONSTRUCTION),
+    ...asDA(DEMAND_ADDITIONS_RETAIL_LOGISTICS_PHARMA),
+    ...asDA(DEMAND_ADDITIONS_AUTO_TELECOM_GOVT_EDUCATION),
+    ...asDA(DEMAND_ADDITIONS_INSURANCE_MEDIA_HOSPITALITY),
+    // v38.0 Phase 1
+    ...asDA(DEMAND_ADDITIONS_CYBERSECURITY),
+    ...asDA(DEMAND_ADDITIONS_CLOUD_PLATFORM),
+    ...asDA(DEMAND_ADDITIONS_AI_ML_SPECIALIZATION),
+    ...asDA(DEMAND_ADDITIONS_QA_FRONTEND_MOBILE),
+    // v38.0 Phase 2
+    ...asDA(DEMAND_ADDITIONS_PHYSICIANS),
+    ...asDA(DEMAND_ADDITIONS_NURSING_ALLIED_HEALTH),
+    ...asDA(DEMAND_ADDITIONS_BIOTECH_HEALTHCARE_IT),
+    ...asDA(DEMAND_ADDITIONS_BEHAVIORAL_ADMIN_VET_PH),
+    // v38.0 Phase 3
+    ...asDA(DEMAND_ADDITIONS_INVESTMENT_BANKING_PE_VC),
+    ...asDA(DEMAND_ADDITIONS_QUANT_ASSET_HEDGE),
+    ...asDA(DEMAND_ADDITIONS_CORPORATE_FINANCE_BANKING_RISK),
+    ...asDA(DEMAND_ADDITIONS_INSURANCE_RE_FINANCE),
+    // v38.0 Phase 4
+    ...asDA(DEMAND_ADDITIONS_SKILLED_TRADES),
+    ...asDA(DEMAND_ADDITIONS_INDUSTRIAL_ENGINEERING),
+    ...asDA(DEMAND_ADDITIONS_ENERGY_SPECIALIZATIONS),
+    ...asDA(DEMAND_ADDITIONS_CONSTRUCTION_SPECIALIZATIONS),
+    ...asDA(DEMAND_ADDITIONS_AVIATION_PUBLIC_SAFETY),
+    // v38.0 Phase 5
+    ...asDA(DEMAND_ADDITIONS_MEDIA_ENTERTAINMENT),
+    ...asDA(DEMAND_ADDITIONS_HOSPITALITY_TRAVEL),
+    ...asDA(DEMAND_ADDITIONS_CX_RESEARCH_ACADEMIA),
+    // v38.0 Phase 6
+    ...asDA(DEMAND_ADDITIONS_MEDICAL_SUBSPECIALTIES),
+    ...asDA(DEMAND_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE),
+    ...asDA(DEMAND_ADDITIONS_SKILLED_SERVICES_EDU_GOV),
+  };
+  const validTrend = (s: string | undefined, fallback: DemandTrend): DemandTrend => {
+    if (s === 'rising' || s === 'stable' || s === 'falling' || s === 'declining') return s as DemandTrend;
+    if (s === 'surging') return 'rising';
+    return fallback;
+  };
+  const validSalaryTrend = (s: string | undefined): 'rising' | 'stable' | 'falling' => {
+    if (s === 'rising' || s === 'stable' || s === 'falling') return s;
+    return 'stable';
+  };
+  for (const [roleKey, d] of Object.entries(allAdditions)) {
+    const timeToFill = d.timeToFillDays ?? d.averageDaysToFill ?? 60;
+    const quarter = d.dataQuarter ?? d.dataAsOf ?? '2026-Q1';
+    ROLE_DEMAND_DB[roleKey] = {
+      roleKey,
+      roleName: d.roleName ?? roleKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      demandIndex: d.demandIndex,
+      demandTrend: validTrend(d.demandTrend as string, 'stable'),
+      jobOpeningsTrend: validTrend(d.jobOpeningsTrend as string, 'stable'),
+      salaryTrend: validSalaryTrend(d.salaryTrend),
+      timeToFillDays: timeToFill,
+      yoyJobOpeningsChange: d.yoyJobOpeningsChange ?? 0,
+      topHiringLocations: d.topHiringLocations,
+      aiSubstitutionRisk: d.aiSubstitutionRisk,
+      dataQuarter: quarter,
+      calibrationNote: d.calibrationNote ?? `Industry data — ${quarter}`,
+    };
+  }
+})();
+
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 /**
@@ -633,6 +1458,7 @@ export function computeMarketDemandReport(
   const jobSearchRunwayWeeks = demandIndexToRunwayWeeks(adjustedDemandIndex);
   const actionRecommendations = buildActionRecommendations(snapshot, adjustedDemandIndex, jobSearchRunwayWeeks);
 
+  const staleMonths = computeRoleDataStaleMonths();
   return {
     roleKey,
     snapshot,
@@ -640,6 +1466,7 @@ export function computeMarketDemandReport(
     adjustedDemandIndex,
     jobSearchRunwayWeeks,
     actionRecommendations,
+    ...(staleMonths > 3 ? { _staleMonths: staleMonths } : {}),
   };
 }
 

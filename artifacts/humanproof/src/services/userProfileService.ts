@@ -73,6 +73,14 @@ export interface UserProfile {
   selfRatedSkills?: string[] | null;
   /** Skills the user is actively working on acquiring */
   targetSkills?: string[] | null;
+
+  // ── Role identity (v36) ──────────────────────────────────────────────────
+  /** Free-text job title entered by user — resolves to canonicalKey for seniority/action dispatch */
+  jobTitle?: string | null;
+  /** Major industry sector key — 10-bucket classification (technology, finance, healthcare…) */
+  industryKey?: string | null;
+  /** Total years of professional experience across all employers */
+  yearsExperience?: number | null;
 }
 
 const REPROMPT_AFTER_DAYS = 90;
@@ -102,6 +110,10 @@ const V16_SELECT_COLUMNS = [
   'dual_income_household',
   'self_rated_skills',
   'target_skills',
+  // v36 role identity
+  'job_title',
+  'industry_key',
+  'years_experience',
 ].join(', ');
 
 // ─── Row mapper ───────────────────────────────────────────────────────────────
@@ -136,6 +148,10 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     // v16 skills
     selfRatedSkills: data.self_rated_skills ?? null,
     targetSkills: data.target_skills ?? null,
+    // v36 role identity
+    jobTitle: data.job_title ?? null,
+    industryKey: data.industry_key ?? null,
+    yearsExperience: data.years_experience != null ? Number(data.years_experience) : null,
   };
 }
 
@@ -196,6 +212,11 @@ export async function upsertUserProfile(
   // ── v16 skills ───────────────────────────────────────────────────────────
   if (patch.selfRatedSkills     !== undefined) row.self_rated_skills     = patch.selfRatedSkills;
   if (patch.targetSkills        !== undefined) row.target_skills         = patch.targetSkills;
+
+  // ── v36 role identity ────────────────────────────────────────────────────
+  if (patch.jobTitle            !== undefined) row.job_title             = patch.jobTitle;
+  if (patch.industryKey         !== undefined) row.industry_key          = patch.industryKey;
+  if (patch.yearsExperience     !== undefined) row.years_experience      = patch.yearsExperience;
 
   const { error } = await supabase
     .from('user_profiles')
