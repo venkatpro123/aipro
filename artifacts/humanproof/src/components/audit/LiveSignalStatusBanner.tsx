@@ -23,6 +23,15 @@ interface Props {
   /** v39.0 A3 — surface the live-quorum timeout cap reason to the user. */
   degradationReason?: string | null;
   degradationDetail?: string | null;
+  /**
+   * v40 quorum gate — true when ZERO signal classes were positively satisfied
+   * (every class is either absence-quorum or unresolved). In this state the
+   * audit refuses to publish a point estimate: "a score from insufficient
+   * sources is not a score." UI renders the red-refusal banner.
+   */
+  quorumInsufficient?: boolean;
+  /** Number of signal classes that reached POSITIVE quorum (0–4). */
+  quorumPositiveClassCount?: number;
   className?:   string;
 }
 
@@ -88,7 +97,7 @@ const TIER_CONFIG: Record<Tier, {
   },
 };
 
-export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, className }) => {
+export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, quorumInsufficient, quorumPositiveClassCount, className }) => {
   const [dismissed, setDismissed] = useState(false);
 
   // Audit v35: use liveRatio from coverage ONLY — never fall back to freshnessScore.
@@ -97,7 +106,9 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
   // all data came from a fresh (< 7d) seeded row. If coverage is null, tier is 'static'.
   const liveRatio        = coverage?.liveRatio ?? 0;
   const genuineApiSigs   = coverage?.genuineApiSignals ?? 0;
-  const tier             = getTier(liveRatio, genuineApiSigs);
+  // v40 quorum gate: hard-refusal state overrides tier — render as 'static' so
+  // the explicit "Live Intelligence Unavailable" copy fires.
+  const tier             = quorumInsufficient ? 'static' : getTier(liveRatio, genuineApiSigs);
   const cfg              = TIER_CONFIG[tier];
   const pct              = Math.round(liveRatio * 100);
   const fetchedAt        = coverage?.fetchedAt;
@@ -190,6 +201,18 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
                   color: '#f59e0b', fontWeight: 600,
                 }}>
                   {degradationDetail ?? 'Live scrape ceiling hit — confidence capped at 60%.'}
+                </span>
+              )}
+              {/* v40 quorum gate: explicit refusal copy when no positive class was reached. */}
+              {quorumInsufficient && (
+                <span style={{
+                  display: 'block', marginTop: '4px',
+                  color: '#ef4444', fontWeight: 700,
+                }}>
+                  Quorum not met — {quorumPositiveClassCount ?? 0}/4 signal classes
+                  positively confirmed. A score from insufficient sources is not a score:
+                  point estimate withheld until evidence reaches the minimum (workforce ≥2,
+                  layoffs ≥2 or 20s absence quorum, financial ≥1, hiring ≥1).
                 </span>
               )}
             </div>

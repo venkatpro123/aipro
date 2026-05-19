@@ -84,6 +84,12 @@ export interface HybridScorePayload {
   confidenceCapsApplied?: string[];
   _dataFreshnessScore?: number;
   _liveDataCoverage?: unknown;
+  /** v40 quorum gate — true when zero classes were positively satisfied. */
+  _quorumInsufficient?: boolean;
+  /** Number of POSITIVELY-satisfied quorum classes (0-4). Absence doesn't count. */
+  _quorumPositiveClassCount?: number;
+  /** Raw QuorumStatus from awaitLiveQuorum, for transparency UI. */
+  _liveQuorumStatus?: unknown;
 }
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -868,5 +874,14 @@ export function buildHybridScorePayload({
     ],
     _dataFreshnessScore: dataFreshnessScore,
     _liveDataCoverage: (companyData as any)._liveDataCoverage ?? null,
+    // v40 quorum gate — surface refusal state on the consensus output so the
+    // LayoffCalculator banner can render the "Quorum not met" red strip.
+    _quorumInsufficient:
+      (companyData as any)._quorumInsufficient === true,
+    _quorumPositiveClassCount:
+      typeof (companyData as any)._quorumPositiveClassCount === 'number'
+        ? (companyData as any)._quorumPositiveClassCount
+        : undefined,
+    _liveQuorumStatus: (companyData as any)._liveQuorumStatus ?? null,
   };
 }

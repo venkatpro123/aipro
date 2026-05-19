@@ -1573,6 +1573,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
               freshnessScore={(state.scoreResult as any)._dataFreshnessScore}
               degradationReason={(state.scoreResult as any).degradationReason ?? null}
               degradationDetail={(state.scoreResult as any).degradationDetail ?? null}
+              quorumInsufficient={
+                (state.scoreResult as any)._quorumInsufficient
+                ?? ((state.companyData as any) ?? {})._quorumInsufficient
+                ?? false
+              }
+              quorumPositiveClassCount={
+                (state.scoreResult as any)._quorumPositiveClassCount
+                ?? ((state.companyData as any) ?? {})._quorumPositiveClassCount
+                ?? undefined
+              }
             />
           </div>
         )}

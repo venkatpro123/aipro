@@ -1026,6 +1026,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       // optimistic fallback that infers reach from reconciliation.summary.
       (companyData as any)._liveUnavailable    = true;
       (companyData as any)._liveQuorumReached  = false;
+      // Live scraping returned null → zero positive classes by definition.
+      (companyData as any)._quorumInsufficient        = true;
+      (companyData as any)._quorumPositiveClassCount  = 0;
       (companyData as any)._liveQuorumStatus = liveQuorum?.status ?? {
         reached: false,
         elapsedMs: 0,
@@ -1159,8 +1162,28 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         (companyData as any)._liveQuorumReached = liveQuorum.reached;
         (companyData as any)._liveUnavailable   = liveQuorum.timedOut && !liveQuorum.reached;
         (companyData as any)._liveQuorumWaitedMs = liveQuorum.waitedMs;
+
+        // Quorum-gate hard refusal — "a score from insufficient sources is not a score".
+        // A class is POSITIVELY satisfied when its source minimum is met by real
+        // evidence. Absence-quorum (zero layoffs after 20s) is informative about
+        // VISIBILITY, not about company risk — it does NOT count as positive.
+        //
+        // When ZERO classes are positively satisfied, the audit lacks the evidence
+        // floor required to publish a point estimate. The downstream confidence
+        // model already caps confidence at 0.45 in this state, but we additionally
+        // expose `_quorumInsufficient = true` so the UI can render the explicit
+        // "Insufficient evidence to audit — sources unreachable" refusal banner
+        // instead of a misleading numeric score.
+        const perClass = liveQuorum.status?.perClass ?? {};
+        const positiveClassCount = Object.values(perClass).filter(
+          (c: any) => c?.satisfied === true && c?.satisfiedByAbsence !== true,
+        ).length;
+        (companyData as any)._quorumPositiveClassCount = positiveClassCount;
+        (companyData as any)._quorumInsufficient = positiveClassCount === 0;
       } else {
-        (companyData as any)._liveUnavailable = true;
+        (companyData as any)._liveUnavailable    = true;
+        (companyData as any)._quorumInsufficient = true;
+        (companyData as any)._quorumPositiveClassCount = 0;
       }
       (companyData as any)._liveDataCoverage = {
         liveWonKeys:   reconciledSignals.summary.liveWonKeys,
@@ -1197,6 +1220,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     trueHeuristicSignals = 7;
     // Mark as zero live coverage so confidence caps fire
     (companyData as any)._dataFreshnessScore = 0;
+    (companyData as any)._quorumInsufficient       = true;
+    (companyData as any)._quorumPositiveClassCount = 0;
+    (companyData as any)._liveUnavailable          = true;
     (companyData as any)._liveDataCoverage = {
       liveWonKeys: [], dbWonKeys: [], liveRatio: 0,
       genuineApiSignals: 0, overallSource: 'heuristic',
@@ -1573,6 +1599,25 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       ...hybridResult.signalQuality,
       lowDataWarning: hybridPayload.consensusData.lowDataWarning,
     };
+  }
+
+  // v40 Quorum Gate — surface the refusal flags onto hybridResult so the
+  // LayoffCalculator banner can render the "Quorum not met" red strip.
+  // Source of truth is companyData (set in the live-reconciliation block). The
+  // flags ALSO flow via hybridConsensusBuilder for the hybrid-scorer path,
+  // but we re-apply here so legacy / fallback paths also surface the state.
+  {
+    const qi = (companyData as any)._quorumInsufficient;
+    const qc = (companyData as any)._quorumPositiveClassCount;
+    if (typeof qi === 'boolean') {
+      (hybridResult as any)._quorumInsufficient = qi;
+    }
+    if (typeof qc === 'number') {
+      (hybridResult as any)._quorumPositiveClassCount = qc;
+    }
+    if ((companyData as any)._liveQuorumStatus) {
+      (hybridResult as any)._liveQuorumStatus = (companyData as any)._liveQuorumStatus;
+    }
   }
 
   // v32: REMOVED the v31 first-audit 45% cap. The audit pipeline now waits for
