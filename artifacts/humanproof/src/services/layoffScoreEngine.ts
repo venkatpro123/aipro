@@ -1165,8 +1165,13 @@ export interface ScoreResult {
    *  May differ from userFactors.performanceTier when self-report contradicts
    *  objective signals (e.g. top claim + no promotion in 5 years). */
   performanceTier: UserFactors['performanceTier'];
+  /** Original self-reported performance tier, before credibility discounting.
+   *  Present only when the effective tier was adjusted (differs from performanceTier).
+   *  Used by TransparencyTab to show:
+   *  "Reported: Top performer. Effective (after credibility analysis): Moderate." */
+  reportedPerformanceTier?: UserFactors['performanceTier'];
   /** Credibility score for the self-reported performance tier (0–1).
-   *  1.0 = fully credible, <0.70 = discounted, present only when tier = 'top'. */
+   *  1.0 = fully credible, <0.70 = discounted, present only when tier = 'top' or 'below'. */
   performanceCredibilityScore?: number;
   /**
    * India-specific sector intelligence — only present when companyData.region === 'IN'.
@@ -2522,6 +2527,10 @@ const calculateConfidenceInterval = (
 // This prevents over-pessimistic self-reports from inflating L5 risk scores.
 
 export interface PerformanceCredibility {
+  /** The user's original self-reported tier — preserved so callers can show
+   *  "Reported: Top performer. Effective: Moderate." in the UI. */
+  reportedTier:     UserFactors['performanceTier'];
+  /** The tier actually used for L5 scoring after credibility discounting. */
   effectiveTier:    UserFactors['performanceTier'];
   credibilityScore: number;   // 0–1
   contradictions:   Array<{ signal1: string; signal2: string; severity: string }>;
@@ -2551,7 +2560,7 @@ export const analyzePerformanceCredibility = (
           signal2: 'Recent promotion — objective signal contradicts self-report',
           severity: 'High',
         });
-        return { effectiveTier: 'average', credibilityScore: 0.65, contradictions: belowContradictions };
+        return { reportedTier: performanceTier, effectiveTier: 'average', credibilityScore: 0.65, contradictions: belowContradictions };
       }
 
       // Long tenure + key relationships suggests anxiety-driven under-reporting
@@ -2561,10 +2570,10 @@ export const analyzePerformanceCredibility = (
           signal2: '5+ years tenure and key relationships — possible anxiety-driven under-reporting',
           severity: 'Medium',
         });
-        return { effectiveTier: 'below', credibilityScore: 0.70, contradictions: belowContradictions };
+        return { reportedTier: performanceTier, effectiveTier: 'below', credibilityScore: 0.70, contradictions: belowContradictions };
       }
     }
-    return { effectiveTier: performanceTier, credibilityScore: 1.0, contradictions: [] };
+    return { reportedTier: performanceTier, effectiveTier: performanceTier, credibilityScore: 1.0, contradictions: [] };
   }
 
   const contradictions: Array<{ signal1: string; signal2: string; severity: string }> = [];
@@ -2612,7 +2621,7 @@ export const analyzePerformanceCredibility = (
     credibilityScore >= 0.40 ? 'average' :
     'unknown';
 
-  return { effectiveTier, credibilityScore, contradictions };
+  return { reportedTier: performanceTier, effectiveTier, credibilityScore, contradictions };
 };
 
 // ─── Signal Quality Analysis ───────────────────────────────────────────────────
@@ -4163,6 +4172,11 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     probabilityForecast,
     timing,
     performanceTier:               performanceCredibility.effectiveTier,
+    // reportedPerformanceTier is only stored when the tier was actually adjusted —
+    // this is the "reported" side of the "Reported: X. Effective: Y." disclosure.
+    reportedPerformanceTier:       performanceCredibility.effectiveTier !== performanceCredibility.reportedTier
+      ? performanceCredibility.reportedTier
+      : undefined,
     performanceCredibilityScore:   (userFactors.performanceTier === 'top' || userFactors.performanceTier === 'below')
       ? performanceCredibility.credibilityScore
       : undefined,

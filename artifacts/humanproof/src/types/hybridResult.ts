@@ -410,6 +410,9 @@ export interface HybridResult {
   /** Effective performance tier used for scoring after credibility analysis.
    *  May differ from the user's self-report when objective signals contradict it. */
   performanceTier?: 'top' | 'average' | 'below' | 'unknown';
+  /** Original self-reported tier — present only when the effective tier was adjusted.
+   *  Enables the exact disclosure: "Reported: Top performer. Effective: Moderate." */
+  reportedPerformanceTier?: 'top' | 'average' | 'below' | 'unknown';
   /** 0–1 credibility score for the self-reported 'top' tier. Absent for other tiers. */
   performanceCredibilityScore?: number;
 

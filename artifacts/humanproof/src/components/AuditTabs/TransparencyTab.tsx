@@ -1262,31 +1262,56 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
-          {/* Performance credibility disclosure — shown when the self-reported 'top'
-              tier was discounted. performanceCredibilityScore is only present when
-              the claim was scrutinised (i.e. original tier = 'top') and
-              performanceTier holds the effective (possibly downgraded) tier. */}
-          {result.performanceCredibilityScore !== undefined &&
-           result.performanceTier !== 'top' && (
-            <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
-              <div className="flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-amber-300 text-sm">
-                    Performance Tier Adjusted — Self-Report Discounted
-                  </h4>
-                  <p className="text-xs text-amber-200/80 mt-1 leading-relaxed">
-                    You reported <span className="font-bold">top performance</span>, but objective signals
-                    (tenure without promotion, no key relationships, generic role) contradict this at a credibility
-                    score of <span className="font-bold">{Math.round((result.performanceCredibilityScore ?? 0) * 100)}%</span>.
-                    The engine used <span className="font-bold">{result.performanceTier}</span> as the
-                    effective tier for L5 scoring. If your situation is genuinely different (IC track, flat org,
-                    or recent promotion not yet reflected), your actual risk is lower than shown.
-                  </p>
+          {/* Performance credibility disclosure.
+              Shown when reportedPerformanceTier exists (meaning the tier was adjusted)
+              and differs from the effective performanceTier.
+              Spec-exact format: "Reported: Top performer. Effective (after credibility
+              analysis): Moderate." This is not punitive — it is accurate. */}
+          {result.reportedPerformanceTier !== undefined &&
+           result.reportedPerformanceTier !== result.performanceTier && (() => {
+            // Tier → human label mapping for the spec disclosure
+            const tierLabel = (t: string | undefined): string => {
+              if (t === 'top')     return 'Top performer';
+              if (t === 'average') return 'Moderate';
+              if (t === 'below')   return 'Below average';
+              return 'Unknown';
+            };
+            const reportedLabel  = tierLabel(result.reportedPerformanceTier);
+            const effectiveLabel = tierLabel(result.performanceTier);
+            const credPct = result.performanceCredibilityScore != null
+              ? Math.round(result.performanceCredibilityScore * 100)
+              : null;
+            return (
+              <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
+                <div className="flex gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-amber-300 text-sm mb-1.5">
+                      Performance Credibility Analysis
+                    </h4>
+                    {/* Spec-exact disclosure line */}
+                    <p className="text-sm font-semibold text-amber-200 mb-1.5">
+                      Reported: {reportedLabel}. Effective (after credibility analysis): {effectiveLabel}.
+                    </p>
+                    <p className="text-xs text-amber-200/75 leading-relaxed">
+                      {credPct !== null && (
+                        <>Credibility score: <span className="font-bold">{credPct}%</span>. </>
+                      )}
+                      Objective signals — tenure without promotion, absence of key relationships, generic
+                      role profile — contradict the self-reported tier. The engine applied the effective
+                      tier (<span className="font-bold">{effectiveLabel}</span>) to L5 scoring.
+                    </p>
+                    <p className="text-xs text-amber-200/60 mt-1.5 leading-relaxed">
+                      This is not punitive — it is accurate. A top performer who has had no promotion
+                      in several years is either in a specific circumstance (IC track, flat org) or
+                      is rating their performance optimistically. If your situation is the former,
+                      your actual risk is lower than shown.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <DataQualityDashboard
             dataFreshness={result.dataFreshness}

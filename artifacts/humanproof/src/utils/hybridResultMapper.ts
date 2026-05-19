@@ -131,7 +131,8 @@ export function mapToHybridResult(
     scenarioArchetypeLabel: isEnsemble(result) ? (result as any).scenarioArchetypeLabel : undefined,
     indiaSpecificInsight: isEnsemble(result) ? (result as any).indiaSpecificInsight : undefined,
     confidenceNote: isEnsemble(result) ? (result as any).confidenceNote : undefined,
-    performanceTier: isEnsemble(result) ? undefined : (result as ScoreResult).performanceTier,
+    performanceTier:             isEnsemble(result) ? undefined : (result as ScoreResult).performanceTier,
+    reportedPerformanceTier:     isEnsemble(result) ? undefined : (result as ScoreResult).reportedPerformanceTier,
     performanceCredibilityScore: isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityScore,
     meta: {
       usedLiveSignals: (trueLiveSignals ?? result.signalQuality.liveSignals ?? 0) > 0,
