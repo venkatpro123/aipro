@@ -16,7 +16,7 @@ import { CollapsibleSection } from "./common/CollapsibleSection";
 import { CareerTwinCard } from "@/components/CareerTwinCard";
 import { ActionDependencyGraph, assignPhase } from "../../components/ActionDependencyGraph";
 import { getCareerIntelligence } from "@/data/intelligence";
-import { getCitiesForRole, formatSalaryPremium, getCityCompanyIntersection } from "@/data/cityOpportunities";
+import { getCitiesForRole, formatSalaryPremium, getCityCompanyIntersection, deriveTargetRolePrefix, joinWithAnd } from "@/data/cityOpportunities";
 import { getActionLearningTime, getSkillLearningWeeks } from "@/data/skillLearningHours";
 import { TimeAvailableTrack, TRACKS } from "../../components/TimeAvailableTrack";
 import type { TrackType } from "../../components/TimeAvailableTrack";
@@ -457,23 +457,44 @@ export function buildDynamicActions(
     let cityIntersectionText = '';
     if (market) {
       if (cityKey) {
-        // City provided — run intersection against CITY_OPPORTUNITIES
-        const intersection = getCityCompanyIntersection(cityKey, prefix, market.topHiringCompaniesIndia);
+        // Derive the target role's prefix for CITY_OPPORTUNITIES lookup.
+        // CRITICAL: must use the TARGET role prefix, not the user's current role prefix.
+        // An SW engineer exploring "Data Engineer" must see Hyderabad data engineering
+        // employers — not Hyderabad SW employers intersected with national data companies.
+        const targetPrefix = deriveTargetRolePrefix(topPath.role);
+        const intersection = getCityCompanyIntersection(cityKey, targetPrefix, market.topHiringCompaniesIndia);
         const cityLabel = cityKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
         if (intersection.source === 'intersection' && intersection.companies.length > 0) {
-          // Named employers confirmed in both city data AND national career path market
-          cityIntersectionText = ` In ${cityLabel}, ${topPath.role} is actively hiring at: ${intersection.companies.join(', ')}. These employers appear in both the ${cityLabel} market and the national ${topPath.role} talent pool — prioritise these for applications.`;
+          // Spec-exact format: named employers from both city AND national pool.
+          // "In Hyderabad, Data Engineering is actively hiring at Walmart Global Tech,
+          //  MakeMyTrip, and Paytm — appearing in both the Hyderabad market and the
+          //  national talent pool."
+          cityIntersectionText =
+            ` In ${cityLabel}, ${topPath.role} is actively hiring at ` +
+            `${joinWithAnd(intersection.companies)} — ` +
+            `appearing in both the ${cityLabel} market and the national talent pool.`;
         } else if (intersection.source === 'city_fallback' && intersection.companies.length > 0) {
-          // City has data but not enough overlap — use city-specific list
-          cityIntersectionText = ` Top ${cityLabel} employers for this function: ${intersection.companies.join(', ')}.`;
+          // City has data but no overlap with national list — name city employers directly.
+          // Never say "explore the [city] market" without naming employers.
+          cityIntersectionText =
+            ` In ${cityLabel}, active employers for ${topPath.role}: ` +
+            `${joinWithAnd(intersection.companies)}.`;
         } else if (intersection.source === 'national_fallback' && intersection.companies.length > 0) {
-          // City not in CITY_OPPORTUNITIES — fall back to national data, say so explicitly
-          cityIntersectionText = ` National hiring leaders for ${topPath.role}: ${intersection.companies.join(', ')} (city-specific data not available for ${cityLabel}; verify on Naukri/LinkedIn).`;
+          // City not in CITY_OPPORTUNITIES — name national employers, say city data is absent.
+          cityIntersectionText =
+            ` National employers hiring for ${topPath.role}: ` +
+            `${joinWithAnd(intersection.companies)}. ` +
+            `City-specific data not available for ${cityLabel} — verify current openings on Naukri/LinkedIn.`;
         }
       } else if (market.topHiringCompaniesIndia.length > 0) {
-        // No city provided — name national employers directly rather than generic "the market"
+        // No city — name national employers and prompt the user to add their city.
+        // Never generic "explore the market" — always name specific companies.
         const topNational = market.topHiringCompaniesIndia.slice(0, 3);
-        cityIntersectionText = ` Top national employers hiring for ${topPath.role} in India: ${topNational.join(', ')}. Add your city in the Financial Context section to see which of these hire locally.`;
+        cityIntersectionText =
+          ` National employers hiring for ${topPath.role} in India: ` +
+          `${joinWithAnd(topNational)}. ` +
+          `Add your city in Financial Context to see which of these hire locally.`;
       }
     }
     // Compute data age and staleness for the market opening count.
@@ -517,16 +538,30 @@ export function buildDynamicActions(
   }
 
   // 8. City opportunity action — when market headwinds are high (L4 > 0.60)
-  // and the user is in a secondary city with limited options.
+  // and a higher-opportunity city has named employers actively hiring.
+  //
+  // The TITLE must name specific employers — "Explore [city] market" without
+  // employer names is exactly the generic reference the spec forbids.
   const l4Score = result.breakdown?.L4 ?? 0;
   if (l4Score > 0.60) {
     const topCities = getCitiesForRole(prefix).slice(0, 2);
     if (topCities.length > 0) {
       const best = topCities[0];
+      const namedEmployers   = best.opportunity.top_5_hiring_companies.slice(0, 2);
+      const namedEmployerStr = namedEmployers.join(' & ');
+      const otherCount       = Math.max(0, best.opportunity.employer_count - namedEmployers.length);
       actions.push({
         id: `city-opportunity-${prefix}`,
-        title: `Explore ${best.city} Market — ${best.opportunity.employer_count} Active Employers`,
-        description: `Your current market shows elevated headwinds (L4: ${Math.round(l4Score * 100)}/100). ${best.city} has ${best.opportunity.employer_count} companies actively hiring for ${prefix} roles. Salary: ${formatSalaryPremium(best.opportunity.salary_premium_pct)}. Median placement time: ${best.opportunity.avg_placement_weeks} weeks. Remote adoption: ${Math.round(best.opportunity.remote_adoption_rate * 100)}%. Top employers: ${best.opportunity.top_5_hiring_companies.slice(0, 3).join(', ')}.`,
+        // Title leads with specific company names + the residual count.
+        // The user can recognise the brands instantly; the "+ N more" anchors scale.
+        title: `${namedEmployerStr} + ${otherCount}+ in ${best.city} are actively hiring`,
+        description:
+          `Your current market shows elevated headwinds (L4: ${Math.round(l4Score * 100)}/100). ` +
+          `${best.city} has ${best.opportunity.employer_count} companies actively hiring for ${prefix.toUpperCase()} roles: ` +
+          `${joinWithAnd(best.opportunity.top_5_hiring_companies.slice(0, 3))}, among others. ` +
+          `Salary: ${formatSalaryPremium(best.opportunity.salary_premium_pct)}. ` +
+          `Median placement time: ${best.opportunity.avg_placement_weeks} weeks. ` +
+          `Remote adoption: ${Math.round(best.opportunity.remote_adoption_rate * 100)}%.`,
         priority: l4Score > 0.75 ? "High" : "Medium",
         layerFocus: "L4 · Market Headwinds",
         riskReductionPct: 12,
