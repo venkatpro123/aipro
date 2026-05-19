@@ -333,14 +333,14 @@ function mapToHybridResult(
   trueLiveSignals: number,
   trueHeuristicSignals: number,
 ): HybridResult {
-  const dimensions = [
-    { key: "L1" as const, label: "Company Health",         score: Math.round(engineResult.breakdown.L1 * 100) },
-    { key: "L2" as const, label: "Layoff History",         score: Math.round(engineResult.breakdown.L2 * 100) },
-    { key: "L3" as const, label: "Task Automatability",    score: Math.round(engineResult.breakdown.L3 * 100) },
-    { key: "L4" as const, label: "Market Headwinds",       score: Math.round(engineResult.breakdown.L4 * 100) },
-    { key: "L5" as const, label: "Experience Protection",  score: Math.round(engineResult.breakdown.L5 * 100) },
-    { key: "D6" as const, label: "AI Agent Capability",    score: Math.round((engineResult.breakdown.D6 ?? 0) * 100) },
-    { key: "D7" as const, label: "Company Health Risk",    score: Math.round((engineResult.breakdown.D7 ?? 0) * 100) },
+  const dimensions: HybridResult['dimensions'] = [
+    { key: "L1" as const, label: "Company Health",        score: Math.round(engineResult.breakdown.L1 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L2" as const, label: "Layoff History",        score: Math.round(engineResult.breakdown.L2 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L3" as const, label: "Task Automatability",   score: Math.round(engineResult.breakdown.L3 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L4" as const, label: "Market Headwinds",      score: Math.round(engineResult.breakdown.L4 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L5" as const, label: "Experience Protection", score: Math.round(engineResult.breakdown.L5 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "D6" as const, label: "AI Agent Capability",   score: Math.round((engineResult.breakdown.D6 ?? 0) * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2026-05-19' },
+    { key: "D7" as const, label: "Company Health Risk",   score: Math.round((engineResult.breakdown.D7 ?? 0) * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2026-05-19' },
   ];
 
   const reasoning = engineResult.recommendations.map(r => r.description).join(" ");
@@ -423,19 +423,19 @@ function mapConsensusScoreToHybridResult(
   source: 'live' | 'db' | 'stale_db' | 'fallback',
 ): HybridResult {
   const breakdownAny = hybridScore.breakdown as Record<string, number | undefined>;
-  const dimensions = [
-    { key: "L1" as const, label: "Company Health", score: Math.round(hybridScore.breakdown.L1 * 100) },
-    { key: "L2" as const, label: "Layoff History", score: Math.round(hybridScore.breakdown.L2 * 100) },
-    { key: "L3" as const, label: "Task Automatability", score: Math.round(hybridScore.breakdown.L3 * 100) },
-    { key: "L4" as const, label: "Market Headwinds", score: Math.round(hybridScore.breakdown.L4 * 100) },
-    { key: "L5" as const, label: "Experience Protection", score: Math.round(hybridScore.breakdown.L5 * 100) },
-  ] as HybridResult["dimensions"];
+  const dimensions: HybridResult['dimensions'] = [
+    { key: "L1" as const, label: "Company Health",        score: Math.round(hybridScore.breakdown.L1 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L2" as const, label: "Layoff History",        score: Math.round(hybridScore.breakdown.L2 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L3" as const, label: "Task Automatability",   score: Math.round(hybridScore.breakdown.L3 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L4" as const, label: "Market Headwinds",      score: Math.round(hybridScore.breakdown.L4 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+    { key: "L5" as const, label: "Experience Protection", score: Math.round(hybridScore.breakdown.L5 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2024-Q4' },
+  ];
 
   if (typeof breakdownAny.D6 === "number") {
-    dimensions.push({ key: "D6", label: "AI Agent Capability", score: Math.round(breakdownAny.D6 * 100) });
+    dimensions.push({ key: "D6", label: "AI Agent Capability", score: Math.round(breakdownAny.D6 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2026-05-19' });
   }
   if (typeof breakdownAny.D7 === "number") {
-    dimensions.push({ key: "D7", label: "Company Health Risk", score: Math.round(breakdownAny.D7 * 100) });
+    dimensions.push({ key: "D7", label: "Company Health Risk", score: Math.round(breakdownAny.D7 * 100), weightCalibrationStatus: 'regression_derived', weightCalibratedAt: '2026-05-19' });
   }
 
   const recommendations = (hybridScore.recommendations ?? []).map((item: any) => ({

@@ -166,7 +166,7 @@ const getNarrative = (meta: DimMeta, score: number): string => {
 // ---------------------------------------------------------------------------
 
 interface LayerScoreCardProps {
-  dim: { key: string; label: string; score: number };
+  dim: { key: string; label: string; score: number; weightCalibrationStatus?: 'regression_derived' | 'uncalibrated_estimate'; weightCalibratedAt?: string };
   weights: Record<string, number>;
   result: TabProps["result"];
   companyData: CompanyData | null;
@@ -356,9 +356,47 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
       </div>
 
       {/* Weight + contribution row */}
-      <div className="flex justify-between items-center" style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em" }}>
+      <div className="flex justify-between items-center flex-wrap gap-1" style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", letterSpacing: "0.08em" }}>
         <span style={{ color: "var(--text-3)", textTransform: "uppercase" }}>
           Weight <span style={{ color: "var(--text-2)", fontWeight: 800, marginLeft: "4px" }}>{weightPct}%</span>
+          {/* Calibration status badge — shows provenance of the weight value */}
+          {dim.weightCalibrationStatus === 'uncalibrated_estimate' ? (
+            <span
+              title="This weight is a developer estimate not yet validated through logistic regression on outcome data."
+              style={{
+                marginLeft: '6px',
+                fontSize: '0.55rem',
+                fontWeight: 700,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                background: 'rgba(245,158,11,0.12)',
+                color: '#f59e0b',
+                border: '1px solid rgba(245,158,11,0.30)',
+                letterSpacing: '0.06em',
+                cursor: 'help',
+              }}
+            >
+              weight: estimated
+            </span>
+          ) : dim.weightCalibrationStatus === 'regression_derived' && dim.weightCalibratedAt ? (
+            <span
+              title={`Weight derived from logistic regression on confirmed layoff outcomes. Calibrated: ${dim.weightCalibratedAt}.`}
+              style={{
+                marginLeft: '6px',
+                fontSize: '0.55rem',
+                fontWeight: 700,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                background: 'rgba(16,185,129,0.08)',
+                color: '#10b981',
+                border: '1px solid rgba(16,185,129,0.22)',
+                letterSpacing: '0.06em',
+                cursor: 'help',
+              }}
+            >
+              regression ✓
+            </span>
+          ) : null}
         </span>
         <span style={{ color: "var(--text-3)", textTransform: "uppercase" }}>
           Contributes <span style={{ color: dimColor, fontWeight: 900, marginLeft: "4px" }}>+{contribution} pts</span>

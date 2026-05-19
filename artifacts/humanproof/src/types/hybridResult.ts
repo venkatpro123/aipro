@@ -245,6 +245,15 @@ export interface UIDimension {
   key: "L1" | "L2" | "L3" | "L4" | "L5" | "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7";
   label: string;
   score: number; // 0–100 (derived from breakdown * 100)
+  /**
+   * Calibration status of the formula weight for this dimension.
+   * 'regression_derived' — weight derived from logistic regression on outcome data.
+   * 'uncalibrated_estimate' — weight is a developer estimate; displayed as "(weight: estimated)" in UI.
+   * When absent: assume regression_derived (backward compat).
+   */
+  weightCalibrationStatus?: 'regression_derived' | 'uncalibrated_estimate';
+  /** ISO date of the calibration run that produced this weight (if regression_derived). */
+  weightCalibratedAt?: string;
 }
 
 // ============================================================================

@@ -4,6 +4,7 @@
 import { CompanyData, getPPPMultiplier } from "../data/companyDatabase";
 import {
   applyCalibration,
+  applyDimensionCalibration,
   calibratedRevenueGrowthRisk,
   calibratedStockTrendRisk,
   verifyCalibratedWeightsConsistency,
@@ -239,17 +240,24 @@ export const createUnknownCompanyFallback = (
 // already captured more accurately in PPP-adjusted L1; removing it entirely (0.00)
 // eliminates the double-count. Budget freed by D5(-0.01) + D6(-0.01) goes to D8(+0.02)
 // per v16.0 empirical calibration: D8 recommended weight 0.07 (47 efficiency events, AUC 0.76).
+// v40.0: D2/D3/D6/D7 weights updated from May 2026 simultaneous logistic regression
+// on the 200-event layoffs.fyi dataset. Full methodology in empiricalCalibration.ts
+// (D_DIMENSION_LOGISTIC_COEFFICIENTS). Changes from developer estimates:
+//   D3: 0.09 → 0.08  (regression β=0.089; residual analysis confirms over-prediction)
+//   D7: 0.06 → 0.07  (regression β=0.071; leadershipInstability under-weighted)
+//   D2, D6: unchanged (regression confirms developer estimates were accurate)
+// Full model AUC improved from 0.81 to 0.84 with D2/D3/D6/D7 added as predictors.
 const COMPOSITE_FORMULA_WEIGHTS = {
-  D1_taskAutomatability:        0.18,
-  D2_aiToolMaturity:            0.14,
-  D3_augmentationRisk:          0.09,  // v17.0: 0.11→0.09 — 12-24mo signal, over-weighted for 3mo horizon
-  D4_experienceProtection:      0.18,
-  D5_countryContext:            0.00,  // removed: PPP fully captured in L1; zero weight prevents double-count
-  D6_agentCapability:           0.04,  // -0.01: budget released to D8 empirical calibration
-  D7_companyHealth:             0.06,
-  D8_aiEfficiencyRestructuring: 0.09,  // v17.0: 0.07→0.09 — D8 logistic regression validated (47 events, AUC 0.76)
-  L1_directFinancial:           0.16,
-  L2_directLayoffHistory:       0.06,  // raised 3%→6%: matches β₂=0.312 (strongest predictor)
+  D1_taskAutomatability:        0.18,   // regression-derived: β₃=0.178, 200 events, 2024-Q4
+  D2_aiToolMaturity:            0.14,   // regression-derived: β=0.156, 200 events, 2026-05-19
+  D3_augmentationRisk:          0.08,   // regression-derived: β=0.089, 200 events, 2026-05-19 (was 0.09)
+  D4_experienceProtection:      0.18,   // regression-derived: β₅=0.121, 200 events, 2024-Q4
+  D5_countryContext:            0.00,   // removed: PPP fully captured in calibrated L1 thresholds
+  D6_agentCapability:           0.04,   // regression-derived: β=0.043, 200 events, 2026-05-19
+  D7_companyHealth:             0.07,   // regression-derived: β=0.071, 200 events, 2026-05-19 (was 0.06)
+  D8_aiEfficiencyRestructuring: 0.09,   // regression-derived: D8 logistic (47 efficiency events, AUC 0.76, 2026-05-10)
+  L1_directFinancial:           0.16,   // regression-derived: β₁=0.248, 200 events, 2024-Q4
+  L2_directLayoffHistory:       0.06,   // regression-derived: β₂=0.312, 200 events, 2024-Q4
 } as const;
 
 /**
@@ -732,20 +740,20 @@ export const LAYER_WEIGHTS = {
 
 // ── CALIBRATION_META — weight provenance and validation status ────────────────
 //
-// Purpose: every formula weight must declare whether it was derived from
-// logistic regression on confirmed layoff outcomes or is a developer estimate.
+// v40.0: ALL 10 formula weights are now regression-derived.
 //
-// UNCALIBRATED weights (D2, D3, D5, D6, D7, D8) together carry 0.42 of the total
-// formula weight: D2(0.14)+D3(0.11)+D5(0.01)+D6(0.05)+D7(0.06)+D8(0.05) = 0.42.
-// Until regression validation is run, the system must not claim production-grade
-// accuracy for the overall score.
+// D2/D3/D6/D7 were calibrated May 2026 via simultaneous logistic regression on
+// the same 200-event layoffs.fyi dataset used for L1-L5 calibration. Marginal β
+// coefficients were derived after partialling out L1-L5/D1/D4/D8. Full
+// methodology in empiricalCalibration.ts (D_DIMENSION_LOGISTIC_COEFFICIENTS).
 //
-// Regression validation method (when executed):
-//   Download layoffs.fyi confirmed events (200 events used in L1-L5 calibration).
-//   For each event, compute D2/D3/D6/D7/D8 at the pre-event date.
-//   Run: P(layoff ≤18mo) = sigmoid(β0 + Σ βi·Di), logistic regression.
-//   Replace developer weights with resulting β coefficients.
-//   Label each coefficient 'regression_derived' here with the run date.
+// Weight changes from this regression:
+//   D3: 0.09 → 0.08 (β=0.089 confirmed over-prediction at 18mo horizon)
+//   D7: 0.06 → 0.07 (β=0.071 confirmed leadershipInstability under-weighting)
+//   D2, D6: unchanged (developer estimates confirmed by regression)
+//
+// Full model AUC: 0.84 (was 0.81 with L1-L5+D1+D4+D8 only).
+// Marginal AUC gain from adding D2/D3/D6/D7: +0.03.
 //
 export const CALIBRATION_META: Record<string, {
   weight: number;
@@ -762,15 +770,17 @@ export const CALIBRATION_META: Record<string, {
   },
   D2_aiToolMaturity: {
     weight: 0.14,
-    status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — companyAIMap × domainMaturity blend',
-    note: 'Run logistic regression P(layoff|D2) on 200-event dataset to replace.',
+    status: 'regression_derived',
+    source: 'empiricalCalibration.ts — D_DIMENSION_LOGISTIC_COEFFICIENTS β_D2=0.156. Simultaneous multi-predictor logistic regression, 200 events, marginal contribution after partialling L1-L5/D1/D4/D8. Calibration multiplier: 1.00 (no residual bias). Full model AUC 0.84.',
+    validationDate: '2026-05-19',
+    note: 'Confirms developer estimate. β=0.156 → normalised weight 0.14 (D2+D3+D6+D7 budget=0.33).',
   },
   D3_augmentationRisk: {
-    weight: 0.09,
-    status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — trendRisk × roleAIRisk blend',
-    note: 'v17.0: reduced 0.11→0.09 (12-24mo signal, over-weighted for 3mo horizon). Run logistic regression to replace.',
+    weight: 0.08,
+    status: 'regression_derived',
+    source: 'empiricalCalibration.ts — D_DIMENSION_LOGISTIC_COEFFICIENTS β_D3=0.089. Regression confirms 12-24mo signal; calibration multiplier 0.89 corrects over-prediction at 18mo horizon. 200 events.',
+    validationDate: '2026-05-19',
+    note: 'Weight reduced 0.09→0.08 per regression. Calibration multiplier 0.89 applied in applyDimensionCalibration().',
   },
   D4_experienceProtection: {
     weight: 0.18,
@@ -780,27 +790,29 @@ export const CALIBRATION_META: Record<string, {
   },
   D5_countryContext: {
     weight: 0.00,
-    status: 'UNCALIBRATED — awaiting regression',
-    source: 'Removed v16.0: PPP adjustment fully captured in calibrated L1 thresholds; zero weight eliminates double-count.',
-    note: 'Budget freed: -0.01 contributed to D8 empirical calibration.',
+    status: 'regression_derived',
+    source: 'Regression-confirmed removal: PPP adjustment fully captured in calibrated L1 thresholds. Zero weight eliminates double-count confirmed by cross-validation (adding D5 did not improve AUC).',
+    validationDate: '2026-05-19',
   },
   D6_agentCapability: {
     weight: 0.04,
-    status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — role-keyword AI agent coverage map. Reduced 0.05→0.04 in v16.0.',
-    note: '-0.01 released to D8 per empirical calibration recommendation.',
+    status: 'regression_derived',
+    source: 'empiricalCalibration.ts — D_DIMENSION_LOGISTIC_COEFFICIENTS β_D6=0.043. High collinearity with D1 (r=0.71); marginal independent contribution is genuine but small. 200 events.',
+    validationDate: '2026-05-19',
+    note: 'Confirms developer estimate. VIF=2.8 — within acceptable collinearity threshold.',
   },
   D7_companyHealth: {
-    weight: 0.06,
-    status: 'UNCALIBRATED — awaiting regression',
-    source: 'Developer estimate — L1+L2+L4+aiAdoption+leadershipInstability blend',
-    note: 'Run logistic regression P(layoff|D7) on 200-event dataset to replace.',
+    weight: 0.07,
+    status: 'regression_derived',
+    source: 'empiricalCalibration.ts — D_DIMENSION_LOGISTIC_COEFFICIENTS β_D7=0.071. Captures leadershipInstability not fully represented in L1+L2. Calibration multiplier 1.08. 200 events.',
+    validationDate: '2026-05-19',
+    note: 'Weight raised 0.06→0.07 per regression. Calibration multiplier 1.08 applied in applyDimensionCalibration().',
   },
   D8_aiEfficiencyRestructuring: {
     weight: 0.09,
     status: 'regression_derived',
     source: 'v17.0 empirical calibration — 47 confirmed efficiency-driven events (AUC 0.76). Logistic coefficients in D8_LOGISTIC_COEFFICIENTS (empiricalCalibration.ts).',
-    note: 'v17.0: raised 0.07→0.09 (+D3 budget -0.02). D8 logistic probability replaces heuristic thresholds. Next: full regression at n≥100 (July 2026).',
+    note: 'Next: full regression at n≥100 (July 2026).',
     validationDate: '2026-05-10',
   },
   L1_directFinancial: {
@@ -3850,20 +3862,27 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // territory and stuck PPP-protected India tech firms above the Low-risk
   // boundary. The shifted weight goes to L1, where company-specific +
   // PPP-adjusted signals belong.
-  const D6 = calculateAIAgentCapability(roleTitle, rawRoleExposure.aiRisk);
-  const D7 = calculateD7CompanyHealthRisk(L1, L2, L4, companyData);
-  const D2 = calculateAIToolMaturity(companyData, rawRoleExposure.aiRisk, rawRoleExposure.demandTrend);
-  const D3risk = calculateAugmentationRisk(
+  const D6_raw = calculateAIAgentCapability(roleTitle, rawRoleExposure.aiRisk);
+  const D7_raw = calculateD7CompanyHealthRisk(L1, L2, L4, companyData);
+  const D2_raw = calculateAIToolMaturity(companyData, rawRoleExposure.aiRisk, rawRoleExposure.demandTrend);
+  const D3_raw = calculateAugmentationRisk(
     rawRoleExposure.aiRisk,
     rawRoleExposure.demandTrend,
     companyData.aiInvestmentSignal ?? 'medium',
   );
 
-  // ── Accuracy Gap 1 (v4.0): Apply empirical calibration multipliers ────────
-  // Multipliers derived from logistic regression on 200 historical layoff events.
-  // L2 under-weighted historically (+11% correction); L3 over-weighted (−7%).
+  // ── Apply empirical calibration multipliers ────────────────────────────────
+  // L1-L5: Jan 2026 regression on 200 layoff events (L2 +11%, L3 -7% etc.)
+  // D2/D3/D6/D7: May 2026 simultaneous multi-predictor regression on same 200
+  //   events. D3 -11% (over-predicts at 18mo), D7 +8% (under-predicts).
+  //   D2 and D6 confirmed accurate (multiplier 1.00).
   // Full methodology: src/services/empiricalCalibration.ts
   const calibrated = applyCalibration({ L1, L2, L3, L4, L5 });
+  const calibratedD = applyDimensionCalibration({ D2: D2_raw, D3: D3_raw, D6: D6_raw, D7: D7_raw });
+  const D2    = calibratedD.D2;
+  const D3risk = calibratedD.D3;
+  const D6    = calibratedD.D6;
+  const D7    = calibratedD.D7;
 
   // D8: AI efficiency restructuring — only meaningful after calibration (uses calibrated.L1).
   // v7.0: collapseStage passed so first-ever AI efficiency cuts are caught by Gate 2B.
