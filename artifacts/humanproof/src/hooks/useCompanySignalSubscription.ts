@@ -117,7 +117,9 @@ export function useCompanySignalSubscription(
     //      complicating per-user fan-out control.
     // The companyName suffix is still included so RLS row-filter works correctly;
     // the random salt scopes the channel name itself to this user session.
-    const channelSalt = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const channelSalt = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const companySlug = dbCompanyName.toLowerCase().replace(/\W+/g, '_');
 
     // Channel 1: company_intelligence UPDATEs (pipeline batch refreshes)
