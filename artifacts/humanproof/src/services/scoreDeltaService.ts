@@ -19,14 +19,19 @@ export interface ScoreHistoryEntry {
   // Values are 0–1 (raw engine output, multiplied by 100 in the attribution display)
   breakdown?: Record<string, number>;
   companyName?: string;
-  // v6.0 Fix 3: Snapshot of company data signals at time of scoring.
-  // Used by explainDimensionDelta() to produce specific driver text (actual field values)
-  // rather than generic "financial signals worsened" prose.
+  // Snapshot of company data signals at time of scoring.
+  // Used by explainDimensionDelta() to produce specific driver text (actual field values).
+  // REQUIRED fields for spec-exact attribution:
+  //   L1: stock90DayChange (prev vs curr), revenueGrowthYoY (prev vs curr)
+  //   L2: layoffRounds (prev vs curr), lastLayoffPercent, lastLayoffDate → recency weight
+  //   L3: aiInvestmentSignal (prev vs curr) → amplification factor delta
   companySnapshot?: {
     stock90DayChange?: number | null;
     revenueGrowthYoY?: number | null;
     layoffRounds?: number;
     lastLayoffPercent?: number | null;
+    /** ISO date of the most recent confirmed layoff — used to compute L2 recency weight */
+    lastLayoffDate?: string | null;
     aiInvestmentSignal?: string;
     employeeCount?: number;
     revenuePerEmployee?: number;
@@ -68,9 +73,30 @@ const DIMENSION_LABELS: Record<string, string> = {
   D7: 'Unified Company Health',
 };
 
+// AI investment signal → D8 amplification factor (matches aiStrengthMap in layoffScoreEngine).
+// Exported as a pure lookup so tests can verify the mapping without running the engine.
+export const AI_AMP_FACTOR: Record<string, number> = {
+  low:       0.00,
+  medium:    0.12,
+  high:      0.52,
+  'very-high': 0.80,
+  very_high:   0.80,  // backward-compat alias
+};
+
 /**
  * Generates a human-readable explanation for why a specific dimension changed.
- * The explanation references the actual score values and direction.
+ *
+ * ATTRIBUTION CONTRACT:
+ *   Every driver string must explain WHY the specific number changed, not THAT it changed.
+ *   When both prev and curr snapshots are available, actual field values MUST appear.
+ *   Generic dimension descriptions are a quality failure.
+ *
+ * Spec-exact formats (dimensions that must match exactly):
+ *   L1: "Stock 90-day return worsened from [prev]% to [curr]% — stock risk: [prevRisk] to [currRisk].
+ *        Revenue growth shifted from [prev]% to [curr]% YoY."
+ *   L2: "New layoff event detected at [company] on [date], [pct]% of workforce. Recency weight: [w]."
+ *   L3: "AI Investment signal escalated from [prev] to [curr].
+ *        Amplification factor changed from [prevAmp] to [currAmp], raising L3 by [delta] points."
  */
 function explainDimensionDelta(
   key: string,
@@ -86,50 +112,100 @@ function explainDimensionDelta(
   const abs = Math.abs(delta);
   const co = companyName ?? 'your company';
 
+  // Format a percentage with sign: +3.1% / -2.0% / 0.0%
+  const pct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+
   let driver: string;
   let counterfactual: string | undefined;
 
   switch (key) {
+    // ── L1: Company Financial Health ─────────────────────────────────────────
     case 'L1': {
-      // v6.0 Fix 3: Use actual field values when snapshots are available
-      const prevStock = prevSnapshot?.stock90DayChange;
-      const currStock = currSnapshot?.stock90DayChange;
-      const prevRev = prevSnapshot?.revenueGrowthYoY;
-      const currRev = currSnapshot?.revenueGrowthYoY;
+      const prevStock = prevSnapshot?.stock90DayChange ?? null;
+      const currStock = currSnapshot?.stock90DayChange ?? null;
+      const prevRev   = prevSnapshot?.revenueGrowthYoY ?? null;
+      const currRev   = currSnapshot?.revenueGrowthYoY ?? null;
 
-      if (currStock != null && prevStock != null && currStock !== prevStock) {
+      const hasStockDelta = prevStock != null && currStock != null && currStock !== prevStock;
+      const hasRevDelta   = prevRev   != null && currRev   != null && currRev   !== prevRev;
+
+      if (hasStockDelta) {
         const stockDir = currStock < prevStock ? 'worsened' : 'improved';
-        driver = `${co}'s financial health ${dir} by ${abs} pts. Primary driver: stock 90-day return ${stockDir} from ${prevStock > 0 ? '+' : ''}${prevStock}% to ${currStock > 0 ? '+' : ''}${currStock}%.`;
-        if (currRev != null && prevRev != null && currRev !== prevRev) {
-          driver += ` Revenue growth also shifted from ${prevRev > 0 ? '+' : ''}${prevRev}% to ${currRev > 0 ? '+' : ''}${currRev}% YoY.`;
+        driver = `Stock 90-day return ${stockDir} from ${pct(prevStock)} to ${pct(currStock)} — stock risk: ${prev} to ${curr}.`;
+        if (hasRevDelta) {
+          driver += ` Revenue growth shifted from ${pct(prevRev!)} to ${pct(currRev!)} YoY.`;
         }
-      } else if (delta > 8) driver = `${co}'s financial health signals deteriorated significantly (+${abs} pts). Primary drivers: revenue deceleration, stock drawdown, or reduced cash runway detected in the latest OSINT pull.`;
-      else if (delta > 3) driver = `${co}'s financial health weakened moderately (+${abs} pts). Revenue-per-employee or funding signals may have updated.`;
-      else if (delta < -5) driver = `${co}'s financial health improved (${abs} pts lower risk). Likely driven by positive revenue trend or reduced overstaffing signals.`;
-      else driver = `${co}'s financial health ${dir} by ${abs} pts. Latest financial signals reflect a minor shift.`;
+      } else if (hasRevDelta) {
+        const revDir = currRev! < prevRev! ? 'declined' : 'grew';
+        driver = `Revenue growth ${revDir} from ${pct(prevRev!)} to ${pct(currRev!)} YoY — financial risk: ${prev} to ${curr}.`;
+      } else {
+        // No snapshot values available — fall back to informative generic text
+        if (delta > 8)       driver = `${co}'s financial health deteriorated significantly (+${abs} pts). Revenue deceleration, stock drawdown, or reduced cash runway detected.`;
+        else if (delta > 3)  driver = `${co}'s financial health weakened (+${abs} pts). Revenue-per-employee or funding signals updated.`;
+        else if (delta < -5) driver = `${co}'s financial health improved (${abs} pts lower risk). Positive revenue trend or reduced overstaffing signals.`;
+        else                 driver = `${co}'s financial health ${dir} by ${abs} pts.`;
+      }
       break;
     }
 
+    // ── L2: Layoff & Instability History ─────────────────────────────────────
     case 'L2': {
       const prevRounds = prevSnapshot?.layoffRounds ?? 0;
       const currRounds = currSnapshot?.layoffRounds ?? 0;
-      const currPct = currSnapshot?.lastLayoffPercent;
+      const currPct    = currSnapshot?.lastLayoffPercent ?? null;
+      const eventDate  = currSnapshot?.lastLayoffDate ?? null;
 
-      if (currRounds > prevRounds && currPct != null) {
-        driver = `A new layoff event was detected for ${co} (+${abs} pts). The event represented approximately ${currPct}% of the workforce, bringing the total to ${currRounds} layoff round${currRounds !== 1 ? 's' : ''} in the past 24 months. Documented cuts raise near-term risk sharply.`;
-      } else if (delta > 8) driver = `A new layoff event was detected for ${co} (+${abs} pts). This is the most significant driver — documented cuts in the last 24 months raise near-term risk sharply.`;
-      else if (delta > 3) driver = `Layoff history signals for ${co} ${dir} (+${abs} pts). A recent event may have been added to the tracking window or sector contagion increased.`;
-      else if (delta < -5) driver = `${co}'s layoff history risk dropped (${abs} pts lower) as a prior event aged out of the 24-month tracking window.`;
-      else driver = `Layoff history for ${co} ${dir} by ${abs} pts. Minor signal updates from the layoff tracking database.`;
+      if (currRounds > prevRounds) {
+        // Compute recency weight using the same exponential decay as the scoring engine:
+        // w = e^(-daysAgo / 30).  0 days → 1.00.  14 days → 0.63.  30 days → 0.37.
+        const daysAgo = eventDate != null
+          ? Math.max(0, Math.round((Date.now() - new Date(eventDate).getTime()) / 86_400_000))
+          : null;
+        const recencyWeight = daysAgo != null
+          ? parseFloat(Math.exp(-daysAgo / 30).toFixed(2))
+          : null;
+        const dateLabel = eventDate != null
+          ? new Date(eventDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+          : 'recently';
+
+        driver = `New layoff event detected at ${co} on ${dateLabel}`;
+        if (currPct != null)       driver += `, ${currPct}% of workforce`;
+        if (recencyWeight != null) driver += `. Recency weight: ${recencyWeight}`;
+        driver += '.';
+      } else if (delta > 8) {
+        driver = `Layoff history for ${co} ${dir} sharply (+${abs} pts). A new event may have entered the 24-month tracking window. Documented cuts raise near-term risk.`;
+      } else if (delta > 3) {
+        driver = `Layoff history for ${co} ${dir} (+${abs} pts). A recent event may have been added or sector contagion increased.`;
+      } else if (delta < -5) {
+        driver = `${co}'s layoff history risk dropped (${abs} pts lower) as a prior event aged out of the 24-month tracking window.`;
+      } else {
+        driver = `Layoff history for ${co} ${dir} by ${abs} pts.`;
+      }
       break;
     }
 
+    // ── L3: Role Displacement Risk ────────────────────────────────────────────
     case 'L3': {
-      if (delta > 5) driver = `AI displacement risk for your role category ${dir} (+${abs} pts). AI tool maturity in your domain likely advanced — new enterprise deployments detected in sector intelligence.`;
-      else if (delta < -5) driver = `Role displacement risk ${dir} (${abs} pts lower). New intelligence shows higher human-augmentation value for this role than previously modeled.`;
-      else driver = `Role displacement risk ${dir} by ${abs} pts. Industry AI adoption rate updates may have affected this dimension.`;
+      const prevAI = prevSnapshot?.aiInvestmentSignal ?? null;
+      const currAI = currSnapshot?.aiInvestmentSignal ?? null;
 
-      // Priority 7: Counterfactual — what skill would have offset this L3 increase?
+      if (prevAI && currAI && prevAI !== currAI) {
+        const prevAmp = AI_AMP_FACTOR[prevAI] ?? AI_AMP_FACTOR['medium'];
+        const currAmp = AI_AMP_FACTOR[currAI] ?? AI_AMP_FACTOR['medium'];
+        const escalated = currAmp > prevAmp;
+        driver =
+          `AI Investment signal ${escalated ? 'escalated' : 'de-escalated'} from ${prevAI} to ${currAI}. ` +
+          `Amplification factor changed from ${prevAmp} to ${currAmp}, ` +
+          `${escalated ? 'raising' : 'lowering'} L3 by ${abs} points.`;
+      } else if (delta > 5) {
+        driver = `AI displacement risk for your role ${dir} (+${abs} pts). AI tool maturity in your domain advanced — new enterprise deployments detected.`;
+      } else if (delta < -5) {
+        driver = `Role displacement risk ${dir} (${abs} pts lower). New intelligence shows higher human-augmentation value for this role than previously modeled.`;
+      } else {
+        driver = `Role displacement risk ${dir} by ${abs} pts. Industry AI adoption rate updates affected this dimension.`;
+      }
+
+      // Counterfactual — what skill would have offset this L3 increase?
       if (delta > 5 && roleKey) {
         try {
           const intel = getCareerIntelligence(roleKey);
@@ -138,42 +214,39 @@ function explainDimensionDelta(
             const offsetPts = Math.min(abs, Math.round((topSafe.longTermValue / 100) * 12));
             const offsetPct = Math.round((offsetPts / abs) * 100);
             const hypotheticalScore = Math.round(curr - offsetPts);
-            counterfactual = `Counterfactual: had you developed "${topSafe.skill}" (long-term value: ${topSafe.longTermValue}/100) to proficiency before this reassessment, your L3 score would be approximately ${hypotheticalScore}/100 — offsetting ${offsetPct}% of this ${abs}-point increase. This is the upskilling action with the highest return on the next audit.`;
+            counterfactual =
+              `Counterfactual: had you developed "${topSafe.skill}" ` +
+              `(long-term value: ${topSafe.longTermValue}/100) to proficiency before this reassessment, ` +
+              `your L3 score would be approximately ${hypotheticalScore}/100 — ` +
+              `offsetting ${offsetPct}% of this ${abs}-point increase.`;
           }
-        } catch { /* role intelligence unavailable — skip counterfactual */ }
+        } catch { /* role intelligence unavailable */ }
       }
       break;
     }
 
     case 'L4':
-      if (delta > 5) driver = `Industry headwinds increased (+${abs} pts). More peer companies in your sector announced workforce reductions in the last 180 days, raising the sector contagion signal.`;
-      else if (delta < -5) driver = `Industry headwinds decreased (${abs} pts lower). Fewer sector-wide layoff events were recorded, improving the sector contagion baseline.`;
-      else driver = `Industry conditions ${dir} by ${abs} pts. Sector AI adoption rate or growth outlook may have been revised.`;
+      if (delta > 5)       driver = `Industry headwinds increased (+${abs} pts). More peer companies in your sector announced workforce reductions in the last 180 days.`;
+      else if (delta < -5) driver = `Industry headwinds decreased (${abs} pts lower). Fewer sector-wide layoff events recorded, improving the sector contagion baseline.`;
+      else                 driver = `Industry conditions ${dir} by ${abs} pts. Sector AI adoption rate or growth outlook revised.`;
       break;
 
     case 'L5':
-      if (delta > 3) driver = `Personal protection score ${dir} (+${abs} pts risk increase). This may reflect updated tenure bracket calculations or a change in performance-tier weighting.`;
-      else if (delta < -3) driver = `Personal protection improved (${abs} pts lower risk). Tenure accumulation, promotion signals, or relationship capital changes contributed.`;
-      else driver = `Personal protection factors ${dir} by ${abs} pts.`;
+      if (delta > 3)       driver = `Personal protection ${dir} (+${abs} pts risk increase). Updated tenure bracket calculations or change in performance-tier weighting.`;
+      else if (delta < -3) driver = `Personal protection improved (${abs} pts lower risk). Tenure accumulation, promotion signals, or relationship capital changes.`;
+      else                 driver = `Personal protection factors ${dir} by ${abs} pts.`;
       break;
 
     case 'D6':
-      if (delta > 5) driver = `AI agent capability for your role ${dir} (+${abs} pts). Autonomous AI systems are demonstrating increased coverage of tasks in your role category.`;
-      else driver = `AI agent capability ${dir} by ${abs} pts as enterprise AI deployment patterns updated.`;
+      if (delta > 5) driver = `AI agent capability for your role ${dir} (+${abs} pts). Autonomous AI systems demonstrating increased task coverage in your role category.`;
+      else           driver = `AI agent capability ${dir} by ${abs} pts as enterprise deployment patterns updated.`;
       break;
 
-    case 'D7': {
-      // v6.0 Fix 3: D7 = Unified Company Health Risk (L1 + L2 + AI adoption + leadership proxy)
-      const prevCsuite = prevSnapshot?.stock90DayChange; // proxy — use snapshot fields available
-      if (delta > 5) {
-        driver = `Company health risk ${dir} (+${abs} pts). D7 blends financial health, layoff history, AI adoption speed, and leadership stability. A significant increase typically reflects: CEO tenure change, C-suite departures, or accelerated AI investment signal. Check the Company Profile tab for the specific leadership stability signals.`;
-      } else if (delta < -5) {
-        driver = `Company health risk improved (${abs} pts lower). Leadership stability or financial health signals moved favourably since last assessment.`;
-      } else {
-        driver = `Unified company health risk ${dir} by ${abs} pts. Minor updates to financial, layoff history, AI adoption, or leadership signals.`;
-      }
+    case 'D7':
+      if (delta > 5)       driver = `Unified company health risk ${dir} (+${abs} pts). D7 blends financial health, layoff history, AI adoption speed, and leadership stability. Check the Company Profile tab for the specific leadership signal.`;
+      else if (delta < -5) driver = `Company health risk improved (${abs} pts lower). Leadership stability or financial health signals moved favourably.`;
+      else                 driver = `Unified company health risk ${dir} by ${abs} pts. Minor updates to financial, layoff, AI adoption, or leadership signals.`;
       break;
-    }
 
     default:
       driver = `${DIMENSION_LABELS[key] ?? key} ${dir} by ${abs} pts.`;
@@ -260,6 +333,10 @@ export function getScoreDelta(
 /**
  * Get full attributed delta comparing current HybridResult against previous stored entry.
  * Returns null if no previous assessment exists for this role/country/experience.
+ *
+ * currentSnapshot: pass the company data snapshot from the CURRENT audit. Without it,
+ * explainDimensionDelta() falls back to generic text for all three spec-required dimensions
+ * (L1, L2, L3) because it cannot compare prev vs curr actual field values.
  */
 export function getAttributedDelta(
   roleKey: string,
@@ -268,6 +345,7 @@ export function getAttributedDelta(
   experience: string,
   countryKey: string,
   companyName?: string,
+  currentSnapshot?: ScoreHistoryEntry['companySnapshot'],
 ): ScoreDelta | null {
   try {
     const history = loadScoreHistory();
@@ -311,7 +389,7 @@ export function getAttributedDelta(
           previous: prevScore,
           current: currScore,
           delta: dimDelta,
-          ...explainDimensionDelta(k, prevScore, currScore, dimDelta, companyName, roleKey, previous.companySnapshot, undefined),
+          ...explainDimensionDelta(k, prevScore, currScore, dimDelta, companyName, roleKey, previous.companySnapshot, currentSnapshot),
         });
       }
       // Sort by absolute delta descending — show biggest drivers first

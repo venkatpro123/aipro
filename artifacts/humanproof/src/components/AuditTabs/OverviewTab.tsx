@@ -1768,9 +1768,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     [financialCtxForStage3, safeResult.total],
   );
 
-  // Score delta attribution for returning users
+  // Score delta attribution for returning users.
+  // currentSnapshot mirrors what recordScore() persists — this is the curr side
+  // of the prev/curr comparison in explainDimensionDelta(). Without it, all
+  // three spec-required dimensions (L1 stock, L2 recency, L3 AI signal) fall
+  // back to generic text because the function cannot compare actual field values.
   const scoreDelta = useMemo(() => {
     const bd = result.breakdown as any;
+    const currentSnapshot = companyData ? {
+      stock90DayChange:  companyData.stock90DayChange  ?? null,
+      revenueGrowthYoY:  companyData.revenueGrowthYoY  ?? null,
+      layoffRounds:      companyData.layoffRounds      ?? 0,
+      lastLayoffPercent: companyData.lastLayoffPercent ?? null,
+      lastLayoffDate:    companyData.layoffsLast24Months?.[0]?.date ?? null,
+      aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
+      employeeCount:     companyData.employeeCount,
+      revenuePerEmployee: companyData.revenuePerEmployee,
+    } : undefined;
     return getAttributedDelta(
       result.workTypeKey,
       result.total,
@@ -1778,8 +1792,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       result.experience,
       result.countryKey,
       result.companyName,
+      currentSnapshot,
     );
-  }, [result]);
+  }, [result, companyData]);
 
   // v7.0 Fix 2 + 5: Score velocity and return type for contextual display
   const scoreVelocity = useMemo(

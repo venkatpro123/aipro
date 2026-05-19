@@ -596,12 +596,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       },
       companyName: companyData.name,
       companySnapshot: {
-        stock90DayChange: companyData.stock90DayChange ?? null,
-        revenueGrowthYoY: companyData.revenueGrowthYoY ?? null,
-        layoffRounds: companyData.layoffRounds ?? 0,
+        stock90DayChange:  companyData.stock90DayChange ?? null,
+        revenueGrowthYoY:  companyData.revenueGrowthYoY ?? null,
+        layoffRounds:      companyData.layoffRounds ?? 0,
         lastLayoffPercent: companyData.lastLayoffPercent ?? null,
+        // Most recent confirmed layoff date — used by L2 attribution recency weight
+        lastLayoffDate:    companyData.layoffsLast24Months?.[0]?.date ?? null,
         aiInvestmentSignal: companyData.aiInvestmentSignal ?? "medium",
-        employeeCount: companyData.employeeCount,
+        employeeCount:     companyData.employeeCount,
         revenuePerEmployee: companyData.revenuePerEmployee,
       },
     });
@@ -1256,12 +1258,13 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           companyName: companyData.name,
           // v6.0 Fix 3: Store company snapshot so delta attribution can reference actual values
           companySnapshot: {
-            stock90DayChange: companyData.stock90DayChange ?? null,
-            revenueGrowthYoY: companyData.revenueGrowthYoY ?? null,
-            layoffRounds: companyData.layoffRounds ?? 0,
+            stock90DayChange:  companyData.stock90DayChange ?? null,
+            revenueGrowthYoY:  companyData.revenueGrowthYoY ?? null,
+            layoffRounds:      companyData.layoffRounds ?? 0,
             lastLayoffPercent: companyData.lastLayoffPercent ?? null,
+            lastLayoffDate:    companyData.layoffsLast24Months?.[0]?.date ?? null,
             aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
-            employeeCount: companyData.employeeCount,
+            employeeCount:     companyData.employeeCount,
             revenuePerEmployee: companyData.revenuePerEmployee,
           },
         });
