@@ -22,6 +22,7 @@ import {
   recordFailure as circuitFailure,
   getCachedResponse,
 } from '../apiCircuitBreaker';
+import { readCache, writeCache } from '../apiResponseCache';
 
 export interface RoleDemandSignal {
   roleTitle: string;
@@ -174,6 +175,21 @@ export async function fetchRoleDemandSignal(
     };
   }
 
+  // Shared cross-user Supabase cache (4h TTL).
+  // Hiring data for TCS changes slowly — there's no value in 30 users each
+  // firing a Naukri scrape in the same afternoon. The first result serves all.
+  const naukriCacheKey = `naukri|${roleTitle.toLowerCase().trim()}|${company.toLowerCase().trim()}`;
+  const sharedNaukri = await readCache<RoleDemandSignal>('naukri', naukriCacheKey);
+  if (sharedNaukri) {
+    const cached = sharedNaukri.payload;
+    return {
+      ...cached,
+      disclosure: cached.disclosure
+        ? `${cached.disclosure} (shared cache: ${sharedNaukri.cacheAgeLabel})`
+        : `Shared cache: hiring data ${sharedNaukri.cacheAgeLabel}.`,
+    };
+  }
+
   // Circuit breaker gate for Naukri/hiring EF — OPEN means the proxy has
   // been unavailable; serve cached signal with disclosure.
   if (!isCallAllowed('naukri')) {
@@ -232,6 +248,9 @@ export async function fetchRoleDemandSignal(
       // Persist to company_skill_demand_cache so CareerSkillsTab can overlay
       // company-specific demand badges. Fire-and-forget — never blocks the caller.
       persistCompanySkillDemand(liveResult);
+      // Write to shared cross-user cache so subsequent audits of the same
+      // role+company don't each burn an EF invocation within the 4h TTL window.
+      writeCache('naukri', naukriCacheKey, liveResult);
       circuitSuccess('naukri', liveResult);
       return liveResult;
     }

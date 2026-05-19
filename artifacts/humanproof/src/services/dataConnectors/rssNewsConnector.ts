@@ -28,6 +28,7 @@ import {
   recordFailure as circuitFailure,
   getCachedResponse,
 } from '../apiCircuitBreaker';
+import { readCache, writeCache } from '../apiResponseCache';
 
 export interface NewsSignal {
   title: string;
@@ -113,10 +114,20 @@ function titleFingerprint(title: string): string {
 }
 
 async function fetchRSSViaProxy(url: string): Promise<any[]> {
+  // Circuit breaker gate — OPEN means rss2json is unavailable; serve local circuit cache.
   if (!isCallAllowed('rss2json')) {
     const cached = getCachedResponse<any[]>('rss2json');
     return cached?.data ?? [];
   }
+
+  // Shared cross-user Supabase cache (30 min TTL) — before making a live call.
+  const sharedCacheKey = `rss2json|${url}`;
+  const sharedCached = await readCache<any[]>('rss2json', sharedCacheKey);
+  if (sharedCached) {
+    circuitSuccess('rss2json', sharedCached.payload);
+    return sharedCached.payload;
+  }
+
   try {
     const res = await fetch(`${RSS_PROXY}${encodeURIComponent(url)}`, {
       signal: AbortSignal.timeout(5000),
@@ -128,6 +139,7 @@ async function fetchRSSViaProxy(url: string): Promise<any[]> {
     const data = await res.json();
     const items = data?.items ?? [];
     circuitSuccess('rss2json', items);
+    writeCache('rss2json', sharedCacheKey, items);
     return items;
   } catch (err: any) {
     circuitFailure('rss2json', err?.message ?? String(err));

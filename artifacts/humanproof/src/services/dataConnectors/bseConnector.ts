@@ -27,10 +27,12 @@ export interface BSECompanyData {
   fetchedAt: string;
 }
 
-const BSE_BASE = 'https://api.bseindia.com/BseIndiaAPI/api';
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+import { readCache, writeCache } from '../apiResponseCache';
 
-const cache = new Map<string, { data: BSECompanyData; ts: number }>();
+const BSE_BASE = 'https://api.bseindia.com/BseIndiaAPI/api';
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min in-process; Supabase layer holds 4h TTL
+
+const cache = new Map<string, { data: BSECompanyData; ts: number }>(); // in-process hot-path only
 
 async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
   const controller = new AbortController();
@@ -45,8 +47,14 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response
 export async function fetchBSECompanyData(
   scripCode: string,
 ): Promise<BSECompanyData | null> {
-  const cached = cache.get(scripCode);
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.data;
+  const inProcess = cache.get(scripCode);
+  if (inProcess && Date.now() - inProcess.ts < CACHE_TTL_MS) return inProcess.data;
+
+  const shared = await readCache<BSECompanyData>('bse', `scrip|${scripCode}`);
+  if (shared) {
+    cache.set(scripCode, { data: shared.payload, ts: Date.now() });
+    return { ...shared.payload, _cacheAgeLabel: shared.cacheAgeLabel, _cachedAt: shared.cachedAt } as BSECompanyData;
+  }
 
   try {
     // BSE quote endpoint (public, no auth)
@@ -78,6 +86,7 @@ export async function fetchBSECompanyData(
     };
 
     cache.set(scripCode, { data, ts: Date.now() });
+    writeCache('bse', `scrip|${scripCode}`, data);
     return data;
   } catch {
     return null;

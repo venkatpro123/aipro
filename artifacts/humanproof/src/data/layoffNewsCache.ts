@@ -1,5 +1,6 @@
 // layoffNewsCache.ts
 import { COMPANY_ALIASES, getCompanyAliases } from './companyIntelligenceDB';
+import { readCache, writeCache } from '../services/apiResponseCache';
 // Layoff event store — seeded with major known events, dynamically expandable at runtime via OSINT.
 //
 // Breaking-news cache invalidation: injectLayoffEvent() calls invalidateForCompany() so that
@@ -280,6 +281,43 @@ export const injectLayoffEvent = (event: LayoffNewsEvent): void => {
 export const refreshFromNewsAPI = async (companyName: string): Promise<number> => {
   const apiKey = (import.meta as any).env?.VITE_NEWSAPI_KEY as string | undefined;
   if (!apiKey) return 0;
+
+  const cacheKey = `newsapi|${companyName.toLowerCase().trim()}`;
+
+  // Check shared cross-user cache before making a live NewsAPI call.
+  // NewsAPI free tier is 100 req/day — without this, 20 users auditing TCS
+  // in the same day each burn a call even when the previous result is 10 min old.
+  const cached = await readCache<{ articles: any[] }>('newsapi', cacheKey);
+  const rawArticles: any[] = cached ? cached.payload.articles : [];
+  let injected = 0;
+
+  const injectArticles = (articles: any[]) => {
+    for (const article of articles) {
+      const text = (article.title ?? '') + ' ' + (article.description ?? '');
+      const lower = text.toLowerCase();
+      if (lower.includes('layoff') || lower.includes('job cut') || lower.includes('restructur')) {
+        const pctMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
+        injectLayoffEvent({
+          companyName,
+          date: (article.publishedAt ?? new Date().toISOString()).slice(0, 10),
+          headline: article.title ?? '',
+          percentCut: pctMatch ? parseFloat(pctMatch[1]) : 0,
+          source: cached
+            ? `${article.source?.name ?? 'NewsAPI'} (${cached.cacheAgeLabel})`
+            : (article.source?.name ?? 'NewsAPI'),
+          url: article.url ?? '',
+          affectedDepartments: [],
+        });
+        injected++;
+      }
+    }
+  };
+
+  if (cached) {
+    injectArticles(rawArticles);
+    return injected;
+  }
+
   try {
     const thirty = new Date();
     thirty.setDate(thirty.getDate() - 30);
@@ -290,25 +328,10 @@ export const refreshFromNewsAPI = async (companyName: string): Promise<number> =
     if (!res.ok) return 0;
     const data = await res.json();
     if (data.status !== 'ok') return 0;
-    let injected = 0;
-    for (const article of (data.articles ?? [])) {
-      const text = (article.title ?? '') + ' ' + (article.description ?? '');
-      const lower = text.toLowerCase();
-      if (lower.includes('layoff') || lower.includes('job cut') || lower.includes('restructur')) {
-        const pctMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
-        injectLayoffEvent({
-          companyName,
-          date: (article.publishedAt ?? new Date().toISOString()).slice(0, 10),
-          headline: article.title ?? '',
-          // Use 0 (undisclosed) when no percentage is stated — 5% was fabricated
-          percentCut: pctMatch ? parseFloat(pctMatch[1]) : 0,
-          source: article.source?.name ?? 'NewsAPI',
-          url: article.url ?? '',
-          affectedDepartments: [],
-        });
-        injected++;
-      }
-    }
+    const liveArticles = data.articles ?? [];
+    // Write to shared cache so other users benefit for the next 2 hours.
+    writeCache('newsapi', cacheKey, { articles: liveArticles });
+    injectArticles(liveArticles);
     return injected;
   } catch {
     return 0;

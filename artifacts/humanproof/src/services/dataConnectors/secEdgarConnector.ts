@@ -49,11 +49,13 @@ const EDGAR_HEADERS: HeadersInit = {
   'Accept': 'application/json',
 };
 
-// 6-hour TTL in-memory cache. Alias expansion multiplies requests up to 10×
-// per company — caching prevents EDGAR rate-limit (10 req/sec) from being hit
-// on repeated audits for the same company within a session or short window.
+import { readCache, writeCache } from '../apiResponseCache';
+
+// In-process Map guards against burst re-requests within the same page session.
+// Cross-user shared caching is handled by the Supabase api_response_cache table
+// via readCache/writeCache — this Map is the hot-path dedup layer only.
 const EDGAR_CACHE = new Map<string, { result: SecEdgarSummary; expiresAt: number }>();
-const EDGAR_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const EDGAR_CACHE_TTL_MS = 30 * 60 * 1000; // 30 min in-process (Supabase layer holds 6h TTL)
 
 const LAYOFF_QUERIES = [
   '"workforce reduction"',
@@ -200,9 +202,18 @@ export async function fetchSecEdgar8KSignals(
   options?: { daysBack?: number },
 ): Promise<SecEdgarSummary> {
   const daysBack = options?.daysBack ?? 365;
-  const cacheKey = `${company.toLowerCase().trim()}|${daysBack}`;
-  const cached = EDGAR_CACHE.get(cacheKey);
-  if (cached && Date.now() < cached.expiresAt) return cached.result;
+  const cacheKey = `edgar8k|${company.toLowerCase().trim()}|${daysBack}`;
+
+  // 1. In-process hot-path dedup (same page session)
+  const inProcess = EDGAR_CACHE.get(cacheKey);
+  if (inProcess && Date.now() < inProcess.expiresAt) return inProcess.result;
+
+  // 2. Shared cross-user Supabase cache (6h TTL — see API_CACHE_TTL_SECONDS)
+  const shared = await readCache<SecEdgarSummary>('sec-edgar', cacheKey);
+  if (shared) {
+    EDGAR_CACHE.set(cacheKey, { result: shared.payload, expiresAt: Date.now() + EDGAR_CACHE_TTL_MS });
+    return { ...shared.payload, _cacheAgeLabel: shared.cacheAgeLabel, _cachedAt: shared.cachedAt } as SecEdgarSummary;
+  }
 
   // Resolve the SEC EDGAR legal entity name(s) for this company.
   // "Google" → ["ALPHABET INC", "GOOGLE LLC"], "Meta" → ["META PLATFORMS INC", "FACEBOOK INC"].
@@ -249,6 +260,7 @@ export async function fetchSecEdgar8KSignals(
 
   if (edgarReachable) {
     EDGAR_CACHE.set(cacheKey, { result, expiresAt: Date.now() + EDGAR_CACHE_TTL_MS });
+    writeCache('sec-edgar', cacheKey, result);
   }
   return result;
 }
@@ -269,7 +281,7 @@ export interface SecEdgarExecSummary {
   fetchedAt: string;
 }
 
-const EXEC_CACHE = new Map<string, { result: SecEdgarExecSummary; expiresAt: number }>();
+const EXEC_CACHE = new Map<string, { result: SecEdgarExecSummary; expiresAt: number }>(); // in-process hot-path only
 
 /**
  * Fetch SEC EDGAR 8-K filings disclosing executive departures (Item 5.02) for a
@@ -285,9 +297,16 @@ export async function fetchSecEdgarExecutiveDepartures(
   options?: { daysBack?: number },
 ): Promise<SecEdgarExecSummary> {
   const daysBack = options?.daysBack ?? 365;
-  const cacheKey = `exec|${company.toLowerCase().trim()}|${daysBack}`;
-  const cached = EXEC_CACHE.get(cacheKey);
-  if (cached && Date.now() < cached.expiresAt) return cached.result;
+  const cacheKey = `edgar_exec|${company.toLowerCase().trim()}|${daysBack}`;
+
+  const inProcess = EXEC_CACHE.get(cacheKey);
+  if (inProcess && Date.now() < inProcess.expiresAt) return inProcess.result;
+
+  const shared = await readCache<SecEdgarExecSummary>('sec-edgar', cacheKey);
+  if (shared) {
+    EXEC_CACHE.set(cacheKey, { result: shared.payload, expiresAt: Date.now() + EDGAR_CACHE_TTL_MS });
+    return shared.payload;
+  }
 
   const edgarNames = resolveEdgarNames(company);
 
@@ -326,6 +345,7 @@ export async function fetchSecEdgarExecutiveDepartures(
 
   if (edgarReachable) {
     EXEC_CACHE.set(cacheKey, { result, expiresAt: Date.now() + EDGAR_CACHE_TTL_MS });
+    writeCache('sec-edgar', cacheKey, result);
   }
   return result;
 }
