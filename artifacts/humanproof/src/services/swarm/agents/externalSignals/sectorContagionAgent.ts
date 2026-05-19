@@ -125,19 +125,60 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
     // 0.0 = no weight in last 30 days (all cuts are old = macro-spread)
     const clusteringRatio = totalDecayWeight > 0 ? last30DecayWeight / totalDecayWeight : 0;
 
-    // ── 3. Macro correction ──────────────────────────────────────────────────
-    // High industryBaselineRisk + low clustering → independent macro responses
-    // Low baseline + high clustering → genuine causal contagion
-    const baselineRisk  = industryData?.baselineRisk ?? (SECTOR_CONTAGION_FALLBACK[industry] ?? 0.45);
-    const spreadFactor  = 1 - clusteringRatio;        // 1 = cuts spread out (macro-like)
-    // macroProbability: 0 = pure contagion, 1 = pure macro.
-    // MACRO_TRIGGER_FRACTION (0.40) is the empirically-derived sector-fraction above which
-    // individual cuts are macro-driven rather than causal contagion. When baseline risk
-    // exceeds this threshold AND cuts are spread out (low clustering), macroProbability
-    // approaches 1 — the correction pushes the signal toward the known-macro baseline
-    // rather than amplifying what is actually a systemic-macro response.
-    const macroBaslineFactor = Math.min(1, baselineRisk / MACRO_TRIGGER_FRACTION);
-    const macroProbability = Math.min(0.85, (spreadFactor * 0.55) + (macroBaslineFactor * 0.45));
+    // ── 3. Sector cutting fraction + macro regime detection ──────────────────
+    //
+    // "Simultaneously" = cuts within RECENT_DAYS (30d). We measure the fraction
+    // of ALL tracked sector companies that have announced cuts in this window,
+    // not just cuts relative to how many cuts occurred in 180 days.
+    //
+    // When sectorCuttingFraction > MACRO_TRIGGER_FRACTION (0.40):
+    //   We are in a MACRO REGIME. The wave is broad enough that individual
+    //   company cuts are more likely independent macro responses than causal
+    //   contagion from one company to another. In this regime:
+    //     - The contagion premium is attenuated
+    //     - The signal converges toward the known industry baseline
+    //     - A healthy company should NOT receive a 1.35× amplifier just because
+    //       its sector is broadly in a macro downturn
+    //
+    // When totalTrackedSectorCompanies is absent (direct agent call, unit tests):
+    //   Fall back to baselineRisk / MACRO_TRIGGER_FRACTION as a crude proxy
+    //   (conservative: fires for Technology at 0.70, which is the legacy behavior).
+    //   This path is documented as a known-imprecise fallback and must be labelled
+    //   in metadata so callers know when the precise path was not taken.
+    const baselineRisk = industryData?.baselineRisk ?? (SECTOR_CONTAGION_FALLBACK[industry] ?? 0.45);
+
+    const recentCuts = inWindow.filter(e => (now - new Date(e.date).getTime()) / MS_PER_DAY <= RECENT_DAYS);
+    const totalTracked = input.totalTrackedSectorCompanies;
+    const hasPreciseFraction = totalTracked != null && totalTracked > 0;
+
+    const sectorCuttingFraction = hasPreciseFraction
+      ? Math.min(1, recentCuts.length / totalTracked!)
+      : null;  // not computable without the denominator
+
+    // isMacroRegime: true when the fraction of tracked companies cutting is
+    // above the empirically-derived threshold. When fraction is unavailable,
+    // fall back to the baselineRisk proxy (documented imprecision).
+    const isMacroRegime = sectorCuttingFraction != null
+      ? sectorCuttingFraction > MACRO_TRIGGER_FRACTION
+      : baselineRisk > MACRO_TRIGGER_FRACTION;  // fallback — imprecise, see comment above
+
+    // macroAttenuation: how strongly to suppress the contagion premium.
+    //
+    // Ramps from 0 at the threshold to 0.70 at 100% cutting (cap: preserving
+    // a floor of contagion signal even in a full macro event, because company-
+    // specific factors still matter at the margins).
+    //
+    // At 40% cutting (threshold): 0% attenuation — premium intact
+    // At 60% cutting:             33% attenuation
+    // At 80% cutting:             67% attenuation
+    // At 100% cutting:            70% attenuation (cap)
+    const macroAttenuation = isMacroRegime
+      ? (() => {
+          const fraction = sectorCuttingFraction ?? (baselineRisk / MACRO_TRIGGER_FRACTION - 1);
+          const rawAttenuation = (Math.max(0, fraction - MACRO_TRIGGER_FRACTION)) / (1 - MACRO_TRIGGER_FRACTION);
+          return Math.min(0.70, rawAttenuation);
+        })()
+      : 0;
 
     // ── 4. Department concentration ──────────────────────────────────────────
     // If all cuts hit the same department, it's a contagion fingerprint
@@ -156,18 +197,31 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
     // 5 decay-weighted peers = full signal (e.g. 3 cuts within 30 days ≈ 2.7 weighted)
     const countSignal = Math.min(0.90, totalDecayWeight / 5.0);
 
-    // Contagion multiplier: reduces signal when macro probability is high,
-    // boosts it when cuts are recent and department-concentrated.
-    const contagionMultiplier = (1 - macroProbability) * (0.70 + deptConcentration * 0.30);
+    // Contagion multiplier: boosted when cuts are recent and department-concentrated;
+    // attenuated by macroAttenuation when the sector is in a broad macro regime.
+    //
+    // Without macro correction (old behavior): multiplier ≈ 0.70 for a tight
+    // cluster with no dept concentration.
+    //
+    // With macro correction at 80% sector cutting (macroAttenuation ≈ 0.67):
+    //   multiplier ≈ 0.70 × (1 − 0.67) ≈ 0.23 — contagion premium mostly
+    //   absorbed, signal falls back toward industry baseline.
+    const rawContagionMultiplier = 0.70 + deptConcentration * 0.30;
+    const contagionMultiplier    = rawContagionMultiplier * (1 - macroAttenuation);
 
     // Final blend:
-    //   - When macroProbability is high: pull toward baselineRisk (already-known macro)
-    //   - When macroProbability is low: let the contagion count signal dominate
+    //   contagionComponent: decayed peer-event signal, reduced in macro regimes
+    //   macroComponent: industry baseline, weighted by how broadly the sector is cutting
+    //     - In macro regime (sectorCuttingFraction high): macroComponent dominates
+    //     - In contagion regime (clusteringRatio high): macroComponent is minor
     const contagionComponent = countSignal * contagionMultiplier;
-    const macroComponent     = baselineRisk * macroProbability;
+    const macroWeight        = isMacroRegime
+      ? (sectorCuttingFraction ?? (baselineRisk / MACRO_TRIGGER_FRACTION - 1))
+      : clusteringRatio * 0.30;  // small macro component when cuts are recent-clustered
+    const macroComponent     = baselineRisk * Math.min(1, macroWeight);
     const finalSignal        = Math.min(0.92, contagionComponent + macroComponent);
 
-    const last30Count = inWindow.filter(e => (now - new Date(e.date).getTime()) / MS_PER_DAY <= RECENT_DAYS).length;
+    const last30Count = recentCuts.length;
     const confidence  = inWindow.length >= 3 ? 0.74 : 0.60;
 
     return {
@@ -178,21 +232,31 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
       sourceType: 'heuristic',
       ageInDays:  last30Count > 0 ? 7 : 30,
       metadata: {
-        peerCutsTotal:       inWindow.length,
-        peerCutsLast30d:     last30Count,
-        peerCutsOlderWindow: inWindow.length - last30Count,
-        decayWeightedCount:  parseFloat(totalDecayWeight.toFixed(2)),
-        clusteringRatio:     parseFloat(clusteringRatio.toFixed(2)),
-        macroProbability:    parseFloat(macroProbability.toFixed(2)),
-        deptConcentration:   parseFloat(deptConcentration.toFixed(2)),
-        topAffectedDept:     topDept,
-        contagionMultiplier: parseFloat(contagionMultiplier.toFixed(2)),
-        baselineRisk:        parseFloat(baselineRisk.toFixed(2)),
-        note: macroProbability > 0.65
-          ? 'Cuts spread across window + high baseline — classified as macro-correlated, not causal contagion'
+        peerCutsTotal:            inWindow.length,
+        peerCutsLast30d:          last30Count,
+        peerCutsOlderWindow:      inWindow.length - last30Count,
+        decayWeightedCount:       parseFloat(totalDecayWeight.toFixed(2)),
+        clusteringRatio:          parseFloat(clusteringRatio.toFixed(2)),
+        // Macro regime fields — surfaced in TransparencyTab for user trust
+        totalTrackedSectorCompanies: totalTracked ?? null,
+        sectorCuttingFraction:    sectorCuttingFraction != null
+                                    ? parseFloat(sectorCuttingFraction.toFixed(3))
+                                    : null,
+        isMacroRegime,
+        macroAttenuation:         parseFloat(macroAttenuation.toFixed(3)),
+        usedFallbackFractionProxy: !hasPreciseFraction,
+        // Signal components
+        deptConcentration:        parseFloat(deptConcentration.toFixed(2)),
+        topAffectedDept:          topDept,
+        contagionMultiplier:      parseFloat(contagionMultiplier.toFixed(3)),
+        baselineRisk:             parseFloat(baselineRisk.toFixed(2)),
+        contagionComponent:       parseFloat(contagionComponent.toFixed(3)),
+        macroComponent:           parseFloat(macroComponent.toFixed(3)),
+        note: isMacroRegime
+          ? `Macro regime — ${sectorCuttingFraction != null ? `${(sectorCuttingFraction * 100).toFixed(0)}% of tracked sector companies cutting simultaneously` : 'high-baseline industry'} (>${Math.round(MACRO_TRIGGER_FRACTION * 100)}% threshold). Contagion premium attenuated ${(macroAttenuation * 100).toFixed(0)}%; signal converges toward industry baseline. Healthy-company scores protected from macro misattribution.`
           : clusteringRatio > 0.60
-          ? 'Tight temporal cluster — contagion propagation pattern detected'
-          : 'Mixed signal — moderate macro and contagion components',
+          ? 'Tight temporal cluster — contagion propagation pattern detected; macro attenuation not applied'
+          : 'Sparse or no simultaneous cutting — standard decay-weighted contagion signal',
       },
     };
   }

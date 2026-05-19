@@ -12,6 +12,8 @@
 import { useMemo } from 'react';
 import type { HybridResult } from '../types/hybridResult';
 import type { CompanyData } from '../data/companyDatabase';
+import type { UserProfile } from '../services/userProfileService';
+import { markFirstAuditCompleted } from '../services/userProfileService';
 import { compressAllSignals, type CompressedIntel } from '../services/signalCompressionService';
 
 export type DashboardMode =
@@ -21,7 +23,7 @@ export type DashboardMode =
   | 'stable'         // score < 35 — emphasise build/grow content
   | 'low-confidence';// confidence < 45% — surface transparency
 
-export type TabKey = 'summary' | 'company' | 'protection' | 'actions' | 'intel';
+export type TabKey = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'transparency';
 
 /**
  * v39.0 F2 — Panel keys SummaryTab can reorder based on mode.
@@ -66,13 +68,28 @@ export interface AdaptationProfile {
 
 const FIRST_AUDIT_KEY = 'hp.v34.firstAuditSeen';
 
-function readFirstAuditSeen(): boolean {
+/**
+ * Hybrid first-audit detection:
+ * 1. Check localStorage (fast, no async).
+ * 2. Fall back to UserProfile.firstAuditCompletedAt (backend, cross-device).
+ * Returns true = "already seen" (don't show welcome again).
+ */
+function readFirstAuditSeen(profile?: UserProfile | null): boolean {
   if (typeof window === 'undefined') return true;
   try {
-    return window.localStorage.getItem(FIRST_AUDIT_KEY) === '1';
+    if (window.localStorage.getItem(FIRST_AUDIT_KEY) === '1') return true;
   } catch {
+    // localStorage unavailable
+  }
+  // If backend profile says the user has completed a first audit on another
+  // device, cache it in localStorage and suppress the wizard.
+  if (profile?.firstAuditCompletedAt) {
+    try {
+      window.localStorage.setItem(FIRST_AUDIT_KEY, '1');
+    } catch { /* swallow */ }
     return true;
   }
+  return false;
 }
 
 export function markFirstAuditSeen(): void {
@@ -82,6 +99,8 @@ export function markFirstAuditSeen(): void {
   } catch {
     /* swallow */
   }
+  // Fire-and-forget to backend so cross-device/incognito sessions are covered.
+  markFirstAuditCompleted().catch(() => { /* non-fatal */ });
 }
 
 function pickMode(result: HybridResult, intel: CompressedIntel): DashboardMode {
@@ -144,13 +163,14 @@ function pickSummaryPanelOrder(mode: DashboardMode): SummaryPanelKey[] {
 export function useDashboardAdaptation(
   result: HybridResult,
   companyData?: CompanyData,
+  profile?: UserProfile | null,
 ): AdaptationProfile {
   return useMemo(() => {
     const intel = compressAllSignals(result, companyData);
     const mode  = pickMode(result, intel);
     const defaultTab = pickDefaultTab(mode);
     const confPct = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
-    const seenBefore = readFirstAuditSeen();
+    const seenBefore = readFirstAuditSeen(profile);
 
     return {
       mode,
@@ -161,7 +181,7 @@ export function useDashboardAdaptation(
       intel,
       summaryPanelOrder: pickSummaryPanelOrder(mode),
     };
-  }, [result, companyData]);
+  }, [result, companyData, profile]);
 }
 
 // ── Tier ordering helpers ────────────────────────────────────────────────────

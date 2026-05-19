@@ -25,7 +25,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Minus,
-  Zap, Shield, Clock, Signal, AlertTriangle, Info,
+  Zap, Shield, Clock, Signal, AlertTriangle, Info, User,
 } from 'lucide-react';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
@@ -33,21 +33,13 @@ import { FirstAuditWelcome } from '../common/FirstAuditWelcome';
 import { CompanyPulseCard } from '../common/CompanyPulseCard';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import TierBadge from '../common/TierBadge';
+import ProvenanceLabel from '../common/ProvenanceLabel';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
+import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
+import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const riskColor = (s: number) =>
-  s >= 75 ? '#dc2626' : s >= 55 ? '#f97316' : s >= 35 ? '#f59e0b' : '#10b981';
-
-const riskLabel = (s: number) =>
-  s >= 75 ? 'CRITICAL' : s >= 55 ? 'HIGH' : s >= 35 ? 'MODERATE' : 'LOW';
-
-const riskGradient = (s: number) =>
-  s >= 75 ? 'linear-gradient(135deg,#dc262640,#dc262618)'
-  : s >= 55 ? 'linear-gradient(135deg,#f9731640,#f9731618)'
-  : s >= 35 ? 'linear-gradient(135deg,#f59e0b40,#f59e0b18)'
-  : 'linear-gradient(135deg,#10b98140,#10b98118)';
+// riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
 
 const readinessColor = (label: string) => ({
   READY: '#10b981', MOSTLY_READY: '#22d3ee',
@@ -60,7 +52,8 @@ const ScoreRingHero: React.FC<{
   score: number;
   confidence: number;
   isMobile: boolean;
-}> = ({ score, confidence, isMobile }) => {
+  calibrationMode?: string;
+}> = ({ score, confidence, isMobile, calibrationMode }) => {
   const size  = isMobile ? 144 : 176;
   const r     = (size - 14) / 2;
   const circ  = 2 * Math.PI * r;
@@ -73,7 +66,11 @@ const ScoreRingHero: React.FC<{
         <div className="absolute inset-0 rounded-full" style={{
           boxShadow: `0 0 ${isMobile ? 32 : 44}px ${color}30`,
         }} />
-        <svg width={size} height={size} className="-rotate-90">
+        <svg
+          width={size} height={size} className="-rotate-90"
+          role="img"
+          aria-label={`Risk score ${score} out of 100 — ${label}`}
+        >
           <circle cx={size/2} cy={size/2} r={r} fill="none"
             stroke="rgba(255,255,255,0.06)" strokeWidth={10} />
           <motion.circle
@@ -82,7 +79,7 @@ const ScoreRingHero: React.FC<{
             strokeDasharray={circ}
             initial={{ strokeDashoffset: circ }}
             animate={{ strokeDashoffset: circ - (score / 100) * circ }}
-            transition={{ duration: 1.1, ease: 'easeOut' }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -118,9 +115,26 @@ const ScoreRingHero: React.FC<{
         </span>
       </motion.div>
 
-      <p className="mt-1.5 text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-        {confidence}% confidence
-      </p>
+      <div className="mt-2 flex flex-col items-center gap-1">
+        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {confidence}% confidence
+        </p>
+        {/* The layoff risk score is always a model output — never a direct measurement.
+            Surface this explicitly so the user knows what kind of number they're reading. */}
+        <div className="flex items-center gap-1.5">
+          <ProvenanceLabel
+            kind="modeled"
+            tooltip={
+              calibrationMode === 'live_empirical'
+                ? 'MODELED — score computed by a formula calibrated against 200+ real outcomes'
+                : calibrationMode === 'live_developing'
+                ? 'MODELED — formula calibrated on developing outcome dataset (47–200 outcomes)'
+                : 'MODELED — formula uses conservative bootstrap priors; empirical calibration in progress'
+            }
+            size="xs"
+          />
+        </div>
+      </div>
     </div>
   );
 };
@@ -174,10 +188,12 @@ interface DriverItem {
 }
 
 interface ActionItem {
-  priority: string;
-  title:    string;
-  timeline: string;
-  step?:    string;
+  priority:       string;
+  title:          string;
+  timeline:       string;
+  step?:          string;
+  evidenceStats?: string;
+  sequencePhase?: string;
 }
 
 const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
@@ -196,6 +212,11 @@ const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
           WHY YOUR SCORE IS WHERE IT IS
         </span>
         <TierBadge tier={1} />
+        <ProvenanceLabel
+          kind="modeled"
+          tooltip="These dimension scores are computed by HumanProof's scoring formula. Individual signals feeding them may be MEASURED or ESTIMATED — expand each driver to see sources."
+          size="xs"
+        />
       </div>
       <div className="space-y-1.5">
         {drivers.slice(0, 3).map(d => (
@@ -265,10 +286,21 @@ const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> 
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold leading-tight"
                 style={{ color: 'rgba(255,255,255,0.90)' }}>{a.title}</p>
-              <p className="text-[10px] leading-snug truncate"
+              <p className="text-[10px] leading-snug"
                 style={{ color: 'rgba(255,255,255,0.45)' }}>
-                {a.timeline}{a.step ? ` · ${a.step}` : ''}
+                {a.sequencePhase
+                  ? { day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' }[a.sequencePhase] ?? a.timeline
+                  : a.timeline
+                }{a.step ? ` · ${a.step}` : ''}
               </p>
+              {/* evidenceStats is the one-liner "why this works" — surfaces data
+                  behind the recommendation so the action feels earned, not templated */}
+              {a.evidenceStats && (
+                <p className="text-[10px] italic mt-0.5 leading-snug line-clamp-2"
+                  style={{ color: 'rgba(255,255,255,0.32)' }}>
+                  {a.evidenceStats}
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -338,13 +370,37 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const preparedness: PreparednessResult | undefined       = r.preparednessScore;
   const urgency  = brief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
   const confPct  = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
+  const calibrationMode: string = (r.modelCalibration as any)?.calibrationMode ?? '';
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
   const conflictCount = result.signalQuality?.conflictingSignals?.length ?? 0;
-  const hardFailures  = result.signalQuality?.hardFailures ?? [];
+  const hardFailures  = [...(result.signalQuality?.hardFailures ?? [])];
   const lowDataWarning = result.signalQuality?.lowDataWarning as any;
+  // v40.0: surface DAG degradation in the trust callout when > 2 layers failed
+  const dagDegraded = result._dagDegradedLayerCount ?? 0;
+  if (dagDegraded > 2) {
+    hardFailures.push(`${dagDegraded} intelligence modules degraded — some insights use fallback estimates`);
+  }
   const pScore = preparedness?.overallScore ?? 0;
   const pColor = preparedness ? readinessColor(preparedness.readinessLabel ?? '') : '#f59e0b';
+
+  // v40.0: calibration limitation check for underrepresented segments
+  const calibrationLimitation = isCalibrationLimitedForCompany(
+    result.industryKey ?? companyData?.industry ?? null,
+    result.countryKey ?? (companyData as any)?.region ?? null,
+    companyData?.isPublic ?? true,
+  );
+
+  // Cold-start detection: count filled personal-context fields.
+  // When < 3 are filled, the score is company + market risk only — personal
+  // factors (visa, runway, family obligation) have not been applied. We surface
+  // this explicitly so users don't mistake a generic score for their actual risk.
+  const uf = (r.userFactors ?? {}) as Record<string, unknown>;
+  const personalFieldsFilled = [
+    'visaStatus', 'savingsMonthsRunway', 'hasDependents', 'dualIncomeHousehold',
+    'hasEquityVesting', 'metroArea', 'performanceTier', 'monthlySalaryUsd',
+  ].filter(f => uf[f] != null && uf[f] !== '' && uf[f] !== 'unknown').length;
+  const profileIsEmpty = personalFieldsFilled < 3;
 
   const velocityIcon = r.scoreDelta?.direction === 'worsening'
     ? TrendingUp : r.scoreDelta?.direction === 'improving'
@@ -386,10 +442,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
     .sort((a, b) => priorityWeight(a.priority) - priorityWeight(b.priority))
     .slice(0, 3)
     .map(rec => ({
-      priority: String(rec.priority ?? 'Medium'),
-      title:    String(rec.title ?? rec.action ?? rec.text ?? 'Take action'),
-      timeline: String(rec.timeline ?? rec.timeframe ?? 'This week'),
-      step:     rec.steps?.[0] ? String(rec.steps[0]) : undefined,
+      priority:       String(rec.priority ?? 'Medium'),
+      title:          String(rec.title ?? rec.action ?? rec.text ?? 'Take action'),
+      timeline:       String(rec.timeline ?? rec.timeframe ?? rec.deadline ?? 'This week'),
+      step:           rec.steps?.[0] ? String(rec.steps[0]) : undefined,
+      evidenceStats:  rec.evidenceStats ? String(rec.evidenceStats) : undefined,
+      sequencePhase:  rec.sequencePhase ? String(rec.sequencePhase) : undefined,
     })), [recommendations]);
 
   const criticalActionCount = recommendations.filter(rc => rc.priority === 'Critical').length;
@@ -465,7 +523,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           <TierBadge tier={1} label="T1 · CORE" />
         </div>
 
-        <ScoreRingHero score={score} confidence={confPct} isMobile={isMobile} />
+        <ScoreRingHero score={score} confidence={confPct} isMobile={isMobile} calibrationMode={calibrationMode} />
         <p className="mt-3 text-[12px] leading-relaxed max-w-xs"
           style={{ color: 'rgba(255,255,255,0.70)' }}>
           {verdictLine(score, urgency)}
@@ -480,12 +538,109 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         )}
       </motion.div>
 
+      {/* ── Profile-incomplete disclosure ─────────────────────────────────── */}
+      {/* When fewer than 3 personal-context fields are filled, the score
+          reflects company + market signals only. Personal amplifiers (visa
+          status, financial runway, family obligation) have NOT been applied.
+          This is not a deficiency in the data — it is an honest gap in
+          personalization. Surface it explicitly so the user doesn't treat a
+          generic score as their actual personal risk. */}
+      {profileIsEmpty && (
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="flex items-start gap-2.5 rounded-xl px-3.5 py-3 cursor-pointer"
+          style={{
+            background: 'rgba(251,191,36,0.07)',
+            border: '1px solid rgba(251,191,36,0.30)',
+          }}
+          onClick={() => {
+            try {
+              window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } }));
+            } catch { /* SSR */ }
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              try {
+                window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } }));
+              } catch { /* SSR */ }
+            }
+          }}
+          aria-label="Your personal risk factors are not yet included. Click to add your profile."
+        >
+          <User className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#fbbf24' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: '#fbbf24' }}>
+              Score reflects company & market risk only
+            </p>
+            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              Your visa status, financial runway, and family situation haven't been included yet.
+              These can shift your personal score by ±8–25 points.{' '}
+              <span style={{ color: '#fbbf24', fontWeight: 600 }}>Add your profile →</span>
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Trust callout — only when something is off ─────────────────────── */}
       <TrustCallout
         lowDataWarning={lowDataWarning}
         conflictCount={conflictCount}
         hardFailures={hardFailures}
       />
+
+      {/* v40.0: Heuristic / stale freshness disclosure — surfaces when the
+          pipeline fell back to historical baselines without live data. */}
+      {(() => {
+        const tier = result.unifiedFreshness?.tier;
+        if (tier === 'heuristic') {
+          return (
+            <div
+              className="flex items-start gap-2.5 rounded-xl px-3.5 py-3"
+              style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
+              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <span className="font-semibold text-amber-400">Heuristic baseline — </span>
+                no live data retrieved for this company. Analysis draws from historical sector averages.
+                Accuracy improves once live signals are available.
+              </p>
+            </div>
+          );
+        }
+        if (tier === 'stale') {
+          return (
+            <div
+              className="flex items-start gap-2.5 rounded-xl px-3.5 py-3"
+              style={{ background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.20)' }}
+            >
+              <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#94a3b8' }} />
+              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <span className="font-semibold" style={{ color: '#94a3b8' }}>Partial live data — </span>
+                some signals are cached. Score reflects available data supplemented by cached baselines.
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
+      {/* v40.0: Calibration limitation chip for underrepresented segments */}
+      {calibrationLimitation.limited && calibrationLimitation.reason && (
+        <div
+          className="flex items-start gap-2.5 rounded-xl px-3.5 py-2.5"
+          style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.20)' }}
+        >
+          <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <span className="font-semibold" style={{ color: '#f59e0b' }}>Calibration note: </span>
+            {calibrationLimitation.reason}
+          </p>
+        </div>
+      )}
 
       {/* ── Tier-1: Quick stats ────────────────────────────────────────────── */}
       <motion.div

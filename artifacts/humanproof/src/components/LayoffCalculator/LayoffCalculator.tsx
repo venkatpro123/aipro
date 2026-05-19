@@ -541,7 +541,8 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       scenarioArchetypeLabel: (shadowEnsemble as any)?.scenarioArchetypeLabel ?? pipelineResult.scenarioArchetypeLabel,
       indiaSpecificInsight: (shadowEnsemble as any)?.indiaSpecificInsight ?? pipelineResult.indiaSpecificInsight,
       confidenceNote: (shadowEnsemble as any)?.confidenceNote ?? pipelineResult.confidenceNote,
-      resolvedPattern: (shadowEnsemble as any)?.resolvedPattern ?? pipelineResult.resolvedPattern,
+      resolvedPattern:           (shadowEnsemble as any)?.resolvedPattern           ?? pipelineResult.resolvedPattern,
+      patternMatchOverlapScore:  (shadowEnsemble as any)?.patternMatchOverlapScore  ?? pipelineResult.patternMatchOverlapScore,
       agentStatus: (shadowEnsemble as any)?.agentStatus ?? pipelineResult.agentStatus,
       meta: {
         ...pipelineResult.meta,

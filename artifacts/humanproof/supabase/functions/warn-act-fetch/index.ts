@@ -647,6 +647,29 @@ serve(async (req: Request) => {
     return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
   }
 
+  // v40 hardening: require Supabase JWT. This EF scrapes state DOL portals
+  // and bulk-writes warn_filings — without auth it was an open relay that
+  // anyone could spam to abuse the state portals under our IP and inflate
+  // our DB. JWT requirement keeps it usable by pg_cron (service role) and
+  // by authenticated admin tooling but rejects anonymous traffic.
+  {
+    const authHeader = req.headers.get('Authorization') ?? '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return jsonResponse({ error: 'Missing Authorization header' }, 401);
+    }
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY')!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return jsonResponse({ error: 'Invalid or expired token' }, 401);
+    } catch {
+      return jsonResponse({ error: 'Auth check failed' }, 401);
+    }
+  }
+
   // ── Parse request body ────────────────────────────────────────────────────
   let states: string[]     = DEFAULT_STATES;
   let companyName: string | undefined;

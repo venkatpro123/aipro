@@ -31,6 +31,23 @@ export interface SwarmInput {
   /** Named peer layoff events from COMPANY_INTELLIGENCE_DB — enables temporal
    *  contagion analysis in sectorContagionAgent. Absent = static fallback. */
   peerLayoffEvents?:  PeerLayoffEvent[];
+  /**
+   * Total number of companies in COMPANY_INTELLIGENCE_DB that match the target
+   * industry (including those with no recent layoffs). Required by
+   * sectorContagionAgent to compute sectorCuttingFraction:
+   *
+   *   sectorCuttingFraction = recentCuts / totalTrackedSectorCompanies
+   *
+   * When this fraction exceeds MACRO_TRIGGER_FRACTION (0.40), the agent
+   * applies a macro correction — reducing the contagion premium and
+   * converging the signal toward the industry baseline, because broad
+   * market corrections affect all companies regardless of individual health.
+   *
+   * When absent: sectorContagionAgent falls back to baselineRisk as a crude
+   * proxy, which may over-fire for high-baseline industries (see comments in
+   * sectorContagionAgent.ts).
+   */
+  totalTrackedSectorCompanies?: number;
 }
 
 // ── Per-Agent Output ─────────────────────────────────────────────────────────

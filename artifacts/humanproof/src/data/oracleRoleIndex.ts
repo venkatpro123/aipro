@@ -190,12 +190,19 @@ export const ALL_ORACLE_ROLES: OracleRoleEntry[] = getAllOracleRoles();
 const SENIORITY_TOKENS = new Set(['senior', 'junior', 'lead', 'staff', 'principal', 'head', 'chief', 'associate', 'manager', 'director', 'vp', 'executive']);
 
 /**
- * Count how many non-seniority query words appear in the entry's display title.
- * Higher count = semantically closer match regardless of title length.
+ * Count how many non-seniority query words appear in the entry's display title
+ * as whole words (not substrings).
+ *
+ * v40.0 FIX-7: previously used `.includes(w)` which over-matched — searching
+ * for "data" would match "metadata analyst" with the same weight as "data
+ * analyst", because "metadata" contains "data" as a substring. Now we split
+ * the title into whitespace/punct tokens and require exact word equality.
  */
 const domainWordOverlap = (entry: OracleRoleEntry, qWords: string[]): number => {
-  const titleLow = entry.displayTitle.toLowerCase();
-  return qWords.filter(w => !SENIORITY_TOKENS.has(w) && titleLow.includes(w)).length;
+  const titleTokens = new Set(
+    entry.displayTitle.toLowerCase().split(/[\s.,;:()\[\]/\-_]+/).filter(Boolean)
+  );
+  return qWords.filter(w => !SENIORITY_TOKENS.has(w) && titleTokens.has(w)).length;
 };
 
 /**

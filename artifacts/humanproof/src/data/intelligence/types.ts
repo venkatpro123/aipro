@@ -29,6 +29,39 @@ export interface SkillDemandLive {
   ageInDays: number;
 }
 
+/**
+ * CompanySkillDemandLive — company-specific demand signal for a skill.
+ *
+ * Source: company_skill_demand_cache, populated by naukriConnector after
+ * each successful live scrape for this company × role_prefix combination.
+ *
+ * CRITICAL LABELING RULE:
+ *   This is a DIFFERENT confidence level from SkillDemandLive (industry/role-level).
+ *   When companyDemand is present, the industry-level demandLive MUST be suppressed.
+ *   Never render both simultaneously — they would imply equal confidence.
+ *
+ * Delta thresholds (applied in applyCompanySkillOverlay):
+ *   delta90dPct < -25 → skill becomes at_risk (company is cutting this role)
+ *   delta90dPct > +30 → safe skill gets "demand rising" reinforcement
+ */
+export interface CompanySkillDemandLive {
+  /** The company this signal belongs to. */
+  companyName: string;
+  /**
+   * Percentage change in openings vs the previous snapshot (~30–90 days ago).
+   * Null on first scrape (no historical comparison available yet).
+   */
+  delta90dPct: number | null;
+  /** Current total openings at this company for roles requiring this skill. */
+  currentOpenings: number | null;
+  /** Demand direction derived from the trend label. */
+  demandTrend: 'surging' | 'growing' | 'stable' | 'contracting';
+  /** ISO timestamp when the Naukri/LinkedIn data was collected. */
+  scrapedAt: string;
+  /** Days since scrapedAt — drives the freshness badge. */
+  ageInDays: number;
+}
+
 export interface SkillRisk {
   skill: string;
   riskScore: number;        // 0–100
@@ -37,8 +70,10 @@ export interface SkillRisk {
   reason: string;
   aiReplacement: 'Full' | 'Partial' | 'None' | string;
   aiTool?: string;
-  /** Live job-market demand overlay — populated at runtime from market_intelligence_cache. */
+  /** Industry/role-level demand overlay from market_intelligence_cache. Suppressed when companyDemand is present. */
   demandLive?: SkillDemandLive;
+  /** Company-specific demand signal from company_skill_demand_cache. Mutually exclusive with demandLive in the UI. */
+  companyDemand?: CompanySkillDemandLive;
 }
 
 export interface SafeSkill {
@@ -47,8 +82,10 @@ export interface SafeSkill {
   longTermValue: number;    // 0–100
   difficulty: 'Low' | 'Medium' | 'High' | 'Very High' | 'Extremely High' | string;
   resource?: string;
-  /** Live job-market demand overlay — populated at runtime from market_intelligence_cache. */
+  /** Industry/role-level demand overlay from market_intelligence_cache. Suppressed when companyDemand is present. */
   demandLive?: SkillDemandLive;
+  /** Company-specific demand signal from company_skill_demand_cache. Mutually exclusive with demandLive in the UI. */
+  companyDemand?: CompanySkillDemandLive;
 }
 
 export interface CareerPath {

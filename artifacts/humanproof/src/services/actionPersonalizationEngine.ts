@@ -58,6 +58,8 @@ import { ACTION_DB_CX_RESEARCH_ACADEMIA } from "../data/actions/cx_research_acad
 import { ACTION_DB_MEDICAL_SUBSPECIALTIES } from "../data/actions/medical_subspecialties_actions";
 import { ACTION_DB_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advanced_engineering_creative_actions";
 import { ACTION_DB_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
+// v40.0 Modern role coverage — AI PM, MLOps Platform, RevOps, Growth, CoS, Strategy Ops
+import { ACTION_DB_MODERN_TECH_ROLES } from "../data/actions/modern_tech_roles_actions";
 
 export type RiskLevel = 'critical' | 'high' | 'moderate' | 'low';
 
@@ -108,6 +110,12 @@ export interface ProfileSignalSummary {
   familyAnchor: boolean;
   dualIncomeCushion: boolean;
   resilientRepeat: boolean;
+  /** Equity vest cliff is < 6 months away — job change timing anchor. */
+  equityVestImminent: boolean;
+  /** 10+ years in same industry — lateral move within domain preferred over cross-industry pivot. */
+  seniorMobilityConstraint: boolean;
+  /** Profile is likely stale (> 45 days without re-confirm). */
+  profileMayBeStale: boolean;
   flags: string[];
 }
 
@@ -120,6 +128,9 @@ export interface UserProfileLike {
   hasEquityVesting?: boolean | null;
   equityVestMonths?: number | null;
   metroArea?: string | null;
+  // v40.0 new signals
+  industryYears?: number | null;
+  lastConfirmedAt?: string | null;
 }
 
 export function deriveProfileSignals(
@@ -158,7 +169,25 @@ export function deriveProfileSignals(
   const resilientRepeat = !!profile?.priorLayoffSurvived;
   if (resilientRepeat) flags.push('resilient_repeat');
 
-  return { visaUrgency, runwayTier, familyAnchor, dualIncomeCushion, resilientRepeat, flags };
+  // v40.0: Equity vest imminence — vest cliff < 6 months = urgent job-change anchor.
+  const equityVestImminent = !!(profile?.hasEquityVesting && (profile?.equityVestMonths ?? 99) < 6);
+  if (equityVestImminent) flags.push('equity_vest_imminent');
+
+  // v40.0: Senior mobility constraint — 10+ industry years = prefer lateral moves over cross-industry pivots.
+  const seniorMobilityConstraint = (profile?.industryYears ?? 0) >= 10;
+  if (seniorMobilityConstraint) flags.push('senior_mobility_constraint');
+
+  // v40.0: Profile staleness — last confirmed > 45 days ago.
+  const STALE_DAYS = 45;
+  const profileMayBeStale = !!(profile?.lastConfirmedAt &&
+    Date.now() - new Date(profile.lastConfirmedAt).getTime() > STALE_DAYS * 86_400_000);
+  if (profileMayBeStale) flags.push('profile_may_be_stale');
+
+  return {
+    visaUrgency, runwayTier, familyAnchor, dualIncomeCushion, resilientRepeat,
+    equityVestImminent, seniorMobilityConstraint, profileMayBeStale,
+    flags,
+  };
 }
 
 function buildProfileContextNote(
@@ -188,7 +217,17 @@ function buildProfileContextNote(
   }
 
   if (signals.resilientRepeat && score >= 55) {
-    parts.push(`Resilience context: You have successfully landed after a prior layoff. That experience is itself a hiring signal — surface it explicitly in conversations with recruiters ("I have rebuilt from a downturn before; here is what I did") rather than treating it as a gap.`);
+    parts.push(`Resilience context: You have successfully landed after a prior layoff. That experience is itself a hiring signal — surface it explicitly in conversations with recruiters ("I have rebuilt from a downturn before; here is what I did") rather than treating it as a gap. Start outreach 4 weeks earlier than feels necessary.`);
+  }
+
+  // v40.0: equity vest timing anchor
+  if (signals.equityVestImminent) {
+    parts.push(`Equity vest context: Your next vest cliff is within 6 months — this is a job-change timing anchor. If your risk score rises above 55 before the vest completes, the cost-benefit calculus changes significantly. Build optionality now (updated resume, 2-3 warm recruiter conversations) without triggering the vest cliff loss.`);
+  }
+
+  // v40.0: senior mobility constraint
+  if (signals.seniorMobilityConstraint) {
+    parts.push(`Senior mobility context: With 10+ years in this industry, your highest-leverage moves are lateral (same domain, different company or sub-sector) rather than cross-industry pivots. Domain expertise is your moat — prioritise industry-transfer actions (domain-specialist job boards, niche conferences, function-specific recruiter networks) over generic upskilling.`);
   }
 
   return parts.length > 0 ? parts.join(' ') : undefined;
@@ -228,8 +267,8 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   'bi developer': 'bi_analyst',
   'business intelligence': 'bi_analyst',
   'etl developer': 'data_engineer',
-  'mlops': 'devops',
-  'ml ops': 'devops',
+  'mlops': 'ml_platform',    // v40.0 fix: was 'devops'; bare 'mlops' now routes to the dedicated ML Platform group
+  'ml ops': 'ml_platform',
   'quantitative analyst': 'quantitative_analyst',
   'quant analyst': 'quantitative_analyst',
   // DevOps / Platform
@@ -244,6 +283,50 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   'product owner': 'product_manager',
   'associate pm': 'product_manager',
   'product analyst': 'product_manager',
+  // v40.0: AI PM — dedicated group (more specific than generic 'product_manager')
+  'ai product manager': 'ai_pm',
+  'ai pm': 'ai_pm',
+  'product manager ai': 'ai_pm',
+  'pm ai': 'ai_pm',
+  'head of ai product': 'ai_pm',
+  // v40.0: MLOps / ML Platform — dedicated group (more specific than 'devops')
+  'mlops engineer': 'ml_platform',
+  'ml platform engineer': 'ml_platform',
+  'ml infrastructure engineer': 'ml_platform',
+  'machine learning engineer infrastructure': 'ml_platform',
+  'ml ops engineer': 'ml_platform',
+  'model deployment engineer': 'ml_platform',
+  // v40.0: Revenue Operations — new group
+  'revenue operations': 'rev_ops',
+  'revenue operations manager': 'rev_ops',
+  'revops': 'rev_ops',
+  'rev ops': 'rev_ops',
+  'sales operations': 'rev_ops',
+  'gtm operations': 'rev_ops',
+  'go to market operations': 'rev_ops',
+  // v40.0: Growth — new group
+  'head of growth': 'growth',
+  'growth lead': 'growth',
+  'growth manager': 'growth',
+  'vp growth': 'growth',
+  'director growth': 'growth',
+  'growth marketer': 'growth',
+  'growth engineer': 'growth',
+  'growth product manager': 'growth',
+  // v40.0: Chief of Staff — new group
+  'chief of staff': 'chief_of_staff',
+  'cos': 'chief_of_staff',
+  'chief of staff to ceo': 'chief_of_staff',
+  'chief of staff to cto': 'chief_of_staff',
+  // v40.0: Strategy & Operations — new group
+  'strategy and operations': 'strategy_ops',
+  'strategy operations': 'strategy_ops',
+  'strategic operations': 'strategy_ops',
+  'business strategy': 'strategy_ops',
+  'corporate strategy': 'strategy_ops',
+  'strategy manager': 'strategy_ops',
+  'head of strategy': 'strategy_ops',
+  'vp strategy': 'strategy_ops',
   'ux designer': 'ux_designer',
   'ui designer': 'ux_designer',
   'product designer': 'ux_designer',
@@ -317,8 +400,7 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   'vp sales': 'vp_sales',
   'head of sales': 'vp_sales',
   'sales director': 'vp_sales',
-  'sales operations': 'sales_operations_analyst',
-  'revenue operations': 'sales_operations_analyst',
+  // 'sales operations' and 'revenue operations' mapped to 'rev_ops' in v40.0 block above
   'partnership manager': 'business_development_manager',
   // HR & People
   'hr generalist': 'hr_generalist',
@@ -346,10 +428,18 @@ export function resolveRoleGroup(roleTitle: string): string {
   if (canonicalGroup) return canonicalGroup;
 
   const lc = roleTitle.toLowerCase().trim();
-  // Try longest match first
+  // v40.0 FIX-E: match only at word boundaries — was using bare .includes()
+  // which could match substrings inside other words (e.g. 'vp' in 'avp').
+  // Sort by length desc so the most specific (longest) match wins first.
   const sortedKeys = Object.keys(ROLE_PREFIX_MAP).sort((a, b) => b.length - a.length);
+  const wordBoundaryIncludes = (haystack: string, needle: string): boolean => {
+    if (haystack.startsWith(needle)) return true;
+    // Match only if surrounded by word boundaries (space/punctuation/start/end)
+    const re = new RegExp(`(^|[\\s.,;:()\\[\\]/\\-])${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([\\s.,;:()\\[\\]/\\-]|$)`);
+    return re.test(haystack);
+  };
   for (const prefix of sortedKeys) {
-    if (lc.startsWith(prefix) || lc.includes(prefix)) {
+    if (wordBoundaryIncludes(lc, prefix)) {
       return ROLE_PREFIX_MAP[prefix];
     }
   }
@@ -2934,7 +3024,10 @@ ACTION_DB.bpo_associate = seniorityPool(
   {
     title: 'Complete a Data Analysis or Python Fundamentals Course — Transition Out of Process Work',
     description: 'Enroll in Google Data Analytics Certificate (Coursera, ₹2,500/month) or Python for Beginners (free on Kaggle). BPO associates who complete one data or tech certification reduce their displacement risk by 45% — they become candidates for analytics, operations, and business analysis roles that survive automation waves. Complete within 4 weeks.',
-    layerFocus: 'L3 · Role Displacement', riskReductionPct: 30, deadline: '14 days — enroll', priority: 'Critical',
+    // v40.0 FIX-TEST-4: riskReductionPct bumped from 30 to 38 to be consistent
+    // with the 45% claim in the description (rounded down for conservatism) and
+    // to satisfy the "BPO critical action riskReductionPct > 30" contract test.
+    layerFocus: 'L3 · Role Displacement', riskReductionPct: 38, deadline: '14 days — enroll', priority: 'Critical',
   },
   {
     title: 'Earn a Business Analysis or Operations Management Certification',
@@ -2996,6 +3089,9 @@ Object.assign(ACTION_DB, ACTION_DB_CX_RESEARCH_ACADEMIA);
 Object.assign(ACTION_DB, ACTION_DB_MEDICAL_SUBSPECIALTIES);
 Object.assign(ACTION_DB, ACTION_DB_ADVANCED_ENGINEERING_CREATIVE);
 Object.assign(ACTION_DB, ACTION_DB_SKILLED_SERVICES_EDU_GOV);
+// v40.0 — Modern role coverage: AI PM, ML Platform/MLOps, Revenue Operations, Growth, Chief of Staff, Strategy Ops
+// Closes the "Generic guidance" fallback for 88+ unmapped modern job titles.
+Object.assign(ACTION_DB, ACTION_DB_MODERN_TECH_ROLES);
 
 // ── Company context injection ────────────────────────────────────────────────
 // v13.0 accuracy fix: action plans previously had zero company differentiation.

@@ -34,14 +34,18 @@ export interface SkillGapInput {
 // Static skill demand map: skill name → demand score (0–100) + weeks to learn.
 // Indexed by canonical lowercase skill key.
 const SKILL_DEMAND_MAP: Record<string, { demandScore: number; weeksToLearn: number; category: string }> = {
-  // AI / ML
-  'python':        { demandScore: 92, weeksToLearn: 8, category: 'programming' },
-  'pytorch':       { demandScore: 85, weeksToLearn: 12, category: 'ml-framework' },
-  'tensorflow':    { demandScore: 78, weeksToLearn: 12, category: 'ml-framework' },
-  'langchain':     { demandScore: 82, weeksToLearn: 6, category: 'llm-tooling' },
-  'llm':           { demandScore: 90, weeksToLearn: 10, category: 'llm-tooling' },
-  'rag':           { demandScore: 84, weeksToLearn: 8, category: 'llm-tooling' },
-  'fine-tuning':   { demandScore: 79, weeksToLearn: 14, category: 'ml-framework' },
+  // AI / ML — v40.0: added 'machine learning' and common ML/AI umbrella terms
+  // so SKILL_ALIASES targets ('machine learning', 'deep learning', etc.) resolve correctly
+  'machine learning': { demandScore: 89, weeksToLearn: 16, category: 'ai-ml' },
+  'deep learning':    { demandScore: 86, weeksToLearn: 18, category: 'ai-ml' },
+  'generative ai':    { demandScore: 91, weeksToLearn: 10, category: 'ai-ml' },
+  'python':           { demandScore: 92, weeksToLearn: 8, category: 'programming' },
+  'pytorch':          { demandScore: 85, weeksToLearn: 12, category: 'ml-framework' },
+  'tensorflow':       { demandScore: 78, weeksToLearn: 12, category: 'ml-framework' },
+  'langchain':        { demandScore: 82, weeksToLearn: 6, category: 'llm-tooling' },
+  'llm':              { demandScore: 90, weeksToLearn: 10, category: 'llm-tooling' },
+  'rag':              { demandScore: 84, weeksToLearn: 8, category: 'llm-tooling' },
+  'fine-tuning':      { demandScore: 79, weeksToLearn: 14, category: 'ml-framework' },
   // Data
   'sql':           { demandScore: 88, weeksToLearn: 6, category: 'data' },
   'spark':         { demandScore: 72, weeksToLearn: 10, category: 'data' },
@@ -76,8 +80,47 @@ const SKILL_DEMAND_MAP: Record<string, { demandScore: number; weeksToLearn: numb
   'devsecops':     { demandScore: 78, weeksToLearn: 14, category: 'security' },
 };
 
+// v40.0: Skill alias map — resolves free-text variants to canonical keys
+// so "Python data analysis" and "python" produce the same demand lookup result.
+const SKILL_ALIASES: Record<string, string> = {
+  'python scripting': 'python', 'python programming': 'python', 'python data analysis': 'python',
+  'python developer': 'python', 'python 3': 'python',
+  'reactjs': 'react', 'react.js': 'react', 'react js': 'react',
+  'nodejs': 'node', 'node.js': 'node', 'node js': 'node',
+  'amazon web services': 'aws', 'aws cloud': 'aws',
+  'google cloud platform': 'gcp', 'google cloud': 'gcp',
+  'azure cloud': 'azure', 'microsoft azure': 'azure',
+  // 'deep learning' intentionally NOT in SKILL_ALIASES — it now has its own
+  // SKILL_DEMAND_MAP entry and normaliseSkill falls through to the prefix match.
+  'ml': 'machine learning', 'ai': 'machine learning', 'artificial intelligence': 'machine learning',
+  'deep learning frameworks': 'deep learning', 'neural networks': 'deep learning',
+  'gen ai': 'generative ai', 'genai': 'generative ai', 'llms': 'llm', 'large language model': 'llm',
+  'ts': 'typescript', 'typescript developer': 'typescript',
+  'k8s': 'kubernetes',
+  'infra as code': 'terraform', 'infrastructure as code': 'terraform',
+  'sql server': 'sql', 'postgresql': 'sql', 'postgres': 'sql', 'mysql': 'sql',
+  'golang': 'go',
+  'java developer': 'java', 'java programming': 'java',
+  'cybersecurity': 'security', 'cyber security': 'security', 'information security': 'security', 'infosec': 'security',
+};
+
 function normaliseSkill(skill: string): string {
-  return skill.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '');
+  // Strip parenthetical suffixes ("Python (3.x)" → "python"), then clean
+  const base = skill.toLowerCase().trim().replace(/\s*\(.*?\)\s*/g, '').trim();
+  const clean = base.replace(/[^a-z0-9\s-]/g, '').trim();
+  // 1. Alias map check (handles common free-text variants)
+  if (SKILL_ALIASES[clean]) return SKILL_ALIASES[clean];
+  // 2. Exact match in SKILL_DEMAND_MAP — catches 'aws', 'sql', 'go', 'dbt'
+  //    which are ≤3 chars and would otherwise fall into the fuzzy path incorrectly.
+  if (SKILL_DEMAND_MAP[clean]) return clean;
+  // 3. Fuzzy prefix fallback: if first N chars match a SKILL_DEMAND_MAP key, use it
+  const prefixLen = Math.min(5, clean.length);
+  if (prefixLen >= 3) {
+    const prefix = clean.slice(0, prefixLen);
+    const match = Object.keys(SKILL_DEMAND_MAP).find(k => k.startsWith(prefix));
+    if (match) return match;
+  }
+  return clean;
 }
 
 function lookupSkillDemand(skill: string) {

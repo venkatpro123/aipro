@@ -68,6 +68,8 @@ import type { CareerContingencyPlan } from "../services/careerContingencyPlanEng
 import type { PreparednessResult } from "../services/preparednessScoreEngine";
 // v35.0 intelligence layers (55)
 import type { PersonalRiskModifier } from "../services/personalRiskAdjusterService";
+// v39.0 D2 — unified freshness verdict
+import type { UnifiedFreshness } from "../services/freshnessUnifier";
 
 // ============================================================================
 // Sub-Interfaces
@@ -368,10 +370,17 @@ export interface HybridResult {
   /**
    * Verified historical precedent that matches this user's signal profile.
    * null when no pattern meets the 70% overlap threshold.
-   * Never LLM-generated — always looked up from HISTORICAL_PATTERNS database.
-   * Rendered as a structured card in TransparencyTab (not as prose).
+   * Set deterministically by matchHistoricalPattern() — never by LLM output.
+   * Rendered as a structured card (not as prose). Never invented at runtime.
    */
   resolvedPattern?: HistoricalPattern | null;
+
+  /**
+   * Signal overlap score (0.70–1.00) for the matched pattern, or null when
+   * no pattern matched. Used to render the confidence meter in PatternMatchCard.
+   * Always accompanies resolvedPattern — null iff resolvedPattern is null.
+   */
+  patternMatchOverlapScore?: number | null;
 
   // ── Narrative intelligence ────────────────────────────────────────────────
   primaryRiskDriver?: string | null;
@@ -898,7 +907,80 @@ export interface HybridResult {
    * network strength, career velocity). Applied after all kill-switches.
    */
   personalRiskModifier?: PersonalRiskModifier;
+
+  // ── v39.0 D2: Unified freshness verdict ──────────────────────────────────
+  /**
+   * Single canonical freshness verdict computed from all pipeline freshness
+   * signals. UI surfaces should read this instead of computing from raw
+   * companyData fields. Tier 'heuristic' means no live data was retrieved —
+   * the UI must disclose this explicitly (v40.0 audit gap #2 fix).
+   */
+  unifiedFreshness?: UnifiedFreshness;
+
+  // ── v40.0: DAG layer degradation count ────────────────────────────────────
+  /** Number of DAG layers that fell back to defaults this audit. > 2 triggers a UI warning. */
+  _dagDegradedLayerCount?: number;
+
+  // ── v40.0: Score delta (30-day trend) ────────────────────────────────────
+  /**
+   * Score velocity vs 30 days ago. Computed from scoreStorageService using
+   * the user's audit history. Rendered in SummaryTab as "+Xpt improving" or
+   * "-Xpt worsening" badge. null when no prior audit exists for comparison.
+   */
+  scoreDelta?: {
+    delta30d: number | null;
+    direction: 'improving' | 'worsening' | 'stable';
+  } | null;
 }
+
+// ============================================================================
+// v40.0 Tab-Slice Types (Task 3.2)
+// Each slice is a Pick<HybridResult, ...> containing only the fields the tab
+// actually renders. Allows future per-tab memoization to prevent cross-tab
+// re-renders when an unrelated field changes.
+// ============================================================================
+
+export type SummaryTabSlice = Pick<HybridResult,
+  | 'total' | 'confidencePercent' | 'confidence' | 'tier' | 'breakdown'
+  | 'dataFreshness' | 'signalQuality' | 'recommendations'
+  | 'intelligenceBrief' | 'preparednessScore' | 'personalRiskModifier'
+  | 'predictionHorizon' | 'unifiedFreshness' | 'warnSignal'
+  | 'industryKey' | 'countryKey' | 'workTypeKey'
+  | 'primaryRiskDriver' | 'sixMonthInactionConsequence'
+  | 'activatedKillSwitches' | 'dimensions'
+>;
+
+export type CompanyTabSlice = Pick<HybridResult,
+  | 'total' | 'warnSignal' | 'secEnhancedSignals' | 'blsMacroSignal'
+  | 'hiringSignal' | 'headcountVelocity' | 'employeeSentiment'
+  | 'glassdoorVelocity' | 'peerContagion' | 'macroEconomicRisk'
+  | 'executiveMovement' | 'signalQuality' | 'leadershipTransitionRisk'
+  | 'maRisk'
+>;
+
+export type ProtectionTabSlice = Pick<HybridResult,
+  | 'total' | 'confidencePercent' | 'preparednessScore'
+  | 'skillGapIntelligence' | 'skillPortfolioFit' | 'careerVelocity'
+  | 'careerContingencyPlan' | 'contingencyPlanStatus'
+  | 'careerConfidence' | 'visaRisk' | 'userFinancialRunway'
+  | 'roleMarketDemand' | 'careerResilience' | 'networkLeverage'
+  | 'personalRiskModifier'
+>;
+
+export type ActionsTabSlice = Pick<HybridResult,
+  | 'total' | 'confidencePercent' | 'recommendations'
+  | 'careerContingencyPlan' | 'contingencyPlanStatus'
+  | 'intelligenceBrief' | 'negotiationIntelligence'
+  | 'strategySynthesis' | 'emergencyResponse'
+>;
+
+export type IntelligenceTabSlice = Pick<HybridResult,
+  | 'total' | 'confidencePercent' | 'breakdown' | 'dimensions'
+  | 'scoreSensitivity' | 'signalContradictions' | 'modelCalibration'
+  | 'bayesianCI' | 'signalQuality' | 'dataFreshness' | 'consensusSnapshot'
+  | 'intelligenceBrief' | 'scenarioPlan' | 'predictionHorizon'
+  | 'activatedKillSwitches' | 'calibrationCoverage' | 'unifiedFreshness'
+>;
 
 // ============================================================================
 // Utility Type Guards

@@ -84,12 +84,32 @@ function saveBufferedEvents(): void {
   } catch {}
 }
 
+// v40.0 production-readiness: analytics endpoint is opt-in via env var.
+// Default endpoint `/api/v1/analytics/track` may not exist in all deployments;
+// without this gate, every flush burned bandwidth on doomed POST requests.
+// Set VITE_ANALYTICS_ENDPOINT in Vercel to enable. When unset, analytics are
+// buffered in-memory only (still useful for SLO dashboard via localStorage read).
+const ANALYTICS_ENDPOINT: string | null = (() => {
+  try {
+    const v = (import.meta as any).env?.VITE_ANALYTICS_ENDPOINT;
+    return typeof v === 'string' && v.length > 0 ? v : null;
+  } catch {
+    return null;
+  }
+})();
+
 function sendBeaconOrFetch(data: string): void {
+  if (!ANALYTICS_ENDPOINT) {
+    // No endpoint configured — events stay buffered in localStorage where ops
+    // can read them via getBufferedEvents(). Nothing is silently lost; just
+    // not POSTed. See VITE_ANALYTICS_ENDPOINT in Vercel project settings.
+    return;
+  }
   try {
     if (navigator.sendBeacon) {
-      navigator.sendBeacon('/api/v1/analytics/track', data);
+      navigator.sendBeacon(ANALYTICS_ENDPOINT, data);
     } else {
-      fetch('/api/v1/analytics/track', {
+      fetch(ANALYTICS_ENDPOINT, {
         method: 'POST',
         body: data,
         headers: { 'Content-Type': 'application/json' },

@@ -32,8 +32,13 @@ import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
+import { TabErrorBoundary } from '../common/TabErrorBoundary';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import EmergencyModeBanner from '../common/EmergencyModeBanner';
+import { riskColor, riskLabel } from '../../../lib/riskTokens';
+import { track } from '../../../services/analyticsService';
+import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
+import { supabase as _supabase } from '../../../utils/supabase';
 
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
@@ -58,13 +63,7 @@ interface Props {
 
 type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'transparency';
 
-// ── Score color helpers ───────────────────────────────────────────────────────
-
-const riskColor = (s: number) =>
-  s >= 75 ? '#dc2626' : s >= 55 ? '#f97316' : s >= 35 ? '#f59e0b' : '#10b981';
-
-const riskLabel = (s: number) =>
-  s >= 75 ? 'CRITICAL' : s >= 55 ? 'HIGH' : s >= 35 ? 'MODERATE' : 'LOW';
+// riskColor and riskLabel are imported from lib/riskTokens.ts (v40.0).
 
 // ── Tab loader ────────────────────────────────────────────────────────────────
 
@@ -216,6 +215,9 @@ const DesktopTabBar: React.FC<{
   result: HybridResult;
 }> = ({ active, onChange, result }) => (
   <div
+    data-tab-bar
+    role="tablist"
+    aria-label="Dashboard sections"
     className="hidden sm:flex items-center gap-1 px-2 py-2 overflow-x-auto"
     style={{
       background: 'rgba(9,12,20,0.92)',
@@ -229,6 +231,9 @@ const DesktopTabBar: React.FC<{
       return (
         <button
           key={value}
+          role="tab"
+          aria-selected={isActive}
+          aria-current={isActive ? 'page' : undefined}
           onClick={() => onChange(value)}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap relative"
           style={{
@@ -261,6 +266,8 @@ const MobileBottomNav: React.FC<{
   result: HybridResult;
 }> = ({ active, onChange, result }) => (
   <div
+    role="tablist"
+    aria-label="Dashboard sections"
     className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center"
     style={{
       background: 'rgba(9,12,20,0.96)',
@@ -269,13 +276,16 @@ const MobileBottomNav: React.FC<{
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}
   >
-    {TAB_CONFIG.map(({ value, shortLabel, Icon, getBadge }) => {
+    {TAB_CONFIG.map(({ value, label, shortLabel, Icon, getBadge }) => {
       const isActive = value === active;
       const badge    = getBadge?.(result);
       const color    = isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.45)';
       return (
         <button
           key={value}
+          role="tab"
+          aria-selected={isActive}
+          aria-label={`${label} tab${badge ? `: ${badge.text}` : ''}`}
           onClick={() => onChange(value)}
           className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 relative transition-colors"
           style={{ color }}
@@ -310,10 +320,45 @@ const MobileBottomNav: React.FC<{
 
 export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const { result, companyData } = props;
-  const adaptation = useDashboardAdaptation(result, companyData);
+  // v40.0 FIX-9: fetch profile for cross-device first-audit detection.
+  // Also listens to auth state changes so a late login (user was anonymous,
+  // then authenticates) triggers a re-fetch — without this, the profile is
+  // never retrieved and cross-device first-audit detection silently fails.
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // v40.0 FIX-10: force a re-render when localStorage changes from another tab
+  // so the first-audit welcome correctly hides if dismissed in another tab.
+  const [, forceRerender] = useState(0);
+  useEffect(() => {
+    const load = () => fetchUserProfile().then(p => { if (p) setUserProfile(p); }).catch(() => {});
+    load();
+    const { data: { subscription } } = _supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) load(); // refetch profile whenever auth state has a user
+    });
+    const onStorage = (e: StorageEvent) => {
+      // Cross-tab sync for first-audit-seen flag and quick-capture done flag
+      if (e.key === 'hp.v34.firstAuditSeen' || e.key === 'hp.quickCapture.done') {
+        forceRerender(n => n + 1);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  const adaptation = useDashboardAdaptation(result, companyData, userProfile);
   const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // v40.0 FIX-13: sync activeTab when the adaptation's defaultTab changes.
+  // useState only initializes once, so if profile loads late and changes the
+  // adaptation mode (e.g., emergency → stable), the tab auto-switches to reflect
+  // the correct default. Guard: only switch if the user hasn't manually changed tab.
+  const [userChangedTab, setUserChangedTab] = useState(false);
+  useEffect(() => {
+    if (!userChangedTab) setActiveTab(adaptation.defaultTab as TabValue);
+  }, [adaptation.defaultTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Show sticky header once user scrolls past ~80px
   useEffect(() => {
@@ -327,6 +372,15 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     (el as EventTarget).addEventListener('scroll', onScroll, { passive: true });
     return () => (el as EventTarget).removeEventListener('scroll', onScroll);
   }, []);
+
+  // v40.0 FIX-10: when ProfileQuickCapture completes, trigger a recalculate so
+  // the pipeline re-runs with the newly saved profile data and personalizedSet
+  // is updated with role-specific actions instead of generic fallback ones.
+  useEffect(() => {
+    const handler = () => { props.onRecalculate?.(); };
+    window.addEventListener('hp.quickCapture.completed', handler);
+    return () => window.removeEventListener('hp.quickCapture.completed', handler);
+  }, [props.onRecalculate]);
 
   // v39.0 F4 — listen for cross-tab navigation events so child panels (e.g.
   // SummaryTab's "View all signal weights" link) can request a tab switch
@@ -346,7 +400,53 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     return () => window.removeEventListener('hp.dashboard.navigate', handler as EventListener);
   }, []);
 
+  // v40.0 keyboard navigation — Alt+1–6 for direct tab access; arrow keys
+  // when focus is on the tab bar. Guard: never intercept keys when focus is
+  // inside a text input, textarea, select, or contenteditable.
+  useEffect(() => {
+    const TABS: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
+    const isEditableTarget = (t: EventTarget | null): boolean => {
+      if (!(t instanceof HTMLElement)) return false;
+      const tag = t.tagName.toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' ||
+        t.isContentEditable || !!t.closest('[contenteditable]');
+    };
+    const handler = (e: KeyboardEvent) => {
+      // Don't intercept keys when the user is typing in a form field
+      if (isEditableTarget(e.target)) return;
+      // Alt+1 through Alt+6 — direct tab access
+      if (e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        const n = parseInt(e.key, 10);
+        if (n >= 1 && n <= TABS.length) {
+          e.preventDefault();
+          handleTabChange(TABS[n - 1]);
+        }
+      }
+      // Arrow keys when focus is within the tab bar
+      if (document.activeElement?.closest('[data-tab-bar]')) {
+        if (e.key === 'ArrowRight') {
+          const idx = TABS.indexOf(activeTab);
+          handleTabChange(TABS[(idx + 1) % TABS.length]);
+        } else if (e.key === 'ArrowLeft') {
+          const idx = TABS.indexOf(activeTab);
+          handleTabChange(TABS[(idx - 1 + TABS.length) % TABS.length]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeTab]);
+
   const handleTabChange = (val: TabValue) => {
+    setUserChangedTab(true); // user explicitly chose a tab — stop auto-syncing
+    // v40.0: telemetry for tab navigation
+    track('tab_switched', {
+      from: activeTab,
+      to: val,
+      score: result.total,
+      confidence: result.confidencePercent,
+      freshness_tier: result.unifiedFreshness?.tier,
+    });
     setActiveTab(val);
     scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -388,7 +488,10 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         )}
 
         {/* ── Tab content ──────────────────────────────────────────────────── */}
-        <AnimatePresence mode="wait">
+        {/* v40.0 FIX-7: removed mode="wait" — was forcing exit-then-enter
+            sequentially (~360ms blocking transition per tab switch). Parallel
+            exit/enter feels snappier and avoids perceived lag on rapid clicks. */}
+        <AnimatePresence>
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 6 }}
@@ -399,35 +502,47 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
           >
             {activeTab === 'summary' && (
-              <Suspense fallback={<TabLoader />}>
-                <SummaryTab {...tabProps} />
-              </Suspense>
+              <TabErrorBoundary tabLabel="Summary">
+                <Suspense fallback={<TabLoader />}>
+                  <SummaryTab {...tabProps} />
+                </Suspense>
+              </TabErrorBoundary>
             )}
             {activeTab === 'company' && (
-              <Suspense fallback={<TabLoader />}>
-                <IntelligenceTab {...tabProps} />
-              </Suspense>
+              <TabErrorBoundary tabLabel="Company">
+                <Suspense fallback={<TabLoader />}>
+                  <IntelligenceTab {...tabProps} />
+                </Suspense>
+              </TabErrorBoundary>
             )}
             {activeTab === 'protection' && (
-              <Suspense fallback={<TabLoader />}>
-                <ProtectionTab {...tabProps} />
-              </Suspense>
+              <TabErrorBoundary tabLabel="Protection">
+                <Suspense fallback={<TabLoader />}>
+                  <ProtectionTab {...tabProps} />
+                </Suspense>
+              </TabErrorBoundary>
             )}
             {activeTab === 'actions' && (
-              <Suspense fallback={<TabLoader />}>
-                <ActionsTab {...tabProps} />
-              </Suspense>
+              <TabErrorBoundary tabLabel="Action Plan">
+                <Suspense fallback={<TabLoader />}>
+                  <ActionsTab {...tabProps} />
+                </Suspense>
+              </TabErrorBoundary>
             )}
             {activeTab === 'intel' && (
-              <Suspense fallback={<TabLoader />}>
-                <AnalysisTab {...tabProps} />
-              </Suspense>
+              <TabErrorBoundary tabLabel="Intelligence">
+                <Suspense fallback={<TabLoader />}>
+                  <AnalysisTab {...tabProps} />
+                </Suspense>
+              </TabErrorBoundary>
             )}
             {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
             {activeTab === 'transparency' && (
-              <Suspense fallback={<TabLoader />}>
-                <TransparencyTab {...tabProps} />
-              </Suspense>
+              <TabErrorBoundary tabLabel="Methodology">
+                <Suspense fallback={<TabLoader />}>
+                  <TransparencyTab {...tabProps} />
+                </Suspense>
+              </TabErrorBoundary>
             )}
           </motion.div>
         </AnimatePresence>

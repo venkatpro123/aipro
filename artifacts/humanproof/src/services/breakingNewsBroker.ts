@@ -36,6 +36,7 @@
 
 import { supabase } from '../utils/supabase';
 import { evaluateFlagSync } from '../config/featureFlags';
+import { escapeIlike } from '../utils/ilikeEscape';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -85,11 +86,19 @@ function companyKey(companyName: string): string {
 // ── Polling path ────────────────────────────────────────────────────────────
 
 async function pollForNewEvents(entry: ChannelEntry, key: string): Promise<void> {
+  // v40 hardening: skip polling when the tab is hidden. Page Visibility
+  // gate keeps a background tab from holding open Supabase requests at
+  // 60s cadence — multiplies request load at scale.
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
   try {
+    // v40 hardening: escape ilike() metacharacters in the cache key. `key`
+    // is `companyName.trim().toLowerCase()`, so `_` and `%` from the
+    // company name would otherwise widen the match to unrelated rows.
+    const safeKey = escapeIlike(key);
     const { data, error } = await supabase
       .from('breaking_news_events')
       .select('id,company_name,event_date,headline,percent_cut,affected_count,confidence,source,source_url,industry,region,created_at')
-      .ilike('company_name', `%${key}%`)
+      .ilike('company_name', `%${safeKey}%`)
       .gt('created_at', entry.lastSeenAt)
       .order('created_at', { ascending: true })
       .limit(20);
@@ -134,15 +143,21 @@ function attachRealtime(key: string, entry: ChannelEntry, companyName: string): 
   if (entry.channel) return;
 
   try {
+    // v40 hardening: previously the realtime filter was
+    // `company_name=ilike.%${companyName}%`, which matched substrings on
+    // the server side ("Apple" → "Snapple", "Pineapple") and broadcast
+    // over-broad event streams to every subscriber. Switch to `eq.` against
+    // the resolved canonical name; JS-side filter remains as a defence layer.
+    const safeChannelKey = key.replace(/[^a-z0-9]/g, '_');
     const channel = supabase
-      .channel(`breaking_news_${key.replace(/[^a-z0-9]/g, '_')}`)
+      .channel(`breaking_news_${safeChannelKey}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'breaking_news_events',
-          filter: `company_name=ilike.%${companyName}%`,
+          filter: `company_name=eq.${companyName}`,
         },
         (payload) => {
           const row = payload.new as BreakingNewsEvent;

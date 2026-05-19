@@ -1449,7 +1449,9 @@ html {
   border-radius: var(--radius-full);
   cursor: pointer;
   border: none;
-  outline: none;
+  /* v40.0 a11y: outline removed here; the global `:focus:not(:focus-visible)`
+     rule at the end of this file handles mouse focus, while `:focus-visible`
+     adds a visible cyan outline for keyboard users. */
   text-decoration: none;
   transition: all var(--dur-base) var(--ease-spring);
   position: relative;
@@ -1656,7 +1658,8 @@ select.input {
   font-weight: 500;
   padding: 0 18px;
   height: 52px; /* clear, large touch target */
-  outline: none;
+  /* v40.0 a11y: outline removed; the global :focus:not(:focus-visible) rule
+     keeps keyboard focus indicators while removing them for mouse interaction. */
   appearance: none;
   -webkit-appearance: none;
   transition:
@@ -3575,6 +3578,23 @@ button, a, [role="button"] {
 .more-sheet,
 .audit-tab-content {
   overscroll-behavior: contain;
+}
+
+/* v40.0 a11y FIX-6: respect prefers-reduced-motion globally.
+   Users with vestibular disorders (or who simply prefer less motion) get all
+   animations and transitions collapsed to ~0ms. This satisfies WCAG 2.3.3
+   (Animation from Interactions) without requiring every Framer Motion component
+   to opt in individually. Components that need motion for *correctness* (not
+   decoration) can override via inline style. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Prevent pull-to-refresh on the whole page causing jitter */

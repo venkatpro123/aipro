@@ -33,6 +33,9 @@ import { evaluateFlagSync } from '../config/featureFlags';
 // and the "we capped you" event is observable in layer_fallback_log.
 import { getConstant } from './calibration/calibrationConstants';
 import { markFallback } from './observability/withFallback';
+// v40.0 Task 4.1: entity resolver is now the canonical source for ticker lookup.
+// The local TICKER_MAP below acts as a fallback for companies not yet in the resolver.
+import { resolveEntity } from './companyEntityResolver';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -522,6 +525,13 @@ export const fetchLiveCompanyData = async (
     // capgemini already mapped above under Europe section (CAPMF) — duplicate removed
   };
   const resolvedTicker = ticker ?? (() => {
+    // v40.0: Check entity resolver first (canonical single source of truth).
+    const entity = resolveEntity(companyName);
+    if (entity) {
+      // Entity resolver returns null for private companies — correct behaviour.
+      return entity.ticker;
+    }
+    // Fallback: local TICKER_MAP for companies not yet in the entity resolver.
     const lower = companyName.toLowerCase();
     for (const [key, t] of Object.entries(TICKER_MAP)) {
       if (lower.includes(key) || key.includes(lower)) {

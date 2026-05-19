@@ -105,6 +105,53 @@ function heuristicSignal(
   };
 }
 
+// Normalize a role title to the snake_case key used in company_skill_demand_cache.
+// Must produce the same keys as workTypeKey in the audit pipeline so reads and
+// writes resolve to the same row.
+function normalizeRolePrefix(roleTitle: string): string {
+  return roleTitle
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+// Map a RoleDemandSignal demand trend to the enum stored in the DB.
+function normalizeTrend(
+  trend: 'rising' | 'stable' | 'falling' | string,
+  estimatedOpenings: number | null,
+): 'surging' | 'growing' | 'stable' | 'contracting' {
+  if (trend === 'rising') {
+    return (estimatedOpenings != null && estimatedOpenings > 50) ? 'surging' : 'growing';
+  }
+  if (trend === 'falling') return 'contracting';
+  return 'stable';
+}
+
+/**
+ * Persist a live Naukri/LinkedIn result to company_skill_demand_cache.
+ * Fire-and-forget — errors are logged but never surface to the caller.
+ * The RPC handles delta computation and prev_openings rotation atomically.
+ */
+function persistCompanySkillDemand(signal: RoleDemandSignal): void {
+  if (!signal.isLive) return;
+
+  const rolePrefix = normalizeRolePrefix(signal.roleTitle);
+  const companyName = signal.company.toLowerCase().replace(/\s+/g, '_');
+  const trend = normalizeTrend(signal.demandTrend, signal.estimatedOpenings);
+
+  void supabase.rpc('upsert_company_skill_demand', {
+    p_company_name:      companyName,
+    p_role_prefix:       rolePrefix,
+    p_current_openings:  signal.estimatedOpenings,
+    p_demand_trend:      trend,
+    p_naukri_openings:   signal.naukriOpenings,
+    p_linkedin_openings: signal.linkedinOpenings,
+    p_is_live:           signal.isLive,
+  }).then(({ error }) => {
+    if (error) console.info('[NaukriConnector] company_skill_demand_cache write failed:', error.message);
+  });
+}
+
 export async function fetchRoleDemandSignal(
   roleTitle: string,
   company: string,
@@ -146,7 +193,7 @@ export async function fetchRoleDemandSignal(
       const liveSource = h.scrapeSource === 'scraped'
         ? 'Naukri+Indeed+LinkedIn (scraped)' as const
         : 'Serper API' as const;
-      return {
+      const liveResult: RoleDemandSignal = {
         roleTitle,
         company,
         estimatedOpenings: h.estimatedOpenings ?? null,
@@ -161,6 +208,10 @@ export async function fetchRoleDemandSignal(
           : 'Hiring data from Serper API (paid fallback). Primary path: Naukri+Indeed+LinkedIn direct scraping.',
         fetchedAt:         h.fetchedAt ?? new Date().toISOString(),
       };
+      // Persist to company_skill_demand_cache so CareerSkillsTab can overlay
+      // company-specific demand badges. Fire-and-forget — never blocks the caller.
+      persistCompanySkillDemand(liveResult);
+      return liveResult;
     }
 
     if (error) {
@@ -228,7 +279,7 @@ export async function fetchRoleDemandSignal(
       const linkedinCount = await parseCount(linkedinRes);
       const total = (naukriCount ?? 0) + (linkedinCount ?? 0);
 
-      return {
+      const devResult: RoleDemandSignal = {
         roleTitle,
         company,
         estimatedOpenings: total > 0 ? total : null,
@@ -241,6 +292,8 @@ export async function fetchRoleDemandSignal(
         disclosure:        '',
         fetchedAt:         new Date().toISOString(),
       };
+      persistCompanySkillDemand(devResult);
+      return devResult;
     } catch (e: any) {
       if (isRateLimitError(e)) {
         recordApiDegradation('serper', 'rate_limited', `Direct Serper 429: ${e?.message}`);

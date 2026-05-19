@@ -20,7 +20,8 @@
 //   NEWS_API_KEY          (optional — only used when all RSS sources return 0)
 //   SERPER_API_KEY        (optional — only used when Naukri+Indeed both fail)
 
-import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
+import { serve }        from 'https://deno.land/std@0.208.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -29,6 +30,29 @@ const CORS = {
 };
 const json = (d: unknown, status = 200) =>
   new Response(JSON.stringify(d), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+
+// v40 hardening: gate all proxy actions on a valid Supabase JWT. Without
+// this, the function is an open relay — anonymous callers can burn Naukri,
+// Indeed, Yahoo, Alpha Vantage, NewsAPI and Serper quotas, and scrape
+// third-party sites under our project's IP. 401 immediately on bad auth.
+async function requireAuth(req: Request): Promise<Response | null> {
+  const authHeader = req.headers.get('Authorization') ?? '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return json({ error: 'Missing Authorization header' }, 401);
+  }
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return json({ error: 'Invalid or expired token' }, 401);
+  } catch {
+    return json({ error: 'Auth check failed' }, 401);
+  }
+  return null;
+}
 
 // Rotating user agents for scraping — reduces bot fingerprinting
 const USER_AGENTS = [
@@ -843,6 +867,9 @@ async function fetchScrapeData(companyName: string, timeoutMs?: number): Promise
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  const authFail = await requireAuth(req);
+  if (authFail) return authFail;
 
   try {
     const body = await req.json().catch(() => ({}));

@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /settings
+Disallow: /team
+Disallow: /predictions
+Disallow: /journal
+
+# Limit aggressive crawlers
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+Sitemap: https://www.humanshield.com/sitemap.xml

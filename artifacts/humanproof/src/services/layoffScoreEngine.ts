@@ -423,49 +423,89 @@ function blendArchetypeWeights(
   return blended;
 }
 
-// v17.0: Cohort-adaptive weight blend.
-// After archetype blending, applies a second conservative blend using the
-// cohort classifier's recommended L1–L5 weights. Ratio 0.30 keeps the
-// archetype baseline dominant while adding cohort signal.
+// Cohort-adaptive weight blend — replaces the legacy flat COHORT_BLEND_RATIO = 0.30.
 //
-// Channel mapping (CohortLayerWeights → WeightKey):
-//   L1 → L1_directFinancial
-//   L2 → L2_directLayoffHistory
-//   L3 → D1_taskAutomatability  (role displacement / automatability)
-//   L5 → D4_experienceProtection
-// L4 (D5_countryContext) is EXCLUDED — zeroed to prevent PPP double-count.
-const COHORT_BLEND_RATIO = 0.30;
+// Per-cohort blend ratios:
+//   DISTRESS:   0.50  — AUC 0.96 on 153 events; high-confidence cohort warrants strong shift
+//   EFFICIENCY: 0.55  — must overcome D8=0 history + smaller calibration set (47 events);
+//               stronger ratio because the cohort classification itself is the primary
+//               evidence that AI efficiency substitution is the layoff driver.
+//   WAVE:       0.45  — AUC 0.72; moderate confidence → moderate shift
+//   UNKNOWN:    0.20  — no cohort clarity; barely deviate from archetype baseline
+//
+// Extended channel map — L4 from the cohort specification is rerouted to different
+// formula keys depending on cohort because L4 represents different risk drivers:
+//
+//   EFFICIENCY cohort → cohortW.L4 (AI-driven industry pressure = 0.22) maps to D8.
+//     Rationale: profitable-company AI substitution IS the efficiency cohort's L4 signal.
+//     D8 receives the budget that EFFICIENCY allocates to "industry headwinds" because
+//     for this cohort the industry pressure IS the AI restructuring signal.
+//
+//   WAVE cohort → cohortW.L4 (sector contagion = 0.40) maps to D7.
+//     Rationale: D5 (countryContext) is zeroed for PPP reasons and cannot carry
+//     sector contagion. D7 (unified company health, fuses news + sector signals)
+//     is the closest proxy for sector-wave pressure in the formula budget.
+//
+//   DISTRESS / UNKNOWN: cohortW.L4 excluded (no L4 channel extension).
+const COHORT_BLEND_RATIOS: Record<string, number> = {
+  DISTRESS:   0.50,
+  EFFICIENCY: 0.55,
+  WAVE:       0.45,
+  UNKNOWN:    0.20,
+};
+
+const COHORT_L4_CHANNEL: Partial<Record<string, WeightKey>> = {
+  EFFICIENCY: 'D8_aiEfficiencyRestructuring',
+  WAVE:       'D7_companyHealth',
+};
 
 function blendCohortWeights(
   base: Record<WeightKey, number>,
   cohortW: CohortLayerWeights,
-  blendRatio: number = COHORT_BLEND_RATIO,
+  primaryCohort: string = 'UNKNOWN',
 ): Record<WeightKey, number> {
-  const addressableSum = cohortW.L1 + cohortW.L2 + cohortW.L3 + cohortW.L5;
-  if (addressableSum === 0) return base;
+  const blendRatio = COHORT_BLEND_RATIOS[primaryCohort] ?? 0.25;
+  const l4Channel = COHORT_L4_CHANNEL[primaryCohort];
 
-  const currentBudget =
-    base.L1_directFinancial +
-    base.L2_directLayoffHistory +
-    base.D1_taskAutomatability +
-    base.D4_experienceProtection;
+  // Addressable keys: always include the four base channels; extend with the
+  // L4-mapped key for EFFICIENCY (D8) and WAVE (D7) cohorts.
+  const addressableKeys: WeightKey[] = [
+    'L1_directFinancial',
+    'L2_directLayoffHistory',
+    'D1_taskAutomatability',
+    'D4_experienceProtection',
+    ...(l4Channel ? [l4Channel] as WeightKey[] : []),
+  ];
 
-  const target: Partial<Record<WeightKey, number>> = {
-    L1_directFinancial:      (cohortW.L1 / addressableSum) * currentBudget,
-    L2_directLayoffHistory:  (cohortW.L2 / addressableSum) * currentBudget,
-    D1_taskAutomatability:   (cohortW.L3 / addressableSum) * currentBudget,
-    D4_experienceProtection: (cohortW.L5 / addressableSum) * currentBudget,
+  // Cohort amounts: each addressable key's target allocation from the cohort spec.
+  const cohortAmounts: Partial<Record<WeightKey, number>> = {
+    L1_directFinancial:      cohortW.L1,
+    L2_directLayoffHistory:  cohortW.L2,
+    D1_taskAutomatability:   cohortW.L3,
+    D4_experienceProtection: cohortW.L5,
   };
+  if (l4Channel) cohortAmounts[l4Channel] = cohortW.L4;
 
-  // WS7 Audit Issue #12 — symmetric pre-norm clamp on cohort blend too.
+  const cohortTotal = addressableKeys.reduce((s, k) => s + (cohortAmounts[k] ?? 0), 0);
+  if (cohortTotal === 0) return base;
+
+  // Budget: total weight held by addressable keys in the current (post-archetype) base.
+  // Targets are scaled proportionally so the budget is exactly preserved.
+  const currentBudget = addressableKeys.reduce((s, k) => s + base[k], 0);
+
+  const target: Partial<Record<WeightKey, number>> = {};
+  for (const key of addressableKeys) {
+    target[key] = ((cohortAmounts[key] ?? 0) / cohortTotal) * currentBudget;
+  }
+
+  // WS7 Audit Issue #12 — symmetric pre-norm clamp.
   const MIN_WEIGHT_FLOOR = 0.001;
   const blended = { ...base } as Record<WeightKey, number>;
-  for (const key of Object.keys(target) as Array<keyof typeof target>) {
+  for (const key of addressableKeys) {
     const post = base[key] * (1 - blendRatio) + (target[key]!) * blendRatio;
     blended[key] = Math.max(MIN_WEIGHT_FLOOR, post);
   }
-  // Also clamp the untouched keys (defence-in-depth: archetype pass should
-  // already have floored them, but cohort blend should not assume that).
+  // Clamp all keys (defence-in-depth).
   for (const key of Object.keys(blended) as WeightKey[]) {
     blended[key] = Math.max(MIN_WEIGHT_FLOOR, blended[key]);
   }
@@ -977,13 +1017,22 @@ export interface ScoreInputs {
     estimatedOpenings?: number | null;
   };
   /**
-   * v17.0: Cohort-adaptive weights from cohortClassifier.ts.
-   * When provided, blends a 30% cohort signal into the archetype-blended
+   * Cohort-adaptive weights from cohortClassifier.ts.
+   * When provided, blends cohort-specific signal into the archetype-blended
    * weights before computing the composite score. Improves accuracy for
    * DISTRESS (AUC 0.96), EFFICIENCY (AUC 0.76), and WAVE (AUC 0.72) cohorts.
    * Leave undefined when cohort classification has not run.
    */
   cohortWeights?: CohortLayerWeights;
+  /**
+   * Primary cohort label from cohortClassifier.ts.
+   * Required alongside cohortWeights to apply cohort-specific blend ratios
+   * and extended channel mappings (D8 for EFFICIENCY, D7 for WAVE).
+   * Also used to activate D8 for EFFICIENCY cohort regardless of the global
+   * v39_d8_ai_efficiency_active flag — the cohort classification is the
+   * calibration signal that justifies D8 activation.
+   */
+  primaryCohort?: 'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN';
 }
 
 export interface ScoreBreakdown {
@@ -1160,6 +1209,7 @@ const clamp = (val: number, min = 0, max = 1): number =>
 
 const monthsDifference = (dateStr: string, now: Date): number => {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return 999; // malformed date → treat as ancient/irrelevant
   return Math.abs(
     (now.getFullYear() - d.getFullYear()) * 12 +
       (now.getMonth() - d.getMonth()),
@@ -1349,7 +1399,8 @@ export const calculateCompanyHealthScore = (
   weights.fundingRisk = 0.15;
 
   // Size risk (UNCALIBRATED — mapCompanySize thresholds are developer estimates)
-  if (companyData.employeeCount > 0) {
+  // Guard: treat 0 as null (unknown) since no real company has 0 employees.
+  if (companyData.employeeCount != null && companyData.employeeCount > 0) {
     signals.sizeRisk = mapCompanySize(companyData.employeeCount);
     weights.sizeRisk = 0.10;
   }
@@ -1376,6 +1427,13 @@ export const calculateCompanyHealthScore = (
   const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
   if (totalWeight === 0) return 0.50;
 
+  // v40.0 FIX-12: development assertion — weights that don't sum to ~1.0 after
+  // redistribution indicate a future refactoring broke the normalization invariant.
+  // Only fires in dev builds (import.meta.env.DEV) — never hits production.
+  if (import.meta.env.DEV && Math.abs(totalWeight - 1.0) > 0.05) {
+    console.warn(`[L1 calculateCompanyHealthScore] weight sum = ${totalWeight.toFixed(3)}, expected ≈ 1.0. Check null signal redistribution.`);
+  }
+
   return weightedAverage(signals, weights);
 };
 
@@ -1397,10 +1455,31 @@ const calculateRecentLayoffRisk = (
   // legacy literal as bootstrap fallback. Each lookup writes one row to
   // engine_constant_resolutions tagged with the audit's request_id so
   // v_uncalibrated_exposure can quantify how many audits touch these bands.
-  if (!layoffs || layoffs.length === 0) {
+
+  // v40.0 FIX-1+3: filter out malformed entries (negative percentCut, future dates,
+  // NaN/Infinity values). Scraper bugs and CSV import errors can produce these;
+  // accepting them silently corrupts L2 scoring with phantom risk signals.
+  const nowMs = now.getTime();
+  const validLayoffs = (layoffs ?? []).filter(l => {
+    if (!l || typeof l.date !== 'string') return false;
+    const d = new Date(l.date);
+    const t = d.getTime();
+    if (isNaN(t)) return false;
+    if (t > nowMs) return false; // future-dated event = data error
+    const pct = l.percentCut;
+    // Missing percentage (null/undefined) is OK — the entry is still useful for
+    // recency-based scoring even without severity. But NaN/Infinity are data
+    // corruption markers and should be rejected outright.
+    if (pct == null) return true;
+    if (typeof pct !== 'number' || !isFinite(pct)) return false;
+    if (pct < 0 || pct > 100) return false; // impossible percentage
+    return true;
+  });
+
+  if (validLayoffs.length === 0) {
     return getConstant<number>('layoffScoreEngine.recentLayoffRisk.noLayoffs', 0.05).value as number;
   }
-  const sorted = [...layoffs].sort(
+  const sorted = [...validLayoffs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
   const mostRecent = sorted[0];
@@ -1434,14 +1513,17 @@ const calculateRoundFrequency = (
   else if (rounds === 3) base = getConstant<number>('layoffScoreEngine.layoffRoundRisk.3rounds', 0.85).value as number;
   else                   base = getConstant<number>('layoffScoreEngine.layoffRoundRisk.4plus',   0.95).value as number;
 
-  // Recency weighting: if most layoffs are old (>18 months), reduce score by up to 20%
+  // Recency weighting based on the MOST RECENT layoff, not the average.
+  // Using avg previously hid recent events: [1 day ago, 730 days ago] → avg 365d
+  // → 0.8 discount despite one being current. Using min(monthsAgo) correctly
+  // keeps the score elevated when ANY round is recent.
   if (layoffs && layoffs.length > 0) {
-    const avgMonthsAgo =
-      layoffs.reduce((sum, l) => sum + monthsDifference(l.date, now), 0) /
-      layoffs.length;
-    if (avgMonthsAgo > 24) return base * 0.65; // very old pattern — much less predictive
-    if (avgMonthsAgo > 18) return base * 0.8; // old pattern — somewhat discounted
-    if (avgMonthsAgo > 12) return base * 0.9; // moderately old
+    const minMonthsAgo = Math.min(
+      ...layoffs.map(l => monthsDifference(l.date, now))
+    );
+    if (minMonthsAgo > 24) return base * 0.65; // all old — much less predictive
+    if (minMonthsAgo > 18) return base * 0.8;  // most recent is still old
+    if (minMonthsAgo > 12) return base * 0.9;  // moderately old
   }
   return base;
 };
@@ -1516,10 +1598,15 @@ export const calculateLayoffHistoryScore = (
   // linearly to 0.5× by 90 days (matching the MARKET_DATA_STALE_DAYS threshold).
   let newsRisk = 0.10;
   let newsWeight = 0.10; // default weight
-  if (relevantNews) {
-    // Guard: future-dated news events produce negative age. Use Math.max(0, ...)
-    // so they're treated as age=0 (most recent possible), not as negative values
-    // that break signal decay calculations downstream.
+  // v40.0 FIX-3: reject future-dated or invalid news events entirely. Previously
+  // future dates were clamped to ageInDays=0, which inflated risk by treating
+  // future-dated entries as breaking-news fresh.
+  const newsDateValid = relevantNews && (() => {
+    const d = new Date(relevantNews.date);
+    const t = d.getTime();
+    return !isNaN(t) && t <= now.getTime();
+  })();
+  if (relevantNews && newsDateValid) {
     const ageInDays = Math.max(0, Math.round(
       (now.getTime() - new Date(relevantNews.date).getTime()) / 86_400_000,
     ));
@@ -1555,9 +1642,18 @@ export const calculateLayoffHistoryScore = (
     // Previously flat 0.70 for ANY event regardless of how many people were cut.
     // Now: base risk (0.55–0.95) + severity boost (0–0.20) capped at 0.98.
     // percentCut 0 → no boost (genuinely unknown), 10% → +0.08, 20% → +0.15, 30%+ → +0.20
-    const pctCut = relevantNews.percentCut ?? 0;
+    // v40.0 FIX-1: clamp pctCut to [0,100] to reject NaN/Infinity/negative/>100 values
+    const rawPct = relevantNews.percentCut ?? 0;
+    const pctCut = isFinite(rawPct) ? Math.max(0, Math.min(100, rawPct)) : 0;
     const severityBoost = pctCut > 0 ? Math.min(0.20, pctCut / 150) : 0;
-    const baseNewsRisk = hasDepartmentMatch ? 0.95 : 0.55 + severityBoost;
+    // When department is null/unknown and the news event names specific departments
+    // (e.g. "Engineering cuts 50%"), use a conservative 0.70 base (not 0.55) —
+    // we can't confirm it's our department but CAN'T confirm it isn't either.
+    // Only drop to 0.55 when we have a department AND it doesn't match.
+    const unknownDeptConservative = !department && relevantNews.affectedDepartments.length > 0;
+    const baseNewsRisk = hasDepartmentMatch ? 0.95
+      : unknownDeptConservative ? 0.70 + severityBoost
+      : 0.55 + severityBoost;
     newsRisk = Math.min(0.98, baseNewsRisk * recencyFactor);
 
     // Boost newsRisk weight to 20% when event is recent (≤14 days) — extended from 7
@@ -1955,39 +2051,72 @@ const SECTOR_EFFICIENCY_BENCHMARKS: Record<string, number> = {
   _default:          300_000,
 };
 
+// ── D8 helper: cost-cutting signal proxy ─────────────────────────────────────
+// Used in Condition 3 (first-ever AI efficiency cut detection).
+//
+// A company preparing its first-ever AI efficiency cut exhibits these signals
+// BEFORE any official announcement — the cut is planned but not yet executed:
+//
+//   1. Hiring freeze or declining posting trend
+//      The company stops backfilling roles even as revenue grows. This is the
+//      single strongest leading indicator: revenue-per-employee rises because
+//      headcount is frozen, not because of organic productivity gain.
+//      Source: _hiringPostingTrend from live Naukri/LinkedIn scraping.
+//
+//   2. Stock decline ≥ 8% in 90 days
+//      Markets price efficiency restructuring risk 3–6 months ahead of
+//      announcements. Google stock fell 28% in 2022 before Jan 2023 cut;
+//      Meta fell 65% in 2022 before Nov 2022 + Jan 2023 cuts.
+//      Threshold 8% chosen to catch moderate early signals without over-firing
+//      on normal volatility.
+//
+//   3. Glassdoor trend falling
+//      Employees at restructuring-imminent companies sense changes in culture,
+//      team dynamics, and management tone before announcements. Glassdoor
+//      trend deterioration is a 30–90 day leading indicator.
+//
+// Requires ANY ONE of the above. Absence of all three = no cost cutting signal.
+// The condition is intentionally permissive — Condition 3 has THREE requirements
+// (L1 < 0.45, layoffRounds == 0, high/very-high AI) and costCuttingSignalPresent
+// is the fourth; a single proxy signal is sufficient evidence at this conjunction.
+export function deriveCostCuttingSignalPresent(companyData: CompanyData): boolean {
+  // Signal 1: Hiring freeze or declining
+  const hiringTrend = (companyData as any)._hiringPostingTrend as string | undefined;
+  if (hiringTrend === 'frozen' || hiringTrend === 'declining') return true;
+
+  // Signal 2: Stock down 8%+ in 90 days (public companies only)
+  if (
+    companyData.isPublic &&
+    companyData.stock90DayChange != null &&
+    companyData.stock90DayChange < -8
+  ) return true;
+
+  // Signal 3: Glassdoor trend deteriorating
+  if (companyData.glassdoorTrendDirection === 'falling') return true;
+
+  return false;
+}
+
 const calculateAIEfficiencyRestructuringRisk = (
   companyData: CompanyData,
   calibratedL1: number,
   collapseStage?: 1 | 2 | 3 | null,
 ): number => {
-  // Gate 1: Not distress-driven. If L1 is high, L1/L2 already captures the risk.
-  if (calibratedL1 >= 0.55) return 0;
+  // ── AI investment classification ──────────────────────────────────────────
+  // Cast to string for the very_high backward-compat alias (not in the declared
+  // type union but present in legacy runtime data).
+  const ai = (companyData.aiInvestmentSignal ?? 'medium') as string;
+  const isHighOrVeryHigh = ai === 'high' || ai === 'very-high' || ai === 'very_high';
+  const isVeryHighOnly   = ai === 'very-high' || ai === 'very_high';
 
-  // Gate 2 (v7.0): OR-gate across three conditions — any one of which confirms
-  // the AI efficiency restructuring pattern.
-  //
-  //   A. Prior cuts: revealed preference for workforce restructuring exists.
-  //   B. Collapse stage ≥ 1: leading signals corroborate risk even without prior cuts.
-  //   C. Overstaffing ratio: revenuePerEmployee > 130% of sector median — the
-  //      first-ever-cut fingerprint before an official announcement.
-  //
-  // Without this gate, Anthropic/OpenAI/Databricks (high AI, no prior cuts, normal
-  // revenue/emp) still return 0 from the aiStr gate below — correctly no signal.
+  // ── RPE / overstaffing (shared between conditions 1-guards and condition 2) ─
+  // ACC-BUG-08 preserved: Indian IT companies are excluded from the RPE check
+  // because SECTOR_EFFICIENCY_BENCHMARKS uses US-equivalent values ($550K for
+  // Technology) while Indian IT sector median is $37K (NASSCOM). Any RPE > $48K
+  // at an Indian IT company would appear overstaffed against the US benchmark.
   const sectorBenchmark =
     SECTOR_EFFICIENCY_BENCHMARKS[companyData.industry] ??
     SECTOR_EFFICIENCY_BENCHMARKS._default;
-  const hasPriorCuts = !!(companyData.layoffRounds && companyData.layoffRounds > 0);
-  const hasCollapseSignal = collapseStage != null && collapseStage >= 1;
-
-  // ACC-BUG-08 FIX: D8 Condition C (overstaffing gate) was firing incorrectly for
-  // Indian IT companies (TCS, Infosys, Wipro). Their sector median RPE is $37K/emp
-  // (NASSCOM benchmark) but the SECTOR_EFFICIENCY_BENCHMARKS above use US-equivalent
-  // values ($550K for Technology). A TCS employee with fallback RPE of $150K would
-  // appear to be at 150K/550K = 27% of benchmark → NOT overstaffed.
-  // BUT if the fallback RPE is $250K (another common default), that's 45% of benchmark.
-  // For Indian IT with sector median $37K, any RPE above $48K (130%) would fire D8.
-  // Fix: skip Condition C when (a) company is Indian-domiciled AND in IT/BPO sector,
-  // OR (b) the RPE value is a known fallback default (150K or 250K — not real data).
   const isIndianIT = companyData.region === 'IN' &&
     /it|bpo|ites|software|tech|consulting/i.test(companyData.industry ?? '');
   const isFallbackRPE = companyData.revenuePerEmployee === 150_000
@@ -1996,32 +2125,79 @@ const calculateAIEfficiencyRestructuringRisk = (
   const isOverstaffedVsAI = !isIndianIT && !isFallbackRPE
     && companyData.revenuePerEmployee > sectorBenchmark * 1.30;
 
-  if (!hasPriorCuts && !hasCollapseSignal && !isOverstaffedVsAI) return 0;
+  const layoffRounds   = companyData.layoffRounds ?? 0;
+  const hasCollapseSignal = collapseStage != null && collapseStage >= 1;
 
-  // AI investment strength — only meaningful at high/very-high levels.
+  // ── Three OR conditions for D8 activation ────────────────────────────────
+  //
+  // Condition 1: established pattern — prior cuts confirm restructuring appetite.
+  //   calibratedL1 < 0.55   not financially distressed (L1/L2 already captures distress)
+  //   isHighOrVeryHigh       AI investment is real and material
+  //   layoffRounds > 0       prior cuts revealed structural restructuring willingness
+  const condition1 =
+    calibratedL1 < 0.55 &&
+    isHighOrVeryHigh &&
+    layoffRounds > 0;
+
+  // Condition 2: overstaffing + leading indicator convergence.
+  //   isVeryHighOnly         Only very-high AI warrants firing without prior cuts here
+  //   isOverstaffedVsAI      Revenue-per-employee above 130% sector benchmark
+  //   hasCollapseSignal      collapseStage ≥ 1: leading indicators already fired
+  //
+  // No L1 threshold: very-high AI + overstaffing + collapse stage is sufficient
+  // evidence regardless of financial health. The growthFactor gate below still
+  // blocks declining-revenue companies (distress, not efficiency).
+  const condition2 =
+    isVeryHighOnly &&
+    isOverstaffedVsAI &&
+    hasCollapseSignal;
+
+  // Condition 3: first-ever AI efficiency cut detection.
+  //   isHighOrVeryHigh         AI investment is material
+  //   costCuttingSignalPresent pre-announcement signals (hiring freeze / stock
+  //                            decline / Glassdoor fall) without prior official cuts
+  //   layoffRounds === 0       no prior rounds — this IS the first-ever cut
+  //   calibratedL1 < 0.45     financially healthy (tighter than cond 1) so we
+  //                            don't misidentify distress companies doing distress cuts
+  //
+  // This condition exists precisely because Meta 2023 and Google 2023 had
+  // layoffRounds = 0 at the time of their first announcement. Without it,
+  // D8 can never fire for a company doing its first-ever efficiency cut — the
+  // precisely wrong behavior given that first-cuts are the hardest to predict.
+  const costCuttingSignalPresent = deriveCostCuttingSignalPresent(companyData);
+  const condition3 =
+    isHighOrVeryHigh &&
+    costCuttingSignalPresent &&
+    layoffRounds === 0 &&
+    calibratedL1 < 0.45;
+
+  if (!condition1 && !condition2 && !condition3) return 0;
+
+  // ── AI investment strength (output magnitude) ─────────────────────────────
   // WS9 — each signal level sourced from engine_calibration_constants with
   // the legacy literal as bootstrap fallback. The very_high alias preserves
   // backward compatibility with earlier data that used underscore form.
   const veryHighValue = getConstant<number>('layoffScoreEngine.aiInvestmentSignal.veryHigh', 0.80).value as number;
   const aiStrengthMap: Record<string, number> = {
-    low:       getConstant<number>('layoffScoreEngine.aiInvestmentSignal.low',    0.00).value as number,
-    medium:    getConstant<number>('layoffScoreEngine.aiInvestmentSignal.medium', 0.12).value as number,
-    high:      getConstant<number>('layoffScoreEngine.aiInvestmentSignal.high',   0.52).value as number,
+    low:         getConstant<number>('layoffScoreEngine.aiInvestmentSignal.low',    0.00).value as number,
+    medium:      getConstant<number>('layoffScoreEngine.aiInvestmentSignal.medium', 0.12).value as number,
+    high:        getConstant<number>('layoffScoreEngine.aiInvestmentSignal.high',   0.52).value as number,
     'very-high': veryHighValue,
-    very_high: veryHighValue,  // backward compat alias
+    very_high:   veryHighValue,  // backward compat alias
   };
-  const aiStr = aiStrengthMap[companyData.aiInvestmentSignal ?? 'medium'] ?? aiStrengthMap.medium;
+  const aiStr = aiStrengthMap[ai] ?? aiStrengthMap.medium;
   if (aiStr === 0) return 0;
 
-  // Revenue growth factor — confirms non-distress motivation.
-  // Declining revenue (rev < 0) means this is distress, not efficiency.
+  // ── Revenue growth factor — confirms non-distress motivation ──────────────
+  // Declining revenue (rev < 0) → distress, not efficiency. D8 returns 0.
+  // This is a second-layer guard that fires even when a condition above matched.
   const rev = companyData.revenueGrowthYoY;
   const growthFactor =
-    rev === null  ? 0.45                            // unknown — partial signal
-    : rev > 10    ? 1.00                            // strong growth
-    : rev > 5     ? 0.85                            // moderate growth
-    : rev >= 0    ? 0.65                            // flat — possible substitution
-    : 0;                                            // declining — distress (gate out)
+    rev === null  ? 0.45   // unknown — partial signal
+    : rev > 10   ? 1.00   // strong growth
+    : rev > 5    ? 0.85   // moderate growth
+    : rev >= 0   ? 0.65   // flat — possible substitution
+    : 0;                   // declining — distress, not efficiency (gate out)
 
   if (growthFactor === 0) return 0;
 
@@ -3458,7 +3634,9 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     if (rounds >= 3) s += 0.18;
     else if (rounds === 2) s += 0.10;
     else if (rounds === 1) s += 0.05;
-    const emp = companyData.employeeCount ?? 1000;
+    // Use Math.max(1, ...) so employeeCount === 0 gets treated as unknown (1000 default)
+    // not as "company has zero employees" which bypasses the ?? 1000 null-coalescing guard.
+    const emp = Math.max(1, companyData.employeeCount ?? 1000);
     if (emp < 100) s += 0.08;  // startup volatility
     else if (emp > 50000) s -= 0.07;  // scale stability
     const stock = companyData.stock90DayChange;
@@ -3649,7 +3827,40 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     try { return evaluateFlagSync('v39_d8_ai_efficiency_active').isActive; }
     catch { return false; }
   })();
-  const D8 = _d8FlagActive
+  // EFFICIENCY cohort override: D8 activates when the cohort classifier has
+  // determined this is a profitable AI-substitution company, regardless of the
+  // global flag. The global flag (v39_d8_ai_efficiency_active) guards against
+  // D8 firing on uncalibrated general audits. The EFFICIENCY cohort
+  // classification IS the calibration signal — a company that classifies as
+  // EFFICIENCY has: positive revenue, high AI investment, prior restructuring
+  // rounds. These are exactly the gates calculateAIEfficiencyRestructuringRisk
+  // enforces internally. Blocking D8 for confirmed EFFICIENCY cohort produces
+  // false-safe scores (38/100 for a profitable company eliminating roles
+  // through AI). The flag gates general-population D8; the cohort label gates
+  // EFFICIENCY-specific D8. They are orthogonal controls.
+  const _d8EfficiencyCohortActive = inputs.primaryCohort === 'EFFICIENCY';
+
+  // Condition 3 pre-check: first-ever AI efficiency cut.
+  //
+  // The EFFICIENCY cohort classifier requires layoffRounds >= 1 for a strong
+  // EFFICIENCY signal ('restructuring_while_profitable' adds weight only when
+  // prior rounds exist). A company doing its first-ever cut therefore produces
+  // a weak cohort signal — _d8EfficiencyCohortActive stays false for the exact
+  // companies Condition 3 targets: Meta/Google pre-2023 (layoffRounds=0, high AI,
+  // healthy financials, hiring freeze + stock decline underway).
+  //
+  // This pre-check mirrors Condition 3's inner logic and gates the function call
+  // without running the full internal computation twice. It is intentionally a
+  // subset of the inner check — the function itself is the authoritative gate.
+  const _d8Condition3Active = (() => {
+    const ai = (companyData.aiInvestmentSignal ?? 'medium') as string;
+    if (ai !== 'high' && ai !== 'very-high' && ai !== 'very_high') return false;
+    if ((companyData.layoffRounds ?? 0) !== 0) return false;
+    if (calibrated.L1 >= 0.45) return false;
+    return deriveCostCuttingSignalPresent(companyData);
+  })();
+
+  const D8 = (_d8FlagActive || _d8EfficiencyCohortActive || _d8Condition3Active)
     ? calculateAIEfficiencyRestructuringRisk(companyData, calibrated.L1, inputs.collapseStage)
     : 0;
 
@@ -3667,12 +3878,14 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     ? blendArchetypeWeights(COMPOSITE_FORMULA_WEIGHTS, scoringArchetype, 0.25)
     : COMPOSITE_FORMULA_WEIGHTS;
 
-  // v17.0: Cohort-adaptive weight blend (COHORT_BLEND_RATIO = 0.30).
-  // When cohortWeights is provided (from pre-pass cohort classification in the
-  // audit pipeline), applies a second blend to archetype weights. Only L1, L2,
-  // D1, and D4 channels are adjusted; D5 excluded (zeroed to prevent double-count).
+  // Cohort-adaptive weight blend. When cohortWeights is provided, applies a
+  // cohort-specific blend to archetype weights:
+  //   EFFICIENCY: 55% blend ratio, D8 + D1 amplified, L1 reduced
+  //   DISTRESS:   50% blend ratio, L1 + L2 amplified
+  //   WAVE:       45% blend ratio, D7 + L2 amplified
+  //   UNKNOWN:    20% blend ratio, near-baseline weights
   const baseW = inputs.cohortWeights
-    ? blendCohortWeights(archetypeW, inputs.cohortWeights, COHORT_BLEND_RATIO)
+    ? blendCohortWeights(archetypeW, inputs.cohortWeights, inputs.primaryCohort ?? 'UNKNOWN')
     : archetypeW;
 
   // v15.0: Layer-level freshness decay. Date-sensitive layers (L1, L2, L4) are

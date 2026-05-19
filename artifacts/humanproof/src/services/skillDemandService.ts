@@ -22,8 +22,10 @@
 // There is NO silent fallback — the absence of live data is always labeled explicitly.
 
 import { supabase } from '../utils/supabase';
-import type { SkillDemandLive } from '../data/intelligence/types';
-import type { CareerIntelligence, SkillRisk, SafeSkill } from '../data/intelligence/types';
+import type {
+  SkillDemandLive, CompanySkillDemandLive,
+  CareerIntelligence, SkillRisk, SafeSkill,
+} from '../data/intelligence/types';
 
 // ── Freshness thresholds ───────────────────────────────────────────────────────
 export const SKILL_DEMAND_LIVE_MAX_DAYS  = 7;   // live badge visible up to and including day 7
@@ -181,6 +183,200 @@ function skillMatchesRole(skillName: string, roleKey: string): boolean {
   const lower = skillName.toLowerCase();
   return keywords.some(kw => lower.includes(kw));
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Company-specific skill demand
+// ══════════════════════════════════════════════════════════════════════════════
+
+// The maximum age for company-specific data to show as "live".
+// Must match the Naukri scraper's weekly refresh cadence.
+export const COMPANY_SKILL_DEMAND_MAX_DAYS = 7;
+
+// Thresholds that reclassify skills when company-specific data is present.
+export const COMPANY_SKILL_CONTRACTING_THRESHOLD = -25;  // delta_90d_pct < this → at_risk
+export const COMPANY_SKILL_GROWING_THRESHOLD      =  30;  // delta_90d_pct > this → demand rising
+
+export interface CompanySkillDemand {
+  companyName:      string;
+  rolePrefix:       string;
+  delta90dPct:      number | null;
+  currentOpenings:  number | null;
+  demandTrend:      'surging' | 'growing' | 'stable' | 'contracting';
+  isLive:           boolean;
+  scrapedAt:        string;
+  ageInDays:        number;
+  freshness:        'live' | 'stale' | 'very_stale';
+}
+
+interface CsdcRow {
+  company_name:      string;
+  role_prefix:       string;
+  current_openings:  number | null;
+  delta_90d_pct:     number | null;
+  demand_trend:      string | null;
+  is_live:           boolean;
+  scraped_at:        string;
+}
+
+// Session-level cache: company+role → result, 30min TTL
+const _companyCacheMap = new Map<string, { result: CompanySkillDemand | null; fetchedAt: number }>();
+
+/**
+ * Fetch company-specific skill demand from company_skill_demand_cache.
+ * Returns null when:
+ *   - No row exists for this company+role
+ *   - The most recent row is older than COMPANY_SKILL_DEMAND_MAX_DAYS
+ *
+ * The 7-day freshness gate is hard — stale company data must NOT receive a
+ * live badge, and must NOT suppress the industry baseline (which may itself
+ * be more recent).
+ */
+export async function getCompanySkillDemand(
+  companyName: string,
+  rolePrefix: string,
+): Promise<CompanySkillDemand | null> {
+  const cacheKey = `${companyName.toLowerCase()}::${rolePrefix.toLowerCase()}`;
+  const hit = _companyCacheMap.get(cacheKey);
+  if (hit && Date.now() - hit.fetchedAt < CACHE_TTL_MS) return hit.result;
+
+  try {
+    const { data, error } = await supabase
+      .from('company_skill_demand_cache')
+      .select('company_name, role_prefix, current_openings, delta_90d_pct, demand_trend, is_live, scraped_at')
+      .eq('company_name', companyName.toLowerCase())
+      .eq('role_prefix', rolePrefix.toLowerCase())
+      .order('scraped_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      _companyCacheMap.set(cacheKey, { result: null, fetchedAt: Date.now() });
+      return null;
+    }
+
+    const row = data as CsdcRow;
+    const ageInDays = Math.round(
+      (Date.now() - new Date(row.scraped_at).getTime()) / 86_400_000,
+    );
+
+    // Hard freshness gate: data older than 7 days must not show as live.
+    // Fall through to industry baseline for the user's own protection.
+    if (ageInDays > COMPANY_SKILL_DEMAND_MAX_DAYS) {
+      _companyCacheMap.set(cacheKey, { result: null, fetchedAt: Date.now() });
+      return null;
+    }
+
+    const result: CompanySkillDemand = {
+      companyName:     row.company_name,
+      rolePrefix:      row.role_prefix,
+      delta90dPct:     row.delta_90d_pct,
+      currentOpenings: row.current_openings,
+      demandTrend:     (row.demand_trend ?? 'stable') as CompanySkillDemand['demandTrend'],
+      isLive:          row.is_live,
+      scrapedAt:       row.scraped_at,
+      ageInDays,
+      freshness:       getSkillFreshnessStatus(ageInDays),
+    };
+
+    _companyCacheMap.set(cacheKey, { result, fetchedAt: Date.now() });
+    return result;
+  } catch {
+    _companyCacheMap.set(cacheKey, { result: null, fetchedAt: Date.now() });
+    return null;
+  }
+}
+
+/**
+ * Strip all industry-level demandLive overlays from a CareerIntelligence record.
+ *
+ * Called before applyCompanySkillOverlay to enforce the labeling rule:
+ * industry averages and company-specific live data must never appear
+ * simultaneously. When company data is present, industry baselines are
+ * hidden entirely — they are a different confidence level and would imply
+ * equal precision if shown side-by-side.
+ */
+export function stripDemandLive(intel: CareerIntelligence): CareerIntelligence {
+  const strip = <T extends { demandLive?: SkillDemandLive }>(arr: T[] | undefined): T[] | undefined =>
+    arr?.map(s => ({ ...s, demandLive: undefined }));
+
+  return {
+    ...intel,
+    skills: {
+      obsolete: strip(intel.skills.obsolete),
+      at_risk:  strip(intel.skills.at_risk),
+      safe:     intel.skills.safe.map(s => ({ ...s, demandLive: undefined })),
+    },
+  };
+}
+
+/**
+ * Apply company-specific demand overlay onto a CareerIntelligence record.
+ *
+ * Overlay rules (applied only to skills whose name matches ROLE_SKILL_KEYWORDS[roleKey]):
+ *
+ *   delta90dPct < COMPANY_SKILL_CONTRACTING_THRESHOLD (-25):
+ *     Matching at_risk skills gain companyDemand (riskScore unchanged — the
+ *     company-specific signal reinforces existing risk classification).
+ *     Matching safe skills are NOT reclassified as at_risk — we don't demote
+ *     structurally safe skills (human judgment, leadership) because of a
+ *     short-term job-posting trend at one company. They get companyDemand
+ *     with a contracting signal so the user can see it but draw their own
+ *     conclusion. The skill's longTermValue is authoritative; one company's
+ *     hiring freeze is not.
+ *
+ *   delta90dPct > COMPANY_SKILL_GROWING_THRESHOLD (+30):
+ *     Matching safe skills gain companyDemand with a growing/surging signal.
+ *     Matching at_risk skills are NOT reclassified as safe — AI displacement
+ *     risk is structural; a company hiring more of them now doesn't change
+ *     the 2030 automation curve.
+ *
+ *   NULL delta90dPct (first scrape, no historical comparison):
+ *     companyDemand is still set (with trend + currentOpenings) so the user
+ *     can see the company is in the system. No reclassification performed.
+ *
+ * The original record is never mutated. Returns a shallow-cloned CareerIntelligence.
+ */
+export function applyCompanySkillOverlay(
+  intel: CareerIntelligence,
+  companyDemand: CompanySkillDemand,
+  roleKey: string,
+): CareerIntelligence {
+  const liveAnnotation: CompanySkillDemandLive = {
+    companyName:     companyDemand.companyName,
+    delta90dPct:     companyDemand.delta90dPct,
+    currentOpenings: companyDemand.currentOpenings,
+    demandTrend:     companyDemand.demandTrend,
+    scrapedAt:       companyDemand.scrapedAt,
+    ageInDays:       companyDemand.ageInDays,
+  };
+
+  const matchesRole = (skillName: string) => skillMatchesRole(skillName, roleKey);
+
+  const patchAtRisk = (skills: SkillRisk[] | undefined): SkillRisk[] | undefined =>
+    skills?.map(s => matchesRole(s.skill)
+      ? { ...s, companyDemand: liveAnnotation }
+      : s,
+    );
+
+  const patchSafe = (skills: SafeSkill[]): SafeSkill[] =>
+    skills.map(s => matchesRole(s.skill)
+      ? { ...s, companyDemand: liveAnnotation }
+      : s,
+    );
+
+  return {
+    ...intel,
+    skills: {
+      obsolete: patchAtRisk(intel.skills.obsolete),
+      at_risk:  patchAtRisk(intel.skills.at_risk),
+      safe:     patchSafe(intel.skills.safe),
+    },
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Industry-level overlay (unchanged from original)
+// ══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Overlay live demand data onto a CareerIntelligence record.

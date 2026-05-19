@@ -740,7 +740,7 @@ function AppContent() {
 
       <AppNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
 
-      <main style={{ position: "relative", zIndex: 1 }}>
+      <main id="main-content" style={{ position: "relative", zIndex: 1 }}>
         <GlobalErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
@@ -789,6 +789,16 @@ function AppContent() {
 function App() {
   return (
     <Router>
+      {/* v40.0 a11y FIX-9: skip-to-main-content link. Visible only on keyboard
+          focus (via Tailwind sr-only + focus:not-sr-only). Keyboard users can
+          jump straight to the main content area instead of tabbing through
+          all the nav links. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[10000] focus:bg-cyan-500 focus:text-black focus:px-4 focus:py-2 focus:rounded focus:font-bold"
+      >
+        Skip to main content
+      </a>
       <HumanProofProvider>
         <ProfileSetupModal />
         <LayoffProvider>

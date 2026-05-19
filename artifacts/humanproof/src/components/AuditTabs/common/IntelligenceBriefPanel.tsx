@@ -1,15 +1,37 @@
-// IntelligenceBriefPanel.tsx — v17.0
+// IntelligenceBriefPanel.tsx — v41.0
 // Renders the AI-generated strategic intelligence brief (Layer 52).
 // Shows skeleton state when brief is loading (undefined), empty state when null.
 // 3-paragraph card: Situation / Risk Factors / Recommended Actions.
+//
+// v41.0 evidence floor: the brief must not render when the underlying data
+// is too thin to support specific claims. A fluent LLM paragraph generated
+// from heuristic baselines is indistinguishable from one grounded in live
+// data — that ambiguity is a trust violation. Two gates:
+//
+//   Gate 1 (hard): freshnessTier === 'heuristic'
+//     → no live data was retrieved for this company at all. The brief would
+//       be entirely pattern-matched from sector averages. Block it.
+//
+//   Gate 2 (soft): confidence < EVIDENCE_FLOOR_PCT
+//     → too few signals resolved to write a reliable company-specific brief.
+//       Show a degraded card explaining what we'd need to generate one.
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Clock, Zap, AlertTriangle, Shield } from 'lucide-react';
+import { Brain, Clock, Zap, AlertTriangle, Shield, Database } from 'lucide-react';
 import type { IntelligenceBriefResult } from '../../../services/intelligenceBriefService';
+
+// Below this confidence level the brief is degraded — shown with a warning.
+const EVIDENCE_FLOOR_PCT = 40;
 
 interface Props {
   intelligenceBrief: IntelligenceBriefResult | null | undefined;
+  /** Overall audit confidence 0–100. Used to decide whether brief is reliable. */
+  confidence?: number;
+  /** Freshness tier from freshnessUnifier. 'heuristic' blocks the brief entirely. */
+  freshnessierTier?: 'live' | 'mixed' | 'stale' | 'heuristic' | string;
+  /** Company name — surfaces in the "what we need" message. */
+  companyName?: string;
 }
 
 const URGENCY_CONFIG: Record<IntelligenceBriefResult['urgencyLevel'], {
@@ -56,12 +78,142 @@ const LoadingSkeleton: React.FC = () => (
   </div>
 );
 
-const IntelligenceBriefPanel: React.FC<Props> = ({ intelligenceBrief }) => {
+// ── Gate 1: Hard block — no live data at all ──────────────────────────────────
+
+const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => (
+  <div
+    className="rounded-2xl overflow-hidden"
+    style={{ border: '1px solid rgba(148,163,184,0.22)', background: 'rgba(15,23,42,0.60)' }}
+  >
+    <div
+      className="flex items-center gap-2 px-5 py-3"
+      style={{ borderBottom: '1px solid rgba(148,163,184,0.15)' }}
+    >
+      <Brain className="w-4 h-4" style={{ color: 'rgba(148,163,184,0.45)' }} />
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(148,163,184,0.45)' }}>
+        AI Intelligence Brief
+      </span>
+      <span
+        className="px-2 py-0.5 rounded text-[9px] font-black"
+        style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.28)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}
+      >
+        NO LIVE DATA
+      </span>
+    </div>
+    <div className="px-5 py-5 flex items-start gap-3.5">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+        style={{ background: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.20)' }}
+      >
+        <Database className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />
+      </div>
+      <div className="flex-1">
+        <p className="text-[12px] font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          Not enough live data to generate a reliable brief
+          {companyName ? ` for ${companyName}` : ''}.
+        </p>
+        <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          A company-specific intelligence brief requires at least one live data source — stock
+          signals, news coverage, job postings, or a WARN filing — so the analysis is grounded
+          in what is actually happening at this company right now, not in sector averages.
+        </p>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          A brief will be generated automatically once live signals resolve. You can also
+          find sector-level context in the Intelligence tab → Market Environment section.
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ── Gate 2: Soft degraded state — low confidence ──────────────────────────────
+
+const LowConfidenceBrief: React.FC<{
+  confidencePct: number;
+  brief: IntelligenceBriefResult;
+}> = ({ confidencePct, brief }) => {
+  const urgency = URGENCY_CONFIG[brief.urgencyLevel];
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ border: `1px solid ${urgency.border}`, background: urgency.bg }}
+    >
+      <div
+        className="flex items-center gap-2 px-5 py-3"
+        style={{ borderBottom: `1px solid ${urgency.border}` }}
+      >
+        <Brain className="w-4 h-4" style={{ color: urgency.color }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', color: urgency.color }}>
+          AI Intelligence Brief
+        </span>
+        <span
+          className="px-2 py-0.5 rounded text-[9px] font-black"
+          style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
+        >
+          LOW CONFIDENCE
+        </span>
+      </div>
+      {/* Warning banner */}
+      <div
+        className="mx-4 mt-4 mb-1 flex items-start gap-2.5 px-3.5 py-3 rounded-xl"
+        style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.28)' }}
+      >
+        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
+        <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <span className="font-semibold text-amber-400">Low data confidence ({confidencePct}%). </span>
+          This brief was generated from partial signals. Statements below are directionally
+          correct but may not reflect conditions specific to this company. Add profile data
+          or wait for live signals to resolve to improve accuracy.
+        </p>
+      </div>
+      {/* Brief content at reduced opacity to signal degraded state */}
+      <div className="p-5 opacity-75">
+        <p className="text-[11px] font-semibold mb-3" style={{ color: urgency.color }}>
+          {brief.keyRiskDriver}
+        </p>
+        {brief.paragraphs.map((para, i) => (
+          <p
+            key={i}
+            className="text-[11px] leading-relaxed mb-3"
+            style={{ color: 'rgba(255,255,255,0.65)', paddingLeft: '4px', borderLeft: `2px solid ${urgency.color}30` }}
+          >
+            {para}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── Main Component ────────────────────────────────────────────────────────────
+
+const IntelligenceBriefPanel: React.FC<Props> = ({
+  intelligenceBrief,
+  confidence,
+  freshnessierTier,
+  companyName,
+}) => {
   if (intelligenceBrief === undefined) return <LoadingSkeleton />;
+
+  // Gate 1 (hard): no live data retrieved — block the brief entirely.
+  // A heuristic-tier audit means every signal is from sector averages; the
+  // LLM would generate plausible-sounding but company-unspecific prose.
+  if (freshnessierTier === 'heuristic') {
+    return <HeuristicBlock companyName={companyName} />;
+  }
+
   if (intelligenceBrief === null) return null;
 
+  // Gate 2 (soft): confidence below evidence floor — show degraded state.
+  const confidencePct = confidence ?? 100;
+  if (confidencePct < EVIDENCE_FLOOR_PCT) {
+    return <LowConfidenceBrief confidencePct={confidencePct} brief={intelligenceBrief} />;
+  }
+
   const urgency = URGENCY_CONFIG[intelligenceBrief.urgencyLevel];
-  const generatedDate = new Date(intelligenceBrief.generatedAt).toLocaleDateString('en-US', {
+  // v40.0 i18n: respect user's browser locale (German users see "Jan.", not "January")
+  const userLocale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
+  const generatedDate = new Date(intelligenceBrief.generatedAt).toLocaleDateString(userLocale, {
     month: 'short', day: 'numeric', year: 'numeric',
   });
 

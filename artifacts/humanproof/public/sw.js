@@ -1,5 +1,7 @@
 // Service Worker for HumanProof PWA
-const CACHE_VERSION = 'hp-v1-2026-04-21';
+// v40.0: cache-version bumped to invalidate any HTML responses that may have been
+// cached by the previous SW (CVE-style cross-user data leak — see FIX-2 below).
+const CACHE_VERSION = 'hp-v2-2026-05-17';
 const STATIC_ASSETS = /^\/assets\//;
 const API_ROUTES = /^\/api\//;
 const CROSS_ORIGIN = /^https?:\/\/(?!localhost|127.0.0.1)/;
@@ -36,11 +38,17 @@ self.addEventListener('fetch', event => {
     );
   }
 
-  // Network-first for navigations, SWR elsewhere
+  // v40.0 FIX-2: NEVER cache HTML navigations. Previously the fallback
+  // `caches.match(event.request)` could serve a stale cached HTML response
+  // that was generated for a different authenticated user — e.g., User A logs
+  // in, opens audit page, gets cached → User A logs out → User B logs in on
+  // the same device → gets User A's cached HTML shell.
+  // The HTML is intentionally a thin shell that React hydrates with current
+  // user context, but cached responses can include user-specific inline data
+  // (e.g., bootstrap config). Always network-fetch the HTML; if offline, fail
+  // gracefully (the rest of the app remains usable via cached assets).
   if (event.request.mode === 'navigate') {
-    return event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
+    return event.respondWith(fetch(event.request));
   }
 
   return event.respondWith(

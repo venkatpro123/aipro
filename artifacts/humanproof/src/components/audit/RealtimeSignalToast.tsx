@@ -73,8 +73,18 @@ export function RealtimeSignalToast(): null {
   const seenEventIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    // v40 hardening: salt the channel name per mount. Previously every tab
+    // joined a single global channel `breaking-news-stream`, which
+    // (a) caused server-side broadcast amplification under multi-tab and
+    // (b) made stale channels harder to attribute on teardown. The
+    // canonical company filter still runs server-side via the broker; this
+    // toast is a passive listener that only filters in-memory against the
+    // recently-audited list, so a per-mount salt is sufficient.
+    const salt = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const channel = supabase
-      .channel('breaking-news-stream')
+      .channel(`breaking-news-stream-${salt}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'breaking_news_events' },

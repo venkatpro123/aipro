@@ -233,7 +233,10 @@ export const aggregateSwarmResults = (
   });
 
   const rawScore     = totalWeight > 0 ? totalWeightedScore / totalWeight : 0.5;
-  const swarmRiskScore = Math.max(2, Math.min(97, Math.round(rawScore * 100)));
+  // Guard: NaN propagates from individual agent signals with NaN values.
+  // isFinite catches NaN and Infinity before they corrupt the final score.
+  const safeRawScore = Number.isFinite(rawScore) ? rawScore : 0.5;
+  const swarmRiskScore = Math.max(2, Math.min(97, Math.round(safeRawScore * 100)));
 
   // ── Confidence from live API usage + resolution rate ─────────────────────
   //

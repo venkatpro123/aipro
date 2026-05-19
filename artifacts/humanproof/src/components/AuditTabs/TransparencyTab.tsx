@@ -2,7 +2,7 @@
 // Data provenance and system transparency — Answers "How was this calculated?"
 // Displays: Data quality dashboard, source provenance, methodology explainers.
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Info,
@@ -27,6 +27,11 @@ import { SignalAttributionWaterfall } from "./common/SignalAttributionWaterfall"
 // v13.0
 import PeerContagionPanel from "./common/PeerContagionPanel";
 import ModelCalibrationPanel from "./common/ModelCalibrationPanel";
+import {
+  getLiveCalibrationStatus,
+  getLiveCalibrationStatusSync,
+  type LiveCalibrationStatus,
+} from "../../services/empiricalCalibration";
 // v17.0
 import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
 // live-data-first
@@ -913,6 +918,16 @@ const IndiaIntelligencePanel: React.FC<{
 // ---------------------------------------------------------------------------
 
 export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
+  // v40.0 FIX-8: fetch live calibration status async so ModelCalibrationPanel
+  // sees real drift data, not the bootstrap default returned by the sync accessor
+  // when the async cache hasn't been primed yet.
+  const [liveCalibStatus, setLiveCalibStatus] = useState<LiveCalibrationStatus>(
+    getLiveCalibrationStatusSync()
+  );
+  useEffect(() => {
+    getLiveCalibrationStatus().then(setLiveCalibStatus).catch(() => {});
+  }, []);
+
   // Real data sources derived from result.meta.dbSource + signal quality
   const dbSource = result.meta?.dbSource ?? "HumanProof Intelligence DB";
   const liveCount = result.signalQuality?.liveSignals ?? 0;
@@ -1329,7 +1344,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             />
             <PatternMatchCard
               pattern={result.resolvedPattern}
-              overlapScore={undefined}
+              overlapScore={result.patternMatchOverlapScore ?? undefined}
             />
           </div>
         )}
@@ -1411,7 +1426,10 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
         {/* v13.0: Model Calibration — engine accuracy and trust metrics */}
         {(result as any).modelCalibration && (
           <div className="mt-6">
-            <ModelCalibrationPanel calibration={(result as any).modelCalibration} />
+            <ModelCalibrationPanel
+              calibration={(result as any).modelCalibration}
+              liveCalibrationStatus={liveCalibStatus}
+            />
           </div>
         )}
 

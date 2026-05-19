@@ -961,6 +961,69 @@ export function resolvePattern(patternId: string | null | undefined): Historical
   return HISTORICAL_PATTERNS[patternId] ?? null;
 }
 
+// ── Deterministic pattern matcher ─────────────────────────────────────────────
+
+/**
+ * Minimum signal overlap required to surface a pattern match.
+ * Below this threshold: return null — no comparison is better than a weak one.
+ * A hallucinated or barely-matching historical comparison is worse than silence.
+ */
+export const PATTERN_MATCH_THRESHOLD = 0.70;
+
+export interface PatternMatchResult {
+  pattern: HistoricalPattern;
+  overlapScore: number;   // 0.70–1.00 (always ≥ PATTERN_MATCH_THRESHOLD)
+  candidate: PatternCandidate;
+}
+
+/**
+ * Deterministic historical pattern matcher.
+ *
+ * Computes signal overlap for every pattern in HISTORICAL_PATTERNS, applies
+ * the 70% threshold, and returns the highest-overlap match — or null.
+ *
+ * Design guarantees:
+ *   1. Pure computation — no network calls, no LLM, no randomness.
+ *   2. Hard threshold — overlapScore < 0.70 always returns null.
+ *      A weak match shown confidently is worse than no match.
+ *   3. Source-locked — only patterns in HISTORICAL_PATTERNS can be returned.
+ *      Hallucinated pattern IDs from LLMs are structurally impossible.
+ *   4. Contradiction check — patterns with active contradictedBy conditions
+ *      are excluded before overlap is scored.
+ *
+ * Called right after calculateLayoffScore() in the audit pipeline so the
+ * matched pattern is available to every downstream consumer (tabs, briefs)
+ * without requiring a separate async fetch.
+ */
+export function matchHistoricalPattern(
+  companyData: CompanyData,
+  breakdown: ScoreBreakdown & { D7?: number },
+  roleTitle: string,
+): PatternMatchResult | null {
+  // computeTopPatternCandidates returns at most 1 candidate (maxCandidates = 1)
+  // sorted by overlapScore descending, contradicted patterns already excluded.
+  const candidates = computeTopPatternCandidates(companyData, breakdown, roleTitle, 1);
+
+  if (candidates.length === 0) return null;
+
+  const top = candidates[0];
+
+  // Hard threshold — never surface a weak match.
+  if (top.overlapScore < PATTERN_MATCH_THRESHOLD) return null;
+
+  const pattern = HISTORICAL_PATTERNS[top.patternId];
+
+  // Defensive guard — should never be undefined if computeTopPatternCandidates
+  // is operating correctly, but we never trust index lookups blindly.
+  if (!pattern) return null;
+
+  return {
+    pattern,
+    overlapScore: top.overlapScore,
+    candidate:    top,
+  };
+}
+
 /**
  * Returns a condensed description of the top candidates for inclusion in the
  * Claude prompt. Each entry is 1-2 lines so the prompt stays compact.

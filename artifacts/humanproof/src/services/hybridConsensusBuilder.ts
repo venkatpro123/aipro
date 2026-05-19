@@ -211,6 +211,9 @@ const mapOverstaffing = (
 
 const monthsDifference = (dateStr: string, now: Date): number => {
   const date = new Date(dateStr);
+  // Guard: malformed/null dates produce Invalid Date → NaN arithmetic → corrupts
+  // all downstream calculations (layoff recency, round frequency, etc.).
+  if (isNaN(date.getTime())) return 999; // treat as ancient/irrelevant
   return Math.abs(
     (now.getFullYear() - date.getFullYear()) * 12 +
       (now.getMonth() - date.getMonth()),
@@ -268,11 +271,12 @@ const calculateRoundFrequency = (
   return base;
 };
 
-const calculateSectorContagion = (industryData?: IndustryRisk): number => {
-  // 0.45 splits the difference with the main engine's calculateMarketConditionsScore
-  // which returns 0.5 for unknown industry — reduces inter-engine score variance from
-  // ±1.2pts to ±0.6pts for companies in unrecognised sectors.
-  if (!industryData) return 0.45;
+const calculateSectorContagion = (industryData?: IndustryRisk, region?: string): number => {
+  // v40.0 FIX-5: India IT sector has elevated contagion baseline from NASSCOM
+  // wave evidence (2022–2024). Use 0.55 instead of the generic 0.45 for unknown
+  // industry when the company is in India — previously treated the same as a US
+  // company with unknown industry, under-estimating contagion risk.
+  if (!industryData) return region === 'IN' ? 0.55 : 0.45;
   const baseSignal = industryData.baselineRisk;
   const rateSignal = clamp(industryData.avgLayoffRate2025 * 5, 0, 1);
   return baseSignal * 0.6 + rateSignal * 0.4;
@@ -571,7 +575,7 @@ export function buildHybridScorePayload({
   const sectorContagion = buildResolvedSignal(
     'sectorContagion',
     heuristicSignal('sectorContagion', industryData?.avgLayoffRate2025 ?? 0.04, 'industry contagion baseline', observedAt),
-    calculateSectorContagion(industryData),
+    calculateSectorContagion(industryData, companyData.region),
     reconciled.conflicts,
   );
   const departmentNews = buildResolvedSignal(
@@ -784,6 +788,12 @@ export function buildHybridScorePayload({
     conformal:         (companyData as any)._conformalBundle ?? null,
     swarmIndependence: (companyData as any)._swarmIndependence ?? null,
     evidencePerClass:  (companyData as any)._evidencePresence ?? undefined,
+    // v40.0: pass DB reliability tier so liveUnavailable floor is quality-aware.
+    // Unknown companies get a 'D' override set in the pipeline fallback path;
+    // all others use the DQ report tier derived from validateDataQuality().
+    dbReliabilityTier: (companyData as any)._dbReliabilityTierOverride
+      ?? (companyData as any)._dataQuality?.tier
+      ?? undefined,
   });
 
   // Diagnostic rationale — surfaced via confidenceCapsApplied for UI tooltip.
@@ -833,8 +843,12 @@ export function buildHybridScorePayload({
         ? { code: 'LOW_DATA' as const, missingCount: missingCriticalCount, capAt: lowDataCap }
         : undefined,
       freshnessReport: {
-        oldestSignalAge: Math.max(...ages),
-        avgSignalAge: Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length),
+        // Guard: Math.max(...[]) returns -Infinity and ages.reduce / 0 returns NaN
+        // when no resolved signals exist. Use 0 as the safe default (no age = fresh).
+        oldestSignalAge: ages.length > 0 ? Math.max(...ages) : 0,
+        avgSignalAge: ages.length > 0
+          ? Math.round(ages.reduce((sum, age) => sum + age, 0) / ages.length)
+          : 0,
         percentLive: resolvedSignals.length > 0 ? liveSignalCount / resolvedSignals.length : 0,
         percentHeuristic: resolvedSignals.length > 0 ? heuristicSignalCount / resolvedSignals.length : 0,
         totalSignalCount: resolvedSignals.length,

@@ -18,6 +18,7 @@ import { motion } from 'framer-motion';
 import {
   Brain, Zap, BarChart2, Activity, BookOpen, Compass,
 } from 'lucide-react';
+import { PatternMatchCard } from '../../PatternMatchCard';
 import type { TabProps } from '../common/types';
 import type { PredictionHorizonResult } from '../../../services/predictionHorizonService';
 import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
@@ -48,11 +49,16 @@ function readinessColor(label: string): string {
 
 // ── Intelligence Brief (compact, no duplication of Summary) ─────────────────
 
+const EVIDENCE_FLOOR_PCT = 40;
+
 const IntelligenceBriefBlock: React.FC<{
   brief: IntelligenceBriefResult | null | undefined;
   urgency: string;
   auditStage?: string;
-}> = ({ brief, urgency, auditStage }) => {
+  confidence?: number;
+  freshnessierTier?: string;
+  companyName?: string;
+}> = ({ brief, urgency, auditStage, confidence, freshnessierTier, companyName }) => {
   const [expanded, setExpanded] = useState(false);
 
   const uc = {
@@ -61,6 +67,31 @@ const IntelligenceBriefBlock: React.FC<{
     MODERATE: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
     LOW:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
   }[urgency] ?? { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' };
+
+  // Gate 1 (hard): heuristic tier — no live data, brief would be sector-generic prose.
+  if (freshnessierTier === 'heuristic') {
+    return (
+      <div className="rounded-2xl p-4" style={{ background: 'rgba(15,23,42,0.60)', border: '1px solid rgba(148,163,184,0.22)' }}>
+        <div className="flex items-center gap-2 mb-2">
+          <Brain className="w-4 h-4" style={{ color: 'rgba(148,163,184,0.45)' }} />
+          <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(148,163,184,0.45)' }}>
+            INTELLIGENCE BRIEF
+          </span>
+          <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.25)', fontFamily: 'var(--font-mono)' }}>
+            NO LIVE DATA
+          </span>
+        </div>
+        <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          No live signals were retrieved{companyName ? ` for ${companyName}` : ''}. A brief
+          grounded in sector averages would look specific but wouldn't be — so we're not
+          generating one. Live data is resolving in the background.
+        </p>
+        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          Sector context is still available in Market Environment below.
+        </p>
+      </div>
+    );
+  }
 
   if (!brief) {
     return (
@@ -83,6 +114,10 @@ const IntelligenceBriefBlock: React.FC<{
       </div>
     );
   }
+
+  // Gate 2 (soft): low confidence — render with a warning banner.
+  const confidencePct = confidence ?? 100;
+  const showLowConfWarning = confidencePct < EVIDENCE_FLOOR_PCT;
 
   const first = brief.paragraphs[0] ?? '';
   const rest  = brief.paragraphs.slice(1);
@@ -109,7 +144,22 @@ const IntelligenceBriefBlock: React.FC<{
         </span>
       </div>
 
-      <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+      {showLowConfWarning && (
+        <div
+          className="mb-3 flex items-start gap-2 rounded-xl px-3 py-2.5"
+          style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.28)' }}
+        >
+          <span className="text-amber-400 text-[11px] font-semibold flex-shrink-0">⚠</span>
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            <span className="font-semibold text-amber-400">Low confidence ({confidencePct}%). </span>
+            This analysis is directional — not enough live signals resolved to write a
+            company-specific brief. Statements below reflect sector patterns more than
+            this specific company's current situation.
+          </p>
+        </div>
+      )}
+
+      <p className="text-[12px] leading-relaxed" style={{ color: showLowConfWarning ? 'rgba(255,255,255,0.60)' : 'rgba(255,255,255,0.85)' }}>
         {first}
       </p>
 
@@ -360,12 +410,53 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   const preparedness: PreparednessResult | undefined   = r.preparednessScore;
   const brief: IntelligenceBriefResult | null | undefined = r.intelligenceBrief;
   const urgencyLevel = brief?.urgencyLevel ?? (result.total >= 75 ? 'HIGH' : result.total >= 55 ? 'MODERATE' : 'LOW');
+  const confPct = result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100);
+  const freshnessierTier: string = result.unifiedFreshness?.tier ?? '';
+  const companyNameForBrief: string = (companyData as any)?.name ?? '';
 
   return (
     <div className="flex flex-col gap-3">
 
       {/* ── T2: Intelligence Brief — full text lives here only ─────────────── */}
-      <IntelligenceBriefBlock brief={brief} urgency={urgencyLevel} auditStage={auditStage} />
+      <IntelligenceBriefBlock
+        brief={brief}
+        urgency={urgencyLevel}
+        auditStage={auditStage}
+        confidence={confPct}
+        freshnessierTier={freshnessierTier}
+        companyName={companyNameForBrief}
+      />
+
+      {/* ── T2: Historical precedent match ───────────────────────────────────
+           Only shown when a verified pattern in HISTORICAL_PATTERNS matches at
+           ≥ 70% signal overlap. Never AI-generated — sourced entirely from
+           manually curated, source-verifiable records.
+           Placed before the score breakdown so context precedes detail. ───── */}
+      {result.resolvedPattern && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+              style={{
+                background: 'rgba(245,158,11,0.10)',
+                color: '#f59e0b',
+                border: '1px solid rgba(245,158,11,0.28)',
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
+              }}
+            >
+              Verified Pattern
+            </span>
+            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Signal-matched against documented precedents — not AI-generated
+            </span>
+          </div>
+          <PatternMatchCard
+            pattern={result.resolvedPattern}
+            overlapScore={result.patternMatchOverlapScore ?? undefined}
+          />
+        </motion.div>
+      )}
 
       {/* ── T2: Dual Gauge — Risk vs Readiness ─────────────────────────────── */}
       <DualGaugePanel riskScore={result.total} preparedness={preparedness} />

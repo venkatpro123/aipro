@@ -27,7 +27,7 @@
 //     the `candidatePipeline` argument without changing this runner.
 
 import type { AuditInputs } from './auditDataPipeline';
-import { fetchAuditData } from './auditDataPipeline';
+import { fetchAuditData, fetchAuditDataWithOfflineFallback } from './auditDataPipeline';
 import type { HybridResult } from '../types/hybridResult';
 import type { CompanyData } from '../data/companyDatabase';
 import { supabase } from '../utils/supabase';
@@ -296,7 +296,8 @@ export async function runWithShadow(
 
   const shadowFlag = await evaluateFlag('ws0_shadow_runner', options.userId ?? null);
   if (shadowFlag.mode === 'off' || shadowFlag.mode === 'deprecated') {
-    const out = await fetchAuditData(inputs);
+    // v40.0: use offline-aware wrapper so network failures return the cached result
+    const out = await fetchAuditDataWithOfflineFallback(inputs);
     return {
       userFacingResult: out.result,
       companyData: out.companyData,
@@ -306,7 +307,7 @@ export async function runWithShadow(
     };
   }
 
-  const legacyPipeline: AuditPipeline = fetchAuditData;
+  const legacyPipeline: AuditPipeline = fetchAuditDataWithOfflineFallback;
 
   // WS6 — Candidate pipeline selection. When `ws6_tier_a_response` is on,
   // use the Tier-A two-stage runner so the user sees a fast first response

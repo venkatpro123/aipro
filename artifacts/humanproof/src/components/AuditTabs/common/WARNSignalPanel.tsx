@@ -26,10 +26,14 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
   if (!warnSignal || !warnSignal.hasActiveWARN) return null;
 
   const urgency = URGENCY_CONFIG(warnSignal.daysUntilLayoff);
-  const displayedLocations = warnSignal.affectedLocations.slice(0, 3);
-  const extraLocations = warnSignal.affectedLocations.length - displayedLocations.length;
+  // Guard: affectedLocations and warnFilings may be absent if the signal was
+  // constructed from an older version of WARNSignal that didn't populate these arrays.
+  const locations = warnSignal.affectedLocations ?? [];
+  const filings = warnSignal.warnFilings ?? [];
+  const displayedLocations = locations.slice(0, 3);
+  const extraLocations = locations.length - displayedLocations.length;
   const filingStates = Array.from(
-    new Set(warnSignal.warnFilings.map(f => f.filingState).filter(Boolean))
+    new Set(filings.map(f => f.filingState).filter(Boolean))
   );
 
   return (

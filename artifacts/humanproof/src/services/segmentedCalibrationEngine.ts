@@ -343,3 +343,49 @@ export function computeSegmentCalibration(
     };
   }
 }
+
+// ── v40.0: Calibration limitation check ──────────────────────────────────────
+
+export interface CalibrationLimitationResult {
+  /** true when the model has known significant underrepresentation for this company's profile. */
+  limited: boolean;
+  /** Human-readable reason for the limitation chip in SummaryTab. null when not limited. */
+  reason: string | null;
+}
+
+/**
+ * Returns a limitation signal when the training dataset (n=200, 70% US, 20% India)
+ * is known to underrepresent the company's segment. Used in SummaryTab to render
+ * an "Calibration note" amber chip so users know to treat scores with additional caution.
+ *
+ * Segments with < 5% of training events return `limited: true`:
+ *   - manufacturing / industrial / construction / energy
+ *   - emerging markets (non US/IN/EU)
+ *   - pre-IPO private startups
+ */
+export function isCalibrationLimitedForCompany(
+  industry: string | null | undefined,
+  region: string | null | undefined,
+  isPublic: boolean,
+): CalibrationLimitationResult {
+  // Pre-IPO private startups
+  if (!isPublic && industry && /startup|early.stage|pre.ipo|seed|series.a|series.b/i.test(industry)) {
+    return { limited: true, reason: 'Calibration has limited data for pre-IPO startups (n=12 in training set).' };
+  }
+
+  // Manufacturing / industrial / energy / construction
+  const ind = (industry ?? '').toLowerCase();
+  if (/manufactur|industrial|factory|energy|oil|gas|mining|construc|utilities/i.test(ind)) {
+    return { limited: true, reason: 'Calibration is limited for this sector (manufacturing/energy n=8 in training set).' };
+  }
+
+  // Emerging markets (not US/India/EU/APAC)
+  const reg = (region ?? '').toUpperCase();
+  const coveredRegions = ['US', 'IN', 'EU', 'UK', 'DE', 'FR', 'APAC', 'SG', 'AU', 'JP', 'NA'];
+  if (reg && !coveredRegions.includes(reg)) {
+    return { limited: true, reason: `Calibration has no training events for region "${region}" — use scores as directional only.` };
+  }
+
+  return { limited: false, reason: null };
+}
+

@@ -16,6 +16,7 @@ import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
   BookOpen, Activity,
 } from 'lucide-react';
+import { ProfileQuickCapture } from '../../ProfileQuickCapture';
 import type { TabProps } from '../common/types';
 import type { CareerContingencyPlan } from '../../../services/careerContingencyPlanEngine';
 import type { ActionPlanItem } from '../../../types/hybridResult';
@@ -214,6 +215,23 @@ const ContingencyUnavailable: React.FC = () => (
 export const ActionsTab: React.FC<TabProps> = (props) => {
   const { result, companyData } = props;
   const r = result as any;
+  // Persist quick-capture completion to localStorage with a 24h TTL so the
+  // form doesn't re-appear across tab switches OR new browser tabs within the
+  // same day. sessionStorage is tab-scoped; localStorage persists across tabs.
+  const QC_KEY = 'hp.quickCapture.done';
+  const QC_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const [quickCaptureCompleted, setQuickCaptureCompleted] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(QC_KEY);
+      if (!raw) return false;
+      const { ts } = JSON.parse(raw) as { ts: number };
+      return Date.now() - ts < QC_TTL_MS;
+    } catch { return false; }
+  });
+  const markQuickCaptureComplete = () => {
+    try { localStorage.setItem(QC_KEY, JSON.stringify({ ts: Date.now() })); } catch { /* swallow */ }
+    setQuickCaptureCompleted(true);
+  };
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
@@ -225,8 +243,24 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
     | { isGenericFallback?: boolean; isDbOverride?: boolean; profileContextNote?: string; roleGroup?: string }
     | undefined;
 
+  // Show quick capture when the user has no personalized data AND hasn't
+  // completed it in this session. Detects missing profile via generic fallback.
+  const hasNoProfile = !personalizedSet?.profileContextNote && !personalizedSet?.isDbOverride;
+  const showQuickCapture = hasNoProfile && !quickCaptureCompleted;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
+
+      {/* v40.0: Inline quick profile capture for users without a profile */}
+      {showQuickCapture && (
+        <ProfileQuickCapture onComplete={() => {
+          markQuickCaptureComplete();
+          // Notify the dashboard that profile data changed so the parent
+          // can trigger a recalculate — without this, personalizedSet
+          // stays stale until the user manually re-runs the audit.
+          window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
+        }} />
+      )}
 
       {/* T1: Emergency callout — only in emergency mode */}
       {adaptation.mode === 'emergency' && <EmergencyCallout score={result.total} />}

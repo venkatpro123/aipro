@@ -217,9 +217,17 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
   const conflictPenalty = clamp(inputs.conflictCount * CONFLICT_PENALTY_PER, 0, MAX_CONFLICT_PENALTY);
   value = Math.max(0, value - conflictPenalty - swarmPenalty);
 
-  // ── Live-unavailable floor ──────────────────────────────────────────────
+  // ── Live-unavailable floor (DB-quality-adjusted) ─────────────────────────
+  // v40.0 audit fix: floor is now anchored to DB record quality tier rather
+  // than a single hard 0.45. Tier A DB records (full Supabase intelligence)
+  // earn a higher floor because the DB data itself is real evidence.
+  const DB_TIER_FLOORS: Record<string, number> = {
+    A: 0.62, B: 0.52, C: 0.45, D: 0.35,
+  };
+  const liveUnavailableFloorVal = DB_TIER_FLOORS[inputs.dbReliabilityTier ?? 'C'] ?? 0.45;
   if (inputs.liveUnavailable) {
-    value = Math.min(value, 0.45);
+    // Apply as minimum floor, not exact override (see confidenceModel.ts rationale).
+    value = Math.max(value, liveUnavailableFloorVal);
   }
 
   // ── Cap (hard upper bound) ──────────────────────────────────────────────
@@ -256,7 +264,11 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
     rationale.push(`Conflict penalty: -${(conflictPenalty * 100).toFixed(0)}pp.`);
   }
   if (inputs.liveUnavailable) {
-    rationale.push('Live intelligence unavailable: hard cap at 45%.');
+    const tier = inputs.dbReliabilityTier ?? 'C';
+    rationale.push(
+      `Live intelligence unavailable — confidence anchored to DB quality tier ${tier}`
+      + ` (${Math.round(liveUnavailableFloorVal * 100)}%).`,
+    );
   }
   if (cap.cap < 1.0) {
     rationale.push(`Presence cap: ${(cap.cap * 100).toFixed(0)}% — ${cap.reason}`);
@@ -270,7 +282,7 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
       freshnessQuality:  { score: freshnessQuality, weight: useNew ? W_FRESHNESS : 0.20 },
       sourceReliability: { score: sourceReliability, weight: useNew ? W_SOURCE_RELIABILITY : 0.20 },
       conflictPenalty,
-      liveUnavailableFloor: inputs.liveUnavailable ? 0.45 : null,
+      liveUnavailableFloor: inputs.liveUnavailable ? liveUnavailableFloorVal : null,
     },
     rationale,
     presenceReport,

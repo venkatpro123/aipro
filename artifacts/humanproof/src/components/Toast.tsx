@@ -32,10 +32,19 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+      {/* v40.0 a11y: aria-live=polite announces new toasts to screen readers.
+          aria-atomic=false so only the new toast is announced, not the whole region. */}
+      <div
+        className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"
+        role="region"
+        aria-label="Notifications"
+        aria-live="polite"
+        aria-atomic="false"
+      >
         {toasts.map((toast) => (
           <div
             key={toast.id}
+            role={toast.type === 'error' ? 'alert' : 'status'}
             className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl backdrop-blur-md transition-all animate-in slide-in-from-right fade-in duration-300 ${
               toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
               toast.type === 'error' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :

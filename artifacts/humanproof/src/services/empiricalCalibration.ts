@@ -95,7 +95,20 @@ this structural gap. D8 is UNCALIBRATED — no regression dataset exists for
 profitable-company AI-efficiency restructuring events.
 
 Next temporal recalibration: July 2026. Target: re-run regression on 300+ events
-including 2024-2026 dataset, with distress vs efficiency cohort separation.`,
+including 2024-2026 dataset, with distress vs efficiency cohort separation.
+
+v40.0 AUDIT — Known calibration limitations:
+- Training set (n=200) geographic breakdown: ~70% US company events, ~20% India.
+- Manufacturing / Industrial: n=8 (4% of training) — L4 industry risk likely
+  miscalibrated for this sector. Scores may understate risk.
+- Emerging markets (LatAm, MEA, Southeast Asia): n=0 — do not use scores for
+  companies primarily operating in these regions.
+- Pre-IPO startups: n=12 (6% of training) — L1 confidence unreliable for
+  private early-stage companies with no SEC filings.
+- Cohort-specific calibration (distress/efficiency/wave/global) partially
+  addresses the India IT and US Big Tech segments. All other segments use
+  GLOBAL defaults. July 2026 recalibration target: separate cohorts,
+  expand n to 400+ events with regional rebalancing.`,
 };
 
 // ── D8 calibration status ──────────────────────────────────────────────────
@@ -139,6 +152,14 @@ export interface LiveCalibrationStatus {
   fetchedAt: string;
   /** UI-ready one-liner. */
   summary: string;
+  // v40.0 drift detection
+  /** Empirical coverage of the 80% CI — fraction of outcomes where actual falls
+   *  within [predicted_ci_low, predicted_ci_high]. undefined when n < 30. */
+  ciCoverageEstimate?: number;
+  /** true when empirical CI coverage deviates > 8pp from the 80% target. */
+  ciDriftDetected?: boolean;
+  /** Human-readable drift warning for ModelCalibrationPanel. */
+  ciDriftWarning?: string;
 }
 
 let _liveCalibrationCache: { status: LiveCalibrationStatus; fetchedAt: number } | null = null;
@@ -191,12 +212,57 @@ export async function getLiveCalibrationStatus(): Promise<LiveCalibrationStatus>
             ? `Live calibration developing: ${N}/${MIN_LIVE_OUTCOMES_FOR_EMPIRICAL} labelled outcomes collected; static 2026-01 anchor still in use.`
             : `Bootstrap calibration: only ${N} labelled outcomes so far; predictions backed by 2026-01-15 published regression (n=200).`;
 
+      // ── v40.0 CI drift detection ────────────────────────────────────────
+      // Compute empirical coverage of the 80% CI from outcome rows that have
+      // predicted_ci_low, predicted_ci_high, and actual_outcome. If fewer than
+      // 30 such rows exist the estimate is statistically unreliable — skip it.
+      let ciCoverageEstimate: number | undefined;
+      let ciDriftDetected: boolean | undefined;
+      let ciDriftWarning: string | undefined;
+      const CI_TARGET = 0.80;
+      const CI_DRIFT_THRESHOLD = 0.08;
+      const MIN_CI_COVERAGE_N = 30;
+      try {
+        const { data: ciRows, error: ciErr } = await supabase
+          .from('user_prediction_outcomes')
+          .select('predicted_ci_low, predicted_ci_high, actual_outcome_score')
+          .not('predicted_ci_low', 'is', null)
+          .not('predicted_ci_high', 'is', null)
+          .not('actual_outcome_score', 'is', null)
+          .limit(500);
+        if (!ciErr && ciRows && ciRows.length >= MIN_CI_COVERAGE_N) {
+          const covered = ciRows.filter((row: any) =>
+            typeof row.actual_outcome_score === 'number' &&
+            typeof row.predicted_ci_low === 'number' &&
+            typeof row.predicted_ci_high === 'number' &&
+            row.actual_outcome_score >= row.predicted_ci_low &&
+            row.actual_outcome_score <= row.predicted_ci_high
+          ).length;
+          ciCoverageEstimate = covered / ciRows.length;
+          const drift = Math.abs(ciCoverageEstimate - CI_TARGET);
+          if (drift > CI_DRIFT_THRESHOLD) {
+            ciDriftDetected = true;
+            ciDriftWarning =
+              `Calibration monitoring: CI coverage estimated at ${Math.round(ciCoverageEstimate * 100)}%`
+              + ` vs. target ${Math.round(CI_TARGET * 100)}%`
+              + ` (n=${ciRows.length}). Scheduled recalibration will address this.`;
+          } else {
+            ciDriftDetected = false;
+          }
+        }
+      } catch {
+        // CI drift detection is non-fatal; predicted_ci columns may not exist yet.
+      }
+
       const status: LiveCalibrationStatus = {
         mode,
         labelledOutcomesN: N,
         positiveOutcomesN: positives,
         fetchedAt: new Date().toISOString(),
         summary,
+        ciCoverageEstimate,
+        ciDriftDetected,
+        ciDriftWarning,
       };
       _liveCalibrationCache = { status, fetchedAt: Date.now() };
       return status;

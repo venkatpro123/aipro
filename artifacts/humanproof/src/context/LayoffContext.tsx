@@ -29,6 +29,8 @@ export interface LayoffState {
   } | null;
   isCalculating: boolean;
   hasCompletedAssessment: boolean;
+  /** v40.0: Monotonic request counter so out-of-order async score updates don't overwrite newer results. */
+  scoreRequestId?: number;
   historySaveCounter: number; // ← triggers history refresh
   skillIntents: Record<string, "protect" | "pivot">;
   quizAnswers: Record<number, number>;
@@ -45,7 +47,10 @@ type LayoffAction =
   | { type: "SET_COMPANY_DATA"; payload: CompanyData | null }
   | { type: "SET_ORACLE_KEY"; payload: string }
   | { type: "SET_CALCULATING"; payload: boolean }
-  | { type: "SET_SCORE_RESULT"; payload: ScoreResult | HybridResult }
+  // v40.0 FIX-8: optional requestId on SET_SCORE_RESULT to guard against stale
+  // out-of-order updates. When the dispatcher knows it kicked off request N,
+  // a late-arriving request M (M<N) will be ignored.
+  | { type: "SET_SCORE_RESULT"; payload: ScoreResult | HybridResult; requestId?: number }
   | { type: "SET_HISTORY"; payload: ScoreHistoryEntry[] }
   | { type: "SET_ALERT_DRIFT"; payload: LayoffState["alertDrift"] }
   | { type: "INCREMENT_SAVE_COUNTER" }
@@ -65,6 +70,7 @@ const initialState: LayoffState = {
   alertDrift: null,
   isCalculating: false,
   hasCompletedAssessment: false,
+  scoreRequestId: 0,
   historySaveCounter: 0,
   skillIntents: {},
   quizAnswers: {},
@@ -96,11 +102,24 @@ const layoffReducer = (
     case "SET_CALCULATING":
       return { ...state, isCalculating: action.payload };
     case "SET_SCORE_RESULT":
+      // v40.0 FIX-8: ignore stale results from prior calculations. The latest
+      // requestId is tracked in state; any action with an older requestId is
+      // dropped to prevent out-of-order overwrites (e.g., user clicks Calculate
+      // twice rapidly — the slower second-to-last result no longer overrides
+      // the most-recent first result).
+      if (
+        action.requestId != null &&
+        state.scoreRequestId != null &&
+        action.requestId < state.scoreRequestId
+      ) {
+        return state;
+      }
       return {
         ...state,
         scoreResult: action.payload,
         isCalculating: false,
         hasCompletedAssessment: true,
+        scoreRequestId: action.requestId ?? state.scoreRequestId,
       };
     case "SET_HISTORY":
       return { ...state, scoreHistory: action.payload };

@@ -15,6 +15,12 @@ import './executiveMovementLayer';
 import './hiringSignalLayer';
 import './employeeSentimentLayer';
 import './headcountVelocityLayer';
+// v40.0 DAG migration batch
+import './warnSignalLayer';
+import './glassdoorVelocityLayer';
+import './secEnhancedLayer';
+import './workforceVelocityLayer';
+import './blsMacroLiveLayer';
 // Add new layer imports below as they migrate from the legacy pipeline.
 // Layers with `core` as a dependency (e.g. conformal_ci) require the
 // legacy engine to ctx.emit('core', ...) before executeRegistry is

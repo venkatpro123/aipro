@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, ChevronDown, Users, LineChart } from 'lucide-react';
+import { Building2, ChevronDown, Users, LineChart, AlertTriangle, Clock } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import {
@@ -165,6 +165,17 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
       ? 'Attempted live + DB — no signal returned. Likely upstream rate-limit; retrying in background.'
       : 'No attempt made — company isn\'t in our intelligence layer yet.';
 
+  // v40.0 audit fix: surface heuristic/stale freshness so users know when
+  // the analysis is based on historical baselines rather than live data.
+  const freshnessTier = result.unifiedFreshness?.tier;
+  const freshnessDisclosure = freshnessTier === 'heuristic'
+    ? { icon: AlertTriangle, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
+        text: 'Analysis based on historical baselines — no live data retrieved for this company.' }
+    : freshnessTier === 'stale'
+    ? { icon: Clock, color: '#94a3b8', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)',
+        text: 'Partial live data. Score supplemented with cached historical baselines.' }
+    : null;
+
   return (
     <div
       className="rounded-2xl overflow-hidden"
@@ -174,6 +185,25 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         transition: 'border-color 0.18s ease',
       }}
     >
+      {/* v40.0: Heuristic / stale freshness disclosure banner */}
+      {freshnessDisclosure && (() => {
+        const { icon: Icon, color, bg, border, text } = freshnessDisclosure;
+        return (
+          <div
+            className="px-3 pt-3 pb-0"
+          >
+            <div
+              className="flex items-start gap-2 px-3 py-2 rounded-xl mb-2"
+              style={{ background: bg, border: `1px solid ${border}` }}
+            >
+              <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color }} />
+              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                {text}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
       {/* Headline row */}
       <button
         onClick={() => setOpen(o => !o)}

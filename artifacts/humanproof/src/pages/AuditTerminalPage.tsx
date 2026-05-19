@@ -3,7 +3,7 @@
 // Completely separate from the Layoff Audit (swarm pipeline).
 // Uses calculateScore() from riskFormula — client-side, no external calls.
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { INDUSTRIES, WORK_TYPES, COUNTRIES } from '../data/catalogData';
 import {
   calculateScore,
@@ -101,6 +101,18 @@ const AuditTerminalPage: React.FC = () => {
   const [activeTab, setActiveTab]     = useState<TabKey>('analysis');
   const [delta, setDelta]             = useState<ScoreDelta | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
+
+  // v40.0 FIX-5: clear isCalculating on unmount so a user who navigates away
+  // mid-calculation and returns later doesn't find the button permanently disabled.
+  // Also tracks mount state so async handlers don't try to setState after unmount
+  // (which React would warn about and which could cause stale UI flashes).
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // ── Select option builders ────────────────────────────────────────────────
 
@@ -155,6 +167,9 @@ const AuditTerminalPage: React.FC = () => {
 
     await new Promise((r) => setTimeout(r, 600)); // UX delay
 
+    // v40.0 FIX-5: abort all setState calls if user navigated away during the delay
+    if (!isMountedRef.current) return;
+
     const score = calculateScore(workTypeKey, industryKey, experience, countryKey);
     setCachedRisk(cacheParams, score);
     setResult(score);
@@ -171,9 +186,22 @@ const AuditTerminalPage: React.FC = () => {
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
   };
 
-  // Handle industry change: clear work type since options change
+  // Handle industry change: clear work type since options change.
+  // v40.0 FIX-9: only clear (and only flag for user feedback) if a workType was
+  // actually selected — otherwise the "reset" message is misleading on first
+  // industry selection when workType was already empty.
   const handleIndustryChange = (key: string) => {
     setIndustryKey(key);
+    if (workTypeKey) {
+      // Toast is fired via the existing notification context (provided in App.tsx).
+      // If the toast context isn't available (e.g., in a standalone test rig),
+      // the no-op fallback below preserves the data clear without crashing.
+      try {
+        window.dispatchEvent(new CustomEvent('hp.toast', {
+          detail: { type: 'info', message: 'Work type cleared — please re-select for the new industry.' }
+        }));
+      } catch { /* swallow */ }
+    }
     setWorkTypeKey('');
   };
 

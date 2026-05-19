@@ -74,10 +74,17 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
       const parsed = JSON.parse(raw);
       const { data, timestamp } = parsed ?? {};
       // Guard: timestamp must be a valid finite positive number. If it's
-      // undefined (old format), NaN (corrupted), or 0 (epoch default), treat
-      // the entry as expired rather than returning indefinitely-stale data.
-      const isValidTimestamp = typeof timestamp === 'number' && isFinite(timestamp) && timestamp > 0;
-      if (isValidTimestamp && Date.now() - timestamp < LOCAL_TTL_MS) {
+      // undefined (old format), NaN (corrupted), 0 (epoch default), or a
+      // far-future date (clock corruption), treat the entry as expired.
+      // Allow 60 seconds of future skew to tolerate small clock differences
+      // (VM users, NTP-resync moments) without invalidating fresh cache.
+      const now = Date.now();
+      const CLOCK_SKEW_TOLERANCE_MS = 60_000;
+      const isValidTimestamp = typeof timestamp === 'number'
+        && isFinite(timestamp)
+        && timestamp > 0
+        && timestamp <= now + CLOCK_SKEW_TOLERANCE_MS;
+      if (isValidTimestamp && now - timestamp < LOCAL_TTL_MS) {
         console.log('[Cache] HIT localStorage:', key);
         return data;
       }
@@ -121,8 +128,45 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
   return null;
 };
 
+// v40.0 FIX-9: LRU-style eviction. Cap total hp_ensemble_ entries at MAX_LOCAL_ENTRIES;
+// when full, drop the oldest entries first. Prevents silent localStorage quota
+// exhaustion after heavy users audit dozens of companies.
+const MAX_LOCAL_ENTRIES = 40;
+const evictOldestEntries = (): void => {
+  try {
+    // Snapshot all matching keys first to avoid race conditions with other tabs
+    // mutating localStorage during iteration.
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('hp_ensemble_')) keys.push(k);
+    }
+    if (keys.length <= MAX_LOCAL_ENTRIES) return;
+
+    const entries: Array<{ key: string; ts: number }> = [];
+    for (const k of keys) {
+      const raw = localStorage.getItem(k);
+      if (raw == null) continue; // key was deleted by another tab between snapshot and read
+      try {
+        const parsed = JSON.parse(raw);
+        entries.push({ key: k, ts: typeof parsed.timestamp === 'number' ? parsed.timestamp : 0 });
+      } catch {
+        // Corrupted — schedule for removal (ts=0 puts it at the front of eviction queue)
+        entries.push({ key: k, ts: 0 });
+      }
+    }
+    if (entries.length <= MAX_LOCAL_ENTRIES) return;
+    entries.sort((a, b) => a.ts - b.ts); // oldest first
+    const toEvict = entries.slice(0, entries.length - MAX_LOCAL_ENTRIES);
+    for (const e of toEvict) {
+      try { localStorage.removeItem(e.key); } catch { /* swallow */ }
+    }
+  } catch { /* localStorage unavailable */ }
+};
+
 export const setCachedAnalysis = async (key: string, value: any): Promise<void> => {
   const slim = slimForCache(value); // BUG-09 FIX: strip heavy data before storing
+  evictOldestEntries(); // v40.0 FIX-9: keep cache bounded
 
   // Save to localStorage immediately (synchronous)
   try {
@@ -131,7 +175,22 @@ export const setCachedAnalysis = async (key: string, value: any): Promise<void> 
       JSON.stringify({ data: slim, timestamp: Date.now() })
     );
   } catch {
-    // localStorage full — skip silently
+    // localStorage full — try evicting half the cache and retry once
+    try {
+      const entries: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('hp_ensemble_')) entries.push(k);
+      }
+      // Remove half
+      for (let i = 0; i < Math.ceil(entries.length / 2); i++) {
+        try { localStorage.removeItem(entries[i]); } catch { /* swallow */ }
+      }
+      localStorage.setItem(
+        `hp_ensemble_${key}`,
+        JSON.stringify({ data: slim, timestamp: Date.now() })
+      );
+    } catch { /* still full — give up */ }
   }
 
   // Save to Supabase async — don't block the UI

@@ -34,16 +34,21 @@ serve(async (req) => {
   const authHeader = req.headers.get('Authorization') ?? '';
   if (!authHeader.startsWith('Bearer ')) return jsonErr('Missing Authorization header', 401);
 
+  // v40 hardening: do not compare service-role JWT via substring includes().
+  // Use Supabase's own validator. The client created with ANON_KEY + caller's
+  // Authorization header — supabase.auth.getUser() succeeds for any valid
+  // user JWT *or* for a service-role JWT (since service role implies
+  // role='service_role' but no user row); we accept anything that does not
+  // error. Direct anon-only callers without a user session will error and
+  // get 401.
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { error: authErr } = await supabase.auth.getUser();
-    // Allow service_role calls through even if getUser returns null (no session)
-    const isServiceRole = authHeader.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '__none__');
-    if (authErr && !isServiceRole) {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) {
       return jsonErr('Invalid or expired token', 401);
     }
   } catch {

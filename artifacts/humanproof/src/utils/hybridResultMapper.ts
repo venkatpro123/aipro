@@ -142,8 +142,9 @@ export function mapToHybridResult(
       timestamp: result.calculatedAt
     },
     _engineResult: isEnsemble(result) ? undefined : result,
-    // v7.0: Pass through verified historical pattern from ensemble path
-    resolvedPattern: isEnsemble(result) ? (result as any).resolvedPattern ?? null : undefined,
+    // Deterministic historical pattern from matchHistoricalPattern() — never LLM-sourced.
+    resolvedPattern:           isEnsemble(result) ? (result as any).resolvedPattern           ?? null : undefined,
+    patternMatchOverlapScore:  isEnsemble(result) ? (result as any).patternMatchOverlapScore  ?? null : undefined,
     // v7.0 Fix 5: Thread timing and probabilityForecast for direct OverviewTab access
     timing:              result.timing,
     probabilityForecast: result.probabilityForecast,

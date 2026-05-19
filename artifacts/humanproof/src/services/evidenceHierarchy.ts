@@ -92,6 +92,8 @@ export interface EvidenceSignal<T = unknown> {
   observedAt: string;
   /** Optional caller confidence score in [0, 1]. Used as tiebreaker. */
   confidence?: number;
+  /** Optional canonical source identifier for deterministic 4th-level tiebreaking. */
+  source?: string;
 }
 
 export interface PickResult<T> {
@@ -235,6 +237,9 @@ export function classifySourceToTier(sourceName: string): SourceTier {
  *   1. tier rank (lower = better)
  *   2. observedAt (newer = better)
  *   3. confidence (higher = better)
+ *   4. source name (lexicographic ascending) — deterministic 4th tiebreaker
+ *      so that identical tier+freshness+confidence always resolves the same
+ *      winner regardless of array insertion order.
  *
  * Use with Array.prototype.sort to surface the most-authoritative signal first.
  */
@@ -246,7 +251,12 @@ export function compareEvidence<T>(a: EvidenceSignal<T>, b: EvidenceSignal<T>): 
   const fresh = (Number.isFinite(bMs) ? bMs : 0) - (Number.isFinite(aMs) ? aMs : 0);
   if (fresh !== 0) return fresh;
   const conf = (b.confidence ?? 0.5) - (a.confidence ?? 0.5);
-  return conf;
+  if (conf !== 0) return conf;
+  // 4th tiebreaker: canonical source identifier, lexicographic ascending.
+  // Falls back to sourceName for signals that don't set the optional `source` field.
+  const aKey = a.source ?? a.sourceName;
+  const bKey = b.source ?? b.sourceName;
+  return aKey.localeCompare(bKey);
 }
 
 // ── Pick winner ─────────────────────────────────────────────────────────────

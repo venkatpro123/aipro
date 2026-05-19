@@ -11,7 +11,16 @@ export class GlobalErrorBoundary extends React.Component<{ children: React.React
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // v40.0 security: only log full error context (stack + component stack) in
+    // development. In production the stack trace can leak internal source paths
+    // and component structure to anyone with DevTools open. The drop_console
+    // build config strips console.log/info/debug but keeps console.warn/error,
+    // so the message-only path below DOES reach production logs.
+    if (import.meta.env.DEV) {
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    } else {
+      console.error('ErrorBoundary caught an error:', error.message);
+    }
   }
 
   render() {

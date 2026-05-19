@@ -53,18 +53,33 @@ function getPlotScore(rawScore: number, source: string): number {
 }
 
 function normalizeEntry(e: any): ScoreEntry {
+  // v40.0 FIX-C: guard against NaN/string/Infinity corruption. Browser extensions
+  // or manual localStorage edits can produce entries with `score: "not_a_number"`
+  // or `score: NaN`. Without these guards, downstream arithmetic (EMA, drift
+  // detection) silently produces NaN, breaking the velocity badge and trend
+  // classification.
+  const rawScore = e?.score;
+  const safeScore = typeof rawScore === 'number' && isFinite(rawScore)
+    ? Math.max(0, Math.min(100, rawScore))
+    : 0;
+  const rawPlot = e?.plotScore;
+  const safePlot = typeof rawPlot === 'number' && isFinite(rawPlot)
+    ? Math.max(0, Math.min(100, rawPlot))
+    : (e?.source === "human-index" ? safeScore : 100 - safeScore);
+  const rawTs = e?.timestamp;
+  const safeTs = typeof rawTs === 'number' && isFinite(rawTs) && rawTs > 0
+    ? rawTs
+    : (() => {
+        const parsed = new Date(rawTs).getTime();
+        return isNaN(parsed) ? Date.now() : parsed;
+      })();
   return {
-    score: e.score ?? 0,
-    plotScore:
-      e.plotScore ??
-      (e.source === "human-index" ? e.score : 100 - (e.score ?? 0)),
-    source: e.source || "job",
-    timestamp:
-      typeof e.timestamp === "number"
-        ? e.timestamp
-        : new Date(e.timestamp).getTime(),
-    dataVersion: e.dataVersion || "2025.0",
-    appVersion: e.appVersion || "1.0",
+    score: safeScore,
+    plotScore: safePlot,
+    source: e?.source || "job",
+    timestamp: safeTs,
+    dataVersion: e?.dataVersion || "2025.0",
+    appVersion: e?.appVersion || "1.0",
   };
 }
 

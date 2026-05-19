@@ -16,7 +16,15 @@ import { LAYER_WEIGHTS } from "@/services/layoffScoreEngine";
 import { getScoreColor } from "@/data/riskEngine";
 import type { TabProps } from "./common/types";
 import type { CareerIntelligence } from "@/data/intelligence/types";
-import { overlaySkillDemand } from "@/services/skillDemandService";
+import {
+  overlaySkillDemand,
+  getCompanySkillDemand,
+  applyCompanySkillOverlay,
+  stripDemandLive,
+  type CompanySkillDemand,
+  COMPANY_SKILL_CONTRACTING_THRESHOLD,
+  COMPANY_SKILL_GROWING_THRESHOLD,
+} from "@/services/skillDemandService";
 import { SkillFreshnessLabel, SkillPanelStaticNotice } from "./SkillFreshnessLabel";
 import { getCareerPathMarketSync, isMarketDataStale, marketDataAgeLabel, isMarketDataFreshWarning, marketDataAgeInline } from "@/services/careerPathMarket";
 import {
@@ -80,6 +88,130 @@ const buildFallbackIntel = (roleKey: string, score: number): CareerIntelligence 
       ? `Without action, AI systems will automate 60–75% of your current task portfolio within 24 months. Roles will restructure; survivors will manage AI outputs, not produce them.`
       : `The risk is manageable but cumulative. Without strategic upskilling, gradual task erosion will reduce leverage and salary growth trajectory over 3–5 years.`,
   };
+};
+
+// ---------------------------------------------------------------------------
+// CompanySkillDemandBanner — shown when company-specific data supersedes
+// industry averages. Tells the user exactly what the data is and what
+// confidence level it carries.
+// ---------------------------------------------------------------------------
+
+interface CompanySkillDemandBannerProps {
+  companyDemand: CompanySkillDemand;
+  companyDisplayName: string;
+}
+
+const CompanySkillDemandBanner: React.FC<CompanySkillDemandBannerProps> = ({
+  companyDemand,
+  companyDisplayName,
+}) => {
+  const delta = companyDemand.delta90dPct;
+  const contracting = delta !== null && delta < COMPANY_SKILL_CONTRACTING_THRESHOLD;
+  const growing     = delta !== null && delta > COMPANY_SKILL_GROWING_THRESHOLD;
+
+  const signalColor = contracting ? 'var(--orange, #f97316)'
+    : growing ? '#10b981'
+    : 'rgba(0,212,224,0.80)';
+
+  const signalText = contracting
+    ? `Role demand at ${companyDisplayName} has contracted ${Math.abs(delta!).toFixed(0)}% vs prior period — skill risk elevated`
+    : growing
+    ? `Role demand at ${companyDisplayName} is up ${delta!.toFixed(0)}% vs prior period — demand rising signals active`
+    : delta === null
+    ? `First scrape for ${companyDisplayName} — trend comparison available after next weekly refresh`
+    : `Role demand at ${companyDisplayName} is stable (${delta > 0 ? '+' : ''}${delta.toFixed(0)}% vs prior period)`;
+
+  return (
+    <div
+      className="flex items-start gap-2.5 rounded-xl px-3.5 py-3 mb-4"
+      style={{ background: `${signalColor}10`, border: `1px solid ${signalColor}30` }}
+    >
+      <span className="text-[11px] flex-shrink-0" style={{ color: signalColor }}>🏢</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: signalColor }}>
+          Skill demand specific to {companyDisplayName}
+          <span className="ml-1.5 font-normal" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            · updated {companyDemand.ageInDays === 0 ? 'today' : `${companyDemand.ageInDays}d ago`}
+          </span>
+        </p>
+        <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          {signalText}. Industry averages hidden — they represent a different confidence level.
+        </p>
+      </div>
+      {companyDemand.currentOpenings != null && (
+        <div className="flex-shrink-0 text-right">
+          <p className="text-[13px] font-black" style={{ color: signalColor }}>
+            {companyDemand.currentOpenings.toLocaleString()}
+          </p>
+          <p className="text-[9px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            openings
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// CompanySkillBadge — inline badge on individual skill cards when company
+// data is present. Never shown alongside SkillFreshnessLabel (they are
+// mutually exclusive — different confidence levels).
+// ---------------------------------------------------------------------------
+
+interface CompanySkillBadgeProps {
+  companyDemand: import('@/data/intelligence/types').CompanySkillDemandLive;
+}
+
+const CompanySkillBadge: React.FC<CompanySkillBadgeProps> = ({ companyDemand }) => {
+  const delta = companyDemand.delta90dPct;
+  if (delta === null) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+        style={{ background: 'rgba(0,212,224,0.10)', color: 'rgba(0,212,224,0.70)', border: '1px solid rgba(0,212,224,0.25)' }}
+        title={`${companyDemand.companyName} hiring data available — trend comparison pending next refresh`}
+      >
+        🏢 {companyDemand.companyName} · no trend yet
+      </span>
+    );
+  }
+
+  const contracting = delta < COMPANY_SKILL_CONTRACTING_THRESHOLD;
+  const growing     = delta > COMPANY_SKILL_GROWING_THRESHOLD;
+
+  if (contracting) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+        style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316', border: '1px solid rgba(249,115,22,0.30)' }}
+        title={`${companyDemand.companyName}: demand contracted ${Math.abs(delta).toFixed(0)}% vs prior period. Data: ${companyDemand.ageInDays}d ago.`}
+      >
+        🏢 ↓{Math.abs(delta).toFixed(0)}% at {companyDemand.companyName}
+      </span>
+    );
+  }
+
+  if (growing) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+        style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.28)' }}
+        title={`${companyDemand.companyName}: demand up ${delta.toFixed(0)}% vs prior period. Data: ${companyDemand.ageInDays}d ago.`}
+      >
+        🏢 ↑{delta.toFixed(0)}% at {companyDemand.companyName} · demand rising
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded"
+      style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.40)', border: '1px solid rgba(255,255,255,0.12)' }}
+      title={`${companyDemand.companyName}: demand stable (${delta > 0 ? '+' : ''}${delta.toFixed(0)}%). Data: ${companyDemand.ageInDays}d ago.`}
+    >
+      🏢 {delta > 0 ? '+' : ''}{delta.toFixed(0)}% at {companyDemand.companyName}
+    </span>
+  );
 };
 
 // ---------------------------------------------------------------------------
@@ -155,12 +287,16 @@ const SkillRiskGauge: React.FC<SkillRiskGaugeProps> = ({
 // AtRiskSkillsPanel — detailed at-risk skills with AI replacement context
 // ---------------------------------------------------------------------------
 
-const AtRiskSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) => {
+const AtRiskSkillsPanel: React.FC<{
+  intel: CareerIntelligence;
+  hasCompanyOverlay: boolean;
+}> = ({ intel, hasCompanyOverlay }) => {
   const atRisk = intel.skills.at_risk ?? [];
   const obsolete = intel.skills.obsolete ?? [];
   const combined = [...obsolete, ...atRisk].slice(0, 8);
-  // Check if ANY skill has live demand data — drives the panel-level static notice
-  const hasAnyLive = combined.some(s => s.demandLive != null);
+  // hasCompanyOverlay=true means company badges show; industry demandLive is stripped.
+  // hasCompanyOverlay=false means fall back to SkillFreshnessLabel (industry baseline).
+  const hasAnyLive = !hasCompanyOverlay && combined.some(s => s.demandLive != null);
 
   if (combined.length === 0) {
     return (
@@ -203,8 +339,11 @@ const AtRiskSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) =
                       <Cpu className="w-2.5 h-2.5 inline mr-0.5" />{s.aiTool}
                     </span>
                   )}
-                  {/* Freshness label — live/stale/research-est */}
-                  <SkillFreshnessLabel demandLive={s.demandLive} showCount={false} />
+                  {/* Company badge supersedes industry freshness label — they are mutually exclusive */}
+                  {s.companyDemand
+                    ? <CompanySkillBadge companyDemand={s.companyDemand} />
+                    : <SkillFreshnessLabel demandLive={s.demandLive} showCount={false} />
+                  }
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">{s.reason}</p>
                 <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-muted-foreground flex-wrap">
@@ -260,13 +399,17 @@ const getDifficultyColor = (diff: string) => {
   return "text-red-400";
 };
 
-const HumanDurableSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ intel }) => {
+const HumanDurableSkillsPanel: React.FC<{
+  intel: CareerIntelligence;
+  hasCompanyOverlay: boolean;
+}> = ({ intel, hasCompanyOverlay }) => {
   const safe = intel.skills.safe.slice(0, 8);
-  const hasAnyLive = safe.some(s => s.demandLive != null);
+  const hasAnyLive = !hasCompanyOverlay && safe.some(s => s.demandLive != null);
 
   return (
     <div className="grid grid-cols-1 gap-3">
-      {!hasAnyLive && <SkillPanelStaticNotice />}
+      {/* Only show the static notice when there's no company overlay and no industry live data */}
+      {!hasCompanyOverlay && !hasAnyLive && <SkillPanelStaticNotice />}
       {safe.map((s, i) => (
         <motion.div
           key={i}
@@ -286,7 +429,10 @@ const HumanDurableSkillsPanel: React.FC<{ intel: CareerIntelligence }> = ({ inte
                 <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                   HUMAN-DURABLE
                 </span>
-                <SkillFreshnessLabel demandLive={s.demandLive} showCount={false} />
+                {s.companyDemand
+                  ? <CompanySkillBadge companyDemand={s.companyDemand} />
+                  : <SkillFreshnessLabel demandLive={s.demandLive} showCount={false} />
+                }
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">{s.whySafe}</p>
               <div className="flex items-center gap-3 mt-2 text-[10px]">
@@ -529,16 +675,45 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
     [rawIntel, result.workTypeKey, result.total],
   );
 
-  // Overlay live Naukri/LinkedIn demand data from market_intelligence_cache.
-  // The overlay is fetched asynchronously so the panel renders immediately with
-  // static data, then skill cards gain freshness labels once the cache query resolves.
+  // Two-phase skill demand overlay:
+  //
+  //   Phase 1 (company-specific, 7-day freshness gate):
+  //     Query company_skill_demand_cache for this company × workTypeKey.
+  //     When found: apply company overlay, STRIP industry demandLive, show banner.
+  //     When not found: fall through to phase 2.
+  //
+  //   Phase 2 (industry/role-level baseline):
+  //     Query market_intelligence_cache for this workTypeKey (role-level averages).
+  //     Shown only when phase 1 produced no result.
+  //
+  // CRITICAL RULE: never show industry averages and a live company badge
+  // simultaneously. They are different confidence levels. Phase 1 completely
+  // supersedes phase 2 when company data is present.
+  const companyName: string = (companyData as any)?.name ?? '';
   const [intel, setIntel] = useState<CareerIntelligence>(baseIntel);
+  const [companyDemand, setCompanyDemand] = useState<CompanySkillDemand | null>(null);
+
   useEffect(() => {
-    setIntel(baseIntel); // reset on role change
-    overlaySkillDemand(baseIntel, result.workTypeKey).then(enriched => {
-      setIntel(enriched);
-    }).catch(() => {/* keep static intel on error */});
-  }, [baseIntel, result.workTypeKey]);
+    setIntel(baseIntel);
+    setCompanyDemand(null);
+
+    Promise.all([
+      overlaySkillDemand(baseIntel, result.workTypeKey),
+      companyName ? getCompanySkillDemand(companyName, result.workTypeKey) : Promise.resolve(null),
+    ]).then(([industryEnriched, companyData]) => {
+      if (companyData) {
+        // Company-specific data is available and fresh (≤7 days).
+        // Strip the industry-level demandLive from all skills first — the two
+        // confidence levels must never appear in the same panel simultaneously.
+        const stripped = stripDemandLive(industryEnriched);
+        setIntel(applyCompanySkillOverlay(stripped, companyData, result.workTypeKey));
+        setCompanyDemand(companyData);
+      } else {
+        // No company data: show industry-level overlay as-is.
+        setIntel(industryEnriched);
+      }
+    }).catch(() => { setIntel(baseIntel); });
+  }, [baseIntel, result.workTypeKey, companyName]);
 
   // v6.0: Derive uniqueness depth at component level for career path filtering
   const uniquenessDepth = (result as any).uniquenessDepth ?? (result as any).userFactors?.uniquenessDepth ?? 'generic';
@@ -610,6 +785,14 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
           <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={result.workTypeKey} />
         </div>
 
+        {/* ── Company skill demand banner — shown only when company data supersedes industry baseline ── */}
+        {companyDemand && (
+          <CompanySkillDemandBanner
+            companyDemand={companyDemand}
+            companyDisplayName={companyName || companyDemand.companyName}
+          />
+        )}
+
         {/* ── At-Risk Skills + Human-Durable Skills ── */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
@@ -617,14 +800,14 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
               title="At-Risk Skills"
               description="Skills facing AI displacement within 1–5 years. Reducing dependence on these or transitioning to their AI-management layer lowers your risk."
             />
-            <AtRiskSkillsPanel intel={intel} />
+            <AtRiskSkillsPanel intel={intel} hasCompanyOverlay={companyDemand !== null} />
           </div>
           <div>
             <SectionHeader
               title="Human-Durable Skills"
               description="Skills that AI cannot replicate due to trust, empathy, contextual judgment, or physical presence. Prioritize building depth in these."
             />
-            <HumanDurableSkillsPanel intel={intel} />
+            <HumanDurableSkillsPanel intel={intel} hasCompanyOverlay={companyDemand !== null} />
           </div>
         </div>
 

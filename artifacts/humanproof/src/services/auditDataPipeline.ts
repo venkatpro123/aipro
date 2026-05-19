@@ -16,6 +16,8 @@ import {
 import { fetchLiveCompanyData, reconcileCompanySignals, type ReconciledCompanySignals } from "./liveDataService";
 import { applyScrapingEnrichment } from "./scrapingOrchestrator";
 import { buildHybridScorePayload } from "./hybridConsensusBuilder";
+// v40.0 Task 5.5: IndexedDB offline audit cache
+import { cacheLastAuditResult, getLastAuditResult } from "./pwaService";
 import { queryCompanyIntelligenceWithMatch, saveToDiscoveryQueue } from "./companyIntelligenceService";
 import { supabase } from "../utils/supabase";
 import { IndustryRisk } from "../data/industryRiskData";
@@ -584,7 +586,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Guard against empty/whitespace company name before committing to a full pipeline run.
   // An empty string sent to the OSINT Edge Function triggers a PostgreSQL ILIKE ''
   // which can match all rows and cause the function to return 2000+ companies.
-  const trimmedCompanyName = (inputs.companyName ?? '').trim();
+  // v40.0 FIX-11: also strip control characters and clamp to 250 chars to prevent
+  // garbage inputs from reaching downstream APIs.
+  const stripControlChars = (s: string) => s.replace(/[\x00-\x1F\x7F]/g, '').slice(0, 250);
+  const trimmedCompanyName = stripControlChars((inputs.companyName ?? '').trim().replace(/\s+/g, ' '));
   if (trimmedCompanyName.length === 0) {
     // Normalize to the fallback path immediately — no OSINT call needed
     inputs = { ...inputs, companyName: 'Unknown Company' };
@@ -592,11 +597,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     inputs = { ...inputs, companyName: trimmedCompanyName };
   }
   // Similarly normalize role title — empty role title sends blank Serper queries
-  const trimmedRole = (inputs.roleTitle ?? '').trim();
+  const trimmedRole = stripControlChars((inputs.roleTitle ?? '').trim().replace(/\s+/g, ' '));
   if (trimmedRole.length === 0) {
     inputs = { ...inputs, roleTitle: 'Software Engineer' }; // neutral default
   } else {
     inputs = { ...inputs, roleTitle: trimmedRole };
+  }
+  // Normalize department similarly
+  if (inputs.department) {
+    inputs = { ...inputs, department: stripControlChars(inputs.department.trim().replace(/\s+/g, ' ')) };
   }
 
   // ── User-input sanitization (v21.0) ─────────────────────────────────────────
@@ -863,12 +872,51 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       (companyData as any)._regionInferred = true;
     }
 
+    // v40.0: Tag unknown companies with 'D' reliability tier so the confidence
+    // model applies a 0.35 floor instead of the 'C' default (0.45).
+    // Without this, an unknown startup gets the same confidence floor as a
+    // company with a sparse-but-present Supabase record.
+    (companyData as any)._dbReliabilityTierOverride = 'D';
+
     // Fire-and-forget — never blocks the audit
     saveToDiscoveryQueue(
       inputs.companyName,
       companyData.industry ?? 'unknown',
       inputs.roleTitle,
     ).catch(() => {}); // arch-allow:R2 fire-and-forget company-discovery enqueue
+  }
+
+  // v40.0 FIX-4: Sanitize companyData numeric fields. Negative employee counts,
+  // impossible revenue growth (>500% or <-100%), and out-of-range percentages
+  // can come from scraper errors or DB corruption. Set them to null so
+  // downstream scoring treats them as "unknown" (correct fallback) rather than
+  // silently propagating garbage values.
+  if (companyData) {
+    if (typeof companyData.employeeCount === 'number' &&
+        (companyData.employeeCount < 0 || !isFinite(companyData.employeeCount))) {
+      // employeeCount is typed as `number` (non-nullable). Use 0 — the
+      // downstream code at calculateCompanyHealthScore gates on
+      // `employeeCount != null && employeeCount > 0` so 0 correctly skips
+      // size-risk computation while staying type-safe.
+      companyData.employeeCount = 0;
+    }
+    if (typeof companyData.revenueGrowthYoY === 'number' &&
+        (!isFinite(companyData.revenueGrowthYoY) ||
+         companyData.revenueGrowthYoY < -100 || companyData.revenueGrowthYoY > 500)) {
+      companyData.revenueGrowthYoY = null;
+    }
+    if (typeof companyData.stock90DayChange === 'number' &&
+        (!isFinite(companyData.stock90DayChange) ||
+         companyData.stock90DayChange < -100 || companyData.stock90DayChange > 500)) {
+      companyData.stock90DayChange = null;
+    }
+    if (typeof companyData.revenuePerEmployee === 'number' &&
+        (companyData.revenuePerEmployee < 0 || !isFinite(companyData.revenuePerEmployee))) {
+      // revenuePerEmployee is typed as `number` (non-nullable). Use 0 instead
+      // of null — downstream code already gates on `> 0` to mean "known data",
+      // so 0 correctly classifies this as "unknown" without breaking the type.
+      companyData.revenuePerEmployee = 0;
+    }
   }
 
   // Step 4b: Post-resolution financial backfill from companyIntelligenceBridge.
@@ -1235,6 +1283,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     userFactors: inputs.userFactors,
     liveHiringSignal,
     cohortWeights: preCohortWeights,
+    primaryCohort: (preCohortLabel === 'GLOBAL' ? 'UNKNOWN' : preCohortLabel) as
+      'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN',
   };
 
   _timer.mark('engine_start');
@@ -1264,6 +1314,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     catch { return { isActive: false, isShadow: false, mode: 'off' as const }; }
   })();
   const dagDisabled = dagFlag.mode === 'off' || (dagFlag.mode as any) === 'deprecated';
+  let _dagDegradedCount = 0;
   try {
     if (dagDisabled) {
       auditPipelineLog.info('dag.phase.disabled_by_flag', { company: inputs.companyName });
@@ -1311,7 +1362,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         error: msg,
       });
     }
+    _dagDegradedCount++;
   }
+  // v40.0: track DAG degraded layer count — surfaced on hybridResult after assembly
 
   // WS4 — Conformal CI post-processing (Audit Issue #26).
   //
@@ -1505,6 +1558,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   const hybridResult = hybridScoreResult
     ? mapConsensusScoreToHybridResult(hybridScoreResult, shadowScoreResult, companyData, inputs, dataSource)
     : mapToHybridResult(shadowScoreResult, companyData, inputs, dataSource, trueLiveSignals, trueHeuristicSignals);
+  // v40.0 FIX-A: attach userFactors immediately so downstream intelligence layers
+  // (especially fetchIntelligenceBrief at line ~2822) can read it. Previously only
+  // attached to finalResult AFTER all layers ran, breaking the LLM brief's profile
+  // context and disabling profile-aware caching.
+  (hybridResult as any).userFactors = inputs.userFactors;
+  // v40.0: surface DAG degradation count collected before hybridResult was assembled
+  if (_dagDegradedCount > 0) (hybridResult as any)._dagDegradedLayerCount = _dagDegradedCount;
   // Surface the LOW_DATA confidence-floor warning (set by hybridConsensusBuilder
   // when 3+ critical signals are null) onto the final HybridResult so the
   // dashboard can render the explicit "low confidence" banner.
@@ -1899,6 +1959,31 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       hiringSignal: (hybridResult as any).hiringSignal,
     });
     (hybridResult as any).scoreTrajectory = scoreTrajectory;
+
+    // v40.0 FIX-3: Compute scoreDelta (30-day velocity) from score history.
+    // SummaryTab reads result.scoreDelta but it was never populated — velocity
+    // badge silently never rendered. The history entry closest to 30 days ago
+    // is used as the comparison point.
+    if (scoreHistory.length >= 2) {
+      const now30 = Date.now();
+      // Find the entry closest to 30 days ago (may be the last entry)
+      const prev = scoreHistory.slice(1).reduce((best: any, entry: any) => {
+        const age = Math.abs((now30 - (entry.timestamp ?? 0)) - 30 * 86_400_000);
+        const bestAge = Math.abs((now30 - (best.timestamp ?? 0)) - 30 * 86_400_000);
+        return age < bestAge ? entry : best;
+      }, scoreHistory[1]);
+      // v40.0 FIX-12: guard against NaN/Infinity propagation from corrupted history
+      const prevScore = typeof prev?.score === 'number' && isFinite(prev.score) ? prev.score : null;
+      const currentScore = typeof hybridResult.total === 'number' && isFinite(hybridResult.total)
+        ? hybridResult.total : null;
+      if (prevScore !== null && currentScore !== null) {
+        const delta = Math.round(currentScore - prevScore);
+        hybridResult.scoreDelta = {
+          delta30d: delta,
+          direction: delta > 1 ? 'worsening' : delta < -1 ? 'improving' : 'stable',
+        };
+      }
+    }
   } catch (e) {
     noteEngineFailure('scoreTrajectory', e);
   }
@@ -2398,6 +2483,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     console.warn('[AuditPipeline] v16 DB pre-pass failed:', e);
   }
 
+  // v40.0: Write _v16WarnFilings onto companyData so the DAG warnSignalLayer
+  // can access it via ctx.companyData._warnFilings (typed any channel).
+  (companyData as any)._warnFilings = _v16WarnFilings;
+  (companyData as any)._glassdoorHistory = _v16GlassdoorHistory;
+  (companyData as any)._executiveDepartures = _v16ExecutiveDepartures;
+
   // 39. WARN Act Signal — ground-truth confirmed layoff signal (US states, 60-day advance)
   // warnFilings now populated from warn_filings DB table via pre-pass above.
   try {
@@ -2416,14 +2507,25 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Quits rate fall (-10% YoY) precedes sector layoffs 60-90 days.
   // v21.0: fetch live JOLTS/FRED from proxy-macro Edge Function; fall back to
   // user-supplied snapshots, then to May 2026 calibrated baselines.
+  //
+  // v40.0 accuracy fix: BLS/FRED data is US-only. For companies in non-US regions
+  // (India, EU, APAC), the signal is tagged isHeuristic=true and the macro layer
+  // uses the bootstrap snapshot instead of live BLS — preventing US unemployment
+  // signals from inflating/deflating risk for Indian or European companies.
   try {
     const uf16 = inputs.userFactors as any;
-    const live = await fetchLiveMacroSnapshot();
+    const isUSCompany = (companyData.region === 'US' || !companyData.region);
+    const live = isUSCompany ? await fetchLiveMacroSnapshot() : null;
     const blsMacroSignal = computeMacroSignal(
       companyData.industry ?? 'technology',
       live?.joltsSnapshot ?? uf16.joltsSnapshot ?? null,
       live?.fredSnapshot  ?? uf16.fredSnapshot  ?? null,
     );
+    // Tag non-US macro signals so the freshness model doesn't treat them as live evidence
+    if (!isUSCompany) {
+      (blsMacroSignal as any).isHeuristic = true;
+      (blsMacroSignal as any).regionNote = `BLS/FRED data is US-only; ${companyData.region} companies use heuristic baseline`;
+    }
     (hybridResult as any).blsMacroSignal = blsMacroSignal;
   } catch (e) {
     noteEngineFailure('blsMacroSignal', e);
@@ -2577,6 +2679,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       },
     );
     (hybridResult as any).personalizedActionSet = personalizedActionSet;
+    // v40.0 FIX-6: hoist the derived profileSignals to the top of hybridResult so
+    // negotiation, contingency, brief, and scenario services can consume them
+    // without re-deriving — preventing threshold drift across services.
+    if (personalizedActionSet?.profileSignals) {
+      (hybridResult as any).profileSignals = personalizedActionSet.profileSignals;
+    }
   } catch (e) {
     noteEngineFailure('personalizedActionSet', e);
   }
@@ -2809,15 +2917,76 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (resolvedRole.canonicalKey ? null : "career_skills"),
   ].filter((value): value is string => Boolean(value));
 
-  return {
-    result: attachAuditMetadata(hybridResult, companyData, inputs, {
-      companyMatchConfidence,
-      companyMatchType,
-      tabsUsedFallback,
-      engineFailures,
-    }),
-    companyData,
-    source: dataSource,
-    _timer,
-  };
+  const finalResult = attachAuditMetadata(hybridResult, companyData, inputs, {
+    companyMatchConfidence,
+    companyMatchType,
+    tabsUsedFallback,
+    engineFailures,
+  });
+
+  // v40.0 FIX-4 CRITICAL: attach userFactors to the result so intelligence brief
+  // and other profile-aware services can read it. Previously these services
+  // expected `(hybridResult as any).userFactors` but it was never populated,
+  // silently breaking all personalization in the brief and cached scenario plans.
+  (finalResult as any).userFactors = inputs.userFactors;
+
+  // v40.0 Task 5.5: Cache successful result to IndexedDB for offline fallback.
+  // Fire-and-forget — cache write failure must never block the response.
+  cacheLastAuditResult(
+    inputs.companyName,
+    { result: finalResult, companyData, source: dataSource },
+    inputs.roleTitle,
+    inputs.department,
+  ).catch(() => { /* non-fatal */ });
+
+  return { result: finalResult, companyData, source: dataSource, _timer };
+}
+
+/**
+ * v40.0 Task 5.5 — Offline-aware wrapper for `fetchAuditData`.
+ *
+ * Tries the live pipeline first. On network failure (TypeError: Failed to fetch,
+ * or any fetch-related error), returns the last cached result from IndexedDB
+ * with `unifiedFreshness.tier = 'stale'` so the UI displays the offline banner.
+ *
+ * Returns null from the cache when no cached result exists for this company.
+ */
+export async function fetchAuditDataWithOfflineFallback(
+  inputs: AuditInputs,
+): Promise<{
+  result: HybridResult;
+  companyData: CompanyData;
+  source: 'live' | 'db' | 'stale_db' | 'fallback';
+  fromOfflineCache?: boolean;
+  _timer?: PipelineTimerInstance;
+}> {
+  try {
+    return await fetchAuditData(inputs);
+  } catch (err) {
+    // Only attempt offline fallback for network-class errors.
+    const isNetworkError =
+      err instanceof TypeError &&
+      (String(err.message).includes('fetch') || String(err.message).includes('network'));
+    if (!isNetworkError) throw err;
+
+    const cached = await getLastAuditResult(inputs.companyName, inputs.roleTitle, inputs.department);
+    if (!cached) throw err; // No cache — re-throw so caller sees the real error.
+
+    const { result, companyData, source } = cached as {
+      result: HybridResult;
+      companyData: CompanyData;
+      source: 'live' | 'db' | 'stale_db' | 'fallback';
+    };
+
+    // Mark freshness as stale so the UI shows the offline banner.
+    (result as any).unifiedFreshness = {
+      score: 0,
+      tier: 'stale',
+      liveQuorumDegraded: true,
+      sources: { liveFreshnessScore: 0, dbFreshnessScore: 50, macroIsHeuristic: true, industryRiskAgeDays: 999, liveQuorumReached: false, genuineApiSignals: 0 },
+      summary: `Offline — showing cached result from ${new Date(((cached as any).cachedAt ?? Date.now()) as number).toLocaleDateString()}. Reconnect to refresh.`,
+    };
+
+    return { result, companyData, source, fromOfflineCache: true };
+  }
 }

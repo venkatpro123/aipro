@@ -72,7 +72,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     background: 'rgba(255,255,255,0.03)',
     border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px',
     color: '#fff', fontFamily: 'var(--body)', fontSize: '0.85rem',
-    outline: 'none', boxSizing: 'border-box', transition: 'all 0.3s',
+    // v40.0 a11y: outline removed from inline style. Global `:focus:not(:focus-visible)`
+    // CSS rule handles mouse focus, while `:focus-visible` preserves keyboard focus.
+    boxSizing: 'border-box', transition: 'all 0.3s',
     fontWeight: '500',
   };
 
@@ -152,14 +154,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Network Identity</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} placeholder="USER://EMAIL_ADDR" />
+              <label htmlFor="auth-email" style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Network Identity</label>
+              <input id="auth-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} placeholder="USER://EMAIL_ADDR" />
             </div>
 
             {mode !== 'forgot' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Access Key</label>
+                  <label htmlFor="auth-password" style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Access Key</label>
                   {mode === 'login' && (
                     <button type="button" onClick={() => { setMode('forgot'); resetMessages(); }}
                       style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -167,7 +169,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     </button>
                   )}
                 </div>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} style={inputStyle} placeholder="KEY://••••••••" />
+                <input id="auth-password" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} required minLength={6} style={inputStyle} placeholder="KEY://••••••••" />
               </div>
             )}
 

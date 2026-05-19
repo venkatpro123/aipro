@@ -494,8 +494,13 @@ export const ALIAS_ADDITIONS_CLOUD_PLATFORM: Record<string, { canonicalKey: stri
   'database engineer': { canonicalKey: 'database_reliability_engineer', displayRole: 'Database Engineer' },
   'database sre': { canonicalKey: 'database_reliability_engineer', displayRole: 'Database SRE' },
   'postgres dba': { canonicalKey: 'database_reliability_engineer', displayRole: 'Postgres DBA' },
-  'database administrator': { canonicalKey: 'database_reliability_engineer', displayRole: 'Database Administrator (DBA)' },
-  'dba': { canonicalKey: 'database_reliability_engineer', displayRole: 'DBA' },
+  // v40.0 FIX-TEST-1: Removed 'database administrator' and 'dba' overrides that
+  // were silently shadowing the base alias map (which routes "Database Administrator"
+  // → sw_dba, the canonical traditional DBA role). Users typing "Database Administrator"
+  // expect classic DBA actions, not SRE-style reliability actions. The specific
+  // 'database sre' and 'postgres dba' aliases above remain for users who explicitly
+  // describe themselves as reliability-focused. The 'database reliability engineer'
+  // alias at line 492 already covers the explicit DBRE case.
 
   // Data Engineer variants
   'data engineer': { canonicalKey: 'data_engineer', displayRole: 'Data Engineer' },
@@ -558,7 +563,11 @@ export const ALIAS_ADDITIONS_CLOUD_PLATFORM: Record<string, { canonicalKey: stri
 
   // IDP variants
   'internal developer platform engineer': { canonicalKey: 'internal_developer_platform_engineer', displayRole: 'Internal Developer Platform Engineer' },
-  'platform engineer': { canonicalKey: 'internal_developer_platform_engineer', displayRole: 'Platform Engineer' },
+  // v40.0 FIX-TEST-2: Removed 'platform engineer' override that was shadowing the
+  // base alias map (which routes "Platform Engineer" → platform_engineer, the
+  // canonical group). The IDP-specific roles below ('idp engineer', 'backstage
+  // engineer', 'developer experience engineer') remain for users who explicitly
+  // identify with the internal developer platform niche.
   'idp engineer': { canonicalKey: 'internal_developer_platform_engineer', displayRole: 'IDP Engineer' },
   'developer experience engineer': { canonicalKey: 'internal_developer_platform_engineer', displayRole: 'Developer Experience (DX) Engineer' },
   'dx engineer': { canonicalKey: 'internal_developer_platform_engineer', displayRole: 'DX Engineer' },

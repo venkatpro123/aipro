@@ -91,6 +91,27 @@ async function fetchOpeningCount(
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 serve(async (req) => {
+  // v40 hardening: pg_cron-only endpoint. Reject any caller that does not
+  // present the service-role bearer. Previously open — anyone could spam
+  // it to fan out Serper queries (paid) and bulk-write role market rows.
+  {
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const provided = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
+    const okLen = serviceRoleKey.length > 0 && provided.length === serviceRoleKey.length;
+    let match = okLen;
+    if (okLen) {
+      for (let i = 0; i < provided.length; i++) {
+        if (provided.charCodeAt(i) !== serviceRoleKey.charCodeAt(i)) match = false;
+      }
+    }
+    if (!match) {
+      return new Response(JSON.stringify({ error: 'forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   const startMs = Date.now();
   let dryRun = false;
   let triggeredBy = 'manual';

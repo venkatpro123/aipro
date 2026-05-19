@@ -44,10 +44,11 @@ import { SwarmReport, PeerLayoffEvent } from "../swarm/swarmTypes";
 import { PipelineTimer, type PipelineTimerInstance } from "../pipelineTimer";
 import { COMPANY_INTELLIGENCE_DB } from "../../data/companyIntelligenceDB";
 import {
-  computeTopPatternCandidates,
-  resolvePattern,
+  matchHistoricalPattern,
   buildPatternPromptContext,
+  computeTopPatternCandidates,
   type HistoricalPattern,
+  type PatternMatchResult,
 } from "../../data/historicalPatterns";
 import {
   buildScenarioNarrative,
@@ -88,8 +89,10 @@ export interface EnsembleResult extends ScoreResult {
   keyProtection: string | null;
   timeHorizon: string | null;
   patternMatch: string | null;
-  /** v7.0: Fully resolved HistoricalPattern when Claude confirmed a valid patternId. Null otherwise. */
+  /** Deterministic match from matchHistoricalPattern() — null when no pattern reaches 70% overlap. */
   resolvedPattern: HistoricalPattern | null;
+  /** Signal overlap score for the matched pattern (0.70–1.00), null when no match. */
+  patternMatchOverlapScore: number | null;
   geminiSynthesis: GeminiResult["synthesis"];
   modelsUsed: string[];
   fromCache: boolean;
@@ -253,6 +256,35 @@ const buildPeerLayoffEvents = (
   return events;
 };
 
+// Counts ALL companies in COMPANY_INTELLIGENCE_DB that share the target
+// industry — including those with no layoff history. This is the denominator
+// for sectorCuttingFraction in sectorContagionAgent.
+//
+// A company at the 40th percentile of a 20-company tracked sector needs 8
+// peers to cut before the macro correction fires. Without this count the
+// agent cannot distinguish "3 of 5 tracked companies cutting" (60% — macro)
+// from "3 of 50 tracked companies cutting" (6% — likely contagion).
+//
+// Industry matching is identical to buildPeerLayoffEvents so the two
+// functions always agree on which companies belong to the sector.
+const countTrackedSectorCompanies = (
+  targetIndustry: string,
+  targetCompanyName: string,
+): number => {
+  const targetWord = targetIndustry.split(/[\s/,]+/)[0].toLowerCase();
+  let count = 0;
+  for (const [, profile] of Object.entries(COMPANY_INTELLIGENCE_DB)) {
+    if (profile.companyName === targetCompanyName) continue;
+    const profileWord = profile.industry.split(/[\s/,]+/)[0].toLowerCase();
+    const matches =
+      profileWord === targetWord ||
+      profile.industry.toLowerCase().includes(targetWord) ||
+      targetIndustry.toLowerCase().includes(profileWord);
+    if (matches) count++;
+  }
+  return count;
+};
+
 export const runFullEnsembleAnalysis = async (
   inputs: EnsembleInputs,
 ): Promise<EnsembleResult> => {
@@ -312,6 +344,9 @@ export const runFullEnsembleAnalysis = async (
     // industry (loose match) and have a known layoff date — giving the
     // contagion agent actual dated events instead of static averages.
     const peerLayoffEvents = buildPeerLayoffEvents(industry, companyName);
+    // Total tracked companies in this sector (denominator for sectorCuttingFraction).
+    // Computed with the same industry-matching logic so the two values are consistent.
+    const totalTrackedSectorCompanies = countTrackedSectorCompanies(industry, companyName);
 
     swarmReport = await runSwarmLayer(
       {
@@ -323,6 +358,7 @@ export const runFullEnsembleAnalysis = async (
         department,
         tenureYears,
         peerLayoffEvents,
+        totalTrackedSectorCompanies,
         userFactors: {
           tenureYears,
           isUniqueRole,
@@ -545,6 +581,18 @@ export const runFullEnsembleAnalysis = async (
     liveHiringSignal: liveHiringSignalForEngine,
   });
 
+  // ── Step 2b: Deterministic historical pattern matching ───────────────────
+  // Runs immediately after scoring — no LLM, no network call.
+  // matchHistoricalPattern() applies a hard 70% signal-overlap threshold.
+  // Below threshold: null (no match is shown). Never invents a pattern.
+  // The result is the authoritative source for resolvedPattern in the output —
+  // the LLM is not asked to confirm, select, or override it.
+  const deterministicPatternMatch: PatternMatchResult | null = matchHistoricalPattern(
+    companyData,
+    engineResult.breakdown as any,
+    roleTitle,
+  );
+
   // ── Step 3: Tiered narrative synthesis ───────────────────────────────────
   // Tier A → Claude (grounded); Tier B → deterministic template; Tier C → scope framing.
   // Law: never call LLM for unknown companies. Hallucination > no narrative.
@@ -600,9 +648,12 @@ export const runFullEnsembleAnalysis = async (
     const failures: string[] = [];
     const wc = (s: string | null | undefined) => (s ?? '').trim().split(/\s+/).filter(Boolean).length;
 
-    // Per-field minimum word counts for v7.0 (aligned with spec, not just current context)
+    // Per-field floor minimums. These are quality gates independent of user state.
+    // isStage3Local = true when score > 80 OR collapseStage >= 3 (matches isStage3 definition).
+    // The effective minimum for each field is max(specMins[field], minWords[field]),
+    // so the context-specific buildQuestionMinWords can only RAISE the floor, never lower it.
     const specMins: Record<string, number> = {
-      primaryRiskDriver:           isStage3Local || score >= 75 ? 80  : 40,
+      primaryRiskDriver:           isStage3Local || score > 80 ? 80  : 40,
       sixMonthInactionConsequence: isStage3Local               ? 120 : 60,
       oneActionThisWeek:           100,  // always
       whatChangesRiskMost:         80,   // always
@@ -703,83 +754,133 @@ export const runFullEnsembleAnalysis = async (
       String(inputs.companyData?.region ?? 'US'),
     );
 
-    function getQuestionPriority(returning: boolean, jump: number, stage3: boolean): QuestionKey[] {
-      if (stage3) {
-        // Stage 3: immediate consequence + action first — user is in crisis
-        return ['sixMonthInactionConsequence', 'oneActionThisWeek', 'primaryRiskDriver',
-                'whatChangesRiskMost', 'estimatedTimeline', 'keyProtectiveFactor'];
+    // ── User state classification for question priority ─────────────────────
+    // Four mutually exclusive states drive both question_order and question_min_words.
+    // The state is resolved once and passed into both functions — never use a
+    // fixed order that ignores context.
+    //
+    // State 1 CRISIS: Stage 3 (collapseStage >= 3) OR score > 80
+    //   The user is at or near active emergency. Consequence + action lead.
+    //   Score > 80 alone triggers this; collapseStage >= 3 triggers regardless of score.
+    //
+    // State 2 DELTA: Returning user, |scoreJump| > 5
+    //   The score moved materially since last audit. The first question must
+    //   explain what changed — not re-orient the user to displacement risk
+    //   they already understand. oneActionThisWeek is 3rd, not 4th.
+    //
+    // State 3 STABLE_RETURNING: Returning user, score stable
+    //   User knows their situation. Lead with the single executable action.
+    //   Market data reference is REQUIRED (not optional) — returning users
+    //   need concrete new evidence to act, not re-framing.
+    //
+    // State 4 FIRST_TIME: Not returning
+    //   Orient before prescribing. primaryRiskDriver leads.
+
+    type UserPriorityState = 'crisis' | 'delta' | 'stable_returning' | 'first_time';
+
+    // isStage3: crisis threshold.
+    // collapseStage >= 3 = leading indicators have converged (hiring freeze + peer cuts + exec departures).
+    // score > 80 = critical band score regardless of collapse stage.
+    const isStage3 = llmTier === 'A' && (
+      engineResult.score > 80 ||
+      ((companyData as any).collapseStage ?? 0) >= 3
+    );
+
+    const userPriorityState: UserPriorityState =
+      isStage3                             ? 'crisis'
+      : (isReturningUser && Math.abs(scoreJump) > 5) ? 'delta'
+      : isReturningUser                    ? 'stable_returning'
+      :                                      'first_time';
+
+    function getQuestionPriority(state: UserPriorityState): QuestionKey[] {
+      switch (state) {
+        case 'crisis':
+          // Consequence first — the user needs to feel the stakes before the action.
+          // oneActionThisWeek 2nd: immediate action is the only output that matters tonight.
+          return ['sixMonthInactionConsequence', 'oneActionThisWeek', 'primaryRiskDriver',
+                  'whatChangesRiskMost', 'estimatedTimeline', 'keyProtectiveFactor'];
+
+        case 'delta':
+          // What changed leads — returning user, score moved materially.
+          // oneActionThisWeek is 3rd (not 4th): they already understand the risk context,
+          // they need the updated action fast. estimatedTimeline moves to 4th.
+          return ['whatChangesRiskMost', 'primaryRiskDriver', 'oneActionThisWeek',
+                  'estimatedTimeline', 'sixMonthInactionConsequence', 'keyProtectiveFactor'];
+
+        case 'stable_returning':
+          // Action leads — returning user, score stable. They know the risk.
+          // Every word must earn its place: no re-orientation, only execution.
+          return ['oneActionThisWeek', 'primaryRiskDriver', 'keyProtectiveFactor',
+                  'estimatedTimeline', 'whatChangesRiskMost', 'sixMonthInactionConsequence'];
+
+        case 'first_time':
+          // Orient before prescribing: risk driver + inaction consequence explain WHY,
+          // then action and timeline explain WHAT.
+          return ['primaryRiskDriver', 'sixMonthInactionConsequence', 'estimatedTimeline',
+                  'oneActionThisWeek', 'whatChangesRiskMost', 'keyProtectiveFactor'];
       }
-      if (returning && jump >= 5) {
-        // Returning user, score rose: explain what changed and why first
-        return ['whatChangesRiskMost', 'primaryRiskDriver', 'estimatedTimeline',
-                'oneActionThisWeek', 'sixMonthInactionConsequence', 'keyProtectiveFactor'];
-      }
-      if (!returning) {
-        // First-time user: primary risk + inaction equally important
-        return ['primaryRiskDriver', 'sixMonthInactionConsequence', 'estimatedTimeline',
-                'oneActionThisWeek', 'whatChangesRiskMost', 'keyProtectiveFactor'];
-      }
-      // Returning, stable score: focus on actionable next step
-      return ['oneActionThisWeek', 'primaryRiskDriver', 'keyProtectiveFactor',
-              'estimatedTimeline', 'whatChangesRiskMost', 'sixMonthInactionConsequence'];
     }
 
-    const isStage3 = llmTier === 'A' && engineResult.score >= 75;
-    const questionPriority = getQuestionPriority(isReturningUser, scoreJump, isStage3);
+    const questionPriority = getQuestionPriority(userPriorityState);
 
-    // ── v6.0: Minimum word counts per field (replaces unreliable % token allocation) ──
+    // ── Minimum word counts per field ───────────────────────────────────────
     // LLMs do not reliably follow percentage-of-response instructions.
-    // Minimum word counts in the structured output spec are enforced by the model
-    // because the JSON field itself provides the constraint: "write at least N words here."
+    // Minimum word counts are enforced field-by-field in the JSON schema.
     // The question ORDER already determines which question gets most elaboration
-    // (first question receives the most natural elaboration before context window fills).
-    function buildQuestionMinWords(returning: boolean, jump: number, stage3: boolean, score: number): Record<QuestionKey, number> {
-      const highScore = score >= 75;
-      if (stage3) {
-        // Crisis: consequence and action get the most words; protective factor gets minimum
-        return {
-          sixMonthInactionConsequence: 120,
-          oneActionThisWeek: 120, // must include week-by-week breakdown
-          primaryRiskDriver: 60,
-          whatChangesRiskMost: 80,
-          estimatedTimeline: 50,
-          keyProtectiveFactor: 40,
-        };
+    // (first question receives the most natural elaboration before context fills).
+    function buildQuestionMinWords(state: UserPriorityState, score: number): Record<QuestionKey, number> {
+      const highScore = score > 80;
+      switch (state) {
+        case 'crisis':
+          // Consequence and action get maximum budget. Protective factor minimum.
+          return {
+            sixMonthInactionConsequence: 120,
+            oneActionThisWeek:           120,
+            primaryRiskDriver:            60,
+            whatChangesRiskMost:          80,
+            estimatedTimeline:            50,
+            keyProtectiveFactor:          40,
+          };
+
+        case 'delta':
+          // whatChangesRiskMost gets maximum budget — must explain the specific
+          // signal shift AND provide a counterfactual (what would reverse it).
+          return {
+            whatChangesRiskMost:         100,
+            primaryRiskDriver:            70,
+            oneActionThisWeek:           100,
+            sixMonthInactionConsequence:  60,
+            estimatedTimeline:            50,
+            keyProtectiveFactor:          40,
+          };
+
+        case 'first_time':
+          // Orient the user: risk driver + consequence carry the most weight.
+          return {
+            primaryRiskDriver:           highScore ? 80 : 60,
+            sixMonthInactionConsequence: highScore ? 80 : 60,
+            oneActionThisWeek:           100,
+            whatChangesRiskMost:          70,
+            estimatedTimeline:            60,
+            keyProtectiveFactor:          50,
+          };
+
+        case 'stable_returning':
+          // oneActionThisWeek owns this response. Market data reference is REQUIRED
+          // (not optional) — the prompt instruction enforces this separately.
+          return {
+            oneActionThisWeek:           120,
+            primaryRiskDriver:            60,
+            keyProtectiveFactor:          60,
+            whatChangesRiskMost:          60,
+            estimatedTimeline:            40,
+            sixMonthInactionConsequence:  40,
+          };
       }
-      if (returning && Math.abs(jump) >= 5) {
-        // Score changed significantly: explain the delta; action is secondary
-        return {
-          whatChangesRiskMost: 100, // must identify specific signal + counterfactual
-          primaryRiskDriver: 70,
-          oneActionThisWeek: 100,
-          sixMonthInactionConsequence: 60,
-          estimatedTimeline: 50,
-          keyProtectiveFactor: 40,
-        };
-      }
-      if (!returning) {
-        // First-time: orient the user to their risk, then give one action
-        return {
-          primaryRiskDriver: highScore ? 80 : 60,
-          sixMonthInactionConsequence: highScore ? 80 : 60,
-          oneActionThisWeek: 100,
-          whatChangesRiskMost: 70,
-          estimatedTimeline: 60,
-          keyProtectiveFactor: 50,
-        };
-      }
-      // Returning, stable: execution focus — what to do this week
-      return {
-        oneActionThisWeek: 120, // must reference career path market data if available
-        primaryRiskDriver: 60,
-        keyProtectiveFactor: 60,
-        whatChangesRiskMost: 60,
-        estimatedTimeline: 40,
-        sixMonthInactionConsequence: 40,
-      };
     }
-    const questionMinWords = buildQuestionMinWords(isReturningUser, scoreJump, isStage3, engineResult.score);
-    // Keep questionWeights for backward compat with any downstream reads, but min_words takes precedence
+    const questionMinWords = buildQuestionMinWords(userPriorityState, engineResult.score);
+    const isStage3LegacyAlias = isStage3;  // alias used in prompt strings below
+    // Retained for backward compat; min_words takes precedence over weights.
     const questionWeights: Record<QuestionKey, number> = { primaryRiskDriver: 17, keyProtectiveFactor: 12, estimatedTimeline: 12, oneActionThisWeek: 20, whatChangesRiskMost: 17, sixMonthInactionConsequence: 22 };
 
     // ── v4.0: Full signal set — all required fields per LLM prompt spec ───────
@@ -840,14 +941,12 @@ export const runFullEnsembleAnalysis = async (
     // Claude is only asked to CONFIRM one of these pre-qualified IDs.
     // Candidates with overlapScore < 0.35 are excluded from the prompt to
     // prevent Claude from picking a poor match just because it was listed.
-    const patternCandidates = computeTopPatternCandidates(
-      companyData,
-      engineResult.breakdown as any,
-      roleTitle,
-      3,
-    ).filter(c => c.overlapScore >= 0.35);
-    const patternPromptContext = buildPatternPromptContext(patternCandidates);
-    const hasCandidates = patternCandidates.length > 0;
+    // Pattern matching is now fully deterministic (Step 2b above).
+    // Claude is no longer asked to select or confirm a patternId.
+    // Build prompt context for informational reference only (not a selection task).
+    const _patternContextForLLM = deterministicPatternMatch
+      ? `Matched historical pattern: ${deterministicPatternMatch.pattern.patternId} — "${deterministicPatternMatch.pattern.patternName}" (${Math.round(deterministicPatternMatch.overlapScore * 100)}% signal overlap). Use this context when relevant, but do NOT return a patternId field.`
+      : null;
 
     try {
       _timer?.mark('llm_start');
@@ -877,33 +976,35 @@ export const runFullEnsembleAnalysis = async (
             hasRecentPromotion,
             hasKeyRelationships,
           },
-          // v7.0: Verified historical pattern candidates (deterministic pre-computation)
-          // Claude selects from this list — it cannot invent patterns not in it.
-          historicalPatternCandidates: hasCandidates ? patternPromptContext : null,
+          // Deterministic pattern context — for Claude's awareness only.
+          // Claude does not select patterns; matchHistoricalPattern() already did.
+          historicalPatternCandidates: _patternContextForLLM,
           // v6.0: Minimum word counts replace percentage token weights (more reliable)
           responseFormat: {
             questions: questionPriority,
             questionMinWords,
             // v6.0 system prompt: 3 sentences, no speculation, JSON output enforced
             systemPrompt: `You are analyzing a professional's AI displacement risk. Every claim you make must be traceable to the signal data provided. Do not speculate about anything not present in the input signals.`,
-            // v6.0: Question sequence + minimum word counts per field
+            // Question sequence + minimum word counts per field.
+            // State-specific ordering has already been computed above — never
+            // override or reinterpret it here.
             priorityInstruction: [
               `Answer the following 6 questions in exactly the order given.`,
               `Each question has a MINIMUM word count that you MUST meet — responses below minimum are rejected and the user gets a fallback, not your answer.`,
-              `Return valid JSON with exactly these 7 field names: primaryRiskDriver, sixMonthInactionConsequence, oneActionThisWeek, whatChangesRiskMost, estimatedTimeline, keyProtectiveFactor, patternId.`,
-              hasCandidates
-                ? `For patternId: select the SINGLE best-matching pattern from this pre-qualified candidate list by comparing the user's signals to each pattern's trigger conditions. Return the exact patternId string (e.g. "INDIA_IT_BPO_AUTOMATION_2024"). Return null if no candidate has >70% signal overlap with this user. Do NOT invent a patternId not in this list — unlisted IDs are rejected.\nCandidates:\n${patternPromptContext}`
-                : `For patternId: no pre-qualified pattern candidates meet the 35% signal overlap threshold for this user. Return null.`,
+              `Return valid JSON with exactly these 6 field names: primaryRiskDriver, sixMonthInactionConsequence, oneActionThisWeek, whatChangesRiskMost, estimatedTimeline, keyProtectiveFactor.`,
               `Question order: ${questionPriority.join(', ')}.`,
               `Minimum word counts: ${Object.entries(questionMinWords).map(([k,v]) => `${k}: ${v} words`).join('; ')}.`,
-              // Content requirements — these are validated by pattern-matching on the response:
-              `For oneActionThisWeek (min ${questionMinWords.oneActionThisWeek}w): include at least one specific number (market opening count, salary delta, hiring rate %) from the career path market data provided. Include specific steps completable in 7 days and one testable proof point.`,
+              // ── Content requirements (validated by pattern-match on response) ──
+              // oneActionThisWeek instruction varies by user state.
+              userPriorityState === 'stable_returning'
+                ? `For oneActionThisWeek (min ${questionMinWords.oneActionThisWeek}w, MARKET DATA REQUIRED): this user has already read the risk framing. They need NEW, SPECIFIC evidence to act on. You MUST cite at least one market number from the provided data (exact job opening count, exact salary range, exact hiring rate %). Generic advice that could apply to any professional is a quality failure and will cause a fallback. Include exactly one step executable today and one verifiable proof point.`
+                : `For oneActionThisWeek (min ${questionMinWords.oneActionThisWeek}w): include at least one specific number (market opening count, salary delta, hiring rate %) from the career path market data provided. Include specific steps completable in 7 days and one testable proof point.`,
               `For whatChangesRiskMost (min ${questionMinWords.whatChangesRiskMost}w): provide EXACTLY 3 ranked options in order of impact. Use format "1. [option] — [why]", "2. [option] — [why]", "3. [option] — [why]". Missing the ranked structure causes a fallback.`,
               `For estimatedTimeline (min ${questionMinWords.estimatedTimeline}w): cite the base timeline AND explain any collapse-stage compression if a collapse stage is present in the signal data.`,
-              // v7.0 Fix 4: returnType-aware context — prevents Claude from re-explaining
-              // concepts returning users already understand (orientation fatigue).
+              // State-aware context — prevents Claude from re-explaining concepts
+              // returning users already understand (orientation fatigue).
               (() => {
-                const stage3Suffix = isStage3 ? ' (STAGE 3 — treat as active emergency, lead with six-month consequence)' : '';
+                const stage3Suffix = isStage3LegacyAlias ? ' (STAGE 3 — treat as active emergency, lead with six-month consequence)' : '';
                 const velocityNote = velocity?.direction === 'accelerating'
                   ? ` Score velocity: +${velocity.delta30d} pts in 30 days — rate of change is the story, not just the absolute score.`
                   : velocity?.direction === 'improving'
@@ -917,7 +1018,7 @@ export const runFullEnsembleAnalysis = async (
                   case 'improving':
                     return `User context: returning user — score improved ${Math.abs(scoreJump)} pts since last audit.${velocityNote} Acknowledge the progress briefly (1 sentence). Then pivot to the next leverage point — what must they do to sustain the improvement and break into the next-lower risk tier.${stage3Suffix}`;
                   case 'stable_returner':
-                    return `User context: returning user — score stable (changed ${scoreJump > 0 ? '+' : ''}${scoreJump} pts).${velocityNote} Skip orientation entirely. Focus on execution: which specific actions have the highest remaining leverage? Reference market data numbers — the user needs concrete reasons to act, not re-framing of the risk.${stage3Suffix}`;
+                    return `User context: returning user — score stable (changed ${scoreJump > 0 ? '+' : ''}${scoreJump} pts).${velocityNote} Skip orientation entirely. This user has seen this risk framing before. Focus exclusively on execution: what specific action with a specific market number justifies doing it THIS week rather than next?${stage3Suffix}`;
                   default:
                     return `User context: first-time user${stage3Suffix}.`;
                 }
@@ -948,34 +1049,19 @@ export const runFullEnsembleAnalysis = async (
           urgencyLevel:                llmData.urgencyLevel                                               ?? null,
         };
 
-        // ── v7.0: Validate patternId against the known database ──────────────
-        // resolvePattern() returns null for any ID not in HISTORICAL_PATTERNS,
-        // preventing display of LLM-invented or hallucinated patterns.
-        const returnedPatternId: string | null = llmData.patternId ?? null;
-        const resolvedPatternLocal = resolvePattern(returnedPatternId);
-        if (returnedPatternId && !resolvedPatternLocal) {
-          console.warn(
-            `[Ensemble] LLM returned unrecognised patternId "${returnedPatternId}" — discarded. ` +
-            `Only IDs from HISTORICAL_PATTERNS are valid.`,
-          );
-        }
-        // Fall back to highest-scoring pre-computed candidate when:
-        //   (a) Claude returned null but a strong candidate (>= 0.70) exists, OR
-        //   (b) Claude returned an invalid ID (discarded above)
-        const fallbackPattern = (!resolvedPatternLocal && patternCandidates[0]?.overlapScore >= 0.70)
-          ? resolvePattern(patternCandidates[0].patternId)
-          : null;
-        const finalPattern = resolvedPatternLocal ?? fallbackPattern;
+        // Pattern matching is deterministic (Step 2b) — the LLM result carries no patternId.
+        // If the LLM returned a patternId field (from a cached or legacy prompt), discard it.
+        // deterministicPatternMatch is the single authoritative source.
 
         const { valid, failures } = validateTierAMinWords(
           normalised, questionMinWords, engineResult.score, isStage3,
         );
 
         if (valid) {
-          claudeAnalysis = { success: true, llmTier: 'A', ...normalised, resolvedPattern: finalPattern } as any;
+          claudeAnalysis = { success: true, llmTier: 'A', ...normalised } as any;
           console.log(
             `[Ensemble] Tier A — Claude narrative accepted (all min_words passed).` +
-            (finalPattern ? ` Pattern: ${finalPattern.patternId}` : ' No pattern matched.'),
+            (deterministicPatternMatch ? ` Pattern: ${deterministicPatternMatch.pattern.patternId} (${Math.round(deterministicPatternMatch.overlapScore * 100)}%)` : ' No pattern matched (< 70% threshold).'),
           );
         } else {
           // Validation failed — fall back to Tier B and log every failure
@@ -993,7 +1079,7 @@ export const runFullEnsembleAnalysis = async (
             // Preserve the field names that DID pass, overlaid by Tier B for failed fields
             ...Object.fromEntries(
               Object.entries(normalised).filter(([k]) => {
-                const specMin = k === 'primaryRiskDriver' ? (isStage3 || engineResult.score >= 75 ? 80 : 40)
+                const specMin = k === 'primaryRiskDriver' ? (isStage3 || engineResult.score > 80 ? 80 : 40)
                   : k === 'sixMonthInactionConsequence' ? (isStage3 ? 120 : 60)
                   : k === 'oneActionThisWeek' ? 100
                   : k === 'whatChangesRiskMost' ? 80
@@ -1141,8 +1227,10 @@ export const runFullEnsembleAnalysis = async (
     // ScoreResult fields required by EnsembleResult (inherited from engine)
     performanceTier:              engineResult.performanceTier,
     performanceCredibilityScore:  engineResult.performanceCredibilityScore,
-    // v7.0 verified historical pattern (null when no match >= 70%)
-    resolvedPattern: (claudeAnalysis as any).resolvedPattern ?? null,
+    // Deterministic historical pattern — set by matchHistoricalPattern(), not LLM.
+    // null when no pattern in HISTORICAL_PATTERNS reaches the 70% overlap threshold.
+    resolvedPattern:          deterministicPatternMatch?.pattern    ?? null,
+    patternMatchOverlapScore: deterministicPatternMatch?.overlapScore ?? null,
   };
 
   // ── Step 8: Cache for future requests ────────────────────────────────────

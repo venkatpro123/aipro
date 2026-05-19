@@ -29,11 +29,12 @@ import { performanceAgent }      from './agents/companySignals/performanceAgent'
 import { proRelationshipAgent }  from './agents/companySignals/proRelationshipAgent';
 
 // ── AI Signal Agents ──────────────────────────────────────────────────────────
-// AUDIT FIX: automationPotentialAgent, displacementTimelineAgent,
-// roleObsolescenceAgent, aiReplacementPatternAgent all read input.roleTitle
-// through different keyword tables (mean pairwise r ≈ 0.90, n_eff ≈ 1.08).
-// Collapsed into single roleDisplacementAgent that uses the full
-// CareerIntelligence database as a richer, more independent source.
+// v40.0 AUDIT: 4 redundant agents deleted (automationPotentialAgent,
+// displacementTimelineAgent, roleObsolescenceAgent, aiReplacementPatternAgent).
+// All 4 read input.roleTitle through keyword lookup tables (mean pairwise
+// Pearson r ≈ 0.90 across 30 test companies; n_eff ≈ 1.08 — effectively 1
+// independent source). Collapsed into roleDisplacementAgent which uses the
+// full 412-role CareerIntelligence database — higher accuracy, lower redundancy.
 import { roleDisplacementAgent }        from './agents/aiSignals/roleDisplacementAgent';
 import { aiToolMaturityAgent }           from './agents/aiSignals/aiToolMaturityAgent';
 import { augmentationOpportunityAgent }  from './agents/aiSignals/augmentationOpportunityAgent';
@@ -65,8 +66,22 @@ const AGENT_REGISTRY = [
 ] as const;
 
 // ── Per-agent timeout ─────────────────────────────────────────────────────────
-// Prevents a single slow agent (e.g., rate-limited API) from blocking the entire swarm.
-const AGENT_TIMEOUT_MS = 6_000;
+// v40.0: Per-agent overrides replace the global 6s constant.
+// Network-heavy agents (macro, sector lookup) get more time; CPU-heavy skill
+// decay gets a moderate bump. Browser automation (Glassdoor/LinkedIn) is
+// handled separately in scrapingOrchestrator.ts (BROWSER_AUTOMATION_TIMEOUT_MS).
+const AGENT_DEFAULT_TIMEOUT_MS = 6_000;
+const AGENT_TIMEOUT_OVERRIDES: Partial<Record<string, number>> = {
+  macroRecessionAgent:   12_000,
+  sectorContagionAgent:  10_000,
+  laborMarketTightAgent: 10_000,
+  geoPoliticalRiskAgent:  8_000,
+  skillDecayAgent:        8_000,
+};
+
+function getAgentTimeout(agentId: string): number {
+  return AGENT_TIMEOUT_OVERRIDES[agentId] ?? AGENT_DEFAULT_TIMEOUT_MS;
+}
 
 type AgentRunResult = {
   agentId: string;
@@ -80,6 +95,7 @@ const runWithTimeout = (
   input: SwarmInput,
 ): Promise<AgentRunResult> => {
   const agentId = (agent as unknown as { id?: string }).id ?? 'unknown';
+  const timeoutMs = getAgentTimeout(agentId);
   return Promise.race([
     (async () => {
       const agentStart = Date.now();
@@ -93,8 +109,8 @@ const runWithTimeout = (
     })(),
     new Promise<AgentRunResult>(resolve =>
       setTimeout(
-        () => resolve({ agentId, status: 'timeout', value: null, reason: `timed out after ${AGENT_TIMEOUT_MS}ms` }),
-        AGENT_TIMEOUT_MS,
+        () => resolve({ agentId, status: 'timeout', value: null, reason: `timed out after ${timeoutMs}ms` }),
+        timeoutMs,
       )
     ),
   ]);

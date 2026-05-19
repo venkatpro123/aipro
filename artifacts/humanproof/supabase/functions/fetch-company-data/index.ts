@@ -27,8 +27,37 @@ const CORS = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: CORS });
 
+// v40 hardening: escape PostgREST ilike() metacharacters so a caller cannot
+// craft cross-row pattern matches via `%` / `_`.
+function escapeIlike(raw: string): string {
+  return raw
+    .slice(0, 200)
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  // v40 hardening: require a Supabase JWT. Without auth, this EF was an
+  // open read endpoint into company_intelligence and an open writer to
+  // company_enrichment_queue — anyone could spam either at no cost.
+  const authHeader = req.headers.get('Authorization') ?? '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return json({ error: 'Missing Authorization header' }, 401);
+  }
+  try {
+    const anonClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error } = await anonClient.auth.getUser();
+    if (error || !user) return json({ error: 'Invalid or expired token' }, 401);
+  } catch {
+    return json({ error: 'Auth check failed' }, 401);
+  }
 
   let companyName = '';
   try {
@@ -39,6 +68,7 @@ serve(async (req) => {
   }
 
   if (!companyName) return json({ error: 'companyName is required' }, 400);
+  if (companyName.length > 200) return json({ error: 'companyName too long' }, 400);
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -65,7 +95,7 @@ serve(async (req) => {
   const { data: fuzzyRows } = await supabase
     .from('company_intelligence')
     .select('*')
-    .ilike('company_name', `%${companyName}%`)
+    .ilike('company_name', `%${escapeIlike(companyName)}%`)
     .order('confidence_score', { ascending: false })
     .limit(3);
 

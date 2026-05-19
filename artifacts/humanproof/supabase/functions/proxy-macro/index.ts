@@ -29,6 +29,29 @@ const CORS = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: CORS });
 
+// v40 hardening: require Supabase JWT before serving macro data. The cache
+// is shared across users so the EF can be cheap, but anonymous callers
+// could still burn FRED_API_KEY quota on cold-cache runs and stuff our
+// bls_macro_snapshots table with no audit trail.
+async function requireAuth(req: Request): Promise<Response | null> {
+  const authHeader = req.headers.get('Authorization') ?? '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return json({ error: 'Missing Authorization header' }, 401);
+  }
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return json({ error: 'Invalid or expired token' }, 401);
+  } catch {
+    return json({ error: 'Auth check failed' }, 401);
+  }
+  return null;
+}
+
 // ── In-memory 6-hour cache (survives within a single Deno isolate lifetime) ───
 let cache: { value: MacroResult; expiresAt: number } | null = null;
 const CACHE_TTL = 6 * 60 * 60 * 1000;
@@ -191,6 +214,9 @@ async function fetchJOLTSSnapshot(): Promise<JOLTSSnapshot | null> {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  const authFail = await requireAuth(req);
+  if (authFail) return authFail;
 
   // Serve from in-memory cache if still fresh
   if (cache && Date.now() < cache.expiresAt) {

@@ -81,6 +81,11 @@ export interface UserProfile {
   industryKey?: string | null;
   /** Total years of professional experience across all employers */
   yearsExperience?: number | null;
+
+  // ── v40.0 first-audit tracking ────────────────────────────────────────────
+  /** ISO timestamp when the user completed their first audit. Null = never seen.
+   *  Stored in DB so incognito / new-device sessions don't re-show the wizard. */
+  firstAuditCompletedAt?: string | null;
 }
 
 const REPROMPT_AFTER_DAYS = 90;
@@ -114,6 +119,8 @@ const V16_SELECT_COLUMNS = [
   'job_title',
   'industry_key',
   'years_experience',
+  // v40.0 first-audit tracking
+  'first_audit_completed_at',
 ].join(', ');
 
 // ─── Row mapper ───────────────────────────────────────────────────────────────
@@ -152,6 +159,8 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     jobTitle: data.job_title ?? null,
     industryKey: data.industry_key ?? null,
     yearsExperience: data.years_experience != null ? Number(data.years_experience) : null,
+    // v40.0 first-audit tracking
+    firstAuditCompletedAt: data.first_audit_completed_at ?? null,
   };
 }
 
@@ -224,6 +233,28 @@ export async function upsertUserProfile(
 
   if (error) return null;
   return fetchUserProfile();
+}
+
+// v40.0 — Write first-audit completion timestamp to user_profiles.
+// Uses UPDATE (not UPSERT) to avoid creating incomplete rows for users who
+// haven't set up a profile yet. If no row exists, the UPDATE affects 0 rows
+// and silently no-ops — correct, because localStorage handles the same-device
+// case and the DB update is only needed for cross-device/incognito coverage.
+export async function markFirstAuditCompleted(): Promise<void> {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    if (!userId) return;
+    await supabase
+      .from('user_profiles')
+      .update({ first_audit_completed_at: new Date().toISOString() })
+      .eq('user_id', userId);
+    // Note: if no profile row exists yet, the UPDATE touches 0 rows (not an error).
+    // The user will be prompted for a full profile on their next login, at which
+    // point markFirstAuditCompleted() will be called again and the UPDATE will land.
+  } catch {
+    // Non-fatal — localStorage cache still covers same-device repeat-session detection.
+  }
 }
 
 // Returns true when the modal should re-prompt for confirmation.

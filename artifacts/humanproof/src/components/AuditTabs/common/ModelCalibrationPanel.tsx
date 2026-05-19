@@ -5,9 +5,12 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield, Info, CheckCircle, AlertCircle, Activity } from "lucide-react";
 import type { ModelCalibrationResult, TierAccuracyRecord } from "@/services/modelCalibrationEngine";
+import type { LiveCalibrationStatus } from "../../../services/empiricalCalibration";
 
 interface ModelCalibrationPanelProps {
   calibration: ModelCalibrationResult;
+  /** v40.0: live calibration status for CI drift monitoring. */
+  liveCalibrationStatus?: LiveCalibrationStatus;
 }
 
 const TRUST_COLORS: Record<string, { color: string; bg: string; border: string }> = {
@@ -60,7 +63,7 @@ const TierRow: React.FC<{ record: TierAccuracyRecord; index: number }> = ({ reco
   );
 };
 
-const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibration }) => {
+const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibration, liveCalibrationStatus }) => {
   const [showSignals, setShowSignals] = useState(false);
   const [showCaveats, setShowCaveats] = useState(false);
   const trust = TRUST_COLORS[calibration.trustLevel] ?? TRUST_COLORS.RESEARCH_GROUNDED;
@@ -83,6 +86,19 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
           </span>
         </div>
       </div>
+
+      {/* v40.0: CI drift warning — amber chip when empirical coverage deviates > 8pp */}
+      {liveCalibrationStatus?.ciDriftDetected && liveCalibrationStatus.ciDriftWarning && (
+        <div
+          className="flex items-start gap-2 rounded-lg px-3 py-2 mb-3"
+          style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.30)' }}
+        >
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            {liveCalibrationStatus.ciDriftWarning}
+          </p>
+        </div>
+      )}
 
       {/* Trust narrative */}
       <p className="text-xs leading-relaxed mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>

@@ -14,6 +14,11 @@
 import { fetchScrapedEnrichment, ScrapedCompanyEnrichment } from './dataConnectors/scrapingHubConnector';
 import type { CompanyData } from '../data/companyDatabase';
 
+// v40.0: Browser automation (Playwright-driven Glassdoor/LinkedIn) gets a
+// dedicated timeout budget. These scrapers run headless Chromium and are
+// significantly slower than HTTP-only scrapers.
+export const BROWSER_AUTOMATION_TIMEOUT_MS = 15_000;
+
 export interface ScrapingOrchestratorResult {
   enrichment:        ScrapedCompanyEnrichment;
   /** Resolved employee count — Wikipedia wins if DB is null or stale */

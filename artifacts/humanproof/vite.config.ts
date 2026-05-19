@@ -7,7 +7,14 @@ import path from "path";
 const port = Number(process.env.PORT) || 5173;
 const basePath = process.env.BASE_PATH || "/";
 
-export default defineConfig({
+// v40.0: configure Vite via the function form so we get the `command` parameter
+// ('build' for `vite build`, 'serve' for `vite dev`). This is more reliable than
+// checking process.env.NODE_ENV because Vercel and other CI environments don't
+// always set NODE_ENV before invoking the build.
+export default defineConfig(({ command }) => {
+  const isProduction = command === 'build';
+
+  return {
   base: basePath,
   plugins: [
     react(),
@@ -24,6 +31,14 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    // v40.0: strip console.log/info/debug from production builds.
+    // Preserves console.warn and console.error so genuine warnings/errors still
+    // surface for users running with DevTools open (e.g., reporting bugs).
+    minify: 'esbuild',
+    target: 'es2020',
+    // v40.0: never emit source maps to production — they leak source code and
+    // increase deploy size. Enable explicitly via VITE_SOURCEMAP=1 when triaging.
+    sourcemap: process.env.VITE_SOURCEMAP === '1',
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -59,10 +74,32 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_BUILD_DATE': JSON.stringify(new Date().toISOString().split('T')[0]),
   },
+  // v40.0: drop console.log/info/debug at build time via esbuild.
+  // Uses vite's `command === 'build'` so the strip ALWAYS happens for production
+  // builds regardless of whether NODE_ENV is explicitly set in the CI environment.
+  // Keeps console.warn and console.error for production observability.
+  esbuild: {
+    drop: isProduction ? ['debugger'] : [],
+    pure: isProduction
+      ? ['console.log', 'console.info', 'console.debug', 'console.trace']
+      : [],
+  },
   server: {
     port,
     host: "0.0.0.0",
-    allowedHosts: true,
+    // v40.0: explicit allowlist instead of `true`. Production traffic goes through
+    // Vercel which already validates the Host header at the platform edge, so this
+    // setting only affects local dev. The allowlist prevents DNS-rebinding-style
+    // attacks against locally-running dev servers.
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '.replit.dev',
+      '.replit.app',
+      '.vercel.app',
+      '.humanshield.com',
+      '.humanproof.com',
+    ],
     fs: {
       strict: true,
       deny: ["**/.*"],
@@ -78,6 +115,15 @@ export default defineConfig({
   preview: {
     port,
     host: "0.0.0.0",
-    allowedHosts: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '.replit.dev',
+      '.replit.app',
+      '.vercel.app',
+      '.humanshield.com',
+      '.humanproof.com',
+    ],
   },
+  };
 });

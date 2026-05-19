@@ -17,7 +17,8 @@
 // Deploy: supabase functions deploy calculate-hybrid-risk
 // Called by: src/services/auditDataPipeline.ts (hybrid scoring step)
 
-import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
+import { serve }        from 'https://deno.land/std@0.208.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
@@ -28,6 +29,29 @@ const CORS = {
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: CORS });
+
+// v40 hardening: validate Supabase JWT before scoring. The EF accepts a
+// fully constructed consensusData blob — without auth, anyone could submit
+// fabricated signals or spam the function. Auth is required to tie usage
+// to a user and to keep the EF unusable as an open scoring oracle.
+async function requireAuth(req: Request): Promise<Response | null> {
+  const authHeader = req.headers.get('Authorization') ?? '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return json({ error: 'Missing Authorization header' }, 401);
+  }
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return json({ error: 'Invalid or expired token' }, 401);
+  } catch {
+    return json({ error: 'Auth check failed' }, 401);
+  }
+  return null;
+}
 
 // COMPOSITE_FORMULA_WEIGHTS — mirrors layoffScoreEngine.ts (keep in sync)
 const W = {
@@ -183,22 +207,97 @@ interface UserFactors {
   department?: string;
 }
 
+// v40 hardening: validate user-supplied signal blob. Without this, callers
+// can submit Infinity/NaN/negative values that bypass the score band, and
+// pad ConsensusData with arbitrary fields that confuse downstream logging.
+// We clamp every signal to its expected range, reject non-finite numbers,
+// length-cap strings, and silently drop unknown keys.
+const ALLOWED_SIGNAL_KEYS = new Set([
+  'revenueGrowth', 'stockTrend', 'fundingHealth', 'overstaffing', 'companySize',
+  'recentLayoffRecency', 'layoffFrequency', 'layoffSeverity', 'sectorContagion',
+  'departmentNews', 'automationRisk', 'aiToolMaturity', 'humanAmplification',
+  'industryBaseline', 'aiAdoptionRate', 'growthOutlook', 'averageTenure',
+]);
+function sanitizeSignal(raw: unknown): { value: number; confidence: number } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as { value?: unknown; confidence?: unknown };
+  const v = Number(r.value);
+  const c = Number(r.confidence);
+  if (!Number.isFinite(v) || !Number.isFinite(c)) return null;
+  return {
+    value:      Math.min(1, Math.max(0, v)),
+    confidence: Math.min(1, Math.max(0, c)),
+  };
+}
+function sanitizeConsensusData(raw: unknown): ConsensusData | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const out: ConsensusData = {};
+  for (const key of ALLOWED_SIGNAL_KEYS) {
+    const s = sanitizeSignal(r[key]);
+    if (s) (out as Record<string, unknown>)[key] = s;
+  }
+  if (typeof r.overallConfidence === 'number' && Number.isFinite(r.overallConfidence)) {
+    out.overallConfidence = Math.min(1, Math.max(0, r.overallConfidence));
+  }
+  if (typeof r.conflictLevel === 'string' && r.conflictLevel.length <= 32) {
+    out.conflictLevel = r.conflictLevel;
+  }
+  if (r.lowDataWarning && typeof r.lowDataWarning === 'object') {
+    const w = r.lowDataWarning as Record<string, unknown>;
+    if (typeof w.code === 'string' && w.code.length <= 64
+        && typeof w.missingCount === 'number' && Number.isFinite(w.missingCount)
+        && typeof w.capAt === 'number' && Number.isFinite(w.capAt)) {
+      out.lowDataWarning = {
+        code:         w.code,
+        missingCount: Math.max(0, Math.floor(w.missingCount)),
+        capAt:        Math.min(100, Math.max(0, w.capAt)),
+      };
+    }
+  }
+  return out;
+}
+function sanitizeUserFactors(raw: unknown): UserFactors {
+  if (!raw || typeof raw !== 'object') return {};
+  const r = raw as Record<string, unknown>;
+  const out: UserFactors = {};
+  if (typeof r.roleTitle === 'string' && r.roleTitle.length <= 200) {
+    out.roleTitle = r.roleTitle;
+  }
+  if (typeof r.department === 'string' && r.department.length <= 100) {
+    out.department = r.department;
+  }
+  if (typeof r.tenureYears === 'number' && Number.isFinite(r.tenureYears)) {
+    out.tenureYears = Math.min(60, Math.max(0, r.tenureYears));
+  }
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
-  let payload: { companyName?: string; consensusData?: ConsensusData; userFactors?: UserFactors; } = {};
+  const authFail = await requireAuth(req);
+  if (authFail) return authFail;
+
+  let payload: { companyName?: unknown; consensusData?: unknown; userFactors?: unknown } = {};
   try {
     payload = await req.json();
   } catch {
     return json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const { consensusData, userFactors, companyName } = payload;
+  const rawCompanyName = typeof payload.companyName === 'string' ? payload.companyName : '';
+  if (rawCompanyName.length > 200) return json({ error: 'companyName too long' }, 400);
+  const companyName = rawCompanyName.trim() || 'unknown';
+
+  const consensusData = sanitizeConsensusData(payload.consensusData);
   if (!consensusData) return json({ error: 'consensusData is required' }, 400);
+
+  const userFactors = sanitizeUserFactors(payload.userFactors);
 
   const { score, breakdown, confidence } = computeComposite(
     consensusData,
-    userFactors ?? {},
+    userFactors,
   );
 
   // Confidence cap: if LOW_DATA warning present, cap at the specified ceiling
@@ -207,7 +306,7 @@ serve(async (req) => {
 
   const result = {
     score:          finalScore,
-    companyName:    companyName ?? 'unknown',
+    companyName,
     breakdown,
     engine:         'hybrid-consensus-v22',
     conflictLevel:  consensusData.conflictLevel ?? 'none',

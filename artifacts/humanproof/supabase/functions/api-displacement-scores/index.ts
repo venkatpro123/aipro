@@ -32,6 +32,19 @@ async function sha256hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// v40 hardening: escape PostgREST ilike() metacharacters. Without this, a
+// caller passing `%` or `_` in company_name can craft pattern matches
+// across unrelated rows (e.g. `_oogle` to match any 6-char co name ending
+// in "oogle"). `\` must be escaped first or the subsequent escapes
+// double-escape. Length-capped to 200 to bound query cost.
+function escapeIlike(raw: string): string {
+  return raw
+    .slice(0, 200)
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
+
 // ── Role-risk scoring (deterministic, no swarm — <500 ms target) ──────────
 //
 // SCORE ARCHITECTURE NOTE
@@ -290,7 +303,7 @@ async function handleTeamRisk(
       const { data } = await supabaseClient
         .from('company_intelligence')
         .select('company_risk_score')
-        .ilike('company_name', `%${body.company_name}%`)
+        .ilike('company_name', `%${escapeIlike(body.company_name)}%`)
         .order('confidence_score', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -407,7 +420,7 @@ async function handleCompanyIntel(
     const { data } = await supabaseClient
       .from('company_intelligence')
       .select('company_name, company_risk_score, hiring_freeze_score, last_updated')
-      .ilike('company_name', `%${body.company_name}%`)
+      .ilike('company_name', `%${escapeIlike(body.company_name)}%`)
       .order('confidence_score', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -452,26 +465,33 @@ serve(async (req) => {
     .eq('is_active', true)
     .maybeSingle();
 
-  if (!keyRecord) return json({ error: 'Invalid or inactive API key' }, 401);
-
-  // Rate limit check — sum actual request_count values for today across all endpoints
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: usageRows } = await supabaseClient
-    .from('api_usage')
-    .select('request_count')
-    .eq('key_id', keyRecord.id)
-    .eq('date', today);
-
-  const totalRequests = (usageRows ?? []).reduce((sum: number, r: any) => sum + (r.request_count ?? 0), 0);
-
-  if (totalRequests >= keyRecord.daily_limit) {
-    return json({ error: 'Daily rate limit exceeded', limit: keyRecord.daily_limit }, 429);
-  }
+  // v40: generic message — do not distinguish "invalid" from "inactive" to
+  // avoid disclosing whether a key exists at all.
+  if (!keyRecord) return json({ error: 'Unauthorized' }, 401);
 
   let body: Record<string, any> = {};
   try { body = await req.json(); } catch { /* empty body */ }
 
   const endpoint = body.endpoint ?? new URL(req.url).searchParams.get('endpoint');
+  const today = new Date().toISOString().slice(0, 10);
+
+  // v40: atomic check-and-increment under advisory lock — prevents the
+  // (read → compare → write) race that previously let concurrent calls
+  // overshoot daily_limit. RPC returns allowed=false at the limit.
+  const { data: rlData, error: rlErr } = await supabaseClient.rpc(
+    'check_and_increment_api_usage',
+    {
+      p_key_id:      keyRecord.id,
+      p_date:        today,
+      p_endpoint:    endpoint ?? 'unknown',
+      p_daily_limit: keyRecord.daily_limit,
+    },
+  );
+  if (rlErr) return json({ error: 'Rate limit check failed' }, 503);
+  const rlRow = Array.isArray(rlData) ? rlData[0] : rlData;
+  if (!rlRow?.allowed) {
+    return json({ error: 'Daily rate limit exceeded', limit: keyRecord.daily_limit }, 429);
+  }
 
   // Route
   let response: Response;
@@ -480,12 +500,8 @@ serve(async (req) => {
   else if (endpoint === 'company-intel') response = await handleCompanyIntel(body, supabaseClient);
   else response = json({ error: `Unknown endpoint: ${endpoint}. Use role-risk, team-risk, or company-intel.` }, 400);
 
-  // Log usage — increment request_count for existing row, insert with 1 for new rows
-  supabaseClient.rpc('increment_api_usage', {
-    p_key_id:  keyRecord.id,
-    p_date:    today,
-    p_endpoint: endpoint ?? 'unknown',
-  }).then(() =>
+  // Touch last_used_at (best-effort, fire-and-forget).
+  Promise.resolve(
     supabaseClient.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRecord.id)
   ).catch(() => {});
 

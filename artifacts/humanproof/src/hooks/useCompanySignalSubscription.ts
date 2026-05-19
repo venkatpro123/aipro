@@ -108,10 +108,22 @@ export function useCompanySignalSubscription(
   useEffect(() => {
     if (!companyName || !dbCompanyName) return;
 
+    // v40.0 FIX-4: Scope realtime channel names per-session. Previously the channel
+    // name was solely derived from the company name, which meant:
+    //   1. Anyone could enumerate which companies are being audited by guessing
+    //      channel names (`bn_signal_google`, `bn_signal_meta`, etc.) and observing
+    //      subscription metadata even without read access to the underlying rows.
+    //   2. Multiple users auditing the same company shared a single channel,
+    //      complicating per-user fan-out control.
+    // The companyName suffix is still included so RLS row-filter works correctly;
+    // the random salt scopes the channel name itself to this user session.
+    const channelSalt = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const companySlug = dbCompanyName.toLowerCase().replace(/\W+/g, '_');
+
     // Channel 1: company_intelligence UPDATEs (pipeline batch refreshes)
     // Use the exact DB company name for the eq filter — Realtime filters are
     // case-sensitive; previously used raw user input which failed on case mismatch.
-    const ciChannelId = `ci_signal_${dbCompanyName.toLowerCase().replace(/\W+/g, '_')}`;
+    const ciChannelId = `ci_signal_${companySlug}_${channelSalt}`;
     const ciChannel = supabase
       .channel(ciChannelId)
       .on(
@@ -166,7 +178,7 @@ export function useCompanySignalSubscription(
     if (fanoutFlag.isActive || fanoutFlag.isShadow) {
       unsubBreakingNews = subscribeBreakingNews(dbCompanyName, handleBreakingNewsRow);
     } else {
-      const bnChannelId = `bn_signal_${dbCompanyName.toLowerCase().replace(/\W+/g, '_')}`;
+      const bnChannelId = `bn_signal_${companySlug}_${channelSalt}`;
       const bnFilter = `company_name=eq.${dbCompanyName}`;
       bnChannel = supabase
         .channel(bnChannelId)

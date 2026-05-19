@@ -401,3 +401,10 @@ export function entityFootprint(rawName: string): string[] {
 export function isPrivateCompany(rawName: string): boolean {
   return resolveCompanyEntity(rawName)?.isPrivate === true;
 }
+
+/**
+ * v40.0 alias — Task 4.1 unification.
+ * `resolveEntity` is the public-facing name used by liveDataService and other
+ * consumers. Delegates to `resolveCompanyEntity` which is the internal name.
+ */
+export const resolveEntity = resolveCompanyEntity;

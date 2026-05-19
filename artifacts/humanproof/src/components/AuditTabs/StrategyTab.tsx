@@ -385,8 +385,13 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
   return (
     <div className="space-y-5 px-1">
-      {/* v17.0: AI Intelligence Brief — top of strategy tab, skeleton while loading */}
-      <IntelligenceBriefPanel intelligenceBrief={(result as any).intelligenceBrief} />
+      {/* v41.0: evidence-floor-gated brief — heuristic tier and low confidence block it */}
+      <IntelligenceBriefPanel
+        intelligenceBrief={(result as any).intelligenceBrief}
+        confidence={result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100)}
+        freshnessierTier={result.unifiedFreshness?.tier}
+        companyName={(companyData as any)?.name}
+      />
 
       {/* Strategy banner */}
       <motion.div

@@ -138,7 +138,25 @@ function extractCount(text: string): number | null {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
-serve(async (_req) => {
+serve(async (req) => {
+  // v40 hardening: pg_cron-only endpoint. Reject any caller that does not
+  // present the service-role bearer. Previously this was a fully open
+  // endpoint that anyone could POST to in order to trigger RSS/HN fan-out
+  // and bulk-write to breaking_news_events. We compare against the
+  // service-role key using a length-equal constant-time check.
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const provided = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
+  const okLen = serviceRoleKey.length > 0 && provided.length === serviceRoleKey.length;
+  let match = okLen;
+  if (okLen) {
+    for (let i = 0; i < provided.length; i++) {
+      if (provided.charCodeAt(i) !== serviceRoleKey.charCodeAt(i)) match = false;
+    }
+  }
+  if (!match) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: CORS });
+  }
+
   const runStart = Date.now();
   try {
   const supabase = createClient(

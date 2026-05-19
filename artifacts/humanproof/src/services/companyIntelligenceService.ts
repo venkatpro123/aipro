@@ -4,6 +4,7 @@
 // Also owns the learning loop (confidence_score updates) and discovery queue capture.
 
 import { supabase } from '../utils/supabase';
+import { escapeIlike } from '../utils/ilikeEscape';
 import { CompanyProfile } from '../data/companyIntelligenceDB';
 import { companyProfileToData } from '../data/companyIntelligenceBridge';
 import type { CompanyData } from '../data/companyDatabase';
@@ -303,7 +304,7 @@ export async function queryCompanyIntelligenceWithMatch(
     const { data: fuzzyRows, error: fuzzyErr } = await supabase
       .from('company_intelligence')
       .select('*')
-      .ilike('company_name', `%${companyName.trim()}%`)
+      .ilike('company_name', `%${escapeIlike(companyName.trim())}%`)
       .order('confidence_score', { ascending: false })
       .limit(5); // fetch top-5 by confidence, then pick the best token-ratio match
 
@@ -426,7 +427,7 @@ export async function searchCompanies(
     // entity (not 5 Oracle rows). The view's search_haystack column lets
     // short-form queries like "TCS" or "ORCL" hit the canonical row even
     // when the canonical display name is the long form.
-    const escaped = query.replace(/[%,()]/g, '');
+    const escaped = escapeIlike(query.replace(/[,()]/g, ''));
     const { data, error } = await supabase
       .from('v_company_canonical')
       .select('company_name, industry, company_risk_score, n_duplicates')
@@ -470,7 +471,7 @@ export async function queryCompanyCandidates(
     const { data, error } = await supabase
       .from('company_intelligence')
       .select('company_name, industry, region, company_risk_score, hiring_freeze_score')
-      .ilike('company_name', `%${query.trim()}%`)
+      .ilike('company_name', `%${escapeIlike(query.trim())}%`)
       .order('confidence_score', { ascending: false })
       .limit(limit);
 

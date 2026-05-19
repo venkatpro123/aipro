@@ -125,7 +125,22 @@ const BOOTSTRAP_RECENCY_DECAY: ReadonlyArray<[number, number]> = [
   [180, 0.25],
 ];
 
+// v40.0 audit fix: add smooth exponential decay so peer layoffs lose weight
+// continuously rather than in discrete bands. A peer layoff 5 days ago gets
+// full weight; one 90 days ago gets ~5% weight. The step-band fallback is
+// retained for backward compatibility when the exponential constant is not
+// available in calibrationConstants.
+function recencyDecayedWeight(daysAgo: number, baseWeight: number): number {
+  return baseWeight * Math.exp(-daysAgo / 30);
+}
+
 function recencyWeight(daysAgo: number): number {
+  // Prefer exponential decay when the feature flag is active.
+  const expConstant = getConstant<number>('peerContagionEngine.exponentialDecayHalfLife', null);
+  if (expConstant.value != null && typeof expConstant.value === 'number') {
+    return Math.exp(-daysAgo / expConstant.value);
+  }
+  // Fallback: step-band decay (legacy + WS9 calibration compatible).
   const resolved = getConstant<ReadonlyArray<[number, number]>>(
     'peerContagionEngine.recencyDecayBands',
     BOOTSTRAP_RECENCY_DECAY,
@@ -136,6 +151,13 @@ function recencyWeight(daysAgo: number): number {
   }
   return 0;
 }
+
+// recencyDecayedWeight is exported for DAG layer consumers that need to apply
+// decay to a custom base weight. The engine itself uses recencyWeight() which
+// is DB-configurable (step-band or exponential) via calibrationConstants.
+// Both approaches are active — recencyWeight() governs internal scoring while
+// recencyDecayedWeight() provides a simpler utility for external callers.
+export { recencyDecayedWeight };
 
 function computeWaveIntensity(directCuts: number, adjacentCuts: number, daysWindow: number): ContagionWaveIntensity {
   const totalCuts = directCuts + adjacentCuts;

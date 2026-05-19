@@ -396,4 +396,132 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     contextTags: ['emerging-role', 'creative-sector', 'ai-resilient', 'creator-economy', 'human-brand'],
     evolutionHorizon: '2028',
   },
+
+  // ── v40.0: Modern role intelligence additions ────────────────────────────────
+  ai_pm: {
+    displayRole: 'AI Product Manager',
+    summary: 'Rapidly professionalizing; AI PMs who combine classic PM rigor with LLM product design, evaluation frameworks, and responsible AI governance are in extreme demand at AI-native companies.',
+    skills: {
+      obsolete: [{ skill: 'Manual user interview scheduling and note-taking', riskScore: 78, riskType: 'Automatable', horizon: '1yr', reason: 'AI note-taking and interview synthesis tools auto-transcribe and surface themes.', aiReplacement: 'Partial' }],
+      at_risk: [{ skill: 'A/B test result interpretation (basic)', riskScore: 65, riskType: 'Augmented', horizon: '2yr', reason: 'Statistical significance and impact calculation increasingly automated by experimentation platforms.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'LLM Product Evaluation Design', whySafe: 'Designing eval suites that measure what actually matters for a business use case — beyond BLEU scores — requires deep domain + AI understanding no AI can self-supply.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Responsible AI Product Strategy', whySafe: 'Navigating EU AI Act, NIST AI RMF, and company policy in a way that enables innovation without regulatory risk requires human judgment across technical and legal domains.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'AI Product Roadmap Prioritization', whySafe: 'Deciding what AI capability to build next requires deep understanding of user need, model capability, and competitive dynamics that AI assistants cannot synthesize.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'VP Product at AI-Native Company', riskReduction: 15, skillGap: 'Team management, revenue ownership', transitionDifficulty: 'Hard', industryMapping: ['AI Labs', 'Enterprise SaaS'], salaryDelta: '+80-180%', timeToTransition: '24 months' },
+      { role: 'Chief Product Officer', riskReduction: 10, skillGap: 'Board-level communication, P&L ownership', transitionDifficulty: 'Very Hard', industryMapping: ['SaaS', 'AI Platforms'], salaryDelta: '+150-400%', timeToTransition: '48 months' },
+    ],
+    riskTrend: [{ year: 2024, riskScore: 10, label: 'Now' }, { year: 2026, riskScore: 12, label: '+2yr' }, { year: 2027, riskScore: 18, label: '+3yr' }, { year: 2028, riskScore: 25, label: '+4yr' }, { year: 2029, riskScore: 30, label: '+5yr' }],
+    confidenceScore: 94,
+    contextTags: ['emerging-role', 'ai-native', 'high-demand', 'product-leadership'],
+    evolutionHorizon: '2030',
+  },
+
+  ml_platform: {
+    displayRole: 'MLOps / ML Platform Engineer',
+    summary: 'Strong demand; the infrastructure layer for AI at scale is a growing function with a clear specialization track distinct from generic DevOps.',
+    skills: {
+      obsolete: [{ skill: 'Manual model deployment scripts without orchestration', riskScore: 82, riskType: 'Automatable', horizon: '1yr', reason: 'MLOps platforms auto-generate deployment pipelines from model registry metadata.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Basic Docker + Kubernetes deployment (generic)', riskScore: 60, riskType: 'Augmented', horizon: '2yr', reason: 'ML-specific deployment tools abstract away container orchestration for standard model types.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'ML Pipeline Architecture (Feature Store + Training + Serving)', whySafe: 'Designing end-to-end ML platforms that balance cost, latency, freshness, and reliability requires systems thinking no tool can fully automate.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Model Observability and Drift Detection', whySafe: 'Monitoring production model performance and detecting when retraining is needed requires understanding of both ML and production system reliability.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Head of ML Infrastructure', riskReduction: 20, skillGap: 'Team leadership, budget ownership', transitionDifficulty: 'Hard', industryMapping: ['AI Labs', 'Tech'], salaryDelta: '+60-140%', timeToTransition: '18 months' },
+      { role: 'Staff / Principal ML Engineer', riskReduction: 15, skillGap: 'Technical depth, cross-org influence', transitionDifficulty: 'Very Hard', industryMapping: ['FAANG', 'Hyperscalers'], salaryDelta: '+40-100%', timeToTransition: '24 months' },
+    ],
+    riskTrend: [{ year: 2024, riskScore: 15, label: 'Now' }, { year: 2026, riskScore: 18, label: '+2yr' }, { year: 2027, riskScore: 22, label: '+3yr' }, { year: 2028, riskScore: 28, label: '+4yr' }, { year: 2029, riskScore: 35, label: '+5yr' }],
+    confidenceScore: 92,
+    contextTags: ['emerging-role', 'ai-infrastructure', 'high-demand', 'tech-sector'],
+    evolutionHorizon: '2029',
+  },
+
+  rev_ops: {
+    displayRole: 'Revenue Operations Manager',
+    summary: 'Growing function at Series A–D companies; RevOps professionals who own the GTM tech stack and drive data-driven sales process design are among the most defensible roles in commercial organizations.',
+    skills: {
+      obsolete: [{ skill: 'Manual CRM data entry and cleanup', riskScore: 90, riskType: 'Automatable', horizon: '1yr', reason: 'AI CRM enrichment tools auto-update contact data from first-party signals and third-party databases.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Basic Salesforce report building', riskScore: 62, riskType: 'Augmented', horizon: '2yr', reason: 'Natural language querying tools allow sales reps to self-serve standard reports without RevOps.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Revenue Process Architecture', whySafe: 'Designing end-to-end GTM processes that align marketing, sales, and CS around a shared revenue model requires deep cross-functional business judgment.', longTermValue: 97, difficulty: 'High' },
+        { skill: 'GTM Tech Stack Strategy', whySafe: 'Deciding which tools to consolidate, which to build, and how to integrate them for a specific company stage requires judgment across cost, capability, and org dynamics.', longTermValue: 96, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'VP Revenue Operations', riskReduction: 20, skillGap: 'Team management, executive presence', transitionDifficulty: 'Hard', industryMapping: ['SaaS', 'B2B Tech'], salaryDelta: '+80-160%', timeToTransition: '24 months' },
+      { role: 'CRO or VP Sales', riskReduction: 25, skillGap: 'Sales closing, quota ownership', transitionDifficulty: 'Very Hard', industryMapping: ['SaaS', 'Enterprise'], salaryDelta: '+120-300%', timeToTransition: '36 months' },
+    ],
+    riskTrend: [{ year: 2024, riskScore: 20, label: 'Now' }, { year: 2026, riskScore: 25, label: '+2yr' }, { year: 2027, riskScore: 30, label: '+3yr' }, { year: 2028, riskScore: 38, label: '+4yr' }, { year: 2029, riskScore: 44, label: '+5yr' }],
+    confidenceScore: 90,
+    contextTags: ['commercial-role', 'saas', 'high-demand', 'gtm-function'],
+    evolutionHorizon: '2029',
+  },
+
+  growth: {
+    displayRole: 'Head of Growth / Growth Lead',
+    summary: 'Highly valued at consumer and PLG SaaS companies; experienced growth leaders who can own a channel from 0→scale are scarce and command strong comp.',
+    skills: {
+      obsolete: [{ skill: 'Manual attribution model building in Excel', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'Multi-touch attribution platforms auto-build and update attribution models from first-party data.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Basic SEO keyword research and on-page optimization', riskScore: 72, riskType: 'Augmented', horizon: '2yr', reason: 'AI content optimization tools auto-generate keyword-optimized drafts from topic briefs.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Growth Loop Architecture', whySafe: 'Designing viral and retention loops that compound over time — viral coefficients, referral mechanics, habit formation — requires deep understanding of user psychology and product mechanics.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Experimentation Culture and Methodology', whySafe: 'Building the systems and culture that run 10+ valid experiments per month requires organizational design, statistical rigor, and leadership skills AI cannot substitute.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'VP Growth or CMO', riskReduction: 20, skillGap: 'Brand strategy, board communication', transitionDifficulty: 'Hard', industryMapping: ['Consumer', 'PLG SaaS'], salaryDelta: '+80-200%', timeToTransition: '24 months' },
+      { role: 'Founder / Co-Founder', riskReduction: 30, skillGap: 'Fundraising, team building, product vision', transitionDifficulty: 'Extremely Hard', industryMapping: ['Startups'], salaryDelta: 'Variable (+200% upside)', timeToTransition: '12 months' },
+    ],
+    riskTrend: [{ year: 2024, riskScore: 22, label: 'Now' }, { year: 2026, riskScore: 28, label: '+2yr' }, { year: 2027, riskScore: 34, label: '+3yr' }, { year: 2028, riskScore: 40, label: '+4yr' }, { year: 2029, riskScore: 46, label: '+5yr' }],
+    confidenceScore: 89,
+    contextTags: ['commercial-role', 'consumer', 'plg', 'high-demand', 'founder-adjacent'],
+    evolutionHorizon: '2029',
+  },
+
+  chief_of_staff: {
+    displayRole: 'Chief of Staff',
+    summary: 'Fixed-tenure role (18–30 months) designed as a launchpad to VP Ops, COO, or functional leadership; success depends entirely on exec sponsor quality and initiative ownership.',
+    skills: {
+      obsolete: [{ skill: 'Manual meeting scheduling and agenda preparation', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'AI executive assistants auto-schedule, prep agendas, and distribute pre-reads from calendar context.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard financial model templates (monthly variance reports)', riskScore: 68, riskType: 'Augmented', horizon: '2yr', reason: 'FP&A AI tools auto-generate variance commentary and flag anomalies without manual analysis.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Organizational Diagnosis and Process Design', whySafe: 'Diagnosing why a cross-functional process is breaking and designing the fix requires political intelligence and systems thinking no AI has.', longTermValue: 97, difficulty: 'High' },
+        { skill: 'Executive Communication and Narrative Building', whySafe: 'Translating complex business situations into clear narratives for board, investors, and leadership requires judgment about what the audience needs that AI cannot substitute.', longTermValue: 96, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'VP Operations', riskReduction: 25, skillGap: 'P&L ownership, team management', transitionDifficulty: 'Moderate', industryMapping: ['SaaS', 'Tech', 'Enterprise'], salaryDelta: '+80-200%', timeToTransition: '18 months' },
+      { role: 'COO', riskReduction: 20, skillGap: 'Revenue ownership, board experience', transitionDifficulty: 'Very Hard', industryMapping: ['Tech', 'SaaS'], salaryDelta: '+200-500%', timeToTransition: '48 months' },
+    ],
+    riskTrend: [{ year: 2024, riskScore: 18, label: 'Now' }, { year: 2026, riskScore: 22, label: '+2yr' }, { year: 2027, riskScore: 26, label: '+3yr' }, { year: 2028, riskScore: 32, label: '+4yr' }, { year: 2029, riskScore: 38, label: '+5yr' }],
+    confidenceScore: 91,
+    contextTags: ['operational-role', 'executive-adjacency', 'launchpad-role', 'tenure-bounded'],
+    evolutionHorizon: '2030',
+  },
+
+  strategy_ops: {
+    displayRole: 'Strategy and Operations',
+    summary: 'Strong demand at Series B–D companies and consulting firms; professionals who combine structured analytical rigor with cross-functional execution ownership are highly valued.',
+    skills: {
+      obsolete: [{ skill: 'Manual data extraction from PDF reports and spreadsheets', riskScore: 92, riskType: 'Automatable', horizon: '1yr', reason: 'AI document parsing tools extract and normalize structured data from unstructured reports in seconds.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard three-statement financial model building', riskScore: 65, riskType: 'Augmented', horizon: '2yr', reason: 'AI FP&A tools auto-populate standard models from data inputs with minimal analyst intervention.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Strategic Problem Structuring', whySafe: 'Defining the right question — what is actually the business problem? — and structuring the analysis to answer it requires judgment no AI can supply without a human setting the frame.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Cross-Functional Alignment and Change Management', whySafe: 'Getting sales, engineering, finance, and leadership to agree on a strategic direction and execute against it requires human political intelligence and relationship capital.', longTermValue: 98, difficulty: 'Very High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'VP Strategy or General Manager', riskReduction: 25, skillGap: 'P&L ownership, revenue accountability', transitionDifficulty: 'Hard', industryMapping: ['SaaS', 'Tech', 'Consulting'], salaryDelta: '+100-250%', timeToTransition: '24 months' },
+      { role: 'Management Consulting Senior Manager', riskReduction: 20, skillGap: 'Client development, project management', transitionDifficulty: 'Moderate', industryMapping: ['McKinsey', 'BCG', 'Bain', 'Big 4'], salaryDelta: '+40-100%', timeToTransition: '12 months' },
+    ],
+    riskTrend: [{ year: 2024, riskScore: 20, label: 'Now' }, { year: 2026, riskScore: 25, label: '+2yr' }, { year: 2027, riskScore: 32, label: '+3yr' }, { year: 2028, riskScore: 40, label: '+4yr' }, { year: 2029, riskScore: 46, label: '+5yr' }],
+    confidenceScore: 90,
+    contextTags: ['operational-role', 'analytical', 'high-demand', 'cross-functional'],
+    evolutionHorizon: '2030',
+  },
 };

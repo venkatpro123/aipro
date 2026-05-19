@@ -37,6 +37,16 @@ export interface ConfidenceInputs {
   liveUnavailable: boolean;
   /** Number of conflicts surfaced by reconcileCompanySignals. */
   conflictCount: number;
+  /**
+   * Database reliability tier for this company from DataQualityReport.
+   * When live intelligence is unavailable, used to set a quality-appropriate
+   * confidence floor instead of a single hard 0.45 for all companies.
+   *   A — full record, high completeness (floor 0.62)
+   *   B — partial record (floor 0.52)
+   *   C — sparse record (floor 0.45 — legacy default)
+   *   D — minimal data (floor 0.35)
+   */
+  dbReliabilityTier?: 'A' | 'B' | 'C' | 'D';
 }
 
 export interface ConfidenceResult {
@@ -110,22 +120,36 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
   value -= conflictPenalty;
   value = clamp(value, 0.10, 0.95);
 
-  // ── Live-unavailable hard cap ────────────────────────────────────────────
-  // Audit v35 fix: the cap must ALWAYS fire when liveUnavailable=true,
-  // regardless of whether the blend dropped below the cap on its own.
-  // The bug: when ALL quorum classes fail (quorumCoverage=0) and all signals
-  // are stale/heuristic (sourceReliability=0.4), the blend falls to ~0.30
-  // and `value > cap` is false — cap silently skipped, output stays ~0.30
-  // which LOOKS low but is STILL misleading: the pipeline ran to ceiling and
-  // found nothing, and 30% confidence implies evidence was collected at some
-  // level. The correct UX: always surface the explicit liveUnavailable state.
+  // ── Live-unavailable floor (DB-quality-adjusted) ─────────────────────────
+  // v40.0 audit fix: the floor now reflects DB record quality instead of using
+  // a single hard 0.45 for all companies. A company with a comprehensive
+  // Supabase intelligence record gets a higher floor than a completely unknown
+  // company — because the DB data IS real evidence, even when live scraping
+  // falls through.
+  //
+  // v35 rationale preserved: the floor must ALWAYS fire when liveUnavailable=
+  // true, anchoring the value regardless of what the weighted blend computes.
+  // When ALL quorum classes fail and all signals are stale/heuristic, the
+  // blend falls to ~0.30 — but surfacing 30% implies evidence was collected
+  // at some level; anchoring to the DB floor is more honest.
+  const DB_TIER_FLOORS: Record<string, number> = {
+    A: 0.62,  // full record, high completeness — DB is near-live quality
+    B: 0.52,  // partial record
+    C: 0.45,  // sparse record (legacy default preserved)
+    D: 0.35,  // minimal data
+  };
   let liveUnavailableFloor: number | null = null;
   if (inputs.liveUnavailable) {
-    const cap = 0.45;
-    // Force cap regardless of direction (ceiling AND floor so the value is
-    // always exactly 0.45 when live is unavailable — unambiguous for the UI).
-    value = cap;
-    liveUnavailableFloor = cap;
+    const floor = DB_TIER_FLOORS[inputs.dbReliabilityTier ?? 'C'] ?? 0.45;
+    // Apply as a minimum floor, not an exact override. In practice when
+    // liveUnavailable=true the weighted blend falls below the floor anyway
+    // (quorumCoverage=0, freshnessQuality=0 → blend ≈ 0.10–0.20), but using
+    // Math.max is semantically correct: "confidence can't drop below this
+    // floor given the DB quality available" rather than "confidence is exactly
+    // this value." This prevents the edge case where a very high sourceReliability
+    // from strong DB records would be incorrectly overridden downward.
+    value = Math.max(value, floor);
+    liveUnavailableFloor = floor;
   }
 
   // ── Rationale ────────────────────────────────────────────────────────────
@@ -151,7 +175,11 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
     rationale.push(`-${Math.round(conflictPenalty * 100)}% conflict penalty (${inputs.conflictCount} conflicts).`);
   }
   if (liveUnavailableFloor != null) {
-    rationale.push(`Live intelligence unavailable — capped at ${Math.round(liveUnavailableFloor * 100)}%.`);
+    const tier = inputs.dbReliabilityTier ?? 'C';
+    rationale.push(
+      `Live intelligence unavailable — confidence anchored to DB quality tier ${tier}`
+      + ` (${Math.round(liveUnavailableFloor * 100)}%).`,
+    );
   }
 
   return {

@@ -13,6 +13,7 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import TierBadge from './TierBadge';
+import { track } from '../../../services/analyticsService';
 
 interface Props {
   title: string;
@@ -37,7 +38,13 @@ export const AdaptiveBlock: React.FC<Props> = ({
   defaultOpen = false, badge, badgeColor, empty, flush, children,
 }) => {
   const [open, setOpen] = useState(defaultOpen && !empty);
-  const toggle = useCallback(() => !empty && setOpen(o => !o), [empty]);
+  const toggle = useCallback(() => {
+    if (empty) return;
+    setOpen(o => {
+      track('panel_toggled', { panel: title, open: !o, tier });
+      return !o;
+    });
+  }, [empty, title, tier]);
 
   return (
     <div
@@ -51,6 +58,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
       <button
         onClick={toggle}
         disabled={empty}
+        aria-expanded={open}
         className="w-full px-4 py-3.5 flex items-center gap-3 text-left"
         style={{ cursor: empty ? 'default' : 'pointer' }}
       >

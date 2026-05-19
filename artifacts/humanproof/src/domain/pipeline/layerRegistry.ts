@@ -157,6 +157,20 @@ interface DagPlan {
  * rest run via Promise.all.
  */
 function buildPlan(layers: AuditLayer[]): DagPlan {
+  // 0. Validate no two layers share the same id (duplicate registration guard).
+  // v40.0: catches future merges where two files call registerLayer with the same id.
+  const seenIds = new Map<string, string>();
+  for (const l of layers) {
+    if (seenIds.has(l.id)) {
+      throw new Error(
+        `layerRegistry: duplicate layer id "${l.id}" — ` +
+          `both "${seenIds.get(l.id)}" and a second layer share this id. ` +
+          `Rename one or remove the duplicate registerLayer() call.`,
+      );
+    }
+    seenIds.set(l.id, l.id);
+  }
+
   // 1. Validate dependencies all exist.
   for (const l of layers) {
     for (const dep of l.dependencies) {

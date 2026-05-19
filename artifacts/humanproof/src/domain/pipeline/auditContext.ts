@@ -39,6 +39,10 @@ import type { ExecutiveMovementSignal } from '../../services/executiveMovementEn
 import type { HiringSignalResult } from '../../services/hiringSignalAnalyzer';
 import type { EmployeeSentimentResult } from '../../services/employeeSentimentEngine';
 import type { HeadcountVelocityResult } from '../../services/headcountVelocityEngine';
+// v40.0 DAG migration — 5 new layers
+import type { WARNSignal } from '../../services/warnActService';
+import type { GlassdoorVelocityResult } from '../../services/glassdoorVelocityEngine';
+import type { SECEnhancedRiskResult } from '../../services/secEnhancedService';
 
 // ── Layer output schema ─────────────────────────────────────────────────────
 //
@@ -71,6 +75,13 @@ export interface LayerOutputs {
   'hiring_signal':       HiringSignalResult;
   'employee_sentiment':  EmployeeSentimentResult;
   'headcount_velocity':  HeadcountVelocityResult;
+
+  // ── v40.0 DAG migration batch ───────────────────────────────────────────
+  'warn_signal':          WARNSignal;
+  'glassdoor_velocity':   GlassdoorVelocityResult;
+  'sec_enhanced':         SECEnhancedRiskResult;
+  'workforce_velocity':   Readonly<{ headcountChange: number; velocityScore: number; trend: string }>;
+  'bls_macro_live':       Readonly<{ isHeuristic: boolean; recessionProbability: number; unemploymentRate: number }>;
 
   // ── Catch-all for layers not yet typed (DELETE ENTRIES, DON'T ADD) ──────
   // The empty `_legacy` channel exists so progressive migration is type-safe.

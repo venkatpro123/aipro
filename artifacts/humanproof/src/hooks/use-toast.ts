@@ -5,8 +5,14 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+// v40.0 FIX: TOAST_LIMIT was 1, hiding critical warnings behind the latest toast.
+// Bumped to 3 so users can see multiple alerts simultaneously.
+const TOAST_LIMIT = 3
+// v40.0 FIX: TOAST_REMOVE_DELAY was 1_000_000ms (~16 minutes). Dismissed toasts
+// stayed in the DOM for the entire session, accumulating event listeners and
+// causing slow memory growth. Reduced to 5 seconds — long enough for the exit
+// animation to complete, short enough to garbage-collect quickly.
+const TOAST_REMOVE_DELAY = 5_000
 
 type ToasterToast = ToastProps & {
   id: string
