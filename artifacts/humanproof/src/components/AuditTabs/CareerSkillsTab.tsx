@@ -27,6 +27,7 @@ import {
 } from "@/services/skillDemandService";
 import { SkillFreshnessLabel, SkillPanelStaticNotice } from "./SkillFreshnessLabel";
 import { getCareerPathMarketSync, isMarketDataStale, marketDataAgeLabel, isMarketDataFreshWarning, marketDataAgeInline } from "@/services/careerPathMarket";
+import { loadFinancialContext, deriveFinancialProfile } from "@/services/financialContextService";
 import {
   Shield, AlertTriangle, TrendingUp, TrendingDown, Cpu,
   Brain, Heart, Lightbulb, Users, Zap, Target, ChevronRight,
@@ -718,6 +719,19 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
   // v6.0: Derive uniqueness depth at component level for career path filtering
   const uniquenessDepth = (result as any).uniquenessDepth ?? (result as any).userFactors?.uniquenessDepth ?? 'generic';
 
+  // Financial profile for income-continuity filtering of career paths.
+  // Uses deriveFinancialProfile (same function as ActionPlanTab) so thresholds
+  // and RunwayTier are consistent across the whole tab set.
+  // Must be derived at component level so the career path section can access it.
+  const financialProfile = useMemo(() => {
+    const ctx = loadFinancialContext();
+    if (!ctx) return null;
+    return deriveFinancialProfile(ctx, result.total);
+  }, [result.total]);
+
+  const fpIsConservative = financialProfile?.riskAppetite === 'conservative';
+  const fpRunwayMonths   = financialProfile?.runwayMonths ?? null;
+
   const safeCount = intel.skills.safe?.length ?? 0;
   const atRiskCount = intel.skills.at_risk?.length ?? 0;
   const obsoleteCount = intel.skills.obsolete?.length ?? 0;
@@ -892,11 +906,12 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
           </div>
         </div>
 
-        {/* ── Career Paths (v6.0: uniqueness-filtered + income-continuity-filtered) ── */}
+        {/* ── Career Paths — uniqueness-filtered + income-continuity-filtered ── */}
         {(() => {
           if (!intel.careerPaths || intel.careerPaths.length === 0) return null;
           const ud = uniquenessDepth as 'generic' | 'functional_specialist' | 'critical_knowledge';
-          // Fix 8: filter by uniqueness depth
+
+          // Step 1: filter by uniqueness depth (existing logic preserved)
           const filteredByUniqueness = intel.careerPaths.filter(p => {
             const f = p.uniquenessDepthFilter ?? 'all';
             if (f === 'all') return true;
@@ -904,121 +919,192 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
             if (ud === 'functional_specialist') return f === 'generic_and_specialist' || f === 'specialist_and_critical';
             return f === 'generic_and_specialist';
           });
-          // Fix 10: filter by income continuity for conservative profiles
-          const runwayMonths = (() => {
-            try {
-              const ctx = JSON.parse(localStorage.getItem('hp_financial_context') || '{}');
-              if (ctx.monthlyExpenses && ctx.emergencyFundMonths) return ctx.emergencyFundMonths as number;
-            } catch { /* ignore */ }
-            return null;
-          })();
-          const isConservative = (() => {
-            try {
-              const ctx = JSON.parse(localStorage.getItem('hp_financial_context') || '{}');
-              if (!ctx.emergencyFundMonths) return false;
-              const runway = ctx.emergencyFundMonths as number;
-              const deps = ctx.dependents as number ?? 0;
-              return runway < 2 || (runway < 4 && deps >= 2);
-            } catch { return false; }
-          })();
+
+          // Step 2: income-continuity filter for conservative profiles.
+          //
+          // A path is COMPATIBLE when:
+          //   - not a conservative profile, OR
+          //   - runway is unknown (cannot filter without it), OR
+          //   - months_to_first_income ≤ runwayMonths / 2
+          //
+          // A path is INCOMPATIBLE (goes to hidden section) when ALL of:
+          //   - conservative profile is active (riskAppetite === 'conservative')
+          //   - runwayMonths is known
+          //   - months_to_first_income exceeds runwayMonths / 2 OR is missing entirely
+          //
+          // Paths with missing months_to_first_income are treated as incompatible
+          // for conservative profiles: "never show a conservative profile user a path
+          // that would exhaust their emergency fund before first paycheck without
+          // explicit disclosure." An unknown gap cannot be verified as safe.
+
           const visiblePaths = filteredByUniqueness.filter(p => {
-            if (!isConservative || !runwayMonths || !p.months_to_first_income) return true;
-            return p.months_to_first_income <= runwayMonths / 2;
+            if (!fpIsConservative || fpRunwayMonths == null) return true;
+            if (p.months_to_first_income == null) return false;  // unknown gap → hidden section
+            return p.months_to_first_income <= fpRunwayMonths / 2;
           });
-          const hiddenCount = filteredByUniqueness.length - visiblePaths.length;
+          const hiddenPaths = filteredByUniqueness.filter(p => !visiblePaths.includes(p));
+
+          // Spec disclosure note: "[N] additional paths available — these require a
+          // [X]-month income gap not compatible with your current financial runway."
+          // [X] = minimum months_to_first_income across hidden paths (or "unknown")
+          const knownGaps = hiddenPaths
+            .map(p => p.months_to_first_income)
+            .filter((m): m is number => m != null);
+          const minGapMonths = knownGaps.length > 0 ? Math.min(...knownGaps) : null;
+          const hasUnknownGaps = hiddenPaths.some(p => p.months_to_first_income == null);
+          const gapLabel = hasUnknownGaps && minGapMonths == null
+            ? 'unknown income gap'
+            : minGapMonths != null
+            ? `${minGapMonths}-month income gap`
+            : 'income gap';
+
+          // Helper: render a single career path card (used for both visible and hidden sections)
+          const renderPathCard = (path: typeof filteredByUniqueness[0], idx: number, dimmed = false) => {
+            const pathRoleKey = path.role
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '_')
+              .replace(/^_|_$/g, '');
+            const market = getCareerPathMarketSync(pathRoleKey);
+            const marketStale      = market ? isMarketDataStale(market)       : false;
+            const marketFreshWarn  = market ? isMarketDataFreshWarning(market) : false;
+            const marketAge        = market ? marketDataAgeLabel(market)       : null;
+            const marketAgeInline_ = market ? marketDataAgeInline(market)      : null;
+
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.06 }}
+                className="glass-panel p-4 rounded-xl hover:border-[var(--border-cyan)] transition-colors"
+                style={dimmed ? { opacity: 0.7 } : undefined}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-lg bg-cyan-500/10 flex-shrink-0">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-sm font-bold">{path.role}</span>
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                        -{path.riskReduction}% RISK
+                      </span>
+                      <span className="text-[9px] font-bold text-muted-foreground">{path.salaryDelta}</span>
+                      {market && (
+                        <span
+                          className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                            marketStale     ? 'text-amber-400/70 bg-amber-500/10' :
+                            marketFreshWarn ? 'text-amber-300/60 bg-amber-500/8'  :
+                                              'text-cyan-400/80 bg-cyan-500/10'
+                          }`}
+                          title={marketAge ?? undefined}
+                        >
+                          {market.indiaOpenings != null ? `${market.indiaOpenings.toLocaleString()} India openings` : ''}
+                          {marketAgeInline_ ? ` · ${marketAgeInline_}` : ''}
+                        </span>
+                      )}
+                      {/* Income gap badge — shown on all path cards when conservative */}
+                      {fpIsConservative && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/12 text-amber-400 border border-amber-500/25">
+                          {path.months_to_first_income != null
+                            ? `${path.months_to_first_income}mo to first pay`
+                            : 'income gap unknown'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">Gap: {path.skillGap}</p>
+                    <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground flex-wrap">
+                      <span><Clock className="w-2.5 h-2.5 inline mr-1" />{path.timeToTransition}</span>
+                      <span>Difficulty: <span className="text-amber-400">{path.transitionDifficulty}</span></span>
+                      {path.months_to_first_income != null && !fpIsConservative && (
+                        <span className="text-emerald-400">First pay: ~{path.months_to_first_income}mo</span>
+                      )}
+                      {market?.hiringBar && (
+                        <span className="text-muted-foreground">Bar: {market.hiringBar}</span>
+                      )}
+                    </div>
+                    {market?.successRate12mPct != null && (
+                      <div className="mt-1.5 flex items-center gap-2 text-[10px]">
+                        <div className="h-1 w-16 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${market.successRate12mPct}%` }} />
+                        </div>
+                        <span className="text-emerald-400/70">{market.successRate12mPct}% 12-mo success rate</span>
+                      </div>
+                    )}
+                    {/* Income dip disclosure — shown when conservative + income data is present */}
+                    {fpIsConservative && path.income_dip_months != null && path.income_dip_months > 0 && (
+                      <p className="text-[9px] text-amber-400/70 mt-1">
+                        Income reduced for ~{path.income_dip_months} months during transition
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+                </div>
+              </motion.div>
+            );
+          };
+
           return (
             <div className="mb-6">
               <SectionHeader
                 title="Recommended Pivot Paths"
                 description="Adjacent roles you can transition into that offer lower AI risk and comparable or higher earning potential."
               />
-              {visiblePaths.length === 0 && (
+
+              {visiblePaths.length === 0 && hiddenPaths.length === 0 && (
                 <p className="text-xs text-muted-foreground p-4 rounded-xl border border-white/10">
-                  No transition paths compatible with your current financial profile. All available paths require an income gap longer than your available runway.
+                  No transition paths available for this role profile.
                 </p>
               )}
-              <div className="grid md:grid-cols-2 gap-4">
-                {visiblePaths.slice(0, 4).map((path, i) => {
-                  // Derive a role key from the path role name for market data lookup.
-                  // e.g. "ML Engineer" → "ml_engineer", "Platform Engineer" → "platform_engineer"
-                  const pathRoleKey = path.role
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '_')
-                    .replace(/^_|_$/g, '');
-                  const market = getCareerPathMarketSync(pathRoleKey);
-                  const marketStale       = market ? isMarketDataStale(market)       : false;
-                  const marketFreshWarn   = market ? isMarketDataFreshWarning(market) : false;
-                  const marketAge         = market ? marketDataAgeLabel(market)       : null;
-                  const marketAgeInline_  = market ? marketDataAgeInline(market)      : null;
 
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      className="glass-panel p-4 rounded-xl hover:border-[var(--border-cyan)] transition-colors"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-1.5 rounded-lg bg-cyan-500/10 flex-shrink-0">
-                          <Zap className="w-4 h-4 text-cyan-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className="text-sm font-bold">{path.role}</span>
-                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                              -{path.riskReduction}% RISK
-                            </span>
-                            <span className="text-[9px] font-bold text-muted-foreground">{path.salaryDelta}</span>
-                            {market && (
-                              <span
-                                className={`text-[9px] font-mono px-1 py-0.5 rounded ${
-                                  marketStale     ? 'text-amber-400/70 bg-amber-500/10' :
-                                  marketFreshWarn ? 'text-amber-300/60 bg-amber-500/8'  :
-                                                    'text-cyan-400/80 bg-cyan-500/10'
-                                }`}
-                                title={marketAge ?? undefined}
-                              >
-                                {market.indiaOpenings != null ? `${market.indiaOpenings.toLocaleString()} India openings` : ''}
-                                {marketAgeInline_ ? ` · ${marketAgeInline_}` : ''}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground mb-2">Gap: {path.skillGap}</p>
-                          <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground flex-wrap">
-                            <span><Clock className="w-2.5 h-2.5 inline mr-1" />{path.timeToTransition}</span>
-                            <span>Difficulty: <span className="text-amber-400">{path.transitionDifficulty}</span></span>
-                            {path.months_to_first_income != null && (
-                              <span className="text-emerald-400">First pay: ~{path.months_to_first_income}mo</span>
-                            )}
-                            {market?.hiringBar && (
-                              <span className="text-muted-foreground">Bar: {market.hiringBar}</span>
-                            )}
-                          </div>
-                          {market?.successRate12mPct != null && (
-                            <div className="mt-1.5 flex items-center gap-2 text-[10px]">
-                              <div className="h-1 w-16 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500/60 rounded-full" style={{ width: `${market.successRate12mPct}%` }} />
-                              </div>
-                              <span className="text-emerald-400/70">{market.successRate12mPct}% 12-mo success rate</span>
-                            </div>
-                          )}
-                          {isConservative && path.months_to_first_income != null && (
-                            <p className="text-[9px] text-emerald-400/70 mt-1">
-                              Income gap: {path.income_dip_months ?? 0} months below 90% baseline
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-              {hiddenCount > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-3 opacity-60">
-                  {hiddenCount} additional transition {hiddenCount === 1 ? 'path' : 'paths'} available — {isConservative ? `require${hiddenCount === 1 ? 's' : ''} a ${runwayMonths ? Math.round(runwayMonths * 0.5) + '+' : 'longer'}-month income gap not compatible with your financial profile. Increase your emergency fund to see them.` : 'filtered by role profile.'}
+              {visiblePaths.length === 0 && hiddenPaths.length > 0 && (
+                <p className="text-xs text-muted-foreground p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 mb-4">
+                  All available transition paths require an income gap longer than half your current runway. See the section below for details.
                 </p>
+              )}
+
+              {/* Visible paths */}
+              {visiblePaths.length > 0 && (
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  {visiblePaths.slice(0, 4).map((path, i) => renderPathCard(path, i))}
+                </div>
+              )}
+
+              {/* Hidden paths — collapsed section with spec disclosure note.
+                  The spec requires: "[N] additional paths available — these require a
+                  [X]-month income gap not compatible with your current financial runway."
+                  Never show these to a conservative profile user without this explicit
+                  disclosure framing. Expanding requires an active decision by the user. */}
+              {hiddenPaths.length > 0 && (
+                <CollapsibleSection
+                  title={`${hiddenPaths.length} additional path${hiddenPaths.length > 1 ? 's' : ''} available — income gap required`}
+                  defaultOpen={false}
+                >
+                  {/* Spec-exact disclosure note */}
+                  <div
+                    className="flex items-start gap-2.5 rounded-xl px-3.5 py-3 mb-4"
+                    style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)' }}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
+                    <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+                      <span className="font-semibold text-amber-400">
+                        {hiddenPaths.length} additional path{hiddenPaths.length > 1 ? 's' : ''} available
+                      </span>
+                      {' '}— these require a{' '}
+                      <span className="font-semibold text-amber-400">{gapLabel}</span>
+                      {' '}not compatible with your current financial runway.
+                      {fpRunwayMonths != null && (
+                        ` Your runway (${fpRunwayMonths.toFixed(1)} months) covers less than half the income gap these transitions require.`
+                      )}
+                      {' '}Increase your emergency fund before pursuing these paths.
+                    </p>
+                  </div>
+
+                  {/* Hidden path cards — rendered at reduced opacity with income gap warning */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {hiddenPaths.slice(0, 4).map((path, i) => renderPathCard(path, i, /* dimmed */ true))}
+                  </div>
+                </CollapsibleSection>
               )}
             </div>
           );
