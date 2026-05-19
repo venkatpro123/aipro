@@ -13,12 +13,13 @@
 //   5. Scenario Fan (T3)
 //   6. Methodology & Transparency (T4)← data quality, calibration, provenance
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Brain, Zap, BarChart2, Activity, BookOpen, Compass,
+  Brain, Zap, BarChart2, Activity, BookOpen, Compass, AlertOctagon,
 } from 'lucide-react';
 import { PatternMatchCard } from '../../PatternMatchCard';
+import { computeScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
 import type { PredictionHorizonResult } from '../../../services/predictionHorizonService';
 import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
@@ -236,10 +237,71 @@ const MiniGauge: React.FC<{
   );
 };
 
+// ── Mini Gauge Range (shown when score sufficiency gate fires) ────────────────
+// The circular gauge is replaced by a horizontal range bar. Showing the
+// circular gauge with a point (e.g. 58) when CI spans [8, 100] would give
+// the false impression that 58 is a reliable location on the risk axis.
+
+const MiniGaugeRange: React.FC<{
+  ciLow: number;
+  ciHigh: number;
+  label: string;
+  sublabel: string;
+}> = ({ ciLow, ciHigh, label, sublabel }) => {
+  const worstColor =
+    ciHigh >= 75 ? '#dc2626' :
+    ciHigh >= 55 ? '#f97316' :
+    ciHigh >= 35 ? '#f59e0b' : '#10b981';
+
+  return (
+    <div className="flex flex-col items-center gap-1.5" style={{ width: 80 }}>
+      {/* Range bar replacing the circular gauge */}
+      <div
+        className="relative rounded-full overflow-hidden"
+        style={{ width: 72, height: 8, background: 'rgba(255,255,255,0.07)' }}
+        aria-label={`Risk range ${ciLow} to ${ciHigh}`}
+        role="img"
+      >
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+          style={{
+            position: 'absolute', top: 0, bottom: 0,
+            left: `${ciLow}%`,
+            width: `${ciHigh - ciLow}%`,
+            background: `linear-gradient(90deg, rgba(251,191,36,0.6), ${worstColor}80)`,
+            borderRadius: 9999,
+            transformOrigin: 'left center',
+          }}
+        />
+      </div>
+      {/* Show bounds, not a point */}
+      <div className="flex items-center gap-0.5">
+        <span className="text-[11px] font-black" style={{ color: 'rgba(255,255,255,0.55)' }}>{ciLow}</span>
+        <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>–</span>
+        <span className="text-[11px] font-black" style={{ color: worstColor }}>{ciHigh}</span>
+      </div>
+      <div
+        className="flex items-center gap-1 px-1.5 py-0.5 rounded"
+        style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)' }}
+      >
+        <AlertOctagon className="w-2.5 h-2.5" style={{ color: '#fbbf24' }} />
+        <span className="text-[8px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
+      </div>
+      <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
+      <p className="text-[9px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
+    </div>
+  );
+};
+
 const DualGaugePanel: React.FC<{
   riskScore: number;
   preparedness: PreparednessResult | undefined;
-}> = ({ riskScore, preparedness }) => {
+  ciLow?: number;
+  ciHigh?: number;
+  scoreSufficient?: boolean;
+}> = ({ riskScore, preparedness, ciLow = 0, ciHigh = 100, scoreSufficient = true }) => {
   const rColor = scoreColor(riskScore);
   const pColor = preparedness ? readinessColor(preparedness.readinessLabel) : '#f59e0b';
   const pScore = preparedness?.overallScore ?? 0;
@@ -263,7 +325,11 @@ const DualGaugePanel: React.FC<{
         RISK vs. READINESS
       </p>
       <div className="flex items-end justify-center gap-8 mb-3">
-        <MiniGauge score={riskScore} color={rColor} label="Layoff Risk" sublabel="probability index" />
+        {/* Risk gauge: point score when sufficient, range bar when not */}
+        {scoreSufficient
+          ? <MiniGauge score={riskScore} color={rColor} label="Layoff Risk" sublabel="probability index" />
+          : <MiniGaugeRange ciLow={ciLow} ciHigh={ciHigh} label="Layoff Risk" sublabel="range — not a point" />
+        }
         <div className="pb-10 flex flex-col items-center">
           <span className="text-lg font-black" style={{ color: combo.color }}>VS</span>
         </div>
@@ -276,7 +342,9 @@ const DualGaugePanel: React.FC<{
         <div className="w-1.5 h-6 rounded-full flex-shrink-0" style={{ background: combo.color }} />
         <div>
           <p className="text-[11px] font-bold" style={{ color: combo.color }}>{combo.label}</p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{combo.desc}</p>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {scoreSufficient ? combo.desc : `Score range ${ciLow}–${ciHigh}: precise tier cannot be determined. ${combo.desc}`}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -414,6 +482,13 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   const freshnessierTier: string = result.unifiedFreshness?.tier ?? '';
   const companyNameForBrief: string = (companyData as any)?.name ?? '';
 
+  // Score sufficiency gate — passed to DualGaugePanel so the risk gauge
+  // shows the CI range instead of a point estimate when insufficient.
+  const scoreSufficiency = useMemo(
+    () => computeScoreSufficiency(result.confidenceInterval, result.confidencePercent),
+    [result.confidenceInterval, result.confidencePercent],
+  );
+
   return (
     <div className="flex flex-col gap-3">
 
@@ -459,7 +534,13 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
       )}
 
       {/* ── T2: Dual Gauge — Risk vs Readiness ─────────────────────────────── */}
-      <DualGaugePanel riskScore={result.total} preparedness={preparedness} />
+      <DualGaugePanel
+        riskScore={result.total}
+        preparedness={preparedness}
+        scoreSufficient={scoreSufficiency.sufficient}
+        ciLow={scoreSufficiency.ciLow}
+        ciHigh={scoreSufficiency.ciHigh}
+      />
 
       {/* ── T2: Risk dimensions breakdown — open by default; this is the tab's job */}
       <AdaptiveBlock

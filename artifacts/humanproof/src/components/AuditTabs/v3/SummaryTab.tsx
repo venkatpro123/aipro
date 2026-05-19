@@ -25,8 +25,9 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Minus,
-  Zap, Shield, Clock, Signal, AlertTriangle, Info, User,
+  Zap, Shield, Clock, Signal, AlertTriangle, Info, User, AlertOctagon,
 } from 'lucide-react';
+import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { FirstAuditWelcome } from '../common/FirstAuditWelcome';
@@ -134,6 +135,153 @@ const ScoreRingHero: React.FC<{
             size="xs"
           />
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Score Range Hero (gate: CI > 50 OR confidence < 20%) ─────────────────────
+// Shown INSTEAD OF ScoreRingHero when the sufficiency gate fires.
+// The score number is structurally absent — not dimmed, not annotated, absent.
+// Displaying 58 with CI [8,100] would imply a tier that cannot be determined.
+
+const ScoreRangeHero: React.FC<{
+  gate: ScoreSufficiency;
+  isMobile: boolean;
+}> = ({ gate, isMobile }) => {
+  const { ciLow, ciHigh, ciRange, confPct, message } = gate;
+
+  // The range bar fills the zone [ciLow, ciHigh] across the 0-100 axis.
+  // Visual: dark track, amber fill for the uncertain zone, tick marks at bounds.
+  const lowPct  = ciLow;
+  const highPct = ciHigh;
+
+  // Conservative tier context: use ciHigh to describe worst-case exposure.
+  const worstLabel =
+    ciHigh >= 75 ? 'up to Critical risk' :
+    ciHigh >= 55 ? 'up to High risk' :
+    ciHigh >= 35 ? 'up to Moderate risk' :
+                   'within Low risk';
+  const worstColor =
+    ciHigh >= 75 ? '#dc2626' :
+    ciHigh >= 55 ? '#f97316' :
+    ciHigh >= 35 ? '#f59e0b' :
+                   '#10b981';
+
+  return (
+    <div className="flex flex-col items-center">
+      {/* Header pill — amber, not a tier color */}
+      <div
+        className="mb-4 flex items-center gap-2 px-3 py-1.5 rounded-full"
+        style={{
+          background: 'rgba(251,191,36,0.12)',
+          border: '1px solid rgba(251,191,36,0.35)',
+        }}
+      >
+        <AlertOctagon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
+        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: '#fbbf24' }}>
+          Score Range — Not a Point Estimate
+        </span>
+      </div>
+
+      {/* Bound numbers */}
+      <div className="flex items-end gap-3 mb-3">
+        <div className="text-center">
+          <span
+            className="font-black leading-none"
+            style={{ fontSize: isMobile ? 38 : 46, color: 'rgba(255,255,255,0.55)' }}
+          >
+            {ciLow}
+          </span>
+          <p className="text-[9px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>LOW</p>
+        </div>
+        <span
+          className="pb-5 font-black text-xl"
+          style={{ color: 'rgba(255,255,255,0.25)' }}
+        >—</span>
+        <div className="text-center">
+          <span
+            className="font-black leading-none"
+            style={{ fontSize: isMobile ? 38 : 46, color: worstColor }}
+          >
+            {ciHigh}
+          </span>
+          <p className="text-[9px] font-mono mt-0.5" style={{ color: worstColor + 'aa' }}>HIGH</p>
+        </div>
+      </div>
+
+      {/* Range bar */}
+      <div
+        className="relative rounded-full overflow-hidden mb-2"
+        style={{
+          width: isMobile ? 220 : 270,
+          height: 8,
+          background: 'rgba(255,255,255,0.08)',
+        }}
+        aria-label={`Score range ${ciLow} to ${ciHigh} out of 100`}
+        role="img"
+      >
+        {/* CI zone fill */}
+        <motion.div
+          initial={{ scaleX: 0, originX: lowPct / 100 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="absolute top-0 bottom-0 rounded-full"
+          style={{
+            left: `${lowPct}%`,
+            width: `${highPct - lowPct}%`,
+            background: `linear-gradient(90deg, rgba(251,191,36,0.60), ${worstColor}90)`,
+          }}
+        />
+        {/* Axis tick marks at 35, 55, 75 (tier boundaries) */}
+        {[35, 55, 75].map(t => (
+          <div
+            key={t}
+            className="absolute top-0 bottom-0 w-px"
+            style={{ left: `${t}%`, background: 'rgba(255,255,255,0.20)' }}
+          />
+        ))}
+      </div>
+
+      {/* Axis label */}
+      <div
+        className="flex justify-between mb-3"
+        style={{ width: isMobile ? 220 : 270 }}
+      >
+        <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>0</span>
+        <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>100</span>
+      </div>
+
+      {/* Primary message — exact spec text */}
+      <p
+        className="text-center text-[11px] leading-relaxed max-w-xs"
+        style={{ color: 'rgba(255,255,255,0.72)' }}
+      >
+        {message}
+      </p>
+
+      {/* Why */}
+      <p
+        className="mt-1.5 text-center text-[10px] leading-snug max-w-xs"
+        style={{ color: 'rgba(255,255,255,0.38)' }}
+      >
+        Worst-case exposure reaches <span style={{ color: worstColor, fontWeight: 700 }}>{worstLabel}</span>.
+        {' '}Confidence: {confPct}% · CI width: {ciRange} pts
+      </p>
+
+      {/* Provenance */}
+      <div className="mt-2 flex items-center gap-1.5">
+        <span
+          className="text-[9px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-wide"
+          style={{
+            background: 'rgba(251,191,36,0.10)',
+            color: '#fbbf24',
+            border: '1px solid rgba(251,191,36,0.28)',
+          }}
+          title="This is an ESTIMATED range, not a measured value. The model has insufficient evidence to narrow it further."
+        >
+          ESTIMATED
+        </span>
       </div>
     </div>
   );
@@ -402,6 +550,14 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   ].filter(f => uf[f] != null && uf[f] !== '' && uf[f] !== 'unknown').length;
   const profileIsEmpty = personalFieldsFilled < 3;
 
+  // ── Score sufficiency gate ───────────────────────────────────────────────
+  // When CI > 50 pts OR confidence < 20%, do not display the point-estimate score.
+  // ScoreRangeHero replaces ScoreRingHero entirely — the number is structurally absent.
+  const scoreSufficiency = useMemo(
+    () => computeScoreSufficiency(result.confidenceInterval, result.confidencePercent),
+    [result.confidenceInterval, result.confidencePercent],
+  );
+
   const velocityIcon = r.scoreDelta?.direction === 'worsening'
     ? TrendingUp : r.scoreDelta?.direction === 'improving'
     ? TrendingDown : Minus;
@@ -523,12 +679,20 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           <TierBadge tier={1} label="T1 · CORE" />
         </div>
 
-        <ScoreRingHero score={score} confidence={confPct} isMobile={isMobile} calibrationMode={calibrationMode} />
-        <p className="mt-3 text-[12px] leading-relaxed max-w-xs"
-          style={{ color: 'rgba(255,255,255,0.70)' }}>
-          {verdictLine(score, urgency)}
-        </p>
-        {r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
+        {/* Gate: if CI range > 50 or confidence < 20%, show range instead of point score */}
+        {scoreSufficiency.sufficient
+          ? <ScoreRingHero score={score} confidence={confPct} isMobile={isMobile} calibrationMode={calibrationMode} />
+          : <ScoreRangeHero gate={scoreSufficiency} isMobile={isMobile} />
+        }
+        {/* Verdict line — suppressed when range is shown (it would imply a tier) */}
+        {scoreSufficiency.sufficient && (
+          <p className="mt-3 text-[12px] leading-relaxed max-w-xs"
+            style={{ color: 'rgba(255,255,255,0.70)' }}>
+            {verdictLine(score, urgency)}
+          </p>
+        )}
+        {/* Score velocity — suppressed when base score is a range (delta from a range is undefined) */}
+        {scoreSufficiency.sufficient && r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
           <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: velocityColor }}>
             {React.createElement(velocityIcon, { className: 'w-3.5 h-3.5' })}
             <span>
@@ -650,13 +814,24 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         className="flex gap-2 overflow-x-auto pb-0.5"
         style={{ scrollbarWidth: 'none' }}
       >
-        <StatChip
-          label="Confidence"
-          value={`${confPct}%`}
-          sub={confPct >= 70 ? 'high' : confPct >= 45 ? 'moderate' : 'low'}
-          color={confPct >= 70 ? '#10b981' : confPct >= 45 ? '#f59e0b' : '#f97316'}
-          icon={Shield}
-        />
+        {/* When gate fires: replace the "Confidence" chip with the range + a clear "insufficient" label */}
+        {scoreSufficiency.sufficient ? (
+          <StatChip
+            label="Confidence"
+            value={`${confPct}%`}
+            sub={confPct >= 70 ? 'high' : confPct >= 45 ? 'moderate' : 'low'}
+            color={confPct >= 70 ? '#10b981' : confPct >= 45 ? '#f59e0b' : '#f97316'}
+            icon={Shield}
+          />
+        ) : (
+          <StatChip
+            label="Score Range"
+            value={`${scoreSufficiency.ciLow}–${scoreSufficiency.ciHigh}`}
+            sub="point est. unreliable"
+            color="#fbbf24"
+            icon={AlertOctagon}
+          />
+        )}
         <StatChip
           label="Readiness"
           value={`${pScore}`}
