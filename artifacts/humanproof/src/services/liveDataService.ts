@@ -802,10 +802,19 @@ export const fetchLiveCompanyData = async (
     // The naukriConnector now routes through proxy-live-signals (server-side Serper key).
     // isLive = true only when the Edge Function confirmed a Serper call was made.
     const hiringIsLive = connectorSignals.roleDemandIsLive;
+    // 'frozen' derives from freezeScore: a high freeze score (≥0.75) signals an active
+    // hiring halt at this company for this role — postingTrend must reflect that so the
+    // +0.12 L3 delta fires in calculateLayoffScore(). Without this branch, 'frozen' was
+    // never emitted and the highest-risk postingTrend adjustment was silently dead.
+    const rawFreezeScore = connectorSignals.hiringFreezeScore;
+    const derivedPostingTrend: 'growing' | 'stable' | 'declining' | 'frozen' =
+      rawFreezeScore >= 0.75                                  ? 'frozen'
+      : connectorSignals.roleDemandTrend === 'rising'         ? 'growing'
+      : connectorSignals.roleDemandTrend === 'falling'        ? 'declining'
+      : 'stable';
     hiringData = {
-      freezeScore:     connectorSignals.hiringFreezeScore,
-      postingTrend:    connectorSignals.roleDemandTrend === 'rising' ? 'growing'
-        : connectorSignals.roleDemandTrend === 'falling' ? 'declining' : 'stable',
+      freezeScore:     rawFreezeScore,
+      postingTrend:    derivedPostingTrend,
       // Only forward counts when they came from a live Serper call.
       estimatedOpenings: hiringIsLive ? connectorSignals.estimatedOpenings : null,
       naukriOpenings:    hiringIsLive ? (connectorSignals as any).naukriOpenings ?? null : null,
@@ -1667,6 +1676,14 @@ export const reconcileCompanySignals = (
   if (!live.hiringData?.isLive) {
     degradedSet.add('hiring');
     missingDataFallbacks.push('Hiring trend is heuristic-only — live job-posting signals were not available for this audit.');
+  } else if (live.hiringData.postingTrend === 'frozen') {
+    // Surface the freeze explicitly so it appears in the Transparency tab
+    // alongside the engine's own postingFallbacks log entry.
+    missingDataFallbacks.push(
+      `Live Naukri signal: hiring FROZEN for this role at this company ` +
+      `(freezeScore=${(live.hiringData.freezeScore ?? 0).toFixed(2)}, estimatedOpenings=${live.hiringData.estimatedOpenings ?? 0}). ` +
+      `L3 increased by +0.12 (mechanical score effect).`,
+    );
   }
 
   for (const key of degradedSet) {

@@ -17,6 +17,10 @@ import {
   BarChart,
   Shield,
   Clock,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Zap,
 } from "lucide-react";
 import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
@@ -1454,6 +1458,142 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                         rejected before MAD z-score classification.
                       </p>
                     )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Live Hiring Signal → L3 Adjustment
+              Shows exactly how Naukri/Serper postingTrend moved L3.
+              Spec: "Live hiring data that affects only display but not scoring
+              is decorative. It must mechanically affect the score." This panel
+              makes the mechanical effect visible in the Transparency tab. */}
+          {(() => {
+            const cd = (result as any).companyData ?? (result._engineResult as any)?.companyData;
+            const postingTrend = cd?._hiringPostingTrend as string | undefined;
+            const isLive       = cd?._hiringIsLive === true;
+            const freezeScore  = cd?._hiringFreezeScore as number | undefined;
+            const openings     = cd?._estimatedRoleOpenings as number | null | undefined;
+            const naukriOpenings   = cd?._naukriOpenings as number | null | undefined;
+            const linkedinOpenings = cd?._linkedinOpenings as number | null | undefined;
+            const disclosure   = cd?._hiringDisclosure as string | undefined;
+
+            if (!postingTrend || postingTrend === 'unknown') return null;
+
+            const L3_DELTA: Record<string, number> = {
+              frozen: 0.12, declining: 0.06, growing: -0.05, stable: 0,
+            };
+            const delta    = isLive ? (L3_DELTA[postingTrend] ?? 0) : 0;
+            const hasDelta = delta !== 0;
+
+            const TREND_META: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
+              frozen:   { label: 'Frozen',   color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)',   icon: <Zap className="w-4 h-4" style={{ color: '#ef4444' }} /> },
+              declining:{ label: 'Declining', color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.30)', icon: <TrendingDown className="w-4 h-4" style={{ color: '#f97316' }} /> },
+              stable:   { label: 'Stable',   color: '#94a3b8', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)', icon: <Minus className="w-4 h-4" style={{ color: '#94a3b8' }} /> },
+              growing:  { label: 'Growing',  color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.28)',  icon: <TrendingUp className="w-4 h-4" style={{ color: '#10b981' }} /> },
+            };
+            const meta = TREND_META[postingTrend] ?? TREND_META['stable'];
+
+            return (
+              <div
+                className="mb-6 p-4 rounded-xl"
+                style={{ border: `1px solid ${meta.border}`, background: meta.bg }}
+              >
+                <div className="flex gap-3">
+                  <div className="shrink-0 mt-0.5">{meta.icon}</div>
+                  <div className="flex-1 min-w-0">
+
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h4 className="font-semibold text-sm" style={{ color: meta.color }}>
+                        Live Hiring Signal — L3 Adjustment
+                      </h4>
+                      {isLive ? (
+                        <span
+                          className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399' }}
+                        >
+                          LIVE
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(148,163,184,0.15)', color: '#94a3b8' }}
+                        >
+                          HEURISTIC
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Core signal row */}
+                    <div className="flex flex-wrap gap-4 mb-2 text-sm">
+                      <span>
+                        <span className="text-[var(--text-secondary)] text-xs">Posting trend </span>
+                        <span className="font-semibold font-mono" style={{ color: meta.color }}>
+                          {meta.label}
+                        </span>
+                      </span>
+                      {hasDelta && isLive && (
+                        <span>
+                          <span className="text-[var(--text-secondary)] text-xs">L3 adjustment </span>
+                          <span
+                            className="font-semibold font-mono"
+                            style={{ color: delta > 0 ? '#ef4444' : '#10b981' }}
+                          >
+                            {delta > 0 ? '+' : ''}{delta.toFixed(2)}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-muted)] ml-1">
+                            (mechanical — not decorative)
+                          </span>
+                        </span>
+                      )}
+                      {!isLive && (
+                        <span className="text-xs text-[var(--text-secondary)]">
+                          No L3 adjustment — heuristic data excluded from scoring
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Opening counts */}
+                    {isLive && (
+                      <div className="flex flex-wrap gap-3 text-xs text-[var(--text-secondary)] mb-2">
+                        {openings != null && (
+                          <span>Estimated openings: <span className="font-semibold text-white/80">{openings}</span></span>
+                        )}
+                        {naukriOpenings != null && (
+                          <span>Naukri: <span className="font-semibold text-white/80">{naukriOpenings}</span></span>
+                        )}
+                        {linkedinOpenings != null && (
+                          <span>LinkedIn: <span className="font-semibold text-white/80">{linkedinOpenings}</span></span>
+                        )}
+                        {freezeScore != null && (
+                          <span>Freeze score: <span className="font-semibold" style={{ color: freezeScore >= 0.75 ? '#ef4444' : freezeScore >= 0.5 ? '#f97316' : '#94a3b8' }}>{(freezeScore * 100).toFixed(0)}%</span></span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* L3 delta table */}
+                    {isLive && hasDelta && (
+                      <div
+                        className="text-xs rounded-lg px-3 py-2 mb-2 font-mono"
+                        style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
+                      >
+                        <span className="text-[var(--text-muted)]">
+                          frozen +0.12 · declining +0.06 · stable 0 · growing −0.05
+                        </span>
+                        <span className="ml-3 font-semibold" style={{ color: meta.color }}>
+                          Applied: {postingTrend} → {delta > 0 ? '+' : ''}{delta.toFixed(2)} on L3
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Heuristic disclosure */}
+                    {!isLive && disclosure && (
+                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                        {disclosure}
+                      </p>
+                    )}
+
                   </div>
                 </div>
               </div>
