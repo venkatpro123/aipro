@@ -29,6 +29,7 @@ import {
   deriveFinancialProfile,
   getPerformanceCollapseStrategy,
   type FinancialProfile,
+  type RunwayTier,
 } from "@/services/financialContextService";
 import {
   computeScoreVelocity,
@@ -126,6 +127,29 @@ function escalatePriority(priority: ActionPlanItem['priority'], urgencyMultiplie
   return priority;
 }
 
+/**
+ * Parse the low end of a salary delta string like "+15–25%" or "-5–+10%".
+ * Returns the numeric lower bound (can be negative).
+ * Used to detect whether a career transition implies a salary decrease > threshold.
+ */
+function parseSalaryDeltaLow(delta: string | undefined): number {
+  if (!delta) return 0;
+  const match = delta.trim().match(/^([+-]?\d+)/);
+  return match ? parseFloat(match[1]) : 0;
+}
+
+/**
+ * Income-gap keywords for suppressing actions that imply voluntary employment gaps.
+ * For CRITICAL runway tier these are suppressed entirely — a user with < 3 months
+ * runway cannot survive even a 30-day gap, so showing these actions would be harmful.
+ */
+const INCOME_GAP_KEYWORDS = [
+  'quit', 'leave your job', 'resign', 'take a gap', 'unpaid leave',
+  'income gap', 'without income', 'between jobs', 'full transition',
+  'aggressive pivot', '6-month career pivot', 'gap period',
+  'extended transition', 'take time off', 'sabbatical',
+];
+
 export function buildDynamicActions(
   result: TabProps["result"],
   companyName: string,
@@ -141,6 +165,60 @@ export function buildDynamicActions(
   const prefix = getPrefix(roleKey);
   const intel = getCareerIntelligence(roleKey);
   const actions: ActionPlanItem[] = [];
+
+  // ── Runway tier — extracted once for all downstream suppression/prepend logic ──
+  const runwayTier: RunwayTier = financialProfile?.runwayTier ?? 'MODERATE';
+  const runwayDisplay = financialProfile?.emergencyRunway ?? 'Unknown';
+
+  // ── CRITICAL tier: prepend cash preservation actions FIRST ──────────────────
+  // These actions appear before ALL others because a user with < 3 months runway
+  // must address cash position before any other career action.
+  // Showing them a 6-month pivot plan first would be harmful advice — they need
+  // to extend runway tonight, not plan a strategic transition.
+  if (runwayTier === 'CRITICAL') {
+    actions.push({
+      id: 'cash-preserve-1',
+      title: 'Calculate Your Exact Monthly Burn Rate Tonight',
+      description: `CRITICAL: ${runwayDisplay} of expenses covered. Open your last 3 bank statements and calculate: fixed EMIs + rent + utilities + groceries + subscriptions. This number is your minimum monthly survival spend. Write it down. Every rupee below this rate extends your search window by one day. You need this number to make every other decision.`,
+      priority: 'Critical',
+      layerFocus: 'L1 · Cash Preservation',
+      riskReductionPct: 0,
+      deadline: '24 hours',
+    });
+    actions.push({
+      id: 'cash-preserve-2',
+      title: 'Cancel or Pause All Non-Essential Subscriptions',
+      description: `With ${runwayDisplay} runway, every subscription is runway burned. Cancel: OTT platforms, gym, premium apps, music services. Pause: anything that auto-renews monthly without immediate essential value. Target: reduce fixed costs by 15–25% within 48 hours. For most professionals this is ₹2,000–₹6,000/month. That is 1–3 extra days of runway per month, which adds up to weeks over a 4-month search.`,
+      priority: 'Critical',
+      layerFocus: 'L1 · Cash Preservation',
+      riskReductionPct: 0,
+      deadline: '48 hours',
+    });
+    actions.push({
+      id: 'cash-preserve-3',
+      title: 'Build an Emergency Income Bridge While Still Employed',
+      description: `A typical job search at your level takes 6–12 weeks minimum. With ${runwayDisplay} runway, you cannot afford a gap. This week: identify one freelance service you can deliver within 7 days — your core skill applied to a smaller client. Platforms: Toptal, Upwork, direct LinkedIn outreach to former colleagues. Goal is not income replacement. Even one ₹15,000–₹40,000 engagement extends your runway by 2–4 weeks.`,
+      priority: 'Critical',
+      layerFocus: 'L5 · Personal Protection',
+      riskReductionPct: 15,
+      deadline: 'This week',
+    });
+  }
+
+  // ── HIGH tier: prepend a job-search-now action FIRST ────────────────────────
+  // 3–6 months runway is enough time to be strategic but not enough to wait.
+  // The first action must be to start external conversations immediately.
+  if (runwayTier === 'HIGH') {
+    actions.push({
+      id: 'job-search-begin-high',
+      title: 'Begin Active Job Search This Week — Runway Is Finite',
+      description: `With ${runwayDisplay} of financial runway, you have time to be strategic but not time to wait. Employed candidates receive 4× more callbacks than those applying after a layoff. This week: update your CV today (2 hours), send 3 warm-reconnection messages on LinkedIn (not asking for jobs — reconnecting), and apply to 2 roles you would genuinely accept. Do this while still employed. Your search window closes faster than it feels.`,
+      priority: 'High',
+      layerFocus: 'L5 · Personal Protection',
+      riskReductionPct: 20,
+      deadline: 'This week',
+    });
+  }
 
   // Derive seniority bracket for all downstream action calibration
   const tenureYears = (result as any).userFactors?.tenureYears ?? (result as any).tenureYears ?? 3;
@@ -347,8 +425,29 @@ export function buildDynamicActions(
   }
 
   // 7. Career Twin-based insight — market-grounded with city intersection (v6.0 Upgrade 4)
+  //
+  // Income-dip gate (conservative + critical):
+  // For users with < 6 months runway, suppress career path actions that imply
+  // a salary decrease OR an income gap. Showing a "−10% salary, 3-month gap"
+  // pivot to someone with 2 months runway is actionable harm, not advice.
+  // When suppressed, the career path action is replaced by a targeted job-search
+  // action (already added above for CRITICAL/HIGH tiers).
   if (intel?.careerPaths?.length) {
     const topPath = intel.careerPaths[0];
+
+    // Income-dip suppression gate for conservative/critical runway profiles.
+    // When active, the career path action is skipped — the CRITICAL cash
+    // preservation actions and HIGH job-search-now action already cover the
+    // correct immediate behavior for users who cannot survive an income gap.
+    const isConservative = financialProfile?.riskAppetite === 'conservative';
+    const deltaLow = parseSalaryDeltaLow(topPath.salaryDelta);
+    const incomeDipMonths = topPath.income_dip_months ?? 0;
+    const skipCareerPath = isConservative && (
+      (runwayTier === 'CRITICAL' && (incomeDipMonths > 0 || deltaLow < 0)) ||
+      (runwayTier === 'HIGH'     && (incomeDipMonths > 3 || deltaLow < -10))
+    );
+
+    if (!skipCareerPath) {
     // Use synchronous lookup inside the pure action builder.
     // The component-level useEffect below fetches the async (live Supabase) version
     // and stores it in liveMarketData — if available it overrides this result.
@@ -396,8 +495,14 @@ export function buildDynamicActions(
       ? (isLiveData ? '[🟢 Live]' : '[📅 Research est.]')
       : '';
 
+    // For conservative profiles, omit the salary delta from the description
+    // when the transition implies a salary decrease — showing "-5–+10%" to
+    // someone with 3 months runway invites them to consider a pay cut they
+    // cannot survive. The transition opportunity is still surfaced; the
+    // risky salary context is suppressed.
+    const suppressSalaryContext = isConservative && deltaLow < 0;
     const marketContext = market
-      ? ` ${provenancePrefix} Market reality: ${openingsDisplay} active openings in India (${formatDemandTrendLabel(market.demandTrend)}).${stalenessCaveat} Hiring bar: ${market.hiringBar} Success rate (12 months): ${formatSuccessRate(market.successRate12mPct)}. Median salary delta: +${market.medianSalaryDeltaPct}%.${cityIntersectionText}`
+      ? ` ${provenancePrefix} Market reality: ${openingsDisplay} active openings in India (${formatDemandTrendLabel(market.demandTrend)}).${stalenessCaveat} Hiring bar: ${market.hiringBar} Success rate (12 months): ${formatSuccessRate(market.successRate12mPct)}.${suppressSalaryContext ? '' : ` Median salary delta: +${market.medianSalaryDeltaPct}%.`}${cityIntersectionText}`
       : ` Key skill gap: ${topPath.skillGap}. Reach out to 2 people currently in this role on LinkedIn this week to verify market demand before investing.`;
     actions.push({
       id: `career-path-${topPath.role.replace(/\s/g, '-')}`,
@@ -408,6 +513,7 @@ export function buildDynamicActions(
       riskReductionPct: topPath.riskReduction,
       deadline: market ? `${market.weeksToFirstInterview} weeks to first interview` : topPath.timeToTransition,
     });
+    } // end if (!skipCareerPath)
   }
 
   // 8. City opportunity action — when market headwinds are high (L4 > 0.60)
@@ -488,7 +594,7 @@ export function buildDynamicActions(
   const seen = new Set<string>();
   let unique = annotatedActions.filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; });
 
-  // Priority 4: Apply financial context — adjust urgency and filter expensive items
+  // Priority 4: Apply financial context — adjust urgency and filter dangerous actions
   if (financialProfile) {
     const { urgencyMultiplier, riskAppetite } = financialProfile;
     unique = unique.map(item => {
@@ -502,12 +608,24 @@ export function buildDynamicActions(
         priority: escalatePriority(item.priority, urgencyMultiplier),
       };
     });
-    // Conservative profile: suppress any action that implies long income gap
+
+    // Income-gap suppression for conservative profiles.
+    // CRITICAL tier: full keyword list — a user with < 3 months runway cannot
+    // survive ANY voluntary income gap. Suppress any action that implies one.
+    // HIGH/other conservative: keep the narrow filter (quit / leave your job).
     if (riskAppetite === 'conservative') {
-      unique = unique.filter(item =>
-        !item.description.toLowerCase().includes('quit') &&
-        !item.description.toLowerCase().includes('leave your job')
-      );
+      if (runwayTier === 'CRITICAL') {
+        unique = unique.filter(item => {
+          const text = (item.title + ' ' + (item.description ?? '')).toLowerCase();
+          return !INCOME_GAP_KEYWORDS.some(kw => text.includes(kw));
+        });
+      } else {
+        // HIGH and other conservative: narrow filter only
+        unique = unique.filter(item => {
+          const text = (item.description ?? '').toLowerCase();
+          return !text.includes('quit') && !text.includes('leave your job');
+        });
+      }
     }
   }
 

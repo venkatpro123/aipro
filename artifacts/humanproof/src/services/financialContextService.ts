@@ -22,17 +22,34 @@ export interface FinancialContext {
 
 export type RiskAppetite = 'conservative' | 'moderate' | 'aggressive';
 
+/**
+ * Runway urgency tier — derived from emergencyFundMonths.
+ *
+ * CRITICAL  < 3 months  immediate cash preservation, no income gaps, no paid courses > ₹3K
+ * HIGH      3–6 months  begin job search now, income continuity required
+ * MODERATE  6–12 months targeted preparation, one-at-a-time pivots
+ * LOW       > 12 months strategic positioning, full transition options available
+ *
+ * This is the primary stratification axis. riskAppetite maps from it:
+ *   CRITICAL + HIGH  → conservative
+ *   MODERATE         → moderate
+ *   LOW              → aggressive
+ */
+export type RunwayTier = 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
+
 export interface FinancialProfile {
   riskAppetite: RiskAppetite;
+  /** Explicit runway tier — the primary stratification axis for action plan filtering. */
+  runwayTier: RunwayTier;
+  /** Raw runway in months (null when not provided). Passed to action plan for message generation. */
+  runwayMonths: number | null;
   /**
    * Combined urgency multiplier: financialUrgencyBase × visaAmplifierApplied.
    * Applied to all action deadlines via adjustDeadline() in ActionPlanTab.
    * 1.0 = no change; >1 = deadlines compressed; <1 = more planning time.
    *
-   * A citizen with 9+ months runway gets 0.85× (patient strategy).
-   * An H1B holder with short runway gets up to 1.89× (near-halved deadlines).
-   * These are not interchangeable situations; citizens cannot use H1B plans
-   * and H1B holders cannot use citizen timelines.
+   * A citizen with 12+ months runway gets 0.85× (patient strategy).
+   * An H1B holder with < 3 months runway gets up to 1.96× (deadlines near-halved).
    */
   urgencyMultiplier: number;
   /** Financial-only urgency component before visa amplification (0.85–1.4). */
@@ -141,30 +158,55 @@ export function deriveFinancialProfile(
     ? `${runwayMonths.toFixed(1)} months`
     : 'Unknown — assess this first';
 
-  // Risk appetite determination
+  // ── Runway tier stratification (spec-exact thresholds) ────────────────────
+  //   CRITICAL  < 3 months  — immediate cash preservation, no income gaps, no paid courses > ₹3K
+  //   HIGH      3–6 months  — begin job search now, income continuity required
+  //   MODERATE  6–12 months — targeted preparation, one-at-a-time pivots
+  //   LOW       > 12 months — strategic positioning, full transition options
+  //
+  // When runway is unknown (null), default to MODERATE so we don't
+  // accidentally suppress income-gap actions for users who simply haven't
+  // entered their context yet. They will get appropriate advice once they do.
+  let runwayTier: RunwayTier;
+  if (runwayMonths === null) {
+    runwayTier = 'MODERATE';
+  } else if (runwayMonths < 3) {
+    runwayTier = 'CRITICAL';
+  } else if (runwayMonths < 6) {
+    runwayTier = 'HIGH';
+  } else if (runwayMonths <= 12) {
+    runwayTier = 'MODERATE';
+  } else {
+    runwayTier = 'LOW';
+  }
+
+  // riskAppetite derived from runwayTier — CRITICAL and HIGH are both conservative
+  // because neither can afford an income gap during transition.
   let riskAppetite: RiskAppetite;
   let urgencyMultiplier: number;
   let primaryConstraint: string;
 
-  if (runwayMonths != null && runwayMonths < 2) {
-    // Critically exposed — income disruption cannot be risked
-    riskAppetite = 'conservative';
-    urgencyMultiplier = 1.4;  // higher urgency because there's no safety net
-    primaryConstraint = `Emergency fund covers only ${runwayMonths.toFixed(1)} months — income disruption risk is severe`;
-  } else if (runwayMonths != null && runwayMonths < 4 && dependents >= 2) {
-    // Limited runway + dependents = conservative
-    riskAppetite = 'conservative';
-    urgencyMultiplier = 1.3;
-    primaryConstraint = `${dependents} financial dependents with ${runwayMonths.toFixed(1)} months runway — conservative bridge strategy required`;
-  } else if (runwayMonths != null && runwayMonths >= 9 && dependents <= 1) {
-    // Strong runway, few dependents = can take aggressive transition risk
-    riskAppetite = 'aggressive';
-    urgencyMultiplier = 0.85;  // can afford to be patient and strategic
-    primaryConstraint = `${runwayMonths.toFixed(1)} months runway with low dependent burden — can take planned transition risk`;
-  } else {
-    riskAppetite = 'moderate';
-    urgencyMultiplier = 1.0;
-    primaryConstraint = 'Moderate financial flexibility — bridge strategy with income continuity recommended';
+  switch (runwayTier) {
+    case 'CRITICAL':
+      riskAppetite = 'conservative';
+      urgencyMultiplier = 1.4;
+      primaryConstraint = `Emergency fund covers only ${runwayMonths!.toFixed(1)} months — immediate cash preservation required. Income disruption risk is severe${dependents > 0 ? ` with ${dependents} dependent${dependents > 1 ? 's' : ''}` : ''}.`;
+      break;
+    case 'HIGH':
+      riskAppetite = 'conservative';
+      urgencyMultiplier = 1.3;
+      primaryConstraint = `${runwayMonths!.toFixed(1)} months runway — begin job search now. Income continuity is required throughout any transition.${dependents > 0 ? ` ${dependents} dependent${dependents > 1 ? 's' : ''} add further constraint.` : ''}`;
+      break;
+    case 'MODERATE':
+      riskAppetite = 'moderate';
+      urgencyMultiplier = 1.0;
+      primaryConstraint = `${runwayMonths !== null ? `${runwayMonths.toFixed(1)} months runway` : 'Moderate runway'} — targeted preparation while employed. One-at-a-time pivots only.`;
+      break;
+    case 'LOW':
+      riskAppetite = 'aggressive';
+      urgencyMultiplier = 0.85;
+      primaryConstraint = `${runwayMonths!.toFixed(1)} months runway with low constraint — full transition options available. Use runway as a strategic asset.`;
+      break;
   }
 
   // Budget range for transition investment
@@ -197,11 +239,13 @@ export function deriveFinancialProfile(
     }
   }
 
-  // Strategy advice by profile + risk score
-  const advice = buildAdvice(riskAppetite, riskScore, runwayMonths, dependents, currency, fmt);
+  // Strategy advice by profile + risk score + tier
+  const advice = buildAdvice(riskAppetite, riskScore, runwayMonths, dependents, currency, fmt, runwayTier);
 
   return {
     riskAppetite,
+    runwayTier,
+    runwayMonths,
     urgencyMultiplier,
     financialUrgencyBase,
     visaAmplifierApplied,
@@ -219,19 +263,29 @@ function buildAdvice(
   dependents: number,
   currency: 'INR' | 'USD',
   fmt: (n: number) => string,
+  runwayTier?: RunwayTier,
 ): FinancialProfile['advice'] {
   if (appetite === 'conservative') {
+    const isCritical = runwayTier === 'CRITICAL';
     return {
-      headline: 'Conservative Bridge Strategy — Income continuity is non-negotiable',
-      strategy: `With ${runway != null ? `${runway.toFixed(1)} months` : 'limited'} runway${dependents > 0 ? ` and ${dependents} dependent${dependents > 1 ? 's' : ''}` : ''}, your transition must preserve income throughout. Stay in current role while building skills on free resources (2 hrs/week). Target same-sector roles first to minimize income gap during transition. Do NOT accept a gap longer than 30 days.`,
-      doNow: 'Build emergency fund to 6 months BEFORE considering any role change. Use free courses (Google certificates, DeepLearning.AI free tier) for skill building.',
-      avoid: 'Do not take unpaid courses that require leaving employment. Do not transition to roles with significantly lower starting salaries even if long-term upside exists. Your dependents and runway do not allow for income risk.',
+      headline: isCritical
+        ? 'CRITICAL — Cash preservation is the only priority. No income gaps.'
+        : 'Conservative Bridge Strategy — Income continuity is non-negotiable',
+      strategy: isCritical
+        ? `With only ${runway != null ? `${runway.toFixed(1)} months` : 'critically short'} runway${dependents > 0 ? ` and ${dependents} dependent${dependents > 1 ? 's' : ''}` : ''}, your immediate priority is extending your cash position, not planning a career transition. Three parallel tracks: (1) reduce monthly burn 15–25% by cutting non-essential fixed costs, (2) build a freelance bridge income while employed, (3) apply to lateral roles only — no income-gap transitions.`
+        : `With ${runway != null ? `${runway.toFixed(1)} months` : 'limited'} runway${dependents > 0 ? ` and ${dependents} dependent${dependents > 1 ? 's' : ''}` : ''}, your transition must preserve income throughout. Begin external job search now while still employed — employed candidates get 4× more callbacks. Target lateral roles in your sector first to minimize transition risk.`,
+      doNow: isCritical
+        ? 'Tonight: calculate exact monthly burn rate. This week: cancel all non-essential subscriptions, identify one freelance service you can offer. No career transitions until emergency fund reaches 6 months.'
+        : 'Begin external job search this week while employed. Update CV and LinkedIn. Reach out to 3 warm contacts. Use free courses only (Google certificates, DeepLearning.AI free tier) for skill building.',
+      avoid: isCritical
+        ? 'Do NOT voluntarily quit or accept any offer that requires a gap period. Do NOT spend money on paid courses, certifications, or training above ₹3,000. Every rupee spent is a day of runway burned.'
+        : 'Do not transition to roles with significantly lower starting salaries. Do not accept income gaps longer than 30 days. Your runway does not allow for speculative pivots.',
     };
   }
 
   if (appetite === 'aggressive') {
     return {
-      headline: 'Full Transition Strategy — You have the financial cushion to be decisive',
+      headline: 'Full Transition Strategy — Use your runway as a strategic asset',
       strategy: `With ${runway != null ? `${runway.toFixed(1)} months` : 'strong'} runway and low dependent burden, you can absorb a 2–4 month income dip for a significantly better role. Execute the full transition roadmap: intensive upskilling (20 hrs/week), aggressive networking, and willingness to take a short-term income hit for a 15–25% salary improvement in the target role.`,
       doNow: `Use the financial runway as a strategic asset. Set a firm transition deadline (${riskScore >= 65 ? '6 months' : '12 months'}). Invest in 1–2 premium certifications in the highest-ROI skills. Target companies 2–3 tiers above current in terms of AI maturity.`,
       avoid: 'Do not let financial comfort reduce urgency. Runway is time-bound, not permanent. Set a decision date and honour it.',
