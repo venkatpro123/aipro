@@ -112,7 +112,22 @@ function computePhaseAwareUrgency(
 
 // ── Inaction scenario ─────────────────────────────────────────────────────────
 
+// ── buildInactionScenario ─────────────────────────────────────────────────────
+//
+// Priority order:
+//   1. LLM-generated sixMonthInactionConsequence (context-aware, highest quality)
+//   2. uniquenessDepth-specific scenario  ← MUST come before intel.inactionScenario
+//   3. intel.inactionScenario for generic only (supplementary, appended not replaced)
+//   4. Score-tier generic fallback
+//
+// Why uniquenessDepth before intel.inactionScenario:
+//   intel.inactionScenario is role-generic — it describes what happens to the role
+//   category, not to the individual's knowledge profile. A critical_knowledge user
+//   has a completely different threat model from a generic role holder at the same
+//   company. The role DB text would override the correct framing without this fix.
+
 function buildInactionScenario(result: HybridResult): string | null {
+  // 1. LLM text takes first priority — it receives uniquenessDepth as context
   if (result.sixMonthInactionConsequence) {
     return result.sixMonthInactionConsequence;
   }
@@ -122,36 +137,97 @@ function buildInactionScenario(result: HybridResult): string | null {
   const company = result.companyName ?? 'your company';
   const intel = getCareerIntelligence(roleKey);
 
-  if (intel?.inactionScenario) return intel.inactionScenario;
-
-  const topDim = [...(result.dimensions ?? [])].sort((a, b) => b.score - a.score)[0];
-  const topDimName = topDim?.label ?? 'Role Displacement';
-
-  // Personalization 3 (v4.0): UniquenessDepth produces categorically different inaction scenarios.
-  // The three levels face structurally different displacement dynamics — generic roles face the fastest
-  // displacement, functional specialists have a medium window, critical knowledge holders have the longest
-  // window but face a different threat (knowledge extraction rather than immediate automation).
+  // 2. uniquenessDepth determines the structural threat model.
+  //    This MUST precede intel?.inactionScenario — the role DB text does not know
+  //    the individual's uniqueness depth and cannot produce the correct framing.
   const uniquenessDepth = (result as any).uniquenessDepth as string | undefined;
 
   if (uniquenessDepth === 'critical_knowledge') {
-    return `If you do nothing, your irreplaceable institutional knowledge provides significant near-term protection — you cannot be immediately replaced because a targeted hire cannot replicate what you know. However, companies systematically extract critical knowledge through documentation projects, system modernisation initiatives, and AI-assisted knowledge-capture programs. Your protection window is tied to the migration timeline, typically 18–36 months for the category of knowledge you hold. After migration completes, your protection disappears rapidly and simultaneously — this is not a gradual erosion but a threshold event.\n\nThe highest-ROI action right now is not to document your knowledge further. That accelerates its transfer to the company's ownership. The highest-ROI action is to use your institutional authority to build a new domain of expertise before the migration cycle completes. You have leverage now that you will not have once the migration is done. Use it to negotiate scope expansion, access to new systems, or a transition to a role that positions you as the person who guides how AI is deployed in your specific domain — nobody has more relevant knowledge for that role than you do.`;
+    // Threat: knowledge extraction, not automation. Timeline: migration cycle.
+    // The action is to leverage institutional authority BEFORE migration completes.
+    return (
+      `Your irreplaceable institutional knowledge is your protection — but companies systematically extract it ` +
+      `through documentation projects and AI-assisted capture programs. Your window is the migration timeline. ` +
+      `Act now to build new expertise while your institutional authority still has leverage.\n\n` +
+      `This is a threshold event, not a gradual erosion. Once the migration completes, your protection ` +
+      `disappears simultaneously — and the market for your profile narrows sharply. The highest-ROI action ` +
+      `right now is not to document your knowledge further: that accelerates its transfer to the company's ` +
+      `ownership. Use your institutional authority to negotiate scope expansion, access to adjacent systems, ` +
+      `or a transition into the role that governs how AI is deployed in your specific domain. ` +
+      `Nobody has more relevant knowledge for that role than you do. The window to claim it is now.`
+    );
   }
 
   if (uniquenessDepth === 'functional_specialist') {
-    return `If you do nothing, your domain expertise as a specialist provides moderate protection — the company cannot immediately replace you because targeted hiring or training is required. However, within 18–24 months the company can source AI-capable specialists from the market. Your specialist moat is real but temporary.\n\nThe specialist moat erodes as AI capability in your specific domain advances and as companies build training programmes for the replacement profile. The threat is not automation of your entire role — it is that the new AI-capable version of your specialisation is hireable from outside for less than you cost. The augmentation window is open. It will close. Begin transitioning your specialisation to the AI-adjacent layer now: the person who validates, governs, and directs AI output in your specific domain is structurally harder to replace than the person who performs the original task.`;
+    // Threat: specialist moat is real but temporary. Timeline: 18-24 months.
+    // The action is to transition specialisation to the AI-adjacent governance layer.
+    return (
+      `Your domain expertise provides moderate protection — the company cannot immediately replace you. ` +
+      `However, within 18–24 months the company can hire AI-capable specialists from the market.\n\n` +
+      `The specialist moat erodes as AI capability in your specific domain advances and as companies ` +
+      `build training programmes for the replacement profile. The threat is not automation of your entire ` +
+      `role — it is that the new AI-capable version of your specialisation is hireable from outside for ` +
+      `less than you cost. The augmentation window is open now. Begin transitioning your specialisation ` +
+      `to the AI-adjacent layer: the person who validates, governs, and directs AI output in your specific ` +
+      `domain is structurally harder to replace than the person who performs the original task.`
+    );
   }
 
-  // Generic role — most urgency, fastest displacement timeline
+  // 3. Generic role — fastest displacement timeline.
+  //    Populate the spec template with actual role intelligence data.
+  //    [task], [AI tool], [top at-risk task] come from intel to make this specific.
+  const topAtRisk = intel?.skills?.at_risk?.[0] ?? intel?.skills?.obsolete?.[0];
+  const taskName  = topAtRisk?.skill      ?? 'standard workflow tasks';
+  const aiTool    = topAtRisk?.aiTool     ?? 'enterprise AI platforms';
+
+  const specTemplate = (
+    `Roles performing standard ${taskName} face a displacement window of 14–18 months. ` +
+    `${aiTool} handles ${taskName} in production today. ` +
+    `Roles without demonstrated AI augmentation are being cut first.`
+  );
+
+  // Score-tier context appended below the spec template
+  let scoreContext: string;
   if (score >= 75) {
-    return `If you do nothing, roles performing standard tasks in this category at ${company} face a displacement window of 12–18 months. AI tools have reached production deployment maturity for this function — ${topDimName} is at ${topDim?.score}/100, indicating the core tasks are automatable with current enterprise platforms. Roles without demonstrated AI augmentation skills are cut first in each restructuring cycle. They are the easiest to justify removing because a smaller AI-capable team produces the same output at lower cost. This is not a projection — it is the observed pattern from every sector that has gone through this cycle. Employees who waited for an official announcement had 4–6 fewer months to reskill than those who started proactively.`;
+    scoreContext = (
+      ` At ${score}/100, displacement risk is active at ${company}. ` +
+      `Roles without documented AI productivity gains are the easiest to justify removing — ` +
+      `a smaller AI-capable team produces the same output at lower cost. ` +
+      `This is the observed pattern from every sector that has completed this cycle. ` +
+      `Employees who waited for an official announcement had 4–6 fewer months to reposition ` +
+      `than those who started proactively.`
+    );
+  } else if (score >= 55) {
+    scoreContext = (
+      ` At ${score}/100, you are in the augmentation window — AI is absorbing the execution ` +
+      `layer of this role, but human oversight and judgment still drive measurable value. ` +
+      `This window closes as the market supply of AI-capable ${roleKey.replace(/_/g, ' ')} ` +
+      `professionals increases. Those who own the AI layer while the transition is happening ` +
+      `retain leverage and salary premium. Those who wait face accelerated commoditisation ` +
+      `when the window closes.`
+    );
+  } else if (score >= 35) {
+    scoreContext = (
+      ` At ${score}/100, exposure is moderate and manageable. Inaction is not immediately ` +
+      `dangerous, but the risk compounds annually as AI capability advances around a static skill set. ` +
+      `Two hours per week of directed AI augmentation prevents gradual drift. ` +
+      `Reassess in 12 months or after any significant AI deployment at ${company}.`
+    );
+  } else {
+    scoreContext = (
+      ` At ${score}/100, your role has strong structural resilience. ` +
+      `Inaction carries minimal near-term risk. Monitor sector AI adoption annually ` +
+      `and maintain depth in your core differentiating skills.`
+    );
   }
-  if (score >= 55) {
-    return `If you do nothing, at ${score}/100 you are in the augmentation window — AI is absorbing the execution layer of your role, but human oversight and strategic judgment still drive measurable value. This window typically lasts 18–36 months before market expectations shift. The roles that thrive through this transition are not the ones that resist the change — they are the ones that own the AI layer while the transition is happening. Those who upskill during this period maintain leverage and salary premium. Those who wait face accelerated commoditisation when the window closes, because the skills are no longer scarce when everyone has been forced to acquire them.`;
-  }
-  if (score >= 35) {
-    return `At ${score}/100, your role has moderate but manageable AI exposure. Inaction is low-risk short-term but cumulative. The ${topDimName} dimension at ${topDim?.score}/100 could accelerate materially if ${company} increases AI investment or sector adoption accelerates beyond current trajectory. Annual reassessment and 2–3 hours per week of directed upskilling is the minimum recommended response to maintain your current risk level. Doing nothing does not keep your score stable — it allows it to drift upward as AI capability advances around your static skill set.`;
-  }
-  return `At ${score}/100, your role has strong structural resilience. Inaction carries minimal near-term risk. Your primary protection is the ${topDimName} dimension at ${topDim?.score}/100. Maintain depth in this area and monitor sector AI adoption trends annually. Reassess in 12 months — the resilience of this role category is well-documented but not permanent.`;
+
+  // Append the role DB inactionScenario as supplementary context when available.
+  // For generic only — for specialist/critical the depth-specific text is sufficient.
+  const dbContext = intel?.inactionScenario
+    ? `\n\n${intel.inactionScenario}`
+    : '';
+
+  return `${specTemplate}${scoreContext}${dbContext}`;
 }
 
 // ── Quick actions ─────────────────────────────────────────────────────────────
