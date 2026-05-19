@@ -55,6 +55,27 @@ export interface PersonalRiskModifier {
   /** One sentence per component that fired, suitable for UI rendering */
   transparencyLines: string[];
   calibrationStatus: 'developer_estimate';
+  /**
+   * Visa-specific urgency amplifier — separate from rawModifier because it
+   * does not change the risk score; it compresses all action deadlines.
+   *
+   * Values match visaRiskEngine scoreAmplifier:
+   *   gcLockIn:       1.40  (+40% urgency)
+   *   h1bL1HighRisk:  1.35  (+35% urgency)
+   *   tn:             1.25  (+25% urgency)
+   *   moderateVisa:   1.20  (+20% urgency)
+   *   baseline:       1.10  (+10% urgency)
+   *   citizen/PR:     1.00  (no amplification)
+   *
+   * Undefined when visa status is citizen, PR, or not applicable.
+   * Used by PersonalRiskModifierPanel to render the explicit urgency chip
+   * and by deriveFinancialProfile to multiply into urgencyMultiplier.
+   */
+  visaUrgencyAmplifier?: number;
+  /** Human-readable visa status label for the urgency chip, e.g. "H1B/L1", "TN", "GC Lock-in". */
+  visaStatusLabel?: string;
+  /** Grace period in days for the active visa — surfaced in the urgency chip. */
+  visaGracePeriodDays?: number;
 }
 
 // ── Component computations ────────────────────────────────────────────────────
@@ -70,13 +91,28 @@ function computeVisaComponent(visa: VisaRiskResult | null | undefined): number {
   return dep >= 0.7 ? 2 : 0;
 }
 
-function visaTransparencyLine(component: number, visa: VisaRiskResult | null | undefined): string | null {
+function visaTransparencyLine(
+  component: number,
+  visa: VisaRiskResult | null | undefined,
+  visaStatusLabel: string,
+): string | null {
   if (component === 0) return null;
   const graceDays = visa?.gracePeriodDays ?? 60;
-  const riskLabel = visa?.overallVisaRisk ?? 'visa-dependent';
-  if (component >= 4) return `${riskLabel} visa risk: ${graceDays}-day clock starts on termination — immigration timeline is the critical constraint.`;
-  if (component >= 3) return `${riskLabel} visa risk: ${graceDays}-day grace period after layoff — consult immigration attorney immediately if risk elevates.`;
-  return `Work-authorization dependency (${riskLabel}) adds urgency to defensive planning.`;
+  const amp = visa?.scoreAmplifier ?? 1.0;
+  const pct = Math.round((amp - 1.0) * 100);
+
+  if (component >= 4) {
+    // GC lock-in: the immigration constraint is the primary risk, not just urgency
+    return `${visaStatusLabel} status: ${graceDays > 0 ? `${graceDays}-day` : 'no'} grace period — immigration timeline is the critical constraint. Urgency +${pct}%.`;
+  }
+  if (component >= 3) {
+    // H1B/L1 at elevated score — spec-exact message
+    return `Your ${visaStatusLabel} status increases effective urgency by ${pct}%. Timeline reflects your ${graceDays}-day grace period constraint.`;
+  }
+  if (component >= 1) {
+    return `Your ${visaStatusLabel} status increases effective urgency by ${pct}%. ${graceDays > 0 ? `${graceDays}-day grace period applies after layoff.` : 'Status ends immediately on termination.'}`;
+  }
+  return `Work-authorization dependency (${visaStatusLabel}) adds urgency to defensive planning.`;
 }
 
 function computeManagerComponent(manager: ManagerRiskResult | null | undefined): number {
@@ -148,6 +184,20 @@ function velocityTransparencyLine(component: number, velocity: CareerVelocityRes
   return `Career trajectory: ${traj} — plateau risk detected; take on a high-visibility project to reset momentum.`;
 }
 
+// ── Visa urgency label derivation ────────────────────────────────────────────
+// Maps the scoreAmplifier value back to a human-readable status label.
+// This avoids storing the raw visaStatus string in the output and keeps the
+// label consistent with how the amplifier was assigned.
+function deriveVisaStatusLabel(visa: VisaRiskResult | null | undefined): string {
+  if (!visa || visa.scoreAmplifier <= 1.0) return '';
+  const amp = visa.scoreAmplifier;
+  if (amp >= 1.38) return 'GC Lock-in (no AC21)';  // gcLockIn: 1.40
+  if (amp >= 1.30) return 'H1B/L1';                 // h1bL1HighRisk: 1.35
+  if (amp >= 1.22) return 'TN';                     // tn: 1.25
+  if (amp >= 1.15) return 'work visa';               // moderateVisa: 1.20
+  return 'work authorization';                       // baseline: 1.10
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function computePersonalRiskModifier(
@@ -166,8 +216,17 @@ export function computePersonalRiskModifier(
 
   const adjustedScore = Math.max(1, Math.min(99, Math.round(baseScore + rawModifier)));
 
+  // Visa urgency amplifier — separate from rawModifier (affects deadlines, not score)
+  const visaStatusLabel = deriveVisaStatusLabel(visaRisk);
+  const visaUrgencyAmplifier = (visaRisk && visaRisk.scoreAmplifier > 1.0)
+    ? visaRisk.scoreAmplifier
+    : undefined;
+  const visaGracePeriodDays = (visaRisk && visaRisk.gracePeriodDays > 0)
+    ? visaRisk.gracePeriodDays
+    : undefined;
+
   const transparencyLines: string[] = [
-    visaTransparencyLine(visaComponent, visaRisk),
+    visaTransparencyLine(visaComponent, visaRisk, visaStatusLabel || 'work authorization'),
     managerTransparencyLine(managerComponent, managerRisk),
     skillTransparencyLine(skillComponent, skillPortfolioFit),
     networkTransparencyLine(networkComponent, networkLeverage),
@@ -180,5 +239,8 @@ export function computePersonalRiskModifier(
     components: { visaComponent, managerComponent, skillComponent, networkComponent, velocityComponent },
     transparencyLines,
     calibrationStatus: 'developer_estimate',
+    visaUrgencyAmplifier,
+    visaStatusLabel: visaStatusLabel || undefined,
+    visaGracePeriodDays,
   };
 }

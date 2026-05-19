@@ -24,7 +24,21 @@ export type RiskAppetite = 'conservative' | 'moderate' | 'aggressive';
 
 export interface FinancialProfile {
   riskAppetite: RiskAppetite;
-  urgencyMultiplier: number;  // 1.0 = no change; >1 = more urgent; <1 = less
+  /**
+   * Combined urgency multiplier: financialUrgencyBase × visaAmplifierApplied.
+   * Applied to all action deadlines via adjustDeadline() in ActionPlanTab.
+   * 1.0 = no change; >1 = deadlines compressed; <1 = more planning time.
+   *
+   * A citizen with 9+ months runway gets 0.85× (patient strategy).
+   * An H1B holder with short runway gets up to 1.89× (near-halved deadlines).
+   * These are not interchangeable situations; citizens cannot use H1B plans
+   * and H1B holders cannot use citizen timelines.
+   */
+  urgencyMultiplier: number;
+  /** Financial-only urgency component before visa amplification (0.85–1.4). */
+  financialUrgencyBase: number;
+  /** Visa amplifier applied (1.0 for citizens/PRs, 1.10–1.40 for work visas). */
+  visaAmplifierApplied: number;
   primaryConstraint: string;  // plain-English constraint
   transitionBudgetRange: string;
   emergencyRunway: string;    // "2.1 months" or "Unknown"
@@ -100,12 +114,20 @@ export function clearFinancialContext(): void {
 }
 
 /**
- * Derive a financial profile from the context + current risk score.
- * This is what changes the action plan strategy — not just the risk tier.
+ * Derive a financial profile from context + current risk score + optional visa amplifier.
+ *
+ * visaAmplifier: pass visaRisk.scoreAmplifier from the audit result.
+ *   The financial urgency base (0.85–1.4) and the visa urgency (1.0–1.40) are
+ *   independent axes — they multiply because the constraints are independent.
+ *   An H1B holder with short runway faces BOTH constraints simultaneously.
+ *
+ *   Combined urgency is clamped at 2.0 to prevent degenerate deadline compression
+ *   (2.0 already means every 6-week deadline becomes 3 weeks — extreme).
  */
 export function deriveFinancialProfile(
   ctx: FinancialContext,
   riskScore: number,
+  visaAmplifier?: number,
 ): FinancialProfile {
   const { monthlyExpenses, dependents, emergencyFundMonths, currentAnnualIncome, currency } = ctx;
 
@@ -153,12 +175,36 @@ export function deriveFinancialProfile(
     ? `${fmt(annualBudget * 0.5)}–${fmt(annualBudget)} per year`
     : 'Focus on free resources first';
 
+  // ── Visa urgency amplification ──────────────────────────────────────────────
+  // Applied AFTER financial urgency is determined.
+  // The two constraints are independent axes — visa grace period applies
+  // regardless of financial runway, and financial runway applies regardless of
+  // visa status. An H1B holder with short runway faces both simultaneously.
+  //
+  // Only amplify (never reduce) — visa constraints only add urgency, not remove it.
+  const financialUrgencyBase = urgencyMultiplier;
+  const visaAmplifierApplied = (visaAmplifier != null && visaAmplifier > 1.0)
+    ? visaAmplifier
+    : 1.0;
+
+  if (visaAmplifierApplied > 1.0) {
+    // Clamp combined multiplier at 2.0 — beyond 2.0 all deadlines become < 1 week,
+    // which is no longer actionable. 2.0 already means every 6-week task → 3 weeks.
+    urgencyMultiplier = Math.min(2.0, financialUrgencyBase * visaAmplifierApplied);
+    // When visa amplification is active, the primary constraint should surface it
+    if (!primaryConstraint.includes('visa') && !primaryConstraint.includes('grace')) {
+      primaryConstraint += `. Work visa status adds a ${Math.round((visaAmplifierApplied - 1) * 100)}% urgency premium — timeline compressed proportionally.`;
+    }
+  }
+
   // Strategy advice by profile + risk score
   const advice = buildAdvice(riskAppetite, riskScore, runwayMonths, dependents, currency, fmt);
 
   return {
     riskAppetite,
     urgencyMultiplier,
+    financialUrgencyBase,
+    visaAmplifierApplied,
     primaryConstraint,
     transitionBudgetRange,
     emergencyRunway,

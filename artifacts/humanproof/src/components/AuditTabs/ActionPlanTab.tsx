@@ -970,9 +970,14 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
 
   // Priority 4: Load financial context from localStorage (set by FinancialContextInput)
   const financialCtx = useMemo(() => loadFinancialContext(), []);
+  // Pass the visa amplifier so urgencyMultiplier = financialUrgency × visaAmplifier.
+  // An H1B holder at score 68 with 3 months runway gets 1.3 × 1.35 = 1.755×.
+  // Their "6 months" action plan becomes ~3.4 months — correct, because they
+  // cannot use a citizen's transition timeline with a 60-day grace period.
+  const visaAmplifier = (result as any).visaRisk?.scoreAmplifier as number | undefined;
   const financialProfile = useMemo(
-    () => financialCtx ? deriveFinancialProfile(financialCtx, result.total) : null,
-    [financialCtx, result.total],
+    () => financialCtx ? deriveFinancialProfile(financialCtx, result.total, visaAmplifier) : null,
+    [financialCtx, result.total, visaAmplifier],
   );
 
   // Priority 9: Performance tier + collapse override
