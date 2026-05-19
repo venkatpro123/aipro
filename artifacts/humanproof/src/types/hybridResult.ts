@@ -445,6 +445,19 @@ export interface HybridResult {
     D7_effective:  number;
   };
 
+  /**
+   * v40.0: Number of active constants in engine_calibration_constants that carry
+   * 'uncalibrated_placeholder' provenance. Non-zero means some scoring terms are
+   * developer estimates not yet validated through regression.
+   * TransparencyTab surfaces this as an amber warning chip.
+   */
+  uncalibratedConstantCount?: number;
+  /**
+   * v40.0: Dotted-path keys of all uncalibrated_placeholder constants that are
+   * active. Used to render tooltips and identify which outputs carry "(estimate)".
+   */
+  uncalibratedConstantKeys?: string[];
+
   // ── Cache provenance ────────────────────────────────────────────────────────
   /**
    * true when this result was served from the localStorage or Supabase analysis cache

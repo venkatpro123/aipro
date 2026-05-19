@@ -252,6 +252,40 @@ export async function primeCalibrationConstants(): Promise<void> {
 // ── Test seam ───────────────────────────────────────────────────────────────
 
 /**
+ * Return the provenance breakdown of the current in-memory snapshot.
+ * Synchronous — uses whatever snapshot is currently loaded (may be stale by up to 30 min).
+ * Returns null if the snapshot has not been loaded yet (pre-prime call).
+ *
+ * Used by the audit pipeline to populate HybridResult.uncalibratedConstantCount
+ * without making an async DB call on the hot audit path.
+ */
+export function getSnapshotProvenanceSummary(): {
+  uncalibratedCount: number;
+  totalCount: number;
+  uncalibratedKeys: string[];
+  provenanceCounts: Record<CalibrationProvenance, number>;
+} | null {
+  if (!snapshot) return null;
+  const counts: Record<CalibrationProvenance, number> = {
+    regression:               0,
+    grid_search:              0,
+    manual_seed:              0,
+    uncalibrated_placeholder: 0,
+  };
+  const uncalibratedKeys: string[] = [];
+  for (const [key, row] of snapshot.entries()) {
+    counts[row.provenance] = (counts[row.provenance] ?? 0) + 1;
+    if (row.provenance === 'uncalibrated_placeholder') uncalibratedKeys.push(key);
+  }
+  return {
+    uncalibratedCount: counts.uncalibrated_placeholder,
+    totalCount:        snapshot.size,
+    uncalibratedKeys,
+    provenanceCounts:  counts,
+  };
+}
+
+/**
  * Test-only: inject a snapshot. Production code never calls this.
  */
 export function __setSnapshotForTesting(rows: ConstantRow[]): void {

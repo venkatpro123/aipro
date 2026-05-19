@@ -59,6 +59,13 @@ import {
   AGREEMENT_CONFLICT_THRESHOLD,
   type HeadcountSourceKey,
 } from "../../services/headcountConsensus";
+import {
+  getProvenanceSummary,
+  getProvenanceSummarySync,
+  provenanceLabel,
+  provenanceColor,
+  type ProvenanceSummary,
+} from "../../services/calibration/calibrationProvenance";
 
 // ---------------------------------------------------------------------------
 // DataQualityDashboard - Visualization of data quality metrics
@@ -764,6 +771,9 @@ const DimensionCalibrationPanel: React.FC = () => {
               </div>
               <div className="px-3 text-center">
                 <span className="text-xs font-mono font-black">{(dim.weight * 100) | 0}%</span>
+                {dim.calibrationStatus !== 'regression_derived' && dim.calibrationStatus !== 'pseudo_validated' && (
+                  <div className="text-[8px] text-amber-500/70 leading-tight mt-0.5">(estimate)</div>
+                )}
               </div>
               <div>
                 <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${c.bg} ${c.text} ${c.border}`}>
@@ -937,6 +947,27 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
     getLiveCalibrationStatus().then(setLiveCalibStatus).catch(() => {});
   }, []);
 
+  // v40.0: calibration constant provenance summary — fetch async, render from cache first.
+  // Falls back to HybridResult.uncalibratedConstantCount when the DB view is unavailable.
+  const [provenanceSummary, setProvenanceSummary] = useState<ProvenanceSummary | null>(
+    getProvenanceSummarySync()
+  );
+  useEffect(() => {
+    getProvenanceSummary().then(s => { if (s) setProvenanceSummary(s); }).catch(() => {});
+  }, []);
+
+  // Derive uncalibrated count from: DB view > HybridResult snapshot count > 0
+  const uncalibratedCount =
+    provenanceSummary?.uncalibratedCount
+    ?? result.uncalibratedConstantCount
+    ?? 0;
+  const uncalibratedKeys: string[] =
+    provenanceSummary?.uncalibratedKeys
+    ?? result.uncalibratedConstantKeys
+    ?? [];
+  const totalConstantCount = provenanceSummary?.totalCount ?? 0;
+  const regressionCoveragePct = provenanceSummary?.regressionCoveragePct ?? 0;
+
   // Real data sources derived from result.meta.dbSource + signal quality
   const dbSource = result.meta?.dbSource ?? "HumanProof Intelligence DB";
   const liveCount = result.signalQuality?.liveSignals ?? 0;
@@ -1050,7 +1081,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
       timestamp: t(4),
       operation: "Confidence Interval Calculation",
       status: "success",
-      details: `Interval: [${result.confidenceInterval?.low ?? "?"}–${result.confidenceInterval?.high ?? "?"}] · Freshness: ${freshnessDays}d`,
+      details: `Interval: [${result.confidenceInterval?.low ?? "?"}–${result.confidenceInterval?.high ?? "?"}]${uncalibratedCount > 0 ? ' (estimate — CI spread from unvalidated constants)' : ''} · Freshness: ${freshnessDays}d`,
     },
     {
       timestamp: t(0),
@@ -1612,6 +1643,53 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             description="When the scoring formula was last calibrated against real outcomes, and how accurate it is."
           />
           <CalibrationFreshnessPanel calibrationCoverage={(result as any).calibrationCoverage} />
+
+          {/* v40.0: Constant provenance chip — shows uncalibrated_placeholder count */}
+          {(uncalibratedCount > 0 || totalConstantCount > 0) && (
+            <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/6 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-amber-300 mb-1">
+                    {uncalibratedCount} of {totalConstantCount || '42+'} scoring constants are unvalidated estimates
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
+                    These constants carry <span className="text-amber-400 font-medium">uncalibrated_placeholder</span> provenance —
+                    they are developer estimates that have not yet been validated through logistic regression on outcome data.
+                    Any score component that depends on them is labeled <span className="font-mono text-amber-300">(estimate)</span> in the UI.
+                    Validated constants ({regressionCoveragePct}%) are derived from regression on {' '}
+                    {(result as any).calibrationCoverage != null
+                      ? `${Math.round((result as any).calibrationCoverage * 100)}% of formula weight`
+                      : 'the primary outcome dataset'}.
+                  </p>
+                  {uncalibratedKeys.length > 0 && (
+                    <details className="group">
+                      <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 transition-colors list-none flex items-center gap-1">
+                        <span className="group-open:hidden">▶</span>
+                        <span className="hidden group-open:inline">▼</span>
+                        {uncalibratedKeys.length} unvalidated constant{uncalibratedKeys.length !== 1 ? 's' : ''}
+                      </summary>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {uncalibratedKeys.map(k => (
+                          <span key={k} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                            {k}
+                          </span>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                  {provenanceSummary && (
+                    <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
+                      <span><span className="text-emerald-400 font-medium">{provenanceSummary.regressionCount}</span> regression</span>
+                      <span><span className="text-sky-400 font-medium">{provenanceSummary.gridSearchCount}</span> grid-search</span>
+                      <span><span className="text-violet-400 font-medium">{provenanceSummary.manualSeedCount}</span> expert estimate</span>
+                      <span><span className="text-amber-400 font-medium">{provenanceSummary.uncalibratedCount}</span> unvalidated</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* v8.0: Per-dimension calibration status with backtester */}
