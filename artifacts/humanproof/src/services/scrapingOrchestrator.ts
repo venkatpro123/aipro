@@ -71,7 +71,9 @@ export async function runScrapingPipeline(
 
   // Launch enrichment scraping (career page + Wikipedia + Glassdoor)
   const enrichment = await fetchScrapedEnrichment(companyName, timeoutMs).catch((): ScrapedCompanyEnrichment => ({
-    wikiEmployeeCount: null, careerHiringActive: null, careerJobCount: null,
+    wikiEmployeeCount: null, linkedinHeadcount: null,
+    careerPageHeadcount: null, secEdgarHeadcount: null, secEdgarFiledAt: null,
+    careerHiringActive: null, careerJobCount: null,
     careerSignals: [], glassdoorRating: null, glassdoorReviews: null,
     glassdoorCeoApproval: null, hasData: false, fetchedAt,
     errors: [options?.isUnknownCompany ? 'scrape timeout (unknown company)' : 'scrape timeout'],
@@ -97,9 +99,12 @@ export async function runScrapingPipeline(
   const glassdoorSentiment   = computeGlassdoorSentiment(enrichment.glassdoorRating, enrichment.glassdoorCeoApproval);
 
   const activeSources: string[] = [];
-  if (enrichment.wikiEmployeeCount != null)  activeSources.push('wikipedia');
-  if (enrichment.careerJobCount    != null)  activeSources.push('career-page');
-  if (enrichment.glassdoorRating   != null)  activeSources.push('glassdoor');
+  if (enrichment.wikiEmployeeCount  != null) activeSources.push('wikipedia');
+  if (enrichment.linkedinHeadcount  != null) activeSources.push('linkedin');
+  if (enrichment.secEdgarHeadcount  != null) activeSources.push('sec-edgar');
+  if (enrichment.careerPageHeadcount!= null) activeSources.push('career-page-headcount');
+  if (enrichment.careerJobCount     != null) activeSources.push('career-page');
+  if (enrichment.glassdoorRating    != null) activeSources.push('glassdoor');
 
   return {
     enrichment, resolvedHeadcount, careerFreezeSignal: freezeScore > 0 ? freezeScore : null,

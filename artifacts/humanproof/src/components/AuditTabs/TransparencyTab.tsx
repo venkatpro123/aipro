@@ -50,6 +50,11 @@ import {
   type DimensionValidationResult,
 } from "../../services/calibrationBacktester";
 import { getScenarioArchetypeLabel, getScenarioArchetypeColor } from "../../services/scenarioNarrativeEngine";
+import {
+  SOURCE_LABELS,
+  AGREEMENT_CONFLICT_THRESHOLD,
+  type HeadcountSourceKey,
+} from "../../services/headcountConsensus";
 
 // ---------------------------------------------------------------------------
 // DataQualityDashboard - Visualization of data quality metrics
@@ -1307,6 +1312,148 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                       is rating their performance optimistically. If your situation is the former,
                       your actual risk is lower than shown.
                     </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Headcount consensus conflict disclosure.
+              SPEC RULE: when agreement < 0.60, the Transparency tab MUST
+              surface an explicit conflict notice. This is non-negotiable.
+              The spec also says: "Never show a headcount figure without the
+              source and the agreement score that produced it." */}
+          {(() => {
+            const cd = (result as any).companyData ?? (result._engineResult as any)?.companyData;
+            const hc = cd?._headcountConsensus as {
+              value: number | null;
+              agreement: number;
+              confidence: number;
+              anchorSource: HeadcountSourceKey | null;
+              contributingSources: HeadcountSourceKey[];
+              rejectedSources: HeadcountSourceKey[];
+              conflictDisclosure: boolean;
+              perSource: Array<{
+                source: HeadcountSourceKey;
+                value: number;
+                rejected: boolean;
+                rejectionReason: 'ratio' | 'mad' | null;
+                observedAt?: string;
+              }>;
+            } | undefined;
+
+            if (!hc || hc.value == null) return null;
+
+            const agreePct     = Math.round(hc.agreement * 100);
+            const confPct      = Math.round(hc.confidence * 100);
+            const anchorLabel  = hc.anchorSource ? (SOURCE_LABELS[hc.anchorSource] ?? hc.anchorSource) : 'unknown source';
+            const isConflict   = hc.conflictDisclosure;
+            const borderColor  = isConflict ? 'border-amber-500/30' : 'border-emerald-500/20';
+            const bgColor      = isConflict ? 'bg-amber-500/08'     : 'bg-emerald-500/05';
+            const headingColor = isConflict ? 'text-amber-300'      : 'text-emerald-300';
+            const textColor    = isConflict ? 'text-amber-200/80'   : 'text-emerald-200/80';
+            const Icon         = isConflict ? AlertTriangle         : Check;
+            const iconColor    = isConflict ? 'text-amber-400'      : 'text-emerald-400';
+
+            return (
+              <div className={`mb-6 p-4 rounded-xl border ${borderColor} ${bgColor}`}>
+                <div className="flex gap-3">
+                  <Icon className={`w-5 h-5 ${iconColor} shrink-0 mt-0.5`} />
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`font-semibold text-sm mb-1.5 ${headingColor}`}>
+                      {isConflict
+                        ? 'Headcount Source Conflict'
+                        : 'Headcount Consensus'}
+                    </h4>
+
+                    {/* Spec: never show a headcount figure without source + agreement. */}
+                    <p className={`text-sm font-semibold mb-1.5 ${isConflict ? 'text-amber-200' : 'text-emerald-200'}`}>
+                      {hc.value.toLocaleString()} employees
+                      {' '}·{' '}anchor: {anchorLabel}
+                      {' '}·{' '}agreement {agreePct}%
+                      {' '}· confidence {confPct}%{' '}
+                      <span
+                        className="font-mono text-xs px-1.5 py-0.5 rounded"
+                        style={{
+                          background: isConflict ? 'rgba(245,158,11,0.15)' : 'rgba(52,211,153,0.12)',
+                          color: isConflict ? '#fbbf24' : '#34d399',
+                        }}
+                      >
+                        MODELED
+                      </span>
+                    </p>
+
+                    {isConflict && (
+                      <p className={`text-xs ${textColor} leading-relaxed mb-2`}>
+                        Agreement score {agreePct}% is below the {Math.round(AGREEMENT_CONFLICT_THRESHOLD * 100)}%
+                        threshold. Sources disagree by more than ±15% of the consensus median.
+                        The figure shown is the median of {hc.contributingSources.length} accepted
+                        source{hc.contributingSources.length !== 1 ? 's' : ''} after
+                        {hc.rejectedSources.length > 0
+                          ? ` rejecting ${hc.rejectedSources.length} outlier${hc.rejectedSources.length !== 1 ? 's' : ''}.`
+                          : ' no outlier rejection.'}
+                        {' '}Treat it as an approximation — workforce-size signals should be
+                        interpreted directionally, not as precise counts.
+                      </p>
+                    )}
+
+                    {/* Per-source table */}
+                    <div className="mt-2 space-y-1">
+                      {hc.perSource.map((row) => {
+                        const label = SOURCE_LABELS[row.source] ?? row.source;
+                        const pct   = hc.value != null && hc.value > 0
+                          ? Math.round(((row.value - hc.value) / hc.value) * 100)
+                          : 0;
+                        const pctStr = pct === 0 ? '±0%'
+                          : pct > 0 ? `+${pct}%` : `${pct}%`;
+                        const withinBand = Math.abs(pct) <= 15;
+                        return (
+                          <div
+                            key={row.source}
+                            className="flex items-center gap-2 text-xs"
+                            style={{ opacity: row.rejected ? 0.45 : 1 }}
+                          >
+                            <span
+                              className="font-mono w-2 h-2 rounded-full shrink-0"
+                              style={{
+                                background: row.rejected
+                                  ? '#ef4444'
+                                  : withinBand ? '#34d399' : '#f59e0b',
+                              }}
+                            />
+                            <span className="text-[var(--text-secondary)] w-36 shrink-0 truncate">{label}</span>
+                            <span className="font-semibold tabular-nums">{row.value.toLocaleString()}</span>
+                            {!row.rejected && (
+                              <span
+                                className="font-mono"
+                                style={{ color: withinBand ? '#34d399' : '#f59e0b' }}
+                              >
+                                {pctStr}
+                              </span>
+                            )}
+                            {row.rejected && (
+                              <span className="text-red-400 font-mono">
+                                REJECTED ({row.rejectionReason === 'ratio' ? '>10× median' : 'MAD outlier'})
+                              </span>
+                            )}
+                            {row.observedAt && (
+                              <span className="text-[var(--text-muted)] ml-auto shrink-0">
+                                {new Date(row.observedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {hc.contributingSources.length > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)] mt-2 leading-relaxed">
+                        Weighted by source reliability: SEC EDGAR 1.00 · Yahoo Finance 0.92 ·
+                        Wikipedia 0.78 · LinkedIn 0.55 · Intelligence DB 0.40 · Career page 0.30.
+                        Outlier rule: any source reporting &gt;10× the median is unconditionally
+                        rejected before MAD z-score classification.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

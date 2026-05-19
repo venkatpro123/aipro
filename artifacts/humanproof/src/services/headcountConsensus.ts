@@ -7,18 +7,25 @@
 // fallbacks (e.g. "large: 10000") are obviously wrong for 600k-person firms.
 //
 // This module fuses up to 6 sources into a confidence-weighted consensus:
-//   * Wikipedia infobox      — high reliability for big public cos
-//   * Yahoo Finance FTE      — most-current quarterly filing
-//   * LinkedIn reported      — self-declared, often the freshest
-//   * Career-page mention    — "We're a team of 50,000+" style claims
-//   * SEC EDGAR cover page   — quarterly 10-Q
-//   * Intelligence DB         — seeded baseline (emergency fallback only)
+//   * SEC EDGAR 10-K        — regulatory filing, highest authority  [1.00]
+//   * Yahoo Finance FTE     — most-current quarterly SEC-sourced FTE [0.92]
+//   * Wikipedia infobox     — community-edited, lags fast-change cos [0.78]
+//   * LinkedIn reported     — self-declared, skews high               [0.55]
+//   * Intelligence DB       — seeded baseline (months stale)          [0.40]
+//   * Career-page inference — "We're a team of X" style claim         [0.30]
 //
-// Strategy:
-//   1. Drop outliers (anything > 10× the median of the rest)
-//   2. Confidence-weight by source reliability (Yahoo > Wiki > LinkedIn > DB)
-//   3. Return median of remaining sources, with `agreement` = fraction of
-//      sources within ±15% of the median.
+// Strategy (spec-exact):
+//   1. HARD REJECT any source reporting > 10× the median of ALL sources.
+//      This fires before MAD z-score and is unconditional — the spec says
+//      "never let a 10× outlier participate".
+//   2. MAD z-score (Iglewicz–Hoaglin, k=3.5) on the survivors for 3+
+//      sources — catches symmetric large-but-sub-10x outliers.
+//   3. Consensus value = median of accepted sources.
+//   4. Agreement = fraction of accepted sources within ±15% of the median.
+//   5. When agreement < 0.60, mark the result with `conflictDisclosure = true`
+//      so the Transparency tab can surface an explicit conflict notice.
+//   6. NEVER show a headcount figure without the contributing sources and the
+//      agreement score; they are fields on every returned HeadcountConsensus.
 
 // WS9 — count-multiplier table sourced from engine_calibration_constants.
 import { getConstant } from './calibration/calibrationConstants';
@@ -68,6 +75,12 @@ export interface HeadcountSourceInput {
   observedAt?: string;
 }
 
+/**
+ * When agreement falls below this threshold (0.60) the Transparency tab MUST
+ * surface a conflict disclosure. The spec says this is a hard rule.
+ */
+export const AGREEMENT_CONFLICT_THRESHOLD = 0.60;
+
 export interface HeadcountConsensus {
   /** Consensus headcount — the median of agreeing sources after outlier rejection. */
   value: number | null;
@@ -77,22 +90,53 @@ export interface HeadcountConsensus {
   confidence: number;
   /** Sources that contributed to the consensus (after outlier rejection). */
   contributingSources: HeadcountSourceKey[];
-  /** Sources rejected as outliers. */
+  /** Sources rejected as outliers (>10× ratio or MAD z-score). */
   rejectedSources: HeadcountSourceKey[];
-  /** Per-source values, for UI display. */
-  perSource: Array<{ source: HeadcountSourceKey; value: number; rejected: boolean }>;
+  /** Per-source values with rejection reason, for UI display. */
+  perSource: Array<{
+    source: HeadcountSourceKey;
+    value: number;
+    rejected: boolean;
+    /** 'ratio' = failed 10× pre-filter; 'mad' = failed MAD z-score; null = accepted */
+    rejectionReason: 'ratio' | 'mad' | null;
+    /** ISO timestamp when this source last reported this value, if known. */
+    observedAt?: string;
+  }>;
+  /**
+   * True when agreement < AGREEMENT_CONFLICT_THRESHOLD (0.60).
+   * The Transparency tab MUST render a conflict disclosure when this is true.
+   * The spec: "never show a headcount figure without the source and the
+   * agreement score that produced it."
+   */
+  conflictDisclosure: boolean;
+  /**
+   * The primary source key that anchors the consensus (highest-reliability
+   * accepted source). Always present when value is non-null — the spec says
+   * never show a headcount without its source.
+   */
+  anchorSource: HeadcountSourceKey | null;
 }
 
-// Higher = more authoritative. Yahoo Finance reads quarterly SEC filings;
-// Wikipedia is community-edited but lags the most for fast-changing companies;
-// LinkedIn is self-reported and skews high; seeded DB is months stale.
-const SOURCE_RELIABILITY: Record<HeadcountSourceKey, number> = {
+// Source reliability weights — spec-defined values.
+// SEC EDGAR 10-K is a legal filing; career-page inference is unstructured
+// text with high false-positive rate ("team of X" inside blog posts).
+export const SOURCE_RELIABILITY: Record<HeadcountSourceKey, number> = {
   'sec-edgar':         1.00,
   'yahoo-fte':         0.92,
   'wikipedia':         0.78,
-  'career-page':       0.65,
   'linkedin':          0.55,
   'intelligence-db':   0.40,
+  'career-page':       0.30,   // spec: 0.30 (was incorrectly 0.65 before v40)
+};
+
+// Human-readable labels for each source — surfaced in TransparencyTab disclosure.
+export const SOURCE_LABELS: Record<HeadcountSourceKey, string> = {
+  'sec-edgar':         'SEC EDGAR 10-K',
+  'yahoo-fte':         'Yahoo Finance FTE',
+  'wikipedia':         'Wikipedia',
+  'linkedin':          'LinkedIn (reported)',
+  'intelligence-db':   'Intelligence DB',
+  'career-page':       'Career page (inferred)',
 };
 
 const median = (xs: number[]): number => {
@@ -104,192 +148,249 @@ const median = (xs: number[]): number => {
     : sorted[mid];
 };
 
-// ── Symmetric outlier detection (WS3 fix for Audit Issue #9) ────────────────
+// ── Outlier detection: two-stage (spec-exact) ───────────────────────────────
 //
-// The legacy rule "reject ratio > 10 or < 0.1" is technically symmetric in the
-// ratio sense, but in absolute headcount terms a 6× downward miss is far more
-// damaging than a 10× upward miss because the consensus median can be pulled
-// below the true value by a single subsidiary career-page mention
-// ("we are 50,000+ professionals" inside the parent's group of 317,000).
+// Stage 1: HARD 10× ratio pre-filter (spec requirement, unconditional).
+//   Reject any source reporting more than 10× the median of ALL plausible
+//   values. This fires before MAD and cannot be overridden. The spec phrase
+//   is exact: "Reject any source reporting more than 10x the median."
 //
-// We replace it with the Modified Z-Score using MAD (Median Absolute
-// Deviation). MAD is robust to outliers because the threshold itself is not
-// inflated by the values being judged. Threshold k = 3.5 follows the standard
-// Iglewicz–Hoaglin convention.
+// Stage 2: Modified Z-Score (MAD) on Stage-1 survivors for 3+ sources.
+//   MAD is robust because the threshold is not inflated by the values being
+//   judged. Threshold k=3.5 follows Iglewicz–Hoaglin convention.
 //
 //   modZ_i = 0.6745 × (x_i − median) / MAD
 //   reject when |modZ_i| > 3.5
 //
-// Edge cases:
-//   * n = 1 or 2 — MAD is unreliable; we fall back to the legacy 10× ratio
-//                  rule, which is more permissive but the only sensible
-//                  choice with so few points.
-//   * MAD = 0    — all retained values are identical; outliers from the
-//                  filtered set are anything that disagrees at all. We use a
-//                  fixed 25% fractional tolerance in that case.
+//   Edge cases:
+//     * n=1 after Stage 1 — no MAD, accept the single survivor.
+//     * n=2 after Stage 1 — MAD meaningless; accept both (Stage 1 already
+//                           caught > 10× divergence between them).
+//     * MAD=0             — identical values; reject anything > ±25%.
 
-interface OutlierClassification {
-  accepted: HeadcountSourceInput[];
-  rejected: HeadcountSourceInput[];
+type RejectionReason = 'ratio' | 'mad' | null;
+
+interface ClassifiedInput {
+  input: HeadcountSourceInput;
+  rejected: boolean;
+  rejectionReason: RejectionReason;
 }
 
-function classifyOutliersMAD(plausible: HeadcountSourceInput[]): OutlierClassification {
-  if (plausible.length <= 2) {
-    // MAD with 1-2 data points is meaningless. Use legacy 10× ratio rule.
-    const ref = median(plausible.map((s) => s.value));
-    const accepted: HeadcountSourceInput[] = [];
-    const rejected: HeadcountSourceInput[] = [];
-    for (const s of plausible) {
-      const ratio = s.value / ref;
-      if (plausible.length === 1 || (ratio <= 10 && ratio >= 0.1)) {
-        accepted.push(s);
-      } else {
-        rejected.push(s);
-      }
-    }
-    return { accepted, rejected };
-  }
+function classifyOutliers(plausible: HeadcountSourceInput[]): ClassifiedInput[] {
+  if (plausible.length === 0) return [];
 
   const values = plausible.map((s) => s.value);
-  const med = median(values);
-  const absDevs = values.map((v) => Math.abs(v - med));
+  const globalMedian = median(values);
+
+  // Stage 1: hard 10× ratio filter (unconditional).
+  const afterRatioFilter: ClassifiedInput[] = plausible.map((s) => {
+    const ratio = globalMedian === 0 ? 1 : s.value / globalMedian;
+    if (ratio > 10 || ratio < 0.1) {
+      return { input: s, rejected: true, rejectionReason: 'ratio' };
+    }
+    return { input: s, rejected: false, rejectionReason: null };
+  });
+
+  const survivors = afterRatioFilter.filter((c) => !c.rejected).map((c) => c.input);
+
+  // Stage 2: MAD z-score on survivors (only meaningful with 3+ points).
+  if (survivors.length < 3) {
+    // 0–2 survivors: Stage 1 is sufficient; accept all survivors.
+    return afterRatioFilter;
+  }
+
+  const survivalValues = survivors.map((s) => s.value);
+  const survivalMedian = median(survivalValues);
+  const absDevs = survivalValues.map((v) => Math.abs(v - survivalMedian));
   const mad = median(absDevs);
 
-  const accepted: HeadcountSourceInput[] = [];
-  const rejected: HeadcountSourceInput[] = [];
-
-  if (mad === 0) {
-    // All values identical or near-identical: reject anything > 25% off.
-    for (const s of plausible) {
-      const ratio = med === 0 ? 1 : s.value / med;
-      if (ratio >= 0.75 && ratio <= 1.25) accepted.push(s);
-      else rejected.push(s);
+  const result: ClassifiedInput[] = [];
+  for (const classified of afterRatioFilter) {
+    if (classified.rejected) {
+      result.push(classified);
+      continue;
     }
-    return { accepted, rejected };
-  }
-
-  const threshold = 3.5;
-  for (const s of plausible) {
-    const modZ = (0.6745 * (s.value - med)) / mad;
-    if (Math.abs(modZ) > threshold) {
-      rejected.push(s);
+    if (mad === 0) {
+      // All survivors identical — reject anything > ±25% from consensus.
+      const ratio = survivalMedian === 0 ? 1 : classified.input.value / survivalMedian;
+      if (ratio < 0.75 || ratio > 1.25) {
+        result.push({ input: classified.input, rejected: true, rejectionReason: 'mad' });
+      } else {
+        result.push(classified);
+      }
     } else {
-      accepted.push(s);
+      const modZ = (0.6745 * (classified.input.value - survivalMedian)) / mad;
+      if (Math.abs(modZ) > 3.5) {
+        result.push({ input: classified.input, rejected: true, rejectionReason: 'mad' });
+      } else {
+        result.push(classified);
+      }
     }
   }
-  return { accepted, rejected };
+  return result;
 }
 
 /**
- * Fuse multiple headcount sources into a single confidence-weighted value.
+ * Fuse multiple headcount sources into a confidence-weighted consensus.
+ *
+ * SPEC REQUIREMENTS (all enforced here):
+ *   - Source weights: SEC EDGAR 1.00 / Yahoo 0.92 / Wikipedia 0.78 /
+ *     LinkedIn 0.55 / Intel DB 0.40 / Career page 0.30
+ *   - Reject any source > 10× the median (hard pre-filter, unconditional).
+ *   - Agreement = fraction of accepted sources within ±15% of the consensus.
+ *   - agreement < 0.60 → conflictDisclosure = true (Transparency tab must
+ *     surface an explicit conflict notice).
+ *   - Every returned value carries anchorSource + contributingSources so the
+ *     caller can never show a headcount without its source provenance.
  *
  * Returns null `value` when no source provided a plausible count (10 ≤ N ≤ 5M).
  *
  * Confidence model:
- *   - 1 source:  confidence = source reliability × 0.8 (penalty for no agreement)
- *   - 2 sources, agree within ±15%: confidence = max reliability × 1.0
- *   - 2 sources, disagree:           confidence = max reliability × 0.7
- *   - 3+ sources, all agree:         confidence = max reliability × 1.0
- *   - 3+ sources, 1 outlier dropped: confidence = max reliability × 0.95
- *   - 3+ sources, multiple outliers: confidence = max reliability × 0.75
+ *   - 1 source:  reliability × 0.80 (no cross-check penalty)
+ *   - 2 sources, agree ±15%: max-reliability × 1.00
+ *   - 2 sources, disagree:   max-reliability × 0.70
+ *   - 3+ sources, all agree: max-reliability × 1.00
+ *   - 3+ sources, 0 rejected: max-reliability × 0.95
+ *   - 3+ sources, 1 rejected: max-reliability × 0.90
+ *   - 3+ sources, 2+ rejected: max-reliability × 0.75
  */
 export function computeHeadcountConsensus(
   inputs: HeadcountSourceInput[],
 ): HeadcountConsensus {
-  // Filter to plausible counts only
+  const EMPTY: HeadcountConsensus = {
+    value: null, agreement: 0, confidence: 0,
+    contributingSources: [], rejectedSources: [],
+    perSource: inputs.map(s => ({
+      source: s.source, value: s.value, rejected: true,
+      rejectionReason: null as RejectionReason, observedAt: s.observedAt,
+    })),
+    conflictDisclosure: false,
+    anchorSource: null,
+  };
+
+  // Filter to plausible counts only (10 ≤ N ≤ 5M).
   const plausible = inputs.filter(s =>
     typeof s.value === 'number' && Number.isFinite(s.value) && s.value >= 10 && s.value <= 5_000_000,
   );
-  if (plausible.length === 0) {
-    return {
-      value: null, agreement: 0, confidence: 0,
-      contributingSources: [], rejectedSources: [],
-      perSource: inputs.map(s => ({ source: s.source, value: s.value, rejected: true })),
-    };
-  }
+  if (plausible.length === 0) return EMPTY;
 
-  // Symmetric outlier rejection via Modified Z-Score (MAD). Catches both
-  // high-side outliers ("LinkedIn 5M" for a 10k company) and the more common
-  // low-side case ("career page mentions a 50k subsidiary at a 317k parent").
-  // See classifyOutliersMAD for edge-case behaviour.
-  const classification = classifyOutliersMAD(plausible);
-  const accepted = classification.accepted;
-  const rejected: HeadcountSourceKey[] = classification.rejected.map((s) => s.source);
+  // Two-stage outlier classification (ratio pre-filter + MAD z-score).
+  const classified = classifyOutliers(plausible);
+  const accepted    = classified.filter((c) => !c.rejected).map((c) => c.input);
+  const rejectedMap = new Map<HeadcountSourceKey, RejectionReason>(
+    classified.filter((c) => c.rejected).map((c) => [c.input.source, c.rejectionReason]),
+  );
 
   if (accepted.length === 0) {
-    // All sources were considered outliers vs each other — return the highest-
-    // reliability source as a single-source result.
+    // All sources mutually inconsistent — fall back to the single highest-
+    // reliability source to avoid returning null when data exists.
     const best = plausible
       .map(s => ({ ...s, rel: SOURCE_RELIABILITY[s.source] ?? 0.4 }))
       .sort((a, b) => b.rel - a.rel)[0];
+    const agreement = 0;
     return {
       value: best.value,
-      agreement: 0,
-      confidence: best.rel * 0.8,
+      agreement,
+      confidence: Math.round(best.rel * 0.8 * 100) / 100,
       contributingSources: [best.source],
       rejectedSources: plausible.filter(s => s.source !== best.source).map(s => s.source),
-      perSource: plausible.map(s => ({ source: s.source, value: s.value, rejected: s.source !== best.source })),
+      perSource: plausible.map(s => ({
+        source: s.source, value: s.value,
+        rejected: s.source !== best.source,
+        rejectionReason: rejectedMap.get(s.source) ?? null,
+        observedAt: s.observedAt,
+      })),
+      conflictDisclosure: true,   // single-source fallback is always a conflict
+      anchorSource: best.source,
     };
   }
 
-  // Consensus value: median of accepted sources, weighted-rounded.
+  // Consensus value: median of accepted sources.
   const consensusMedian = median(accepted.map(s => s.value));
-  const consensusValue = Math.round(consensusMedian);
+  const consensusValue  = Math.round(consensusMedian);
 
-  // Agreement: fraction of accepted sources within ±15% of the median.
+  // Agreement: fraction of accepted sources within ±15% of the consensus median.
   const agreeingCount = accepted.filter(s => {
     const ratio = s.value / consensusMedian;
     return ratio >= 0.85 && ratio <= 1.15;
   }).length;
   const agreement = accepted.length > 0 ? agreeingCount / accepted.length : 0;
 
-  // Confidence: combine max source reliability with source count and agreement.
+  // Anchor source: highest-reliability accepted source (shown in every UI display).
+  const anchorSource = accepted
+    .map(s => ({ source: s.source, rel: SOURCE_RELIABILITY[s.source] ?? 0.4 }))
+    .sort((a, b) => b.rel - a.rel)[0]?.source ?? null;
+
+  // Confidence: max reliability of accepted sources × count×agreement multiplier.
   const maxReliability = Math.max(...accepted.map(s => SOURCE_RELIABILITY[s.source] ?? 0.4));
-  // WS9 — the count×agreement multiplier table is sourced from
-  // engine_calibration_constants under
-  // 'headcountConsensus.countMultipliers'. Bootstrap fallback preserves
-  // the legacy behaviour exactly. recalibrate-engine target.
+  const rejectedCount  = rejectedMap.size;
+  // WS9 — count×agreement multiplier table from engine_calibration_constants.
   const multipliers = resolveCountMultipliers();
   const countMultiplier =
     accepted.length === 1 ? multipliers.singleSource
-    : accepted.length === 2 ? (agreement === 1 ? multipliers.twoSourceAgree : multipliers.twoSourceDisagree)
-    : agreement === 1        ? multipliers.threePlusAllAgree
-    : rejected.length === 0  ? multipliers.threePlusNoneRejected
-    : rejected.length === 1  ? multipliers.threePlusOneRejected
+    : accepted.length === 2 ? (agreement >= 1 ? multipliers.twoSourceAgree : multipliers.twoSourceDisagree)
+    : agreement >= 1          ? multipliers.threePlusAllAgree
+    : rejectedCount === 0     ? multipliers.threePlusNoneRejected
+    : rejectedCount === 1     ? multipliers.threePlusOneRejected
     : multipliers.threePlusMultiRejected;
   const confidence = Math.min(1, maxReliability * countMultiplier);
 
   return {
     value: consensusValue,
-    agreement,
+    agreement: Math.round(agreement * 100) / 100,
     confidence: Math.round(confidence * 100) / 100,
     contributingSources: accepted.map(s => s.source),
-    rejectedSources: rejected,
+    rejectedSources: Array.from(rejectedMap.keys()),
     perSource: plausible.map(s => ({
-      source: s.source, value: s.value,
-      rejected: rejected.includes(s.source),
+      source: s.source,
+      value: s.value,
+      rejected: rejectedMap.has(s.source),
+      rejectionReason: rejectedMap.get(s.source) ?? null,
+      observedAt: s.observedAt,
     })),
+    conflictDisclosure: agreement < AGREEMENT_CONFLICT_THRESHOLD,
+    anchorSource,
   };
 }
 
 /**
- * Convenience: feed in the raw values from the audit pipeline and get back a
- * consensus. Skips sources with null/undefined/0 values automatically.
+ * Convenience: feed in raw headcount values from the audit pipeline.
+ * All 6 source slots accept an optional `observedAt` ISO timestamp so the
+ * Transparency tab can display source freshness alongside the figure.
+ * Slots with null/undefined/0 values are skipped automatically.
+ *
+ * Spec: "Never show a headcount figure without the source and the agreement
+ * score that produced it." The returned HeadcountConsensus carries both.
  */
 export function consensusFromSignals(signals: {
-  wikipedia?: number | null;
-  yahooFte?: number | null;
-  linkedin?: number | null;
-  careerPage?: number | null;
-  secEdgar?: number | null;
-  intelDb?: number | null;
+  wikipedia?:  { value: number | null; observedAt?: string } | number | null;
+  yahooFte?:   { value: number | null; observedAt?: string } | number | null;
+  linkedin?:   { value: number | null; observedAt?: string } | number | null;
+  careerPage?: { value: number | null; observedAt?: string } | number | null;
+  secEdgar?:   { value: number | null; observedAt?: string } | number | null;
+  intelDb?:    { value: number | null; observedAt?: string } | number | null;
 }): HeadcountConsensus {
   const inputs: HeadcountSourceInput[] = [];
-  if (signals.wikipedia)  inputs.push({ source: 'wikipedia',       value: signals.wikipedia });
-  if (signals.yahooFte)   inputs.push({ source: 'yahoo-fte',       value: signals.yahooFte });
-  if (signals.linkedin)   inputs.push({ source: 'linkedin',        value: signals.linkedin });
-  if (signals.careerPage) inputs.push({ source: 'career-page',     value: signals.careerPage });
-  if (signals.secEdgar)   inputs.push({ source: 'sec-edgar',       value: signals.secEdgar });
-  if (signals.intelDb)    inputs.push({ source: 'intelligence-db', value: signals.intelDb });
+
+  const extract = (
+    raw: { value: number | null; observedAt?: string } | number | null | undefined,
+  ): { value: number | null; observedAt?: string } => {
+    if (raw == null)               return { value: null };
+    if (typeof raw === 'number')   return { value: raw };
+    return { value: raw.value, observedAt: raw.observedAt };
+  };
+
+  const push = (source: HeadcountSourceKey, raw: typeof signals.wikipedia) => {
+    const { value, observedAt } = extract(raw);
+    if (value != null && value > 0) inputs.push({ source, value, observedAt });
+  };
+
+  push('sec-edgar',       signals.secEdgar);
+  push('yahoo-fte',       signals.yahooFte);
+  push('wikipedia',       signals.wikipedia);
+  push('linkedin',        signals.linkedin);
+  push('intelligence-db', signals.intelDb);
+  push('career-page',     signals.careerPage);
+
   return computeHeadcountConsensus(inputs);
 }

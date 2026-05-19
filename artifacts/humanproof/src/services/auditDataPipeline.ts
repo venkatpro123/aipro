@@ -1079,15 +1079,25 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       // it flows through reconciliation as a genuine live signal. Below 0.7,
       // we fall back to the prior single-source path.
       const { consensusFromSignals } = await import('./headcountConsensus');
-      const wikiEmp = scrapingResultEarly?.enrichment?.wikiEmployeeCount ?? null;
-      const yahooFte = liveData.stockData?.employeeCount ?? null;
-      const intelDb = (companyData.employeeCount && companyData.employeeCount > 0)
+      const wikiEmp      = scrapingResultEarly?.enrichment?.wikiEmployeeCount ?? null;
+      const linkedinEmp  = scrapingResultEarly?.enrichment?.linkedinHeadcount  ?? null;
+      const careerPageEmp= scrapingResultEarly?.enrichment?.careerPageHeadcount ?? null;
+      const secEdgarEmp  = scrapingResultEarly?.enrichment?.secEdgarHeadcount   ?? null;
+      const secEdgarAt   = scrapingResultEarly?.enrichment?.secEdgarFiledAt      ?? undefined;
+      const yahooFte     = liveData.stockData?.employeeCount ?? null;
+      const intelDb      = (companyData.employeeCount && companyData.employeeCount > 0)
         ? companyData.employeeCount
         : null;
+      const scrapeFetchedAt = scrapingResultEarly?.fetchedAt;
       const consensus = consensusFromSignals({
-        wikipedia: wikiEmp,
-        yahooFte,
-        intelDb: (companyData as any)._isSeededBaseline ? intelDb : null,
+        secEdgar:   secEdgarEmp  != null ? { value: secEdgarEmp,  observedAt: secEdgarAt }      : null,
+        yahooFte:   yahooFte     != null ? { value: yahooFte,     observedAt: scrapeFetchedAt } : null,
+        wikipedia:  wikiEmp      != null ? { value: wikiEmp,      observedAt: scrapeFetchedAt } : null,
+        linkedin:   linkedinEmp  != null ? { value: linkedinEmp,  observedAt: scrapeFetchedAt } : null,
+        intelDb:    (companyData as any)._isSeededBaseline && intelDb != null
+          ? { value: intelDb, observedAt: (companyData as any).lastUpdated ?? undefined }
+          : null,
+        careerPage: careerPageEmp != null ? { value: careerPageEmp, observedAt: scrapeFetchedAt } : null,
       });
 
       if (consensus.value != null && consensus.confidence >= 0.5) {
@@ -1116,6 +1126,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
           contributingSources: consensus.contributingSources,
           rejectedSources: consensus.rejectedSources,
           perSource: consensus.perSource,
+          conflictDisclosure: consensus.conflictDisclosure,
+          anchorSource: consensus.anchorSource,
         };
       } else if (wikiEmp && wikiEmp >= 10 && !yahooFte) {
         // Single-source Wikipedia path — preserved for back-compat when consensus
