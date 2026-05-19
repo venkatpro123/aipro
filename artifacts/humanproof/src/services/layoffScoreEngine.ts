@@ -32,7 +32,7 @@ import {
   type IndiaRiskEnrichment,
 } from "./indiaSectorIntelligence";
 import { validateDataQuality, type DataQualityReport } from "./dataQualityValidator";
-import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate } from "./signalDecayModel";
+import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate, type SignalDecayType } from "./signalDecayModel";
 import { evaluateFlagSync } from "../config/featureFlags";
 // WS9 — uncalibrated sector floors now routed through DB.
 import { getConstant } from "./calibration/calibrationConstants";
@@ -1033,6 +1033,43 @@ export interface ScoreInputs {
    * calibration signal that justifies D8 activation.
    */
   primaryCohort?: 'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN';
+  /**
+   * Per-signal fetch/event timestamps for per-signal decay.
+   *
+   * Replaces the single `companyData.lastUpdated` global decay with
+   * signal-type-accurate timestamps so each layer is decayed from its own
+   * information age, not the DB row age.
+   *
+   * - breakingNewsLayoffDate:  ISO date of the most recent layoff event
+   *     (event date, not fetch date — a news story published today about
+   *      a layoff announced last month should decay from the announcement date).
+   * - stockFetchedAt:          ISO datetime of the stock API response
+   *     (Yahoo Finance / Alpha Vantage / BSE). Used for stock_90d_change decay.
+   * - revenueGrowthFetchedAt:  ISO datetime of revenue data (same API call as
+   *     stock; revenue_growth_yoy has 90-day half-life so this rarely matters).
+   * - hiringFetchedAt:         ISO datetime of the Naukri/hiring API response.
+   *     hiring_posting_trend 10-day half-life — a 2-week-old hiring signal
+   *     should carry only ~37% of its original weight.
+   * - execDepartureDate:       ISO date of the most recent executive departure
+   *     from SEC 8-K filings. executive_departure 14-day half-life.
+   * - sectorContagionEventDate: ISO date of the most recent peer-sector layoff
+   *     event. sector_contagion 21-day half-life.
+   * - layoffHistoryDate:       ISO date of the most recent layoff event in
+   *     companyData.layoffsLast24Months. layoff_history_event 30-day half-life.
+   *
+   * All fields are optional. When absent, falls back to companyData.lastUpdated
+   * (same behaviour as pre-v40 decay logic). Pass explicit `null` to suppress
+   * fallback and use a neutral 0.75 weight for that signal type.
+   */
+  signalTimestamps?: {
+    breakingNewsLayoffDate?:   string | null;
+    stockFetchedAt?:           string | null;
+    revenueGrowthFetchedAt?:   string | null;
+    hiringFetchedAt?:          string | null;
+    execDepartureDate?:        string | null;
+    sectorContagionEventDate?: string | null;
+    layoffHistoryDate?:        string | null;
+  };
 }
 
 export interface ScoreBreakdown {
@@ -1194,6 +1231,23 @@ export interface ScoreResult {
   /** LOW-1: Human-readable labels for each kill-switch that fired this run.
    *  Surfaces in TransparencyTab as amber badges. */
   activatedKillSwitches?: string[];
+  /**
+   * v40.0: Per-signal freshness decay weights applied this run.
+   * Each value is in [minWeight, 1.0] — 1.0 = brand new, 0.5 = at half-life,
+   * minWeight = fully stale (floors at signal-type minimum, not zero).
+   * TransparencyTab surfaces these so users can see why a signal carries
+   * reduced weight ("Stock data: 6 days old → 50% weight").
+   */
+  signalDecayWeights?: {
+    stock:        number;  // stock_90d_change
+    revenue:      number;  // revenue_growth_yoy
+    layoffHistory:number;  // layoff_history_event
+    hiring:       number;  // hiring_posting_trend
+    sector:       number;  // sector_contagion
+    breakingNews: number;  // breaking_news_layoff (dept-match bonus decay)
+    L1_effective: number;  // composite L1 decay (max(f_stock, f_revenue * 0.6))
+    D7_effective: number;  // composite D7 decay ((f_stock + f_layoff) / 2)
+  };
 }
 
 // ─── Utility ───
@@ -3897,30 +3951,97 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     ? blendCohortWeights(archetypeW, inputs.cohortWeights, inputs.primaryCohort ?? 'UNKNOWN')
     : archetypeW;
 
-  // v15.0: Layer-level freshness decay. Date-sensitive layers (L1, L2, L4) are
-  // downweighted by the freshness of companyData.lastUpdated mapped to the
-  // dominant signal type for that layer. Remaining weights are renormalised so
-  // the formula budget stays exactly 1.0. Stale-data scores skew toward the
-  // structural (role/personal) signals rather than toward zero.
+  // Per-signal freshness decay (v40.0).
+  //
+  // Each signal type has its own empirically derived half-life (signalDecayModel.ts):
+  //   breaking_news_layoff  : 3 days  — a 2-week-old announcement has ~2% predictive weight
+  //   stock_90d_change      : 7 days  — L1 driven by stock performance, market reprices fast
+  //   hiring_posting_trend  : 10 days — job postings change within weeks (L3 live gate)
+  //   executive_departure   : 14 days — structural signal; urgency fades over a month
+  //   sector_contagion      : 21 days — L4/D5; sector waves play out over weeks
+  //   layoff_history_event  : 30 days — L2; past events retain historical but decay
+  //   revenue_growth_yoy    : 90 days — reported quarterly, changes slowly
+  //
+  // Decay is applied to individual formula components (not layers):
+  //   L1_directFinancial     ← stock_90d_change timestamp
+  //   D7_companyHealth       ← stock_90d_change timestamp (D7 fuses stock + layoff signals)
+  //   L2_directLayoffHistory ← layoff_history_event timestamp (most recent layoff event)
+  //   D5_countryContext      ← sector_contagion timestamp
+  //   D1_taskAutomatability  ← hiring_posting_trend timestamp (via L3 live gate)
+  //
+  // Revenue growth (revenue_growth_yoy, 90-day half-life) is embedded inside L1.
+  // We apply it as a secondary modifier to L1 when a fresh stock timestamp is absent
+  // but a revenue timestamp is present, ensuring quarterly figures aren't penalised
+  // at the same rate as the 7-day stock half-life.
+  //
+  // When a per-signal timestamp is missing: falls back to companyData.lastUpdated.
+  // When lastUpdated is also missing: uses neutral weight 0.75 (slight staleness assumed).
+  //
+  // After per-signal decay the weights are renormalised so the formula budget = 1.0.
+  // Stale-data scores shift toward structural (role/personal) signals rather than zero.
+
   type WeightSet = Record<keyof typeof COMPOSITE_FORMULA_WEIGHTS, number>;
-  const W: WeightSet = SCORING_DECAY_ENABLED && companyData.lastUpdated
+
+  // Per-signal decay weights — computed here so they're available for both
+  // the formula weight adjustment and the ScoreResult.signalDecayWeights field.
+  let _decayWeights: ScoreResult['signalDecayWeights'] | undefined;
+
+  const W: WeightSet = SCORING_DECAY_ENABLED
     ? (() => {
-        const ref = now;
-        const f_L1 = computeSignalFreshnessWeightFromDate(companyData.lastUpdated, 'stock_90d_change', ref);
-        const f_L2 = computeSignalFreshnessWeightFromDate(companyData.lastUpdated, 'layoff_history_event', ref);
-        const f_L4 = computeSignalFreshnessWeightFromDate(companyData.lastUpdated, 'sector_contagion', ref);
+        const ref      = now;
+        const ts       = inputs.signalTimestamps ?? {};
+        const fallback = companyData.lastUpdated ?? null;
+        const neutral  = 0.75; // used when no timestamp is available
+
+        // Resolve the timestamp to use for each signal type.
+        // Preference order: explicit per-signal timestamp → DB lastUpdated → neutral
+        const resolve = (
+          explicit: string | null | undefined,
+          decayType: SignalDecayType,
+        ): number => {
+          const date = explicit !== undefined ? explicit : fallback;
+          if (!date) return neutral;
+          return computeSignalFreshnessWeightFromDate(date, decayType, ref);
+        };
+
+        const f_stock       = resolve(ts.stockFetchedAt,           'stock_90d_change');
+        const f_revenue     = resolve(ts.revenueGrowthFetchedAt,   'revenue_growth_yoy');
+        const f_layoff      = resolve(ts.layoffHistoryDate,        'layoff_history_event');
+        const f_hiring      = resolve(ts.hiringFetchedAt,          'hiring_posting_trend');
+        const f_sector      = resolve(ts.sectorContagionEventDate, 'sector_contagion');
+        const f_breakingNews = resolve(ts.breakingNewsLayoffDate,  'breaking_news_layoff');
+
+        // L1 uses the more conservative of stock + revenue decay.
+        // Stock reprices in 7 days; revenue figures are quarterly (90-day half-life).
+        // When stock is stale but revenue is fresh, L1 is not fully penalised.
+        const f_L1 = Math.max(f_stock, f_revenue * 0.6);
+
+        // D7 fuses stock + layoff signals — decay as average of the two.
+        const f_D7 = (f_stock + f_layoff) / 2;
+
+        // Expose decay weights for ScoreResult transparency
+        _decayWeights = {
+          stock:         Math.round(f_stock        * 1000) / 1000,
+          revenue:       Math.round(f_revenue      * 1000) / 1000,
+          layoffHistory: Math.round(f_layoff       * 1000) / 1000,
+          hiring:        Math.round(f_hiring       * 1000) / 1000,
+          sector:        Math.round(f_sector       * 1000) / 1000,
+          breakingNews:  Math.round(f_breakingNews * 1000) / 1000,
+          L1_effective:  Math.round(f_L1           * 1000) / 1000,
+          D7_effective:  Math.round(f_D7           * 1000) / 1000,
+        };
 
         const eff: WeightSet = {
-          D1_taskAutomatability:        baseW.D1_taskAutomatability,
+          D1_taskAutomatability:        baseW.D1_taskAutomatability        * f_hiring,
           D2_aiToolMaturity:            baseW.D2_aiToolMaturity,
           D3_augmentationRisk:          baseW.D3_augmentationRisk,
           D4_experienceProtection:      baseW.D4_experienceProtection,
-          D5_countryContext:            baseW.D5_countryContext      * f_L4,
+          D5_countryContext:            baseW.D5_countryContext             * f_sector,
           D6_agentCapability:           baseW.D6_agentCapability,
-          D7_companyHealth:             baseW.D7_companyHealth       * f_L1, // D7 fuses L1+L2+AI signal
+          D7_companyHealth:             baseW.D7_companyHealth              * f_D7,
           D8_aiEfficiencyRestructuring: baseW.D8_aiEfficiencyRestructuring,
-          L1_directFinancial:           baseW.L1_directFinancial     * f_L1,
-          L2_directLayoffHistory:       baseW.L2_directLayoffHistory * f_L2,
+          L1_directFinancial:           baseW.L1_directFinancial            * f_L1,
+          L2_directLayoffHistory:       baseW.L2_directLayoffHistory        * f_layoff,
         };
 
         const sum = Object.values(eff).reduce((a, b) => a + b, 0);
@@ -3962,13 +4083,16 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     });
   });
   // Department match premium: +0.05 (5 pts on 0-100 scale) when department explicitly
-  // targeted, scaled by recency (full weight ≤30 days, halved by 90 days).
+  // targeted, decayed by breaking_news_layoff half-life (3 days) from the event date.
+  // A department-targeted layoff announcement from 2 weeks ago has ~6% of its original
+  // predictive weight vs today's announcement — the decay model reflects this correctly.
+  // The floor (minWeight = 0.10) ensures historical department targeting retains a
+  // residual signal even for events many months old.
   const deptMatchBonus = deptMatchEvent
-    ? (() => {
-        const ageD = Math.round((now.getTime() - new Date(deptMatchEvent.date).getTime()) / 86_400_000);
-        const recency = ageD <= 30 ? 1.0 : Math.max(0.5, 1.0 - (ageD - 30) / 120);
-        return 0.05 * recency;
-      })()
+    ? 0.05 * computeSignalFreshnessWeight(
+        Math.max(0, Math.round((now.getTime() - new Date(deptMatchEvent.date).getTime()) / 86_400_000)),
+        'breaking_news_layoff',
+      )
     : 0;
 
   const preKillSwitchScore = Math.round(clamp(rawScore + deptMatchBonus) * 100);
@@ -4207,6 +4331,9 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     })(),
     // LOW-1: all kill-switch names that fired, for TransparencyTab badges
     activatedKillSwitches: ksResult.activatedKillSwitches,
+    // v40.0: per-signal freshness decay weights — surfaced in TransparencyTab
+    // so users understand why a signal carries reduced weight due to staleness.
+    signalDecayWeights: _decayWeights,
   };
 };
 

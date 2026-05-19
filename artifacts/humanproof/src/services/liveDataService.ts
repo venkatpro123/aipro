@@ -1650,12 +1650,34 @@ export const reconcileCompanySignals = (
     active._estimatedRoleOpenings = live.hiringData.estimatedOpenings;
     active._naukriOpenings = live.hiringData.naukriOpenings;
     active._linkedinOpenings = live.hiringData.linkedinOpenings;
+    // Signal-level timestamp for per-signal decay in the scoring engine.
+    // The engine must decay hiring_posting_trend from this date, not from
+    // the global companyData.lastUpdated which reflects the DB row age.
+    active._hiringFetchedAt = live.hiringData.fetchedAt;
     if (live.hiringData.isLive && live.hiringData.estimatedOpenings != null) informativeLiveSignalCount++;
   }
 
   if (live.newsData) {
     active._liveNewsChecked = true;
     active._liveNewsSentiment = live.newsData.sentimentSignal;
+    // News signal timestamp for per-signal decay. breaking_news_layoff has a
+    // 3-day half-life — the engine must use the actual news fetch date, not DB lastUpdated.
+    active._newsFetchedAt = live.newsData.fetchedAt;
+    // Date of the most recent layoff event (event date, not fetch date).
+    // Used for breaking_news_layoff decay — the event date is more accurate than the fetch date.
+    if (live.newsData.latestLayoffEvent?.date) {
+      active._latestLayoffEventDate = live.newsData.latestLayoffEvent.date;
+    }
+  }
+
+  // Stock signal timestamp for per-signal decay. stock_90d_change has 7-day
+  // half-life — use fetch date so a 6-hour-old Yahoo Finance quote decays correctly
+  // rather than inheriting the potentially weeks-old DB lastUpdated.
+  if (live.stockData) {
+    active._stockFetchedAt = live.stockData.fetchedAt;
+    // Revenue growth YoY timestamp: revenue figures are quarterly, but the
+    // fetch date (from the same stock API call) is the best available proxy.
+    active._revenueGrowthFetchedAt = live.stockData.fetchedAt;
   }
 
   const intendedLiveClasses = [

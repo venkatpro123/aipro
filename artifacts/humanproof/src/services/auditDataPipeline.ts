@@ -401,6 +401,7 @@ function mapToHybridResult(
     _engineResult: engineResult,
     calibrationCoverage: engineResult.calibrationCoverage,
     activatedKillSwitches: engineResult.activatedKillSwitches,
+    signalDecayWeights: engineResult.signalDecayWeights,
   };
 }
 
@@ -1313,6 +1314,29 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     // Pre-pass cohort failure is non-fatal; engine uses flat weights
   }
 
+  // Per-signal timestamps for the decay engine (v40.0).
+  // Each is read from the stamped fields on shadowCompanyData (set in reconcileCompanySignals
+  // from the live API fetchedAt values). When absent, the engine falls back to
+  // companyData.lastUpdated or a neutral 0.75 weight — no regression from prior behaviour.
+  const _cd = shadowCompanyData as any;
+
+  // Most recent layoff event date drives breaking_news_layoff decay (3-day half-life).
+  // Prefer the event date over the fetch date — a story about a 2-month-old announcement
+  // should decay from the announcement date, not from when we fetched the article.
+  const _latestLayoffDate: string | null =
+    _cd._latestLayoffEventDate
+    ?? (Array.isArray(_cd.layoffsLast24Months) && _cd.layoffsLast24Months.length > 0
+        ? _cd.layoffsLast24Months[0]?.date ?? null
+        : null);
+
+  // Most recent executive departure date from SEC 8-K (14-day half-life).
+  const _execDepartureDate: string | null =
+    _cd._execDepartureDate ?? _cd._latestExecDeparture ?? null;
+
+  // Most recent sector-level peer layoff event date (21-day half-life).
+  const _sectorContagionDate: string | null =
+    _cd._sectorContagionDate ?? _cd._latestPeerLayoffDate ?? null;
+
   const shadowScoreInputs: ScoreInputs = {
     companyData: shadowCompanyData,
     industryData,
@@ -1323,6 +1347,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     cohortWeights: preCohortWeights,
     primaryCohort: (preCohortLabel === 'GLOBAL' ? 'UNKNOWN' : preCohortLabel) as
       'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN',
+    signalTimestamps: {
+      breakingNewsLayoffDate:   _latestLayoffDate,
+      stockFetchedAt:           _cd._stockFetchedAt ?? null,
+      revenueGrowthFetchedAt:   _cd._revenueGrowthFetchedAt ?? null,
+      hiringFetchedAt:          _cd._hiringFetchedAt ?? null,
+      execDepartureDate:        _execDepartureDate,
+      sectorContagionEventDate: _sectorContagionDate,
+      layoffHistoryDate:        _latestLayoffDate,
+    },
   };
 
   _timer.mark('engine_start');

@@ -1701,6 +1701,55 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
           </div>
         </CollapsibleSection>
 
+        {/* v40.0: Per-signal decay weights — shows how each signal's age reduces its scoring weight */}
+        {result.signalDecayWeights && (
+          <div className="mt-6 rounded-xl border border-slate-700/50 bg-slate-800/40 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-4 h-4 text-amber-400" />
+              <h4 className="text-sm font-semibold text-slate-200">Signal Freshness Decay</h4>
+              <span className="ml-auto text-xs text-slate-500">weight × age → effective formula contribution</span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Each signal type has an empirically derived half-life. A breaking news layoff announcement
+              decays to 50% predictive weight in 3 days. Revenue figures decay in 90 days.
+              Decayed weights are renormalised so the formula budget stays at 100%.
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {(
+                [
+                  { label: 'Stock 90d change', key: 'stock',         halfLife: '7d',  color: result.signalDecayWeights.stock         >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.stock         >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'Revenue growth',   key: 'revenue',       halfLife: '90d', color: result.signalDecayWeights.revenue       >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.revenue       >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'Layoff history',   key: 'layoffHistory', halfLife: '30d', color: result.signalDecayWeights.layoffHistory >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.layoffHistory >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'Hiring trend',     key: 'hiring',        halfLife: '10d', color: result.signalDecayWeights.hiring        >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.hiring        >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'Sector contagion', key: 'sector',        halfLife: '21d', color: result.signalDecayWeights.sector        >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.sector        >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'Breaking news',    key: 'breakingNews',  halfLife: '3d',  color: result.signalDecayWeights.breakingNews  >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.breakingNews  >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'L1 (composite)',   key: 'L1_effective',  halfLife: 'max(stock, rev×0.6)', color: result.signalDecayWeights.L1_effective >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.L1_effective >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                  { label: 'D7 (composite)',   key: 'D7_effective',  halfLife: 'avg(stock, layoff)', color: result.signalDecayWeights.D7_effective >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.D7_effective >= 0.4 ? 'text-amber-400' : 'text-red-400' },
+                ] as const
+              ).map(({ label, key, halfLife, color }) => {
+                const w = result.signalDecayWeights![key];
+                const pct = Math.round(w * 100);
+                return (
+                  <div key={key} className="rounded-lg bg-slate-900/50 border border-slate-700/30 p-3">
+                    <div className="text-xs text-slate-400 mb-1 truncate">{label}</div>
+                    <div className={`text-lg font-bold tabular-nums ${color}`}>{pct}%</div>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-700/60 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-slate-600 mt-1">t½ {halfLife}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-600 mt-3">
+              Formula: weight = max(floor, e^(−ln2/t½ × age)). Floors: breaking news 10%, stock 15%, hiring 15%, layoff history 25%, revenue 30%, sector 20%, exec departure 20%.
+            </p>
+          </div>
+        )}
+
         {/* Data freshness: live signal coverage bar + static fallback badge */}
         <div className="mt-6">
           <DataFreshnessPanel

@@ -429,6 +429,21 @@ export interface HybridResult {
   calibrationCoverage?: number;
   /** LOW-1: all kill-switch names that fired this run (e.g. ['financial_distress_triad']). */
   activatedKillSwitches?: string[];
+  /**
+   * v40.0: Per-signal freshness decay weights applied this run. Each value is in
+   * [minWeight, 1.0]. Surfaced in TransparencyTab so users can see how data age
+   * reduced each signal's effective contribution ("Stock data 6 days old → 50% weight").
+   */
+  signalDecayWeights?: {
+    stock:         number;
+    revenue:       number;
+    layoffHistory: number;
+    hiring:        number;
+    sector:        number;
+    breakingNews:  number;
+    L1_effective:  number;
+    D7_effective:  number;
+  };
 
   // ── Cache provenance ────────────────────────────────────────────────────────
   /**
