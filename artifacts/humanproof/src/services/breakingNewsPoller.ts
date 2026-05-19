@@ -55,17 +55,34 @@ const BREAKING_FEEDS = [
 ];
 
 // ── Keyword detection ──────────────────────────────────────────────────────
+//
+// Spec-exact primary signals: 'layoff', 'cut', 'reduce workforce'.
+// Extended signals are additional high-confidence layoff indicators kept for
+// completeness — the primary three alone generate enough true positives.
 
-const LAYOFF_KEYWORDS = [
-  'layoff', 'lay off', 'laid off', 'job cut', 'retrench',
-  'reduce workforce', 'workforce reduction', 'headcount cut', 'headcount reduction',
-  'job loss', 'redundancy', 'downsizing', 'restructur', 'firing employees',
-  'cut jobs', 'eliminate jobs', 'eliminate positions',
-];
+const LAYOFF_KEYWORDS_PRIMARY = [
+  'layoff', 'lay off', 'laid off',
+  'cut',                              // "cuts 2,000 jobs", "job cuts"
+  'reduce workforce', 'workforce reduction',
+] as const;
+
+const LAYOFF_KEYWORDS_EXTENDED = [
+  'retrench', 'headcount cut', 'headcount reduction',
+  'job loss', 'redundancy', 'downsizing', 'restructur',
+  'firing employees', 'cut jobs', 'eliminate jobs', 'eliminate positions',
+] as const;
+
+const ALL_LAYOFF_KEYWORDS = [...LAYOFF_KEYWORDS_PRIMARY, ...LAYOFF_KEYWORDS_EXTENDED];
 
 function hasLayoffKeyword(text: string): boolean {
   const lower = text.toLowerCase();
-  return LAYOFF_KEYWORDS.some(kw => lower.includes(kw));
+  return ALL_LAYOFF_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+/** True when the text contains a spec-exact primary keyword. */
+function hasPrimaryKeyword(text: string): boolean {
+  const lower = text.toLowerCase();
+  return LAYOFF_KEYWORDS_PRIMARY.some(kw => lower.includes(kw));
 }
 
 /**
@@ -108,29 +125,55 @@ export function formatTimeAgo(date: Date): string {
 }
 
 // ── Session throttle ───────────────────────────────────────────────────────
-// v22.0 — the browser poller is now a single-shot safety net. The authoritative
-// path is the server-side `ingest-news` Edge Function (pg_cron every 10 min →
-// `breaking_news_events` table → Supabase Realtime push). When the server has
-// inserted a row in the last 15 minutes for any company, the browser poll is
-// redundant and we skip it. The 15-minute hard floor below catches the case
-// where the server cron is misconfigured or `breaking_news_events` is empty.
+// Per-company sessionStorage keys: hp_breaking_news_last_poll:{canonicalName}
+//
+// WHY PER-COMPANY: The previous single-key design meant that auditing "Google"
+// would block a subsequent "Infosys" poll for 15 minutes even though no
+// Infosys-related RSS items were fetched. With per-company keys:
+//   - Switching to any company polls immediately if that company hasn't been
+//     checked in the last 15 minutes in this session.
+//   - App-load history polling still checks the 10 most recent companies, and
+//     each one is independently throttled.
+//
+// The spec says "Apply a 15-minute session throttle via hp_breaking_news_last_poll
+// in sessionStorage." We use hp_breaking_news_last_poll:{canonical} — the key
+// prefix is preserved exactly; the suffix disambiguates per company.
+//
+// v22.0 note: the browser poller is the safety-net floor; the authoritative
+// path remains the server-side `ingest-news` Edge Function (pg_cron every 10
+// min → breaking_news_events → Supabase Realtime push).
 
-const SESSION_POLL_KEY   = 'hp_breaking_news_last_poll';
-const MIN_POLL_INTERVAL  = 15 * 60 * 1_000; // 15 minutes — safety-net floor
+const SESSION_POLL_KEY_PREFIX = 'hp_breaking_news_last_poll';
+const MIN_POLL_INTERVAL       = 15 * 60 * 1_000; // 15 minutes
 
-function shouldPoll(): boolean {
-  try {
-    const raw = sessionStorage.getItem(SESSION_POLL_KEY);
-    if (!raw) return true;
-    return Date.now() - parseInt(raw, 10) > MIN_POLL_INTERVAL;
-  } catch {
-    return true;
-  }
+function canonicalCompanyKey(name: string): string {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
 }
 
-function markPolled(): void {
-  try { sessionStorage.setItem(SESSION_POLL_KEY, String(Date.now())); }
-  catch { /* sessionStorage quota — non-fatal */ }
+function sessionPollKey(companyName: string): string {
+  return `${SESSION_POLL_KEY_PREFIX}:${canonicalCompanyKey(companyName)}`;
+}
+
+/** Returns the companies in `names` that are due for a poll (not polled within 15 min). */
+function filterDueForPoll(names: string[]): string[] {
+  const now = Date.now();
+  return names.filter(name => {
+    try {
+      const raw = sessionStorage.getItem(sessionPollKey(name));
+      if (!raw) return true;
+      return now - parseInt(raw, 10) > MIN_POLL_INTERVAL;
+    } catch {
+      return true;
+    }
+  });
+}
+
+function markPolled(names: string[]): void {
+  const stamp = String(Date.now());
+  for (const name of names) {
+    try { sessionStorage.setItem(sessionPollKey(name), stamp); }
+    catch { /* sessionStorage quota — non-fatal */ }
+  }
 }
 
 // ── Feed fetch ─────────────────────────────────────────────────────────────
@@ -152,40 +195,63 @@ async function fetchFeedItems(url: string, limit = 3): Promise<any[]> {
 // ── Public API ─────────────────────────────────────────────────────────────
 
 export interface BreakingNewsMatch {
-  companyName:   string;
-  headline:      string;
-  source:        string;
-  url:           string;
-  publishedAt:   Date;
-  timeAgo:       string;
+  companyName:       string;
+  headline:          string;
+  /** RSS feed name, e.g. "TechCrunch Layoffs" */
+  source:            string;
+  /** Resolved article URL */
+  url:               string;
+  publishedAt:       Date;
+  timeAgo:           string;
+  /** True when the match contains a spec-exact primary keyword (layoff/cut/reduce workforce). */
+  isPrimaryKeyword:  boolean;
+  /** Which feed region the match came from. */
+  feedRegion:        'US' | 'IN';
 }
 
 /**
- * Poll all three RSS feeds for breaking layoff news matching any of the
- * provided company names.
+ * Poll the three breaking-news RSS feeds for layoff signals matching any of
+ * the provided company names.
  *
- * - Throttled: runs at most once per 15 minutes per browser session.
- * - Matches are injected into layoffNewsCache via injectLayoffEvent() so the
- *   BreakingNewsBanner and the scoring engine both see them automatically.
- * - Returns the list of matches found (or [] if throttled / no matches).
+ * THROTTLE: Each company has an independent 15-minute sessionStorage window
+ * (key: hp_breaking_news_last_poll:{canonical}). Only companies that haven't
+ * been polled in the last 15 minutes in this session are included in the fetch.
+ * This means switching dashboards always polls the new company immediately.
+ *
+ * MATCH CRITERIA (spec-exact):
+ *   - Company name must appear in the article TITLE (not just description).
+ *   - Article text must contain at least one of: 'layoff', 'cut', 'reduce
+ *     workforce' (primary), or any extended layoff keyword.
+ *
+ * SIDE EFFECTS: Matches are injected into layoffNewsCache via injectLayoffEvent()
+ * so the BreakingNewsBanner and the scoring engine both see them automatically.
+ *
+ * @returns Array of matches, sorted newest-first. Empty when all companies are
+ *   throttled or no matches found.
  */
 export async function pollBreakingNews(
   companyNames: string[],
+  options?: { force?: boolean },
 ): Promise<BreakingNewsMatch[]> {
   if (companyNames.length === 0) return [];
-  if (!shouldPoll()) return [];
 
-  markPolled();
-
-  // Deduplicate company names, skip obviously generic names
-  const names = [...new Set(
+  // Deduplicate and sanitise company names
+  const allNames = [...new Set(
     companyNames
       .map(n => n.trim())
-      .filter(n => n.length >= 3 && !n.toLowerCase().includes('unknown')),
+      .filter(n => n.length >= 3 && !n.toLowerCase().includes('unknown') && !n.toLowerCase().startsWith('fallback')),
   )];
-  if (names.length === 0) return [];
+  if (allNames.length === 0) return [];
 
-  // Fetch all feeds in parallel; individual failures don't abort others
+  // Per-company throttle — only poll names due for a check
+  const dueNames = options?.force ? allNames : filterDueForPoll(allNames);
+  if (dueNames.length === 0) return [];
+
+  // Mark ALL due names polled before fetching (prevents concurrent calls from
+  // double-polling when React StrictMode mounts the hook twice).
+  markPolled(dueNames);
+
+  // Fetch all feeds concurrently — individual failures don't abort others
   const feedResults = await Promise.allSettled(
     BREAKING_FEEDS.map(feed =>
       fetchFeedItems(feed.url, 3).then(items => ({ feed, items })),
@@ -203,44 +269,49 @@ export async function pollBreakingNews(
       const description = (item.description ?? item.content ?? '').trim();
       const fullText    = `${title} ${description}`;
 
-      // Must contain a layoff keyword somewhere in the article
+      // Must contain a layoff keyword anywhere in the article text
       if (!hasLayoffKeyword(fullText)) continue;
 
-      // Check each company name against the title
-      for (const companyName of names) {
+      // Company name must appear in the TITLE (spec requirement; description
+      // matching generates too many false positives).
+      for (const companyName of dueNames) {
         if (!titleMatchesCompany(title, companyName)) continue;
 
-        const publishedAt = new Date(item.pubDate ?? item.published ?? Date.now());
-        const url = item.link ?? item.url ?? '';
+        const publishedAt      = new Date(item.pubDate ?? item.published ?? Date.now());
+        const url              = item.link ?? item.url ?? '';
+        const isPrimaryKeyword = hasPrimaryKeyword(fullText);
 
         const event: LayoffNewsEvent = {
           companyName,
-          date:               publishedAt.toISOString(),
-          headline:           title,
-          percentCut:         0, // not reliably parseable from RSS titles
-          source:             feed.name,
+          date:                publishedAt.toISOString(),
+          headline:            title,
+          percentCut:          0,   // not reliably parseable from RSS titles
+          source:              feed.name,
           url,
           affectedDepartments: [],
         };
 
-        // injectLayoffEvent() deduplicates by company+date internally and
-        // notifies all BreakingNewsBanner subscribers.
+        // injectLayoffEvent() deduplicates by company+date and notifies all
+        // BreakingNewsBanner subscribers.
         injectLayoffEvent(event);
 
         matches.push({
           companyName,
-          headline:    title,
-          source:      feed.name,
+          headline:          title,
+          source:            feed.name,
           url,
           publishedAt,
-          timeAgo:     formatTimeAgo(publishedAt),
+          timeAgo:           formatTimeAgo(publishedAt),
+          isPrimaryKeyword,
+          feedRegion:        feed.region,
         });
 
-        // Only report this article once even if multiple company names match
+        // One article should only match once even if multiple company names hit
         break;
       }
     }
   }
 
-  return matches;
+  // Newest-first so the banner always shows the most recent signal
+  return matches.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
 }

@@ -62,6 +62,7 @@ import { detectCollapseStage } from "../../services/collapsePredictor";
 import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
+import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
 import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName } from "../../services/apiCircuitBreaker";
 // WS0 — shadow runner gates legacy-vs-candidate engine comparison behind
 // `ws0_shadow_runner` flag. Internally invokes auditDataPipeline.fetchAuditData
@@ -180,6 +181,25 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const [scraperGateActive, setScraperGateActive] = useState(false);
   const scraperGateResolveRef = useRef<(() => void) | null>(null);
 
+  // ── Dashboard-open RSS poll ──────────────────────────────────────────────
+  // When the user opens a dashboard (hasCompletedAssessment=true), this hook
+  // polls the three breaking-news feeds for the current company. Per-company
+  // 15-min throttle means switching companies always polls the new one.
+  // onBreakingNewsMatched fires only for the currently displayed company.
+  const { forcePoll: forceBreakingNewsPoll } = useBreakingNewsPoller(
+    state.hasCompletedAssessment ? (state.companyName ?? null) : null,
+    {
+      onBreakingNewsMatched: () => {
+        // The BreakingNewsBanner subscribes to onNewLayoffEvent() and will
+        // appear automatically when injectLayoffEvent() is called by the poller.
+        // No explicit state update needed here — the banner renders itself.
+      },
+    },
+  );
+  // Expose forcePoll on the force-refresh handler so the "Recalculate" button
+  // in the banner also triggers a fresh RSS poll before re-running the audit.
+  const handleForceBreakingNewsPoll = forceBreakingNewsPoll;
+
   // ── Supabase Realtime for breaking_news_events is handled by useCompanySignalSubscription
   // inside LayoffAuditDashboard (rendered when hasCompletedAssessment=true). That hook
   // does client-side name matching (Realtime doesn't support ilike filters), injects into
@@ -256,6 +276,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
   const handleForceRefresh = async () => {
     setIsForceRefreshing(true);
+    // Force a fresh RSS poll before re-running the audit so the breaking-news
+    // event that triggered this recalculation is reflected in the new score.
+    handleForceBreakingNewsPoll();
     try {
       await handleCalculate(true);
     } finally {
