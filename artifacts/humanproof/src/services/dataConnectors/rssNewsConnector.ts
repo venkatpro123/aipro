@@ -22,6 +22,13 @@
 //      over-counts (feed returns 50 items; only 2 are about the company).
 //      Signal is now based on *matched* articles, not the raw feed size.
 
+import {
+  isCallAllowed,
+  recordSuccess as circuitSuccess,
+  recordFailure as circuitFailure,
+  getCachedResponse,
+} from '../apiCircuitBreaker';
+
 export interface NewsSignal {
   title: string;
   source: string;
@@ -106,14 +113,24 @@ function titleFingerprint(title: string): string {
 }
 
 async function fetchRSSViaProxy(url: string): Promise<any[]> {
+  if (!isCallAllowed('rss2json')) {
+    const cached = getCachedResponse<any[]>('rss2json');
+    return cached?.data ?? [];
+  }
   try {
     const res = await fetch(`${RSS_PROXY}${encodeURIComponent(url)}`, {
       signal: AbortSignal.timeout(5000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      circuitFailure('rss2json', `HTTP ${res.status}`);
+      return [];
+    }
     const data = await res.json();
-    return data?.items ?? [];
-  } catch {
+    const items = data?.items ?? [];
+    circuitSuccess('rss2json', items);
+    return items;
+  } catch (err: any) {
+    circuitFailure('rss2json', err?.message ?? String(err));
     return [];
   }
 }

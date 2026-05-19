@@ -1,5 +1,16 @@
 // apiCircuitBreaker.ts
-// Circuit breaker for external APIs: Alpha Vantage, NewsAPI, Serper.
+// Circuit breaker for all external APIs.
+//
+// Covered APIs (9 total):
+//   alphavantage  — Alpha Vantage stock data (25/day free tier)
+//   newsapi       — NewsAPI headlines (100/day free tier)
+//   serper        — Serper.dev search (paid, fallback only)
+//   rss2json      — rss2json.com RSS proxy (shared by breakingNewsPoller + rssNewsConnector)
+//   yahoo-finance — Yahoo Finance /v8 + /v10 via proxy-live-signals EF
+//   naukri        — Naukri hiring API via proxy-live-signals EF
+//   sec-edgar     — SEC EDGAR direct HTTPS (rate-limited per IP)
+//   warn-act      — DOL WARN Act database
+//   bse           — BSE India stock API
 //
 // STATE MACHINE
 // ─────────────
@@ -32,7 +43,36 @@ import { supabase } from '../utils/supabase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type CircuitApiName = 'alphavantage' | 'newsapi' | 'serper';
+export type CircuitApiName =
+  | 'alphavantage'
+  | 'newsapi'
+  | 'serper'
+  | 'rss2json'
+  | 'yahoo-finance'
+  | 'naukri'
+  | 'sec-edgar'
+  | 'warn-act'
+  | 'bse';
+
+/** All APIs tracked by the circuit breaker — used for sync and quota snapshots. */
+export const ALL_CIRCUIT_APIS: CircuitApiName[] = [
+  'alphavantage', 'newsapi', 'serper',
+  'rss2json', 'yahoo-finance', 'naukri',
+  'sec-edgar', 'warn-act', 'bse',
+];
+
+/** Human-readable labels for circuit breaker API names. */
+export const CIRCUIT_API_LABELS: Record<CircuitApiName, string> = {
+  'alphavantage':  'Alpha Vantage',
+  'newsapi':       'NewsAPI',
+  'serper':        'Serper',
+  'rss2json':      'RSS Proxy (rss2json)',
+  'yahoo-finance': 'Yahoo Finance',
+  'naukri':        'Naukri',
+  'sec-edgar':     'SEC EDGAR',
+  'warn-act':      'WARN Act (DOL)',
+  'bse':           'BSE India',
+};
 export type CircuitState   = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export interface CircuitStatus {
@@ -161,7 +201,7 @@ export async function syncCircuitStateFromSupabase(): Promise<void> {
     const { data } = await supabase
       .from('api_circuit_status')
       .select('api_name, state, consecutive_failures, last_failure_at, last_success_at, opened_at, probe_allowed_at')
-      .in('api_name', ['alphavantage', 'newsapi', 'serper']);
+      .in('api_name', ALL_CIRCUIT_APIS);
 
     if (!data) return;
 
@@ -416,7 +456,7 @@ export interface ApiQuotaStatus {
  * Used by LayoffCalculator to show a banner when any circuit is OPEN.
  */
 export function getApiQuotaStatus(): Record<CircuitApiName, ApiQuotaStatus> {
-  const apis: CircuitApiName[] = ['alphavantage', 'newsapi', 'serper'];
+  const apis: CircuitApiName[] = ALL_CIRCUIT_APIS;
   const result = {} as Record<CircuitApiName, ApiQuotaStatus>;
   for (const api of apis) {
     const snap = getCircuitSnapshot(api);

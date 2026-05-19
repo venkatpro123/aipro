@@ -31,6 +31,12 @@
 
 import { injectLayoffEvent } from '../data/layoffNewsCache';
 import type { LayoffNewsEvent } from '../data/layoffNewsCache';
+import {
+  isCallAllowed,
+  recordSuccess as circuitSuccess,
+  recordFailure as circuitFailure,
+  getCachedResponse,
+} from './apiCircuitBreaker';
 
 // ── Feed configuration ─────────────────────────────────────────────────────
 
@@ -178,17 +184,47 @@ function markPolled(names: string[]): void {
 
 // ── Feed fetch ─────────────────────────────────────────────────────────────
 
-async function fetchFeedItems(url: string, limit = 3): Promise<any[]> {
+/**
+ * Fetch RSS items via rss2json proxy with circuit breaker protection.
+ *
+ * When 'rss2json' circuit is OPEN: return cached items (labeled fromCache=true
+ * via caller) — never silently serve stale data as live.
+ * When HALF_OPEN: one probe call; success→CLOSED, failure stays OPEN.
+ *
+ * Cache key for rss2json is shared across all feeds because the breaker tracks
+ * the proxy health (one proxy, many feeds). Per-feed item-level caching is
+ * handled by the sessionStorage throttle layer above.
+ */
+async function fetchFeedItems(
+  url: string,
+  limit = 3,
+): Promise<{ items: any[]; fromCircuitBreaker: boolean; cachedAt: number | null }> {
+  if (!isCallAllowed('rss2json')) {
+    // Circuit OPEN — return cached items if available
+    const cached = getCachedResponse<any[]>('rss2json');
+    return {
+      items:               (cached?.data ?? []).slice(0, limit),
+      fromCircuitBreaker:  true,
+      cachedAt:            cached?.cachedAt ?? null,
+    };
+  }
+
   try {
     const res = await fetch(
       `${RSS_PROXY}${encodeURIComponent(url)}&count=${limit}`,
       { signal: AbortSignal.timeout(8_000) },
     );
-    if (!res.ok) return [];
+    if (!res.ok) {
+      circuitFailure('rss2json', `HTTP ${res.status}`);
+      return { items: [], fromCircuitBreaker: false, cachedAt: null };
+    }
     const data = await res.json();
-    return (data?.items ?? []).slice(0, limit);
-  } catch {
-    return [];
+    const items = (data?.items ?? []).slice(0, limit);
+    circuitSuccess('rss2json', items);
+    return { items, fromCircuitBreaker: false, cachedAt: null };
+  } catch (err: any) {
+    circuitFailure('rss2json', err?.message ?? String(err));
+    return { items: [], fromCircuitBreaker: false, cachedAt: null };
   }
 }
 
@@ -207,6 +243,10 @@ export interface BreakingNewsMatch {
   isPrimaryKeyword:  boolean;
   /** Which feed region the match came from. */
   feedRegion:        'US' | 'IN';
+  /** True when this match came from circuit breaker cache (rss2json OPEN). */
+  fromCircuitBreaker: boolean;
+  /** Unix ms timestamp of when the cached item was fetched. Null when live. */
+  cachedAt:          number | null;
 }
 
 /**
@@ -251,10 +291,11 @@ export async function pollBreakingNews(
   // double-polling when React StrictMode mounts the hook twice).
   markPolled(dueNames);
 
-  // Fetch all feeds concurrently — individual failures don't abort others
+  // Fetch all feeds concurrently — individual failures don't abort others.
+  // Each fetchFeedItems call returns { items, fromCircuitBreaker, cachedAt }.
   const feedResults = await Promise.allSettled(
     BREAKING_FEEDS.map(feed =>
-      fetchFeedItems(feed.url, 3).then(items => ({ feed, items })),
+      fetchFeedItems(feed.url, 3).then(result => ({ feed, ...result })),
     ),
   );
 
@@ -262,7 +303,7 @@ export async function pollBreakingNews(
 
   for (const result of feedResults) {
     if (result.status !== 'fulfilled') continue;
-    const { feed, items } = result.value;
+    const { feed, items, fromCircuitBreaker, cachedAt } = result.value;
 
     for (const item of items) {
       const title       = (item.title ?? '').trim();
@@ -289,6 +330,10 @@ export async function pollBreakingNews(
           source:              feed.name,
           url,
           affectedDepartments: [],
+          // Circuit breaker provenance — preserved through injectLayoffEvent
+          // spread so BreakingNewsBanner can label stale cache items.
+          _fromCircuitBreaker: fromCircuitBreaker,
+          _cachedAt:           fromCircuitBreaker ? (cachedAt ?? null) : null,
         };
 
         // injectLayoffEvent() deduplicates by company+date and notifies all
@@ -304,6 +349,10 @@ export async function pollBreakingNews(
           timeAgo:           formatTimeAgo(publishedAt),
           isPrimaryKeyword,
           feedRegion:        feed.region,
+          // Circuit breaker provenance — BreakingNewsBanner uses this to
+          // display "Cached [N] hours ago" when rss2json circuit is OPEN.
+          fromCircuitBreaker,
+          cachedAt: cachedAt ?? null,
         });
 
         // One article should only match once even if multiple company names hit

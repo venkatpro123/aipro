@@ -62,11 +62,16 @@ export const BreakingNewsBanner: React.FC<Props> = ({
 
   if (!event || dismissed) return null;
 
-  const publishedAt = new Date(event.date);
-  const isValidDate = !isNaN(publishedAt.getTime());
-  const timeAgo     = isValidDate ? formatTimeAgo(publishedAt) : null;
-  const feedLabel   = event.source ? (FEED_SHORT[event.source] ?? event.source) : null;
-  const hasUrl      = !!(event.url);
+  const publishedAt       = new Date(event.date);
+  const isValidDate       = !isNaN(publishedAt.getTime());
+  const timeAgo           = isValidDate ? formatTimeAgo(publishedAt) : null;
+  const feedLabel         = event.source ? (FEED_SHORT[event.source] ?? event.source) : null;
+  const hasUrl            = !!(event.url);
+  const isCircuitCached   = !!(event as any)._fromCircuitBreaker;
+  const cachedAtMs        = (event as any)._cachedAt as number | null | undefined;
+  const cacheAgeLabel     = isCircuitCached && cachedAtMs
+    ? `Cached ${formatTimeAgo(new Date(cachedAtMs))}`
+    : null;
 
   return (
     <AnimatePresence>
@@ -93,7 +98,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Header row: "Breaking Signal" label + feed source tag + time */}
+          {/* Header row: "Breaking Signal" label + feed source tag + time + cache badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
             <span style={{
               fontFamily: 'var(--font-mono)', fontWeight: 700,
@@ -115,12 +120,25 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 {feedLabel}
               </span>
             )}
-            {timeAgo && (
+            {timeAgo && !cacheAgeLabel && (
               <span style={{
                 fontSize: '0.65rem', color: 'var(--text-secondary)',
                 fontFamily: 'var(--font-mono)',
               }}>
                 {timeAgo}
+              </span>
+            )}
+            {/* Explicit "Cached N hours ago" label — never silently serve stale data as live */}
+            {cacheAgeLabel && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '1px 7px', borderRadius: '999px',
+                background: 'rgba(234,179,8,0.15)',
+                border: '1px solid rgba(234,179,8,0.35)',
+                fontSize: '0.65rem', fontWeight: 600,
+                color: '#fde047', fontFamily: 'var(--font-mono)',
+              }}>
+                {cacheAgeLabel}
               </span>
             )}
           </div>
@@ -141,15 +159,15 @@ export const BreakingNewsBanner: React.FC<Props> = ({
             )}
           </p>
 
-          {/* Explanatory copy */}
+          {/* Explanatory copy — honest about cached vs live signal provenance */}
           <p style={{
             fontSize: '0.7rem', color: 'var(--text-secondary)',
             lineHeight: 1.5, marginBottom: '10px',
           }}>
-            Your current score was calculated before this event. This closes
-            the gap between weekly pipeline runs and breaking announcements —
-            recalculating will incorporate this into the layoff history signal
-            (L2) and update the risk score.
+            {isCircuitCached
+              ? `The RSS feed is temporarily unavailable (circuit breaker open). This signal was read from a local cache${cacheAgeLabel ? ` (${cacheAgeLabel.toLowerCase()})` : ''}. Recalculate to attempt a live re-fetch and incorporate any new data.`
+              : 'Your current score was calculated before this event. This closes the gap between weekly pipeline runs and breaking announcements — recalculating will incorporate this into the layoff history signal (L2) and update the risk score.'
+            }
           </p>
 
           {/* CTA row */}

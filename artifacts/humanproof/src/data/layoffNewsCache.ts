@@ -25,6 +25,12 @@ export interface LayoffNewsEvent {
   _seeded?: boolean;
   /** Signal confidence 0–1; seeded fallbacks default to 0.40, curated events to 0.90 */
   confidence?: number;
+  /** True when this event was sourced from circuit breaker cache (rss2json OPEN).
+   *  BreakingNewsBanner uses this to show "Cached [N] hours ago" — never silently
+   *  serve stale data as live. */
+  _fromCircuitBreaker?: boolean;
+  /** Unix ms timestamp of when the cached item was fetched. Only set when _fromCircuitBreaker=true. */
+  _cachedAt?: number | null;
 }
 
 // ─── Department taxonomy ─────────────────────────────────────────────────────

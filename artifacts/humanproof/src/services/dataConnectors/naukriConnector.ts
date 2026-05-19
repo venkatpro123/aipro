@@ -16,6 +16,12 @@ import {
   incrementRequestCount,
   isQuotaExhausted,
 } from '../apiDegradationMonitor';
+import {
+  isCallAllowed,
+  recordSuccess as circuitSuccess,
+  recordFailure as circuitFailure,
+  getCachedResponse,
+} from '../apiCircuitBreaker';
 
 export interface RoleDemandSignal {
   roleTitle: string;
@@ -168,6 +174,21 @@ export async function fetchRoleDemandSignal(
     };
   }
 
+  // Circuit breaker gate for Naukri/hiring EF — OPEN means the proxy has
+  // been unavailable; serve cached signal with disclosure.
+  if (!isCallAllowed('naukri')) {
+    const cached = getCachedResponse<RoleDemandSignal>('naukri');
+    if (cached?.data) {
+      const ageHours = Math.round((Date.now() - cached.cachedAt) / 3_600_000);
+      return {
+        ...cached.data,
+        disclosure: `Naukri circuit breaker open — serving cached hiring data from ${ageHours > 0 ? `${ageHours} hour${ageHours !== 1 ? 's' : ''} ago` : 'earlier this session'}. Not live.`,
+        _stale: true,
+      };
+    }
+    return heuristicSignal(roleTitle, company, 'serper_unavailable');
+  }
+
   try {
     const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
       body: { action: 'hiring', roleTitle, companyName: company },
@@ -211,6 +232,7 @@ export async function fetchRoleDemandSignal(
       // Persist to company_skill_demand_cache so CareerSkillsTab can overlay
       // company-specific demand badges. Fire-and-forget — never blocks the caller.
       persistCompanySkillDemand(liveResult);
+      circuitSuccess('naukri', liveResult);
       return liveResult;
     }
 
@@ -220,6 +242,7 @@ export async function fetchRoleDemandSignal(
       } else {
         recordApiDegradation('serper', 'network_error', error.message);
       }
+      circuitFailure('naukri', error.message);
     }
     if (data?.errors?.length) {
       console.info('[NaukriConnector] Edge Function:', data.errors.join('; '));
@@ -230,6 +253,7 @@ export async function fetchRoleDemandSignal(
     } else {
       recordApiDegradation('serper', 'network_error', e?.message);
     }
+    circuitFailure('naukri', e?.message ?? 'unknown');
     console.info('[NaukriConnector] Edge Function unavailable:', e?.message);
   }
 
@@ -245,7 +269,7 @@ export async function fetchRoleDemandSignal(
     ? (import.meta as any).env?.VITE_SERPER_KEY as string | undefined
     : undefined;
 
-  if (isLocalhost && devSerperKey) {
+  if (isLocalhost && devSerperKey && isCallAllowed('serper')) {
     try {
       const [naukriRes, linkedinRes] = await Promise.all([
         fetch('https://google.serper.dev/search', {
@@ -293,10 +317,14 @@ export async function fetchRoleDemandSignal(
         fetchedAt:         new Date().toISOString(),
       };
       persistCompanySkillDemand(devResult);
+      circuitSuccess('serper', devResult);
       return devResult;
     } catch (e: any) {
       if (isRateLimitError(e)) {
         recordApiDegradation('serper', 'rate_limited', `Direct Serper 429: ${e?.message}`);
+        circuitFailure('serper', `rate_limited: ${e?.message}`);
+      } else {
+        circuitFailure('serper', e?.message ?? 'unknown');
       }
       /* fall through to heuristic */
     }

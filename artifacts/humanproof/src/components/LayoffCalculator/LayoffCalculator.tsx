@@ -63,7 +63,7 @@ import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
-import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName } from "../../services/apiCircuitBreaker";
+import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName, CIRCUIT_API_LABELS } from "../../services/apiCircuitBreaker";
 // WS0 — shadow runner gates legacy-vs-candidate engine comparison behind
 // `ws0_shadow_runner` flag. Internally invokes auditDataPipeline.fetchAuditData
 // when the flag is off, so downstream consumers see the legacy shape.
@@ -1552,39 +1552,84 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         </div>
       )}
 
-      {/* Circuit-open banner — only shown when ALL live sources failed (genuineApiSignals=0).
-          alphavantage / newsapi / serper are now FALLBACK-only APIs; their circuits being OPEN
-          does not indicate an outage since Yahoo Finance + RSS scraping + Naukri direct are primary.
-          We only warn if the liveDataCoverage shows zero genuine signals from any source. */}
+      {/* Circuit-open banner — covers all 9 tracked APIs.
+          Primary APIs (yahoo-finance, rss2json, naukri): open circuit = real degradation,
+          always shown regardless of genuineApiSignals.
+          Fallback-only APIs (alphavantage, newsapi, serper, sec-edgar, warn-act, bse):
+          only shown when genuineApiSignals = 0 (primary sources also failed).
+          Each open API shows "Cached N hours ago" when cached data is available —
+          never silently serve stale data as live. */}
       {state.hasCompletedAssessment &&
         !state.isCalculating &&
         apiQuotaStatus &&
         (() => {
-          const coverage = (state.scoreResult as any)?._liveDataCoverage;
+          const coverage      = (state.scoreResult as any)?._liveDataCoverage;
           const genuineSignals = coverage?.genuineApiSignals ?? null;
-          const openAPIs = Object.entries(apiQuotaStatus).filter(([, s]) => s.state === 'OPEN');
-          // Only show the banner when primary scraped sources also failed (no genuine live signals)
-          // AND old fallback APIs are open. If scraped sources worked, the open-API circuits
-          // are irrelevant — they're fallbacks that weren't needed.
           const primaryAlsoFailed = genuineSignals === 0 || genuineSignals === null;
-          return openAPIs.length > 0 && primaryAlsoFailed;
-        })() && (
-          <div className="max-w-4xl mx-auto px-4 mb-3">
-            <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              <span className="mt-0.5 text-base">⚠</span>
-              <div>
-                <span className="font-semibold text-amber-100">Paid API fallbacks unavailable</span>
-                <span className="ml-2 text-amber-300/80">
-                  {Object.entries(apiQuotaStatus)
-                    .filter(([, s]) => s.state === 'OPEN')
-                    .map(([api, s]) =>
-                      `${api}${s.cachedAgeLabel ? ` (cached ${s.cachedAgeLabel})` : ''}`
-                    ).join(', ')} — primary scraped sources (Yahoo Finance, RSS, Naukri direct) are still active.
-                </span>
-              </div>
+
+          // Primary scraped APIs — always actionable when open
+          const PRIMARY_APIS: CircuitApiName[] = ['yahoo-finance', 'rss2json', 'naukri'];
+          // Fallback-only — only surface when primaries also failed
+          const FALLBACK_APIS: CircuitApiName[] = ['alphavantage', 'newsapi', 'serper', 'sec-edgar', 'warn-act', 'bse'];
+
+          const openPrimary  = PRIMARY_APIS.filter(api => apiQuotaStatus[api]?.state === 'OPEN');
+          const openFallback = FALLBACK_APIS.filter(api => apiQuotaStatus[api]?.state === 'OPEN');
+
+          const showPrimary  = openPrimary.length > 0;
+          const showFallback = openFallback.length > 0 && primaryAlsoFailed;
+
+          if (!showPrimary && !showFallback) return null;
+
+          const formatEntry = (api: CircuitApiName) => {
+            const s = apiQuotaStatus[api];
+            const label = CIRCUIT_API_LABELS[api] ?? api;
+            return s?.cachedAgeLabel
+              ? `${label} — Cached ${s.cachedAgeLabel}`
+              : `${label} — no cached data`;
+          };
+
+          return (
+            <div className="max-w-4xl mx-auto px-4 mb-3 flex flex-col gap-2">
+              {showPrimary && (
+                <div className="flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  <span className="mt-0.5 text-base flex-shrink-0">⛔</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-red-100">Primary data source{openPrimary.length > 1 ? 's' : ''} unavailable</span>
+                    <ul className="mt-1 space-y-0.5">
+                      {openPrimary.map(api => (
+                        <li key={api} className="text-red-300/90 font-mono text-xs">
+                          {formatEntry(api)}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-1.5 text-red-300/70 text-xs">
+                      Circuit open after 3 consecutive failures. Probe will retry in 5 minutes.
+                      Scores are based on cached or heuristic data — not live signals.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {showFallback && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                  <span className="mt-0.5 text-base flex-shrink-0">⚠</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-amber-100">Fallback API{openFallback.length > 1 ? 's' : ''} also unavailable</span>
+                    <ul className="mt-1 space-y-0.5">
+                      {openFallback.map(api => (
+                        <li key={api} className="text-amber-300/80 font-mono text-xs">
+                          {formatEntry(api)}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-1.5 text-amber-300/60 text-xs">
+                      All data sources are degraded. Score confidence is reduced — recalculate when connectivity is restored.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
       {/* Live signal status banner — shows data coverage tier and live vs DB breakdown */}
       {state.hasCompletedAssessment &&
