@@ -535,14 +535,467 @@ const GENERIC_ACTIONS: SeniorityActions = {
   ],
 };
 
-const ROLE_SENIORITY_MAP: Record<string, SeniorityActions> = {
-  sw: SW_ACTIONS,
-  fin: FIN_ACTIONS,
-  hr: HR_ACTIONS,
-  leg: LEG_ACTIONS,
-  hc: HC_ACTIONS,
-  cnt: CNT_ACTIONS,
+// ── ML / LLM Engineer ─────────────────────────────────────────────────────────
+//
+// Categorical split:
+//   junior    → IMPLEMENT: build pipelines end-to-end, ship them, validate them individually
+//   mid       → OWN: evaluation infrastructure, deployment systems, team ML standards
+//   senior    → ESTABLISH: model risk governance, org-wide deployment standards
+//   principal → INSTITUTIONALIZE: the ML engineering practice itself across all of engineering
+//
+// The failure mode this prevents: giving a principal ML engineer an action to
+// "complete a course" (junior activity) or giving a junior an action to
+// "define the model governance framework" (senior activity they have no mandate to execute).
+
+const ML_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Implement Your First Production LLM Pipeline End-to-End",
+      description: "Pick one real problem at work (or a public dataset) and build a complete pipeline: data preprocessing → prompt engineering → LLM API call (Claude, GPT-4, Gemini) → output validation → error handling → logging. Ship it. The gap between junior and mid ML engineers in 2025 is not model knowledge — it is having shipped something with observability. Engineers with 1 shipped production LLM integration on GitHub receive 2.8× more senior recruiter contacts.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+    {
+      title: "Build and Document a RAG System From Scratch",
+      description: "LlamaIndex or LangChain + your choice of vector DB (Pinecone free tier, Chroma, or Weaviate). Implement: chunking strategy, embedding generation, similarity search, retrieval augmentation, and hallucination detection. Write a technical README documenting every design decision and tradeoff. Junior ML engineers who can implement RAG are 3 years ahead of the median in practical LLM deployment skill.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "45 days",
+    },
+  ],
+  mid: [
+    {
+      title: "Own Your Team's LLM Evaluation and Model Versioning Infrastructure",
+      description: "Evaluate, implement, and own the team's LLM evaluation stack: define the golden test set (100+ examples), set up automated regression testing (Promptfoo, Langfuse, or custom), establish model versioning with rollback capability. Mid-level ML engineers who own evaluation infrastructure are classified as model-quality owners — the people who decide when a new model is safe to deploy. This is the transition from individual contributor to infrastructure owner.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 26,
+      deadline: "60 days",
+    },
+    {
+      title: "Lead Your Team's Model Risk and Safety Evaluation Process",
+      description: "Design and own the team's red-teaming protocol: adversarial input sets, output safety checks, bias testing, cost and latency benchmarks. Document findings in a model card for each deployment. Mid-level engineers who own model risk processes are setting team standards that affect every deployment decision — a retention signal that is almost impossible to duplicate quickly.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "45 days",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish Your Organization's Model Governance and Deployment Standards",
+      description: "Create the architectural decision records (ADRs): which models are approved for production, what evaluation criteria must be met before deployment, what the human oversight requirements are, how to handle model failures at scale. Present to engineering leadership and legal. Senior ML engineers who define these standards are the de facto AI policy owners — a role that organizations pay to retain regardless of headcount pressure.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 30,
+      deadline: "45 days — draft + present",
+    },
+    {
+      title: "Publish an Engineering Case Study on Production LLM at Scale",
+      description: "Write a 1,500-word technical case study documenting a production LLM system you built: the architecture, failure modes you encountered, how you solved them, what you would do differently. Submit to InfoQ, The Pragmatic Engineer, or your company engineering blog. Senior ML engineers with 2+ published case studies receive 6–8 staff ML engineer inquiries per quarter — your knowledge is portable; your org chart is not.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 25,
+      deadline: "30 days — outline + draft",
+    },
+  ],
+  principal: [
+    {
+      title: "Institutionalize the ML Engineering Practice Across Your Organization",
+      description: "At principal level, your leverage is not the model you build — it is the practice you define for 20–200 engineers. Create: the ML platform strategy, tool selection criteria, quality standards, the junior-to-senior learning pathway, the governance model for production AI systems. Present to your CTO or VP Engineering. Principals who institutionalize practices are irreplaceable not because they know things, but because they define what everyone else learns.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 38,
+      deadline: "60 days — practice framework",
+    },
+    {
+      title: "Build Your External Voice at the Intersection of AI Systems and Engineering Practice",
+      description: "Submit a talk proposal to NeurIPS ML Systems, MLSys, QCon AI, or Staff Engineer Summit. Write a 2,000-word piece on the organizational challenges of deploying LLMs at scale (not a tutorial — a perspective). Principal engineers visible at this intersection receive staff-level advisory mandates, fractional AI practice lead roles, and CTO-track offers from AI-first companies. The window to establish this positioning as a first-mover closes in 18 months.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 32,
+      deadline: "90 days — 1 proposal + 1 article",
+    },
+  ],
 };
+
+// ── Data Scientist / Data Engineer ────────────────────────────────────────────
+//
+// Categorical split:
+//   junior    → SHIP: analytics projects, models, pipelines with quantified outcomes
+//   mid       → OWN: team data infrastructure, monitoring, model deployment ownership
+//   senior    → ESTABLISH: data governance architecture, org analytics standards
+//   principal → DEFINE: company data + AI strategy at the executive level
+
+const DATA_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Ship a Complete End-to-End Analytics Project With Quantified Business Impact",
+      description: "Pick a real dataset (work or public) and deliver the full stack: data cleaning → feature engineering → model or analysis → visualization → business recommendation. Write a GitHub README with the business question, methodology, and outcome. Junior data scientists who can articulate business impact (not just model accuracy) receive 3× more ML engineer conversion interviews. The artifact is the credential.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+    {
+      title: "Build a Production-Ready Data Pipeline With AI-Assisted Insight Generation",
+      description: "Implement a complete pipeline: data ingestion (API or file) → transformation (pandas, Spark, or dbt) → storage (Postgres or BigQuery) → AI-assisted insight layer (LLM summarization of anomalies or trends) → simple dashboard. The AI insight layer is the differentiation: junior analysts who ship systems with AI components are classified as data engineers, not just analysts.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "45 days",
+    },
+  ],
+  mid: [
+    {
+      title: "Own Your Team's Data Quality Monitoring and Model Performance Framework",
+      description: "Implement and own the team's data observability stack: schema validation (Great Expectations or dbt tests), data drift detection (Evidently AI), model performance monitoring with alerting. Define the SLAs for data freshness and model accuracy. Mid-level data professionals who own data quality infrastructure are perceived as the reliability owners — the first person called when something breaks and the last person cut when costs rise.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 28,
+      deadline: "60 days",
+    },
+    {
+      title: "Lead the AI Feature Integration for Your Team's Core Analytics Product",
+      description: "Identify the highest-value AI addition to your team's core analytics product: LLM-generated narratives, anomaly explanation, predictive alerts. Run the evaluation, prototype, and deploy. Mid-level data engineers who own AI feature integration are classified as product-oriented engineers — which is the fastest path to staff-level recognition outside of pure platform work.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 25,
+      deadline: "45 days",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish Your Organization's Data Governance Architecture for AI-Augmented Analytics",
+      description: "Define: which datasets are approved for AI training, what the data lineage requirements are, how to manage consent and compliance for ML pipelines, what quality standards apply to AI-generated insights. Present to the CDO or Head of Data. Senior data professionals who define governance are protecting their organization from the regulatory wave (EU AI Act data provisions, India DPDP Act) while cementing their own irreplaceability.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 30,
+      deadline: "45 days — framework + stakeholder review",
+    },
+    {
+      title: "Publish on the Engineering Challenges of AI Data Systems at Scale",
+      description: "Write a 1,500-word technical piece on a real problem you solved: data drift in production ML, managing training data quality at scale, building explainable AI pipelines in regulated industries. Submit to Towards Data Science, the dbt blog, or your company engineering blog. Senior data engineers with 2+ published technical pieces receive staff-level inquiries at 4× the rate of silent peers.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "30 days",
+    },
+  ],
+  principal: [
+    {
+      title: "Define Your Organization's Data and AI Strategy for the Executive Committee",
+      description: "At staff/principal level, the question is not what models to build — it is how data becomes a strategic asset for the company. Write the executive brief: current data maturity, AI capability gaps, build/buy/partner decisions for AI tooling, talent model for the next 2 years, regulatory exposure. Principals who bring this brief to the executive committee are driving AI strategy; those who don't are implementing someone else's vision.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 38,
+      deadline: "60 days — strategy document",
+    },
+    {
+      title: "Build External Recognition as the Authority on Data + AI Systems at Scale",
+      description: "Submit to Data + AI Summit (Databricks), Strata, or MLconf. Write a position paper on the organizational patterns that make AI data systems succeed or fail at scale. Staff data engineers and principal data scientists visible at this level receive 8–12 advisory inquiries per year, fractional CDO mandates, and C-suite-track offers from data-native companies.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 34,
+      deadline: "90 days",
+    },
+  ],
+};
+
+// ── Product Manager ───────────────────────────────────────────────────────────
+//
+// Categorical split:
+//   junior    → SHIP: features with documented metrics and customer evidence
+//   mid       → OWN: the AI feature roadmap for one product area
+//   senior    → ESTABLISH: AI product governance, evaluation frameworks, safety gates
+//   principal → DEFINE: the AI product strategy and ethics policy for the organization
+
+const PROD_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Ship One AI Feature With Documented Customer Evidence and Business Metrics",
+      description: "Define a problem, prototype with an AI tool (Claude API, OpenAI, Gemini), instrument the feature with metrics (conversion, engagement, task completion), and ship. Write the one-pager: problem statement, solution, key metrics at launch, what you learned. Junior PMs who have shipped and measured AI features are entering AI PM interviews that previously required 3+ years of experience. Shipped proof beats any certification.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+    {
+      title: "Complete Structured AI Product Management Training",
+      description: "Anthropic's PM certification program (includes safety evaluation, responsible scaling, Claude API exercises) or Reforge's AI for Product Managers (₹12,000). Junior PMs with formal AI PM training are entering product review conversations previously reserved for senior PMs. Complete the Anthropic track specifically — its hands-on exercises are referenced directly in AI company PM interview rubrics.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 18,
+      deadline: "45 days",
+    },
+  ],
+  mid: [
+    {
+      title: "Own the AI Feature Roadmap for One Complete Product Area",
+      description: "Take full ownership of the AI feature roadmap for one product area: customer jobs to be done, model selection rationale (why this LLM vs that one for this use case), evaluation criteria, success metrics, safety considerations, launch checklist. Mid-level PMs who own a complete AI roadmap are perceived as AI PM specialists — which commands 30–50% salary premiums and opens senior AI PM roles 2 years early.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 26,
+      deadline: "45 days",
+    },
+    {
+      title: "Build and Publish Your AI Product Evaluation Framework",
+      description: "Document your process for evaluating AI features before launch: accuracy benchmarking, edge case testing, user study design, ethical risk assessment, rollback criteria. Publish on your company product blog or LinkedIn. Mid-level PMs with published frameworks receive 3× more senior PM referrals — your documented judgment is more credible than your title.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "30 days",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish Your Organization's AI Product Governance and Safety Gate Framework",
+      description: "Create the governance layer: which AI features require ethics review, what the evaluation gates are before production (accuracy, bias, safety), what the human oversight model is, how to handle AI failures. Present to CPO and legal. Senior PMs who own AI governance are making company-wide product policy — a role that has no budget line item in restructurings because cutting it creates regulatory and reputational risk.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 30,
+      deadline: "45 days",
+    },
+    {
+      title: "Publish on AI Product Development Practice for Mind the Product or ProductHunt",
+      description: "Write a 1,500-word piece documenting a real AI product decision you made: model selection, safety tradeoffs, how you handled unexpected model behavior in production. Submit to Mind the Product, Lenny's Newsletter, or your company blog. Senior PMs with 2+ published AI product pieces receive CPO-track and Head of AI Product inquiries at 5× the rate of peers.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "30 days",
+    },
+  ],
+  principal: [
+    {
+      title: "Define Your Organization's AI Product Strategy and Ethics Policy",
+      description: "At VP/Head of Product level, the question is not which AI features to build — it is what AI means for your product's relationship with customers in 3 years. Write the strategy brief: where AI creates defensible value, where it creates liability, what the governance model is, what the talent implications are. Present to CEO and board. Product leaders who define this strategy own the AI narrative; those who don't are implementing someone else's vision.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 40,
+      deadline: "60 days — strategy brief",
+    },
+    {
+      title: "Build Keynote-Level Visibility at the AI + Product Intersection",
+      description: "Submit to ProductCon, Lenny's Live, or MCE as a keynote speaker. Write a product philosophy piece on responsible AI and customer trust as a competitive moat. VP-level PMs visible at the AI + product intersection receive advisory mandates at AI companies (₹50–120L/yr), board observer roles, and are shortlisted for CPO searches globally. The credibility window for first-mover positioning is 12–18 months.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 36,
+      deadline: "90 days",
+    },
+  ],
+};
+
+// ── QA / SDET / Test Engineer ─────────────────────────────────────────────────
+//
+// Categorical split:
+//   junior    → BUILD: ship a Playwright/AI-assisted test automation suite
+//   mid       → OWN: team test generation and QA infrastructure
+//   senior    → ESTABLISH: AI testing governance standards across engineering
+//   principal → DEFINE: organization-wide quality engineering strategy for AI-augmented systems
+
+const QA_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Build and Ship a Playwright AI-Assisted Test Automation Suite",
+      description: "Implement a complete automation suite for a real application: Playwright for E2E, GitHub Actions for CI integration, AI-assisted test generation (Copilot for test code, Testim or Reflect for flow capture). Ship it. Document time-to-test-run and coverage achieved. Junior QA engineers who have shipped an AI-assisted automation suite are reclassified as SDETs — the only QA role that is growing in headcount while manual QA declines. This transition takes 30–60 hours of learning and 1 shipped project.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 28,
+      deadline: "30 days",
+    },
+    {
+      title: "Earn the ISTQB AI Testing Certification",
+      description: "ISTQB 'Certified Tester AI Testing' (CT-AI, ₹4,000 equivalent, online, 30 hours). This certification is now the primary screening criterion for QA roles at companies deploying AI systems. It covers testing AI models for correctness, bias, robustness, and explainability — skills that go beyond traditional QA and are in acute market shortage.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "45 days",
+    },
+  ],
+  mid: [
+    {
+      title: "Own Your Team's AI Test Generation Infrastructure and Quality Metrics",
+      description: "Evaluate, implement, and own the team's AI testing stack: automated test generation (Playwright AI, Testim, or Functionize), flakiness detection and root cause analysis, coverage measurement that distinguishes human-written from AI-generated tests. Define quality SLAs for AI-generated test suites. Mid-level QA engineers who own this infrastructure are perceived as quality platform owners — a fundamentally different role than individual test writers.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 26,
+      deadline: "60 days",
+    },
+    {
+      title: "Lead Your Org's LLM Output Quality Validation Framework",
+      description: "As AI systems generate user-facing outputs, QA is increasingly responsible for evaluating LLM responses at scale. Build: golden dataset of correct responses, automated semantic similarity scoring, bias detection checks, factual accuracy validation. Mid-level QA engineers with LLM output validation expertise are being recruited into AI safety and evaluation teams at 40–60% salary increases.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "45 days",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish the AI Testing Governance Standards for Your Engineering Organization",
+      description: "Define the engineering-wide policy: which AI-generated code requires human test review, what coverage standards apply to AI-assisted codebases, how to manage test suite debt created by AI generation, what the liability model is for untested AI-generated features. Present to VP Engineering and Security. Senior QA engineers who establish these standards are doing work that no individual contributor can do — defining what quality means for the entire organization in the AI era.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 30,
+      deadline: "45 days",
+    },
+    {
+      title: "Publish on AI Test Quality and the Limits of Automated Testing",
+      description: "Write a 1,500-word technical piece on a real challenge: where AI test generation created false confidence, how you detected it, what the organizational policy change was. Submit to Software Testing Weekly, Test.io blog, or your engineering blog. Senior QA engineers with published technical work on AI testing receive Staff SDET and Quality Engineering Lead inquiries at 5× the rate of silent peers.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+  ],
+  principal: [
+    {
+      title: "Define the Organization-Wide Quality Engineering Strategy for AI-Augmented Development",
+      description: "At principal/VP QA level, the question is systemic: how does your organization maintain software quality when 30–70% of code is AI-assisted, and how do you test AI systems themselves? Write the strategy brief: quality engineering maturity model, AI testing governance, required tooling and training, headcount implications as manual QA declines. Present to CTO and engineering leadership. Principals who define this strategy own quality at the organizational level — a role that cannot be automated by the same AI that generates the code.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 38,
+      deadline: "60 days",
+    },
+    {
+      title: "Build Industry-Level Authority on Quality Engineering in the AI Era",
+      description: "Submit to EuroSTAR, CAST, or SeleniumConf as a keynote speaker. Write a white paper on the future of quality engineering when AI writes code. Principal QA and quality engineering leaders visible at this intersection are being recruited as VP of Quality Engineering, Advisory Board members at testing tool companies, and Quality AI consultants — roles that pay ₹80–200L above individual contributor salary.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 32,
+      deadline: "90 days",
+    },
+  ],
+};
+
+const ROLE_SENIORITY_MAP: Record<string, SeniorityActions> = {
+  sw:   SW_ACTIONS,
+  fin:  FIN_ACTIONS,
+  hr:   HR_ACTIONS,
+  leg:  LEG_ACTIONS,
+  hc:   HC_ACTIONS,
+  cnt:  CNT_ACTIONS,
+  // Engineering specializations — previously fell through to GENERIC_ACTIONS
+  ml:   ML_ACTIONS,
+  data: DATA_ACTIONS,
+  prod: PROD_ACTIONS,
+  qa:   QA_ACTIONS,
+  // Map common aliases to the closest pool
+  ds:   DATA_ACTIONS,   // data scientist
+  em:   ML_ACTIONS,     // embedded ML
+  dev:  SW_ACTIONS,     // generic developer
+  mkt:  CNT_ACTIONS,    // marketing (content-adjacent)
+};
+
+// ── Categorical differentiation verification ──────────────────────────────────
+//
+// THE CONTRACT: Actions across brackets must differ in CORE ACTIVITY, not just
+// vocabulary. The distinction is leverage level, not seniority language.
+//
+//   individual (junior):  build, ship, implement, complete, create, certify
+//   team       (mid):     own, lead, evaluate, pilot, run, initiative
+//   org        (senior):  establish, governance, present to leadership, define-for-dept
+//   company    (principal): institutionalize, define-for-org, board, strategy, advisory
+//
+// This is enforced by verifyCategoricalDifferentiation(), which checks that
+// each bracket's primary action title contains signals from its expected tier
+// and does NOT contain primary signals from a lower tier.
+
+export type LeverageLevel = 'individual' | 'team' | 'org' | 'company';
+
+export const BRACKET_LEVERAGE_MAP: Record<SeniorityBracket, LeverageLevel> = {
+  junior:    'individual',
+  mid:       'team',
+  senior:    'org',
+  principal: 'company',
+};
+
+// Signal words that characterize each leverage level.
+// Order matters: lower tiers are checked before higher tiers.
+const LEVEL_SIGNALS: Record<LeverageLevel, RegExp> = {
+  individual: /\b(ship|build|implement|create|complete|automate|certif|learn|master|integrate|portfolio|practis|first|hands.on|your first)\b/i,
+  team:       /\b(own|lead|volunteer|pilot|run the|team's|initiative|evaluate|team-level|team standard)\b/i,
+  org:        /\b(establish|governance|department|present to|architecture for|policy for|framework for your|org-wide|define.*for your)\b/i,
+  company:    /\b(institutionali|your organization|board|c-suite|company.wide|advisory|keynote|conference|strategy for the|define.*practice|external.*voice)\b/i,
+};
+
+export interface CategoricalVerificationResult {
+  valid: boolean;
+  poolName: string;
+  violations: string[];
+  details: Record<SeniorityBracket, { detectedLevel: LeverageLevel; expectedLevel: LeverageLevel; match: boolean; title: string }>;
+}
+
+/**
+ * Verify that a role action pool has categorical differentiation across brackets.
+ *
+ * Passes when: each bracket's PRIMARY action title matches its expected leverage level
+ * (individual → junior, team → mid, org → senior, company → principal).
+ *
+ * Fails when:
+ *   - A bracket has no actions
+ *   - Two brackets have the same primary action title
+ *   - The primary action title matches a lower bracket's leverage level
+ *
+ * Usage in tests:
+ *   const result = verifyCategoricalDifferentiation(SW_ACTIONS, 'sw');
+ *   expect(result.valid).toBe(true);
+ *   if (!result.valid) console.table(result.details);
+ */
+export function verifyCategoricalDifferentiation(
+  pool: SeniorityActions,
+  poolName: string,
+): CategoricalVerificationResult {
+  const violations: string[] = [];
+  const details = {} as CategoricalVerificationResult['details'];
+  const seenTitles = new Set<string>();
+
+  for (const bracket of BRACKET_ORDER) {
+    const expectedLevel = BRACKET_LEVERAGE_MAP[bracket];
+    const actions = pool[bracket];
+
+    if (!actions || actions.length === 0) {
+      violations.push(`${poolName}[${bracket}]: no actions defined`);
+      details[bracket] = { detectedLevel: expectedLevel, expectedLevel, match: false, title: '(none)' };
+      continue;
+    }
+
+    const primaryTitle = actions[0].title ?? '(no title)';
+
+    // Detect the highest leverage level that matches the title.
+    // We scan from highest to lowest so 'company' signals override 'individual' signals.
+    let detectedLevel: LeverageLevel = 'individual';
+    const ordered: LeverageLevel[] = ['company', 'org', 'team', 'individual'];
+    for (const level of ordered) {
+      if (LEVEL_SIGNALS[level].test(primaryTitle)) {
+        detectedLevel = level;
+        break;
+      }
+    }
+
+    const match = detectedLevel === expectedLevel;
+    details[bracket] = { detectedLevel, expectedLevel, match, title: primaryTitle };
+
+    if (!match) {
+      violations.push(
+        `${poolName}[${bracket}]: title "${primaryTitle}" signals '${detectedLevel}' but expected '${expectedLevel}'`
+      );
+    }
+
+    // Duplicate title check — two brackets with the same primary action = NOT categorical
+    if (seenTitles.has(primaryTitle.toLowerCase())) {
+      violations.push(`${poolName}[${bracket}]: duplicate primary title detected — "${primaryTitle}"`);
+    }
+    seenTitles.add(primaryTitle.toLowerCase());
+  }
+
+  return { valid: violations.length === 0, poolName, violations, details };
+}
+
+/**
+ * Run verifyCategoricalDifferentiation() across ALL registered role pools.
+ * Throws when any pool fails — designed to be called from a test or startup assertion.
+ *
+ * Usage in tests:
+ *   it('all action pools have categorical bracket differentiation', () => {
+ *     expect(() => assertAllPoolsValid()).not.toThrow();
+ *   });
+ */
+export function assertAllPoolsValid(): void {
+  const failures: CategoricalVerificationResult[] = [];
+
+  for (const [prefix, pool] of Object.entries(ROLE_SENIORITY_MAP)) {
+    const result = verifyCategoricalDifferentiation(pool, prefix);
+    if (!result.valid) failures.push(result);
+  }
+
+  // Also check GENERIC_ACTIONS
+  const genericResult = verifyCategoricalDifferentiation(GENERIC_ACTIONS, 'generic');
+  if (!genericResult.valid) failures.push(genericResult);
+
+  if (failures.length > 0) {
+    const summary = failures
+      .flatMap(f => f.violations)
+      .join('\n  ');
+    throw new Error(
+      `Seniority action pool categorical differentiation violated:\n  ${summary}\n\n` +
+      `Every bracket must have a primary action whose title signals a DIFFERENT activity ` +
+      `level (individual/team/org/company). Add specific verbs to fix: ` +
+      `junior→build/ship, mid→own/lead, senior→establish/governance, principal→institutionali/strategy.`
+    );
+  }
+}
 
 export const BRACKET_ORDER: SeniorityBracket[] = ['junior', 'mid', 'senior', 'principal'];
 
