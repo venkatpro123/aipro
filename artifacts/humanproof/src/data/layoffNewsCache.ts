@@ -257,6 +257,14 @@ export const injectLayoffEvent = (event: LayoffNewsEvent): void => {
     import('../services/cache/analysisCache').then(({ invalidateForCompany }) => {
       invalidateForCompany(enrichedEvent.companyName);
     }).catch(() => { /* non-fatal */ });
+    // Invalidate swarm cache so the 24h cached agent results are cleared.
+    // A breaking news event changes the company's signal profile — stale
+    // pre-announcement swarm results would produce wrong scores for up to 24h.
+    // Lazy import mirrors the analysisCache pattern; swarmCache has no deps
+    // that would create a circular chain, but consistency matters.
+    import('../services/swarm/swarmCache').then(({ invalidateSwarmForCompany }) => {
+      invalidateSwarmForCompany(enrichedEvent.companyName);
+    }).catch(() => { /* non-fatal */ });
     // Notify listeners (e.g. BreakingNewsBanner component)
     _listeners.forEach(fn => {
       try { fn(enrichedEvent); } catch { /* listener errors must not break injection */ }
