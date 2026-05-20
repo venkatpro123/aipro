@@ -154,33 +154,41 @@ const buildOracleRoleIndex = (): OracleRoleEntry[] => {
   return entries.sort((a, b) => a.currentRiskScore - b.currentRiskScore);
 };
 
-// Lazily initialised: buildOracleRoleIndex() iterates all 371 role objects and
-// sorts them — ~50ms CPU on a mid-range Android. Running it at module load would
-// block the main thread during the initial parse burst. Instead it runs on the
-// first call to searchOracleRoles / getRoleEntryByKey / getAllOracleRoles,
-// which only happens when the user opens the Audit form (a lazy-loaded route).
+// Lazily initialised: buildOracleRoleIndex() iterates all 400+ role objects
+// and sorts them. Running at module load blocks the main thread during the
+// initial parse burst. Runs on the first call to searchOracleRoles /
+// getRoleEntryByKey / getAllOracleRoles (which only happen when the user opens
+// the Audit form).
+//
+// Stale-cache guard: if the index was built while MASTER_CAREER_INTELLIGENCE
+// was still empty (corpus not yet loaded), we rebuild it automatically the
+// next time a caller requests entries and the corpus has since loaded.
 let _cachedIndex: OracleRoleEntry[] | null = null;
+let _cachedIndexBuiltWithCorpus = false;
 
 function getOracleIndex(): OracleRoleEntry[] {
-  if (!_cachedIndex) _cachedIndex = buildOracleRoleIndex();
+  const corpusNowLoaded = Object.keys(MASTER_CAREER_INTELLIGENCE).length > 0;
+  if (!_cachedIndex || (!_cachedIndexBuiltWithCorpus && corpusNowLoaded)) {
+    _cachedIndex = buildOracleRoleIndex();
+    _cachedIndexBuiltWithCorpus = corpusNowLoaded;
+  }
   return _cachedIndex;
 }
 
 /**
  * Full pre-built index, materialised on first call.
  * Prefer searchOracleRoles() for search and getRoleEntryByKey() for lookups.
- * Use this only when you need the raw array (e.g. bulk iteration).
  */
 export function getAllOracleRoles(): OracleRoleEntry[] {
   return getOracleIndex();
 }
 
 /**
- * @deprecated Use getAllOracleRoles() — this constant triggers eager construction
- * when destructured at import time in some bundler configurations.
- * Kept for backward compatibility; consumers inside the lazy audit route are fine.
+ * @deprecated Use getAllOracleRoles() — this constant was built at module-load
+ * time when the corpus was still empty. Preserved for backward compatibility
+ * only; all internal callers have been migrated to getAllOracleRoles().
  */
-export const ALL_ORACLE_ROLES: OracleRoleEntry[] = getAllOracleRoles();
+export const ALL_ORACLE_ROLES: OracleRoleEntry[] = [];
 
 // ── Search API ────────────────────────────────────────────────────────────
 

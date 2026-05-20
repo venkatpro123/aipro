@@ -1,148 +1,100 @@
-// ═══════════════════════════════════════════════════════════════════════════════
 // intelligence/index.ts — Master Career Intelligence Registry v4.0
 //
 // Architecture:
-// ┌─────────────────────────────────────────────────────────┐
-// │  MASTER_CAREER_INTELLIGENCE                             │
-// │  Aggregated from all industry modules                   │
-// │                                                         │
-// │  Primary APIs:                                          │
-// │  • getCareerIntelligence(roleKey)                       │
-// │  • getCountryAdaptedIntelligence(base, countryKey)      │
-// │  • getVariantInactionScenario(scenario, score, ...)     │
-// │  • buildContextTags(score, industryKey, existing)       │
-// └─────────────────────────────────────────────────────────┘
+//   MASTER_CAREER_INTELLIGENCE — starts empty, populated by ensureCareerIntelligenceLoaded().
 //
-// Adding new roles: create a new module, export a Record<string, CareerIntelligence>,
-// import it here and spread it into MASTER_CAREER_INTELLIGENCE.
-// ═══════════════════════════════════════════════════════════════════════════════
+//   Primary APIs:
+//     getCareerIntelligence(roleKey)       — sync, O(1) from Map cache
+//     ensureCareerIntelligenceLoaded()     — async, await before first audit
+//     prefetchCareerIntelligenceCorpus()   — schedule idle prefetch at boot
+//     getCountryAdaptedIntelligence(...)
+//     getVariantInactionScenario(...)
+//     buildContextTags(...)
+//
+// Lazy loading: the 842KB corpus (12 modules) lives in corpusData.ts and
+// is NOT imported statically. It loads via import('./corpusData') on first
+// ensureCareerIntelligenceLoaded() call. prefetchCareerIntelligenceCorpus()
+// registers a requestIdleCallback(timeout=3000ms) so the chunk is in browser
+// cache before the user submits an audit.
+//
+// Adding new roles: create a module, import it in corpusData.ts and spread
+// it into ASSEMBLED_CORPUS there. Do NOT add static imports here.
 
 import { CareerIntelligence } from './types';
 
-// ── Core Intelligence Modules ──────────────────────────────────────────────────
-import { TECH_INTELLIGENCE } from './tech';
-import { FINANCE_INTELLIGENCE } from './finance';
-import { HEALTHCARE_INTELLIGENCE } from './healthcare';
-import { INDUSTRY_INTELLIGENCE } from './industry';
-import { CREATIVE_INTELLIGENCE } from './creative';
-
-// ── Services Module (Split from original services.ts) ──────────────────────────
-import { SERVICES_LEGAL_INTELLIGENCE } from './services_legal';
-import { SERVICES_HR_INTELLIGENCE } from './services_hr';
-
-// ── Original Services (still active — legacy roles not yet migrated) ────────────
-import { SERVICES_INTELLIGENCE } from './services';
-
-// ── New: Emerging AI-Era Roles ──────────────────────────────────────────────────
-import { EMERGING_INTELLIGENCE } from './emerging';
-
-// ── New v4.0: Expanded Service Vertical Modules ──────────────────────────────────
-import { SERVICES_GOV_INTELLIGENCE } from './services_gov';
-import { SERVICES_EDU_INTELLIGENCE } from './services_edu';
-import { SERVICES_RETAIL_INTELLIGENCE } from './services_retail';
-
+// ── Corpus state ──────────────────────────────────────────────────────────────
 
 /**
- * MASTER_CAREER_INTELLIGENCE
- * The single source of truth for all seeded career intelligence.
- *
- * v4.0 — Includes:
- * - 6 core industry modules (tech, finance, healthcare, industry, creative, services)
- * - 5 services sub-modules (legal, HR, gov, edu, retail)
- * - 1 emerging AI-era module (20 frontier roles)
- * - Total: 400+ unique seeded roles
- *
- * For new modules: import and spread into this record.
- * Duplicate keys: later modules override earlier ones — order matters.
+ * MASTER_CAREER_INTELLIGENCE — empty at module load, populated by
+ * ensureCareerIntelligenceLoaded(). Mutable so Object.assign() fills it
+ * in-place; callers that took a reference at import time see the keys.
  */
-export const MASTER_CAREER_INTELLIGENCE: Record<string, CareerIntelligence> = {
-  ...TECH_INTELLIGENCE,
-  ...FINANCE_INTELLIGENCE,
-  // Services split: individual sub-modules override legacy services roles matching same key
-  ...SERVICES_INTELLIGENCE,          // Original 81 roles (includes all leg_*, hr_*, etc.)
-  ...SERVICES_LEGAL_INTELLIGENCE,    // Enhanced legal roles — overrides leg_* from services.ts
-  ...SERVICES_HR_INTELLIGENCE,       // Enhanced HR roles — overrides hr_* from services.ts
-  ...HEALTHCARE_INTELLIGENCE,
-  ...INDUSTRY_INTELLIGENCE,
-  ...CREATIVE_INTELLIGENCE,
-  ...EMERGING_INTELLIGENCE,          // 20 brand-new AI-era roles
-  // v4.0: New vertical expansions
-  ...SERVICES_GOV_INTELLIGENCE,      // 10 Government & Public Sector roles
-  ...SERVICES_EDU_INTELLIGENCE,      // 7 Education & Training roles
-  ...SERVICES_RETAIL_INTELLIGENCE,   // 8 Retail, Consumer & Hospitality roles
-};
+export const MASTER_CAREER_INTELLIGENCE: Record<string, CareerIntelligence> = {};
 
-// ── Duplicate-key guard ────────────────────────────────────────────────────────
-// MASTER_CAREER_INTELLIGENCE is built by spreading multiple modules in order.
-// JavaScript spread silently lets later modules overwrite earlier ones for the
-// same key — correct for intentional overrides (SERVICES_LEGAL over SERVICES),
-// but a silent data loss when two modules accidentally define the same key.
-// This assertion runs once at module load in non-production builds and logs every
-// unintentional collision so they can be resolved at the module level.
-if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
-  const allModules: Array<[string, Record<string, CareerIntelligence>]> = [
-    ['TECH', TECH_INTELLIGENCE],
-    ['FINANCE', FINANCE_INTELLIGENCE],
-    ['SERVICES', SERVICES_INTELLIGENCE],
-    ['SERVICES_LEGAL', SERVICES_LEGAL_INTELLIGENCE],
-    ['SERVICES_HR', SERVICES_HR_INTELLIGENCE],
-    ['HEALTHCARE', HEALTHCARE_INTELLIGENCE],
-    ['INDUSTRY', INDUSTRY_INTELLIGENCE],
-    ['CREATIVE', CREATIVE_INTELLIGENCE],
-    ['EMERGING', EMERGING_INTELLIGENCE],
-    ['SERVICES_GOV', SERVICES_GOV_INTELLIGENCE],
-    ['SERVICES_EDU', SERVICES_EDU_INTELLIGENCE],
-    ['SERVICES_RETAIL', SERVICES_RETAIL_INTELLIGENCE],
-  ];
-  // Known intentional overrides — these are expected and should not warn.
-  const INTENTIONAL_OVERRIDES = new Set([
-    // SERVICES_LEGAL overrides leg_* from SERVICES
-    // SERVICES_HR overrides hr_* from SERVICES
-    'ser_legal_ops',
-    'gov_defender',
-    'gov_tax_auditor',
-    'gov_policy_analyst',
-    'gov_diplomat',
-    'gov_social_worker',
-  ]);
-  const seen = new Map<string, string>(); // key → first module name
-  for (const [modName, mod] of allModules) {
-    for (const key of Object.keys(mod)) {
-      if (seen.has(key) && !INTENTIONAL_OVERRIDES.has(key)) {
-        const prefix = key.split('_')[0];
-        const isExpectedOverride =
-          (modName === 'SERVICES_LEGAL' && prefix === 'leg') ||
-          (modName === 'SERVICES_HR'    && prefix === 'hr');
-        if (!isExpectedOverride) {
-          console.warn(`[MASTER_CAREER_INTELLIGENCE] Duplicate key "${key}" in ${modName} overrides ${seen.get(key)}. If intentional, add to INTENTIONAL_OVERRIDES.`);
-        }
-      } else {
-        seen.set(key, modName);
-      }
-    }
-  }
-}
+let _corpusLoaded = false;
+let _loadPromise: Promise<void> | null = null;
 
-// ── BUG-08 FIX: Pre-built O(1) lookup caches ──────────────────────────────────
-// Previously every call to getCareerIntelligence() did an O(n) object lookup across
-// 400+ records. These Map caches pre-build at module load time for instant reads.
+// ── O(1) lookup caches — populated when corpus loads ─────────────────────────
 
 /** Direct key lookup: role key → CareerIntelligence */
-const _directCache = new Map<string, CareerIntelligence>(
-  Object.entries(MASTER_CAREER_INTELLIGENCE)
-);
+const _directCache = new Map<string, CareerIntelligence>();
 
-/** Alias resolution cache: original key → resolved key (populated lazily and cached) */
+/** Alias resolution cache: original key → resolved key (populated lazily) */
 const _resolvedKeyCache = new Map<string, string>();
 
+// ── Lazy loading API ──────────────────────────────────────────────────────────
 
-// ── Catalog → Intelligence Key Bridge ─────────────────────────────────────────
+/**
+ * Ensure the 842KB corpus is loaded into MASTER_CAREER_INTELLIGENCE.
+ * Resolves immediately on subsequent calls once loaded.
+ * fetchAuditData() awaits this at pipeline entry.
+ */
+export async function ensureCareerIntelligenceLoaded(): Promise<void> {
+  if (_corpusLoaded) return;
+  if (_loadPromise) return _loadPromise;
+  _loadPromise = import('./corpusData').then(({ ASSEMBLED_CORPUS }) => {
+    Object.assign(MASTER_CAREER_INTELLIGENCE, ASSEMBLED_CORPUS);
+    for (const [k, v] of Object.entries(ASSEMBLED_CORPUS)) {
+      _directCache.set(k, v);
+    }
+    _corpusLoaded = true;
+  });
+  return _loadPromise;
+}
+
+/**
+ * Returns true once ensureCareerIntelligenceLoaded() has resolved.
+ * Guard bulk-enumeration calls (getSeededRoleKeys, getRolesByTag, etc.).
+ */
+export function isCareerIntelligenceLoaded(): boolean {
+  return _corpusLoaded;
+}
+
+/**
+ * Schedule a background corpus prefetch via requestIdleCallback(timeout=3000ms).
+ * Call once at app boot (main.tsx). By the time the user submits an audit,
+ * the chunk is typically already in browser cache — ensureCareerIntelligenceLoaded()
+ * becomes a near-instant no-op instead of a 150–400ms blocking fetch.
+ *
+ * Falls back to setTimeout(100ms) in environments without requestIdleCallback.
+ */
+export function prefetchCareerIntelligenceCorpus(): void {
+  if (_corpusLoaded || _loadPromise) return;
+  const schedule =
+    typeof window !== 'undefined' && 'requestIdleCallback' in window
+      ? (cb: () => void) =>
+          (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void })
+            .requestIdleCallback(cb, { timeout: 3000 })
+      : (cb: () => void) => setTimeout(cb, 100);
+  schedule(() => { void ensureCareerIntelligenceLoaded(); });
+}
+
+// ── Catalog → Intelligence Key Bridge ────────────────────────────────────────
 // Maps every catalogData.ts WORK_TYPE key to the best-matching intelligence key.
-// This is the single fix for: (1) flat 61% scores, (2) blank skill matrix.
-// When a catalog key has no direct intelligence entry, we resolve to the closest role.
+// Pure lookup table — no corpus dependency; lives in index.ts, not corpusData.ts.
 
 const CATALOG_TO_INTEL_KEY: Record<string, string> = {
-  // ── Software / Tech ────────────────────────────────────────────────────────
+  // Software / Tech
   sw_backend:           'sw_backend',       sw_frontend:       'sw_frontend',
   sw_fullstack:         'sw_backend',       sw_devops:         'sw_devops',
   sw_arch:              'sw_arch',          sw_cloud:          'sw_cloud',
@@ -183,7 +135,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   erp_sap:              'erp_sap',          erp_oracle:        'erp_sap',
   erp_ms365:            'erp_sap',          erp_support:       'erp_sap',
 
-  // ── Finance ────────────────────────────────────────────────────────────────
+  // Finance
   fin_account:          'fin_account',      fin_audit:         'fin_audit',
   fin_tax:              'fin_tax',          fin_fp:            'fin_fp_analyst',
   fin_treasury:         'fin_treasury',     fin_credit:        'fin_credit_analyst',
@@ -200,7 +152,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   inv_portfolio:        'fin_hedge_pm',     inv_vc:            'fin_vc',
   inv_quant:            'fin_quant',        inv_trading:       'fin_quant',
 
-  // ── Media / Creative / Content ────────────────────────────────────────────
+  // Media / Creative / Content
   med_journalism:       'cnt_journalist',   med_edit:          'med_edit',
   med_broadcast:        'med_sports_broadcaster', med_digital:  'cnt_social',
   med_video:            'med_video',        med_podcast:       'med_podcast_host',
@@ -234,7 +186,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   mus_mixing:           'mus_mixing',        mus_lyrics:        'mus_lyrics',
   mus_session:          'mus_session',       mus_teach:         'edu_teacher_k12',
 
-  // ── BPO / Admin / HR / Legal ──────────────────────────────────────────────
+  // BPO / Admin / HR / Legal
   bpo_inbound:          'bpo_inbound',      bpo_outbound:      'bpo_outbound',
   bpo_chat:             'bpo_chat',         bpo_email_support: 'bpo_email_support',
   bpo_tech_support:     'bpo_tech_support', bpo_data_entry:    'bpo_data_entry',
@@ -266,7 +218,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   adm_data_entry:       'bpo_data_entry',   adm_reception:     'bpo_inbound',
   adm_coord:            'adm_exec',
 
-  // ── Healthcare / Pharma / Mental Health / Nursing ─────────────────────────
+  // Healthcare / Pharma / Mental Health / Nursing
   hc_doctor:            'hc_surgeon',       hc_specialist:     'hc_oncologist',
   hc_surgeon:           'hc_surgeon',       hc_radiology:      'hc_radio',
   hc_pathology:         'hc_lab',           hc_admin_hc:       'hc_admin',
@@ -284,7 +236,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   nur_community:        'nur_rn',           nur_midwife:       'hc_nursing_practitioner',
   nur_para:             'nur_rn',
 
-  // ── Education / EdTech / Training ─────────────────────────────────────────
+  // Education / EdTech / Training
   edu_teach:            'edu_teacher_k12',  edu_higher:        'edu_university_prof',
   edu_special:          'edu_special_needs_teacher', edu_admin_edu: 'edu_school_principal',
   edu_curriculum:       'edu_instructional_designer', edu_counsellor: 'edu_counselor',
@@ -295,7 +247,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   tr_coach:             'edu_corporate_trainer', tr_elearning:  'edu_instructional_designer',
   tr_assessment:        'edu_corporate_trainer',
 
-  // ── Manufacturing / Auto / Engineering / Construction / Energy / Aerospace ─
+  // Manufacturing / Auto / Engineering / Construction / Energy / Aerospace
   mfg_production:       'mfg_plant_mgr',    mfg_quality:       'trd_ndt_spec',
   mfg_maintenance:      'trd_millwright',   mfg_process:       'eng_chemical',
   mfg_lean:             'mfg_plant_mgr',    mfg_safety:        'con_hse',
@@ -318,7 +270,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   aero_test:            'eng_aero',         aero_mfg:          'mfg_plant_mgr',
   aero_def:             'eng_aero',
 
-  // ── Retail / E-commerce / FMCG ────────────────────────────────────────────
+  // Retail / E-commerce / FMCG
   ret_floor:            'ret_store_manager', ret_buyer:         'ret_buyer_fashion',
   ret_ecom:             'ret_ecommerce_mgr', ret_inventory:     'log_inventory_control',
   ret_cx:               'ser_success_mgr',  ret_category:      'ret_category_mgr',
@@ -329,7 +281,7 @@ const CATALOG_TO_INTEL_KEY: Record<string, string> = {
   fmcg_brand_mgr:       'des_brand_strategist', fmcg_supply_fmcg: 'ser_supply_chain_dir',
   fmcg_rd:              'hc_researcher',
 
-  // ── Government / NGO / Agriculture ───────────────────────────────────────
+  // Government / NGO / Agriculture
   gov_admin:            'gov_policy_analyst', gov_policy:      'gov_policy_analyst',
   gov_public_finance:   'fin_fp_analyst',   gov_social:        'gov_social_worker',
   gov_it:               'sw_devops',
@@ -359,42 +311,36 @@ const normaliseHumanTitle = (value: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// ── Public APIs ────────────────────────────────────────────────────────────────
+// ── Public APIs ───────────────────────────────────────────────────────────────
 
 /**
  * Resolve a catalog WORK_TYPE key to its best-matching intelligence key.
- * BUG-08 FIX: Results are memoized in _resolvedKeyCache (Map) so repeated calls
- * for the same key are O(1) after the first resolution.
+ * Results are memoized in _resolvedKeyCache (Map) so repeated calls are O(1).
  * Tries: (1) direct match, (2) alias bridge, (3) prefix heuristic.
  */
 export const resolveIntelligenceKey = (roleKey: string): string => {
   if (!roleKey) return roleKey;
 
-  // 1. Check the resolution cache first — O(1) for all previously seen keys
   const cached = _resolvedKeyCache.get(roleKey);
   if (cached !== undefined) return cached;
 
-  // 2. Direct match against the direct cache
   if (_directCache.has(roleKey)) {
     _resolvedKeyCache.set(roleKey, roleKey);
     return roleKey;
   }
 
-  // 3. Alias bridge
   const aliased = CATALOG_TO_INTEL_KEY[roleKey];
   if (aliased && _directCache.has(aliased)) {
     _resolvedKeyCache.set(roleKey, aliased);
     return aliased;
   }
 
-  // 3b. Human-readable title alias bridge
   const humanAlias = HUMAN_TITLE_TO_INTEL_KEY[normaliseHumanTitle(roleKey)];
   if (humanAlias && _directCache.has(humanAlias)) {
     _resolvedKeyCache.set(roleKey, humanAlias);
     return humanAlias;
   }
 
-  // 4. Prefix heuristic for unmapped keys
   const prefix = roleKey.split('_')[0];
   const prefixMap: Record<string, string> = {
     sw: 'sw_backend', ml: 'ml_engineer', sec: 'sec_pen', dev: 'sw_devops',
@@ -422,21 +368,20 @@ export const resolveIntelligenceKey = (roleKey: string): string => {
     return prefixKey;
   }
 
-  // 5. No match — cache the original key and warn. The caller's _directCache.get()
-  // will return undefined, which getCareerIntelligence() converts to null. Without
-  // this warning, null intelligence causes silent fallback to generic action templates
-  // with no signal to the caller or the user.
   if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
-    console.warn(`[resolveIntelligenceKey] No match for "${roleKey}" — career intelligence will be null. Check CATALOG_TO_INTEL_KEY or add a direct entry in the relevant module.`);
+    console.warn(
+      `[resolveIntelligenceKey] No match for "${roleKey}" — career intelligence will be null. ` +
+      `Check CATALOG_TO_INTEL_KEY or add a direct entry in the relevant module.`,
+    );
   }
   _resolvedKeyCache.set(roleKey, roleKey);
   return roleKey;
 };
 
 /**
- * Resolver: Fetch base career intelligence for a given role key.
- * BUG-08 FIX: Uses _directCache (Map) for O(1) lookup instead of O(n) object access.
- * Automatically resolves catalog WORK_TYPE keys via the alias bridge + memoization.
+ * Fetch base career intelligence for a role key. O(1) from Map cache.
+ * Returns null when corpus not yet loaded (call ensureCareerIntelligenceLoaded first)
+ * or when the role has no entry.
  */
 export const getCareerIntelligence = (roleKey: string): CareerIntelligence | null => {
   const resolved = resolveIntelligenceKey(roleKey);
@@ -448,26 +393,25 @@ export const getCareerIntelligence = (roleKey: string): CareerIntelligence | nul
  */
 export const hasSeededData = (roleKey: string): boolean => {
   const resolved = resolveIntelligenceKey(roleKey);
-  return !!MASTER_CAREER_INTELLIGENCE[resolved];
+  return _directCache.has(resolved);
 };
 
 /**
- * Get all seeded role keys.
+ * Get all seeded role keys. Returns [] before corpus is loaded.
  */
 export const getSeededRoleKeys = (): string[] => {
   return Object.keys(MASTER_CAREER_INTELLIGENCE);
 };
 
 /**
- * Get total count of seeded roles.
+ * Get total count of seeded roles. Returns 0 before corpus is loaded.
  */
 export const getSeededRoleCount = (): number => {
   return Object.keys(MASTER_CAREER_INTELLIGENCE).length;
 };
 
 /**
- * Get all roles for a given context tag.
- * Used for filtering and discovery: e.g. "show me all ai-resilient roles"
+ * Get all roles for a given context tag. Returns {} before corpus is loaded.
  */
 export const getRolesByTag = (tag: string): Record<string, CareerIntelligence> => {
   const result: Record<string, CareerIntelligence> = {};
@@ -480,8 +424,7 @@ export const getRolesByTag = (tag: string): Record<string, CareerIntelligence> =
 };
 
 /**
- * Get all roles with a risk trend score above a threshold.
- * Useful for finding high-risk roles for dashboard views.
+ * Get all roles with a risk trend score in [min, max]. Returns {} before corpus is loaded.
  */
 export const getRolesByRiskLevel = (minCurrentScore: number, maxCurrentScore: number): Record<string, CareerIntelligence> => {
   const result: Record<string, CareerIntelligence> = {};
@@ -514,10 +457,6 @@ type UniquenessDepth = 'generic' | 'functional_specialist' | 'critical_knowledge
 
 /**
  * Filter career paths by the user's uniqueness depth.
- * critical_knowledge users see 'critical_only' and 'specialist_and_critical' paths.
- * functional_specialist users see 'generic_and_specialist' and 'specialist_and_critical' paths.
- * generic users see 'generic_and_specialist' and 'all' paths.
- * When uniquenessDepthFilter is absent, path is shown to everyone.
  */
 export function filterCareerPathsByUniqueness(
   paths: CareerPath[],
@@ -528,7 +467,6 @@ export function filterCareerPathsByUniqueness(
     if (f === 'all') return true;
     if (uniquenessDepth === 'critical_knowledge') return f === 'critical_only' || f === 'specialist_and_critical';
     if (uniquenessDepth === 'functional_specialist') return f === 'generic_and_specialist' || f === 'specialist_and_critical';
-    // generic
     return f === 'generic_and_specialist';
   });
 }

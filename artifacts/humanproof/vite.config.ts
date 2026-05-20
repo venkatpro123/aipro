@@ -42,14 +42,42 @@ export default defineConfig(({ command }) => {
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Intelligence data — 371 role profiles, 842KB raw / 187KB gzip.
-          // Splitting into its own chunk achieves three things:
-          //   1. Cache-stable: hash only changes when role data changes, not on every deploy
-          //   2. Absent from main chunk on landing page (AuditTerminalPage is now lazy)
-          //   3. Loads in parallel with the app shell once the audit route is requested
-          if (id.includes('/data/intelligence/') || id.includes('/data/oracleRoleIndex')) {
-            return 'career-intelligence';
+          // Career intelligence corpus — 842KB raw / 187KB gzip.
+          //
+          // LAZY CHUNK: career-intelligence contains only the corpus data files
+          // (corpusData.ts + the 12 industry modules). These are accessed
+          // exclusively via dynamic import() from intelligence/index.ts, so
+          // the chunk is NOT loaded until ensureCareerIntelligenceLoaded() is
+          // called. The requestIdleCallback prefetch in main.tsx triggers the
+          // load after 3s of idle — typically before the user reaches the form.
+          //
+          // intelligence/index.ts (lookup tables, resolver functions) and its
+          // small utility siblings are statically imported and stay in the
+          // audit-route bundle via default chunking. They are ~30KB combined.
+          //
+          // Why separate?  If index.ts were in the same chunk as corpusData.ts,
+          // the entire 842KB spread would execute the moment the chunk loaded —
+          // defeating the lazy initialization at the Rollup module-evaluation level.
+          const CORPUS_DATA_BASENAMES = new Set([
+            'corpusData', 'tech', 'finance', 'healthcare', 'industry', 'creative',
+            'services_legal', 'services_hr', 'services', 'emerging',
+            'services_gov', 'services_edu', 'services_retail',
+          ]);
+          if (id.includes('/data/intelligence/')) {
+            const basename = id.split('/').pop()?.replace(/\.[^.]+$/, '') ?? '';
+            if (CORPUS_DATA_BASENAMES.has(basename)) {
+              return 'career-intelligence';
+            }
+            // index.ts, types.ts, countryIntelligenceModifier.ts,
+            // contentVariantEngine.ts — small statics, let Rollup bundle them
+            // into the audit-route chunk via default heuristics.
+            return undefined;
           }
+          // oracleRoleIndex.ts — iterates MASTER_CAREER_INTELLIGENCE but is
+          // imported by LaoffInputForm (lazy audit route). Default chunking
+          // keeps it alongside the audit route code, not in the data chunk,
+          // to avoid creating a static import chain into career-intelligence.
+          // The stale-cache guard in oracleRoleIndex.ts rebuilds when corpus loads.
           // Vendor libs — framer-motion is split for lazy-load savings;
           // everything else stays in one vendor chunk to avoid the circular
           // vendor <-> vendor-react initialization order crash

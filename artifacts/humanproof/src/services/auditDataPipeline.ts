@@ -126,6 +126,7 @@ import { computeConformalCI, type ConformalCohort } from "./conformalCI";
 import { detectStealthLayoff, applyStealthFloor } from "./stealthLayoffDetector";
 import { detectAcquisitionPremium } from "./mergerAcquisitionRiskEngine";
 import { evaluateFlagSync, freezeAuditFlags, clearAuditFlags } from "../config/featureFlags";
+import { ensureCareerIntelligenceLoaded } from "../data/intelligence/index";
 // DEBT-5 — structured logging.
 import { createLogger } from "../shared/logger";
 const auditPipelineLog = createLogger({ service: "audit-pipeline" });
@@ -656,6 +657,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // service it calls will read from this frozen copy, not the live 60s-refresh
   // cache. clearAuditFlags() releases the lock at the return site.
   const auditFlagSnapshot = freezeAuditFlags();
+
+  // ── Career intelligence corpus — ensure loaded before pipeline runs ──────────
+  // The 842KB corpus is lazy-loaded (prefetched via requestIdleCallback at boot).
+  // This await is a no-op when the prefetch already completed; it only blocks on
+  // first audit if the user submitted faster than the 3s idle timeout.
+  await ensureCareerIntelligenceLoaded();
 
   // ── Pipeline timing ─────────────────────────────────────────────────────────
   const _timer = PipelineTimer.start(inputs.companyName);

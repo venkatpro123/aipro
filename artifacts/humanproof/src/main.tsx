@@ -140,6 +140,25 @@ bootLog.info('app.boot.start', {
 });
 void primeFlags().catch((err) => bootLog.warn('app.boot.prime_flags_failed', { error: err }));
 void resolveTenantId().catch(() => undefined);
+// Schedule the 842KB career-intelligence corpus for idle prefetch.
+// Dynamic import — career-intelligence is NOT a static dependency of the main
+// bundle. requestIdleCallback(timeout=3000ms) fires at most 3s after idle
+// so the chunk is in browser cache before the user reaches the audit form.
+// ensureCareerIntelligenceLoaded() in fetchAuditData() is a no-op if the
+// prefetch completed first.
+(() => {
+  const schedule =
+    typeof window !== 'undefined' && 'requestIdleCallback' in window
+      ? (cb: () => void) =>
+          (window as Window & { requestIdleCallback: (cb: () => void, opts: { timeout: number }) => void })
+            .requestIdleCallback(cb, { timeout: 3000 })
+      : (cb: () => void) => setTimeout(cb, 100);
+  schedule(() => {
+    void import('./data/intelligence/index').then(
+      ({ ensureCareerIntelligenceLoaded }) => ensureCareerIntelligenceLoaded(),
+    );
+  });
+})();
 
 // Fire-and-forget: loads companies, industries, roles from Supabase into the
 // in-memory cache so all synchronous getters (getCompanySync etc.) work
