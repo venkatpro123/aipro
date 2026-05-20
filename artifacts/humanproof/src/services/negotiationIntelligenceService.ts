@@ -65,6 +65,16 @@ export interface NegotiationIntelligenceInputs {
   industry: string;
   /** GAP J: role canonical key for role-specific negotiation scripts */
   workTypeKey?: string;
+  /** v40.0: company name for personalised email body copy */
+  companyName?: string;
+  /**
+   * v40.0: seniority bracket drives which script tier is used and whether
+   * the knowledge transfer premium clause is injected.
+   * junior/mid: relationship-first framing, no knowledge transfer clause
+   * senior:     knowledge transfer premium injected
+   * principal:  stronger knowledge transfer framing + directness
+   */
+  seniorityBracket?: 'junior' | 'mid' | 'senior' | 'principal' | null;
   /**
    * v39.0 B3: profile signals modulate urgency, walk-away framing, and risk
    * tolerance. Visa-dependent users surface timing pressure; family-anchored
@@ -82,6 +92,45 @@ export interface NegotiationIntelligenceInputs {
 
 export type NegotiationLeverageRating = 'STRONG' | 'MODERATE' | 'WEAK' | 'NONE';
 
+// ── Email script types ────────────────────────────────────────────────────────
+
+/** Which optional profile clause was injected into an email script */
+export type NegotiationClauseKey =
+  | 'visa_grace_period'        // H1B/L1/OPT: 60-day post-termination window
+  | 'family_stability'         // dependents + single income: stability framing
+  | 'equity_acceleration'      // unvested equity ≤12 months: cliff offset ask
+  | 'knowledge_transfer_premium'; // senior/principal: institutional knowledge cost
+
+export const NEGOTIATION_CLAUSE_LABELS: Record<NegotiationClauseKey, string> = {
+  visa_grace_period:            'Visa clause',
+  family_stability:             'Family stability clause',
+  equity_acceleration:          'Equity acceleration appendix',
+  knowledge_transfer_premium:   'Knowledge transfer premium',
+};
+
+/**
+ * A fully-composed, copy-pasteable email.
+ *
+ * Only irreducible placeholders remain:
+ *   [First name]   — manager's first name (one-word substitution)
+ *   [Your name]    — user's first name (one-word substitution)
+ *   [target comp]  — the specific number the user wants (user's own data)
+ *
+ * All substantive data (company name, tenure, role leverage, visa type,
+ * equity months, seniority framing) is filled in from profile signals.
+ * The platform does the personalization work so the user does not have to.
+ */
+export interface NegotiationEmailScript {
+  /** Short label for the UI toggle */
+  label: string;
+  /** Full email subject line */
+  subject: string;
+  /** Full email body — copy-paste into Gmail/Outlook, substitute 3 placeholders */
+  body: string;
+  /** Which profile clauses were injected — shown as badges in the UI */
+  clausesInjected: NegotiationClauseKey[];
+}
+
 export interface NegotiationIntelligenceResult {
   leverageRating: NegotiationLeverageRating;
   /** 0–100 composite leverage score */
@@ -94,8 +143,14 @@ export interface NegotiationIntelligenceResult {
   timingWindow: string;
   /** How strong is the outside option (BATNA)? */
   batnaStrength: string;
-  /** 2–3 specific conversation openers */
+  /** Legacy short openers — kept for backward compat; prefer emailScripts */
   scripts: string[];
+  /**
+   * v40.0: fully-composed, copy-pasteable email scripts with clause injection.
+   * [0] = opening email (to schedule the conversation)
+   * [1] = counter email (to respond after an initial lowball) — present for STRONG/MODERATE
+   */
+  emailScripts: NegotiationEmailScript[];
   /** Risks of negotiating in this situation */
   risksToNegotiating: string[];
   /** Topics / demands that would backfire */
@@ -172,6 +227,7 @@ export function computeNegotiationIntelligence(
       timingWindow: '',
       batnaStrength: 'Too constrained to negotiate from strength',
       scripts: [],
+      emailScripts: [],
       risksToNegotiating: ['Critical runway — any signal of job hunting or negotiation increases layoff risk'],
       redLines: [],
       shouldDisplay: false,
@@ -199,6 +255,26 @@ export function computeNegotiationIntelligence(
     inputs.workTypeKey ?? 'default',
     inputs.userProfile ?? null,
   );
+
+  // v40.0: fully-composed, copy-pasteable email scripts with seniority + clause injection
+  const seniorityBracket: 'junior' | 'mid' | 'senior' | 'principal' =
+    inputs.seniorityBracket ?? (
+      tenureYears >= 10 ? 'principal'
+      : tenureYears >= 5 ? 'senior'
+      : tenureYears >= 2 ? 'mid'
+      : 'junior'
+    );
+  const emailScripts = buildEmailScripts(
+    leverageRating,
+    specificAsk,
+    marketTightness,
+    tenureYears,
+    inputs.workTypeKey ?? 'default',
+    inputs.userProfile ?? null,
+    seniorityBracket,
+    inputs.companyName ?? 'your company',
+  );
+
   const { risks, redLines } = buildRisksAndRedLines(leverageRating, currentScore, runwayTier, inputs.userProfile ?? null);
 
   return {
@@ -209,6 +285,7 @@ export function computeNegotiationIntelligence(
     timingWindow,
     batnaStrength,
     scripts,
+    emailScripts,
     risksToNegotiating: risks,
     redLines,
     shouldDisplay: leverageRating !== 'NONE',
@@ -619,6 +696,161 @@ type LegacyNegotiationAddition = {
     };
   }
 })();
+
+// ── Email script builder ──────────────────────────────────────────────────────
+// Produces 1–2 fully-composed, copy-pasteable emails.
+// Rule: fill in EVERY data point we have. Leave only [First name], [Your name],
+// and [target comp] as placeholders. These are word-substitutions, not language
+// composition tasks — the platform does the personalization work.
+
+function buildEmailScripts(
+  leverageRating: NegotiationLeverageRating,
+  specificAsk: string,
+  tightness: MarketTightness,
+  tenureYears: number,
+  workTypeKey: string,
+  userProfile: NegotiationIntelligenceInputs['userProfile'],
+  seniorityBracket: 'junior' | 'mid' | 'senior' | 'principal',
+  companyName: string,
+): NegotiationEmailScript[] {
+  if (leverageRating === 'NONE') return [];
+
+  const staticVariant  = ROLE_SCRIPT_VARIANTS[workTypeKey] ?? ROLE_SCRIPT_VARIANTS['default'];
+  const dbNego         = getRoleOverride(workTypeKey)?.negotiation;
+  const variant        = dbNego
+    ? {
+        strongOpener:    dbNego.strong_opener     ?? staticVariant.strongOpener,
+        leverageContext: dbNego.leverage_context  ?? staticVariant.leverageContext,
+        countersScript:  dbNego.counters_script   ?? staticVariant.countersScript,
+        walkAwayLine:    dbNego.walk_away_line     ?? staticVariant.walkAwayLine,
+      }
+    : staticVariant;
+
+  // ── Profile clause detection ────────────────────────────────────────────────
+  const visaType      = userProfile?.visaStatus;
+  const visaDependent = visaType === 'h1b' || visaType === 'l1' || visaType === 'opt';
+  const familyAnchored = !!userProfile?.hasDependents && !userProfile?.dualIncomeHousehold;
+  const equityMonths  = userProfile?.equityVestMonths ?? 0;
+  const equityAnchor  = !!userProfile?.hasEquityVesting && equityMonths > 0 && equityMonths <= 12;
+  const seniorLevel   = seniorityBracket === 'senior' || seniorityBracket === 'principal';
+
+  const tenureDisplay = tenureYears < 1
+    ? `${Math.round(tenureYears * 12)} months`
+    : tenureYears === 1 ? '1 year'
+    : `${Math.round(tenureYears)} years`;
+
+  const visaLabel = visaType === 'h1b' ? 'H-1B' : visaType === 'l1' ? 'L-1' : 'OPT';
+
+  // ── Clause paragraphs — each is a self-contained email paragraph ──────────
+
+  const VISA_CLAUSE = visaDependent
+    ? `\n\nOne piece of context I want to be transparent about: I'm on a ${visaLabel} visa. After employment ends, I have a 60-day window before I'm required to leave the country. I'm raising this conversation now — while I have good runway and no urgency — because I can't afford to have it in a distressed context. This isn't pressure. It's responsible planning on both our sides.`
+    : '';
+
+  const FAMILY_CLAUSE = familyAnchored && !visaDependent
+    ? `\n\nOne thing I want you to understand about my situation: I'm the primary earner supporting dependents. That context doesn't change what I'm asking for, but it does mean that stability and predictability matter as much to me as the compensation number itself. A clear role-scope commitment or retention structure would be as valuable as a comp percentage increase.`
+    : '';
+
+  const EQUITY_CLAUSE = equityAnchor
+    ? `\n\nThere's one additional factor I want to put on the table: I have ${equityMonths} months until my next significant vesting milestone at ${companyName}. That's real money I'd be forfeiting in any transition. If there's a path to either accelerating that cliff or bridging the gap with a sign-on component, it changes my calculus significantly — and it's cheaper for ${companyName} than the recruiting cost of replacing me at this point.`
+    : '';
+
+  const KNOWLEDGE_TRANSFER_CLAUSE = seniorLevel
+    ? seniorityBracket === 'principal'
+      ? `\n\nI want to put one point on the table directly: the institutional knowledge I carry — the architecture decisions, the team context, the vendor and customer relationships — has a real replacement cost. The average time-to-productivity for a principal-level hire in this market is 9–12 months. That's not a threat. It's shared context for what "alignment" means at this level. I'm raising this because I'd rather align here than in a position where I'm already mid-process elsewhere.`
+      : `\n\nOne context point worth naming: the institutional knowledge I carry — design decisions, team history, external relationships — has a concrete replacement cost. A senior hire in this market typically takes 6–9 months to reach full productivity. I'm not invoking that as leverage. I'm flagging it as context for what the cost of misalignment is for both sides.`
+    : '';
+
+  // The primary profile clause is determined by priority order
+  const primaryClause = VISA_CLAUSE || FAMILY_CLAUSE || EQUITY_CLAUSE || KNOWLEDGE_TRANSFER_CLAUSE;
+  const injectedClauses: NegotiationClauseKey[] = [];
+  if (VISA_CLAUSE)                   injectedClauses.push('visa_grace_period');
+  if (FAMILY_CLAUSE)                 injectedClauses.push('family_stability');
+  if (EQUITY_CLAUSE)                 injectedClauses.push('equity_acceleration');
+  if (KNOWLEDGE_TRANSFER_CLAUSE)     injectedClauses.push('knowledge_transfer_premium');
+
+  // ── Seniority-tier base opening ───────────────────────────────────────────
+
+  const seniorityOpening = (() => {
+    const leverageCtx = variant.leverageContext;
+    switch (seniorityBracket) {
+      case 'principal':
+        return `I'd like to have a direct conversation about my compensation and long-term alignment at ${companyName}. I've spent ${tenureDisplay} here, and I want to be equally direct about both the value I provide and my expectations. ${leverageCtx}`;
+      case 'senior':
+        return `I'd like to schedule time for a compensation alignment discussion. I've been at ${companyName} for ${tenureDisplay}, and I think the context of that conversation is worth framing before we have it. ${leverageCtx}`;
+      case 'mid':
+        return `I wanted to reach out about a conversation I've been thinking through. I've been at ${companyName} for ${tenureDisplay} and I feel I've grown significantly in scope and impact. ${leverageCtx} I'd like to make sure my compensation reflects where I am, not where I was when I joined.`;
+      default: // junior
+        return `I wanted to flag a conversation I'd like to have. I've been at ${companyName} for ${tenureDisplay} and I think I've made meaningful progress in my role. I'd love to make sure my compensation path reflects that growth. ${leverageCtx}`;
+    }
+  })();
+
+  const closing = seniorityBracket === 'principal' || seniorityBracket === 'senior'
+    ? `This isn't an ultimatum. It's an alignment conversation. Could we find 30 minutes this week?`
+    : `I'm not comparing offers right now — I'm planning to stay and grow here. Could we carve out 20 minutes this week?`;
+
+  // ── Email 1: Opening email ────────────────────────────────────────────────
+
+  const subjectOpener = seniorityBracket === 'principal'
+    ? 'Long-term alignment conversation'
+    : seniorityBracket === 'senior'
+    ? `Compensation and scope alignment`
+    : 'Compensation alignment — quick conversation request';
+
+  const bodyOpener = [
+    `Hi [First name],`,
+    ``,
+    seniorityOpening,
+    primaryClause,
+    ``,
+    closing,
+    ``,
+    `[Your name]`,
+  ].join('\n');
+
+  const emails: NegotiationEmailScript[] = [
+    {
+      label: 'Opening email',
+      subject: subjectOpener,
+      body: bodyOpener,
+      clausesInjected: injectedClauses,
+    },
+  ];
+
+  // ── Email 2: Counter-offer email (STRONG or MODERATE only) ────────────────
+
+  if (leverageRating === 'STRONG' || leverageRating === 'MODERATE') {
+    const marketLine = (tightness === 'EXTREMELY_TIGHT' || tightness === 'TIGHT')
+      ? `The market for this role is genuinely tight right now — I have data on that from active conversations. I'm not using that as a bluff; I'm sharing it as context.`
+      : `I've been tracking the external market for my role, and there's a real gap between my current comp and what I'm seeing for comparable positions.`;
+
+    const counterBody = [
+      `Hi [First name],`,
+      ``,
+      `Thank you for the initial conversation. I want to be direct about where I am.`,
+      ``,
+      marketLine,
+      ``,
+      `${specificAsk} That's my specific ask, and I've thought carefully about it before raising it.`,
+      equityAnchor ? EQUITY_CLAUSE.trim() : '',
+      visaDependent ? VISA_CLAUSE.trim() : '',
+      seniorLevel ? KNOWLEDGE_TRANSFER_CLAUSE.trim() : '',
+      ``,
+      `I'm genuinely committed to staying and continuing to build here. If we can find movement on [target comp], that commitment is easy to make. What can you do?`,
+      ``,
+      `[Your name]`,
+    ].filter(Boolean).join('\n');
+
+    emails.push({
+      label: 'Counter-offer email',
+      subject: `Re: Compensation discussion`,
+      body: counterBody,
+      clausesInjected: injectedClauses,
+    });
+  }
+
+  return emails;
+}
 
 function buildRoleSpecificScripts(
   leverageRating: NegotiationLeverageRating,

@@ -2153,6 +2153,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const runway = (hybridResult as any).financialRunway;
     if (compIntel && runway) {
       const ufNego = inputs.userFactors as any;
+      // v40.0: derive seniority bracket for email script tier selection
+      const negoSeniorityRaw = deriveSeniorityBracket(
+        inputs.userFactors.tenureYears ?? 0,
+        resolvedRole?.canonicalKey ?? inputs.oracleKey ?? null,
+      );
+      const negoSeniority: 'junior' | 'mid' | 'senior' | 'principal' =
+        negoSeniorityRaw === 'staff_plus' ? 'principal'
+        : (negoSeniorityRaw as 'junior' | 'mid' | 'senior' | 'principal');
+
       const negotiationIntelligence = computeNegotiationIntelligence({
         competitiveIntelligence: compIntel,
         financialRunway: runway,
@@ -2161,6 +2170,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         performanceTier: inputs.userFactors.performanceTier ?? 'average',
         industry: companyData.industry ?? 'technology',
         workTypeKey: resolvedRole.canonicalKey ?? 'default', // GAP J: role-specific scripts
+        companyName: companyData.name,   // v40.0: for personalised email body
+        seniorityBracket: negoSeniority, // v40.0: drives email tier + knowledge transfer clause
         // v39.0 B3: profile signals (visa, family, equity vesting) modulate
         // walk-away framing, urgency, and red-line risks.
         userProfile: {

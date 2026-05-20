@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scale, ChevronDown, ChevronUp } from 'lucide-react';
-import type { NegotiationIntelligenceResult, NegotiationLeverageRating } from '../../../services/negotiationIntelligenceService';
+import { Scale, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import type {
+  NegotiationIntelligenceResult,
+  NegotiationLeverageRating,
+  NegotiationEmailScript,
+  NegotiationClauseKey,
+} from '../../../services/negotiationIntelligenceService';
+import { NEGOTIATION_CLAUSE_LABELS } from '../../../services/negotiationIntelligenceService';
 
 interface Props {
   negotiation: NegotiationIntelligenceResult;
@@ -16,14 +22,150 @@ const RATING_CONFIG: Record<NegotiationLeverageRating, {
   NONE:     { bg: '', border: '', badge: '', label: '', barColor: '' },
 };
 
+const CLAUSE_COLORS: Record<NegotiationClauseKey, string> = {
+  visa_grace_period:          'bg-violet-500/12 text-violet-300 border-violet-500/25',
+  family_stability:           'bg-sky-500/12 text-sky-300 border-sky-500/25',
+  equity_acceleration:        'bg-amber-500/12 text-amber-300 border-amber-500/25',
+  knowledge_transfer_premium: 'bg-emerald-500/12 text-emerald-300 border-emerald-500/25',
+};
+
+// ── CopyButton — clipboard with check confirmation ────────────────────────────
+
+const CopyButton: React.FC<{ text: string }> = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for environments without clipboard API
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded transition-colors"
+      style={{
+        background: copied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
+        color:      copied ? '#34d399' : 'rgba(255,255,255,0.45)',
+        border:     `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.10)'}`,
+      }}
+      title="Copy email to clipboard"
+    >
+      {copied
+        ? <><Check size={10} /> Copied</>
+        : <><Copy size={10} /> Copy email</>}
+    </button>
+  );
+};
+
+// ── EmailScriptCard — one copy-pasteable email ────────────────────────────────
+
+const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }> = ({ email, index }) => {
+  const [expanded, setExpanded] = useState(index === 0);
+  const fullText = `Subject: ${email.subject}\n\n${email.body}`;
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden border border-white/8"
+      style={{ background: 'rgba(255,255,255,0.03)' }}
+    >
+      {/* Email header row */}
+      <button
+        type="button"
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-white/4 transition-colors"
+      >
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex-shrink-0">
+          {email.label}
+        </span>
+
+        {/* Clause badges */}
+        {email.clausesInjected.length > 0 && (
+          <div className="flex flex-wrap gap-1 flex-1">
+            {email.clausesInjected.map(clause => (
+              <span
+                key={clause}
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${CLAUSE_COLORS[clause]}`}
+              >
+                {NEGOTIATION_CLAUSE_LABELS[clause]}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {expanded
+          ? <ChevronUp size={12} className="text-muted-foreground flex-shrink-0 ml-auto" />
+          : <ChevronDown size={12} className="text-muted-foreground flex-shrink-0 ml-auto" />}
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-3">
+              {/* Subject line */}
+              <div className="flex items-center gap-2 mb-1.5 pt-1">
+                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">Subject:</span>
+                <span className="text-[11px] text-gray-200 font-medium">{email.subject}</span>
+              </div>
+
+              {/* Body — pre-formatted, monospace for easy scanning */}
+              <pre
+                className="text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap font-sans rounded-lg p-3 mb-2.5"
+                style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                {email.body}
+              </pre>
+
+              {/* Footer: placeholder guide + copy button */}
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[9px] text-muted-foreground opacity-60 leading-relaxed">
+                  Substitute: <span className="font-mono text-amber-400/70">[First name]</span>,{' '}
+                  <span className="font-mono text-amber-400/70">[Your name]</span>
+                  {email.body.includes('[target comp]') && (
+                    <>, <span className="font-mono text-amber-400/70">[target comp]</span></>
+                  )}
+                  {email.body.includes('[your achievement metric]') && (
+                    <>, <span className="font-mono text-amber-400/70">[your achievement metric]</span></>
+                  )}
+                  {' '}— everything else is already filled in.
+                </p>
+                <CopyButton text={fullText} />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ── Main panel ────────────────────────────────────────────────────────────────
+
 export function NegotiationIntelligencePanel({ negotiation }: Props) {
-  const [showScripts, setShowScripts] = useState(false);
   const [showRisks, setShowRisks] = useState(false);
 
   if (!negotiation.shouldDisplay) return null;
 
-  // BUG-FIX: Safe fallback for unexpected leverage rating values
   const cfg = RATING_CONFIG[negotiation.leverageRating] ?? RATING_CONFIG['WEAK'];
+  const hasEmailScripts = (negotiation.emailScripts?.length ?? 0) > 0;
 
   return (
     <motion.div
@@ -76,39 +218,30 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
         </div>
       </div>
 
-      {/* Scripts — collapsible */}
-      {negotiation.scripts.length > 0 && (
-        <div className="border-t border-white/5 pt-3">
-          <button
-            onClick={() => setShowScripts(!showScripts)}
-            className="w-full flex items-center justify-between text-[11px] text-gray-400 hover:text-gray-200 transition-colors"
-          >
-            <span>Conversation openers ({negotiation.scripts.length})</span>
-            {showScripts ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
-          <AnimatePresence>
-            {showScripts && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-2 space-y-2"
-              >
-                {negotiation.scripts.map((script, i) => (
-                  <div key={i} className="p-2 rounded bg-gray-800/60 text-[11px] text-gray-300 italic">
-                    {script}
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Copy-pasteable email scripts */}
+      {hasEmailScripts && (
+        <div className="border-t border-white/5 pt-3 mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[11px] font-semibold text-gray-300">
+              Ready-to-send email scripts
+            </span>
+            <span className="text-[9px] text-muted-foreground">
+              — personalised, copy-paste ready
+            </span>
+          </div>
+          <div className="space-y-2">
+            {negotiation.emailScripts.map((email, i) => (
+              <EmailScriptCard key={i} email={email} index={i} />
+            ))}
+          </div>
         </div>
       )}
 
       {/* Risks + red lines — collapsible */}
       {(negotiation.risksToNegotiating.length > 0 || negotiation.redLines.length > 0) && (
-        <div className="border-t border-white/5 pt-3 mt-3">
+        <div className="border-t border-white/5 pt-3 mt-1">
           <button
+            type="button"
             onClick={() => setShowRisks(!showRisks)}
             className="w-full flex items-center justify-between text-[11px] text-gray-400 hover:text-gray-200 transition-colors"
           >
