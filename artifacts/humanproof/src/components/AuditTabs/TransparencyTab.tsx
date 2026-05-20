@@ -934,6 +934,150 @@ const IndiaIntelligencePanel: React.FC<{
 };
 
 // ---------------------------------------------------------------------------
+// CIWideningSourcesPanel — surfaces all three independent CI widening sources
+// ---------------------------------------------------------------------------
+
+const STALENESS_LEVEL: Record<string, number> = { Low: 1, Medium: 2, High: 3, Critical: 4 };
+const STALENESS_COLOR: Record<string, string> = {
+  Low: '#10b981', Medium: '#f59e0b', High: '#f97316', Critical: '#ef4444',
+};
+
+const SourceRow: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  isDominant: boolean;
+  color: string;
+  impactLevel: number;
+  detail: string;
+  note: string;
+  subItems?: string[];
+}> = ({ icon, label, isDominant, color, impactLevel, detail, note, subItems }) => (
+  <div style={{
+    borderRadius: 8, padding: '10px 12px',
+    background: impactLevel > 0 ? `${color}09` : 'rgba(255,255,255,0.02)',
+    border: `1px solid ${impactLevel > 0 ? color + '25' : 'rgba(255,255,255,0.07)'}`,
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+      {icon}
+      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>{label}</span>
+      {isDominant && impactLevel > 0 && (
+        <span style={{ fontSize: '0.59rem', padding: '0 5px', borderRadius: 3, fontWeight: 800, background: `${color}22`, color, border: `1px solid ${color}38`, lineHeight: '18px' }}>
+          DOMINANT
+        </span>
+      )}
+      {/* 4-pip impact bar */}
+      <div style={{ display: 'flex', gap: 2, marginLeft: 'auto' }}>
+        {[1, 2, 3, 4].map(pip => (
+          <div
+            key={pip}
+            style={{
+              width: 6, height: 6, borderRadius: 2,
+              background: pip <= Math.round(impactLevel) ? color : 'rgba(255,255,255,0.10)',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+    <div style={{ fontSize: '0.71rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{detail}</div>
+    {subItems && subItems.length > 0 && (
+      <div style={{ marginTop: 4 }}>
+        {subItems.map((item, i) => (
+          <div key={i} style={{ fontSize: '0.67rem', color: `${color}99`, marginTop: 2 }}>· {item}</div>
+        ))}
+      </div>
+    )}
+    <div style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.28)', marginTop: 5, fontStyle: 'italic' }}>{note}</div>
+  </div>
+);
+
+const CIWideningSourcesPanel: React.FC<{
+  dataFreshness: TabProps['result']['dataFreshness'];
+  signalQuality: TabProps['result']['signalQuality'];
+  ciRange: number;
+}> = ({ dataFreshness, signalQuality, ciRange }) => {
+  const conflictCount = signalQuality.conflictingSignals.length;
+  const conflictPenaltyPct = Math.min(conflictCount * 5, 20);
+  const hasLowDataGuard = !!signalQuality.lowDataWarning;
+
+  const stalenessScore = STALENESS_LEVEL[dataFreshness.accuracyImpact] ?? 0;
+  const stalenessColor = STALENESS_COLOR[dataFreshness.accuracyImpact] ?? '#9ca3af';
+  const conflictScore  = conflictCount > 0 ? Math.min(conflictCount * 1.5, 4) : 0;
+  const nullDataScore  = hasLowDataGuard ? 4 : 0;
+
+  const dominantKey = (() => {
+    if (stalenessScore >= conflictScore && stalenessScore >= nullDataScore && stalenessScore > 0) return 'staleness';
+    if (conflictScore >= nullDataScore && conflictScore > 0) return 'conflict';
+    if (nullDataScore > 0) return 'nulldata';
+    return null;
+  })();
+
+  const dominantLabel: Record<string, string> = {
+    staleness: 'dominant: data age',
+    conflict:  'dominant: source conflicts',
+    nulldata:  'dominant: missing critical signals',
+  };
+
+  return (
+    <div style={{ borderRadius: 12, padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <Layers style={{ width: 14, height: 14, flexShrink: 0, color: 'rgba(255,255,255,0.45)' }} />
+        <span style={{ fontSize: '0.67rem', fontWeight: 800, color: 'rgba(255,255,255,0.60)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+          CI Widening Sources — {ciRange}pt interval
+        </span>
+        {dominantKey && (
+          <span style={{ fontSize: '0.61rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            {dominantLabel[dominantKey]}
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <SourceRow
+          icon={<Clock style={{ width: 12, height: 12, color: stalenessColor }} />}
+          label="Data staleness"
+          isDominant={dominantKey === 'staleness'}
+          color={stalenessColor}
+          impactLevel={stalenessScore}
+          detail={`Age: ${dataFreshness.ageInDays}d · CI impact: ${dataFreshness.accuracyImpact}${dataFreshness.stalenessWarning ? ` — ${dataFreshness.stalenessWarning.replace(/^[^\s]+\s/, '')}` : ''}`}
+          note="Older data → larger uncertainty band. Fresh live signals narrow this component."
+        />
+        <SourceRow
+          icon={<AlertTriangle style={{ width: 12, height: 12, color: conflictCount > 0 ? '#f97316' : '#9ca3af' }} />}
+          label="Source conflicts"
+          isDominant={dominantKey === 'conflict'}
+          color={conflictCount > 0 ? '#f97316' : '#9ca3af'}
+          impactLevel={conflictScore}
+          detail={conflictCount === 0
+            ? 'No cross-source conflicts detected — confidence not penalized'
+            : `${conflictCount} conflict${conflictCount !== 1 ? 's' : ''} · −${conflictPenaltyPct}% confidence (5% per conflict, capped at 20%)`}
+          subItems={signalQuality.conflictingSignals.slice(0, 2).map(c => `${c.signalType}: ${c.descriptions[0] ?? 'conflicting values across sources'}`)}
+          note="Each conflict reduces confidence, which propagates to a wider CI."
+        />
+        <SourceRow
+          icon={<Shield style={{ width: 12, height: 12, color: hasLowDataGuard ? '#ef4444' : '#9ca3af' }} />}
+          label="Null-data guard (L1)"
+          isDominant={dominantKey === 'nulldata'}
+          color={hasLowDataGuard ? '#ef4444' : '#9ca3af'}
+          impactLevel={nullDataScore}
+          detail={hasLowDataGuard
+            ? `${signalQuality.lowDataWarning!.missingCount} critical signals missing — confidence capped at ${signalQuality.lowDataWarning!.capAt}%`
+            : 'All critical L1 signals present — guard not active'}
+          subItems={hasLowDataGuard && signalQuality.missingDataFallbacks ? signalQuality.missingDataFallbacks.slice(0, 2) : []}
+          note={hasLowDataGuard ? 'CI is conservatively wide until missing signals are resolved.' : 'No CI inflation from missing data.'}
+        />
+      </div>
+
+      <p style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.27)', marginTop: 12, lineHeight: 1.6, marginBottom: 0 }}>
+        These three sources are independent — each can be resolved separately. The dominant source
+        is the single largest contributor to the {ciRange}pt interval. Resolving it alone would
+        narrow the CI; resolving all three would narrow it to its minimum achievable width given
+        the current model.
+      </p>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // ConformalCIPanel — per-cohort conformal prediction interval disclosure
 // ---------------------------------------------------------------------------
 
@@ -2084,6 +2228,17 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             <ConformalCIPanel bundle={result.conformalBundle} />
           </div>
         )}
+
+        {/* CI widening sources — three independent factors that expand the uncertainty interval */}
+        <div className="mt-2">
+          <CIWideningSourcesPanel
+            dataFreshness={result.dataFreshness}
+            signalQuality={result.signalQuality}
+            ciRange={result.confidenceInterval
+              ? (result.confidenceInterval.range ?? (result.confidenceInterval.high - result.confidenceInterval.low))
+              : 0}
+          />
+        </div>
 
         {/* v14.0: Segmented Calibration — per-segment score adjustment */}
         {(result as any).segmentCalibration && (result as any).segmentCalibration.adjustmentDelta !== 0 && (

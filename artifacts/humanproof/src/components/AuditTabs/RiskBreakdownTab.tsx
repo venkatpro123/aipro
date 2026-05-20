@@ -3,12 +3,12 @@
 // Displays: 5/6 dimension score cards with narratives, radar, confidence interval,
 //           key risk drivers, and data quality metrics.
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   AlertTriangle, BarChart, Clock, Activity, CheckSquare,
   TrendingUp, TrendingDown, DollarSign, Shield, Cpu,
-  Globe, Briefcase, Users, Zap,
+  Globe, Briefcase, Users, Zap, Info,
 } from "lucide-react";
 import { DimensionRadar } from "@/components/DimensionRadar";
 import { KeyRiskDriversPanel } from "@/components/LayoffCalculator/KeyRiskDriversPanel";
@@ -546,16 +546,50 @@ const ScoreConfidenceInterval: React.FC<{
 }> = ({ score, confidenceInterval, confidencePercent }) => {
   const { low, high } = confidenceInterval;
   const range = high - low;
+  const halfRange = Math.round(range / 2);
   const color = getScoreColor(score / 100);
+  const [showEpistemicNote, setShowEpistemicNote] = useState(false);
 
   return (
     <div className="glass-panel-heavy p-[var(--space-6)] rounded-xl border border-[var(--border-2)]">
       <div className="flex justify-between items-center mb-[var(--space-6)]">
-        <div className="label-sm text-[var(--cyan)] tracking-[0.2em] font-black uppercase">Certainty Calibration</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="label-sm text-[var(--cyan)] tracking-[0.2em] font-black uppercase">Certainty Calibration</div>
+          <button
+            type="button"
+            onClick={() => setShowEpistemicNote(v => !v)}
+            title="What does this interval mean?"
+            aria-label="Explain confidence interval"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px', color: showEpistemicNote ? 'var(--cyan)' : 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', borderRadius: 4, transition: 'color 0.15s' }}
+          >
+            <Info size={12} />
+          </button>
+        </div>
         <div className="px-[var(--space-2)] py-1 bg-white/5 rounded text-[10px] font-mono text-muted-foreground">
           {confidencePercent}% CONFIDENCE
         </div>
       </div>
+
+      {/* Epistemic uncertainty explanation — toggles on info click */}
+      {showEpistemicNote && (
+        <div style={{ marginBottom: 20, padding: '12px 14px', borderRadius: 10, background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.15)' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Epistemic uncertainty — not a statistical error bar
+          </div>
+          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)' }}>
+            This range represents <strong style={{ color: 'rgba(255,255,255,0.92)' }}>genuine uncertainty</strong> in your score based on signal quality, data freshness, and source conflicts. It reflects what we do not know — not measurement noise around a known value.
+          </p>
+          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)' }}>
+            A ±{halfRange}pt interval means your true risk could be anywhere from{' '}
+            <strong style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)' }}>{low}</strong> to{' '}
+            <strong style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)' }}>{high}</strong>.
+            The central mark (<span style={{ fontFamily: 'var(--font-mono)', color }}>{score}</span>) is the model's best estimate given available signals.
+          </p>
+          <p style={{ margin: 0, fontSize: '0.71rem', lineHeight: 1.6, color: 'rgba(255,255,255,0.50)' }}>
+            With better data — more live sources, more recent signals, fewer source conflicts — this range would narrow. Three independent factors widen it: data staleness, cross-source conflict penalties, and missing critical signals (null-data guard). All three are broken down in the Transparency tab.
+          </p>
+        </div>
+      )}
 
       <div className="h-12 relative flex items-center mb-6 px-1">
         <div className="w-full bg-white/5 h-1.5 rounded-full relative">
