@@ -489,6 +489,21 @@ export interface HybridResult {
    */
   flagSnapshot?: Record<string, string>;
 
+  /**
+   * The segment that resolved for this audit's calibration (e.g. "INDIA__TECH__LARGE"
+   * or "GLOBAL"). Displayed in the Transparency Tab so users understand which
+   * calibration dataset was applied to their score.
+   */
+  appliedCalibrationSegment?: string;
+  /**
+   * Which tier of the calibration hierarchy supplied the L1-L5 multipliers:
+   *   segment_db        — DB row with ≥ 80 verified outcomes for this segment
+   *   segment_bootstrap — In-memory research-grounded values (no sufficient DB data yet)
+   *   cohort_db         — Legacy CohortScope row (INDIA_IT, US_BIG_TECH, etc.)
+   *   global_bootstrap  — Hardcoded global constants (no segment or cohort match)
+   */
+  calibrationFallbackLevel?: 'segment_db' | 'segment_bootstrap' | 'cohort_db' | 'global_bootstrap';
+
   // ── Cache provenance ────────────────────────────────────────────────────────
   /**
    * true when this result was served from the localStorage or Supabase analysis cache

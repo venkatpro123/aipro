@@ -127,6 +127,8 @@ import { detectStealthLayoff, applyStealthFloor } from "./stealthLayoffDetector"
 import { detectAcquisitionPremium } from "./mergerAcquisitionRiskEngine";
 import { evaluateFlagSync, freezeAuditFlags, clearAuditFlags } from "../config/featureFlags";
 import { ensureCareerIntelligenceLoaded } from "../data/intelligence/index";
+import { loadCalibration } from "./calibrationLoader";
+import { setAuditCalibrationBundle } from "./empiricalCalibration";
 // DEBT-5 — structured logging.
 import { createLogger } from "../shared/logger";
 const auditPipelineLog = createLogger({ service: "audit-pipeline" });
@@ -1383,6 +1385,29 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       layoffHistoryDate:        _latestLayoffDate,
     },
   };
+
+  // ── Segment calibration — inject before scoring, clear in finally ─────────
+  // loadCalibration resolves the 3-tier hierarchy:
+  //   segment_db (≥80 outcomes) → segment_bootstrap (in-memory research) →
+  //   cohort_db (INDIA_IT/US_BIG_TECH) → global_bootstrap.
+  // setAuditCalibrationBundle injects the segment multipliers into
+  // applyCalibration() inside calculateLayoffScore() without changing its signature.
+  let _calibBundle: Awaited<ReturnType<typeof loadCalibration>> | undefined;
+  try {
+    _calibBundle = await loadCalibration({
+      region:       companyData.region,
+      industry:     companyData.industry,
+      headcount:    (companyData as any).workforce_count ?? null,
+      isPublic:     companyData.isPublic,
+      fundingStage: (companyData as any).funding_stage ?? null,
+    });
+    if (_calibBundle.fallbackLevel !== 'global_bootstrap') {
+      setAuditCalibrationBundle(_calibBundle.layerCalibration);
+    }
+  } catch {
+    // Non-fatal — scoring runs with global bootstrap if calibration load fails
+    _calibBundle = undefined;
+  }
 
   _timer.mark('engine_start');
   const shadowScoreResult = calculateLayoffScore(shadowScoreInputs);
@@ -3090,11 +3115,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // shows whether a flag change was the cause.
   finalResult.flagSnapshot = auditFlagSnapshot;
 
-  // Release the per-audit flag lock before caching or returning so the next
-  // audit (and any background tasks that run after this returns) get a fresh
-  // freeze. Placed after stampinging flagSnapshot so the cleared state doesn't
-  // affect the stored record.
+  // Stamp the applied calibration segment on the result for Transparency Tab.
+  if (_calibBundle) {
+    finalResult.appliedCalibrationSegment = _calibBundle.segmentKey ?? _calibBundle.scope;
+    finalResult.calibrationFallbackLevel  = _calibBundle.fallbackLevel;
+  }
+
+  // Release the per-audit flag lock and calibration bundle before caching.
   clearAuditFlags();
+  setAuditCalibrationBundle(null);
 
   // v40.0 Task 5.5: Cache successful result to IndexedDB for offline fallback.
   // Fire-and-forget — cache write failure must never block the response.

@@ -38,6 +38,20 @@ import {
   type LayerCalibration,
   type D8LogisticCoefficients,
 } from './empiricalCalibration';
+import {
+  classifyRegionForSegment,
+  classifyIndustryForSegment,
+  classifySizeForSegment,
+  buildSegmentFallbackChain,
+  segmentKeyToLabel,
+  MIN_SEGMENT_OUTCOMES,
+} from './calibration/calibrationSegments';
+import {
+  lookupCalibrationWithRegion,
+  classifyCompanySize,
+  classifyIndustry as segClassifyIndustry,
+  classifyRegion as segClassifyRegion,
+} from './segmentedCalibrationEngine';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -49,9 +63,9 @@ export type CohortScope =
   | 'STARTUP_LATE_STAGE';
 
 export interface CalibrationBundle {
-  /** Where these values came from — "bootstrap" or "db:<version>". */
+  /** Where these values came from — "bootstrap" | "segment-bootstrap:<key>" | "db:<version>". */
   source: string;
-  /** The scope that resolved (after fallback chain). */
+  /** The CohortScope that resolved (after the cohort fallback chain). */
   scope: CohortScope;
   /** L1–L5 multipliers applied AFTER raw layer scoring, BEFORE composite. */
   layerCalibration: LayerCalibration;
@@ -67,11 +81,30 @@ export interface CalibrationBundle {
   nEvents: number;
   /** ISO timestamp when this bundle was loaded. */
   loadedAt: string;
+  // ── Segment fields (set when segment resolution ran) ──────────────────────
+  /**
+   * Applied segment key (e.g. "INDIA__TECH__LARGE"). Present when a segment
+   * bundle resolved from either the DB or the in-memory bootstrap matrix.
+   * Absent when segment resolution was skipped or all segments missed.
+   */
+  segmentKey?: string;
+  /** Human-readable label for Transparency Tab display. */
+  segmentLabel?: string;
+  /**
+   * Which level of the resolution hierarchy supplied the multipliers:
+   *   segment_db        — DB row with n_events_total >= 80
+   *   segment_bootstrap — In-memory SEGMENT_CALIBRATIONS research values
+   *   cohort_db         — Legacy CohortScope row (INDIA_IT, US_BIG_TECH, …)
+   *   global_bootstrap  — Hardcoded global bootstrap values
+   */
+  fallbackLevel: 'segment_db' | 'segment_bootstrap' | 'cohort_db' | 'global_bootstrap';
 }
 
 export interface ScopeResolutionHint {
   region?: string;        // 'IN', 'US', 'EU', etc.
   industry?: string;      // 'IT Services', 'Banking', ...
+  /** Employee count — used for size-segment classification (SMALL/MEDIUM/LARGE). */
+  headcount?: number | null;
   isPublic?: boolean;
   fundingStage?: 'pre_seed' | 'seed' | 'series_a' | 'series_b' | 'series_c' | 'series_d_plus' | 'public' | null;
 }
@@ -91,6 +124,48 @@ function bootstrapBundle(scope: CohortScope = 'GLOBAL'): CalibrationBundle {
     coverage: { at90: null, at80: null, at50: null },
     nEvents: 200,
     loadedAt: new Date().toISOString(),
+    fallbackLevel: 'global_bootstrap',
+  };
+}
+
+/**
+ * Build a segment-specific bootstrap bundle from the in-memory
+ * SEGMENT_CALIBRATIONS research matrix. Used when the DB has no segment row
+ * with ≥ MIN_SEGMENT_OUTCOMES outcomes — the research-grounded multipliers
+ * are still better than the global bootstrap for India IT, healthcare, etc.
+ */
+function segmentBootstrapBundle(
+  segmentKey: string,
+  region: string | undefined,
+  industry: string | undefined,
+  headcount: number | null | undefined,
+): CalibrationBundle {
+  const companySize = classifyCompanySize(headcount ?? null);
+  const industrySegment = segClassifyIndustry(industry ?? 'tech');
+  const regionSegment = segClassifyRegion(region ?? 'US');
+  const calib = lookupCalibrationWithRegion(companySize, industrySegment, regionSegment);
+
+  return {
+    source: `segment-bootstrap:${segmentKey}`,
+    scope: 'GLOBAL',
+    layerCalibration: {
+      L1: BOOTSTRAP_LAYER_CALIBRATION.L1 * calib.l1,
+      L2: BOOTSTRAP_LAYER_CALIBRATION.L2 * calib.l2,
+      L3: BOOTSTRAP_LAYER_CALIBRATION.L3 * calib.l3,
+      L4: BOOTSTRAP_LAYER_CALIBRATION.L4 * calib.l4,
+      L5: BOOTSTRAP_LAYER_CALIBRATION.L5 * calib.l5,
+    },
+    d8: { ...BOOTSTRAP_D8 },
+    revenueGrowthThresholds: BOOTSTRAP_REVENUE.map((p) => [p[0], p[1]] as [number, number]),
+    stockTrendThresholds: BOOTSTRAP_STOCK.map((p) => [p[0], p[1]] as [number, number]),
+    fcfMarginThresholds: BOOTSTRAP_FCF.map((p) => [p[0], p[1]] as [number, number]),
+    auc: { distress: calib.auc, efficiency: null, wave: null, combined: calib.auc },
+    coverage: { at90: null, at80: null, at50: null },
+    nEvents: 0, // bootstrap has no DB-verified event count
+    loadedAt: new Date().toISOString(),
+    segmentKey,
+    segmentLabel: segmentKeyToLabel(segmentKey),
+    fallbackLevel: 'segment_bootstrap',
   };
 }
 
@@ -140,6 +215,9 @@ interface CacheEntry {
 
 const cache: Map<CohortScope, CacheEntry> = new Map();
 const inflight: Map<CohortScope, Promise<CalibrationBundle>> = new Map();
+// Separate cache keyed by segment_key string (different namespace from CohortScope)
+const segmentCache: Map<string, CacheEntry> = new Map();
+const segmentInflight: Map<string, Promise<CalibrationBundle | null>> = new Map();
 let bootstrapWarningEmitted = false;
 
 function emitBootstrapWarning(reason: string): void {
@@ -154,6 +232,7 @@ function emitBootstrapWarning(reason: string): void {
 interface CalibrationVersionRow {
   version: string;
   cohort_scope: string;
+  segment_key: string | null;
   l1_multiplier: number;
   l2_multiplier: number;
   l3_multiplier: number;
@@ -196,9 +275,10 @@ function rowToBundle(row: CalibrationVersionRow): CalibrationBundle {
       .filter((p): p is [number, number] => p !== null);
   };
 
+  const isSegmentRow = !!row.segment_key;
   return {
     source: `db:${row.version}`,
-    scope: row.cohort_scope as CohortScope,
+    scope: isSegmentRow ? 'GLOBAL' : (row.cohort_scope as CohortScope),
     layerCalibration: {
       L1: row.l1_multiplier,
       L2: row.l2_multiplier,
@@ -229,6 +309,13 @@ function rowToBundle(row: CalibrationVersionRow): CalibrationBundle {
     },
     nEvents: row.n_events_total,
     loadedAt: new Date().toISOString(),
+    ...(isSegmentRow ? {
+      segmentKey: row.segment_key!,
+      segmentLabel: segmentKeyToLabel(row.segment_key!),
+      fallbackLevel: 'segment_db' as const,
+    } : {
+      fallbackLevel: 'cohort_db' as const,
+    }),
   };
 }
 
@@ -251,6 +338,67 @@ async function fetchActiveForScope(scope: CohortScope): Promise<CalibrationBundl
   }
   if (!data) return null;
   return rowToBundle(data as unknown as CalibrationVersionRow);
+}
+
+/**
+ * Fetch a segment-specific calibration row.
+ * Only returns a bundle when:
+ *   (a) a DB row exists for this segment_key with status='active', AND
+ *   (b) n_events_total >= MIN_SEGMENT_OUTCOMES (80).
+ * Returns null when either condition fails — caller falls to next in chain.
+ */
+async function fetchActiveForSegmentKey(segmentKey: string): Promise<CalibrationBundle | null> {
+  const { data, error } = await supabase
+    .from('engine_calibration_versions')
+    .select(
+      'version,cohort_scope,segment_key,l1_multiplier,l2_multiplier,l3_multiplier,l4_multiplier,l5_multiplier,' +
+        'd8_beta0,d8_beta_l1,d8_beta_l2,d8_beta_ai_signal,d8_beta_layoff_rounds,' +
+        'revenue_growth_thresholds,stock_trend_thresholds,fcf_margin_thresholds,' +
+        'auc_distress,auc_efficiency,auc_wave,auc_combined,' +
+        'coverage_at_90,coverage_at_80,coverage_at_50,n_events_total',
+    )
+    .eq('segment_key', segmentKey)
+    .eq('status', 'active')
+    .gte('n_events_total', MIN_SEGMENT_OUTCOMES)  // 80-outcome minimum
+    .maybeSingle();
+  if (error) {
+    emitBootstrapWarning(`segment fetch failed for ${segmentKey}: ${error.message}`);
+    return null;
+  }
+  if (!data) return null;
+  return rowToBundle(data as unknown as CalibrationVersionRow);
+}
+
+async function loadSegmentWithCache(
+  segmentKey: string,
+  region: string | undefined,
+  industry: string | undefined,
+  headcount: number | null | undefined,
+): Promise<CalibrationBundle | null> {
+  const now = Date.now();
+  const cached = segmentCache.get(segmentKey);
+  if (cached && now - cached.fetchedAt < CACHE_TTL_MS) {
+    // Return cached; null means "no DB row" — caller uses bootstrap
+    return cached.bundle.source === 'segment-miss' ? null : cached.bundle;
+  }
+  const existing = segmentInflight.get(segmentKey);
+  if (existing) return existing;
+
+  const p = fetchActiveForSegmentKey(segmentKey)
+    .then((bundle) => {
+      if (bundle) {
+        segmentCache.set(segmentKey, { bundle, fetchedAt: Date.now() });
+        return bundle;
+      }
+      // Cache the miss so we don't hit the DB again within the TTL.
+      // Store a sentinel so we can distinguish "miss cached" from "not cached".
+      const miss = { ...bootstrapBundle('GLOBAL'), source: 'segment-miss' };
+      segmentCache.set(segmentKey, { bundle: miss, fetchedAt: Date.now() });
+      return null;
+    })
+    .finally(() => { segmentInflight.delete(segmentKey); });
+  segmentInflight.set(segmentKey, p);
+  return p;
 }
 
 async function loadScopeWithCache(scope: CohortScope): Promise<CalibrationBundle> {
@@ -285,22 +433,77 @@ async function loadScopeWithCache(scope: CohortScope): Promise<CalibrationBundle
  * Gated by the ws2_outcome_calibration flag — when off, always returns
  * bootstrap values regardless of DB state.
  */
+/**
+ * Build a segment-bootstrap bundle from the in-memory SEGMENT_CALIBRATIONS
+ * matrix if the segment has a non-default entry. Returns null when the
+ * segment falls through to the _DEFAULT entry (which is identical to global
+ * bootstrap — not worth returning as "segment-specific").
+ */
+function buildInMemorySegmentBundle(
+  segmentKey: string,
+  region: string | undefined,
+  industry: string | undefined,
+  headcount: number | null | undefined,
+): CalibrationBundle | null {
+  try {
+    const companySize = classifyCompanySize(headcount ?? null);
+    const industrySegment = segClassifyIndustry(industry ?? 'other');
+    const regionSegment = segClassifyRegion(region ?? 'US');
+    const calib = lookupCalibrationWithRegion(companySize, industrySegment, regionSegment);
+    // lookupCalibrationWithRegion returns _DEFAULT when no specific entry exists.
+    // _DEFAULT has all multipliers = 1.0 which is identical to global bootstrap.
+    // Skip it so we don't waste a "segment_bootstrap" label on the default.
+    const isDefault = calib.l1 === 1.0 && calib.l2 === 1.0 && calib.l3 === 1.0 &&
+                      calib.l4 === 1.0 && calib.l5 === 1.0;
+    if (isDefault) return null;
+    return segmentBootstrapBundle(segmentKey, region, industry, headcount);
+  } catch {
+    return null;
+  }
+}
+
 export async function loadCalibration(hint?: ScopeResolutionHint): Promise<CalibrationBundle> {
   const flag = evaluateFlagSync('ws2_outcome_calibration');
   if (!flag.isActive && !flag.isShadow) {
     return bootstrapBundle('GLOBAL');
   }
 
+  // ── Tier 1: Segment resolution (region × industry × size) ─────────────────
+  // Try the most-specific segment first. For each key in the fallback chain:
+  //   (a) DB row with n_events >= 80 → segment_db bundle (highest quality)
+  //   (b) In-memory SEGMENT_CALIBRATIONS hit → segment_bootstrap bundle
+  // If the entire segment chain misses, fall through to CohortScope (Tier 2).
+  if (hint) {
+    const segRegion   = classifyRegionForSegment(hint.region);
+    const segIndustry = classifyIndustryForSegment(hint.industry);
+    const segSize     = classifySizeForSegment(hint.headcount);
+    const segChain    = buildSegmentFallbackChain(segRegion, segIndustry, segSize);
+
+    for (const segKey of segChain) {
+      // (a) Try DB row with 80-outcome gate
+      const dbBundle = await loadSegmentWithCache(segKey, hint.region, hint.industry, hint.headcount);
+      if (dbBundle) return dbBundle;
+
+      // (b) Try in-memory research bootstrap for this specific segment key
+      // Only do this for the most-specific key (first in chain) — otherwise
+      // a partial match (region only) would mask a complete CohortScope match.
+      if (segKey === segChain[0]) {
+        const inMemory = buildInMemorySegmentBundle(
+          segKey, hint.region, hint.industry, hint.headcount,
+        );
+        if (inMemory) return inMemory;
+      }
+    }
+  }
+
+  // ── Tier 2: Legacy CohortScope resolution ─────────────────────────────────
   const scopes = resolveScopes(hint);
   for (const scope of scopes) {
     const bundle = await loadScopeWithCache(scope);
-    if (bundle.source !== 'bootstrap') {
-      // Found a real DB-backed scope. Return it.
-      return bundle;
-    }
-    // Bootstrap-for-this-scope means no active row exists — try the next
-    // (less specific) scope. The final fallback is GLOBAL bootstrap.
+    if (bundle.source !== 'bootstrap') return bundle;
   }
+
+  // ── Tier 3: Global bootstrap ───────────────────────────────────────────────
   return bootstrapBundle('GLOBAL');
 }
 
@@ -313,6 +516,25 @@ export function loadCalibrationSync(hint?: ScopeResolutionHint): CalibrationBund
   if (!flag.isActive && !flag.isShadow) {
     return bootstrapBundle('GLOBAL');
   }
+  // Tier 1: check segment cache (populated by a prior async loadCalibration call)
+  if (hint) {
+    const segRegion   = classifyRegionForSegment(hint.region);
+    const segIndustry = classifyIndustryForSegment(hint.industry);
+    const segSize     = classifySizeForSegment(hint.headcount);
+    const segChain    = buildSegmentFallbackChain(segRegion, segIndustry, segSize);
+    for (const segKey of segChain) {
+      const cached = segmentCache.get(segKey);
+      if (cached && cached.bundle.source !== 'segment-miss' && cached.bundle.source !== 'bootstrap') {
+        return cached.bundle;
+      }
+    }
+    // Try in-memory bootstrap for the most-specific segment
+    if (segChain.length > 0) {
+      const inMemory = buildInMemorySegmentBundle(segChain[0], hint.region, hint.industry, hint.headcount);
+      if (inMemory) return inMemory;
+    }
+  }
+  // Tier 2: legacy cohort cache
   const scopes = resolveScopes(hint);
   for (const scope of scopes) {
     const cached = cache.get(scope);
@@ -337,5 +559,7 @@ export async function primeCalibrationCache(scopes: CohortScope[] = ['GLOBAL', '
 export function __resetForTesting(): void {
   cache.clear();
   inflight.clear();
+  segmentCache.clear();
+  segmentInflight.clear();
   bootstrapWarningEmitted = false;
 }

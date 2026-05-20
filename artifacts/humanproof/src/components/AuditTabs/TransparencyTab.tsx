@@ -1597,6 +1597,59 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             </div>
           )}
 
+          {/* Segmented calibration disclosure — always shown when a segment resolved. */}
+          {result.appliedCalibrationSegment && (
+            <div className="mb-6 p-4 rounded-xl border border-cyan-500/25 bg-cyan-500/8">
+              <div className="flex gap-3">
+                <BarChart2 className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h4 className="font-semibold text-cyan-300 text-sm">
+                      Calibration segment applied
+                    </h4>
+                    <span
+                      className={[
+                        'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                        result.calibrationFallbackLevel === 'segment_db'
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : result.calibrationFallbackLevel === 'segment_bootstrap'
+                            ? 'bg-cyan-500/12 text-cyan-400 border-cyan-500/25'
+                            : result.calibrationFallbackLevel === 'cohort_db'
+                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                              : 'bg-white/10 text-gray-400 border-white/15',
+                      ].join(' ')}
+                    >
+                      {result.calibrationFallbackLevel === 'segment_db'       ? 'DB-calibrated (≥80 outcomes)' :
+                       result.calibrationFallbackLevel === 'segment_bootstrap' ? 'Research bootstrap' :
+                       result.calibrationFallbackLevel === 'cohort_db'         ? 'Cohort DB' :
+                                                                                 'Global bootstrap'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-cyan-200/80 leading-relaxed">
+                    <span className="font-mono font-semibold">{result.appliedCalibrationSegment}</span>
+                    {' '}— L1–L5 layer multipliers were adjusted for this company's region,
+                    industry, and size. A 50,000-person Indian IT services firm has structurally
+                    different layoff dynamics from a 300-person US fintech; the global pooled
+                    coefficients would systematically miscalibrate for one or both populations.
+                  </p>
+                  {result.calibrationFallbackLevel === 'segment_bootstrap' && (
+                    <p className="text-[10px] text-cyan-200/55 mt-1.5 leading-relaxed">
+                      Research-grounded estimates are applied — this segment has not yet
+                      accumulated ≥80 verified outcomes for regression-derived coefficients.
+                      The multipliers are from published literature, not empirical regression.
+                    </p>
+                  )}
+                  {result.calibrationFallbackLevel === 'global_bootstrap' && (
+                    <p className="text-[10px] text-cyan-200/55 mt-1.5 leading-relaxed">
+                      No segment-specific calibration was available — global pooled coefficients
+                      applied. Accuracy may be lower for under-represented markets.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Unknown company inference disclosure — shown when industry/region were
               inferred from the company name because the company wasn't in the DB. */}
           {(() => {

@@ -393,16 +393,37 @@ export function getEarningsSurpriseRiskDelta(surpriseCategory: string): number {
  * The multipliers are small corrections (0.93–1.11) that account for
  * systematic bias measured in the regression validation set.
  * They do not change the direction of any signal — only the magnitude.
+ *
+ * When a segment-specific bundle is active (set by setAuditCalibrationBundle),
+ * the segment multipliers are COMPOSED with LAYER_CALIBRATION: the result is
+ * that both the global bias correction AND the segment-specific adjustment apply.
  */
+
+// ── Per-audit segment calibration override ────────────────────────────────────
+// Set by the audit pipeline when a segment-specific bundle resolves.
+// Cleared in the finally path of fetchAuditData() alongside clearAuditFlags().
+let _auditLayerCalibration: LayerCalibration | null = null;
+
+/**
+ * Inject segment-specific calibration for the current audit run.
+ * Pass null to revert to the global LAYER_CALIBRATION constants.
+ */
+export function setAuditCalibrationBundle(bundle: LayerCalibration | null): void {
+  _auditLayerCalibration = bundle;
+}
+
 export function applyCalibration(rawScores: {
   L1: number; L2: number; L3: number; L4: number; L5: number;
 }): typeof rawScores {
+  // Compose: global bias correction × segment multiplier (when active).
+  // For "INDIA__TECH__LARGE": effective L3 = L3_raw × 0.93 (global) × 1.35 (segment) = × 1.256
+  const seg = _auditLayerCalibration;
   return {
-    L1: clampCalib(rawScores.L1 * LAYER_CALIBRATION.L1),
-    L2: clampCalib(rawScores.L2 * LAYER_CALIBRATION.L2),
-    L3: clampCalib(rawScores.L3 * LAYER_CALIBRATION.L3),
-    L4: clampCalib(rawScores.L4 * LAYER_CALIBRATION.L4),
-    L5: clampCalib(rawScores.L5 * LAYER_CALIBRATION.L5),
+    L1: clampCalib(rawScores.L1 * LAYER_CALIBRATION.L1 * (seg?.L1 ?? 1)),
+    L2: clampCalib(rawScores.L2 * LAYER_CALIBRATION.L2 * (seg?.L2 ?? 1)),
+    L3: clampCalib(rawScores.L3 * LAYER_CALIBRATION.L3 * (seg?.L3 ?? 1)),
+    L4: clampCalib(rawScores.L4 * LAYER_CALIBRATION.L4 * (seg?.L4 ?? 1)),
+    L5: clampCalib(rawScores.L5 * LAYER_CALIBRATION.L5 * (seg?.L5 ?? 1)),
   };
 }
 
