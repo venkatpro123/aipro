@@ -661,6 +661,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           data_quality: pipelineQuality,
           calculated_at: new Date().toISOString(),
           allow_community_share: allowCommunityShare,
+          // Snapshot of company signals at scoring time — required for server-side
+          // delta attribution on multi-device users (localStorage doesn't travel).
+          company_snapshot: {
+            stock90DayChange:   companyData.stock90DayChange ?? null,
+            revenueGrowthYoY:   companyData.revenueGrowthYoY ?? null,
+            layoffRounds:       companyData.layoffRounds ?? 0,
+            lastLayoffPercent:  companyData.lastLayoffPercent ?? null,
+            lastLayoffDate:     companyData.layoffsLast24Months?.[0]?.date ?? null,
+            aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
+          },
         });
 
         // WS7 — Server-authoritative score trajectory (Audit Issue #13).
@@ -1265,10 +1275,15 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
       // ── Record score with L1-L5 breakdown for delta attribution ──────────────
       // This enables "why did your score change?" for returning Layoff Audit users.
+      // MUST run for every completed audit — including companies not in the oracle DB.
+      // The previous guard `if (bd && state.oracleKey)` was wrong: when oracleKey is
+      // null (unknown company), the most accurate ensemble score was never recorded.
+      // A returning user who audited an unknown company twice would never see attribution
+      // because the first audit produced no history entry to diff against.
       const bd = ensembleResult.breakdown;
-      if (bd && state.oracleKey) {
+      if (bd) {
         recordScore({
-          roleKey: state.oracleKey,
+          roleKey: oracleRoleKey,  // defined at line ~1062 as state.oracleKey || 'generic'
           industryKey: companyData.industry || 'Technology',
           countryKey: d5CountryKey,
           experience: oracleExp,
@@ -1279,15 +1294,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
                        ...(bd.D6 != null ? { D6: bd.D6 } : {}),
                        ...(bd.D7 != null ? { D7: bd.D7 } : {}) },
           companyName: companyData.name,
-          // v6.0 Fix 3: Store company snapshot so delta attribution can reference actual values
           companySnapshot: {
-            stock90DayChange:  companyData.stock90DayChange ?? null,
-            revenueGrowthYoY:  companyData.revenueGrowthYoY ?? null,
-            layoffRounds:      companyData.layoffRounds ?? 0,
-            lastLayoffPercent: companyData.lastLayoffPercent ?? null,
-            lastLayoffDate:    companyData.layoffsLast24Months?.[0]?.date ?? null,
+            stock90DayChange:   companyData.stock90DayChange ?? null,
+            revenueGrowthYoY:   companyData.revenueGrowthYoY ?? null,
+            layoffRounds:       companyData.layoffRounds ?? 0,
+            lastLayoffPercent:  companyData.lastLayoffPercent ?? null,
+            lastLayoffDate:     companyData.layoffsLast24Months?.[0]?.date ?? null,
             aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
-            employeeCount:     companyData.employeeCount,
+            employeeCount:      companyData.employeeCount,
             revenuePerEmployee: companyData.revenuePerEmployee,
           },
         });
@@ -1332,6 +1346,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             data_quality: finalQuality,
             calculated_at: new Date().toISOString(),
             allow_community_share: allowCommunityShare,
+            company_snapshot: {
+              stock90DayChange:   companyData.stock90DayChange ?? null,
+              revenueGrowthYoY:   companyData.revenueGrowthYoY ?? null,
+              layoffRounds:       companyData.layoffRounds ?? 0,
+              lastLayoffPercent:  companyData.lastLayoffPercent ?? null,
+              lastLayoffDate:     companyData.layoffsLast24Months?.[0]?.date ?? null,
+              aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
+            },
           });
 
           // Non-blocking score_history sync via scoreSyncService

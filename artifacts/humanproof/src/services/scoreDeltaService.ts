@@ -267,15 +267,48 @@ export function loadScoreHistory(): ScoreHistoryEntry[] {
   }
 }
 
+// Dev-only guard: warn when breakdown is missing required L1-L5 fields so the
+// gap is caught at development time rather than silently failing attribution.
+function warnIfBreakdownIncomplete(entry: ScoreHistoryEntry): void {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') return;
+  const bd = entry.breakdown;
+  if (!bd) {
+    console.warn('[scoreDeltaService] recordScore called without breakdown — delta attribution will show "no data" for all dimensions.', { roleKey: entry.roleKey, company: entry.companyName });
+    return;
+  }
+  const required = ['L1', 'L2', 'L3', 'L4', 'L5'] as const;
+  const missing = required.filter(k => typeof bd[k] !== 'number');
+  if (missing.length > 0) {
+    console.warn(`[scoreDeltaService] recordScore breakdown missing ${missing.join(', ')} — attribution for those dimensions will fall back to generic text.`, { roleKey: entry.roleKey, company: entry.companyName });
+  }
+  // Sanity-check scale: L1-L5 should be 0-1 raw engine output.
+  const outOfRange = required.filter(k => typeof bd[k] === 'number' && (bd[k] < 0 || bd[k] > 1));
+  if (outOfRange.length > 0) {
+    console.warn(`[scoreDeltaService] recordScore breakdown values out of 0-1 range for ${outOfRange.join(', ')} — pass raw engine output, not display-scaled values.`, { values: outOfRange.reduce((a, k) => ({ ...a, [k]: bd[k] }), {}) });
+  }
+  const snap = entry.companySnapshot;
+  if (!snap) {
+    console.warn('[scoreDeltaService] recordScore called without companySnapshot — L1/L2/L3 driver text will be generic for this entry.', { roleKey: entry.roleKey, company: entry.companyName });
+  }
+}
+
 export function recordScore(entry: ScoreHistoryEntry): void {
+  if (process.env.NODE_ENV !== 'production') {
+    warnIfBreakdownIncomplete(entry);
+  }
   try {
     const history = loadScoreHistory();
     const oneDayAgo = Date.now() - 86_400_000;
 
+    // Deduplication key: role + company + country + experience within 24h.
+    // Including companyName prevents two audits for different companies on the
+    // same role/country/experience from overwriting each other in the same day.
+    const companyNorm = (entry.companyName ?? '').toLowerCase().trim();
     const filtered = history.filter(h =>
       !(h.roleKey === entry.roleKey &&
         h.countryKey === entry.countryKey &&
         h.experience === entry.experience &&
+        (h.companyName ?? '').toLowerCase().trim() === companyNorm &&
         h.timestamp > oneDayAgo)
     );
 
