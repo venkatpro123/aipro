@@ -480,6 +480,15 @@ export interface HybridResult {
    */
   calibrationDbBootstrap?: boolean;
 
+  /**
+   * Serialized record of every feature flag mode that was active when this
+   * audit ran. Resolved once via freezeAuditFlags() at pipeline entry.
+   * Stored for reproducibility: if you re-run the same audit and the modes
+   * in this record differ from the current global flag state, the code paths
+   * that ran may differ from the original run.
+   */
+  flagSnapshot?: Record<string, string>;
+
   // ── Cache provenance ────────────────────────────────────────────────────────
   /**
    * true when this result was served from the localStorage or Supabase analysis cache

@@ -125,7 +125,7 @@ import { getMacroRecessionSignalForCohortClassifier } from "./macroSnapshot";
 import { computeConformalCI, type ConformalCohort } from "./conformalCI";
 import { detectStealthLayoff, applyStealthFloor } from "./stealthLayoffDetector";
 import { detectAcquisitionPremium } from "./mergerAcquisitionRiskEngine";
-import { evaluateFlagSync } from "../config/featureFlags";
+import { evaluateFlagSync, freezeAuditFlags, clearAuditFlags } from "../config/featureFlags";
 // DEBT-5 — structured logging.
 import { createLogger } from "../shared/logger";
 const auditPipelineLog = createLogger({ service: "audit-pipeline" });
@@ -650,6 +650,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       } as any,
     };
   }
+
+  // ── Feature flag snapshot — resolved once for this audit run ────────────────
+  // All evaluateFlagSync / evaluateFlag calls within this function and every
+  // service it calls will read from this frozen copy, not the live 60s-refresh
+  // cache. clearAuditFlags() releases the lock at the return site.
+  const auditFlagSnapshot = freezeAuditFlags();
 
   // ── Pipeline timing ─────────────────────────────────────────────────────────
   const _timer = PipelineTimer.start(inputs.companyName);
@@ -3071,6 +3077,17 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // expected `(hybridResult as any).userFactors` but it was never populated,
   // silently breaking all personalization in the brief and cached scenario plans.
   (finalResult as any).userFactors = inputs.userFactors;
+
+  // Stamp the flag snapshot used for this run. Stored for reproducibility:
+  // if a re-audit produces different output, comparing flagSnapshot records
+  // shows whether a flag change was the cause.
+  finalResult.flagSnapshot = auditFlagSnapshot;
+
+  // Release the per-audit flag lock before caching or returning so the next
+  // audit (and any background tasks that run after this returns) get a fresh
+  // freeze. Placed after stampinging flagSnapshot so the cleared state doesn't
+  // affect the stored record.
+  clearAuditFlags();
 
   // v40.0 Task 5.5: Cache successful result to IndexedDB for offline fallback.
   // Fire-and-forget — cache write failure must never block the response.

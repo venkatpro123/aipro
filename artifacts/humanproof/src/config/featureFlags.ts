@@ -117,6 +117,13 @@ interface Snapshot {
 let currentSnapshot: Snapshot | null = null;
 let inflightFetch: Promise<Snapshot> | null = null;
 
+// ── Per-audit flag lock ──────────────────────────────────────────────────────
+// Frozen once at fetchAuditData() entry; released when the audit exits.
+// evaluateFlagSync / evaluateFlag prefer this over currentSnapshot so that
+// a flag change (DB write, 60s refresh) cannot alter behaviour mid-audit,
+// and so two runs with the same inputs always execute the same code paths.
+let auditLockedSnapshot: Snapshot | null = null;
+
 // Local overrides for development. Set via window.__HP_FLAG_OVERRIDES__
 // in browser console:
 //   __HP_FLAG_OVERRIDES__ = { ws3_evidence_hierarchy: 'production' }
@@ -231,6 +238,14 @@ export async function evaluateFlag(key: FlagKey, userId: string | null = null): 
     };
   }
 
+  // If an audit is in flight, use its locked snapshot without waiting for
+  // a background refresh that could alter the result mid-run.
+  if (auditLockedSnapshot) {
+    const row = auditLockedSnapshot.flags.get(key);
+    if (!row) return { isActive: false, isShadow: false, mode: 'off' };
+    return evaluateRow(row, userId);
+  }
+
   const snap = await ensureSnapshot();
   const row = snap.flags.get(key);
   if (!row) {
@@ -253,7 +268,9 @@ export function evaluateFlagSync(key: FlagKey, userId: string | null = null): Fl
     };
   }
 
-  const snap = snapshotSync();
+  // Audit-locked snapshot takes absolute priority: if an audit is in flight,
+  // every flag read uses the state that was frozen at audit start.
+  const snap = auditLockedSnapshot ?? snapshotSync();
   if (!snap) return { isActive: false, isShadow: false, mode: 'off' };
   const row = snap.flags.get(key);
   if (!row) return { isActive: false, isShadow: false, mode: 'off' };
@@ -296,6 +313,49 @@ export function snapshotForLedger(): Record<string, FlagMode> {
 }
 
 /**
+ * Freeze the current flag snapshot for one audit run.
+ *
+ * Call once at the audit entry point (fetchAuditData) before any flag-gated
+ * code executes. All subsequent evaluateFlagSync / evaluateFlag calls in this
+ * JS event-loop task and its continuations will read from this snapshot, not
+ * from the live 60s-refresh cache, until clearAuditFlags() is called.
+ *
+ * Returns a serializable record of the locked modes. Store on
+ * HybridResult.flagSnapshot for reproducibility inspection — if you re-run
+ * the same audit and the flag modes differ from this record, the code paths
+ * may differ from the original run.
+ *
+ * Safe to call when the snapshot has not been primed yet: all flags default
+ * to 'off' (the safe legacy fallback path).
+ */
+export function freezeAuditFlags(): Record<string, FlagMode> {
+  const source = snapshotSync();
+  if (source) {
+    // Deep-copy the Map so a background refresh cannot mutate our locked copy.
+    auditLockedSnapshot = {
+      flags: new Map(source.flags),
+      fetchedAt: source.fetchedAt,
+    };
+  } else {
+    // Snapshot not yet primed — lock an empty map (all flags off).
+    auditLockedSnapshot = { flags: new Map(), fetchedAt: Date.now() };
+  }
+  const record: Record<string, FlagMode> = {};
+  for (const [k, row] of auditLockedSnapshot.flags) {
+    record[k] = row.mode;
+  }
+  return record;
+}
+
+/**
+ * Release the per-audit flag lock so the next audit gets a fresh freeze.
+ * Call in the finally path of the audit pipeline entry function.
+ */
+export function clearAuditFlags(): void {
+  auditLockedSnapshot = null;
+}
+
+/**
  * Test-only: replace the snapshot directly. Used by Vitest setup.
  */
 export function __setSnapshotForTesting(rows: FeatureFlagRow[]): void {
@@ -311,4 +371,5 @@ export function __setSnapshotForTesting(rows: FeatureFlagRow[]): void {
 export function __resetSnapshotForTesting(): void {
   currentSnapshot = null;
   inflightFetch = null;
+  auditLockedSnapshot = null;
 }

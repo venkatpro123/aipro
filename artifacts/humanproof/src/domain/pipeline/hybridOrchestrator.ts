@@ -30,13 +30,21 @@ import type { CompanyData } from '../../data/companyDatabase';
 // ── Flag snapshot adapter ───────────────────────────────────────────────────
 
 function buildFlagSnapshot(): FlagSnapshot {
-  // Resolve every flag once via evaluateFlagSync. Layers then query via
-  // ctx.flags.isActive(...) — deterministic for the duration of the audit,
-  // even if the underlying cache refreshes mid-audit.
+  // evaluateFlagSync reads from the per-audit frozen snapshot (set by
+  // freezeAuditFlags() in fetchAuditData) so these calls are already
+  // deterministic for the audit's lifetime. Memoize per-key anyway to
+  // avoid redundant Map lookups on hot-path layers.
+  const cache = new Map<string, ReturnType<typeof evaluateFlagSync>>();
+  const resolve = (key: string) => {
+    if (!cache.has(key)) {
+      cache.set(key, evaluateFlagSync(key as Parameters<typeof evaluateFlagSync>[0]));
+    }
+    return cache.get(key)!;
+  };
   return {
-    isActive: (key) => evaluateFlagSync(key as Parameters<typeof evaluateFlagSync>[0]).isActive,
-    isShadow: (key) => evaluateFlagSync(key as Parameters<typeof evaluateFlagSync>[0]).isShadow,
-    modeOf:   (key) => evaluateFlagSync(key as Parameters<typeof evaluateFlagSync>[0]).mode,
+    isActive: (key) => resolve(key).isActive,
+    isShadow: (key) => resolve(key).isShadow,
+    modeOf:   (key) => resolve(key).mode,
   };
 }
 
