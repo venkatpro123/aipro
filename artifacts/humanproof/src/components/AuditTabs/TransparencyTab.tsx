@@ -47,7 +47,8 @@ import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
 // live-data-first
 import { DataFreshnessPanel } from "../audit/DataFreshnessPanel";
 import { LiveDataCoveragePanel } from "../audit/LiveDataCoveragePanel";
-import { CALIBRATION_META } from "../../services/empiricalCalibration";
+import { CALIBRATION_META, LAYER_CALIBRATION } from "../../services/empiricalCalibration";
+import type { SegmentCalibrationResult } from "../../services/segmentedCalibrationEngine";
 import { getCircuitSnapshot } from "../../services/apiCircuitBreaker";
 import { PatternMatchCard } from "../PatternMatchCard";
 import {
@@ -592,6 +593,156 @@ interface MethodologySection {
   description: string;
   icon: React.ReactNode;
 }
+
+// ---------------------------------------------------------------------------
+// EffectiveWeightsPanel — composed formula × global calibration × segment
+// ---------------------------------------------------------------------------
+// Principle 1 compliance: the formula weights (e.g. L1=30%) are NOT what
+// drives the final score after calibration composition. This panel shows the
+// three-component product so users can see the actual effective contribution
+// of each layer for their specific segment.
+//
+// Effective contribution of Lₙ:
+//   formula_weight × LAYER_CALIBRATION.Lₙ × segment_multiplier.Lₙ
+//
+// Normalized effective share = effective_Lₙ / Σ effective_Lₖ
+// These are disclosed as percentages so users understand why their India BPO
+// score behaves differently from a US Tech score given the same raw signals.
+
+const HYBRID_FORMULA_WEIGHTS_DISPLAY = {
+  L1: 0.30,
+  L2: 0.25,
+  L3: 0.20,
+  L4: 0.12,
+  L5: 0.13,
+} as const;
+
+const LAYER_DISPLAY_NAMES: Record<string, string> = {
+  L1: 'Company Health',
+  L2: 'Layoff History',
+  L3: 'Role Exposure',
+  L4: 'Market Conditions',
+  L5: 'Personal Factors',
+};
+
+const EffectiveWeightsPanel: React.FC<{
+  segmentCalibration?: SegmentCalibrationResult;
+}> = ({ segmentCalibration: seg }) => {
+  type LayerKey = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
+  const layers: LayerKey[] = ['L1', 'L2', 'L3', 'L4', 'L5'];
+
+  const segMultiplierKey: Record<LayerKey, keyof SegmentCalibrationResult> = {
+    L1: 'l1Multiplier',
+    L2: 'l2Multiplier',
+    L3: 'l3Multiplier',
+    L4: 'l4Multiplier',
+    L5: 'l5Multiplier',
+  };
+
+  const rows = layers.map((l) => {
+    const fw   = HYBRID_FORMULA_WEIGHTS_DISPLAY[l];
+    const gc   = LAYER_CALIBRATION[l];
+    const sm   = seg ? (seg[segMultiplierKey[l]] as number) ?? 1.0 : 1.0;
+    const eff  = fw * gc * sm;
+    return { layer: l, name: LAYER_DISPLAY_NAMES[l], fw, gc, sm, eff };
+  });
+
+  const totalEff  = rows.reduce((s, r) => s + r.eff, 0);
+  const hasSegAdj = seg != null && rows.some((r) => Math.abs(r.sm - 1.0) > 0.01);
+
+  const pct  = (v: number) => `${Math.round(v * 100)}%`;
+  const mult = (v: number) => v === 1.0 ? '×1.00' : `×${v.toFixed(2)}`;
+  const share = (eff: number) => `${Math.round((eff / totalEff) * 100)}%`;
+
+  return (
+    <div className="glass-panel overflow-hidden">
+      {hasSegAdj && (
+        <div className="px-4 py-2 text-[10px] bg-amber-500/10 border-b border-amber-500/20 text-amber-400/80 leading-relaxed">
+          <span className="font-bold uppercase tracking-widest mr-1">Segment active:</span>
+          {seg!.segmentLabel} — calibration multipliers shift the effective layer contributions below.
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <table className="w-full text-[11px]">
+          <thead>
+            <tr className="bg-white/5 border-b border-white/10">
+              <th className="text-left py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Layer</th>
+              <th className="text-right py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Formula&nbsp;Wt</th>
+              <th className="text-right py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Global Cal</th>
+              {hasSegAdj && (
+                <th className="text-right py-2.5 px-4 label-xs text-amber-400/60 opacity-80 uppercase">Seg Mult</th>
+              )}
+              <th className="text-right py-2.5 px-4 label-xs text-cyan-400/70 opacity-80 uppercase">Eff&nbsp;Share</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {rows.map(({ layer, name, fw, gc, sm, eff }) => {
+              const effShare    = eff / totalEff;
+              const driftFromFw = Math.abs(effShare - fw) > 0.03;
+              return (
+                <tr key={layer} className="hover:bg-white/5 transition-colors">
+                  <td className="py-2.5 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">{layer}</span>
+                      <span className="font-medium">{name}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-4 text-right font-mono opacity-60">{pct(fw)}</td>
+                  <td className="py-2.5 px-4 text-right font-mono" style={{
+                    color: gc > 1.05 ? 'var(--amber)' : gc < 0.95 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.55)'
+                  }}>
+                    {mult(gc)}
+                  </td>
+                  {hasSegAdj && (
+                    <td className="py-2.5 px-4 text-right font-mono" style={{
+                      color: sm > 1.1 ? 'var(--amber)' : sm < 0.9 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.55)'
+                    }}>
+                      {mult(sm)}
+                    </td>
+                  )}
+                  <td className="py-2.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-16 bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${effShare * 100}%`,
+                            background: driftFromFw ? 'var(--amber)' : 'var(--cyan)',
+                          }}
+                        />
+                      </div>
+                      <span className="font-mono font-bold w-8 text-right" style={{
+                        color: driftFromFw ? 'var(--amber)' : 'var(--cyan)'
+                      }}>
+                        {share(eff)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="px-4 py-3 border-t border-white/5 text-[10px] text-muted-foreground leading-relaxed space-y-1">
+        <p>
+          <span className="text-cyan-400/70 font-bold">Eff Share</span> = formula weight × global calibration × segment multiplier, normalized.
+          Amber rows deviate &gt;3 pts from the raw formula weight — these are the layers where calibration has most changed the score composition.
+        </p>
+        {!hasSegAdj && (
+          <p className="opacity-60">
+            No segment-specific adjustment active for this company profile. Effective shares reflect global calibration only.
+          </p>
+        )}
+        {hasSegAdj && seg!.calibrationStatus === 'developer_estimate' && (
+          <p className="text-amber-400/60">
+            Segment multipliers are developer-estimated (not regression-derived). Use for directional guidance only.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // D8ValidationPanel — inline deployment gate status for D8
@@ -2206,6 +2357,15 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             description="Validation status for each of the 10 scoring formula weights. Shows which are regression-derived vs developer estimates."
           />
           <DimensionCalibrationPanel />
+        </div>
+
+        {/* v40.0: Effective layer weights after calibration composition (Principle 1 disclosure) */}
+        <div className="mb-6">
+          <SectionHeader
+            title="Effective Layer Weights"
+            description="What each layer actually contributes to your score after global calibration multipliers and segment adjustments are applied. Formula weights (e.g. L1=30%) are not the effective contribution — calibration composition changes the share."
+          />
+          <EffectiveWeightsPanel segmentCalibration={(result as any).segmentCalibration} />
         </div>
 
         {/* v8.0: India sector intelligence — only shown for India-region companies */}

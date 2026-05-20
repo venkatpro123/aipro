@@ -451,6 +451,119 @@ async function recalibrateScope(
   };
 }
 
+// ── D8 held-out validation gate (inline — Deno cannot import frontend services) ─
+//
+// Mirrors d8ValidationService.ts from the frontend. Called once per cron run,
+// after all scope recalibrations complete. Idempotent: the UPDATE is a no-op
+// when the flag is already mode='production'.
+
+interface D8HeldoutRow {
+  actual_efficiency_layoff: boolean;
+  predicted_probability: number;
+}
+
+interface D8GateResult {
+  n_heldout: number;
+  auc_roc: number;
+  precision_at_threshold: number;
+  passes_gate: boolean;
+  gate_failure_reason?: string;
+  already_active: boolean;
+  activated_this_run: boolean;
+}
+
+const D8_GATE = { N_MIN: 15, AUC_MIN: 0.72, PREC_MIN: 0.65, THRESHOLD: 0.50 };
+
+function d8AUC(rows: D8HeldoutRow[]): number {
+  const pos = rows.filter(r => r.actual_efficiency_layoff).map(r => r.predicted_probability);
+  const neg = rows.filter(r => !r.actual_efficiency_layoff).map(r => r.predicted_probability);
+  if (pos.length === 0 || neg.length === 0) return 0.5;
+  let wins = 0;
+  for (const p of pos) for (const n of neg) { if (p > n) wins++; else if (p === n) wins += 0.5; }
+  return wins / (pos.length * neg.length);
+}
+
+function d8Precision(rows: D8HeldoutRow[], threshold: number): number {
+  const pp = rows.filter(r => r.predicted_probability >= threshold);
+  if (pp.length === 0) return 0;
+  return pp.filter(r => r.actual_efficiency_layoff).length / pp.length;
+}
+
+// deno-lint-ignore no-explicit-any
+async function runD8GateCheck(supabase: any): Promise<D8GateResult> {
+  // Fetch current flag state — avoid writes when already active.
+  const { data: flagRow } = await supabase
+    .from('engine_feature_flags')
+    .select('mode')
+    .eq('flag_key', 'v39_d8_ai_efficiency_active')
+    .maybeSingle();
+
+  const alreadyActive = flagRow?.mode === 'production';
+
+  // Fetch held-out events.
+  const { data: events, error } = await supabase
+    .from('d8_heldout_events')
+    .select('actual_efficiency_layoff,predicted_probability');
+
+  if (error || !events) {
+    return {
+      n_heldout: 0, auc_roc: 0.5, precision_at_threshold: 0,
+      passes_gate: false,
+      gate_failure_reason: `d8_heldout_events fetch failed: ${error?.message ?? 'no data'}`,
+      already_active: alreadyActive, activated_this_run: false,
+    };
+  }
+
+  const n    = events.length;
+  const auc  = Math.round(d8AUC(events as D8HeldoutRow[]) * 1000) / 1000;
+  const prec = Math.round(d8Precision(events as D8HeldoutRow[], D8_GATE.THRESHOLD) * 1000) / 1000;
+
+  const failures: string[] = [];
+  if (n    < D8_GATE.N_MIN)   failures.push(`n_heldout=${n} < required ${D8_GATE.N_MIN}`);
+  if (auc  < D8_GATE.AUC_MIN) failures.push(`AUC=${auc} < required ${D8_GATE.AUC_MIN}`);
+  if (prec < D8_GATE.PREC_MIN) failures.push(`precision=${prec} < required ${D8_GATE.PREC_MIN}`);
+
+  const passes = failures.length === 0;
+
+  if (passes && !alreadyActive) {
+    const reason =
+      `Held-out validation gate cleared by recalibrate-engine cron: ` +
+      `n=${n}, AUC=${auc}, precision=${prec}. ` +
+      `Activated at ${new Date().toISOString()}.`;
+
+    await supabase
+      .from('engine_feature_flags')
+      .update({ mode: 'production', last_changed_reason: reason, last_changed_at: new Date().toISOString() })
+      .eq('flag_key', 'v39_d8_ai_efficiency_active');
+
+    await supabase
+      .from('engine_calibration_versions')
+      .update({
+        d8_validation_metadata: {
+          n_heldout: n, auc_roc: auc, precision_at_threshold: prec,
+          threshold: D8_GATE.THRESHOLD, passes_gate: true,
+          evaluated_at: new Date().toISOString(),
+          evaluated_by: 'recalibrate-engine-cron',
+          gate_criteria: { n_heldout_min: D8_GATE.N_MIN, auc_roc_min: D8_GATE.AUC_MIN, precision_min: D8_GATE.PREC_MIN },
+        },
+      })
+      .eq('cohort_scope', 'GLOBAL')
+      .eq('status', 'active');
+
+    return {
+      n_heldout: n, auc_roc: auc, precision_at_threshold: prec,
+      passes_gate: true, already_active: false, activated_this_run: true,
+    };
+  }
+
+  return {
+    n_heldout: n, auc_roc: auc, precision_at_threshold: prec,
+    passes_gate: passes,
+    gate_failure_reason: failures.length > 0 ? failures.join('; ') : undefined,
+    already_active: alreadyActive, activated_this_run: false,
+  };
+}
+
 // ── Main handler ────────────────────────────────────────────────────────────
 
 Deno.serve((req) =>
@@ -508,13 +621,40 @@ Deno.serve((req) =>
       }
     }
 
+    // ── Post-recalibration: D8 held-out validation gate check ─────────────
+    // Runs on every weekly cron regardless of which scopes were requested.
+    // Idempotent — the UPDATE is a no-op when flag is already 'production'.
+    let d8Gate: D8GateResult | null = null;
+    try {
+      d8Gate = await runD8GateCheck(supabase);
+      if (d8Gate.activated_this_run) {
+        run.addMeta('d8_activated', true);
+        run.addMeta('d8_auc', d8Gate.auc_roc);
+        run.addMeta('d8_precision', d8Gate.precision_at_threshold);
+        run.addMeta('d8_n_heldout', d8Gate.n_heldout);
+      }
+    } catch (d8Err) {
+      // Non-fatal: D8 gate failure must not break the calibration run.
+      run.recordFallback({
+        layerId: 'd8_gate_check',
+        reason: 'exception',
+        errorMessage: d8Err instanceof Error ? d8Err.message : String(d8Err),
+      });
+    }
+
     const promoted = results.filter((r) => r.promoted).length;
     run.setItemsOut(promoted);
     run.addMeta('promoted_scopes', promoted);
     run.addMeta('pending_scopes', results.filter((r) => !r.promoted && r.versionId != null).length);
 
     return new Response(
-      JSON.stringify({ ok: true, scopes_processed: results.length, promoted, results }),
+      JSON.stringify({
+        ok: true,
+        scopes_processed: results.length,
+        promoted,
+        results,
+        d8_gate: d8Gate,
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }),

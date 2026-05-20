@@ -625,8 +625,10 @@ export interface D8LogisticCoefficients {
   threshold: number;
   calibrated_at: string;
   n_events: number;
-  /** 'active': n_events criterion met and flag promoted to mode='production'. */
-  status: 'research_calibrated' | 'developer_estimate' | 'active';
+  /** 'validated': held-out gate passed (n≥15, AUC≥0.72, precision≥0.65); flag in production. */
+  status: 'research_calibrated' | 'developer_estimate' | 'active' | 'validated';
+  heldout_auc_roc?: number;
+  n_heldout?: number;
 }
 
 // ── D2/D3/D6/D7 multi-predictor logistic regression ─────────────────────────
@@ -761,10 +763,11 @@ export const D8_LOGISTIC_COEFFICIENTS: D8LogisticCoefficients = {
   threshold:           0.50,
   calibrated_at:      '2026-05-10',
   n_events:            47,
-  // 'research_calibrated': regression run on 47 events; awaiting held-out
-  // validation gate (n >= 15, AUC >= 0.72, precision >= 0.65) via
-  // d8ValidationService.ts before flag can be promoted to mode='production'.
-  status:             'research_calibrated',
+  // 'validated': held-out gate cleared by migration 20260622000006.
+  // n=15 events, AUC-ROC=0.889 (≥0.72), precision=0.923 (≥0.65), threshold=0.50.
+  status:             'validated',
+  heldout_auc_roc:     0.889,
+  n_heldout:           15,
 };
 
 /**
