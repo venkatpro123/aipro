@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Clock, AlertTriangle } from 'lucide-react';
+import { Shield, Clock, AlertTriangle, Scale } from 'lucide-react';
 import type { VisaRiskResult, VisaRiskLevel } from '../../../services/visaRiskEngine';
 
 interface Props {
@@ -41,6 +41,17 @@ export function VisaRiskPanel({ visaRisk }: Props) {
         </div>
 
         <div className="flex-1 min-w-0">
+          {/* Legal disclaimer — first item in panel so it is always visible before any guidance */}
+          <div className="flex items-start gap-2 px-3 py-2.5 mb-3 rounded-lg bg-amber-950/30 border border-amber-500/20">
+            <Scale size={12} className="text-amber-400/80 shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-[10px] text-amber-200/70 leading-relaxed m-0">
+              <span className="font-semibold text-amber-300/90">General information only — not legal advice.</span>{' '}
+              Immigration law changes frequently and varies by jurisdiction. Grace periods, AC21
+              eligibility, and employer-of-record options should be verified with a qualified
+              immigration attorney before any employment decision.
+            </p>
+          </div>
+
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-sm font-semibold text-white">Visa / Work Authorization Risk</span>
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${cfg.badgeClass} border-current/20`}>

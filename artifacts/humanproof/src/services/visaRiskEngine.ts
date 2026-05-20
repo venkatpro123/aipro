@@ -231,7 +231,7 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   }
   if (overallVisaRisk === 'MODERATE') {
     immediateActions.push('Begin passive job search (update LinkedIn, connect with 2–3 H1B-friendly employers)');
-    immediateActions.push(`Know your grace period: ${gracePeriodDays} days from last day of employment`);
+    immediateActions.push(`General guidance: grace periods run approximately ${gracePeriodDays} days from last day of employment — verify the exact figure for your visa category with an immigration attorney`);
   }
 
   return {
