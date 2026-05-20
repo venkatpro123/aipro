@@ -141,8 +141,8 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                 }
               </div>
             </div>
-            {/* Score bar */}
-            <div className="h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            {/* Score bar with optional benchmark tick */}
+            <div className="relative h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pillar.score}%` }}
@@ -150,6 +150,22 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                 className="h-1 rounded-full"
                 style={{ background: statusColor }}
               />
+              {/* Benchmark tick — a short vertical line showing the median */}
+              {pillar.benchmark && (
+                <div
+                  title={`Median: ${pillar.benchmark.medianScore}% (${pillar.benchmark.populationLabel})`}
+                  style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    left: `${pillar.benchmark.medianScore}%`,
+                    width: '1.5px',
+                    height: '5px',
+                    background: 'rgba(255,255,255,0.45)',
+                    borderRadius: '1px',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -196,6 +212,34 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                       </p>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Benchmark comparison — "You: N%. Median among X: M%." */}
+              {/* Scores without benchmarks are numbers without meaning. */}
+              {pillar.benchmark && (
+                <div
+                  className="rounded-lg px-2.5 py-2"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  <p className="text-[9px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                    BENCHMARK
+                  </p>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    <span style={{ color: statusColor, fontWeight: 800 }}>You: {pillar.score}%</span>
+                    {'  ·  '}
+                    <span>
+                      Median among {pillar.benchmark.populationLabel}:{' '}
+                      <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>
+                        {pillar.benchmark.medianScore}%
+                      </span>
+                    </span>
+                  </p>
+                  {pillar.benchmark.formulaNote && (
+                    <p className="text-[9px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                      Formula: {pillar.benchmark.formulaNote}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
