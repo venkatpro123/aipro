@@ -48,6 +48,17 @@ export interface OutcomeRow {
   detected_at: string | null;
   predicted_cohort: string | null;
   predicted_archetype: string | null;
+  /** JSON array of all source signals that triggered this detection (audit trail). */
+  detection_evidence: Record<string, unknown> | null;
+  /**
+   * true when confidence < 0.70 — outcome was NOT auto-attributed.
+   * Human reviewer must confirm or reject before the row is used in calibration.
+   */
+  requires_manual_review: boolean;
+  /** Why this row was flagged (e.g. "news confidence 0.65 < threshold 0.70"). */
+  review_reason: string | null;
+  /** UUID of the ingestion cron run that wrote or last updated this row. */
+  ingestion_run_id: string | null;
 }
 
 export interface BacktestQuery {
@@ -75,6 +86,25 @@ export interface ImplicitDetection {
   outcome_date: string;
   detection_confidence: number;
   detection_evidence: Record<string, unknown>;
+}
+
+export interface SourcePriorityUpsertArgs {
+  user_id: string;
+  audit_session_id: string;
+  outcome_source: Exclude<OutcomeSource, 'user_reported'>;
+  outcome_reported: string | null;   // null when flagging for manual review
+  outcome_date: string;
+  detection_confidence: number;
+  detection_evidence: Record<string, unknown>;
+  ingestion_run_id: string;
+  manual_review_threshold?: number;  // defaults to 0.70
+}
+
+export interface SourcePriorityUpsertResult {
+  action: 'inserted' | 'updated' | 'dual_coded' | 'skipped' | 'flagged' | 'no_session';
+  id: string;
+  reason?: string;
+  requires_manual_review?: boolean;
 }
 
 // ── Repository ──────────────────────────────────────────────────────────────
@@ -108,9 +138,13 @@ export class OutcomesRepository extends BaseRepository {
           .select(
             'id,user_id,audit_session_id,company_name,role_title,predicted_risk_tier,' +
               'predicted_score,audit_date,outcome_reported,outcome_date,outcome_source,' +
-              'detection_confidence,detected_at,predicted_cohort,predicted_archetype',
+              'detection_confidence,detected_at,predicted_cohort,predicted_archetype,' +
+              'detection_evidence,requires_manual_review,review_reason,ingestion_run_id',
           )
           .not('outcome_reported', 'is', null)
+          // Never include rows still pending manual review — they haven't been
+          // confirmed yet and would inject unvalidated outcomes into calibration.
+          .eq('requires_manual_review', false)
           .gte('audit_date', since.toISOString().slice(0, 10))
           .order('audit_date', { ascending: false })
           .limit(maxRows);
@@ -216,6 +250,74 @@ export class OutcomesRepository extends BaseRepository {
       return res as { data: { id: string }[] | null; count: number | null; error: { code?: string; message: string } | null };
     });
     return result.count;
+  }
+
+  /**
+   * Upsert a single outcome candidate using source-priority rules.
+   *
+   * Calls the upsert_outcome_with_source_priority Postgres function which:
+   *   - Never overwrites user_reported outcomes.
+   *   - Higher confidence wins over lower confidence.
+   *   - Equal confidence from a different source → dual_coded.
+   *   - confidence < manualReviewThreshold → requires_manual_review = true,
+   *     outcome_reported left NULL (not auto-attributed).
+   *
+   * Returns the action taken and the affected row id.
+   */
+  async upsertWithSourcePriority(
+    args: SourcePriorityUpsertArgs,
+  ): Promise<SourcePriorityUpsertResult> {
+    const result = await this.runQuery<SourcePriorityUpsertResult>(
+      'upsertWithSourcePriority',
+      async () => {
+        const res = await this.client.rpc('upsert_outcome_with_source_priority', {
+          p_user_id:               args.user_id,
+          p_audit_session_id:      args.audit_session_id,
+          p_outcome_source:        args.outcome_source,
+          p_outcome_reported:      args.outcome_reported,
+          p_outcome_date:          args.outcome_date,
+          p_detection_confidence:  args.detection_confidence,
+          p_detection_evidence:    args.detection_evidence,
+          p_ingestion_run_id:      args.ingestion_run_id,
+          p_manual_review_threshold: args.manual_review_threshold ?? 0.70,
+        });
+        return res as { data: SourcePriorityUpsertResult | null; error: { code?: string; message: string } | null };
+      },
+    );
+    return result ?? { action: 'skipped', id: '' };
+  }
+
+  /**
+   * Load rows pending manual review (confidence < 0.70).
+   * These are sessions where a weak signal was detected but not auto-attributed.
+   * A human reviewer must either confirm (set outcome_reported) or reject
+   * (clear requires_manual_review + set outcome_reported = null to re-open).
+   */
+  async loadPendingManualReview(
+    opts: { windowDays?: number; maxRows?: number } = {},
+  ): Promise<OutcomeRow[]> {
+    const windowDays = opts.windowDays ?? 90;
+    const maxRows    = opts.maxRows    ?? 500;
+    const since      = new Date();
+    since.setUTCDate(since.getUTCDate() - windowDays);
+
+    return (
+      (await this.runQuery<OutcomeRow[]>('loadPendingManualReview', async () => {
+        const res = await this.client
+          .from('user_prediction_outcomes')
+          .select(
+            'id,user_id,audit_session_id,company_name,role_title,predicted_risk_tier,' +
+              'predicted_score,audit_date,outcome_source,detection_confidence,' +
+              'review_reason,detection_evidence,detected_at,ingestion_run_id',
+          )
+          .eq('requires_manual_review', true)
+          .is('outcome_reported', null)
+          .gte('audit_date', since.toISOString().slice(0, 10))
+          .order('detected_at', { ascending: false })
+          .limit(maxRows);
+        return res as { data: OutcomeRow[] | null; error: { code?: string; message: string } | null };
+      })) ?? []
+    );
   }
 
   /** Source-mix breakdown for the selection-bias report. */
