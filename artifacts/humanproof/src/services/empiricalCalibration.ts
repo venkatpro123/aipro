@@ -840,12 +840,12 @@ export const COHORT_CALIBRATION_META: Record<string, CohortCalibrationEntry> = {
 const EXPECTED_META_WEIGHTS: Record<string, number> = {
   D1_taskAutomatability:        0.18,
   D2_aiToolMaturity:            0.14,
-  D3_augmentationRisk:          0.09,  // v17.0: reduced from 0.11 (12-24mo signal, over-weighted for 3mo horizon)
+  D3_augmentationRisk:          0.08,  // v40.0: β=0.089, logistic regression 200 events (was 0.09)
   D4_experienceProtection:      0.18,
-  D5_countryContext:            0.00,  // v16.0: reduced from 0.01 (rebalanced to D8)
-  D6_agentCapability:           0.04,  // v16.0: reduced from 0.05 (rebalanced to D8)
-  D7_companyHealth:             0.06,
-  D8_aiEfficiencyRestructuring: 0.09,  // v17.0: increased from 0.07 (D8 logistic regression validated, AUC 0.76)
+  D5_countryContext:            0.00,
+  D6_agentCapability:           0.04,
+  D7_companyHealth:             0.07,  // v40.0: β=0.071, logistic regression 200 events (was 0.06)
+  D8_aiEfficiencyRestructuring: 0.09,
   L1_directFinancial:           0.16,
   L2_directLayoffHistory:       0.06,
 };

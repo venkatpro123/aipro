@@ -1979,7 +1979,7 @@ const calculateAIAgentCapability = (
  * returns 0.40 — the same neutral value the old proxy returned for `layoffRounds=0`.
  * This means existing records without the new fields behave identically to before.
  */
-export const computeLeadershipInstabilityProxy = (cd: CompanyData): number => {
+export const computeLeadershipInstabilityProxy = (cd: CompanyData, now: Date = new Date()): number => {
   // ── Null-signal fix ────────────────────────────────────────────────────────
   // BUG (fixed): the previous implementation set `hasData` per signal but never
   // used it. All four signals were ALWAYS included in the weighted blend, with
@@ -2036,7 +2036,7 @@ export const computeLeadershipInstabilityProxy = (cd: CompanyData): number => {
     // dilute the residualization on companies recovering from old cuts.
     const hasRecentLayoff = (() => {
       if (!cd.layoffsLast24Months || cd.layoffsLast24Months.length === 0) return false;
-      const sixMonthsAgo = Date.now() - 180 * 24 * 60 * 60 * 1000;
+      const sixMonthsAgo = now.getTime() - 180 * 24 * 60 * 60 * 1000;
       return cd.layoffsLast24Months.some(r => {
         const d = r.date ? new Date(r.date).getTime() : NaN;
         return Number.isFinite(d) && d >= sixMonthsAgo;
@@ -2280,6 +2280,7 @@ const calculateD7CompanyHealthRisk = (
   L2: number,
   L4: number,
   companyData: CompanyData,
+  now: Date = new Date(),
 ): number => {
   const aiAdoptionMap: Record<string, number> = {
     low: 0.25,
@@ -2294,7 +2295,7 @@ const calculateD7CompanyHealthRisk = (
   // Previously this was circular with L2 which already weighs layoffRounds.
   // A company can have 0 documented layoff rounds yet exhibit severe leadership
   // instability (e.g. CEO departure + board restructuring = first-wave signal).
-  const leadershipInstability = computeLeadershipInstabilityProxy(companyData);
+  const leadershipInstability = computeLeadershipInstabilityProxy(companyData, now);
 
   return clamp(
     L1 * 0.30 +
@@ -2701,6 +2702,7 @@ const analyzeSignalQuality = (
   L5: number,
   D6?: number,
   D7?: number,
+  now: Date = new Date(),
 ) => {
   const conflicts: Array<{
     signal1: string;
@@ -2714,7 +2716,7 @@ const analyzeSignalQuality = (
   // FIX: Real conflict #1 — aggressive hiring WHILE having recent layoffs (<12 months)
   // This is a genuine contradiction that may indicate a restructuring-pivot pattern
   const hasRecentLayoffs = companyData.layoffsLast24Months?.some(l => {
-    const monthsAgo = monthsDifference(l.date, new Date());
+    const monthsAgo = monthsDifference(l.date, now);
     return monthsAgo < 12;
   }) ?? false;
 
@@ -3863,7 +3865,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // boundary. The shifted weight goes to L1, where company-specific +
   // PPP-adjusted signals belong.
   const D6_raw = calculateAIAgentCapability(roleTitle, rawRoleExposure.aiRisk);
-  const D7_raw = calculateD7CompanyHealthRisk(L1, L2, L4, companyData);
+  const D7_raw = calculateD7CompanyHealthRisk(L1, L2, L4, companyData, now);
   const D2_raw = calculateAIToolMaturity(companyData, rawRoleExposure.aiRisk, rawRoleExposure.demandTrend);
   const D3_raw = calculateAugmentationRisk(
     rawRoleExposure.aiRisk,
@@ -4160,7 +4162,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // Detect conflicting signals and missing data.
   // Merge performance credibility contradictions so they surface in the Transparency
   // tab and trigger the same confidence-interval widening as company-level conflicts.
-  const signalQualityBase = analyzeSignalQuality(companyData, L1, L2, L3, L4, L5, D6, D7);
+  const signalQualityBase = analyzeSignalQuality(companyData, L1, L2, L3, L4, L5, D6, D7, now);
 
   // Append live posting-trend adjustment log when applicable (Fix 4 v7.0).
   // This makes the mechanical score effect visible in the Transparency tab.

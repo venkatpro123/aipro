@@ -31,6 +31,8 @@ export interface ScoreTrajectoryInputs {
   temporalRisk?: TemporalRiskResult;
   managerRisk?: ManagerRiskResult;
   hiringSignal?: HiringSignalResult;
+  /** Reference timestamp. Inject for deterministic / test runs; defaults to wall clock. */
+  now?: Date;
 }
 
 export interface ScoreTrajectoryResult extends TrajectoryProjection {
@@ -51,12 +53,13 @@ const HIGH_TIER_THRESHOLD = 70;
 
 export function computeScoreTrajectory(inputs: ScoreTrajectoryInputs): ScoreTrajectoryResult {
   const { currentScore, companyData, hybridResult, scoreHistory, temporalRisk, managerRisk, hiringSignal } = inputs;
+  const now = inputs.now ?? new Date();
 
   // Compute velocity from score history (only v12.0+ entries to avoid formula-change noise)
   const v12History = scoreHistory
     .filter(e => {
       // Accept entries from the same company, within the last 90 days
-      const ageInDays = (Date.now() - new Date(e.timestamp).getTime()) / 86_400_000;
+      const ageInDays = (now.getTime() - new Date(e.timestamp).getTime()) / 86_400_000;
       return (
         e.companyName?.toLowerCase() === companyData.name?.toLowerCase() &&
         ageInDays <= 90
@@ -131,7 +134,7 @@ export function computeScoreTrajectory(inputs: ScoreTrajectoryInputs): ScoreTraj
     const ptsToThreshold = HIGH_TIER_THRESHOLD - currentScore;
     const monthsToThreshold = ptsToThreshold / velocityPtsPerMonth;
     if (monthsToThreshold <= 12) {
-      const targetDate = new Date();
+      const targetDate = new Date(now);
       targetDate.setDate(targetDate.getDate() + Math.round(monthsToThreshold * 30));
       criticalDecisionDateISO = targetDate.toISOString();
     }
@@ -140,7 +143,7 @@ export function computeScoreTrajectory(inputs: ScoreTrajectoryInputs): ScoreTraj
   if (!criticalDecisionDateISO && temporalRisk?.nextDangerWindow?.startsInDays != null) {
     const days = temporalRisk.nextDangerWindow.startsInDays;
     if (days <= 60 && currentScore >= 50) {
-      const targetDate = new Date();
+      const targetDate = new Date(now);
       targetDate.setDate(targetDate.getDate() + days);
       criticalDecisionDateISO = targetDate.toISOString();
     }

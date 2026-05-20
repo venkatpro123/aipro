@@ -397,6 +397,7 @@ export function buildHybridScorePayload({
   roleTitle,
   department,
   userFactors,
+  now: _now,
 }: {
   reconciled: ReconciledCompanySignals;
   companyData: CompanyData;
@@ -404,8 +405,10 @@ export function buildHybridScorePayload({
   roleTitle: string;
   department: string;
   userFactors: UserFactors;
+  /** Reference timestamp. Inject for deterministic / test runs; defaults to wall clock. */
+  now?: Date;
 }): HybridScorePayload {
-  const now = new Date();
+  const now = _now ?? new Date();
   const observedAt = companyData.lastUpdated
     ? new Date(companyData.lastUpdated).toISOString()
     : now.toISOString();
