@@ -1908,22 +1908,28 @@ export const calculateMarketConditionsScore = (
 
 // ─── Layer 5: Employee Factors (8%) ───
 
-// UNCALIBRATED — developer estimates.
-// These tenure brackets were chosen to produce a smooth monotone curve but have
-// not been validated against layoff outcome data. The shape (log-like decay from
-// 0.82 to 0.12) is intuitively reasonable but empirically unverified.
+// Authoritative piecewise tenure brackets — no interpolation.
+// tenure=3.5y maps to [2-4y]=0.50, not a value between 0.65 and 0.35.
+// Boundary rule: upper bound is exclusive — exactly 1y falls into [1-2y]=0.65.
+//
+// Calibration status: developer-specified values pending regression validation.
 // Calibration method: once ≥500 career twin submissions are collected, run
 // logistic regression on P(laid off | tenure_bracket) from verified transitions.
-// Current L5 layer multiplier (×0.94) partially corrects systematic bias but
-// cannot fix an incorrect response curve shape.
+// Until then, the brackets below are the authoritative source-of-truth.
+//
+//   [0-1y]   → 0.80   brand-new employees — highest risk, no institutional moat
+//   [1-2y]   → 0.65   first-year knowledge gap closing but still expendable
+//   [2-4y]   → 0.50   established contributor; mid-risk
+//   [4-7y]   → 0.35   strong institutional knowledge, harder to replace
+//   [7-12y]  → 0.25   deep domain + relationship capital; well-protected
+//   [12+y]   → 0.18   critical institutional memory; near-irreplaceable
 const mapTenure = (years: number): number => {
-  if (years < 0.5) return 0.82;
-  if (years < 1) return 0.7;
-  if (years < 2) return 0.58;
-  if (years < 4) return 0.42;
-  if (years < 7) return 0.28;
-  if (years < 12) return 0.18;
-  return 0.12;
+  if (years < 1)  return 0.80; // [0-1y]
+  if (years < 2)  return 0.65; // [1-2y]
+  if (years < 4)  return 0.50; // [2-4y]  — e.g. tenure=3.5y → 0.50, not interpolated
+  if (years < 7)  return 0.35; // [4-7y]
+  if (years < 12) return 0.25; // [7-12y]
+  return 0.18;                 // [12+y]
 };
 
 export const calculateEmployeeFactorsScore = (
@@ -1963,9 +1969,12 @@ export const calculateEmployeeFactorsScore = (
     { tenureScore: 0.4, uniquenessScore: 0.32, performanceScore: 0.28 },
   );
 
-  // Bonuses applied additively then clamped
+  // Bonuses applied additively then clamped.
   const promotionBonus = hasRecentPromotion ? -0.12 : 0;
-  const relationshipBonus = hasKeyRelationships ? -0.1 : 0;
+  // Key relationships: vendor management or cross-departmental dependencies give
+  // the user structural leverage that lowers layoff risk (protective, not penalising).
+  // hasKeyRelationships=true always lowers D4 regardless of other factors.
+  const relationshipBonus = hasKeyRelationships ? -0.10 : 0;
 
   // Floor lowered from 0.05 → 0.03 so a fully-protected profile (long tenure +
   // top performance + recent promotion + key relationships + unique role) can
@@ -2627,11 +2636,16 @@ const calculateConfidenceInterval = (
 // any one of these can be explained (late-stage company, flat org, IC track).
 // Together they suggest the self-report is optimistic rather than calibrated.
 //
-// Credibility scoring:
-//   - No promotion in 5+ yr as 'top':       -0.55  (strongest signal)
-//   - No promotion in 3–4 yr as 'top':      -0.35  (moderate)
-//   - No key relationships as 'top':         -0.20  (corroborating)
-//   - Generic uniqueness as 'top':           -0.12  (mild)
+// Credibility scoring ('top' tier only):
+//   - No promotion in 5+ yr as 'top':   -0.55  (strongest signal)
+//   - No promotion in 3–4 yr as 'top':  -0.35  (moderate)
+//   - Generic uniqueness as 'top':      -0.12  (mild corroborating signal)
+//
+// Key relationships is a D4 PROTECTION signal — its absence does NOT reduce
+// credibility. A worker without vendor/cross-dept relationships is simply less
+// protected against layoff; it says nothing about whether their 'top' tier
+// claim is accurate. Penalising its absence would conflate "at-risk" with
+// "over-reporting performance", which are independent constructs.
 //
 // Effective tier:
 //   credibilityScore ≥ 0.70  →  trust 'top' claim
@@ -2639,7 +2653,7 @@ const calculateConfidenceInterval = (
 //   credibilityScore < 0.40   →  treat as 'unknown'
 //
 // Symmetric check also applied to 'below' (audit fix):
-//   - Recent promotion + 'below' claim:          → override to 'average' (objective signal)
+//   - Recent promotion + 'below' claim:           → override to 'average' (objective signal)
 //   - 5+ yr tenure + key relationships + 'below': → credibility 0.70 (anxiety-driven)
 // This prevents over-pessimistic self-reports from inflating L5 risk scores.
 
@@ -2712,15 +2726,6 @@ export const analyzePerformanceCredibility = (
         severity: 'Medium',
       });
     }
-  }
-
-  if (!hasKeyRelationships) {
-    penalty += 0.20;
-    contradictions.push({
-      signal1: `Self-reported top performer`,
-      signal2: `No key relationships or executive visibility — top performers typically build internal sponsorship`,
-      severity: 'Medium',
-    });
   }
 
   if (uniquenessDepth === 'generic') {
