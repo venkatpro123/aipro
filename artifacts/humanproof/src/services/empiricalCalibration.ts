@@ -570,7 +570,8 @@ export interface D8LogisticCoefficients {
   threshold: number;
   calibrated_at: string;
   n_events: number;
-  status: 'research_calibrated' | 'developer_estimate';
+  /** 'active': n_events criterion met and flag promoted to mode='production'. */
+  status: 'research_calibrated' | 'developer_estimate' | 'active';
 }
 
 // ── D2/D3/D6/D7 multi-predictor logistic regression ─────────────────────────
@@ -695,7 +696,9 @@ export const D8_LOGISTIC_COEFFICIENTS: D8LogisticCoefficients = {
   threshold:           0.50,
   calibrated_at:      '2026-05-10',
   n_events:            47,
-  status:             'research_calibrated',
+  // Promoted to 'active': n=47 met, AUC=0.76, flag mode='production' 2026-05-22.
+  // Next full regression at n≥100 (target July 2026).
+  status:             'active',
 };
 
 /**

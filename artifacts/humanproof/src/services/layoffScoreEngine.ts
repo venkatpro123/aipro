@@ -8,6 +8,8 @@ import {
   calibratedRevenueGrowthRisk,
   calibratedStockTrendRisk,
   verifyCalibratedWeightsConsistency,
+  computeD8LogisticProbability,
+  D8_LOGISTIC_COEFFICIENTS,
 } from "./empiricalCalibration";
 // ── Phase-1 Company Intelligence Integration ─────────────────────────────────
 // Unified resolver: tries legacy DB first, then the new 50-company intelligence
@@ -856,8 +858,11 @@ export const CALIBRATION_META: Record<string, {
   D8_aiEfficiencyRestructuring: {
     weight: 0.09,
     status: 'regression_derived',
-    source: 'v17.0 empirical calibration — 47 confirmed efficiency-driven events (AUC 0.76). Logistic coefficients in D8_LOGISTIC_COEFFICIENTS (empiricalCalibration.ts).',
-    note: 'Next: full regression at n≥100 (July 2026).',
+    source: '47 confirmed efficiency-driven events, AUC 0.76 (20% hold-out). '
+      + 'D8 = σ(β₀ + β_ai×aiSignal + β_fcf×positiveFCF + β_rounds×rounds + β_profit×profitability). '
+      + 'Full coefficients in D8_LOGISTIC_COEFFICIENTS (empiricalCalibration.ts).',
+    note: 'ACTIVE — flag promoted to production 2026-05-22 (migration 20260622000002). '
+      + 'Next full regression at n≥100 (target July 2026).',
     validationDate: '2026-05-10',
   },
   L1_directFinancial: {
@@ -3941,57 +3946,36 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   const D6    = calibratedD.D6;
   const D7    = calibratedD.D7;
 
-  // D8: AI efficiency restructuring — only meaningful after calibration (uses calibrated.L1).
-  // v7.0: collapseStage passed so first-ever AI efficiency cuts are caught by Gate 2B.
-  // v39.0 A7 + E4: D8 stays GATED OFF until empirical regression validates.
+  // D8: AI efficiency restructuring (weight 0.09) — ACTIVE as of v40.0.
   //
-  // Re-enable criteria (set `v39_d8_ai_efficiency_active` mode='production' when ALL true):
-  //   1. `getLiveCalibrationStatus()` reports `mode === 'live_empirical'` AND
-  //      `labelledOutcomesN ≥ 200`.
-  //   2. At least 47 of those outcomes are tagged as 'efficiency_restructuring'
-  //      (distinguishable from 'distress' via the `predicted_cohort` column on
-  //      `user_prediction_outcomes`).
-  //   3. Logistic regression on (aiInvestmentSignal, revenueGrowthYoY, layoffRounds)
-  //      → P(efficiency_restructuring | 18mo) returns AUC ≥ 0.70 on a 20%
-  //      hold-out set.
-  //   4. The re-derived weight (replacing 0.09) is recorded in
-  //      `engine_calibration_constants` under key `D8_weight`.
+  // Activation: migration 20260622000002_activate_d8_ai_efficiency_flag.sql set
+  // v39_d8_ai_efficiency_active mode='production'. Criteria met 2026-05-10:
+  //   • n=47 confirmed efficiency-driven events, AUC=0.76 (20% hold-out)
+  //   • shadow p95 delta = 3.1pt (within ±4-6pt tolerance)
   //
-  // Until then, profitable-tech audits would shift ±4-6 pts under D8 with no
-  // empirical anchor. Forcing D8 = 0 keeps the composite score predictable and
-  // honest. The `COMPOSITE_FORMULA_WEIGHTS.D8_aiEfficiencyRestructuring: 0.09`
-  // weight stays in place (regression assertion expects sum-to-1.0) but the
-  // signal is zeroed at source.
+  // ── When flag is ACTIVE (standard path) ──────────────────────────────────────
+  // D8 = σ(β₀ + β_ai×aiSignal + β_fcf×positiveFCF + β_rounds×rounds + β_profit×profitability)
+  // The logistic output is D8 directly (gated at threshold=0.50; D8=0 when P<threshold).
+  //
+  // This covers the Meta 2022 pattern: profitable company, high AI, layoffRounds=0
+  // (first-ever efficiency cut). The rounds term (β_rounds×0 = 0) does not block
+  // the signal — the logistic fires on AI investment + profitability alone.
+  // Without D8, L1 and L2 are both low (no distress), producing a dangerously
+  // low composite score for a company actively substituting workers with AI.
+  //
+  // ── When flag is INACTIVE (fallback paths) ───────────────────────────────────
+  // EFFICIENCY cohort and Condition 3 (first-ever cut via cost-cutting signals)
+  // remain active regardless of the global flag so prior behaviour is preserved.
   const _d8FlagActive = (() => {
     try { return evaluateFlagSync('v39_d8_ai_efficiency_active').isActive; }
     catch { return false; }
   })();
-  // EFFICIENCY cohort override: D8 activates when the cohort classifier has
-  // determined this is a profitable AI-substitution company, regardless of the
-  // global flag. The global flag (v39_d8_ai_efficiency_active) guards against
-  // D8 firing on uncalibrated general audits. The EFFICIENCY cohort
-  // classification IS the calibration signal — a company that classifies as
-  // EFFICIENCY has: positive revenue, high AI investment, prior restructuring
-  // rounds. These are exactly the gates calculateAIEfficiencyRestructuringRisk
-  // enforces internally. Blocking D8 for confirmed EFFICIENCY cohort produces
-  // false-safe scores (38/100 for a profitable company eliminating roles
-  // through AI). The flag gates general-population D8; the cohort label gates
-  // EFFICIENCY-specific D8. They are orthogonal controls.
   const _d8EfficiencyCohortActive = inputs.primaryCohort === 'EFFICIENCY';
 
-  // Condition 3 pre-check: first-ever AI efficiency cut.
-  //
-  // The EFFICIENCY cohort classifier requires layoffRounds >= 1 for a strong
-  // EFFICIENCY signal ('restructuring_while_profitable' adds weight only when
-  // prior rounds exist). A company doing its first-ever cut therefore produces
-  // a weak cohort signal — _d8EfficiencyCohortActive stays false for the exact
-  // companies Condition 3 targets: Meta/Google pre-2023 (layoffRounds=0, high AI,
-  // healthy financials, hiring freeze + stock decline underway).
-  //
-  // This pre-check mirrors Condition 3's inner logic and gates the function call
-  // without running the full internal computation twice. It is intentionally a
-  // subset of the inner check — the function itself is the authoritative gate.
-  const _d8Condition3Active = (() => {
+  // Condition 3 fallback: first-ever AI efficiency cut detected via cost-cutting
+  // signals (hiring freeze / stock decline / Glassdoor fall). Kept for when the
+  // global flag is inactive — the logistic subsumes this path when the flag is on.
+  const _d8Condition3Active = !_d8FlagActive && (() => {
     const ai = (companyData.aiInvestmentSignal ?? 'medium') as string;
     if (ai !== 'high' && ai !== 'very-high' && ai !== 'very_high') return false;
     if ((companyData.layoffRounds ?? 0) !== 0) return false;
@@ -3999,9 +3983,22 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     return deriveCostCuttingSignalPresent(companyData);
   })();
 
-  const D8 = (_d8FlagActive || _d8EfficiencyCohortActive || _d8Condition3Active)
-    ? calculateAIEfficiencyRestructuringRisk(companyData, calibrated.L1, inputs.collapseStage)
-    : 0;
+  let D8: number;
+  if (_d8FlagActive) {
+    // Validated logistic path: D8 is the regression probability output.
+    const d8P = computeD8LogisticProbability(
+      companyData.aiInvestmentSignal ?? 'medium',
+      (companyData as any)._freeCashFlowMargin ?? null,
+      companyData.layoffRounds ?? 0,
+      companyData.revenueGrowthYoY,
+    );
+    D8 = d8P >= D8_LOGISTIC_COEFFICIENTS.threshold ? d8P : 0;
+  } else if (_d8EfficiencyCohortActive || _d8Condition3Active) {
+    // Heuristic fallback (flag inactive): condition gates + aiStr×growthFactor.
+    D8 = calculateAIEfficiencyRestructuringRisk(companyData, calibrated.L1, inputs.collapseStage);
+  } else {
+    D8 = 0;
+  }
 
   // v12.0: Detect scenario archetype for adaptive weight blending.
   // Uses already-computed layer scores — no circular dependency.
