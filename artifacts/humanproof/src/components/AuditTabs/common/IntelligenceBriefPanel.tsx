@@ -311,8 +311,36 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
             <span style={{ fontSize: '10px' }}>1</span>
           </div>
           <div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
-              Top Action This Week
+            <div className="flex items-center gap-2 mb-1">
+              <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                Top Action This Week
+              </div>
+              {/* Market-grounded badge — shown when action cites real market data numbers */}
+              {intelligenceBrief.marketGrounded ? (
+                <span
+                  title="This action references real market data: opening counts, hiring bar, and success rates from career market research."
+                  style={{
+                    fontSize: '8px', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                    padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.06em',
+                    background: 'rgba(16,185,129,0.10)', color: '#34d399',
+                    border: '1px solid rgba(16,185,129,0.22)', cursor: 'help',
+                  }}
+                >
+                  market data ✓
+                </span>
+              ) : (
+                <span
+                  title="Market context unavailable for this role — action is based on general guidance."
+                  style={{
+                    fontSize: '8px', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                    padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.06em',
+                    background: 'rgba(107,114,128,0.10)', color: '#9ca3af',
+                    border: '1px solid rgba(107,114,128,0.22)', cursor: 'help',
+                  }}
+                >
+                  general guidance
+                </span>
+              )}
             </div>
             <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5, fontWeight: 600 }}>
               {intelligenceBrief.topActionThisWeek}

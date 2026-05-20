@@ -9,6 +9,7 @@
 
 import { supabase } from '../utils/supabase';
 import { invokeEdgeFunction } from '../infrastructure/requestId';
+import type { CareerPathMarket } from './careerPathMarket';
 
 export interface IntelligenceBriefResult {
   paragraphs: [string, string, string];
@@ -19,6 +20,14 @@ export interface IntelligenceBriefResult {
   cachedUntil: string;
   modelUsed: string;
   fromCache: boolean;
+  /**
+   * true when topActionThisWeek contains at least one number sourced from
+   * careerPathMarket data (indiaOpenings, successRate12mPct, weeksToFirstInterview).
+   * false when the LLM response failed the number-citation check and a
+   * generated fallback was substituted. UI can show a "market data cited"
+   * badge when true.
+   */
+  marketGrounded: boolean;
 }
 
 interface CachedBrief {
@@ -103,6 +112,9 @@ async function checkCache(
       cachedUntil: cached.expires_at,
       modelUsed: cached.model_used,
       fromCache: true,
+      // Infer marketGrounded from the cached action text — if it contains a digit,
+      // it was likely grounded. Accurate for actions generated after v40.0.
+      marketGrounded: actionContainsNumber(cached.top_action ?? ''),
     };
   } catch {
     return null;
@@ -167,6 +179,51 @@ export function buildProfileSignature(uf: Record<string, any> | null | undefined
   // can share the cache.
   if (visa === 'na' && runwayTier === 'u' && !dep && !dim && !res) return null;
   return `v:${visa},r:${runwayTier},dep:${dep},dim:${dim},res:${res}`;
+}
+
+/**
+ * Formats the CareerPathMarket data into a structured block for the LLM prompt.
+ * The LLM is instructed to cite at least one of these numbers in oneActionThisWeek.
+ */
+function buildMarketContextBlock(market: CareerPathMarket): string {
+  const lines: string[] = [
+    `Target role: ${market.targetRole}`,
+    `Active openings (India): ${market.indiaOpenings.toLocaleString()}`,
+    `Hiring bar: ${market.hiringBar}`,
+    `Proof of competency (what interviewers want to see): ${market.proofOfCompetency}`,
+    `Time to first interview from dedicated effort: ${market.weeksToFirstInterview} weeks`,
+    `12-month transition success rate: ${market.successRate12mPct}%`,
+  ];
+  if (market.demandTrend) {
+    lines.push(`Demand trend: ${market.demandTrend}`);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Validates that the LLM's oneActionThisWeek contains at least one digit —
+ * a necessary (though not sufficient) condition for it to cite market data.
+ *
+ * "build a project in your target field" → false (no number)
+ * "Data Engineering has 12,000 openings — build X" → true
+ */
+function actionContainsNumber(action: string): boolean {
+  return /\d/.test(action);
+}
+
+/**
+ * Generates a market-grounded fallback when the LLM response fails validation.
+ * Always contains numbers from market data so users get an actionable output
+ * even when the model ignores the citation instruction.
+ */
+function generateGroundedFallback(market: CareerPathMarket): string {
+  return (
+    `Build ${market.proofOfCompetency} this week and push to GitHub. ` +
+    `${market.targetRole} has ${market.indiaOpenings.toLocaleString()} active openings in India — ` +
+    `the hiring bar is: ${market.hiringBar}. ` +
+    `${market.successRate12mPct}% of people who make this transition land a role within 12 months ` +
+    `(typically ${market.weeksToFirstInterview} weeks to first interview from dedicated effort).`
+  );
 }
 
 function buildEngineBreakdown(hybridResult: Record<string, unknown>): string {
@@ -301,6 +358,7 @@ function buildSignalContext(hybridResult: Record<string, unknown>): string {
 function mapLlmResponseToBrief(
   response: LlmAnalyzeResponse,
   modelUsed: string,
+  market: CareerPathMarket | null,
 ): IntelligenceBriefResult {
   const urgencyRaw = (response.urgencyLevel ?? 'Moderate').toUpperCase();
   const urgency: IntelligenceBriefResult['urgencyLevel'] =
@@ -310,19 +368,47 @@ function mapLlmResponseToBrief(
 
   const situation = response.synthesis ?? 'Risk analysis complete. See breakdown for details.';
   const risks = response.primaryRiskDriver ?? 'Multiple risk factors identified. Review score breakdown.';
-  const actions = response.oneActionThisWeek ?? response.whatChangesRiskMost ??
-    'Review your action plan and prioritize the highest-impact items this week.';
 
+  // Validate that oneActionThisWeek contains a real number from market data.
+  // If the LLM ignored the citation instruction, substitute a generated fallback
+  // that is guaranteed to include market numbers. An action without a number
+  // is generic and therefore useless ("build a project in your target field").
+  const rawAction = response.oneActionThisWeek ?? response.whatChangesRiskMost ?? '';
+  let topActionThisWeek: string;
+  let marketGrounded: boolean;
+
+  if (market && rawAction && actionContainsNumber(rawAction)) {
+    // LLM cited a number — use its response (capped at 420 chars)
+    topActionThisWeek = rawAction.slice(0, 420);
+    marketGrounded    = true;
+  } else if (market) {
+    // LLM failed the citation check — substitute a grounded fallback
+    topActionThisWeek = generateGroundedFallback(market).slice(0, 420);
+    marketGrounded    = true;
+    console.info(
+      '[intelligenceBriefService] oneActionThisWeek failed number-citation check — ' +
+      'substituted market-grounded fallback.',
+    );
+  } else {
+    // No market data available — use LLM response or generic fallback as-is
+    topActionThisWeek = rawAction.slice(0, 420) ||
+      'Review your action plan and prioritize the highest-impact items this week.';
+    marketGrounded    = actionContainsNumber(topActionThisWeek);
+  }
+
+  const actions = topActionThisWeek;
   const now = new Date().toISOString();
+
   return {
     paragraphs: [situation, risks, actions],
     urgencyLevel: urgency,
     keyRiskDriver: response.primaryRiskDriver?.slice(0, 200) ?? 'See breakdown',
-    topActionThisWeek: response.oneActionThisWeek?.slice(0, 300) ?? actions,
+    topActionThisWeek,
     generatedAt: now,
     cachedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     modelUsed,
     fromCache: false,
+    marketGrounded,
   };
 }
 
@@ -331,6 +417,7 @@ export async function fetchIntelligenceBrief(
   roleTitle: string,
   hybridResult: Record<string, unknown>,
   userId: string | null,
+  marketContext?: CareerPathMarket | null,
 ): Promise<IntelligenceBriefResult | null> {
   const currentScore = typeof hybridResult.total === 'number' ? hybridResult.total : 0;
   const warnSignalAny = hybridResult.warnSignal as any;
@@ -352,7 +439,9 @@ export async function fetchIntelligenceBrief(
 
   // Call llm-analyze edge function
   try {
-    const structuredContext = buildStructuredSignalPayload(hybridResult);
+    const structuredContext   = buildStructuredSignalPayload(hybridResult);
+    const careerMarketContext = marketContext ? buildMarketContextBlock(marketContext) : '';
+
     const { data, error } = await invokeEdgeFunction<any>('llm-analyze', {
       body: {
         companyName,
@@ -367,9 +456,25 @@ export async function fetchIntelligenceBrief(
         // user's circumstances (visa, runway, dependents, prior layoff) so
         // the brief is framed for THEIR situation, not a templated one.
         userProfileContext: profileContextBlock,
-        analysisInstructions: structuredContext
-          ? `Be specific: use exact numbers and signal names from structuredContext. Name the cohort and explain why. List 1–2 specific vulnerable signals and 1–2 protective signals. Avoid generic phrases like "multiple risk factors identified". ${profileContextBlock ? 'The user profile context above is the user you are writing FOR — frame timing constraints (visa grace period, financial runway), recommended risk posture (family-anchored vs. dual-income), and resilience framing accordingly.' : ''} CRITICAL: if a specific number, location, or date is not present in structuredContext, do NOT estimate or infer it — use "data unavailable" instead. Never fabricate statistics.`
-          : `State only what the score breakdown confirms. Do not speculate about live signals. ${profileContextBlock ? 'Frame the brief around the user profile context above — visa grace periods, runway tier, family situation.' : ''} Never fabricate statistics or specific numbers not present in the provided data.`,
+        // v40.0: career market context — the LLM MUST cite at least one of
+        // these numbers in oneActionThisWeek. Validated in mapLlmResponseToBrief;
+        // a fallback is generated if the LLM ignores the instruction.
+        careerMarketContext,
+        analysisInstructions: [
+          structuredContext
+            ? `Be specific: use exact numbers and signal names from structuredContext. Name the cohort and explain why. List 1–2 specific vulnerable signals and 1–2 protective signals. Avoid generic phrases like "multiple risk factors identified".`
+            : `State only what the score breakdown confirms. Do not speculate about live signals.`,
+          profileContextBlock
+            ? `Frame timing constraints (visa grace period, financial runway), recommended risk posture, and resilience framing around the user profile context.`
+            : '',
+          careerMarketContext
+            ? `In oneActionThisWeek, cite at least one number from the career market context provided. ` +
+              `Example: "${marketContext?.targetRole ?? 'This role'} has ${(marketContext?.indiaOpenings ?? 0).toLocaleString()} active openings in India. ` +
+              `The hiring bar is ${marketContext?.hiringBar ?? 'a demonstrated project'} — not a tutorial. ` +
+              `Build ${marketContext?.proofOfCompetency ?? 'a portfolio artifact'} this week."`
+            : '',
+          `CRITICAL: if a specific number, location, or date is not present in the provided data, do NOT estimate or infer it — use "data unavailable" instead. Never fabricate statistics.`,
+        ].filter(Boolean).join(' '),
       },
     });
 
@@ -378,7 +483,7 @@ export async function fetchIntelligenceBrief(
       return null;
     }
 
-    const brief = mapLlmResponseToBrief(data as LlmAnalyzeResponse, data.model ?? 'llm-analyze');
+    const brief = mapLlmResponseToBrief(data as LlmAnalyzeResponse, data.model ?? 'llm-analyze', marketContext ?? null);
 
     // Persist to cache (non-blocking) — keyed by profile_signature + cohort.
     saveToCache(userId, companyName, roleTitle, currentScore, brief, profileSignature, currentCohort).catch(() => {}); // arch-allow:R2 fire-and-forget cache-write; next call re-computes on miss

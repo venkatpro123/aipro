@@ -108,6 +108,7 @@ import { computePersonalizedTimeline } from "./personalizedTimelineService";
 import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
 import { computeActionEffortBadge } from "./actionRankingService";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
+import { getCareerPathMarket } from "./careerPathMarket";
 import { evaluateJobOffer } from "./offerEvaluationEngine";
 import { computeCareerContingencyPlan } from "./careerContingencyPlanEngine";
 import { computePreparednessScore } from "./preparednessScoreEngine";
@@ -2939,16 +2940,26 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   }
 
   // 52. Intelligence Brief — AI-generated strategic brief via llm-analyze (async, cached 24h)
-  fetchIntelligenceBrief(
-    companyData.name,
-    inputs.roleTitle,
-    hybridResult as unknown as Record<string, unknown>,
-    userId,
-  ).then((brief) => {
-    if (brief) (hybridResult as any).intelligenceBrief = brief;
-  }).catch((e) => {
-    console.warn('[AuditPipeline] intelligenceBrief fetch failed:', e);
-  });
+  // v40.0: fetch career market context and pass to the brief service so the LLM
+  // can cite real market numbers (openings, hiring bar, success rate) in oneActionThisWeek.
+  // getCareerPathMarket is async (tries live Supabase data, falls back to static baseline).
+  // Both the market fetch and the brief fetch are fire-and-forget; neither blocks scoring.
+  getCareerPathMarket(inputs.roleTitle)
+    .then((marketContext) =>
+      fetchIntelligenceBrief(
+        companyData.name,
+        inputs.roleTitle,
+        hybridResult as unknown as Record<string, unknown>,
+        userId,
+        marketContext,
+      ),
+    )
+    .then((brief) => {
+      if (brief) (hybridResult as any).intelligenceBrief = brief;
+    })
+    .catch((e) => {
+      console.warn('[AuditPipeline] intelligenceBrief fetch failed:', e);
+    });
 
   // 53. Career Contingency Plan — 3-path STAY/NEGOTIATE/TRANSITION decision framework
   try {
