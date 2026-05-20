@@ -173,15 +173,17 @@ Response schema:
     try {
       parsed = JSON.parse(jsonText);
     } catch {
-      // If JSON parsing fails, return the raw text as the synthesis field
-      // so the service can still display something useful.
+      // JSON parse failure: signal the orchestrator to fall back to Tier B immediately.
+      // DO NOT return a partial response with sentinel strings like "Unable to parse…" or
+      // empty fields — those pass through the normalisation step and surface to the user
+      // as a one-sentence answer where 100 words are expected, which is worse than silence.
+      // The orchestrator checks llmData.fallback === true and routes to buildTierBNarrative.
+      console.error(`[llm-analyze] JSON parse failure. rawText preview: ${rawText.slice(0, 200)}`);
       return new Response(
         JSON.stringify({
-          synthesis:         rawText.slice(0, 400),
-          primaryRiskDriver: 'Unable to parse structured response.',
-          urgencyLevel:      'MODERATE',
-          oneActionThisWeek: '',
-          model:             'claude-haiku-4-5-20251001',
+          fallback:       true,
+          fallbackReason: 'json_parse_failure',
+          model:          'claude-haiku-4-5-20251001',
         }),
         { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
       );

@@ -1033,9 +1033,34 @@ export const runFullEnsembleAnalysis = async (
       _timer?.mark('llm_end');
       if (!llmError && llmData && !llmData.fallback) {
         // ── v7.0: Validate min_words before accepting Tier A response ─────────
-        // Map legacy field names from the LLM response to v7.0 canonical names.
-        // The Edge Function may return either the old names or the new ones;
-        // normalise before validation so the validator only sees canonical names.
+        //
+        // Step 1 — check all 6 required fields are present (non-null, non-empty).
+        // Missing fields are caught again by the word-count gate, but logging them
+        // separately here makes the root cause immediately visible in production logs.
+        const REQUIRED_FIELDS = [
+          'primaryRiskDriver', 'sixMonthInactionConsequence', 'oneActionThisWeek',
+          'whatChangesRiskMost', 'estimatedTimeline', 'keyProtectiveFactor',
+        ] as const;
+        const missingFields = REQUIRED_FIELDS.filter(f => {
+          const v = (llmData as any)[f] ?? (llmData as any).dominantRiskFactor /* legacy alias for primaryRiskDriver */ ?? null;
+          return !v || String(v).trim().length === 0;
+        });
+        if (missingFields.length > 0) {
+          console.warn(
+            `[Ensemble] Tier A missing ${missingFields.length} required field${missingFields.length > 1 ? 's' : ''}: ${missingFields.join(', ')} — using full Tier B narrative.`,
+          );
+          claudeAnalysis = {
+            ...buildTierBNarrative(
+              companyData, roleTitle, engineResult.score, engineResult.breakdown,
+              (companyData as any).collapseStage ?? null,
+              engineResult.recommendations,
+            ),
+            llmTier: 'B',
+          };
+        } else {
+
+        // Step 2 — map legacy field names to v7.0 canonical names before validation.
+        // The Edge Function may return either the old names or the new ones.
         const normalised = {
           primaryRiskDriver:           llmData.primaryRiskDriver           ?? llmData.dominantRiskFactor  ?? null,
           sixMonthInactionConsequence: llmData.sixMonthInactionConsequence                                ?? null,
@@ -1060,14 +1085,24 @@ export const runFullEnsembleAnalysis = async (
         if (valid) {
           claudeAnalysis = { success: true, llmTier: 'A', ...normalised } as any;
           console.log(
-            `[Ensemble] Tier A — Claude narrative accepted (all min_words passed).` +
+            `[Ensemble] Tier A — Claude narrative accepted (all 6 fields passed min_words).` +
             (deterministicPatternMatch ? ` Pattern: ${deterministicPatternMatch.pattern.patternId} (${Math.round(deterministicPatternMatch.overlapScore * 100)}%)` : ' No pattern matched (< 70% threshold).'),
           );
         } else {
-          // Validation failed — fall back to Tier B and log every failure
+          // ── Validation failed: use FULL Tier B — no partial LLM overlay ────────────
+          //
+          // Policy: any field failure means the entire LLM response is discarded.
+          // DO NOT merge LLM fields that "passed" back over the Tier B result.
+          // A one-sentence response to a question that deserves 100 words is worse
+          // than the deterministic template — it falsely implies the LLM engaged deeply.
+          // Mixing creates a hybrid where some fields have Tier A depth and others have
+          // Tier A shallowness — the user cannot tell which is which.
+          //
+          // Log every failure with field name + actual word count so production
+          // operators can see which field triggered the fallback.
           console.warn(
-            `[Ensemble] Tier A min_words FAILED (${failures.length} violation${failures.length > 1 ? 's' : ''}) — falling back to Tier B.\n` +
-            failures.map(f => `  • ${f}`).join('\n'),
+            `[Ensemble] Tier A FAILED validation (${failures.length} field${failures.length > 1 ? 's' : ''}) — using full Tier B narrative, zero LLM field overlay.\n` +
+            failures.map(f => `  ✗ ${f}`).join('\n'),
           );
           claudeAnalysis = {
             ...buildTierBNarrative(
@@ -1076,21 +1111,9 @@ export const runFullEnsembleAnalysis = async (
               engineResult.recommendations,
             ),
             llmTier: 'B',
-            // Preserve the field names that DID pass, overlaid by Tier B for failed fields
-            ...Object.fromEntries(
-              Object.entries(normalised).filter(([k]) => {
-                const specMin = k === 'primaryRiskDriver' ? (isStage3 || engineResult.score > 80 ? 80 : 40)
-                  : k === 'sixMonthInactionConsequence' ? (isStage3 ? 120 : 60)
-                  : k === 'oneActionThisWeek' ? 100
-                  : k === 'whatChangesRiskMost' ? 80
-                  : k === 'estimatedTimeline' ? 50
-                  : k === 'keyProtectiveFactor' ? 40 : 0;
-                const wc = (normalised[k as keyof typeof normalised] ?? '').trim().split(/\s+/).filter(Boolean).length;
-                return wc >= specMin;  // keep fields that DID pass
-              })
-            ),
           };
         }
+        } // end: missingFields else — all validation paths resolved
       } else {
         // Tier A API failed → fall back to Tier B template (not silence)
         console.warn('[Ensemble] Tier A Claude failed — falling back to Tier B template:', llmError?.message);
