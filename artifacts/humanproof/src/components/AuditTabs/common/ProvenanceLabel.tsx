@@ -74,7 +74,23 @@ const CONFIG: Record<ProvenanceKind, {
 };
 
 interface Props {
-  kind: ProvenanceKind;
+  /**
+   * Explicit provenance kind. Pass either `kind` directly OR `field` (auto-derived
+   * via getValueProvenance). Passing both: `kind` wins.
+   */
+  kind?: ProvenanceKind;
+  /**
+   * Stable field identifier (e.g. 'stock_90d_change', 'preparedness_overall').
+   * When provided, calls getValueProvenance(field, sourceKey) to derive kind +
+   * sourceLabel. This is the preferred API — no per-component decision needed.
+   */
+  field?: string;
+  /**
+   * Source string passed to getValueProvenance for source-aware kind resolution
+   * (e.g. a stock price is MEASURED from alpha-vantage but ESTIMATED from heuristic).
+   */
+  sourceKey?: string | null;
+  /** Display label for the source — shown in tooltip. */
   source?: string;
   tooltip?: string;
   size?: 'xs' | 'sm';
@@ -82,14 +98,30 @@ interface Props {
 }
 
 const ProvenanceLabel: React.FC<Props> = ({
-  kind,
+  kind: explicitKind,
+  field,
+  sourceKey,
   source,
   tooltip,
   size = 'xs',
   className = '',
 }) => {
-  const cfg = CONFIG[kind];
-  const title = tooltip ?? (source ? `${cfg.title} — Source: ${source}` : cfg.title);
+  // Lazy import avoids circular dep: valueProvenance imports the ProvenanceKind type.
+  // Resolving kind from field, when explicit kind not provided.
+  let resolvedKind: ProvenanceKind = explicitKind ?? 'estimated';
+  let resolvedSource: string | undefined = source;
+
+  if (!explicitKind && field) {
+    // Inline lookup — keeps the component synchronous and avoids importing the
+    // registry at module-eval time (which would create a circular dep).
+    const { getValueProvenance } = require('../../../services/valueProvenance');
+    const p = getValueProvenance(field, sourceKey ?? undefined);
+    resolvedKind = p.kind;
+    resolvedSource = source ?? p.sourceLabel;
+  }
+
+  const cfg = CONFIG[resolvedKind];
+  const title = tooltip ?? (resolvedSource ? `${cfg.title} — Source: ${resolvedSource}` : cfg.title);
   const fontSize = size === 'xs' ? '8px' : '9px';
   const px = size === 'xs' ? '5px' : '6px';
   const py = size === 'xs' ? '1px' : '2px';

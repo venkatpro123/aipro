@@ -10,6 +10,16 @@ import {
   AlertTriangle, Clock, CheckCircle2, XCircle, Zap,
 } from 'lucide-react';
 import type { CareerContingencyPlan, ContingencyPath, ContingencyPathId, ContingencyPathFinancialProjection } from '../../../services/careerContingencyPlanEngine';
+import ProvenanceLabel from './ProvenanceLabel';
+
+// Path-to-field mapping for provenance lookup. STAY/NEGOTIATE are always
+// ESTIMATED (no empirical outcome data). TRANSITION may be MODELED when
+// the score is anchored to careerPathMarket successRate12mPct (market research).
+const PATH_PROVENANCE_FIELD: Record<ContingencyPathId, string> = {
+  STAY:       'contingency_stay_feasibility',
+  NEGOTIATE:  'contingency_negotiate_feasibility',
+  TRANSITION: 'contingency_transition_feasibility',
+};
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -86,11 +96,18 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
             FEASIBILITY
           </span>
-          {/* Source provenance badge */}
+          {/* Global MEASURED/MODELED/ESTIMATED provenance label.
+              Source key 'market_successRate' upgrades the path to MODELED in the registry. */}
+          <ProvenanceLabel
+            field={PATH_PROVENANCE_FIELD[path.pathId]}
+            sourceKey={feasibilitySource ?? 'estimated'}
+            size="xs"
+          />
+          {/* Source-specific detail badge */}
           {isEstimated ? (
             <span
               title="Feasibility is model-estimated — not validated against outcome data. Displayed as a range to reflect uncertainty."

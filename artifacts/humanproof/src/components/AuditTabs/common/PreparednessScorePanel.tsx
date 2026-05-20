@@ -10,6 +10,18 @@ import {
   ChevronDown, ChevronRight, TrendingUp, AlertCircle,
 } from 'lucide-react';
 import type { PreparednessResult, PillarScore } from '../../../services/preparednessScoreEngine';
+import ProvenanceLabel from './ProvenanceLabel';
+
+// Map pillar key → registered field id for provenance lookup. All pillar scores
+// are MODELED (composite formula outputs) — the label warns users that the
+// number is not a direct measurement even when the pillar header looks clinical.
+const PILLAR_PROVENANCE_FIELD: Record<string, string> = {
+  financial:   'preparedness_financial',
+  market:      'preparedness_market',
+  skills:      'preparedness_skills',
+  clarity:     'preparedness_clarity',
+  operational: 'preparedness_operational',
+};
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -113,8 +125,12 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[12px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <span className="text-[12px] font-semibold inline-flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {pillar.label}
+                {/* Per-pillar provenance: each pillar score is MODELED (formula output) */}
+                {PILLAR_PROVENANCE_FIELD[pillar.key] && (
+                  <ProvenanceLabel field={PILLAR_PROVENANCE_FIELD[pillar.key]} size="xs" />
+                )}
                 {/* Audit v35: heuristic badge — surfaced when 2+ inputs were
                     industry priors rather than personalized live data. */}
                 {pillar.isHeuristic && (
@@ -290,9 +306,13 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
                 {config.label.toUpperCase()}
               </span>
             </div>
-            <h3 className="text-sm font-bold mb-1" style={{ color: 'rgba(255,255,255,0.92)' }}>
-              Career Preparedness
-            </h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                Career Preparedness
+              </h3>
+              {/* The overall score is always MODELED — composite of 5 pillar formulas */}
+              <ProvenanceLabel field="preparedness_overall" size="xs" />
+            </div>
             <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.58)' }}>
               {preparedness.estimatedLandingWeeks}w estimated to a comparable offer if laid off today
             </p>
