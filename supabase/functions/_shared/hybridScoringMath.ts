@@ -1,5 +1,19 @@
 // hybridScoringMath.ts
-// Runtime-neutral port of artifacts/humanproof/services/hybridScoringEngine.ts.
+// Runtime-neutral 5-layer hybrid scoring path used by:
+//   • calculate-hybrid-risk Edge Function (server-side audit validation)
+//   • audit-coalesce EF (score re-run against stored consensus snapshots)
+//   • Any batch job that already has a resolved ConsensusSignalSet
+//
+// This is deliberately a SEPARATE formula from the 10-term DAG in
+// layoffScoreEngine.ts (browser bundle). The two paths operate on different
+// input types:
+//   • hybridScoringMath  operates on a ConsensusSignalSet (fully resolved,
+//     multi-source consensus already applied).
+//   • layoffScoreEngine  operates on raw CompanyData + UserFactors before
+//     consensus resolution.
+// Scores from the two paths will differ for the same company — that is
+// intentional and expected. What must NOT differ: the formula weights within
+// each path, and the tenant semantics of each layer.
 //
 // Why a port rather than a re-export?
 //   The frontend file imports from React/Vite-only paths (`../services/...`,
@@ -11,10 +25,26 @@
 //   so it can be imported by both edge functions and (eventually) a Node test
 //   harness without bundler magic.
 //
-// Keep numerical behaviour identical to the frontend `calculateHybridLayoffScore`.
-// Any divergence here would mean server-side and client-side scores disagree
-// for the same consensus inputs, which is the exact problem this module exists
-// to prevent.
+// AUTHORITATIVE FORMULA WEIGHTS — defined once here, not inline in the rawScore
+// expression. Any edit must keep HYBRID_FORMULA_WEIGHTS summing to exactly 1.00.
+// The assertion below throws at Deno isolate startup if weights drift.
+
+export const HYBRID_FORMULA_WEIGHTS = {
+  L1_companyHealth:    0.30,
+  L2_layoffHistory:    0.25,
+  L3_roleExposure:     0.20,
+  L4_marketConditions: 0.12,
+  L5_employeeFactors:  0.13,
+} as const;
+
+// ── Formula weight integrity assertion ──────────────────────────────────────
+// Mirrors the IIFE assertion in layoffScoreEngine.ts (browser bundle). In Deno
+// top-level code runs synchronously before the first request handler, so this
+// throws before the isolate becomes available — identical fail-fast semantics.
+const _hybridFormulaSum = Object.values(HYBRID_FORMULA_WEIGHTS).reduce((a, b) => a + b, 0);
+if (Math.abs(_hybridFormulaSum - 1.0) > 0.001) {
+  throw new Error('HYBRID FORMULA WEIGHTS DO NOT SUM TO 1.0: ' + _hybridFormulaSum);
+}
 
 import {
   ActionPlanItem,
@@ -65,14 +95,16 @@ function calculateMarketConditions(consensus: ConsensusSignalSet): number {
   return Math.min(1, baseline + growthMod + aiFactor);
 }
 
+// Spec-authoritative 6-bracket table — matches D4 tenure brackets in
+// layoffScoreEngine.ts. No interpolation; bracket boundaries are exact.
+// Updated in sync with the layoffScoreEngine.ts D4 spec fix (v40.0 session).
 function mapTenure(years: number): number {
-  if (years < 0.5) return 0.82;
-  if (years < 1) return 0.70;
-  if (years < 2) return 0.58;
-  if (years < 4) return 0.42;
-  if (years < 7) return 0.28;
-  if (years < 12) return 0.18;
-  return 0.12;
+  if (years < 1)  return 0.80; // [0-1y]
+  if (years < 2)  return 0.65; // [1-2y]
+  if (years < 4)  return 0.50; // [2-4y]
+  if (years < 7)  return 0.35; // [4-7y]
+  if (years < 12) return 0.25; // [7-12y]
+  return 0.18;                 // [12+y]
 }
 
 function calculateEmployeeFactors(userFactors: UserFactors): number {
@@ -296,7 +328,9 @@ export function calculateHybridScore(inputs: HybridScoreInputs): ScoreResult {
   const L4 = calculateMarketConditions(consensus);
   const L5 = calculateEmployeeFactors(userFactors);
 
-  let rawScore = L1 * 0.30 + L2 * 0.25 + L3 * 0.20 + L4 * 0.12 + L5 * 0.13;
+  const W = HYBRID_FORMULA_WEIGHTS;
+  let rawScore = L1 * W.L1_companyHealth + L2 * W.L2_layoffHistory + L3 * W.L3_roleExposure +
+                 L4 * W.L4_marketConditions + L5 * W.L5_employeeFactors;
 
   const overrides: string[] = [];
 

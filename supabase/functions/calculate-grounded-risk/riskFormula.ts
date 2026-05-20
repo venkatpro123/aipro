@@ -171,10 +171,26 @@ export const getUrgency = (score: number) => {
 export const getConfidence = (_workType: string) => 'HIGH';
 export const getAutomationExp = (_workType: string) => 'Expanding';
 
+// ─── Grounded-risk formula weights ───────────────────────────────
+// Named constants (not inline literals) so the assertion below can catch drift.
+// Sum must remain exactly 1.00; any rebalance requires updating ALL six values.
+export const GROUNDED_FORMULA_WEIGHTS = {
+  D1_taskAutomatability: 0.26,
+  D2_aiToolMaturity:     0.18,
+  D3_humanAmplification: 0.20,
+  D4_experienceShield:   0.16,
+  D5_countryExposure:    0.09,
+  D6_socialCapitalMoat:  0.11,
+} as const;
+
+// Assertion runs at module load (Deno top-level or Node require-time).
+// Mirrors the pattern in layoffScoreEngine.ts (browser) and hybridScoringMath.ts (Deno EF).
+const _groundedFormulaSum = Object.values(GROUNDED_FORMULA_WEIGHTS).reduce((a, b) => a + b, 0);
+if (Math.abs(_groundedFormulaSum - 1.0) > 0.001) {
+  throw new Error('GROUNDED FORMULA WEIGHTS DO NOT SUM TO 1.0: ' + _groundedFormulaSum);
+}
+
 // ─── Master Calculation Function ─────────────────────────────────
-// BUG-C3 FIX: Updated weights to match marketed 6D spec:
-//   D1=26%, D2=18%, D3=20%, D4=16%, D5=9%, D6=11%
-// Previously used: D1=35%, D2=25%, D3=25%, D6=15% (only 4 dims!)
 export function calculateScore(
   workType: string,
   industry: string,
@@ -193,23 +209,23 @@ export function calculateScore(
   // D3 — Human Amplification (curved inversion)
   const d3 = calculateD3(workType);
 
-  // D4 — Experience Shield (BUG-C3 FIX: was stub returning 50)
+  // D4 — Experience Shield
   const d4 = calculateD4(workType, experience);
 
-  // D5 — Country Exposure (BUG-C3 FIX: was stub returning 50)
+  // D5 — Country Exposure
   const d5 = calculateD5(country);
 
   // D6 — Social Capital Moat
   const d6 = calculateD6(workType);
 
-  // Weighted sum matching marketed specification
+  const GW = GROUNDED_FORMULA_WEIGHTS;
   const total = Math.round(
-    (d1 * 0.26) +
-    (d2 * 0.18) +
-    (d3 * 0.20) +
-    (d4 * 0.16) +
-    (d5 * 0.09) +
-    (d6 * 0.11)
+    d1 * GW.D1_taskAutomatability +
+    d2 * GW.D2_aiToolMaturity     +
+    d3 * GW.D3_humanAmplification +
+    d4 * GW.D4_experienceShield   +
+    d5 * GW.D5_countryExposure    +
+    d6 * GW.D6_socialCapitalMoat
   );
 
   // Determine data quality based on how many dimensions have real data
@@ -220,12 +236,12 @@ export function calculateScore(
   return {
     total: Math.min(Math.max(total, 0), 100),
     dimensions: [
-      { key: 'D1', label: 'Task Automatability', score: Math.round(d1), weight: 26 },
-      { key: 'D2', label: 'AI Tool Maturity',    score: Math.round(d2), weight: 18 },
-      { key: 'D3', label: 'Human Amplification', score: Math.round(d3), weight: 20 },
-      { key: 'D4', label: 'Experience Shield',   score: Math.round(d4), weight: 16 },
-      { key: 'D5', label: 'Country Exposure',    score: Math.round(d5), weight: 9  },
-      { key: 'D6', label: 'Social Capital Moat', score: Math.round(d6), weight: 11 },
+      { key: 'D1', label: 'Task Automatability', score: Math.round(d1), weight: Math.round(GW.D1_taskAutomatability * 100) },
+      { key: 'D2', label: 'AI Tool Maturity',    score: Math.round(d2), weight: Math.round(GW.D2_aiToolMaturity     * 100) },
+      { key: 'D3', label: 'Human Amplification', score: Math.round(d3), weight: Math.round(GW.D3_humanAmplification * 100) },
+      { key: 'D4', label: 'Experience Shield',   score: Math.round(d4), weight: Math.round(GW.D4_experienceShield   * 100) },
+      { key: 'D5', label: 'Country Exposure',    score: Math.round(d5), weight: Math.round(GW.D5_countryExposure    * 100) },
+      { key: 'D6', label: 'Social Capital Moat', score: Math.round(d6), weight: Math.round(GW.D6_socialCapitalMoat  * 100) },
     ],
     confidence: dataQuality === 'DQ_FULL' ? 'HIGH' : 'MODERATE',
     dataQuality,
