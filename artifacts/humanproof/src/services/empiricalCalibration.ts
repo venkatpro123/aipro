@@ -108,7 +108,20 @@ v40.0 AUDIT — Known calibration limitations:
 - Cohort-specific calibration (distress/efficiency/wave/global) partially
   addresses the India IT and US Big Tech segments. All other segments use
   GLOBAL defaults. July 2026 recalibration target: separate cohorts,
-  expand n to 400+ events with regional rebalancing.`,
+  expand n to 400+ events with regional rebalancing.
+
+D8 (AI efficiency restructuring, weight 0.09) deployment status:
+- Logistic regression trained on 47 confirmed efficiency-driven events (AUC 0.76
+  on 10-event bootstrap hold-out; training calibrated_at 2026-05-10).
+- Flag DISABLED pending held-out validation gate: requires n_heldout >= 15,
+  AUC >= 0.72, precision >= 0.65 at threshold 0.50. Current hold-out set: 10
+  events (below minimum). Gate checked automatically by d8ValidationService
+  (recalibrate-engine cron) when new held-out events are confirmed.
+- When gate passes, Transparency Tab will show: "D8 term active — empirically
+  calibrated from [N] efficiency restructuring events, AUC-ROC: [score]."
+- Heuristic fallback active when flag is disabled: EFFICIENCY cohort and
+  Condition 3 (first-ever cut via cost-cutting signals) still fire via
+  calculateAIEfficiencyRestructuringRisk().`,
 };
 
 // ── D8 calibration status ──────────────────────────────────────────────────
@@ -573,9 +586,11 @@ export interface D8CalibrationData {
 }
 
 export const D8_CALIBRATION: D8CalibrationData = {
+  // 'research_calibrated': regression complete, deployment gate pending.
+  // Flag disabled until held-out validation (n>=15, AUC>=0.72, precision>=0.65).
   status: 'research_calibrated',
   events_analyzed: 47,
-  cohort_precision: 0.71,  // weighted average across signal strength tiers
+  cohort_precision: 0.71,  // weighted average across signal strength tiers (training set)
   cohort_recall: 0.62,
   estimated_auc: 0.76,
   calibrated_at: '2026-05-10',
@@ -726,6 +741,16 @@ export const D_DIMENSION_CALIBRATION: DDimensionCalibration = {
   D7: 1.08,  // Under-predicts; leadershipInstability sub-signal deserves more weight
 };
 
+// ── D8 held-out validation gate (mirrors D8_VALIDATION_GATE in d8ValidationService.ts) ──
+// Exported here so consumers (e.g. Transparency Tab) can read thresholds without
+// importing the full validation service (which pulls in Supabase).
+export const D8_VALIDATION_GATE = {
+  N_HELDOUT_MIN:  15,
+  AUC_ROC_MIN:    0.72,
+  PRECISION_MIN:  0.65,
+  THRESHOLD:      0.50,
+} as const;
+
 export const D8_LOGISTIC_COEFFICIENTS: D8LogisticCoefficients = {
   intercept:          -1.82,
   beta_ai_high:       +1.45,
@@ -736,9 +761,10 @@ export const D8_LOGISTIC_COEFFICIENTS: D8LogisticCoefficients = {
   threshold:           0.50,
   calibrated_at:      '2026-05-10',
   n_events:            47,
-  // Promoted to 'active': n=47 met, AUC=0.76, flag mode='production' 2026-05-22.
-  // Next full regression at n≥100 (target July 2026).
-  status:             'active',
+  // 'research_calibrated': regression run on 47 events; awaiting held-out
+  // validation gate (n >= 15, AUC >= 0.72, precision >= 0.65) via
+  // d8ValidationService.ts before flag can be promoted to mode='production'.
+  status:             'research_calibrated',
 };
 
 /**

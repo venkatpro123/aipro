@@ -858,11 +858,15 @@ export const CALIBRATION_META: Record<string, {
   D8_aiEfficiencyRestructuring: {
     weight: 0.09,
     status: 'regression_derived',
-    source: '47 confirmed efficiency-driven events, AUC 0.76 (20% hold-out). '
+    source: '47 confirmed efficiency-driven events, AUC 0.76 on 10-event bootstrap hold-out. '
       + 'D8 = σ(β₀ + β_ai×aiSignal + β_fcf×positiveFCF + β_rounds×rounds + β_profit×profitability). '
       + 'Full coefficients in D8_LOGISTIC_COEFFICIENTS (empiricalCalibration.ts).',
-    note: 'ACTIVE — flag promoted to production 2026-05-22 (migration 20260622000002). '
-      + 'Next full regression at n≥100 (target July 2026).',
+    note: 'DISABLED — held-out validation gate not yet cleared. '
+      + 'Gate: n_heldout >= 15 (current: 10), AUC >= 0.72 (current: 0.76 ✓), '
+      + 'precision >= 0.65 (current: 0.71 ✓). Fails on n_heldout < 15. '
+      + 'Heuristic fallback (calculateAIEfficiencyRestructuringRisk) active for '
+      + 'EFFICIENCY cohort and Condition 3 while flag is disabled. '
+      + 'd8ValidationService.activateD8IfValidated() promotes flag when gate clears.',
     validationDate: '2026-05-10',
   },
   L1_directFinancial: {

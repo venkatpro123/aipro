@@ -36,6 +36,12 @@ import {
   getLiveCalibrationStatusSync,
   type LiveCalibrationStatus,
 } from "../../services/empiricalCalibration";
+import {
+  getD8ValidationStatus,
+  getD8ValidationStatusSync,
+  type D8ValidationStatus,
+  D8_VALIDATION_GATE,
+} from "../../services/d8ValidationService";
 // v17.0
 import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
 // live-data-first
@@ -587,6 +593,87 @@ interface MethodologySection {
   icon: React.ReactNode;
 }
 
+// ---------------------------------------------------------------------------
+// D8ValidationPanel — inline deployment gate status for D8
+// ---------------------------------------------------------------------------
+const D8ValidationPanel: React.FC = () => {
+  const [d8Status, setD8Status] = React.useState<D8ValidationStatus>(
+    getD8ValidationStatusSync()
+  );
+
+  React.useEffect(() => {
+    let cancelled = false;
+    getD8ValidationStatus().then(s => { if (!cancelled) setD8Status(s); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const gate = D8_VALIDATION_GATE;
+  const r = d8Status.latest_result;
+
+  if (d8Status.is_active && r) {
+    return (
+      <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-lg p-3 mt-2">
+        <div className="flex items-start gap-2">
+          <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-mono text-emerald-300 font-medium">
+              D8 term active — empirically calibrated from {r.n_heldout} efficiency
+              restructuring events, AUC-ROC: {r.auc_roc}.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Precision at threshold {r.threshold}: {r.precision_at_threshold} · Recall: {r.recall_at_threshold} ·
+              Positives: {r.n_positive} · Negatives: {r.n_negative}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const n = r?.n_heldout ?? 0;
+  const auc = r?.auc_roc ?? null;
+  const prec = r?.precision_at_threshold ?? null;
+
+  const nOk   = n   >= gate.N_HELDOUT_MIN;
+  const aucOk = auc !== null && auc  >= gate.AUC_ROC_MIN;
+  const precOk = prec !== null && prec >= gate.PRECISION_MIN;
+
+  const gateRow = (label: string, value: string | null, required: string, passes: boolean) => (
+    <div className="flex items-center justify-between font-mono text-xs py-0.5">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-2">
+        <span className={passes ? 'text-emerald-400' : 'text-rose-400'}>
+          {value ?? '—'}
+        </span>
+        <span className="text-muted-foreground/50">≥ {required}</span>
+        <span>{passes ? '✓' : '✗'}</span>
+      </span>
+    </div>
+  );
+
+  return (
+    <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 mt-2">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="w-full">
+          <p className="text-xs font-medium text-amber-300 mb-2">
+            D8 validation pending — held-out gate not yet cleared
+          </p>
+          <div className="bg-black/20 rounded px-2 py-1 space-y-0.5">
+            {gateRow('n_heldout', String(n),    String(gate.N_HELDOUT_MIN),  nOk)}
+            {gateRow('AUC-ROC',  auc  !== null ? auc.toFixed(3)  : null, String(gate.AUC_ROC_MIN),    aucOk)}
+            {gateRow('precision', prec !== null ? prec.toFixed(3) : null, String(gate.PRECISION_MIN),  precOk)}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Heuristic fallback active (EFFICIENCY cohort + Condition 3). D8 will be
+            auto-promoted when gate clears via recalibrate-engine cron.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MethodologyExplainer: React.FC = () => {
   const sections: MethodologySection[] = [
     {
@@ -610,13 +697,13 @@ const MethodologyExplainer: React.FC = () => {
     {
       title: "Confidence Calibration & Validation",
       description:
-        "L1–L5 thresholds calibrated via logistic regression on 200 verified layoff events (layoffs.fyi 2023–2025, AUC-ROC 0.81 on 40-event hold-out). Cross-sectional validation on 56 companies (2024–2026) produced L1-only AUC 0.73 (95% CI: 0.58–0.86). The model accurately detects distress-driven layoffs (AUC 0.96 for this cohort) but a separate 'efficiency-driven restructuring' signal (D8) was added after validation showed profitable AI-investing companies were systematically missed. Next temporal recalibration: July 2026.",
+        "L1–L5 thresholds calibrated via logistic regression on 200 verified layoff events (layoffs.fyi 2023–2025, AUC-ROC 0.81 on 40-event hold-out). Cross-sectional validation on 56 companies (2024–2026) produced L1-only AUC 0.73 (95% CI: 0.58–0.86). The model accurately detects distress-driven layoffs (AUC 0.96 for this cohort); D8 (efficiency-driven restructuring) is regression-calibrated (47 events, AUC 0.76) but held pending a 15-event held-out gate. Next temporal recalibration: July 2026.",
       icon: <BarChart2 className="w-6 h-6 text-amber-400" />,
     },
     {
       title: "Known Model Limitations",
       description:
-        "The system predicts two distinct layoff types differently: (1) Distress-driven layoffs (financial pressure + high L1/L2) — accurately predicted, AUC ~0.96. (2) Efficiency-driven restructuring (profitable companies replacing workers with AI) — partially covered by D8 signal, but UNCALIBRATED. The D8 signal gates on prior layoff history and high AI investment; companies with no prior rounds (Anthropic, OpenAI) correctly score as low risk despite high AI investment. Score confidence intervals reflect this uncertainty.",
+        "The system predicts two distinct layoff types differently: (1) Distress-driven layoffs (financial pressure + high L1/L2) — accurately predicted, AUC ~0.96. (2) Efficiency-driven restructuring (profitable companies replacing workers with AI) — covered by D8 signal (regression-calibrated, 47 events), currently held pending held-out validation gate (n ≥ 15, AUC ≥ 0.72, precision ≥ 0.65). Heuristic fallback active. Companies with no prior rounds (Anthropic, OpenAI) correctly score as low risk despite high AI investment. Score confidence intervals reflect this uncertainty.",
       icon: <Shield className="w-6 h-6 text-orange-400" />,
     },
   ];
@@ -627,11 +714,12 @@ const MethodologyExplainer: React.FC = () => {
         <div key={index} className="bg-white/5 border border-white/5 rounded-lg p-[var(--space-4)] hover:bg-white/10 transition-colors">
           <div className="flex gap-[var(--space-3)]">
             <div className="flex-shrink-0 mt-1">{section.icon}</div>
-            <div>
+            <div className="w-full">
               <h4 className="label-xs font-black uppercase tracking-wider mb-[var(--space-2)]">{section.title}</h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {section.description}
               </p>
+              {section.title === "Known Model Limitations" && <D8ValidationPanel />}
             </div>
           </div>
         </div>
@@ -648,8 +736,8 @@ const MethodologyExplainer: React.FC = () => {
               Formula: 10-term composite (D1–D8, L1, L2), weights summing to exactly 1.00.
               Empirical calibration details — including training event count, AUC-ROC, and
               next recalibration date — are shown in the Model Calibration panel above.
-              D8 (AI efficiency restructuring) is UNCALIBRATED — added post-validation;
-              distress-driven prediction AUC ~0.96; efficiency-driven partially covered.
+              D8 (AI efficiency restructuring) is regression-calibrated (47 events, AUC 0.76)
+              — deployment gate status shown in Known Model Limitations above.
             </p>
           </div>
         </div>
