@@ -54,6 +54,34 @@ export interface ContingencyPath {
   financialProjection?: ContingencyPathFinancialProjection;
   /** MED-8: base feasibility values are model-estimated, not regression-calibrated. */
   feasibilityCalibrationStatus: 'developer_estimate';
+
+  /**
+   * Provenance of the feasibilityScore percentage.
+   *
+   *   'market_successRate'  — derived from careerPathMarket.successRate12mPct
+   *                           (market research data, citable). Show as point estimate.
+   *   'portability_matrix'  — derived from rolePortabilityMatrix.score
+   *                           (empirical portability data). Show as point estimate.
+   *   'estimated'           — developer formula with no empirical validation.
+   *                           MUST display as a range (feasibilityRangeLow–feasibilityRangeHigh),
+   *                           never as a point estimate, to avoid false precision.
+   */
+  feasibilitySource: 'market_successRate' | 'portability_matrix' | 'estimated';
+
+  /**
+   * Epistemic uncertainty bounds — present only when feasibilitySource='estimated'.
+   * A 62% estimate with ±12pp uncertainty renders as "50–74%", not "62%".
+   * Ranges are honest; point estimates from uncalibrated formulas are not.
+   */
+  feasibilityRangeLow?: number;
+  feasibilityRangeHigh?: number;
+
+  /**
+   * Human-readable source attribution — present when feasibilitySource is
+   * 'market_successRate' or 'portability_matrix'. Shown as a tooltip/footnote
+   * in the UI so users can verify the provenance of the number.
+   */
+  feasibilitySourceNote?: string;
 }
 
 export interface CareerContingencyPlan {
@@ -91,11 +119,42 @@ export interface CareerContingencyInput {
    *  Values >1.0 = higher leverage (surgeons, principal engineers, compliance officers).
    *  Values <1.0 = lower leverage (BPO associates, junior admins, media analysts). */
   roleLeverageMultiplier?: number | null;
+
+  /**
+   * v40.0: 12-month transition success rate from careerPathMarket.successRate12mPct
+   * for the user's target/current role. When present, TRANSITION path feasibilityScore
+   * is anchored to this market-research figure and labeled 'market_successRate'.
+   * Source: careerPathMarket.ts hardcoded baseline (market research, 2026 estimates).
+   * Range: 0–100 (percent of attempted transitions that land a role within 12 months).
+   */
+  transitionSuccessRate12mPct?: number | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const WEEKS_HORIZON = 16; // Base planning horizon
+
+// Epistemic uncertainty bands for developer-estimated feasibility scores.
+// When feasibilitySource='estimated', the displayed range is [score - band, score + band].
+// Bands reflect the model's inherent uncertainty: NEGOTIATE has higher variance
+// than STAY because negotiation outcome depends on factors the model cannot observe
+// (manager's budget authority, company headcount freeze status, etc.).
+const FEASIBILITY_UNCERTAINTY = {
+  STAY:      10, // ±10pp: internal path has moderate uncertainty (resilience model is partially validated)
+  NEGOTIATE: 12, // ±12pp: leverage outcome has higher variance
+  TRANSITION: 12, // ±12pp: job search timing/outcome has high variance (only when no market data)
+} as const;
+
+/**
+ * Compute range bounds for an estimated feasibility score.
+ * Clamps to [5, 95] so the displayed range stays within meaningful bounds.
+ */
+function estimatedRange(score: number, band: number): { low: number; high: number } {
+  return {
+    low:  Math.max(5,  score - band),
+    high: Math.min(95, score + band),
+  };
+}
 const VISA_STAY_PENALTY = 20; // Visa-dependent users face larger STAY cost
 const EQUITY_NEGOTIATE_BONUS = 15; // Unvested equity is leverage
 
@@ -399,6 +458,13 @@ function buildStayPath(input: CareerContingencyInput, feasibility: number): Cont
     ],
     financialProjection: buildPathFinancialProjection('STAY', input),
     feasibilityCalibrationStatus: 'developer_estimate',
+    // STAY feasibility is entirely model-estimated — no empirical win/loss data exists
+    // for "probability of keeping your job given these signals". Show as range.
+    feasibilitySource: 'estimated',
+    ...(() => {
+      const { low, high } = estimatedRange(feasibility, FEASIBILITY_UNCERTAINTY.STAY);
+      return { feasibilityRangeLow: low, feasibilityRangeHigh: high };
+    })(),
   };
 }
 
@@ -437,6 +503,14 @@ function buildNegotiatePath(input: CareerContingencyInput, feasibility: number):
     ],
     financialProjection: buildPathFinancialProjection('NEGOTIATE', input),
     feasibilityCalibrationStatus: 'developer_estimate',
+    // NEGOTIATE feasibility is model-estimated — negotiation outcomes are not tracked
+    // in the calibration dataset (user_prediction_outcomes captures layoff outcomes,
+    // not negotiation success). Show as range.
+    feasibilitySource: 'estimated',
+    ...(() => {
+      const { low, high } = estimatedRange(feasibility, FEASIBILITY_UNCERTAINTY.NEGOTIATE);
+      return { feasibilityRangeLow: low, feasibilityRangeHigh: high };
+    })(),
   };
 }
 
@@ -445,19 +519,28 @@ function buildTransitionPath(input: CareerContingencyInput, feasibility: number)
   const liquidity = input.jobMarketLiquidity?.score ?? 50;
   const runway = resolveRunwayMonths(input);
 
+  // When successRate12mPct is available from market research, blend it with the
+  // model formula (60% market data, 40% model) so the displayed score reflects
+  // real-world transition outcomes. Without this, a data engineer showing 60%
+  // market success rate might display "47% feasibility" from the formula alone.
+  const sr = input.transitionSuccessRate12mPct;
+  const groundedFeasibility = sr != null && sr > 0
+    ? Math.round(sr * 0.6 + feasibility * 0.4)
+    : feasibility;
+
   const riskLevel: ContingencyPath['riskLevel'] =
-    feasibility < 30 || runway < 2 ? 'CRITICAL' :
-    feasibility < 45 || runway < 4 ? 'HIGH' :
-    feasibility < 65 ? 'MEDIUM' : 'LOW';
+    groundedFeasibility < 30 || runway < 2 ? 'CRITICAL' :
+    groundedFeasibility < 45 || runway < 4 ? 'HIGH' :
+    groundedFeasibility < 65 ? 'MEDIUM' : 'LOW';
 
   return {
     pathId: 'TRANSITION',
     label: 'Transition & Advance',
     tagline: 'Execute a structured exit to a better-fitting, lower-risk opportunity',
-    feasibilityScore: feasibility,
-    expectedValueScore: Math.round(feasibility * 0.5 + liquidity * 0.5),
+    feasibilityScore: groundedFeasibility,
+    expectedValueScore: Math.round(groundedFeasibility * 0.5 + liquidity * 0.5),
     riskLevel,
-    timelineWeeks: Math.round(WEEKS_HORIZON * (1 + (1 - feasibility / 100))),
+    timelineWeeks: Math.round(WEEKS_HORIZON * (1 + (1 - groundedFeasibility / 100))),
     immediateActions: immediate,
     shortTermActions: shortTerm,
     successIndicators: [
@@ -478,6 +561,31 @@ function buildTransitionPath(input: CareerContingencyInput, feasibility: number)
     ],
     financialProjection: buildPathFinancialProjection('TRANSITION', input),
     feasibilityCalibrationStatus: 'developer_estimate',
+    // TRANSITION feasibility source: use successRate12mPct from careerPathMarket when
+    // available (market research, 2026 estimates) — this is the most honest available
+    // grounding for "what % of people attempting this transition land a role in 12 months."
+    // When unavailable, fall back to the model estimate and show as a range.
+    ...(() => {
+      const sr = input.transitionSuccessRate12mPct;
+      if (sr != null && sr > 0) {
+        // Market-research-sourced: show as point estimate with source label.
+        // The feasibilityScore was already anchored to sr via the formula above;
+        // we record the original sr for accurate attribution.
+        return {
+          feasibilitySource: 'market_successRate' as const,
+          feasibilitySourceNote:
+            `Source: careerPathMarket successRate12mPct (market research, 2026 estimates). ` +
+            `${Math.round(sr)}% of people who attempt this transition land a comparable role within 12 months.`,
+        };
+      }
+      // No market data — show range
+      const { low, high } = estimatedRange(feasibility, FEASIBILITY_UNCERTAINTY.TRANSITION);
+      return {
+        feasibilitySource: 'estimated' as const,
+        feasibilityRangeLow: low,
+        feasibilityRangeHigh: high,
+      };
+    })(),
   };
 }
 

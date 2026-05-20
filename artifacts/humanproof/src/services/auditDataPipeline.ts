@@ -108,7 +108,7 @@ import { computePersonalizedTimeline } from "./personalizedTimelineService";
 import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
 import { computeActionEffortBadge } from "./actionRankingService";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
-import { getCareerPathMarket } from "./careerPathMarket";
+import { getCareerPathMarket, getCareerPathMarketSync } from "./careerPathMarket";
 import { evaluateJobOffer } from "./offerEvaluationEngine";
 import { computeCareerContingencyPlan } from "./careerContingencyPlanEngine";
 import { computePreparednessScore } from "./preparednessScoreEngine";
@@ -2997,6 +2997,11 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       roleLeverageMultiplier: (hybridResult as any).roleIndustryComposite?.riskModifier != null
         ? Math.max(0.5, Math.min(2.0, 1.0 - ((hybridResult as any).roleIndustryComposite.riskModifier / 40)))
         : undefined, // v37.0: derive from role-industry composite (-15→+20 modifier maps to 0.5–2.0 leverage)
+      // v40.0: market-research success rate for transition path probability grounding.
+      // getCareerPathMarketSync is synchronous — uses static baseline, always available.
+      // When present, TRANSITION feasibilityScore is anchored to this figure (60/40 blend)
+      // and labeled 'market_successRate' so the UI can show a point estimate with source.
+      transitionSuccessRate12mPct: getCareerPathMarketSync(inputs.roleTitle)?.successRate12mPct ?? null,
     });
     (hybridResult as any).careerContingencyPlan = careerContingencyPlan;
   } catch (e) {

@@ -60,41 +60,84 @@ const RISK_COLORS: Record<string, string> = {
 // ── Sub-Components ────────────────────────────────────────────────────────────
 
 interface FeasibilityBarProps {
-  score: number;
+  path: ContingencyPath;
   accentColor: string;
 }
 
-const FeasibilityBar: React.FC<FeasibilityBarProps & { isEstimate?: boolean }> = ({ score, accentColor, isEstimate }) => (
-  <div>
-    <div className="flex justify-between items-center mb-1">
-      <div className="flex items-center gap-1">
-        <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          FEASIBILITY
-        </span>
-        {/* MED-8: show estimate indicator when feasibility is model-estimated */}
-        {isEstimate && (
-          <span
-            title="Feasibility score is model-estimated — pending outcome calibration"
-            className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
-            style={{ background: 'rgba(245,158,11,0.15)', color: 'rgba(245,158,11,0.75)', border: '1px solid rgba(245,158,11,0.25)' }}
-          >
-            est.
+/**
+ * Renders feasibility as a bar with a probability label.
+ *
+ * Source-aware display rules (matching the task requirement):
+ *   'estimated'          → show range "N–M%" + amber "(estimated)" badge.
+ *                          Point estimates from uncalibrated formulas imply false precision.
+ *   'market_successRate' → show point "N%" + green "market data" badge + source tooltip.
+ *   'portability_matrix' → show point "N%" + blue "portability matrix" badge + source tooltip.
+ *
+ * The bar width always reflects the midpoint (feasibilityScore) regardless of source.
+ */
+const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) => {
+  const { feasibilityScore: score, feasibilitySource, feasibilityRangeLow, feasibilityRangeHigh, feasibilitySourceNote } = path;
+  const isEstimated = feasibilitySource === 'estimated' || !feasibilitySource;
+
+  const displayValue = isEstimated && feasibilityRangeLow != null && feasibilityRangeHigh != null
+    ? `${feasibilityRangeLow}–${feasibilityRangeHigh}%`
+    : `${score}%`;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            FEASIBILITY
           </span>
-        )}
+          {/* Source provenance badge */}
+          {isEstimated ? (
+            <span
+              title="Feasibility is model-estimated — not validated against outcome data. Displayed as a range to reflect uncertainty."
+              className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+              style={{ background: 'rgba(245,158,11,0.15)', color: 'rgba(245,158,11,0.75)', border: '1px solid rgba(245,158,11,0.25)' }}
+            >
+              estimated
+            </span>
+          ) : feasibilitySource === 'market_successRate' ? (
+            <span
+              title={feasibilitySourceNote ?? 'Sourced from career path market research (12-month transition success rate).'}
+              className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+              style={{ background: 'rgba(16,185,129,0.15)', color: 'rgba(16,185,129,0.85)', border: '1px solid rgba(16,185,129,0.30)' }}
+            >
+              market data ✓
+            </span>
+          ) : feasibilitySource === 'portability_matrix' ? (
+            <span
+              title={feasibilitySourceNote ?? 'Sourced from role portability matrix (empirical transition data).'}
+              className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+              style={{ background: 'rgba(59,130,246,0.15)', color: 'rgba(96,165,250,0.85)', border: '1px solid rgba(59,130,246,0.30)' }}
+            >
+              portability matrix ✓
+            </span>
+          ) : null}
+        </div>
+        {/* Range for estimated; point for sourced */}
+        <span className="text-[11px] font-black" style={{ color: accentColor }}>{displayValue}</span>
       </div>
-      <span className="text-[11px] font-black" style={{ color: accentColor }}>{score}%</span>
+      <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${score}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="h-1.5 rounded-full"
+          style={{ background: accentColor }}
+        />
+      </div>
+      {/* Source note for non-estimated paths */}
+      {!isEstimated && feasibilitySourceNote && (
+        <p className="text-[9px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          {feasibilitySourceNote}
+        </p>
+      )}
     </div>
-    <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: `${score}%` }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-        className="h-1.5 rounded-full"
-        style={{ background: accentColor }}
-      />
-    </div>
-  </div>
-);
+  );
+};
 
 // GAP G: inline financial grounding row beneath the feasibility bar
 const FinancialProjectionRow: React.FC<{
@@ -274,7 +317,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
 
         {/* Feasibility bar */}
         <div className="mt-3">
-          <FeasibilityBar score={path.feasibilityScore} accentColor={accentColor} isEstimate={path.feasibilityCalibrationStatus === 'developer_estimate'} />
+          <FeasibilityBar path={path} accentColor={accentColor} />
           {path.financialProjection && (
             <FinancialProjectionRow
               projection={path.financialProjection}
