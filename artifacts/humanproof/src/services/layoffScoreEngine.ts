@@ -1344,28 +1344,12 @@ const monthsDifference = (dateStr: string, now: Date): number => {
 
 // ─── Layer 1: Company Health (30%) ───
 
-const mapRevenueGrowth = (yoyPercent: number | null): number => {
-  if (yoyPercent === null) return 0.5;
-  if (yoyPercent < -20) return 0.95;
-  if (yoyPercent < -10) return 0.85;
-  if (yoyPercent < 0) return 0.72;
-  if (yoyPercent < 5) return 0.55;
-  if (yoyPercent < 10) return 0.42;
-  if (yoyPercent < 20) return 0.3;
-  if (yoyPercent < 30) return 0.18;
-  return 0.1;
-};
-
-const mapStockTrend = (change90Day: number | null): number => {
-  if (change90Day === null) return 0.5;
-  if (change90Day < -30) return 0.95;
-  if (change90Day < -15) return 0.8;
-  if (change90Day < -5) return 0.6;
-  if (change90Day < 5) return 0.42;
-  if (change90Day < 15) return 0.28;
-  if (change90Day < 30) return 0.15;
-  return 0.08;
-};
+// mapRevenueGrowth and mapStockTrend were removed — they were dead code.
+// calculateCompanyHealthScore uses calibratedRevenueGrowthRisk() and
+// calibratedStockTrendRisk() from empiricalCalibration.ts, which read from
+// CALIBRATED_REVENUE_THRESHOLDS / CALIBRATED_STOCK_THRESHOLDS (bootstrap) or
+// the per-audit DB-backed override injected by setAuditL1Thresholds()
+// when a segment bundle resolves from engine_calibration_versions.
 
 // UNCALIBRATED — developer estimates.
 // Calibration method: CB Insights startup failure rates by months-since-funding.

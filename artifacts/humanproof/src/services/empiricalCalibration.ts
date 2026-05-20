@@ -302,35 +302,49 @@ export function resetLiveCalibrationCacheForTesting(): void {
   _liveCalibrationInflight = null;
 }
 
-// Revenue growth threshold table — calibrated against outcomes
-// Previously: < -20% → 0.95. Calibration shows this was correct within ±0.03.
-// The thresholds below reflect the empirical P(layoff) at each band.
-export const CALIBRATED_REVENUE_THRESHOLDS: Array<[number, number]> = [
-  // [threshold_pct, calibrated_risk_score]
-  [-20, 0.93],  // was 0.95 — slightly over-stated
-  [-10, 0.84],  // was 0.85 — confirmed
-  [0,   0.70],  // was 0.72 — minor over-statement
-  [5,   0.54],  // was 0.55 — confirmed
-  [10,  0.41],  // was 0.42 — confirmed
-  [20,  0.29],  // was 0.30 — confirmed
-  [30,  0.17],  // was 0.18 — confirmed
+// ── L1 threshold point type ───────────────────────────────────────────────────
+// Each point defines the upper bound (exclusive) of a risk bucket and its risk
+// score, plus a provenance label so the Transparency Tab can show whether the
+// value came from a regression run or was seeded manually.
+//
+// Lookup semantics: for revenue/stock, iterate in ascending order and return
+// the score for the first threshold where value < threshold.
+//
+// Provenance:
+//   'manual_seed'       — developer-set value, not yet validated by regression
+//   'regression_derived' — empirically derived from ≥80 labelled outcomes
+export interface L1ThresholdPoint {
+  threshold: number;
+  risk: number;
+  provenance: 'regression_derived' | 'manual_seed';
+}
+
+// ── Revenue growth threshold table ────────────────────────────────────────────
+// spec values: [-20%→1.0, -5%→0.80, 0%→0.60, +5%→0.40, +15%→0.20, +25%→0.10]
+// All provenance = 'manual_seed' until segment regression (≥80 outcomes) runs.
+// DB rows in engine_calibration_versions(revenue_growth_thresholds) override
+// these bootstrap values when a segment bundle resolves.
+export const CALIBRATED_REVENUE_THRESHOLDS: L1ThresholdPoint[] = [
+  { threshold: -20, risk: 1.00, provenance: 'manual_seed' },
+  { threshold:  -5, risk: 0.80, provenance: 'manual_seed' },
+  { threshold:   0, risk: 0.60, provenance: 'manual_seed' },
+  { threshold:   5, risk: 0.40, provenance: 'manual_seed' },
+  { threshold:  15, risk: 0.20, provenance: 'manual_seed' },
+  { threshold:  25, risk: 0.10, provenance: 'manual_seed' },
 ];
 
-// Stock trend thresholds — calibrated against outcomes
-// v13.0 accuracy fix: Added extreme-decline tiers (-60%, -90%) so near-bankruptcy
-// signals (-99%) are not scored identically to moderate drawdowns (-30%).
-// The practical ceiling is 0.97 (not 1.0) because a -99% stock collapse is often
-// accompanied by trading halts, which are captured separately by the news cache.
-export const CALIBRATED_STOCK_THRESHOLDS: Array<[number, number]> = [
-  // [change_pct, calibrated_risk_score]
-  [-90, 0.97],  // near-bankruptcy signal — extreme collapse, likely delisting
-  [-60, 0.95],  // severe crash — existential company risk
-  [-30, 0.92],  // was 0.95 — over-stated: stock down 30%+ doesn't always precede layoffs
-  [-15, 0.79],  // was 0.80 — confirmed
-  [-5,  0.60],  // was 0.60 — confirmed
-  [5,   0.43],  // was 0.42 — confirmed
-  [15,  0.28],  // was 0.28 — confirmed
-  [30,  0.15],  // was 0.15 — confirmed
+// ── Stock trend threshold table ───────────────────────────────────────────────
+// spec values: [-50%→1.0, -30%→0.85, -15%→0.70, 0%→0.50, +10%→0.30, +20%→0.15]
+// All provenance = 'manual_seed' until segment regression (≥80 outcomes) runs.
+// DB rows in engine_calibration_versions(stock_trend_thresholds) override these
+// bootstrap values when a segment bundle resolves.
+export const CALIBRATED_STOCK_THRESHOLDS: L1ThresholdPoint[] = [
+  { threshold: -50, risk: 1.00, provenance: 'manual_seed' },
+  { threshold: -30, risk: 0.85, provenance: 'manual_seed' },
+  { threshold: -15, risk: 0.70, provenance: 'manual_seed' },
+  { threshold:   0, risk: 0.50, provenance: 'manual_seed' },
+  { threshold:  10, risk: 0.30, provenance: 'manual_seed' },
+  { threshold:  20, risk: 0.15, provenance: 'manual_seed' },
 ];
 
 // FCF (Free Cash Flow) threshold table — v16.0
@@ -412,6 +426,27 @@ export function setAuditCalibrationBundle(bundle: LayerCalibration | null): void
   _auditLayerCalibration = bundle;
 }
 
+// ── Per-audit L1 threshold override ──────────────────────────────────────────
+// When a segment-specific calibration bundle resolves from the DB (≥80 outcomes),
+// the pipeline injects its threshold arrays here so calibratedRevenueGrowthRisk /
+// calibratedStockTrendRisk use segment-tuned values instead of bootstrap constants.
+// Follows the same pattern as _auditLayerCalibration above.
+// Cleared in the finally path of fetchAuditData() alongside setAuditCalibrationBundle(null).
+let _auditRevenueThresholds: L1ThresholdPoint[] | null = null;
+let _auditStockThresholds: L1ThresholdPoint[] | null = null;
+
+/**
+ * Inject DB-backed L1 threshold arrays for the current audit run.
+ * Pass null for either argument to revert that table to the bootstrap constants.
+ */
+export function setAuditL1Thresholds(
+  revenue: L1ThresholdPoint[] | null,
+  stock: L1ThresholdPoint[] | null,
+): void {
+  _auditRevenueThresholds = revenue;
+  _auditStockThresholds   = stock;
+}
+
 export function applyCalibration(rawScores: {
   L1: number; L2: number; L3: number; L4: number; L5: number;
 }): typeof rawScores {
@@ -454,24 +489,29 @@ export function applyDimensionCalibration(rawScores: {
 const clampCalib = (v: number) => Math.max(0.02, Math.min(0.98, v));
 
 /**
- * Apply calibrated revenue growth threshold instead of hardcoded steps.
- * Returns a 0–1 risk score.
+ * Returns the L1 risk score for a given revenue YoY growth percentage.
+ * Uses the per-audit DB-backed threshold array when injected by the pipeline
+ * (segment bundle with ≥80 outcomes); falls back to CALIBRATED_REVENUE_THRESHOLDS.
  */
 export function calibratedRevenueGrowthRisk(yoyPercent: number | null): number {
   if (yoyPercent === null) return 0.5;
-  for (const [threshold, score] of CALIBRATED_REVENUE_THRESHOLDS) {
-    if (yoyPercent < threshold) return score;
+  const table = _auditRevenueThresholds ?? CALIBRATED_REVENUE_THRESHOLDS;
+  for (const { threshold, risk } of table) {
+    if (yoyPercent < threshold) return risk;
   }
   return 0.10;
 }
 
 /**
- * Apply calibrated stock trend threshold instead of hardcoded steps.
+ * Returns the L1 risk score for a given 90-day stock price change percentage.
+ * Uses the per-audit DB-backed threshold array when injected by the pipeline
+ * (segment bundle with ≥80 outcomes); falls back to CALIBRATED_STOCK_THRESHOLDS.
  */
 export function calibratedStockTrendRisk(change90Day: number | null): number {
   if (change90Day === null) return 0.5;
-  for (const [threshold, score] of CALIBRATED_STOCK_THRESHOLDS) {
-    if (change90Day < threshold) return score;
+  const table = _auditStockThresholds ?? CALIBRATED_STOCK_THRESHOLDS;
+  for (const { threshold, risk } of table) {
+    if (change90Day < threshold) return risk;
   }
   return 0.08;
 }

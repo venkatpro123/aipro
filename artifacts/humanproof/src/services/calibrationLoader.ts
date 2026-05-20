@@ -37,6 +37,7 @@ import {
   CALIBRATED_FCF_THRESHOLDS as BOOTSTRAP_FCF,
   type LayerCalibration,
   type D8LogisticCoefficients,
+  type L1ThresholdPoint,
 } from './empiricalCalibration';
 import {
   classifyRegionForSegment,
@@ -71,9 +72,13 @@ export interface CalibrationBundle {
   layerCalibration: LayerCalibration;
   /** D8 logistic regression coefficients. */
   d8: D8LogisticCoefficients;
-  /** Piecewise-linear threshold tables. Same shape as bootstrap arrays. */
-  revenueGrowthThresholds: Array<[number, number]>;
-  stockTrendThresholds: Array<[number, number]>;
+  /**
+   * Piecewise-linear threshold tables with per-point provenance labels.
+   * When source is 'db:*' and fallbackLevel is 'segment_db', these values
+   * came from a segment regression (≥80 outcomes) and override bootstrap.
+   */
+  revenueGrowthThresholds: L1ThresholdPoint[];
+  stockTrendThresholds: L1ThresholdPoint[];
   fcfMarginThresholds: Array<[number, number]>;
   /** Provenance for UI / transparency. */
   auc: { distress: number | null; efficiency: number | null; wave: number | null; combined: number | null };
@@ -117,8 +122,8 @@ function bootstrapBundle(scope: CohortScope = 'GLOBAL'): CalibrationBundle {
     scope,
     layerCalibration: { ...BOOTSTRAP_LAYER_CALIBRATION },
     d8: { ...BOOTSTRAP_D8 },
-    revenueGrowthThresholds: BOOTSTRAP_REVENUE.map((p) => [p[0], p[1]] as [number, number]),
-    stockTrendThresholds: BOOTSTRAP_STOCK.map((p) => [p[0], p[1]] as [number, number]),
+    revenueGrowthThresholds: [...BOOTSTRAP_REVENUE],
+    stockTrendThresholds: [...BOOTSTRAP_STOCK],
     fcfMarginThresholds: BOOTSTRAP_FCF.map((p) => [p[0], p[1]] as [number, number]),
     auc: { distress: 0.96, efficiency: 0.76, wave: 0.72, combined: 0.81 },
     coverage: { at90: null, at80: null, at50: null },
@@ -156,8 +161,8 @@ function segmentBootstrapBundle(
       L5: BOOTSTRAP_LAYER_CALIBRATION.L5 * calib.l5,
     },
     d8: { ...BOOTSTRAP_D8 },
-    revenueGrowthThresholds: BOOTSTRAP_REVENUE.map((p) => [p[0], p[1]] as [number, number]),
-    stockTrendThresholds: BOOTSTRAP_STOCK.map((p) => [p[0], p[1]] as [number, number]),
+    revenueGrowthThresholds: [...BOOTSTRAP_REVENUE],
+    stockTrendThresholds: [...BOOTSTRAP_STOCK],
     fcfMarginThresholds: BOOTSTRAP_FCF.map((p) => [p[0], p[1]] as [number, number]),
     auc: { distress: calib.auc, efficiency: null, wave: null, combined: calib.auc },
     coverage: { at90: null, at80: null, at50: null },
@@ -257,18 +262,40 @@ interface CalibrationVersionRow {
 }
 
 function rowToBundle(row: CalibrationVersionRow): CalibrationBundle {
-  const parseThresholds = (raw: unknown): Array<[number, number]> => {
+  // Parse revenue/stock JSONB into L1ThresholdPoint[].
+  // Handles two JSONB shapes:
+  //   legacy array format: [[threshold, risk], ...]
+  //   object format:       [{ threshold, risk, provenance? }, ...]
+  // When provenance is absent (legacy), defaults to 'regression_derived' since
+  // any value written by the recalibrate-engine cron came from regression.
+  const parseL1Thresholds = (raw: unknown): L1ThresholdPoint[] => {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((p): L1ThresholdPoint | null => {
+        if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number') {
+          return { threshold: p[0], risk: p[1], provenance: 'regression_derived' };
+        }
+        if (p && typeof p === 'object') {
+          const o = p as { threshold?: unknown; risk?: unknown; provenance?: unknown };
+          if (typeof o.threshold === 'number' && typeof o.risk === 'number') {
+            const prov = o.provenance === 'manual_seed' ? 'manual_seed' : 'regression_derived';
+            return { threshold: o.threshold, risk: o.risk, provenance: prov };
+          }
+        }
+        return null;
+      })
+      .filter((p): p is L1ThresholdPoint => p !== null);
+  };
+
+  // FCF remains as [number, number][] — no provenance needed (not user-visible).
+  const parseFCFThresholds = (raw: unknown): Array<[number, number]> => {
     if (!Array.isArray(raw)) return [];
     return raw
       .map((p) => {
-        if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number') {
-          return [p[0], p[1]] as [number, number];
-        }
+        if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number') return [p[0], p[1]] as [number, number];
         if (p && typeof p === 'object') {
           const o = p as { threshold?: unknown; risk?: unknown };
-          if (typeof o.threshold === 'number' && typeof o.risk === 'number') {
-            return [o.threshold, o.risk] as [number, number];
-          }
+          if (typeof o.threshold === 'number' && typeof o.risk === 'number') return [o.threshold, o.risk] as [number, number];
         }
         return null;
       })
@@ -293,9 +320,9 @@ function rowToBundle(row: CalibrationVersionRow): CalibrationBundle {
     // is not yet mappable 1:1 from the DB schema, so we surface the existing
     // bootstrap D8 until a follow-up migration aligns the column names.
     d8: { ...BOOTSTRAP_D8 },
-    revenueGrowthThresholds: parseThresholds(row.revenue_growth_thresholds),
-    stockTrendThresholds: parseThresholds(row.stock_trend_thresholds),
-    fcfMarginThresholds: parseThresholds(row.fcf_margin_thresholds),
+    revenueGrowthThresholds: parseL1Thresholds(row.revenue_growth_thresholds),
+    stockTrendThresholds: parseL1Thresholds(row.stock_trend_thresholds),
+    fcfMarginThresholds: parseFCFThresholds(row.fcf_margin_thresholds),
     auc: {
       distress: row.auc_distress,
       efficiency: row.auc_efficiency,

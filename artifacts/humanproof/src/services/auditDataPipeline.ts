@@ -128,7 +128,7 @@ import { detectAcquisitionPremium } from "./mergerAcquisitionRiskEngine";
 import { evaluateFlagSync, freezeAuditFlags, clearAuditFlags } from "../config/featureFlags";
 import { ensureCareerIntelligenceLoaded } from "../data/intelligence/index";
 import { loadCalibration } from "./calibrationLoader";
-import { setAuditCalibrationBundle } from "./empiricalCalibration";
+import { setAuditCalibrationBundle, setAuditL1Thresholds } from "./empiricalCalibration";
 // DEBT-5 — structured logging.
 import { createLogger } from "../shared/logger";
 const auditPipelineLog = createLogger({ service: "audit-pipeline" });
@@ -1404,6 +1404,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     });
     if (_calibBundle.fallbackLevel !== 'global_bootstrap') {
       setAuditCalibrationBundle(_calibBundle.layerCalibration);
+    }
+    // Inject DB-backed L1 threshold arrays when segment regression has ≥80 outcomes.
+    // segment_db means the DB row passed the MIN_SEGMENT_OUTCOMES gate in fetchActiveForSegmentKey.
+    // All other fallback levels (segment_bootstrap, cohort_db, global_bootstrap) use bootstrap arrays.
+    if (_calibBundle.fallbackLevel === 'segment_db') {
+      setAuditL1Thresholds(
+        _calibBundle.revenueGrowthThresholds,
+        _calibBundle.stockTrendThresholds,
+      );
     }
   } catch {
     // Non-fatal — scoring runs with global bootstrap if calibration load fails
@@ -3125,6 +3134,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Release the per-audit flag lock and calibration bundle before caching.
   clearAuditFlags();
   setAuditCalibrationBundle(null);
+  setAuditL1Thresholds(null, null);
 
   // v40.0 Task 5.5: Cache successful result to IndexedDB for offline fallback.
   // Fire-and-forget — cache write failure must never block the response.
