@@ -193,7 +193,7 @@ export async function activateD8IfValidated(): Promise<{
 
   if (flagErr) throw new Error(`d8ValidationService: flag lookup failed: ${flagErr.message}`);
 
-  const alreadyActive = flagRow?.mode === 'production';
+  const alreadyActive = flagRow?.mode === 'production';  // 'off' | 'shadow' | 'canary' | 'production' | 'deprecated'
 
   if (!alreadyActive) {
     const activationReason =

@@ -115,7 +115,7 @@ COMMENT ON COLUMN public.engine_calibration_versions.d8_validation_metadata IS
 -- d8ValidationService confirms the gate is cleared.
 UPDATE public.engine_feature_flags
 SET
-  mode                = 'disabled',
+  mode                = 'off',
   last_changed_reason =
     'Reverted from production: held-out set contained only 10 events, below the '
     'required minimum of 15. Gate criteria: n_heldout >= 15 AND AUC >= 0.72 AND '
