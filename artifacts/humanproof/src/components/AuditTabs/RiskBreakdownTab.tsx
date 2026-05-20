@@ -24,6 +24,7 @@ import type { TabProps } from "./common/types";
 // v12.0
 import { CareerPortfolioPanel } from "./common/CareerPortfolioPanel";
 import { SignalAttributionWaterfall } from "./common/SignalAttributionWaterfall";
+import { getEffectiveFormulaWeights } from "../../services/layoffScoreEngine";
 
 // ---------------------------------------------------------------------------
 // Dimension metadata — labels + weights + narrative generators
@@ -51,7 +52,7 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
   L1: {
     label: "Financial Health",
     fullLabel: "Company Financial Vulnerability",
-    weight: 0.30,
+    weight: 0.16, // COMPOSITE_FORMULA_WEIGHTS.L1_directFinancial
     icon: DollarSign,
     narrativeLow:  "Company financials are stable. Revenue per employee, growth trajectory, and cash position are within healthy bounds for the sector.",
     narrativeMid:  "Moderate financial stress detected. Revenue deceleration or elevated cost ratios suggest near-term cost-containment pressure.",
@@ -60,7 +61,7 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
   L2: {
     label: "Layoff History",
     fullLabel: "Layoff & Workforce Instability",
-    weight: 0.25,
+    weight: 0.06, // COMPOSITE_FORMULA_WEIGHTS.L2_directLayoffHistory
     icon: Users,
     narrativeLow:  "No material layoff history in the 24-month window. Workforce stability is a positive retention signal.",
     narrativeMid:  "One documented workforce reduction on record. Single events carry ~60% base rate for a follow-up within 9 months.",
@@ -69,7 +70,7 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
   L3: {
     label: "Role Displacement",
     fullLabel: "AI Role Displacement Risk",
-    weight: 0.20,
+    weight: 0.18, // COMPOSITE_FORMULA_WEIGHTS.D1_taskAutomatability
     icon: Cpu,
     narrativeLow:  "Your role has strong structural protection against AI displacement. Human judgment, trust, and cross-context reasoning are core to value delivery.",
     narrativeMid:  "Moderate AI exposure in your role category. The execution layer is being augmented by AI, but oversight and strategy functions remain human-native.",
@@ -78,7 +79,7 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
   L4: {
     label: "Industry Risk",
     fullLabel: "Industry & Market Headwinds",
-    weight: 0.12,
+    weight: 0.00, // COMPOSITE_FORMULA_WEIGHTS.D5_countryContext — pending country data
     icon: BarChart,
     narrativeLow:  "Your industry sector has below-average AI disruption velocity and positive employment growth outlook.",
     narrativeMid:  "Sector-level AI adoption is accelerating at a moderate pace. Some functions are being consolidated across the industry.",
@@ -87,7 +88,7 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
   L5: {
     label: "Regional Risk",
     fullLabel: "Regional & Macro Headwinds",
-    weight: 0.13,
+    weight: 0.18, // COMPOSITE_FORMULA_WEIGHTS.D4_experienceProtection
     icon: Globe,
     narrativeLow:  "Your geographic market has a favorable labor demand profile and moderate AI adoption pace relative to global peers.",
     narrativeMid:  "Regional labor market conditions present moderate headwinds — some demand softness or above-average tech-sector job cuts in your region.",
@@ -685,11 +686,13 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
   const { width } = useAdaptiveSystem();
   const isMobile = width < 768;
 
-  const isOracle = result.dimensions.some(d => d.key.startsWith("D"));
+  // D6 and D7 are always added to dimensions, so isOracle must check for D1-D5 specifically.
+  const isOracle = result.dimensions.some(d => ['D1','D2','D3','D4','D5'].includes(d.key));
 
-  const weights = isOracle
-    ? { D1: 0.35, D2: 0.25, D3: 0.15, D4: 0.10, D5: 0.08, D6: 0.07 }
-    : { L1: 0.30, L2: 0.25, L3: 0.20, L4: 0.12, L5: 0.13 };
+  // Authoritative formula weights — sourced from getEffectiveFormulaWeights() which
+  // reads COMPOSITE_FORMULA_WEIGHTS and respects the D8 kill-switch flag.
+  // DO NOT hardcode these; they drift from the engine as regression updates land.
+  const weights = getEffectiveFormulaWeights();
 
   const radarDimensions = useMemo(() =>
     result.dimensions.map(dim => {
@@ -711,6 +714,63 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
 
         {/* ── Primary / Protective driver summary ── */}
         <ScoreSummaryBanner result={result} />
+
+        {/* ── Scoring Archetype Badge (BUG-1 fix: engine archetype now flows through HybridResult) ── */}
+        {result.engineArchetype && result.engineArchetype !== 'low_risk_maintain' && (
+          <div className="flex items-center gap-2 mb-2">
+            <div className="px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border"
+              style={{
+                background: 'var(--amber)/10',
+                borderColor: 'var(--amber)/30',
+                color: 'var(--amber)',
+              }}
+            >
+              {result.engineArchetype === 'india_it_bench_risk'       && 'PATTERN: India IT Bench Risk'}
+              {result.engineArchetype === 'financial_distress_layoff' && 'PATTERN: Financial Distress Layoff'}
+              {result.engineArchetype === 'ai_efficiency_restructuring' && 'PATTERN: AI Efficiency Restructuring'}
+              {result.engineArchetype === 'rapid_growth_hiring_reversal' && 'PATTERN: Hiring Reversal'}
+              {result.engineArchetype === 'sector_contagion_spread'   && 'PATTERN: Sector Contagion'}
+              {!['india_it_bench_risk','financial_distress_layoff','ai_efficiency_restructuring','rapid_growth_hiring_reversal','sector_contagion_spread'].includes(result.engineArchetype)
+                && `PATTERN: ${result.engineArchetype.replace(/_/g, ' ').toUpperCase()}`}
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              Adaptive weight blending active for this pattern
+            </span>
+          </div>
+        )}
+
+        {/* ── Segment Calibration Panel (BUG-4 fix: surface multipliers so users can see calibration path) ── */}
+        {(result as any).segmentCalibration && (
+          <div className="mb-4 px-4 py-3 rounded-xl border border-white/8 bg-white/3 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest shrink-0">
+              Segment Calibration
+            </div>
+            <div className="text-[11px] text-foreground/80 font-medium">
+              {(result as any).segmentCalibration.segmentLabel}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {(['l1','l2','l3','l4','l5'] as const).map(key => {
+                const val: number = (result as any).segmentCalibration[`${key}Multiplier`] ?? 1;
+                const labelMap: Record<string,string> = { l1:'L1', l2:'L2', l3:'L3', l4:'L4', l5:'L5' };
+                const isAmplified = val > 1.05;
+                const isSuppressed = val < 0.95;
+                return (
+                  <span key={key} className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                    style={{
+                      background: isAmplified ? 'var(--red)/10' : isSuppressed ? 'var(--emerald)/10' : 'var(--border)/30',
+                      color: isAmplified ? 'var(--red)' : isSuppressed ? 'var(--emerald)' : 'var(--muted-foreground)',
+                    }}
+                  >
+                    {labelMap[key]}×{val.toFixed(2)}
+                  </span>
+                );
+              })}
+            </div>
+            {(result as any).segmentCalibration.calibrationStatus === 'developer_estimate' && (
+              <span className="text-[9px] text-amber-400/70 ml-auto">ESTIMATED</span>
+            )}
+          </div>
+        )}
 
         {/* ── Dimension Score Cards ── */}
         <div className="mb-6">

@@ -137,6 +137,12 @@ const SEGMENT_CALIBRATIONS: Record<string, SegmentCalibData> = {
     insight: 'Hyperscaler layoffs (Meta, Google, Amazon) are dominated by AI efficiency (D8 — not in L1-L5 base model). L1 is the WEAKEST predictor — all hyperscalers are financially healthy when they cut. L3 (role displacement) and L5 (personal skills) are strongest.',
     status: 'research_derived',
   },
+  'HYPERSCALER_IT_SERVICES': {
+    l1: 0.90, l2: 1.05, l3: 1.10, l4: 0.95, l5: 1.00,
+    baseRate: 0.15, auc: 0.77,
+    insight: 'Large-scale IT services firms (50,000+ headcount) are more geographically diversified than enterprise peers but still face AI task substitution in BPO/outsourcing lines. L1 more predictive than in pure-tech hyperscalers.',
+    status: 'developer_estimate',
+  },
 
   // ── Default fallback ──────────────────────────────────────────────────────
   '_DEFAULT': {
@@ -155,6 +161,12 @@ const SEGMENT_CALIBRATIONS: Record<string, SegmentCalibData> = {
     l1: 0.75, l2: 1.15, l3: 1.35, l4: 1.25, l5: 0.85,
     baseRate: 0.28, auc: 0.79,
     insight: 'Indian IT services enterprise layoffs driven by US client concentration (L4 dominant), AI substitution of BPO work (L3 elevated), and contract renewal cycles. L1 (financial health) is weakest predictor — Infosys/TCS are profitable when they cut.',
+    status: 'research_derived',
+  },
+  'HYPERSCALER_IT_SERVICES_INDIA': {
+    l1: 0.75, l2: 1.15, l3: 1.35, l4: 1.25, l5: 0.85,
+    baseRate: 0.25, auc: 0.79,
+    insight: 'India-headquartered IT services hyperscalers (Wipro/TCS/Infosys scale) face US client concentration risk (L4), AI BPO task substitution (L3 elevated), and GCC parent dependencies. L1 weak predictor — these firms are profitable when they cut. Slightly lower base rate than enterprise peers due to more diversified client portfolios at scale.',
     status: 'research_derived',
   },
 
@@ -202,11 +214,13 @@ export function classifyCompanySize(employeeCount: number | null): CompanySizeSe
 
 export function classifyIndustry(industryKey: string): IndustrySegment {
   const k = industryKey.toLowerCase();
-  if (/it_|software|saas|gaming|tech/.test(k)) return 'TECH';
+  // IT_SERVICES must be checked before BPO_SERVICES — 'IT Services' contains 'services'
+  // which would otherwise match the broader BPO_SERVICES regex first.
+  if (/it[_ ]?services|outsourc/.test(k))       return 'IT_SERVICES';
+  if (/it_|software|saas|gaming|tech/.test(k))  return 'TECH';
   if (/bpo|services|consulting|admin/.test(k))  return 'BPO_SERVICES';
   if (/finance|fintech|insurance|investment/.test(k)) return 'FINANCE';
   if (/health|medical|pharma|nursing/.test(k))  return 'HEALTHCARE';
-  if (/it_services|outsourc/.test(k))           return 'IT_SERVICES';
   return 'OTHER';
 }
 

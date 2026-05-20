@@ -405,6 +405,7 @@ function mapToHybridResult(
       timestamp: engineResult.calculatedAt
     },
     _engineResult: engineResult,
+    engineArchetype: engineResult.scoringArchetype,
     calibrationCoverage: engineResult.calibrationCoverage,
     activatedKillSwitches: engineResult.activatedKillSwitches,
     killSwitchFloors: engineResult.killSwitchFloors,
@@ -503,6 +504,7 @@ function mapConsensusScoreToHybridResult(
       timestamp: hybridScore.calculatedAt,
     },
     _engineResult: shadowEngineResult,
+    engineArchetype: shadowEngineResult.scoringArchetype,
     timing: shadowEngineResult.timing,
     probabilityForecast: shadowEngineResult.probabilityForecast,
     performanceTier: shadowEngineResult.performanceTier,

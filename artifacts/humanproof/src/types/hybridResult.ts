@@ -406,6 +406,13 @@ export interface HybridResult {
   keyProtectiveFactor?: string | null;
   scenarioArchetype?: string;
   scenarioArchetypeLabel?: string;
+  /**
+   * Scoring engine archetype key — returned by `detectScoringArchetype()` in
+   * `layoffScoreEngine.ts`. Examples: 'india_it_bench_risk', 'financial_distress_layoff',
+   * 'ai_efficiency_restructuring', 'low_risk_maintain'. Distinct from `scenarioArchetype`
+   * which comes from the narrative engine. Surfaced in RiskBreakdownTab as an archetype badge.
+   */
+  engineArchetype?: string;
   indiaSpecificInsight?: string;
   confidenceNote?: string;
 

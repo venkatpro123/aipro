@@ -280,7 +280,7 @@ export const companyDatabase: CompanyData[] = [
     name: 'Wipro',
     ticker: 'WIT',
     isPublic: true,
-    industry: 'Technology',
+    industry: 'IT Services',
     region: 'IN',
     employeeCount: 240000,
     revenueGrowthYoY: 2,
