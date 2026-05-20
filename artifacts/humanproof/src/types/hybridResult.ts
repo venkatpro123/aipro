@@ -231,8 +231,13 @@ export interface ActionPlanItem {
   evidence?: Array<{ signal: string; source: string; confidence: 'high' | 'medium' | 'low' }>;
   /** GAP F: human-readable effort badge (e.g. '30 min', '2h', '2 weeks') */
   effortBadge?: string;
-  /** GAP F: when in the job-search sequence this action belongs (day1/week1/month1/quarter1) */
-  sequencePhase?: 'day1' | 'week1' | 'month1' | 'quarter1';
+  /**
+   * GAP F: when in the job-search sequence this action belongs.
+   * 'phase0' is the emergency tier — renders before Phase 1 in the dependency
+   * graph and gates Phase 1 unlock until the Phase 0 action is completed.
+   * Phase 0 is triggered by departmentFreezeScore ≥ 65 OR collapseStage ≥ 3.
+   */
+  sequencePhase?: 'phase0' | 'day1' | 'week1' | 'month1' | 'quarter1';
   /** GAP F: one-line outcome evidence stat for trust-building (e.g. "2.8× more recruiter contacts") */
   evidenceStats?: string;
   /** GAP F: which other action IDs this depends on (shown as sequencing constraint) */

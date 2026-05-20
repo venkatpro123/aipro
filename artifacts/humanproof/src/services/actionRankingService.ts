@@ -178,10 +178,10 @@ export function computeActionROI(action: Partial<ActionPlanItem>): number {
  */
 export function sortByROIWithinPhases(
   pending: ActionPlanItem[],
-  phaseAssigner: (item: ActionPlanItem) => 1 | 2 | 3,
+  phaseAssigner: (item: ActionPlanItem) => 0 | 1 | 2 | 3,
 ): Array<ActionPlanItem & { _topRoiInPhase?: boolean }> {
-  const byPhase = new Map<1 | 2 | 3, ActionPlanItem[]>([
-    [1, []], [2, []], [3, []],
+  const byPhase = new Map<0 | 1 | 2 | 3, ActionPlanItem[]>([
+    [0, []], [1, []], [2, []], [3, []],
   ]);
 
   for (const item of pending) {
@@ -190,7 +190,8 @@ export function sortByROIWithinPhases(
 
   const result: Array<ActionPlanItem & { _topRoiInPhase?: boolean }> = [];
 
-  for (const phase of [1, 2, 3] as const) {
+  // Phase 0 items come first and are never reordered by ROI (typically one item).
+  for (const phase of [0, 1, 2, 3] as const) {
     const items = byPhase.get(phase)!;
     if (items.length === 0) continue;
 

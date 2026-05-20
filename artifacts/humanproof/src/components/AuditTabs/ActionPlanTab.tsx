@@ -318,6 +318,27 @@ export function buildDynamicActions(
       layerFocus: "L2 · Layoff & Instability History",
       riskReductionPct: 25,
       deadline: "This week — pre-announcement window",
+      // Phase 0 marker: gates Phase 1 unlock in the dependency graph.
+      sequencePhase: 'phase0' as const,
+    });
+  }
+
+  // Stage 3 Phase 0 action — triggered when collapse signals indicate imminent risk
+  // (1–6 months before announcement). Only created when dept-freeze Phase 0 wasn't
+  // already inserted (one Phase 0 action at a time to avoid overwhelm).
+  if (
+    (collapseStageForDept ?? 0) >= 3 &&
+    !actions.some(a => a.id?.startsWith('dept-freeze-phase0'))
+  ) {
+    actions.push({
+      id: `stage3-emergency-phase0-${roleKey}`,
+      title: '[Phase 0] Stage 3 Collapse Signal — Emergency Response Required Now',
+      description: `Stage 3 collapse signals are active at ${companyName}: the combination of leadership instability, sustained negative coverage, and layoff history has crossed the threshold that historically precedes formal announcements by 4–8 weeks. This is not a "watch and wait" situation — it is an emergency window.\n\nPhase 1 actions are locked until you complete this step: treat your job search as a full-time parallel project this week. Schedule 3 targeted applications by end of week. Do not let the apparent stability of your current role delay this.`,
+      priority: "Critical",
+      layerFocus: "L2 · Layoff & Instability History",
+      riskReductionPct: 30,
+      deadline: "This week — 4–8 week pre-announcement window",
+      sequencePhase: 'phase0' as const,
     });
   }
 
@@ -1309,25 +1330,36 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
     [sortedItems, completedItems],
   );
 
-  // Phase lock state — mirrors ActionDependencyGraph logic so the flat list and
-  // the dependency graph panel enforce the same threshold consistently.
-  // Phase 2 locks until Phase 1 ≥50% complete; Phase 3 locks until Phase 2 ≥50%.
-  // Items whose phase is locked have their checkbox disabled (not just visually dim).
-  const { lockedPhases } = useMemo(() => {
-    const byPhase: Record<1 | 2 | 3, ActionPlanItem[]> = { 1: [], 2: [], 3: [] };
+  // Phase lock state — mirrors ActionDependencyGraph exactly.
+  //
+  // Phase 0: never locked (it IS the emergency gate).
+  // Phase 1: locked when Phase 0 items exist AND Phase 0 is not 100% complete.
+  // Phase 2: locked when Phase 1 < 50% complete.
+  // Phase 3: locked when Phase 2 < 50% complete.
+  //
+  // The lock is enforced: pointer-events disabled + aria-disabled on the checkbox.
+  // A user who skips Phase 0 and jumps directly to long-horizon upskilling has
+  // made a worse decision than if the platform had never intervened.
+  const { lockedPhases, phase0Items } = useMemo(() => {
+    const byPhase: Record<0 | 1 | 2 | 3, ActionPlanItem[]> = { 0: [], 1: [], 2: [], 3: [] };
     for (const item of sortedItems) {
       byPhase[assignPhase(item)].push(item);
     }
-    const phasePct = (ph: 1 | 2 | 3): number => {
+    const phasePct = (ph: 0 | 1 | 2 | 3): number => {
       const items = byPhase[ph];
-      if (items.length === 0) return 100;
+      if (items.length === 0) return 100; // empty phase = satisfied
       const done = items.filter(i => completedItems[i.id]).length;
       return Math.round((done / items.length) * 100);
     };
+    const p0 = phasePct(0);
     const p1 = phasePct(1);
     const p2 = phasePct(2);
+    const hasPhase0 = byPhase[0].length > 0;
     return {
+      phase0Items: byPhase[0],
       lockedPhases: new Set<1 | 2 | 3>([
+        // Phase 1 locks when Phase 0 emergency action is not yet completed
+        ...(hasPhase0 && p0 < 100 ? [1 as const] : []),
         ...(p1 < 50 ? [2 as const] : []),
         ...(p2 < 50 ? [3 as const] : []),
       ]),
@@ -1600,12 +1632,54 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         )}
 
-        {/* Action Items — priority-grouped with colored section headers */}
+        {/* Action Items — Phase 0 emergency section first, then priority-grouped */}
         <AnimatePresence>
           {sortedItems.length > 0 ? (
             <div className="space-y-6">
+
+              {/* Phase 0: emergency section — rendered before ALL other actions.
+                  When this section is present and incomplete, Phase 1/2/3 are locked.
+                  The lock is enforced at the checkbox level (pointer-events disabled). */}
+              {phase0Items.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div style={{
+                      width: '6px', height: '6px', borderRadius: '50%',
+                      background: '#dc2626', boxShadow: '0 0 8px #dc2626',
+                      flexShrink: 0, animation: 'pulse-live 1.8s ease-in-out infinite',
+                    }} />
+                    <span className="text-xs font-black tracking-widest uppercase" style={{ color: '#dc2626', fontFamily: 'var(--font-mono)' }}>
+                      ⚡ PHASE 0 — EMERGENCY
+                    </span>
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      Complete before Phase 1 unlocks
+                    </span>
+                    <span className="text-xs text-muted-foreground font-mono ml-auto">
+                      {phase0Items.filter(i => completedItems[i.id]).length}/{phase0Items.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {phase0Items.map((item, i) => (
+                      <ActionItem
+                        key={item.id}
+                        item={item}
+                        isCompleted={!!completedItems[item.id]}
+                        onToggle={() => setCompletedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                        index={i}
+                        isLocked={false}
+                        selectedTrack={selectedTrack}
+                        isTopRoiInPhase={false}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {(['Critical', 'High', 'Medium', 'Low'] as const).map(priority => {
-                const priorityItems = sortedItems.filter(item => item.priority === priority);
+                // Exclude Phase 0 items from priority groups (they have their own section above)
+                const priorityItems = sortedItems.filter(
+                  item => item.priority === priority && assignPhase(item) !== 0
+                );
                 if (priorityItems.length === 0) return null;
                 const cfg = PRIORITY_CONFIG[priority];
                 const completedCount = priorityItems.filter(item => completedItems[item.id]).length;
@@ -1640,7 +1714,8 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                     <div className="space-y-2">
                       {priorityItems.map((item, i) => {
                         const itemPhase = assignPhase(item);
-                        const itemIsLocked = lockedPhases.has(itemPhase as 2 | 3);
+                        // lockedPhases can contain 1, 2, or 3 — Phase 1 locks when Phase 0 is incomplete
+                        const itemIsLocked = itemPhase >= 1 && lockedPhases.has(itemPhase as 1 | 2 | 3);
                         return (
                           <ActionItem
                             key={item.id}
