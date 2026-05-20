@@ -81,7 +81,13 @@ let snapshot: Map<string, ConstantRow> | null = null;
 let snapshotLoadedAt = 0;
 let refreshInFlight: Promise<void> | null = null;
 
+// DB availability state — distinguishes "DB unreachable" from "key not in DB".
+// null = no load attempt yet; true = last attempt succeeded; false = last attempt failed.
+let lastLoadSucceeded: boolean | null = null;
+let lastLoadAttemptAt = 0;
+
 async function loadSnapshot(): Promise<void> {
+  lastLoadAttemptAt = Date.now();
   // Use the global cohort scope here. Per-scope refinement is a future
   // extension; the WS9 seed only writes GLOBAL rows.
   const { data, error } = await supabase
@@ -91,6 +97,7 @@ async function loadSnapshot(): Promise<void> {
     .eq('cohort_scope', 'GLOBAL');
 
   if (error) {
+    lastLoadSucceeded = false;
     log.warn('snapshot.load_failed', { errorMessage: error.message, code: error.code });
     return; // keep stale snapshot; bootstrap will be used for misses
   }
@@ -101,6 +108,7 @@ async function loadSnapshot(): Promise<void> {
   }
   snapshot = next;
   snapshotLoadedAt = Date.now();
+  lastLoadSucceeded = true;
   log.debug('snapshot.loaded', { count: next.size });
 }
 
@@ -285,6 +293,46 @@ export function getSnapshotProvenanceSummary(): {
   };
 }
 
+export interface CalibrationDbStatus {
+  /**
+   * True when the last DB load attempt succeeded and `snapshot` holds live rows.
+   * False when the last attempt failed (DB unreachable, RLS error, network).
+   * Null when no attempt has been made yet (pre-prime).
+   */
+  dbAvailable: boolean | null;
+  /** Unix ms timestamp of the last load attempt. 0 = never attempted. */
+  lastAttemptAt: number;
+  /** Number of constants currently in the in-memory snapshot. */
+  snapshotCount: number;
+  /**
+   * True when ALL constants are being served from hardcoded fallback values
+   * because the DB was unavailable on the last load attempt and the snapshot
+   * is empty. Distinguishes a full DB outage from individual key misses.
+   *
+   * A score computed when isBootstrap = true used slightly different constant
+   * values than one computed from live DB rows. Users deserve to know.
+   */
+  isBootstrap: boolean;
+}
+
+/**
+ * Returns the current calibration DB availability state synchronously.
+ * Used by the audit pipeline to stamp `calibrationDbBootstrap` on results,
+ * and by TransparencyTab to surface a bootstrap warning banner.
+ */
+export function getCalibrationDbStatus(): CalibrationDbStatus {
+  const snapshotCount = snapshot?.size ?? 0;
+  return {
+    dbAvailable:   lastLoadSucceeded,
+    lastAttemptAt: lastLoadAttemptAt,
+    snapshotCount,
+    // isBootstrap = true when the snapshot is empty AND the DB was unreachable.
+    // Key-level misses (DB available but key absent) are NOT isBootstrap — those
+    // are normal gaps that get filled by caller-supplied defaults.
+    isBootstrap: lastLoadSucceeded === false && snapshotCount === 0,
+  };
+}
+
 /**
  * Test-only: inject a snapshot. Production code never calls this.
  */
@@ -302,4 +350,6 @@ export function __resetSnapshotForTesting(): void {
   snapshot = null;
   snapshotLoadedAt = 0;
   refreshInFlight = null;
+  lastLoadSucceeded = null;
+  lastLoadAttemptAt = 0;
 }

@@ -1568,6 +1568,35 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
+          {/* Calibration constants bootstrap disclosure — shown when the DB was unreachable
+              at score computation time and all constants fell back to hardcoded defaults.
+              The score is valid but used bootstraps instead of live-calibrated values. */}
+          {result.calibrationDbBootstrap && (
+            <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
+              <div className="flex gap-3">
+                <Database className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-amber-300 text-sm mb-1">
+                    Calibration constants loaded from backup (database unavailable)
+                  </h4>
+                  <p className="text-xs text-amber-200/80 leading-relaxed">
+                    The scoring engine could not reach the calibration constants database
+                    when this score was computed. All scalar constants — AI displacement
+                    weights, confidence caps, visa risk amplifiers, and peer contagion
+                    multipliers — were served from hardcoded fallback values instead of
+                    live DB-calibrated values.
+                  </p>
+                  <p className="text-xs text-amber-200/60 mt-1.5 leading-relaxed">
+                    Your score is valid and will not differ substantially from a DB-backed
+                    score, but the exact constant values may differ slightly from the
+                    currently active calibrated rows. Recalculate once the database is
+                    reachable to confirm with live constants.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Unknown company inference disclosure — shown when industry/region were
               inferred from the company name because the company wasn't in the DB. */}
           {(() => {

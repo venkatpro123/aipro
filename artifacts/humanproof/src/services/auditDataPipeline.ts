@@ -114,7 +114,7 @@ import { computeCareerContingencyPlan } from "./careerContingencyPlanEngine";
 import { computePreparednessScore } from "./preparednessScoreEngine";
 import { computePersonalRiskModifier } from "./personalRiskAdjusterService";
 // v40.0: calibration provenance — uncalibrated constant count for Transparency tab
-import { getSnapshotProvenanceSummary } from "./calibration/calibrationConstants";
+import { getSnapshotProvenanceSummary, getCalibrationDbStatus } from "./calibration/calibrationConstants";
 import { ensureRoleIntelligenceLoaded } from "./roleIntelligenceClient";
 import {
   checkEdgeFunctionHealth,
@@ -405,13 +405,15 @@ function mapToHybridResult(
     calibrationCoverage: engineResult.calibrationCoverage,
     activatedKillSwitches: engineResult.activatedKillSwitches,
     signalDecayWeights: engineResult.signalDecayWeights,
-    // v40.0: surface uncalibrated constant count from in-memory snapshot.
+    // v40.0: surface uncalibrated constant count + DB availability from in-memory snapshot.
     // Synchronous — no DB call on the hot audit path.
     ...(() => {
-      const prov = getSnapshotProvenanceSummary();
-      return prov
-        ? { uncalibratedConstantCount: prov.uncalibratedCount, uncalibratedConstantKeys: prov.uncalibratedKeys }
-        : {};
+      const prov   = getSnapshotProvenanceSummary();
+      const dbStat = getCalibrationDbStatus();
+      return {
+        ...(prov ? { uncalibratedConstantCount: prov.uncalibratedCount, uncalibratedConstantKeys: prov.uncalibratedKeys } : {}),
+        calibrationDbBootstrap: dbStat.isBootstrap,
+      };
     })(),
   };
 }

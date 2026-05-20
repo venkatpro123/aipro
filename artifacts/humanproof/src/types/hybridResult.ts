@@ -472,6 +472,13 @@ export interface HybridResult {
    * active. Used to render tooltips and identify which outputs carry "(estimate)".
    */
   uncalibratedConstantKeys?: string[];
+  /**
+   * True when ALL calibration constants were served from hardcoded fallback values
+   * because engine_calibration_constants was unreachable at score computation time.
+   * The score is valid but used bootstrap defaults instead of DB-calibrated values.
+   * TransparencyTab surfaces this as an amber disclosure banner.
+   */
+  calibrationDbBootstrap?: boolean;
 
   // ── Cache provenance ────────────────────────────────────────────────────────
   /**
