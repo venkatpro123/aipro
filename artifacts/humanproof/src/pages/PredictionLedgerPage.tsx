@@ -652,6 +652,43 @@ export default function PredictionLedgerPage() {
             Forward-looking predictions are logged before the event. Retroactive entries
             are clearly labeled and excluded from the accuracy rate.
           </p>
+
+          {/* Primary accuracy statement — always visible in header */}
+          <div style={{ marginTop: 12, fontSize: '0.88rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
+            {completedForward > 0 ? (
+              <>
+                Forward-looking predictions:{' '}
+                <strong style={{ color: 'var(--text-1)' }}>{confirmedForward.length} confirmed</strong>{' '}
+                of{' '}
+                <strong style={{ color: 'var(--text-1)' }}>{completedForward} completed</strong>{' '}
+                (<strong style={{ color: forwardAccuracy >= 75 ? '#10b981' : forwardAccuracy < 60 ? '#f59e0b' : 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>{forwardAccuracy}% accuracy</strong>).{' '}
+                <span style={{ color: 'var(--text-3)' }}>
+                  {monitoringForward.length} prediction{monitoringForward.length !== 1 ? 's' : ''} currently monitoring.
+                </span>
+                {completedForward >= 3 && (
+                  <span style={{
+                    display: 'inline-block', marginLeft: 10,
+                    padding: '2px 9px', borderRadius: 5, fontSize: '0.75rem', fontWeight: 800,
+                    background: forwardAccuracy >= 75 ? 'rgba(16,185,129,0.12)' : forwardAccuracy < 60 ? 'rgba(245,158,11,0.12)' : 'rgba(59,130,246,0.10)',
+                    color: forwardAccuracy >= 75 ? '#10b981' : forwardAccuracy < 60 ? '#f59e0b' : 'var(--text-2)',
+                    border: `1px solid ${forwardAccuracy >= 75 ? 'rgba(16,185,129,0.25)' : forwardAccuracy < 60 ? 'rgba(245,158,11,0.30)' : 'rgba(59,130,246,0.20)'}`,
+                  }}>
+                    {forwardAccuracy >= 75 ? '✓ Model validated' : forwardAccuracy < 60 ? '⚠ Model under review.' : 'Model tracking'}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span style={{ color: 'var(--text-3)' }}>
+                Forward-looking predictions: no completed predictions yet.{' '}
+                {monitoringForward.length} prediction{monitoringForward.length !== 1 ? 's' : ''} currently monitoring.
+              </span>
+            )}
+          </div>
+
+          {/* Retroactive calibration count — clearly excluded */}
+          <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-3)' }}>
+            Retroactive calibration entries: {VALIDATED_RETROACTIVE.length} entries from layoffs.fyi historical data — not counted in accuracy rate above.
+          </div>
         </div>
 
         {/* Accuracy stats — forward-looking only */}
@@ -686,7 +723,7 @@ export default function PredictionLedgerPage() {
                 {forwardAccuracy >= 75
                   ? `✓ Model validated — ${forwardAccuracy}% forward accuracy on ${completedForward} completed predictions`
                   : forwardAccuracy < 60
-                    ? `⚠ Model under review — calibration update in progress (${forwardAccuracy}% on ${completedForward} completed predictions)`
+                    ? `⚠ Model under review. ${forwardAccuracy}% on ${completedForward} completed predictions — calibration update in progress`
                     : `Model tracking — ${forwardAccuracy}% on ${completedForward} completed predictions`}
               </div>
             )}
@@ -1015,6 +1052,22 @@ export default function PredictionLedgerPage() {
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', lineHeight: 1.75, marginTop: 8 }}>
             <strong style={{ color: 'var(--text-2)' }}>Signal provenance badges</strong> on each retroactive entry show: <span style={{ color: '#10b981', fontWeight: 700 }}>✓ pre-event</span> (publicly observable and time-stamped before the layoff), <span style={{ color: '#f59e0b', fontWeight: 700 }}>? ambiguous</span> (directionally correct, source not independently verified), and <span style={{ color: '#ef4444', fontWeight: 700 }}>✗ corrected</span> (original signal was hindsight-only — replaced after audit).
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', lineHeight: 1.75, marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+            <strong style={{ color: 'var(--text-2)' }}>Accuracy disclosure policy.</strong>{' '}
+            The forward accuracy rate above is computed as{' '}
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-2)', fontSize: '0.75rem' }}>confirmedCount ÷ (confirmedCount + refutedCount)</span>,
+            where <em>is_retroactive = false</em>.
+            Retroactive calibration entries are excluded from this calculation and counted separately.
+            Only predictions whose outcome window has closed (confirmed or refuted) are included —
+            predictions still in the monitoring window are counted in "currently monitoring" and excluded
+            from the rate until resolved.
+            The rate is displayed as-is: a 62% accuracy is shown as 62%, not rounded up or left blank.
+            Silence about a model's accuracy is itself an accuracy claim — the implicit claim that the
+            number would look bad if stated. Accurate disclosure of a below-target rate is more
+            trust-building than silence about a claimed higher rate. When accuracy falls below 60%,
+            a <span style={{ color: '#f59e0b', fontWeight: 700 }}>⚠ Model under review</span> indicator appears.
+            When it exceeds 75%, a <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Model validated</span> indicator appears.
           </div>
         </div>
 
