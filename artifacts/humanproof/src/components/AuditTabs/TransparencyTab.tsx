@@ -66,6 +66,7 @@ import {
   provenanceColor,
   type ProvenanceSummary,
 } from "../../services/calibration/calibrationProvenance";
+import type { ConformalBundle, ConformalInterval } from "../../services/conformalCI";
 
 // ---------------------------------------------------------------------------
 // DataQualityDashboard - Visualization of data quality metrics
@@ -928,6 +929,166 @@ const IndiaIntelligencePanel: React.FC<{
       <p className="text-[10px] text-muted-foreground px-1">
         Source: NASSCOM Trendlines 2025, Naukri Job Speak Mar 2026, EPFO Mar 2026. Sector pulse snapshot updated quarterly.
       </p>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// ConformalCIPanel — per-cohort conformal prediction interval disclosure
+// ---------------------------------------------------------------------------
+
+const COHORT_COLORS: Record<string, { bg: string; border: string; text: string }> = {
+  DISTRESS:   { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.28)',   text: '#f87171' },
+  EFFICIENCY: { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.28)',  text: '#60a5fa' },
+  WAVE:       { bg: 'rgba(168,85,247,0.08)',  border: 'rgba(168,85,247,0.28)',  text: '#c084fc' },
+  GLOBAL:     { bg: 'rgba(99,102,241,0.08)',  border: 'rgba(99,102,241,0.25)',  text: '#a5b4fc' },
+  UNKNOWN:    { bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.25)', text: '#9ca3af' },
+};
+
+const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => {
+  // Display the 90% interval as the primary; 80% and 50% as secondary.
+  const i90 = bundle.intervals.find((i) => Math.abs(i.nominalCoverage - 0.9) < 0.01);
+  const i80 = bundle.intervals.find((i) => Math.abs(i.nominalCoverage - 0.8) < 0.01);
+  const primary = i90 ?? i80 ?? bundle.intervals[0] ?? null;
+
+  const isFallback   = bundle.source === 'fallback_heuristic';
+  const isConformal  = bundle.source === 'conformal';
+  const isPooled     = !!primary?.pooledFromCohort;
+
+  const resolvedCohort  = primary?.resolvedCohort  ?? 'GLOBAL';
+  const requestedCohort = primary?.pooledFromCohort ?? resolvedCohort; // requested = pooledFromCohort when set
+  const cohortStyle     = COHORT_COLORS[resolvedCohort] ?? COHORT_COLORS.GLOBAL;
+
+  return (
+    <div
+      className="rounded-2xl p-4"
+      style={{ background: cohortStyle.bg, border: `1px solid ${cohortStyle.border}` }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 flex-shrink-0" style={{ color: cohortStyle.text }} />
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+            Conformal Prediction Interval
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Source badge */}
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={isConformal
+              ? { background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }
+              : { background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
+            }
+          >
+            {isConformal ? 'CONFORMAL' : 'HEURISTIC FALLBACK'}
+          </span>
+          {/* Cohort badge */}
+          {isConformal && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: `${cohortStyle.border}`, color: cohortStyle.text, border: `1px solid ${cohortStyle.border}` }}
+            >
+              {resolvedCohort}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Pool-up warning — the critical disclosure this panel exists for */}
+      {isPooled && primary && (
+        <div
+          className="flex items-start gap-2 rounded-lg px-3 py-2.5 mb-3"
+          style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.30)' }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <div>
+            <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#fbbf24' }}>
+              Pooled CI — cohort data insufficient
+            </p>
+            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              Your audit was classified as <span className="font-mono font-bold" style={{ color: COHORT_COLORS[requestedCohort]?.text ?? '#9ca3af' }}>{requestedCohort}</span>, but
+              that cohort currently has fewer than 80 calibration outcomes.
+              This confidence interval was computed from <span className="font-bold">{primary.calibrationN.toLocaleString()}</span> pooled{' '}
+              <span className="font-mono font-bold" style={{ color: cohortStyle.text }}>{resolvedCohort}</span> outcomes.
+              A {requestedCohort}-specific CI would be narrower and more precise once sufficient
+              outcomes accumulate. The interval shown here is valid but conservatively wide.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Heuristic fallback warning */}
+      {isFallback && (
+        <div
+          className="flex items-start gap-2 rounded-lg px-3 py-2.5 mb-3"
+          style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.22)' }}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            Insufficient calibration data across all cohorts (fewer than 80 confirmed outcomes).
+            This is a heuristic width estimate — not an empirically validated coverage guarantee.
+            Do not interpret as a "90% credible interval."
+          </p>
+        </div>
+      )}
+
+      {/* Interval tiles */}
+      {bundle.intervals.length > 0 && (
+        <div className={`grid gap-2 mb-3 ${bundle.intervals.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {bundle.intervals.map((iv: ConformalInterval) => {
+            const pct = Math.round(iv.nominalCoverage * 100);
+            return (
+              <div
+                key={iv.nominalCoverage}
+                className="rounded-lg p-2.5 text-center"
+                style={{ background: 'rgba(255,255,255,0.04)' }}
+              >
+                <div className="text-sm font-bold" style={{ color: cohortStyle.text }}>
+                  {iv.low}–{iv.high}
+                </div>
+                <div className="text-[10px] opacity-50 mt-0.5">{pct}% interval</div>
+                {iv.empiricalCoverage != null && (
+                  <div
+                    className="text-[9px] mt-0.5 font-medium"
+                    style={{ color: Math.abs(iv.empiricalCoverage - iv.nominalCoverage) < 0.05 ? '#34d399' : '#fbbf24' }}
+                  >
+                    empirical {Math.round(iv.empiricalCoverage * 100)}%
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Calibration metadata */}
+      {isConformal && primary && (
+        <div className="flex items-center gap-4 flex-wrap mt-1 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'rgba(255,255,255,0.40)' }}>
+          <span>n = {primary.calibrationN.toLocaleString()} calibration outcomes</span>
+          {primary.lastCalibratedAt && (
+            <span>last calibrated {new Date(primary.lastCalibratedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          )}
+          {primary.empiricalCoverage != null && (
+            <span>empirical coverage {Math.round(primary.empiricalCoverage * 100)}% (90% nominal)</span>
+          )}
+        </div>
+      )}
+
+      {/* Rationale */}
+      {primary?.rationale && (
+        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {primary.rationale}
+        </p>
+      )}
+
+      {!isFallback && (
+        <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.22)' }}>
+          Split-conformal prediction. Interval = [score − q_α, score + q_α] where q_α is the{' '}
+          ⌈(n+1)(1−α)⌉-th quantile of calibration non-conformity scores.
+          Marginal coverage guarantee holds for i.i.d. data regardless of distribution.
+        </p>
+      )}
     </div>
   );
 };
@@ -1914,6 +2075,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                 σ_total = √(σ_data² + σ_calibration²). Calibration σ=3.5pts from AUC-ROC=0.81 at n=200 events.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* v40.0: Conformal Prediction Interval — per-cohort calibration with pool-up disclosure */}
+        {result.conformalBundle && result.conformalBundle.source !== 'no_data' && (
+          <div className="mt-6">
+            <ConformalCIPanel bundle={result.conformalBundle} />
           </div>
         )}
 

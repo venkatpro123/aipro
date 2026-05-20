@@ -2512,6 +2512,19 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     noteEngineFailure('segmentCalibration', e);
   }
 
+  // Surface the conformal CI bundle on hybridResult so the UI can read it.
+  // The bundle was computed at line 1464–1482 and stored on companyData._conformalBundle.
+  // We copy it to hybridResult here (after hybridResult is assembled) so TransparencyTab
+  // can show the pooledFromCohort badge without reaching into companyData internals.
+  try {
+    const conformalBundleForResult = (companyData as any)._conformalBundle ?? null;
+    if (conformalBundleForResult) {
+      hybridResult.conformalBundle = conformalBundleForResult;
+    }
+  } catch (e) {
+    noteEngineFailure('conformalBundle_surface', e);
+  }
+
   // Bayesian Credible Interval — proper uncertainty quantification
   try {
     const dqTier = deriveDataQualityTier(

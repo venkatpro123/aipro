@@ -143,8 +143,8 @@ function rowToNonconformity(row: CalibrationRow): number | null {
   return Math.abs(predicted - actual) * 100;
 }
 
-async function fetchCalibrationSet(cohort: ConformalCohort): Promise<CalibrationSet | null> {
-  const since = new Date();
+async function fetchCalibrationSet(cohort: ConformalCohort, now: Date = new Date()): Promise<CalibrationSet | null> {
+  const since = new Date(now);
   since.setUTCDate(since.getUTCDate() - CALIBRATION_LOOKBACK_DAYS);
   let q = supabase
     .from('user_prediction_outcomes')
@@ -191,7 +191,7 @@ async function fetchCalibrationSet(cohort: ConformalCohort): Promise<Calibration
   return {
     cohort,
     nonconformities: ncs,
-    lastCalibratedAt: new Date().toISOString(),
+    lastCalibratedAt: now.toISOString(),
     empiricalCoverage,
   };
 }

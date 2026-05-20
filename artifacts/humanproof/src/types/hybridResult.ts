@@ -3,6 +3,7 @@
 // All tabs receive a `HybridResult` prop; this is the single source of truth.
 
 import type { ScoreResult } from "../services/layoffScoreEngine";
+import type { ConformalBundle } from "../services/conformalCI";
 import type { HistoricalPattern } from "../data/historicalPatterns";
 import type { JobMarketLiquidityResult } from "../services/jobMarketLiquidityService";
 import type { EscapePathReport } from "../services/escapePathOptimizer";
@@ -803,6 +804,24 @@ export interface HybridResult {
    * σ derived from data quality tier (A=3pts, B=6pts, C=10pts, D=18pts).
    */
   bayesianCI?: BayesianCredibleInterval;
+  /**
+   * v40.0: Full conformal prediction bundle from the conformalCILayer DAG step.
+   *
+   * Populated when ws4_conformal_ci flag is active and the per-cohort (or global
+   * pooled) calibration set has ≥ MIN_CALIBRATION_POINTS (80) outcomes.
+   *
+   * Key fields to surface in the UI:
+   *   source           — 'conformal' | 'fallback_heuristic' | 'no_data'
+   *   intervals[].pooledFromCohort — non-null when the requested cohort had < 80
+   *                   outcomes and the CI was computed from the broader cross-cohort
+   *                   pool. The UI MUST show the pooled badge so users know the CI
+   *                   is less precise than a cohort-specific estimate would be.
+   *   intervals[].calibrationN    — number of calibration points used
+   *   intervals[].resolvedCohort  — cohort the CI was actually built from
+   *   intervals[].empiricalCoverage — measured coverage on hold-out set (null until
+   *                   the weekly coverage_audit cron populates it)
+   */
+  conformalBundle?: ConformalBundle | null;
 
   // Extended user context (v14.0)
   /** User's declared tech skills — drives skillPortfolioFit and techStackObsolescence */
