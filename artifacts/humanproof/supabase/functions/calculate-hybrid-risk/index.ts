@@ -34,11 +34,20 @@ const json = (data: unknown, status = 200) =>
 // fully constructed consensusData blob — without auth, anyone could submit
 // fabricated signals or spam the function. Auth is required to tie usage
 // to a user and to keep the EF unusable as an open scoring oracle.
+//
+// Service-role bypass: the synthetic-probe cron calls this EF with the
+// service role key instead of a user JWT. We check for an exact match
+// against SUPABASE_SERVICE_ROLE_KEY before attempting JWT validation so
+// internal callers (probe, recalibrate-engine) are not blocked.
 async function requireAuth(req: Request): Promise<Response | null> {
   const authHeader = req.headers.get('Authorization') ?? '';
   if (!authHeader.startsWith('Bearer ')) {
     return json({ error: 'Missing Authorization header' }, 401);
   }
+  const token = authHeader.slice('Bearer '.length);
+  // Allow internal service-role callers without a user JWT.
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (serviceKey && token === serviceKey) return null;
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
