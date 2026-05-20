@@ -37,8 +37,54 @@ interface Props {
 const STORAGE_KEY_PREFIX = "hp_stage3_checklist_";
 
 function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp: FinancialProfile | null): WeekPlan[] {
-  const hasRunway = fp?.emergencyRunway && fp.emergencyRunway !== "Unknown";
+  const hasRunway     = fp?.emergencyRunway && fp.emergencyRunway !== "Unknown";
   const isConservative = fp?.riskAppetite === "conservative";
+  const isCriticalRunway = fp?.runwayTier === "CRITICAL";
+  // Conservative financial profile = explicitly conservative OR runway is critically short
+  const needsConservativeAdaptation = isConservative || isCriticalRunway;
+
+  // Week 1 actions — financial preparation
+  // Conservative adaptation is prepended as the FIRST critical action when applicable.
+  // Spec: "Emergency fund is critically low — do NOT resign under any circumstances.
+  //        Job search and emergency fund building are simultaneous Week 1 priorities."
+  const week1Actions: WeekAction[] = [];
+
+  if (needsConservativeAdaptation) {
+    week1Actions.push({
+      id: "w1-0",
+      text: hasRunway
+        ? `Emergency fund is critically low (${fp!.emergencyRunway} runway) — do NOT resign under any circumstances. Job search and emergency fund building are simultaneous Week 1 priorities. Every rupee saved this week extends the window.`
+        : "Emergency fund is critically low — do NOT resign under any circumstances. Job search and emergency fund building are simultaneous Week 1 priorities.",
+      critical: true,
+    });
+  }
+
+  week1Actions.push(
+    {
+      id: "w1-1",
+      text: "Calculate your exact monthly burn rate — rent, food, EMIs, subscriptions. Write it down. This number determines how much time you have.",
+      critical: true,
+    },
+    {
+      id: "w1-2",
+      text: hasRunway
+        ? `Your current runway: ${fp!.emergencyRunway}. Extend to at least 3 months if possible — cancel non-essential subscriptions today. OTT, gym, unused SaaS tools first.`
+        : "Audit your savings: how many months of expenses can you cover? Target minimum 3 months — cancel non-essentials today to extend runway.",
+      critical: true,
+    },
+    {
+      id: "w1-3",
+      text: needsConservativeAdaptation
+        ? "Do NOT resign. Do NOT tell colleagues. Do NOT make any large purchases or financial commitments until you have an offer in hand."
+        : "Do NOT resign yet. Do NOT tell colleagues. Do NOT make large purchases.",
+      critical: true,
+    },
+    {
+      id: "w1-4",
+      text: "Notify one trusted person — partner, close family member, or mentor — about the situation. They need to know for financial planning. No one else.",
+      critical: false,
+    },
+  );
 
   return [
     {
@@ -46,37 +92,38 @@ function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp:
       title: "Financial Preparation",
       Icon: DollarSign,
       color: "#ef4444",
-      milestone: "Emergency fund documented. Budget reviewed.",
-      actions: [
-        { id: "w1-1", text: `Calculate your exact monthly burn rate — rent, food, EMIs, subscriptions. Write it down.`, critical: true },
-        {
-          id: "w1-2",
-          text: hasRunway
-            ? `Your current runway: ${fp!.emergencyRunway}. Extend to at least 3 months if possible — cancel non-essential subscriptions today.`
-            : "Audit your savings: how many months of expenses can you cover? Target minimum 3 months.",
-          critical: true,
-        },
-        { id: "w1-3", text: "Do NOT resign yet. Do NOT tell colleagues. Do NOT make large purchases.", critical: true },
-        {
-          id: "w1-4",
-          text: isConservative
-            ? "Notify your partner or one trusted family member — they need to know the situation for financial planning."
-            : "Notify one trusted person (partner/family) about the situation.",
-          critical: false,
-        },
-      ],
+      milestone: needsConservativeAdaptation
+        ? "Emergency fund plan documented. No resignation under any circumstances."
+        : "Emergency fund documented. Monthly burn calculated. One person notified.",
+      actions: week1Actions,
     },
     {
       week: "Week 2",
       title: "Profile Activation",
       Icon: UserCheck,
       color: "#f97316",
-      milestone: "CV sent to 2 reviewers. 5 outreach emails sent.",
+      milestone: "CV with impact bullets ready. 5 warm outreach emails sent.",
       actions: [
-        { id: "w2-1", text: 'Update your CV: every role needs 2–3 impact bullets in this format: "I did X, which drove Y (measured outcome)." No metrics = invisible.', critical: true },
-        { id: "w2-2", text: 'LinkedIn: update headline and summary. Enable "Open to Work" in career interests — set to Hidden from current employer.', critical: true },
-        { id: "w2-3", text: `Email 5 warm professional contacts — NOT asking for jobs yet. Message: "Reconnecting — I'm exploring options in [area]. Would love to catch up."`, critical: true },
-        { id: "w2-4", text: `Identify 3 target companies and 1 specific role type. These guide your network conversations in weeks 3–4.`, critical: false },
+        {
+          id: "w2-1",
+          text: 'Update your CV: every role needs 2–3 impact bullets in this exact format: "I did X, which resulted in Y (quantified outcome)." No numbers = invisible to ATS and recruiters. Add metrics even if approximate.',
+          critical: true,
+        },
+        {
+          id: "w2-2",
+          text: 'LinkedIn: update your headline and "About" section. Enable "Open to Work" under Career Interests — set visibility to Hidden from current employer only. Do not make it public.',
+          critical: true,
+        },
+        {
+          id: "w2-3",
+          text: 'Email 5 warm professional contacts this week — NOT asking for jobs. Message template: "Reconnecting — I\'m quietly exploring options in [area]. Would love a 15-minute catch-up." Warm contacts have 4× the reply rate of cold ones.',
+          critical: true,
+        },
+        {
+          id: "w2-4",
+          text: "Identify 3 specific target companies and the exact role title you are targeting at each. Specificity is a competitive advantage — it guides every network conversation in weeks 3–4.",
+          critical: false,
+        },
       ],
     },
     {
@@ -84,32 +131,66 @@ function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp:
       title: "Parallel Pursuit",
       Icon: Send,
       color: "#f59e0b",
-      milestone: "First interview scheduled. 6+ applications submitted.",
+      milestone: "6+ targeted applications submitted. First interview scheduled.",
       actions: [
-        { id: "w3-1", text: "Apply to minimum 3 roles per week — not maximum. Targeted applications only. 3 quality applications > 30 spray-and-pray.", critical: true },
-        { id: "w3-2", text: "One informational conversation per week with someone at a target company. NOT a job interview — ask about the work.", critical: true },
-        { id: "w3-3", text: "Prepare 3 STAR-format stories (Situation, Task, Action, Result). Behavioral interviews at 90% of companies will use these.", critical: true },
+        {
+          id: "w3-1",
+          text: "3 targeted applications per week — not more. Quality over volume. Customise each cover letter to the specific role. 3 quality applications outperform 30 spray-and-pray submissions in interview conversion.",
+          critical: true,
+        },
+        {
+          id: "w3-2",
+          text: "1 informational conversation per week with someone at a target company. This is NOT a job interview — ask about the work, the team, the challenges. Informational interviews convert to referrals at 3× the rate of cold applications.",
+          critical: true,
+        },
+        {
+          id: "w3-3",
+          text: "Prepare 3 STAR-format stories (Situation, Task, Action, Result) from your most impactful work. Behavioral interviews use these at 90%+ of companies. Write them out; don't improvise in the room.",
+          critical: true,
+        },
         {
           id: "w3-4",
           text: isConservative
-            ? "If possible, complete one free micro-certification directly relevant to your target role (DeepLearning.AI, Google, HubSpot — all free)."
-            : "Complete one micro-certification relevant to your target role (max 2 weeks, max ₹3,000 investment).",
+            ? "Complete one free micro-certification directly relevant to your target role this week (DeepLearning.AI, Google Analytics, HubSpot, AWS free tier — all free). Demonstrates forward motion to interviewers."
+            : "Complete one micro-certification relevant to your target role (max 2 weeks, max ₹3,000). Tangible signal of transition intent for interviewers.",
           critical: false,
         },
       ],
     },
     {
       week: "Weeks 5–6",
-      title: "Consolidation & Decision",
+      title: "Consolidation",
       Icon: TrendingUp,
       color: "#10b981",
-      milestone: "Offer in hand OR 3+ active conversations in pipeline.",
+      milestone: "Offer in hand OR 3+ active conversations. Pipeline expanding if needed.",
       actions: [
-        { id: "w5-1", text: "Follow up on all applications: a single-sentence LinkedIn or email check-in. Most rejections are silent — following up surfaces hidden opportunities.", critical: true },
-        { id: "w5-2", text: "If you have an offer: DO NOT accept the first number. Counter with your target + 10–15%. The worst they say is no.", critical: true },
-        { id: "w5-3", text: `If no offer yet: expand target list by 2 additional companies. Lower your role-level threshold by one step (senior → mid-senior is fine temporarily).`, critical: true },
-        { id: "w5-4", text: `Review notice period obligations at ${companyName}. Understanding your exit timeline is a negotiating asset, not a liability.`, critical: false },
-        { id: "w5-5", text: "If score is still above 80 after 6 weeks of this protocol and no offer exists: contact a career coach with outplacement experience. This is a resource investment, not a defeat.", critical: false },
+        {
+          id: "w5-1",
+          text: "Follow up on every application that has been silent for 7+ days: one sentence on LinkedIn or email — 'Following up on my application for [role] — happy to share additional context if useful.' Most rejections are silent; following up surfaces 20–30% of hidden opportunities.",
+          critical: true,
+        },
+        {
+          id: "w5-2",
+          text: "If you have an offer: do NOT accept the first number. Counter with your target + 10–15%. The worst outcome is they say no and revert to the original number. Negotiating is expected — not negotiating is leaving money on the table.",
+          critical: true,
+        },
+        {
+          id: "w5-3",
+          text: `If no offer yet — expand pipeline: add 2 more target companies, consider one role level below your current (senior → mid-senior is recoverable), and increase outreach to 8 contacts this week instead of 5.`,
+          critical: true,
+        },
+        {
+          id: "w5-4",
+          text: `Review your notice period obligations at ${companyName}. Your exit timeline is a negotiating asset: if you can start in 2 weeks instead of 60 days, say so — it is a real differentiator for urgent roles.`,
+          critical: false,
+        },
+        {
+          id: "w5-5",
+          text: score >= 80
+            ? "Score is still elevated after 6 weeks of this protocol — contact a career coach with outplacement experience. This is a targeted resource investment, not a defeat. A 1-session coach can unlock referrals and preparation gaps you cannot see yourself."
+            : "If no offer by end of week 6, reassess your target role and company list — the market may be giving you feedback about positioning that a coach or trusted peer can surface.",
+          critical: false,
+        },
       ],
     },
   ];

@@ -67,6 +67,7 @@ import {
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { useHumanProof } from "@/context/HumanProofContext";
 import { rankAndUnwrap, sortByROIWithinPhases } from "@/services/actionRankingService";
+import { Stage3EmergencyProtocol } from "../../components/Stage3EmergencyProtocol";
 import type { TabProps } from "./common/types";
 import type { ActionPlanItem } from "@/types/hybridResult";
 // v12.0 panels
@@ -1675,9 +1676,27 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         )}
 
-        {/* Action Items — Phase 0 emergency section first, then priority-grouped */}
+        {/* Stage 3: replace the generic action list with the week-by-week protocol.
+            The Phase 0 timeline recalibration (above) still renders — it acknowledges the
+            signal. Stage3EmergencyProtocol gives the user exactly what to DO, week by week.
+            Generic priority-grouped items are suppressed entirely at Stage 3: presenting
+            a "Medium priority: build a portfolio project" action alongside an imminent
+            collapse signal actively misleads the user about their situation. */}
+        {collapseStageForOverride === 3 && (
+          <div className="mb-6">
+            <Stage3EmergencyProtocol
+              companyName={companyData?.name ?? result.companyName ?? 'your company'}
+              roleKey={result.workTypeKey ?? ''}
+              score={result.total}
+              financialProfile={financialProfile}
+            />
+          </div>
+        )}
+
+        {/* Action Items — Phase 0 emergency section first, then priority-grouped.
+            Suppressed entirely when Stage 3 is active — the protocol above replaces them. */}
         <AnimatePresence>
-          {sortedItems.length > 0 ? (
+          {collapseStageForOverride !== 3 && sortedItems.length > 0 ? (
             <div className="space-y-6">
 
               {/* Phase 0: emergency section — rendered before ALL other actions.
@@ -1777,7 +1796,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                 );
               })}
             </div>
-          ) : (
+          ) : collapseStageForOverride !== 3 ? (
             <div className="text-center p-8 glass-panel rounded-xl">
               <p className="text-muted-foreground text-sm">
                 {search || filter !== "all"
@@ -1785,7 +1804,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                   : "No action items available."}
               </p>
             </div>
-          )}
+          ) : null}
         </AnimatePresence>
 
         {/* Resources Row */}
