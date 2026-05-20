@@ -442,6 +442,219 @@ export function getTrajParams(score: number): TrajectoryParams {
   };
 }
 
+// ─── Trajectory calibration metadata ────────────────────────────────────────
+// Every parameter has a primary source citation + an applicability note.
+// The UI uses this to decide whether to render an applicability warning:
+//   AER-2020 dominant → show warning (US manufacturing 1980s-1990s)
+//   BLS-2024 dominant → no warning (stronger match for current displacement context)
+
+export type TrajectorySource =
+  | 'BLS-2024'         // Bureau of Labor Statistics 2024 displaced worker survey — strongest match
+  | 'AER-2020'         // Lachowska, Mas & Woodbury 2020 — US manufacturing 1980s-1990s
+  | 'ROW-2024'         // Rest of World 2024 — India IT/BPO real-world cases
+  | 'WEF-2025'         // World Economic Forum Future of Jobs Report 2025
+  | 'JLS-1993'         // Jacobson, LaLonde & Sullivan 1993 — high-tenure US workers
+  | 'TAA-EVAL'         // Mathematica TAA Evaluation 2023
+  | 'NASSCOM-25'       // NASSCOM India tech 2025
+  | 'IDA'              // India Industrial Disputes Act
+  | 'EST';             // Developer estimate, no direct citation
+
+export interface ParameterCalibration {
+  /** Primary source citation drives the applicability disclosure rule */
+  primarySource: TrajectorySource;
+  /** Secondary corroborating sources */
+  secondarySources?: TrajectorySource[];
+  /** One-line applicability note describing what the source data covers */
+  applicabilityNote: string;
+  /** Optional uncertainty band — wider for less-applicable sources */
+  uncertaintyPct?: number;
+}
+
+export interface TrajectoryCalibration {
+  /** Primary source for this tier's parameters as a whole */
+  tierPrimarySource: TrajectorySource;
+  /**
+   * When true: render the AER-2020-style applicability disclosure.
+   * Set when AER-2020 (or another low-applicability source) dominates the tier's params.
+   */
+  requiresApplicabilityDisclosure: boolean;
+  /** The disclosure text shown to users when requiresApplicabilityDisclosure=true */
+  disclosureText: string;
+  /** Per-parameter calibration metadata */
+  parameters: {
+    noActionMultiplierM36: ParameterCalibration;
+    transitionDipFraction: ParameterCalibration;
+    transitionRecoveryM36: ParameterCalibration;
+    severanceMonths: ParameterCalibration;
+  };
+}
+
+/**
+ * Tier-keyed calibration metadata. Use getTrajectoryCalibration(score) to look up.
+ *
+ * The disclosure text follows the spec exactly: when AER-2020 dominates, users
+ * see "Trajectory estimate — source data covers US manufacturing workers.
+ * India IT sector displacement data pending. This is a modeled estimate."
+ * When BLS-2024 dominates, no warning is shown — BLS-2024 is a stronger match
+ * for displaced-worker scenarios because it's contemporary and broad-sector.
+ */
+const CALIBRATION_META: Record<'critical' | 'high' | 'moderate' | 'low', TrajectoryCalibration> = {
+  critical: {
+    // Critical tier (score ≥ 80): India BPO/data-entry/customer-support roles
+    // The most consequential parameter (noActionMultiplierM36 = 0.52) is derived
+    // from AER-2020 + ROW-2024 — both are imperfect proxies for India IT 2026.
+    tierPrimarySource: 'AER-2020',
+    requiresApplicabilityDisclosure: true,
+    disclosureText:
+      'Trajectory estimate — source data covers US manufacturing workers ' +
+      '(AER-2020) and India BPO cases (ROW-2024). India IT sector displacement ' +
+      'data pending. This is a modeled estimate.',
+    parameters: {
+      noActionMultiplierM36: {
+        primarySource: 'AER-2020',
+        secondarySources: ['ROW-2024', 'BLS-2024'],
+        applicabilityNote:
+          'Derived from US manufacturing displacement (1980s-1990s) blended with ' +
+          'India BPO real-world cases (ROW-2024). Not yet validated against India ' +
+          'IT sector outcome data.',
+        uncertaintyPct: 25,
+      },
+      transitionDipFraction: {
+        primarySource: 'BLS-2024',
+        secondarySources: ['ROW-2024', 'EST'],
+        applicabilityNote: 'BLS-2024 survey + ROW-2024 India real cases for job-search income dip.',
+        uncertaintyPct: 15,
+      },
+      transitionRecoveryM36: {
+        primarySource: 'WEF-2025',
+        secondarySources: ['TAA-EVAL'],
+        applicabilityNote: 'WEF reskilling cohort outcomes + TAA cumulative earnings premium.',
+        uncertaintyPct: 20,
+      },
+      severanceMonths: {
+        primarySource: 'IDA',
+        applicabilityNote: 'India Industrial Disputes Act formula (15 days × years ÷ 30).',
+        uncertaintyPct: 8,
+      },
+    },
+  },
+  high: {
+    // High tier (score 65-79): mixed-automation roles
+    // Primary source is AER-2020 + BLS-2024 — disclosure still warranted because
+    // the central parameter (0.62) is anchored to US manufacturing data.
+    tierPrimarySource: 'AER-2020',
+    requiresApplicabilityDisclosure: true,
+    disclosureText:
+      'Trajectory estimate — source data covers US manufacturing workers ' +
+      '(AER-2020) and US 2024 displaced workers (BLS-2024). India IT sector ' +
+      'displacement data pending. This is a modeled estimate.',
+    parameters: {
+      noActionMultiplierM36: {
+        primarySource: 'AER-2020',
+        secondarySources: ['BLS-2024'],
+        applicabilityNote:
+          'AER-2020 US manufacturing + BLS-2024 contemporary displacement, ' +
+          'adjusted for India mixed-automation market depth.',
+        uncertaintyPct: 20,
+      },
+      transitionDipFraction: {
+        primarySource: 'BLS-2024',
+        secondarySources: ['ROW-2024'],
+        applicabilityNote: 'Contemporary US survey + India real cases for job-search dip.',
+        uncertaintyPct: 12,
+      },
+      transitionRecoveryM36: {
+        primarySource: 'WEF-2025',
+        secondarySources: ['TAA-EVAL'],
+        applicabilityNote: 'Reskilling cohort outcomes from WEF + TAA evaluation.',
+        uncertaintyPct: 18,
+      },
+      severanceMonths: {
+        primarySource: 'IDA',
+        applicabilityNote: 'India Industrial Disputes Act formula.',
+        uncertaintyPct: 8,
+      },
+    },
+  },
+  moderate: {
+    // Moderate tier (score 45-64): low-automation roles in transition
+    // BLS-2024 dominates here — contemporary US survey is the strongest available
+    // match for the scenario (gradual decline rather than sudden displacement).
+    tierPrimarySource: 'BLS-2024',
+    requiresApplicabilityDisclosure: false,
+    disclosureText:
+      'Trajectory derived from contemporary US displaced-worker data (BLS-2024). ' +
+      'India IT cohort calibration pending. Treat as a modeled estimate.',
+    parameters: {
+      noActionMultiplierM36: {
+        primarySource: 'BLS-2024',
+        secondarySources: ['AER-2020'],
+        applicabilityNote: 'BLS-2024 all-displaced-worker average is the closest available match.',
+        uncertaintyPct: 15,
+      },
+      transitionDipFraction: {
+        primarySource: 'BLS-2024',
+        applicabilityNote: 'BLS-2024 reemployed-worker income transition data.',
+        uncertaintyPct: 10,
+      },
+      transitionRecoveryM36: {
+        primarySource: 'WEF-2025',
+        secondarySources: ['BLS-2024'],
+        applicabilityNote: 'Reskilling premium consistent across WEF and BLS samples.',
+        uncertaintyPct: 14,
+      },
+      severanceMonths: {
+        primarySource: 'IDA',
+        applicabilityNote: 'India Industrial Disputes Act formula.',
+        uncertaintyPct: 8,
+      },
+    },
+  },
+  low: {
+    // Low tier (score < 45): stable / low-automation roles
+    // BLS-2024 dominates and the scenario is closer to "voluntary career move"
+    // than "displacement." No applicability warning needed.
+    tierPrimarySource: 'BLS-2024',
+    requiresApplicabilityDisclosure: false,
+    disclosureText:
+      'Trajectory based on BLS-2024 contemporary survey data — the strongest ' +
+      'available match for low-automation displacement scenarios. Modeled estimate.',
+    parameters: {
+      noActionMultiplierM36: {
+        primarySource: 'BLS-2024',
+        applicabilityNote: 'BLS-2024 low-automation occupations show stable wages with mild erosion.',
+        uncertaintyPct: 10,
+      },
+      transitionDipFraction: {
+        primarySource: 'BLS-2024',
+        applicabilityNote: 'BLS-2024 confirms minimal income disruption for in-demand roles.',
+        uncertaintyPct: 8,
+      },
+      transitionRecoveryM36: {
+        primarySource: 'WEF-2025',
+        applicabilityNote: 'WEF reskilling premium for active career advancement.',
+        uncertaintyPct: 12,
+      },
+      severanceMonths: {
+        primarySource: 'IDA',
+        applicabilityNote: 'India Industrial Disputes Act formula.',
+        uncertaintyPct: 8,
+      },
+    },
+  },
+};
+
+/**
+ * Look up calibration metadata by risk score.
+ * Used by the panel to render the appropriate applicability disclosure.
+ */
+export function getTrajectoryCalibration(score: number): TrajectoryCalibration {
+  if (score >= 80) return CALIBRATION_META.critical;
+  if (score >= 65) return CALIBRATION_META.high;
+  if (score >= 45) return CALIBRATION_META.moderate;
+  return CALIBRATION_META.low;
+}
+
 export function computeTrajectory(
   monthlyIncome: number,
   params: TrajectoryParams,
@@ -689,11 +902,35 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
           <p className="text-xs text-muted-foreground mt-0.5">
             What does inaction actually cost you in money over 36 months?
           </p>
-          {riskScore >= 80 && (
-            <p className="text-[10px] text-amber-400/80 mt-1 font-mono">
-              ⚠ Trajectory estimate — Critical tier parameters derived from BPO/manufacturing data, not India IT 2026. Amber band reflects model uncertainty.
-            </p>
-          )}
+          {/* Metadata-driven applicability disclosure. Sourced from
+              TRAJECTORY_CALIBRATION_META so the warning fires whenever the tier's
+              primary source has known limitations (AER-2020 US manufacturing,
+              etc.) and not just for riskScore≥80.
+              When the source is BLS-2024 (contemporary, broad-sector), no warning
+              is shown — it's the strongest available match. */}
+          {(() => {
+            const calib = getTrajectoryCalibration(riskScore);
+            if (calib.requiresApplicabilityDisclosure) {
+              return (
+                <p
+                  className="text-[10px] text-amber-400/80 mt-1 font-mono"
+                  title={`Primary source: ${calib.tierPrimarySource}. Sources for each parameter are listed in the methodology footnote below.`}
+                >
+                  ⚠ {calib.disclosureText}
+                </p>
+              );
+            }
+            // No applicability warning needed — but still acknowledge it's modeled,
+            // not a measurement. Quieter styling because the source is a strong match.
+            return (
+              <p
+                className="text-[10px] text-muted-foreground/60 mt-1 font-mono"
+                title={`Primary source: ${calib.tierPrimarySource}. The strongest available data match for this tier.`}
+              >
+                Modeled estimate · Primary source: {calib.tierPrimarySource}
+              </p>
+            );
+          })()}
         </div>
         <span
           className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest"
