@@ -295,10 +295,13 @@ export function buildDynamicActions(
   // Inject personalized actions at the top of the list
   actions.push(...personalizedActions);
 
-  // v6.0 Fix 7: Department freeze score Phase 0 action — inserted BEFORE score-tier action.
-  // When the user's department shows a freeze score ≥ 65 and stage ≥ 2, the department-level
-  // signal is more specific and more urgent than the company-wide score.
-  // This is Phase 0: unlocks immediately, displayed before all other phases.
+  // ── Phase 0: department freeze score timeline recalibration ─────────────────
+  // Condition: departmentFreezeScore ≥ 65 AND collapseStage ≥ 2.
+  // The department-level signal is more specific than the company-wide score.
+  // Departments at Critical Freeze are historically cut 2–3 months before
+  // company-wide announcements. This action recalibrates the user's timeline
+  // — it does NOT reduce risk (riskReductionPct = 0) and is NOT an upskilling
+  // action. It must appear before all other actions and gates Phase 1 unlock.
   const departmentFreezeScore = (result as any).departmentFreezeScore as number | null | undefined;
   const collapseStageForDept = result.collapseStage ?? null;
   const userDepartment = (result as any).userFactors?.department ?? (result as any).department ?? '';
@@ -308,37 +311,77 @@ export function buildDynamicActions(
     collapseStageForDept != null &&
     collapseStageForDept >= 2
   ) {
-    const freezeLabel = departmentFreezeScore >= 80 ? 'Critical Freeze' : 'Freeze';
-    const leadTimeWeeks = departmentFreezeScore >= 80 ? '8–10' : '6–8';
-    actions.push({
-      id: `dept-freeze-phase0-${roleKey}`,
-      title: `[Phase 0] ${userDepartment || 'Your Department'} Shows ${freezeLabel} Signal — Act ${leadTimeWeeks} Weeks Earlier`,
-      description: `Your department shows a ${departmentFreezeScore}% hiring freeze score at ${companyName}. Departments entering ${freezeLabel} status are cut ${leadTimeWeeks} weeks before company-wide announcements. Your individual risk score (${score}/100) reflects company-level signals, but your department-level signal is higher. Begin your transition timeline ${leadTimeWeeks} weeks earlier than the overall score suggests.\n\nImmediate action: Update your CV this week to be application-ready. Do not wait for the announcement — by then you will be one of hundreds of candidates from the same company applying simultaneously. The competitive advantage of being first is weeks, not days.`,
-      priority: "Critical",
-      layerFocus: "L2 · Layoff & Instability History",
-      riskReductionPct: 25,
-      deadline: "This week — pre-announcement window",
-      // Phase 0 marker: gates Phase 1 unlock in the dependency graph.
-      sequencePhase: 'phase0' as const,
+    const freezeScore     = Math.round(departmentFreezeScore);
+    const isCritical      = departmentFreezeScore >= 80;
+    const freezeLabel     = isCritical ? 'Critical Freeze' : 'Freeze';
+    const deptName        = userDepartment || 'Your department';
+
+    // baseTimeline: what the overall score alone implies for transition urgency.
+    const baseTimeline =
+      score >= 75 ? '4–8 weeks'
+      : score >= 55 ? '2–3 months'
+      : score >= 40 ? '3–6 months'
+      : '6–12 months';
+
+    // adjustedTimeline: 6–8 weeks earlier than baseTimeline, reflecting the
+    // department-level signal which fires before company-wide announcements.
+    const adjustedTimeline =
+      score >= 75 ? 'this week'
+      : score >= 55 ? '2–4 weeks'
+      : score >= 40 ? '6–10 weeks'
+      : '3–6 months';
+
+    // Prepend with unshift — Phase 0 must appear before all other actions.
+    // The render loop also enforces this via assignPhase() === 0, but positional
+    // prepending makes the intent explicit to future readers.
+    actions.unshift({
+      id:          `dept-freeze-phase0-${roleKey}`,
+      title:       `[Phase 0] ${deptName} shows ${freezeScore}% hiring freeze at ${companyName} — timeline recalibration required`,
+      description: [
+        `Your department ${deptName} shows ${freezeScore}% hiring freeze at ${companyName}.`,
+        `Departments at ${freezeLabel} are historically cut 2–3 months before company-wide announcements.`,
+        `Your effective timeline is ${adjustedTimeline}, not ${baseTimeline}.`,
+        `Begin transition 6–8 weeks earlier than the overall risk score suggests.`,
+        ``,
+        `This is a timeline recalibration, not an upskilling action. Do not start long-horizon skill-building (Phase 1) until you have read and understood this signal. The overall risk score (${Math.round(score)}/100) uses company-wide data — your department-level freeze score (${freezeScore}%) is a stronger, more specific leading indicator.`,
+        ``,
+        `Immediate step: acknowledge this signal and set a concrete start date for your job search, 6–8 weeks earlier than you would have based on the company-wide score alone.`,
+      ].join('\n'),
+      priority:         'Critical',
+      layerFocus:       'L2 · Layoff & Instability History',
+      // riskReductionPct = 0: this is a timeline recalibration, not a risk-reduction action.
+      // Displaying a non-zero reduction would misrepresent what acknowledging this signal does.
+      riskReductionPct: 0,
+      deadline:         'Now — pre-announcement window',
+      sequencePhase:    'phase0' as const,
     });
   }
 
-  // Stage 3 Phase 0 action — triggered when collapse signals indicate imminent risk
-  // (1–6 months before announcement). Only created when dept-freeze Phase 0 wasn't
-  // already inserted (one Phase 0 action at a time to avoid overwhelm).
+  // ── Phase 0: Stage 3 emergency ───────────────────────────────────────────────
+  // Only created when Stage 3 signals are active AND the dept-freeze Phase 0
+  // wasn't already inserted (one Phase 0 action at a time to avoid overwhelm).
+  // riskReductionPct = 0 for the same reason: this is an urgency recalibration,
+  // not a skill or network action.
   if (
     (collapseStageForDept ?? 0) >= 3 &&
     !actions.some(a => a.id?.startsWith('dept-freeze-phase0'))
   ) {
-    actions.push({
-      id: `stage3-emergency-phase0-${roleKey}`,
-      title: '[Phase 0] Stage 3 Collapse Signal — Emergency Response Required Now',
-      description: `Stage 3 collapse signals are active at ${companyName}: the combination of leadership instability, sustained negative coverage, and layoff history has crossed the threshold that historically precedes formal announcements by 4–8 weeks. This is not a "watch and wait" situation — it is an emergency window.\n\nPhase 1 actions are locked until you complete this step: treat your job search as a full-time parallel project this week. Schedule 3 targeted applications by end of week. Do not let the apparent stability of your current role delay this.`,
-      priority: "Critical",
-      layerFocus: "L2 · Layoff & Instability History",
-      riskReductionPct: 30,
-      deadline: "This week — 4–8 week pre-announcement window",
-      sequencePhase: 'phase0' as const,
+    actions.unshift({
+      id:          `stage3-emergency-phase0-${roleKey}`,
+      title:       `[Phase 0] Stage 3 collapse signals active at ${companyName} — emergency timeline`,
+      description: [
+        `Stage 3 collapse signals are active at ${companyName}.`,
+        `The combination of leadership instability, sustained negative coverage, and layoff history has crossed the threshold that historically precedes formal announcements by 4–8 weeks.`,
+        `Your effective timeline is now, not the horizon implied by the overall score.`,
+        `Begin transition 6–8 weeks earlier than the overall risk score suggests.`,
+        ``,
+        `This is not a "watch and wait" situation. Phase 1 actions are locked until you complete this step: treat your job search as a full-time parallel project this week. Schedule 3 targeted applications by end of week. Do not let the apparent stability of your current role delay this action.`,
+      ].join('\n'),
+      priority:         'Critical',
+      layerFocus:       'L2 · Layoff & Instability History',
+      riskReductionPct: 0,
+      deadline:         'Now — 4–8 week pre-announcement window',
+      sequencePhase:    'phase0' as const,
     });
   }
 
