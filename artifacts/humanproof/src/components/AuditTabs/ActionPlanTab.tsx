@@ -17,7 +17,7 @@ import { CareerTwinCard } from "@/components/CareerTwinCard";
 import { ActionDependencyGraph, assignPhase } from "../../components/ActionDependencyGraph";
 import { getCareerIntelligence } from "@/data/intelligence";
 import { getCitiesForRole, formatSalaryPremium, getCityCompanyIntersection, deriveTargetRolePrefix, joinWithAnd } from "@/data/cityOpportunities";
-import { getActionLearningTime, getSkillLearningWeeks } from "@/data/skillLearningHours";
+import { getActionLearningTime, getSkillLearningWeeks, getSkillLearningWeeksForRole } from "@/data/skillLearningHours";
 import { TimeAvailableTrack, TRACKS } from "../../components/TimeAvailableTrack";
 import type { TrackType } from "../../components/TimeAvailableTrack";
 import { FinancialContextInput } from "../../components/FinancialContextInput";
@@ -66,7 +66,7 @@ import {
 } from "@/services/careerPathMarket";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { useHumanProof } from "@/context/HumanProofContext";
-import { rankAndUnwrap } from "@/services/actionRankingService";
+import { rankAndUnwrap, sortByROIWithinPhases } from "@/services/actionRankingService";
 import type { TabProps } from "./common/types";
 import type { ActionPlanItem } from "@/types/hybridResult";
 // v12.0 panels
@@ -618,10 +618,12 @@ export function buildDynamicActions(
   }
 
   // Attach multi-track weeks-to-proficiency to each action item once.
-  // The data is stored on the item object; ActionItem highlights the active
-  // track at render time — changing selectedTrack re-renders without recomputing.
+  // Uses role-aware hours so Python = 40h for SW engineers vs 90h for finance
+  // analysts — the same skill has a different learning curve depending on the
+  // user's background. The data is stored on the item object; ActionItem
+  // highlights the active track at render time without recomputing.
   const annotatedActions = actions.map(item => {
-    const learningWeeks = getSkillLearningWeeks(item.title);
+    const learningWeeks = getSkillLearningWeeksForRole(item.title, roleKey) ?? getSkillLearningWeeks(item.title);
     return learningWeeks ? { ...item, learningWeeks } : item;
   });
 
@@ -808,6 +810,8 @@ interface ActionItemProps {
   index: number;
   isLocked?: boolean;
   selectedTrack: TrackType;
+  /** True when this action has the highest ROI (riskReductionPct ÷ hours) in its phase */
+  isTopRoiInPhase?: boolean;
 }
 
 const ACTION_TRACK_CFG = [
@@ -824,7 +828,7 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: strin
   Low:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.04)',border: 'rgba(148,163,184,0.14)',label: 'LOW' },
 };
 
-const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, index, isLocked = false, selectedTrack }) => {
+const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, index, isLocked = false, selectedTrack, isTopRoiInPhase = false }) => {
   const cfg = PRIORITY_CONFIG[item.priority] ?? PRIORITY_CONFIG.Medium;
 
   return (
@@ -893,6 +897,21 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                   −{item.riskReductionPct}% RISK
                 </span>
               )}
+              {isTopRoiInPhase && !isCompleted && (
+                <span
+                  title={`Highest ROI in this phase: ${item.riskReductionPct}% risk reduction ÷ estimated hours`}
+                  style={{
+                    fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 900,
+                    padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.06em',
+                    background: 'rgba(245,158,11,0.14)', color: '#f59e0b',
+                    border: '1px solid rgba(245,158,11,0.32)',
+                    display: 'flex', alignItems: 'center', gap: '3px',
+                  }}
+                >
+                  <Zap style={{ width: '9px', height: '9px', display: 'inline', flexShrink: 0 }} />
+                  Highest impact per hour
+                </span>
+              )}
             </div>
           </div>
 
@@ -905,7 +924,10 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
             {item.description}
           </p>
 
-          {/* Learning weeks ROI row */}
+          {/* Learning weeks ROI row — all three tracks simultaneously.
+              The selected track is amber; others are dimmed.
+              Computed once from skillLearningHours (role-aware); updates live
+              on track change via React re-render — no API call. */}
           {item.learningWeeks && (
             <div className="flex items-center gap-2 flex-wrap mb-2.5" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem' }}>
               <Zap className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--amber)', opacity: 0.6 }} />
@@ -921,7 +943,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                       opacity: sel ? 1 : 0.45,
                       letterSpacing: '0.06em',
                     }}>
-                      {hours}h/wk: {weeks}w
+                      {hours}h/wk: {weeks} {weeks === 1 ? 'week' : 'weeks'}
                     </span>
                   </React.Fragment>
                 );
@@ -951,8 +973,16 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                 letterSpacing: '0.06em',
               }}>
                 <Clock className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
-                {item.deadline}
-                {item.originalDeadline && (
+                {/* When learningWeeks is present, the deadline annotation reflects
+                    the selected track — updates live on track change, pure JS. */}
+                {item.learningWeeks
+                  ? (() => {
+                      const trackMap = { minimal: 'w2', moderate: 'w8', intensive: 'w20' } as const;
+                      const wks = item.learningWeeks[trackMap[selectedTrack]];
+                      return `${wks} ${wks === 1 ? 'week' : 'weeks'} at current track`;
+                    })()
+                  : item.deadline}
+                {item.originalDeadline && !item.learningWeeks && (
                   <span style={{ opacity: 0.5, fontSize: '0.52rem' }}>
                     (from {item.originalDeadline})
                   </span>
@@ -1260,19 +1290,19 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   }, [filteredItems, trackConfig.maxActions, performanceOverride]);
 
   const sortedItems = useMemo(() => {
-    // v15.0: Within the pending group, rank by impact ÷ effort × profile
-    // multipliers (salary band, visa, tenure). Completed items remain pinned
-    // to the bottom so users see actionable work first.
-    const pending = trackLimitedItems.filter((it) => !completedItems[it.id]);
+    // v40.0: Sort within each dependency phase by ROI = riskReductionPct ÷ estimated_hours.
+    // This preserves phase ordering (Phase 1 before Phase 2 before Phase 3) while
+    // ensuring the highest-value action per hour floats to the top of its phase.
+    // The top-ROI item in each phase receives _topRoiInPhase=true for the badge.
+    //
+    // Note: selectedTrack is included in the dependency array so the sort
+    // re-runs when the track changes (role-aware hours may differ per track).
+    // No API call needed — all data is in client memory.
+    const pending   = trackLimitedItems.filter((it) => !completedItems[it.id]);
     const completed = trackLimitedItems.filter((it) => completedItems[it.id]);
-    const rankingContext = {
-      hasDependents: userProfile?.hasDependents,
-      runwaySituation: (result as any).userFinancialRunway?.runwaySituation ?? null,
-      careerConfidenceScore: (result as any).careerConfidence?.overallScore ?? null,
-    };
-    const rankedPending = rankAndUnwrap(pending, userProfile, rankingContext) as ActionPlanItem[];
-    return [...rankedPending, ...completed];
-  }, [trackLimitedItems, completedItems, userProfile]);
+    const roiSorted = sortByROIWithinPhases(pending as ActionPlanItem[], assignPhase);
+    return [...roiSorted, ...completed];
+  }, [trackLimitedItems, completedItems, selectedTrack]);
 
   const completedCount = useMemo(
     () => sortedItems.filter(item => completedItems[item.id]).length,
@@ -1620,6 +1650,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                             index={i}
                             isLocked={itemIsLocked}
                             selectedTrack={selectedTrack}
+                            isTopRoiInPhase={!!(item as any)._topRoiInPhase}
                           />
                         );
                       })}

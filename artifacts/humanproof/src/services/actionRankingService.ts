@@ -148,6 +148,70 @@ export function rankAndUnwrap(
   return rankActions(actions, profile, context).map((r) => r.action);
 }
 
+/**
+ * ROI for a single action: riskReductionPct ÷ estimated_hours.
+ * Higher is better — a 15% risk reduction that takes 8h beats a 10% reduction
+ * that takes 40h. Uses the w8 track as the canonical effort estimate (median
+ * weekly commitment); w8 × 8 gives total hours.
+ */
+export function computeActionROI(action: Partial<ActionPlanItem>): number {
+  const impact = action.riskReductionPct ?? 0;
+  const effort = effortHours(action);
+  return impact > 0 && effort > 0 ? impact / effort : 0;
+}
+
+/**
+ * Sort actions by ROI within each dependency phase, tagging the top-ROI action
+ * in each phase with `_topRoiInPhase = true`.
+ *
+ * Phase assignment is injected via `phaseAssigner` so this service does not
+ * import from component files (ActionDependencyGraph.tsx → assignPhase).
+ *
+ * Output order:
+ *   Phase 1 items (sorted by ROI desc), Phase 2 items (ROI desc), Phase 3 items (ROI desc)
+ *   — completed items are handled by the caller (they stay pinned to the bottom).
+ *
+ * Why per-phase rather than global?
+ *   A Phase 3 "nice to have" action with very high ROI should not jump ahead
+ *   of Phase 1 "must do first" actions that have unlocked prerequisites.
+ *   ROI only drives ordering WITHIN the phase the action belongs to.
+ */
+export function sortByROIWithinPhases(
+  pending: ActionPlanItem[],
+  phaseAssigner: (item: ActionPlanItem) => 1 | 2 | 3,
+): Array<ActionPlanItem & { _topRoiInPhase?: boolean }> {
+  const byPhase = new Map<1 | 2 | 3, ActionPlanItem[]>([
+    [1, []], [2, []], [3, []],
+  ]);
+
+  for (const item of pending) {
+    byPhase.get(phaseAssigner(item))!.push(item);
+  }
+
+  const result: Array<ActionPlanItem & { _topRoiInPhase?: boolean }> = [];
+
+  for (const phase of [1, 2, 3] as const) {
+    const items = byPhase.get(phase)!;
+    if (items.length === 0) continue;
+
+    const ranked = items
+      .map(item => ({ item, roi: computeActionROI(item) }))
+      .sort((a, b) => b.roi - a.roi);
+
+    ranked.forEach(({ item, roi }, idx) => {
+      result.push({
+        ...item,
+        // Only badge when there are ≥2 actions in the phase and the top item
+        // has meaningful ROI (> 0). A single-item phase gets no badge —
+        // "highest of one" is not a useful signal.
+        _topRoiInPhase: idx === 0 && roi > 0 && ranked.length >= 2,
+      });
+    });
+  }
+
+  return result;
+}
+
 /** GAP F: convert raw effort-hours estimate to a human-readable badge */
 export function formatEffortBadge(hours: number): string {
   if (hours <= 0.5) return '15 min';

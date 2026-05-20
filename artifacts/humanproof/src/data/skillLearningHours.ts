@@ -254,3 +254,81 @@ export function getSkillLearningWeeks(
   }
   return null;
 }
+
+// ── Role-aware hour overrides ─────────────────────────────────────────────────
+// Different role backgrounds reach interview-ready at different speeds for the
+// same skill. A software engineer learning Python already knows programming
+// patterns (loops, functions, types) — they need 40h to reach interview-ready.
+// A finance analyst learning Python starts with no programming background —
+// they need 90h (the separate "Python for Finance" entry covers this path,
+// but the override ensures action-title matching uses the right hours).
+//
+// Key format: roleCategory → skillKeyword → interview_ready_hours override.
+// roleCategory is derived from result.workTypeKey (first segment before '_').
+const ROLE_SKILL_HOUR_OVERRIDES: Record<string, Record<string, number>> = {
+  // Software / engineering roles — faster on programming; slower on domain skills
+  sw:     { 'Python': 40, 'SQL': 30, 'Data Analysis (Pandas)': 40 },
+  eng:    { 'Python': 40, 'SQL': 30, 'Data Analysis (Pandas)': 40 },
+  dev:    { 'Python': 40, 'SQL': 30, 'Data Analysis (Pandas)': 40 },
+  ml:     { 'Python': 35, 'SQL': 25, 'RAG Systems': 45, 'LLM Evaluation / Testing': 30 },
+  data:   { 'Python': 45, 'SQL': 25, 'Data Analysis (Pandas)': 35 },
+  cloud:  { 'Python': 45, 'AWS Cloud Practitioner': 45 },
+  cyber:  { 'Python': 45 },
+  qa:     { 'Python': 50, 'Playwright AI': 20 },
+  // Finance / business roles — slower on programming; faster on domain content
+  fin:    { 'Python': 90, 'SQL': 55, 'Data Analysis (Pandas)': 70, 'People Analytics': 40 },
+  bank:   { 'Python': 90, 'SQL': 55 },
+  quant:  { 'Python': 50, 'SQL': 35 },
+  fp:     { 'Python': 90, 'SQL': 55, 'Google Data Analytics Certificate': 70 },
+  account:{ 'Python': 95, 'SQL': 60 },
+  // HR / people roles
+  hr:     { 'Python': 100, 'People Analytics': 45, 'SQL': 60 },
+  // Healthcare roles
+  health: { 'Python': 100, 'AI in Healthcare': 55, 'Clinical AI Validation': 80 },
+  // Legal roles
+  leg:    { 'Python': 110, 'Harvey AI': 15, 'Contract AI Auditing': 55 },
+};
+
+/**
+ * Extract the role category prefix from a workTypeKey.
+ * "sw_backend" → "sw", "fin_fp_analyst" → "fin", "ml_engineer" → "ml"
+ */
+export function roleCategory(workTypeKey: string | null | undefined): string {
+  if (!workTypeKey) return '';
+  return workTypeKey.toLowerCase().split('_')[0];
+}
+
+/**
+ * Role-aware variant of getSkillLearningWeeks.
+ * Uses ROLE_SKILL_HOUR_OVERRIDES when available for the given role category,
+ * falling back to the universal SKILL_LEARNING_HOURS.interview_ready value.
+ *
+ * Example: actionTitle="Master Python for automation", workTypeKey="fin_fp_analyst"
+ *   → roleCategory="fin" → override: Python=90h
+ *   → { w2: 45, w8: 12, w20: 5 }
+ *
+ * vs. same action for workTypeKey="sw_backend"
+ *   → roleCategory="sw" → override: Python=40h
+ *   → { w2: 20, w8: 5, w20: 2 }
+ */
+export function getSkillLearningWeeksForRole(
+  actionTitle: string,
+  workTypeKey: string | null | undefined,
+): { w2: number; w8: number; w20: number } | null {
+  const cat = roleCategory(workTypeKey);
+  const roleOverrides = ROLE_SKILL_HOUR_OVERRIDES[cat] ?? {};
+
+  for (const key of Object.keys(SKILL_LEARNING_HOURS)) {
+    if (key === '_default') continue;
+    if (actionTitle.toLowerCase().includes(key.toLowerCase())) {
+      // Use role-specific override when available; fall back to universal value
+      const h = roleOverrides[key] ?? SKILL_LEARNING_HOURS[key].interview_ready;
+      return {
+        w2:  Math.ceil(h / 2),
+        w8:  Math.ceil(h / 8),
+        w20: Math.ceil(h / 20),
+      };
+    }
+  }
+  return null;
+}
