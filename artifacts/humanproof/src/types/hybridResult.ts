@@ -444,6 +444,8 @@ export interface HybridResult {
   calibrationCoverage?: number;
   /** LOW-1: all kill-switch names that fired this run (e.g. ['financial_distress_triad']). */
   activatedKillSwitches?: string[];
+  /** v40.0: floor value for each fired kill-switch, e.g. { confirmed_recent_layoff_news: 72 }. */
+  killSwitchFloors?: Record<string, number>;
   /**
    * v40.0: Per-signal freshness decay weights applied this run. Each value is in
    * [minWeight, 1.0]. Surfaced in TransparencyTab so users can see how data age

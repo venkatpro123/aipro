@@ -407,6 +407,7 @@ function mapToHybridResult(
     _engineResult: engineResult,
     calibrationCoverage: engineResult.calibrationCoverage,
     activatedKillSwitches: engineResult.activatedKillSwitches,
+    killSwitchFloors: engineResult.killSwitchFloors,
     signalDecayWeights: engineResult.signalDecayWeights,
     // v40.0: surface uncalibrated constant count + DB availability from in-memory snapshot.
     // Synchronous — no DB call on the hot audit path.

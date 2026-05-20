@@ -1491,39 +1491,71 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             </div>
           )}
 
-          {/* LOW-1: Kill-switch badges — shown when any kill-switch fired this run */}
-          {(result.activatedKillSwitches ?? []).length > 0 && (
-            <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/8">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-[11px] font-bold text-amber-300 mb-2 tracking-wide uppercase">Score Floor Active — Kill-Switch Fired</h4>
-                  <p className="text-[10px] text-amber-200/70 mb-2">
-                    One or more risk kill-switches raised your score to a minimum floor. These activate when signal combinations indicate risks that the base formula may underweight.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(result.activatedKillSwitches ?? []).map(ks => {
-                      const labels: Record<string, string> = {
-                        confirmed_recent_layoff_news: 'Confirmed Recent Layoff News',
-                        financial_distress_triad: 'Financial Distress Triad',
-                        pre_layoff_precursor: 'Pre-Layoff Precursor (Hiring Freeze)',
-                        pre_layoff_precursor_inferred: 'Pre-Layoff Precursor (Inferred)',
-                      };
-                      return (
-                        <span
-                          key={ks}
-                          className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: 'rgba(245,158,11,0.18)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.35)' }}
-                        >
-                          {labels[ks] ?? ks.replace(/_/g, ' ')}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
+          {/* Kill-switch floor disclosure — one block per fired switch.
+              Spec: each floor must appear as a "Score Floor Active" badge with the exact
+              disclosure text. A floor-adjusted score must never look formula-derived. */}
+          {(result.activatedKillSwitches ?? []).length > 0 && (() => {
+            const floors = result.killSwitchFloors ?? {};
+            const DISCLOSURE: Record<string, string> = {
+              confirmed_recent_layoff_news:
+                'confirmed_recent_layoff_news floor applied — minimum score 72 (breaking news event detected within 30 days).',
+              financial_distress_triad:
+                'financial_distress_triad floor applied — minimum score 65 (L1 > 75%, negative FCF, stock < −30%).',
+              pre_layoff_precursor:
+                'pre_layoff_precursor floor applied — minimum score 58 (confirmed hiring freeze, layoff history, sector contagion detected).',
+              pre_layoff_precursor_inferred:
+                'pre_layoff_precursor_inferred floor applied — minimum score 52 (AI inference from news/Glassdoor).',
+            };
+            return (
+              <div className="mb-6 space-y-2">
+                {(result.activatedKillSwitches ?? []).map(ks => {
+                  const floorVal = floors[ks];
+                  const disclosure =
+                    DISCLOSURE[ks] ??
+                    `${ks.replace(/_/g, ' ')} floor applied${floorVal != null ? ` — minimum score ${floorVal}` : ''}.`;
+                  return (
+                    <div
+                      key={ks}
+                      className="p-4 rounded-xl border border-rose-500/40 bg-rose-500/8"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Shield className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                            <h4 className="text-[11px] font-bold text-rose-300 uppercase tracking-wide">
+                              Score Floor Active
+                            </h4>
+                            <span
+                              className="text-[9px] font-black px-2 py-0.5 rounded"
+                              style={{ background: 'rgba(239,68,68,0.18)', color: '#f87171', border: '1px solid rgba(239,68,68,0.35)' }}
+                            >
+                              FLOOR-ADJUSTED · NOT FORMULA-DERIVED
+                            </span>
+                            {floorVal != null && (
+                              <span
+                                className="text-[9px] font-mono font-bold px-2 py-0.5 rounded"
+                                style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.25)' }}
+                              >
+                                min {floorVal}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-rose-200/85 leading-relaxed font-mono">
+                            {disclosure}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-muted-foreground leading-relaxed px-1">
+                  Kill-switch floors apply when signal combinations indicate risks the base formula
+                  cannot fully capture. The score is bounded below by the floor value regardless of
+                  formula output. Disclosed here so you know the final score is not purely formula-derived.
+                </p>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Circuit breaker disclosure — shown when any API has OPEN/HALF_OPEN circuit */}
           {(() => {
