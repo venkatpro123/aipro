@@ -1408,6 +1408,22 @@ export interface ScoreResult {
   calibrationCoverage?: number;
   /** LOW-1: all kill-switch names that fired this run. */
   activatedKillSwitches?: string[];
+  /** Banking sector regional stability adjustment — present when industry is
+   *  banking-related and region is in BANKING_REGULATORY_STABILITY (CA/US/UK/DE/
+   *  FR/CH/SG/JP/AU/HK/IN/AE/BR/MX). Surfaces the country multiplier (e.g. Canada
+   *  0.68×) and full rationale for TransparencyTab disclosure. */
+  bankingStabilityAdjustment?: {
+    multiplier: number;
+    countryCode: string;
+    countryName: string;
+    primaryRegulator: string;
+    rationale: string;
+    historicalContext: string;
+    baselineBefore: number;
+    baselineAfter: number;
+    disclosure: string;
+    labeledAs: 'ESTIMATED';
+  };
   /** Hyperscaler D8 proxy — true when the +0.12 composite adjustment was applied.
    *  Only fires when D8 flag is inactive, company is a named hyperscaler,
    *  aiInvestmentSignal = 'very-high', and L1 < 0.45 (profitable).
@@ -1994,6 +2010,11 @@ export const calculateLayoffHistoryScore = (
 export const calculateMarketConditionsScore = (
   industry: string,
   industryData?: IndustryRisk,
+  /** Optional ISO country code or short name (e.g. 'CA', 'US', 'UK', 'SG').
+   *  When provided AND industry is banking-related, applies a regulatory stability
+   *  multiplier from BANKING_REGULATORY_STABILITY. A Canadian Big Five SWE receives
+   *  0.68× the US-baseline L4; a Japanese megabank SWE receives 0.65×. */
+  region?: string | null,
 ): number => {
   if (!industryData) return 0.5;
 
@@ -2011,10 +2032,35 @@ export const calculateMarketConditionsScore = (
   // Now uses aiAdoptionRate as a signal (previously dead data)
   const aiDisruptionFactor = industryData.aiAdoptionRate * 0.15; // 0-15% contribution
 
-  const base =
+  let base =
     industryData.baselineRisk +
     (growthModifier[industryData.growthOutlook] || 0) +
     aiDisruptionFactor;
+
+  // Banking-sector regional stability adjustment.
+  // Canadian Big Five (OSFI strict capital, no systemic failure since 1923) → 0.68×.
+  // US banks (at-will, aggressive cuts) → 1.00× reference.
+  // Japan megabanks (lifetime employment culture + FSA) → 0.65× (lowest).
+  // Brazil (macro volatility) → 1.10×.
+  // Lazy require to avoid static circular dep.
+  if (region) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const { computeBankingStabilityAdjustment } = require('../data/bankingRegulatoryStability') as {
+        computeBankingStabilityAdjustment: (
+          industry: string | null | undefined,
+          region: string | null | undefined,
+          baselineL4: number,
+        ) => { baselineAfter: number; multiplier: number } | null;
+      };
+      const adjustment = computeBankingStabilityAdjustment(industry, region, base);
+      if (adjustment) {
+        base = adjustment.baselineAfter;
+      }
+    } catch {
+      // Module unavailable — fall through to unadjusted baseline
+    }
+  }
 
   return clamp(base);
 };
@@ -4088,7 +4134,54 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     : 0;
   const L3 = Math.min(0.98, Math.max(0.02, L3base + postingDelta));
 
-  const L4 = calculateMarketConditionsScore(companyData.industry, industryData);
+  const L4 = calculateMarketConditionsScore(companyData.industry, industryData, companyData.region);
+
+  // Banking stability adjustment is computed inside L4 above; we re-derive the
+  // adjustment metadata here so it can be surfaced on ScoreResult for the UI.
+  // Lazy require to avoid static circular dep (same pattern as L4 internal call).
+  let _bankingStabilityAdj: ScoreResult['bankingStabilityAdjustment'] = undefined;
+  if (companyData.region && industryData) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const { computeBankingStabilityAdjustment } = require('../data/bankingRegulatoryStability') as {
+        computeBankingStabilityAdjustment: (
+          industry: string | null | undefined,
+          region: string | null | undefined,
+          baselineL4: number,
+        ) => {
+          multiplier: number;
+          baselineBefore: number;
+          baselineAfter: number;
+          profile: { countryCode: string; countryName: string; primaryRegulator: string; rationale: string; historicalContext: string };
+          disclosure: string;
+        } | null;
+      };
+      // Recompute against the RAW base (industryData.baselineRisk + growth + AI) so
+      // the disclosed before/after pair reflects the actual adjustment delta.
+      const rawBaseline = industryData.baselineRisk
+        + ((['growing', 'stable', 'volatile', 'declining'].includes(industryData.growthOutlook)
+            ? { growing: -0.12, stable: 0.0, volatile: 0.1, declining: 0.18 }[industryData.growthOutlook] ?? 0
+            : 0))
+        + industryData.aiAdoptionRate * 0.15;
+      const adj = computeBankingStabilityAdjustment(companyData.industry, companyData.region, rawBaseline);
+      if (adj) {
+        _bankingStabilityAdj = {
+          multiplier:         adj.multiplier,
+          countryCode:        adj.profile.countryCode,
+          countryName:        adj.profile.countryName,
+          primaryRegulator:   adj.profile.primaryRegulator,
+          rationale:          adj.profile.rationale,
+          historicalContext:  adj.profile.historicalContext,
+          baselineBefore:     adj.baselineBefore,
+          baselineAfter:      adj.baselineAfter,
+          disclosure:         adj.disclosure,
+          labeledAs:          'ESTIMATED',
+        };
+      }
+    } catch {
+      // Module unavailable — leave undefined
+    }
+  }
 
   // Credibility-discount self-reported performance before L5 calculation.
   // A user claiming top performance with no promotion in 5 years, no key relationships,
@@ -4612,6 +4705,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     performanceCredibilityThresholdLabel: performanceCredibility.regionThresholdLabel,
     hyperscalerD8ProxyApplied:           hyperscalerProxyApplied || undefined,
     hyperscalerD8ProxyAmount:            hyperscalerProxyApplied ? HYPERSCALER_D8_PROXY : undefined,
+    bankingStabilityAdjustment:          _bankingStabilityAdj,
     recommendations: generateRecommendations(
       breakdown,
       companyData,
