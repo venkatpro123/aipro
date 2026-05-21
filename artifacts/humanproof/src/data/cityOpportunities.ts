@@ -298,33 +298,72 @@ export function joinWithAnd(items: string[]): string {
  * Cross-references the city's top hiring companies with the career path market's
  * top hiring companies to find companies active at BOTH the given city AND the target role.
  * Returns the intersection, ranked by employer_count in the city.
+ *
+ * GLOBAL EXTENSION (post-v6): When `cityKey` does not resolve to an India city
+ * (Bangalore, Mumbai, Hyderabad, etc.), this function delegates to the global
+ * city registry (globalCityEmployers.ts) which covers Singapore, London, Berlin,
+ * Amsterdam, Dublin, SF, NYC, Seattle, Toronto, Sydney, Tokyo, Tel Aviv, HK, Dubai.
+ *
+ * For non-India cities the function intersects with `globalTopCompanies` (from
+ * careerPathMarket.topHiringCompaniesGlobal) instead of the India pool, then falls
+ * back to the city's named employer roster when no overlap exists.
+ *
+ * USE CASE (the actionable difference):
+ *   Singapore SWE pivoting to ML Engineering — before this fix:
+ *     national_fallback returned ['Flipkart (LLM infra)', 'Swiggy', 'Meesho']
+ *     → useless: those are Indian companies the SG user can't apply to locally.
+ *   After this fix:
+ *     city_fallback returns ['Grab', 'Sea Limited', 'Shopee']
+ *     → actionable: named Singapore ML employers hiring tonight.
  */
 export function getCityCompanyIntersection(
   cityKey: string,
   targetRolePrefix: string,
-  /** Companies from careerPathMarket.topHiringCompaniesIndia */
+  /** Companies from careerPathMarket.topHiringCompaniesIndia (used for India cities). */
   nationalTopCompanies: string[],
-): { companies: string[]; source: 'intersection' | 'city_fallback' | 'national_fallback' } {
-  const cityProfile = CITY_OPPORTUNITIES[cityKey];
-  if (!cityProfile) {
+  /** Optional: companies from careerPathMarket.topHiringCompaniesGlobal.
+   *  When provided, non-India cities use this pool for intersection.
+   *  Falls back to nationalTopCompanies when omitted (legacy behaviour). */
+  globalTopCompanies?: readonly string[],
+): { companies: string[]; source: 'intersection' | 'city_fallback' | 'national_fallback' | 'global_fallback' | 'unknown_city' } {
+  // 1) India city path (existing behaviour, untouched)
+  const indiaProfile = CITY_OPPORTUNITIES[cityKey];
+  if (indiaProfile) {
+    const cityCompanies = indiaProfile.roles[targetRolePrefix]?.top_5_hiring_companies ?? [];
+
+    const intersection = nationalTopCompanies.filter(natCo =>
+      cityCompanies.some(cityCo =>
+        cityCo.toLowerCase().includes(natCo.split(' ')[0].toLowerCase()) ||
+        natCo.toLowerCase().includes(cityCo.split(' ')[0].toLowerCase())
+      )
+    );
+
+    if (intersection.length >= 2) {
+      return { companies: intersection.slice(0, 3), source: 'intersection' };
+    }
+
+    const combined = [...new Set([...cityCompanies, ...nationalTopCompanies])].slice(0, 3);
+    return { companies: combined, source: cityCompanies.length > 0 ? 'city_fallback' : 'national_fallback' };
+  }
+
+  // 2) Global city path — delegate to globalCityEmployers.ts when available.
+  // Lazy require to avoid a static circular dep if other modules import from
+  // cityOpportunities.ts at module-init time.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const { getGlobalCityCompanyIntersection } = require('./globalCityEmployers') as {
+      getGlobalCityCompanyIntersection: (
+        city: string,
+        roleCategoryKey: string,
+        globalTopCompanies: readonly string[],
+      ) => { companies: string[]; source: 'intersection' | 'city_fallback' | 'global_fallback' | 'unknown_city' };
+    };
+    // Use the global pool when provided; otherwise fall back to the India pool
+    // (preserves legacy behaviour for callers that haven't been updated).
+    const poolForGlobalCities = globalTopCompanies ?? nationalTopCompanies;
+    return getGlobalCityCompanyIntersection(cityKey, targetRolePrefix, poolForGlobalCities);
+  } catch {
+    // Module unavailable (extremely unlikely) — graceful fallback to national pool
     return { companies: nationalTopCompanies.slice(0, 3), source: 'national_fallback' };
   }
-
-  const cityCompanies = cityProfile.roles[targetRolePrefix]?.top_5_hiring_companies ?? [];
-
-  // Find companies present in BOTH lists (case-insensitive partial match)
-  const intersection = nationalTopCompanies.filter(natCo =>
-    cityCompanies.some(cityCo =>
-      cityCo.toLowerCase().includes(natCo.split(' ')[0].toLowerCase()) ||
-      natCo.toLowerCase().includes(cityCo.split(' ')[0].toLowerCase())
-    )
-  );
-
-  if (intersection.length >= 2) {
-    return { companies: intersection.slice(0, 3), source: 'intersection' };
-  }
-
-  // Not enough intersection — return city companies with national companies as supplement
-  const combined = [...new Set([...cityCompanies, ...nationalTopCompanies])].slice(0, 3);
-  return { companies: combined, source: cityCompanies.length > 0 ? 'city_fallback' : 'national_fallback' };
 }

@@ -527,30 +527,54 @@ export function buildDynamicActions(
         // An SW engineer exploring "Data Engineer" must see Hyderabad data engineering
         // employers — not Hyderabad SW employers intersected with national data companies.
         const targetPrefix = deriveTargetRolePrefix(topPath.role);
-        const intersection = getCityCompanyIntersection(cityKey, targetPrefix, market.topHiringCompaniesIndia);
+        // Pass BOTH India and Global hiring pools — getCityCompanyIntersection now
+        // routes to globalCityEmployers.ts for non-India cities (Singapore, London,
+        // Berlin, Amsterdam, Dublin, SF, NYC, etc.) and intersects with the global
+        // pool instead of the India pool. Without this, a Singapore SWE pivoting to
+        // ML Engineering received Indian companies as the fallback — non-actionable.
+        const intersection = getCityCompanyIntersection(
+          cityKey,
+          targetPrefix,
+          market.topHiringCompaniesIndia,
+          market.topHiringCompaniesGlobal,
+        );
         const cityLabel = cityKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
         if (intersection.source === 'intersection' && intersection.companies.length > 0) {
-          // Spec-exact format: named employers from both city AND national pool.
+          // Named employers from both city AND national/global pool.
           // "In Hyderabad, Data Engineering is actively hiring at Walmart Global Tech,
           //  MakeMyTrip, and Paytm — appearing in both the Hyderabad market and the
           //  national talent pool."
           cityIntersectionText =
             ` In ${cityLabel}, ${topPath.role} is actively hiring at ` +
             `${joinWithAnd(intersection.companies)} — ` +
-            `appearing in both the ${cityLabel} market and the national talent pool.`;
+            `appearing in both the ${cityLabel} market and the talent pool.`;
         } else if (intersection.source === 'city_fallback' && intersection.companies.length > 0) {
-          // City has data but no overlap with national list — name city employers directly.
-          // Never say "explore the [city] market" without naming employers.
+          // City has data but no overlap with national/global list — name city employers directly.
+          // The actionable signal: these are the companies hiring in this city RIGHT NOW.
+          // E.g., Singapore SWE → ML: "In Singapore, active employers for ML Engineer:
+          //   Grab, Sea Limited, and Shopee."
           cityIntersectionText =
             ` In ${cityLabel}, active employers for ${topPath.role}: ` +
             `${joinWithAnd(intersection.companies)}.`;
+        } else if (intersection.source === 'global_fallback' && intersection.companies.length > 0) {
+          // City not in the global registry, but we have global hirers — name them
+          // and prompt for live verification.
+          cityIntersectionText =
+            ` Global employers hiring for ${topPath.role}: ` +
+            `${joinWithAnd(intersection.companies)}. ` +
+            `City-specific data not available for ${cityLabel} — verify current openings on LinkedIn / local job boards.`;
         } else if (intersection.source === 'national_fallback' && intersection.companies.length > 0) {
           // City not in CITY_OPPORTUNITIES — name national employers, say city data is absent.
           cityIntersectionText =
             ` National employers hiring for ${topPath.role}: ` +
             `${joinWithAnd(intersection.companies)}. ` +
             `City-specific data not available for ${cityLabel} — verify current openings on Naukri/LinkedIn.`;
+        } else if (intersection.source === 'unknown_city') {
+          // Neither India nor global registries know this city — explicit prompt.
+          cityIntersectionText =
+            ` City data unavailable for ${cityLabel} for ${topPath.role}. ` +
+            `Search LinkedIn / local job boards for current openings and add a recognised city in Financial Context.`;
         }
       } else if (market.topHiringCompaniesIndia.length > 0) {
         // No city — name national employers and prompt the user to add their city.
