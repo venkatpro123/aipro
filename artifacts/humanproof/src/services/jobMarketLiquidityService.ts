@@ -20,6 +20,7 @@
 
 import type { CompanyData } from '../data/companyDatabase';
 import { resolveMetro } from '../data/techClusterMetros';
+import { getSalaryPreservationProfile } from './marketPriorityEngine';
 
 // ─── Output Types ─────────────────────────────────────────────────────────────
 
@@ -159,6 +160,38 @@ const SENIORITY_PLACEMENT: Record<string, SeniorityPlacementProfile> = {
   '10-15': { velocityMultiplier: 0.82, salaryPreservation: 85 },
   '15+':   { velocityMultiplier: 0.70, salaryPreservation: 88 },   // slow but preserves comp
 };
+
+// ── Market-adjusted salary preservation ──────────────────────────────────────
+// The seniority-only table (55–88%) is calibrated on US market norms.
+// A senior SWE in India cannot preserve 85% of salary when changing roles —
+// the Indian tech market is more competitive and salaries are lower in USD terms.
+// Conversely, a Singapore EP holder at a major tech firm has strong leverage.
+//
+// Algorithm: map the seniority preservation score (55–88%) onto the market-
+// specific floor/ceiling range from SALARY_PRESERVATION_BY_MARKET.
+//
+// Example:
+//   India senior SWE (seniority=85, floor=45, ceiling=72):
+//     norm = (85-55)/(88-55) = 0.91 → result = 45 + 0.91×(72-45) = 70%
+//   US senior SWE (seniority=85, floor=72, ceiling=95):
+//     norm = 0.91 → result = 72 + 0.91×(95-72) = 93%
+function computeMarketAdjustedSalaryPreservation(
+  seniorityBasePreservation: number,   // from SENIORITY_PLACEMENT (55–88)
+  regionKey: string,
+): number {
+  const profile = getSalaryPreservationProfile(regionKey);
+  const SENIORITY_MIN = 55;  // minimum seniority preservation (0-2yr)
+  const SENIORITY_MAX = 88;  // maximum seniority preservation (15+yr)
+
+  // Normalize the seniority score to 0–1
+  const norm = Math.max(0, Math.min(1,
+    (seniorityBasePreservation - SENIORITY_MIN) / (SENIORITY_MAX - SENIORITY_MIN),
+  ));
+
+  // Map to market-specific floor/ceiling
+  const marketAdjusted = profile.preservationFloor + norm * (profile.preservationCeiling - profile.preservationFloor);
+  return Math.round(marketAdjusted);
+}
 
 // ─── Main computation ─────────────────────────────────────────────────────────
 
@@ -426,7 +459,7 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
     factors,
     keyBarriers,
     keyAccelerators,
-    salaryPreservation: seniorityProfile.salaryPreservation,
+    salaryPreservation: computeMarketAdjustedSalaryPreservation(seniorityProfile.salaryPreservation, regionKey),
     marketDemandTrend,
     confidenceNote,
     geoSupplySurge,
