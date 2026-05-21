@@ -691,45 +691,183 @@ const glassdoorUrl = (companyName: string): string => {
   return `https://www.glassdoor.com/Overview/Working-at-${slug}-EI_IE0.htm`;
 };
 
-// Wikipedia employee count extraction — parses infobox JSON via Wikipedia API
-async function fetchWikipediaHeadcount(companyName: string): Promise<number | null> {
-  try {
-    const slug = wikiSlug(companyName);
-    // Use Wikipedia REST API to get page content (no key required)
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`;
-    const res = await fetch(url, {
-      headers: { 'User-Agent': UA(), 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(6_000),
-    });
-    if (!res.ok) return null;
-    const summary = await res.json();
-    if (summary.type === 'disambiguation') return null;
+// ── Wikipedia headcount extraction — multi-language with Wikidata fallback ──
+//
+// Fetch order:
+//   1. English Wikipedia — direct slug (fast path for US/EU/India companies)
+//   2. English Wikipedia — OpenSearch correction (handles "Rappi" → "Rappi (company)")
+//   3. Language-specific Wikipedia editions — ES/PT/FR/AR with matching infobox fields
+//   4. Wikidata P1082 — language-agnostic structured fallback (Flutterwave, Careem, etc.)
+//
+// This covers LatAm (Rappi, Kavak, Loft), Middle East (Careem, Anghami, Souq),
+// and Africa (Flutterwave, Andela, Jumia) where en.wikipedia.org is either absent,
+// a stub without the infobox field, or the data lives on a non-English edition.
 
-    // Wikipedia REST summary doesn't include infobox data. Fetch wikitext for infobox parsing.
-    const wikitextUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(slug)}&prop=wikitext&format=json&origin=*`;
-    const wtRes = await fetch(wikitextUrl, {
+// Infobox employee-count field names by Wikipedia language edition.
+// English: num_employees  Spanish: num_empleados  Portuguese: funcionários / num_funcionários
+// French: effectifs  German: mitarbeiter  Arabic: عدد الموظفين (Unicode-safe via broad digits match)
+const WIKI_EMP_FIELDS: Array<{ regex: RegExp }> = [
+  { regex: /\|\s*num_employees\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s.]+)/i },
+  { regex: /\|\s*num_empleados\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s.]+)/i },
+  { regex: /\|\s*(?:num_funcionários|funcionários)\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s.]+)/i },
+  { regex: /\|\s*effectifs\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s.]+)/i },
+  { regex: /\|\s*mitarbeiter\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s.]+)/i },
+  // Broad fallback: any infobox field ending in _employees / _workforce / _staff
+  { regex: /\|\s*\w*(?:employees|workforce|staff|headcount)\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s.]+)/i },
+];
+
+function parseEmployeeCount(wikitext: string): number | null {
+  for (const { regex } of WIKI_EMP_FIELDS) {
+    const m = wikitext.match(regex);
+    if (!m) continue;
+    const raw = m[1].replace(/[,\s.]/g, '');
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n) && n >= 10 && n <= 5_000_000) return n;
+  }
+  return null;
+}
+
+async function fetchWikitextForPage(host: string, title: string): Promise<string | null> {
+  try {
+    const url = `https://${host}/w/api.php?action=parse&page=${encodeURIComponent(title)}&prop=wikitext&format=json&origin=*`;
+    const res = await fetch(url, {
       headers: { 'User-Agent': UA(), 'Accept': 'application/json' },
       signal: AbortSignal.timeout(7_000),
     });
-    if (!wtRes.ok) return null;
-    const wtData = await wtRes.json();
-    const wikitext: string = wtData?.parse?.wikitext?.['*'] ?? '';
+    if (!res.ok) return null;
+    const d = await res.json();
+    return d?.parse?.wikitext?.['*'] ?? null;
+  } catch { return null; }
+}
 
-    // Parse infobox "num_employees" — formats:
-    //   | num_employees = 614,795 (2023)
-    //   | num_employees = {{circa|600000}} (2024)
-    //   | num_employees = ~500,000
-    const empMatch = wikitext.match(/\|\s*num_employees\s*=\s*(?:\{\{[^}]*\}\}\s*)?(?:~|circa\s*)?([\d,\s]+)/i);
-    if (!empMatch) return null;
+// Wikipedia OpenSearch: find the canonical page title when direct slug fails.
+// Handles "Rappi" → "Rappi (empresa)" or "Rappi (company)" title mismatches.
+async function wikiOpenSearchTitle(host: string, query: string): Promise<string | null> {
+  try {
+    const url = `https://${host}/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=5&namespace=0&format=json`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA() },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) return null;
+    const [, titles] = await res.json();
+    // Prefer titles that include the company name and a company-context qualifier
+    const exact = (titles as string[]).find(t =>
+      t.toLowerCase().startsWith(query.toLowerCase()) ||
+      t.toLowerCase().includes(query.toLowerCase())
+    );
+    return exact ?? (titles as string[])[0] ?? null;
+  } catch { return null; }
+}
 
-    const raw = empMatch[1].replace(/[,\s]/g, '');
-    const n = parseInt(raw, 10);
-    // Sanity: 10 ≤ employees ≤ 5M (rules out abuse)
-    if (!isFinite(n) || n < 10 || n > 5_000_000) return null;
+// Wikidata P1082 (number of employees) — language-agnostic, structured.
+// Works for any company that has a Wikidata entry regardless of Wikipedia coverage.
+async function fetchWikidataEmployeeCount(companyName: string): Promise<number | null> {
+  try {
+    // Step 1: search for the entity
+    const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(companyName)}&language=en&type=item&format=json&limit=5`;
+    const searchRes = await fetch(searchUrl, {
+      headers: { 'User-Agent': UA() },
+      signal: AbortSignal.timeout(6_000),
+    });
+    if (!searchRes.ok) return null;
+    const searchData = await searchRes.json();
+    const entities: Array<{ id: string; label?: string; description?: string }> =
+      searchData?.search ?? [];
+    if (entities.length === 0) return null;
+
+    // Prefer entities whose description contains 'company' / 'corporation' / 'enterprise'
+    const companyEntity = entities.find(e =>
+      /\b(company|corporation|enterprise|startup|tech|conglomerate|group)\b/i.test(e.description ?? '')
+    ) ?? entities[0];
+
+    // Step 2: fetch P1082 (number of employees) from entity claims
+    const entityUrl = `https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${companyEntity.id}&property=P1082&format=json`;
+    const entityRes = await fetch(entityUrl, {
+      headers: { 'User-Agent': UA() },
+      signal: AbortSignal.timeout(6_000),
+    });
+    if (!entityRes.ok) return null;
+    const entityData = await entityRes.json();
+
+    const claims: any[] = entityData?.claims?.P1082 ?? [];
+    if (claims.length === 0) return null;
+
+    // Take the most recent value — claims may have multiple time-qualified entries.
+    // Sort by qualifiers P585 (point in time) desc if present; otherwise use first.
+    const sorted = [...claims].sort((a, b) => {
+      const tA = a.qualifiers?.P585?.[0]?.datavalue?.value?.time ?? '';
+      const tB = b.qualifiers?.P585?.[0]?.datavalue?.value?.time ?? '';
+      return tB.localeCompare(tA);
+    });
+    const amount = sorted[0]?.mainsnak?.datavalue?.value?.amount;
+    if (!amount) return null;
+
+    const n = Math.abs(parseInt(String(amount).replace(/\+/, ''), 10));
+    if (!Number.isFinite(n) || n < 10 || n > 5_000_000) return null;
     return n;
-  } catch {
-    return null;
+  } catch { return null; }
+}
+
+// Wikipedia employee count extraction — parses infobox JSON via Wikipedia API
+async function fetchWikipediaHeadcount(companyName: string): Promise<number | null> {
+  const slug = wikiSlug(companyName);
+
+  // ── Step 1: English Wikipedia direct slug ───────────────────────────────────
+  try {
+    const summaryRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`,
+      { headers: { 'User-Agent': UA(), 'Accept': 'application/json' }, signal: AbortSignal.timeout(6_000) },
+    );
+    if (summaryRes.ok) {
+      const summary = await summaryRes.json();
+      if (summary.type !== 'disambiguation') {
+        const wt = await fetchWikitextForPage('en.wikipedia.org', slug);
+        if (wt) {
+          const n = parseEmployeeCount(wt);
+          if (n !== null) return n;
+        }
+      }
+    }
+  } catch { /* fall through */ }
+
+  // ── Step 2: English Wikipedia OpenSearch correction ─────────────────────────
+  // Handles "Rappi (empresa)" / "Grab (company)" / "Careem (company)" title mismatches.
+  try {
+    const correctedTitle = await wikiOpenSearchTitle('en.wikipedia.org', companyName);
+    if (correctedTitle && correctedTitle.toLowerCase() !== slug.toLowerCase().replace(/_/g, ' ')) {
+      const wt = await fetchWikitextForPage('en.wikipedia.org', correctedTitle);
+      if (wt) {
+        const n = parseEmployeeCount(wt);
+        if (n !== null) return n;
+      }
+    }
+  } catch { /* fall through */ }
+
+  // ── Step 3: Language-specific Wikipedia editions ────────────────────────────
+  // Spanish (LatAm), Portuguese (Brazil), French (Francophone Africa), Arabic (MENA).
+  // Each edition may have an employee count even when the English page is a stub.
+  const langEditions = [
+    { host: 'es.wikipedia.org' },  // Rappi, Kavak, Loft, MercadoLibre, OLX LatAm
+    { host: 'pt.wikipedia.org' },  // Brazilian companies
+    { host: 'fr.wikipedia.org' },  // Francophone Africa, Maghreb
+    { host: 'ar.wikipedia.org' },  // MENA: Careem, Anghami, Talabat, Souq
+  ];
+  for (const { host } of langEditions) {
+    try {
+      const title = await wikiOpenSearchTitle(host, companyName);
+      if (!title) continue;
+      const wt = await fetchWikitextForPage(host, title);
+      if (!wt) continue;
+      const n = parseEmployeeCount(wt);
+      if (n !== null) return n;
+    } catch { /* try next edition */ }
   }
+
+  // ── Step 4: Wikidata P1082 fallback ─────────────────────────────────────────
+  // Language-agnostic structured data — works for Flutterwave, Andela, Jumia, Grab,
+  // Careem, and any company that has a Wikidata entry regardless of Wikipedia depth.
+  return await fetchWikidataEmployeeCount(companyName);
 }
 
 // Career page scraping — detect hiring freeze and job count
