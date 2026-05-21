@@ -4,12 +4,15 @@
 // depending on their financial resilience.
 // Stored in localStorage — never sent to server (sensitive data).
 
+import { formatCurrency, pppCalibrate } from './currencyService';
+
 export interface FinancialContext {
-  monthlyExpenses: number | null;           // INR
+  monthlyExpenses: number | null;           // in localCurrencyCode units
   dependents: number;                       // 0–10+
   emergencyFundMonths: number | null;       // months of expenses covered (savings only)
-  currentAnnualIncome: number | null;       // INR
-  currency: 'INR' | 'USD';
+  currentAnnualIncome: number | null;       // in localCurrencyCode units
+  /** ISO 4217 currency code, e.g. 'USD', 'INR', 'SGD', 'PHP'. Defaults to 'USD'. */
+  currency: string;
   capturedAt: number;                       // unix ms
   /**
    * India city key — must match a key in CITY_OPPORTUNITIES.
@@ -166,9 +169,7 @@ export function deriveFinancialProfile(
 ): FinancialProfile {
   const { monthlyExpenses, dependents, emergencyFundMonths, currentAnnualIncome, currency, countryCode, tenureYears } = ctx;
 
-  const fmt = (n: number) => currency === 'INR'
-    ? n >= 100_000 ? `₹${(n / 100_000).toFixed(1)}L` : `₹${(n / 1_000).toFixed(0)}K`
-    : `$${(n / 1_000).toFixed(0)}K`;
+  const fmt = (n: number) => formatCurrency(n, currency);
 
   // EFFECTIVE runway = stated savings + MENA gratuity (when applicable).
   // A 7-year UAE employee with 4 months saved sees runwayTier shift from CRITICAL
@@ -204,7 +205,7 @@ export function deriveFinancialProfile(
     : 'Unknown — assess this first';
 
   // ── Runway tier stratification (spec-exact thresholds) ────────────────────
-  //   CRITICAL  < 3 months  — immediate cash preservation, no income gaps, no paid courses > ₹3K
+  //   CRITICAL  < 3 months  — immediate cash preservation, no income gaps, no paid courses > PPP-calibrated ~$35
   //   HIGH      3–6 months  — begin job search now, income continuity required
   //   MODERATE  6–12 months — targeted preparation, one-at-a-time pivots
   //   LOW       > 12 months — strategic positioning, full transition options
@@ -309,7 +310,7 @@ function buildAdvice(
   riskScore: number,
   runway: number | null,
   dependents: number,
-  currency: 'INR' | 'USD',
+  currency: string,
   fmt: (n: number) => string,
   runwayTier?: RunwayTier,
 ): FinancialProfile['advice'] {
@@ -326,7 +327,7 @@ function buildAdvice(
         ? 'Tonight: calculate exact monthly burn rate. This week: cancel all non-essential subscriptions, identify one freelance service you can offer. No career transitions until emergency fund reaches 6 months.'
         : 'Begin external job search this week while employed. Update CV and LinkedIn. Reach out to 3 warm contacts. Use free courses only (Google certificates, DeepLearning.AI free tier) for skill building.',
       avoid: isCritical
-        ? 'Do NOT voluntarily quit or accept any offer that requires a gap period. Do NOT spend money on paid courses, certifications, or training above ₹3,000. Every rupee spent is a day of runway burned.'
+        ? `Do NOT voluntarily quit or accept any offer that requires a gap period. Do NOT spend money on paid courses, certifications, or training above ${formatCurrency(pppCalibrate(35, currency), currency)}. Every unit of local currency spent is a day of runway burned.`
         : 'Do not transition to roles with significantly lower starting salaries. Do not accept income gaps longer than 30 days. Your runway does not allow for speculative pivots.',
     };
   }
@@ -344,7 +345,7 @@ function buildAdvice(
   return {
     headline: 'Moderate Bridge Strategy — Upskill while employed, transition with continuity',
     strategy: 'Build 2–3 key skills over the next 3–6 months while maintaining current income. Target a lateral-to-upward transition in the same sector first — this minimizes income risk while moving to a safer role. Accept a ≤10% income dip for a significantly safer role profile.',
-    doNow: `Allocate ${currency === 'INR' ? '₹3,000–₹8,000/month' : '$40–$100/month'} to targeted skill investment (Coursera, DataCamp, or sector-specific certifications). Begin external conversations every 2 weeks — informational only, not job applications yet.`,
+    doNow: `Allocate ${formatCurrency(pppCalibrate(40, currency), currency)}–${formatCurrency(pppCalibrate(100, currency), currency)}/month to targeted skill investment (Coursera, DataCamp, or sector-specific certifications). Begin external conversations every 2 weeks — informational only, not job applications yet.`,
     avoid: 'Do not attempt a simultaneous industry + role + function change. Change one dimension at a time to manage risk and maintain salary.',
   };
 }

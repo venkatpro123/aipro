@@ -54,6 +54,10 @@ export interface UserFinancialContext {
   dualIncomeHousehold: boolean;
   /** Has navigated a layoff before and landed successfully. */
   priorLayoffSurvived: boolean;
+  /** ISO 4217 code for the user's local currency — forwarded to UI for display only. */
+  displayCurrencyCode?: string | null;
+  /** Raw local-currency monthly salary — forwarded to UI so it can show "SGD 8,500 = ~$6,340 USD". */
+  localMonthlySalaryRaw?: number | null;
 }
 
 /** Output: full assessment consumed by action-ranking and UI panels. */
@@ -319,6 +323,8 @@ export function buildContextFromProfile(
     hasDependents?: boolean | null;
     dualIncomeHousehold?: boolean | null;
     priorLayoffSurvived?: boolean | null;
+    localCurrencyCode?: string | null;
+    localMonthlySalaryRaw?: number | null;
   } | null,
 ): UserFinancialContext {
   return {
@@ -330,5 +336,7 @@ export function buildContextFromProfile(
     hasDependents: profile?.hasDependents ?? false,
     dualIncomeHousehold: profile?.dualIncomeHousehold ?? false,
     priorLayoffSurvived: profile?.priorLayoffSurvived ?? false,
+    displayCurrencyCode: profile?.localCurrencyCode ?? null,
+    localMonthlySalaryRaw: profile?.localMonthlySalaryRaw ?? null,
   };
 }

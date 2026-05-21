@@ -114,6 +114,14 @@ export interface UserProfile {
   /** Total years of professional experience across all employers */
   yearsExperience?: number | null;
 
+  // ── v40.0 global currency ────────────────────────────────────────────────
+  /** ISO 4217 currency code for the user's local market (e.g. 'SGD', 'PHP', 'GBP').
+   *  Auto-detected from metro+visaStatus if not explicitly set; defaults to 'USD'. */
+  localCurrencyCode?: string | null;
+  /** Monthly salary in the user's local currency (raw, before USD conversion).
+   *  Stored so the UI can show "SGD 8,500/mo = ~$6,340 USD" without re-prompting. */
+  localMonthlySalaryRaw?: number | null;
+
   // ── v40.0 first-audit tracking ────────────────────────────────────────────
   /** ISO timestamp when the user completed their first audit. Null = never seen.
    *  Stored in DB so incognito / new-device sessions don't re-show the wizard. */
@@ -151,6 +159,9 @@ const V16_SELECT_COLUMNS = [
   'job_title',
   'industry_key',
   'years_experience',
+  // v40.0 global currency
+  'local_currency_code',
+  'local_monthly_salary_raw',
   // v40.0 first-audit tracking
   'first_audit_completed_at',
 ].join(', ');
@@ -191,6 +202,9 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     jobTitle: data.job_title ?? null,
     industryKey: data.industry_key ?? null,
     yearsExperience: data.years_experience != null ? Number(data.years_experience) : null,
+    // v40.0 global currency
+    localCurrencyCode: data.local_currency_code ?? null,
+    localMonthlySalaryRaw: data.local_monthly_salary_raw != null ? Number(data.local_monthly_salary_raw) : null,
     // v40.0 first-audit tracking
     firstAuditCompletedAt: data.first_audit_completed_at ?? null,
   };
@@ -258,6 +272,10 @@ export async function upsertUserProfile(
   if (patch.jobTitle            !== undefined) row.job_title             = patch.jobTitle;
   if (patch.industryKey         !== undefined) row.industry_key          = patch.industryKey;
   if (patch.yearsExperience     !== undefined) row.years_experience      = patch.yearsExperience;
+
+  // ── v40.0 global currency ────────────────────────────────────────────────
+  if (patch.localCurrencyCode      !== undefined) row.local_currency_code      = patch.localCurrencyCode;
+  if (patch.localMonthlySalaryRaw  !== undefined) row.local_monthly_salary_raw = patch.localMonthlySalaryRaw;
 
   const { error } = await supabase
     .from('user_profiles')

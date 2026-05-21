@@ -9,6 +9,7 @@ import { useHumanProof } from '../context/HumanProofContext';
 import { useAuth } from '../context/AuthContext';
 import { shouldRepromptProfile } from '../services/userProfileService';
 import type { SalaryBand, VisaStatus } from '../services/userProfileService';
+import { inferCurrencyFromContext, convertToUsd, localToUsdLabel, CURRENCY_META } from '../services/currencyService';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,16 @@ const METRO_OPTIONS: Array<{ value: string; label: string; group: string }> = [
   { value: 'toronto',       label: 'Toronto',        group: 'International' },
   { value: 'singapore',     label: 'Singapore',      group: 'International' },
   { value: 'other',         label: 'Other',          group: 'International' },
+];
+
+// Curated display list — ordered by global professional population.
+// All 48 currencies are in CURRENCY_META; these cover the vast majority of users.
+const CURATED_CURRENCY_CODES = [
+  'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'SGD', 'INR', 'PHP', 'AED', 'SAR',
+  'QAR', 'KWD', 'JPY', 'KRW', 'CNY', 'HKD', 'TWD', 'MYR', 'IDR', 'THB',
+  'VND', 'BRL', 'MXN', 'COP', 'ARS', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN',
+  'CZK', 'HUF', 'RON', 'NZD', 'BDT', 'PKR', 'LKR', 'EGP', 'ZAR', 'NGN',
+  'KES', 'GHS', 'OMR', 'BHD',
 ];
 
 const STEP_LABELS = ['Core', 'Financial', 'Situation', 'Skills'] as const;
@@ -195,9 +206,8 @@ export function ProfileSetupModal() {
   const [tenureYears, setTenureYears] = useState<string>('');
 
   // Step 1 — Financial
-  const [salaryMode, setSalaryMode] = useState<'usd' | 'inr'>('usd');
-  const [monthlySalaryUsd, setMonthlySalaryUsd] = useState<string>('');
-  const [monthlySalaryInr, setMonthlySalaryInr] = useState<string>('');
+  const [localCurrencyCode, setLocalCurrencyCode] = useState<string>('USD');
+  const [localMonthlySalaryRaw, setLocalMonthlySalaryRaw] = useState<string>('');
   const [monthlyExpensesUsd, setMonthlyExpensesUsd] = useState<string>('');
   const [savingsMonthsRunway, setSavingsMonthsRunway] = useState<string>('');
   const [hasEquityVesting, setHasEquityVesting] = useState(false);
@@ -222,12 +232,27 @@ export function ProfileSetupModal() {
   useEffect(() => {
     if (!isHydrated || !user) return;
     if (shouldRepromptProfile(userProfile)) {
+      const vs = userProfile?.visaStatus ?? '';
+      const mt = userProfile?.metro ?? '';
       setSalaryBand(userProfile?.salaryBand ?? '');
-      setVisaStatus(userProfile?.visaStatus ?? '');
-      setMetro(userProfile?.metro ?? '');
+      setVisaStatus(vs);
+      setMetro(mt);
       setTenureYears(userProfile?.tenureYears != null ? String(userProfile.tenureYears) : '');
-      setMonthlySalaryUsd(userProfile?.monthlySalaryUsd != null ? String(userProfile.monthlySalaryUsd) : '');
-      setMonthlySalaryInr(userProfile?.monthlySalaryInr != null ? String(userProfile.monthlySalaryInr) : '');
+      // Currency: prefer stored value, then auto-detect from metro+visa
+      const detectedCurrency = userProfile?.localCurrencyCode
+        ?? inferCurrencyFromContext(mt, vs);
+      setLocalCurrencyCode(detectedCurrency);
+      // Local salary: prefer stored raw value, fall back to INR then USD
+      const storedLocal = userProfile?.localMonthlySalaryRaw;
+      const storedInr = userProfile?.monthlySalaryInr;
+      const storedUsd = userProfile?.monthlySalaryUsd;
+      if (storedLocal != null) {
+        setLocalMonthlySalaryRaw(String(storedLocal));
+      } else if (storedInr != null && detectedCurrency === 'INR') {
+        setLocalMonthlySalaryRaw(String(storedInr));
+      } else if (storedUsd != null) {
+        setLocalMonthlySalaryRaw(String(storedUsd));
+      }
       setMonthlyExpensesUsd(userProfile?.monthlyExpensesUsd != null ? String(userProfile.monthlyExpensesUsd) : '');
       setSavingsMonthsRunway(userProfile?.savingsMonthsRunway != null ? String(userProfile.savingsMonthsRunway) : '');
       setHasEquityVesting(userProfile?.hasEquityVesting ?? false);
@@ -245,6 +270,22 @@ export function ProfileSetupModal() {
     }
   }, [isHydrated, userProfile, user]);
 
+  // Auto-update currency when visa or metro changes (only if not overridden by user)
+  useEffect(() => {
+    if (!open) return;
+    const detected = inferCurrencyFromContext(metro, visaStatus);
+    setLocalCurrencyCode((prev) => {
+      // Only auto-update if the current value is also auto-derived (not manually chosen)
+      // We detect this by checking if the current value matches what was auto-detected
+      // before the change — this prevents overwriting deliberate manual selection.
+      const prevDetected = inferCurrencyFromContext(
+        userProfile?.metro ?? '', userProfile?.visaStatus ?? '',
+      );
+      return prev === prevDetected ? detected : prev;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visaStatus, metro]);
+
   if (!open) return null;
 
   const isReprompt = userProfile != null && userProfile.lastConfirmedAt != null;
@@ -261,33 +302,42 @@ export function ProfileSetupModal() {
   const handleSubmit = async () => {
     setSubmitting(true);
     const tenure = tenureYears === '' ? undefined : Number(tenureYears);
-    const salaryUsd = salaryMode === 'usd' && monthlySalaryUsd !== '' ? Number(monthlySalaryUsd) : undefined;
-    const salaryInr = salaryMode === 'inr' && monthlySalaryInr !== '' ? Number(monthlySalaryInr) : undefined;
     const rawToSkills = (raw: string): string[] | undefined =>
       raw.trim() ? raw.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
-
     const yoe = yearsExperience === '' ? undefined : Number(yearsExperience);
+
+    // Salary: store raw local amount + derived USD for pipeline calculations
+    const localSalaryNum = localMonthlySalaryRaw !== '' ? Number(localMonthlySalaryRaw) : undefined;
+    const salaryUsd = localSalaryNum != null
+      ? convertToUsd(localSalaryNum, localCurrencyCode)
+      : undefined;
+    const salaryInr = localSalaryNum != null && localCurrencyCode === 'INR'
+      ? localSalaryNum
+      : undefined;
+
     await saveUserProfile({
-      salaryBand:          salaryBand || undefined,
-      visaStatus:          visaStatus || undefined,
-      metro:               metro || undefined,
-      tenureYears:         Number.isFinite(tenure) ? tenure : undefined,
-      confirm:             true,
-      jobTitle:            jobTitle.trim() || undefined,
-      industryKey:         industryKey || undefined,
-      yearsExperience:     Number.isFinite(yoe) ? yoe : undefined,
-      monthlySalaryUsd:    salaryUsd,
-      monthlySalaryInr:    salaryInr,
-      monthlyExpensesUsd:  monthlyExpensesUsd !== '' ? Number(monthlyExpensesUsd) : undefined,
-      savingsMonthsRunway: savingsMonthsRunway !== '' ? Number(savingsMonthsRunway) : undefined,
+      salaryBand:             salaryBand || undefined,
+      visaStatus:             visaStatus || undefined,
+      metro:                  metro || undefined,
+      tenureYears:            Number.isFinite(tenure) ? tenure : undefined,
+      confirm:                true,
+      jobTitle:               jobTitle.trim() || undefined,
+      industryKey:            industryKey || undefined,
+      yearsExperience:        Number.isFinite(yoe) ? yoe : undefined,
+      localCurrencyCode:      localCurrencyCode,
+      localMonthlySalaryRaw:  localSalaryNum,
+      monthlySalaryUsd:       salaryUsd,
+      monthlySalaryInr:       salaryInr,
+      monthlyExpensesUsd:     monthlyExpensesUsd !== '' ? Number(monthlyExpensesUsd) : undefined,
+      savingsMonthsRunway:    savingsMonthsRunway !== '' ? Number(savingsMonthsRunway) : undefined,
       hasEquityVesting,
-      equityVestMonths:    hasEquityVesting && equityVestMonths !== '' ? Number(equityVestMonths) : undefined,
+      equityVestMonths:       hasEquityVesting && equityVestMonths !== '' ? Number(equityVestMonths) : undefined,
       hasDependents,
       dualIncomeHousehold,
       priorLayoffSurvived,
-      metroArea:           metroArea || undefined,
-      selfRatedSkills:     rawToSkills(selfRatedSkillsRaw),
-      targetSkills:        rawToSkills(targetSkillsRaw),
+      metroArea:              metroArea || undefined,
+      selfRatedSkills:        rawToSkills(selfRatedSkillsRaw),
+      targetSkills:           rawToSkills(targetSkillsRaw),
     });
     setSubmitting(false);
     setOpen(false);
@@ -361,26 +411,37 @@ export function ProfileSetupModal() {
           Stays private — shapes runway estimates and urgency of recommended actions.
         </p>
 
-        <FieldGroup label="Monthly Salary" helper="Used to estimate your financial runway — not stored in plaintext">
-          <div style={{ display: 'flex', gap: 16, marginBottom: 6 }}>
-            {(['usd', 'inr'] as const).map((mode) => (
-              <label key={mode} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.85rem', color: 'rgba(255,255,255,0.70)' }}>
-                <input type="radio" name="salaryMode" checked={salaryMode === mode}
-                  onChange={() => setSalaryMode(mode)}
-                  style={{ accentColor: 'var(--cyan, #00d4e0)' }} />
-                {mode === 'usd' ? 'Enter in USD' : 'Enter in INR'}
-              </label>
-            ))}
-          </div>
-          {salaryMode === 'usd'
-            ? <input className="input" type="number" min={0} value={monthlySalaryUsd}
-                onChange={(e) => setMonthlySalaryUsd(e.target.value)} placeholder="$5,000" />
-            : <input className="input" type="number" min={0} value={monthlySalaryInr}
-                onChange={(e) => setMonthlySalaryInr(e.target.value)} placeholder="₹4,00,000" />
-          }
+        <FieldGroup label="Currency" helper="Auto-detected from your location and visa status — override if needed">
+          <select className="input" aria-label="Currency" value={localCurrencyCode} onChange={(e) => setLocalCurrencyCode(e.target.value)}>
+            {CURATED_CURRENCY_CODES.filter((c) => CURRENCY_META[c]).map((c) => {
+              const m = CURRENCY_META[c];
+              return <option key={c} value={c}>{m.symbol} {m.name} ({c})</option>;
+            })}
+          </select>
         </FieldGroup>
 
-        <FieldGroup label="Monthly Expenses (USD)" helper="Rent + food + bills — estimates how long you could sustain a job search">
+        <FieldGroup
+          label={`Monthly Salary (${localCurrencyCode})`}
+          helper={
+            localMonthlySalaryRaw !== '' && localCurrencyCode !== 'USD'
+              ? `${localToUsdLabel(Number(localMonthlySalaryRaw), localCurrencyCode)} — used for runway math`
+              : 'Gross monthly — used to estimate how long your runway lasts'
+          }
+        >
+          <input className="input" type="number" min={0} value={localMonthlySalaryRaw}
+            onChange={(e) => setLocalMonthlySalaryRaw(e.target.value)}
+            placeholder={
+              localCurrencyCode === 'INR' ? '85,000' :
+              localCurrencyCode === 'PHP' ? '45,000' :
+              localCurrencyCode === 'SGD' ? '8,500' :
+              localCurrencyCode === 'GBP' ? '4,000' :
+              localCurrencyCode === 'EUR' ? '4,500' :
+              '5,000'
+            }
+          />
+        </FieldGroup>
+
+        <FieldGroup label="Monthly Expenses (USD)" helper="Rent + food + bills in USD — estimates how long you could sustain a job search">
           <input className="input" type="number" min={0} value={monthlyExpensesUsd}
             onChange={(e) => setMonthlyExpensesUsd(e.target.value)} placeholder="$3,000" />
         </FieldGroup>
