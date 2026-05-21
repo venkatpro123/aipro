@@ -41,7 +41,9 @@ export type VisaStatus =
   | 'saudi_iqama'
   // Qatar work permit (RP) — employer-sponsored, 30-day grace
   | 'qatar_work_permit'
-  // Catch-all for GCC sponsored permits (Bahrain, Oman, Kuwait)
+  // Kuwait work permit (Article 17/18) — employer-sponsored, 90-day grace post-2020 reforms
+  | 'kuwait_work_permit'
+  // Catch-all for remaining GCC sponsored permits (Bahrain, Oman)
   | 'gcc_sponsored'
   | 'other_work_auth'
   | 'not_applicable';
@@ -104,7 +106,8 @@ const GRACE_PERIOD_DAYS: Partial<Record<VisaStatus, number>> = {
   uae_golden_visa:     1825, // 5 years — Golden Visa is residency, not employer-tied
   saudi_iqama:         60,   // Saudi Labor Law 2024 amendments: 60-day grace
   qatar_work_permit:   30,   // Qatar Labour Law: 30-day grace
-  gcc_sponsored:       30,   // Bahrain/Oman/Kuwait conservative baseline
+  kuwait_work_permit:  90,   // Kuwait post-2020 reforms: 90-day grace before mandatory departure
+  gcc_sponsored:       30,   // Bahrain/Oman conservative baseline
 };
 
 const TRANSFER_WINDOW_MONTHS: Partial<Record<VisaStatus, number>> = {
@@ -119,6 +122,7 @@ const TRANSFER_WINDOW_MONTHS: Partial<Record<VisaStatus, number>> = {
   uae_golden_visa:     12.0,  // 5–10yr residency = effectively no transfer pressure
   saudi_iqama:         2.0,   // 60 days + Nitaqat/Saudization quota factor at new sponsor
   qatar_work_permit:   1.0,
+  kuwait_work_permit:  3.0,   // 90 days + ministry approval per Article 18 transfer
   gcc_sponsored:       1.0,
 };
 
@@ -151,9 +155,10 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     || visaStatus === 'uae_golden_visa'
     || visaStatus === 'saudi_iqama'
     || visaStatus === 'qatar_work_permit'
+    || visaStatus === 'kuwait_work_permit'
     || visaStatus === 'gcc_sponsored';
   const isUsRegion = ['US', 'United States'].includes(region);
-  const isMenaRegion = ['AE', 'UAE', 'SA', 'Saudi Arabia', 'QA', 'Qatar', 'BH', 'OM', 'KW'].includes(region);
+  const isMenaRegion = ['AE', 'UAE', 'SA', 'Saudi Arabia', 'QA', 'Qatar', 'BH', 'OM', 'KW', 'Kuwait'].includes(region);
   if (!isUsRegion && !isMenaRegion && !isMenaVisa && visaStatus !== 'h1b' && visaStatus !== 'l1') {
     return noRisk();
   }
@@ -190,6 +195,10 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   } else if (visaStatus === 'qatar_work_permit') {
     // Qatar: 30-day grace, kafala system reforms eased transfers but real friction remains.
     dependencyScore = 80;
+  } else if (visaStatus === 'kuwait_work_permit') {
+    // Kuwait: 90-day grace (longest in GCC post-2020 reforms) but ministry approval
+    // under Article 17/18 + 1-year wait for some transfer types adds real friction.
+    dependencyScore = 74;
   } else if (visaStatus === 'gcc_sponsored') {
     // Bahrain/Oman/Kuwait: conservative baseline — varies by emirate/region
     dependencyScore = 75;
@@ -210,6 +219,7 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   const isMenaSponsoredVisa = visaStatus === 'uae_employment_visa'
     || visaStatus === 'saudi_iqama'
     || visaStatus === 'qatar_work_permit'
+    || visaStatus === 'kuwait_work_permit'
     || visaStatus === 'gcc_sponsored';
 
   if (isGcLockIn && currentScore >= 55) {
@@ -257,12 +267,24 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.h1bL1HighRisk', 1.35).value as number;
     amplifierRationale = `H1B/L1 holder at elevated risk score (${currentScore}/100). A 60-day grace period is insufficient for most job searches in this market.`;
   } else if (currentScore >= 55 && isMenaSponsoredVisa) {
-    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.menaSponsoredHighRisk', 1.32).value as number;
-    const visaLabel = visaStatus === 'uae_employment_visa' ? 'UAE Employment Visa'
-      : visaStatus === 'saudi_iqama' ? 'Saudi Iqama'
-      : visaStatus === 'qatar_work_permit' ? 'Qatar work permit'
-      : 'GCC sponsored visa';
-    amplifierRationale = `${visaLabel} holder at elevated risk (${currentScore}/100). 30-60 day grace period after employer cancellation + NOC requirement (UAE) or Nitaqat quota (Saudi) at the next sponsor adds structural friction beyond the legal clock.`;
+    // Per-visa amplifiers (spec): UAE 1.30, Saudi 1.35 (Nitaqat friction highest),
+    // Qatar 1.28, Kuwait 1.25 (longest grace period in GCC eases urgency slightly).
+    if (visaStatus === 'uae_employment_visa') {
+      scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.uaeEmploymentVisa', 1.30).value as number;
+      amplifierRationale = `UAE Employment Visa holder at elevated risk (${currentScore}/100). 30-day grace post-cancellation + NOC bottleneck at current employer makes a job search outside the grace clock structurally difficult.`;
+    } else if (visaStatus === 'saudi_iqama') {
+      scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.saudiIqama', 1.35).value as number;
+      amplifierRationale = `Saudi Iqama holder at elevated risk (${currentScore}/100). 60-day grace + Nitaqat (Saudization) quota at the next sponsor creates the highest structural friction in the GCC. Many sponsors lack open foreign-hire slots for non-Saudi candidates in green/platinum Nitaqat tiers.`;
+    } else if (visaStatus === 'qatar_work_permit') {
+      scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.qatarWorkPermit', 1.28).value as number;
+      amplifierRationale = `Qatar work permit holder at elevated risk (${currentScore}/100). 30-day grace + Ministry of Labour approval required for transfer. Post-kafala reforms eased this but ministry processing (5-10 business days) remains a real constraint.`;
+    } else if (visaStatus === 'kuwait_work_permit') {
+      scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.kuwaitWorkPermit', 1.25).value as number;
+      amplifierRationale = `Kuwait work permit holder at elevated risk (${currentScore}/100). 90-day grace (longest in GCC) eases urgency slightly, but Article 17/18 transfer requires ministry approval + 1-year wait for some transfer categories.`;
+    } else {
+      scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.gccSponsored', 1.22).value as number;
+      amplifierRationale = `GCC sponsored visa holder at elevated risk (${currentScore}/100). 30-day grace period + new sponsor formalities apply.`;
+    }
   } else if (visaStatus === 'tn') {
     scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.tn', 1.25).value as number;
     amplifierRationale = 'TN status has no grace period — status ends immediately on termination. Transfer requires border crossing which adds logistical risk.';
@@ -302,6 +324,10 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   if (visaStatus === 'qatar_work_permit') {
     keyRisks.push('Qatar: 30-day grace period; kafala reforms (2020) allow employer changes but ministry approval and new employment contract are required');
   }
+  if (visaStatus === 'kuwait_work_permit') {
+    keyRisks.push('Kuwait: 90-day grace period (longest in GCC) but Article 17 (private sector) ↔ Article 18 (governmental) transfers require ministry approval');
+    keyRisks.push('Some Kuwait visa categories impose a 1-year wait between sponsors after transfer rejection — verify your Article type before resigning');
+  }
 
   // Immediate actions
   const immediateActions: string[] = [];
@@ -317,6 +343,10 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     } else if (visaStatus === 'qatar_work_permit') {
       immediateActions.push('Qatar: secure new offer + Ministry of Labour approval for transfer (typically 5–10 business days post-reform)');
       immediateActions.push('End-of-service gratuity: 3 weeks per year of service — quantify the financial buffer');
+    } else if (visaStatus === 'kuwait_work_permit') {
+      immediateActions.push('Kuwait: 90-day grace gives more breathing room than UAE/Qatar — use it deliberately for offer + ministry approval');
+      immediateActions.push('Verify your Article 17 (private) vs 18 (gov/quasi-gov) classification — affects which sponsors you can transfer to');
+      immediateActions.push('End-of-service gratuity: 15 days/yr first 5yr + 30 days/yr thereafter, capped at 1.5yr basic salary — significant buffer at 7+ years');
     } else {
       immediateActions.push('Build an external pipeline NOW — your 60-day clock means offers must be in hand before any announcement');
       immediateActions.push('Consult an immigration attorney about your AC21 portability status and grace period rights');

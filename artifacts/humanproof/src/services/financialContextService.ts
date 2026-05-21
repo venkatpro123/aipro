@@ -7,7 +7,7 @@
 export interface FinancialContext {
   monthlyExpenses: number | null;           // INR
   dependents: number;                       // 0–10+
-  emergencyFundMonths: number | null;       // months of expenses covered
+  emergencyFundMonths: number | null;       // months of expenses covered (savings only)
   currentAnnualIncome: number | null;       // INR
   currency: 'INR' | 'USD';
   capturedAt: number;                       // unix ms
@@ -18,6 +18,15 @@ export interface FinancialContext {
    * the action plan. When absent, the action plan falls back to national data.
    */
   city?: string;
+  /**
+   * ISO country code (AE, SA, QA, BH, OM, KW). When provided alongside tenureYears,
+   * end-of-service gratuity is computed and added to emergencyFundMonths to produce
+   * EFFECTIVE runway. A 7-year UAE employee with 4 months saved gets effective
+   * runway = 4 + 4.9 = 8.9 months → riskAppetite shifts from 'conservative' to 'moderate'.
+   */
+  countryCode?: string;
+  /** Years of tenure at current employer — required for gratuity calculation. */
+  tenureYears?: number;
 }
 
 export type RiskAppetite = 'conservative' | 'moderate' | 'aggressive';
@@ -39,10 +48,19 @@ export type RunwayTier = 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
 
 export interface FinancialProfile {
   riskAppetite: RiskAppetite;
-  /** Explicit runway tier — the primary stratification axis for action plan filtering. */
+  /** Explicit runway tier — the primary stratification axis for action plan filtering.
+   *  Computed from EFFECTIVE runway (savings + MENA gratuity), not raw savings. */
   runwayTier: RunwayTier;
-  /** Raw runway in months (null when not provided). Passed to action plan for message generation. */
+  /** EFFECTIVE runway = stated savings + gratuity (when MENA + tenure provided).
+   *  This is the value used for runwayTier classification. Null when no data. */
   runwayMonths: number | null;
+  /** User-reported savings months (the raw input). Kept separately so the UI can show
+   *  "stated 4 months → effective 8.9 months (+4.9 gratuity)". */
+  statedRunwayMonths: number | null;
+  /** MENA end-of-service gratuity buffer in months of total pay (0 when not applicable). */
+  gratuityMonths: number;
+  /** Gratuity disclosure narrative (formula + statute) when gratuityMonths > 0. */
+  gratuityDisclosure?: string;
   /**
    * Combined urgency multiplier: financialUrgencyBase × visaAmplifierApplied.
    * Applied to all action deadlines via adjustDeadline() in ActionPlanTab.
@@ -146,16 +164,43 @@ export function deriveFinancialProfile(
   riskScore: number,
   visaAmplifier?: number,
 ): FinancialProfile {
-  const { monthlyExpenses, dependents, emergencyFundMonths, currentAnnualIncome, currency } = ctx;
+  const { monthlyExpenses, dependents, emergencyFundMonths, currentAnnualIncome, currency, countryCode, tenureYears } = ctx;
 
   const fmt = (n: number) => currency === 'INR'
     ? n >= 100_000 ? `₹${(n / 100_000).toFixed(1)}L` : `₹${(n / 1_000).toFixed(0)}K`
     : `$${(n / 1_000).toFixed(0)}K`;
 
-  // Runway calculation
-  const runwayMonths = emergencyFundMonths ?? null;
+  // EFFECTIVE runway = stated savings + MENA gratuity (when applicable).
+  // A 7-year UAE employee with 4 months saved sees runwayTier shift from CRITICAL
+  // (savings only) → MODERATE (effective 8.9 months including 4.9 mo gratuity).
+  // This is the most consequential MENA bug: risk_appetite was structurally wrong
+  // for ~all MENA professionals because gratuity was completely invisible.
+  const statedRunwayMonths = emergencyFundMonths ?? null;
+  let gratuityMonths = 0;
+  let gratuityDisclosure: string | undefined;
+  if (countryCode && tenureYears != null && tenureYears > 0) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const { computeGratuity } = require('../data/endOfServiceGratuity') as {
+        computeGratuity: (cc: string, ty: number) => {
+          effectiveBufferMonths: number;
+          disclosureText: string;
+        } | null;
+      };
+      const calc = computeGratuity(countryCode, tenureYears);
+      if (calc) {
+        gratuityMonths = calc.effectiveBufferMonths;
+        gratuityDisclosure = calc.disclosureText;
+      }
+    } catch { /* gratuity module unavailable */ }
+  }
+  const runwayMonths = statedRunwayMonths != null
+    ? statedRunwayMonths + gratuityMonths
+    : (gratuityMonths > 0 ? gratuityMonths : null);
   const emergencyRunway = runwayMonths != null
-    ? `${runwayMonths.toFixed(1)} months`
+    ? gratuityMonths > 0
+      ? `${runwayMonths.toFixed(1)} months effective (${(statedRunwayMonths ?? 0).toFixed(1)} saved + ${gratuityMonths.toFixed(1)} gratuity)`
+      : `${runwayMonths.toFixed(1)} months`
     : 'Unknown — assess this first';
 
   // ── Runway tier stratification (spec-exact thresholds) ────────────────────
@@ -246,6 +291,9 @@ export function deriveFinancialProfile(
     riskAppetite,
     runwayTier,
     runwayMonths,
+    statedRunwayMonths,
+    gratuityMonths,
+    gratuityDisclosure,
     urgencyMultiplier,
     financialUrgencyBase,
     visaAmplifierApplied,

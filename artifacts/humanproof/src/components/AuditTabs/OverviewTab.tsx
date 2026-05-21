@@ -2687,7 +2687,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
         {/* v12.0: Visa Risk — work authorization dependency (critical for H1B/L1/OPT) */}
         {(result as any).visaRisk?.shouldDisplay && (
-          <VisaRiskPanel visaRisk={(result as any).visaRisk} />
+          <VisaRiskPanel
+            visaRisk={(result as any).visaRisk}
+            countryCode={companyData?.region}
+            tenureYears={(result as any).tenureYears}
+          />
         )}
 
         {/* v12.0: What-If Simulator — replaces read-only ScoreSensitivityPanel */}

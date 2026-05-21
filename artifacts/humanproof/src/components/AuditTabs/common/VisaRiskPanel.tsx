@@ -1,10 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Clock, AlertTriangle, Scale } from 'lucide-react';
+import { Shield, Clock, AlertTriangle, Scale, DollarSign } from 'lucide-react';
 import type { VisaRiskResult, VisaRiskLevel } from '../../../services/visaRiskEngine';
+import { computeGratuity } from '../../../data/endOfServiceGratuity';
 
 interface Props {
   visaRisk: VisaRiskResult;
+  /** ISO country code for gratuity computation (AE, SA, QA, BH, OM, KW). */
+  countryCode?: string;
+  /** Tenure years for gratuity computation — required to surface the formula. */
+  tenureYears?: number;
 }
 
 const LEVEL_CONFIG: Record<VisaRiskLevel, {
@@ -21,12 +26,18 @@ const LEVEL_CONFIG: Record<VisaRiskLevel, {
   CRITICAL: { bgClass: 'bg-red-950/40', borderClass: 'border-red-500/60', badgeClass: 'bg-red-500/20 text-red-300', label: 'Critical', icon: AlertTriangle },
 };
 
-export function VisaRiskPanel({ visaRisk }: Props) {
+export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
   if (!visaRisk.shouldDisplay) return null;
 
   // BUG-FIX: Safe fallback in case an unknown risk level is passed (future-proof)
   const cfg = LEVEL_CONFIG[visaRisk.overallVisaRisk] ?? LEVEL_CONFIG['MODERATE'];
   const Icon = cfg.icon;
+
+  // MENA gratuity: surface statutory end-of-service entitlement so users can fold it
+  // into their effective runway calculation rather than counting savings alone.
+  const gratuity = countryCode && tenureYears != null && tenureYears > 0
+    ? computeGratuity(countryCode, tenureYears)
+    : null;
 
   return (
     <motion.div
@@ -113,6 +124,48 @@ export function VisaRiskPanel({ visaRisk }: Props) {
             <div className="mt-2 flex items-center gap-1.5">
               <span className="text-emerald-400 text-xs">✓</span>
               <span className="text-[11px] text-emerald-400">AC21 portability applies — GC transfer is protected</span>
+            </div>
+          )}
+
+          {gratuity && gratuity.effectiveBufferMonths > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/5">
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20">
+                <div className="p-1.5 rounded-md bg-emerald-500/10 shrink-0">
+                  <DollarSign size={12} className="text-emerald-400" aria-hidden="true" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-[11px] font-semibold text-emerald-300">
+                      End-of-service gratuity entitlement
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-medium">
+                      ≈ {gratuity.effectiveBufferMonths.toFixed(1)} months runway
+                    </span>
+                    <span className="text-[9px] uppercase tracking-wide text-emerald-400/60 font-medium">
+                      MEASURED
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-100/80 leading-relaxed m-0 mb-1.5">
+                    {gratuity.disclosureText}
+                  </p>
+                  <p className="text-[10px] text-emerald-200/60 leading-relaxed m-0">
+                    Statute: {gratuity.statuteRef}. This is a lump-sum termination benefit
+                    that materially extends your effective runway — fold it into your
+                    risk-appetite classification alongside savings.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {gratuity && gratuity.effectiveBufferMonths === 0 && tenureYears != null && tenureYears > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/5">
+              <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-950/10 border border-amber-500/15">
+                <Scale size={11} className="text-amber-400/70 shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="text-[10px] text-amber-200/70 leading-relaxed m-0">
+                  {gratuity.disclosureText}
+                </p>
+              </div>
             </div>
           )}
         </div>

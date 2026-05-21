@@ -144,7 +144,13 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         empty={!hasPersonal}
       >
         {careerVelocity && <CareerVelocityPanel velocity={careerVelocity} />}
-        {visaRisk && visaRisk.dependencyScore > 10 && <VisaRiskPanel visaRisk={visaRisk} />}
+        {visaRisk && visaRisk.dependencyScore > 10 && (
+          <VisaRiskPanel
+            visaRisk={visaRisk}
+            countryCode={companyData.region}
+            tenureYears={r.tenureYears}
+          />
+        )}
         {userRunway && <UserFinancialRunwayPanel userFinancialRunway={userRunway} />}
       </AdaptiveBlock>
     ),

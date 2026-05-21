@@ -1036,6 +1036,7 @@ export interface UserFactors {
     | 'uae_golden_visa'
     | 'saudi_iqama'
     | 'qatar_work_permit'
+    | 'kuwait_work_permit'
     | 'gcc_sponsored'
     | 'other_work_auth'
     | 'not_applicable';
