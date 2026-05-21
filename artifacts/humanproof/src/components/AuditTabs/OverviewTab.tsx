@@ -40,6 +40,7 @@ import {
   loadFinancialContext,
   deriveFinancialProfile,
 } from "@/services/financialContextService";
+import { inferCurrencyFromContext } from "@/services/currencyService";
 import { computePeerPercentile, getLivePeerPercentile, formatPercentile, type PeerPercentileResult } from "@/services/peerPercentile";
 // v12.0 new panels
 import { ManagerRiskCard } from "./common/ManagerRiskCard";
@@ -2790,9 +2791,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             ?? (result as any)._engineResult?.companyData?._userCity
             ?? (companyData as any)?._userCity
             ?? undefined;
-          // Region → display currency
-          const currency: 'INR' | 'USD' =
-            region === 'IN' || region === 'INDIA' ? 'INR' : 'USD';
+          // Use stored currency preference; fall back to context inference, then USD.
+          const currency: string =
+            loadFinancialContext()?.currency
+            ?? inferCurrencyFromContext(userCity, undefined);
           return (
             <div className="mt-8">
               <SalaryAtRiskPanel

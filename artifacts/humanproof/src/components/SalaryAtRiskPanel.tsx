@@ -35,18 +35,20 @@ import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingDown, TrendingUp, DollarSign, AlertCircle,
-  ChevronDown, Minus,
+  ChevronDown, Minus, RefreshCw,
 } from "lucide-react";
 import {
   resolveCityPremium,
   type CitySalaryPremium,
 } from "../data/globalCitySalaryPremiums";
+import { formatCurrency, convertToUsd, convertFromUsd, CURRENCY_META } from "../services/currencyService";
 
 interface Props {
   riskScore: number;      // 0–100
   roleKey?: string;
   companyName?: string;
-  currency?: "INR" | "USD";
+  /** ISO 4217 currency code. Defaults to 'USD'. */
+  currency?: string;
   // v4.0 enhancements
   /** Collapse stage from CollapsePredictor — compresses stable period */
   collapseStage?: 1 | 2 | 3 | null;
@@ -750,15 +752,9 @@ export function computeTrajectory(
   return points;
 }
 
-const formatMoney = (amount: number, currency: "INR" | "USD"): string => {
-  if (currency === "INR") {
-    if (amount >= 100_000) return `₹${(amount / 100_000).toFixed(1)}L`;
-    if (amount >= 1_000) return `₹${(amount / 1_000).toFixed(0)}K`;
-    return `₹${amount}`;
-  }
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
-  return `$${amount}`;
-};
+// formatMoney is now a thin wrapper around currencyService.formatCurrency.
+// Accepts any ISO 4217 code; unknown codes fall back to USD formatting.
+const formatMoney = (amount: number, code: string): string => formatCurrency(amount, code);
 
 const SCENARIO_COLORS = {
   noAction: "#ef4444",
@@ -769,7 +765,7 @@ const SCENARIO_COLORS = {
 
 export const SalaryAtRiskPanel: React.FC<Props> = ({
   riskScore,
-  currency = "INR",
+  currency = "USD",
   collapseStage = null,
   cityKey,
   riskAppetite,
@@ -778,9 +774,19 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
   const [annualInput, setAnnualInput] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [showScenario, setShowScenario] = useState(false);
+  // Show values in USD instead of local currency — only meaningful when currency ≠ USD
+  const [showInUsd, setShowInUsd] = useState(false);
 
   const annual = parseInt(annualInput.replace(/[^0-9]/g, ""), 10) || 0;
   const monthly = Math.round(annual / 12);
+
+  const currMeta = CURRENCY_META[currency] ?? CURRENCY_META['USD'];
+  const displayCurrency = showInUsd ? 'USD' : currency;
+  const toDisplay = (localAmount: number): number =>
+    showInUsd ? convertToUsd(localAmount, currency) : localAmount;
+
+  // Plan annual cost in local currency (base $150 USD converted)
+  const planCostLocal = Math.round(convertFromUsd(150, currency));
 
   // v4.0: Apply collapse-stage compression to stable period.
   // baseStableMonths is always the uncompressed value so the chart can draw a
@@ -843,11 +849,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
   const totalFull = trapezoidSum("full");
   const inactionCost = Math.round(totalFull - totalNoAction);
 
-  // Annual plan cost
-  const PLAN_ANNUAL_INR = 12000;
-  const PLAN_ANNUAL_USD = 150;
-  const planCost = currency === "INR" ? PLAN_ANNUAL_INR : PLAN_ANNUAL_USD;
-  const roiMultiple = inactionCost > 0 ? Math.round(inactionCost / planCost) : 0;
+  const roiMultiple = inactionCost > 0 ? Math.round(inactionCost / planCostLocal) : 0;
 
   // Determine chart max for scaling — include volatility band upper bounds,
   // and scenario path values when the scenario overlay is active (bridge income
@@ -961,17 +963,34 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
         {/* Income input */}
         {!submitted && (
           <div className="mb-5">
-            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
-              Your Current Annual Income
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Your Current Annual Income ({currency})
+              </label>
+              {currency !== 'USD' && (
+                <button
+                  type="button"
+                  onClick={() => setShowInUsd(v => !v)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border transition-colors font-mono uppercase tracking-wider"
+                  style={{
+                    borderColor: showInUsd ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.15)',
+                    color:       showInUsd ? 'rgb(6,182,212)' : 'rgba(255,255,255,0.4)',
+                    background:  showInUsd ? 'rgba(6,182,212,0.08)' : 'transparent',
+                  }}
+                >
+                  <RefreshCw size={8} />
+                  {showInUsd ? `${currMeta.symbol} Local` : 'USD $'}
+                </button>
+              )}
+            </div>
             <div className="flex gap-3">
               <div className="relative flex-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">
-                  {currency === "INR" ? "₹" : "$"}
+                  {currMeta.symbol}
                 </span>
                 <input
                   type="text"
-                  placeholder={currency === "INR" ? "e.g. 1200000" : "e.g. 80000"}
+                  placeholder={`e.g. ${Math.round(80_000 * currMeta.unitsPerUsd).toLocaleString()}`}
                   value={annualInput}
                   onChange={e => setAnnualInput(e.target.value)}
                   className="w-full pl-8 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
@@ -1016,7 +1035,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                           stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
                         <text x={PAD.l - 4} y={y + 3} textAnchor="end"
                           fill="rgba(255,255,255,0.35)" fontSize="9" fontFamily="monospace">
-                          {formatMoney(val, currency)}
+                          {formatMoney(toDisplay(val), displayCurrency)}
                         </text>
                       </g>
                     );
@@ -1149,7 +1168,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                     return (
                       <text key={key} x={x} y={y} textAnchor="end"
                         fill={SCENARIO_COLORS[key]} fontSize="9" fontFamily="monospace" fontWeight="bold">
-                        {formatMoney(last[key], currency)}
+                        {formatMoney(toDisplay(last[key]), displayCurrency)}
                       </text>
                     );
                   })}
@@ -1241,21 +1260,21 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
               {[
                 {
                   label: "No Action — M36 Income",
-                  value: formatMoney(trajectory[trajectory.length - 1].noAction * 12, currency),
+                  value: formatMoney(toDisplay(trajectory[trajectory.length - 1].noAction * 12), displayCurrency),
                   sublabel: `${Math.round(params.noActionMultiplierM36 * 100)}% of current`,
                   color: "var(--red)",
                   icon: <TrendingDown className="w-4 h-4" />,
                 },
                 {
                   label: "Partial Adaptation — M36",
-                  value: formatMoney(trajectory[trajectory.length - 1].partial * 12, currency),
+                  value: formatMoney(toDisplay(trajectory[trajectory.length - 1].partial * 12), displayCurrency),
                   sublabel: "4h/week upskilling",
                   color: "var(--amber)",
                   icon: <Minus className="w-4 h-4" />,
                 },
                 {
                   label: "Full Transition — M36",
-                  value: formatMoney(trajectory[trajectory.length - 1].full * 12, currency),
+                  value: formatMoney(toDisplay(trajectory[trajectory.length - 1].full * 12), displayCurrency),
                   sublabel: `${Math.round(params.transitionRecoveryM36 * 100)}% of current`,
                   color: "var(--emerald)",
                   icon: <TrendingUp className="w-4 h-4" />,
@@ -1289,22 +1308,38 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                   </div>
                   <div className="text-2xl font-black tracking-tight mb-1" style={{ color: "var(--emerald)" }}>
                     {inactionCost > 0
-                      ? `${formatMoney(inactionCost, currency)} gap`
+                      ? `${formatMoney(toDisplay(Math.abs(inactionCost)), displayCurrency)} over 36 months`
                       : "Positive gap — transitions improve income"}
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    The difference between the full-transition path and the no-action path over 36 months is{" "}
-                    <strong className="text-white">{formatMoney(Math.abs(inactionCost), currency)}</strong>.{" "}
-                    {inactionCost > 0 && roiMultiple > 0 && (
+                    {inactionCost > 0 ? (
                       <>
-                        A HumanProof Survivor plan costs{" "}
-                        <strong className="text-white">{formatMoney(planCost, currency)}/year</strong>.{" "}
-                        That is a{" "}
-                        <strong className="text-emerald-400">{roiMultiple}× return</strong>{" "}
-                        on the plan investment over 3 years.
+                        Cost of inaction:{' '}
+                        <strong className="text-white">
+                          {formatMoney(toDisplay(Math.abs(inactionCost)), displayCurrency)}
+                        </strong>{' '}
+                        cumulative income gap over 36 months (full transition vs. no action).
+                        {roiMultiple > 0 && (
+                          <>
+                            {' '}A HumanProof Survivor plan costs{' '}
+                            <strong className="text-white">
+                              {formatMoney(toDisplay(planCostLocal), displayCurrency)}/year
+                            </strong>.{' '}
+                            That is a{' '}
+                            <strong className="text-emerald-400">{roiMultiple}× return</strong>{' '}
+                            on the plan investment over 3 years.
+                          </>
+                        )}
                       </>
+                    ) : (
+                      'The full-transition path exceeds the no-action path — acting now improves lifetime income.'
                     )}
                   </p>
+                  {showInUsd && currency !== 'USD' && (
+                    <p className="text-[10px] text-cyan-400/70 mt-1.5">
+                      Showing in USD · Original local values: {currency} {formatMoney(Math.abs(inactionCost), currency)} over 36 months
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

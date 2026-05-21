@@ -1,7 +1,6 @@
-// FinancialContextInput.tsx
-// Optional deep-context form: emergency fund, dependents, monthly expenses.
-// These three numbers change what advice is appropriate — giving the same
-// advice to a person with ₹2L savings vs ₹20L savings is potentially harmful.
+// FinancialContextInput.tsx — v21.0
+// Multi-currency financial context intake.
+// Supports 12 ISO 4217 currencies. MENA users get gratuity fields.
 // Data stored in localStorage ONLY — never transmitted.
 
 import React, { useState } from "react";
@@ -16,10 +15,50 @@ import {
   type FinancialContext,
   type FinancialProfile,
 } from "../services/financialContextService";
+import { CURRENCY_META } from "../services/currencyService";
+
+// Supported currencies exposed in the selector (spec-listed + common MENA)
+const CURRENCY_OPTIONS: Array<{ code: string; label: string }> = [
+  { code: 'USD', label: 'USD — US Dollar ($)' },
+  { code: 'GBP', label: 'GBP — British Pound (£)' },
+  { code: 'EUR', label: 'EUR — Euro (€)' },
+  { code: 'INR', label: 'INR — Indian Rupee (₹)' },
+  { code: 'SGD', label: 'SGD — Singapore Dollar (S$)' },
+  { code: 'AUD', label: 'AUD — Australian Dollar (A$)' },
+  { code: 'CAD', label: 'CAD — Canadian Dollar (C$)' },
+  { code: 'AED', label: 'AED — UAE Dirham' },
+  { code: 'SAR', label: 'SAR — Saudi Riyal' },
+  { code: 'QAR', label: 'QAR — Qatari Riyal' },
+  { code: 'PHP', label: 'PHP — Philippine Peso (₱)' },
+  { code: 'BRL', label: 'BRL — Brazilian Real (R$)' },
+  { code: 'JPY', label: 'JPY — Japanese Yen (¥)' },
+  { code: 'MXN', label: 'MXN — Mexican Peso (MX$)' },
+  { code: 'KWD', label: 'KWD — Kuwaiti Dinar' },
+  { code: 'BHD', label: 'BHD — Bahraini Dinar' },
+  { code: 'OMR', label: 'OMR — Omani Rial' },
+];
+
+// MENA currencies that trigger gratuity fields
+const MENA_CURRENCY_CODES = new Set(['AED', 'SAR', 'QAR', 'KWD', 'BHD', 'OMR']);
+
+// Default country code per MENA currency (user can override via dropdown)
+const MENA_CURRENCY_TO_COUNTRY: Record<string, string> = {
+  AED: 'AE', SAR: 'SA', QAR: 'QA', KWD: 'KW', BHD: 'BH', OMR: 'OM',
+};
+
+const MENA_COUNTRIES: Array<{ code: string; label: string }> = [
+  { code: 'AE', label: 'United Arab Emirates' },
+  { code: 'SA', label: 'Saudi Arabia' },
+  { code: 'QA', label: 'Qatar' },
+  { code: 'KW', label: 'Kuwait' },
+  { code: 'BH', label: 'Bahrain' },
+  { code: 'OM', label: 'Oman' },
+];
 
 interface Props {
   riskScore: number;
-  currency?: "INR" | "USD";
+  /** ISO 4217 currency code. Used as initial selection; user can override. */
+  currency?: string;
   onProfileDerived?: (profile: FinancialProfile) => void;
 }
 
@@ -31,18 +70,38 @@ const APPETITE_CONFIG = {
 
 export const FinancialContextInput: React.FC<Props> = ({
   riskScore,
-  currency = "INR",
+  currency = "USD",
   onProfileDerived,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [saved, setSaved] = useState(false);
   const [profile, setProfile] = useState<FinancialProfile | null>(null);
 
+  // User can change currency within the form — override the prop default
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(
+    CURRENCY_OPTIONS.find(o => o.code === currency) ? currency : 'USD'
+  );
+
   const [expenses, setExpenses] = useState("");
   const [dependents, setDependents] = useState("0");
   const [runwayMonths, setRunwayMonths] = useState("");
   const [income, setIncome] = useState("");
   const [city, setCity] = useState("");
+
+  // MENA gratuity fields — only shown when selectedCurrency is a MENA currency
+  const isMena = MENA_CURRENCY_CODES.has(selectedCurrency);
+  const [countryCode, setCountryCode] = useState<string>(
+    MENA_CURRENCY_TO_COUNTRY[currency] ?? ''
+  );
+  const [tenureYears, setTenureYears] = useState("");
+
+  // Auto-update countryCode when MENA currency changes
+  const handleCurrencyChange = (code: string) => {
+    setSelectedCurrency(code);
+    if (MENA_CURRENCY_CODES.has(code) && MENA_CURRENCY_TO_COUNTRY[code]) {
+      setCountryCode(MENA_CURRENCY_TO_COUNTRY[code]);
+    }
+  };
 
   const handleSave = () => {
     const normCity = normaliseCityKey(city.trim() || null);
@@ -51,9 +110,12 @@ export const FinancialContextInput: React.FC<Props> = ({
       dependents: parseInt(dependents, 10) || 0,
       emergencyFundMonths: runwayMonths ? parseFloat(runwayMonths) : null,
       currentAnnualIncome: income ? parseInt(income.replace(/[^0-9]/g, ""), 10) : null,
-      currency,
+      currency: selectedCurrency,
       capturedAt: Date.now(),
       city: normCity ?? undefined,
+      // MENA gratuity fields — included for all users; computeGratuity returns null for non-MENA
+      countryCode: isMena && countryCode ? countryCode : undefined,
+      tenureYears: isMena && tenureYears ? parseFloat(tenureYears) : undefined,
     };
     saveFinancialContext(ctx);
     const derived = deriveFinancialProfile(ctx, riskScore);
@@ -62,12 +124,14 @@ export const FinancialContextInput: React.FC<Props> = ({
     onProfileDerived?.(derived);
   };
 
-  const currSymbol = currency === "INR" ? "₹" : "$";
+  const currMeta = CURRENCY_META[selectedCurrency] ?? CURRENCY_META['USD'];
+  const currSymbol = currMeta.symbol;
 
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
       {/* Header — collapsible */}
       <button
+        type="button"
         onClick={() => setExpanded(v => !v)}
         className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left"
       >
@@ -104,6 +168,23 @@ export const FinancialContextInput: React.FC<Props> = ({
                 This data is stored only in your browser. It is never sent to any server. You can clear it at any time.
               </div>
 
+              {/* Currency selector — top of form */}
+              <div className="mb-4">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                  Currency
+                </label>
+                <select
+                  title="Currency"
+                  value={selectedCurrency}
+                  onChange={e => handleCurrencyChange(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
+                >
+                  {CURRENCY_OPTIONS.map(o => (
+                    <option key={o.code} value={o.code}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {/* Monthly expenses */}
                 <div>
@@ -114,7 +195,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{currSymbol}</span>
                     <input
                       type="text"
-                      placeholder={currency === "INR" ? "e.g. 50000" : "e.g. 3000"}
+                      placeholder={`e.g. ${Math.round(3_000 * currMeta.unitsPerUsd).toLocaleString()}`}
                       value={expenses}
                       onChange={e => setExpenses(e.target.value)}
                       className="w-full pl-7 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
@@ -143,6 +224,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                     Financial Dependents
                   </label>
                   <select
+                    title="Financial Dependents"
                     value={dependents}
                     onChange={e => setDependents(e.target.value)}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none"
@@ -164,7 +246,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{currSymbol}</span>
                     <input
                       type="text"
-                      placeholder={currency === "INR" ? "e.g. 1200000" : "e.g. 80000"}
+                      placeholder={`e.g. ${Math.round(80_000 * currMeta.unitsPerUsd).toLocaleString()}`}
                       value={income}
                       onChange={e => setIncome(e.target.value)}
                       className="w-full pl-7 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
@@ -172,33 +254,82 @@ export const FinancialContextInput: React.FC<Props> = ({
                   </div>
                 </div>
 
-                {/* City — unlocks named-employer recommendations */}
-                {currency === "INR" && (
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                      Your City (optional — names local employers in your action plan)
-                    </label>
-                    <input
-                      type="text"
-                      list="city-suggestions"
-                      placeholder="e.g. Bangalore, Mumbai, Hyderabad, Pune"
-                      value={city}
-                      onChange={e => setCity(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
-                    />
-                    <datalist id="city-suggestions">
-                      {['Bangalore', 'Mumbai', 'Hyderabad', 'Pune', 'Chennai', 'Delhi NCR', 'Kolkata', 'Noida', 'Gurgaon', 'Ahmedabad', 'Kochi', 'Indore', 'Coimbatore'].map(c => (
-                        <option key={c} value={c} />
-                      ))}
-                    </datalist>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      When provided, your action plan names specific companies hiring in your city — not just "the market."
-                    </p>
-                  </div>
-                )}
+                {/* City — unlocks named-employer recommendations for all users */}
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Your City (optional — names local employers in your action plan)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. London, Singapore, Dubai, Bangalore, Manila"
+                    value={city}
+                    onChange={e => setCity(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    When provided, your action plan names specific companies hiring in your city.
+                  </p>
+                </div>
               </div>
 
+              {/* MENA gratuity fields — only shown for MENA currencies */}
+              {isMena && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mb-4 p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/20 overflow-hidden"
+                >
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px] font-bold text-emerald-300">
+                      End-of-Service Gratuity — adds to your effective runway
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-emerald-200/70 mb-3 leading-relaxed">
+                    GCC law mandates a lump-sum gratuity on termination. A 7-year UAE employee adds ~5.5 months of
+                    salary to their runway — this shifts urgency classification from CRITICAL to MODERATE.
+                    Formula: 21 days/yr × first 5 years + 30 days/yr thereafter.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">
+                        Country of Employment
+                      </label>
+                      <select
+                        title="Country of Employment"
+                        value={countryCode}
+                        onChange={e => setCountryCode(e.target.value)}
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none"
+                      >
+                        <option value="">Select country</option>
+                        {MENA_COUNTRIES.map(c => (
+                          <option key={c.code} value={c.code}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">
+                        Years at Current Employer
+                      </label>
+                      <input
+                        type="number"
+                        min="0" max="40" step="0.5"
+                        placeholder="e.g. 7"
+                        value={tenureYears}
+                        onChange={e => setTenureYears(e.target.value)}
+                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-emerald-200/50 mt-2">
+                    MEASURED — statutory formula (not an estimate). Individual entitlement varies by contract type
+                    and termination reason. Verify with your HR or a labour law specialist.
+                  </p>
+                </motion.div>
+              )}
+
               <button
+                type="button"
                 onClick={handleSave}
                 className="w-full py-2.5 rounded-lg text-sm font-bold transition-colors"
                 style={{ background: "var(--cyan)", color: "#000" }}
@@ -237,9 +368,21 @@ export const FinancialContextInput: React.FC<Props> = ({
                         </div>
                       </div>
                       <div className="mt-2 pt-2 border-t border-white/5 text-[10px] text-muted-foreground">
-                        Emergency runway: <strong>{profile.emergencyRunway}</strong>{" · "}
+                        Effective runway:{' '}
+                        <strong className="text-white">{profile.emergencyRunway}</strong>
+                        {profile.gratuityMonths > 0 && (
+                          <span className="text-emerald-400 ml-1">
+                            (+{profile.gratuityMonths.toFixed(1)} mo gratuity)
+                          </span>
+                        )}
+                        {' · '}
                         Transition budget: <strong>{profile.transitionBudgetRange}</strong>
                       </div>
+                      {profile.gratuityDisclosure && (
+                        <div className="mt-1 pt-1 border-t border-white/5 text-[9px] text-emerald-300/70 leading-relaxed">
+                          {profile.gratuityDisclosure}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>

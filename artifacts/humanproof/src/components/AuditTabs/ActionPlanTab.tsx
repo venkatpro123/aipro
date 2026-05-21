@@ -1912,7 +1912,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
             title="Personalise Your Strategy"
             description="Two optional assessments that significantly improve the accuracy of your action plan. Stored locally only — never transmitted."
           />
-          <FinancialContextInput riskScore={result.total} currency="INR" />
+          <FinancialContextInput riskScore={result.total} currency={financialCtx?.currency ?? 'USD'} />
           <CareerCapitalAssessment currentRiskScore={result.total} />
         </div>
 
