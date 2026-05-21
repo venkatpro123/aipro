@@ -24,6 +24,7 @@ import {
   recordFailure as circuitFailure,
   getCachedResponse,
   getCircuitSnapshot,
+  stockCircuitKeyForTicker,
 } from './apiCircuitBreaker';
 import type { PipelineTimerInstance } from './pipelineTimer';
 // WS3 — Evidence hierarchy veto for reconcileCompanySignals (Audit Issue #7).
@@ -573,11 +574,19 @@ export const fetchLiveCompanyData = async (
   let stockData: StockLiveData | null = null;
   let newsData: NewsLiveData | null = null;
 
+  // Derive the Yahoo Finance circuit key for this ticker BEFORE Gate 2 checks.
+  // US tickers (no suffix) → yahoo-finance-us; international (.NS/.BO/.L/.SI/etc.)
+  // → yahoo-finance-global. This means a US Yahoo Finance outage does not open
+  // the circuit for Indian/European/APAC tickers, which route through the same
+  // proxy but represent a distinct exchange availability domain.
+  const yfCircuitKey = stockCircuitKeyForTicker(resolvedTicker);
+
   // ── Gate 1: per-session quota guard ──────────────────────────────────────
   // Stock now uses Yahoo Finance (unlimited, no key) via proxy-live-signals.
-  // The `alphavantage` circuit breaker is kept for the localhost dev fallback path
-  // where VITE_ALPHAVANTAGE_KEY may be set. NewsAPI is still key-gated (100/day),
-  // but the proxy tries Google+Bing+Reddit first — NewsAPI is only last resort.
+  // `alphavantage` quota is tracked only for the localhost dev fallback path
+  // where VITE_ALPHAVANTAGE_KEY may be set. The proxy path uses no quota.
+  // NewsAPI is still key-gated (100/day), but the proxy tries Google+Bing+Reddit
+  // first — NewsAPI is only last resort.
   const yFinanceExhausted = isQuotaExhausted('alphavantage');  // localhost AV dev path only
   const newsExhausted     = isQuotaExhausted('newsapi');
 
@@ -597,12 +606,13 @@ export const fetchLiveCompanyData = async (
   // ── Gate 2: circuit breaker ───────────────────────────────────────────────
   // OPEN circuit = 3+ consecutive failures in the last 5 minutes.
   // Each service is gated independently — stock open does NOT block news.
-  const yFinanceCircuitOpen = !isCallAllowed('alphavantage');
+  // yfCircuitKey is ticker-aware: US circuit opening does not block intl tickers.
+  const yFinanceCircuitOpen = !isCallAllowed(yfCircuitKey);
   const newsCircuitOpen     = !isCallAllowed('newsapi');
 
   if (yFinanceCircuitOpen) {
-    const yfSnap  = getCircuitSnapshot('alphavantage');
-    const yfCache = getCachedResponse<StockLiveData>('alphavantage');
+    const yfSnap  = getCircuitSnapshot(yfCircuitKey);
+    const yfCache = getCachedResponse<StockLiveData>(yfCircuitKey);
     if (yfCache) {
       // Serve stale cache as a degraded signal — do NOT count as live. The cached
       // data is potentially hours/days old and counting it as a real live signal
@@ -683,13 +693,13 @@ export const fetchLiveCompanyData = async (
             source: resolvedSource,
             fetchedAt: new Date().toISOString(),
           };
-          circuitSuccess('alphavantage', stockData);
+          circuitSuccess(yfCircuitKey, stockData);
           if (ps.price90DayChange != null) liveCount += 1; else heuristicCount += 1;
           if (ps.revenueGrowthYoY != null) liveCount += 1; else heuristicCount += 1;
         } else {
           if (resolvedTicker && !stockBlocked) {
             errors.push(`Stock proxy: no data for ${resolvedTicker}`);
-            circuitFailure('alphavantage', `no data for ${resolvedTicker}`);
+            circuitFailure(yfCircuitKey, `no data for ${resolvedTicker}`);
           } else if (!resolvedTicker) {
             errors.push('No ticker — stock signals unavailable (private/unknown company)');
           }
@@ -733,7 +743,7 @@ export const fetchLiveCompanyData = async (
       }
     } catch (proxyErr: any) {
       errors.push(`proxy-live-signals: ${proxyErr.message}`);
-      if (stockNeeded) { heuristicCount += 2; circuitFailure('alphavantage', proxyErr.message); }
+      if (stockNeeded) { heuristicCount += 2; circuitFailure(yfCircuitKey, proxyErr.message); }
       if (newsNeeded)  { heuristicCount += 1; circuitFailure('newsapi',       proxyErr.message); }
       if (isRateLimitError(proxyErr)) {
         recordApiDegradation('supabase_osint', 'rate_limited', proxyErr.message);
@@ -784,7 +794,7 @@ export const fetchLiveCompanyData = async (
       s => s !== 'Naukri Heuristic',
     );
 
-    // BSE/NSE stock signal (real network call)
+    // BSE/NSE stock signal (real network call — bseConnector, no Yahoo Finance)
     if (stockData === null && connectorSignals.stock90DayChange !== null) {
       stockData = {
         price90DayChange: connectorSignals.stock90DayChange,
@@ -792,7 +802,7 @@ export const fetchLiveCompanyData = async (
         marketCap: connectorSignals.marketCapCr,
         peRatio: connectorSignals.peRatio,
         employeeCount: null,
-        source: 'alphavantage',
+        source: 'bse-india',
         fetchedAt: connectorSignals.fetchedAt,
       };
       liveCount += 1;

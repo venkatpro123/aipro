@@ -28,6 +28,7 @@ export interface BSECompanyData {
 }
 
 import { readCache, writeCache } from '../apiResponseCache';
+import { isCallAllowed, recordSuccess as circuitSuccess, recordFailure as circuitFailure } from '../apiCircuitBreaker';
 
 const BSE_BASE = 'https://api.bseindia.com/BseIndiaAPI/api';
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min in-process; Supabase layer holds 4h TTL
@@ -56,12 +57,20 @@ export async function fetchBSECompanyData(
     return { ...shared.payload, _cacheAgeLabel: shared.cacheAgeLabel, _cachedAt: shared.cachedAt } as BSECompanyData;
   }
 
+  // Circuit breaker guard: if BSE India is OPEN (3+ consecutive failures),
+  // skip the live call to avoid hammering a down endpoint. The 'bse' circuit
+  // is isolated from Yahoo Finance circuits — a Yahoo US outage never blocks BSE.
+  if (!isCallAllowed('bse')) return null;
+
   try {
     // BSE quote endpoint (public, no auth)
     const quoteRes = await fetchWithTimeout(
       `${BSE_BASE}/ComHeader/w?quotetype=EQ&scripcode=${scripCode}`,
     );
-    if (!quoteRes.ok) return null;
+    if (!quoteRes.ok) {
+      circuitFailure('bse', `HTTP ${quoteRes.status} for scrip ${scripCode}`);
+      return null;
+    }
     const quote = await quoteRes.json();
 
     const data: BSECompanyData = {
@@ -85,10 +94,12 @@ export async function fetchBSECompanyData(
       fetchedAt: new Date().toISOString(),
     };
 
+    circuitSuccess('bse', data);
     cache.set(scripCode, { data, ts: Date.now() });
     writeCache('bse', `scrip|${scripCode}`, data);
     return data;
-  } catch {
+  } catch (err: any) {
+    circuitFailure('bse', err?.message ?? String(err));
     return null;
   }
 }

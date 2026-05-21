@@ -1,16 +1,22 @@
 // apiCircuitBreaker.ts
 // Circuit breaker for all external APIs.
 //
-// Covered APIs (9 total):
-//   alphavantage  — Alpha Vantage stock data (25/day free tier)
-//   newsapi       — NewsAPI headlines (100/day free tier)
-//   serper        — Serper.dev search (paid, fallback only)
-//   rss2json      — rss2json.com RSS proxy (shared by breakingNewsPoller + rssNewsConnector)
-//   yahoo-finance — Yahoo Finance /v8 + /v10 via proxy-live-signals EF
-//   naukri        — Naukri hiring API via proxy-live-signals EF
-//   sec-edgar     — SEC EDGAR direct HTTPS (rate-limited per IP)
-//   warn-act      — DOL WARN Act database
-//   bse           — BSE India stock API
+// Covered APIs (13 total):
+//   alphavantage         — Alpha Vantage stock data (25/day free tier, localhost dev only)
+//   newsapi              — NewsAPI headlines (100/day free tier)
+//   serper               — Serper.dev search (paid, fallback only)
+//   rss2json             — rss2json.com RSS proxy (shared by breakingNewsPoller + rssNewsConnector)
+//   yahoo-finance-us     — Yahoo Finance for US-listed tickers (no suffix / .N / .O) via proxy EF
+//   yahoo-finance-global — Yahoo Finance for internationally-listed tickers (.NS, .BO, .L, .SI, .AX, etc.)
+//                          Isolated from yahoo-finance-us so a US data-centre outage does not block
+//                          BSE/NSE/LSE data acquisition on the same proxy connection path.
+//   naukri               — Naukri hiring API via proxy-live-signals EF
+//   sec-edgar            — SEC EDGAR direct HTTPS (rate-limited per IP)
+//   warn-act             — DOL WARN Act database
+//   bse                  — BSE India stock API (direct, no auth, public endpoint)
+//   nse-india            — NSE India stock/derivative data
+//   london-stock-exchange — LSE stock data (future connector)
+//   sgx                  — Singapore Exchange data (future connector)
 //
 // STATE MACHINE
 // ─────────────
@@ -48,31 +54,58 @@ export type CircuitApiName =
   | 'newsapi'
   | 'serper'
   | 'rss2json'
-  | 'yahoo-finance'
+  | 'yahoo-finance-us'
+  | 'yahoo-finance-global'
   | 'naukri'
   | 'sec-edgar'
   | 'warn-act'
-  | 'bse';
+  | 'bse'
+  | 'nse-india'
+  | 'london-stock-exchange'
+  | 'sgx';
 
 /** All APIs tracked by the circuit breaker — used for sync and quota snapshots. */
 export const ALL_CIRCUIT_APIS: CircuitApiName[] = [
-  'alphavantage', 'newsapi', 'serper',
-  'rss2json', 'yahoo-finance', 'naukri',
-  'sec-edgar', 'warn-act', 'bse',
+  'alphavantage', 'newsapi', 'serper', 'rss2json',
+  'yahoo-finance-us', 'yahoo-finance-global',
+  'naukri', 'sec-edgar', 'warn-act',
+  'bse', 'nse-india', 'london-stock-exchange', 'sgx',
 ];
 
 /** Human-readable labels for circuit breaker API names. */
 export const CIRCUIT_API_LABELS: Record<CircuitApiName, string> = {
-  'alphavantage':  'Alpha Vantage',
-  'newsapi':       'NewsAPI',
-  'serper':        'Serper',
-  'rss2json':      'RSS Proxy (rss2json)',
-  'yahoo-finance': 'Yahoo Finance',
-  'naukri':        'Naukri',
-  'sec-edgar':     'SEC EDGAR',
-  'warn-act':      'WARN Act (DOL)',
-  'bse':           'BSE India',
+  'alphavantage':           'Alpha Vantage',
+  'newsapi':                'NewsAPI',
+  'serper':                 'Serper',
+  'rss2json':               'RSS Proxy (rss2json)',
+  'yahoo-finance-us':       'Yahoo Finance (US)',
+  'yahoo-finance-global':   'Yahoo Finance (International)',
+  'naukri':                 'Naukri',
+  'sec-edgar':              'SEC EDGAR',
+  'warn-act':               'WARN Act (DOL)',
+  'bse':                    'BSE India',
+  'nse-india':              'NSE India',
+  'london-stock-exchange':  'London Stock Exchange',
+  'sgx':                    'Singapore Exchange (SGX)',
 };
+
+/**
+ * Map a stock ticker symbol to the appropriate Yahoo Finance circuit key.
+ * International suffixes (.NS/.BO for India, .L for London, .SI for Singapore,
+ * .AX for Australia, .HK for Hong Kong, etc.) route to yahoo-finance-global so
+ * a US-side Yahoo Finance outage does not block Indian/European/APAC data
+ * acquisition that runs on the same Yahoo Finance proxy path.
+ */
+export function stockCircuitKeyForTicker(
+  ticker: string | null | undefined,
+): 'yahoo-finance-us' | 'yahoo-finance-global' {
+  if (!ticker) return 'yahoo-finance-us';
+  // Match any recognized international exchange suffix
+  if (/\.(NS|BO|L|SI|AX|HK|TO|PA|DE|MC|MI|AS|SW|ST|OL|CO|HE|LS|WA|SA|MX|BA|KS|TW|T)$/i.test(ticker)) {
+    return 'yahoo-finance-global';
+  }
+  return 'yahoo-finance-us';
+}
 export type CircuitState   = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export interface CircuitStatus {
