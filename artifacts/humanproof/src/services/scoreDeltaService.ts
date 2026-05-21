@@ -25,6 +25,8 @@ export interface ScoreHistoryEntry {
   //   L1: stock90DayChange (prev vs curr), revenueGrowthYoY (prev vs curr)
   //   L2: layoffRounds (prev vs curr), lastLayoffPercent, lastLayoffDate → recency weight
   //   L3: aiInvestmentSignal (prev vs curr) → amplification factor delta
+  //   L4: parent/GCC/peer-contagion fields below — spec-exact attribution
+  //       for GCC users whose parent company announced layoffs.
   companySnapshot?: {
     stock90DayChange?: number | null;
     revenueGrowthYoY?: number | null;
@@ -35,6 +37,38 @@ export interface ScoreHistoryEntry {
     aiInvestmentSignal?: string;
     employeeCount?: number;
     revenuePerEmployee?: number;
+
+    // ── L4 attribution fields (v40.0) ────────────────────────────────────
+    /** Name of detected parent company (e.g. "Microsoft" for a Microsoft India GCC).
+     *  Populated from ParentPropagationResult.parentName when companyData is a known
+     *  subsidiary. Drives spec-exact L4 driver text citing the parent. */
+    parentCompanyName?: string;
+    /** Country of the parent company (e.g. "US" / "United States") */
+    parentCountry?: string;
+    /** Most recent verified layoff event at the parent company. ISO date +
+     *  workforce-percent. When this changes between two history entries we
+     *  know the L4 increase was caused by parent-company contagion, not
+     *  generic "sector headwinds". */
+    parentLayoffEvent?: {
+      date: string;        // ISO YYYY-MM-DD
+      percent: number;     // 0–100
+      affectedCount?: number;
+    };
+    /** GCC archetype classification (strategic_partner, captive, hybrid, etc.)
+     *  from indiaSectorIntelligence.gccRiskProfile.archetype. */
+    gccArchetype?: string;
+    /** Propagation lag in months from parent announcement to subsidiary action
+     *  (lower bound, upper bound). Used in spec-exact driver text:
+     *  "Historical propagation timeline: 6-9 months." */
+    propagationLagMonths?: { min: number; max: number };
+    /** Peer-contagion amplifier from PeerContagionResult.scoreAmplifier — 1.00 means
+     *  no contagion, 1.35 means peak wave. */
+    peerContagionMultiplier?: number;
+    /** Top-contributing peer company name (most recent peer cut driving the wave).
+     *  E.g. "Meta" for a Salesforce engineer whose score moved due to Meta cuts. */
+    peerContagionTopPeer?: string;
+    /** Total peer companies in the wave (any relationship type) */
+    peerContagionAffectedCount?: number;
   };
 }
 
@@ -225,11 +259,98 @@ function explainDimensionDelta(
       break;
     }
 
-    case 'L4':
+    // ── L4: Industry Headwinds — spec-exact GCC + peer-contagion attribution ─
+    case 'L4': {
+      // Detect parent-company contagion: the parent layoff event is NEW or
+      // its percent has changed between snapshots. This is the canonical
+      // signal that an L4 increase was caused by parent-company action, not
+      // generic sector drift.
+      const prevParentEvent = prevSnapshot?.parentLayoffEvent;
+      const currParentEvent = currSnapshot?.parentLayoffEvent;
+      const parentEventIsNew =
+        currParentEvent && (
+          !prevParentEvent ||
+          prevParentEvent.date !== currParentEvent.date ||
+          prevParentEvent.percent !== currParentEvent.percent
+        );
+      const parentName = currSnapshot?.parentCompanyName ?? prevSnapshot?.parentCompanyName;
+      const gccArchetype = currSnapshot?.gccArchetype;
+      const lag = currSnapshot?.propagationLagMonths;
+      const isIncrease = delta > 0;
+
+      if (parentEventIsNew && parentName && currParentEvent && isIncrease) {
+        // Spec-exact format: "L4 (Industry Headwinds) increased N points.
+        // Parent company contagion: [Parent] announced [N]% workforce reduction
+        // on [date]. GCC classification: strategic_partner. Historical
+        // propagation timeline to India operations: 6-9 months."
+        const dateLabel = (() => {
+          const d = new Date(currParentEvent.date);
+          if (isNaN(d.getTime())) return currParentEvent.date;
+          const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+        })();
+        const lagLabel = lag
+          ? (lag.min === lag.max ? `${lag.min} months` : `${lag.min}-${lag.max} months`)
+          : '6-9 months';
+
+        driver =
+          `L4 (Industry Headwinds) increased ${abs} points. ` +
+          `Parent company contagion: ${parentName} announced ` +
+          `${currParentEvent.percent}% workforce reduction on ${dateLabel}` +
+          (currParentEvent.affectedCount
+            ? ` (${currParentEvent.affectedCount.toLocaleString()} affected)`
+            : '') +
+          `.` +
+          (gccArchetype ? ` GCC classification: ${gccArchetype}.` : '') +
+          ` Historical propagation timeline to your region: ${lagLabel}.`;
+        break;
+      }
+
+      // Peer-contagion wave: scoreAmplifier changed materially (>=0.05) or
+      // the named top peer changed between snapshots.
+      const prevMult = prevSnapshot?.peerContagionMultiplier;
+      const currMult = currSnapshot?.peerContagionMultiplier;
+      const prevTopPeer = prevSnapshot?.peerContagionTopPeer;
+      const currTopPeer = currSnapshot?.peerContagionTopPeer;
+      const multiplierChanged =
+        prevMult != null && currMult != null && Math.abs(currMult - prevMult) >= 0.05;
+      const topPeerChanged = currTopPeer && currTopPeer !== prevTopPeer;
+
+      if (isIncrease && (multiplierChanged || topPeerChanged) && currTopPeer) {
+        const peerCount = currSnapshot?.peerContagionAffectedCount ?? 0;
+        const multClause = currMult != null
+          ? `peer contagion amplifier rose to ×${currMult.toFixed(2)}`
+          : `peer contagion wave detected`;
+        const peerCountClause = peerCount > 0
+          ? ` ${peerCount} peer compan${peerCount === 1 ? 'y' : 'ies'} in this sector announced workforce reductions in the wave.`
+          : '';
+        driver =
+          `L4 (Industry Headwinds) increased ${abs} points. ` +
+          `Sector peer contagion: ${multClause} — most-recent named peer cut was ${currTopPeer}.` +
+          peerCountClause +
+          (gccArchetype ? ` Your GCC archetype (${gccArchetype}) carries 2-3× propagation from this wave.` : '');
+        break;
+      }
+
+      // De-escalation: parent event aged out or peer wave intensity dropped.
+      if (delta < -5 && (prevParentEvent || (prevMult != null && currMult != null && currMult < prevMult))) {
+        const oldParent = prevSnapshot?.parentCompanyName;
+        if (oldParent && !currParentEvent) {
+          driver = `L4 (Industry Headwinds) decreased ${abs} points. ${oldParent} parent-contagion signal aged out of the active window — your derived L4 reverted toward sector baseline.`;
+        } else if (prevMult != null && currMult != null && currMult < prevMult) {
+          driver = `L4 (Industry Headwinds) decreased ${abs} points. Peer contagion amplifier dropped from ×${prevMult.toFixed(2)} to ×${currMult.toFixed(2)} as the named peer wave receded from the 180-day window.`;
+        } else {
+          driver = `Industry headwinds decreased (${abs} pts lower). Fewer sector-wide layoff events recorded, improving the sector contagion baseline.`;
+        }
+        break;
+      }
+
+      // Fallback — generic L4 text only when no parent/peer signal is available.
       if (delta > 5)       driver = `Industry headwinds increased (+${abs} pts). More peer companies in your sector announced workforce reductions in the last 180 days.`;
       else if (delta < -5) driver = `Industry headwinds decreased (${abs} pts lower). Fewer sector-wide layoff events recorded, improving the sector contagion baseline.`;
       else                 driver = `Industry conditions ${dir} by ${abs} pts. Sector AI adoption rate or growth outlook revised.`;
       break;
+    }
 
     case 'L5':
       if (delta > 3)       driver = `Personal protection ${dir} (+${abs} pts risk increase). Updated tenure bracket calculations or change in performance-tier weighting.`;
@@ -290,6 +411,95 @@ function warnIfBreakdownIncomplete(entry: ScoreHistoryEntry): void {
   if (!snap) {
     console.warn('[scoreDeltaService] recordScore called without companySnapshot — L1/L2/L3 driver text will be generic for this entry.', { roleKey: entry.roleKey, company: entry.companyName });
   }
+}
+
+/**
+ * v40.0 — Build the L4-attribution portion of a companySnapshot from a
+ * HybridResult-like object. Centralised so both LayoffCalculator call sites
+ * (initial audit + manual recalc) populate the same fields identically.
+ *
+ * Field sources:
+ *   parentCompanyName, parentCountry, propagationLagMonths → result.parentPropagation
+ *   gccArchetype → result.indiaRiskEnrichment.gccArchetype
+ *   peerContagionMultiplier / TopPeer / AffectedCount → result.peerContagion
+ *   parentLayoffEvent → matched from peerContagion.affectedPeers when parent
+ *                       company name matches (case-insensitive substring).
+ *
+ * Defensive: every access is optional-chained — a HybridResult missing any
+ * of these layers just yields a snapshot without that field, falling the
+ * downstream L4 driver text through to generic.
+ */
+export function buildL4SnapshotFields(
+  result: Record<string, any> | null | undefined,
+): Pick<NonNullable<ScoreHistoryEntry['companySnapshot']>,
+  'parentCompanyName' | 'parentCountry' | 'parentLayoffEvent' | 'gccArchetype'
+  | 'propagationLagMonths' | 'peerContagionMultiplier' | 'peerContagionTopPeer'
+  | 'peerContagionAffectedCount'
+> {
+  const out: Pick<NonNullable<ScoreHistoryEntry['companySnapshot']>,
+    'parentCompanyName' | 'parentCountry' | 'parentLayoffEvent' | 'gccArchetype'
+    | 'propagationLagMonths' | 'peerContagionMultiplier' | 'peerContagionTopPeer'
+    | 'peerContagionAffectedCount'
+  > = {};
+  if (!result) return out;
+
+  const pp = result.parentPropagation as
+    | { parentName?: string; parentCountry?: string; lagMonths?: { min?: number; max?: number } }
+    | undefined;
+  if (pp?.parentName) {
+    out.parentCompanyName = pp.parentName;
+    if (pp.parentCountry) out.parentCountry = pp.parentCountry;
+    if (pp.lagMonths && pp.lagMonths.min != null && pp.lagMonths.max != null) {
+      out.propagationLagMonths = { min: pp.lagMonths.min, max: pp.lagMonths.max };
+    }
+  }
+
+  const enrich = result.indiaRiskEnrichment as
+    | { gccArchetype?: string; gccRiskProfile?: { layoffContagionLag?: number } }
+    | undefined;
+  if (enrich?.gccArchetype && enrich.gccArchetype !== 'not_gcc') {
+    out.gccArchetype = enrich.gccArchetype;
+    if (!out.propagationLagMonths && enrich.gccRiskProfile?.layoffContagionLag != null) {
+      const lag = enrich.gccRiskProfile.layoffContagionLag;
+      out.propagationLagMonths = { min: Math.max(1, lag - 3), max: lag };
+    }
+  }
+
+  const peer = result.peerContagion as
+    | {
+        scoreAmplifier?: number;
+        affectedPeers?: Array<{ companyName: string; layoffDate?: string; estimatedPercentCut?: number; daysAgo?: number }>;
+      }
+    | undefined;
+  if (peer) {
+    if (peer.scoreAmplifier != null) out.peerContagionMultiplier = peer.scoreAmplifier;
+    const peers = peer.affectedPeers ?? [];
+    if (peers.length > 0) {
+      // "Top peer" = most recent cut (lowest daysAgo) — that's the named driver.
+      const sorted = [...peers].sort((a, b) => (a.daysAgo ?? 999) - (b.daysAgo ?? 999));
+      out.peerContagionTopPeer = sorted[0].companyName;
+      out.peerContagionAffectedCount = peers.length;
+
+      // If a peer in the wave IS the detected parent, use that peer's event
+      // as the parentLayoffEvent. This is the spec-exact path that produces
+      // "Microsoft announced 12% workforce reduction on Mar 15, 2026".
+      if (out.parentCompanyName) {
+        const parentLower = out.parentCompanyName.toLowerCase().trim();
+        const parentPeer = peers.find(p =>
+          p.companyName.toLowerCase().trim().includes(parentLower) ||
+          parentLower.includes(p.companyName.toLowerCase().trim())
+        );
+        if (parentPeer && parentPeer.layoffDate) {
+          out.parentLayoffEvent = {
+            date:    parentPeer.layoffDate,
+            percent: parentPeer.estimatedPercentCut ?? 0,
+          };
+        }
+      }
+    }
+  }
+
+  return out;
 }
 
 export function recordScore(entry: ScoreHistoryEntry): void {

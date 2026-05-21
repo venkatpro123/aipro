@@ -57,7 +57,7 @@ import {
 import { getAutoDeducedDepartment } from "../../data/oracleRoleIndex";
 import { countryCodeToD5Key } from "../../data/companyDatabase";
 import { injectLayoffEvent } from "../../data/layoffNewsCache";
-import { recordScore } from "../../services/scoreDeltaService";
+import { recordScore, buildL4SnapshotFields } from "../../services/scoreDeltaService";
 import { detectCollapseStage } from "../../services/collapsePredictor";
 import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
@@ -628,6 +628,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         aiInvestmentSignal: companyData.aiInvestmentSignal ?? "medium",
         employeeCount:     companyData.employeeCount,
         revenuePerEmployee: companyData.revenuePerEmployee,
+        // v40.0 — L4 attribution: parent / GCC / peer-contagion specifics
+        // so explainDimensionDelta produces spec-exact driver text instead
+        // of generic "sector headwinds worsened".
+        ...buildL4SnapshotFields(mergedResult as any),
       },
     });
 
@@ -1303,6 +1307,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
             employeeCount:      companyData.employeeCount,
             revenuePerEmployee: companyData.revenuePerEmployee,
+            // v40.0 — L4 attribution. ensembleResult may not carry the full
+            // pipeline metadata (parentPropagation, peerContagion, indiaRiskEnrichment)
+            // — when absent the helper returns an empty object and L4 falls back
+            // to generic text. Safe degradation.
+            ...buildL4SnapshotFields(ensembleResult as any),
           },
         });
       }
