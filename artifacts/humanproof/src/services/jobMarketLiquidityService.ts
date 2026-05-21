@@ -21,6 +21,12 @@
 import type { CompanyData } from '../data/companyDatabase';
 import { resolveMetro } from '../data/techClusterMetros';
 import { getSalaryPreservationProfile } from './marketPriorityEngine';
+import {
+  resolveUSCityMarket,
+  resolveRoleCategoryKey,
+  computeCityDepthMultiplier,
+  type USCityMarketProfile,
+} from '../data/usCityMarketIntelligence';
 
 // ─── Output Types ─────────────────────────────────────────────────────────────
 
@@ -50,6 +56,21 @@ export interface JobMarketLiquidityResult {
     geoClusterActiveCuts: number;      // peer companies in same metro currently cutting
     surgeMonthsAdded: number;          // additional months added to timeline by supply surge
     surgeNarrative: string;
+  };
+  /** City-level job market intelligence — present when user's city matches a US profile.
+   *  Uses city-specific employer counts and avg placement weeks rather than national averages.
+   *  LABELED: ESTIMATED from LinkedIn Workforce Report 2024, Indeed US Hiring Lab 2024-2025. */
+  cityMarketIntelligence?: {
+    cityName: string;
+    tier: 1 | 2 | 3;
+    marketDepthScore: number;          // 0–1 relative to SF Bay Area reference
+    employerCount: number;             // active employers for this role in this city (ESTIMATED)
+    avgPlacementWeeks: number;         // median weeks from first app to offer (ESTIMATED)
+    salaryPremiumPct: number;          // % vs national median (ESTIMATED)
+    relocationPressure: string;        // 'none'|'low'|'moderate'|'high'
+    post2023FreezeAdjustment: number;  // post-freeze market depth multiplier
+    cityNarrative: string;
+    labeledAs: 'ESTIMATED';
   };
 }
 
@@ -264,9 +285,22 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
     : 0.80;
 
   // ── Factor 5: Geographic market depth (0–1) ───────────────────────────────
-  // Normalise region: "India" → "IN", "United States" → "US", etc.
+  // L9 now uses city-level employer counts and avg placement weeks for US cities
+  // instead of national averages (US=1.0 for all cities was the bug — Phoenix and
+  // SF previously received identical geoScores).
   const regionKey = normaliseRegion(region);
   const baseGeoScore = REGION_PLACEMENT_SPEED[regionKey] ?? REGION_PLACEMENT_SPEED['US'];
+
+  // US city-level depth adjustment. For non-US regions: no city data, use national avg.
+  // computeCityDepthMultiplier() folds in post-2023 hiring freeze effects.
+  const usCityProfile: USCityMarketProfile | null =
+    (regionKey === 'US') ? resolveUSCityMarket(city) : null;
+  const roleCategoryKey = resolveRoleCategoryKey(normalizedKey);
+  const cityRoleData = usCityProfile?.roles[roleCategoryKey] ?? usCityProfile?.roles['general'] ?? null;
+
+  // City depth multiplier: 0.70 (shallow/Phoenix) to 1.05 (deep/SF post-freeze).
+  // Applied to baseGeoScore before the supply-surge penalty.
+  const cityDepthMultiplier = usCityProfile ? computeCityDepthMultiplier(usCityProfile) : 1.0;
 
   // ── Factor 9: Geographic supply-surge penalty ─────────────────────────────
   // Two components:
@@ -290,8 +324,11 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
   // Dynamic surge penalty: each co-located active cut = -8% (cap at -32%)
   const dynamicSurgePenalty = Math.min(0.32, geoClusterActiveCuts * 0.08);
 
-  // Combined geo score
-  const geoScore = Math.max(0.30, baseGeoScore * (1 - staticConcentrationPenalty - dynamicSurgePenalty));
+  // Combined geo score: city depth multiplier applied first, then surge penalties.
+  // Phoenix: 1.0 × 0.782 × (1 - 0.011 - 0) = 0.773  (was 1.0 before city fix)
+  // SF Bay Area: 1.0 × 0.989 × (1 - 0.04 - 0) = 0.949 (was 0.96 before)
+  // Austin: 1.0 × 0.912 × (1 - 0.029 - 0) = 0.885
+  const geoScore = Math.max(0.30, baseGeoScore * cityDepthMultiplier * (1 - staticConcentrationPenalty - dynamicSurgePenalty));
 
   // ── METRO_REEMPLOYMENT_DELAY_WEEKS — supply surge timeline extension ─────────
   // When 2+ metro cluster members announce layoffs within 90 days, the local
@@ -365,8 +402,17 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
   // Inverse sigmoid: high liquidity → short time, low liquidity → long time.
   // Calibrated: score 80 → ~1.5 months, score 50 → ~4 months, score 20 → ~9 months.
   // surgeMonthsAdded: additional time from simultaneous co-located peer layoffs.
+  //
+  // City-level avgPlacementWeeks anchor: when US city data is available, blend
+  // the model estimate (60%) with the empirical city anchor (40%). This ensures
+  // Phoenix (~24 weeks = 5.5mo) and SF (~12 weeks = 2.8mo) produce meaningfully
+  // different timelines even before score differences are accounted for.
   const baseMonthsToReemploy = computeMonthsToReemploy(score, tenureYears);
-  const monthsToReemploy = Math.round((baseMonthsToReemploy + surgeMonthsAdded) * 2) / 2;
+  const cityAnchorMonths = cityRoleData ? cityRoleData.avgPlacementWeeks / 4.333 : null;
+  const blendedBaseMonths = cityAnchorMonths
+    ? (baseMonthsToReemploy * 0.60 + cityAnchorMonths * 0.40)
+    : baseMonthsToReemploy;
+  const monthsToReemploy = Math.round((blendedBaseMonths + surgeMonthsAdded) * 2) / 2;
 
   // ── Tier classification ───────────────────────────────────────────────────
   const tier = score >= 68 ? 'Fast'
@@ -436,8 +482,14 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
       weight: W.geo,
       label: geoScore >= 0.90 ? 'Deep Market' : geoScore >= 0.78 ? 'Good Depth' : geoScore >= 0.60 ? 'Crowded Market' : 'Supply-Surge Risk',
       detail: geoClusterActiveCuts > 0
-        ? `${metro?.metroName ?? regionKey} market: ${geoClusterActiveCuts} co-located peer company layoffs flooding local supply. `
+        ? `${metro?.metroName ?? usCityProfile?.cityName ?? regionKey} market: ${geoClusterActiveCuts} co-located peer company layoffs flooding local supply. `
           + `Static depth reduced by ${Math.round((dynamicSurgePenalty + staticConcentrationPenalty) * 100)}% — consider remote roles to escape local competition.`
+        : usCityProfile && cityRoleData
+        ? `${usCityProfile.cityName} (Tier ${usCityProfile.tier}): ~${cityRoleData.employerCount.toLocaleString()} active employers for this role, `
+          + `median ${cityRoleData.avgPlacementWeeks} weeks to offer. `
+          + (usCityProfile.relocationPressure === 'high' ? 'Many Staff+ roles require relocation or targeting remote positions. ' : '')
+          + (cityRoleData.salaryPremiumPct > 0 ? `Salary premium +${cityRoleData.salaryPremiumPct}% vs national median.` : `Salary ${Math.abs(cityRoleData.salaryPremiumPct)}% below national median.`)
+          + ' ESTIMATED from Hired.com / LinkedIn Workforce Report 2024.'
         : `${regionKey} market has ${geoScore >= 0.90 ? 'the highest' : geoScore >= 0.80 ? 'strong' : 'moderate'} employer density for this role type.`,
     },
     {
@@ -469,6 +521,20 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
         `If a wave hits, supply surge would add ${(1 * 0.75).toFixed(1)}–${(3 * 0.75).toFixed(1)} months per co-located layoff.`,
   } : undefined;
 
+  // Build city-level market intelligence object for the result
+  const cityMarketIntelligence = usCityProfile && cityRoleData ? {
+    cityName:                 usCityProfile.cityName,
+    tier:                     usCityProfile.tier,
+    marketDepthScore:         usCityProfile.marketDepthScore,
+    employerCount:            cityRoleData.employerCount,
+    avgPlacementWeeks:        cityRoleData.avgPlacementWeeks,
+    salaryPremiumPct:         cityRoleData.salaryPremiumPct,
+    relocationPressure:       usCityProfile.relocationPressure,
+    post2023FreezeAdjustment: usCityProfile.post2023FreezeAdjustment,
+    cityNarrative:            usCityProfile.marketNarrative,
+    labeledAs:                'ESTIMATED' as const,
+  } : undefined;
+
   return {
     score,
     monthsToReemploy,
@@ -481,6 +547,7 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
     marketDemandTrend,
     confidenceNote,
     geoSupplySurge,
+    cityMarketIntelligence,
   };
 }
 

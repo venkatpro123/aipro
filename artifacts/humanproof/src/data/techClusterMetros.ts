@@ -266,6 +266,31 @@ export const TECH_CLUSTER_METROS: readonly TechClusterMetro[] = [
     ],
   },
 
+  // ── Phoenix ───────────────────────────────────────────────────────────────
+  // Tier 3 US market. Intel Chandler fab is the largest employer (~15k).
+  // GoDaddy HQ + PayPal operations + smaller tech firms. Shallow for specialized
+  // engineering roles. Staff Engineers typically target remote roles or relocate.
+  // Previously MISSING from registry — caused L9 to assign US=1.0 geoScore,
+  // same as San Francisco. Corrected: concentrationScore=0.28 (vs SF 1.00).
+  {
+    metroName: 'Phoenix',
+    aliases: [
+      'phoenix', 'phoenix az', 'scottsdale', 'tempe', 'chandler az',
+      'gilbert az', 'mesa az', 'greater phoenix',
+    ],
+    region: 'US',
+    concentrationScore: 0.28,           // ~5% of SF's active employer density
+    dominantCompanies: [
+      { companyKey: 'intel',     displayName: 'Intel (Chandler fab)',      presenceMode: 'major_office', estimatedHeadcount: 15_000  },
+      { companyKey: 'godaddy',   displayName: 'GoDaddy (HQ)',              presenceMode: 'hq',           estimatedHeadcount: 2_500   },
+      { companyKey: 'paypal',    displayName: 'PayPal (operations)',        presenceMode: 'major_office', estimatedHeadcount: 2_000   },
+      { companyKey: 'amazon',    displayName: 'Amazon (fulfillment/ops)',   presenceMode: 'satellite',    estimatedHeadcount: 1_000   },
+      { companyKey: 'microsoft', displayName: 'Microsoft (Phoenix)',        presenceMode: 'satellite',    estimatedHeadcount: 800     },
+      { companyKey: 'usbank',    displayName: 'U.S. Bank Tech Center',      presenceMode: 'major_office', estimatedHeadcount: 1_500   },
+      { companyKey: 'honeywell', displayName: 'Honeywell (HQ)',             presenceMode: 'hq',           estimatedHeadcount: 8_000   },
+    ],
+  },
+
   // ── London ────────────────────────────────────────────────────────────────
   // Europe's largest tech cluster. US hyperscalers + UK FinTech unicorns.
   // Amazon, Google, Meta, Microsoft all have major EU/EMEA operations here.
