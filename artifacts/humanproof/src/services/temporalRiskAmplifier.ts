@@ -22,6 +22,93 @@ import {
   type EmploymentProtectionRegime,
 } from '../data/employmentProtectionLaw';
 
+// ─── Employment Protection Index ─────────────────────────────────────────────
+//
+// Encodes employment law strength per jurisdiction as a scalar 0–1.
+// Used to compute the adjusted displacement timeline:
+//   adjusted_timeline = base_timeline × (1 + PROTECTION_INDEX × 0.6)
+//
+// Derivation:
+//   0.10 (US)  — at-will. No mandatory notice; WARN Act applies only to very
+//                large cuts (50+). Effective protection: 0–14 days.
+//   0.35 (SG)  — Employment Act. 1–4 weeks notice by tenure. No mass-layoff advance
+//                notice. MOM retrenchment guidelines are advisory, not statutory.
+//   0.40 (CA)  — Provincial Employment Standards. 1–8 weeks (Ontario/BC). Group
+//                termination notice (CLC §212): 8–16 weeks for 50+ workers.
+//   0.45 (UK)  — ERA 1996 + TULRCA 1992. Statutory redundancy pay; 30–45 day
+//                collective consultation; 1 week/year notice (max 12 weeks).
+//   0.45 (AU)  — Fair Work Act. Redundancy pay 4–16 weeks; notice 1–4 weeks.
+//   0.55 (IN)  — IDA 1947. Chapter V-B government permission (100+ workers).
+//                Workmen: 3 months notice + retrenchment compensation. Managerial
+//                employees governed by contract (typically 1–3 months).
+//   0.65 (NL)  — Wwz. UWV permission required before dismissal notice; 1–4 months
+//                statutory notice. Transitievergoeding mandatory.
+//   0.75 (DE)  — KSchG + BetrVG. Betriebsrat consultation required on EVERY
+//                termination. Mass dismissals: BA notification (30-day wait) +
+//                Sozialplan. Notice: 4 weeks → 7 months (§622 BGB).
+//   0.80 (FR)  — Code du Travail. PSE mandatory for 10+ redundancies (50+employee
+//                companies). DREETS validation (4 months) or collective agreement
+//                (2 months). Préavis 1–3 months.
+//
+// Extension formula: extensionPct = PROTECTION_INDEX × 60
+//   Germany (0.75): 0.75 × 60 = 45% timeline extension vs at-will baseline
+//   France  (0.80): 0.80 × 60 = 48% timeline extension
+//   UK      (0.45): 0.45 × 60 = 27% timeline extension
+//   Singapore(0.35):0.35 × 60 = 21% timeline extension
+//   US      (0.10): 0.10 × 60 =  6% (near-zero; WARN Act only for large sites)
+//
+// LABELED: ESTIMATED — calibrated against documented labor law provisions.
+// Individual outcomes vary by collective agreement, tenure, company size, and
+// sector-specific regulations.
+
+export const EMPLOYMENT_PROTECTION_INDEX: Record<string, number> = {
+  // At-will baseline
+  US:  0.10,
+  // Moderate protection
+  SG:  0.35,
+  CA:  0.40,
+  UK:  0.45,
+  GB:  0.45,  // alias for UK
+  AU:  0.45,
+  // Stronger protection
+  IN:  0.55,
+  NL:  0.65,
+  // High protection (EU continental)
+  DE:  0.75,
+  AT:  0.72,  // Austria: similar Handelsregister regime to Germany
+  SE:  0.70,  // Sweden: LAS strict LIFO + MBL union negotiation
+  CH:  0.68,  // Switzerland: similar to Germany, cantonal variation
+  BE:  0.72,  // Belgium: C4/C3 dismissal docs, strong collective agreements
+  NO:  0.68,  // Norway: strong union agreements
+  DK:  0.62,  // Denmark: Flexicurity — easier to fire, generous welfare
+  FI:  0.65,  // Finland: Co-operation Act consultation
+  ES:  0.62,  // Spain: ERE procedure (30-day consultation)
+  IT:  0.68,  // Italy: CIGS temporary layoff mechanism
+  PT:  0.60,
+  PL:  0.58,
+  // Very high (France)
+  FR:  0.80,
+  // MENA / APAC
+  AE:  0.30,  // UAE: Employment Visa — 30-day grace period post-termination
+  JP:  0.65,  // Japan: lifetime employment culture; de-facto very hard to dismiss
+  KR:  0.62,  // South Korea: LBA consultation required for mass redundancy
+  CN:  0.58,  // China: Labor Contract Law — significant severance requirements
+  SG_EP: 0.35, // Singapore EP/S-Pass — same as SG for computation
+  // LatAm
+  BR:  0.55,  // Brazil: CLT — 30–90 day notice, FGTS fund
+  MX:  0.52,  // Mexico: LFT — 3 months + 20 days/year severance
+  CO:  0.48,
+  AR:  0.52,
+  // Default for unknown jurisdictions
+  DEFAULT: 0.35,  // conservative mid-point (moderate protection)
+};
+
+/** Resolve the protection index for a region code. Falls back gracefully. */
+function resolveProtectionIndex(normRegion: string): number {
+  return EMPLOYMENT_PROTECTION_INDEX[normRegion]
+    ?? EMPLOYMENT_PROTECTION_INDEX.DEFAULT;
+}
+
 // ─── Output types ─────────────────────────────────────────────────────────────
 
 export type RiskWindow =
@@ -77,6 +164,31 @@ export interface LegalTimelineResult {
   workerActions: string[];
 }
 
+/** Employment protection buffer — how much legal protection strength extends the
+ *  displacement timeline vs the at-will (US) baseline.
+ *
+ *  Formula: adjusted_timeline = base_timeline × (1 + protectionIndex × 0.6)
+ *  Extension percentage: protectionIndex × 60 (e.g. Germany 0.75 → 45%)
+ *
+ *  LABELED: ESTIMATED — computed from EMPLOYMENT_PROTECTION_INDEX which is
+ *  calibrated against published labor law provisions. */
+export interface ProtectionBufferResult {
+  /** ISO country code resolved for this computation */
+  countryCode: string;
+  /** Protection index 0–1 (0=at-will, 1=maximum protection) */
+  protectionIndex: number;
+  /** Percentage by which legal protection extends the displacement timeline
+   *  vs the at-will (US) baseline: protectionIndex × 60 */
+  timelineExtensionPct: number;
+  /** Multiplier applied to base_timeline: 1 + protectionIndex × 0.6 */
+  timelineMultiplier: number;
+  /** Concise user-facing narrative for the Transparency Tab / OverviewTab */
+  protectionNarrative: string;
+  /** True when extension is material (>10%) and warrants UI surface */
+  isMateriallyProtected: boolean;
+  readonly labeledAs: 'ESTIMATED';
+}
+
 export interface TemporalRiskResult {
   currentAmplifier: number;         // today's temporal amplifier (1.0 = flat)
   amplifiedScore: number;           // score × currentAmplifier, capped at 99
@@ -97,6 +209,9 @@ export interface TemporalRiskResult {
    *  Absent for unknown regions or US (which is the at-will baseline).
    *  LABELED: ESTIMATED — varies by collective agreement, tenure, company size. */
   legalTimeline?: LegalTimelineResult;
+  /** Employment protection buffer — extends displacement timeline by protection strength.
+   *  Always present. Extension is near-zero for US (at-will) and up to 48% for France. */
+  protectionBuffer: ProtectionBufferResult;
 }
 
 // ─── Earnings calendar for major public companies ─────────────────────────────
@@ -180,6 +295,62 @@ const INDIA_SEASONAL_PATTERNS: SeasonalPattern[] = [
     label: 'India fiscal new year (April) — fresh headcount approvals, lowest layoff probability',
   },
 ];
+
+// ─── Employment protection buffer computation ────────────────────────────────
+
+function computeProtectionBuffer(normRegion: string): ProtectionBufferResult {
+  const protectionIndex = resolveProtectionIndex(normRegion);
+  const timelineExtensionPct = Math.round(protectionIndex * 60);      // 0.75 → 45
+  const timelineMultiplier   = Math.round((1 + protectionIndex * 0.6) * 100) / 100; // 1.45
+
+  // US baseline index is 0.10 → 6% extension (near-zero)
+  // Any country above 0.20 has material protection worth surfacing
+  const isMateriallyProtected = protectionIndex > 0.20;
+
+  // Build the user-facing narrative
+  let protectionNarrative: string;
+  const countryName = getCountryNameForRegion(normRegion);
+
+  if (protectionIndex <= 0.12) {
+    protectionNarrative =
+      `${countryName} employment law provides minimal advance protection ` +
+      `(${timelineExtensionPct}% above at-will baseline). ` +
+      `Treat announcement and last day as close together unless your contract specifies otherwise.`;
+  } else if (protectionIndex <= 0.45) {
+    protectionNarrative =
+      `Legal protection buffer: ${countryName} employment law extends your effective ` +
+      `timeline by ~${timelineExtensionPct}% vs the at-will baseline. ` +
+      `Statutory notice + consultation gives you measurable preparation runway after any announcement.`;
+  } else {
+    protectionNarrative =
+      `Legal protection buffer: ${countryName} employment law extends your effective ` +
+      `timeline by ~${timelineExtensionPct}% vs the global at-will baseline. ` +
+      `Strong procedural protections (consultation, government approval, social plan obligations) ` +
+      `mean announcement and last day are separated by months — use this window actively.`;
+  }
+
+  return {
+    countryCode:           normRegion,
+    protectionIndex,
+    timelineExtensionPct,
+    timelineMultiplier,
+    protectionNarrative,
+    isMateriallyProtected,
+    labeledAs:             'ESTIMATED',
+  };
+}
+
+function getCountryNameForRegion(normRegion: string): string {
+  const NAMES: Record<string, string> = {
+    US: 'US (at-will)', GB: 'UK', DE: 'Germany', FR: 'France',
+    NL: 'Netherlands', IN: 'India', SG: 'Singapore', CA: 'Canada',
+    AU: 'Australia', JP: 'Japan', AE: 'UAE', SE: 'Sweden', IT: 'Italy',
+    ES: 'Spain', BE: 'Belgium', CH: 'Switzerland', AT: 'Austria',
+    NO: 'Norway', DK: 'Denmark', FI: 'Finland', BR: 'Brazil', MX: 'Mexico',
+    KR: 'South Korea', CN: 'China', PL: 'Poland', PT: 'Portugal', IE: 'Ireland',
+  };
+  return NAMES[normRegion] ?? normRegion;
+}
 
 // ─── Legal timeline computation ──────────────────────────────────────────────
 //
@@ -309,6 +480,10 @@ export function computeTemporalRisk(inputs: TemporalAmplifierInputs): TemporalRi
   // Uses the region already passed in (ISO country code like 'DE', 'FR', 'GB').
   const legalTimeline = computeLegalTimeline(inputs.companyData, normRegion);
 
+  // Protection buffer: EMPLOYMENT_PROTECTION_INDEX × 0.6 → timeline extension.
+  // Always computed (US gets 6%, France gets 48%). Used in OverviewTab panel.
+  const protectionBuffer = computeProtectionBuffer(normRegion);
+
   return {
     currentAmplifier: Math.round(currentAmplifier * 100) / 100,
     amplifiedScore,
@@ -321,6 +496,7 @@ export function computeTemporalRisk(inputs: TemporalAmplifierInputs): TemporalRi
     safeWindows,
     confidenceNote: buildConfidenceNote(isPublic, companyNameLower),
     legalTimeline,
+    protectionBuffer,
   };
 }
 

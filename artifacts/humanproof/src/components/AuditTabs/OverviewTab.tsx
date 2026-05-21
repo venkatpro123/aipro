@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { submitPredictionFeedback } from "@/services/scoreSyncService";
 import type { PrecisionBrief } from "@/services/scenarioNarrativeEngine";
-import type { TemporalRiskResult, LegalTimelineResult } from "@/services/temporalRiskAmplifier";
+import type { TemporalRiskResult, LegalTimelineResult, ProtectionBufferResult } from "@/services/temporalRiskAmplifier";
 import type { JobMarketLiquidityResult } from "@/services/jobMarketLiquidityService";
 import type { EscapePathReport } from "@/services/escapePathOptimizer";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
@@ -812,12 +812,91 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
           )}
         </div>
 
+        {/* Employment protection buffer — always shown when material (>10% extension) */}
+        {temporal.protectionBuffer?.isMateriallyProtected && (
+          <ProtectionBufferCard buffer={temporal.protectionBuffer} />
+        )}
+
         {/* Legal protection window — shown for non-US jurisdictions with meaningful protection */}
         {temporal.legalTimeline && temporal.legalTimeline.estimatedProtectionDays.min > 14 && (
           <LegalTimelineCard legal={temporal.legalTimeline} />
         )}
       </div>
     </motion.div>
+  );
+};
+
+// ── Protection Buffer Card ────────────────────────────────────────────────────
+// Surfaces EMPLOYMENT_PROTECTION_INDEX-derived timeline extension in a single
+// scannable card. Spec: "Legal protection buffer: Germany employment law extends
+// your effective timeline by ~45% vs the global baseline."
+// Shown for all jurisdictions with protectionIndex > 0.20 (material protection).
+const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ buffer }) => {
+  const pct = buffer.timelineExtensionPct;
+
+  // Visual accent: green gradient for high protection, amber for moderate
+  const isHighProtection = pct >= 40;
+  const accentColor    = isHighProtection ? '#10b981' : '#f59e0b';
+  const accentBg       = isHighProtection ? 'rgba(16,185,129,0.08)' : 'rgba(245,158,11,0.06)';
+  const accentBorder   = isHighProtection ? 'rgba(16,185,129,0.22)' : 'rgba(245,158,11,0.20)';
+  const accentBadgeBg  = isHighProtection ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.14)';
+
+  // Bar width proportional to protection (0–80% scale → 100% bar width at 48%)
+  const barWidth = Math.min(100, Math.round(pct / 48 * 100));
+  const usBarWidth = Math.round(6 / 48 * 100); // US 6% baseline marker
+
+  return (
+    <div className="mt-3 rounded-lg border overflow-hidden"
+      style={{ borderColor: accentBorder, background: accentBg }}>
+
+      {/* Header */}
+      <div className="px-3 py-2 flex items-center gap-2 border-b" style={{ borderColor: accentBorder }}>
+        <Shield className="w-3 h-3 flex-shrink-0" style={{ color: accentColor }} />
+        <span className="text-[9.5px] font-black uppercase tracking-[0.14em]" style={{ color: accentColor }}>
+          Legal Protection Buffer
+        </span>
+        <span className="ml-auto text-[8.5px] px-1.5 py-0.5 rounded font-bold uppercase"
+          style={{ background: accentBadgeBg, color: accentColor, border: `1px solid ${accentBorder}` }}>
+          ESTIMATED
+        </span>
+      </div>
+
+      <div className="px-3 py-2.5 space-y-2">
+        {/* Spec-exact disclosure line */}
+        <p className="text-[10.5px] font-semibold leading-snug" style={{ color: accentColor }}>
+          {buffer.protectionNarrative}
+        </p>
+
+        {/* Visual: protection bar vs US baseline */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-[8.5px] text-white/40">
+            <span>At-will baseline (US, 6%)</span>
+            <span className="font-mono">{buffer.countryCode} · +{pct}%</span>
+          </div>
+          <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            {/* Full protection bar */}
+            <div className="absolute inset-y-0 left-0 rounded-full transition-all"
+              style={{ width: `${barWidth}%`, background: accentColor, opacity: 0.75 }} />
+            {/* US baseline marker */}
+            <div className="absolute inset-y-0 rounded-full"
+              style={{ left: `${usBarWidth}%`, width: '2px', background: 'rgba(255,255,255,0.35)' }} />
+          </div>
+          <div className="flex justify-between text-[8px] text-white/30 font-mono">
+            <span>0%</span>
+            <span>+{pct}% timeline multiplier ×{buffer.timelineMultiplier.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* Key fact */}
+        <div className="flex items-center gap-1.5 text-[8.5px] text-white/50">
+          <span style={{ color: accentColor }}>›</span>
+          <span>
+            Employment protection index: <span className="font-mono text-white/70">{buffer.protectionIndex.toFixed(2)}</span>
+            {' '}(scale 0.10 at-will → 0.80 France PSE)
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };
 
