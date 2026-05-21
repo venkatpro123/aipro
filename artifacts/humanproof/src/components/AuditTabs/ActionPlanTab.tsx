@@ -583,16 +583,20 @@ export function buildDynamicActions(
         }
       } else if (resolvedMarket && resolvedMarket.hiringCompanies.length > 0) {
         // No city key — show region-specific employers (or global if no region data).
-        // resolveRegionalMarket() already chose topHiringCompaniesByRegion[region] first,
-        // then topHiringCompaniesGlobal — NEVER topHiringCompaniesIndia for non-India users.
-        const topEmployers = resolvedMarket.hiringCompanies.slice(0, 3);
+        // resolveRegionalMarket() already chose named fields / topHiringCompaniesByRegion[region]
+        // first, then topHiringCompaniesGlobal — NEVER topHiringCompaniesIndia for non-India users.
+        const topEmployers = resolvedMarket.hiringCompanies.slice(0, 5);
+        const openingCount = resolvedMarket.isRegionSpecific
+          ? `~${resolvedMarket.count.toLocaleString()} openings`
+          : null;
         const employerScope = resolvedMarket.isHiringCompaniesRegionSpecific
           ? `in ${resolvedMarket.regionLabel}`
           : 'globally';
         cityIntersectionText =
-          ` Employers hiring for ${topPath.role} ${employerScope}: ` +
-          `${joinWithAnd(topEmployers)}. ` +
-          `Add your city in Financial Context to see local opportunities.`;
+          (openingCount ? ` ${resolvedMarket.regionLabel} market: ${openingCount}.` : '') +
+          ` Top hirers ${employerScope}: ${joinWithAnd(topEmployers)}.` +
+          ` Median ${resolvedMarket.weeksToFirstInterview} weeks to first interview.` +
+          (resolvedMarket.isRegionSpecific ? '' : ' Add your city in Financial Context to see local opportunities.');
         // Append remote options when relevant (markets with limited local supply).
         if (resolvedMarket.remoteOpenings && resolvedMarket.topHiringCompaniesRemote.length > 0) {
           const remoteCount = resolvedMarket.remoteOpenings.toLocaleString();
@@ -645,7 +649,9 @@ export function buildDynamicActions(
       priority: score >= 70 ? "High" : "Medium",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: topPath.riskReduction,
-      deadline: market ? `${market.weeksToFirstInterview} weeks to first interview` : topPath.timeToTransition,
+      deadline: resolvedMarket
+        ? `${resolvedMarket.weeksToFirstInterview} weeks to first interview`
+        : market ? `${market.weeksToFirstInterview} weeks to first interview` : topPath.timeToTransition,
     });
     } // end if (!skipCareerPath)
   }
