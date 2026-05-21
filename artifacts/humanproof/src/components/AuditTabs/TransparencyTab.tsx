@@ -1847,6 +1847,65 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             </div>
           )}
 
+          {/* Filing regime quality — structural CI/confidence adjustment by domicile.
+              Filed in result.signalQuality.filingRegime (added to signalQuality spread in engine). */}
+          {(() => {
+            const regime = (result.signalQuality as any)?.filingRegime;
+            if (!regime || regime.regimeCode === 'SEC') return null;  // US baseline: no disclosure needed
+            const hasPenalty = regime.confidencePercentPenalty > 0 || regime.ciWidthPenaltyPts > 0;
+            if (!hasPenalty) return null;
+            return (
+              <div className="mb-6 p-4 rounded-xl border overflow-hidden"
+                style={{ borderColor: 'rgba(139,92,246,0.25)', background: 'rgba(139,92,246,0.05)' }}>
+                <div className="flex gap-3">
+                  <Database className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <h4 className="font-semibold text-violet-300 text-sm">
+                        Filing Regime Signal Quality
+                      </h4>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                        style={{ background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.25)' }}>
+                        ESTIMATED
+                      </span>
+                    </div>
+                    <p className="text-xs text-violet-200/80 font-semibold mb-1">
+                      {regime.label} — CI widened by +{regime.ciWidthPenaltyPts} pts, confidence reduced by {regime.confidencePercentPenalty}% vs US SEC baseline.
+                    </p>
+                    <p className="text-xs text-violet-200/60 leading-relaxed mb-2">
+                      {regime.penaltyRationale}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-[10px]">
+                      <div>
+                        <div className="text-violet-400/60 mb-0.5">Filing frequency</div>
+                        <div className="font-medium text-violet-200/80 capitalize">
+                          {regime.filingFrequency.replace('_', ' ')}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-violet-400/60 mb-0.5">Source quality</div>
+                        <div className="font-medium text-violet-200/80">
+                          {Math.round(regime.regulatorySourceQuality * 100)}% vs SEC 95%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-violet-400/60 mb-0.5">Layoff notice</div>
+                        <div className="font-medium" style={{ color: regime.hasMandatoryLayoffNotice ? '#6ee7b7' : '#fca5a5' }}>
+                          {regime.hasMandatoryLayoffNotice ? 'Mandatory' : 'None required'}
+                        </div>
+                      </div>
+                    </div>
+                    {regime.layoffNoticeNote && (
+                      <p className="text-[9px] text-violet-200/45 mt-1.5 leading-tight">
+                        {regime.layoffNoticeNote}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {(((result.signalQuality.hardFailures?.length ?? 0) > 0) ||
             ((result.signalQuality.confidenceCapsApplied?.length ?? 0) > 0)) && (
             <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200">

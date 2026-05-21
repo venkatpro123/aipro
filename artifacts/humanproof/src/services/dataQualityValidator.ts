@@ -38,6 +38,11 @@ export interface DataQualityReport {
   // Tier D: <50% fields present, fallback used → ±18 pts variance
   missingCriticalFields: string[];
   suggestedActions:      string[];
+  /** Structural data quality based on the company's domicile and listing regime.
+   *  A UK company audit has inherently wider CI than a US company at the same
+   *  freshness because Companies House is annual vs SEC quarterly event-driven.
+   *  LABELED: ESTIMATED from cross-market filing regime research. */
+  filingRegime: FilingRegimeQuality;
 }
 
 export interface IntelligentFallbacks {
@@ -106,6 +111,201 @@ const INDUSTRY_RPE_FALLBACK: Record<string, { IN: number; US: number; EU: number
   'default':            { IN: 35000,  US: 300000, EU: 250000, APAC: 180000, GLOBAL: 220000 },
 };
 
+// ── Filing regime quality — structural data quality by domicile + listing ────
+//
+// The user asks: does a UK company audit have inherently wider CI than a US
+// company at the same data freshness? YES — but the system previously didn't
+// model this. The gap is structural:
+//
+//   US SEC (baseline): Quarterly 10-Q + event-driven 8-K within 4 business
+//     days of any material event (layoffs, guidance). WARN Act gives 60-day
+//     PUBLIC notice of large workforce cuts.
+//
+//   UK Companies House: Annual reports (within 9 months of year end). No
+//     mandatory PUBLIC advance notice of redundancies. Collective consultation
+//     (TULRCA) is internal — not published until after it completes.
+//
+//   Germany GmbH (Bundesanzeiger): Annual, often delayed by months. No public
+//     layoff signal. Betriebsrat consultation is entirely internal.
+//
+//   India NSE/BSE: Quarterly SEBI filings (good) but IDA government permission
+//     is private, and layoff events are rarely pre-announced publicly.
+//
+// LABELED: ESTIMATED — penalty values derived from cross-market research on
+// filing frequency, event disclosure mandates, and data availability gaps.
+
+export interface FilingRegimeQuality {
+  regimeCode: string;
+  /** Human-readable name for the filing regime */
+  label: string;
+  /** Source confidence for regulatory filings from this domicile (0–1) */
+  regulatorySourceQuality: number;
+  /** How often material event disclosures are published */
+  filingFrequency: 'event_driven' | 'quarterly' | 'semi_annual' | 'annual';
+  /** Does this regime mandate PUBLIC advance notice of mass layoffs? */
+  hasMandatoryLayoffNotice: boolean;
+  layoffNoticeNote?: string;
+  /** Additional pts added to CI half-width vs the US SEC baseline */
+  ciWidthPenaltyPts: number;
+  /** Percentage points deducted from confidencePercent calculation */
+  confidencePercentPenalty: number;
+  /** Short rationale shown in TransparencyTab */
+  penaltyRationale: string;
+}
+
+export const FILING_REGIME_QUALITY: Record<string, FilingRegimeQuality> = {
+  // ── US SEC (baseline — zero penalty) ─────────────────────────────────────
+  SEC: {
+    regimeCode: 'SEC',
+    label: 'SEC 8-K / 10-K (US public)',
+    regulatorySourceQuality: 0.95,
+    filingFrequency: 'event_driven',
+    hasMandatoryLayoffNotice: true,
+    layoffNoticeNote: 'WARN Act: 60-day public notice for 50+ workers at sites with 100+ employees.',
+    ciWidthPenaltyPts: 0,
+    confidencePercentPenalty: 0,
+    penaltyRationale: 'Baseline: SEC event-driven 8-K filings + WARN Act provide near-real-time layoff signals.',
+  },
+  // ── US private ────────────────────────────────────────────────────────────
+  US_PRIVATE: {
+    regimeCode: 'US_PRIVATE',
+    label: 'US private company',
+    regulatorySourceQuality: 0.70,
+    filingFrequency: 'annual',
+    hasMandatoryLayoffNotice: false,
+    ciWidthPenaltyPts: 3,
+    confidencePercentPenalty: 3,
+    penaltyRationale: 'No SEC filings. US private companies have strong alternative sources (Crunchbase, Layoffs.fyi, LinkedIn) reducing penalty vs other private regimes.',
+  },
+  // ── UK public (LSE / AIM + Companies House) ───────────────────────────────
+  LSE: {
+    regimeCode: 'LSE',
+    label: 'London Stock Exchange (UK public)',
+    regulatorySourceQuality: 0.75,
+    filingFrequency: 'semi_annual',
+    hasMandatoryLayoffNotice: false,
+    layoffNoticeNote: 'TULRCA consultation (30–45 days) is internal — not published until complete. No WARN Act equivalent.',
+    ciWidthPenaltyPts: 7,
+    confidencePercentPenalty: 8,
+    penaltyRationale: 'UK filings are semi-annual (half-year report) vs US quarterly 8-K. No mandatory public layoff pre-announcement. Regulatory disclosure lag is structurally wider.',
+  },
+  // ── UK private (Companies House only) ────────────────────────────────────
+  CH_PRIVATE: {
+    regimeCode: 'CH_PRIVATE',
+    label: 'Companies House (UK private)',
+    regulatorySourceQuality: 0.55,
+    filingFrequency: 'annual',
+    hasMandatoryLayoffNotice: false,
+    ciWidthPenaltyPts: 13,
+    confidencePercentPenalty: 12,
+    penaltyRationale: 'Annual filing only (≤9 months after year-end). No stock data. No mandatory layoff notice. CI significantly wider due to structural data gap.',
+  },
+  // ── Germany public (BaFin / Deutsche Börse — AG) ──────────────────────────
+  BAFIN: {
+    regimeCode: 'BAFIN',
+    label: 'BaFin / Deutsche Börse (German public AG)',
+    regulatorySourceQuality: 0.82,
+    filingFrequency: 'quarterly',
+    hasMandatoryLayoffNotice: false,
+    layoffNoticeNote: 'Betriebsrat (Works Council) consultation is internal. §17 KSchG notification to Bundesagentur für Arbeit is administrative — not public in advance.',
+    ciWidthPenaltyPts: 5,
+    confidencePercentPenalty: 5,
+    penaltyRationale: 'Quarterly EU filings provide good data cadence, but no public layoff notice mechanism. BaFin disclosure standards slightly below SEC event-driven standard.',
+  },
+  // ── Germany private (GmbH — Bundesanzeiger) ──────────────────────────────
+  GMBH: {
+    regimeCode: 'GMBH',
+    label: 'Bundesanzeiger (German GmbH)',
+    regulatorySourceQuality: 0.52,
+    filingFrequency: 'annual',
+    hasMandatoryLayoffNotice: false,
+    ciWidthPenaltyPts: 15,
+    confidencePercentPenalty: 14,
+    penaltyRationale: 'Minimal public disclosure. Annual Bundesanzeiger filing required since 2007 but often delayed. No stock data. No public layoff signal. Widest CI among developed markets.',
+  },
+  // ── India NSE / BSE ───────────────────────────────────────────────────────
+  NSE_BSE: {
+    regimeCode: 'NSE_BSE',
+    label: 'NSE / BSE (India public)',
+    regulatorySourceQuality: 0.88,
+    filingFrequency: 'quarterly',
+    hasMandatoryLayoffNotice: false,
+    layoffNoticeNote: 'IDA Chapter V-B government permission is private (60–120 days, not publicly announced). No advance layoff notice requirement.',
+    ciWidthPenaltyPts: 3,
+    confidencePercentPenalty: 3,
+    penaltyRationale: 'Quarterly SEBI filings provide reasonable data cadence. No public layoff notice mandate reduces leading signal quality vs SEC baseline.',
+  },
+  // ── Singapore SGX ────────────────────────────────────────────────────────
+  SGX: {
+    regimeCode: 'SGX',
+    label: 'SGX (Singapore Exchange)',
+    regulatorySourceQuality: 0.83,
+    filingFrequency: 'quarterly',
+    hasMandatoryLayoffNotice: false,
+    ciWidthPenaltyPts: 5,
+    confidencePercentPenalty: 5,
+    penaltyRationale: 'SGX quarterly filings, but smaller analyst coverage and no mandatory layoff pre-announcement reduces leading signal quality.',
+  },
+  // ── EU general (Euronext, AMF, etc.) ─────────────────────────────────────
+  EU_LISTED: {
+    regimeCode: 'EU_LISTED',
+    label: 'EU-listed (Euronext / local exchange)',
+    regulatorySourceQuality: 0.80,
+    filingFrequency: 'quarterly',
+    hasMandatoryLayoffNotice: false,
+    layoffNoticeNote: 'EU varies by country. Works Council consultation is internal. No EU-wide public layoff advance notice requirement.',
+    ciWidthPenaltyPts: 6,
+    confidencePercentPenalty: 6,
+    penaltyRationale: 'EU Transparency Directive requires quarterly filings, but event-disclosure standards and layoff notice mandates lag the SEC baseline across all member states.',
+  },
+  // ── Unknown / Other ───────────────────────────────────────────────────────
+  UNKNOWN: {
+    regimeCode: 'UNKNOWN',
+    label: 'Unknown filing regime',
+    regulatorySourceQuality: 0.55,
+    filingFrequency: 'annual',
+    hasMandatoryLayoffNotice: false,
+    ciWidthPenaltyPts: 9,
+    confidencePercentPenalty: 8,
+    penaltyRationale: 'Unknown domicile — assuming annual filing cadence. CI widened for structural uncertainty.',
+  },
+};
+
+/** Resolve the filing regime quality for a given company. */
+export function resolveFilingRegime(companyData: CompanyData): FilingRegimeQuality {
+  const region   = (companyData.region   ?? '').toUpperCase().trim();
+  const isPublic = companyData.isPublic  ?? false;
+
+  // US is the calibration baseline — zero penalty
+  if (!region || region === 'US' || region === 'USA') {
+    return isPublic ? FILING_REGIME_QUALITY.SEC : FILING_REGIME_QUALITY.US_PRIVATE;
+  }
+  // UK
+  if (region === 'GB' || region === 'UK') {
+    return isPublic ? FILING_REGIME_QUALITY.LSE : FILING_REGIME_QUALITY.CH_PRIVATE;
+  }
+  // DACH — Germany, Austria, Switzerland (similar Handelsregister regime)
+  if (region === 'DE' || region === 'AT' || region === 'CH') {
+    return isPublic ? FILING_REGIME_QUALITY.BAFIN : FILING_REGIME_QUALITY.GMBH;
+  }
+  // India
+  if (region === 'IN' || region === 'INDIA') {
+    return FILING_REGIME_QUALITY.NSE_BSE;
+  }
+  // Singapore
+  if (region === 'SG') {
+    return FILING_REGIME_QUALITY.SGX;
+  }
+  // EU countries under EU Transparency Directive
+  const EU_CODES = new Set([
+    'FR', 'NL', 'SE', 'ES', 'IT', 'BE', 'DK', 'FI', 'NO', 'PT', 'PL', 'IE',
+    'CZ', 'HU', 'RO', 'LU', 'SK', 'SI', 'HR', 'EE', 'LV', 'LT', 'BG', 'GR',
+  ]);
+  if (EU_CODES.has(region)) return FILING_REGIME_QUALITY.EU_LISTED;
+
+  return FILING_REGIME_QUALITY.UNKNOWN;
+}
+
 // ── Source reliability scores ─────────────────────────────────────────────
 const SOURCE_CONFIDENCE: Record<string, number> = {
   // Live scraped sources (highest confidence — real-time observations)
@@ -137,6 +337,17 @@ const SOURCE_CONFIDENCE: Record<string, number> = {
   'Supabase Intelligence':      0.72,
   'CompanyIntelligenceDB':      0.70,
   'NASSCOM':                    0.75,
+  // UK / EU regulatory sources
+  'Companies House':            0.72,  // UK annual filings — lower cadence than SEC
+  'London Stock Exchange':      0.80,
+  'LSE':                        0.80,
+  'AIM':                        0.75,
+  'Deutsche Börse':             0.82,
+  'BaFin':                      0.82,
+  'Bundesanzeiger':             0.55,  // German GmbH annual filing
+  'Euronext':                   0.80,
+  'AMF':                        0.80,  // France Autorité des marchés financiers
+  'SGX':                        0.83,  // Singapore Exchange
   // Fallback sources (lowest confidence)
   'Fallback - Unknown Company': 0.10,
   'Fallback':                   0.20,
@@ -299,6 +510,7 @@ export function validateDataQuality(companyData: CompanyData): DataQualityReport
     reliabilityTier: tier,
     missingCriticalFields: missingCritical,
     suggestedActions,
+    filingRegime: resolveFilingRegime(companyData),
   };
 }
 

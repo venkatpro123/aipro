@@ -2547,7 +2547,11 @@ const calculateConfidencePercent = (
   const completenessPenalty = Math.round((1 - dataQuality.completeness) * 18);
   const variancePenalty = Math.max(0, dataQuality.expectedScoreVariance - 3);
   const missingCriticalPenalty = dataQuality.missingCriticalFields.length * 4;
-  let percent = base - stalenessPenalty - completenessPenalty - variancePenalty - missingCriticalPenalty;
+  // Filing regime structural penalty: UK Companies House (annual) inherently has lower
+  // signal quality than US SEC (event-driven quarterly). The same raw data freshness
+  // score cannot mean the same thing for a German GmbH vs a NASDAQ-listed company.
+  const filingRegimePenalty = dataQuality.filingRegime?.confidencePercentPenalty ?? 0;
+  let percent = base - stalenessPenalty - completenessPenalty - variancePenalty - missingCriticalPenalty - filingRegimePenalty;
 
   // Phase 3 fix: Critical staleness caps confidence to 35% — stale data cannot be high confidence
   if (dataFreshness.accuracyImpact === 'Critical') {
@@ -2615,6 +2619,13 @@ const calculateConfidenceInterval = (
     halfWidth,
     dataQuality.expectedScoreVariance + dataQuality.missingCriticalFields.length * 2,
   );
+
+  // Filing regime CI width penalty: UK/German companies have structurally lower
+  // signal quality than US SEC companies at the same data freshness. The CI must
+  // widen to reflect that Companies House annual filings cannot provide the same
+  // leading indicators as SEC 8-K event-driven disclosures.
+  const regimeCIPenaltyPts = dataQuality.filingRegime?.ciWidthPenaltyPts ?? 0;
+  halfWidth += regimeCIPenaltyPts;
 
   const low = Math.max(0, score - halfWidth);
   const high = Math.min(100, score + halfWidth);
@@ -4318,6 +4329,9 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     ],
     hasConflicts: signalQualityBase.hasConflicts || performanceCredibility.contradictions.length > 0,
     missingDataFallbacks: [...signalQualityBase.missingDataFallbacks, ...postingFallbacks],
+    // Filing regime quality surfaced here so TransparencyTab can render the structural
+    // CI/confidence disclosure without re-computing the regime from companyData.
+    filingRegime: dataQuality.filingRegime,
   };
 
   // Severity-weighted conflict penalty.
