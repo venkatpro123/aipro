@@ -10,6 +10,7 @@
 import { supabase } from '../utils/supabase';
 import { invokeEdgeFunction } from '../infrastructure/requestId';
 import type { CareerPathMarket } from './careerPathMarket';
+import { resolveRegionalMarket, type ResolvedRegionalMarket } from './careerPathMarket';
 
 export interface IntelligenceBriefResult {
   paragraphs: [string, string, string];
@@ -184,11 +185,29 @@ export function buildProfileSignature(uf: Record<string, any> | null | undefined
 /**
  * Formats the CareerPathMarket data into a structured block for the LLM prompt.
  * The LLM is instructed to cite at least one of these numbers in oneActionThisWeek.
+ *
+ * REGION-AWARE: chooses the appropriate opening count + job-board source for the
+ * user's region. For a Berlin-based audit, surfaces StepStone/XING context — not
+ * Naukri (which would be hallucinatory for a German user). When region-specific
+ * data is missing, explicitly tells the LLM to disclose that gap rather than
+ * fabricate a number.
  */
-function buildMarketContextBlock(market: CareerPathMarket): string {
+function buildMarketContextBlock(
+  market: CareerPathMarket,
+  resolved: ResolvedRegionalMarket,
+): string {
+  const sourceLine = resolved.isRegionSpecific
+    ? `Active openings (${resolved.regionLabel} — ${resolved.source}): ${resolved.count.toLocaleString()} as of ${resolved.asOf}.`
+    : `Active openings (global aggregate): ${resolved.count.toLocaleString()}. ` +
+      `REGION-SPECIFIC DATA UNAVAILABLE FOR ${resolved.regionLabel.toUpperCase()} — ` +
+      `if you cite this number, you MUST disclose that it is a global figure and ` +
+      `recommend the user verify on ${resolved.suggestedSources.slice(0, 2).join(' / ')}.`;
+
   const lines: string[] = [
     `Target role: ${market.targetRole}`,
-    `Active openings (India): ${market.indiaOpenings.toLocaleString()}`,
+    `User's market region: ${resolved.regionLabel}`,
+    `Region-appropriate job-board sources: ${resolved.suggestedSources.join(', ')}`,
+    sourceLine,
     `Hiring bar: ${market.hiringBar}`,
     `Proof of competency (what interviewers want to see): ${market.proofOfCompetency}`,
     `Time to first interview from dedicated effort: ${market.weeksToFirstInterview} weeks`,
@@ -215,12 +234,27 @@ function actionContainsNumber(action: string): boolean {
  * Generates a market-grounded fallback when the LLM response fails validation.
  * Always contains numbers from market data so users get an actionable output
  * even when the model ignores the citation instruction.
+ *
+ * REGION-AWARE: phrases the opening count using the user's actual region.
+ * A Berlin user never receives "X active openings in India" — they get
+ * StepStone/XING-attributed figures, or an explicit "global aggregate" caveat
+ * with a recommendation to verify on region-appropriate boards.
  */
-function generateGroundedFallback(market: CareerPathMarket): string {
+function generateGroundedFallback(
+  market: CareerPathMarket,
+  resolved: ResolvedRegionalMarket,
+): string {
+  const openingsClause = resolved.isRegionSpecific
+    ? `${market.targetRole} has ${resolved.count.toLocaleString()} active openings in ${resolved.regionLabel} ` +
+      `(${resolved.source}, as of ${resolved.asOf}) — the hiring bar is: ${market.hiringBar}.`
+    : `${market.targetRole} has ${resolved.count.toLocaleString()} active openings globally — ` +
+      `region-specific data for ${resolved.regionLabel} is not yet available; verify on ` +
+      `${resolved.suggestedSources.slice(0, 2).join(' / ')} before pivoting. ` +
+      `The hiring bar is: ${market.hiringBar}.`;
+
   return (
     `Build ${market.proofOfCompetency} this week and push to GitHub. ` +
-    `${market.targetRole} has ${market.indiaOpenings.toLocaleString()} active openings in India — ` +
-    `the hiring bar is: ${market.hiringBar}. ` +
+    `${openingsClause} ` +
     `${market.successRate12mPct}% of people who make this transition land a role within 12 months ` +
     `(typically ${market.weeksToFirstInterview} weeks to first interview from dedicated effort).`
   );
@@ -359,6 +393,7 @@ function mapLlmResponseToBrief(
   response: LlmAnalyzeResponse,
   modelUsed: string,
   market: CareerPathMarket | null,
+  resolvedMarket: ResolvedRegionalMarket | null,
 ): IntelligenceBriefResult {
   const urgencyRaw = (response.urgencyLevel ?? 'Moderate').toUpperCase();
   const urgency: IntelligenceBriefResult['urgencyLevel'] =
@@ -381,9 +416,9 @@ function mapLlmResponseToBrief(
     // LLM cited a number — use its response (capped at 420 chars)
     topActionThisWeek = rawAction.slice(0, 420);
     marketGrounded    = true;
-  } else if (market) {
-    // LLM failed the citation check — substitute a grounded fallback
-    topActionThisWeek = generateGroundedFallback(market).slice(0, 420);
+  } else if (market && resolvedMarket) {
+    // LLM failed the citation check — substitute a region-grounded fallback
+    topActionThisWeek = generateGroundedFallback(market, resolvedMarket).slice(0, 420);
     marketGrounded    = true;
     console.info(
       '[intelligenceBriefService] oneActionThisWeek failed number-citation check — ' +
@@ -418,6 +453,12 @@ export async function fetchIntelligenceBrief(
   hybridResult: Record<string, unknown>,
   userId: string | null,
   marketContext?: CareerPathMarket | null,
+  /** Company region — used to route market-data citation to region-appropriate
+   *  job-board sources (StepStone/XING for Germany, Reed for UK, etc.) instead
+   *  of defaulting to Naukri (India) for every user. Falls back to 'global' when
+   *  absent, which triggers the LLM to disclose "region-specific data
+   *  unavailable" rather than silently citing irrelevant numbers. */
+  companyRegion?: string | null,
 ): Promise<IntelligenceBriefResult | null> {
   const currentScore = typeof hybridResult.total === 'number' ? hybridResult.total : 0;
   const warnSignalAny = hybridResult.warnSignal as any;
@@ -440,7 +481,12 @@ export async function fetchIntelligenceBrief(
   // Call llm-analyze edge function
   try {
     const structuredContext   = buildStructuredSignalPayload(hybridResult);
-    const careerMarketContext = marketContext ? buildMarketContextBlock(marketContext) : '';
+    // Resolve region-appropriate market data BEFORE building the prompt so the
+    // LLM never sees India numbers for a Berlin user (the bug this fixes).
+    const resolvedMarket      = marketContext ? resolveRegionalMarket(marketContext, companyRegion ?? null) : null;
+    const careerMarketContext = marketContext && resolvedMarket
+      ? buildMarketContextBlock(marketContext, resolvedMarket)
+      : '';
 
     const { data, error } = await invokeEdgeFunction<any>('llm-analyze', {
       body: {
@@ -467,11 +513,19 @@ export async function fetchIntelligenceBrief(
           profileContextBlock
             ? `Frame timing constraints (visa grace period, financial runway), recommended risk posture, and resilience framing around the user profile context.`
             : '',
-          careerMarketContext
-            ? `In oneActionThisWeek, cite at least one number from the career market context provided. ` +
-              `Example: "${marketContext?.targetRole ?? 'This role'} has ${(marketContext?.indiaOpenings ?? 0).toLocaleString()} active openings in India. ` +
-              `The hiring bar is ${marketContext?.hiringBar ?? 'a demonstrated project'} — not a tutorial. ` +
-              `Build ${marketContext?.proofOfCompetency ?? 'a portfolio artifact'} this week."`
+          careerMarketContext && resolvedMarket
+            ? `In oneActionThisWeek, cite at least one number from the career market context provided ` +
+              `for the user's region (${resolvedMarket.regionLabel}). ` +
+              (resolvedMarket.isRegionSpecific
+                ? `Example: "${marketContext?.targetRole ?? 'This role'} has ${resolvedMarket.count.toLocaleString()} active openings in ${resolvedMarket.regionLabel} ` +
+                  `(source: ${resolvedMarket.source}). The hiring bar is ${marketContext?.hiringBar ?? 'a demonstrated project'} — not a tutorial. ` +
+                  `Build ${marketContext?.proofOfCompetency ?? 'a portfolio artifact'} this week."`
+                : `Example: "${marketContext?.targetRole ?? 'This role'} has ${resolvedMarket.count.toLocaleString()} active openings globally. ` +
+                  `Region-specific data for ${resolvedMarket.regionLabel} is not yet in our cache, so verify on ` +
+                  `${resolvedMarket.suggestedSources.slice(0, 2).join(' / ')} before pivoting. ` +
+                  `Build ${marketContext?.proofOfCompetency ?? 'a portfolio artifact'} this week."`) +
+              ` DO NOT cite Naukri / India numbers unless the user's region IS India.` +
+              ` DO NOT invent a region-specific number that is not in the provided market context.`
             : '',
           `CRITICAL: if a specific number, location, or date is not present in the provided data, do NOT estimate or infer it — use "data unavailable" instead. Never fabricate statistics.`,
         ].filter(Boolean).join(' '),
@@ -483,7 +537,7 @@ export async function fetchIntelligenceBrief(
       return null;
     }
 
-    const brief = mapLlmResponseToBrief(data as LlmAnalyzeResponse, data.model ?? 'llm-analyze', marketContext ?? null);
+    const brief = mapLlmResponseToBrief(data as LlmAnalyzeResponse, data.model ?? 'llm-analyze', marketContext ?? null, resolvedMarket);
 
     // Persist to cache (non-blocking) — keyed by profile_signature + cohort.
     saveToCache(userId, companyName, roleTitle, currentScore, brief, profileSignature, currentCohort).catch(() => {}); // arch-allow:R2 fire-and-forget cache-write; next call re-computes on miss

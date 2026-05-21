@@ -12,6 +12,20 @@
 // - Realistic salary delta (median, not range)
 // - Success rate for this transition (estimated from career twin data + research)
 
+/** A regional opening count tied to a specific job-board source. */
+export interface RegionalMarketOpenings {
+  /** Active opening count in this region */
+  count: number;
+  /** Primary job-board / data source for this region. Examples:
+   *  Germany → "StepStone", India → "Naukri", UK → "Reed", US → "Indeed". */
+  source: string;
+  /** ISO date string when the count was measured. Falls back to market.dataAsOf
+   *  when not provided. */
+  asOf?: string;
+  /** Optional: the data is from a live scrape (vs. research baseline). */
+  isLive?: boolean;
+}
+
 export interface CareerPathMarket {
   targetRole: string;
   /**
@@ -29,6 +43,15 @@ export interface CareerPathMarket {
   indiaOpenings: number;
   /** Estimated global openings — same staleness caveat as indiaOpenings */
   globalOpenings: number;
+  /**
+   * Region-specific openings keyed by regionKey ('germany' | 'uk' | 'usa' |
+   * 'canada' | 'singapore' | 'australia' | 'uae' | 'india' | etc.).
+   * Populated by marketIntelligenceService from the regional_openings JSONB
+   * column. When absent for a user's region, the LLM prompt falls back to
+   * globalOpenings WITH an explicit "region-specific data unavailable for
+   * {region}" disclosure — never lies that India numbers apply globally.
+   */
+  regionalOpenings?: Record<string, RegionalMarketOpenings>;
   /** Top 5 companies actively hiring for this role in India */
   topHiringCompaniesIndia: string[];
   /** Top 5 companies globally */
@@ -420,6 +443,177 @@ export function getCareerPathMarketSync(targetRole: string): CareerPathMarket | 
   }
 
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Region-aware market resolution
+// ---------------------------------------------------------------------------
+// Maps the user's audited company region to a regionKey + the appropriate
+// authoritative job-board sources. When the LLM brief is generated for a
+// Berlin-based company, the prompt should NEVER show Naukri (India) numbers
+// — it should surface StepStone / XING / Bundesagentur für Arbeit context
+// for Germany, with explicit disclosure when region-specific data is missing.
+
+export type RegionKey =
+  | 'germany' | 'uk' | 'usa' | 'canada' | 'singapore' | 'australia'
+  | 'uae' | 'saudi_arabia' | 'india' | 'france' | 'netherlands' | 'spain'
+  | 'sweden' | 'switzerland' | 'japan' | 'brazil' | 'mexico' | 'eu' | 'global';
+
+/** Authoritative job-board sources per region. The LLM cites these by name
+ *  in oneActionThisWeek so users know where to verify the count. */
+export const MARKET_DATA_SOURCES_BY_REGION: Record<RegionKey, string[]> = {
+  germany:     ['StepStone', 'XING', 'Bundesagentur für Arbeit', 'LinkedIn DE'],
+  uk:          ['Reed', 'CV-Library', 'Indeed UK', 'LinkedIn UK'],
+  usa:         ['Indeed', 'LinkedIn US', 'BLS', 'ZipRecruiter'],
+  canada:      ['Job Bank Canada', 'Indeed CA', 'LinkedIn CA', 'Workopolis'],
+  singapore:   ['JobStreet SG', 'MyCareersFuture', 'LinkedIn SG'],
+  australia:   ['SEEK', 'Indeed AU', 'LinkedIn AU'],
+  uae:         ['Bayt', 'Naukrigulf', 'GulfTalent', 'LinkedIn AE'],
+  saudi_arabia:['Bayt', 'GulfTalent', 'Naukrigulf', 'LinkedIn SA'],
+  india:       ['Naukri', 'LinkedIn IN', 'Foundit (Monster India)', 'Apna'],
+  france:      ['HelloWork', 'Pôle Emploi', 'APEC', 'LinkedIn FR'],
+  netherlands: ['NationaleVacaturebank', 'Werk.nl', 'LinkedIn NL'],
+  spain:       ['InfoJobs', 'Tecnoempleo', 'LinkedIn ES'],
+  sweden:      ['Arbetsförmedlingen', 'Monster SE', 'LinkedIn SE'],
+  switzerland: ['JobScout24', 'jobs.ch', 'LinkedIn CH'],
+  japan:       ['Doda', 'Rikunabi', 'LinkedIn JP'],
+  brazil:      ['Catho', 'Vagas.com', 'LinkedIn BR'],
+  mexico:      ['OCC Mundial', 'Computrabajo', 'LinkedIn MX'],
+  eu:          ['EURES (EU Job Mobility Portal)', 'LinkedIn EU'],
+  global:      ['LinkedIn (global)', 'Indeed (global)'],
+};
+
+/** Normalise company.region (ISO code or short name) to a regionKey. */
+const REGION_KEY_MAP: Record<string, RegionKey> = {
+  de: 'germany', deu: 'germany', germany: 'germany', berlin: 'germany',
+  gb: 'uk', uk: 'uk', gbr: 'uk', 'united kingdom': 'uk', britain: 'uk', england: 'uk',
+  us: 'usa', usa: 'usa', 'united states': 'usa', america: 'usa',
+  ca: 'canada', can: 'canada', canada: 'canada',
+  sg: 'singapore', sgp: 'singapore', singapore: 'singapore',
+  au: 'australia', aus: 'australia', australia: 'australia',
+  ae: 'uae', are: 'uae', uae: 'uae', 'united arab emirates': 'uae', dubai: 'uae', 'abu dhabi': 'uae',
+  sa: 'saudi_arabia', sau: 'saudi_arabia', 'saudi arabia': 'saudi_arabia', riyadh: 'saudi_arabia',
+  in: 'india', ind: 'india', india: 'india',
+  fr: 'france', fra: 'france', france: 'france',
+  nl: 'netherlands', nld: 'netherlands', netherlands: 'netherlands',
+  es: 'spain', esp: 'spain', spain: 'spain',
+  se: 'sweden', swe: 'sweden', sweden: 'sweden',
+  ch: 'switzerland', che: 'switzerland', switzerland: 'switzerland',
+  jp: 'japan', jpn: 'japan', japan: 'japan',
+  br: 'brazil', bra: 'brazil', brazil: 'brazil',
+  mx: 'mexico', mex: 'mexico', mexico: 'mexico',
+  // EU bucket — anything else in the Eurozone defaults to 'eu'
+  it: 'eu', ita: 'eu', italy: 'eu',
+  be: 'eu', bel: 'eu', belgium: 'eu',
+  at: 'eu', aut: 'eu', austria: 'eu',
+  ie: 'eu', irl: 'eu', ireland: 'eu',
+  pt: 'eu', prt: 'eu', portugal: 'eu',
+  fi: 'eu', fin: 'eu', finland: 'eu',
+  dk: 'eu', dnk: 'eu', denmark: 'eu',
+  pl: 'eu', pol: 'eu', poland: 'eu',
+};
+
+export function normaliseRegionKey(region: string | null | undefined): RegionKey {
+  if (!region) return 'global';
+  return REGION_KEY_MAP[region.toLowerCase().trim()] ?? 'global';
+}
+
+/** Human-readable label for a regionKey — used in LLM prompt text. */
+export function regionDisplayLabel(rk: RegionKey): string {
+  switch (rk) {
+    case 'germany':      return 'Germany';
+    case 'uk':           return 'United Kingdom';
+    case 'usa':          return 'United States';
+    case 'canada':       return 'Canada';
+    case 'singapore':    return 'Singapore';
+    case 'australia':    return 'Australia';
+    case 'uae':          return 'UAE';
+    case 'saudi_arabia': return 'Saudi Arabia';
+    case 'india':        return 'India';
+    case 'france':       return 'France';
+    case 'netherlands':  return 'Netherlands';
+    case 'spain':        return 'Spain';
+    case 'sweden':       return 'Sweden';
+    case 'switzerland':  return 'Switzerland';
+    case 'japan':        return 'Japan';
+    case 'brazil':       return 'Brazil';
+    case 'mexico':       return 'Mexico';
+    case 'eu':           return 'EU';
+    case 'global':       return 'global';
+  }
+}
+
+export interface ResolvedRegionalMarket {
+  regionKey: RegionKey;
+  regionLabel: string;
+  count: number;
+  source: string;
+  /** Suggested sources for this region (used in fallback narrative when
+   *  region-specific data is unavailable — directs users where to verify). */
+  suggestedSources: string[];
+  asOf: string;
+  /** true when the resolved market data is actually region-specific (from
+   *  regionalOpenings[regionKey] OR indiaOpenings for an India user).
+   *  false when we fell back to globalOpenings — the LLM is then instructed
+   *  to disclose "region-specific data unavailable for {regionLabel}". */
+  isRegionSpecific: boolean;
+}
+
+/**
+ * Resolve the appropriate market opening count + source for a user's region.
+ *
+ * Resolution order:
+ *   1. market.regionalOpenings[regionKey] (live-cached or seeded per-region)
+ *   2. market.indiaOpenings → ONLY when regionKey === 'india' (the legacy field
+ *      is implicitly India-scoped — using it for any other region would be
+ *      the exact bug this resolver exists to prevent).
+ *   3. market.globalOpenings with isRegionSpecific=false — the LLM must
+ *      then disclose that region-specific data is unavailable.
+ */
+export function resolveRegionalMarket(
+  market: CareerPathMarket,
+  region: string | null | undefined,
+): ResolvedRegionalMarket {
+  const regionKey   = normaliseRegionKey(region);
+  const regionLabel = regionDisplayLabel(regionKey);
+  const suggestedSources = MARKET_DATA_SOURCES_BY_REGION[regionKey];
+
+  const regional = market.regionalOpenings?.[regionKey];
+  if (regional && regional.count > 0) {
+    return {
+      regionKey,
+      regionLabel,
+      count:            regional.count,
+      source:           regional.source,
+      suggestedSources,
+      asOf:             regional.asOf ?? market.dataAsOf,
+      isRegionSpecific: true,
+    };
+  }
+
+  // India is the only region whose data is implicit in the legacy field.
+  if (regionKey === 'india' && market.indiaOpenings > 0) {
+    return {
+      regionKey,
+      regionLabel,
+      count:            market.indiaOpenings,
+      source:           'Naukri',
+      suggestedSources,
+      asOf:             market.dataAsOf,
+      isRegionSpecific: true,
+    };
+  }
+
+  // Fallback: global aggregate, explicitly flagged so the prompt discloses it.
+  return {
+    regionKey,
+    regionLabel,
+    count:            market.globalOpenings,
+    source:           'global aggregate',
+    suggestedSources,
+    asOf:             market.dataAsOf,
+    isRegionSpecific: false,
+  };
 }
 
 export function formatDemandTrendLabel(trend: CareerPathMarket['demandTrend']): string {

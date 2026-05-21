@@ -3108,6 +3108,11 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         hybridResult as unknown as Record<string, unknown>,
         userId,
         marketContext,
+        // v40.0: company region routes market-data citation to region-appropriate
+        // job-board sources (StepStone/XING/Reed/etc.) instead of defaulting to
+        // Naukri for every user. Without this, a Berlin audit would prompt the
+        // LLM with India numbers and either hallucinate or trigger Tier B fallback.
+        companyData.region,
       ),
     )
     .then((brief) => {

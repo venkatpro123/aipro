@@ -24,6 +24,16 @@ interface MarketCacheRow {
   role_key:              string;
   india_openings:        number | null;
   global_openings:       number | null;
+  /** Per-region openings + sources (v40.0 — added by migration 20260520000001).
+   *  Shape: { germany: { count: 1200, source: 'StepStone', asOf: '2026-03-15', isLive: true }, ... }
+   *  Eliminates the bug where Berlin users had Naukri (India) data injected into
+   *  their LLM brief prompt. */
+  regional_openings:     Record<string, {
+    count:    number;
+    source:   string;
+    asOf?:    string;
+    isLive?:  boolean;
+  }> | null;
   demand_trend:          'surging' | 'growing' | 'stable' | 'contracting' | null;
   top_companies_india:   string[] | null;
   top_companies_global:  string[] | null;
@@ -193,6 +203,7 @@ function rowToPartialMarket(row: MarketCacheRow): Partial<CareerPathMarket> {
 
   if (row.india_openings   != null) partial.indiaOpenings       = row.india_openings;
   if (row.global_openings  != null) partial.globalOpenings      = row.global_openings;
+  if (row.regional_openings != null) partial.regionalOpenings   = row.regional_openings;
   if (row.demand_trend     != null) partial.demandTrend         = row.demand_trend;
   if (row.top_companies_india  != null) partial.topHiringCompaniesIndia  = row.top_companies_india;
   if (row.top_companies_global != null) partial.topHiringCompaniesGlobal = row.top_companies_global;
