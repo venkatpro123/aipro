@@ -11,6 +11,7 @@ import { supabase } from '../utils/supabase';
 import { invokeEdgeFunction } from '../infrastructure/requestId';
 import type { CareerPathMarket } from './careerPathMarket';
 import { resolveRegionalMarket, type ResolvedRegionalMarket } from './careerPathMarket';
+import { buildRegionalLlmContext, type RegionalLlmContextResult } from './regionalLlmContext';
 
 export interface IntelligenceBriefResult {
   paragraphs: [string, string, string];
@@ -487,6 +488,17 @@ export async function fetchIntelligenceBrief(
     const careerMarketContext = marketContext && resolvedMarket
       ? buildMarketContextBlock(marketContext, resolvedMarket)
       : '';
+    // v40.0 Phase 25 — region-aware labor-market context block. Injects
+    // market-appropriate signals (Naukri+NASSCOM+EPFO for India, BLS+WARN for US,
+    // DWP+ONS for UK, IAB+Betriebsrat for Germany, MOM+EP for Singapore,
+    // StatsCan+LMIA for Canada) and statutory labor-law bridges.
+    const regionalContext: RegionalLlmContextResult = buildRegionalLlmContext(
+      companyRegion,
+      marketContext ?? null,
+      resolvedMarket,
+      hybridResult,
+      null,
+    );
 
     const { data, error } = await invokeEdgeFunction<any>('llm-analyze', {
       body: {
@@ -506,6 +518,10 @@ export async function fetchIntelligenceBrief(
         // these numbers in oneActionThisWeek. Validated in mapLlmResponseToBrief;
         // a fallback is generated if the LLM ignores the instruction.
         careerMarketContext,
+        // v40.0 Phase 25: region-aware market signals + statutory labor-law bridge.
+        // The LLM uses this to ground action recommendations in region-appropriate
+        // sources (StepStone/IAB for DE, Naukri/NASSCOM for IN, BLS/WARN for US, etc.).
+        regionalMarketContext: regionalContext.text,
         analysisInstructions: [
           structuredContext
             ? `Be specific: use exact numbers and signal names from structuredContext. Name the cohort and explain why. List 1–2 specific vulnerable signals and 1–2 protective signals. Avoid generic phrases like "multiple risk factors identified".`
@@ -514,8 +530,10 @@ export async function fetchIntelligenceBrief(
             ? `Frame timing constraints (visa grace period, financial runway), recommended risk posture, and resilience framing around the user profile context.`
             : '',
           careerMarketContext && resolvedMarket
-            ? `In oneActionThisWeek, cite at least one number from the career market context provided ` +
+            ? `In oneActionThisWeek, cite at least one number from the REGION-APPROPRIATE market context provided ` +
               `for the user's region (${resolvedMarket.regionLabel}). ` +
+              `The primary required source for this region is ${regionalContext.primaryRequiredSource}; ` +
+              `acceptable alternatives: ${regionalContext.suggestedSources.slice(1, 3).join(' / ')}. ` +
               (resolvedMarket.isRegionSpecific
                 ? `Example: "${marketContext?.targetRole ?? 'This role'} has ${resolvedMarket.count.toLocaleString()} active openings in ${resolvedMarket.regionLabel} ` +
                   `(source: ${resolvedMarket.source}). The hiring bar is ${marketContext?.hiringBar ?? 'a demonstrated project'} — not a tutorial. ` +
@@ -524,8 +542,23 @@ export async function fetchIntelligenceBrief(
                   `Region-specific data for ${resolvedMarket.regionLabel} is not yet in our cache, so verify on ` +
                   `${resolvedMarket.suggestedSources.slice(0, 2).join(' / ')} before pivoting. ` +
                   `Build ${marketContext?.proofOfCompetency ?? 'a portfolio artifact'} this week."`) +
-              ` DO NOT cite Naukri / India numbers unless the user's region IS India.` +
-              ` DO NOT invent a region-specific number that is not in the provided market context.`
+              ` CRITICAL ROUTING RULES:` +
+              ` (1) DO NOT cite Naukri or NASSCOM numbers unless the user's region IS India.` +
+              ` (2) DO NOT cite BLS / WARN Act / LinkedIn US metro numbers unless the user's region IS the United States.` +
+              ` (3) DO NOT cite StepStone / IAB / Betriebsrat / Blue Card numbers unless the user's region IS Germany.` +
+              ` (4) DO NOT cite DWP / ONS / Reed numbers unless the user's region IS the United Kingdom.` +
+              ` (5) DO NOT cite MOM / JobStreet SG / EP-pass numbers unless the user's region IS Singapore.` +
+              ` (6) DO NOT cite Job Bank Canada / StatsCan / LMIA numbers unless the user's region IS Canada.` +
+              ` (7) DO NOT invent a region-specific number that is not in the provided market context.` +
+              ` If the user's region is uncovered by the provided market block, cite the global aggregate WITH explicit disclosure that region-specific data is unavailable.`
+            : '',
+          // v40.0 Phase 25 — explicit regional context instruction. The block is
+          // already in `regionalMarketContext`; this tells the LLM what to do with it.
+          regionalContext.text
+            ? `REGIONAL CONTEXT: A region-aware signal block is provided in regionalMarketContext. ` +
+              `For ${regionalContext.regionLabel} users you may cite: ${regionalContext.suggestedSources.join(', ')}. ` +
+              `Additionally surface the statutory labor-law bridge in the brief's prose where relevant ` +
+              `(post-termination rights, consultation timeline, work-permit grace period) — these change the user's available decision window materially.`
             : '',
           `CRITICAL: if a specific number, location, or date is not present in the provided data, do NOT estimate or infer it — use "data unavailable" instead. Never fabricate statistics.`,
         ].filter(Boolean).join(' '),

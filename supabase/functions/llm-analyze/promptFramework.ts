@@ -52,6 +52,15 @@ export interface NormalizedAnalyzeRequest {
     hasKeyRelationships: boolean;
   };
   historicalPatternCandidates: string | null;
+  // v40.0 Phase 25 — extra context blocks built client-side and threaded through
+  // to the LLM prompt. Previously dropped silently; without them the carefully-
+  // constructed market + profile + structured signal prompts never reached the
+  // model and Tier B fallbacks were forced. Each is optional; absent = empty.
+  careerMarketContext: string | null;
+  regionalMarketContext: string | null;
+  userProfileContext: string | null;
+  structuredContext: string | null;
+  analysisInstructions: string | null;
   responseFormat: {
     questions: CanonicalQuestionKey[];
     questionMinWords: Record<CanonicalQuestionKey, number>;
@@ -279,6 +288,14 @@ export function normalizeAnalyzeRequest(raw: unknown): NormalizedAnalyzeRequest 
     historicalPatternCandidates: obj.historicalPatternCandidates == null
       ? null
       : toString(obj.historicalPatternCandidates),
+    // v40.0 Phase 25 — capture the rich context blocks the client builds.
+    // Without these the model received only signal_snapshot + engine_breakdown
+    // and the careful market/profile/regional instructions were silently dropped.
+    careerMarketContext:    obj.careerMarketContext == null    ? null : toString(obj.careerMarketContext),
+    regionalMarketContext:  obj.regionalMarketContext == null  ? null : toString(obj.regionalMarketContext),
+    userProfileContext:     obj.userProfileContext == null     ? null : toString(obj.userProfileContext),
+    structuredContext:      obj.structuredContext == null      ? null : toString(obj.structuredContext),
+    analysisInstructions:   obj.analysisInstructions == null   ? null : toString(obj.analysisInstructions),
     responseFormat,
   };
 }
@@ -389,7 +406,10 @@ function buildResponseSchema(req: NormalizedAnalyzeRequest, urgencyLevel: string
 function computeMaxTokens(minWords: Record<CanonicalQuestionKey, number>): number {
   const totalMinWords = CANONICAL_QUESTIONS.reduce((sum, key) => sum + minWords[key], 0);
   const estimatedTokens = Math.ceil(totalMinWords * 1.8) + 180;
-  return Math.max(700, Math.min(1500, estimatedTokens));
+  // v40.0 Phase 25 — raised ceiling to 1800 to accommodate the richer prompt
+  // (profile + structured + career market + regional + analysis instructions).
+  // The OUTPUT length is still gated by minWords; only the headroom changes.
+  return Math.max(700, Math.min(1800, estimatedTokens));
 }
 
 export function buildPromptPackage(req: NormalizedAnalyzeRequest): PromptPackage {
@@ -402,16 +422,39 @@ export function buildPromptPackage(req: NormalizedAnalyzeRequest): PromptPackage
     'Every sentence must map to the supplied evidence. Never invent company facts, job openings, market shifts, or pattern IDs.',
   ];
 
-  const userSegments = [
+  const userSegments: string[] = [
     `QUESTION PRIORITY: ${req.responseFormat.questions.join(', ')}`,
     req.responseFormat.priorityInstruction || 'Follow the canonical question order and meet every minimum word count.',
     `USER PROFILE\n${buildUserProfile(req)}`,
+  ];
+
+  // v40.0 Phase 25 — inject the rich client-built context blocks IF present.
+  // Order matters: profile context → structured signals → career market →
+  // region-specific market block. The LLM reads top-to-bottom, so the most
+  // user-specific (profile) lands closest to the QUESTION PRIORITY block.
+  if (req.userProfileContext) {
+    userSegments.push(`USER PROFILE CONTEXT\n${req.userProfileContext}`);
+  }
+  if (req.structuredContext) {
+    userSegments.push(`GROUND TRUTH SIGNALS\n${req.structuredContext}`);
+  }
+  if (req.careerMarketContext) {
+    userSegments.push(`CAREER MARKET CONTEXT\n${req.careerMarketContext}`);
+  }
+  if (req.regionalMarketContext) {
+    userSegments.push(`REGION-AWARE MARKET CONTEXT\n${req.regionalMarketContext}`);
+  }
+  if (req.analysisInstructions) {
+    userSegments.push(`ANALYSIS INSTRUCTIONS\n${req.analysisInstructions}`);
+  }
+
+  userSegments.push(
     `SIGNAL SNAPSHOT\n${buildSignalSummary(req)}`,
     `DATA QUALITY\n${dataQualityDirective}`,
     `ACTION FRAMEWORK\n${buildActionFramework(req, calibration.urgencyLevel)}`,
     `HISTORICAL PATTERN RESOLUTION\n${buildPatternDirective(req.historicalPatternCandidates)}`,
     buildResponseSchema(req, calibration.urgencyLevel),
-  ];
+  );
 
   return {
     systemPrompt: systemSegments.join(' '),
