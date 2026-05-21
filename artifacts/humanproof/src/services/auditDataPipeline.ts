@@ -701,6 +701,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       _timer,
       inputs.roleTitle ?? 'Software Engineer',
       inputs.industry ?? undefined,
+      undefined,                        // isUnknownCompany: resolved below post-EF
+      inputs.country,                   // region: drives Google News locale + APAC feed selection
     ).catch((err: unknown) => {
       console.warn('[AuditPipeline] Concurrent live scraping failed:', err);
       return null;

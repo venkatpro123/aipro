@@ -36,11 +36,22 @@ const CORS = { 'Content-Type': 'application/json' };
 // The scan will also fetch the top 50 companies from company_intelligence
 // dynamically on each run.
 const ALWAYS_WATCH = [
+  // India IT majors
   'Tata Consultancy Services', 'TCS',
   'Infosys', 'Wipro', 'HCL Technologies', 'Tech Mahindra', 'LTIMindtree',
+  // US big tech
   'Accenture', 'IBM', 'Google', 'Meta', 'Amazon', 'Microsoft', 'Apple',
   'Oracle', 'Salesforce', 'Spotify', 'Snap', 'Twitter', 'X',
+  // India unicorns
   'Byju\'s', 'Paytm', 'Ola', 'Swiggy', 'Zomato',
+  // Singapore / Southeast Asia tech — previously missing; primary SG layoff sources
+  // (TechInAsia, CNA, e27) break these 4-8h before global tech press
+  'Grab', 'Sea Limited', 'Shopee', 'Lazada', 'GoTo', 'Gojek', 'Tokopedia',
+  'Singtel', 'DBS', 'OCBC', 'UOB', 'StarHub', 'M1', 'Keppel',
+  'Razer', 'Carousell', 'PropertyGuru', 'Ninja Van', 'Funding Societies',
+  // APAC broader
+  'Canva', 'Atlassian', 'Afterpay', 'Seek', 'REA Group',  // Australia
+  'Shopify', 'Hootsuite', 'Wealthsimple',                  // Canada
 ];
 
 const LAYOFF_KEYWORDS = [
@@ -51,12 +62,19 @@ const LAYOFF_KEYWORDS = [
 
 const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 const RSS_FEEDS = [
+  // India — primary sources for Indian tech layoffs
   'https://economictimes.indiatimes.com/tech/tech-bytes/rssfeeds/78570561.cms',
   'https://economictimes.indiatimes.com/industry/services/it/rssfeeds/13358151.cms',
   'https://www.livemint.com/rss/technology',
   'https://www.moneycontrol.com/rss/business.xml',
   'https://inc42.com/feed/',
-  // Global tech
+  // Singapore / Southeast Asia — previously absent; TechInAsia and CNA break
+  // Singapore layoffs 4-8h before TechCrunch reaches them
+  'https://www.techinasia.com/feed',                              // TechInAsia — primary SG/SEA tech news
+  'https://www.channelnewsasia.com/rssfeeds/8395986',             // CNA Business/Tech — Singapore broadcast news
+  'https://e27.co/feed/',                                         // e27 — Singapore startup ecosystem
+  // APAC + Global tech
+  'https://feeds.reuters.com/reuters/technologyNews',             // Reuters Tech — fast on APAC + global
   'https://techcrunch.com/category/layoffs/feed/',
   'https://feeds.feedburner.com/TechCrunch',
 ];
@@ -184,6 +202,10 @@ serve(async (req) => {
       : url.includes('livemint') ? 'Livemint'
       : url.includes('moneycontrol') ? 'Moneycontrol'
       : url.includes('inc42') ? 'Inc42'
+      : url.includes('techinasia') ? 'TechInAsia'
+      : url.includes('channelnewsasia') ? 'CNA Business'
+      : url.includes('e27.co') ? 'e27'
+      : url.includes('reuters') ? 'Reuters'
       : 'TechCrunch')),
     // HN search for top watched companies (limit to avoid Algolia rate limits)
     ...watchList.slice(0, 10).map(c => fetchHN(c)),
@@ -217,7 +239,8 @@ serve(async (req) => {
       item.source === 'SEC EDGAR' || item.source === 'WARN Act'
         ? 'high'
         : item.source === 'Economic Times' || item.source === 'Moneycontrol' ||
-          item.source === 'Bloomberg' || item.source === 'Reuters'
+          item.source === 'Bloomberg' || item.source === 'Reuters' ||
+          item.source === 'TechInAsia' || item.source === 'CNA Business'
         ? 'medium'
         : 'low';
 

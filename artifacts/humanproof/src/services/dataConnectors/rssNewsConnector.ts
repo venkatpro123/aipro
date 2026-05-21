@@ -52,9 +52,26 @@ export interface NewsSummary {
 
 const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
-// Google News RSS: company-targeted, no API key, publically accessible.
-function googleNewsRssUrl(company: string): string {
-  return `https://news.google.com/rss/search?q=${encodeURIComponent(company + ' layoff OR restructuring OR job cut')}&hl=en-IN&gl=IN&ceid=IN:en`;
+// Google News locale table — maps our internal region keys to Google News gl/hl/ceid params.
+// Previously hardcoded to gl=IN for all companies, meaning Singapore/UK/EU queries ran
+// through India's Google News index and de-prioritized TechInAsia, CNA, e27, etc.
+const GOOGLE_NEWS_LOCALE: Record<string, { hl: string; gl: string; ceid: string }> = {
+  IN:   { hl: 'en-IN', gl: 'IN', ceid: 'IN:en' },
+  SG:   { hl: 'en-SG', gl: 'SG', ceid: 'SG:en' },
+  UK:   { hl: 'en-GB', gl: 'GB', ceid: 'GB:en' },
+  AU:   { hl: 'en-AU', gl: 'AU', ceid: 'AU:en' },
+  CA:   { hl: 'en-CA', gl: 'CA', ceid: 'CA:en' },
+  DE:   { hl: 'de',    gl: 'DE', ceid: 'DE:de' },
+  FR:   { hl: 'fr',    gl: 'FR', ceid: 'FR:fr' },
+  AE:   { hl: 'en-AE', gl: 'AE', ceid: 'AE:en' },
+  US:   { hl: 'en-US', gl: 'US', ceid: 'US:en' },
+};
+const DEFAULT_GOOGLE_LOCALE = { hl: 'en', gl: 'US', ceid: 'US:en' };
+
+// Google News RSS: company-targeted, no API key, region-aware.
+function googleNewsRssUrl(company: string, region?: string): string {
+  const loc = (region && GOOGLE_NEWS_LOCALE[region]) ?? DEFAULT_GOOGLE_LOCALE;
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(company + ' layoff OR restructuring OR job cut')}&hl=${loc.hl}&gl=${loc.gl}&ceid=${loc.ceid}`;
 }
 
 // Bing News RSS: no API key, company-targeted
@@ -66,6 +83,16 @@ function bingNewsRssUrl(company: string): string {
 function yahooFinanceRssUrl(ticker: string): string {
   return `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
 }
+
+// APAC/Singapore-specific static feeds — TechInAsia, CNA Business, e27.
+// These are the primary sources that break Singapore tech layoffs 4-8 hours
+// before they reach global English press (TechCrunch, Reuters global).
+const APAC_STATIC_FEEDS = {
+  techInAsia:  'https://www.techinasia.com/feed',
+  cnaBusinessTech: 'https://www.channelnewsasia.com/rssfeeds/8395986',
+  e27:         'https://e27.co/feed/',
+  reutersAsia: 'https://feeds.reuters.com/reuters/technologyNews',
+};
 
 const STATIC_FEEDS = {
   economicTimes: 'https://economictimes.indiatimes.com/tech/tech-bytes/rssfeeds/78570561.cms',
@@ -148,9 +175,9 @@ async function fetchRSSViaProxy(url: string): Promise<any[]> {
 }
 
 // Direct Google News RSS fetch (no proxy needed — Google News allows CORS GET)
-async function fetchGoogleNewsRSS(company: string): Promise<any[]> {
+async function fetchGoogleNewsRSS(company: string, region?: string): Promise<any[]> {
   try {
-    const url = googleNewsRssUrl(company);
+    const url = googleNewsRssUrl(company, region);
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return [];
     const text = await res.text();
@@ -281,11 +308,15 @@ async function fetchHNMentions(company: string): Promise<NewsSignal[]> {
 
 /**
  * fetchCompanyNewsSignals — scraping-first, no API key required.
- * Sources: Google News RSS + Bing News RSS + Yahoo Finance RSS (if ticker) +
+ * Sources: Google News RSS (region-aware) + Bing News RSS + Yahoo Finance RSS (if ticker) +
  *          Reddit JSON + Economic Times RSS + Hacker News Algolia API.
+ * For SG/AU/APAC: additionally polls TechInAsia, CNA Business, e27, Reuters Asia.
  * All sources are free-tier with no daily quotas.
+ *
+ * @param region  Optional ISO region code (SG, IN, UK, AU, DE, CA, US, …).
+ *                Controls Google News geo-locale and whether APAC feeds are included.
  */
-export async function fetchCompanyNewsSignals(company: string, ticker?: string): Promise<NewsSummary> {
+export async function fetchCompanyNewsSignals(company: string, ticker?: string, region?: string): Promise<NewsSummary> {
   const emptyResult: NewsSummary = {
     company, signals: [], negativeCount: 0, layoffSignalCount: 0,
     sentimentScore: 0, fetchedAt: new Date().toISOString(),
@@ -293,15 +324,26 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string):
   try {
     const companyLower = company.toLowerCase();
 
-    // Launch all scraped sources concurrently — no API keys, no quotas
+    const isApac = region === 'SG' || region === 'AU' || region === 'MY' || region === 'ID' || region === 'PH';
+    const isIndia = region === 'IN';
+
+    // Launch all scraped sources concurrently — no API keys, no quotas.
+    // APAC companies additionally poll TechInAsia, CNA Business, e27, Reuters Asia
+    // because these sources break Singapore/SEA layoffs 4-8h before TechCrunch.
     const fetches: Promise<any>[] = [
-      fetchRSSViaProxy(STATIC_FEEDS.economicTimes),  // 0: Economic Times
-      fetchGoogleNewsRSS(company),                    // 1: Google News
+      isIndia || !region ? fetchRSSViaProxy(STATIC_FEEDS.economicTimes) : Promise.resolve([]),  // 0: ET (India only)
+      fetchGoogleNewsRSS(company, region),            // 1: Google News (region-aware)
       fetchHNMentions(company),                       // 2: Hacker News
       fetchBingNewsRSS(company),                      // 3: Bing News
       fetchRedditMentions(company),                   // 4: Reddit
     ];
     if (ticker) fetches.push(fetchYahooFinanceRSS(ticker)); // 5: Yahoo Finance RSS (ticker-only)
+    if (isApac) {
+      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.techInAsia));   // 6: TechInAsia
+      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.cnaBusinessTech)); // 7: CNA Business
+      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.e27));          // 8: e27
+      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.reutersAsia));  // 9: Reuters Asia
+    }
 
     const settled = await Promise.allSettled(fetches);
     const [etItems, gnItems, hnSignals, bingItems, redditSignals] = [
@@ -312,6 +354,10 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string):
       settled[4].status === 'fulfilled' ? settled[4].value : [] as NewsSignal[],
     ];
     const yfItems = ticker && settled[5]?.status === 'fulfilled' ? settled[5].value as any[] : [];
+    // APAC supplemental feeds (indices 6-9, only populated when isApac)
+    const apacItems: any[] = isApac
+      ? [6, 7, 8, 9].flatMap(i => settled[i]?.status === 'fulfilled' ? settled[i].value : [])
+      : [];
 
     const seenUrls = new Set<string>();
     const seenFingerprints = new Set<string>();
@@ -371,6 +417,22 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string):
     // Process Yahoo Finance RSS items (already company-specific via ticker)
     for (const item of yfItems) {
       const sig = processItem(item, 'Yahoo Finance');
+      if (sig) allSignals.push(sig);
+    }
+
+    // Process APAC supplemental items (TechInAsia, CNA, e27, Reuters Asia)
+    const APAC_SOURCE_NAMES = ['TechInAsia', 'CNA Business', 'e27', 'Reuters Asia'];
+    for (let i = 0; i < apacItems.length; i++) {
+      const item = apacItems[i];
+      // Source name not available per-item since they're mixed from 4 feeds;
+      // label by best-guess domain from link, fallback to 'APAC Press'.
+      const link = String(item.link ?? item.url ?? '');
+      const sourceName = link.includes('techinasia') ? 'TechInAsia'
+        : link.includes('channelnewsasia') ? 'CNA Business'
+        : link.includes('e27') ? 'e27'
+        : link.includes('reuters') ? 'Reuters Asia'
+        : 'APAC Press';
+      const sig = processItem(item, sourceName);
       if (sig) allSignals.push(sig);
     }
 

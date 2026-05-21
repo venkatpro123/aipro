@@ -77,6 +77,7 @@ export async function enrichCompanySignals(
   companyName: string,
   roleTitle: string,
   industry: string,
+  region?: string,
 ): Promise<EnrichedCompanySignals> {
   const sourcesUsed: string[] = [];
 
@@ -99,7 +100,7 @@ export async function enrichCompanySignals(
     getCompanyLayoffs(companyName),        // 1: layoffData
     fetchMCACompanyInfo(companyName),      // 2: mcaData
     fetchRoleDemandSignal(roleTitle, companyName), // 3: roleData
-    fetchCompanyNewsSignals(companyName),  // 4: newsData
+    fetchCompanyNewsSignals(companyName, undefined, region),  // 4: newsData
     fetchIndiaPressSignals(companyName),   // 5: indiaPressData
     fetchSecEdgar8KSignals(companyName),   // 6: secData
     fetchWarnNotices(companyName),         // 7: warnData

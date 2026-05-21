@@ -58,6 +58,21 @@ const BREAKING_FEEDS = [
     url: 'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms',
     region: 'IN' as const,
   },
+  {
+    name: 'TechInAsia',
+    url: 'https://www.techinasia.com/feed',
+    region: 'SG' as const,
+  },
+  {
+    name: 'CNA Business',
+    url: 'https://www.channelnewsasia.com/rssfeeds/8395986',
+    region: 'SG' as const,
+  },
+  {
+    name: 'Reuters Tech',
+    url: 'https://feeds.reuters.com/reuters/technologyNews',
+    region: 'GLOBAL' as const,
+  },
 ];
 
 // ── Keyword detection ──────────────────────────────────────────────────────
@@ -242,7 +257,7 @@ export interface BreakingNewsMatch {
   /** True when the match contains a spec-exact primary keyword (layoff/cut/reduce workforce). */
   isPrimaryKeyword:  boolean;
   /** Which feed region the match came from. */
-  feedRegion:        'US' | 'IN';
+  feedRegion:        'US' | 'IN' | 'SG' | 'UK' | 'EU' | 'APAC' | 'GLOBAL';
   /** True when this match came from circuit breaker cache (rss2json OPEN). */
   fromCircuitBreaker: boolean;
   /** Unix ms timestamp of when the cached item was fetched. Null when live. */

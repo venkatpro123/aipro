@@ -408,6 +408,7 @@ export const fetchLiveCompanyData = async (
   roleTitle?: string,
   industry?: string,
   isUnknownCompany?: boolean,
+  region?: string,
 ): Promise<LiveDataResult> => {
   const errors: string[] = [];
   let liveCount = 0;
@@ -784,7 +785,7 @@ export const fetchLiveCompanyData = async (
     // Pass roleTitle so Naukri/Serper can fetch role-specific opening counts.
     // Pass industry so getSectorLayoffCount returns meaningful peer-company signals.
     // Previously both were '', making hiring always heuristic and sector count always 0.
-    connectorSignals = await enrichCompanySignals(companyName, roleTitle ?? '', industry ?? '');
+    connectorSignals = await enrichCompanySignals(companyName, roleTitle ?? '', industry ?? '', region);
     _timer?.mark('bse_fetch_end');
     _timer?.mark('serper_end');
 
