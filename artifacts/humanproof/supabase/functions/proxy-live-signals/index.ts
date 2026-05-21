@@ -595,6 +595,575 @@ async function fetchHiringDirect(roleTitle: string, companyName: string): Promis
   };
 }
 
+// ── Market connector types (mirrors client-side HiringMarket) ─────────────────
+
+type HiringMarket = 'india' | 'us' | 'uk' | 'germany' | 'singapore' | 'australia' | 'canada' | 'latam' | 'mena';
+
+interface MarketHiringResult extends HiringResult {
+  /** Per-connector outcome for client-side circuit tracking. */
+  connectorResults: Record<string, { openings: number | null; failed: boolean }>;
+  /** The market that was used for connector routing. */
+  market: HiringMarket;
+}
+
+// ── LinkedIn: unified with per-market geoId ───────────────────────────────────
+
+const LINKEDIN_GEO: Record<HiringMarket, { geoId: string; location: string }> = {
+  india:     { geoId: '102713980', location: 'India' },
+  us:        { geoId: '103644278', location: 'United States' },
+  uk:        { geoId: '101165590', location: 'United Kingdom' },
+  germany:   { geoId: '101282230', location: 'Germany' },
+  singapore: { geoId: '102454443', location: 'Singapore' },
+  australia: { geoId: '101452733', location: 'Australia' },
+  canada:    { geoId: '101174742', location: 'Canada' },
+  latam:     { geoId: '106057199', location: 'Brazil' },
+  mena:      { geoId: '104305776', location: 'United Arab Emirates' },
+};
+
+async function fetchLinkedInMarket(roleTitle: string, companyName: string, market: HiringMarket): Promise<number | null> {
+  const { geoId } = LINKEDIN_GEO[market];
+  try {
+    const keywords = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.linkedin.com/jobs/search/?keywords=${keywords}&geoId=${geoId}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/"totalJobCount"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d,]+)\s+(?:results?|jobs?)/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) && n < 500_000 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Indeed: unified with per-market locale ─────────────────────────────────────
+
+const INDEED_LOCALE: Record<HiringMarket, { host: string; location: string }> = {
+  india:     { host: 'in.indeed.com',  location: 'India' },
+  us:        { host: 'www.indeed.com', location: 'United+States' },
+  uk:        { host: 'uk.indeed.com',  location: 'United+Kingdom' },
+  germany:   { host: 'de.indeed.com',  location: 'Deutschland' },
+  singapore: { host: 'sg.indeed.com',  location: 'Singapore' },
+  australia: { host: 'au.indeed.com',  location: 'Australia' },
+  canada:    { host: 'ca.indeed.com',  location: 'Canada' },
+  latam:     { host: 'www.indeed.com', location: 'Brazil' },
+  mena:      { host: 'www.indeed.com', location: 'United+Arab+Emirates' },
+};
+
+async function fetchIndeedMarket(roleTitle: string, companyName: string, market: HiringMarket): Promise<number | null> {
+  const { host, location } = INDEED_LOCALE[market];
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://${host}/jobs?q=${q}&l=${location}&limit=1`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US,en;q=0.9' },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/<title>[\s\S]*?(\d[\d,]+)\s+[\w\s]+jobs?\s+in/i)
+           ?? html.match(/(\d[\d,]+)\s+(?:\w[\w\s]*?\s+)?jobs?\s+in\s+[\w\s]+/i)
+           ?? html.match(/"totalResults"\s*:\s*(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── UK: Reed ──────────────────────────────────────────────────────────────────
+
+async function fetchReedDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.reed.co.uk/jobs?keywords=${q}&location=uk&proximity=20`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // "<strong>1,234</strong> jobs found" or "Found 1,234 jobs"
+    const m = html.match(/>(\d[\d,]+)<\/strong>\s*jobs?\s+found/i)
+           ?? html.match(/found\s+(\d[\d,]+)\s+jobs?/i)
+           ?? html.match(/"totalResults"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d,]+)\s+jobs?\s+matching/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── UK: Jobsite / Totaljobs ────────────────────────────────────────────────────
+
+async function fetchJobsiteDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.totaljobs.com/jobs/${encodeURIComponent(roleTitle.toLowerCase().replace(/\s+/g, '-'))}?keywords=${q}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d,]+)\s+jobs?\s+found/i)
+           ?? html.match(/"totalJobCount"\s*:\s*(\d+)/)
+           ?? html.match(/>(\d[\d,]+)<\/[^>]+>\s*(?:jobs?|results?)/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Germany: StepStone ────────────────────────────────────────────────────────
+
+async function fetchStepstoneDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.stepstone.de/jobs/${encodeURIComponent(roleTitle.toLowerCase().replace(/\s+/g, '-'))}?q=${q}&action=facet_selected%3Bkeyword%3B${encodeURIComponent(roleTitle)}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // StepStone embeds result count in JSON-LD: "numberOfItems":1234
+    const m = html.match(/"numberOfItems"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d.]+)\s+(?:Stellen|Jobs|Treffer)/i)
+           ?? html.match(/"totalCount"\s*:\s*(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/[.,]/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Germany: Xing ─────────────────────────────────────────────────────────────
+
+async function fetchXingDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.xing.com/jobs/search?keywords=${q}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'de-DE,de;q=0.9' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/"totalCount"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d,]+)\s+(?:Jobs?|Stellen)/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Singapore: JobsDB ─────────────────────────────────────────────────────────
+
+async function fetchJobsDBDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://sg.jobsdb.com/j?sp=search&q=${q}&l=Singapore`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/"totalCount"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d,]+)\s+jobs?/i)
+           ?? html.match(/__NEXT_DATA__[\s\S]*?"totalCount"\s*:\s*(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Singapore: MyCareersFuture (government portal) ────────────────────────────
+
+async function fetchMyCareersFutureDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    // MyCareersFuture exposes a public search API
+    const params = new URLSearchParams({
+      search: `${roleTitle} ${companyName}`,
+      sortBy: 'new_posting_date',
+      limit: '1',
+      page: '0',
+    });
+    const url = `https://api.mycareersfuture.gov.sg/v2/jobs?${params}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const total = data?.total ?? data?.data?.meta?.total ?? null;
+    return typeof total === 'number' ? total : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Australia: SEEK ───────────────────────────────────────────────────────────
+
+async function fetchSeekDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const keywords = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.seek.com.au/jobs?keywords=${keywords}&where=Australia`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // SEEK embeds count in window.__SEEK_DATA__ or page heading
+    const m = html.match(/"totalCount"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d,]+)\s+jobs?\s+(?:found|matching|in Australia)/i)
+           ?? html.match(/"count"\s*:\s*(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) && n < 200_000 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Australia: Jora ───────────────────────────────────────────────────────────
+
+async function fetchJoraDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://au.jora.com/j?q=${q}&l=Australia`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d,]+)\s+jobs?/i)
+           ?? html.match(/"totalResults"\s*:\s*(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Canada: Job Bank (government) ─────────────────────────────────────────────
+
+async function fetchJobBankDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    // Job Bank exposes a public REST search endpoint
+    const params = new URLSearchParams({
+      searchstring: `${roleTitle} ${companyName}`,
+      locationstring: 'Canada',
+      sort: 'M',
+      num: '1',
+    });
+    const url = `https://www.jobbank.gc.ca/jobsearch/jobsearch?${params}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'en-CA,en;q=0.9' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // "Showing results 1 - 25 of 1,234 results"
+    const m = html.match(/of\s+(\d[\d,]+)\s+results?/i)
+           ?? html.match(/(\d[\d,]+)\s+jobs?\s+(?:found|matching|available)/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── LatAm: Bumeran ───────────────────────────────────────────────────────────
+
+async function fetchBumeranDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    // Bumeran covers AR/PE/VE/EC/PA; use the root domain (redirects to nearest regional)
+    const url = `https://www.bumeran.com.ar/empleos/?q=${q}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'es-AR,es;q=0.9' },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d,.]+)\s+(?:empleos?|resultados?|ofertas?)/i)
+           ?? html.match(/"totalCount"\s*:\s*(\d+)/)
+           ?? html.match(/"count"\s*:\s*(\d+)/);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/[.,]/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── LatAm: Computrabajo ───────────────────────────────────────────────────────
+
+async function fetchComputrabajoDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    // Use Colombia as base — Computrabajo covers MX/CO/AR/CL/PE/VE/EC and more
+    const url = `https://co.computrabajo.com/ofertas-de-trabajo?q=${q}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'es-CO,es;q=0.9' },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d.,]+)\s+(?:ofertas?|vacantes?|empleos?)/i)
+           ?? html.match(/"totalOfertas"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d.,]+)\s+results?/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/[.,]/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── US: Glassdoor Jobs ─────────────────────────────────────────────────────────
+
+async function fetchGlassdoorJobsDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${q}&locT=N&locId=1&jobType=all`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/"totalJobCount"\s*:\s*(\d+)/)
+           ?? html.match(/(\d[\d,]+)\s+(?:Jobs?|results?)/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── MENA: Bayt ────────────────────────────────────────────────────────────────
+
+async function fetchBaytDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const q = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.bayt.com/en/international/jobs/?q=${q}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA(), 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'en-AE,en;q=0.9' },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d,]+)\s+(?:jobs?|vacancies|positions)/i)
+           ?? html.match(/"totalCount"\s*:\s*(\d+)/)
+           ?? html.match(/<span[^>]*class="[^"]*count[^"]*"[^>]*>(\d[\d,]+)<\/span>/i);
+    if (!m) return null;
+    const n = parseInt(m[1].replace(/,/g, ''), 10);
+    return isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── MENA: NaukriGulf ──────────────────────────────────────────────────────────
+
+async function fetchNaukriGulfDirect(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    // NaukriGulf exposes a similar internal JSON API to Naukri India
+    const keyword = `${roleTitle} ${companyName}`.trim();
+    const url = 'https://www.naukrigulf.com/mnljobs/v1/search?' + new URLSearchParams({
+      noOfResults: '5',
+      searchType: 'adv',
+      key: keyword,
+      pageNo: '0',
+    }).toString();
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': UA(),
+        'Accept': 'application/json',
+        'Referer': 'https://www.naukrigulf.com/',
+      },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const count = data?.noOfJobs ?? data?.totalJobCount ?? null;
+    return typeof count === 'number' ? count : (typeof count === 'string' ? parseInt(count, 10) || null : null);
+  } catch {
+    return null;
+  }
+}
+
+// ── Market hiring orchestrator ─────────────────────────────────────────────────
+//
+// Routes to the right combination of job boards for the given market.
+// Skips connectors listed in skipConnectors (client-reported open circuits).
+// Returns connectorResults so the client can update per-connector circuit state.
+
+async function fetchHiringForMarket(
+  roleTitle: string,
+  companyName: string,
+  market: HiringMarket,
+  skipConnectors: string[],
+): Promise<MarketHiringResult | null> {
+  const skip = new Set(skipConnectors);
+  const errors: string[] = [];
+  const connectorResults: Record<string, { openings: number | null; failed: boolean }> = {};
+
+  // Helper: run a scraper, record result and failure in connectorResults
+  async function run(id: string, fn: () => Promise<number | null>): Promise<number | null> {
+    if (skip.has(id)) {
+      connectorResults[id] = { openings: null, failed: false }; // skipped ≠ failed
+      return null;
+    }
+    try {
+      const count = await fn();
+      connectorResults[id] = { openings: count, failed: count === null };
+      return count;
+    } catch {
+      connectorResults[id] = { openings: null, failed: true };
+      return null;
+    }
+  }
+
+  type CountMap = Record<string, number | null>;
+  let counts: CountMap = {};
+
+  if (market === 'india') {
+    // Existing Naukri path re-used for India — fetchHiringDirect already handles this
+    // but we go through per-connector accounting here for consistency.
+    const [naukri, indeed, linkedin] = await Promise.all([
+      run('naukri',         () => fetchNaukriDirect(roleTitle, companyName)),
+      run('indeed-india',   () => fetchIndeedMarket(roleTitle, companyName, 'india')),
+      run('linkedin-india', () => fetchLinkedInMarket(roleTitle, companyName, 'india')),
+    ]);
+    counts = { naukri, 'indeed-india': indeed, 'linkedin-india': linkedin };
+
+  } else if (market === 'us') {
+    const [linkedin, indeed, glassdoor] = await Promise.all([
+      run('linkedin-us',    () => fetchLinkedInMarket(roleTitle, companyName, 'us')),
+      run('indeed-us',      () => fetchIndeedMarket(roleTitle, companyName, 'us')),
+      run('glassdoor-jobs', () => fetchGlassdoorJobsDirect(roleTitle, companyName)),
+    ]);
+    counts = { 'linkedin-us': linkedin, 'indeed-us': indeed, 'glassdoor-jobs': glassdoor };
+
+  } else if (market === 'uk') {
+    const [linkedin, indeed, reed, jobsite] = await Promise.all([
+      run('linkedin-uk', () => fetchLinkedInMarket(roleTitle, companyName, 'uk')),
+      run('indeed-uk',   () => fetchIndeedMarket(roleTitle, companyName, 'uk')),
+      run('reed',        () => fetchReedDirect(roleTitle, companyName)),
+      run('jobsite',     () => fetchJobsiteDirect(roleTitle, companyName)),
+    ]);
+    counts = { 'linkedin-uk': linkedin, 'indeed-uk': indeed, reed, jobsite };
+
+  } else if (market === 'germany') {
+    const [stepstone, linkedin, xing] = await Promise.all([
+      run('stepstone',   () => fetchStepstoneDirect(roleTitle, companyName)),
+      run('linkedin-de', () => fetchLinkedInMarket(roleTitle, companyName, 'germany')),
+      run('xing',        () => fetchXingDirect(roleTitle, companyName)),
+    ]);
+    counts = { stepstone, 'linkedin-de': linkedin, xing };
+
+  } else if (market === 'singapore') {
+    const [linkedin, jobsdb, mcf] = await Promise.all([
+      run('linkedin-sg',     () => fetchLinkedInMarket(roleTitle, companyName, 'singapore')),
+      run('jobsdb',          () => fetchJobsDBDirect(roleTitle, companyName)),
+      run('mycareersfuture', () => fetchMyCareersFutureDirect(roleTitle, companyName)),
+    ]);
+    counts = { 'linkedin-sg': linkedin, jobsdb, mycareersfuture: mcf };
+
+  } else if (market === 'australia') {
+    const [seek, linkedin, jora] = await Promise.all([
+      run('seek',        () => fetchSeekDirect(roleTitle, companyName)),
+      run('linkedin-au', () => fetchLinkedInMarket(roleTitle, companyName, 'australia')),
+      run('jora',        () => fetchJoraDirect(roleTitle, companyName)),
+    ]);
+    counts = { seek, 'linkedin-au': linkedin, jora };
+
+  } else if (market === 'canada') {
+    const [linkedin, indeed, jobbank] = await Promise.all([
+      run('linkedin-ca', () => fetchLinkedInMarket(roleTitle, companyName, 'canada')),
+      run('indeed-ca',   () => fetchIndeedMarket(roleTitle, companyName, 'canada')),
+      run('job-bank',    () => fetchJobBankDirect(roleTitle, companyName)),
+    ]);
+    counts = { 'linkedin-ca': linkedin, 'indeed-ca': indeed, 'job-bank': jobbank };
+
+  } else if (market === 'latam') {
+    const [linkedin, bumeran, computrabajo] = await Promise.all([
+      run('linkedin-latam', () => fetchLinkedInMarket(roleTitle, companyName, 'latam')),
+      run('bumeran',        () => fetchBumeranDirect(roleTitle, companyName)),
+      run('computrabajo',   () => fetchComputrabajoDirect(roleTitle, companyName)),
+    ]);
+    counts = { 'linkedin-latam': linkedin, bumeran, computrabajo };
+
+  } else if (market === 'mena') {
+    const [bayt, linkedin, naukrigulf] = await Promise.all([
+      run('bayt',          () => fetchBaytDirect(roleTitle, companyName)),
+      run('linkedin-mena', () => fetchLinkedInMarket(roleTitle, companyName, 'mena')),
+      run('naukrigulf',    () => fetchNaukriGulfDirect(roleTitle, companyName)),
+    ]);
+    counts = { bayt, 'linkedin-mena': linkedin, naukrigulf };
+  }
+
+  // Aggregate: sum all non-null counts; require at least one live result
+  const presentCounts = Object.values(counts).filter((v): v is number => v !== null && v >= 0);
+  if (presentCounts.length === 0) return null;
+
+  const total = presentCounts.reduce((a, b) => a + b, 0);
+
+  // Source label — list which connectors returned data
+  const activeSources = Object.entries(counts)
+    .filter(([, v]) => v !== null)
+    .map(([id]) => id)
+    .join('+');
+
+  const demandTrend: 'rising' | 'stable' | 'falling' =
+    total > 15 ? 'rising' : total > 4 ? 'stable' : 'falling';
+  const hiringFreezeScore = total === 0 ? 0.85 : total < 3 ? 0.65 : total < 8 ? 0.40 : 0.15;
+
+  return {
+    estimatedOpenings:  total > 0 ? total : null,
+    demandTrend,
+    hiringFreezeScore,
+    naukriOpenings:     counts['naukri'] ?? counts['naukrigulf'] ?? null,
+    linkedinOpenings:   counts['linkedin-us'] ?? counts['linkedin-uk'] ?? counts['linkedin-de']
+                     ?? counts['linkedin-sg'] ?? counts['linkedin-au'] ?? counts['linkedin-ca']
+                     ?? counts['linkedin-latam'] ?? counts['linkedin-mena'] ?? counts['linkedin-india'] ?? null,
+    indeedOpenings:     counts['indeed-us'] ?? counts['indeed-uk'] ?? counts['indeed-ca']
+                     ?? counts['indeed-india'] ?? null,
+    isLive:             true,
+    scrapeSource:       'scraped',
+    source:             `${activeSources} (scraped)`,
+    fetchedAt:          new Date().toISOString(),
+    errors,
+    serperRateLimited:  false,
+    connectorResults,
+    market,
+  };
+}
+
 // ── Serper fallback (paid, used only when direct scraping completely fails) ────
 
 async function fetchHiringSerper(roleTitle: string, companyName: string, serperKey: string): Promise<HiringResult> {
@@ -1036,19 +1605,44 @@ serve(async (req) => {
       const role    = (roleTitle ?? 'Software Engineer').trim();
       const company = (companyName ?? '').trim();
 
-      // PRIMARY: Direct scraping (no API key)
-      const scraped = await fetchHiringDirect(role, company);
+      // Market routing: client sends the resolved HiringMarket (defaults 'india'
+      // for backwards-compat). skipConnectors lists circuit-OPEN IDs from the
+      // client so the EF skips known-bad job boards without burning a timeout.
+      const market: HiringMarket = (['india','us','uk','germany','singapore','australia','canada','latam','mena'] as const)
+        .includes(body.market as HiringMarket)
+        ? (body.market as HiringMarket)
+        : 'india';
+      const skipConnectors: string[] = Array.isArray(body.skipConnectors) ? body.skipConnectors : [];
+
+      // PRIMARY: Market-appropriate direct scraping (no API key)
+      const scraped = await fetchHiringForMarket(role, company, market, skipConnectors);
       if (scraped) {
-        return json({ hiringData: scraped, errors: scraped.errors });
+        return json({
+          hiringData:       scraped,
+          connectorResults: scraped.connectorResults,
+          market:           scraped.market,
+          errors:           scraped.errors,
+        });
       }
 
-      // FALLBACK: Serper API (paid — only when direct scraping completely failed)
+      // SECONDARY: India-specific Naukri+Indeed+LinkedIn path for india market
+      // when fetchHiringForMarket returned null (all connectors returned null).
+      // For non-india markets this path is intentionally skipped — Naukri data
+      // for a Singapore company is noise, not signal.
+      if (market === 'india') {
+        const indiaScraped = await fetchHiringDirect(role, company);
+        if (indiaScraped) {
+          return json({ hiringData: indiaScraped, connectorResults: {}, market: 'india', errors: indiaScraped.errors });
+        }
+      }
+
+      // FALLBACK: Serper API (paid — only when all direct scraping completely failed)
       if (serperKey) {
         const serperResult = await fetchHiringSerper(role, company, serperKey);
-        return json({ hiringData: serperResult, errors: serperResult.errors });
+        return json({ hiringData: serperResult, connectorResults: {}, market, errors: serperResult.errors });
       }
 
-      return json({ hiringData: null, errors: ['Direct job-board scraping returned no results and SERPER_API_KEY not configured'] });
+      return json({ hiringData: null, connectorResults: {}, market, errors: ['No job-board connectors returned data for this market and SERPER_API_KEY not configured'] });
     }
 
     // ── stock / news / both actions ────────────────────────────────────────────

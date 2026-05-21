@@ -21,22 +21,29 @@ import {
   recordSuccess as circuitSuccess,
   recordFailure as circuitFailure,
   getCachedResponse,
+  type CircuitApiName,
 } from '../apiCircuitBreaker';
 import { readCache, writeCache } from '../apiResponseCache';
+import {
+  resolveHiringMarket,
+  MARKET_HIRING_CONNECTORS,
+  type HiringMarket,
+} from '../hiringSignalAnalyzer';
 
 export interface RoleDemandSignal {
   roleTitle: string;
   company: string;
   estimatedOpenings: number | null;
-  /** Breakdown: openings found on Naukri specifically. Null when not live. */
+  /** Breakdown: openings found on Naukri/NaukriGulf specifically. Null when not live. */
   naukriOpenings: number | null;
   /** Breakdown: openings found on LinkedIn specifically. Null when not live. */
   linkedinOpenings: number | null;
   demandTrend: 'rising' | 'stable' | 'falling';
   hiringFreezeScore: number;
-  source: 'Naukri Heuristic' | 'Serper API' | 'Naukri+Indeed+LinkedIn (scraped)';
+  /** Live source label — market-specific when a market connector was used. */
+  source: string;
   /**
-   * true  — values came from a real-time Serper API call (server-side).
+   * true  — values came from a real-time market-appropriate job board scrape.
    * false — ROLE_DEMAND_BASE static prior (Q1 2026 manual review, not refreshed per-request).
    * UI must show "heuristic" qualifier when false.
    */
@@ -50,6 +57,10 @@ export interface RoleDemandSignal {
   _fallbackReason?: 'serper_unavailable' | 'serper_quota_exceeded' | 'serper_error';
   /** ISO date of the static baseline snapshot */
   _baselineDate?: string;
+  /** Which geographic market's connectors were used. */
+  _market?: HiringMarket;
+  /** Per-connector scrape outcomes — passed to client for circuit tracking. */
+  _connectorResults?: Record<string, { openings: number | null; failed: boolean }>;
 }
 
 // ── Static priors — last manual review: Q1 2026 ──────────────────────────────
@@ -162,74 +173,95 @@ function persistCompanySkillDemand(signal: RoleDemandSignal): void {
 export async function fetchRoleDemandSignal(
   roleTitle: string,
   company: string,
+  region?: string,
 ): Promise<RoleDemandSignal> {
+  const market = resolveHiringMarket(region);
+  const marketConnectors = MARKET_HIRING_CONNECTORS[market];
+
   // ── Primary: Direct scraping via proxy-live-signals EF (no API key needed) ─
-  // The EF tries Naukri+Indeed+LinkedIn direct scraping first; Serper is its fallback.
-  // We do NOT pre-increment the Serper counter — we only count it when the EF
-  // actually used Serper (scrapeSource === 'serper'). Pre-incrementing was inflating
-  // the Serper quota counter on every audit even when direct scraping succeeded.
+  // The EF runs market-appropriate job board scrapers; Serper is last-resort fallback.
   if (isQuotaExhausted('serper')) {
     return {
       ...heuristicSignal(roleTitle, company, 'serper_quota_exceeded'),
-      disclosure: 'Serper daily quota exhausted this session. Primary: Naukri+Indeed+LinkedIn direct scraping (no key).',
+      disclosure: 'Serper daily quota exhausted this session. Primary: market-specific job board scraping (no key).',
     };
   }
 
-  // Shared cross-user Supabase cache (4h TTL).
-  // Hiring data for TCS changes slowly — there's no value in 30 users each
-  // firing a Naukri scrape in the same afternoon. The first result serves all.
-  const naukriCacheKey = `naukri|${roleTitle.toLowerCase().trim()}|${company.toLowerCase().trim()}`;
-  const sharedNaukri = await readCache<RoleDemandSignal>('naukri', naukriCacheKey);
-  if (sharedNaukri) {
-    const cached = sharedNaukri.payload;
+  // Shared cross-user Supabase cache (4h TTL). Market-scoped key so a Singapore
+  // result never poisons an India cache for the same role+company.
+  const cacheKey = `hiring|${market}|${roleTitle.toLowerCase().trim()}|${company.toLowerCase().trim()}`;
+  const sharedCached = await readCache<RoleDemandSignal>('naukri', cacheKey);
+  if (sharedCached) {
+    const cached = sharedCached.payload;
     return {
       ...cached,
       disclosure: cached.disclosure
-        ? `${cached.disclosure} (shared cache: ${sharedNaukri.cacheAgeLabel})`
-        : `Shared cache: hiring data ${sharedNaukri.cacheAgeLabel}.`,
+        ? `${cached.disclosure} (shared cache: ${sharedCached.cacheAgeLabel})`
+        : `Shared cache: hiring data ${sharedCached.cacheAgeLabel}.`,
     };
   }
 
-  // Circuit breaker gate for Naukri/hiring EF — OPEN means the proxy has
-  // been unavailable; serve cached signal with disclosure.
+  // Circuit breaker gate — 'naukri' represents the proxy-live-signals EF health
+  // (not just Naukri India). If the EF is OPEN, serve cached signal.
   if (!isCallAllowed('naukri')) {
     const cached = getCachedResponse<RoleDemandSignal>('naukri');
     if (cached?.data) {
       const ageHours = Math.round((Date.now() - cached.cachedAt) / 3_600_000);
       return {
         ...cached.data,
-        disclosure: `Naukri circuit breaker open — serving cached hiring data from ${ageHours > 0 ? `${ageHours} hour${ageHours !== 1 ? 's' : ''} ago` : 'earlier this session'}. Not live.`,
+        disclosure: `Hiring proxy circuit open — serving cached data from ${ageHours > 0 ? `${ageHours}h ago` : 'earlier this session'}. Not live.`,
         _stale: true,
       };
     }
     return heuristicSignal(roleTitle, company, 'serper_unavailable');
   }
 
+  // Build skipConnectors: connector IDs whose client-side circuits are OPEN.
+  // The EF receives this list and skips those job boards without burning timeouts.
+  const skipConnectors = marketConnectors
+    .filter(c => !isCallAllowed(c.id as CircuitApiName))
+    .map(c => c.id);
+
   try {
     const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
-      body: { action: 'hiring', roleTitle, companyName: company },
+      body: {
+        action:          'hiring',
+        roleTitle,
+        companyName:     company,
+        market,
+        skipConnectors,
+      },
     });
 
     if (!error && data?.hiringData?.isLive) {
       const h = data.hiringData;
-      // Only track Serper quota when the EF actually USED Serper as fallback.
-      // Direct scraping (Naukri+Indeed+LinkedIn) has no quota to track.
+
       if (h.scrapeSource === 'serper') {
         incrementRequestCount('serper');
       }
-      // Check if the Edge Function itself detected a Serper rate-limit
       if (h.serperRateLimited) {
         recordApiDegradation('serper', 'rate_limited', 'Serper 429 from proxy-live-signals');
         return heuristicSignal(roleTitle, company, 'serper_quota_exceeded');
       }
-      // scrapeSource tells us which path delivered the data:
-      //   naukri+linkedin+indeed = scraped (no API key)
-      //   serper                 = Serper API fallback
-      // scrapeSource: 'scraped' = Naukri+Indeed+LinkedIn direct scraping (no API key)
-      //               'serper'  = Serper paid API fallback
-      const liveSource = h.scrapeSource === 'scraped'
-        ? 'Naukri+Indeed+LinkedIn (scraped)' as const
-        : 'Serper API' as const;
+
+      // Update per-connector circuits from EF response. The EF returns
+      // connectorResults: { [connectorId]: { openings, failed } } so the client
+      // can track which specific job boards are healthy vs open.
+      const connectorResults: Record<string, { openings: number | null; failed: boolean }> =
+        data.connectorResults ?? {};
+      for (const [connId, outcome] of Object.entries(connectorResults)) {
+        const circuitId = connId as CircuitApiName;
+        if ((outcome as any).failed) {
+          circuitFailure(circuitId, `scrape returned null for ${connId}`);
+        } else if ((outcome as any).openings !== null) {
+          circuitSuccess(circuitId, (outcome as any).openings);
+        }
+      }
+
+      const sourceLabel = h.scrapeSource === 'scraped'
+        ? (h.source ?? `${market} job boards (scraped)`)
+        : 'Serper API';
+
       const liveResult: RoleDemandSignal = {
         roleTitle,
         company,
@@ -238,19 +270,18 @@ export async function fetchRoleDemandSignal(
         linkedinOpenings:  h.linkedinOpenings ?? null,
         demandTrend:       h.demandTrend,
         hiringFreezeScore: h.hiringFreezeScore,
-        source:            liveSource,
+        source:            sourceLabel,
         isLive:            true,
         disclosure:        h.scrapeSource === 'scraped'
           ? ''
-          : 'Hiring data from Serper API (paid fallback). Primary path: Naukri+Indeed+LinkedIn direct scraping.',
+          : 'Hiring data from Serper API (paid fallback). Primary: market-specific job board scraping.',
         fetchedAt:         h.fetchedAt ?? new Date().toISOString(),
+        _market:           market,
+        _connectorResults: connectorResults,
       };
-      // Persist to company_skill_demand_cache so CareerSkillsTab can overlay
-      // company-specific demand badges. Fire-and-forget — never blocks the caller.
+
       persistCompanySkillDemand(liveResult);
-      // Write to shared cross-user cache so subsequent audits of the same
-      // role+company don't each burn an EF invocation within the 4h TTL window.
-      writeCache('naukri', naukriCacheKey, liveResult);
+      writeCache('naukri', cacheKey, liveResult);
       circuitSuccess('naukri', liveResult);
       return liveResult;
     }

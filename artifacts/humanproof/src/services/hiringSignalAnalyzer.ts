@@ -14,6 +14,158 @@
 //   Dept-specific freeze (eng) + D8 high → eng restructuring: 74%
 //   Aggressive hiring reversal (Q1 >50 roles → Q2 0) → 91%
 
+import type { CircuitApiName } from './apiCircuitBreaker';
+
+// ── Market hiring connector registry ─────────────────────────────────────────
+//
+// Maps each geographic market to its ordered list of hiring connectors.
+// Connectors are tried in listed order; the first group (isPrimary=true)
+// are run in parallel, remaining connectors serve as fallback signals.
+//
+// Circuit breaker IDs match CircuitApiName keys exactly — the client updates
+// per-connector circuits from the EF's connectorResults response field.
+//
+// A Naukri-derived hiring freeze score for a Singapore company is noise,
+// not a signal. Market-appropriate hiring data is a prerequisite for L9
+// (JobMarketLiquidity) accuracy.
+
+export type HiringMarket =
+  | 'india'
+  | 'us'
+  | 'uk'
+  | 'germany'
+  | 'singapore'
+  | 'australia'
+  | 'canada'
+  | 'latam'
+  | 'mena';
+
+export interface MarketConnectorConfig {
+  /** Circuit breaker ID — must match CircuitApiName exactly. */
+  id: CircuitApiName;
+  /** Display name shown in UI source attribution. */
+  name: string;
+  /** Scraping target domain (informational). */
+  scrapeTarget: string;
+  /**
+   * Signal weight relative to market peers (0–1).
+   * Higher = more reliable for this market.
+   * Used to weight multi-source job count aggregation.
+   */
+  weight: number;
+  /** True = run in primary parallel batch; false = secondary/supplement. */
+  isPrimary: boolean;
+}
+
+export const MARKET_HIRING_CONNECTORS: Record<HiringMarket, MarketConnectorConfig[]> = {
+  india: [
+    { id: 'naukri',        name: 'Naukri',        scrapeTarget: 'naukri.com',       weight: 1.00, isPrimary: true  },
+    { id: 'indeed-india',  name: 'Indeed India',  scrapeTarget: 'in.indeed.com',    weight: 0.70, isPrimary: true  },
+    { id: 'linkedin-india',name: 'LinkedIn India',scrapeTarget: 'linkedin.com/jobs', weight: 0.60, isPrimary: false },
+  ],
+  us: [
+    { id: 'linkedin-us',   name: 'LinkedIn US',   scrapeTarget: 'linkedin.com/jobs', weight: 1.00, isPrimary: true  },
+    { id: 'indeed-us',     name: 'Indeed US',     scrapeTarget: 'indeed.com',        weight: 0.90, isPrimary: true  },
+    { id: 'glassdoor-jobs',name: 'Glassdoor',     scrapeTarget: 'glassdoor.com',     weight: 0.60, isPrimary: false },
+  ],
+  uk: [
+    { id: 'linkedin-uk',   name: 'LinkedIn UK',   scrapeTarget: 'linkedin.com/jobs', weight: 0.90, isPrimary: true  },
+    { id: 'indeed-uk',     name: 'Indeed UK',     scrapeTarget: 'uk.indeed.com',     weight: 0.85, isPrimary: true  },
+    { id: 'reed',          name: 'Reed',          scrapeTarget: 'reed.co.uk',        weight: 0.80, isPrimary: true  },
+    { id: 'jobsite',       name: 'Jobsite/Totaljobs', scrapeTarget: 'totaljobs.com', weight: 0.60, isPrimary: false },
+  ],
+  germany: [
+    { id: 'stepstone',     name: 'StepStone DE',  scrapeTarget: 'stepstone.de',      weight: 1.00, isPrimary: true  },
+    { id: 'linkedin-de',   name: 'LinkedIn DE',   scrapeTarget: 'linkedin.com/jobs', weight: 0.90, isPrimary: true  },
+    { id: 'xing',          name: 'Xing Jobs',     scrapeTarget: 'xing.com',          weight: 0.70, isPrimary: false },
+  ],
+  singapore: [
+    { id: 'linkedin-sg',      name: 'LinkedIn SG',         scrapeTarget: 'linkedin.com/jobs',      weight: 0.90, isPrimary: true  },
+    { id: 'jobsdb',           name: 'JobsDB SG',           scrapeTarget: 'sg.jobsdb.com',          weight: 0.85, isPrimary: true  },
+    { id: 'mycareersfuture',  name: 'MyCareersFuture.sg',  scrapeTarget: 'mycareersfuture.gov.sg', weight: 0.75, isPrimary: false },
+  ],
+  australia: [
+    { id: 'seek',          name: 'SEEK',          scrapeTarget: 'seek.com.au',       weight: 1.00, isPrimary: true  },
+    { id: 'linkedin-au',   name: 'LinkedIn AU',   scrapeTarget: 'linkedin.com/jobs', weight: 0.90, isPrimary: true  },
+    { id: 'jora',          name: 'Jora AU',       scrapeTarget: 'au.jora.com',       weight: 0.65, isPrimary: false },
+  ],
+  canada: [
+    { id: 'linkedin-ca',   name: 'LinkedIn CA',   scrapeTarget: 'linkedin.com/jobs', weight: 0.90, isPrimary: true  },
+    { id: 'indeed-ca',     name: 'Indeed CA',     scrapeTarget: 'ca.indeed.com',     weight: 0.85, isPrimary: true  },
+    { id: 'job-bank',      name: 'Job Bank Canada', scrapeTarget: 'jobbank.gc.ca',   weight: 0.75, isPrimary: false },
+  ],
+  latam: [
+    { id: 'linkedin-latam',name: 'LinkedIn LatAm', scrapeTarget: 'linkedin.com/jobs', weight: 0.90, isPrimary: true  },
+    { id: 'bumeran',       name: 'Bumeran',       scrapeTarget: 'bumeran.com',       weight: 0.85, isPrimary: true  },
+    { id: 'computrabajo',  name: 'Computrabajo',  scrapeTarget: 'computrabajo.com',  weight: 0.75, isPrimary: false },
+  ],
+  mena: [
+    { id: 'bayt',          name: 'Bayt.com',      scrapeTarget: 'bayt.com',          weight: 1.00, isPrimary: true  },
+    { id: 'linkedin-mena', name: 'LinkedIn MENA', scrapeTarget: 'linkedin.com/jobs', weight: 0.90, isPrimary: true  },
+    { id: 'naukrigulf',    name: 'NaukriGulf',    scrapeTarget: 'naukrigulf.com',    weight: 0.80, isPrimary: false },
+  ],
+};
+
+/**
+ * Resolve a geographic region string (country code, country name, or locale)
+ * to the appropriate HiringMarket for connector routing.
+ *
+ * Called by naukriConnector before invoking the proxy-live-signals EF, so the EF
+ * receives the correct market and runs market-appropriate job board scrapers.
+ *
+ * Unmapped regions fall back to 'india' only because that is the legacy default
+ * (Naukri was always the fallback before market routing existed). For genuinely
+ * unknown regions the caller should treat the result as heuristic only.
+ */
+export function resolveHiringMarket(region: string | null | undefined): HiringMarket {
+  if (!region) return 'india';
+  const r = region.trim().toUpperCase();
+
+  // India
+  if (r === 'IN' || r === 'INDIA') return 'india';
+
+  // US / North America (non-Canada)
+  if (r === 'US' || r === 'USA' || r === 'UNITED STATES' || r === 'UNITED STATES OF AMERICA') return 'us';
+
+  // UK / British Isles
+  if (r === 'UK' || r === 'GB' || r === 'UNITED KINGDOM' || r === 'ENGLAND' || r === 'SCOTLAND' || r === 'WALES' || r === 'NORTHERN IRELAND' || r === 'IE' || r === 'IRELAND') return 'uk';
+
+  // Germany / DACH / EU
+  if (r === 'DE' || r === 'GERMANY' || r === 'DEUTSCHLAND' || r === 'AT' || r === 'AUSTRIA' || r === 'CH' || r === 'SWITZERLAND') return 'germany';
+  // Broader EU — StepStone covers most of continental Europe
+  if (['FR', 'NL', 'ES', 'IT', 'PL', 'SE', 'BE', 'DK', 'FI', 'NO', 'PT', 'CZ', 'HU', 'RO', 'GR'].includes(r)) return 'germany';
+
+  // Singapore / Southeast Asia
+  if (r === 'SG' || r === 'SINGAPORE') return 'singapore';
+  // Broader SEA — JobsDB covers MY/PH/TH/ID; MyCareersFuture is SG-only but LinkedIn covers all
+  if (['MY', 'MALAYSIA', 'TH', 'THAILAND', 'PH', 'PHILIPPINES', 'ID', 'INDONESIA', 'VN', 'VIETNAM'].includes(r)) return 'singapore';
+
+  // Australia / New Zealand / Pacific
+  if (r === 'AU' || r === 'AUSTRALIA') return 'australia';
+  if (r === 'NZ' || r === 'NEW ZEALAND') return 'australia';
+
+  // Canada
+  if (r === 'CA' || r === 'CANADA') return 'canada';
+
+  // LatAm
+  if (['MX', 'MEXICO', 'BR', 'BRAZIL', 'AR', 'ARGENTINA', 'CL', 'CHILE', 'CO', 'COLOMBIA', 'PE', 'PERU', 'VE', 'VENEZUELA', 'EC', 'ECUADOR', 'BO', 'BOLIVIA', 'UY', 'URUGUAY', 'PY', 'PARAGUAY'].includes(r)) return 'latam';
+
+  // MENA
+  if (['AE', 'UAE', 'UNITED ARAB EMIRATES', 'SA', 'SAUDI ARABIA', 'QA', 'QATAR', 'KW', 'KUWAIT', 'BH', 'BAHRAIN', 'OM', 'OMAN', 'EG', 'EGYPT', 'JO', 'JORDAN', 'LB', 'LEBANON', 'PK', 'PAKISTAN'].includes(r)) return 'mena';
+
+  return 'india';
+}
+
+/**
+ * Return the primary circuit breaker ID for a market — used by naukriConnector
+ * to gate the EF invocation before any scraping is attempted.
+ */
+export function primaryCircuitForMarket(market: HiringMarket): CircuitApiName {
+  const connectors = MARKET_HIRING_CONNECTORS[market];
+  const primary = connectors.find(c => c.isPrimary);
+  return primary?.id ?? 'naukri';
+}
+
 export type HiringTrend = "accelerating" | "growing" | "stable" | "declining" | "frozen" | "unknown";
 
 export type HiringRiskPattern =
@@ -57,6 +209,12 @@ export interface HiringSignalResult {
   estimatedAnnouncementDays: number | null;
   /** Recommended user actions based on hiring pattern */
   actions: string[];
+  /** Which geographic market's connectors were used to derive this signal. */
+  hiringMarket: HiringMarket | null;
+  /** Connector IDs that returned data (circuit breaker IDs matching CircuitApiName). */
+  connectorsAttempted: string[];
+  /** Connector IDs that failed or were circuit-opened and skipped. */
+  connectorsFailed: string[];
 }
 
 // ─── Role category to department mapping ────────────────────────────────────
@@ -166,6 +324,12 @@ export interface HiringSignalInputs {
   companySize?: "small" | "mid" | "large" | "mega";
   wasAggressiveHirer?: boolean;  // was hiring at >200% sector average 6 months ago
   d8Score?: number;              // AI efficiency restructuring score (0–1)
+  /** Market whose connectors produced the overallTrend — passed through to HiringSignalResult. */
+  hiringMarket?: HiringMarket | null;
+  /** Connectors that returned data in this market fetch cycle. */
+  connectorsAttempted?: string[];
+  /** Connectors that failed or were skipped due to open circuit. */
+  connectorsFailed?: string[];
 }
 
 function classifyHiringPattern(inputs: HiringSignalInputs): HiringRiskPattern {
@@ -290,6 +454,9 @@ export function analyzeHiringSignals(inputs: HiringSignalInputs): HiringSignalRe
     interpretation,
     estimatedAnnouncementDays: patternConfig.estimatedAnnouncementDays,
     actions: buildHiringActions(pattern, userDeptIsFrozen, patternConfig.estimatedAnnouncementDays),
+    hiringMarket:        inputs.hiringMarket   ?? null,
+    connectorsAttempted: inputs.connectorsAttempted ?? [],
+    connectorsFailed:    inputs.connectorsFailed    ?? [],
   };
 }
 

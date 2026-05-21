@@ -99,7 +99,7 @@ export async function enrichCompanySignals(
     findBSEScripCodeViaProxy(companyName), // 0: bseCode (proxy — avoids CORS)
     getCompanyLayoffs(companyName),        // 1: layoffData
     fetchMCACompanyInfo(companyName),      // 2: mcaData
-    fetchRoleDemandSignal(roleTitle, companyName), // 3: roleData
+    fetchRoleDemandSignal(roleTitle, companyName, region), // 3: roleData
     fetchCompanyNewsSignals(companyName, undefined, region),  // 4: newsData
     fetchIndiaPressSignals(companyName),   // 5: indiaPressData
     fetchSecEdgar8KSignals(companyName),   // 6: secData

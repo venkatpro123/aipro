@@ -62,7 +62,44 @@ export type CircuitApiName =
   | 'bse'
   | 'nse-india'
   | 'london-stock-exchange'
-  | 'sgx';
+  | 'sgx'
+  // ── Market-specific hiring connectors ─────────────────────────────────────
+  // India
+  | 'indeed-india'
+  | 'linkedin-india'
+  // US
+  | 'linkedin-us'
+  | 'indeed-us'
+  | 'glassdoor-jobs'
+  // UK
+  | 'linkedin-uk'
+  | 'indeed-uk'
+  | 'reed'
+  | 'jobsite'
+  // Germany / EU
+  | 'linkedin-de'
+  | 'stepstone'
+  | 'xing'
+  // Singapore
+  | 'linkedin-sg'
+  | 'jobsdb'
+  | 'mycareersfuture'
+  // Australia
+  | 'linkedin-au'
+  | 'seek'
+  | 'jora'
+  // Canada
+  | 'linkedin-ca'
+  | 'indeed-ca'
+  | 'job-bank'
+  // LatAm
+  | 'linkedin-latam'
+  | 'bumeran'
+  | 'computrabajo'
+  // MENA
+  | 'linkedin-mena'
+  | 'bayt'
+  | 'naukrigulf';
 
 /** All APIs tracked by the circuit breaker — used for sync and quota snapshots. */
 export const ALL_CIRCUIT_APIS: CircuitApiName[] = [
@@ -70,6 +107,24 @@ export const ALL_CIRCUIT_APIS: CircuitApiName[] = [
   'yahoo-finance-us', 'yahoo-finance-global',
   'naukri', 'sec-edgar', 'warn-act',
   'bse', 'nse-india', 'london-stock-exchange', 'sgx',
+  // India hiring
+  'indeed-india', 'linkedin-india',
+  // US hiring
+  'linkedin-us', 'indeed-us', 'glassdoor-jobs',
+  // UK hiring
+  'linkedin-uk', 'indeed-uk', 'reed', 'jobsite',
+  // Germany hiring
+  'linkedin-de', 'stepstone', 'xing',
+  // Singapore hiring
+  'linkedin-sg', 'jobsdb', 'mycareersfuture',
+  // Australia hiring
+  'linkedin-au', 'seek', 'jora',
+  // Canada hiring
+  'linkedin-ca', 'indeed-ca', 'job-bank',
+  // LatAm hiring
+  'linkedin-latam', 'bumeran', 'computrabajo',
+  // MENA hiring
+  'linkedin-mena', 'bayt', 'naukrigulf',
 ];
 
 /** Human-readable labels for circuit breaker API names. */
@@ -87,6 +142,42 @@ export const CIRCUIT_API_LABELS: Record<CircuitApiName, string> = {
   'nse-india':              'NSE India',
   'london-stock-exchange':  'London Stock Exchange',
   'sgx':                    'Singapore Exchange (SGX)',
+  // India hiring
+  'indeed-india':           'Indeed India',
+  'linkedin-india':         'LinkedIn India',
+  // US hiring
+  'linkedin-us':            'LinkedIn US',
+  'indeed-us':              'Indeed US',
+  'glassdoor-jobs':         'Glassdoor Jobs',
+  // UK hiring
+  'linkedin-uk':            'LinkedIn UK',
+  'indeed-uk':              'Indeed UK',
+  'reed':                   'Reed.co.uk',
+  'jobsite':                'Jobsite/Totaljobs',
+  // Germany hiring
+  'linkedin-de':            'LinkedIn Germany',
+  'stepstone':              'StepStone DE',
+  'xing':                   'Xing Jobs',
+  // Singapore hiring
+  'linkedin-sg':            'LinkedIn Singapore',
+  'jobsdb':                 'JobsDB Singapore',
+  'mycareersfuture':        'MyCareersFuture.gov.sg',
+  // Australia hiring
+  'linkedin-au':            'LinkedIn Australia',
+  'seek':                   'SEEK Australia',
+  'jora':                   'Jora Australia',
+  // Canada hiring
+  'linkedin-ca':            'LinkedIn Canada',
+  'indeed-ca':              'Indeed Canada',
+  'job-bank':               'Job Bank Canada',
+  // LatAm hiring
+  'linkedin-latam':         'LinkedIn LatAm',
+  'bumeran':                'Bumeran',
+  'computrabajo':           'Computrabajo',
+  // MENA hiring
+  'linkedin-mena':          'LinkedIn MENA',
+  'bayt':                   'Bayt.com',
+  'naukrigulf':             'NaukriGulf',
 };
 
 /**
