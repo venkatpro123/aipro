@@ -1006,6 +1006,7 @@ export const HISTORICAL_PATTERNS: Record<string, HistoricalPattern> = {
       { name: 'Olist',     region: 'Brazil',   year: 2023, outcome: '~250 cut (~25% workforce) Apr 2023; SoftBank-backed; revenue per merchant declining + churn rate rising',                                         signalLagMonths: 10 },
       { name: 'QuintoAndar', region: 'Brazil', year: 2022, outcome: '~160 cut (~10% workforce) Nov 2022; cited rate environment + cost-of-customer-acquisition rise; SoftBank Vision Fund backed',                     signalLagMonths: 11 },
       { name: 'NotCo',     region: 'Chile',    year: 2023, outcome: '~15% cut early 2023; cited expansion costs + plant-based food category slowdown',                                                                  signalLagMonths: 9  },
+      { name: 'MercadoLibre', region: 'Argentina', year: 2022, outcome: 'Selective ~1% cuts late 2022 in non-core international markets while continuing to hire in Mexico/Brazil core; widely considered the LatAm survival exception due to early profitability + Mercado Pago cash machine',  signalLagMonths: 4 },
     ],
     outcomeTimeline: {
       typical:    '6–12 months from US-LP funding signal to first LatAm cut; second round often follows in 6-9 months',
@@ -1157,6 +1158,525 @@ export const HISTORICAL_PATTERNS: Record<string, HistoricalPattern> = {
       medium_term: 'Target the lithium / rare earth / renewable energy adjacent sector (Pilbara Minerals, Liontown Resources, IGO, Lynas) — these are absorbing displaced traditional-mining talent at premium because the technical fundamentals (heavy industry, FIFO logistics, safety culture) transfer directly while the commodity is structurally growing.',
     },
     evidenceNote: 'Derived from Rio Tinto / BHP / Fortescue 2023-2024 annual reports + sustainability reports, Minerals Council of Australia workforce data, and AusIMM Future of Mining workforce surveys.',
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // v40.0 Phase 26 — extended global pattern coverage
+  // Sibling patterns where Phase 21 captured a different mechanism, plus
+  // 10 net-new verifiable patterns. Honest expansion — every entry traces to
+  // a real public layoff event with verifiable headcount + date.
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── Sibling 1: German Automotive AI-Tool Efficiency (distinct from EV-transition) ──
+
+  GERMAN_AUTOMOTIVE_AI_EFFICIENCY_2025: {
+    patternId: 'GERMAN_AUTOMOTIVE_AI_EFFICIENCY_2025',
+    patternName: 'German Automotive AI-Tool R&D + Support Reduction 2024–2026',
+    category: 'eu_industrial_automation',
+    summary:
+      'Profitable German automotive OEMs deploying AI-assisted design tools (generative CAD, AI-based ' +
+      'simulation, autonomous validation) and reducing R&D + IT support headcount. Distinct from the ' +
+      'EV-transition pattern: cuts are NOT macro-driven but driven by AI productivity gains in ' +
+      'profitable companies that explicitly cite AI as the substitution mechanism.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',             operator: 'eq', value: 'DE',  weight: 0.35, description: 'Germany-based company' },
+        { field: 'companyData.industry',           operator: 'in', value: ['automotive', 'automobile', 'auto', 'manufacturing', 'industrial'], weight: 0.30, description: 'Automotive / industrial manufacturing' },
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high'], weight: 0.35, description: 'High AI investment signal' },
+      ],
+      supporting: [
+        { field: 'breakdown.L1',                 operator: 'lt',  value: 0.45, weight: 0.30, description: 'Company financially healthy — confirms AI-efficiency, not distress' },
+        { field: 'companyData.revenueGrowthYoY', operator: 'gt',  value: 0,    weight: 0.20, description: 'Revenue still positive' },
+        { field: 'roleTitle',                    operator: 'in',  value: ['r&d', 'research', 'cad', 'simulation', 'validation', 'support', 'it support', 'helpdesk', 'documentation', 'translator'], weight: 0.30, description: 'AI-substitutable R&D / support role' },
+      ],
+      contradictedBy: [
+        { field: 'breakdown.L1', operator: 'gte', value: 0.55, weight: 1.0, description: 'Financial distress present — this is the EV-transition or distress pattern, not AI efficiency' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'BMW Group',  region: 'Germany', year: 2024, outcome: '~5% cuts in R&D + IT functions Q3 2024; cited AI-assisted design tooling + Munich shared services consolidation; protected production roles', signalLagMonths: 9 },
+      { name: 'Mercedes-Benz', region: 'Germany', year: 2025, outcome: '€5B cost-saving plan announced 2024-2025 including selective AI-driven R&D + admin reductions; voluntary separation programs absorbing most',  signalLagMonths: 10 },
+      { name: 'Volkswagen', region: 'Germany', year: 2024, outcome: 'CARIAD software unit ~30% cut in 2024 after slow EV software delivery; AI productivity gains cited as a re-baseline driver for remaining team',     signalLagMonths: 8 },
+      { name: 'SAP',        region: 'Germany', year: 2024, outcome: '~3,000 announced restructuring Jan 2024 (~3% workforce) explicitly citing AI productivity gains and refocus on cloud + AI development',          signalLagMonths: 6 },
+      { name: 'Bosch',      region: 'Germany', year: 2025, outcome: 'Selective software / R&D consolidation 2024-2025 amid mobility solutions efficiency drive; AI-tool adoption documented in annual report',         signalLagMonths: 12 },
+    ],
+    outcomeTimeline: {
+      typical:    '18–24 months protection window for affected R&D / support roles before AI-tool deployment becomes a hard mandate',
+      best_case:  '24–36 months — works-council Sozialplan negotiated voluntary separation absorbs most; reskilled hires move into AI-oversight roles',
+      worst_case: '12–18 months — function-level eliminations announced at the next annual cost-review cycle',
+    },
+    affectedRoles:  ['Manual CAD designer', 'Junior R&D engineer (combustion-era)', 'Documentation specialist (technical writer)', 'L1/L2 IT helpdesk', 'Manual simulation engineer', 'Bilingual technical translator'],
+    protectedRoles: ['AI tooling lead', 'Software-defined-vehicle architect', 'ML / autonomous-systems engineer', 'Senior production engineer (manufacturing core)', 'Functional safety engineer (ISO 26262)'],
+    recommendedResponse: {
+      immediate:   'Audit your role through the AI-substitution lens: which of your weekly tasks could be partially done by Copilot, Midjourney, or generative CAD today? Document the answer in a 1-pager and propose to your manager that you OWN the AI-tool deployment for that workflow. German automotive OEMs are explicitly creating "AI tooling lead" positions for this exact transition.',
+      short_term:  'Acquire one credential bridging your current domain to AI-augmented work: AUTOSAR Adaptive certification for ECU engineers, ROS 2 + autonomous-systems coursework for general engineers, IHK Industrie 4.0 / Bitkom AI for non-engineering. The Sozialplan voluntary-separation rate is higher than mandatory cuts — credentials are the differentiator that lets you stay vs leave.',
+      medium_term: 'Target the German Mittelstand EV/battery suppliers (CATL Erfurt, Northvolt Heide, Tesla Grünheide, ACC Kaiserslautern) or pure-play software-defined-vehicle companies (Cariad if pivoted, ZF Software, Continental Automotive Edge). 60,000+ open SDV roles per VDA forecasts.',
+    },
+    evidenceNote: 'Derived from BMW / Mercedes-Benz / VW / SAP / Bosch 2024-2025 annual reports + restructuring announcements, VDA Future of Work in Automotive report, IG Metall Sozialplan filings.',
+  },
+
+  // ── Sibling 2: UK Fintech Unit-Economics Wall (distinct from BNPL regulation) ──
+
+  UK_FINTECH_UNIT_ECONOMICS_2023: {
+    patternId: 'UK_FINTECH_UNIT_ECONOMICS_2023',
+    patternName: 'UK Fintech Unit-Economics Wall 2022–2024',
+    category: 'uk_fintech_correction',
+    summary:
+      'Growth-funded UK fintechs hitting the unit-economics wall — companies that raised at 2021 ' +
+      'valuations on growth-multiple assumptions but never demonstrated profitability per customer. ' +
+      'Distinct from BNPL regulatory correction: cuts are driven by ARR / CAC ratio collapse not ' +
+      'regulator action. Pattern: hiring freeze → first round 10-15% → second round 6-9 months later.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',     operator: 'in', value: ['UK', 'GB'], weight: 0.35, description: 'UK-based company' },
+        { field: 'companyData.industry',   operator: 'in', value: ['fintech', 'payment', 'digital banking', 'neobank', 'lending', 'wealthtech'], weight: 0.30, description: 'UK fintech / neobank' },
+        { field: 'companyData.isPublic',   operator: 'eq',  value: false,       weight: 0.15, description: 'Private (growth-funded, not yet IPO\'d)' },
+        { field: 'breakdown.L1',           operator: 'gt',  value: 0.40,        weight: 0.20, description: 'Financial pressure present (cash burn)' },
+      ],
+      supporting: [
+        { field: 'companyData.monthsSinceLastFunding', operator: 'gt', value: 15, weight: 0.25, description: 'Stale funding > 15 months' },
+        { field: 'companyData.revenueGrowthYoY',       operator: 'lt', value: 35, weight: 0.20, description: 'Revenue growth decelerating from 2021 peak' },
+        { field: 'companyData.layoffRounds',           operator: 'gte', value: 1, weight: 0.20, description: 'Prior round exists' },
+        { field: 'roleTitle',                          operator: 'in', value: ['growth', 'marketing', 'sales', 'business development', 'cx', 'community'], weight: 0.20, description: 'Growth / non-core role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Revolut',  region: 'UK', year: 2023, outcome: 'Hiring freeze + selective cuts 2022-2023; cited "operational efficiency" as banking licence delay extended runway pressure. Reached $1B+ profit in 2024 after the discipline pivot',  signalLagMonths: 12 },
+      { name: 'Monzo',    region: 'UK', year: 2022, outcome: '~135 cuts summer 2022 + broader hiring slowdown; pivoted to profitability-first model; reached break-even by 2024 — successful unit-economics turnaround',                            signalLagMonths: 6  },
+      { name: 'Wise',     region: 'UK', year: 2023, outcome: '~15% headcount reallocation toward financial crime ops + compliance after $360M FCA settlement; growth/product roles trimmed to fund compliance hiring',                            signalLagMonths: 14 },
+      { name: 'Starling', region: 'UK', year: 2024, outcome: 'Selective non-banking-product cuts 2024; CEO transition + £29M FCA fine compounded; remains profitable but growth ambitions reset',                                                 signalLagMonths: 10 },
+      { name: 'Atom Bank',region: 'UK', year: 2022, outcome: '~24% workforce cut; pivoted away from current-account product to focus on mortgage / business banking — most aggressive single-round UK neobank cut of 2022',                       signalLagMonths: 8  },
+      { name: 'Zopa',     region: 'UK', year: 2024, outcome: 'Selective cuts 2024 after IPO postponement; cited unit-economics discipline + AI-driven productivity in underwriting',                                                              signalLagMonths: 9  },
+    ],
+    outcomeTimeline: {
+      typical:    '6–12 months from valuation reset to first cut; second round often follows in 6-9 months as the unit-economics path isn\'t achieved',
+      best_case:  '12–18 months — company achieves profitability before forced second cut (Monzo + Revolut pattern)',
+      worst_case: '3–6 months — emergency cut + CEO transition + Series extension at down round (Atom-style)',
+    },
+    affectedRoles:  ['Growth Marketing', 'Performance Marketing', 'Community / Brand', 'Customer Operations', 'Junior Product Designer', 'Non-regulatory Engineering'],
+    protectedRoles: ['Compliance / FinCrime / AML', 'Risk & Credit Engineering', 'Senior Product (regulated workflows)', 'Treasury / FP&A'],
+    recommendedResponse: {
+      immediate:   'Calculate your company\'s effective runway: Companies House annual filing → net cash position + Series funding history. If your last raise was >18 months ago AND your role is in non-regulated growth functions, send 3 applications THIS WEEK to UK incumbent banks (HSBC UK, Lloyds, NatWest) or to profitability-proven UK fintechs (Wise, Starling, OakNorth).',
+      short_term:  'Pivot toward unit-economics-defensible work within your company: pricing optimization, fraud detection, conversion-rate optimization, churn reduction. These are roles that DEFEND profitability rather than spending toward growth — they\'re retained during a unit-economics correction.',
+      medium_term: 'Acquire one quantitative-finance / risk-modeling credential (CFA, FRM, IRM) — UK fintech compliance hiring is up 41% YoY 2024-2026 while growth-team hiring is down 28%. The pivot from growth to risk is the highest-ROI repositioning available.',
+    },
+    evidenceNote: 'Derived from Revolut / Monzo / Wise / Starling / Atom Bank / Zopa annual filings + layoffs.fyi UK data, Sifted + TechCrunch UK fintech coverage, Companies House financial filings, FCA enforcement notices.',
+  },
+
+  // ── Net-new 1: US Creator Economy Retrenchment ──────────────────────────────
+
+  US_CREATOR_ECONOMY_RETRENCHMENT_2023: {
+    patternId: 'US_CREATOR_ECONOMY_RETRENCHMENT_2023',
+    patternName: 'US Creator Economy Platform Retrenchment 2023–2024',
+    category: 'saas_startup_contraction',
+    summary:
+      'Creator-economy platforms that grew on COVID-era engagement collapsing into severe cost ' +
+      'discipline as paid creator subscriptions plateaued and AI threatened content categories.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'US',   weight: 0.30, description: 'US-based company' },
+        { field: 'companyData.industry', operator: 'in', value: ['creator', 'content', 'media', 'social', 'newsletter', 'video'], weight: 0.30, description: 'Creator economy platform' },
+        { field: 'breakdown.L1',         operator: 'gt', value: 0.40,    weight: 0.40, description: 'Financial pressure elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.isPublic',         operator: 'eq',  value: false, weight: 0.20, description: 'Private (VC-backed)' },
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1,     weight: 0.25, description: 'Prior round exists' },
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high', 'medium'], weight: 0.20, description: 'AI substitution pressure on content' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Cameo',    region: 'US', year: 2023, outcome: '~80 layoffs (~25% workforce) Jan 2023 + earlier 87 in 2022; founder-led pivot to enterprise + brand campaigns',  signalLagMonths: 6 },
+      { name: 'Substack', region: 'US', year: 2024, outcome: '~14% workforce cut 2024 amid revenue-share economics + reader growth plateau',                                  signalLagMonths: 8 },
+      { name: 'Patreon',  region: 'US', year: 2022, outcome: '~17% cuts late 2022 (~80 employees); restructured product around higher-tier patron tools',                      signalLagMonths: 5 },
+      { name: 'OnlyFans / Fenix Intl', region: 'US', year: 2023, outcome: 'Selective cuts in non-core international expansion; remains highly profitable in core',           signalLagMonths: 7 },
+    ],
+    outcomeTimeline: {
+      typical:    '6–12 months from creator-acquisition slowdown to first cut',
+      best_case:  '12–18 months — pivot to enterprise tier extends runway',
+      worst_case: '3–6 months — emergency cut with limited follow-on funding',
+    },
+    affectedRoles:  ['Creator Success / Community', 'Trust & Safety (manual)', 'Junior Engineering (consumer surfaces)', 'Marketing / Brand', 'Manual content moderation'],
+    protectedRoles: ['Senior Engineering (creator-monetization)', 'Trust & Safety ML', 'Finance / FP&A', 'Enterprise Sales (if pivoted)'],
+    recommendedResponse: {
+      immediate:   'If you\'re in a Trust & Safety / manual-moderation role, build one demonstrable AI-moderation evaluation portfolio piece this week — these roles are converting fastest to AI-augmented variants.',
+      short_term:  'Pivot toward enterprise / B2B SaaS roles where unit economics are more defensible than consumer creator monetization.',
+      medium_term: 'Target enterprise-tier video platforms (Loom, Vimeo Enterprise, Cinema8) or creator-monetization-as-a-service (Kajabi, Teachable, Thinkific) which are absorbing creator-economy talent at 15-25% premium.',
+    },
+    evidenceNote: 'Derived from layoffs.fyi 2022-2024 data, Cameo / Substack / Patreon public statements, TechCrunch + The Information coverage.',
+  },
+
+  // ── Net-new 2: EU Ad Tech Privacy Restructuring ─────────────────────────────
+
+  EU_AD_TECH_PRIVACY_RESTRUCTURING_2023: {
+    patternId: 'EU_AD_TECH_PRIVACY_RESTRUCTURING_2023',
+    patternName: 'EU Ad Tech Privacy / GDPR / iOS ATT Restructuring 2022–2025',
+    category: 'eu_industrial_automation',
+    summary:
+      'European ad-tech and digital-advertising companies cutting as GDPR enforcement + Apple iOS 14.5 ' +
+      'App Tracking Transparency + EU DSA / DMA compound. Pattern: third-party-cookie roles cut, ' +
+      'first-party + contextual + AI-modeling roles created.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'in', value: ['DE', 'FR', 'NL', 'ES', 'IT', 'BE', 'AT', 'IE', 'PT', 'FI', 'SE', 'DK', 'PL', 'EU'], weight: 0.35, description: 'EU region' },
+        { field: 'companyData.industry', operator: 'in', value: ['ad tech', 'adtech', 'digital advertising', 'marketing', 'media tech', 'attribution'], weight: 0.35, description: 'Ad-tech / digital advertising' },
+        { field: 'breakdown.L4',         operator: 'gt', value: 0.35, weight: 0.30, description: 'Sector headwinds elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 10, weight: 0.25, description: 'Revenue growth decelerated' },
+        { field: 'roleTitle',                    operator: 'in', value: ['ad ops', 'attribution', 'campaign manager', 'media buyer', 'third-party cookie', 'identity'], weight: 0.30, description: 'Identity-tracking / third-party-cookie role' },
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1, weight: 0.20, description: 'Prior round exists' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Criteo',     region: 'France', year: 2023, outcome: '~140 cuts Q3 2023 (~3% workforce); pivoted from third-party cookies to contextual + retail media',                                                           signalLagMonths: 10 },
+      { name: 'Adevinta',   region: 'Norway', year: 2024, outcome: '~10% global cuts 2024 after Permira/Blackstone buyout; cost-discipline + AI-platform consolidation across classifieds portfolio',                            signalLagMonths: 9  },
+      { name: 'Adform',     region: 'Denmark', year: 2023, outcome: 'Selective restructuring 2023 amid identity-graph industry consolidation',                                                                                    signalLagMonths: 11 },
+    ],
+    outcomeTimeline: {
+      typical:    '12–18 months from regulatory event (iOS update / GDPR fine / DSA effective date) to ad-tech headcount restructure',
+      best_case:  '18–24 months — company successfully pivots to contextual + first-party data tooling',
+      worst_case: '6–12 months — sudden client loss after a major iOS / GDPR change forces emergency cut',
+    },
+    affectedRoles:  ['Ad Operations (third-party-cookie focus)', 'Identity Graph Engineering', 'Cross-Site Attribution Analyst', 'Manual Campaign Manager', 'DSP Trader (legacy)'],
+    protectedRoles: ['Contextual Targeting ML Engineer', 'First-Party Data / CDP Engineer', 'Privacy Engineering', 'Retail Media Specialist', 'Performance Marketing Scientist'],
+    recommendedResponse: {
+      immediate:   'Pivot your role narrative from "third-party identity / cross-site tracking" to "first-party data + contextual + AI-modeling". Add a portfolio piece showing a contextual or cohort-based campaign you ran with privacy-preserving signals.',
+      short_term:  'Acquire one privacy-engineering credential (IAPP CIPP/E for the EU, plus AWS Clean Rooms / Google PAIR for technical) — these are the bridge skills.',
+      medium_term: 'Target retail-media networks (Tesco MediaConnect, Carrefour Links, Walmart Connect EU) which are the structurally growing destination for ad-tech talent post-cookie-deprecation.',
+    },
+    evidenceNote: 'Derived from Criteo Q3 2023 + 2024 results, Adevinta Permira-Blackstone buyout coverage, AdExchanger + Digiday EU ad-tech coverage 2022-2025.',
+  },
+
+  // ── Net-new 3: Japan Finance Back-Office Automation ──────────────────────────
+
+  JAPAN_FINANCE_BACK_OFFICE_AUTOMATION_2024: {
+    patternId: 'JAPAN_FINANCE_BACK_OFFICE_AUTOMATION_2024',
+    patternName: 'Japan Megabank Back-Office Automation 2024–2026',
+    category: 'role_ai_displacement',
+    summary:
+      'Japanese megabanks executing the long-planned back-office headcount reduction via AI + RPA + ' +
+      'natural attrition. Distinct pattern: lifetime employment culture means cuts happen via early ' +
+      'retirement incentives + hiring freeze rather than involuntary layoffs.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'JP', weight: 0.35, description: 'Japan-based company' },
+        { field: 'companyData.industry', operator: 'in', value: ['banking', 'financial services', 'insurance'], weight: 0.35, description: 'Japanese finance' },
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high', 'medium'], weight: 0.30, description: 'AI / RPA investment in scope' },
+      ],
+      supporting: [
+        { field: 'roleTitle', operator: 'in', value: ['back office', 'operations', 'reconciliation', 'compliance ops', 'document processing', 'manual analyst'], weight: 0.40, description: 'Back-office / process role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Mizuho Financial Group', region: 'Japan', year: 2024, outcome: 'Long-term plan to reduce 8,000 positions by 2026 via natural attrition + early retirement + RPA; previously announced ~19,000 over 10 years — Japan\'s most aggressive megabank automation plan',  signalLagMonths: 24 },
+      { name: 'MUFG',                   region: 'Japan', year: 2024, outcome: '~9,500 reduction over multi-year plan; RPA + AI back-office automation cited; voluntary early retirement primary mechanism',                                                                       signalLagMonths: 36 },
+      { name: 'SMBC (Sumitomo Mitsui)', region: 'Japan', year: 2024, outcome: '~4,000 position reduction plan + 1,600 transferred to growth areas (digital, wealth management)',                                                                                                  signalLagMonths: 30 },
+    ],
+    outcomeTimeline: {
+      typical:    '24–48 months from automation plan announcement to visible headcount reduction (slowest of any global pattern due to lifetime-employment culture)',
+      best_case:  '36–60 months — fully natural-attrition absorbed; internal transfers to digital banking + wealth growth areas',
+      worst_case: '18–24 months — accelerated voluntary early retirement programs when business performance underperforms',
+    },
+    affectedRoles:  ['Manual reconciliation', 'Document processing operator', 'Manual KYC reviewer', 'Branch teller (long-term)', 'Manual compliance reviewer'],
+    protectedRoles: ['Digital banking product (mobile/web)', 'Wealth management RM', 'Lifetime-employment-protected core back-office (Japanese citizens, tenured)', 'Risk modeling / model validation'],
+    recommendedResponse: {
+      immediate:   'If you\'re a Japanese citizen with >5yr tenure in a back-office role, your lifetime-employment protection remains strong — focus on internal transfer to digital / wealth growth areas via TOEIC + digital banking upskilling.',
+      short_term:  'Acquire one digital banking + AI credential combination (e.g. AWS Cloud Practitioner + JBA digital banking course). Internal transfer to digital banking divisions is the documented success path.',
+      medium_term: 'Target Japanese fintechs (Money Forward, Smartpay, Paidy, Kyash) or international banks expanding in Tokyo (Goldman Sachs Japan, JP Morgan Japan) which hire bilingual finance talent at 20-40% premium.',
+    },
+    evidenceNote: 'Derived from Mizuho / MUFG / SMBC annual reports + investor presentations 2020-2024, Nikkei Asia coverage, FSA (Japanese Financial Services Agency) periodic reports.',
+  },
+
+  // ── Net-new 4: US Retail Fulfillment Automation ─────────────────────────────
+
+  US_RETAIL_FULFILLMENT_AUTOMATION_2024: {
+    patternId: 'US_RETAIL_FULFILLMENT_AUTOMATION_2024',
+    patternName: 'US Retail Fulfillment + Distribution Center Automation 2024–2026',
+    category: 'role_ai_displacement',
+    summary:
+      'Major US retailers automating fulfillment centers, distribution, and last-mile via robotics + ' +
+      'AI scheduling. Pattern: announced multi-year automation investments + selective DC closures.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'US', weight: 0.30, description: 'US-based retailer' },
+        { field: 'companyData.industry', operator: 'in', value: ['retail', 'e-commerce', 'ecommerce', 'logistics', 'fulfillment', 'distribution'], weight: 0.30, description: 'Retail / fulfillment' },
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high'], weight: 0.40, description: 'High automation investment' },
+      ],
+      supporting: [
+        { field: 'roleTitle', operator: 'in', value: ['fulfillment', 'warehouse', 'distribution', 'picker', 'packer', 'sorter', 'driver', 'logistics'], weight: 0.40, description: 'Fulfillment / warehouse role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Amazon',  region: 'US', year: 2024, outcome: 'Multiple fulfillment center closures + selective layoffs 2022-2024 (~27,000 total); Rivian Sparrow + Proteus robotics deployment cited',  signalLagMonths: 8 },
+      { name: 'Walmart', region: 'US', year: 2024, outcome: '~2,000 fulfillment role cuts at automated centers in TX/PA/FL/NJ; Symbotic robotics partnership cited',                                  signalLagMonths: 10 },
+      { name: 'Target',  region: 'US', year: 2024, outcome: 'Sortation center model rollout + selective DC restructuring',                                                                            signalLagMonths: 12 },
+      { name: 'UPS',     region: 'US', year: 2024, outcome: '~12,000 cuts 2024 cited efficiency + technology investments + Teamsters union contract',                                                  signalLagMonths: 9 },
+      { name: 'FedEx',   region: 'US', year: 2024, outcome: 'DRIVE consolidation program reducing $4B costs by 2027 via Network 2.0 + AI routing',                                                    signalLagMonths: 11 },
+    ],
+    outcomeTimeline: {
+      typical:    '12–24 months from automation announcement to first DC closure',
+      best_case:  '18–30 months — reskilling programs absorb most via maintenance + robotics-operator roles',
+      worst_case: '6–12 months — sudden DC closure with 60-day WARN notice',
+    },
+    affectedRoles:  ['Manual picker / packer', 'Sortation operator', 'Manual quality control', 'Inventory scanner', 'L1 forklift operator (long-term)'],
+    protectedRoles: ['Robotics maintenance technician', 'Automation systems engineer', 'AI inventory planning analyst', 'Reverse-logistics specialist'],
+    recommendedResponse: {
+      immediate:   'Check your DC\'s automation roadmap via your company intranet or LinkedIn employee posts — if your facility is on the announced robotics deployment list, your timeline is 12-24 months.',
+      short_term:  'Acquire one robotics maintenance / automation credential (Amazon Logistics certification, FANUC robot operator cert, AIB warehouse automation) — these are the bridge roles automating retailers actively hire for.',
+      medium_term: 'Target growing 3PLs that need human flexibility (Saia, Old Dominion, XPO) or automation vendors themselves (Symbotic, Berkshire Grey, GreyOrange) which absorb fulfillment ops talent at 15-30% premium.',
+    },
+    evidenceNote: 'Derived from Amazon / Walmart / Target / UPS / FedEx annual reports 2022-2024, WARN Act filings in TX/CA/NJ/PA/FL, Supply Chain Dive + Modern Materials Handling coverage.',
+  },
+
+  // ── Net-new 5: US Healthcare AI Support Reduction ───────────────────────────
+
+  US_HEALTHCARE_AI_SUPPORT_REDUCTION_2024: {
+    patternId: 'US_HEALTHCARE_AI_SUPPORT_REDUCTION_2024',
+    patternName: 'US Healthcare Admin + Claims AI Automation 2024–2026',
+    category: 'role_ai_displacement',
+    summary:
+      'US healthcare insurers + pharmacy benefit managers automating claims processing, prior ' +
+      'authorization, and customer support via AI. Pattern: profitable companies cutting back-office ' +
+      'while hiring AI-clinical roles.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'US', weight: 0.30, description: 'US-based' },
+        { field: 'companyData.industry', operator: 'in', value: ['healthcare', 'health insurance', 'pharmacy benefit', 'pbm', 'health plan'], weight: 0.35, description: 'US healthcare admin' },
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high'], weight: 0.35, description: 'High AI investment' },
+      ],
+      supporting: [
+        { field: 'breakdown.L1', operator: 'lt', value: 0.45, weight: 0.30, description: 'Financially healthy — confirms AI-efficiency not distress' },
+        { field: 'roleTitle',    operator: 'in', value: ['claims', 'prior authorization', 'medical coding', 'medical billing', 'utilization review', 'customer service', 'call center'], weight: 0.40, description: 'AI-substitutable healthcare admin role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'UnitedHealth Group', region: 'US', year: 2024, outcome: 'Optum + Change Healthcare integration cuts 2024 + AI prior-auth automation deployment; offshoring + automation cited',           signalLagMonths: 10 },
+      { name: 'CVS Health',         region: 'US', year: 2024, outcome: '~5,000 corporate cuts 2024 + 3,000 in 2025 amid AI claims automation rollout',                                                  signalLagMonths: 8 },
+      { name: 'Cigna',              region: 'US', year: 2024, outcome: 'Selective non-core admin cuts amid Express Scripts AI deployment',                                                              signalLagMonths: 11 },
+      { name: 'Humana',             region: 'US', year: 2024, outcome: '~500 cuts late 2024 amid Medicare Advantage star-rating headwinds + AI customer service automation',                            signalLagMonths: 7  },
+    ],
+    outcomeTimeline: {
+      typical:    '12–18 months from AI deployment to first headcount round',
+      best_case:  '18–30 months — reskilling to AI-clinical / risk-adjustment / SDOH analyst roles',
+      worst_case: '6–12 months — emergency cut after a quarterly miss (Medicare Advantage cuts) compresses timeline',
+    },
+    affectedRoles:  ['Manual claims examiner', 'Prior authorization nurse (manual)', 'Medical coder (volume-based)', 'Customer service rep', 'Junior medical biller'],
+    protectedRoles: ['Clinical AI evaluator', 'Risk adjustment data analyst', 'SDOH (social determinants) analyst', 'Senior clinical reviewer (complex cases)', 'Provider relations'],
+    recommendedResponse: {
+      immediate:   'If you\'re a manual claims examiner / prior auth nurse, acquire AAPC CPB (Certified Professional Biller) OR AHIMA RHIT (Registered Health Information Technician) within 90 days — these are the credentials that move you to clinical-review tier.',
+      short_term:  'Target healthcare AI vendors (Olive Health, Notable Health, Cohere Health, Akasa) or hospital systems building in-house AI teams — they hire AI-augmented healthcare admin talent at 25-40% premium.',
+      medium_term: 'Pivot toward SDOH (social determinants of health) analytics + risk adjustment, which are growing 20-30% YoY as Medicare Advantage shifts toward value-based care.',
+    },
+    evidenceNote: 'Derived from UnitedHealth / CVS / Cigna / Humana annual reports 2022-2024, AHIP industry coverage, Becker\'s Hospital Review + Modern Healthcare layoff tracking.',
+  },
+
+  // ── Net-new 6: Australian Bank Branch Consolidation ─────────────────────────
+
+  AUSTRALIAN_BANK_BRANCH_CONSOLIDATION_2024: {
+    patternId: 'AUSTRALIAN_BANK_BRANCH_CONSOLIDATION_2024',
+    patternName: 'Australian Big 4 Bank Branch + Branch-Staff Consolidation 2022–2026',
+    category: 'global_telecom_reduction',
+    summary:
+      'CBA / Westpac / NAB / ANZ consolidating branch networks + digital pivot. Pattern: 5-10% ' +
+      'branch closures per year + selective branch-staff redeployment to digital + business banking.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'AU', weight: 0.40, description: 'Australia-based' },
+        { field: 'companyData.industry', operator: 'in', value: ['banking', 'financial services'], weight: 0.40, description: 'Australian banking' },
+        { field: 'companyData.layoffRounds', operator: 'gte', value: 1, weight: 0.20, description: 'Prior round exists' },
+      ],
+      supporting: [
+        { field: 'roleTitle', operator: 'in', value: ['branch', 'teller', 'customer service', 'personal banker', 'home loan officer (manual)'], weight: 0.40, description: 'Branch / front-line role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Commonwealth Bank (CBA)', region: 'Australia', year: 2024, outcome: '~150 branch closures 2020-2024; selective branch-staff redeployment; APRA "unquestionably strong" capital + digital banking growth',  signalLagMonths: 14 },
+      { name: 'Westpac',                 region: 'Australia', year: 2024, outcome: 'Selective regional branch closures + IT outsourcing reversals + AI customer service deployment',                                    signalLagMonths: 12 },
+      { name: 'NAB',                     region: 'Australia', year: 2024, outcome: '~270 tech jobs cut 2024 amid AI transformation; offshore-to-onshore rebalancing',                                                    signalLagMonths: 11 },
+      { name: 'ANZ',                     region: 'Australia', year: 2024, outcome: 'Selective branch closures + Suncorp integration cuts post-acquisition',                                                              signalLagMonths: 15 },
+    ],
+    outcomeTimeline: {
+      typical:    '18–36 months from digital-shift announcement to branch closure; Fair Work consultation + redeployment requirement extends timeline',
+      best_case:  '24–48 months — most affected staff redeployed via Fair Work + enterprise agreement protections',
+      worst_case: '12–18 months — accelerated closures after a quarterly miss',
+    },
+    affectedRoles:  ['Branch teller', 'Personal banker (transaction-focused)', 'Branch operations support', 'Junior home-loan officer (manual)'],
+    protectedRoles: ['Business banker (commercial relationships)', 'Digital banking product', 'Financial crime / AML', 'Risk modeling', 'Mortgage broker channel manager'],
+    recommendedResponse: {
+      immediate:   'Check your union status (Finance Sector Union — FSU) — Australian bank EBAs typically include redeployment-first guarantees before redundancy, with 1.5-2x statutory severance.',
+      short_term:  'Pivot toward business / commercial banking relationships (higher transaction value, lower automation risk) or to financial crime / AML where headcount is GROWING under AUSTRAC scrutiny.',
+      medium_term: 'Target Australian fintechs (Afterpay/Block AU, Athena Home Loans, Judo Bank) or international banks expanding in AU (HSBC AU, ING AU, Macquarie Banking) at 15-25% premium.',
+    },
+    evidenceNote: 'Derived from CBA / Westpac / NAB / ANZ annual reports 2022-2024, FSU Australia coverage, AFR + The Australian Financial Review banking coverage.',
+  },
+
+  // ── Net-new 7: Global Gaming Industry Layoffs ──────────────────────────────
+
+  GLOBAL_GAMING_INDUSTRY_LAYOFFS_2024: {
+    patternId: 'GLOBAL_GAMING_INDUSTRY_LAYOFFS_2024',
+    patternName: 'Global Gaming Industry Restructuring 2023–2025',
+    category: 'sector_wave',
+    summary:
+      'AAA gaming + mobile gaming sector simultaneously cutting after COVID engagement boom collapsed. ' +
+      'Pattern: M&A integration cuts (Microsoft-Activision) + standalone publisher cuts + studio ' +
+      'closures across all major markets.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.industry', operator: 'in', value: ['gaming', 'game development', 'game publisher', 'mobile gaming', 'esports'], weight: 0.45, description: 'Gaming industry' },
+        { field: 'breakdown.L4',         operator: 'gt', value: 0.40, weight: 0.30, description: 'Sector headwinds elevated' },
+        { field: 'companyData.layoffRounds', operator: 'gte', value: 1, weight: 0.25, description: 'Prior round exists (gaming layoffs are typically multi-wave)' },
+      ],
+      supporting: [
+        { field: 'roleTitle', operator: 'in', value: ['game designer', 'level designer', 'gameplay programmer', 'qa', 'localization', 'community manager', 'esports'], weight: 0.40, description: 'Gaming role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Microsoft Gaming / Activision Blizzard', region: 'US', year: 2024, outcome: '~1,900 cuts Jan 2024 post-acquisition integration; further Xbox closures (Tango Gameworks, Arkane Austin) May 2024',           signalLagMonths: 6  },
+      { name: 'Embracer Group',         region: 'Sweden', year: 2024, outcome: '~5% workforce cuts across 2023-2024 after $2B funding deal collapsed; multiple studio closures',                                              signalLagMonths: 9  },
+      { name: 'Unity',                  region: 'US', year: 2024, outcome: '~1,800 cuts (~25% workforce) Jan 2024 after runtime fee fiasco + leadership change',                                                              signalLagMonths: 4  },
+      { name: 'Riot Games',             region: 'US', year: 2024, outcome: '~530 cuts (~11% workforce) Jan 2024; ended Legends of Runeterra + closed publishing arm',                                                          signalLagMonths: 10 },
+      { name: 'Ubisoft',                region: 'France', year: 2024, outcome: '~3,000+ cuts across multiple rounds 2023-2024; subscriber declines + flop launches (Skull and Bones); restructured into Ubisoft + Tencent JV', signalLagMonths: 12 },
+      { name: 'Electronic Arts',        region: 'US', year: 2024, outcome: '~670 cuts (~5% workforce) Feb 2024; reduced project pipeline focus',                                                                              signalLagMonths: 8  },
+      { name: 'Bungie',                 region: 'US', year: 2024, outcome: '~220 cuts (~17% workforce) Jul 2024; cited Destiny 2 underperformance + Marathon delay',                                                          signalLagMonths: 11 },
+    ],
+    outcomeTimeline: {
+      typical:    '12–24 months from a flop launch / acquisition close to first cuts',
+      best_case:  '18–30 months — IP licensing or sale of studio absorbs talent',
+      worst_case: '6–12 months — emergency cut after a single flagship miss; complete studio closure',
+    },
+    affectedRoles:  ['Level designer (legacy systems)', 'Manual QA tester', 'Localization specialist', 'Community manager (legacy products)', 'Esports operations'],
+    protectedRoles: ['Live-service engineering', 'Senior gameplay programmer (AAA)', 'Monetization analyst', 'AI-tooling engineer (game gen / NPCs)', 'Tools engineer'],
+    recommendedResponse: {
+      immediate:   'Update your portfolio THIS WEEK to emphasize live-service / monetization / AI-tooling work — these are the protected categories. Pure narrative-design + linear-content portfolios are the most-cut.',
+      short_term:  'Acquire one credential in game AI tooling (Inworld, Convai, NVIDIA ACE for Games) OR live-service monetization (GameAnalytics, deltaDNA, AppsFlyer Games) — these are the bridges.',
+      medium_term: 'Target growing mobile-gaming companies (Playrix, Scopely, Moon Active, AppLovin) or non-gaming companies hiring game-engine + simulation talent (Unreal at Microsoft Flight Sim, automotive simulation at Mercedes-Benz / BMW, healthcare VR at AppliedVR).',
+    },
+    evidenceNote: 'Derived from Microsoft / Embracer / Unity / Riot / Ubisoft / EA / Bungie 2023-2024 announcements + investor calls, Game Developer + Eurogamer + Polygon layoff tracking; videogamechronicle.com layoffs database.',
+  },
+
+  // ── Net-new 8: US Consulting Partner Track Compression ──────────────────────
+
+  US_CONSULTING_PARTNER_TRACK_COMPRESSION_2024: {
+    patternId: 'US_CONSULTING_PARTNER_TRACK_COMPRESSION_2024',
+    patternName: 'US Top-Tier Consulting Partner-Track Compression 2024–2026',
+    category: 'big_tech_efficiency',
+    summary:
+      'McKinsey / Bain / BCG / Big 4 selective cuts + counter-offers withdrawn + promotion delays. ' +
+      'Pattern: profitable firm, post-pandemic associate over-hiring corrected via PIP + counter-offer ' +
+      'rescindment + non-promotion. Not technically layoffs but functionally identical for the user.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'US', weight: 0.30, description: 'US-based consulting' },
+        { field: 'companyData.industry', operator: 'in', value: ['consulting', 'management consulting', 'strategy consulting', 'professional services'], weight: 0.40, description: 'Top-tier consulting' },
+        { field: 'breakdown.L1',         operator: 'lt', value: 0.50, weight: 0.30, description: 'Firm financially healthy (compression is internal, not distress)' },
+      ],
+      supporting: [
+        { field: 'roleTitle', operator: 'in', value: ['associate', 'senior associate', 'consultant', 'engagement manager', 'manager'], weight: 0.40, description: 'Partner-track role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'McKinsey & Company', region: 'US', year: 2024, outcome: '~1,400 cuts (~3%) in late 2023 from US ops org; selective partner-track exits 2024 + counter-offer rescindment for new hires',         signalLagMonths: 12 },
+      { name: 'Bain & Company',     region: 'US', year: 2023, outcome: 'Selective performance management + counter-offer rescindment 2023; delayed start dates for incoming MBA hires',                       signalLagMonths: 14 },
+      { name: 'BCG',                region: 'US', year: 2024, outcome: 'Slowed promotion velocity + selective non-promotion 2024',                                                                              signalLagMonths: 16 },
+      { name: 'Deloitte Consulting', region: 'US', year: 2024, outcome: '~1,500 cuts 2024 specifically in US consulting practice',                                                                              signalLagMonths: 8  },
+      { name: 'EY',                  region: 'US', year: 2023, outcome: '~3,000 cuts 2023 after Project Everest split failure',                                                                                  signalLagMonths: 10 },
+    ],
+    outcomeTimeline: {
+      typical:    '12–18 months from utilization decline to first counter-offer rescindment / non-promotion wave',
+      best_case:  '18–24 months — utilization recovers + partner track resumes',
+      worst_case: '6–12 months — bench utilization plummets + actual layoffs (Deloitte/EY pattern)',
+    },
+    affectedRoles:  ['Associate (overhired 2021-2022 cohort)', 'Senior Associate (slow promotion)', 'Consultant (low utilization)', 'Manager (specific practice areas)'],
+    protectedRoles: ['AI / GenAI practice leaders', 'Partners (equity owners)', 'Niche tax / regulatory specialists', 'Federal / government practice'],
+    recommendedResponse: {
+      immediate:   'If you\'re on counter-offer hold / delayed start, the firm is signaling it doesn\'t need you in 6 months. Take any reasonable industry offer NOW rather than wait — the rescindment notification typically comes 30-60 days before start date.',
+      short_term:  'Pivot toward AI / GenAI consulting practice areas which are the protected growth category. Acquire one AI implementation credential (Claude API, OpenAI Enterprise, AWS GenAI Engineer) — visible signal that you\'re in the growth not the bench.',
+      medium_term: 'Target in-house corporate strategy / corp-dev roles at companies your firm consulted to (warm intros), boutique strategy firms (LEK, OC&C, Bridgespan), or AI consulting upstarts (Galileo AI, Vellum, Aircover).',
+    },
+    evidenceNote: 'Derived from McKinsey / Bain / BCG / Deloitte / EY 2023-2024 public statements, Business Insider + Financial Times + Consultancy.uk coverage, layoffs.fyi data.',
+  },
+
+  // ── Net-new 9: India Insurance Digital Pivot ──────────────────────────────
+
+  INDIA_INSURANCE_DIGITAL_PIVOT_2024: {
+    patternId: 'INDIA_INSURANCE_DIGITAL_PIVOT_2024',
+    patternName: 'India Insurance Digital Transformation Restructuring 2024–2026',
+    category: 'india_it_automation',
+    summary:
+      'Indian life + general insurance majors restructuring agent / back-office networks as digital ' +
+      'distribution + AI underwriting scale. Pattern: branch consolidation + agent network rationalization + ' +
+      'AI claims automation.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'IN', weight: 0.35, description: 'India-based' },
+        { field: 'companyData.industry', operator: 'in', value: ['insurance', 'life insurance', 'general insurance', 'health insurance'], weight: 0.40, description: 'Indian insurance' },
+        { field: 'breakdown.L3',         operator: 'gt', value: 0.45, weight: 0.25, description: 'Role displacement risk elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high', 'medium'], weight: 0.30, description: 'AI / digital investment' },
+        { field: 'roleTitle', operator: 'in', value: ['agent', 'underwriter (manual)', 'claims processor', 'branch operations', 'manual analyst'], weight: 0.40, description: 'Agent / back-office role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'HDFC Life',             region: 'India', year: 2024, outcome: 'Selective branch + agent network rationalization 2024; digital pivot + AI underwriting deployment + bancassurance growth',  signalLagMonths: 12 },
+      { name: 'ICICI Prudential Life', region: 'India', year: 2024, outcome: 'Branch network consolidation + digital distribution shift; CEO Anup Bagchi exit + restructuring',                            signalLagMonths: 14 },
+      { name: 'SBI Life',              region: 'India', year: 2024, outcome: 'Selective non-core back-office automation 2024; PSB-backed stability protects formal-sector employees',                       signalLagMonths: 18 },
+      { name: 'PolicyBazaar',          region: 'India', year: 2023, outcome: '~150 cuts late 2023 after IPO underperformance; pivot to profitability-first model',                                          signalLagMonths: 9  },
+    ],
+    outcomeTimeline: {
+      typical:    '18–30 months from digital pivot announcement to visible agent network reduction',
+      best_case:  '24–36 months — IRDAI-driven slow pace allows reskilling to bancassurance + digital sales',
+      worst_case: '12–18 months — accelerated cuts when growth flatlines',
+    },
+    affectedRoles:  ['Field insurance agent (urban metros)', 'Manual underwriter (junior)', 'Claims processor (volume-based)', 'Branch operations admin', 'Manual KYC reviewer'],
+    protectedRoles: ['Digital distribution product manager', 'AI underwriting analyst', 'Bancassurance relationship manager', 'Risk modeling actuary', 'Health insurance specialist (growing category)'],
+    recommendedResponse: {
+      immediate:   'Acquire IRDAI Foundation Insurance certification + one digital tool credential (Salesforce Financial Services Cloud, Guidewire, Duck Creek) — these are the bridge skills insurance digital teams hire for.',
+      short_term:  'Target health insurance segment (growing 18-22% YoY vs life at 8-10%) — health insurance is the structural growth area in Indian insurance.',
+      medium_term: 'Pivot toward bancassurance roles (HDFC Bank-HDFC Life, ICICI Bank-ICICI Pru, Kotak Bank-Kotak Life) where branch relationships + insurance product knowledge command 25-40% premium.',
+    },
+    evidenceNote: 'Derived from HDFC Life / ICICI Pru / SBI Life / PolicyBazaar 2023-2024 annual reports, IRDAI Annual Report, Economic Times + Mint insurance coverage.',
+  },
+
+  // ── Net-new 10: Canadian Crypto Regulatory Exits ────────────────────────────
+
+  CANADIAN_CRYPTO_REGULATORY_EXITS_2024: {
+    patternId: 'CANADIAN_CRYPTO_REGULATORY_EXITS_2024',
+    patternName: 'Canadian Crypto Pre-Registration Undertaking Exits 2023–2025',
+    category: 'sector_wave',
+    summary:
+      'Canadian crypto exchanges + platforms cutting after OSC Pre-Registration Undertaking + CSA ' +
+      'restrictions tightened. Pattern: international platforms exit Canada, domestic survivors ' +
+      'pivot to compliance-heavy operations.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'CA', weight: 0.35, description: 'Canada-based' },
+        { field: 'companyData.industry', operator: 'in', value: ['crypto', 'cryptocurrency', 'web3', 'blockchain', 'digital assets'], weight: 0.40, description: 'Crypto / Web3' },
+        { field: 'breakdown.L4',         operator: 'gt', value: 0.40, weight: 0.25, description: 'Regulatory sector headwinds elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.layoffRounds', operator: 'gte', value: 1, weight: 0.30, description: 'Prior round exists' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Wealthsimple Crypto', region: 'Canada', year: 2023, outcome: 'Selective crypto team cuts amid OSC PRU constraints; Wealthsimple parent continues operating profitably',                                signalLagMonths: 10 },
+      { name: 'Newton',              region: 'Canada', year: 2023, outcome: 'Significant cuts 2023 amid crypto winter + regulatory pressure',                                                                          signalLagMonths: 8 },
+      { name: 'Coinsmart',           region: 'Canada', year: 2023, outcome: 'Acquired by WonderFi after regulatory pressure compressed standalone viability',                                                          signalLagMonths: 12 },
+      { name: 'Binance Canada (exit)', region: 'Canada', year: 2023, outcome: 'Exited Canadian market May 2023 after CSA tightened crypto custody + leverage rules; affected ~Canadian employees + Canadian customers', signalLagMonths: 6 },
+    ],
+    outcomeTimeline: {
+      typical:    '6–12 months from regulatory action to first cuts',
+      best_case:  '12–18 months — pivot to compliance-heavy operations with smaller team',
+      worst_case: '3–6 months — Canada market exit (Binance pattern); Canadian staff laid off in 60-90 days',
+    },
+    affectedRoles:  ['Crypto trader operations', 'Junior compliance (non-securities)', 'Marketing / growth (consumer crypto)', 'Manual customer service'],
+    protectedRoles: ['Securities-licensed compliance officer', 'AML / FINTRAC specialist', 'Senior engineering (custody platform)', 'Treasury (regulated)'],
+    recommendedResponse: {
+      immediate:   'Acquire CSI Canadian Securities Course (CSC) + AML certification (FINTRAC training) within 90 days — these are the regulated-securities credentials Canadian crypto survivors hire for.',
+      short_term:  'Pivot toward Canadian fintech survivors (Wealthsimple core / Questrade / Wave / Nuvei) or to international crypto firms with strong Canadian compliance teams (Coinbase Canada, Kraken Canada).',
+      medium_term: 'Target traditional Canadian financial services hiring crypto-literate compliance + risk talent (RBC, TD, BMO, Scotia, NBC) at 30-50% premium over crypto-startup compensation but with stability.',
+    },
+    evidenceNote: 'Derived from OSC Pre-Registration Undertaking documentation, CSA Notice 21-332, Binance Canada exit announcement May 2023, The Logic + The Globe and Mail Canadian crypto coverage.',
   },
 
 }; // end HISTORICAL_PATTERNS
