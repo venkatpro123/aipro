@@ -1816,23 +1816,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     : companyData.employeeCount >= 200 ? 'mid'
     : 'small';
 
-  // 1. Job Market Liquidity — re-employment velocity
-  try {
-    const jobMarketLiquidity = computeJobMarketLiquidity({
-      oracleKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'generic',
-      industry: companyData.industry ?? 'technology',
-      tenureYears: inputs.userFactors.tenureYears,
-      region: companyData.region ?? 'US',
-      companySize,
-      isPublic: companyData.isPublic ?? false,
-      riskScore: hybridResult.total,
-      uniquenessDepth: (inputs.userFactors as any).uniquenessDepth,
-      performanceTier: (inputs.userFactors as any).performanceTier,
-    });
-    (hybridResult as any).jobMarketLiquidity = jobMarketLiquidity;
-  } catch (e) {
-    noteEngineFailure('jobMarketLiquidity', e);
-  }
+  // NOTE: Job Market Liquidity moved to step 23 (after peer contagion) so that
+  // geo cluster supply-surge data from peerContagion.geoCluster can be passed in.
+  // See step 23 below.
 
   // 2. Escape Path Optimizer — top-3 risk-reduction moves
   try {
@@ -2270,10 +2256,38 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       companyName: companyData.name,
       industry: companyData.industry ?? 'technology',
       currentScore: hybridResult.total,
+      city: (inputs.userFactors as any).city,
     });
     (hybridResult as any).peerContagion = peerContagion;
   } catch (e) {
     noteEngineFailure('peerContagion', e);
+  }
+
+  // 22.3. Job Market Liquidity — re-employment velocity.
+  // Placed AFTER peer contagion (step 22) so geo cluster supply-surge data is available.
+  // The geoCluster from peerContagion extends monthsToReemploy when co-located peers
+  // are cutting simultaneously (Seattle SWE scenario: Amazon + Microsoft both cutting
+  // = ~10,000 displaced engineers in the same metro competing for the same roles).
+  try {
+    const peerContagionResult = (hybridResult as any).peerContagion;
+    const geoCluster = peerContagionResult?.geoCluster;
+    const jobMarketLiquidity = computeJobMarketLiquidity({
+      oracleKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'generic',
+      industry: companyData.industry ?? 'technology',
+      tenureYears: inputs.userFactors.tenureYears,
+      region: companyData.region ?? 'US',
+      companySize,
+      isPublic: companyData.isPublic ?? false,
+      riskScore: hybridResult.total,
+      uniquenessDepth: (inputs.userFactors as any).uniquenessDepth,
+      performanceTier: (inputs.userFactors as any).performanceTier,
+      city: (inputs.userFactors as any).city,
+      geoClusterActiveCuts: geoCluster?.geoClusteredCuts ?? 0,
+      geoConcentrationScore: geoCluster?.geoConcentrationScore,
+    });
+    (hybridResult as any).jobMarketLiquidity = jobMarketLiquidity;
+  } catch (e) {
+    noteEngineFailure('jobMarketLiquidity', e);
   }
 
   // 22.5. Role-Industry Composite — cross-role × industry risk modifier

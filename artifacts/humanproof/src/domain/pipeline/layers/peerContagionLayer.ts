@@ -58,10 +58,16 @@ export const peerContagionLayer: AuditLayer<'peer_contagion'> = {
   parallelGroup: 'live_io',
   async run(ctx) {
     const core = ctx.require('core');
+    // city from userFactors enables geo cluster supply-surge analysis.
+    // Safe cast — city is optional in both UserFactors and PeerContagionInputs.
+    const city: string | undefined = (ctx as any).inputs?.userFactors?.city
+      ?? (ctx as any).userFactors?.city
+      ?? undefined;
     return computePeerContagionLive({
       companyName: ctx.companyData.name,
       industry: ctx.companyData.industry ?? 'technology',
       currentScore: core.total,
+      city,
     });
   },
   fallback: () => FALLBACK_RESULT,

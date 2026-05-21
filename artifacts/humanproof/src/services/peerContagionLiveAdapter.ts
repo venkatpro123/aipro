@@ -175,6 +175,8 @@ function checkPeerLayoffsFromEvents(
  * downstream consumers (UI panels, score amplifier blending, etc.).
  */
 export async function computePeerContagionLive(inputs: PeerContagionInputs): Promise<PeerContagionResult> {
+  // city is threaded through to computePeerContagion for geo cluster analysis.
+  // It is optional — when absent, geoCluster is omitted from the result.
   const flag = evaluateFlagSync('ws3_peer_contagion_live');
   if (!flag.isActive && !flag.isShadow) {
     return computePeerContagion(inputs);

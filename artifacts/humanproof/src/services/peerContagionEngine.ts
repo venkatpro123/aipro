@@ -29,6 +29,11 @@ import { layoffNewsCache } from '../data/layoffNewsCache';
 // developer estimates. Routed through getConstant so the recalibrate
 // cron can replace them with empirical regression values.
 import { getConstant } from './calibration/calibrationConstants';
+import {
+  resolveMetro,
+  PRESENCE_SURGE_WEIGHT,
+  type CompanyPresenceMode,
+} from '../data/techClusterMetros';
 
 export type ContagionWaveIntensity =
   | 'NONE'        // 0 peers cut in last 180 days
@@ -51,6 +56,32 @@ export interface AffectedPeer {
   daysAgo: number;
   estimatedPercentCut: number;  // 0 if unknown
   contagionContribution: number; // 0–1 weight of this peer in the wave score
+}
+
+// ── Geo cluster result ────────────────────────────────────────────────────────
+// Populated when the user's city maps to a known tech cluster metro. Captures
+// how many co-located peer companies are currently cutting and the resulting
+// local supply-surge pressure on the re-employment market.
+
+export interface GeoClusteredCut {
+  companyKey: string;
+  displayName: string;
+  presenceMode: CompanyPresenceMode;
+  surgeWeight: number;              // 0.10–1.00 based on presence mode
+}
+
+export interface GeoClusterResult {
+  metroName: string;
+  geoConcentrationScore: number;    // 0–1: tech employment density of this metro (ESTIMATED)
+  totalMetroPeers: number;          // dominant tech companies tracked in this metro
+  geoClusteredCuts: number;         // peer companies in same metro currently cutting
+  weightedSurgePressure: number;    // 0–1 weighted by presence mode
+  localSupplySurgeRisk: 'none' | 'low' | 'moderate' | 'high' | 'severe';
+  supplySurgeAmplifier: number;     // 1.00–1.40: multiplier on re-employment timeline
+  estimatedDisplacedEngineers: number; // rough estimate of engineers flooding local market (ESTIMATED)
+  affectedInMetro: GeoClusteredCut[];
+  remoteFirstInMetro: string[];     // companies in metro with remote-first mode (reduced surge)
+  geoNarrative: string;             // human-readable explanation
 }
 
 export interface PeerContagionResult {
@@ -84,12 +115,22 @@ export interface PeerContagionResult {
    * regression in Phase E1 completes.
    */
   readonly multiplierConfidence: 'bootstrap' | 'calibrated';
+  /**
+   * Geographic cluster analysis — populated when user's city maps to a known
+   * tech cluster metro. Captures local supply-surge risk from co-located peer
+   * layoffs. Absent when city is unknown or not in a tracked metro.
+   * Used by jobMarketLiquidityService to extend re-employment timeline.
+   */
+  geoCluster?: GeoClusterResult;
 }
 
 export interface PeerContagionInputs {
   companyName: string;
   industry: string;
   currentScore: number;
+  /** User's city of work (e.g. "Seattle", "San Francisco"). Enables geo cluster
+   *  analysis — supply-surge detection when co-located peers cut simultaneously. */
+  city?: string;
 }
 
 // ── Contagion wave scoring constants ─────────────────────────────────────────
@@ -255,6 +296,124 @@ function checkPeerLayoffsFromCache(peerCompanyId: string): { found: boolean; day
   return { found: false, daysAgo: 999, percentCut: 0 };
 }
 
+// ── Geographic cluster risk ────────────────────────────────────────────────────
+// Computes the local supply-surge effect when multiple co-located tech companies
+// are laying off simultaneously. A Seattle engineer hit by an Amazon wave is
+// NOT competing nationally — they compete with thousands of displaced Microsoft,
+// Meta, and Google Kirkland engineers in the same local job market.
+//
+// Supply-surge weight by presence mode:
+//   hq:           1.00  (Amazon Seattle = 100k local; 5% cut = 5,000 local engineers displaced)
+//   major_office: 0.75  (Google Kirkland = 5k local; 5% cut = ~190 local engineers displaced)
+//   satellite:    0.35  (smaller contribution)
+//   remote_first: 0.10  (layoffs hit ALL markets equally, not just local)
+//
+// Assumes a 5% cut-size for estimatedDisplacedEngineers — this is a calibration
+// floor estimate based on documented wave sizes (2022–2023 tech waves). The actual
+// impact scales with the wave severity, which is captured in waveIntensity.
+
+function computeGeoClusterRisk(
+  city: string | undefined,
+  companyKey: string,
+  affectedPeers: AffectedPeer[],
+): GeoClusterResult | undefined {
+  const metro = resolveMetro(city);
+  if (!metro) return undefined;
+
+  const affectedPeerKeys = new Set(affectedPeers.map(p => p.companyName.toLowerCase().trim()));
+
+  const affectedInMetro: GeoClusteredCut[] = [];
+  const remoteFirstInMetro: string[] = [];
+  let weightedSurge = 0;
+  let estimatedDisplaced = 0;
+
+  for (const mc of metro.dominantCompanies) {
+    // Skip the user's own company — we're measuring peer pressure, not self
+    if (mc.companyKey === companyKey || companyKey.includes(mc.companyKey) || mc.companyKey.includes(companyKey)) {
+      continue;
+    }
+
+    if (mc.presenceMode === 'remote_first') {
+      remoteFirstInMetro.push(mc.displayName);
+    }
+
+    // Check if this metro company appears in the affected peers list
+    const isCutting = affectedPeerKeys.has(mc.companyKey)
+      || [...affectedPeerKeys].some(k => k.includes(mc.companyKey) || mc.companyKey.includes(k));
+    if (!isCutting) continue;
+
+    const surgeWeight = PRESENCE_SURGE_WEIGHT[mc.presenceMode];
+    affectedInMetro.push({
+      companyKey: mc.companyKey,
+      displayName: mc.displayName,
+      presenceMode: mc.presenceMode,
+      surgeWeight,
+    });
+
+    weightedSurge += surgeWeight;
+    // Assume 5% average cut size for displacement estimate (conservative wave floor).
+    estimatedDisplaced += Math.round(mc.estimatedHeadcount * 0.05 * surgeWeight);
+  }
+
+  const geoClusteredCuts = affectedInMetro.length;
+
+  // Max possible surge = if EVERY metro company were cutting at full weight
+  const maxPossibleSurge = metro.dominantCompanies
+    .filter(mc => mc.companyKey !== companyKey)
+    .reduce((s, mc) => s + PRESENCE_SURGE_WEIGHT[mc.presenceMode], 0);
+
+  const weightedSurgePressure = maxPossibleSurge > 0
+    ? Math.min(1, weightedSurge / maxPossibleSurge)
+    : 0;
+
+  const localSupplySurgeRisk: GeoClusterResult['localSupplySurgeRisk'] =
+    weightedSurge >= 2.0 ? 'severe' :
+    weightedSurge >= 1.2 ? 'high' :
+    weightedSurge >= 0.5 ? 'moderate' :
+    weightedSurge > 0    ? 'low' :
+    'none';
+
+  // supplySurgeAmplifier: 1.00 (no surge) to 1.40 (severe coordinated wave).
+  // Each full-weight (HQ) peer cutting contributes +0.12 to the amplifier.
+  // A Seattle engineer with Amazon + Microsoft both cutting = ~1.24× timeline extension.
+  const supplySurgeAmplifier = Math.min(1.40, 1.00 + weightedSurge * 0.12);
+
+  const totalMetroPeers = metro.dominantCompanies.filter(mc => mc.companyKey !== companyKey).length;
+
+  // Build narrative
+  let geoNarrative: string;
+  if (geoClusteredCuts === 0) {
+    geoNarrative = `${metro.metroName} tech cluster (concentration score: ${Math.round(metro.concentrationScore * 100)}/100): `
+      + `${totalMetroPeers} major tech employers monitored in this metro. `
+      + `No co-located peers are currently cutting — local engineer supply is stable. `
+      + `If a wave hits, supply surge risk would be elevated due to metro concentration.`;
+  } else {
+    const cutList = affectedInMetro.slice(0, 3).map(c => c.displayName).join(', ');
+    const more = affectedInMetro.length > 3 ? ` +${affectedInMetro.length - 3} more` : '';
+    geoNarrative = `${metro.metroName} supply surge: ${geoClusteredCuts} co-located peer${geoClusteredCuts > 1 ? 's' : ''} `
+      + `(${cutList}${more}) cutting simultaneously. `
+      + `ESTIMATED ${estimatedDisplaced.toLocaleString()}+ displaced engineers competing in the same metro job market. `
+      + `Re-employment timeline extended by ${(supplySurgeAmplifier - 1.0) * 100 | 0}% versus a non-cluster market.`
+      + (remoteFirstInMetro.length > 0
+        ? ` Note: ${remoteFirstInMetro.join(', ')} are remote-first — their layoffs distribute globally, not locally.`
+        : '');
+  }
+
+  return {
+    metroName: metro.metroName,
+    geoConcentrationScore: metro.concentrationScore,
+    totalMetroPeers,
+    geoClusteredCuts,
+    weightedSurgePressure,
+    localSupplySurgeRisk,
+    supplySurgeAmplifier,
+    estimatedDisplacedEngineers: estimatedDisplaced,
+    affectedInMetro,
+    remoteFirstInMetro,
+    geoNarrative,
+  };
+}
+
 // ── Core engine ───────────────────────────────────────────────────────────────
 
 export function computePeerContagion(inputs: PeerContagionInputs): PeerContagionResult {
@@ -267,8 +426,11 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
 
   const totalPeersMonitored = peers.length;
 
+  const companyKeyNorm = companyKey;
+
   if (totalPeersMonitored === 0) {
-    // No peer data — can't compute contagion
+    // No peer data — still compute geo cluster for the static concentration signal
+    const geoCluster = computeGeoClusterRisk(inputs.city, companyKeyNorm, []);
     return {
       waveIntensity: 'NONE',
       propagationRisk: 'NEGLIGIBLE',
@@ -286,6 +448,7 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
       multipliersCalibrationStatus: 'developer_estimate',
       multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
       multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
+      geoCluster,
     };
   }
 
@@ -350,6 +513,9 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
   // Sort affected peers by recency
   affectedPeers.sort((a, b) => a.daysAgo - b.daysAgo);
 
+  // Compute geographic supply-surge cluster risk using the resolved affected peers.
+  const geoCluster = computeGeoClusterRisk(inputs.city, companyKeyNorm, affectedPeers);
+
   return {
     waveIntensity,
     propagationRisk,
@@ -367,5 +533,6 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
     multipliersCalibrationStatus: 'developer_estimate',
     multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
     multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
+    geoCluster,
   };
 }

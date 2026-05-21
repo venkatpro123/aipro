@@ -5,11 +5,21 @@
 // Score 0–100: higher = faster re-employment.
 // monthsToReemploy: median months to next comparable role given current market.
 //
+// v40.1: Geographic supply-surge Factor 9.
+// When co-located peer companies in the same metro are cutting simultaneously,
+// thousands of engineers flood one local job market. A Seattle SWE competing
+// against displaced Amazon, Microsoft, Meta, and Google Kirkland engineers
+// faces a categorically harder market than a non-cluster engineer in the same
+// role. Factor 9 applies:
+//   - Static metro concentration penalty (always, based on city)
+//   - Dynamic supply-surge penalty (scales with geoClusterActiveCuts)
+//
 // DESIGN: Entirely deterministic — no API calls. All factors derived from
 // existing scoring inputs. The result is injected into HybridResult so every
 // audit automatically includes job-market liquidity intelligence.
 
 import type { CompanyData } from '../data/companyDatabase';
+import { resolveMetro } from '../data/techClusterMetros';
 
 // ─── Output Types ─────────────────────────────────────────────────────────────
 
@@ -32,6 +42,14 @@ export interface JobMarketLiquidityResult {
   salaryPreservation: number;        // 0–100: how much comp can they preserve (vs taking cut)
   marketDemandTrend: 'rising' | 'stable' | 'falling';
   confidenceNote: string | null;     // surfaced when confidence is low
+  /** Geographic supply-surge analysis — present when user's city maps to a known tech cluster. */
+  geoSupplySurge?: {
+    metroName: string;
+    geoConcentrationScore: number;     // 0–1 static metro tech density (ESTIMATED)
+    geoClusterActiveCuts: number;      // peer companies in same metro currently cutting
+    surgeMonthsAdded: number;          // additional months added to timeline by supply surge
+    surgeNarrative: string;
+  };
 }
 
 // ─── Role demand velocity by oracle prefix ───────────────────────────────────
@@ -154,6 +172,13 @@ export interface LiquidityInputs {
   riskScore: number;           // current layoff risk (0–100)
   uniquenessDepth?: 'generic' | 'functional_specialist' | 'critical_knowledge';
   performanceTier?: 'top' | 'average' | 'below' | 'unknown';
+  /** User's city of work — enables geo supply-surge Factor 9 (static metro concentration). */
+  city?: string;
+  /** Number of peer companies in the same metro currently cutting — from peerContagionResult.geoCluster.
+   *  Drives the dynamic supply-surge penalty beyond the static metro concentration. */
+  geoClusterActiveCuts?: number;
+  /** 0–1 tech density of the user's metro — from peerContagionResult.geoCluster. */
+  geoConcentrationScore?: number;
 }
 
 export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiquidityResult {
@@ -167,6 +192,9 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
     riskScore,
     uniquenessDepth = 'functional_specialist',
     performanceTier = 'average',
+    city,
+    geoClusterActiveCuts = 0,
+    geoConcentrationScore,
   } = inputs;
 
   // ── Factor 1: Role demand velocity (0–1) ──────────────────────────────────
@@ -205,7 +233,36 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
   // ── Factor 5: Geographic market depth (0–1) ───────────────────────────────
   // Normalise region: "India" → "IN", "United States" → "US", etc.
   const regionKey = normaliseRegion(region);
-  const geoScore = REGION_PLACEMENT_SPEED[regionKey] ?? REGION_PLACEMENT_SPEED['US'];
+  const baseGeoScore = REGION_PLACEMENT_SPEED[regionKey] ?? REGION_PLACEMENT_SPEED['US'];
+
+  // ── Factor 9: Geographic supply-surge penalty ─────────────────────────────
+  // Two components:
+  //   A. Static metro concentration: even with no active layoffs, a high-
+  //      concentration metro (Seattle=0.92, Bay Area=1.0) has more engineers
+  //      competing for the same roles year-round. Small baseline reduction.
+  //   B. Dynamic surge penalty: each active co-located peer company cutting
+  //      floods the local market. A Seattle engineer with Amazon+Microsoft
+  //      both cutting faces ~10,000 displaced peers in the same metro.
+  //      Each additional co-located cut reduces the geo score by 8%.
+  //
+  // The combined effect is applied to geoScore rather than as a separate
+  // formula weight — conceptually it is a geo-depth modifier, not a new
+  // dimension. The supply surge narrative is surfaced separately in the result.
+  const metro = resolveMetro(city);
+  const effectiveConcentration = geoConcentrationScore ?? metro?.concentrationScore ?? 0;
+
+  // Static penalty: high-concentration metros have 0–4% baseline drag
+  const staticConcentrationPenalty = effectiveConcentration * 0.04;
+
+  // Dynamic surge penalty: each co-located active cut = -8% (cap at -32%)
+  const dynamicSurgePenalty = Math.min(0.32, geoClusterActiveCuts * 0.08);
+
+  // Combined geo score
+  const geoScore = Math.max(0.30, baseGeoScore * (1 - staticConcentrationPenalty - dynamicSurgePenalty));
+
+  // Supply surge additional months on top of the base model
+  // Each additional co-located cut extends search by ~0.75 months (capped at 3 months).
+  const surgeMonthsAdded = Math.min(3.0, geoClusterActiveCuts * 0.75);
 
   // ── Factor 6: Brand halo from company ────────────────────────────────────
   // Coming from a well-known or public company speeds up placement.
@@ -256,7 +313,9 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
   // ── Months-to-reemploy model ──────────────────────────────────────────────
   // Inverse sigmoid: high liquidity → short time, low liquidity → long time.
   // Calibrated: score 80 → ~1.5 months, score 50 → ~4 months, score 20 → ~9 months.
-  const monthsToReemploy = computeMonthsToReemploy(score, tenureYears);
+  // surgeMonthsAdded: additional time from simultaneous co-located peer layoffs.
+  const baseMonthsToReemploy = computeMonthsToReemploy(score, tenureYears);
+  const monthsToReemploy = Math.round((baseMonthsToReemploy + surgeMonthsAdded) * 2) / 2;
 
   // ── Tier classification ───────────────────────────────────────────────────
   const tier = score >= 68 ? 'Fast'
@@ -324,8 +383,11 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
       name: 'Geographic Depth',
       value: geoScore,
       weight: W.geo,
-      label: geoScore >= 0.90 ? 'Deep Market' : geoScore >= 0.78 ? 'Good Depth' : 'Limited Market',
-      detail: `${regionKey} market has ${geoScore >= 0.90 ? 'the highest' : geoScore >= 0.80 ? 'strong' : 'moderate'} employer density for this role type.`,
+      label: geoScore >= 0.90 ? 'Deep Market' : geoScore >= 0.78 ? 'Good Depth' : geoScore >= 0.60 ? 'Crowded Market' : 'Supply-Surge Risk',
+      detail: geoClusterActiveCuts > 0
+        ? `${metro?.metroName ?? regionKey} market: ${geoClusterActiveCuts} co-located peer company layoffs flooding local supply. `
+          + `Static depth reduced by ${Math.round((dynamicSurgePenalty + staticConcentrationPenalty) * 100)}% — consider remote roles to escape local competition.`
+        : `${regionKey} market has ${geoScore >= 0.90 ? 'the highest' : geoScore >= 0.80 ? 'strong' : 'moderate'} employer density for this role type.`,
     },
     {
       name: 'Company Brand Halo',
@@ -341,6 +403,21 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
     ? `Role "${oracleKey}" not in demand velocity database — liquidity score estimated from ${industry} industry median. Accuracy: ±15 pts.`
     : null;
 
+  // Build supply-surge narrative for the result
+  const geoSupplySurge = metro ? {
+    metroName: metro.metroName,
+    geoConcentrationScore: effectiveConcentration,
+    geoClusterActiveCuts,
+    surgeMonthsAdded,
+    surgeNarrative: geoClusterActiveCuts > 0
+      ? `${metro.metroName} supply surge: ${geoClusterActiveCuts} co-located peer company layoff${geoClusterActiveCuts > 1 ? 's' : ''} ` +
+        `competing for the same local roles. ESTIMATED ${surgeMonthsAdded.toFixed(1)} additional months on re-employment timeline. ` +
+        `Targeting remote-first or out-of-metro roles reduces this penalty by up to ${Math.round(dynamicSurgePenalty * 100)}%.`
+      : `${metro.metroName} is a high-concentration tech cluster (${Math.round(effectiveConcentration * 100)}/100 density). ` +
+        `No co-located peers currently cutting — local supply is stable. ` +
+        `If a wave hits, supply surge would add ${(1 * 0.75).toFixed(1)}–${(3 * 0.75).toFixed(1)} months per co-located layoff.`,
+  } : undefined;
+
   return {
     score,
     monthsToReemploy,
@@ -352,6 +429,7 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
     salaryPreservation: seniorityProfile.salaryPreservation,
     marketDemandTrend,
     confidenceNote,
+    geoSupplySurge,
   };
 }
 
