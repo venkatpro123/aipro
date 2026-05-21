@@ -42,14 +42,17 @@ const VISA_OPTIONS: Array<{ value: VisaStatus; label: string }> = [
   // ── UK ───────────────────────────────────────────────────────────────────
   { value: 'uk_skilled_worker',   label: 'UK Skilled Worker visa' },
   // ── EU ───────────────────────────────────────────────────────────────────
-  { value: 'eu_blue_card',        label: 'EU Blue Card (Germany / France / Netherlands)' },
+  { value: 'eu_blue_card_germany', label: 'EU Blue Card — Germany (§20 AufenthG 6-month extension)' },
+  { value: 'eu_blue_card',         label: 'EU Blue Card — France / Netherlands / other EU' },
   // ── Singapore ────────────────────────────────────────────────────────────
-  { value: 'singapore_ep',        label: 'Singapore Employment Pass (EP)' },
-  { value: 'singapore_s_pass',    label: 'Singapore S Pass' },
+  { value: 'singapore_ep',         label: 'Singapore Employment Pass (EP)' },
+  { value: 'singapore_s_pass',     label: 'Singapore S Pass' },
   // ── Australia ────────────────────────────────────────────────────────────
-  { value: 'australia_482_tss',   label: 'Australia 482 TSS (Temporary Skill Shortage)' },
+  { value: 'australia_482_tss',    label: 'Australia 482 TSS (Temporary Skill Shortage)' },
   // ── Philippines ──────────────────────────────────────────────────────────
-  { value: 'philippines_9g_aep',  label: 'Philippines 9G (Alien Employment Permit)' },
+  { value: 'philippines_9g_aep',   label: 'Philippines 9G (Alien Employment Permit)' },
+  // ── Japan ────────────────────────────────────────────────────────────────
+  { value: 'japan_work_visa',      label: 'Japan Work Visa (Engineer / Specialist / HSP)' },
   // ── Canada ───────────────────────────────────────────────────────────────
   { value: 'canada_lmia_permit',  label: 'Canada LMIA work permit' },
   // ── MENA ─────────────────────────────────────────────────────────────────

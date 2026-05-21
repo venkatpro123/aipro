@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Clock, AlertTriangle, Scale, DollarSign } from 'lucide-react';
+import { Shield, Clock, AlertTriangle, Scale, DollarSign, Lightbulb } from 'lucide-react';
 import type { VisaRiskResult, VisaRiskLevel } from '../../../services/visaRiskEngine';
 import { computeGratuity } from '../../../data/endOfServiceGratuity';
 
@@ -115,6 +115,22 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
                 <div key={i} className="flex items-start gap-2">
                   <span className="text-blue-400 text-[10px] mt-0.5">▶</span>
                   <span className="text-[11px] text-gray-300">{action}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Available options — escape paths / transition programs */}
+          {visaRisk.availableOptions && visaRisk.availableOptions.length > 0 && (
+            <div className="pt-2 border-t border-white/5 mt-2 space-y-1">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Lightbulb size={11} className="text-teal-400 shrink-0" aria-hidden="true" />
+                <span className="text-[11px] font-medium text-teal-300">Options available to you:</span>
+              </div>
+              {visaRisk.availableOptions.map((opt, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-teal-400 text-[10px] mt-0.5">◆</span>
+                  <span className="text-[11px] text-teal-100/90">{opt}</span>
                 </div>
               ))}
             </div>

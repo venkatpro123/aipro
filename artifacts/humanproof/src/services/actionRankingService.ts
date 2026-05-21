@@ -46,19 +46,21 @@ const VISA_MULTIPLIER: Record<VisaStatus, number> = {
   opt:                  1.40,  // legacy alias
   tn:                   1.35,  // no grace period — immediate status loss
   // UK
-  uk_skilled_worker:    1.28,  // 60-day grace + sponsor licence gate
+  uk_skilled_worker:    1.30,  // 60-day grace + sponsor licence gate; employer constraint
   // EU
   eu_blue_card:         1.12,  // Germany's 6-month buffer reduces urgency significantly
+  eu_blue_card_germany: 1.10,  // Explicit Germany §20 AufenthG — most protective globally
   // APAC
-  singapore_s_pass:     1.42,  // 10-day cancellation — highest urgency on platform
-  singapore_ep:         1.28,  // 30-day STVP + MOM processing pressure
-  australia_482_tss:    1.28,  // 60-day SBS transfer window
-  philippines_9g_aep:   1.28,  // per-employer AEP; DOLE publication adds 14+ days
+  singapore_s_pass:     1.25,  // 10-day cancellation — tightest grace; quota-based
+  singapore_ep:         1.20,  // 30-day STVP + MOM processing; Job Seeker Pass option
+  australia_482_tss:    1.35,  // 28-day notification + sponsor must transfer; high urgency
+  philippines_9g_aep:   1.15,  // per-employer AEP; DOLE publication adds 14+ days
+  japan_work_visa:      1.20,  // 30-day grace + MOJ status-change 1–3 months
   // Canada
-  canada_lmia_permit:   1.25,  // LMIA process slow but CUSMA/EE escape paths exist
+  canada_lmia_permit:   1.25,  // LMIA process slow but CUSMA/EE/BOWP escape paths exist
   // MENA — employer-tied sponsored visas
-  uae_employment_visa:  1.28,  // 30-day grace + NOC bottleneck
-  saudi_iqama:          1.30,  // 60-day grace + Nitaqat friction (highest in GCC)
+  uae_employment_visa:  1.30,  // 30-day grace; 2022 reform transfers available some sectors
+  saudi_iqama:          1.35,  // 60-day grace + Nitaqat friction (highest in GCC); employer permission
   qatar_work_permit:    1.25,  // 30-day grace + MoL approval
   kuwait_work_permit:   1.20,  // 90-day grace (longest GCC) — eases slightly
   gcc_sponsored:        1.22,  // Bahrain/Oman conservative baseline

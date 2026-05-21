@@ -28,11 +28,13 @@ export type VisaStatus =
   | 'uk_skilled_worker'
   // EU
   | 'eu_blue_card'
+  | 'eu_blue_card_germany'  // Germany-specific §20 AufenthG 6-month job-search extension
   // APAC
   | 'singapore_ep'
   | 'singapore_s_pass'
   | 'australia_482_tss'
   | 'philippines_9g_aep'
+  | 'japan_work_visa'
   // Canada
   | 'canada_lmia_permit'
   // MENA
