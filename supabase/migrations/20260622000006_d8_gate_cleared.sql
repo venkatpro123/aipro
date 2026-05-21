@@ -149,11 +149,11 @@ SET d8_validation_metadata = '{
   "evaluated_by":             "migration-20260622000006",
   "coefficient_bundle": {
     "intercept":              -1.82,
-    "beta_ai_high":           +1.45,
-    "beta_ai_very_high":      +2.31,
-    "beta_positive_fcf":      +0.87,
-    "beta_prior_rounds":      +0.63,
-    "beta_profitability":     +0.94,
+    "beta_ai_high":            1.45,
+    "beta_ai_very_high":       2.31,
+    "beta_positive_fcf":       0.87,
+    "beta_prior_rounds":       0.63,
+    "beta_profitability":      0.94,
     "n_training_events":       47,
     "training_auc":            0.76,
     "calibrated_at":           "2026-05-10"
