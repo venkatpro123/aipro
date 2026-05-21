@@ -265,6 +265,80 @@ export const TECH_CLUSTER_METROS: readonly TechClusterMetro[] = [
       { companyKey: 'grubhub',   displayName: 'Grubhub (HQ)',            presenceMode: 'hq',           estimatedHeadcount: 1_500   },
     ],
   },
+
+  // ── London ────────────────────────────────────────────────────────────────
+  // Europe's largest tech cluster. US hyperscalers + UK FinTech unicorns.
+  // Amazon, Google, Meta, Microsoft all have major EU/EMEA operations here.
+  // DeepMind HQ. Revolut, Monzo, Wayve are native London-domiciled companies.
+  {
+    metroName: 'London',
+    aliases: [
+      'london', 'uk london', 'greater london', 'london uk', 'canary wharf',
+      'shoreditch', 'kings cross london', 'london england',
+    ],
+    region: 'GB',
+    concentrationScore: 0.82,
+    dominantCompanies: [
+      { companyKey: 'amazon',    displayName: 'Amazon UK (HQ)',          presenceMode: 'major_office', estimatedHeadcount: 8_000   },
+      { companyKey: 'google',    displayName: 'Google UK (HQ)',          presenceMode: 'major_office', estimatedHeadcount: 14_000  },
+      { companyKey: 'meta',      displayName: 'Meta UK',                 presenceMode: 'major_office', estimatedHeadcount: 6_000   },
+      { companyKey: 'microsoft', displayName: 'Microsoft UK',            presenceMode: 'major_office', estimatedHeadcount: 3_000   },
+      { companyKey: 'deepmind',  displayName: 'DeepMind (HQ)',           presenceMode: 'hq',           estimatedHeadcount: 1_800   },
+      { companyKey: 'revolut',   displayName: 'Revolut (HQ)',            presenceMode: 'hq',           estimatedHeadcount: 4_000   },
+      { companyKey: 'monzo',     displayName: 'Monzo (HQ)',              presenceMode: 'hq',           estimatedHeadcount: 2_500   },
+      { companyKey: 'wayve',     displayName: 'Wayve (HQ)',              presenceMode: 'hq',           estimatedHeadcount: 800     },
+      { companyKey: 'deliveroo', displayName: 'Deliveroo (HQ)',          presenceMode: 'hq',           estimatedHeadcount: 2_000   },
+      { companyKey: 'wise',      displayName: 'Wise (HQ)',               presenceMode: 'hq',           estimatedHeadcount: 3_500   },
+    ],
+  },
+
+  // ── Berlin ────────────────────────────────────────────────────────────────
+  // Germany's startup capital. Zalando, Delivery Hero, HelloFresh are
+  // Berlin-native hyperscalers. N26, SumUp dominate EU FinTech. Auto1 in mobility.
+  {
+    metroName: 'Berlin',
+    aliases: [
+      'berlin', 'berlin de', 'berlin germany', 'mitte', 'kreuzberg', 'prenzlauer berg',
+    ],
+    region: 'DE',
+    concentrationScore: 0.68,
+    dominantCompanies: [
+      { companyKey: 'zalando',         displayName: 'Zalando (HQ)',          presenceMode: 'hq',           estimatedHeadcount: 7_000   },
+      { companyKey: 'delivery hero',   displayName: 'Delivery Hero (HQ)',    presenceMode: 'hq',           estimatedHeadcount: 4_000   },
+      { companyKey: 'hellofresh',      displayName: 'HelloFresh (HQ)',       presenceMode: 'hq',           estimatedHeadcount: 3_500   },
+      { companyKey: 'sumup',           displayName: 'SumUp (HQ)',            presenceMode: 'hq',           estimatedHeadcount: 2_500   },
+      { companyKey: 'auto1',           displayName: 'Auto1 Group (HQ)',      presenceMode: 'hq',           estimatedHeadcount: 3_000   },
+      { companyKey: 'n26',             displayName: 'N26 (HQ)',              presenceMode: 'hq',           estimatedHeadcount: 1_500   },
+      { companyKey: 'soundcloud',      displayName: 'SoundCloud (HQ)',       presenceMode: 'hq',           estimatedHeadcount: 600     },
+      { companyKey: 'gorillas',        displayName: 'Gorillas / Getir',      presenceMode: 'hq',           estimatedHeadcount: 800     },
+    ],
+  },
+
+  // ── Singapore ─────────────────────────────────────────────────────────────
+  // APAC's highest-density tech cluster. Grab, Sea Limited, Gojek anchor the
+  // Southeast Asian superapp ecosystem. Government AISG program subsidizes
+  // enterprise AI adoption. High concentration of GCC regional HQs.
+  {
+    metroName: 'Singapore',
+    aliases: [
+      'singapore', 'sg', 'singapore city', 'raffles place', 'one north', 'jurong',
+    ],
+    region: 'SG',
+    concentrationScore: 0.88,
+    dominantCompanies: [
+      { companyKey: 'grab',          displayName: 'Grab (HQ)',             presenceMode: 'hq',           estimatedHeadcount: 8_000   },
+      { companyKey: 'sea limited',   displayName: 'Sea Limited (HQ)',      presenceMode: 'hq',           estimatedHeadcount: 10_000  },
+      { companyKey: 'shopee',        displayName: 'Shopee (HQ)',           presenceMode: 'hq',           estimatedHeadcount: 5_000   },
+      { companyKey: 'lazada',        displayName: 'Lazada (HQ)',           presenceMode: 'hq',           estimatedHeadcount: 3_000   },
+      { companyKey: 'gojek',         displayName: 'Gojek SG',             presenceMode: 'major_office', estimatedHeadcount: 1_500   },
+      { companyKey: 'razer',         displayName: 'Razer (HQ)',            presenceMode: 'hq',           estimatedHeadcount: 2_000   },
+      { companyKey: 'propertyguru',  displayName: 'PropertyGuru (HQ)',     presenceMode: 'hq',           estimatedHeadcount: 1_500   },
+      { companyKey: 'google',        displayName: 'Google Singapore',      presenceMode: 'major_office', estimatedHeadcount: 2_500   },
+      { companyKey: 'meta',          displayName: 'Meta Singapore',        presenceMode: 'major_office', estimatedHeadcount: 2_000   },
+      { companyKey: 'amazon',        displayName: 'Amazon Singapore',      presenceMode: 'major_office', estimatedHeadcount: 3_000   },
+      { companyKey: 'microsoft',     displayName: 'Microsoft Singapore',   presenceMode: 'major_office', estimatedHeadcount: 2_000   },
+    ],
+  },
 ];
 
 // ── Metro resolution utilities ────────────────────────────────────────────────

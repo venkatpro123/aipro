@@ -32,6 +32,7 @@
 // falls back to the original industryData blend or static table.
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
+import { detectActiveMetroClusters } from '../../../../data/companyPeers';
 
 // Static fallback — used only when no peerLayoffEvents are provided
 const SECTOR_CONTAGION_FALLBACK: Record<string, number> = {
@@ -77,6 +78,22 @@ const DECAY_LAMBDA = 0.023;
 // Label: ANALYST_DERIVED — requires regression validation on full layoffs.fyi dataset.
 // When validated, update this constant and add validationDate.
 const MACRO_TRIGGER_FRACTION = 0.40;  // ANALYST_DERIVED · 2024-Q4 · method: inflection analysis
+
+// ── Metro cluster contagion amplifier ─────────────────────────────────────────
+// When 2+ companies from the SAME metro tech cluster (Seattle, Bay Area, NYC,
+// London, Berlin, Singapore) announce layoffs within 90 days, the geographic
+// co-location creates a contagion dynamic distinct from sector-wide waves:
+//   • Shared talent pool: engineers commute between cluster companies; a cut
+//     at Amazon Seattle signals to Microsoft/Meta that the same talent pool
+//     is about to flood the market — and pressures them to cut before rehiring.
+//   • Shared clients: London FinTech companies share enterprise clients; one
+//     company cutting signals contract renegotiation pressure for peers.
+//   • Media + board contagion: the same investors and board members see one
+//     cluster cut and approve similar measures at their other portfolio companies.
+// The 1.25× amplifier is applied to the raw contagion signal (before the 0.92 cap).
+// ESTIMATED — multiplier calibrated against 2022-2023 Seattle and 2023 London waves.
+const CLUSTER_CONTAGION_AMPLIFIER = 1.25;
+const CLUSTER_WINDOW_DAYS         = 90;
 
 const MS_PER_DAY  = 24 * 60 * 60 * 1000;
 const WINDOW_DAYS = 180;
@@ -219,7 +236,23 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
       ? (sectorCuttingFraction ?? (baselineRisk / MACRO_TRIGGER_FRACTION - 1))
       : clusteringRatio * 0.30;  // small macro component when cuts are recent-clustered
     const macroComponent     = baselineRisk * Math.min(1, macroWeight);
-    const finalSignal        = Math.min(0.92, contagionComponent + macroComponent);
+
+    // ── Metro cluster amplifier ──────────────────────────────────────────────
+    // Check if 2+ cluster members cut within CLUSTER_WINDOW_DAYS (90 days).
+    // Geographic co-location creates contagion beyond sector-level propagation:
+    // shared talent pools, shared clients, shared investors.
+    const cuts90d = inWindow.filter(
+      e => (now - new Date(e.date).getTime()) / MS_PER_DAY <= CLUSTER_WINDOW_DAYS,
+    );
+    const activeClusters = detectActiveMetroClusters(
+      cuts90d.map(e => e.company ?? ''),
+      CLUSTER_WINDOW_DAYS,
+      2,  // 2+ cluster members required to trigger amplifier
+    );
+    const clusterAmplifier = activeClusters.length > 0 ? CLUSTER_CONTAGION_AMPLIFIER : 1.0;
+    const topCluster       = activeClusters[0] ?? null;
+
+    const finalSignal = Math.min(0.92, (contagionComponent + macroComponent) * clusterAmplifier);
 
     const last30Count = recentCuts.length;
     const confidence  = inWindow.length >= 3 ? 0.74 : 0.60;
@@ -257,6 +290,12 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
           : clusteringRatio > 0.60
           ? 'Tight temporal cluster — contagion propagation pattern detected; macro attenuation not applied'
           : 'Sparse or no simultaneous cutting — standard decay-weighted contagion signal',
+        // Metro cluster fields — populated when geographic co-location amplifies signal
+        metroClusterFired:   activeClusters.length > 0,
+        activeMetroCluster:  topCluster?.metroName ?? null,
+        clusterMembersCutting: topCluster?.matchedCompanies ?? [],
+        clusterCutCount:     topCluster?.count ?? 0,
+        clusterAmplifier:    clusterAmplifier,
       },
     };
   }

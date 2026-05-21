@@ -515,3 +515,83 @@ export function hasExplicitPeers(companyName: string): boolean {
 export function getPeerCount(): number {
   return COMPANY_PEERS_DB.length;
 }
+
+// ── Metro Tech Cluster Registry ───────────────────────────────────────────────
+//
+// Named tech clusters where geographic co-location amplifies peer contagion.
+// When 2+ members of the same cluster announce layoffs within 90 days:
+//   • sectorContagionAgent applies CLUSTER_CONTAGION_AMPLIFIER=1.25 to signal
+//   • jobMarketLiquidityService adds METRO_REEMPLOYMENT_DELAY_WEEKS=3 to timeline
+//
+// Company names are lowercase keyword substrings — matching against layoff event
+// company names is case-insensitive partial match.
+//
+// SOURCE: User-specified clusters from engineering team research (2026-05-21).
+// LABELED: ESTIMATED — membership reflects known co-location, not exhaustive lists.
+//
+// DESIGN NOTE: These lists are intentionally simpler than techClusterMetros.ts
+// (which has headcount/presence-mode metadata for the geo supply-surge engine).
+// This registry is optimised for fast string-matching in the swarm contagion agent.
+
+export const METRO_TECH_CLUSTER: Readonly<Record<string, readonly string[]>> = {
+  // ── United States ─────────────────────────────────────────────────────────
+  'Seattle-Bellevue': [
+    'amazon', 'microsoft', 'meta', 'google', 'salesforce',
+    'expedia', 'zillow', 'tableau',
+  ],
+  'San Francisco Bay Area': [
+    'google', 'apple', 'meta', 'salesforce', 'oracle', 'adobe',
+    'stripe', 'airbnb', 'linkedin', 'twitter', 'x corp', 'uber', 'lyft',
+  ],
+  'New York': [
+    'goldman sachs', 'goldman', 'jpmorgan', 'jp morgan', 'bloomberg',
+    'snap', 'spotify', 'tiktok',
+  ],
+  // ── Europe ────────────────────────────────────────────────────────────────
+  'London': [
+    'amazon', 'google', 'meta', 'microsoft',
+    'revolut', 'monzo', 'deepmind', 'wayve',
+  ],
+  'Berlin': [
+    'zalando', 'delivery hero', 'hellofresh', 'sumup', 'auto1', 'n26',
+  ],
+  // ── Asia-Pacific ──────────────────────────────────────────────────────────
+  'Singapore': [
+    'grab', 'sea limited', 'sea group', 'lazada', 'shopee',
+    'gojek', 'razer', 'propertyguru',
+  ],
+};
+
+/** Identify which metro cluster a company belongs to (if any).
+ *  Returns the cluster name, or null if not found. */
+export function getMetroCluster(companyName: string): string | null {
+  const lower = companyName.toLowerCase().trim();
+  for (const [metroName, members] of Object.entries(METRO_TECH_CLUSTER)) {
+    if (members.some(m => lower.includes(m) || m.includes(lower.split(' ')[0]))) {
+      return metroName;
+    }
+  }
+  return null;
+}
+
+/** Given a list of company names (e.g., from layoff events), count how many
+ *  belong to each metro cluster. Returns only clusters with >= minCount members. */
+export function detectActiveMetroClusters(
+  companyNames: string[],
+  windowDays: number,
+  minCount: number = 2,
+): Array<{ metroName: string; matchedCompanies: string[]; count: number }> {
+  const results: Array<{ metroName: string; matchedCompanies: string[]; count: number }> = [];
+
+  for (const [metroName, members] of Object.entries(METRO_TECH_CLUSTER)) {
+    const matched = companyNames.filter(name => {
+      const lower = name.toLowerCase().trim();
+      return members.some(m => lower.includes(m) || m.includes(lower.split(' ')[0]));
+    });
+    if (matched.length >= minCount) {
+      results.push({ metroName, matchedCompanies: matched, count: matched.length });
+    }
+  }
+
+  return results.sort((a, b) => b.count - a.count);
+}

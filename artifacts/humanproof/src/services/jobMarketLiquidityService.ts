@@ -293,9 +293,27 @@ export function computeJobMarketLiquidity(inputs: LiquidityInputs): JobMarketLiq
   // Combined geo score
   const geoScore = Math.max(0.30, baseGeoScore * (1 - staticConcentrationPenalty - dynamicSurgePenalty));
 
-  // Supply surge additional months on top of the base model
-  // Each additional co-located cut extends search by ~0.75 months (capped at 3 months).
-  const surgeMonthsAdded = Math.min(3.0, geoClusterActiveCuts * 0.75);
+  // ── METRO_REEMPLOYMENT_DELAY_WEEKS — supply surge timeline extension ─────────
+  // When 2+ metro cluster members announce layoffs within 90 days, the local
+  // job market floods with engineers competing for the same roles. The discrete
+  // 3-week delay (METRO_REEMPLOYMENT_DELAY_WEEKS) captures the market-clearing
+  // time above the base model, plus 0.75 months per additional cluster cut beyond 2.
+  //
+  // Formula (per spec):
+  //   geoClusterActiveCuts >= 2:  3 weeks (base cluster bonus) + 0.75mo per extra cut
+  //   geoClusterActiveCuts  = 1:  0.75 months (per-cut formula only)
+  //   geoClusterActiveCuts  = 0:  0 months
+  //
+  // The "3 weeks" constant equals METRO_REEMPLOYMENT_DELAY_WEEKS / 4.333 months.
+  // Supply surge narrative surfaced in geoSupplySurge.surgeNarrative.
+  const METRO_REEMPLOYMENT_DELAY_WEEKS = 3;      // per spec — discrete bonus when 2+ cluster cuts
+  const METRO_DELAY_MONTHS = METRO_REEMPLOYMENT_DELAY_WEEKS / 4.333; // 0.692 months
+
+  const surgeMonthsAdded = Math.min(3.0,
+    geoClusterActiveCuts >= 2
+      ? METRO_DELAY_MONTHS + (geoClusterActiveCuts - 2) * 0.75  // 3wk base + 0.75mo per extra
+      : geoClusterActiveCuts * 0.75,                             // < 2 cuts: per-cut only
+  );
 
   // ── Factor 6: Brand halo from company ────────────────────────────────────
   // Coming from a well-known or public company speeds up placement.
