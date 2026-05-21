@@ -37,6 +37,10 @@ import {
   TrendingDown, TrendingUp, DollarSign, AlertCircle,
   ChevronDown, Minus,
 } from "lucide-react";
+import {
+  resolveCityPremium,
+  type CitySalaryPremium,
+} from "../data/globalCitySalaryPremiums";
 
 interface Props {
   riskScore: number;      // 0–100
@@ -54,15 +58,24 @@ interface Props {
   dataQuality?: 'live' | 'partial' | 'fallback';
 }
 
-// ── v4.0 city salary premium lookup ─────────────────────────────────────────
+// ── City salary premium lookup ──────────────────────────────────────────────
+// PREVIOUSLY: hardcoded 15 Indian cities only — global users (SF, London, Singapore,
+// Sydney, Zurich, Toronto, etc.) received no city premium adjustment, so the full-
+// transition recovery trajectory showed national-median income (understating SF
+// recovery by ~45%, NYC by ~38%, Zurich by ~55%).
+//
+// NOW: resolves via globalCitySalaryPremiums.ts which covers 50+ cities across
+// US, UK, EU, Canada, APAC, Australia, Middle East, India, LatAm. Returns 0 for
+// truly unknown cities; returns the full premium entry for known cities so the
+// UI can display the baseline reference ("vs US national median").
 function getCitySalaryPremium(cityKey: string | undefined): number {
-  if (!cityKey) return 0;
-  const PREMIUMS: Record<string, number> = {
-    bangalore: 22, mumbai: 18, hyderabad: 16, pune: 13, chennai: 10,
-    delhi_ncr: 11, noida: 4, gurgaon: 9, kolkata: -8, ahmedabad: -6,
-    kochi: -10, coimbatore: -14, jaipur: -16, nagpur: -20, indore: -18,
-  };
-  return PREMIUMS[cityKey.toLowerCase().replace(/\s+/g, '_')] ?? 0;
+  return resolveCityPremium(cityKey)?.premiumPct ?? 0;
+}
+
+/** Returns the full premium entry (with cityName, baselineLabel, localCurrency)
+ *  for the disclosure. Returns null when city is unknown. */
+function getCitySalaryPremiumEntry(cityKey: string | undefined): CitySalaryPremium | null {
+  return resolveCityPremium(cityKey);
 }
 
 // ── v4.0 collapse stage → stable period multiplier ──────────────────────────
@@ -783,8 +796,12 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
     };
   }, [riskScore, collapseStage]);
 
-  // v4.0: City salary premium affects full-transition recovery
-  const cityPremium = useMemo(() => getCitySalaryPremium(cityKey), [cityKey]);
+  // v4.0: City salary premium affects full-transition recovery.
+  // Now global (50+ cities) — previously only Indian cities had premiums applied,
+  // leaving SF/NYC/London/Singapore/Sydney/Zurich/Toronto users with national-median
+  // trajectories that materially understated their actual recovery ceiling.
+  const cityPremiumEntry = useMemo(() => getCitySalaryPremiumEntry(cityKey), [cityKey]);
+  const cityPremium = cityPremiumEntry?.premiumPct ?? 0;
   const cityPremiumMultiplier = 1 + cityPremium / 100;
 
   // v4.0: Compute trajectories with city premium applied to full path
@@ -1204,9 +1221,11 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                     ⚠ Stage {collapseStage} signals detected — stable period estimate compressed by {Math.round((1 - getStageMultiplier(collapseStage)) * 100)}%.
                   </p>
                 )}
-                {cityPremium !== 0 && (
+                {cityPremium !== 0 && cityPremiumEntry && (
                   <p className="text-[10px] text-cyan-400 leading-relaxed">
-                    📍 Full transition path includes estimated {cityPremium > 0 ? '+' : ''}{cityPremium}% {cityKey?.replace(/_/g,' ')} salary premium.
+                    📍 Full transition path includes estimated {cityPremium > 0 ? '+' : ''}{cityPremium}%{' '}
+                    {cityPremiumEntry.cityName} salary premium vs {cityPremiumEntry.baselineLabel}
+                    {' '}<span className="opacity-60">(ESTIMATED — applies to full-transition trajectory only).</span>
                   </p>
                 )}
                 {riskAppetite === 'conservative' && !visiblePaths.includes('full') && (

@@ -2772,16 +2772,36 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         )}
 
-        {/* Salary at Risk — conversion feature */}
-        <div className="mt-8">
-          <SalaryAtRiskPanel
-            riskScore={result.total}
-            roleKey={result.workTypeKey}
-            companyName={result.companyName}
-            currency="INR"
-            collapseStage={collapseStage ?? undefined}
-          />
-        </div>
+        {/* Salary at Risk — conversion feature
+            Wires user city + region-derived currency so the full-transition
+            recovery trajectory applies the correct city premium for global users
+            (SF +45%, NYC +38%, London +28%, Singapore +40%, Sydney +25%,
+            Zurich +55%, Toronto +20%) instead of falling back to national median. */}
+        {(() => {
+          const region = (companyData?.region ?? 'IN').toUpperCase();
+          // Resolve user city from geographicOptionality (computed from userFactors.city)
+          // or fall back to company HQ region for national defaults.
+          const userCity =
+            (result as any).geographicOptionality?.relocationOptions?.originCityName
+            ?? (result as any)._engineResult?.companyData?._userCity
+            ?? (companyData as any)?._userCity
+            ?? undefined;
+          // Region → display currency
+          const currency: 'INR' | 'USD' =
+            region === 'IN' || region === 'INDIA' ? 'INR' : 'USD';
+          return (
+            <div className="mt-8">
+              <SalaryAtRiskPanel
+                riskScore={result.total}
+                roleKey={result.workTypeKey}
+                companyName={result.companyName}
+                currency={currency}
+                collapseStage={collapseStage ?? undefined}
+                cityKey={userCity}
+              />
+            </div>
+          );
+        })()}
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-6 flex-wrap">
