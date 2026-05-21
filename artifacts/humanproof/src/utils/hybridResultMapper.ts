@@ -136,6 +136,8 @@ export function mapToHybridResult(
     performanceCredibilityScore:          isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityScore,
     performanceCredibilityRegionKey:      isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityRegionKey,
     performanceCredibilityThresholdLabel: isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityThresholdLabel,
+    hyperscalerD8ProxyApplied:            isEnsemble(result) ? undefined : (result as ScoreResult).hyperscalerD8ProxyApplied,
+    hyperscalerD8ProxyAmount:             isEnsemble(result) ? undefined : (result as ScoreResult).hyperscalerD8ProxyAmount,
     meta: {
       usedLiveSignals: (trueLiveSignals ?? result.signalQuality.liveSignals ?? 0) > 0,
       liveSignalCount: trueLiveSignals ?? result.signalQuality.liveSignals ?? 0,

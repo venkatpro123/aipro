@@ -266,6 +266,100 @@ const COMPOSITE_FORMULA_WEIGHTS = {
   L2_directLayoffHistory:       0.06,   // regression-derived: β₂=0.312, 200 events, 2024-Q4
 } as const;
 
+// ── Hyperscaler D8 Proxy ──────────────────────────────────────────────────────
+//
+// PURPOSE: Prevents dangerously under-scored results for profitable hyperscaler
+// employees while D8 empirical validation is still completing.
+//
+// PROBLEM: When v39_d8_ai_efficiency_active=off, profitable hyperscalers (L1<0.45)
+// with very-high AI investment score LOW because L1/L2 are both low (healthy company,
+// no distress cuts). But this is exactly the profile of Meta/Google/Amazon 2022-2023
+// efficiency restructurings. Without D8, these scores are misleadingly low.
+//
+// SOLUTION: A documented +0.12 composite proxy (NOT D8) when ALL conditions hold:
+//   1. D8 flag is inactive (proxy is suppressed when full D8 is running)
+//   2. Company is a named hyperscaler or major subsidiary
+//   3. aiInvestmentSignal = 'very-high' (highest AI investment tier)
+//   4. calibrated.L1 < 0.45 (profitable — NOT a financial-distress scenario)
+//
+// The proxy is +0.12 on the [0,1] rawScore scale = +12 pts on the 0-100 composite.
+// It is explicitly labeled in TransparencyTab so users know it is not the validated D8.
+//
+// LABELED: ESTIMATED — based on documented 2022-2023 hyperscaler efficiency patterns.
+// Will be retired when D8 flag activates (full logistic handles this case).
+
+/** Keywords that identify hyperscalers and major subsidiaries (case-insensitive substring match).
+ *  Short keywords (≤3 chars) require word-boundary matching to avoid false positives. */
+export const HYPERSCALER_NAMES: readonly string[] = [
+  // ── Core 16 (user-specified) ──
+  'google', 'meta', 'amazon', 'microsoft', 'apple', 'salesforce', 'oracle',
+  'adobe', 'ibm', 'intel', 'cisco', 'hp inc', 'hewlett packard', 'dell',
+  'nvidia', 'broadcom', 'qualcomm',
+  // ── Alphabet group ──
+  'alphabet', 'waymo', 'deepmind', 'verily', 'x corp',
+  // ── Amazon group ──
+  'aws', 'whole foods tech', 'twitch',
+  // ── Microsoft group ──
+  'github', 'linkedin', 'xbox', 'azure',
+  // ── Meta group ──
+  'instagram', 'whatsapp', 'oculus', 'reality labs',
+  // ── Salesforce group ──
+  'mulesoft', 'tableau', 'slack', 'heroku',
+  // ── Oracle group ──
+  'netsuite', 'peoplesoft',
+  // ── Broadcom group ──
+  'vmware', 'symantec', 'ca technologies',
+  // ── HP group ──
+  'hewlett', 'hpe',
+  // ── Adjacent hyperscalers ──
+  'sap', 'servicenow', 'workday', 'snowflake', 'palantir',
+  // ── Semiconductor hyperscalers ──
+  'amd', 'arm holdings', 'marvell', 'globalfoundries',
+];
+
+/** +0.12 on the 0–1 rawScore scale = +12 pts on 0–100 composite. */
+const HYPERSCALER_D8_PROXY = 0.12;
+
+/** Returns true if the company name matches a known hyperscaler or subsidiary keyword. */
+export function isHyperscalerCompany(companyName: string): boolean {
+  const lower = (companyName ?? '').toLowerCase().trim();
+  if (!lower) return false;
+  return HYPERSCALER_NAMES.some(keyword => {
+    if (keyword.length <= 3) {
+      // Short keywords require word-boundary match to avoid false positives
+      // (e.g. "ibm" should not match "alibaba", "hp" should not match "php")
+      return lower === keyword
+        || lower.startsWith(keyword + ' ')
+        || lower.endsWith(' ' + keyword)
+        || lower.includes(' ' + keyword + ' ');
+    }
+    return lower.includes(keyword);
+  });
+}
+
+/** Compute the hyperscaler D8 proxy adjustment.
+ *  Returns HYPERSCALER_D8_PROXY (+0.12) when all conditions are met, else 0. */
+function computeHyperscalerD8Proxy(
+  companyData: CompanyData,
+  d8FlagActive: boolean,
+  calibratedL1: number,
+): { bonus: number; applied: boolean } {
+  // Suppressed when D8 flag is on — the full logistic handles this case
+  if (d8FlagActive) return { bonus: 0, applied: false };
+
+  // Must be a named hyperscaler
+  if (!isHyperscalerCompany(companyData.name)) return { bonus: 0, applied: false };
+
+  // Must have very-high AI investment signal
+  const ai = companyData.aiInvestmentSignal as string | null | undefined;
+  if (ai !== 'very-high' && ai !== 'very_high') return { bonus: 0, applied: false };
+
+  // Must be profitable (L1 < 0.45 = healthy financials, not distress-driven)
+  if (calibratedL1 >= 0.45) return { bonus: 0, applied: false };
+
+  return { bonus: HYPERSCALER_D8_PROXY, applied: true };
+}
+
 /**
  * v39.0 E2 — Effective formula weights for downstream sensitivity analysis.
  *
@@ -1301,6 +1395,14 @@ export interface ScoreResult {
   calibrationCoverage?: number;
   /** LOW-1: all kill-switch names that fired this run. */
   activatedKillSwitches?: string[];
+  /** Hyperscaler D8 proxy — true when the +0.12 composite adjustment was applied.
+   *  Only fires when D8 flag is inactive, company is a named hyperscaler,
+   *  aiInvestmentSignal = 'very-high', and L1 < 0.45 (profitable).
+   *  Disclosed in TransparencyTab. Will be retired when D8 flag activates. */
+  hyperscalerD8ProxyApplied?: boolean;
+  /** Amount applied by the hyperscaler proxy (0.12 on 0-1 scale = +12 pts).
+   *  Present only when hyperscalerD8ProxyApplied = true. */
+  hyperscalerD8ProxyAmount?: number;
   /**
    * v40.0: floor value for each fired kill-switch, e.g. { confirmed_recent_layoff_news: 72 }.
    * TransparencyTab renders an exact "Score Floor Active" badge per entry so the user
@@ -4268,7 +4370,13 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
       )
     : 0;
 
-  const preKillSwitchScore = Math.round(clamp(rawScore + deptMatchBonus) * 100);
+  // Hyperscaler D8 proxy — applied when D8 flag is inactive and the company
+  // matches the hyperscaler pattern (very-high AI + profitable + named hyperscaler).
+  // Disclosed in TransparencyTab as a documented approximation, not the validated D8 term.
+  const { bonus: hyperscalerProxyBonus, applied: hyperscalerProxyApplied } =
+    computeHyperscalerD8Proxy(companyData, _d8FlagActive, calibrated.L1);
+
+  const preKillSwitchScore = Math.round(clamp(rawScore + deptMatchBonus + hyperscalerProxyBonus) * 100);
 
   // v12.0: Apply kill-switches with sigmoid floors (no hard discontinuities).
   // Compute news age for KS-A: find most recent news for this company.
@@ -4489,6 +4597,8 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
       : undefined,
     performanceCredibilityRegionKey:      performanceCredibility.regionKey,
     performanceCredibilityThresholdLabel: performanceCredibility.regionThresholdLabel,
+    hyperscalerD8ProxyApplied:           hyperscalerProxyApplied || undefined,
+    hyperscalerD8ProxyAmount:            hyperscalerProxyApplied ? HYPERSCALER_D8_PROXY : undefined,
     recommendations: generateRecommendations(
       breakdown,
       companyData,

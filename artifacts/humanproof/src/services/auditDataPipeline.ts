@@ -512,6 +512,8 @@ function mapConsensusScoreToHybridResult(
     performanceCredibilityScore:          shadowEngineResult.performanceCredibilityScore,
     performanceCredibilityRegionKey:      shadowEngineResult.performanceCredibilityRegionKey,
     performanceCredibilityThresholdLabel: shadowEngineResult.performanceCredibilityThresholdLabel,
+    hyperscalerD8ProxyApplied:            shadowEngineResult.hyperscalerD8ProxyApplied,
+    hyperscalerD8ProxyAmount:             shadowEngineResult.hyperscalerD8ProxyAmount,
     indiaRiskEnrichment: shadowEngineResult.indiaRiskEnrichment,
   };
 }

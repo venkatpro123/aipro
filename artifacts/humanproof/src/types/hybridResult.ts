@@ -442,6 +442,11 @@ export interface HybridResult {
   performanceCredibilityRegionKey?: 'india' | 'germany' | 'us' | 'default';
   /** Human-readable label shown in TransparencyTab, e.g. "India IT threshold (5 years)". */
   performanceCredibilityThresholdLabel?: string;
+  /** True when the hyperscaler D8 proxy (+0.12 composite) was applied.
+   *  Fires when D8 flag is inactive + company is a named hyperscaler + very-high AI + L1 < 0.45. */
+  hyperscalerD8ProxyApplied?: boolean;
+  /** Amount applied by the proxy (0.12 on 0-1 scale = +12 pts on 0-100 composite). */
+  hyperscalerD8ProxyAmount?: number;
 
   // ── India Sector Intelligence (v8.0) ───────────────────────────────────────
   /**

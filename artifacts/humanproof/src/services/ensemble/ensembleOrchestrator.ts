@@ -1253,6 +1253,8 @@ export const runFullEnsembleAnalysis = async (
     performanceCredibilityScore:          engineResult.performanceCredibilityScore,
     performanceCredibilityRegionKey:      engineResult.performanceCredibilityRegionKey,
     performanceCredibilityThresholdLabel: engineResult.performanceCredibilityThresholdLabel,
+    hyperscalerD8ProxyApplied:            engineResult.hyperscalerD8ProxyApplied,
+    hyperscalerD8ProxyAmount:             engineResult.hyperscalerD8ProxyAmount,
     // Deterministic historical pattern — set by matchHistoricalPattern(), not LLM.
     // null when no pattern in HISTORICAL_PATTERNS reaches the 70% overlap threshold.
     resolvedPattern:          deterministicPatternMatch?.pattern    ?? null,
