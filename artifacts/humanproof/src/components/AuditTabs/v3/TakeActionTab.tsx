@@ -5,13 +5,21 @@
 // Decision-driven IA: answers "What is my full plan?"
 //   T1: ContingencyPlan (STAY / NEGOTIATE / TRANSITION) + EmergencyProtocol when active
 //   T2: PriorityActionMatrix (top 5) + FinancialRunway when urgent + inline ProfileCapture
-//   T3: Complete plan (all actions) + Negotiation scripts + Strategy
-//   T4: Exit timing + Offer evaluation + Internal mobility
+//   T3: Complete plan (all actions) + Negotiation scripts + Strategy  [lazy-loaded]
 //
 // Emergency mode: EmergencyProtocol renders FIRST, Critical/High actions only,
 //                 ProfileQuickCapture suppressed.
+//
+// Design decisions:
+//   - Does NOT call useDashboardAdaptationV4 — uses emergencyMode prop from parent.
+//     The parent (LayoffAuditDashboardV4) already computes adaptation and passes
+//     emergencyMode={true} when mode === 'emergency'. Calling it again here would
+//     re-run compressAllSignals in the same render tree unnecessarily.
+//   - ActionPlanTab + StrategyTab are lazy-loaded so their large module graphs
+//     (useHumanProof, useAdaptiveSystem, 30+ imports each) do not block this tab's
+//     initial render.
 
-import React, { useState, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
@@ -25,12 +33,25 @@ import CareerContingencyPanel from '../common/CareerContingencyPanel';
 import EmergencyModeBanner from '../common/EmergencyModeBanner';
 import EmergencyProtocolPanel from '../common/EmergencyProtocolPanel';
 import AdaptiveBlock from '../common/AdaptiveBlock';
-import StrategyTab from '../StrategyTab';
-import { ActionPlanTab } from '../ActionPlanTab';
 import TierBadge from '../common/TierBadge';
 import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligencePanel';
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
-import { useDashboardAdaptationV4 } from '../../../hooks/useDashboardAdaptation';
+
+// Lazy-load the heavy T3 components — each has 30+ imports including context
+// hooks. If either fails to load, only its collapsed section is affected; the
+// T1/T2 content above the fold renders normally.
+const ActionPlanTab = lazy(() =>
+  import('../ActionPlanTab').then(m => ({ default: m.ActionPlanTab ?? m.default }))
+);
+const StrategyTab = lazy(() => import('../StrategyTab'));
+
+// ── Tab section loader ─────────────────────────────────────────────────────────
+
+const SectionLoader: React.FC = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="w-5 h-5 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan,#00d4e0)] animate-spin" />
+  </div>
+);
 
 // ── Priority config ───────────────────────────────────────────────────────────
 
@@ -48,8 +69,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
 
   const prioritised = useMemo(() => {
     const order: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-    let sorted = [...items].sort((a, b) => (order[a.priority] ?? 4) - (order[b.priority] ?? 4));
-    // Emergency mode: only show Critical + High initially
+    const sorted = [...items].sort((a, b) => (order[a.priority] ?? 4) - (order[b.priority] ?? 4));
     if (emergencyMode && !showAll) {
       const urgent = sorted.filter(i => i.priority === 'Critical' || i.priority === 'High');
       return urgent.length > 0 ? urgent : sorted;
@@ -57,9 +77,9 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
     return sorted;
   }, [items, emergencyMode, showAll]);
 
-  const visible = showAll || emergencyMode ? prioritised : prioritised.slice(0, 5);
+  const visible = (showAll || emergencyMode) ? prioritised : prioritised.slice(0, 5);
   const criticalCount = items.filter(i => i.priority === 'Critical').length;
-  const hiddenMediumLow = emergencyMode && !showAll
+  const hiddenMediumLow = (emergencyMode && !showAll)
     ? items.filter(i => i.priority === 'Medium' || i.priority === 'Low').length
     : 0;
 
@@ -88,7 +108,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
           const PIcon = config.icon;
           return (
             <motion.div
-              key={item.id}
+              key={item.id ?? idx}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.03 }}
@@ -114,7 +134,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
                     {item.sequencePhase && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
                         style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-                        {({ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string,string>)[item.sequencePhase]}
+                        {({ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string, string>)[item.sequencePhase] ?? item.sequencePhase}
                       </span>
                     )}
                     {item.deadline && (
@@ -128,7 +148,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
                         {item.effortBadge}
                       </span>
                     )}
-                    {item.riskReductionPct > 0 && (
+                    {(item.riskReductionPct ?? 0) > 0 && (
                       <span className="text-[10px]" style={{ color: '#10b98180' }}>
                         <TrendingDown className="w-2.5 h-2.5 inline mr-1" />−{item.riskReductionPct}% risk
                       </span>
@@ -148,6 +168,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
 
       {(hiddenMediumLow > 0 || (!emergencyMode && items.length > 5)) && (
         <button
+          type="button"
           onClick={() => setShowAll(s => !s)}
           className="w-full mt-3 py-2 text-[11px] font-semibold rounded-xl transition-colors"
           style={{ color: 'rgba(0,212,224,0.85)', background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.15)' }}
@@ -178,7 +199,7 @@ const ContingencyFailed: React.FC = () => (
     style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)' }}>
     <p className="text-[12px] font-semibold mb-1" style={{ color: 'rgba(245,158,11,0.85)' }}>Could not compute contingency paths</p>
     <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-      An error occurred. Try refreshing or adding more profile data to retry.
+      Try refreshing or adding more profile data to retry.
     </p>
   </div>
 );
@@ -200,6 +221,9 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
   const { result, companyData, emergencyMode } = props;
   const r = result as any;
 
+  // Emergency state from parent prop only — no redundant hook call
+  const isEmergency = !!emergencyMode;
+
   const QC_KEY = 'hp.quickCapture.done';
   const QC_TTL_MS = 24 * 60 * 60 * 1000;
   const [quickCaptureCompleted, setQuickCaptureCompleted] = useState<boolean>(() => {
@@ -217,20 +241,15 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
 
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
-  const recommendations: ActionPlanItem[] = result.recommendations ?? [];
-
-  const adaptation = useDashboardAdaptationV4(result, companyData);
-  const isEmergency = emergencyMode || adaptation.mode === 'emergency';
+  const recommendations: ActionPlanItem[] = Array.isArray(result.recommendations) ? result.recommendations : [];
 
   const personalizedSet = r.personalizedActionSet as
     | { isGenericFallback?: boolean; isDbOverride?: boolean; profileContextNote?: string; roleGroup?: string }
     | undefined;
 
   const hasNoProfile = !personalizedSet?.profileContextNote && !personalizedSet?.isDbOverride;
-  // Suppress profile capture in emergency mode
   const showQuickCapture = hasNoProfile && !quickCaptureCompleted && !isEmergency;
 
-  // Financial runway urgency
   const financialRunway = r.financialRunway;
   const runwayUrgent = financialRunway?.monthsCovered != null && financialRunway.monthsCovered < 6;
 
@@ -238,7 +257,7 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
 
       {/* T1: Emergency mode banner */}
-      {adaptation.showEmergencyBanner && (
+      {isEmergency && (
         <EmergencyModeBanner result={result} onJumpToActions={() => { /* already on this tab */ }} />
       )}
 
@@ -257,7 +276,7 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
             : <ContingencyUnavailable />
       }
 
-      {/* v39.0 B6: profile-aware framing + honest fallback notice */}
+      {/* Profile context + generic fallback notice */}
       {personalizedSet?.profileContextNote && (
         <div className="rounded-2xl p-4"
           style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.20)' }}>
@@ -285,7 +304,7 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         <ActionMatrix items={recommendations} emergencyMode={isEmergency} />
       )}
 
-      {/* T2: Financial runway intelligence — only when urgent */}
+      {/* T2: Financial runway — only when urgent */}
       {runwayUrgent && financialRunway && (
         <AdaptiveBlock
           title="Financial runway — urgent"
@@ -307,7 +326,7 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         }} />
       )}
 
-      {/* T3: Complete action plan — collapsed */}
+      {/* T3: Complete action plan — lazy-loaded, collapsed */}
       <AdaptiveBlock
         title="Complete action plan"
         subtitle="Full ranked list with deadlines, effort estimates, evidence"
@@ -316,10 +335,12 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         accentColor="#22d3ee"
         defaultOpen={false}
       >
-        <ActionPlanTab {...props} />
+        <Suspense fallback={<SectionLoader />}>
+          <ActionPlanTab {...props} />
+        </Suspense>
       </AdaptiveBlock>
 
-      {/* T3: Negotiation intelligence + strategic plan — collapsed */}
+      {/* T3: Negotiation + strategic plan — lazy-loaded, collapsed */}
       <AdaptiveBlock
         title="Negotiation & strategic plan"
         subtitle="Role-specific scripts, exit timing, offer evaluation, phase roadmap"
@@ -328,10 +349,12 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         accentColor="#f59e0b"
         defaultOpen={false}
       >
-        {r.negotiationIntelligence && (
-          <NegotiationIntelligencePanel negotiation={r.negotiationIntelligence} />
-        )}
-        <StrategyTab {...props} />
+        <Suspense fallback={<SectionLoader />}>
+          {r.negotiationIntelligence && (
+            <NegotiationIntelligencePanel negotiation={r.negotiationIntelligence} />
+          )}
+          <StrategyTab result={result} companyData={companyData} />
+        </Suspense>
       </AdaptiveBlock>
 
     </div>
