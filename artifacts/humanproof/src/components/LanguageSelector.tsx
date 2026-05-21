@@ -4,8 +4,10 @@ import { useI18n } from '../i18n';
 const LANGUAGES = [
   { code: 'en', name: 'English' },
   { code: 'es', name: 'Español' },
+  { code: 'pt', name: 'Português' },
   { code: 'fr', name: 'Français' },
   { code: 'de', name: 'Deutsch' },
+  { code: 'hi', name: 'हिन्दी' },
   { code: 'ja', name: '日本語' },
   { code: 'zh', name: '中文' },
 ];

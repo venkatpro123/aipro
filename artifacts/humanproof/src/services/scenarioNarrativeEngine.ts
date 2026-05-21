@@ -956,6 +956,98 @@ function buildSecondaryInsight(
   }
 }
 
+// ─── Localized archetype + urgency helpers ───────────────────────────────────
+// v40.0 — locale-aware variants of the existing English-only label functions.
+// Falls back to English when a locale lacks the key. Long-form narrative
+// fields (oneActionThisWeek, primaryRiskDriver, etc.) remain English until
+// translator review per language; the synthesisStem field is the first
+// translated narrative surface and is exposed via getLocalizedSynthesisStem.
+
+type NarrativeLocaleTable = {
+  urgency?:        Record<string, string>;
+  archetype?:      Record<string, string>;
+  synthesisStem?:  Record<string, string>;
+  disclaimer?:     string;
+};
+
+// Static cache of locale tables — populated lazily on first call to avoid a
+// circular dep between scenarioNarrativeEngine.ts and i18n/index.tsx.
+let _localeCache: Record<string, NarrativeLocaleTable> | null = null;
+
+function loadLocaleTables(): Record<string, NarrativeLocaleTable> {
+  if (_localeCache) return _localeCache;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const en = require('../i18n/locales/en').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const es = require('../i18n/locales/es').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const fr = require('../i18n/locales/fr').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const de = require('../i18n/locales/de').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const ja = require('../i18n/locales/ja').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const zh = require('../i18n/locales/zh').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const pt = require('../i18n/locales/pt').default;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+    const hi = require('../i18n/locales/hi').default;
+    _localeCache = {
+      en: en.narrative ?? {},
+      es: es.narrative ?? {},
+      fr: fr.narrative ?? {},
+      de: de.narrative ?? {},
+      ja: ja.narrative ?? {},
+      zh: zh.narrative ?? {},
+      pt: pt.narrative ?? {},
+      hi: hi.narrative ?? {},
+    };
+  } catch {
+    _localeCache = {};
+  }
+  return _localeCache;
+}
+
+export function getLocalizedArchetypeLabel(
+  archetype: ScenarioArchetype,
+  locale: string = 'en',
+): string {
+  const tables = loadLocaleTables();
+  const localized = tables[locale]?.archetype?.[archetype];
+  if (localized) return localized;
+  // Fallback chain: requested locale → en table → English helper (always exists).
+  const en = tables.en?.archetype?.[archetype];
+  if (en) return en;
+  return getScenarioArchetypeLabel(archetype);
+}
+
+export function getLocalizedUrgencyLabel(
+  urgency: 'Immediate' | 'High' | 'Moderate' | 'Low',
+  locale: string = 'en',
+): string {
+  const tables = loadLocaleTables();
+  return tables[locale]?.urgency?.[urgency] ?? tables.en?.urgency?.[urgency] ?? urgency;
+}
+
+export function getLocalizedSynthesisStem(
+  archetype: ScenarioArchetype,
+  locale: string = 'en',
+): string {
+  const tables = loadLocaleTables();
+  return tables[locale]?.synthesisStem?.[archetype]
+    ?? tables.en?.synthesisStem?.[archetype]
+    ?? '';
+}
+
+/** Returns the model-generated disclaimer in the requested locale.
+ *  Used by UI surfaces (PatternMatchCard, IntelligenceBriefPanel) to clarify
+ *  that long-form narrative remains in English on non-en locales. */
+export function getLocalizedNarrativeDisclaimer(locale: string = 'en'): string {
+  const tables = loadLocaleTables();
+  return tables[locale]?.disclaimer ?? tables.en?.disclaimer ?? '';
+}
+
 export function getScenarioArchetypeLabel(archetype: ScenarioArchetype): string {
   const labels: Record<ScenarioArchetype, string> = {
     financial_distress_layoff: 'Financial Distress',

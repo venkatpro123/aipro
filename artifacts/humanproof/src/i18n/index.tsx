@@ -12,6 +12,8 @@ import fr from "./locales/fr";
 import de from "./locales/de";
 import ja from "./locales/ja";
 import zh from "./locales/zh";
+import pt from "./locales/pt";
+import hi from "./locales/hi";
 import { track } from "../services/analyticsService";
 
 type TranslationKeys = typeof en;
@@ -23,6 +25,8 @@ const translations: Record<string, TranslationKeys> = {
   de,
   ja,
   zh,
+  pt,
+  hi,
 };
 
 const LOCALE_STORAGE_KEY = "humanproof_locale";
@@ -41,8 +45,12 @@ function detectInitialLocale(): string {
     const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
     if (stored && translations[stored]) return stored;
   } catch {}
-  const nav = navigator.language?.slice(0, 2).toLowerCase() || "en";
-  return translations[nav] ? nav : "en";
+  // Handle BCP-47 variants — pt-BR/pt-PT → pt, hi-IN → hi, zh-CN/zh-TW → zh.
+  const rawNav = navigator.language?.toLowerCase() || "en";
+  const base = rawNav.slice(0, 2);
+  if (translations[base]) return base;
+  // Region-specific overrides — e.g. zh-tw could later route to a future zh-tw locale.
+  return "en";
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
@@ -106,8 +114,10 @@ export function useI18n() {
 export const languages = [
   { code: "en", name: "English" },
   { code: "es", name: "Español" },
+  { code: "pt", name: "Português" },
   { code: "fr", name: "Français" },
   { code: "de", name: "Deutsch" },
+  { code: "hi", name: "हिन्दी" },
   { code: "ja", name: "日本語" },
   { code: "zh", name: "中文" },
 ];
