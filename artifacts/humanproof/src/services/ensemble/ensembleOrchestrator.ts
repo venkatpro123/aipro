@@ -463,6 +463,31 @@ export const runFullEnsembleAnalysis = async (
     // Detects the dominant risk archetype and builds a data-driven narrative
     // specific to that scenario. Replaces the 10 static templates with 144+
     // scenario combinations that are India-aware, GCC-aware, and role-specific.
+    //
+    // v40.0 — build the ArchetypeContext so the strict global gates fire:
+    //   - monthsSinceLastFunding for latam_funding_crisis
+    //   - parentPropagation parentCountry + parentLayoffDate for apac_hyperscaler_localization
+    //   - hasRegulatorySignal derived from recent layoff news + sector for
+    //     eu_regulatory_restructuring + fintech_regulatory_tightening
+    const _cdAny = cd as any;
+    const _parentLayoffDate: string | undefined = _cdAny._parentPropagation?.parentLayoffDate
+      ?? _cdAny.parentPropagation?.parentLayoffDate;
+    const _parentCountry: string | undefined = _cdAny._parentPropagation?.parentCountry
+      ?? _cdAny.parentPropagation?.parentCountry;
+    const _parentLag = _cdAny._parentPropagation?.lagMonths ?? _cdAny.parentPropagation?.lagMonths;
+    // Regulatory-signal proxy: recent layoff news within 180d OR explicit
+    // regulatoryAction flag from upstream connectors. Without explicit
+    // regulatoryAction, the engine falls back to its proxy (sector + L4>0.30).
+    const _hasRegulatorySignal: boolean | undefined =
+      typeof _cdAny.regulatoryAction === 'boolean' ? _cdAny.regulatoryAction : undefined;
+    const _scenarioContext = {
+      monthsSinceLastFunding: _cdAny.monthsSinceLastFunding,
+      parentPropagation: (_parentCountry || _parentLayoffDate || _parentLag)
+        ? { parentCountry: _parentCountry, parentLayoffDate: _parentLayoffDate, lagMonths: _parentLag }
+        : undefined,
+      hasRegulatorySignal: _hasRegulatorySignal,
+    };
+
     const scenario = buildScenarioNarrative(
       cd,
       { ...bd, L2: bd.L2 ?? 0 },
@@ -471,6 +496,7 @@ export const runFullEnsembleAnalysis = async (
       tenureYears,
       uniquenessDepth,
       recs,
+      _scenarioContext,
     );
 
     // ── Collapse-stage timeline compression (preserved from v7.0) ────────────

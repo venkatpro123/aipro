@@ -1899,6 +1899,35 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     });
     if (parentPropagation) {
       (hybridResult as any).parentPropagation = parentPropagation;
+      // v40.0: attach to companyData so the Tier B archetype gates (specifically
+      // apac_hyperscaler_localization) can read parent country + recent layoff
+      // date + propagation lag without an extra dependency on hybridResult.
+      // _parentPropagation is intentionally namespaced with underscore so it's
+      // distinct from the canonical static companyData fields.
+      (companyData as any)._parentPropagation = {
+        parentName:        parentPropagation.parentName,
+        parentCountry:     parentPropagation.parentCountry,
+        lagMonths:         parentPropagation.lagMonths,
+        // Try to source the parent's most recent layoff date from the parent's
+        // companyDatabase entry. parentPropagation today doesn't expose this
+        // directly, so we look it up via the same alias path.
+        parentLayoffDate:  (() => {
+          try {
+            const pn = parentPropagation.parentName?.toLowerCase().trim();
+            if (!pn) return undefined;
+            // Lazy require to avoid circular dep on companyDatabase.
+            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+            const { COMPANY_DATABASE } = require("../data/companyDatabase") as { COMPANY_DATABASE: Record<string, any> };
+            for (const k of Object.keys(COMPANY_DATABASE)) {
+              if (k.toLowerCase().includes(pn) || pn.includes(k.toLowerCase())) {
+                const ev = COMPANY_DATABASE[k]?.layoffsLast24Months?.[0]?.date;
+                if (typeof ev === 'string') return ev;
+              }
+            }
+          } catch { /* parent data unavailable */ }
+          return undefined;
+        })(),
+      };
     }
   } catch (e) {
     noteEngineFailure('parentSubsidiaryPropagation', e);

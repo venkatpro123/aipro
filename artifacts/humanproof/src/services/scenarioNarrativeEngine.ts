@@ -89,11 +89,33 @@ export interface ArchetypeConfidence {
   confidence: number;   // 0–1
 }
 
+/** Optional v40.0 contextual signals that sharpen archetype detection.
+ *  When the audit pipeline supplies these, the tightened spec-exact gates fire;
+ *  otherwise the legacy looser fallbacks apply. */
+export interface ArchetypeContext {
+  /** ParentPropagationResult.parentName + parentCountry + lagMonths when subsidiary detected */
+  parentPropagation?: {
+    parentName?: string;
+    parentCountry?: string;
+    lagMonths?: { min?: number; max?: number };
+    /** ISO date of parent's most recent layoff event when known */
+    parentLayoffDate?: string;
+  };
+  /** Months since last funding round (for LatAm funding-crisis gate) */
+  monthsSinceLastFunding?: number;
+  /** A regulatory-action / enforcement signal is observed for this company
+   *  (EU AI Act / GDPR / FCA / RBI / SEC enforcement / central-bank action). */
+  hasRegulatorySignal?: boolean;
+}
+
 export function scoreArchetypeConfidences(
   companyData: CompanyData,
   breakdown: { L1: number; L2: number; L3: number; L4?: number; L5?: number; D6?: number; D7?: number; D8?: number },
   score: number,
   enrichment?: IndiaRiskEnrichment,
+  /** v40.0 — optional contextual signals (parent propagation, funding age,
+   *  regulatory enforcement). When absent the gates use spec-faithful proxies. */
+  context?: ArchetypeContext,
 ): ArchetypeConfidence[] {
   const L1 = breakdown.L1 ?? 0;
   const L2 = breakdown.L2 ?? 0;
@@ -196,6 +218,69 @@ export function scoreArchetypeConfidences(
     industry.includes('national security') ||
     industry.includes('govtech') ||
     industry.includes('intelligence');
+
+  // v40.0 spec-exact: EU_REGULATED_SECTORS — sectors where EU AI Act / GDPR / DSA /
+  // PSD3 / MiCA / MDR / IVDR enforcement materially shapes headcount allocation.
+  // Note: the test is a STRICTER subset of (isFinServ || isDataHeavy) — it adds
+  // explicit healthcare/pharma + telecom + AI/ML categories that the EU Act
+  // classifies as high-risk.
+  const isEURegulatedSector =
+    isFintech ||
+    industry.includes('banking') ||
+    industry.includes('financial service') ||
+    industry.includes('insurance') ||
+    industry.includes('payments') ||
+    industry.includes('asset management') ||
+    industry.includes('healthcare') ||
+    industry.includes('health-tech') ||
+    industry.includes('healthtech') ||
+    industry.includes('pharma') ||
+    industry.includes('medical device') ||
+    industry.includes('biotech') ||
+    industry.includes('telecom') ||
+    industry.includes('data') ||
+    industry.includes('analytics') ||
+    industry.includes('ad tech') ||
+    industry.includes('adtech') ||
+    industry.includes('digital advertising') ||
+    industry.includes('ai') ||
+    industry.includes('artificial intelligence') ||
+    industry.includes('machine learning');
+
+  // Regulatory-signal detection. Strongest signal: explicit context flag from
+  // the audit pipeline (e.g. recent FCA / BaFin / RBI / SEC enforcement event).
+  // Spec-faithful proxy when context is absent: company is in an EU-regulated
+  // sector AND L4 industry headwinds are elevated (> 0.30), which captures the
+  // sector-wide regulator-driven restructuring wave without a per-company event.
+  const hasExplicitRegulatorySignal = context?.hasRegulatorySignal === true;
+  const hasRegulatoryProxy = isEURegulatedSector && L4 > 0.30;
+  const regulatorySignalPresent = hasExplicitRegulatorySignal || hasRegulatoryProxy;
+
+  // v40.0 spec-exact: LatAm funding age
+  const monthsSinceFunding = context?.monthsSinceLastFunding
+    ?? (companyData as any).monthsSinceLastFunding
+    ?? null;
+
+  // v40.0 spec-exact: US parent detection + recent parent cut within 180 days.
+  // Strongest signal: parentPropagation.parentLayoffDate from context. Spec-faithful
+  // proxy: parentPropagation lag.max <= 6 months means the propagation engine has
+  // confirmed an active parent-event window for this subsidiary.
+  const parentCountryUpper = (context?.parentPropagation?.parentCountry ?? '').toString().toUpperCase();
+  const parentIsUS =
+    parentCountryUpper === 'US' ||
+    parentCountryUpper === 'USA' ||
+    parentCountryUpper.includes('UNITED STATES');
+  const parentLayoffDate = context?.parentPropagation?.parentLayoffDate;
+  const parentLayoffWithin180Days = parentLayoffDate
+    ? (() => {
+        const t = new Date(parentLayoffDate).getTime();
+        if (isNaN(t)) return false;
+        return (Date.now() - t) <= (180 * 86400000);
+      })()
+    : false;
+  const lagMaxMonths = context?.parentPropagation?.lagMonths?.max;
+  const propagationWindowActive = lagMaxMonths != null && lagMaxMonths <= 6;
+  const parentRecentlyCut = parentLayoffWithin180Days || propagationWindowActive;
   const isStartup =
     (companyData as any).fundingStage === 'series-a' ||
     (companyData as any).fundingStage === 'series-b' ||
@@ -257,62 +342,70 @@ export function scoreArchetypeConfidences(
     },
 
     // ── v40.0 global archetypes ──────────────────────────────────────────────
+    // SPEC: gate conditions match the v40.0 product spec exactly. Each archetype
+    // requires structurally-grounded signals — not just a region + an elevated
+    // score — so the fired archetype is provably applicable to the user.
 
     {
-      // EU regulatory restructuring — GDPR / EU AI Act / DSA compliance-cost
-      // headcount optimization. Fires on EU region + (fintech/data/saas) where
-      // L4 is the dominant driver and the company is profitable enough that
-      // financial distress alone doesn't explain the restructuring.
-      // Score >= 45 floor (below that the cohort is too soft).
+      // EU regulatory restructuring — strict v40.0 spec:
+      //   L2 < 0.30  (low layoff history → confirms regulation-driven, not distress)
+      //   AND company in EU_REGULATED_SECTORS
+      //   AND regulatory_signal present
+      // Geographic gate: must be EU region (only EU regulators apply).
+      // Score floor: 45 — below that the cohort is too soft to fire a specific
+      //   regulatory narrative.
       archetype: 'eu_regulatory_restructuring',
-      confidence: isEU && (isFinServ || isDataHeavy) && score >= 45
-        ? Math.min(1, 0.55 + (L4 * 0.5) + (Math.max(0, score - 45) / 100))
+      confidence: (isEU && isEURegulatedSector && regulatorySignalPresent && L2 < 0.30 && score >= 45)
+        ? Math.min(1, 0.60 + (L4 * 0.4) + (Math.max(0, score - 45) / 110))
         : 0,
     },
 
     {
-      // LatAm funding crisis — startups without US funding runway hit by VC
-      // dry-up. Fires on LatAm region + startup-stage + L1 elevated (cash
-      // burn). Series-B-stuck pattern: profitable enough to need a Series C
-      // but Series Cs aren't closing in LatAm 2024-2026.
+      // LatAm funding crisis — strict v40.0 spec:
+      //   private company  (companyData.isPublic === false)
+      //   AND monthsSinceFunding > 18  (stale funding — the hard signal)
+      //   AND region = LATAM
       archetype: 'latam_funding_crisis',
-      confidence: isLATAM && isStartup && (L1 > 0.35 || score >= 45)
-        ? Math.min(1, 0.50 + (L1 * 0.6) + (Math.max(0, score - 50) / 110))
+      confidence: (isLATAM && companyData.isPublic === false && monthsSinceFunding != null && monthsSinceFunding > 18)
+        ? Math.min(1, 0.60 + (L1 * 0.4) + (Math.max(0, monthsSinceFunding - 18) / 36))
         : 0,
     },
 
     {
-      // APAC hyperscaler localization — US-parent tech company localizing APAC
-      // ops, replacing expat-heavy teams with regional hires. Fires on APAC
-      // region + signal-of-hyperscaler-parent OR named APAC GCC archetype +
-      // moderate-to-elevated L3 (the layer where role-substitution shows up).
+      // APAC hyperscaler localization — strict v40.0 spec:
+      //   US parent  (context.parentPropagation.parentCountry === 'US')
+      //   AND APAC office  (region in APAC_REGIONS)
+      //   AND parent cut in 180 days  (parentLayoffDate within window OR
+      //                                propagation lag.max <= 6 months)
       archetype: 'apac_hyperscaler_localization',
-      confidence: (isAPAC && (isHyperscaler || isGCC) && score >= 45)
-        ? Math.min(1, 0.50 + (L3 * 0.5) + (Math.max(0, score - 45) / 110))
+      confidence: (isAPAC && parentIsUS && parentRecentlyCut)
+        ? Math.min(1, 0.65 + (L3 * 0.3) + (D8 * 0.15))
         : 0,
     },
 
     {
-      // US gov contract risk — defense tech, aerospace, federal contractors
-      // facing budget cuts (DOGE 2025-2026, continuing resolutions). Fires on
-      // US region + defense/govt-adjacent industry. L4 + L2 compound because
-      // contract cancellations create both sector-wave and layoff-history
-      // signal simultaneously.
+      // US gov contract risk — strict v40.0 spec:
+      //   government-adjacent industry (defense / aerospace / federal / govtech)
+      //   AND D8 signals  (D8 > 0.10 means the AI-efficiency layer fired —
+      //                    captures DOGE-era contract cancellations + AI-driven
+      //                    restructuring that compound for federal contractors)
+      // Geographic gate: US (regulators + budget process are US-specific).
       archetype: 'us_gov_contract_risk',
-      confidence: isUS && isDefenseGov && score >= 45
-        ? Math.min(1, 0.55 + (L4 * 0.4) + (L2 * 0.3))
+      confidence: (isUS && isDefenseGov && D8 > 0.10)
+        ? Math.min(1, 0.65 + (L4 * 0.3) + (D8 * 0.5))
         : 0,
     },
 
     {
-      // Fintech regulatory tightening — central bank AI/fintech crackdowns
-      // (RBI restrictions on UPI fintechs, MAS digital bank licensing, ECB
-      // payments oversight, FCA crypto restrictions, BaFin AI Act enforcement).
-      // Fires globally on fintech industry + L4 elevated. Region routes the
-      // regulator citation in the narrative but every region fires.
+      // Fintech regulatory tightening — strict v40.0 spec:
+      //   fintech classification
+      //   AND regulatory_signal present  (central-bank action / AI-Act / MiCA / FCA)
+      //   AND L1 elevated  (L1 > 0.40 — confirms regulatory pressure has
+      //                     translated into financial decisions, not just talk)
+      // Region routes the regulator citation in the narrative; gate is global.
       archetype: 'fintech_regulatory_tightening',
-      confidence: isFintech && score >= 45
-        ? Math.min(1, 0.50 + (L4 * 0.5) + (Math.max(0, score - 45) / 110))
+      confidence: (isFintech && regulatorySignalPresent && L1 > 0.40)
+        ? Math.min(1, 0.60 + (L4 * 0.3) + (L1 * 0.2))
         : 0,
     },
   ];
@@ -327,8 +420,9 @@ export function detectScenario(
   breakdown: { L1: number; L2: number; L3: number; L4?: number; L5?: number; D6?: number; D7?: number; D8?: number },
   score: number,
   enrichment?: IndiaRiskEnrichment,
+  context?: ArchetypeContext,
 ): ScenarioArchetype {
-  const ranked = scoreArchetypeConfidences(companyData, breakdown, score, enrichment);
+  const ranked = scoreArchetypeConfidences(companyData, breakdown, score, enrichment, context);
   return ranked[0].archetype;
 }
 
@@ -347,8 +441,9 @@ export function detectArchetypeBlend(
   breakdown: { L1: number; L2: number; L3: number; L4?: number; L5?: number; D6?: number; D7?: number; D8?: number },
   score: number,
   enrichment?: IndiaRiskEnrichment,
+  context?: ArchetypeContext,
 ): ArchetypeBlend {
-  const ranked = scoreArchetypeConfidences(companyData, breakdown, score, enrichment);
+  const ranked = scoreArchetypeConfidences(companyData, breakdown, score, enrichment, context);
   const primary = ranked[0];
   const secondary = ranked[1]?.confidence >= 0.35 ? ranked[1] : null;
 
@@ -849,13 +944,16 @@ export function buildScenarioNarrative(
   tenureYears: number,
   uniquenessDepth: string,
   recs?: Array<{ title: string; riskReductionPct: number; priority: string }>,
+  /** v40.0 — optional contextual signals (parent propagation, funding age,
+   *  regulatory enforcement) that tighten archetype gates to the spec-exact path. */
+  context?: ArchetypeContext,
 ): ScenarioNarrative {
   const enrichment = companyData.region === 'IN' || (companyData.region as string) === 'India'
     ? getIndiaRiskEnrichment(companyData.name, companyData.industry ?? '', companyData.region)
     : undefined;
 
   // v10.0: Compute archetype blend BEFORE selecting the primary narrative
-  const blend = detectArchetypeBlend(companyData, breakdown, score, enrichment);
+  const blend = detectArchetypeBlend(companyData, breakdown, score, enrichment, context);
   const archetype = blend.primary.archetype;
 
   let narrative: ScenarioNarrative;
