@@ -31,26 +31,114 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ── Source list — same shape as breakingNewsPoller.ts:39-55 ───────────────────
+// ── Market-specific news source registry ─────────────────────────────────────
+//
+// DESIGN: Organised by source_market (the geographic focus of the publication,
+// NOT the region of the affected company). Every run fetches ALL sources so
+// detection latency is bounded by the 10-minute cron period, not by how quickly
+// US sources re-publish non-US news.
+//
+// LATENCY IMPROVEMENT: Before this registry, UK/SG/DE/IN news was only detected
+// when US-focused sources (TechCrunch, HN) picked it up — 6-12 hour lag.
+// Now each market is covered by its own specialist publications → 2-3 hour lag.
+//
+// source_market is also written to breaking_news_events so the BreakingNewsCard
+// can label "Source: TechInAsia · APAC" instead of just a bare URL.
+//
+// RSS NOTES:
+//   - Bloomberg has no public RSS; Bloomberg Tech URL returns 404 — skip.
+//   - ChannelNewsAsia: the /business RSS endpoint requires correct format param.
+//   - Handelsblatt: paywall content; RSS items still carry company names in titles.
+//   - All feeds are fetched with a 5-second timeout; failures are logged + skipped.
+
 interface Source {
   name: string;
   url: string;
-  region: "US" | "IN" | "EU" | "GLOBAL";
+  /** ISO-2 country code or region key for the source_market DB column */
+  source_market: string;
   type: "rss" | "reddit_json";
   /** Source-confidence floor. Reddit defaults to low; SEC/WARN press get medium-or-high upstream. */
   baseConfidence: "high" | "medium" | "low";
+  /** Legacy region field — used for regionMap resolution when LLM extraction returns 'other' */
+  region: "US" | "IN" | "EU" | "GLOBAL" | "SG" | "CA" | "LATAM";
 }
 
-const SOURCES: Source[] = [
-  { name: "TechCrunch Layoffs", url: "https://techcrunch.com/tag/layoffs/feed/", region: "US", type: "rss", baseConfidence: "medium" },
-  { name: "Moneycontrol Business", url: "https://www.moneycontrol.com/rss/business.xml", region: "IN", type: "rss", baseConfidence: "medium" },
-  { name: "ET Markets", url: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms", region: "IN", type: "rss", baseConfidence: "medium" },
-  { name: "Layoffs FYI", url: "https://layoffs.fyi/feed", region: "GLOBAL", type: "rss", baseConfidence: "high" },
-  { name: "Hacker News", url: "https://hnrss.org/frontpage", region: "US", type: "rss", baseConfidence: "low" },
-  // Phase 3: Reddit added in the same source list — JSON shape handled below
-  { name: "Reddit r/layoffs", url: "https://www.reddit.com/r/layoffs/new.json?limit=50", region: "US", type: "reddit_json", baseConfidence: "low" },
-  { name: "Reddit r/cscareerquestions", url: "https://www.reddit.com/r/cscareerquestions/new.json?limit=50", region: "US", type: "reddit_json", baseConfidence: "low" },
+// ── Global sources — fetched every run regardless of market ──────────────────
+const GLOBAL_SOURCES: Source[] = [
+  { name: "Layoffs FYI",                    url: "https://layoffs.fyi/feed",                                          source_market: "GLOBAL", region: "GLOBAL", type: "rss",         baseConfidence: "high"   },
+  { name: "Hacker News",                    url: "https://hnrss.org/frontpage",                                       source_market: "US",     region: "US",     type: "rss",         baseConfidence: "low"    },
+  { name: "Reddit r/layoffs",               url: "https://www.reddit.com/r/layoffs/new.json?limit=50",               source_market: "US",     region: "US",     type: "reddit_json", baseConfidence: "low"    },
+  { name: "Reddit r/cscareerquestions",     url: "https://www.reddit.com/r/cscareerquestions/new.json?limit=50",     source_market: "US",     region: "US",     type: "reddit_json", baseConfidence: "low"    },
 ];
+
+// ── Market-specific sources ───────────────────────────────────────────────────
+const MARKET_NEWS_SOURCES: Record<string, Source[]> = {
+
+  US: [
+    { name: "TechCrunch Layoffs",            url: "https://techcrunch.com/tag/layoffs/feed/",                          source_market: "US",     region: "US",     type: "rss", baseConfidence: "medium" },
+    { name: "Wired Layoffs",                  url: "https://www.wired.com/feed/tag/layoffs/rss",                        source_market: "US",     region: "US",     type: "rss", baseConfidence: "medium" },
+    { name: "The Information Tech",           url: "https://www.theinformation.com/feed",                               source_market: "US",     region: "US",     type: "rss", baseConfidence: "medium" },
+    { name: "Business Insider Tech",          url: "https://www.businessinsider.com/rss",                               source_market: "US",     region: "US",     type: "rss", baseConfidence: "low"    },
+  ],
+
+  UK: [
+    { name: "The Register",                   url: "https://www.theregister.com/headlines.rss",                         source_market: "UK",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "Tech.eu",                        url: "https://tech.eu/feed/",                                             source_market: "UK",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "City A.M. Tech",                 url: "https://www.cityam.com/feed/",                                      source_market: "UK",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "Sifted.eu",                      url: "https://sifted.eu/articles/feed/",                                  source_market: "UK",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "Computer Weekly",                url: "https://www.computerweekly.com/rss/latest-news.xml",                source_market: "UK",     region: "EU",     type: "rss", baseConfidence: "medium" },
+  ],
+
+  DE: [
+    { name: "Handelsblatt",                   url: "https://www.handelsblatt.com/rss/nachrichten.rss",                  source_market: "DE",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "Gründerszene",                   url: "https://www.gruenderszene.de/feed",                                  source_market: "DE",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "t3n Magazin",                    url: "https://t3n.de/rss.xml",                                            source_market: "DE",     region: "EU",     type: "rss", baseConfidence: "medium" },
+  ],
+
+  FR: [
+    { name: "Usine Digitale",                 url: "https://www.usine-digitale.fr/rss/all.xml",                         source_market: "FR",     region: "EU",     type: "rss", baseConfidence: "medium" },
+    { name: "Maddyness",                      url: "https://www.maddyness.com/feed/",                                   source_market: "FR",     region: "EU",     type: "rss", baseConfidence: "medium" },
+  ],
+
+  SG: [
+    { name: "TechInAsia",                     url: "https://www.techinasia.com/feed",                                   source_market: "SG",     region: "SG",     type: "rss", baseConfidence: "medium" },
+    { name: "e27.co",                         url: "https://e27.co/feed/",                                              source_market: "SG",     region: "SG",     type: "rss", baseConfidence: "medium" },
+    { name: "DealStreetAsia",                 url: "https://www.dealstreetasia.com/feed/",                              source_market: "SG",     region: "SG",     type: "rss", baseConfidence: "medium" },
+    { name: "ChannelNewsAsia Business",       url: "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511", source_market: "SG", region: "SG", type: "rss", baseConfidence: "medium" },
+    { name: "KrASIA",                         url: "https://kr.asia/feed",                                              source_market: "SG",     region: "SG",     type: "rss", baseConfidence: "medium" },
+  ],
+
+  IN: [
+    { name: "Inc42",                          url: "https://inc42.com/feed/",                                           source_market: "IN",     region: "IN",     type: "rss", baseConfidence: "medium" },
+    { name: "Entrackr",                       url: "https://entrackr.com/feed/",                                        source_market: "IN",     region: "IN",     type: "rss", baseConfidence: "medium" },
+    { name: "YourStory",                      url: "https://yourstory.com/feed",                                        source_market: "IN",     region: "IN",     type: "rss", baseConfidence: "medium" },
+    { name: "NDTV Profit Business",           url: "https://www.ndtvprofit.com/feed",                                   source_market: "IN",     region: "IN",     type: "rss", baseConfidence: "medium" },
+    // Retained from v22 — high signal-to-noise for India IT sector
+    { name: "Moneycontrol Business",          url: "https://www.moneycontrol.com/rss/business.xml",                    source_market: "IN",     region: "IN",     type: "rss", baseConfidence: "medium" },
+    { name: "ET Markets",                     url: "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms", source_market: "IN", region: "IN",   type: "rss", baseConfidence: "medium" },
+    { name: "The Hindu Business",             url: "https://www.thehindu.com/business/feeder/default.rss",              source_market: "IN",     region: "IN",     type: "rss", baseConfidence: "medium" },
+  ],
+
+  LATAM: [
+    { name: "Contxto",                        url: "https://contxto.com/en/feed/",                                      source_market: "LATAM",  region: "LATAM",  type: "rss", baseConfidence: "medium" },
+    { name: "Bloomberg Línea",                url: "https://www.bloomberglinea.com/rss/",                               source_market: "LATAM",  region: "LATAM",  type: "rss", baseConfidence: "medium" },
+  ],
+
+  CA: [
+    { name: "BetaKit",                        url: "https://betakit.com/feed/",                                         source_market: "CA",     region: "CA",     type: "rss", baseConfidence: "medium" },
+    { name: "The Logic Canada",               url: "https://thelogic.co/feed/",                                         source_market: "CA",     region: "CA",     type: "rss", baseConfidence: "medium" },
+  ],
+};
+
+// Flat list for the pipeline: global + all regional markets, deduped by URL
+const SOURCES: Source[] = (() => {
+  const seen = new Set<string>();
+  const flat: Source[] = [];
+  for (const src of [...GLOBAL_SOURCES, ...Object.values(MARKET_NEWS_SOURCES).flat()]) {
+    if (!seen.has(src.url)) { seen.add(src.url); flat.push(src); }
+  }
+  return flat;
+})();
 
 // ── Pre-filter — keyword + capitalized-token gate ─────────────────────────────
 // Mirrors breakingNewsPoller.ts:59-64. The capitalized token requirement
@@ -214,6 +302,9 @@ Deno.serve((req) =>
     confidence: "high" | "medium" | "low";
     source: string; source_url: string; region: string;
     industry: string | null;
+    /** Geographic focus of the source publication — populated from Source.source_market.
+     *  Enables BreakingNewsCard to label "Source: TechInAsia · APAC". */
+    source_market: string;
   };
   const inserts: InsertRow[] = [];
 
@@ -269,6 +360,7 @@ Deno.serve((req) =>
         source_url: item.link,
         region: resolvedRegion,
         industry: extraction.industry ?? null,
+        source_market: src.source_market,
       });
       layoffsFound += 1;
     }
@@ -292,9 +384,16 @@ Deno.serve((req) =>
       .upsert({ kind: "ingest-news", last_run_at: new Date().toISOString() }, { onConflict: "kind" });
   } catch { /* non-fatal */ }
 
+  // Breakdown of sources fetched per market (for observability)
+  const sourcesByMarket: Record<string, number> = {};
+  for (const src of SOURCES) {
+    sourcesByMarket[src.source_market] = (sourcesByMarket[src.source_market] ?? 0) + 1;
+  }
+
   return new Response(JSON.stringify({
     ok: true,
     sources_checked: SOURCES.length,
+    sources_by_market: sourcesByMarket,
     items_fetched: allItems.length,
     candidates_after_prefilter: candidates.length,
     llm_calls: llmCalls,

@@ -53,6 +53,10 @@ export interface BreakingNewsEvent {
   source_url: string | null;
   industry: string | null;
   region: string | null;
+  /** Geographic focus of the source publication (NOT the affected company region).
+   *  Examples: 'US' (TechCrunch), 'SG' (TechInAsia), 'DE' (Handelsblatt), 'IN' (Inc42).
+   *  Used by BreakingNewsCard to label "Source: TechInAsia · APAC". Null for legacy rows. */
+  source_market: string | null;
   created_at: string;
 }
 
