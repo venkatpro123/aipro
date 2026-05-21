@@ -2332,8 +2332,22 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   try {
     const peerContagionResult = (hybridResult as any).peerContagion;
     const geoCluster = peerContagionResult?.geoCluster;
+    // Remote-first conversion: when userFactors.remoteEligibility = 'FULLY_REMOTE',
+    // L9 should treat accessible market as globalOpenings × 0.35 (international
+    // hiring friction discount) rather than city/region-bounded openings.
+    const remoteEligibility = (inputs.userFactors as any).remoteEligibility as string | undefined;
+    const isRemoteFirst = remoteEligibility === 'FULLY_REMOTE';
+    // Pull globalOpenings from careerPathMarket for the user's CURRENT role
+    // (not their target pivot). Falls back to 0 when not in the registry.
+    const _resolvedRoleKey = resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'generic';
+    let _globalOpenings: number | undefined;
+    try {
+      const _market = getCareerPathMarketSync(_resolvedRoleKey);
+      _globalOpenings = _market?.globalOpenings;
+    } catch { /* ignore — globalOpenings stays undefined */ }
+
     const jobMarketLiquidity = computeJobMarketLiquidity({
-      oracleKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'generic',
+      oracleKey: _resolvedRoleKey,
       industry: companyData.industry ?? 'technology',
       tenureYears: inputs.userFactors.tenureYears,
       region: companyData.region ?? 'US',
@@ -2345,6 +2359,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       city: (inputs.userFactors as any).city,
       geoClusterActiveCuts: geoCluster?.geoClusteredCuts ?? 0,
       geoConcentrationScore: geoCluster?.geoConcentrationScore,
+      isRemoteFirst,
+      globalOpenings: _globalOpenings,
     });
     (hybridResult as any).jobMarketLiquidity = jobMarketLiquidity;
   } catch (e) {
