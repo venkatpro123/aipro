@@ -1,4 +1,4 @@
-// offerEvaluationEngine.ts — v13.0 Layer 26
+// offerEvaluationEngine.ts — v40.1 Layer 26
 //
 // Job offer evaluation and scoring engine.
 //
@@ -26,7 +26,8 @@ export type OfferRecommendation =
   | 'NEGOTIATE'        // 45–64: Acceptable offer; specific negotiation points
   | 'NEGOTIATE_HARD'   // 30–44: Below market or high risk; needs substantial improvement
   | 'DECLINE'          // 0–29: Offer fails multiple criteria; do not accept as-is
-  | 'INVESTIGATE_MORE'; // Data insufficient to recommend; get more info first
+  | 'INVESTIGATE_MORE' // Data insufficient to recommend; get more info first
+  | 'CANNOT_ACCEPT';   // Visa/sponsorship eligibility hard block — offer is legally inaccessible
 
 export type CompanyStabilityTier =
   | 'ELITE'         // Top 50 public companies, consistent growth, low layoff history
@@ -66,6 +67,18 @@ export interface OfferEvaluationResult {
   keyInsight: string;             // single most important insight about this offer
   redFlags: string[];
   greenFlags: string[];
+  /**
+   * True when the user's visa status makes this offer legally inaccessible
+   * (e.g. company confirmed it does not sponsor, or sponsorship is unresolvable).
+   * When true, recommendation is always CANNOT_ACCEPT regardless of score.
+   */
+  visaEligibilityBlocked: boolean;
+  /**
+   * Plain-English eligibility note — set whenever the user is on a work visa,
+   * regardless of whether the offer is blocked. Blocked → hard legal barrier.
+   * Not blocked but note present → required due-diligence before accepting.
+   */
+  visaEligibilityNote: string | null;
   readonly calibrationStatus: 'framework_based';
 }
 
@@ -89,6 +102,23 @@ export interface OfferEvaluationInputs {
   currentRoleLevel?: 'individual_contributor' | 'senior_ic' | 'lead' | 'manager' | 'director' | 'vp_plus';
   offerResponseDeadlineDays?: number;
   marketRateForRole?: number;     // if user researched it
+
+  // ── Visa eligibility inputs ───────────────────────────────────────────────
+  /** User's active visa status — sourced from UserProfile. Required for sponsor gating. */
+  visaStatus?: string | null;
+  /**
+   * ISO country code of the company's primary operating jurisdiction ('US', 'GB', 'SG', 'AU', etc.).
+   * Used to infer whether the company is likely able to sponsor certain visa types.
+   * E.g. a US-only company cannot sponsor a UK Skilled Worker visa without a UK entity.
+   */
+  offerCompanyCountry?: string | null;
+  /**
+   * Explicit answer to "Does this company sponsor work visas for your status?"
+   * True  = company confirmed they will sponsor.
+   * False = company confirmed they will not sponsor — hard eligibility block.
+   * Null  = not asked yet — surface as required due-diligence, not a hard block.
+   */
+  offerCompanySponsorshipAvailable?: boolean | null;
 }
 
 // ── Dimension scorers ─────────────────────────────────────────────────────────
@@ -321,9 +351,174 @@ function buildRecommendation(score: number): OfferRecommendation {
   return 'DECLINE';
 }
 
+// ── Visa sponsor eligibility gate ────────────────────────────────────────────
+//
+// Runs BEFORE the 6 dimension scorers.  A legally inaccessible offer must not
+// receive a STRONG_ACCEPT / ACCEPT recommendation regardless of comp or growth.
+//
+// Three tiers of response:
+//   HARD BLOCK  — offerCompanySponsorshipAvailable === false (confirmed denial).
+//                 Any work visa holder.  recommendation → CANNOT_ACCEPT.
+//   INFERRED    — work visa + company country mismatch with no UK/SG entity
+//                 inferred + sponsorship not confirmed.  Not a hard block but
+//                 surfaces as a RED_FLAG and sets recommendation → INVESTIGATE_MORE.
+//   ADVISORY    — work visa + sponsorship unknown.  Required due-diligence note;
+//                 dimensions are scored normally.
+
+const WORK_VISA_LABELS: Record<string, string> = {
+  h1b: 'H1B', l1: 'L1', opt_stem: 'OPT STEM', opt: 'OPT', tn: 'TN',
+  uk_skilled_worker: 'UK Skilled Worker',
+  eu_blue_card: 'EU Blue Card',
+  singapore_ep: 'Singapore EP', singapore_s_pass: 'Singapore S Pass',
+  australia_482_tss: 'Australia 482 TSS',
+  philippines_9g_aep: 'Philippines 9G AEP',
+  canada_lmia_permit: 'Canada LMIA permit',
+  uae_employment_visa: 'UAE Employment Visa',
+  saudi_iqama: 'Saudi Iqama',
+  qatar_work_permit: 'Qatar work permit',
+  kuwait_work_permit: 'Kuwait work permit',
+  gcc_sponsored: 'GCC sponsored visa',
+  other_work_auth: 'work authorization',
+  other: 'work authorization',
+};
+
+const NO_VISA_CONSTRAINT = new Set(['citizen', 'permanent_resident', 'not_applicable', 'na', '']);
+
+interface EligibilityCheck {
+  blocked: boolean;        // true → CANNOT_ACCEPT
+  inferredRisk: boolean;   // true → INVESTIGATE_MORE even if not hard-blocked
+  note: string | null;     // shown in redFlags and visaEligibilityNote
+}
+
+function checkVisaEligibility(inputs: OfferEvaluationInputs): EligibilityCheck {
+  const visa = inputs.visaStatus ?? '';
+  if (!visa || NO_VISA_CONSTRAINT.has(visa)) return { blocked: false, inferredRisk: false, note: null };
+
+  const visaLabel = WORK_VISA_LABELS[visa] ?? 'work visa';
+  const sponsorKnown = inputs.offerCompanySponsorshipAvailable;
+  const co = (inputs.offerCompanyCountry ?? '').toUpperCase();
+  const companyName = inputs.offerCompanyName;
+
+  // ── Hard block: company explicitly confirmed no sponsorship ───────────────
+  if (sponsorKnown === false) {
+    return {
+      blocked: true,
+      inferredRisk: false,
+      note: `${companyName} has confirmed they do not sponsor work visas. As a ${visaLabel} holder, you cannot legally accept this offer. Remove it from consideration — pursuing it wastes negotiation capital.`,
+    };
+  }
+
+  // ── UK Skilled Worker: must have Home Office sponsor licence ──────────────
+  if (visa === 'uk_skilled_worker') {
+    if (sponsorKnown === true) {
+      // Confirmed sponsorship — advisory only
+      return {
+        blocked: false,
+        inferredRisk: false,
+        note: `UK Skilled Worker: ${companyName} has confirmed sponsor licence. Ensure your Certificate of Sponsorship (CoS) is issued before you resign from your current role.`,
+      };
+    }
+    // Co is non-UK → high probability they lack a UK sponsor licence
+    const likelyNoUkPresence = co && co !== 'GB' && co !== 'UK';
+    if (likelyNoUkPresence) {
+      return {
+        blocked: false,
+        inferredRisk: true,
+        note: `UK Skilled Worker visa requires ${companyName} to hold a UK Home Office sponsor licence. ${companyName} appears to be based in ${co} — US/non-UK companies cannot employ UK Skilled Worker visa holders unless they have a registered UK entity and sponsor licence. Ask HR: "Are you a licensed UK immigration sponsor?" before investing further time in this process.`,
+      };
+    }
+    // Unknown country, sponsorship unknown → required due-diligence
+    return {
+      blocked: false,
+      inferredRisk: false,
+      note: `UK Skilled Worker visa: your new employer must hold a Home Office sponsor licence and issue a Certificate of Sponsorship (CoS) before you can switch roles. Confirm this with ${companyName} HR immediately — it is a hard legal requirement and takes 8–12 weeks to process.`,
+    };
+  }
+
+  // ── H1B / L1 / OPT: USCIS petition required ──────────────────────────────
+  if (['h1b', 'l1', 'opt_stem', 'opt'].includes(visa)) {
+    if (sponsorKnown === true) {
+      return {
+        blocked: false,
+        inferredRisk: false,
+        note: `${visaLabel}: ${companyName} will file an H1B transfer petition. Confirm the expected USCIS processing time — premium processing (~15 business days) is available if timeline is tight.`,
+      };
+    }
+    return {
+      blocked: false,
+      inferredRisk: false,
+      note: `${visaLabel} transfer requires ${companyName} to file a new petition with USCIS (typically 2–6 months; 15 days with premium processing). Confirm before accepting: "Does your company sponsor H1B transfers, and will you cover premium processing fees?"`,
+    };
+  }
+
+  // ── Singapore EP / S Pass ─────────────────────────────────────────────────
+  if (visa === 'singapore_ep' || visa === 'singapore_s_pass') {
+    const graceDays = visa === 'singapore_s_pass' ? 10 : 30;
+    if (sponsorKnown === true) {
+      return {
+        blocked: false,
+        inferredRisk: false,
+        note: `${visaLabel}: ${companyName} will apply for your new MOM pass. Your current pass is cancelled on your last day — ensure the new application is submitted before you resign (MOM approval takes 3–8 weeks).`,
+      };
+    }
+    return {
+      blocked: false,
+      inferredRisk: false,
+      note: `${visaLabel} holders have only ${graceDays} days after your current pass is cancelled. ${companyName} must apply for your new MOM pass before you resign. Confirm they will initiate this and get a written commitment on timing.`,
+    };
+  }
+
+  // ── Australia 482 TSS ─────────────────────────────────────────────────────
+  if (visa === 'australia_482_tss') {
+    if (sponsorKnown === true) {
+      return { blocked: false, inferredRisk: false, note: `Australia 482 TSS: ${companyName} is a Standard Business Sponsor. Confirm your occupation is on the MLTSSL/STSOL and the new nomination is lodged before your current sponsor notifies Home Affairs of the end of employment.` };
+    }
+    return {
+      blocked: false,
+      inferredRisk: false,
+      note: `Australia 482 TSS: ${companyName} must be an approved Standard Business Sponsor to employ you. Ask: "Is your company a registered 482 sponsor?" — this is non-negotiable.`,
+    };
+  }
+
+  // ── Canada LMIA ───────────────────────────────────────────────────────────
+  if (visa === 'canada_lmia_permit') {
+    if (sponsorKnown === true) {
+      return { blocked: false, inferredRisk: false, note: `Canada LMIA: ${companyName} is willing to obtain an LMIA. Processing typically takes 60–150 days — negotiate a start date that accounts for this.` };
+    }
+    return {
+      blocked: false,
+      inferredRisk: false,
+      note: `Canada LMIA work permit requires ${companyName} to obtain a Labour Market Impact Assessment (LMIA) — a 60–150 day process. Verify they will sponsor and understand the timeline before accepting. CUSMA/Express Entry paths may offer faster alternatives.`,
+    };
+  }
+
+  // ── Philippines 9G AEP ────────────────────────────────────────────────────
+  if (visa === 'philippines_9g_aep') {
+    if (sponsorKnown === true) {
+      return { blocked: false, inferredRisk: false, note: `Philippines 9G AEP: ${companyName} will file your new AEP. DOLE requires 14-day publication before approval — plan accordingly; your current AEP is per-employer and non-transferable.` };
+    }
+    return {
+      blocked: false,
+      inferredRisk: false,
+      note: `Philippines 9G AEP is per-employer and per-position — it cannot transfer. ${companyName} must file a new AEP with DOLE (14-day publication required before approval). Confirm they will sponsor before advancing.`,
+    };
+  }
+
+  // ── Generic work auth fallback ────────────────────────────────────────────
+  return {
+    blocked: false,
+    inferredRisk: false,
+    note: `You hold a ${visaLabel} — confirm ${companyName} will sponsor your work authorization before accepting. Non-sponsoring offers are legally inaccessible regardless of comp or role quality.`,
+  };
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function evaluateJobOffer(inputs: OfferEvaluationInputs): OfferEvaluationResult {
+  // Visa eligibility gate runs first — a legally inaccessible offer must not
+  // receive a positive recommendation regardless of comp or stability scores.
+  const eligibility = checkVisaEligibility(inputs);
+
   const dimensions: OfferDimension[] = [
     scoreCompanyStability(inputs),
     scoreCompensationDelta(inputs),
@@ -335,7 +530,24 @@ export function evaluateJobOffer(inputs: OfferEvaluationInputs): OfferEvaluation
   const overallScore = Math.round(
     dimensions.reduce((sum, d) => sum + d.score * d.weight, 0)
   );
-  const recommendation = buildRecommendation(overallScore);
+
+  // Eligibility overrides dim-score recommendation.
+  //   HARD BLOCK (blocked=true)   → CANNOT_ACCEPT
+  //   INFERRED RISK (inferredRisk) → INVESTIGATE_MORE (clamp away from positive recs)
+  //   Otherwise                   → normal score-based recommendation
+  let recommendation: OfferRecommendation;
+  if (eligibility.blocked) {
+    recommendation = 'CANNOT_ACCEPT';
+  } else if (eligibility.inferredRisk) {
+    // Don't let a good comp score mask an unresolved sponsor eligibility risk.
+    // Cap at INVESTIGATE_MORE even if score would produce ACCEPT/STRONG_ACCEPT.
+    const scoreBased = buildRecommendation(overallScore);
+    recommendation = (scoreBased === 'STRONG_ACCEPT' || scoreBased === 'ACCEPT')
+      ? 'INVESTIGATE_MORE'
+      : scoreBased;
+  } else {
+    recommendation = buildRecommendation(overallScore);
+  }
 
   const riskDim = dimensions.find(d => d.id === 'risk_reduction');
   const currentEstimatedNew = inputs.currentScore - (riskDim ? (riskDim.score >= 70 ? 15 : riskDim.score >= 45 ? 5 : -10) : 0);
@@ -349,9 +561,13 @@ export function evaluateJobOffer(inputs: OfferEvaluationInputs): OfferEvaluation
     ? Math.abs(inputs.offerBaseSalary - inputs.marketRateForRole) / inputs.marketRateForRole < 0.10
     : null;
 
-  const redFlags = dimensions
+  // Eligibility note prepended to redFlags so it's impossible to miss.
+  const dimRedFlags = dimensions
     .filter(d => d.verdict === 'RED_FLAG')
     .map(d => `${d.name}: ${d.insight}`);
+  const redFlags: string[] = eligibility.note && (eligibility.blocked || eligibility.inferredRisk)
+    ? [eligibility.note, ...dimRedFlags]
+    : dimRedFlags;
 
   const greenFlags = dimensions
     .filter(d => d.verdict === 'EXCELLENT')
@@ -362,9 +578,13 @@ export function evaluateJobOffer(inputs: OfferEvaluationInputs): OfferEvaluation
     return order[a.verdict] - order[b.verdict];
   })[0];
 
-  const keyInsight = overallScore >= 70
-    ? `Strong offer (${overallScore}/100): ${greenFlags[0] || 'Multiple positive signals detected'}`
-    : `${keyInsightDim.name} is the key issue: ${keyInsightDim.insight}`;
+  const keyInsight = eligibility.blocked
+    ? `ELIGIBILITY BLOCK: ${eligibility.note}`
+    : eligibility.inferredRisk
+      ? `Sponsorship unconfirmed: ${eligibility.note}`
+      : overallScore >= 70
+        ? `Strong offer (${overallScore}/100): ${greenFlags[0] || 'Multiple positive signals detected'}`
+        : `${keyInsightDim.name} is the key issue: ${keyInsightDim.insight}`;
 
   const acceptanceAdvice: Record<OfferRecommendation, string> = {
     STRONG_ACCEPT: 'This offer scores well across multiple dimensions. Accept or make one focused counter-offer on the weakest dimension.',
@@ -372,7 +592,8 @@ export function evaluateJobOffer(inputs: OfferEvaluationInputs): OfferEvaluation
     NEGOTIATE: 'Negotiate the MUST_GET points before deciding. If they improve, accept. If they refuse to move, walk away.',
     NEGOTIATE_HARD: 'This offer needs material improvement. Counter with specific data-backed requests. Their response will reveal how they value you.',
     DECLINE: 'This offer fails multiple criteria. Declining is defensible. If you must accept (financial pressure), negotiate every point aggressively first.',
-    INVESTIGATE_MORE: 'Get more information before deciding — specifically about company financials and growth trajectory.',
+    INVESTIGATE_MORE: 'Resolve the eligibility question before evaluating this offer further. Ask HR directly: "Will you sponsor my work visa?" Get the answer in writing.',
+    CANNOT_ACCEPT: 'This offer is legally inaccessible given your visa status. Do not invest further time in this process unless the company can confirm sponsorship in writing.',
   };
 
   return {
@@ -388,6 +609,8 @@ export function evaluateJobOffer(inputs: OfferEvaluationInputs): OfferEvaluation
     keyInsight,
     redFlags,
     greenFlags,
+    visaEligibilityBlocked: eligibility.blocked,
+    visaEligibilityNote: eligibility.note,
     calibrationStatus: 'framework_based',
   };
 }
