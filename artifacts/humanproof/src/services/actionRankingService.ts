@@ -29,17 +29,44 @@ const SALARY_MULTIPLIER: Record<SalaryBand, number> = {
   '250k+':    0.90,
 };
 
-// Visa multipliers. H1B/L1/OPT have hard clocks tied to job loss → defensive
-// actions are time-critical. Citizens/PRs have geographic flexibility but no
-// 60-day filing deadline pressure.
+// Visa multipliers: employer-tied work visas add a hard grace-period clock on
+// job loss → defensive/visa-focused actions are elevated. Values are ordered
+// by urgency. GC lock-in is handled at the engine level (visaRiskEngine.ts);
+// this multiplier only affects action RANKING, not the risk score itself.
 const VISA_MULTIPLIER: Record<VisaStatus, number> = {
-  citizen:            1.00,
-  permanent_resident: 1.05,
-  h1b:                1.30,
-  l1:                 1.30,
-  opt:                1.40,
-  other:              1.10,
-  na:                 1.00,
+  // No constraint
+  citizen:              1.00,
+  permanent_resident:   1.05,
+  not_applicable:       1.00,
+  na:                   1.00,  // legacy alias
+  // US
+  h1b:                  1.30,
+  l1:                   1.30,
+  opt_stem:             1.40,  // 60-day clock + cap-gap complexity
+  opt:                  1.40,  // legacy alias
+  tn:                   1.35,  // no grace period — immediate status loss
+  // UK
+  uk_skilled_worker:    1.28,  // 60-day grace + sponsor licence gate
+  // EU
+  eu_blue_card:         1.12,  // Germany's 6-month buffer reduces urgency significantly
+  // APAC
+  singapore_s_pass:     1.42,  // 10-day cancellation — highest urgency on platform
+  singapore_ep:         1.28,  // 30-day STVP + MOM processing pressure
+  australia_482_tss:    1.28,  // 60-day SBS transfer window
+  philippines_9g_aep:   1.28,  // per-employer AEP; DOLE publication adds 14+ days
+  // Canada
+  canada_lmia_permit:   1.25,  // LMIA process slow but CUSMA/EE escape paths exist
+  // MENA — employer-tied sponsored visas
+  uae_employment_visa:  1.28,  // 30-day grace + NOC bottleneck
+  saudi_iqama:          1.30,  // 60-day grace + Nitaqat friction (highest in GCC)
+  qatar_work_permit:    1.25,  // 30-day grace + MoL approval
+  kuwait_work_permit:   1.20,  // 90-day grace (longest GCC) — eases slightly
+  gcc_sponsored:        1.22,  // Bahrain/Oman conservative baseline
+  // UAE Golden Visa: employment-independent residency — low urgency
+  uae_golden_visa:      1.05,
+  // Generic
+  other_work_auth:      1.15,
+  other:                1.10,  // legacy alias
 };
 
 // Tenure multiplier: short tenure = severance is small, internal mobility weak

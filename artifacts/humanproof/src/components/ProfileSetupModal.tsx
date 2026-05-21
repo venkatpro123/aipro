@@ -27,14 +27,40 @@ const INDUSTRY_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'telecom',                label: 'Telecom / Infrastructure' },
 ];
 
+// Visa options grouped by region — label is shown in the <select> dropdown.
+// The value must match a VisaStatus key so the engine can route correctly.
 const VISA_OPTIONS: Array<{ value: VisaStatus; label: string }> = [
-  { value: 'citizen',            label: 'Citizen' },
-  { value: 'permanent_resident', label: 'Permanent resident / Green card' },
-  { value: 'h1b',                label: 'H1B' },
-  { value: 'l1',                 label: 'L1' },
-  { value: 'opt',                label: 'OPT / student' },
-  { value: 'other',              label: 'Other work visa' },
-  { value: 'na',                 label: 'Prefer not to say' },
+  // ── No constraint ────────────────────────────────────────────────────────
+  { value: 'citizen',             label: 'Citizen / National' },
+  { value: 'permanent_resident',  label: 'Permanent resident / ILR / Green card' },
+  // ── US ───────────────────────────────────────────────────────────────────
+  { value: 'h1b',                 label: 'H1B (US)' },
+  { value: 'l1',                  label: 'L1 (US — intracompany transfer)' },
+  { value: 'opt_stem',            label: 'OPT / OPT STEM (US)' },
+  { value: 'tn',                  label: 'TN (US/Canada — CUSMA/NAFTA)' },
+  // ── UK ───────────────────────────────────────────────────────────────────
+  { value: 'uk_skilled_worker',   label: 'UK Skilled Worker visa' },
+  // ── EU ───────────────────────────────────────────────────────────────────
+  { value: 'eu_blue_card',        label: 'EU Blue Card (Germany / France / Netherlands)' },
+  // ── Singapore ────────────────────────────────────────────────────────────
+  { value: 'singapore_ep',        label: 'Singapore Employment Pass (EP)' },
+  { value: 'singapore_s_pass',    label: 'Singapore S Pass' },
+  // ── Australia ────────────────────────────────────────────────────────────
+  { value: 'australia_482_tss',   label: 'Australia 482 TSS (Temporary Skill Shortage)' },
+  // ── Philippines ──────────────────────────────────────────────────────────
+  { value: 'philippines_9g_aep',  label: 'Philippines 9G (Alien Employment Permit)' },
+  // ── Canada ───────────────────────────────────────────────────────────────
+  { value: 'canada_lmia_permit',  label: 'Canada LMIA work permit' },
+  // ── MENA ─────────────────────────────────────────────────────────────────
+  { value: 'uae_employment_visa', label: 'UAE Employment Visa' },
+  { value: 'uae_golden_visa',     label: 'UAE Golden Visa (5–10yr residency)' },
+  { value: 'saudi_iqama',         label: 'Saudi Iqama (work residence permit)' },
+  { value: 'qatar_work_permit',   label: 'Qatar work permit' },
+  { value: 'kuwait_work_permit',  label: 'Kuwait work permit' },
+  { value: 'gcc_sponsored',       label: 'GCC sponsored (Bahrain / Oman)' },
+  // ── Generic ──────────────────────────────────────────────────────────────
+  { value: 'other_work_auth',     label: 'Other work authorization' },
+  { value: 'not_applicable',      label: 'Prefer not to say / Self-employed' },
 ];
 
 const METRO_OPTIONS: Array<{ value: string; label: string; group: string }> = [

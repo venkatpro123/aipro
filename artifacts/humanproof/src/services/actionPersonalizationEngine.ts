@@ -139,9 +139,19 @@ export function deriveProfileSignals(
 ): ProfileSignalSummary {
   const flags: string[] = [];
 
-  // Visa urgency: visa-dependent users facing elevated risk have shorter
-  // optimal job-search runways (60-day grace period after termination).
-  const visaDependent = profile?.visaStatus === 'h1b' || profile?.visaStatus === 'l1' || profile?.visaStatus === 'opt';
+  // Visa urgency: any employer-tied work authorization adds a grace-period clock
+  // on job loss. Singapore S Pass (10d) and OPT/opt_stem (60d with cap-gap) are
+  // most severe; EU Blue Card (180d Germany buffer) is least severe.
+  // Use a Set to avoid TypeScript's type-narrowing chain collapsing the union.
+  const WORK_VISA_STATUSES = new Set([
+    'h1b', 'l1', 'opt_stem', 'opt', 'tn',
+    'uk_skilled_worker', 'eu_blue_card',
+    'singapore_ep', 'singapore_s_pass', 'australia_482_tss', 'philippines_9g_aep',
+    'canada_lmia_permit',
+    'uae_employment_visa', 'saudi_iqama', 'qatar_work_permit', 'kuwait_work_permit', 'gcc_sponsored',
+    'other_work_auth', 'other',
+  ]);
+  const visaDependent = profile?.visaStatus != null && WORK_VISA_STATUSES.has(profile.visaStatus);
   const visaUrgency: ProfileSignalSummary['visaUrgency'] =
     visaDependent && score >= 55 ? 'critical' :
     visaDependent             ? 'elevated' :

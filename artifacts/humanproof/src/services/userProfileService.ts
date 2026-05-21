@@ -14,7 +14,39 @@
 import { supabase } from '../utils/supabase';
 
 export type SalaryBand = '<50k' | '50-100k' | '100-150k' | '150-250k' | '250k+';
-export type VisaStatus = 'citizen' | 'permanent_resident' | 'h1b' | 'l1' | 'opt' | 'other' | 'na';
+export type VisaStatus =
+  // No visa constraint
+  | 'citizen'
+  | 'permanent_resident'
+  // US
+  | 'h1b'
+  | 'l1'
+  | 'opt_stem'
+  | 'opt'            // legacy alias — kept for backward compat with stored profiles
+  | 'tn'
+  // UK
+  | 'uk_skilled_worker'
+  // EU
+  | 'eu_blue_card'
+  // APAC
+  | 'singapore_ep'
+  | 'singapore_s_pass'
+  | 'australia_482_tss'
+  | 'philippines_9g_aep'
+  // Canada
+  | 'canada_lmia_permit'
+  // MENA
+  | 'uae_employment_visa'
+  | 'uae_golden_visa'
+  | 'saudi_iqama'
+  | 'qatar_work_permit'
+  | 'kuwait_work_permit'
+  | 'gcc_sponsored'
+  // Generic / legacy
+  | 'other_work_auth'
+  | 'other'          // legacy alias
+  | 'not_applicable'
+  | 'na';            // legacy alias
 export type CityTier = 'tier1' | 'tier2' | 'tier3';
 
 // INR → USD conversion rate used for savings-runway normalisation.

@@ -30,7 +30,44 @@ export type VisaStatus =
   | 'l1'
   | 'opt_stem'
   | 'tn'
-  // ── MENA work authorization (added: UAE/Saudi/Qatar tech professionals) ──
+  // ── UK ───────────────────────────────────────────────────────────────────
+  // Skilled Worker visa (Tier 2 successor): employer must hold Home Office
+  // sponsor licence + issue a Certificate of Sponsorship. 60-day grace period
+  // after employment ends before leave expires. Salary threshold £38,700
+  // general (2024); occupation-specific going rates may differ.
+  | 'uk_skilled_worker'
+  // ── EU ───────────────────────────────────────────────────────────────────
+  // EU Blue Card: high-skill work authorisation. Germany's implementation
+  // (§20 AufenthG) is uniquely generous — 6-month job-search extension upon
+  // termination. France/NL give 30–90 days. Card is country-specific.
+  | 'eu_blue_card'
+  // ── APAC ─────────────────────────────────────────────────────────────────
+  // Australia Temporary Skill Shortage (subclass 482 TSS): 60-day window to
+  // find a new approved Standard Business Sponsor. Occupation must be on
+  // MLTSSL or STSOL. Fair Work Act salary parity required at each sponsor.
+  | 'australia_482_tss'
+  // Singapore Employment Pass (EP): employer-tied, cancelled upon termination.
+  // MOM typically grants a 30-day STVP/Short-Term Visit Pass for transition.
+  // New employer must apply for a fresh EP (MOM processing 3–8 weeks).
+  | 'singapore_ep'
+  // Singapore S Pass: mid-skilled work pass, quota-based (≤15% workforce).
+  // 10-day cancellation period — shortest grace window on the platform.
+  // Minimum qualifying salary S$3,150/month (2024), rising Sep 2025.
+  | 'singapore_s_pass'
+  // ── Canada ───────────────────────────────────────────────────────────────
+  // LMIA (Labour Market Impact Assessment) work permit: employer-specific.
+  // New LMIA at a different employer takes 60–150 days + $1,000 CAD fee.
+  // LMIA-exempt pathways exist under CUSMA Annex 1603.D.1 and intracompany.
+  // IRCC Bridge Open Work Permit (BOWP) gives 90-day maintained status on
+  // permit renewal; does NOT apply on termination from the sponsoring employer.
+  | 'canada_lmia_permit'
+  // ── Philippines ──────────────────────────────────────────────────────────
+  // 9G Alien Employment Permit (AEP): issued by DOLE per employer and per
+  // position. A new DOLE AEP application (BFO-DOLE-F-01) is required for
+  // each employer change, including mandatory 14-day newspaper publication.
+  // Full cycle typically 60–90 days. Anti-dummy law restricts certain roles.
+  | 'philippines_9g_aep'
+  // ── MENA work authorization ───────────────────────────────────────────────
   // UAE Employment Visa (Mahkoumiyat) is employer-sponsored, ~30 days grace
   // after cancellation. Effectively H1B-equivalent in employer-lock dynamic.
   | 'uae_employment_visa'
@@ -73,6 +110,8 @@ export type VisaRiskLevel = 'NONE' | 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 
 export interface VisaRiskResult {
   overallVisaRisk: VisaRiskLevel;
+  /** The resolved visa type — carried through for label derivation without reverse-engineering amplifiers */
+  visaType: VisaStatus;
   /** How dependent on THIS employer for legal status (0–100) */
   dependencyScore: number;
   /** Legal grace period after layoff in days */
@@ -93,7 +132,7 @@ export interface VisaRiskResult {
   shouldDisplay: boolean;
 }
 
-// ── Legal constants — US (USCIS-grounded, 2024) + MENA (Ministry guidance) ───
+// ── Legal constants — US / UK / EU / APAC / Canada / Philippines / MENA ──────
 const GRACE_PERIOD_DAYS: Partial<Record<VisaStatus, number>> = {
   // US
   h1b:        60,
@@ -101,6 +140,20 @@ const GRACE_PERIOD_DAYS: Partial<Record<VisaStatus, number>> = {
   opt_stem:   60,
   tn:         0,   // TN is status-based; termination = immediate status loss
   other_work_auth: 60,   // conservative estimate
+  // UK — UKVI 2024 guidance: leave typically expires with the sponsorship end date;
+  // 60-day transition period is the standard Home Office practice for role changes.
+  uk_skilled_worker: 60,
+  // EU — Germany §20 AufenthG: 6-month (180-day) job-search period.
+  // Other EU countries: 30–90 days. We encode Germany's maximum (most users
+  // referencing EU Blue Card are Germany-based; other countries produce lower urgency anyway).
+  eu_blue_card: 180,
+  // APAC
+  australia_482_tss:  60,   // DIBP: 60 days to find new sponsor, transfer nomination, or depart
+  singapore_ep:       30,   // MOM: STVP/special pass typically 30 days on EP cancellation
+  singapore_s_pass:   10,   // MOM: 10-day cancellation — shortest grace window globally
+  canada_lmia_permit: 90,   // IRCC maintained-status bridge on permit renewal; on termination,
+                             // remaining permit validity applies — 90-day is a conservative floor
+  philippines_9g_aep: 0,    // AEP is per-employer; cannot legally work at another employer
   // MENA — labour ministry guidance 2024-2025
   uae_employment_visa: 30,   // UAE Labour Law 2021: 30-day grace after cancellation
   uae_golden_visa:     1825, // 5 years — Golden Visa is residency, not employer-tied
@@ -117,6 +170,17 @@ const TRANSFER_WINDOW_MONTHS: Partial<Record<VisaStatus, number>> = {
   opt_stem:   2.0,
   tn:         0.5,  // TN: need new employer letter + border crossing
   other_work_auth: 1.5,
+  // UK — 60-day grace; sponsor licence check + CoS issuance is the real bottleneck
+  uk_skilled_worker: 2.0,
+  // EU — Germany: 6-month realistic window (register with Agentur, claim ALG1, search);
+  // shorter in other EU countries but Germany is the benchmark for EU Blue Card
+  eu_blue_card: 6.0,
+  // APAC
+  australia_482_tss:  2.0,   // 60 days to find SBS + lodge transfer nomination
+  singapore_ep:       1.5,   // 30-day STVP + MOM processing 3–8 weeks
+  singapore_s_pass:   0.5,   // 10-day window — barely enough for formal applications
+  canada_lmia_permit: 4.0,   // LMIA processing 60–150 days at new employer
+  philippines_9g_aep: 2.5,   // DOLE 14-day publication + processing = ~60–90 days
   // MENA — transfer requires new sponsor + ministry approval + medical
   uae_employment_visa: 1.0,   // 30 days legally, NOC + new offer process is real bottleneck
   uae_golden_visa:     12.0,  // 5–10yr residency = effectively no transfer pressure
@@ -146,20 +210,28 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     return noRisk();
   }
 
-  // Non-US, non-MENA regions with no H1B/MENA analog: minimal visa risk.
-  // Previously this branch silently dropped MENA visa holders to noRisk(), even
-  // though UAE Employment Visa / Saudi Iqama / Qatar work permits create employer-
-  // lock dynamics structurally equivalent to H1B. Now MENA visa statuses route
-  // through the full dependency scoring path regardless of region string.
+  // Route all globally-typed visa statuses through the full dependency scoring.
+  // Prior code dropped non-US/MENA users to noRisk() even when the visa type
+  // itself carries employer-lock risk (UK Skilled Worker, Singapore EP, etc.).
+  // Now: if the visaStatus is any explicit global type, route through regardless
+  // of the region string — the type assertion is authoritative.
   const isMenaVisa = visaStatus === 'uae_employment_visa'
     || visaStatus === 'uae_golden_visa'
     || visaStatus === 'saudi_iqama'
     || visaStatus === 'qatar_work_permit'
     || visaStatus === 'kuwait_work_permit'
     || visaStatus === 'gcc_sponsored';
+  const isGlobalExplicitVisa = visaStatus === 'uk_skilled_worker'
+    || visaStatus === 'eu_blue_card'
+    || visaStatus === 'australia_482_tss'
+    || visaStatus === 'singapore_ep'
+    || visaStatus === 'singapore_s_pass'
+    || visaStatus === 'canada_lmia_permit'
+    || visaStatus === 'philippines_9g_aep';
   const isUsRegion = ['US', 'United States'].includes(region);
   const isMenaRegion = ['AE', 'UAE', 'SA', 'Saudi Arabia', 'QA', 'Qatar', 'BH', 'OM', 'KW', 'Kuwait'].includes(region);
-  if (!isUsRegion && !isMenaRegion && !isMenaVisa && visaStatus !== 'h1b' && visaStatus !== 'l1') {
+  if (!isUsRegion && !isMenaRegion && !isMenaVisa && !isGlobalExplicitVisa
+      && visaStatus !== 'h1b' && visaStatus !== 'l1') {
     return noRisk();
   }
 
@@ -206,6 +278,37 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     // Golden Visa: 5–10yr residency NOT tied to employer. Holder can switch jobs freely.
     // Effectively a PR-like status for visa risk purposes.
     dependencyScore = 15;
+  } else if (visaStatus === 'uk_skilled_worker') {
+    // Home Office-licensed sponsor required; Certificate of Sponsorship per employer.
+    // 60-day grace, but CoS quota at new employer and salary threshold compliance
+    // (£38,700 general / SOC going rate) create meaningful friction.
+    dependencyScore = 72;
+  } else if (visaStatus === 'eu_blue_card') {
+    // Germany §20 AufenthG: 6-month job-search period dramatically reduces employer
+    // lock-in vs. all other work visas. ALG1 unemployment benefit + Ausländerbehörde
+    // job-seeker permit available. Other EU: lower dependency still (shorter period
+    // but continent-wide network). Lowest dependency of any explicit work visa type.
+    dependencyScore = 50;
+  } else if (visaStatus === 'australia_482_tss') {
+    // Standard Business Sponsor (SBS) transfer required within 60 days. Occupation
+    // must remain on MLTSSL/STSOL. Broader sponsor pool than H1B market.
+    dependencyScore = 68;
+  } else if (visaStatus === 'singapore_ep') {
+    // EP cancelled upon termination; new employer must apply fresh with MOM (3–8 weeks).
+    // MOM processing + Fair Consideration Framework advertising = real time pressure.
+    dependencyScore = 72;
+  } else if (visaStatus === 'singapore_s_pass') {
+    // 10-day cancellation — shortest grace window on the platform. Quota-based:
+    // new employer must have open S Pass quota slots. Near-H1B dependency level.
+    dependencyScore = 88;
+  } else if (visaStatus === 'canada_lmia_permit') {
+    // LMIA is employer-specific; new employer must obtain separate LMIA (60–150 days).
+    // LMIA-exempt pathways (CUSMA, intracompany) exist but apply to a narrow set.
+    dependencyScore = 65;
+  } else if (visaStatus === 'philippines_9g_aep') {
+    // AEP is per employer AND per position. No transfer mechanism — new DOLE application
+    // required for each employer change with mandatory 14-day publication period.
+    dependencyScore = 82;
   }
 
   // Visa expiry proximity increases risk
@@ -233,6 +336,23 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   } else if (visaStatus === 'uae_golden_visa') {
     // Golden Visa is essentially residency-independent of employer
     overallVisaRisk = currentScore >= 55 ? 'LOW' : 'NONE';
+  // ── Global visa types ──────────────────────────────────────────────────────
+  } else if (visaStatus === 'singapore_s_pass') {
+    // 10-day cancellation = most dangerous grace window; elevate one tier vs. EP
+    overallVisaRisk = currentScore >= 50 ? 'CRITICAL' : 'HIGH';
+  } else if (currentScore >= 65 && (visaStatus === 'uk_skilled_worker' || visaStatus === 'singapore_ep'
+      || visaStatus === 'australia_482_tss' || visaStatus === 'philippines_9g_aep')) {
+    overallVisaRisk = 'CRITICAL';
+  } else if (currentScore >= 50 && (visaStatus === 'uk_skilled_worker' || visaStatus === 'singapore_ep'
+      || visaStatus === 'australia_482_tss' || visaStatus === 'philippines_9g_aep')) {
+    overallVisaRisk = 'HIGH';
+  } else if (currentScore >= 55 && visaStatus === 'canada_lmia_permit') {
+    // LMIA transfer is slow (60–150 days) but Canada has more escape pathways
+    // (Express Entry, PNP) — cap at HIGH rather than CRITICAL
+    overallVisaRisk = 'HIGH';
+  } else if (visaStatus === 'eu_blue_card') {
+    // Germany's 6-month buffer makes CRITICAL classification rarely appropriate
+    overallVisaRisk = currentScore >= 70 ? 'MODERATE' : 'LOW';
   } else if (currentScore >= 40) {
     overallVisaRisk = 'MODERATE';
   } else {
@@ -288,9 +408,34 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   } else if (visaStatus === 'tn') {
     scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.tn', 1.25).value as number;
     amplifierRationale = 'TN status has no grace period — status ends immediately on termination. Transfer requires border crossing which adds logistical risk.';
+  // ── Global visa amplifiers ─────────────────────────────────────────────────
+  } else if (currentScore >= 50 && visaStatus === 'singapore_s_pass') {
+    // 10-day cancellation is the tightest grace window on the platform. Amplifier
+    // approaches GC lock-in level because the window is insufficient for any formal process.
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.singaporeSPass', 1.38).value as number;
+    amplifierRationale = `Singapore S Pass holder at elevated risk (${currentScore}/100). 10-day cancellation period — the tightest grace window of any work visa type. Offers and quota verification at the new employer must precede any risk materialisation.`;
+  } else if (currentScore >= 50 && visaStatus === 'uk_skilled_worker') {
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.ukSkilledWorker', 1.30).value as number;
+    amplifierRationale = `UK Skilled Worker visa holder at elevated risk (${currentScore}/100). 60-day grace period; new employer must hold a Home Office sponsor licence and issue a Certificate of Sponsorship before the clock expires.`;
+  } else if (currentScore >= 50 && visaStatus === 'singapore_ep') {
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.singaporeEp', 1.28).value as number;
+    amplifierRationale = `Singapore Employment Pass holder at elevated risk (${currentScore}/100). EP cancelled upon termination; 30-day STVP window + MOM processing for a new EP (3–8 weeks) creates a compressed search timeline.`;
+  } else if (currentScore >= 50 && visaStatus === 'australia_482_tss') {
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.australia482Tss', 1.28).value as number;
+    amplifierRationale = `Australian 482 TSS visa holder at elevated risk (${currentScore}/100). 60-day window to find a new approved Standard Business Sponsor and lodge a nomination transfer with the Department of Home Affairs.`;
+  } else if (currentScore >= 50 && visaStatus === 'philippines_9g_aep') {
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.philippines9gAep', 1.28).value as number;
+    amplifierRationale = `Philippines 9G AEP holder at elevated risk (${currentScore}/100). AEP is employer-specific; new DOLE application with mandatory 14-day publication period required. Full cycle: 60–90 days.`;
+  } else if (currentScore >= 45 && visaStatus === 'canada_lmia_permit') {
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.canadaLmiaPermit', 1.25).value as number;
+    amplifierRationale = `Canadian LMIA work permit holder at elevated risk (${currentScore}/100). New LMIA at a different employer takes 60–150 days and costs $1,000 CAD. Check CUSMA/LMIA-exempt eligibility and Express Entry CRS score immediately.`;
+  } else if (visaStatus === 'eu_blue_card') {
+    // Germany's 6-month buffer significantly reduces urgency; low amplifier.
+    scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.euBlueCard', 1.15).value as number;
+    amplifierRationale = `EU Blue Card holder — Germany's §20 AufenthG 6-month job-search period significantly reduces urgency vs. other work visas. Register with Bundesagentur für Arbeit immediately to claim ALG1 and obtain the job-seeker residence permit.`;
   } else if (currentScore >= 45) {
     scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.moderateRisk', 1.20).value as number;
-    amplifierRationale = `${visaStatus.toUpperCase()} holder with moderate-to-elevated risk. The 60-day clock adds urgency that citizens/PRs don't face.`;
+    amplifierRationale = `${visaStatus.toUpperCase()} holder with moderate-to-elevated risk. The grace-period clock adds urgency that citizens/PRs don't face.`;
   } else {
     scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.baseline', 1.10).value as number;
     amplifierRationale = `${visaStatus.toUpperCase()} work authorization adds an employment-law constraint that increases the cost of a layoff vs. a citizen.`;
@@ -328,6 +473,41 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     keyRisks.push('Kuwait: 90-day grace period (longest in GCC) but Article 17 (private sector) ↔ Article 18 (governmental) transfers require ministry approval');
     keyRisks.push('Some Kuwait visa categories impose a 1-year wait between sponsors after transfer rejection — verify your Article type before resigning');
   }
+  if (visaStatus === 'uk_skilled_worker') {
+    keyRisks.push('UK: new employer must hold a valid Home Office Skilled Worker sponsor licence — check the public register on gov.uk/check-if-organisation-can-sponsor-workers before applying');
+    keyRisks.push('UK salary threshold: new role must meet £38,700 general minimum (2024) OR the occupation-specific SOC going rate — whichever is higher');
+    keyRisks.push('60-day grace period after employment ends; Certificate of Sponsorship must be issued and submitted to UKVI before this expires');
+  }
+  if (visaStatus === 'eu_blue_card') {
+    keyRisks.push('EU Blue Card is country-specific — a German Blue Card does NOT automatically transfer to France, Netherlands, or any other EU state');
+    keyRisks.push('Germany §20 AufenthG: 6-month job-search period with job-seeker residence permit (Aufenthaltserlaubnis zur Arbeitssuche) — must register with Bundesagentur für Arbeit to activate');
+    keyRisks.push('New role must meet minimum salary threshold (€45,300 general / €35,100 shortage occupations for 2024); salary below threshold disqualifies Blue Card renewal');
+  }
+  if (visaStatus === 'australia_482_tss') {
+    keyRisks.push('Australia: 60 days from end of employment to find a new approved Standard Business Sponsor, lodge a nomination, and transfer the visa stream');
+    keyRisks.push('New occupation must appear on MLTSSL (Medium and Long-term Strategic Skills List) or STSOL for 482 TSS subclass continuation');
+    keyRisks.push('Fair Work Act obligation: new sponsor must pay market salary rate (MSAR) — underpaying relative to Australian workers is a visa compliance risk');
+  }
+  if (visaStatus === 'singapore_ep') {
+    keyRisks.push('Singapore EP cancelled upon termination; MOM typically grants a 30-day STVP (Short-Term Visit Pass) to settle affairs — this is not guaranteed and must be requested');
+    keyRisks.push('New employer must file a fresh EP application with MOM — processing 3–8 weeks; Fair Consideration Framework advertising obligation may add delay at larger employers');
+    keyRisks.push('EP minimum salary: S$5,000/month general, S$5,500 for financial services sector (2024); new role must meet the applicable threshold');
+  }
+  if (visaStatus === 'singapore_s_pass') {
+    keyRisks.push('Singapore S Pass: 10-day cancellation period — the shortest grace window of any work visa tracked by this platform; treat any risk signal as requiring pre-emptive action');
+    keyRisks.push('S Pass is quota-based: new employer may have exhausted their 15%-of-workforce quota cap — verify before accepting offer, as MOM will reject if quota is exceeded');
+    keyRisks.push('Minimum qualifying salary: S$3,150/month (2024), rising to S$3,300 from Sep 2025; salary compliance required at each employer change');
+  }
+  if (visaStatus === 'canada_lmia_permit') {
+    keyRisks.push('Canada LMIA is employer-specific; new LMIA at a different employer typically takes 60–150 days and costs the employer $1,000 CAD — many employers refuse LMIA-dependent candidates');
+    keyRisks.push('LMIA-exempt pathways: CUSMA (Annex 1603.D.1) covers professionals, engineers, accountants, and others — verify eligibility before assuming a long LMIA wait is required');
+    keyRisks.push('Express Entry: if your CRS score is competitive (check monthly draw cutoffs at ircc.canada.ca), filing an EOI now may be faster than repeating LMIA cycles');
+  }
+  if (visaStatus === 'philippines_9g_aep') {
+    keyRisks.push('Philippines 9G AEP is employer-specific and position-specific — cannot legally work for any other employer without a new DOLE-issued AEP, even temporarily');
+    keyRisks.push('New AEP application requires 14-day newspaper publication (DOLE requirement) plus processing; full cycle typically 60–90 days — plan accordingly');
+    keyRisks.push('Anti-Dummy Law (RA 7042): certain industries are reserved for Filipino nationals (retail trade, mass media, advertising agency management) — confirm your role category is not restricted');
+  }
 
   // Immediate actions
   const immediateActions: string[] = [];
@@ -347,9 +527,37 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
       immediateActions.push('Kuwait: 90-day grace gives more breathing room than UAE/Qatar — use it deliberately for offer + ministry approval');
       immediateActions.push('Verify your Article 17 (private) vs 18 (gov/quasi-gov) classification — affects which sponsors you can transfer to');
       immediateActions.push('End-of-service gratuity: 15 days/yr first 5yr + 30 days/yr thereafter, capped at 1.5yr basic salary — significant buffer at 7+ years');
+    } else if (visaStatus === 'uk_skilled_worker') {
+      immediateActions.push('UK: check the Home Office sponsor licence register (gov.uk/check-if-organisation-can-sponsor-workers) before applying to any employer — unlicensed sponsors cannot issue a CoS');
+      immediateActions.push('Calculate your statutory redundancy pay (1 week/yr service, max 20 weeks) + notice pay — this financial buffer runs alongside the 60-day grace period');
+      immediateActions.push('Identify employers who have recently sponsored Skilled Worker visas — active HR familiarity makes the CoS process 2–4× faster than first-time sponsors');
+    } else if (visaStatus === 'eu_blue_card') {
+      immediateActions.push('EU/Germany: register with Bundesagentur für Arbeit immediately — this activates ALG1 (Arbeitslosengeld I) unemployment benefit claim, typically €60–70% of prior net salary');
+      immediateActions.push('Apply for Aufenthaltserlaubnis zur Arbeitssuche (§20 AufenthG job-seeker permit) at your local Auslaenderbehörde — valid up to 6 months; activates Germany\'s 180-day buffer');
+      immediateActions.push('Target employers in the same Bundesland initially — changing employer within the first 2 years on a German Blue Card requires ABH notification within 3 months');
+    } else if (visaStatus === 'australia_482_tss') {
+      immediateActions.push('Australia: notify Department of Home Affairs of employment change within 28 days — use ImmiAccount; failure to notify is a visa compliance risk');
+      immediateActions.push('Check Fair Work Ombudsman\'s register of approved Standard Business Sponsors actively recruiting for your ANZSCO occupation code');
+      immediateActions.push('If MLTSSL-listed and eligible, consider subclass 186/189 pathways — permanent residence removes sponsor dependency entirely');
+    } else if (visaStatus === 'singapore_ep') {
+      immediateActions.push('Singapore: request a transitional STVP (Short-Term Visit Pass) from MOM immediately upon termination — standard practice, usually approved within 1 business day online');
+      immediateActions.push('Begin EP applications through target employers now; GTS (global-HQ employers) track faster and have EP approval pre-authorisation at MOM');
+      immediateActions.push('If search extends beyond 30 days, apply for Long-Term Visit Pass or job-seeker EntrePass to maintain legal stay while applications are in progress');
+    } else if (visaStatus === 'singapore_s_pass') {
+      immediateActions.push('URGENT: 10-day S Pass cancellation is the platform\'s shortest grace window — treat any elevated risk signal as requiring immediate pre-emptive job search, not reactive');
+      immediateActions.push('Request STVP from MOM on Day 1 of notice — provides 30 days to settle affairs and submit formal EP/S Pass applications at new employers');
+      immediateActions.push('Verify new employer\'s S Pass quota headroom BEFORE accepting an offer — ask HR explicitly; MOM will reject the application if the employer is at quota cap');
+    } else if (visaStatus === 'canada_lmia_permit') {
+      immediateActions.push('Canada: check CUSMA/LMIA-exempt eligibility first (no $1,000 fee, faster) — many tech, finance, professional, and managerial roles qualify under Annex 1603.D.1');
+      immediateActions.push('Check your Express Entry CRS score at ircc.canada.ca — provincial draws (ONP, BCPNP) often have lower thresholds than federal Express Entry draws; a PR pathway eliminates LMIA dependency');
+      immediateActions.push('Bridge Open Work Permit (BOWP): if your permit expired and an extension/change is pending with IRCC, maintained status gives up to 90 days — verify your current status in IRCC account');
+    } else if (visaStatus === 'philippines_9g_aep') {
+      immediateActions.push('Philippines: secure a new employer offer BEFORE current AEP lapses — there is no legal mechanism to work at a different employer without a new DOLE-issued AEP');
+      immediateActions.push('File new DOLE AEP application (BFO-DOLE-F-01) immediately with target employer; allow 60–90 days for publication + DOLE processing + Bureau of Immigration endorsement');
+      immediateActions.push('Verify the role category is not restricted by the Anti-Dummy Law (RA 7042) before committing to the employer — retail, mass media, and advertising management are reserved categories');
     } else {
-      immediateActions.push('Build an external pipeline NOW — your 60-day clock means offers must be in hand before any announcement');
-      immediateActions.push('Consult an immigration attorney about your AC21 portability status and grace period rights');
+      immediateActions.push('Build an external pipeline NOW — your grace-period clock means offers must be in hand before any announcement');
+      immediateActions.push('Consult an immigration attorney about your portability status and exact grace period rights for your visa category');
     }
     if (isGcLockIn) {
       immediateActions.push('Ask your attorney about GC priority date preservation options at alternative sponsors');
@@ -357,8 +565,11 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   }
   if (overallVisaRisk === 'MODERATE') {
     if (isMenaSponsoredVisa) {
-      immediateActions.push(`Begin passive search at free-zone / multinational employers — these offer the fastest visa transfer process`);
+      immediateActions.push('Begin passive search at free-zone / multinational employers — these offer the fastest visa transfer process');
       immediateActions.push(`General guidance: ${gracePeriodDays}-day grace period after visa cancellation. Verify exact rules with your HR / a labour law specialist`);
+    } else if (isGlobalExplicitVisa) {
+      immediateActions.push(`Begin passive job search targeted at licensed/approved sponsors in your visa category — ${gracePeriodDays > 0 ? `${gracePeriodDays}-day grace applies` : 'no automatic grace period'}`);
+      immediateActions.push('Verify exact grace period rules and sponsor-transfer process with an immigration solicitor / registered migration agent in your jurisdiction');
     } else {
       immediateActions.push('Begin passive job search (update LinkedIn, connect with 2–3 H1B-friendly employers)');
       immediateActions.push(`General guidance: grace periods run approximately ${gracePeriodDays} days from last day of employment — verify the exact figure for your visa category with an immigration attorney`);
@@ -367,6 +578,7 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
 
   return {
     overallVisaRisk,
+    visaType: visaStatus,
     dependencyScore,
     gracePeriodDays,
     transferWindowMonths,
@@ -382,6 +594,7 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
 function noRisk(): VisaRiskResult {
   return {
     overallVisaRisk: 'NONE',
+    visaType: 'not_applicable',
     dependencyScore: 0,
     gracePeriodDays: 0,
     transferWindowMonths: 0,

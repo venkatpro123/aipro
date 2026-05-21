@@ -34,7 +34,7 @@ export interface PersonalRiskModifierInput {
 }
 
 export interface PersonalRiskModifierComponents {
-  /** 0 to +4: OPT_STEM=+4, H1B/L1=+3, TN=+1, citizen=0 */
+  /** 0 to +4: S Pass/OPT_STEM=+4, H1B/L1/UK/SG-EP/AU/PH/Saudi=+3, TN/Canada/UAE/Qatar=+1–2, EU Blue Card=+1, citizen=0 */
   visaComponent: number;
   /** 0 to +3: recent_layoff=+3, forced=+2, voluntary=+1, none=0 */
   managerComponent: number;
@@ -185,17 +185,40 @@ function velocityTransparencyLine(component: number, velocity: CareerVelocityRes
 }
 
 // ── Visa urgency label derivation ────────────────────────────────────────────
-// Maps the scoreAmplifier value back to a human-readable status label.
-// This avoids storing the raw visaStatus string in the output and keeps the
-// label consistent with how the amplifier was assigned.
+// Uses visaType (carried on VisaRiskResult since v40.0) for a direct label
+// lookup rather than reverse-engineering from the amplifier value, which
+// became ambiguous once multiple visa types share the same amplifier band.
+const VISA_STATUS_LABELS: Partial<Record<string, string>> = {
+  h1b:                 'H1B',
+  l1:                  'L1',
+  opt_stem:            'OPT STEM',
+  opt:                 'OPT',
+  tn:                  'TN',
+  uk_skilled_worker:   'UK Skilled Worker',
+  eu_blue_card:        'EU Blue Card',
+  singapore_ep:        'Singapore EP',
+  singapore_s_pass:    'Singapore S Pass',
+  australia_482_tss:   'Australia 482 TSS',
+  philippines_9g_aep:  'Philippines 9G AEP',
+  canada_lmia_permit:  'Canada LMIA permit',
+  uae_employment_visa: 'UAE Employment Visa',
+  uae_golden_visa:     'UAE Golden Visa',
+  saudi_iqama:         'Saudi Iqama',
+  qatar_work_permit:   'Qatar work permit',
+  kuwait_work_permit:  'Kuwait work permit',
+  gcc_sponsored:       'GCC sponsored visa',
+  other_work_auth:     'work authorization',
+  other:               'work authorization',
+};
+
 function deriveVisaStatusLabel(visa: VisaRiskResult | null | undefined): string {
   if (!visa || visa.scoreAmplifier <= 1.0) return '';
-  const amp = visa.scoreAmplifier;
-  if (amp >= 1.38) return 'GC Lock-in (no AC21)';  // gcLockIn: 1.40
-  if (amp >= 1.30) return 'H1B/L1';                 // h1bL1HighRisk: 1.35
-  if (amp >= 1.22) return 'TN';                     // tn: 1.25
-  if (amp >= 1.15) return 'work visa';               // moderateVisa: 1.20
-  return 'work authorization';                       // baseline: 1.10
+  // GC lock-in is signalled by amplifier ≥ 1.38 with the GC-in-progress path;
+  // it is not a separate VisaStatus value, so keep the amplifier check here.
+  if (visa.scoreAmplifier >= 1.38 && visa.visaType !== 'singapore_s_pass') {
+    return 'GC Lock-in (no AC21)';
+  }
+  return VISA_STATUS_LABELS[visa.visaType] ?? 'work authorization';
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────

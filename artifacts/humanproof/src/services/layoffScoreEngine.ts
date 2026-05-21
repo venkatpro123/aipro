@@ -1031,7 +1031,15 @@ export interface UserFactors {
     | 'h1b'
     | 'l1'
     | 'opt_stem'
+    | 'opt'
     | 'tn'
+    | 'uk_skilled_worker'
+    | 'eu_blue_card'
+    | 'singapore_ep'
+    | 'singapore_s_pass'
+    | 'australia_482_tss'
+    | 'philippines_9g_aep'
+    | 'canada_lmia_permit'
     | 'uae_employment_visa'
     | 'uae_golden_visa'
     | 'saudi_iqama'
@@ -1039,7 +1047,9 @@ export interface UserFactors {
     | 'kuwait_work_permit'
     | 'gcc_sponsored'
     | 'other_work_auth'
-    | 'not_applicable';
+    | 'other'
+    | 'not_applicable'
+    | 'na';
   /** Months until visa expiry */
   visaExpiryMonths?: number;
   /** Months since I-485 (green card) filing — high lock-in when 18–179 months */
