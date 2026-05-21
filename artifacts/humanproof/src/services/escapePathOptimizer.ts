@@ -128,6 +128,22 @@ export interface EscapePathInputs {
   companyData: CompanyData;
   uniquenessDepth?: 'generic' | 'functional_specialist' | 'critical_knowledge';
   performanceTier?: 'top' | 'average' | 'below' | 'unknown';
+  /** Optional pre-computed relocation options (from geographicOptionalityEngine).
+   *  When present, the location_shift path injects specific city data (employer counts,
+   *  salaries in local currency, visa pathway, English-only role fraction) into the steps
+   *  instead of producing generic "research top 5 cities" guidance. */
+  relocationOptionsTop3?: Array<{
+    cityName: string;
+    flagEmoji: string;
+    employerCount: number;
+    avgPlacementWeeks: number;
+    salaryDisplayLocal: string;
+    salaryMedianUSD: number;
+    visaPathwayName: string;
+    visaRequired: boolean;
+    englishOnlyRoleFraction: number;
+    totalFitScore: number;
+  }>;
 }
 
 export function computeEscapePaths(inputs: EscapePathInputs): EscapePathReport {
@@ -466,13 +482,61 @@ function buildEscapePath(
         targetProfile: `Senior/Lead ${inputs.oracleKey.replace(/_/g, ' ')} with cross-functional dependencies — L5 target ≤30/100`,
       };
 
-    case 'location_shift':
+    case 'location_shift': {
+      // Inject specific relocation candidate data when computeRelocationOptions provided it.
+      // Replaces generic "research top 5 cities" with named cities + actual numbers.
+      const relocTop3 = inputs.relocationOptionsTop3 ?? [];
+      const hasCityData = relocTop3.length > 0;
+      const top = relocTop3[0];
+
+      const cityComparisonStep = hasCityData
+        ? {
+            action:
+              `Compare ${relocTop3.map(c => `${c.flagEmoji} ${c.cityName}`).join(' vs ')}: ` +
+              relocTop3.map(c =>
+                `${c.cityName} (${c.employerCount.toLocaleString()} employers, ${c.salaryDisplayLocal}, ` +
+                `${c.avgPlacementWeeks}wk placement, ${c.visaRequired ? c.visaPathwayName : 'no visa'})`,
+              ).join('; ') + '.',
+            timeframe: '7 days',
+            effort: 'Low' as const,
+          }
+        : {
+            action: `Research the top 5 cities with the highest demand for ${inputs.oracleKey.replace(/_/g, ' ')} roles — apply to 3 remote-friendly companies headquartered there.`,
+            timeframe: '14 days',
+            effort: 'Low' as const,
+          };
+
+      const topCityActionStep = hasCityData && top
+        ? {
+            action:
+              `Top fit: ${top.flagEmoji} ${top.cityName} (${top.totalFitScore}/100). ` +
+              `${top.employerCount.toLocaleString()} active employers for your role; median salary ${top.salaryDisplayLocal} ` +
+              `(~$${top.salaryMedianUSD.toLocaleString()} USD); ` +
+              `${Math.round(top.englishOnlyRoleFraction * 100)}% of roles accept English-only candidates; ` +
+              `${top.visaRequired ? `${top.visaPathwayName} required` : 'EU free movement — no visa needed'}. ` +
+              `Apply to 5 top employers in ${top.cityName} within 14 days.`,
+            timeframe: '14 days',
+            effort: top.visaRequired ? ('Medium' as const) : ('Low' as const),
+          }
+        : null;
+
       return {
         id: 'path_location_shift',
         type: 'location_shift',
-        title: 'Expand to Remote or Higher-Demand Markets',
-        headline: `Opening your search to remote-first roles or markets with deeper employer density can reduce time-to-placement by 30–50% and access roles unavailable in your local market`,
-        rationale: `Geographic concentration limits your effective candidate pool to employers in a single market. Remote-first roles, roles in higher-growth cities, or international opportunities (especially for tech roles with USD compensation) can simultaneously reduce L4 (market headwinds) by accessing a less saturated talent market.`,
+        title: hasCityData && top
+          ? `Relocate to ${top.flagEmoji} ${top.cityName} or expand remote search`
+          : 'Expand to Remote or Higher-Demand Markets',
+        headline: hasCityData && top
+          ? `${top.cityName} has ${top.employerCount.toLocaleString()} active employers for your role, ${top.avgPlacementWeeks}-week median placement, ` +
+            `and ${top.visaRequired ? `${top.visaPathwayName} (~${(inputs.relocationOptionsTop3 ?? [])[0]?.visaPathwayName})` : 'EU free movement'}. ` +
+            `Salary ${top.salaryDisplayLocal} (~$${top.salaryMedianUSD.toLocaleString()} USD).`
+          : `Opening your search to remote-first roles or markets with deeper employer density can reduce time-to-placement by 30–50% and access roles unavailable in your local market`,
+        rationale: hasCityData
+          ? `Specific relocation candidates with backing data: ` +
+            relocTop3.map(c => `${c.cityName} (fit ${c.totalFitScore}/100)`).join(', ') +
+            `. Data sourced from euCityMarketIntelligence: open job counts, median salary in local currency, ` +
+            `visa pathway (EU citizen vs Skilled Worker), English-only role fraction, employment law protection strength.`
+          : `Geographic concentration limits your effective candidate pool to employers in a single market. Remote-first roles, roles in higher-growth cities, or international opportunities (especially for tech roles with USD compensation) can simultaneously reduce L4 (market headwinds) by accessing a less saturated talent market.`,
         estimatedScoreDrop: Math.max(6, totalImpact),
         primaryDimension: `L4 (Market Headwinds) via geographic expansion`,
         steps: [
@@ -481,17 +545,17 @@ function buildEscapePath(
             timeframe: '7 days',
             effort: 'Low',
           },
-          {
-            action: `Research the top 5 cities with the highest demand for ${inputs.oracleKey.replace(/_/g, ' ')} roles — apply to 3 remote-friendly companies headquartered there.`,
-            timeframe: '14 days',
-            effort: 'Low',
-          },
+          cityComparisonStep,
+          ...(topCityActionStep ? [topCityActionStep] : []),
         ],
         effort: 'Low',
         timeToImpact: '30–45 days',
         confidenceInEstimate: 'Medium',
-        targetProfile: `Same role, expanded geographic market — access to remote-first employers and higher-growth city talent pools`,
+        targetProfile: hasCityData && top
+          ? `Relocation to ${top.cityName} — ${top.employerCount.toLocaleString()} employers, ${top.salaryDisplayLocal} median, ${top.visaRequired ? top.visaPathwayName : 'no visa needed'}`
+          : `Same role, expanded geographic market — access to remote-first employers and higher-growth city talent pools`,
       };
+    }
 
     default:
       return buildDefaultPath(inputs.currentScore, inputs);

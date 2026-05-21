@@ -16,6 +16,18 @@
 //
 // Calibration: research_grounded (LinkedIn, NASSCOM, BLS 2025)
 
+import {
+  resolveEUCity,
+  resolveEURoleCategoryKey,
+  getDefaultRelocationCandidates,
+  EU_CITY_MARKET_PROFILES,
+  type EUCityMarketProfile,
+} from '../data/euCityMarketIntelligence';
+import {
+  getEmploymentProtectionRegime,
+  computeEffectiveProtectionDays,
+} from '../data/employmentProtectionLaw';
+
 export type RemoteEligibility = 'FULLY_REMOTE' | 'HYBRID' | 'IN_OFFICE_ONLY' | 'UNKNOWN';
 
 export type GeographicTier =
@@ -25,6 +37,89 @@ export type GeographicTier =
   | 'TIER_2_CITY'       // Smaller cities, limited tech ecosystem
   | 'REMOTE_ONLY'       // Fully remote — geography-agnostic
   | 'UNKNOWN';
+
+/** Per-city relocation comparison output. Each entry contains the specific data
+ *  a relocating professional needs to evaluate: open jobs, salary in local currency,
+ *  visa pathway, employment protection, English-language friendliness, time-to-interview.
+ *  LABELED: ESTIMATED — derived from euCityMarketIntelligence.ts + employmentProtectionLaw.ts. */
+export interface RelocationOption {
+  cityName: string;
+  countryCode: string;
+  countryName: string;
+  flagEmoji: string;
+
+  /** Active employers hiring for this role in this city (ESTIMATED) */
+  employerCount: number;
+  /** Median weeks from first application to offer (ESTIMATED) */
+  avgPlacementWeeks: number;
+  /** Typical weeks to first interview (market depth proxy) */
+  timeToFirstInterviewWeeks: number;
+
+  /** Salary in LOCAL currency (formatted with symbol) */
+  salaryDisplayLocal: string;
+  /** Median annual salary in local currency (number) */
+  salaryMedianLocal: number;
+  /** Median annual salary in USD (for cross-market comparison) */
+  salaryMedianUSD: number;
+  /** % delta vs origin city salary (positive = higher, negative = lower) */
+  salaryDeltaVsOriginPct: number | null;
+
+  /** Fraction of postings that accept English-only candidates (0-1) */
+  englishOnlyRoleFraction: number;
+  /** Fraction offering remote/hybrid (0-1) */
+  remoteAdoptionRate: number;
+  /** Cost of living vs London (1.0 = London) */
+  costOfLivingVsLondon: number;
+
+  /** Visa pathway display (e.g., "EU Blue Card", "Kennismigrant", "Critical Skills Employment Permit") */
+  visaPathwayName: string;
+  /** Whether visa is required for the user (true for non-EU origin or post-Brexit UK→EU) */
+  visaRequired: boolean;
+  /** Salary threshold for visa in LOCAL currency */
+  visaSalaryThresholdLocal: number;
+  /** Visa salary threshold display string */
+  visaSalaryThresholdDisplay: string;
+  /** Typical visa processing weeks (min-max) */
+  visaProcessingWeeksMin: number;
+  visaProcessingWeeksMax: number;
+  /** Visa key considerations (top 2-3) */
+  visaConsiderations: string[];
+
+  /** Employment law protection strength tier */
+  employmentProtectionTier: 'minimal' | 'moderate' | 'strong' | 'very_strong';
+  /** Days from announcement to last working day (large cut, ESTIMATED) */
+  legalProtectionDaysMin: number;
+  legalProtectionDaysMax: number;
+
+  /** Composite fit score 0-100 (higher = better fit for this user) */
+  totalFitScore: number;
+  /** Why this is/isn't a good fit */
+  fitRationale: string;
+
+  /** Top 3 recommended actions specific to this city relocation */
+  actionItems: string[];
+
+  /** Key advantages of this market */
+  advantages: readonly string[];
+  /** Key disadvantages of this market */
+  disadvantages: readonly string[];
+}
+
+/** Relocation comparison result. Present when origin city resolves to an EU/UK profile
+ *  OR explicit candidate cities are provided. */
+export interface RelocationOptionsResult {
+  /** Origin city used as the comparison baseline (e.g., "London") */
+  originCityName: string | null;
+  /** Origin country code for visa pathway resolution */
+  originCountryCode: string | null;
+  /** Candidate cities ranked by totalFitScore descending */
+  candidates: RelocationOption[];
+  /** Top-line recommendation summary */
+  recommendation: string;
+  /** Critical warnings (e.g., "Berlin requires German for most non-tech roles") */
+  warnings: string[];
+  readonly labeledAs: 'ESTIMATED';
+}
 
 export interface GeographicOptionalityResult {
   // Overall
@@ -61,6 +156,11 @@ export interface GeographicOptionalityResult {
 
   // Actions
   geographicActions: GeographicAction[];
+
+  /** Per-city relocation comparison — present when origin maps to a known EU/UK profile
+   *  OR explicit candidate cities are provided. Surfaces open jobs, salary local+USD,
+   *  visa pathway, employment law strength, English-only role %, time-to-first-interview. */
+  relocationOptions?: RelocationOptionsResult;
 
   calibrationStatus: 'research_grounded';
 }
@@ -214,10 +314,262 @@ function getGeographicActions(
 
 export interface GeographicOptionalityInput {
   city?: string;
-  region?: string;         // 'US' | 'IN' | 'EU' | 'APAC'
+  region?: string;         // 'US' | 'IN' | 'EU' | 'APAC' (ISO country code preferred: 'GB', 'DE', etc.)
   remoteEligibility?: RemoteEligibility;
   workTypeKey?: string;
   financialRunwayMonths?: number | null;
+  /** User's visa/citizenship status — drives relocation visa pathway resolution.
+   *  EU/EEA/Swiss citizens get free movement; UK post-Brexit and non-EU need visa. */
+  citizenshipStatus?: 'eu_eea_citizen' | 'uk_citizen' | 'us_citizen' | 'other_non_eu';
+  /** Explicit candidate cities for relocation comparison (overrides default candidates) */
+  relocationCandidates?: string[];
+}
+
+// ── Relocation Options ───────────────────────────────────────────────────────
+// Builds per-city comparison for relocation decisions. Surfaces the specific
+// data points the user needs: open jobs, salary in local currency, visa pathway,
+// employment law strength, English-only role %, time-to-first-interview.
+//
+// The visa requirement logic:
+//   - EU/EEA/Swiss citizens: free movement to EU destinations (visaRequired=false)
+//   - UK citizens (post-Brexit): need EU visa (visaRequired=true for EU destinations)
+//   - Non-EU/UK origin: visa required for both UK and EU destinations
+//   - For UK destination from EU origin: post-Brexit Skilled Worker visa required
+function computeRelocationOptions(
+  originCity: string | null,
+  originRegion: string,
+  candidates: string[],
+  workTypeKey: string,
+  citizenshipStatus: GeographicOptionalityInput['citizenshipStatus'],
+): RelocationOptionsResult | undefined {
+  if (!candidates.length) return undefined;
+
+  const originProfile = resolveEUCity(originCity);
+  const originRoleKey = resolveEURoleCategoryKey(workTypeKey);
+  const originRoleData = originProfile?.roles[originRoleKey] ?? originProfile?.roles['general'];
+
+  const inferredCitizenship: GeographicOptionalityInput['citizenshipStatus'] =
+    citizenshipStatus
+    ?? (originRegion === 'GB' || originRegion === 'UK' ? 'uk_citizen' : 'other_non_eu');
+
+  // Resolve each candidate city and compute its option
+  const options: RelocationOption[] = [];
+  const warnings: string[] = [];
+
+  for (const candidate of candidates) {
+    const profile = resolveEUCity(candidate);
+    if (!profile) continue;
+
+    const roleKey = resolveEURoleCategoryKey(workTypeKey);
+    const roleData = profile.roles[roleKey] ?? profile.roles['general'];
+    if (!roleData) continue;
+
+    // Determine if visa is required
+    const isEUDestination = ['DE', 'NL', 'IE', 'FR', 'SE', 'ES', 'IT', 'BE'].includes(profile.countryCode);
+    const isUKDestination = profile.countryCode === 'GB';
+    const isCHDestination = profile.countryCode === 'CH';
+    const isEUCitizen     = inferredCitizenship === 'eu_eea_citizen';
+    const isUKCitizen     = inferredCitizenship === 'uk_citizen';
+
+    let visaRequired: boolean;
+    if (isEUDestination) {
+      visaRequired = !isEUCitizen;      // EU destination requires visa for non-EU
+    } else if (isUKDestination) {
+      visaRequired = !isUKCitizen;      // UK destination requires Skilled Worker visa for non-UK
+    } else if (isCHDestination) {
+      visaRequired = true;              // Switzerland always requires permit (even for EU)
+    } else {
+      visaRequired = true;
+    }
+
+    // Compute salary delta vs origin
+    const salaryDeltaVsOriginPct = originRoleData
+      ? Math.round(((roleData.salaryMedianUSD - originRoleData.salaryMedianUSD) / originRoleData.salaryMedianUSD) * 100)
+      : null;
+
+    // Employment law tier from regime
+    const regime = getEmploymentProtectionRegime(profile.countryCode);
+    const protectionDays = regime
+      ? computeEffectiveProtectionDays(regime, 1000) // assume large-cut applies for cross-market comparison
+      : { min: 14, max: 60 };
+    const protectionTier: RelocationOption['employmentProtectionTier'] =
+      protectionDays.min >= 90 ? 'very_strong' :
+      protectionDays.min >= 45 ? 'strong' :
+      protectionDays.min >= 14 ? 'moderate' : 'minimal';
+
+    // Compute fit score (0-100)
+    const fitScore = computeRelocationFitScore({
+      profile, roleData, visaRequired, salaryDeltaVsOriginPct,
+    });
+
+    // Build action items specific to this city
+    const actionItems = buildCityActionItems(profile, visaRequired, roleData);
+
+    // Build rationale
+    const fitRationale = buildFitRationale(profile, roleData, visaRequired, salaryDeltaVsOriginPct);
+
+    options.push({
+      cityName: profile.cityName,
+      countryCode: profile.countryCode,
+      countryName: profile.countryName,
+      flagEmoji: profile.flagEmoji,
+      employerCount: roleData.employerCount,
+      avgPlacementWeeks: roleData.avgPlacementWeeks,
+      timeToFirstInterviewWeeks: roleData.timeToFirstInterviewWeeks,
+      salaryDisplayLocal: `${profile.localCurrencySymbol}${roleData.salaryMedianLocal.toLocaleString()}`,
+      salaryMedianLocal: roleData.salaryMedianLocal,
+      salaryMedianUSD: roleData.salaryMedianUSD,
+      salaryDeltaVsOriginPct,
+      englishOnlyRoleFraction: roleData.englishOnlyRoleFraction,
+      remoteAdoptionRate: roleData.remoteAdoptionRate,
+      costOfLivingVsLondon: profile.costOfLivingVsLondon,
+      visaPathwayName: visaRequired ? profile.visa.nonEuPathwayName : 'EU free movement',
+      visaRequired,
+      visaSalaryThresholdLocal: profile.visa.nonEuSalaryThresholdLocal,
+      visaSalaryThresholdDisplay: visaRequired
+        ? `${profile.localCurrencySymbol}${profile.visa.nonEuSalaryThresholdLocal.toLocaleString()}`
+        : 'N/A — free movement',
+      visaProcessingWeeksMin: profile.visa.nonEuVisaProcessingWeeksMin,
+      visaProcessingWeeksMax: profile.visa.nonEuVisaProcessingWeeksMax,
+      visaConsiderations: profile.visa.visaConsiderations.slice(0, 3),
+      employmentProtectionTier: protectionTier,
+      legalProtectionDaysMin: protectionDays.min,
+      legalProtectionDaysMax: protectionDays.max,
+      totalFitScore: fitScore,
+      fitRationale,
+      actionItems,
+      advantages: profile.advantages,
+      disadvantages: profile.disadvantages,
+    });
+
+    // Generate market-specific warnings
+    if (visaRequired && roleData.salaryMedianLocal < profile.visa.nonEuSalaryThresholdLocal) {
+      warnings.push(
+        `${profile.cityName}: median ${profile.localCurrencySymbol}${roleData.salaryMedianLocal.toLocaleString()} is BELOW the ` +
+        `${profile.visa.nonEuPathwayName} threshold (${profile.localCurrencySymbol}${profile.visa.nonEuSalaryThresholdLocal.toLocaleString()}). ` +
+        `Visa eligibility may require negotiating above-median offer.`,
+      );
+    }
+    if (roleData.englishOnlyRoleFraction < 0.50 && profile.englishLanguageMarket !== 'english_native') {
+      warnings.push(
+        `${profile.cityName}: only ${Math.round(roleData.englishOnlyRoleFraction * 100)}% of ${roleKey} roles accept English-only candidates. ` +
+        `${profile.localLanguage} fluency expands your accessible market materially.`,
+      );
+    }
+  }
+
+  // Sort by fit score descending
+  options.sort((a, b) => b.totalFitScore - a.totalFitScore);
+
+  // Build recommendation
+  const top = options[0];
+  const recommendation = top
+    ? `Top fit: ${top.flagEmoji} ${top.cityName} (${top.totalFitScore}/100). ` +
+      `${top.employerCount.toLocaleString()} active employers, ` +
+      `median ${top.salaryDisplayLocal} (~$${top.salaryMedianUSD.toLocaleString()} USD), ` +
+      `${top.avgPlacementWeeks}-week placement, ${top.visaRequired ? top.visaPathwayName : 'no visa needed'}.`
+    : 'No matching relocation candidates found in registry.';
+
+  return {
+    originCityName: originProfile?.cityName ?? originCity,
+    originCountryCode: originProfile?.countryCode ?? originRegion,
+    candidates: options,
+    recommendation,
+    warnings,
+    labeledAs: 'ESTIMATED',
+  };
+}
+
+function computeRelocationFitScore(args: {
+  profile: EUCityMarketProfile;
+  roleData: EUCityMarketProfile['roles'][string];
+  visaRequired: boolean;
+  salaryDeltaVsOriginPct: number | null;
+}): number {
+  const { profile, roleData, visaRequired, salaryDeltaVsOriginPct } = args;
+  // Components:
+  //   marketDepth (30): more employers = better
+  //   englishFriendliness (20): higher = better (less language barrier)
+  //   visaEase (20): no visa or fast visa = better
+  //   salary (15): better salary than origin = better
+  //   placementSpeed (15): faster placement = better
+  const marketDepth = Math.round(profile.marketDepthScore * 30);
+  const englishFriendliness = Math.round(roleData.englishOnlyRoleFraction * 20);
+  const visaEase = !visaRequired
+    ? 20
+    : profile.visa.nonEuVisaProcessingWeeksMax <= 6 ? 16
+    : profile.visa.nonEuVisaProcessingWeeksMax <= 10 ? 12 : 8;
+  const salary = salaryDeltaVsOriginPct === null
+    ? 8
+    : salaryDeltaVsOriginPct >= 10 ? 15
+    : salaryDeltaVsOriginPct >= 0 ? 12
+    : salaryDeltaVsOriginPct >= -15 ? 8 : 4;
+  const placementSpeed = roleData.avgPlacementWeeks <= 12 ? 15
+    : roleData.avgPlacementWeeks <= 16 ? 11
+    : roleData.avgPlacementWeeks <= 20 ? 7 : 4;
+  return Math.min(100, marketDepth + englishFriendliness + visaEase + salary + placementSpeed);
+}
+
+function buildFitRationale(
+  profile: EUCityMarketProfile,
+  roleData: EUCityMarketProfile['roles'][string],
+  visaRequired: boolean,
+  salaryDelta: number | null,
+): string {
+  const parts: string[] = [];
+  parts.push(`${roleData.employerCount.toLocaleString()} active employers for this role.`);
+  if (roleData.englishOnlyRoleFraction >= 0.85) {
+    parts.push(`English-friendly (${Math.round(roleData.englishOnlyRoleFraction * 100)}% of roles accept English-only).`);
+  } else if (roleData.englishOnlyRoleFraction >= 0.50) {
+    parts.push(`Moderately English-friendly (${Math.round(roleData.englishOnlyRoleFraction * 100)}% English-only roles).`);
+  } else {
+    parts.push(`${profile.localLanguage} fluency expands accessible market (only ${Math.round(roleData.englishOnlyRoleFraction * 100)}% English-only).`);
+  }
+  if (!visaRequired) {
+    parts.push(`No visa required — EU free movement.`);
+  } else {
+    parts.push(`${profile.visa.nonEuPathwayName} required (~${profile.visa.nonEuVisaProcessingWeeksMin}-${profile.visa.nonEuVisaProcessingWeeksMax} weeks processing).`);
+  }
+  if (salaryDelta !== null) {
+    if (salaryDelta >= 0) {
+      parts.push(`+${salaryDelta}% salary vs origin.`);
+    } else {
+      parts.push(`${salaryDelta}% salary vs origin (offset by ${Math.round((1 - profile.costOfLivingVsLondon) * 100)}% lower cost of living).`);
+    }
+  }
+  return parts.join(' ');
+}
+
+function buildCityActionItems(
+  profile: EUCityMarketProfile,
+  visaRequired: boolean,
+  roleData: EUCityMarketProfile['roles'][string],
+): string[] {
+  const actions: string[] = [];
+
+  if (visaRequired) {
+    actions.push(
+      `Confirm employer can sponsor ${profile.visa.nonEuPathwayName} ` +
+      `(minimum salary ${profile.localCurrencySymbol}${profile.visa.nonEuSalaryThresholdLocal.toLocaleString()}) ` +
+      `before formal application — most ${profile.cityName} multinationals do.`,
+    );
+  } else {
+    actions.push(`No visa needed (EU free movement). Begin applications immediately.`);
+  }
+
+  if (roleData.englishOnlyRoleFraction < 0.70 && profile.englishLanguageMarket !== 'english_native') {
+    actions.push(
+      `Filter ${profile.cityName} job board listings to English-only roles (~${Math.round(roleData.englishOnlyRoleFraction * 100)}% of total). ` +
+      `Target multinationals + tech startups for highest English-friendly ratio.`,
+    );
+  }
+
+  actions.push(
+    `Target ${profile.topEmployers.slice(0, 3).join(', ')} as priority employers ` +
+    `(strong English-friendly hiring + ${roleData.timeToFirstInterviewWeeks}-week typical interview turnaround).`,
+  );
+
+  return actions;
 }
 
 export function computeGeographicOptionality(
@@ -230,6 +582,8 @@ export function computeGeographicOptionality(
       remoteEligibility = 'UNKNOWN',
       workTypeKey = '_default',
       financialRunwayMonths = null,
+      citizenshipStatus,
+      relocationCandidates,
     } = input;
 
     const cityData = classifyCity(city || region);
@@ -272,6 +626,15 @@ export function computeGeographicOptionality(
       UNKNOWN:      'Remote eligibility unknown — defaulting to partial remote assumption.',
     }[remoteEligibility];
 
+    // Compute relocation options when origin city resolves to an EU/UK profile
+    // OR explicit candidate cities were provided.
+    const cityKnownToEURegistry = !!resolveEUCity(city);
+    const shouldComputeRelocation = cityKnownToEURegistry || (relocationCandidates?.length ?? 0) > 0;
+    const candidates = relocationCandidates ?? getDefaultRelocationCandidates(city);
+    const relocationOptions = shouldComputeRelocation
+      ? computeRelocationOptions(city, region, candidates, workTypeKey, citizenshipStatus)
+      : undefined;
+
     return {
       geographicOptionalityScore,
       optionalityLabel,
@@ -296,6 +659,7 @@ export function computeGeographicOptionality(
       highOpportunityMarkets: getHighOpportunityMarkets(workTypeKey, region),
       remoteFirstTargets: ['GitLab', 'Automattic (WordPress)', 'Basecamp', 'Notion', 'Linear', 'Vercel', 'Supabase', 'Fly.io'],
       geographicActions: getGeographicActions(geographicOptionalityScore, remoteEligibility, tier),
+      relocationOptions,
       calibrationStatus: 'research_grounded',
     };
   } catch {

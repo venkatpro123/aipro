@@ -671,6 +671,76 @@ export const EMPLOYMENT_PROTECTION_LAW: Record<string, EmploymentProtectionRegim
       'Lodge unfair dismissal application within 21 days of dismissal if grounds exist',
     ],
   },
+
+  // ── Ireland ───────────────────────────────────────────────────────────────
+  // Redundancy Payments Acts 1967–2014 + Unfair Dismissals Acts 1977–2015.
+  // EU HQ destination for 70+ multinational tech companies (Google, Meta, Stripe,
+  // Salesforce, LinkedIn, Workday). Workplace Relations Commission (WRC) handles
+  // unfair dismissal claims. Critical Skills Employment Permit is the primary
+  // non-EU pathway and one of the fastest in Europe (3-4 weeks processing).
+  IE: {
+    countryCode: 'IE',
+    countryName: 'Ireland',
+    flagEmoji: '🇮🇪',
+    regime: 'Redundancy Payments Acts + Unfair Dismissals Acts',
+    governanceBody: 'Workplace Relations Commission (WRC) + Labour Court',
+    collectiveThreshold: 5,    // Protection of Employment Act 1977: 5+ in 30 days triggers collective
+    smallCutComponents: [
+      {
+        label: 'Statutory minimum notice (Minimum Notice and Terms of Employment Act 1973)',
+        daysMin: 7,    // 1 week (13 weeks – 2 years service)
+        daysMax: 56,   // 8 weeks (15+ years service)
+        isOptional: false,
+        triggerNote: '1 week (<2yr), 2 weeks (2-5yr), 4 weeks (5-10yr), 6 weeks (10-15yr), 8 weeks (15+yr)',
+      },
+      {
+        label: 'Statutory redundancy pay (Redundancy Payments Acts)',
+        daysMin: 0,    // pay calculation, not waiting period
+        daysMax: 0,
+        isOptional: false,
+        triggerNote: '2 weeks pay per year of service + 1 bonus week (eligible after 2 years employment, capped at €600/week)',
+      },
+    ],
+    largeCutAdditionalComponents: [
+      {
+        label: 'Collective redundancy consultation (Protection of Employment Act 1977)',
+        daysMin: 30,
+        daysMax: 30,
+        isOptional: false,
+        triggerNote: 'Mandatory 30-day consultation when 5+ workers in establishments of 21-49 employees, or 10+ in 50-99, or 30+ in 100+',
+      },
+      {
+        label: 'Minister for Enterprise notification',
+        daysMin: 30,
+        daysMax: 30,
+        isOptional: false,
+        triggerNote: 'Required before any dismissal notice takes effect; runs concurrent with consultation',
+      },
+    ],
+    totalDaysSmall:     { min: 7,   max: 56  },
+    totalDaysLarge:     { min: 37,  max: 86  },
+    extensionVsUSBaselineDays: { min: 0, max: 26 },
+    isGovernmentApprovalRequired: false,
+    governmentApprovalNote: 'Notification to Minister for Enterprise required (not approval).',
+    hasMandatorySocialPlan: false,
+    socialPlanNote: 'Statutory redundancy pay is the mandatory benefit. Enhanced ex-gratia packages are common at multinationals (often 4-6 weeks per year of service vs statutory 2 weeks).',
+    labeledAs: 'ESTIMATED',
+    labelNote: 'Derived from Redundancy Payments Acts 1967-2014, Unfair Dismissals Acts 1977-2015, Protection of Employment Act 1977, WRC procedural guidance (2025). Dublin is EU HQ for 70+ US multinationals — enhanced corporate severance packages typical.',
+    protectionSummary: '37–86 days (large) including consultation + notice',
+    disclosureNarrative:
+      'Irish law combines statutory minimum notice (1–8 weeks by tenure), mandatory redundancy pay ' +
+      '(2 weeks/year + 1 bonus week), and collective consultation (30 days for 5+ workers). ' +
+      'Dublin\'s 70+ multinational HQs typically provide enhanced ex-gratia packages well above ' +
+      'statutory minimums (4-6 weeks/year is common). Unfair dismissal claims go to WRC within ' +
+      '6 months; awards capped at 2 years\' gross remuneration.',
+    workerActions: [
+      'Verify statutory redundancy pay calculation: 2 weeks/year × service + 1 bonus week (cap €600/wk)',
+      'Compare statutory minimum against ex-gratia package — multinationals typically offer 2-3× the floor',
+      'File WRC unfair dismissal claim within 6 months if procedural fairness lacking',
+      'Critical Skills Employment Permit holders: 90-day grace period; begin new sponsor search immediately',
+      'EU Blue Card holders: 3-month job-seeking period maintained on termination',
+    ],
+  },
 };
 
 // ── Resolution helpers ────────────────────────────────────────────────────────

@@ -1824,17 +1824,49 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // See step 23 below.
 
   // 2. Escape Path Optimizer — top-3 risk-reduction moves
+  // Pre-compute relocation options inline so location_shift step can cite specific
+  // candidate cities (Berlin/Amsterdam/Dublin for London users) with backing data
+  // instead of generic "research top 5 cities" guidance.
   try {
+    const userCity = (inputs.userFactors as any).city as string | undefined;
+    const userRegion = companyData.region ?? 'US';
+    // Lazy-compute relocation options (uses geographicOptionalityEngine internals)
+    let relocationOptionsTop3: any[] | undefined;
+    try {
+      const geoForEscape = computeGeographicOptionality({
+        city: userCity ?? '',
+        region: userRegion,
+        remoteEligibility: (inputs.userFactors as any).remoteEligibility ?? 'UNKNOWN',
+        workTypeKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? '_default',
+        financialRunwayMonths: inputs.financialRunwayMonths ?? null,
+      });
+      relocationOptionsTop3 = geoForEscape.relocationOptions?.candidates.slice(0, 3).map(c => ({
+        cityName: c.cityName,
+        flagEmoji: c.flagEmoji,
+        employerCount: c.employerCount,
+        avgPlacementWeeks: c.avgPlacementWeeks,
+        salaryDisplayLocal: c.salaryDisplayLocal,
+        salaryMedianUSD: c.salaryMedianUSD,
+        visaPathwayName: c.visaPathwayName,
+        visaRequired: c.visaRequired,
+        englishOnlyRoleFraction: c.englishOnlyRoleFraction,
+        totalFitScore: c.totalFitScore,
+      }));
+    } catch {
+      relocationOptionsTop3 = undefined;
+    }
+
     const escapePaths = computeEscapePaths({
       currentScore: hybridResult.total,
       breakdown: finalBreakdown,
       oracleKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'generic',
       industry: companyData.industry ?? 'technology',
       tenureYears: inputs.userFactors.tenureYears,
-      region: companyData.region ?? 'US',
+      region: userRegion,
       companyData,
       uniquenessDepth: (inputs.userFactors as any).uniquenessDepth,
       performanceTier: (inputs.userFactors as any).performanceTier,
+      relocationOptionsTop3,
     });
     (hybridResult as any).escapePaths = escapePaths;
   } catch (e) {
