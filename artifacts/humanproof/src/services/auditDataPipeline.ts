@@ -2115,6 +2115,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       industry: companyData.industry ?? 'technology',
       region: companyData.region ?? 'US',
       uniquenessDepth: (inputs.userFactors as any).uniquenessDepth,
+      knowledgeType: (inputs.userFactors as any).knowledgeType,
       performanceTier: (inputs.userFactors as any).performanceTier,
       hasAiSkills: (inputs.userFactors as any).hasAiSkills ?? false,
       hasAlternativeIncome: (inputs.userFactors as any).hasAlternativeIncome ?? false,

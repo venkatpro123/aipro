@@ -144,6 +144,11 @@ export interface EnsembleInputs {
   isUniqueRole: boolean;
   /** Priority 3: 3-level uniqueness depth — overrides isUniqueRole when present */
   uniquenessDepth?: UniquenessDepth;
+  /** Sub-classification of critical_knowledge — drives differentiated inaction narratives.
+   *  relationship_based: mobile moat (board/investor/team trust); erodes when person leaves seat.
+   *  system_specific: stationary moat (legacy code); erodes when migration completes (~18–36mo).
+   *  domain_expertise: transferable depth; externalize to create market optionality. */
+  knowledgeType?: import('../../services/layoffScoreEngine').KnowledgeType;
   performanceTier: UserFactors["performanceTier"];
   hasRecentPromotion: boolean;
   hasKeyRelationships: boolean;
@@ -298,6 +303,7 @@ export const runFullEnsembleAnalysis = async (
     tenureYears,
     isUniqueRole,
     uniquenessDepth,
+    knowledgeType,
     performanceTier,
     hasRecentPromotion,
     hasKeyRelationships,
@@ -497,6 +503,7 @@ export const runFullEnsembleAnalysis = async (
       uniquenessDepth,
       recs,
       _scenarioContext,
+      knowledgeType,
     );
 
     // ── Collapse-stage timeline compression (preserved from v7.0) ────────────

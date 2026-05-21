@@ -59,6 +59,10 @@ export interface ResilienceInputs {
   industry: string;
   region: string;
   uniquenessDepth?: "generic" | "functional_specialist" | "critical_knowledge";
+  /** Sub-classification when uniquenessDepth === 'critical_knowledge'. Drives differentiated
+   *  insight text: relationship_based (mobile moat) vs system_specific (migration deadline)
+   *  vs domain_expertise (externalize to create optionality). */
+  knowledgeType?: "relationship_based" | "system_specific" | "domain_expertise";
   performanceTier?: "top" | "average" | "below" | "unknown";
   hasAiSkills?: boolean;
   hasAlternativeIncome?: boolean;     // freelance, consulting, products
@@ -159,7 +163,11 @@ function scoreSkillCurrency(inputs: ResilienceInputs): ResiliencePillar {
   const insight = inputs.hasAiSkills
     ? `AI-augmented skillset — the primary differentiator in the 2024–2026 labor market. High transferability across roles.`
     : inputs.uniquenessDepth === "critical_knowledge"
-    ? `Deep institutional knowledge provides near-term protection. Risk: knowledge extraction programs (documentation, AI-capture) can commoditize it within 18–36 months.`
+    ? inputs.knowledgeType === 'relationship_based'
+      ? `Relationship capital (board trust, investor access, team loyalty) is mobile — it follows you to a new role and does not commoditize over time. Risk: letting this capital sit unused while in seat; the moat erodes when you leave, not from any documentation or AI-capture program.`
+      : inputs.knowledgeType === 'domain_expertise'
+      ? `Deep domain expertise provides near-term protection and is transferable across employers. Risk: internal expertise invisible to the external market creates no optionality when the role is displaced — externalize it through writing, speaking, or consulting.`
+      : `System-specific critical knowledge provides near-term protection with a hard expiry: knowledge extraction programs and AI-assisted documentation can commoditize it within 18–36 months of the migration start. Track the migration clock actively.`
     : `Skill profile is ${inputs.uniquenessDepth === "functional_specialist" ? "moderately" : "not strongly"} differentiated — AI augmentation would be the highest-ROI skill investment.`;
 
   const topAction = !inputs.hasAiSkills

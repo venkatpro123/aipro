@@ -497,6 +497,7 @@ function buildFinancialDistressNarrative(
   tenureYears: number,
   uniquenessDepth: string,
   enrichment?: IndiaRiskEnrichment,
+  knowledgeType?: string,
 ): ScenarioNarrative {
   const L1pct = pct(bd.L1);
   const L2pct = pct(bd.L2);
@@ -536,9 +537,26 @@ function buildFinancialDistressNarrative(
     oneActionThisWeek: `Update your LinkedIn headline today and accept the next recruiter contact. At a company with L1: ${L1pct}/100 and L2: ${L2pct}/100, recruiter outreach is the primary signal channel — not job boards. One conversation this week creates a market data point on your current value and one potential parallel path. Recruiters have visibility into unadvertised roles that no job board surface — your score of ${score}/100 is in the range where this action has highest ROI.`,
     whatChangesRiskMost: `1. Activate external market visibility — updated LinkedIn and 2 recruiter conversations within 7 days. Highest-leverage action at L1: ${L1pct}/100 + L2: ${L2pct}/100 combination. 2. Build 3-month financial runway in liquid savings — at ${tenureYears} yr tenure, estimated severance is ~${severanceDays} days; a runway above that means you negotiate from strength, not desperation. 3. Identify your top 3 target companies with active openings in your domain — list prepared in advance means action in days, not weeks, when the announcement comes.`,
     estimatedTimeline: `${horizon} based on L1: ${L1pct}/100 + L2: ${L2pct}/100 combination${cd.layoffRounds > 0 ? ` and ${cd.layoffRounds} documented round${cd.layoffRounds > 1 ? 's' : ''} in recent history` : ''}.`,
-    keyProtectiveFactor: bd.L5 != null && bd.L5 < 0.40
-      ? `Personal resilience (L5: ${L5pct}/100) — ${tenureYears} yr tenure and ${uniquenessDepth === 'critical_knowledge' ? 'critical institutional knowledge' : uniquenessDepth === 'functional_specialist' ? 'functional specialisation' : 'generic profile (build differentiated knowledge)'} provides partial protection, but L5 does not offset company-level financial distress signals at L1: ${L1pct}/100.`
-      : `No strong protective factor offsets the L1 signal at this level. The best protection at the financial distress archetype is market optionality — having an alternative offer or advanced process running in parallel.`,
+    keyProtectiveFactor: (() => {
+      if (bd.L5 == null || bd.L5 >= 0.40) {
+        return `No strong protective factor offsets the L1 signal at this level. The best protection at the financial distress archetype is market optionality — having an alternative offer or advanced process running in parallel.`;
+      }
+      let knowledgeNote: string;
+      if (uniquenessDepth === 'critical_knowledge') {
+        if (knowledgeType === 'relationship_based') {
+          knowledgeNote = `Relationship capital (board trust, investor relationships, team loyalty) provides partial insulation — senior relationships are the last cut. But financial distress at L1: ${L1pct}/100 may not leave the window open to leverage them; convert this capital to market optionality now while still in seat.`;
+        } else if (knowledgeType === 'domain_expertise') {
+          knowledgeNote = `Domain expertise provides partial insulation — cutting deep specialists creates operational risk. At L1: ${L1pct}/100, externalize and document expertise before budget decisions override that protection.`;
+        } else {
+          knowledgeNote = `System-specific critical knowledge provides partial insulation during active migration — companies rarely disrupt migration-critical personnel. But financial distress at L1: ${L1pct}/100 can cancel migrations entirely, eliminating this protection before the migration clock completes.`;
+        }
+      } else if (uniquenessDepth === 'functional_specialist') {
+        knowledgeNote = `Functional specialisation provides partial insulation but does not offset company-level financial distress at L1: ${L1pct}/100.`;
+      } else {
+        knowledgeNote = `Generic profile (build differentiated knowledge) — limited protective factor at L1: ${L1pct}/100.`;
+      }
+      return `Personal resilience (L5: ${L5pct}/100) — ${tenureYears} yr tenure. ${knowledgeNote} L5 does not fully offset company-level financial distress signals at L1: ${L1pct}/100.`;
+    })(),
     synthesis: `${cd.name} is in the financial distress archetype — L1: ${L1pct}/100 with ${historyPhrase}. Displacement risk is ${score >= 65 ? 'high and time-sensitive' : 'elevated and escalating'}. Estimated exposure window: ${horizon}. Key action: activate external market visibility this week.`,
     urgencyLevel: score >= 75 ? 'Immediate' : score >= 55 ? 'High' : 'Moderate',
     indiaSpecificInsight: enrichment?.isIndiaPrimary
@@ -554,6 +572,7 @@ function buildAIEfficiencyNarrative(
   role: string,
   tenureYears: number,
   uniquenessDepth: string,
+  knowledgeType?: string,
 ): ScenarioNarrative {
   const L1pct = pct(bd.L1);
   const D8pct = pct(bd.D8 ?? 0);
@@ -572,9 +591,18 @@ function buildAIEfficiencyNarrative(
     oneActionThisWeek: `Map your role tasks against 3 categories: (A) AI generates first draft, I review and approve — own this; (B) AI cannot do this without my domain judgment — invest here; (C) AI fully replaces this — these disappear. Spend 90 minutes building this map today. At ${cd.name}'s ${aiSignal} AI investment level (D8: ${D8pct}/100), having this map is the difference between repositioning vs being removed. Document the output — it becomes your irreplaceable-contribution artifact.`,
     whatChangesRiskMost: `1. Demonstrable AI oversight skills — not "I use Copilot" but "I built a review framework for AI-generated output." This directly addresses D8: ${D8pct}/100, the primary trigger. 2. Own one AI integration initiative at ${cd.name} — repositions you as "the person who makes AI work" rather than "the person AI replaces." Direct impact on L3: ${L3pct}/100. 3. Document one specific example of human judgment that corrected an AI error — your irreplaceable-contribution credential for the next 3 years.`,
     estimatedTimeline: `12–24 months at D8: ${D8pct}/100 + L1: ${L1pct}/100 + L3: ${L3pct}/100. Profitable AI restructuring archetype is slower than financial distress but more structurally certain once the AI tools mature — companies plan these in 6–12 month advance cycles, not emergency waves.`,
-    keyProtectiveFactor: uniquenessDepth === 'critical_knowledge'
-      ? `Critical institutional knowledge (L5 protection) is meaningful at D8: ${D8pct}/100 — AI efficiency cuts typically preserve irreplaceable knowledge holders because their judgment is harder to automate than their task outputs. Your ${tenureYears} yr tenure compounds this.`
-      : `Building demonstrable AI oversight expertise is the primary protection at D8: ${D8pct}/100 — it directly addresses the condition that triggers this archetype. Generic profiles at L3: ${L3pct}/100 have limited natural protection without it.`,
+    keyProtectiveFactor: (() => {
+      if (uniquenessDepth !== 'critical_knowledge') {
+        return `Building demonstrable AI oversight expertise is the primary protection at D8: ${D8pct}/100 — it directly addresses the condition that triggers this archetype. Generic profiles at L3: ${L3pct}/100 have limited natural protection without it.`;
+      }
+      if (knowledgeType === 'relationship_based') {
+        return `Relationship capital (board trust, investor relationships, team loyalty) is the one form of critical knowledge that AI efficiency cuts almost never target — these relationships ARE the value, not a proxy for it. Your ${tenureYears} yr network is a mobile moat. Risk: letting this capital sit unused in seat rather than converting it to market optionality while the company restructures around you.`;
+      }
+      if (knowledgeType === 'domain_expertise') {
+        return `Domain expertise partially offsets D8: ${D8pct}/100 — AI efficiency cuts preserve specialists whose judgment cannot be automated. Ensure this expertise is visible externally (published work, speaking, consulting engagements) so it creates market optionality beyond internal protection.`;
+      }
+      return `System-specific critical knowledge delays AI efficiency cuts — companies preserve migration-critical personnel. But at D8: ${D8pct}/100, this protection is time-bounded: once migration or AI substitution completes (~18–36 months), this moat evaporates entirely. Build transferable skills before the migration clock runs out — it is a hard deadline, not a soft preference.`;
+    })(),
     synthesis: `${cd.name} is in the AI efficiency restructuring archetype — ${aiSignal} AI investment + documented workforce actions. D8: ${D8pct}/100. The risk is structural, not financial. Displacement horizon: 12–24 months. Protection strategy: reposition as AI oversight, not AI-competing.`,
     urgencyLevel: score >= 65 ? 'High' : score >= 45 ? 'Moderate' : 'Low',
     confidenceNote: `D8 weight (5%) is UNCALIBRATED — awaiting regression on "efficiency-driven profitable layoff" cohort. D8 signal direction is correct (validated by Meta/Google/Microsoft cases) but magnitude estimates have ±3pt uncertainty.`,
@@ -589,6 +617,7 @@ function buildRoleDisplacementNarrative(
   tenureYears: number,
   uniquenessDepth: string,
   enrichment?: IndiaRiskEnrichment,
+  knowledgeType?: string,
 ): ScenarioNarrative {
   const L3pct = pct(bd.L3);
   const D2pct = pct(bd.D2 ?? 0);
@@ -602,11 +631,21 @@ function buildRoleDisplacementNarrative(
     oneActionThisWeek: `Identify the single ${role} task that AI can currently perform at 70%+ of your quality. Spend 2 hours this week building a quality-review process for AI output on that task — not avoiding it, but owning the oversight layer. At L3: ${L3pct}/100 displacement risk, the goal is to position yourself as the person whose judgment is required to validate AI performance, not compete with AI on execution speed. Document this process — it is your portfolio artifact for the next performance cycle.`,
     whatChangesRiskMost: `1. Shift 20% of your task portfolio from "execution" to "AI oversight/review" — this directly reduces L3 from ${L3pct}/100 by addressing the primary displacement mechanism. 2. Complete one AI integration certification that is specific to your role domain (GitHub Copilot for developers, Claude API for analysts, Midjourney for designers). 3. Build one publicly demonstrable AI-integration project — even a simple workflow. Public evidence compounds over time.`,
     estimatedTimeline: `${score >= 75 ? '6–12 months' : score >= 55 ? '12–24 months' : '24–36 months'} based on L3: ${L3pct}/100 + ${cd.aiInvestmentSignal ?? 'medium'} AI adoption environment. Role displacement timelines are longer than financial distress timelines but more certain once the AI tool matures — the tools become cheaper and more accessible faster than roles transform.`,
-    keyProtectiveFactor: uniquenessDepth === 'critical_knowledge'
-      ? `Critical institutional knowledge partially offsets L3: ${L3pct}/100 — but only the non-automatable components. Mapping which specific tasks require institutional knowledge vs generic execution is essential to know exactly what needs protecting.`
-      : uniquenessDepth === 'functional_specialist'
-        ? `Functional specialisation (L5) provides a 12–18 month buffer compared to generic profiles, but at L3: ${L3pct}/100, even specialists need to demonstrate AI oversight skills to maintain this advantage.`
-        : `Generic role profile at L3: ${L3pct}/100 has limited natural protection. Building demonstrable AI oversight skills is the primary protective action — it's the only signal that directly addresses the L3 displacement risk.`,
+    keyProtectiveFactor: (() => {
+      if (uniquenessDepth === 'functional_specialist') {
+        return `Functional specialisation (L5) provides a 12–18 month buffer compared to generic profiles, but at L3: ${L3pct}/100, even specialists need to demonstrate AI oversight skills to maintain this advantage.`;
+      }
+      if (uniquenessDepth !== 'critical_knowledge') {
+        return `Generic role profile at L3: ${L3pct}/100 has limited natural protection. Building demonstrable AI oversight skills is the primary protective action — it's the only signal that directly addresses the L3 displacement risk.`;
+      }
+      if (knowledgeType === 'relationship_based') {
+        return `Relationship capital partially offsets L3: ${L3pct}/100 — roles anchored in board trust, founder relationships, or team loyalty are harder to eliminate than pure execution roles. Map which tasks require institutional judgment vs generic execution: the former is protected, the latter is already being displaced regardless of your tenure.`;
+      }
+      if (knowledgeType === 'domain_expertise') {
+        return `Domain expertise partially offsets L3: ${L3pct}/100, but only the non-automatable components. Externalize this expertise publicly (writing, speaking, consulting) — deep knowledge that is invisible outside your current employer provides no market optionality when the role is displaced.`;
+      }
+      return `System-specific critical knowledge partially offsets L3: ${L3pct}/100 — but only until migration completes. Track the migration timeline actively: it is the hard deadline for your skill transition, not a soft preference. With ~18–36 months until the moat evaporates, each quarter of inaction reduces viable transition paths.`;
+    })(),
     synthesis: `${role} at ${cd.name ?? 'your company'} — role displacement archetype. L3: ${L3pct}/100 + D2: ${D2pct}/100. Timeline: ${score >= 55 ? '12–24 months' : '24–36 months'}. Protection strategy: transition from execution to AI oversight within your current role.`,
     urgencyLevel: score >= 65 ? 'High' : score >= 45 ? 'Moderate' : 'Low',
     indiaSpecificInsight: enrichment?.isIndiaPrimary
@@ -947,6 +986,12 @@ export function buildScenarioNarrative(
   /** v40.0 — optional contextual signals (parent propagation, funding age,
    *  regulatory enforcement) that tighten archetype gates to the spec-exact path. */
   context?: ArchetypeContext,
+  /** Sub-classification of critical_knowledge — only used when uniquenessDepth === 'critical_knowledge'.
+   *  Drives differentiated keyProtectiveFactor text and inaction urgency framing.
+   *  'relationship_based': mobile moat (board/investor/team trust); erodes when person leaves seat.
+   *  'system_specific': stationary moat (legacy code/process); erodes when migration completes (~18–36mo).
+   *  'domain_expertise': transferable functional depth; externalize to create market optionality. */
+  knowledgeType?: string,
 ): ScenarioNarrative {
   const enrichment = companyData.region === 'IN' || (companyData.region as string) === 'India'
     ? getIndiaRiskEnrichment(companyData.name, companyData.industry ?? '', companyData.region)
@@ -959,27 +1004,27 @@ export function buildScenarioNarrative(
   let narrative: ScenarioNarrative;
   switch (archetype) {
     case 'financial_distress_layoff':
-      narrative = buildFinancialDistressNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment);
+      narrative = buildFinancialDistressNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment, knowledgeType);
       break;
     case 'ai_efficiency_restructuring':
-      narrative = buildAIEfficiencyNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth);
+      narrative = buildAIEfficiencyNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, knowledgeType);
       break;
     case 'role_displacement':
-      narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment);
+      narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment, knowledgeType);
       break;
     case 'sector_wave':
       narrative = buildSectorWaveNarrative(companyData, breakdown, score, roleTitle, tenureYears, enrichment);
       break;
     case 'gcc_parent_contagion':
       if (!enrichment) {
-        narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment);
+        narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment, knowledgeType);
       } else {
         narrative = buildGCCContagionNarrative(companyData, breakdown, score, roleTitle, tenureYears, enrichment);
       }
       break;
     case 'india_it_bench_risk':
       if (!enrichment) {
-        narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment);
+        narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment, knowledgeType);
       } else {
         narrative = buildIndiaBenchNarrative(companyData, breakdown, score, roleTitle, tenureYears, enrichment);
       }
@@ -1006,7 +1051,7 @@ export function buildScenarioNarrative(
       narrative = buildFintechRegulatoryNarrative(companyData, breakdown, score, roleTitle, tenureYears);
       break;
     default:
-      narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment);
+      narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment, knowledgeType);
   }
 
   // v10.0: Inject archetype blend data into the narrative result

@@ -992,6 +992,27 @@ export const UNIQUENESS_SCORES: Record<UniquenessDepth, number> = {
   critical_knowledge:   0.18,
 };
 
+/**
+ * KnowledgeType — disambiguates critical_knowledge into two structurally different situations.
+ * Only meaningful when uniquenessDepth === 'critical_knowledge'; ignored otherwise.
+ *
+ * relationship_based: Board trust, investor access, team loyalty. The moat is MOBILE —
+ *   it follows the person to a new role. Moat erodes when the person leaves seat,
+ *   not when any migration or documentation project completes. Correct action: convert
+ *   this capital into market optionality while still in seat.
+ *
+ * system_specific:    Legacy code ownership, proprietary process knowledge, institutional
+ *   memory tied to one system. The moat is STATIONARY — it erodes when the migration or
+ *   AI substitution completes (~18–36 months). Moat is time-bounded by an external clock
+ *   the person does not control. Correct action: transition before migration finishes.
+ *
+ * domain_expertise:   Deep functional knowledge transferable across employers (e.g. a
+ *   specialist with 20yr domain depth). Less time-bounded than system_specific but less
+ *   mobile than relationship_based. Correct action: document + publish to make expertise
+ *   visible outside the current employer.
+ */
+export type KnowledgeType = 'relationship_based' | 'system_specific' | 'domain_expertise';
+
 export interface UserFactors {
   tenureYears: number;
   /** Total career years across ALL jobs — distinct from tenureYears at current company.
@@ -1001,6 +1022,16 @@ export interface UserFactors {
   isUniqueRole: boolean;
   /** 3-level depth score — overrides isUniqueRole when present for better L5 accuracy. */
   uniquenessDepth?: UniquenessDepth;
+  /**
+   * Sub-classification of critical_knowledge — only meaningful when uniquenessDepth ===
+   * 'critical_knowledge'. Drives differentiated inaction narratives and action priorities:
+   * - relationship_based → leverage NOW actions (board/investor conversations)
+   * - system_specific    → migration-deadline-aware transition actions
+   * - domain_expertise   → publish/document visibility actions
+   * When absent for critical_knowledge users, defaults to system_specific behavior
+   * (conservative: assumes time-bounded protection).
+   */
+  knowledgeType?: KnowledgeType;
   performanceTier: "top" | "average" | "below" | "unknown";
   hasRecentPromotion: boolean;
   hasKeyRelationships: boolean;

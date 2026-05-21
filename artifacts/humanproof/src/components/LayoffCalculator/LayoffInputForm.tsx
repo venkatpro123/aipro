@@ -12,7 +12,7 @@ import {
 import { CompanyData } from "../../data/companyDatabase";
 import { profileUnknownCompany } from "../../services/ensemble/quickProfilerAgent";
 import { Building, Info, Zap, Shield, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import type { UniquenessDepth } from "../../services/layoffScoreEngine";
+import type { UniquenessDepth, KnowledgeType } from "../../services/layoffScoreEngine";
 import {
   searchOracleRoles,
   getAutoDeducedDepartment,
@@ -464,6 +464,12 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     state.userFactors?.uniquenessDepth ??
     (state.userFactors?.isUniqueRole ? 'critical_knowledge' : 'generic')
   );
+  // Sub-classification of critical_knowledge — only shown when uniquenessDepth === 'critical_knowledge'.
+  // Drives differentiated inaction narratives: relationship_based (mobile moat) vs system_specific
+  // (migration deadline) vs domain_expertise (externalize to create optionality).
+  const [knowledgeType, setKnowledgeType] = useState<KnowledgeType>(
+    (state.userFactors as any)?.knowledgeType ?? 'system_specific'
+  );
   // Keep isUniqueRole derived for backward compat
   const isUniqueRole = uniquenessDepth === 'critical_knowledge';
   const [performanceTier, setPerformanceTier] = useState(
@@ -799,6 +805,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           careerYears: validatedCareerYears,
           isUniqueRole,
           uniquenessDepth,
+          // knowledgeType is only meaningful when uniquenessDepth === 'critical_knowledge'
+          knowledgeType: uniquenessDepth === 'critical_knowledge' ? knowledgeType : undefined,
           performanceTier: performanceTier as "top" | "average" | "below" | "unknown",
           hasRecentPromotion,
           hasKeyRelationships,
@@ -1077,7 +1085,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
               />
 
               {/* Priority 3: 3-Level Uniqueness Depth (replaces Yes/No toggle) */}
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: uniquenessDepth === 'critical_knowledge' ? '12px' : '24px' }}>
                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Role Uniqueness 💎
                 </div>
@@ -1092,6 +1100,25 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   onChange={v => setUniquenessDepth(v as UniquenessDepth)}
                 />
               </div>
+              {/* Knowledge type sub-classification — only shown for critical knowledge holders.
+                  Drives differentiated inaction narratives: mobile moat vs migration deadline. */}
+              {uniquenessDepth === 'critical_knowledge' && (
+                <div style={{ marginBottom: '24px', paddingLeft: '8px', borderLeft: '2px solid var(--cyan-dim)' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    What type of institutional knowledge?
+                  </div>
+                  <ToggleGroup
+                    ariaLabel="Knowledge type"
+                    options={[
+                      { value: 'system_specific', label: 'System', desc: 'Legacy code / proprietary processes (moat erodes when migration completes)' },
+                      { value: 'relationship_based', label: 'Relationships', desc: 'Board trust / investor access / team loyalty (mobile — follows you to next role)' },
+                      { value: 'domain_expertise', label: 'Domain', desc: 'Deep functional knowledge transferable across employers' },
+                    ]}
+                    value={knowledgeType}
+                    onChange={v => setKnowledgeType(v as KnowledgeType)}
+                  />
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                   {[
                     { key: 'promo', label: 'Recent Promotion', active: hasRecentPromotion, setter: setHasRecentPromotion, icon: '↗' },
