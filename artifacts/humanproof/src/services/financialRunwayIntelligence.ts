@@ -22,6 +22,7 @@
 
 import type { EscapePathReport, EscapePathType } from './escapePathOptimizer';
 import type { JobMarketLiquidityResult } from './jobMarketLiquidityService';
+import { computeGratuity, type GratuityCalculation } from '../data/endOfServiceGratuity';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -51,7 +52,19 @@ export interface RunwayMoveSequence {
 
 export interface FinancialRunwayResult {
   // ── Core assessment ──────────────────────────────────────────────────────────
+  /** Effective runway = savedMonths + gratuityMonths (for MENA users) or savedMonths only.
+   *  This is the value the tier/strategy/urgency are computed from. */
   runwayMonths: number;
+  /** User-reported savings runway (months of expenses covered by liquid savings). */
+  savedRunwayMonths: number;
+  /** End-of-service gratuity buffer in months of total pay (0 when no MENA regime applies).
+   *  UAE: 21 days/yr first 5 + 30 days/yr thereafter (capped at 2yr).
+   *  Saudi: 15 days/yr first 5 + 30 days/yr thereafter. Etc. */
+  gratuityMonths: number;
+  /** Gratuity disclosure narrative (when gratuityMonths > 0). */
+  gratuityDisclosure?: string;
+  /** ISO country code that produced the gratuity calculation (AE, SA, QA, BH, OM, KW). */
+  gratuityCountryCode?: string;
   tier: RunwayTier;
   tierLabel: string;
   urgencyModifier: number;         // multiplier on action deadlines (Critical: 0.5×, Strong: 2.0×)
@@ -389,10 +402,16 @@ function computeRunwayRiskScore(
 // ─── Main entry point ──────────────────────────────────────────────────────────
 
 export interface FinancialRunwayInputs {
-  financialRunwayMonths: number;   // months of expenses covered (0 = unknown, defaults to 6)
+  financialRunwayMonths: number;   // user-reported months of expenses covered by savings (0 = unknown, defaults to 6)
   currentScore: number;
   escapePaths?: EscapePathReport;
   jobMarketLiquidity?: JobMarketLiquidityResult;
+  /** ISO country code (AE, SA, QA, BH, OM, KW for MENA gratuity computation).
+   *  When present + tenureYears provided, end-of-service gratuity is added to the
+   *  effective runway used for tier classification. */
+  countryCode?: string;
+  /** Tenure in years at current employer — required for gratuity calculation. */
+  tenureYears?: number;
 }
 
 export function computeFinancialRunway(inputs: FinancialRunwayInputs): FinancialRunwayResult {
@@ -400,10 +419,25 @@ export function computeFinancialRunway(inputs: FinancialRunwayInputs): Financial
     currentScore,
     escapePaths,
     jobMarketLiquidity,
+    countryCode,
+    tenureYears,
   } = inputs;
 
-  // Default to 6 months when not provided (industry median)
-  const runwayMonths = inputs.financialRunwayMonths > 0 ? inputs.financialRunwayMonths : 6;
+  // User-reported savings runway. Default to 6 months when not provided (industry median).
+  const savedRunwayMonths = inputs.financialRunwayMonths > 0 ? inputs.financialRunwayMonths : 6;
+
+  // MENA end-of-service gratuity: adds months of effective runway at termination.
+  // A 7-year UAE employee accrues ~6.5 months of effective buffer that previously
+  // was completely invisible to the urgency tier classification.
+  const gratuityCalc: GratuityCalculation | null = (countryCode && tenureYears != null && tenureYears > 0)
+    ? computeGratuity(countryCode, tenureYears)
+    : null;
+  const gratuityMonths = gratuityCalc?.effectiveBufferMonths ?? 0;
+
+  // Effective runway folds gratuity into the urgency calculation.
+  // A 4-month-savings UAE employee with 7 years tenure (≈6.5 months gratuity) has
+  // effective runway 10.5 months → "comfortable" tier, NOT "critical".
+  const runwayMonths = savedRunwayMonths + gratuityMonths;
 
   const tier = resolveRunwayTier(runwayMonths);
   const cfg = TIER_CONFIG[tier];
@@ -435,6 +469,10 @@ export function computeFinancialRunway(inputs: FinancialRunwayInputs): Financial
 
   return {
     runwayMonths,
+    savedRunwayMonths,
+    gratuityMonths,
+    gratuityDisclosure: gratuityCalc?.disclosureText,
+    gratuityCountryCode: gratuityCalc?.countryCode,
     tier,
     tierLabel: cfg.label,
     urgencyModifier: cfg.urgencyModifier,

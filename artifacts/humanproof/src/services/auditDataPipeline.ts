@@ -1952,11 +1952,18 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // 7. Financial Runway Intelligence — runway-constrained personalized strategy
   try {
     const runwayMonths = inputs.financialRunwayMonths ?? 0;
+    // MENA gratuity wiring: pass country + tenure so the runway engine adds the
+    // end-of-service buffer (UAE 21d/yr first 5 + 30d/yr thereafter, Saudi half-
+    // month/yr first 5 + month/yr thereafter, etc.) to the effective runway.
+    // For a 7-year UAE employee this lifts effective runway by ~6.5 months, which
+    // can change the urgency tier from "critical" to "comfortable".
     const financialRunway = computeFinancialRunway({
       financialRunwayMonths: runwayMonths,
       currentScore: hybridResult.total,
       escapePaths: (hybridResult as any).escapePaths,
       jobMarketLiquidity: (hybridResult as any).jobMarketLiquidity,
+      countryCode: companyData.region,
+      tenureYears: inputs.userFactors.tenureYears,
     });
     (hybridResult as any).financialRunway = financialRunway;
     (hybridResult as any).financialRunwayMonths = runwayMonths;

@@ -1025,7 +1025,20 @@ export interface UserFactors {
 
   // ── v12.0 Extensions: Visa Risk Intelligence ─────────────────────────────
   /** Work authorization status (for visa risk assessment) */
-  visaStatus?: 'citizen' | 'permanent_resident' | 'h1b' | 'l1' | 'opt_stem' | 'tn' | 'other_work_auth' | 'not_applicable';
+  visaStatus?:
+    | 'citizen'
+    | 'permanent_resident'
+    | 'h1b'
+    | 'l1'
+    | 'opt_stem'
+    | 'tn'
+    | 'uae_employment_visa'
+    | 'uae_golden_visa'
+    | 'saudi_iqama'
+    | 'qatar_work_permit'
+    | 'gcc_sponsored'
+    | 'other_work_auth'
+    | 'not_applicable';
   /** Months until visa expiry */
   visaExpiryMonths?: number;
   /** Months since I-485 (green card) filing — high lock-in when 18–179 months */
