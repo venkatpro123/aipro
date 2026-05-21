@@ -15,6 +15,12 @@
 // referenceDate + companyData + region. Fully reproducible for a given date.
 
 import type { CompanyData } from '../data/companyDatabase';
+import {
+  getEmploymentProtectionRegime,
+  computeEffectiveProtectionDays,
+  isLargeLayoff,
+  type EmploymentProtectionRegime,
+} from '../data/employmentProtectionLaw';
 
 // ─── Output types ─────────────────────────────────────────────────────────────
 
@@ -37,6 +43,40 @@ export interface MonthlyRiskEntry {
   primaryReason: string | null;
 }
 
+/** Employment protection legal timeline — how long after announcement until last day.
+ *  This is a DISTINCT concept from the risk calendar (which shows when announcement
+ *  is most likely). Together they give: announcement timing + legal runway = full picture.
+ *
+ *  LABELED: ESTIMATED — derived from published labor law. Individual cases vary by
+ *  collective agreement, tenure, and specific company size. */
+export interface LegalTimelineResult {
+  countryCode: string;
+  countryName: string;
+  flagEmoji: string;
+  regime: string;
+  governanceBody: string;
+  /** Is this computed as a large layoff (collective rules apply)? */
+  isLargeLayoff: boolean;
+  /** Estimated days from layoff announcement to last working day */
+  estimatedProtectionDays: { min: number; max: number };
+  /** Extra days vs US at-will baseline — the "effective time advantage" */
+  extensionVsUSBaselineDays: { min: number; max: number };
+  isGovernmentApprovalRequired: boolean;
+  hasMandatorySocialPlan: boolean;
+  labeledAs: 'MEASURED' | 'MODELED' | 'ESTIMATED';
+  /** Timeline components (notice, consultation, government process) */
+  components: Array<{
+    label: string;
+    daysMin: number;
+    daysMax: number;
+    isOptional: boolean;
+    triggerNote?: string;
+  }>;
+  protectionSummary: string;
+  disclosureNarrative: string;
+  workerActions: string[];
+}
+
 export interface TemporalRiskResult {
   currentAmplifier: number;         // today's temporal amplifier (1.0 = flat)
   amplifiedScore: number;           // score × currentAmplifier, capped at 99
@@ -52,6 +92,11 @@ export interface TemporalRiskResult {
   } | null;
   safeWindows: string[];            // months with amplifier < 1.0 (best time to negotiate)
   confidenceNote: string | null;
+  /** Country-specific employment protection legal timeline.
+   *  Present when companyData.region maps to a known jurisdiction.
+   *  Absent for unknown regions or US (which is the at-will baseline).
+   *  LABELED: ESTIMATED — varies by collective agreement, tenure, company size. */
+  legalTimeline?: LegalTimelineResult;
 }
 
 // ─── Earnings calendar for major public companies ─────────────────────────────
@@ -136,6 +181,66 @@ const INDIA_SEASONAL_PATTERNS: SeasonalPattern[] = [
   },
 ];
 
+// ─── Legal timeline computation ──────────────────────────────────────────────
+//
+// Computes the employment protection window for the user's country.
+// This answers "after announcement, how long before my last day?" — completely
+// separate from the risk calendar which answers "when is announcement risk highest?"
+//
+// Example — same risk score, fundamentally different actual timelines:
+//   US SWE (Amazon):  announcement → 0-60 days (WARN Act) → last day
+//   DE SWE (SAP):     announcement → 90-180 days (Betriebsrat + Sozialplan) → last day
+//   → German worker has effectively 60-80% more time to prepare.
+
+function computeLegalTimeline(
+  companyData: CompanyData,
+  normRegion: string,
+): LegalTimelineResult | undefined {
+  // Use the region field as the country code (already ISO 2-letter for most records)
+  const countryCode = normRegion;
+  const regime = getEmploymentProtectionRegime(countryCode);
+  if (!regime) return undefined;
+
+  const largeCut = isLargeLayoff(regime, companyData.employeeCount);
+  const protectionDays = computeEffectiveProtectionDays(regime, companyData.employeeCount);
+
+  // Build component list: always-on components + large-cut additional components (if applicable)
+  const components = [
+    ...regime.smallCutComponents.map(c => ({
+      label: c.label,
+      daysMin: c.daysMin,
+      daysMax: c.daysMax,
+      isOptional: c.isOptional,
+      triggerNote: c.triggerNote,
+    })),
+    ...(largeCut ? regime.largeCutAdditionalComponents.map(c => ({
+      label: c.label,
+      daysMin: c.daysMin,
+      daysMax: c.daysMax,
+      isOptional: c.isOptional,
+      triggerNote: c.triggerNote,
+    })) : []),
+  ];
+
+  return {
+    countryCode: regime.countryCode,
+    countryName: regime.countryName,
+    flagEmoji: regime.flagEmoji,
+    regime: regime.regime,
+    governanceBody: regime.governanceBody,
+    isLargeLayoff: largeCut,
+    estimatedProtectionDays: protectionDays,
+    extensionVsUSBaselineDays: regime.extensionVsUSBaselineDays,
+    isGovernmentApprovalRequired: regime.isGovernmentApprovalRequired,
+    hasMandatorySocialPlan: regime.hasMandatorySocialPlan,
+    labeledAs: regime.labeledAs,
+    components,
+    protectionSummary: regime.protectionSummary,
+    disclosureNarrative: regime.disclosureNarrative,
+    workerActions: regime.workerActions,
+  };
+}
+
 // ─── Main computation ─────────────────────────────────────────────────────────
 
 export interface TemporalAmplifierInputs {
@@ -200,6 +305,10 @@ export function computeTemporalRisk(inputs: TemporalAmplifierInputs): TemporalRi
   const currentWindowReason = todayEntry.primaryReason;
   const activeWindowsToday = todayEntry.activeWindows;
 
+  // Legal timeline: country-specific employment protection window.
+  // Uses the region already passed in (ISO country code like 'DE', 'FR', 'GB').
+  const legalTimeline = computeLegalTimeline(inputs.companyData, normRegion);
+
   return {
     currentAmplifier: Math.round(currentAmplifier * 100) / 100,
     amplifiedScore,
@@ -211,6 +320,7 @@ export function computeTemporalRisk(inputs: TemporalAmplifierInputs): TemporalRi
     nextDangerWindow: nextDanger,
     safeWindows,
     confidenceNote: buildConfidenceNote(isPublic, companyNameLower),
+    legalTimeline,
   };
 }
 

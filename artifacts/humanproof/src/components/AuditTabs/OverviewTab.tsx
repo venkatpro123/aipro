@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { submitPredictionFeedback } from "@/services/scoreSyncService";
 import type { PrecisionBrief } from "@/services/scenarioNarrativeEngine";
-import type { TemporalRiskResult } from "@/services/temporalRiskAmplifier";
+import type { TemporalRiskResult, LegalTimelineResult } from "@/services/temporalRiskAmplifier";
 import type { JobMarketLiquidityResult } from "@/services/jobMarketLiquidityService";
 import type { EscapePathReport } from "@/services/escapePathOptimizer";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
@@ -776,7 +776,6 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         {heatmapMonths.length > 0 ? (
           <CalendarHeatmap months={heatmapMonths} />
         ) : (
-          /* Fallback when riskCalendar not populated */
           <div className="text-[10px] text-muted-foreground opacity-60">
             Calendar data not available for this company.
           </div>
@@ -812,8 +811,131 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
             </div>
           )}
         </div>
+
+        {/* Legal protection window — shown for non-US jurisdictions with meaningful protection */}
+        {temporal.legalTimeline && temporal.legalTimeline.estimatedProtectionDays.min > 14 && (
+          <LegalTimelineCard legal={temporal.legalTimeline} />
+        )}
       </div>
     </motion.div>
+  );
+};
+
+// ── Legal Timeline Card ───────────────────────────────────────────────────────
+// Surfaces country-specific employment protection law. Shows the legal runway
+// between layoff announcement and last working day — a DIFFERENT signal from
+// the risk calendar (which shows announcement timing).
+const LegalTimelineCard: React.FC<{ legal: LegalTimelineResult }> = ({ legal }) => {
+  const hasExtension = legal.extensionVsUSBaselineDays.min > 14;
+  const minDays = legal.estimatedProtectionDays.min;
+  const maxDays = legal.estimatedProtectionDays.max;
+  const minWeeks = Math.round(minDays / 7);
+  const maxWeeks = Math.round(maxDays / 7);
+
+  return (
+    <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/[0.04] overflow-hidden">
+      {/* Header */}
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-blue-500/10">
+        <Shield className="w-3 h-3 text-blue-400 flex-shrink-0" />
+        <span className="text-[9.5px] font-black uppercase tracking-[0.14em] text-blue-300">
+          Employment Protection — {legal.flagEmoji} {legal.countryName}
+        </span>
+        <span className="ml-auto text-[8.5px] px-1.5 py-0.5 rounded font-bold uppercase"
+          style={{ background: 'rgba(99,179,237,0.12)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.25)' }}>
+          {legal.labeledAs}
+        </span>
+      </div>
+
+      <div className="px-3 py-2.5 space-y-2">
+        {/* Key number */}
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-base font-black text-blue-200">
+            {minWeeks}–{maxWeeks} weeks
+          </span>
+          <span className="text-[10px] text-blue-300/70 font-medium">
+            announcement → last working day
+          </span>
+        </div>
+
+        {/* Regime badge */}
+        <div className="text-[9px] text-blue-300/60 font-mono leading-tight">
+          {legal.regime}
+        </div>
+
+        {/* Timeline components */}
+        <div className="space-y-1">
+          {legal.components.map((comp, i) => {
+            const compMinWeeks = Math.round(comp.daysMin / 7);
+            const compMaxWeeks = Math.round(comp.daysMax / 7);
+            const barWidth = Math.min(100, (comp.daysMax / maxDays) * 100);
+            return (
+              <div key={i} className="text-[9px]">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-blue-200/70 truncate max-w-[75%]">{comp.label}</span>
+                  <span className="text-blue-300/80 font-mono flex-shrink-0 ml-1">
+                    {compMinWeeks === compMaxWeeks ? `${compMinWeeks}w` : `${compMinWeeks}–${compMaxWeeks}w`}
+                  </span>
+                </div>
+                <div className="h-0.5 rounded-full overflow-hidden" style={{ background: 'rgba(99,179,237,0.1)' }}>
+                  <div className="h-full rounded-full" style={{
+                    width: `${barWidth}%`,
+                    background: comp.isOptional
+                      ? 'rgba(99,179,237,0.35)'
+                      : 'rgba(99,179,237,0.65)',
+                  }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Extension vs US baseline */}
+        {hasExtension && (
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <div className="text-[9px] text-emerald-400/80 font-medium">
+              +{Math.round(legal.extensionVsUSBaselineDays.min / 7)}–
+              {Math.round(legal.extensionVsUSBaselineDays.max / 7)} weeks
+            </div>
+            <div className="text-[9px] text-blue-300/50">vs US at-will baseline</div>
+          </div>
+        )}
+
+        {/* Government approval flag */}
+        {legal.isGovernmentApprovalRequired && (
+          <div className="flex items-start gap-1.5 pt-0.5 p-1.5 rounded"
+            style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)' }}>
+            <AlertTriangle className="w-2.5 h-2.5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <span className="text-[8.5px] text-amber-300/80 leading-tight">
+              Government approval required before dismissals — adds uncertainty to the timeline.
+            </span>
+          </div>
+        )}
+
+        {/* Mandatory social plan flag */}
+        {legal.hasMandatorySocialPlan && (
+          <div className="text-[8.5px] text-emerald-400/70">
+            ✓ Mandatory social plan (Sozialplan / PSE equivalent) — contains severance formula &amp; outplacement obligations
+          </div>
+        )}
+
+        {/* Worker actions */}
+        {legal.workerActions.length > 0 && (
+          <div className="pt-1 border-t border-blue-500/10">
+            <div className="text-[9px] text-blue-300/60 font-bold uppercase tracking-wide mb-1">
+              Use this window to
+            </div>
+            <ul className="space-y-0.5">
+              {legal.workerActions.slice(0, 3).map((action, i) => (
+                <li key={i} className="flex items-start gap-1">
+                  <span className="text-blue-400/60 flex-shrink-0 mt-0.5">›</span>
+                  <span className="text-[8.5px] text-blue-200/65 leading-tight">{action}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
