@@ -62,6 +62,7 @@ import {
   formatSuccessRate,
   isMarketDataStale,
   marketDataAgeLabel,
+  resolveRegionalMarket,
   type CareerPathMarket,
 } from "@/services/careerPathMarket";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
@@ -517,6 +518,10 @@ export function buildDynamicActions(
     // The component-level useEffect below fetches the async (live Supabase) version
     // and stores it in liveMarketData — if available it overrides this result.
     const market = liveMarketData ?? getCareerPathMarketSync(topPath.role);
+    // Resolve region-specific market data — avoids surfacing India Naukri numbers to
+    // Philippines, UK, Singapore, etc. users. `region` is already derived above from
+    // result.region ?? result.companyRegion.
+    const resolvedMarket = market ? resolveRegionalMarket(market, region) : null;
     // v7.0: cityKey is now an explicit parameter — no localStorage reads inside this function.
     // The city key must be normalised (lowercase, underscores) before being passed here.
     let cityIntersectionText = '';
@@ -576,14 +581,25 @@ export function buildDynamicActions(
             ` City data unavailable for ${cityLabel} for ${topPath.role}. ` +
             `Search LinkedIn / local job boards for current openings and add a recognised city in Financial Context.`;
         }
-      } else if (market.topHiringCompaniesIndia.length > 0) {
-        // No city — name national employers and prompt the user to add their city.
-        // Never generic "explore the market" — always name specific companies.
-        const topNational = market.topHiringCompaniesIndia.slice(0, 3);
+      } else if (resolvedMarket && resolvedMarket.hiringCompanies.length > 0) {
+        // No city key — show region-specific employers (or global if no region data).
+        // resolveRegionalMarket() already chose topHiringCompaniesByRegion[region] first,
+        // then topHiringCompaniesGlobal — NEVER topHiringCompaniesIndia for non-India users.
+        const topEmployers = resolvedMarket.hiringCompanies.slice(0, 3);
+        const employerScope = resolvedMarket.isHiringCompaniesRegionSpecific
+          ? `in ${resolvedMarket.regionLabel}`
+          : 'globally';
         cityIntersectionText =
-          ` National employers hiring for ${topPath.role} in India: ` +
-          `${joinWithAnd(topNational)}. ` +
-          `Add your city in Financial Context to see which of these hire locally.`;
+          ` Employers hiring for ${topPath.role} ${employerScope}: ` +
+          `${joinWithAnd(topEmployers)}. ` +
+          `Add your city in Financial Context to see local opportunities.`;
+        // Append remote options when relevant (markets with limited local supply).
+        if (resolvedMarket.remoteOpenings && resolvedMarket.topHiringCompaniesRemote.length > 0) {
+          const remoteCount = resolvedMarket.remoteOpenings.toLocaleString();
+          const topRemote   = resolvedMarket.topHiringCompaniesRemote.slice(0, 2);
+          cityIntersectionText +=
+            ` Remote-eligible openings: ~${remoteCount} globally (${joinWithAnd(topRemote)}).`;
+        }
       }
     }
     // Compute data age and staleness for the market opening count.
@@ -592,11 +608,16 @@ export function buildDynamicActions(
     // so users do not make a career pivot decision on significantly out-of-date demand data.
     const stale     = market ? isMarketDataStale(market) : false;
     const ageLabel  = market ? marketDataAgeLabel(market) : '';
+    // Use resolved region count (e.g. Philippines 680 not India 12,000) with correct label.
+    const resolvedCount   = resolvedMarket?.count ?? market?.globalOpenings ?? 0;
+    const resolvedLabel   = resolvedMarket?.regionLabel ?? 'global';
+    const primarySource   = resolvedMarket?.source ?? 'global aggregate';
     const openingsDisplay = market
-      ? `${market.indiaOpenings.toLocaleString()} (${ageLabel})`
+      ? `${resolvedCount.toLocaleString()} (${ageLabel})`
       : '';
+    const verifySource = resolvedMarket?.suggestedSources?.[0] ?? 'LinkedIn';
     const stalenessCaveat = stale
-      ? ` Opening count is ${ageLabel} — verify current demand on LinkedIn/Naukri before committing to this transition.`
+      ? ` Opening count is ${ageLabel} — verify current demand on ${verifySource} before committing to this transition.`
       : '';
 
     // Provenance prefix: live Supabase data vs research estimate
@@ -610,9 +631,12 @@ export function buildDynamicActions(
     // someone with 3 months runway invites them to consider a pay cut they
     // cannot survive. The transition opportunity is still surfaced; the
     // risky salary context is suppressed.
+    const regionDataNote = resolvedMarket && !resolvedMarket.isRegionSpecific
+      ? ` (${resolvedLabel}-specific data unavailable — showing global estimate; verify on ${verifySource})`
+      : '';
     const suppressSalaryContext = isConservative && deltaLow < 0;
     const marketContext = market
-      ? ` ${provenancePrefix} Market reality: ${openingsDisplay} active openings in India (${formatDemandTrendLabel(market.demandTrend)}).${stalenessCaveat} Hiring bar: ${market.hiringBar} Success rate (12 months): ${formatSuccessRate(market.successRate12mPct)}.${suppressSalaryContext ? '' : ` Median salary delta: +${market.medianSalaryDeltaPct}%.`}${cityIntersectionText}`
+      ? ` ${provenancePrefix} Market reality: ${openingsDisplay} active openings in ${resolvedLabel}${regionDataNote} (${formatDemandTrendLabel(market.demandTrend)}).${stalenessCaveat} Hiring bar: ${market.hiringBar} Success rate (12 months): ${formatSuccessRate(market.successRate12mPct)}.${suppressSalaryContext ? '' : ` Median salary delta: +${market.medianSalaryDeltaPct}%.`}${cityIntersectionText}`
       : ` Key skill gap: ${topPath.skillGap}. Reach out to 2 people currently in this role on LinkedIn this week to verify market demand before investing.`;
     actions.push({
       id: `career-path-${topPath.role.replace(/\s/g, '-')}`,

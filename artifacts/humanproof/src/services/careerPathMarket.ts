@@ -56,6 +56,21 @@ export interface CareerPathMarket {
   topHiringCompaniesIndia: string[];
   /** Top 5 companies globally */
   topHiringCompaniesGlobal: string[];
+  /**
+   * Region-keyed company lists — resolved in preference to topHiringCompaniesIndia/Global
+   * for users in that specific region. Population is optional: only add when you have
+   * verified, region-specific employer data (not guesses).
+   */
+  topHiringCompaniesByRegion?: Partial<Record<RegionKey, string[]>>;
+  /**
+   * Estimated active openings accessible in a fully-remote capacity
+   * (OnlineJobs.ph, Upwork, LinkedIn remote, Remote.com, etc.).
+   * Highly relevant for markets where local openings are limited but English
+   * proficiency enables access to global remote roles (Philippines, India, LatAm).
+   */
+  remoteOpenings?: number;
+  /** Top companies hiring for this role in a fully-remote capacity */
+  topHiringCompaniesRemote?: string[];
   /** The actual bar — what hiring managers want to see (not "get a cert") */
   hiringBar: string;
   /** Typical hiring bar artifact — what you need to show */
@@ -214,6 +229,14 @@ const MARKET_DATA: Record<string, CareerPathMarket> = {
     globalOpenings: 72000,
     topHiringCompaniesIndia: ['Walmart Global Tech', 'Target India', 'Zomato', 'Paytm', 'MakeMyTrip'],
     topHiringCompaniesGlobal: ['Databricks', 'Snowflake', 'dbt Labs', 'Confluent', 'Palantir'],
+    topHiringCompaniesByRegion: {
+      philippines: ['Accenture PH', 'Concentrix Analytics', 'Globe Telecom', 'UnionBank', 'Lazada PH'],
+    },
+    topHiringCompaniesRemote: ['Deel', 'Toptal', 'Remote.com (engineering)', 'Shopify (remote)', 'Automattic'],
+    regionalOpenings: {
+      philippines: { count: 680, source: 'JobStreet PH', asOf: '2026-03-31' },
+    },
+    remoteOpenings: 2800,
     hiringBar: 'Production data pipeline — not a tutorial notebook. dbt transformations, Apache Spark or Kafka integration, orchestration (Airflow/Prefect), data quality monitoring. Candidates who can only do ETL scripting without pipeline orchestration are increasingly screened out.',
     proofOfCompetency: 'GitHub repo with a complete data pipeline: ingestion → transformation (dbt) → orchestration → monitoring. Or: dbt certification + a public dbt project with documented data model.',
     medianSalaryDeltaPct: 35,
@@ -366,6 +389,14 @@ const MARKET_DATA: Record<string, CareerPathMarket> = {
     globalOpenings: 52000,
     topHiringCompaniesIndia: ['Flipkart', 'Juspay', 'Razorpay', 'Pine Labs', 'BrowserStack'],
     topHiringCompaniesGlobal: ['BrowserStack', 'LambdaTest', 'Sauce Labs', 'Tricentis', 'Mabl'],
+    topHiringCompaniesByRegion: {
+      philippines: ['Accenture PH', 'Concentrix QA', 'Globe Telecom', 'Voyager Innovations', 'Maya Bank'],
+    },
+    topHiringCompaniesRemote: ['BrowserStack', 'LambdaTest', 'TestRail (Gurock)', 'Sauce Labs', 'Toptal (QA)'],
+    regionalOpenings: {
+      philippines: { count: 920, source: 'JobStreet PH', asOf: '2026-03-31' },
+    },
+    remoteOpenings: 3200,
     hiringBar: 'A working automation framework — Selenium/Playwright + API test suite + CI/CD integration. The AI differentiation is: AI-powered test generation (Copilot/TestPilot) + intelligent test selection. Manual testers who can only write test cases are being screened out at the JD level.',
     proofOfCompetency: 'GitHub repo with a complete automation framework: UI tests (Playwright) + API tests (Postman/REST-assured) + CI/CD pipeline + test report generation. Running against a public app or your own project.',
     medianSalaryDeltaPct: 40,
@@ -374,6 +405,84 @@ const MARKET_DATA: Record<string, CareerPathMarket> = {
     weeksToFirstInterview: 6,
     dataAsOf: '2025-12-31',
     dataSource: 'NASSCOM Testing Trends 2025, Stack Overflow Developer Survey 2024',
+  },
+
+  // ── BPO / PHILIPPINES-RELEVANT TRANSITIONS ────────────────────────────────
+  // Voice and non-voice BPO employs 1.3M in the Philippines. AI substitution
+  // for voice support (65%) and data entry (79%) is creating urgent demand for
+  // adjacent roles. These paths are documented for PH market reality specifically:
+  // remote compensation structures, local employer pools, and JobStreet PH counts.
+
+  'customer_success_manager': {
+    targetRole: 'Customer Success Manager',
+    indiaOpenings: 4500,
+    globalOpenings: 28000,
+    topHiringCompaniesIndia: ['Freshworks', 'Zoho', 'Razorpay', 'Chargebee', 'Juspay'],
+    topHiringCompaniesGlobal: ['HubSpot', 'Salesforce', 'Zendesk', 'Intercom', 'Gainsight'],
+    topHiringCompaniesByRegion: {
+      philippines: ['TaskUs', 'Accenture PH', 'Teleperformance PH', 'Sprout Solutions', 'Zendesk PH'],
+    },
+    topHiringCompaniesRemote: ['Help Scout', 'Front', 'Zapier', 'Loom', 'Notion'],
+    regionalOpenings: {
+      philippines: { count: 820, source: 'JobStreet PH', asOf: '2026-03-31' },
+    },
+    remoteOpenings: 3500,
+    hiringBar: 'Track record of reducing churn or growing expansion revenue. BPO-to-CSM transitions succeed when candidates quantify retention outcomes — CSAT improvement %, churn reduction %, upsell conversion rates. The transition fails when candidates position themselves as "customer service" rather than "revenue protection." Hiring managers screen for ownership of a book of accounts and a named outcome.',
+    proofOfCompetency: '2-page case study: BPO client situation, specific retention intervention (script change, escalation protocol, proactive outreach), outcome in measurable % terms. Or: a product knowledge certification from a SaaS vendor (Salesforce, HubSpot, Zendesk) demonstrating platform fluency.',
+    medianSalaryDeltaPct: 35,
+    successRate12mPct: 48,
+    demandTrend: 'growing',
+    weeksToFirstInterview: 8,
+    dataAsOf: '2026-03-31',
+    dataSource: 'LinkedIn Jobs Report 2025, JobStreet PH Salary Insights Q1 2026, Gainsight CSM Benchmark 2025',
+  },
+
+  'rpa_automation_analyst': {
+    targetRole: 'RPA Automation Analyst',
+    indiaOpenings: 3200,
+    globalOpenings: 19000,
+    topHiringCompaniesIndia: ['Infosys BPM', 'Wipro Robotic Automation', 'TCS BPS', 'HCL Technologies', 'EXL Service'],
+    topHiringCompaniesGlobal: ['UiPath', 'Blue Prism', 'Automation Anywhere', 'ServiceNow', 'SS&C Blue Prism'],
+    topHiringCompaniesByRegion: {
+      philippines: ['Accenture PH (RPA COE)', 'Concentrix PH', 'Globe Telecom', 'BDO Unibank', 'Metrobank'],
+    },
+    topHiringCompaniesRemote: ['UiPath (partner network)', 'Toptal (RPA)', 'Fiverr Pro (automation)', 'Freelancer.com', 'Remote.com'],
+    regionalOpenings: {
+      philippines: { count: 540, source: 'JobStreet PH', asOf: '2026-03-31' },
+    },
+    remoteOpenings: 1800,
+    hiringBar: 'A working RPA bot deployed against a real repetitive process — not a tutorial demo. UiPath or Automation Anywhere certification is baseline. The differentiator is a bot that handles exceptions, not just the happy path. BPO workers have a structural advantage: they own the process documentation that RPA bots automate. Document the process, then automate it — the documented process is proof of domain understanding.',
+    proofOfCompetency: 'UiPath or Automation Anywhere project on GitHub or published to UiPath Marketplace: an automation with exception handling, logging, and ROI calculation (hours saved per week). Pair with a UiPath Developer Foundation or Automation Anywhere Certified Advanced Professional certification.',
+    medianSalaryDeltaPct: 42,
+    successRate12mPct: 55,
+    demandTrend: 'surging',
+    weeksToFirstInterview: 6,
+    dataAsOf: '2026-03-31',
+    dataSource: 'Gartner RPA Market Guide 2025, JobStreet PH Automation Jobs Q1 2026, UiPath Talent Report 2025',
+  },
+
+  'cx_operations_analyst': {
+    targetRole: 'CX Operations Analyst',
+    indiaOpenings: 2100,
+    globalOpenings: 13000,
+    topHiringCompaniesIndia: ['Genpact Analytics', 'WNS Analytics', 'EXL Analytics', 'Mphasis', 'iGate (Capgemini)'],
+    topHiringCompaniesGlobal: ['Qualtrics', 'Medallia', 'NICE InContact', 'Talkdesk', 'Genesys'],
+    topHiringCompaniesByRegion: {
+      philippines: ['Accenture PH (CX Analytics)', 'TaskUs (Insights)', 'Teleperformance PH', 'Globe Telecom', 'UnionBank CX'],
+    },
+    topHiringCompaniesRemote: ['Qualtrics (remote)', 'HubSpot Service', 'Zendesk Analytics', 'Freshdesk', 'Intercom'],
+    regionalOpenings: {
+      philippines: { count: 460, source: 'JobStreet PH', asOf: '2026-03-31' },
+    },
+    remoteOpenings: 2200,
+    hiringBar: 'A CX analytics portfolio: CSAT/NPS/FCR trend analysis with root cause insight and a measurable improvement recommendation. SQL for querying support ticket data. Tableau or Looker for dashboards. The market differentiates "reporting" (output tables) from "insight" (actionable recommendation from the data). Candidates need at least one documented case of converting data into a team action — e.g., "redesigned IVR flow based on FCR analysis, reduced repeat calls 18%."',
+    proofOfCompetency: 'A Tableau or Power BI dashboard analyzing call center or support ticket data: volume trends, agent performance, CSAT drivers, with 2–3 documented improvement recommendations. Can be built on public datasets (Kaggle CX benchmark datasets). Include SQL queries used to prepare the data.',
+    medianSalaryDeltaPct: 28,
+    successRate12mPct: 58,
+    demandTrend: 'growing',
+    weeksToFirstInterview: 7,
+    dataAsOf: '2026-03-31',
+    dataSource: 'CCAP Philippines 2025 BPO Talent Report, JobStreet PH CX Analytics Q1 2026, Qualtrics XM Industry Benchmark 2025',
   },
 
   'technical_writer_ai': {
@@ -457,30 +566,43 @@ export function getCareerPathMarketSync(targetRole: string): CareerPathMarket | 
 export type RegionKey =
   | 'germany' | 'uk' | 'usa' | 'canada' | 'singapore' | 'australia'
   | 'uae' | 'saudi_arabia' | 'india' | 'france' | 'netherlands' | 'spain'
-  | 'sweden' | 'switzerland' | 'japan' | 'brazil' | 'mexico' | 'eu' | 'global';
+  | 'sweden' | 'switzerland' | 'japan' | 'brazil' | 'mexico'
+  | 'philippines' | 'indonesia' | 'vietnam' | 'malaysia' | 'thailand'
+  | 'south_korea' | 'taiwan' | 'hong_kong'
+  | 'eu' | 'global';
 
 /** Authoritative job-board sources per region. The LLM cites these by name
  *  in oneActionThisWeek so users know where to verify the count. */
 export const MARKET_DATA_SOURCES_BY_REGION: Record<RegionKey, string[]> = {
-  germany:     ['StepStone', 'XING', 'Bundesagentur für Arbeit', 'LinkedIn DE'],
-  uk:          ['Reed', 'CV-Library', 'Indeed UK', 'LinkedIn UK'],
-  usa:         ['Indeed', 'LinkedIn US', 'BLS', 'ZipRecruiter'],
-  canada:      ['Job Bank Canada', 'Indeed CA', 'LinkedIn CA', 'Workopolis'],
-  singapore:   ['JobStreet SG', 'MyCareersFuture', 'LinkedIn SG'],
-  australia:   ['SEEK', 'Indeed AU', 'LinkedIn AU'],
-  uae:         ['Bayt', 'Naukrigulf', 'GulfTalent', 'LinkedIn AE'],
-  saudi_arabia:['Bayt', 'GulfTalent', 'Naukrigulf', 'LinkedIn SA'],
-  india:       ['Naukri', 'LinkedIn IN', 'Foundit (Monster India)', 'Apna'],
-  france:      ['HelloWork', 'Pôle Emploi', 'APEC', 'LinkedIn FR'],
-  netherlands: ['NationaleVacaturebank', 'Werk.nl', 'LinkedIn NL'],
-  spain:       ['InfoJobs', 'Tecnoempleo', 'LinkedIn ES'],
-  sweden:      ['Arbetsförmedlingen', 'Monster SE', 'LinkedIn SE'],
-  switzerland: ['JobScout24', 'jobs.ch', 'LinkedIn CH'],
-  japan:       ['Doda', 'Rikunabi', 'LinkedIn JP'],
-  brazil:      ['Catho', 'Vagas.com', 'LinkedIn BR'],
-  mexico:      ['OCC Mundial', 'Computrabajo', 'LinkedIn MX'],
-  eu:          ['EURES (EU Job Mobility Portal)', 'LinkedIn EU'],
-  global:      ['LinkedIn (global)', 'Indeed (global)'],
+  germany:      ['StepStone', 'XING', 'Bundesagentur für Arbeit', 'LinkedIn DE'],
+  uk:           ['Reed', 'CV-Library', 'Indeed UK', 'LinkedIn UK'],
+  usa:          ['Indeed', 'LinkedIn US', 'BLS', 'ZipRecruiter'],
+  canada:       ['Job Bank Canada', 'Indeed CA', 'LinkedIn CA', 'Workopolis'],
+  singapore:    ['JobStreet SG', 'MyCareersFuture', 'LinkedIn SG'],
+  australia:    ['SEEK', 'Indeed AU', 'LinkedIn AU'],
+  uae:          ['Bayt', 'Naukrigulf', 'GulfTalent', 'LinkedIn AE'],
+  saudi_arabia: ['Bayt', 'GulfTalent', 'Naukrigulf', 'LinkedIn SA'],
+  india:        ['Naukri', 'LinkedIn IN', 'Foundit (Monster India)', 'Apna'],
+  france:       ['HelloWork', 'Pôle Emploi', 'APEC', 'LinkedIn FR'],
+  netherlands:  ['NationaleVacaturebank', 'Werk.nl', 'LinkedIn NL'],
+  spain:        ['InfoJobs', 'Tecnoempleo', 'LinkedIn ES'],
+  sweden:       ['Arbetsförmedlingen', 'Monster SE', 'LinkedIn SE'],
+  switzerland:  ['JobScout24', 'jobs.ch', 'LinkedIn CH'],
+  japan:        ['Doda', 'Rikunabi', 'LinkedIn JP'],
+  brazil:       ['Catho', 'Vagas.com', 'LinkedIn BR'],
+  mexico:       ['OCC Mundial', 'Computrabajo', 'LinkedIn MX'],
+  // ── Southeast Asia ─────────────────────────────────────────────────────────
+  philippines:  ['JobStreet PH', 'Kalibrr', 'LinkedIn PH', 'OnlineJobs.ph'],
+  indonesia:    ['JobStreet ID', 'Glints', 'Kalibrr ID', 'LinkedIn ID'],
+  vietnam:      ['VietnamWorks', 'TopCV', 'ITviec (tech)', 'LinkedIn VN'],
+  malaysia:     ['JobStreet MY', 'Hiredly', 'LinkedIn MY'],
+  thailand:     ['JobsDB TH', 'LinkedIn TH', 'Jobtopgun'],
+  // ── East Asia ───────────────────────────────────────────────────────────────
+  south_korea:  ['Saramin', 'JobKorea', 'LinkedIn KR'],
+  taiwan:       ['104 Job Bank', '1111 Job Bank', 'LinkedIn TW'],
+  hong_kong:    ['JobsDB HK', 'CTgoodjobs', 'LinkedIn HK'],
+  eu:           ['EURES (EU Job Mobility Portal)', 'LinkedIn EU'],
+  global:       ['LinkedIn (global)', 'Indeed (global)'],
 };
 
 /** Normalise company.region (ISO code or short name) to a regionKey. */
@@ -502,6 +624,19 @@ const REGION_KEY_MAP: Record<string, RegionKey> = {
   jp: 'japan', jpn: 'japan', japan: 'japan',
   br: 'brazil', bra: 'brazil', brazil: 'brazil',
   mx: 'mexico', mex: 'mexico', mexico: 'mexico',
+  // ── Southeast / East Asia ───────────────────────────────────────────────────
+  ph: 'philippines', phl: 'philippines', philippines: 'philippines',
+  manila: 'philippines', 'metro manila': 'philippines', makati: 'philippines',
+  bgc: 'philippines', 'bonifacio global city': 'philippines', taguig: 'philippines',
+  cebu: 'philippines', 'cebu city': 'philippines', davao: 'philippines',
+  quezon: 'philippines', 'quezon city': 'philippines', pasig: 'philippines',
+  id: 'indonesia', idn: 'indonesia', indonesia: 'indonesia', jakarta: 'indonesia',
+  vn: 'vietnam', vnm: 'vietnam', vietnam: 'vietnam', 'ho chi minh': 'vietnam', hanoi: 'vietnam',
+  my: 'malaysia', mys: 'malaysia', malaysia: 'malaysia', 'kuala lumpur': 'malaysia', kl: 'malaysia',
+  th: 'thailand', tha: 'thailand', thailand: 'thailand', bangkok: 'thailand',
+  kr: 'south_korea', kor: 'south_korea', 'south korea': 'south_korea', seoul: 'south_korea',
+  tw: 'taiwan', twn: 'taiwan', taiwan: 'taiwan', taipei: 'taiwan',
+  hk: 'hong_kong', hkg: 'hong_kong', 'hong kong': 'hong_kong',
   // EU bucket — anything else in the Eurozone defaults to 'eu'
   it: 'eu', ita: 'eu', italy: 'eu',
   be: 'eu', bel: 'eu', belgium: 'eu',
@@ -538,6 +673,14 @@ export function regionDisplayLabel(rk: RegionKey): string {
     case 'japan':        return 'Japan';
     case 'brazil':       return 'Brazil';
     case 'mexico':       return 'Mexico';
+    case 'philippines':  return 'Philippines';
+    case 'indonesia':    return 'Indonesia';
+    case 'vietnam':      return 'Vietnam';
+    case 'malaysia':     return 'Malaysia';
+    case 'thailand':     return 'Thailand';
+    case 'south_korea':  return 'South Korea';
+    case 'taiwan':       return 'Taiwan';
+    case 'hong_kong':    return 'Hong Kong';
     case 'eu':           return 'EU';
     case 'global':       return 'global';
   }
@@ -557,6 +700,23 @@ export interface ResolvedRegionalMarket {
    *  false when we fell back to globalOpenings — the LLM is then instructed
    *  to disclose "region-specific data unavailable for {regionLabel}". */
   isRegionSpecific: boolean;
+  /**
+   * Companies actively hiring in the resolved region. Comes from
+   * topHiringCompaniesByRegion[regionKey] when available; falls back to
+   * topHiringCompaniesGlobal. NEVER from topHiringCompaniesIndia for non-India
+   * users — that is the bug this field resolves.
+   */
+  hiringCompanies: string[];
+  /** true when hiringCompanies is region-specific (not the global fallback). */
+  isHiringCompaniesRegionSpecific: boolean;
+  /**
+   * Remote-eligible opening count when the resolved region has limited local
+   * supply but strong remote access (e.g. Philippines, LatAm markets).
+   * Null when not applicable or not populated.
+   */
+  remoteOpenings: number | null;
+  /** Top companies hiring for this role remotely — relevant for PH/LatAm users. */
+  topHiringCompaniesRemote: string[];
 }
 
 /**
@@ -578,6 +738,16 @@ export function resolveRegionalMarket(
   const regionLabel = regionDisplayLabel(regionKey);
   const suggestedSources = MARKET_DATA_SOURCES_BY_REGION[regionKey];
 
+  // ── Hiring companies: region-specific first, global fallback, NEVER India-only ──
+  const regionCompanies = market.topHiringCompaniesByRegion?.[regionKey];
+  const hiringCompanies = regionCompanies && regionCompanies.length > 0
+    ? regionCompanies
+    : market.topHiringCompaniesGlobal;
+  const isHiringCompaniesRegionSpecific = !!(regionCompanies && regionCompanies.length > 0);
+
+  const remoteOpenings = market.remoteOpenings ?? null;
+  const topHiringCompaniesRemote = market.topHiringCompaniesRemote ?? [];
+
   const regional = market.regionalOpenings?.[regionKey];
   if (regional && regional.count > 0) {
     return {
@@ -588,6 +758,10 @@ export function resolveRegionalMarket(
       suggestedSources,
       asOf:             regional.asOf ?? market.dataAsOf,
       isRegionSpecific: true,
+      hiringCompanies,
+      isHiringCompaniesRegionSpecific,
+      remoteOpenings,
+      topHiringCompaniesRemote,
     };
   }
 
@@ -601,6 +775,11 @@ export function resolveRegionalMarket(
       suggestedSources,
       asOf:             market.dataAsOf,
       isRegionSpecific: true,
+      // India uses the dedicated topHiringCompaniesIndia list (the intended use of that field).
+      hiringCompanies:  market.topHiringCompaniesByRegion?.india ?? market.topHiringCompaniesIndia,
+      isHiringCompaniesRegionSpecific: true,
+      remoteOpenings,
+      topHiringCompaniesRemote,
     };
   }
 
@@ -613,6 +792,10 @@ export function resolveRegionalMarket(
     suggestedSources,
     asOf:             market.dataAsOf,
     isRegionSpecific: false,
+    hiringCompanies,
+    isHiringCompaniesRegionSpecific,
+    remoteOpenings,
+    topHiringCompaniesRemote,
   };
 }
 
