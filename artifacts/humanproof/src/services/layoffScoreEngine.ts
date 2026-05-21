@@ -35,6 +35,7 @@ import {
   type IndiaRiskEnrichment,
 } from "./indiaSectorIntelligence";
 import { validateDataQuality, type DataQualityReport } from "./dataQualityValidator";
+import { computeD1CountryMultiplier } from "../data/aiEnterpriseDeploymentRates";
 import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate, type SignalDecayType } from "./signalDecayModel";
 import { evaluateFlagSync } from "../config/featureFlags";
 // WS9 — uncalibrated sector floors now routed through DB.
@@ -3814,7 +3815,24 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   const L2 = calculateLayoffHistoryScore(companyData, industryData, department, now);
 
   // L3: blend global role exposure (70%) with company-specific risk from Supabase (30%)
-  const globalL3 = calculateRoleExposureScore(roleTitle, department, inputs.roleExposureOverride);
+  //
+  // D1 COUNTRY MULTIPLIER BUG FIX: calculateD1() in riskFormula.ts has a country-aware
+  // multiplier, but calculateRoleExposureScore() here has NONE — every user globally was
+  // getting the USA D1 value. This applies the correct role-category × country enterprise
+  // AI deployment rate. Key differentials it encodes:
+  //   Germany QA (Betriebsrat approval required for code monitoring): 0.844 vs USA 0.906
+  //   Singapore QA (AISG program): 0.940 vs USA 0.906
+  //   India IT services QA (client-side governed by US clients): 0.881 vs India baseline 0.844
+  //   Japan QA (cautious enterprise adoption despite strong AI research): 0.867
+  const _isITServices = /IT Services|BPO|Outsourcing|consulting/i.test(companyData.industry ?? '');
+  const _d1CountryMod = computeD1CountryMultiplier(
+    companyData.region,
+    roleTitle,
+    _isITServices && companyData.region === 'IN',
+  );
+  const globalL3 = Math.min(0.98, Math.max(0.02,
+    calculateRoleExposureScore(roleTitle, department, inputs.roleExposureOverride) * _d1CountryMod.multiplier,
+  ));
   const companyRoleRisk = getCompanyRoleRisk(companyData, roleTitle);
 
   // [AUDIT FIX]: For the 97.5% of companies without a role_risk_map in the DB,

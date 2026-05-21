@@ -47,7 +47,7 @@ export const COUNTRY_RISK_PROFILES: Record<string, CountryRiskProfile> = {
 
   // ── Europe — Western ──────────────────────────────────────────
   uk:           { ...d5(0.82, 0.65, 0.50, 0.88), label: 'United Kingdom', note: 'Strong FinTech hub; high adoption in professional services' },
-  germany:      { ...d5(0.75, 0.40, 0.38, 0.85), label: 'Germany', note: 'Strong labour protection laws buffer displacement; export-led industrial strength' },
+  germany:      { ...d5(0.75, 0.40, 0.38, 0.85), label: 'Germany', note: 'Betriebsrat (BetrVG §87(1)6) must approve AI tools that monitor/evaluate employees — creates a structural gate for QA, HR, and performance-monitoring AI. Enterprise AI adoption is slower for monitored-role categories. Role-specific penalty applied in aiEnterpriseDeploymentRates.ts.' },
   france:       { ...d5(0.72, 0.35, 0.40, 0.78), label: 'France', note: 'Regulatory environment slows displacement vs USA' },
   netherlands:  { ...d5(0.80, 0.55, 0.45, 0.82), label: 'Netherlands' },
   belgium:      { ...d5(0.70, 0.45, 0.42, 0.72), label: 'Belgium' },
@@ -77,7 +77,7 @@ export const COUNTRY_RISK_PROFILES: Record<string, CountryRiskProfile> = {
 
   // ── Asia-Pacific ─────────────────────────────────────────────
   china:        { ...d5(0.85, 0.85, 0.30, 0.72), label: 'China', note: 'Mass state-led AI adoption; labour market highly dynamic' },
-  japan:        { ...d5(0.78, 0.38, 0.28, 0.80), label: 'Japan', note: 'Strong lifetime employment culture buffers displacement; aging workforce increasing automation pressure' },
+  japan:        { ...d5(0.68, 0.38, 0.28, 0.80), label: 'Japan', note: 'Lifetime employment culture = cautious enterprise AI tool adoption (0.68 vs 0.78 research output). Strong AI research does not translate to enterprise deployment speed. Seniority norms resist AI performance monitoring.' },
   south_korea:  { ...d5(0.82, 0.60, 0.35, 0.82), label: 'South Korea', note: 'Extremely high tech adoption; chaebols driving rapid AI deployment' },
   taiwan:       { ...d5(0.75, 0.55, 0.32, 0.80), label: 'Taiwan', note: 'Semiconductor leadership provides long-term job buffer' },
   singapore:    { ...d5(0.88, 0.70, 0.42, 0.92), label: 'Singapore', note: 'Highest AI readiness in Asia; government-funded reskilling programs' },
