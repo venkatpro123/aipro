@@ -508,7 +508,9 @@ function mapConsensusScoreToHybridResult(
     timing: shadowEngineResult.timing,
     probabilityForecast: shadowEngineResult.probabilityForecast,
     performanceTier: shadowEngineResult.performanceTier,
-    performanceCredibilityScore: shadowEngineResult.performanceCredibilityScore,
+    performanceCredibilityScore:          shadowEngineResult.performanceCredibilityScore,
+    performanceCredibilityRegionKey:      shadowEngineResult.performanceCredibilityRegionKey,
+    performanceCredibilityThresholdLabel: shadowEngineResult.performanceCredibilityThresholdLabel,
     indiaRiskEnrichment: shadowEngineResult.indiaRiskEnrichment,
   };
 }

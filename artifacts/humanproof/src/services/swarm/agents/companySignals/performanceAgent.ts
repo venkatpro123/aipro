@@ -13,7 +13,7 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
   // Apply credibility discount — same logic as the engine's L5 calculation.
   // Prevents the swarm from giving a 0.08 risk signal on a 'top' claim that
   // the engine has already discounted to 'average'.
-  const credibility = analyzePerformanceCredibility(input.userFactors);
+  const credibility = analyzePerformanceCredibility(input.userFactors, input.companyData.region);
   const tier        = credibility.effectiveTier;
   const discounted  = tier !== rawTier;
 

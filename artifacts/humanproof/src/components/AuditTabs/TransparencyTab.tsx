@@ -1979,6 +1979,21 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             const credPct = result.performanceCredibilityScore != null
               ? Math.round(result.performanceCredibilityScore * 100)
               : null;
+
+            // Region-adjusted threshold context for the disclosure line.
+            // Spec: "Region-adjusted credibility check: no role change in 5 years (India IT threshold)."
+            const regionKey       = (result as any).performanceCredibilityRegionKey as string | undefined;
+            const thresholdLabel  = (result as any).performanceCredibilityThresholdLabel as string | undefined;
+            const isRegionAdjusted = regionKey === 'india' || regionKey === 'germany';
+
+            // Human-readable threshold noun: India uses "role change" (band/grade shift counts),
+            // all other markets use "promotion".
+            const progressionNoun = regionKey === 'india' ? 'role change' : 'promotion';
+
+            // The noPromotionYearsThreshold isn't threaded to HybridResult directly, so we
+            // derive it from the region key for the disclosure label.
+            const thresholdYears = (regionKey === 'india' || regionKey === 'germany') ? 5 : 3;
+
             return (
               <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
                 <div className="flex gap-3">
@@ -1987,23 +2002,34 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                     <h4 className="font-semibold text-amber-300 text-sm mb-1.5">
                       Performance Credibility Analysis
                     </h4>
-                    {/* Spec-exact disclosure line */}
-                    <p className="text-sm font-semibold text-amber-200 mb-1.5">
-                      Reported: {reportedLabel}. Effective (after credibility analysis): {effectiveLabel}.
+
+                    {/* Spec line 1: reported vs effective */}
+                    <p className="text-sm font-semibold text-amber-200 mb-1">
+                      Performance tier: {reportedLabel} (reported). Effective tier: {effectiveLabel}.
                     </p>
+
+                    {/* Spec line 2: region-specific threshold disclosure */}
+                    {isRegionAdjusted && thresholdLabel && (
+                      <p className="text-xs font-medium text-amber-300/90 mb-1.5">
+                        Region-adjusted credibility check: no {progressionNoun} in {thresholdYears} years
+                        {' '}({thresholdLabel}).
+                      </p>
+                    )}
+
                     <p className="text-xs text-amber-200/75 leading-relaxed">
                       {credPct !== null && (
                         <>Credibility score: <span className="font-bold">{credPct}%</span>. </>
                       )}
-                      Objective signals — tenure without promotion, absence of key relationships, generic
-                      role profile — contradict the self-reported tier. The engine applied the effective
+                      Objective signals — tenure without {progressionNoun}, generic role profile —
+                      contradict the self-reported tier. The engine applied the effective
                       tier (<span className="font-bold">{effectiveLabel}</span>) to L5 scoring.
                     </p>
                     <p className="text-xs text-amber-200/60 mt-1.5 leading-relaxed">
-                      This is not punitive — it is accurate. A top performer who has had no promotion
-                      in several years is either in a specific circumstance (IC track, flat org) or
-                      is rating their performance optimistically. If your situation is the former,
-                      your actual risk is lower than shown.
+                      This is not punitive — it is accurate. A top performer who has had no {progressionNoun}{' '}
+                      in several years is either in a specific circumstance (IC track, flat org
+                      {regionKey === 'india' ? ', lateral rotation' : ''}) or is rating their
+                      performance optimistically. If your situation is the former, your actual
+                      risk is lower than shown.
                     </p>
                   </div>
                 </div>

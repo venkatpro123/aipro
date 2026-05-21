@@ -1250,7 +1250,9 @@ export const runFullEnsembleAnalysis = async (
     // ScoreResult fields required by EnsembleResult (inherited from engine)
     performanceTier:              engineResult.performanceTier,
     reportedPerformanceTier:      engineResult.reportedPerformanceTier,
-    performanceCredibilityScore:  engineResult.performanceCredibilityScore,
+    performanceCredibilityScore:          engineResult.performanceCredibilityScore,
+    performanceCredibilityRegionKey:      engineResult.performanceCredibilityRegionKey,
+    performanceCredibilityThresholdLabel: engineResult.performanceCredibilityThresholdLabel,
     // Deterministic historical pattern — set by matchHistoricalPattern(), not LLM.
     // null when no pattern in HISTORICAL_PATTERNS reaches the 70% overlap threshold.
     resolvedPattern:          deterministicPatternMatch?.pattern    ?? null,

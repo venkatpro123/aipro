@@ -1276,6 +1276,10 @@ export interface ScoreResult {
   /** Credibility score for the self-reported performance tier (0–1).
    *  1.0 = fully credible, <0.70 = discounted, present only when tier = 'top' or 'below'. */
   performanceCredibilityScore?: number;
+  /** Region key used to select the no-promotion threshold ('india' | 'germany' | 'us' | 'default'). */
+  performanceCredibilityRegionKey?: CredibilityRegionKey;
+  /** Human-readable label for the threshold applied, shown in TransparencyTab. */
+  performanceCredibilityThresholdLabel?: string;
   /**
    * India-specific sector intelligence — only present when companyData.region === 'IN'.
    * Contains GCC archetype, NASSCOM sector benchmarks, seasonal risk window,
@@ -2629,10 +2633,19 @@ const calculateConfidenceInterval = (
 // any one of these can be explained (late-stage company, flat org, IC track).
 // Together they suggest the self-report is optimistic rather than calibrated.
 //
+// Region-specific thresholds (CREDIBILITY_REGION_THRESHOLDS below):
+//   - India IT:  5 yr threshold — role change (band/grade shift) substitutes
+//                for title promotion; penalising at 3yr would misfires on
+//                lateral moves common in IT services.
+//   - Germany:   5 yr threshold — Betriebsrat-negotiated wage scales mean
+//                formal title promotions are slower than US orgs by design.
+//   - US:        3 yr threshold — standard performance cycle.
+//   - Default:   3 yr threshold — conservative global baseline.
+//
 // Credibility scoring ('top' tier only):
-//   - No promotion in 5+ yr as 'top':   -0.55  (strongest signal)
-//   - No promotion in 3–4 yr as 'top':  -0.35  (moderate)
-//   - Generic uniqueness as 'top':      -0.12  (mild corroborating signal)
+//   - No promotion in (threshold+2)+ yr as 'top': -0.55  (strongest signal)
+//   - No promotion in threshold–(threshold+1) yr:  -0.35  (moderate)
+//   - Generic uniqueness as 'top':                 -0.12  (mild corroborating)
 //
 // Key relationships is a D4 PROTECTION signal — its absence does NOT reduce
 // credibility. A worker without vendor/cross-dept relationships is simply less
@@ -2650,6 +2663,42 @@ const calculateConfidenceInterval = (
 //   - 5+ yr tenure + key relationships + 'below': → credibility 0.70 (anxiety-driven)
 // This prevents over-pessimistic self-reports from inflating L5 risk scores.
 
+/** Region-specific credibility thresholds for the no-promotion penalty.
+ *
+ *  noPromotionYears: tenure without promotion at which the MODERATE penalty fires (-0.35).
+ *                    Strong penalty (-0.55) fires at noPromotionYears + 2.
+ *  label:            Human-readable disclosure for the TransparencyTab.
+ *
+ *  Rationale for non-US markets:
+ *    india  — IT services progression is band/grade-based (role change substitutes
+ *              for title promotion). Penalising at 3yr would misfire on lateral moves.
+ *    germany — Betriebsrat-negotiated wage scales make formal title promotions slower;
+ *              tenure-based seniority is the norm across most German orgs.
+ */
+export const CREDIBILITY_REGION_THRESHOLDS = {
+  india: {
+    noPromotionYears: 5,
+    seniorityWeight:  0.45,
+    label: 'India IT threshold (5 years — role change counts)',
+  },
+  germany: {
+    noPromotionYears: 5,
+    tenureWeight:     0.60,
+    label: 'Germany threshold (5 years — Betriebsrat wage scales)',
+  },
+  us: {
+    noPromotionYears: 3,
+    networkWeight:    0.55,
+    label: 'US standard threshold (3 years)',
+  },
+  default: {
+    noPromotionYears: 3,
+    label: 'Global default threshold (3 years)',
+  },
+} as const;
+
+export type CredibilityRegionKey = keyof typeof CREDIBILITY_REGION_THRESHOLDS;
+
 export interface PerformanceCredibility {
   /** The user's original self-reported tier — preserved so callers can show
    *  "Reported: Top performer. Effective: Moderate." in the UI. */
@@ -2658,10 +2707,29 @@ export interface PerformanceCredibility {
   effectiveTier:    UserFactors['performanceTier'];
   credibilityScore: number;   // 0–1
   contradictions:   Array<{ signal1: string; signal2: string; severity: string }>;
+  /** Which region threshold was applied to the no-promotion penalty. */
+  regionKey: CredibilityRegionKey;
+  /** Human-readable label surfaced in TransparencyTab credibility disclosure. */
+  regionThresholdLabel: string;
+  /** The noPromotionYears threshold that was applied (moderate penalty fires here). */
+  noPromotionYearsThreshold: number;
+}
+
+/** Resolve which credibility region applies.
+ *  India: region='IN', any industry (IT services norm is sector-wide in India).
+ *  Germany: region='DE'.
+ *  US: region='US'.
+ *  Default: all other regions. */
+function resolveCredibilityRegion(region?: string): CredibilityRegionKey {
+  if (region === 'IN') return 'india';
+  if (region === 'DE') return 'germany';
+  if (region === 'US') return 'us';
+  return 'default';
 }
 
 export const analyzePerformanceCredibility = (
   userFactors: UserFactors,
+  region?: string,
 ): PerformanceCredibility => {
   const {
     performanceTier,
@@ -2670,6 +2738,18 @@ export const analyzePerformanceCredibility = (
     hasKeyRelationships,
     uniquenessDepth,
   } = userFactors;
+
+  const regionKey            = resolveCredibilityRegion(region);
+  const threshold            = CREDIBILITY_REGION_THRESHOLDS[regionKey];
+  const moderateThreshold    = threshold.noPromotionYears;       // e.g. 5 for India/DE, 3 for US
+  const strongThreshold      = threshold.noPromotionYears + 2;   // e.g. 7 for India/DE, 5 for US
+  const regionThresholdLabel = threshold.label;
+
+  const baseResult = {
+    regionKey,
+    regionThresholdLabel,
+    noPromotionYearsThreshold: moderateThreshold,
+  };
 
   if (performanceTier !== 'top') {
     // Symmetric credibility check: challenge over-pessimistic 'below' self-reports.
@@ -2684,7 +2764,7 @@ export const analyzePerformanceCredibility = (
           signal2: 'Recent promotion — objective signal contradicts self-report',
           severity: 'High',
         });
-        return { reportedTier: performanceTier, effectiveTier: 'average', credibilityScore: 0.65, contradictions: belowContradictions };
+        return { ...baseResult, reportedTier: performanceTier, effectiveTier: 'average', credibilityScore: 0.65, contradictions: belowContradictions };
       }
 
       // Long tenure + key relationships suggests anxiety-driven under-reporting
@@ -2694,28 +2774,31 @@ export const analyzePerformanceCredibility = (
           signal2: '5+ years tenure and key relationships — possible anxiety-driven under-reporting',
           severity: 'Medium',
         });
-        return { reportedTier: performanceTier, effectiveTier: 'below', credibilityScore: 0.70, contradictions: belowContradictions };
+        return { ...baseResult, reportedTier: performanceTier, effectiveTier: 'below', credibilityScore: 0.70, contradictions: belowContradictions };
       }
     }
-    return { reportedTier: performanceTier, effectiveTier: performanceTier, credibilityScore: 1.0, contradictions: [] };
+    return { ...baseResult, reportedTier: performanceTier, effectiveTier: performanceTier, credibilityScore: 1.0, contradictions: [] };
   }
 
   const contradictions: Array<{ signal1: string; signal2: string; severity: string }> = [];
   let penalty = 0;
 
   if (!hasRecentPromotion) {
-    if (tenureYears >= 5) {
+    const regionNote = regionKey !== 'us' && regionKey !== 'default'
+      ? ` (${regionThresholdLabel})`
+      : '';
+    if (tenureYears >= strongThreshold) {
       penalty += 0.55;
       contradictions.push({
         signal1: `Self-reported top performer`,
-        signal2: `No promotion in ${tenureYears} years — top performers in most orgs advance within 2–3 years`,
+        signal2: `No promotion in ${tenureYears} years — top performers in most orgs advance within ${moderateThreshold}–${moderateThreshold + 1} years${regionNote}`,
         severity: 'High',
       });
-    } else if (tenureYears >= 3) {
+    } else if (tenureYears >= moderateThreshold) {
       penalty += 0.35;
       contradictions.push({
         signal1: `Self-reported top performer`,
-        signal2: `No promotion in ${tenureYears} years — review cycle timing may explain this, but warrants scrutiny`,
+        signal2: `No promotion in ${tenureYears} years${regionNote} — review cycle timing may explain this, but warrants scrutiny`,
         severity: 'Medium',
       });
     }
@@ -2736,7 +2819,7 @@ export const analyzePerformanceCredibility = (
     credibilityScore >= 0.40 ? 'average' :
     'unknown';
 
-  return { reportedTier: performanceTier, effectiveTier, credibilityScore, contradictions };
+  return { ...baseResult, reportedTier: performanceTier, effectiveTier, credibilityScore, contradictions };
 };
 
 // ─── Signal Quality Analysis ───────────────────────────────────────────────────
@@ -3868,7 +3951,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // and a generic role receives a discounted effective tier so the claim doesn't silently
   // halve their L5 risk contribution. The original tier and the discrepancies are both
   // preserved in signalQuality so users can see exactly what was adjusted and why.
-  const performanceCredibility = analyzePerformanceCredibility(userFactors);
+  const performanceCredibility = analyzePerformanceCredibility(userFactors, companyData.region);
   const effectiveUserFactors   = performanceCredibility.effectiveTier !== userFactors.performanceTier
     ? { ...userFactors, performanceTier: performanceCredibility.effectiveTier }
     : userFactors;
@@ -4372,6 +4455,8 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     performanceCredibilityScore:   (userFactors.performanceTier === 'top' || userFactors.performanceTier === 'below')
       ? performanceCredibility.credibilityScore
       : undefined,
+    performanceCredibilityRegionKey:      performanceCredibility.regionKey,
+    performanceCredibilityThresholdLabel: performanceCredibility.regionThresholdLabel,
     recommendations: generateRecommendations(
       breakdown,
       companyData,

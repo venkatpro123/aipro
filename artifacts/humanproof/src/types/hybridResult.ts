@@ -437,6 +437,10 @@ export interface HybridResult {
   reportedPerformanceTier?: 'top' | 'average' | 'below' | 'unknown';
   /** 0–1 credibility score for the self-reported 'top' tier. Absent for other tiers. */
   performanceCredibilityScore?: number;
+  /** Region key used to select the no-promotion penalty threshold. */
+  performanceCredibilityRegionKey?: 'india' | 'germany' | 'us' | 'default';
+  /** Human-readable label shown in TransparencyTab, e.g. "India IT threshold (5 years)". */
+  performanceCredibilityThresholdLabel?: string;
 
   // ── India Sector Intelligence (v8.0) ───────────────────────────────────────
   /**

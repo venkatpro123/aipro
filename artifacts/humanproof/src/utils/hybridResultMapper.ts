@@ -133,7 +133,9 @@ export function mapToHybridResult(
     confidenceNote: isEnsemble(result) ? (result as any).confidenceNote : undefined,
     performanceTier:             isEnsemble(result) ? undefined : (result as ScoreResult).performanceTier,
     reportedPerformanceTier:     isEnsemble(result) ? undefined : (result as ScoreResult).reportedPerformanceTier,
-    performanceCredibilityScore: isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityScore,
+    performanceCredibilityScore:          isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityScore,
+    performanceCredibilityRegionKey:      isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityRegionKey,
+    performanceCredibilityThresholdLabel: isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityThresholdLabel,
     meta: {
       usedLiveSignals: (trueLiveSignals ?? result.signalQuality.liveSignals ?? 0) > 0,
       liveSignalCount: trueLiveSignals ?? result.signalQuality.liveSignals ?? 0,
