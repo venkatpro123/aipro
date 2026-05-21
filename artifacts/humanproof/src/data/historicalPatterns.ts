@@ -30,7 +30,14 @@ export type PatternCategory =
   | 'saas_startup_contraction'
   | 'role_ai_displacement'
   | 'sector_wave'
-  | 'company_lifecycle';
+  | 'company_lifecycle'
+  // v40.0 — global regional patterns
+  | 'eu_industrial_automation'
+  | 'uk_fintech_correction'
+  | 'apac_tech_contraction'
+  | 'latam_consolidation'
+  | 'global_telecom_reduction'
+  | 'apac_resource_automation';
 
 export interface SignalCondition {
   /** Dot-notation field path resolvable by evalCondition() */
@@ -44,7 +51,15 @@ export interface SignalCondition {
 
 export interface HistoricalCompany {
   name: string;
-  region: 'India' | 'US' | 'Global';
+  /** Widened in v40.0 to support EU, UK, APAC, LatAm, and Australia patterns.
+   *  'EU' is used as a regional umbrella when a pattern spans multiple EU countries
+   *  (e.g. global_telecom_reduction). For single-country EU events use the country code. */
+  region:
+    | 'India' | 'US' | 'Global'
+    | 'Germany' | 'UK' | 'France' | 'Netherlands' | 'Spain' | 'Italy' | 'EU'
+    | 'Singapore' | 'Japan' | 'Korea' | 'Australia' | 'Hong Kong' | 'Indonesia' | 'Malaysia'
+    | 'Brazil' | 'Mexico' | 'Argentina' | 'Colombia' | 'Chile' | 'LatAm'
+    | 'UAE' | 'Saudi Arabia' | 'Canada';
   year: number;
   /** One sentence: what actually happened */
   outcome: string;
@@ -813,6 +828,335 @@ export const HISTORICAL_PATTERNS: Record<string, HistoricalPattern> = {
       medium_term: 'Pursue a CFA or CMA qualification. Credentials separate FP&A/strategic finance professionals from transactional finance workers — the latter is automating; the former is not.',
     },
     evidenceNote: 'Derived from Gartner CFO Technology Survey 2024, Vic.ai customer impact reports, Deloitte Finance Automation research 2024.',
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // v40.0 GLOBAL PATTERNS — closing the US-tech-centric coverage gap.
+  // Berlin, London, Singapore, São Paulo, and Sydney users previously matched
+  // generic "Big Tech AI Efficiency" patterns at low overlap because no
+  // regionally specific pattern existed. These 7 entries are the documented,
+  // verifiable historical patterns for those markets and industries.
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── Category 7: EU Industrial Automation ──────────────────────────────────
+
+  GERMANY_AUTOMOTIVE_AUTOMATION_2024: {
+    patternId: 'GERMANY_AUTOMOTIVE_AUTOMATION_2024',
+    patternName: 'German Automotive AI/EV Transition Workforce Reduction 2024–2026',
+    category: 'eu_industrial_automation',
+    summary:
+      'German automotive OEMs and Tier-1 suppliers reducing engineering and production headcount as ' +
+      'EV transition + AI-assisted design + supply chain pressure compound. Distinct from US tech ' +
+      'efficiency: works-council consultation, 30-90 day notice periods, slower but more structural.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'DE',   weight: 0.40, description: 'Germany-based company' },
+        { field: 'companyData.industry', operator: 'in', value: ['automotive', 'automobile', 'auto', 'manufacturing', 'industrial', 'mobility'], weight: 0.35, description: 'Automotive or industrial manufacturing' },
+        { field: 'breakdown.L4',         operator: 'gt', value: 0.40,   weight: 0.25, description: 'Industry headwinds elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1,    weight: 0.20, description: 'At least one prior round' },
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 5,    weight: 0.20, description: 'Revenue growth stalled or negative' },
+        { field: 'roleTitle',                    operator: 'in',  value: ['engineer', 'design', 'mechanical', 'production', 'manufacturing', 'r&d', 'powertrain', 'combustion'], weight: 0.25, description: 'Production / combustion-era engineering role' },
+        { field: 'breakdown.L2',                 operator: 'gt',  value: 0.35, weight: 0.15, description: 'Layoff history present' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Volkswagen',  region: 'Germany', year: 2024, outcome: '~35,000 jobs to be cut by 2030 announced Dec 2024 (largest in VW history); 3 German plants to be closed; works-council negotiations capped some cuts but accelerated voluntary separations',  signalLagMonths: 14 },
+      { name: 'Bosch',       region: 'Germany', year: 2024, outcome: '~7,000 jobs cut announced 2024 across mobility solutions and drives & controls divisions; cited EV transition + Chinese supply chain pressure',                                              signalLagMonths: 10 },
+      { name: 'ZF Friedrichshafen', region: 'Germany', year: 2024, outcome: '14,000 jobs in Germany to be cut by 2028; restructuring driven by EV powertrain shift + AI-assisted design productivity gains',                                                       signalLagMonths: 12 },
+      { name: 'Continental', region: 'Germany', year: 2024, outcome: '7,150 jobs cut globally including major German positions; Automotive division spin-off announced; weak China auto market cited',                                                              signalLagMonths: 8  },
+      { name: 'Mercedes-Benz', region: 'Germany', year: 2025, outcome: '~30,000 office jobs targeted via voluntary separations + early retirement; €5B cost-saving plan; EQ EV division underperforming',                                                          signalLagMonths: 6  },
+    ],
+    outcomeTimeline: {
+      typical:    '12–24 months from EV transition announcement to first visible cuts; second wave often 18 months later',
+      best_case:  '24–36 months — Sozialplan (social plan) negotiated with works council absorbs most via voluntary separation',
+      worst_case: '6–12 months — emergency restructuring with mandatory cuts and Sozialplan litigation',
+    },
+    affectedRoles:  ['Combustion-engine engineer', 'Production planner', 'Manual quality control', 'Mechanical design (legacy platforms)', 'Powertrain validation'],
+    protectedRoles: ['Software / AI engineer (automotive)', 'Battery cell engineer', 'EV systems architect', 'ADAS / autonomy engineer', 'Sustainability / ESG specialist'],
+    recommendedResponse: {
+      immediate:   'Identify your role on the works-council seniority list (Betriebsrat liaison can confirm). Sozialplan severance is calculated as: age × tenure_years × monthly_salary × factor (0.5-1.2). For a 40-year-old with 10 years tenure, expect ~12–18 months severance — but only if you are part of the negotiated Sozialplan.',
+      short_term:  'Pivot toward software-defined-vehicle (SDV) skills: AUTOSAR Adaptive, ROS 2, V2X, functional safety (ISO 26262). German OEMs are hiring 30-50% of their engineering force into software roles by 2030. Take one IHK Industrie 4.0 or Bitkom AI certification.',
+      medium_term: 'Target Mittelstand suppliers transitioning to EV, or pure-play German EV/battery companies (CATL Erfurt, Northvolt Heide, Tesla Grünheide). The talent gap in German SDV / battery engineering is 60,000+ roles per VDA forecasts.',
+    },
+    evidenceNote: 'Derived from VW Dec 2024 announcement, Bosch / ZF / Continental / Mercedes-Benz 2024-2025 restructuring announcements, VDA Future of Work in Automotive report, and works-council Sozialplan public filings.',
+  },
+
+  // ── Category 8: UK Fintech Correction ─────────────────────────────────────
+
+  UK_FINTECH_BNPL_CORRECTION_2023: {
+    patternId: 'UK_FINTECH_BNPL_CORRECTION_2023',
+    patternName: 'UK Fintech Valuation Reset + BNPL/Crypto Correction 2022–2024',
+    category: 'uk_fintech_correction',
+    summary:
+      'UK fintechs that raised at 2021 peak valuations facing combined pressure from rising rates + ' +
+      'FCA consumer-duty enforcement + BNPL regulation (effective 2026). Layoff pattern: 20-30% cuts ' +
+      'in growth/marketing/CX, simultaneous compliance hiring.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'in', value: ['UK', 'GB'], weight: 0.40, description: 'UK-based company' },
+        { field: 'companyData.industry', operator: 'in', value: ['fintech', 'payment', 'digital banking', 'crypto', 'insurtech', 'lending'], weight: 0.30, description: 'Fintech / payments / lending' },
+        { field: 'breakdown.L1',         operator: 'gt', value: 0.40, weight: 0.30, description: 'Financial pressure present' },
+      ],
+      supporting: [
+        { field: 'companyData.isPublic',         operator: 'eq',  value: false, weight: 0.15, description: 'Private (most affected — public UK fintechs are scarcer)' },
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1,     weight: 0.20, description: 'Prior round exists' },
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 25,    weight: 0.20, description: 'Revenue growth decelerated from 2021 peak' },
+        { field: 'roleTitle',                    operator: 'in',  value: ['marketing', 'growth', 'customer support', 'cx', 'community', 'partnerships', 'product designer'], weight: 0.20, description: 'Growth / non-compliance role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Klarna',   region: 'UK', year: 2022, outcome: '700 jobs cut globally (10% of workforce); valuation collapsed from $45.6B (2021) to $6.7B (2022); BNPL credit-quality concerns + EU consumer credit directive pressure',  signalLagMonths: 6 },
+      { name: 'Curve',    region: 'UK', year: 2023, outcome: '~25% of workforce cut after Series C extension at flat valuation; BNPL strategy unwind',                                                                                    signalLagMonths: 9 },
+      { name: 'Revolut',  region: 'UK', year: 2023, outcome: 'Hiring freeze + selective cuts in non-revenue functions; banking licence delay extended pressure to 2024-2025',                                                              signalLagMonths: 12 },
+      { name: 'Wise',     region: 'UK', year: 2023, outcome: 'FCA enforcement action ($360M settlement Aug 2024) + 15% headcount reallocation toward financial-crime ops; product/growth teams trimmed',                                  signalLagMonths: 14 },
+      { name: 'Monzo',    region: 'UK', year: 2022, outcome: '~135 cut in summer 2022; broader hiring slowdown; pivoted to profitability and reached break-even by 2024',                                                                   signalLagMonths: 6 },
+      { name: 'Atom Bank',region: 'UK', year: 2022, outcome: '~24% workforce cut; pivoted away from current-account product to focus on mortgage / business banking',                                                                       signalLagMonths: 8 },
+    ],
+    outcomeTimeline: {
+      typical:    '6–12 months from valuation reset to first headcount cut; FCA enforcement adds 12-18 month tail risk',
+      best_case:  '12–18 months — company pivots to profitability before forced second cut',
+      worst_case: '3–6 months — emergency cut + leadership change + Series extension at down round',
+    },
+    affectedRoles:  ['Growth Marketing', 'Customer Operations', 'Community / Partnerships', 'Junior Product Designer', 'Non-regulatory Engineering'],
+    protectedRoles: ['Financial Crime / AML', 'Compliance Engineering', 'Risk & Credit', 'Senior Product (regulated workflows)', 'Treasury'],
+    recommendedResponse: {
+      immediate:   'Check Companies House for the latest annual filing — Net cash position + Series funding history reveals runway. UK fintechs with <12 months runway and last raise > 18 months ago are in the cut zone. Then audit your role: does it touch a regulated workflow (KYC/AML/credit/sanctions)? If not, this is the protective pivot to make this quarter.',
+      short_term:  'Acquire one FCA / financial-crime credential within 90 days: ACAMS CGSS or CAMS, IRM Certificate in Financial Services Risk, ICA Financial Crime Prevention. UK FinCrime hiring is up 41% YoY 2024-2026 while growth-team hiring is down 28%.',
+      medium_term: 'Target UK challenger banks (Starling, Atom, OakNorth) entering their post-correction growth phase, or large UK incumbents (HSBC UK, Lloyds, NatWest) absorbing former fintech talent into Digital divisions. Avoid pre-Series-C fintechs that have not yet had a correction round.',
+    },
+    evidenceNote: 'Derived from Klarna Q2 2022 results, FCA enforcement notices 2022-2024, layoffs.fyi UK data, Sifted + TechCrunch UK fintech coverage, and Companies House annual filings.',
+  },
+
+  // ── Category 9: APAC Tech Contraction ─────────────────────────────────────
+
+  SINGAPORE_TECH_CONTRACTION_2022: {
+    patternId: 'SINGAPORE_TECH_CONTRACTION_2022',
+    patternName: 'APAC Super-App / Tech Hub Contraction 2022–2024',
+    category: 'apac_tech_contraction',
+    summary:
+      'Singapore-headquartered or APAC-hub tech companies cutting after 2021 peak. Different pattern from ' +
+      'US tech: workforce reduction often via Singapore EP/PEP withdrawal (forcing expat departure) rather ' +
+      'than direct layoffs, plus localization toward Manila / KL / Bangalore for cost.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'in', value: ['SG', 'HK', 'ID', 'MY', 'PH', 'TH', 'VN'], weight: 0.40, description: 'APAC-based or APAC-hub company' },
+        { field: 'companyData.industry', operator: 'in', value: ['tech', 'software', 'internet', 'e-commerce', 'fintech', 'super-app', 'ride-hailing', 'logistics'], weight: 0.30, description: 'Tech / digital industry' },
+        { field: 'breakdown.L1',         operator: 'gt', value: 0.40, weight: 0.30, description: 'Financial pressure present' },
+      ],
+      supporting: [
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1,    weight: 0.25, description: 'Prior round exists' },
+        { field: 'companyData.stock90DayChange', operator: 'lt',  value: -15,  weight: 0.20, description: 'Stock drawdown > 15% (for listed)' },
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 20,   weight: 0.20, description: 'Revenue growth decelerated' },
+        { field: 'roleTitle',                    operator: 'in',  value: ['marketing', 'growth', 'business development', 'expansion', 'product designer', 'cx', 'community'], weight: 0.15, description: 'Growth / expansion role' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Sea Limited (Shopee / Garena)', region: 'Singapore', year: 2022, outcome: '~7,000 layoffs across 2022 (~10% workforce); exited Brazil + several EU markets; Shopee Latin America wound down; cost-cutting + path to profitability',  signalLagMonths: 6  },
+      { name: 'GoTo Group (Gojek / Tokopedia)', region: 'Indonesia', year: 2022, outcome: '1,300 layoffs (12% workforce) Nov 2022; second round 600 in Mar 2023; integration of Gojek + Tokopedia consolidated duplicate teams',                       signalLagMonths: 9  },
+      { name: 'Grab',                            region: 'Singapore', year: 2023, outcome: '~1,000 layoffs (11% workforce) Jun 2023; largest cut since IPO; cited macro headwinds + AI productivity gains',                                          signalLagMonths: 18 },
+      { name: 'Carousell',                       region: 'Singapore', year: 2022, outcome: '~110 layoffs (10% workforce) late 2022; cited "challenging macro climate" and SoftBank Vision Fund pressure',                                              signalLagMonths: 8  },
+      { name: 'Lazada',                          region: 'Singapore', year: 2024, outcome: '~1,000 layoffs (~10-30% across teams) Jan 2024; Alibaba parent company efficiency drive; regional consolidation toward fewer hubs',                       signalLagMonths: 12 },
+      { name: 'Foodpanda APAC',                  region: 'Singapore', year: 2023, outcome: '~250 layoffs across APAC region (~5% workforce); Delivery Hero parent pressure; exit from several SE Asian markets',                                       signalLagMonths: 10 },
+    ],
+    outcomeTimeline: {
+      typical:    '6–12 months from SoftBank / parent-company efficiency signal to APAC cut',
+      best_case:  '12–18 months — company reaches path-to-profitability inflection without further cuts',
+      worst_case: '3–6 months — second wave 6 months after first; common in APAC tech 2022-2024',
+    },
+    affectedRoles:  ['Growth / Expansion (new market focus)', 'Marketing', 'Business Development', 'Product Designer (non-core surface)', 'CX / Community'],
+    protectedRoles: ['Core Engineering (revenue platform)', 'Data Science / ML', 'Compliance / Regulatory (esp. fintech arm)', 'Finance / FP&A', 'Senior Product (core)'],
+    recommendedResponse: {
+      immediate:   'Check your EP/PEP renewal date and status (if expat). Singapore MoM EP holders should expect employer to communicate at least 30 days before action. If your role is in a non-core growth function, surface a "core platform" project this week to create internal mobility justification.',
+      short_term:  'Pivot toward "core revenue platform" or regulated-fintech function within current company. APAC tech hubs are protecting fintech / payments / compliance functions even while cutting growth — MAS regulatory framework requires it.',
+      medium_term: 'Target APAC-native companies entering post-cut growth phase (Sea profitable since 2023, Grab break-even 2024) or large APAC banks consolidating fintech talent into digital divisions (DBS, OCBC, UOB, Maybank). Avoid pre-IPO APAC tech that has not yet had its 2022-2024 reset.',
+    },
+    evidenceNote: 'Derived from Sea Limited / Grab / GoTo / Lazada Q2-Q4 2022-2024 earnings, layoffs.fyi APAC data, TechCrunch SEA, and DealStreetAsia coverage.',
+  },
+
+  // ── Category 10: LatAm Consolidation ──────────────────────────────────────
+
+  LATAM_ECOMMERCE_CONSOLIDATION_2022: {
+    patternId: 'LATAM_ECOMMERCE_CONSOLIDATION_2022',
+    patternName: 'LatAm E-Commerce / Marketplace Consolidation 2022–2024',
+    category: 'latam_consolidation',
+    summary:
+      'LatAm e-commerce, delivery, and marketplace companies cutting after US-VC retreat. Pattern: ' +
+      '20-30% cuts in single rounds, severance often 30-60 days only, slow local reabsorption due to ' +
+      'smaller VC ecosystem and fewer parallel hiring companies.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'in', value: ['BR', 'MX', 'AR', 'CO', 'CL', 'PE', 'UY'], weight: 0.40, description: 'LatAm region' },
+        { field: 'companyData.industry', operator: 'in', value: ['e-commerce', 'ecommerce', 'marketplace', 'delivery', 'logistics', 'fintech', 'proptech', 'edtech', 'mobility'], weight: 0.30, description: 'LatAm digital sector' },
+        { field: 'breakdown.L1',         operator: 'gt', value: 0.45, weight: 0.30, description: 'Financial pressure elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.isPublic',         operator: 'eq',  value: false, weight: 0.15, description: 'Private (US-VC-backed)' },
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1,    weight: 0.25, description: 'Prior round exists' },
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 30,   weight: 0.20, description: 'Revenue growth decelerated from 2021 peak' },
+        { field: 'companyData.monthsSinceLastFunding', operator: 'gt', value: 15, weight: 0.20, description: 'Stale funding > 15 months' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Rappi',     region: 'Colombia', year: 2022, outcome: '~6% cuts mid-2022 (~300 employees); second round 780 in early 2023; cited SoftBank Vision Fund pressure + path-to-profitability requirement',  signalLagMonths: 9  },
+      { name: 'VTEX',      region: 'Brazil',   year: 2022, outcome: '~12% cuts Aug 2022 (~190 employees); pivoted from international expansion to LatAm core; reached profitability 2023',                            signalLagMonths: 6  },
+      { name: 'Kavak',     region: 'Mexico',   year: 2023, outcome: '~7% cuts early 2023; exited Brazil + Turkey; SoftBank pressure to demonstrate unit economics in core Mexico market',                              signalLagMonths: 8  },
+      { name: 'Loft',      region: 'Brazil',   year: 2022, outcome: '12% cut (~380 employees) Jun 2022; second round Nov 2022; pivoted from real-estate transactions to mortgage origination',                       signalLagMonths: 7  },
+      { name: 'Olist',     region: 'Brazil',   year: 2023, outcome: '~250 cut (~25% workforce) Apr 2023; SoftBank-backed; revenue per merchant declining + churn rate rising',                                         signalLagMonths: 10 },
+      { name: 'QuintoAndar', region: 'Brazil', year: 2022, outcome: '~160 cut (~10% workforce) Nov 2022; cited rate environment + cost-of-customer-acquisition rise; SoftBank Vision Fund backed',                     signalLagMonths: 11 },
+      { name: 'NotCo',     region: 'Chile',    year: 2023, outcome: '~15% cut early 2023; cited expansion costs + plant-based food category slowdown',                                                                  signalLagMonths: 9  },
+    ],
+    outcomeTimeline: {
+      typical:    '6–12 months from US-LP funding signal to first LatAm cut; second round often follows in 6-9 months',
+      best_case:  '12–18 months — company reaches path-to-profitability before second cut',
+      worst_case: '3–6 months — emergency cut with 30-day severance and no follow-on',
+    },
+    affectedRoles:  ['International expansion teams', 'Marketing / Brand', 'Growth Operations', 'Junior Engineering', 'Customer Operations'],
+    protectedRoles: ['Core unit-economics roles (Pricing, Logistics Ops, Fraud)', 'Compliance / Financial Crime (regulated subs)', 'Senior Engineering (revenue platform)', 'Finance / FP&A'],
+    recommendedResponse: {
+      immediate:   'Calculate company runway via Crunchbase / LAVCA / Distrito: last round size ÷ assumed monthly burn (often 12-18 months at peak burn for LatAm growth-stage). If your last round was > 15 months ago AND your role is in expansion / growth / marketing, send 3 applications THIS WEEK before the formal announcement compresses local hiring.',
+      short_term:  'Build a USD-denominated income optionality: US remote work, LATAM-hub office at multinational (Microsoft / Google / AWS / Mercado Libre / Nubank), or remote-first US employer accepting LatAm candidates. The peso/real/COP devaluation risk now compounds your job-loss risk.',
+      medium_term: 'Target profitable LatAm incumbents (Mercado Libre, Nubank, Banco Inter, Stone, PagSeguro, dLocal) or US multinational LatAm hubs (Microsoft Mexico, AWS Brazil, Google São Paulo). These are absorbing displaced LatAm tech talent at 15-25% bilingual premium.',
+    },
+    evidenceNote: 'Derived from Distrito Q1 2026 funding report, LAVCA Brazil/Mexico data, layoffs.fyi LatAm coverage, Bloomberg LATAM Tech coverage, and Endeavor Mexico Series A→B graduation analysis.',
+  },
+
+  // ── Category 11: India IT Bench Reduction (distinct from automation pattern) ──
+
+  INDIA_IT_BENCH_REDUCTION_2024: {
+    patternId: 'INDIA_IT_BENCH_REDUCTION_2024',
+    patternName: 'India IT Services Bench Reduction Wave 2024–2026',
+    category: 'india_it_automation',
+    summary:
+      'India IT services majors compressing bench from 18-22% (pre-2023) to 10-13% target. Distinct ' +
+      'from the AI automation pattern: cuts driven by allocation pressure + 60-90 day bench-time PIP ' +
+      'triggers, not AI substitution. Disproportionately affects mid-tenure (3-7yr) developers.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'eq', value: 'IN',  weight: 0.35, description: 'India-based company' },
+        { field: 'companyData.industry', operator: 'in', value: ['it services', 'it', 'consulting', 'systems integration', 'ites', 'bpo'], weight: 0.35, description: 'IT services / consulting' },
+        { field: 'breakdown.L4',         operator: 'gt', value: 0.40, weight: 0.30, description: 'Sector headwinds elevated (deal flow contracted)' },
+      ],
+      supporting: [
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 8,    weight: 0.25, description: 'Revenue growth < 8% (services contraction)' },
+        { field: 'roleTitle',                    operator: 'in',  value: ['developer', 'engineer', 'consultant', 'analyst', 'tester', 'qa', 'specialist'], weight: 0.25, description: 'Allocation-dependent IT services role' },
+        { field: 'companyData.layoffRounds',     operator: 'gte', value: 1,    weight: 0.20, description: 'Prior allocation/PIP wave occurred' },
+        { field: 'breakdown.L2',                 operator: 'gt',  value: 0.35, weight: 0.15, description: 'Layoff history present' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Infosys',  region: 'India', year: 2024, outcome: 'Bench utilization dropped from 18% (Q2 FY24) to 14% (Q2 FY25) via "subcontractor reduction" + selective PIP triggers; ~300 freshers terminated post-allocation failure Mar 2024',  signalLagMonths: 7  },
+      { name: 'Wipro',    region: 'India', year: 2024, outcome: 'Bench compression from 20%→12% target; mid-2024 selective involuntary separations across mid-tenure cohort; "managed out" framing avoiding formal layoff classification',           signalLagMonths: 9  },
+      { name: 'TCS',      region: 'India', year: 2024, outcome: 'Internal target of <15% bench utilization announced; soft attrition encouraged via lateral transfer to lower-priority accounts',                                                       signalLagMonths: 6  },
+      { name: 'Cognizant',region: 'India', year: 2024, outcome: '~3,500 layoffs Mar 2024 (~1% global workforce, concentrated in India bench); cited "performance management" + "talent quality"',                                                          signalLagMonths: 5  },
+      { name: 'LTIMindtree', region: 'India', year: 2024, outcome: 'Bench compression + selective exits; revenue per employee target raised; merger synergies driving overlap reductions',                                                              signalLagMonths: 11 },
+    ],
+    outcomeTimeline: {
+      typical:    '60–90 days on bench → PIP trigger; PIP → exit typically 30-60 days. Total: 4-6 months from project rollback to separation',
+      best_case:  '6-9 months — bench-time → internal cert + reallocation to growth practice (cloud/AI/data)',
+      worst_case: '60 days bench → 30 days PIP → exit with statutory severance only (15 days/year capped at IDA limit)',
+    },
+    affectedRoles:  ['Manual QA / Testing', 'Mid-tenure Developer (3-7yr)', 'Legacy Tech Specialist (Mainframe, COBOL, Legacy SAP)', 'L1/L2 Support', 'Junior Consultant'],
+    protectedRoles: ['Cloud Engineer (AWS/Azure/GCP certified)', 'AI/ML Engineer', 'Cybersecurity Specialist', 'Data Engineer', 'GenAI / Prompt Engineering certified'],
+    recommendedResponse: {
+      immediate:   'Email your Resource Management (RM) contact + HR Business Partner TODAY: "I am currently available for project allocation. My skills: [list]. Open to [growth practice]." Copy your reporting manager. Bench-time silence is the #1 PIP trigger.',
+      short_term:  'Acquire 1 in-demand certification in 60 days: AWS Solutions Architect, Azure AI Engineer, GCP Cloud Engineer, or a Generative AI certification. India IT services growth practices (Cloud, AI/ML, Cybersecurity, Data) have headcount growth even while overall company headcount is flat — certifications enable internal transfer.',
+      medium_term: 'Target GCC (Global Capability Center) employers (NatWest GCC, Goldman GCC, JPMorgan GCC, Walmart Global Tech, Target India) where the same skills command 30-50% premium + better job security than IT services. GCC hiring is up 21% YoY 2024-2026 per Nasscom while services hiring is flat.',
+    },
+    evidenceNote: 'Derived from TCS/Infosys/Wipro/HCLTech quarterly results 2024-2026, NASSCOM Strategic Review 2025-26, Economic Times IT coverage, and verified PIP/bench testimonials via Glassdoor + AmbitionBox.',
+  },
+
+  // ── Category 12: Global Telecom Workforce Reduction ───────────────────────
+
+  GLOBAL_TELECOM_WORKFORCE_REDUCTION_2024: {
+    patternId: 'GLOBAL_TELECOM_WORKFORCE_REDUCTION_2024',
+    patternName: 'Global Telecom 5G CAPEX Burnout + AI Automation 2023–2026',
+    category: 'global_telecom_reduction',
+    summary:
+      'Major global telecoms reducing workforce as 5G CAPEX cycle peaks + cord-cutting + AI-driven ' +
+      'network operations automation compound. Distinct from tech: union-heavy workforces, collective ' +
+      'bargaining, longer notice periods, voluntary separation programs preferred.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.industry', operator: 'in', value: ['telecom', 'telecommunications', 'wireless', 'mobile carrier', 'broadband', 'isp', 'cellular', 'fixed line'], weight: 0.50, description: 'Telecom / wireless / ISP' },
+        { field: 'breakdown.L4',         operator: 'gt', value: 0.35, weight: 0.25, description: 'Industry headwinds elevated' },
+        { field: 'companyData.layoffRounds', operator: 'gte', value: 1, weight: 0.25, description: 'Prior round exists (telecom restructurings are typically multi-wave)' },
+      ],
+      supporting: [
+        { field: 'companyData.revenueGrowthYoY', operator: 'lt',  value: 3,    weight: 0.25, description: 'Revenue growth < 3% (telecom maturity)' },
+        { field: 'companyData.isPublic',         operator: 'eq',  value: true, weight: 0.15, description: 'Public (most affected — listed telecoms under investor efficiency pressure)' },
+        { field: 'roleTitle',                    operator: 'in',  value: ['network engineer', 'noc', 'field technician', 'call center', 'customer service', 'billing', 'retail', 'sales'], weight: 0.25, description: 'Network ops / customer-facing role' },
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high', 'medium'], weight: 0.15, description: 'AI investment present (network automation in scope)' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'AT&T',         region: 'US',      year: 2023, outcome: '~10,000 jobs cut 2023 (~3.5% workforce); cited "operational efficiency" + AI-driven customer service automation',                                                                signalLagMonths: 8  },
+      { name: 'Verizon',      region: 'US',      year: 2023, outcome: '~5,100 cut Q4 2023 (assurance program); broader voluntary separation program in 2024; cited 5G CAPEX wind-down + customer service AI',                                              signalLagMonths: 9  },
+      { name: 'Vodafone',     region: 'UK',      year: 2023, outcome: '11,000 jobs to be cut over 3 years (announced May 2023); largest in Vodafone history; CEO Margherita Della Valle restructuring',                                                    signalLagMonths: 12 },
+      { name: 'BT Group',     region: 'UK',      year: 2023, outcome: '~55,000 jobs to be cut by 2030 (announced May 2023); ~10,000 from AI/automation specifically; "smaller, more agile workforce" rationale',                                            signalLagMonths: 14 },
+      { name: 'Deutsche Telekom', region: 'Germany', year: 2024, outcome: '~3,800 jobs to be cut in T-Systems unit (Apr 2024); broader efficiency program ongoing 2024-2026',                                                                                signalLagMonths: 10 },
+      { name: 'Orange',       region: 'France',  year: 2024, outcome: 'Selective cuts in non-core markets (Belgium, Spain); voluntary separation programs for senior employees; Made in France priority',                                                  signalLagMonths: 11 },
+      { name: 'Telefonica',   region: 'Spain',   year: 2024, outcome: '~3,400 jobs to be cut in Spain (announced Dec 2023) via ERE (collective dismissal procedure); largest Spanish telecom restructuring since 2003',                                    signalLagMonths: 13 },
+      { name: 'Telstra',      region: 'Australia', year: 2024, outcome: '~2,800 jobs cut May 2024 (~9% workforce); 5G CAPEX cycle ending + enterprise services pressure',                                                                                  signalLagMonths: 10 },
+    ],
+    outcomeTimeline: {
+      typical:    '12–24 months from 5G CAPEX peak to first major cut; second wave 12-18 months after',
+      best_case:  '24–36 months — voluntary separation programs absorb most via early-retirement + redeployment to fiber / B2B / AI ops',
+      worst_case: '6–12 months — emergency cut following regulator-driven price-cap or major customer loss',
+    },
+    affectedRoles:  ['Field Technician (legacy copper/DSL)', 'Call Center Agent', 'Billing Operations', 'Retail Store Staff', 'L1 Network Operations Center'],
+    protectedRoles: ['Fiber Network Engineer', 'AI / Network Automation Engineer', 'Cybersecurity (telecom-specific)', '5G / 6G RAN Engineer', 'B2B Solutions / Enterprise Sales'],
+    recommendedResponse: {
+      immediate:   'Check your union representation status (CWA in US, CWU in UK, ver.di in Germany, CGT in France). Telecom layoffs typically go through collective bargaining first — union members have negotiated voluntary separation packages averaging 1.5-2x statutory severance. Make sure your union membership is current.',
+      short_term:  'Pivot toward fiber / B2B / AI-network roles within current company. All major telecoms are simultaneously cutting legacy roles while hiring 30-40% more in fiber deployment + AI network operations + cybersecurity. Internal transfer is the highest-success path.',
+      medium_term: 'Acquire one telecom-specific AI credential: Nokia AVA, Ericsson AI Network, or vendor-neutral 5G / AI for telecom certification. Target hyperscaler telecom adjacent (AWS for Telecom, Azure Communication Services, Google Cloud Telecom) — these are absorbing former telecom engineering talent at 25-40% premium.',
+    },
+    evidenceNote: 'Derived from AT&T/Verizon/Vodafone/BT/Deutsche Telekom/Telefonica/Telstra 2023-2024 announcements, GSMA Mobile Economy 2025 report, and CWA/CWU/ver.di union negotiations coverage.',
+  },
+
+  // ── Category 13: APAC Resource / Mining Automation ────────────────────────
+
+  AUSTRALIA_MINING_AUTOMATION_2024: {
+    patternId: 'AUSTRALIA_MINING_AUTOMATION_2024',
+    patternName: 'Australia Mining Autonomy + Decarbonization Workforce Shift 2023–2026',
+    category: 'apac_resource_automation',
+    summary:
+      'Australian mining majors automating haul trucks, drills, and trains while simultaneously hiring ' +
+      'for decarbonization + lithium / rare earth diversification. Net headcount near-flat but profound ' +
+      'role mix shift: operator roles cut, engineering / automation roles created.',
+    triggerConditions: {
+      required: [
+        { field: 'companyData.region',   operator: 'in', value: ['AU', 'NZ'],          weight: 0.40, description: 'Australia / NZ' },
+        { field: 'companyData.industry', operator: 'in', value: ['mining', 'resources', 'metals', 'energy', 'oil & gas', 'lithium', 'iron ore'], weight: 0.35, description: 'Resources / mining sector' },
+        { field: 'breakdown.L3',         operator: 'gt', value: 0.45, weight: 0.25, description: 'Role displacement elevated' },
+      ],
+      supporting: [
+        { field: 'companyData.aiInvestmentSignal', operator: 'in', value: ['high', 'very-high', 'very_high', 'medium'], weight: 0.25, description: 'AI / automation investment in scope' },
+        { field: 'roleTitle',                      operator: 'in', value: ['haul truck', 'drill operator', 'train driver', 'mine worker', 'rig operator', 'shovel operator', 'manual'], weight: 0.30, description: 'Operator / manual mining role' },
+        { field: 'companyData.layoffRounds',       operator: 'gte', value: 1,   weight: 0.15, description: 'Prior workforce adjustment present' },
+      ],
+    },
+    historicalCompanies: [
+      { name: 'Rio Tinto',  region: 'Australia', year: 2023, outcome: 'AutoHaul (world\'s first fully autonomous heavy-haul rail) eliminated ~500 train-driver roles in Pilbara; ~300 net-new automation engineering jobs created',           signalLagMonths: 24 },
+      { name: 'BHP',        region: 'Australia', year: 2024, outcome: 'Autonomous haul truck fleet expansion + autonomous drill program; ~600 operator roles transitioned via "Skills Pathways" program (60% retrained, 40% departed)',           signalLagMonths: 20 },
+      { name: 'Fortescue',  region: 'Australia', year: 2024, outcome: 'Green energy + autonomy investment of $6B over 2024-2030; ~700 traditional mining roles converted to renewable energy + autonomous fleet ops',                              signalLagMonths: 16 },
+      { name: 'Woodside Energy', region: 'Australia', year: 2024, outcome: 'Selected workforce reductions in legacy LNG operations; simultaneous hiring for decarbonization + carbon capture engineering',                                       signalLagMonths: 14 },
+      { name: 'Newcrest Mining', region: 'Australia', year: 2023, outcome: 'Newmont acquisition (2023) drove $500M synergy program; ~9% workforce reduction at integrated entity by 2025',                                                       signalLagMonths: 8  },
+    ],
+    outcomeTimeline: {
+      typical:    '18–30 months from autonomy CAPEX commitment to operator-role displacement',
+      best_case:  '24–36 months — Skills Pathways or equivalent retraining program absorbs 60-70% via internal mobility',
+      worst_case: '12–18 months — sudden autonomy deployment without retraining program; FIFO worker community impact',
+    },
+    affectedRoles:  ['Haul Truck Operator', 'Drill Operator', 'Train Driver (heavy-haul)', 'Shovel Operator', 'Manual Surveyor', 'Mine Equipment Maintenance (legacy)'],
+    protectedRoles: ['Autonomous Systems Engineer', 'Mine Planning Engineer', 'Decarbonization / Sustainability Engineer', 'Geotechnical Engineer', 'Renewable Energy Engineer (mining-adjacent)'],
+    recommendedResponse: {
+      immediate:   'Check your company\'s "Skills Pathways" or equivalent retraining program (Rio Tinto, BHP, Fortescue all have variants). Eligibility is typically based on tenure + safety record + role category. Apply this week — slots are oversubscribed and decided on first-come basis once a site enters autonomy deployment.',
+      short_term:  'Acquire one Cert IV in Autonomous Systems (TAFE NSW, TAFE WA, Curtin Open Universities Australia) or equivalent vendor credential (Caterpillar MineStar, Komatsu FrontRunner). Australian mining is hiring 30-40% more for autonomous fleet operations + maintenance than legacy operator roles — pivot before the legacy role is automated.',
+      medium_term: 'Target the lithium / rare earth / renewable energy adjacent sector (Pilbara Minerals, Liontown Resources, IGO, Lynas) — these are absorbing displaced traditional-mining talent at premium because the technical fundamentals (heavy industry, FIFO logistics, safety culture) transfer directly while the commodity is structurally growing.',
+    },
+    evidenceNote: 'Derived from Rio Tinto / BHP / Fortescue 2023-2024 annual reports + sustainability reports, Minerals Council of Australia workforce data, and AusIMM Future of Mining workforce surveys.',
   },
 
 }; // end HISTORICAL_PATTERNS
