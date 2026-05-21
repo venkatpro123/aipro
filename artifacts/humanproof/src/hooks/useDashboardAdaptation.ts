@@ -25,6 +25,9 @@ export type DashboardMode =
 
 export type TabKey = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'transparency';
 
+/** V4 navigation — 3 primary tabs only. */
+export type TabKeyV4 = 'risk' | 'actions' | 'explore';
+
 /**
  * v39.0 F2 — Panel keys SummaryTab can reorder based on mode.
  * Each key matches a render block inside SummaryTab.
@@ -90,6 +93,42 @@ function readFirstAuditSeen(profile?: UserProfile | null): boolean {
     return true;
   }
   return false;
+}
+
+export function pickDefaultTabV4(mode: DashboardMode): TabKeyV4 {
+  switch (mode) {
+    case 'emergency':      return 'actions';
+    case 'low-confidence': return 'explore';
+    default:               return 'risk';
+  }
+}
+
+export interface AdaptationProfileV4 extends Omit<AdaptationProfile, 'defaultTab'> {
+  defaultTab: TabKeyV4;
+}
+
+export function useDashboardAdaptationV4(
+  result: HybridResult,
+  companyData?: CompanyData,
+  profile?: UserProfile | null,
+): AdaptationProfileV4 {
+  return useMemo(() => {
+    const intel = compressAllSignals(result, companyData);
+    const mode  = pickMode(result, intel);
+    const defaultTab = pickDefaultTabV4(mode);
+    const confPct = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
+    const seenBefore = readFirstAuditSeen(profile);
+
+    return {
+      mode,
+      defaultTab,
+      showEmergencyBanner: mode === 'emergency',
+      showFirstAuditWelcome: !seenBefore,
+      showLowConfidenceCallout: confPct < 50,
+      intel,
+      summaryPanelOrder: pickSummaryPanelOrder(mode),
+    };
+  }, [result, companyData, profile]);
 }
 
 export function markFirstAuditSeen(): void {

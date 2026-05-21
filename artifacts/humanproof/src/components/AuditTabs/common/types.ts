@@ -11,4 +11,6 @@ export interface TabProps {
   onRecalculate?: () => void;
   /** Current pipeline stage label — shown in AnalysisTab skeleton when brief is computing */
   auditStage?: string;
+  /** V4 dashboard: true when mode === 'emergency'. Drives layout transformation in new tabs. */
+  emergencyMode?: boolean;
 }

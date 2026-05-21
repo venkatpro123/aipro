@@ -57,6 +57,7 @@ export interface HistoricalCompany {
   region:
     | 'India' | 'US' | 'Global'
     | 'Germany' | 'UK' | 'France' | 'Netherlands' | 'Spain' | 'Italy' | 'EU'
+    | 'Norway' | 'Denmark' | 'Sweden' | 'Finland' | 'Switzerland' | 'Austria' | 'Belgium' | 'Poland'
     | 'Singapore' | 'Japan' | 'Korea' | 'Australia' | 'Hong Kong' | 'Indonesia' | 'Malaysia'
     | 'Brazil' | 'Mexico' | 'Argentina' | 'Colombia' | 'Chile' | 'LatAm'
     | 'UAE' | 'Saudi Arabia' | 'Canada';

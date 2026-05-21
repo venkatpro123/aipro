@@ -55,7 +55,7 @@ const LABOR_LAW_BRIDGE: Record<string, LaborLawBridge> = {
     consultationTimeline: 'No formal works-council; "Standing Orders" require 30-day notice for >100-employee firms.',
     workPermitBridge: 'Not applicable — Indian citizens unaffected; expats on Employment Visa have 30-day departure window post-termination.',
   },
-  us: {
+  usa: {
     postTerminationRights:
       'At-will employment baseline. WARN Act: 60-day advance notice required for layoffs >50 employees at sites of >100 staff. COBRA: 18-month health insurance bridge at full premium + 2% admin.',
     verifyAt: 'dol.gov + state DOL portal for WARN filings',
@@ -256,7 +256,7 @@ export function buildRegionalLlmContext(
       break;
     }
 
-    case 'us': {
+    case 'usa': {
       lines.push(`US context (LinkedIn + Indeed + BLS JOLTS + WARN + metro contagion):`);
       if (bls) {
         if (bls.joltsHires != null)      lines.push(`  • BLS JOLTS hires: ${bls.joltsHires.toLocaleString()}.`);

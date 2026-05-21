@@ -25,6 +25,7 @@ import { WhatIfSkillSimulator } from "./WhatIfSkillSimulator";
 import { KeyRiskDriversPanel } from "./KeyRiskDriversPanel";
 import { LayoffAuditDashboard } from "./LayoffAuditDashboard";
 import { LayoffAuditDashboardV3, isTabsV3Enabled } from "../AuditTabs/v3/LayoffAuditDashboardV3";
+import { LayoffAuditDashboardV4 } from "../AuditTabs/v3/LayoffAuditDashboardV4";
 import { mapToHybridResult } from "../../utils/hybridResultMapper";
 import { resolveCompanyData } from "../../data/companyIntelligenceBridge";
 import { markCompanyRecentlyAudited } from "../audit/RealtimeSignalToast";
@@ -1709,9 +1710,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             2: 'Reconciling live market signals…',
           };
           const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, auditStage: STAGE_LABELS[ensembleStage] };
-          return isTabsV3Enabled()
-            ? <LayoffAuditDashboardV3 {...commonProps} />
-            : <LayoffAuditDashboard {...commonProps} />;
+          return <LayoffAuditDashboardV4 {...commonProps} />;
+          // V3 and V1 kept below as rollback path — do not delete
+          // return isTabsV3Enabled()
+          //   ? <LayoffAuditDashboardV3 {...commonProps} />
+          //   : <LayoffAuditDashboard {...commonProps} />;
         })()}
 
       {showShareCard && state.scoreResult && (
