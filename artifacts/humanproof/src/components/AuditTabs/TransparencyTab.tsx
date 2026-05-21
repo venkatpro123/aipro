@@ -21,6 +21,7 @@ import {
   TrendingDown,
   Minus,
   Zap,
+  Building,
 } from "lucide-react";
 import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
@@ -49,6 +50,7 @@ import { DataFreshnessPanel } from "../audit/DataFreshnessPanel";
 import { LiveDataCoveragePanel } from "../audit/LiveDataCoveragePanel";
 import { CALIBRATION_META, LAYER_CALIBRATION } from "../../services/empiricalCalibration";
 import type { SegmentCalibrationResult } from "../../services/segmentedCalibrationEngine";
+import type { ParentPropagationResult } from "../../services/parentSubsidiaryPropagation";
 import { getCircuitSnapshot } from "../../services/apiCircuitBreaker";
 import { PatternMatchCard } from "../PatternMatchCard";
 import {
@@ -1030,6 +1032,143 @@ const DimensionCalibrationPanel: React.FC = () => {
         Not a substitute for full regression — weights may still be off by ±30–80%.
         <span className="font-bold"> Next step</span>: {report.nextValidationStep}
       </p>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// ParentPropagationPanel — parent→subsidiary propagation by office function
+// ---------------------------------------------------------------------------
+
+const RISK_LEVEL_COLORS: Record<string, { bg: string; border: string; text: string; badge: string }> = {
+  negligible: { bg: 'rgba(16,185,129,0.04)',  border: 'rgba(16,185,129,0.20)',  text: '#6ee7b7',  badge: 'rgba(16,185,129,0.15)' },
+  low:        { bg: 'rgba(16,185,129,0.04)',  border: 'rgba(16,185,129,0.20)',  text: '#6ee7b7',  badge: 'rgba(16,185,129,0.15)' },
+  moderate:   { bg: 'rgba(245,158,11,0.04)', border: 'rgba(245,158,11,0.20)', text: '#fcd34d', badge: 'rgba(245,158,11,0.15)' },
+  elevated:   { bg: 'rgba(249,115,22,0.04)', border: 'rgba(249,115,22,0.20)', text: '#fdba74', badge: 'rgba(249,115,22,0.15)' },
+  high:       { bg: 'rgba(239,68,68,0.04)',  border: 'rgba(239,68,68,0.20)',  text: '#fca5a5', badge: 'rgba(239,68,68,0.15)' },
+};
+
+const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }> = ({ propagation: p }) => {
+  const colors = RISK_LEVEL_COLORS[p.propagationRisk.level] ?? RISK_LEVEL_COLORS['moderate'];
+  const lagStr = p.lagMonths.min === p.lagMonths.max
+    ? `${p.lagMonths.min}mo`
+    : `${p.lagMonths.min}–${p.lagMonths.max}mo`;
+  const runwayStr = `${p.effectiveRunwayMonths.min}–${p.effectiveRunwayMonths.max} months`;
+
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: colors.border, background: colors.bg }}>
+      {/* Header */}
+      <div className="px-4 pt-3 pb-2.5 flex flex-wrap items-center gap-2 border-b" style={{ borderColor: colors.border }}>
+        <Building className="w-3.5 h-3.5 flex-shrink-0" style={{ color: colors.text }} />
+        <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: colors.text }}>
+          {p.parentName} → {p.officeFunctionLabel}
+        </span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+          style={{ background: colors.badge, color: colors.text, border: `1px solid ${colors.border}` }}>
+          {p.propagationRisk.level} propagation risk
+        </span>
+        {p.functionRefinedFromRole && (
+          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+            style={{ background: 'rgba(99,179,237,0.10)', color: '#93c5fd', border: '1px solid rgba(99,179,237,0.20)' }}>
+            function inferred from role
+          </span>
+        )}
+        <span className="ml-auto text-[9px] text-white/30 uppercase tracking-widest">ESTIMATED</span>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {/* Key metrics row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <div className="data-label mb-1">Propagation Factor</div>
+            <div className="text-sm font-black" style={{ color: colors.text }}>
+              {(p.propagationFactor * 100).toFixed(0)}%
+            </div>
+            <div className="data-label opacity-50">of parent risk transmitted</div>
+          </div>
+          <div>
+            <div className="data-label mb-1">Announcement → Action</div>
+            <div className="text-sm font-black text-white/80">{lagStr}</div>
+            <div className="data-label opacity-50">expected lag</div>
+          </div>
+          <div>
+            <div className="data-label mb-1">Effective Runway</div>
+            <div className="text-sm font-black text-emerald-400">{runwayStr}</div>
+            <div className="data-label opacity-50">lag + legal protection</div>
+          </div>
+        </div>
+
+        {/* Function narrative */}
+        <p className="text-[10px] text-white/60 leading-relaxed border-l-2 pl-3"
+          style={{ borderColor: colors.border }}>
+          {p.functionNarrative}
+        </p>
+
+        {/* Protection vs vulnerability */}
+        <div className="grid grid-cols-2 gap-3">
+          {p.protectionFactors.length > 0 && (
+            <div>
+              <div className="text-[9px] font-bold uppercase tracking-wide text-emerald-400/70 mb-1">
+                Protection factors
+              </div>
+              <ul className="space-y-0.5">
+                {p.protectionFactors.slice(0, 2).map((f, i) => (
+                  <li key={i} className="flex items-start gap-1">
+                    <span className="text-emerald-400/60 flex-shrink-0">›</span>
+                    <span className="text-[8.5px] text-white/55 leading-tight">{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {p.vulnerabilityFactors.length > 0 && (
+            <div>
+              <div className="text-[9px] font-bold uppercase tracking-wide text-red-400/70 mb-1">
+                Vulnerability factors
+              </div>
+              <ul className="space-y-0.5">
+                {p.vulnerabilityFactors.slice(0, 2).map((f, i) => (
+                  <li key={i} className="flex items-start gap-1">
+                    <span className="text-red-400/60 flex-shrink-0">›</span>
+                    <span className="text-[8.5px] text-white/55 leading-tight">{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Legal protection window */}
+        {p.legalProtectionDays && (
+          <div className="flex items-center gap-2 p-2 rounded-lg"
+            style={{ background: 'rgba(99,179,237,0.06)', border: '1px solid rgba(99,179,237,0.15)' }}>
+            <Shield className="w-3 h-3 text-blue-400 flex-shrink-0" />
+            <span className="text-[9px] text-blue-200/70">
+              After parent-triggered announcement: <span className="font-bold text-blue-300">
+                {Math.round(p.legalProtectionDays.min / 7)}–{Math.round(p.legalProtectionDays.max / 7)} weeks
+              </span> legal protection window before last day (ESTIMATED from local employment law).
+              Combined runway: <span className="font-bold text-blue-300">{runwayStr}</span>.
+            </span>
+          </div>
+        )}
+
+        {/* Priority actions */}
+        {p.priorityActions.length > 0 && (
+          <div className="border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="text-[9px] font-bold uppercase tracking-wide text-white/40 mb-1.5">
+              Use the {lagStr} window to
+            </div>
+            <ul className="space-y-1">
+              {p.priorityActions.slice(0, 3).map((a, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="text-[8px] font-bold text-white/30 flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="text-[8.5px] text-white/60 leading-tight">{a}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -2406,6 +2545,17 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
               scenarioArchetype={(result as any).scenarioArchetype}
               indiaSpecificInsight={(result as any).indiaSpecificInsight}
             />
+          </div>
+        )}
+
+        {/* Parent-Subsidiary Propagation — shown when company is a known subsidiary */}
+        {(result as any).parentPropagation && (
+          <div className="mb-6">
+            <SectionHeader
+              title="Parent Company Propagation Analysis"
+              description="How layoff signals from the parent company propagate to this office — modeled by office function, entity dependence, and local employment law. ESTIMATED from documented 2022–2026 restructuring patterns."
+            />
+            <ParentPropagationPanel propagation={(result as any).parentPropagation} />
           </div>
         )}
 

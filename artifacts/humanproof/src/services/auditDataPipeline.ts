@@ -30,6 +30,7 @@ import { loadCuratedLayoffEvents } from "../data/layoffNewsCache";
 import { computeJobMarketLiquidity } from "./jobMarketLiquidityService";
 import { computeEscapePaths } from "./escapePathOptimizer";
 import { computeTemporalRisk } from "./temporalRiskAmplifier";
+import { computeParentPropagation } from "./parentSubsidiaryPropagation";
 import { buildPrecisionBrief, detectScenario } from "./scenarioNarrativeEngine";
 import { computeFinancialRunway } from "./financialRunwayIntelligence";
 import { computeDepartmentRisk, mapScenarioToCompanyArchetype } from "./departmentRiskEngine";
@@ -1848,6 +1849,25 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (hybridResult as any).temporalRisk = temporalRisk;
   } catch (e) {
     noteEngineFailure('temporalRiskAmplifier', e);
+  }
+
+  // 3.5. Parent-Subsidiary Propagation — how parent company signals propagate
+  // by office function (engineering GCC, EMEA revenue, APAC operations, shared services).
+  // Only fires when the company is detected as a subsidiary of a known parent.
+  // Separate from IndiaRiskEnrichment (which handles India-specific sector intelligence).
+  try {
+    const parentPropagation = computeParentPropagation({
+      companyName: companyData.name,
+      region:      companyData.region ?? 'US',
+      roleTitle:   inputs.roleTitle,
+      city:        (inputs.userFactors as any).city,
+      employeeCount: companyData.employeeCount,
+    });
+    if (parentPropagation) {
+      (hybridResult as any).parentPropagation = parentPropagation;
+    }
+  } catch (e) {
+    noteEngineFailure('parentSubsidiaryPropagation', e);
   }
 
   // 4. Precision Intelligence Brief — data-grounded 3-point analyst summary

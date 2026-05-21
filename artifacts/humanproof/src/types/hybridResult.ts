@@ -10,6 +10,7 @@ import type { EscapePathReport } from "../services/escapePathOptimizer";
 import type { TemporalRiskResult } from "../services/temporalRiskAmplifier";
 import type { PrecisionBrief } from "../services/scenarioNarrativeEngine";
 import type { IndiaRiskEnrichment } from "../services/indiaSectorIntelligence";
+import type { ParentPropagationResult } from "../services/parentSubsidiaryPropagation";
 import type { FinancialRunwayResult } from "../services/financialRunwayIntelligence";
 import type { DepartmentRiskResult } from "../services/departmentRiskEngine";
 import type { ScoreSensitivityResult } from "../services/scoreSensitivityEngine";
@@ -449,6 +450,17 @@ export interface HybridResult {
    * Rendered in TransparencyTab's India Intelligence panel.
    */
   indiaRiskEnrichment?: IndiaRiskEnrichment;
+
+  /**
+   * Parent-to-subsidiary propagation analysis — present when the company is
+   * identified as a subsidiary of a known parent in the registry.
+   * Covers: Google/Alphabet, Microsoft, Amazon/AWS, Meta, Apple, Goldman Sachs,
+   * JPMorgan, Salesforce, Samsung, and others.
+   * Models propagation by office function (engineering_hub, regional_revenue,
+   * regional_operations, shared_services, eu_hq) and entity dependence score.
+   * LABELED: ESTIMATED — derived from documented 2022–2026 restructuring patterns.
+   */
+  parentPropagation?: ParentPropagationResult;
 
   // ── Score formula transparency ───────────────────────────────────────────────
   /** MED-5: fraction of total formula weight that is regression-derived (0–1, e.g. 0.58). */
