@@ -15,14 +15,25 @@
 //   score breakdown. Generic sentences that could apply to any user are banned.
 //
 // SCENARIO ARCHETYPES:
-//   1. financial_distress_layoff  — L1 dominant, company in financial trouble
+//   1. financial_distress_layoff   — L1 dominant, company in financial trouble
 //   2. ai_efficiency_restructuring — D8 fires, profitable company cutting for AI
-//   3. role_displacement          — L3 dominant, role itself being automated
-//   4. sector_wave               — L4 dominant, macro/industry headwinds
-//   5. gcc_parent_contagion       — GCC employee, parent company cutting
-//   6. india_it_bench_risk        — Bench/non-billable in IT services
-//   7. individual_resilience_gap  — L5 dominant, personal factors are the risk
-//   8. low_risk_maintain          — All signals green, optimization mode
+//   3. role_displacement           — L3 dominant, role itself being automated
+//   4. sector_wave                 — L4 dominant, macro/industry headwinds
+//   5. gcc_parent_contagion        — GCC employee, parent company cutting
+//   6. india_it_bench_risk         — Bench/non-billable in IT services
+//   7. individual_resilience_gap   — L5 dominant, personal factors are the risk
+//   8. low_risk_maintain           — All signals green, optimization mode
+//   9. eu_regulatory_restructuring — GDPR/EU AI Act compliance-cost headcount
+//                                    optimization at EU-based companies
+//  10. latam_funding_crisis        — LatAm startup w/o US funding runway hit by
+//                                    VC dry-up; series-B-stuck pattern
+//  11. apac_hyperscaler_localization — US tech localizing APAC ops; expat-heavy
+//                                      teams replaced w/ regional hires
+//  12. us_gov_contract_risk        — Defense-tech / federal-contractor budget
+//                                    cuts (DOGE, continuing resolutions)
+//  13. fintech_regulatory_tightening — Central-bank AI/fintech crackdowns
+//                                      (RBI/MAS/ECB/FCA/BaFin) forcing
+//                                      compliance hiring + product cuts
 
 import type { CompanyData } from '../data/companyDatabase';
 import type { ScoreBreakdown } from './layoffScoreEngine';
@@ -42,7 +53,13 @@ export type ScenarioArchetype =
   | 'gcc_parent_contagion'
   | 'india_it_bench_risk'
   | 'individual_resilience_gap'
-  | 'low_risk_maintain';
+  | 'low_risk_maintain'
+  // v40.0 — global Tier B archetypes
+  | 'eu_regulatory_restructuring'
+  | 'latam_funding_crisis'
+  | 'apac_hyperscaler_localization'
+  | 'us_gov_contract_risk'
+  | 'fintech_regulatory_tightening';
 
 export interface ScenarioNarrative {
   archetype: ScenarioArchetype;
@@ -89,6 +106,105 @@ export function scoreArchetypeConfidences(
   const isGCC = enrichment?.gccArchetype !== 'not_gcc' && enrichment?.gccArchetype !== undefined;
   const isITServices = isIndia && (companyData.industry ?? '').toLowerCase().includes('it')
     && (companyData.industry ?? '').toLowerCase().includes('service');
+
+  // v40.0 — region + industry context for new global archetypes.
+  // Region buckets — match the data layer (sectorRegionStability.ts).
+  const region   = (companyData.region ?? '').toString().toLowerCase().trim();
+  const industry = (companyData.industry ?? '').toString().toLowerCase().trim();
+  const EU_REGIONS = new Set([
+    'de', 'deu', 'germany',
+    'fr', 'fra', 'france',
+    'nl', 'nld', 'netherlands',
+    'es', 'esp', 'spain',
+    'it', 'ita', 'italy',
+    'be', 'bel', 'belgium',
+    'at', 'aut', 'austria',
+    'ie', 'irl', 'ireland',
+    'pt', 'prt', 'portugal',
+    'fi', 'fin', 'finland',
+    'se', 'swe', 'sweden',
+    'dk', 'dnk', 'denmark',
+    'pl', 'pol', 'poland',
+    'gr', 'grc', 'greece',
+    'cz', 'cze', 'czechia',
+    'hu', 'hun', 'hungary',
+    'ro', 'rou', 'romania',
+    'lu', 'lux', 'luxembourg',
+    'eu',
+  ]);
+  const LATAM_REGIONS = new Set([
+    'br', 'bra', 'brazil',
+    'mx', 'mex', 'mexico',
+    'ar', 'arg', 'argentina',
+    'co', 'col', 'colombia',
+    'cl', 'chl', 'chile',
+    'pe', 'per', 'peru',
+    'uy', 'ury', 'uruguay',
+    'latam', 'latin america',
+  ]);
+  const APAC_REGIONS = new Set([
+    'sg', 'sgp', 'singapore',
+    'hk', 'hkg', 'hong kong',
+    'jp', 'jpn', 'japan',
+    'kr', 'kor', 'south korea', 'korea',
+    'tw', 'twn', 'taiwan',
+    'au', 'aus', 'australia',
+    'nz', 'nzl', 'new zealand',
+    'my', 'mys', 'malaysia',
+    'id', 'idn', 'indonesia',
+    'th', 'tha', 'thailand',
+    'ph', 'phl', 'philippines',
+    'vn', 'vnm', 'vietnam',
+    'apac',
+  ]);
+
+  const isEU    = EU_REGIONS.has(region);
+  const isLATAM = LATAM_REGIONS.has(region);
+  const isAPAC  = APAC_REGIONS.has(region);
+  const isUS    = region === 'us' || region === 'usa' || region === 'united states';
+
+  // Industry-family detection (lightweight — matches scenario triggers, not the
+  // full role taxonomy). False-positives bias toward generic archetypes which
+  // is the safer failure mode than mis-firing a regulatory narrative.
+  const isFintech =
+    industry.includes('fintech') ||
+    industry.includes('digital banking') ||
+    industry.includes('payment') ||
+    industry.includes('crypto') ||
+    industry.includes('insurtech') ||
+    industry.includes('regtech');
+  const isFinServ = isFintech ||
+    industry.includes('banking') ||
+    industry.includes('financial service') ||
+    industry.includes('insurance') ||
+    industry.includes('asset management');
+  const isDataHeavy =
+    industry.includes('data') ||
+    industry.includes('analytics') ||
+    industry.includes('ad tech') ||
+    industry.includes('adtech') ||
+    industry.includes('marketing') ||
+    industry.includes('digital advertising') ||
+    industry.includes('saas');
+  const isDefenseGov =
+    industry.includes('defense') ||
+    industry.includes('defence') ||
+    industry.includes('aerospace') ||
+    industry.includes('government') ||
+    industry.includes('federal') ||
+    industry.includes('military') ||
+    industry.includes('national security') ||
+    industry.includes('govtech') ||
+    industry.includes('intelligence');
+  const isStartup =
+    (companyData as any).fundingStage === 'series-a' ||
+    (companyData as any).fundingStage === 'series-b' ||
+    (companyData as any).fundingStage === 'series-c' ||
+    (companyData as any).fundingStage === 'seed' ||
+    (companyData.employeeCount != null && companyData.employeeCount < 500 && !companyData.isPublic);
+  const isHyperscaler =
+    (companyData.aiInvestmentSignal === 'very-high' || companyData.aiInvestmentSignal === 'high') &&
+    (companyData.employeeCount ?? 0) > 10000;
 
   const scores: ArchetypeConfidence[] = [
     {
@@ -137,6 +253,66 @@ export function scoreArchetypeConfidences(
       // Primary driver: L5 elevated with moderate company/role signals
       confidence: L5 > 0.3
         ? Math.min(1, L5 * 0.8 * (1 - Math.min(0.7, Math.max(L1, L3))))
+        : 0,
+    },
+
+    // ── v40.0 global archetypes ──────────────────────────────────────────────
+
+    {
+      // EU regulatory restructuring — GDPR / EU AI Act / DSA compliance-cost
+      // headcount optimization. Fires on EU region + (fintech/data/saas) where
+      // L4 is the dominant driver and the company is profitable enough that
+      // financial distress alone doesn't explain the restructuring.
+      // Score >= 45 floor (below that the cohort is too soft).
+      archetype: 'eu_regulatory_restructuring',
+      confidence: isEU && (isFinServ || isDataHeavy) && score >= 45
+        ? Math.min(1, 0.55 + (L4 * 0.5) + (Math.max(0, score - 45) / 100))
+        : 0,
+    },
+
+    {
+      // LatAm funding crisis — startups without US funding runway hit by VC
+      // dry-up. Fires on LatAm region + startup-stage + L1 elevated (cash
+      // burn). Series-B-stuck pattern: profitable enough to need a Series C
+      // but Series Cs aren't closing in LatAm 2024-2026.
+      archetype: 'latam_funding_crisis',
+      confidence: isLATAM && isStartup && (L1 > 0.35 || score >= 45)
+        ? Math.min(1, 0.50 + (L1 * 0.6) + (Math.max(0, score - 50) / 110))
+        : 0,
+    },
+
+    {
+      // APAC hyperscaler localization — US-parent tech company localizing APAC
+      // ops, replacing expat-heavy teams with regional hires. Fires on APAC
+      // region + signal-of-hyperscaler-parent OR named APAC GCC archetype +
+      // moderate-to-elevated L3 (the layer where role-substitution shows up).
+      archetype: 'apac_hyperscaler_localization',
+      confidence: (isAPAC && (isHyperscaler || isGCC) && score >= 45)
+        ? Math.min(1, 0.50 + (L3 * 0.5) + (Math.max(0, score - 45) / 110))
+        : 0,
+    },
+
+    {
+      // US gov contract risk — defense tech, aerospace, federal contractors
+      // facing budget cuts (DOGE 2025-2026, continuing resolutions). Fires on
+      // US region + defense/govt-adjacent industry. L4 + L2 compound because
+      // contract cancellations create both sector-wave and layoff-history
+      // signal simultaneously.
+      archetype: 'us_gov_contract_risk',
+      confidence: isUS && isDefenseGov && score >= 45
+        ? Math.min(1, 0.55 + (L4 * 0.4) + (L2 * 0.3))
+        : 0,
+    },
+
+    {
+      // Fintech regulatory tightening — central bank AI/fintech crackdowns
+      // (RBI restrictions on UPI fintechs, MAS digital bank licensing, ECB
+      // payments oversight, FCA crypto restrictions, BaFin AI Act enforcement).
+      // Fires globally on fintech industry + L4 elevated. Region routes the
+      // regulator citation in the narrative but every region fires.
+      archetype: 'fintech_regulatory_tightening',
+      confidence: isFintech && score >= 45
+        ? Math.min(1, 0.50 + (L4 * 0.5) + (Math.max(0, score - 45) / 110))
         : 0,
     },
   ];
@@ -202,6 +378,11 @@ function buildBlendedSynthesis(
     india_it_bench_risk: 'India IT bench risk',
     individual_resilience_gap: 'personal resilience gap',
     low_risk_maintain: 'low risk',
+    eu_regulatory_restructuring: 'EU regulatory restructuring (GDPR / AI Act)',
+    latam_funding_crisis: 'LatAm funding crisis (VC dry-up)',
+    apac_hyperscaler_localization: 'APAC hyperscaler localization',
+    us_gov_contract_risk: 'US gov contract risk',
+    fintech_regulatory_tightening: 'fintech regulatory tightening',
   };
 
   return `Your ${score}/100 risk reflects a blend: ${primaryPct}% driven by ${archetypeLabels[primary.archetype]} and ${secondaryPct}% by ${archetypeLabels[secondary.archetype]}. Both risk dimensions require attention — addressing only one will leave the other unresolved and score reduction will be partial.`;
@@ -453,6 +634,187 @@ function buildIndividualResilienceNarrative(
   };
 }
 
+// ─── v40.0 Global Archetype Narrative Builders ───────────────────────────────
+
+function buildEURegulatoryNarrative(
+  cd: CompanyData,
+  bd: { L1: number; L3: number; L4?: number; L5?: number },
+  score: number,
+  role: string,
+  tenureYears: number,
+): ScenarioNarrative {
+  const L1pct = pct(bd.L1);
+  const L3pct = pct(bd.L3);
+  const L4pct = pct(bd.L4 ?? 0);
+  const region = (cd.region ?? '').toString().toUpperCase();
+
+  // Regulator citation per EU country — drives narrative specificity.
+  const REGULATOR_BY_COUNTRY: Record<string, string> = {
+    DE: 'BaFin (Bundesanstalt für Finanzdienstleistungsaufsicht)',
+    FR: 'ACPR + CNIL',
+    NL: 'AFM + DNB',
+    ES: 'CNMV + AEPD',
+    IT: 'CONSOB + Garante Privacy',
+    BE: 'FSMA + Belgian DPA',
+    AT: 'FMA + DSB',
+    IE: 'CBI + DPC (Data Protection Commission)',
+    PT: 'CMVM + CNPD',
+    FI: 'FIN-FSA',
+    SE: 'Finansinspektionen + IMY',
+    DK: 'Finanstilsynet + Datatilsynet',
+    PL: 'KNF + UODO',
+    EU: 'ECB SSM + EDPB',
+  };
+  const regulator = REGULATOR_BY_COUNTRY[region] ?? 'national supervisor + EDPB';
+  const isHQRegion = region === 'DE' || region === 'FR' || region === 'NL' || region === 'IE' || region === 'EU';
+
+  return {
+    archetype: 'eu_regulatory_restructuring',
+    primaryRiskDriver: `EU regulatory compliance burden is the dominant driver at ${score}/100 — ${cd.name} faces compounding pressure from the EU AI Act (Article 6 high-risk-system classification, effective Aug 2026), GDPR enforcement (avg fines up 31% YoY 2024-2026), and DSA/DMA obligations. L4 (Industry Headwinds): ${L4pct}/100. Regulator: ${regulator}. ${cd.industry ?? 'Your sector'} headcount changes here are compliance-driven, not financial-distress driven — L1 (${L1pct}/100) shows the company is profitable enough that the cuts are strategic reallocation toward compliance/risk hires, not cost panic.`,
+    sixMonthInactionConsequence: `EU AI Act compliance deadlines stack: high-risk-system documentation (Aug 2026), data-governance audits (Feb 2027), human-oversight evidence (rolling). At ${cd.name} the next 6 months are when the headcount reallocation moves from data/marketing/growth teams into compliance/risk/legal — your data-team or product-growth role is more exposed than a compliance-engineering role even at identical L3: ${L3pct}/100. Without repositioning toward regulatory-adjacent work, the 6-month outcome is a quiet performance-review-based exit during the next compliance audit cycle. Estimated EU collective redundancy notice period: 30-90 days depending on works-council scope.`,
+    oneActionThisWeek: `Identify the 1 EU AI Act / GDPR compliance gap at ${cd.name} that your skills could plausibly close in 90 days. Document it in a 1-pager and schedule a 20-minute conversation with your manager titled: "EU AI Act readiness — where I can contribute." With ${regulator} enforcement actions averaging 4.2M EUR per major fine in 2025-2026, every EU role pivot from "general data work" to "AI-Act/GDPR compliant data work" raises L5 by an estimated 8-12 points within one quarter. This is the highest-ROI move available at L4: ${L4pct}/100.`,
+    whatChangesRiskMost: `1. Acquire one EU AI Act-specific credential within 60 days (EDPB Data Protection Officer, ISACA AI Audit, IAPP CIPP/E) — directly addresses the L4: ${L4pct}/100 trigger by repositioning you on the compliance side of the cut line, not the optimization side. 2. Document 2 specific data-governance contributions to ${cd.name}'s AI Act readiness — works-council records of "compliance contribution" weigh heavily in EU redundancy selection criteria. 3. Build a Brussels/Frankfurt/Dublin recruiter pipeline — EU regulatory hiring is up 38% YoY 2024-2026 even as general tech hiring contracts.`,
+    estimatedTimeline: `${score >= 65 ? '6-12 months' : '12-18 months'} — EU restructurings move slower than US (works-council consultation, social plan negotiation, PSE filing in FR) but are more structurally certain once announced. The AI Act Aug 2026 high-risk-system deadline is the operational forcing function. L4: ${L4pct}/100 reflects this deterministic pressure.`,
+    keyProtectiveFactor: `${isHQRegion ? `EU HQ location (${region}) is a partial protective factor — head-office roles face works-council consultation requirements that satellite offices in other EU states often lack. ` : ''}${cd.name}'s L1: ${L1pct}/100 means the company has financial room to absorb compliance costs without panic — the cuts will be deliberate, not chaotic. Roles touching the AI Act compliance perimeter (risk, governance, audit, DPO function) are the protected category.`,
+    synthesis: `${cd.name} (${region}) — EU regulatory restructuring archetype. L4: ${L4pct}/100, regulator: ${regulator}. Compliance-driven headcount reallocation, not financial distress. Timeline: ${score >= 65 ? '6-12 months' : '12-18 months'}. Pivot toward AI Act / GDPR-adjacent work is the highest-leverage move.`,
+    urgencyLevel: score >= 65 ? 'High' : score >= 50 ? 'Moderate' : 'Low',
+  };
+}
+
+function buildLatAmFundingNarrative(
+  cd: CompanyData,
+  bd: { L1: number; L2: number; L3: number; L4?: number; L5?: number },
+  score: number,
+  role: string,
+  tenureYears: number,
+): ScenarioNarrative {
+  const L1pct = pct(bd.L1);
+  const L2pct = pct(bd.L2);
+  const L3pct = pct(bd.L3);
+  const region = (cd.region ?? '').toString().toUpperCase();
+  const runway = (cd as any).runwayMonths as number | undefined;
+  const fundingStage = (cd as any).fundingStage as string | undefined;
+
+  const REGIONAL_CONTEXT: Record<string, string> = {
+    BR: 'Brazilian VC funding in 2026 is 41% below 2021 peak per Distrito Q1 report. Series B closes averaged 6.2 months in 2024 vs 2.1 months in 2021',
+    MX: 'Mexican VC fundraising is at a 4-year low; Endeavor Mexico reports Series A→B graduation rate dropped from 38% (2021) to 14% (2026)',
+    AR: 'Argentine startups face peso volatility + capital controls. USD-denominated revenue is now table-stakes for any institutional round',
+    CO: 'Colombian VC ecosystem (Bogotá, Medellín) is highly dependent on US LPs; Series C and beyond are functionally closed to local-only LP syndicates',
+    CL: 'Chilean startups face the smallest VC pool in major LatAm markets; Corfu government co-investment is the dominant Series A source',
+  };
+  const macroContext = REGIONAL_CONTEXT[region] ?? 'LatAm VC funding is at multi-year lows with US LP retreat compounding';
+
+  return {
+    archetype: 'latam_funding_crisis',
+    primaryRiskDriver: `LatAm funding crisis is the dominant driver at ${score}/100 — ${cd.name} (${fundingStage ?? 'late-stage startup'}${runway != null ? `, ${runway}mo runway` : ''}) is exposed to the VC dry-up affecting the entire region. L1 (Financial Health): ${L1pct}/100, L2 (Layoff History): ${L2pct}/100. ${macroContext}. The risk pattern: companies that raised in 2020-2022 at 30-40x revenue multiples now need a down round or a "default alive" cut to bridge to Series C — and the rounds aren't closing.`,
+    sixMonthInactionConsequence: `LatAm startup cuts in 2024-2026 have a different signature than US: typically 20-30% in one round (vs US 10-15% in three rounds), severance often 30-60 days only (vs US 60-90), and rehiring at the same company within 12 months is rare because the next round often doesn't close. Without ${cd.name} closing a Series C or a strategic acquisition in the next 6 months, the layoff probability at L1: ${L1pct}/100${runway != null ? ` and ${runway}mo runway` : ''} compounds quarterly. Local market reabsorption is slower than US — fewer parallel hiring companies, more candidates per opening.`,
+    oneActionThisWeek: `Check ${cd.name}'s last funding milestone via Crunchbase / LAVCA / Distrito. If the last round was >18 months ago, the company is in the "either close Series C or cut" decision window. Then this week update LinkedIn to "Open to Work" (recruiter-visible only) AND submit 3 applications to: (a) a profitable LatAm company at >5yr operating history, (b) a US/EU multinational LatAm-hub office, (c) a fintech / e-commerce incumbent. The bilingual/Spanish-Portuguese fluency premium in the regional market is 18-25% — leverage it now while the supply is concentrated.`,
+    whatChangesRiskMost: `1. Build a parallel pipeline of 3 stable-employer applications within 30 days — at L1: ${L1pct}/100 + L2: ${L2pct}/100, the contagion risk doubles each quarter without a runway-extension event. 2. Acquire one in-demand technical skill (Cloud certs, AI/ML engineering, payments compliance) — closes the regional skills gap that protects against displacement even during downturns. 3. Build a USD-denominated income stream (consulting, US remote work) — peso/real/peso volatility means LatAm-only salary now has a 15-30% downside in real terms.`,
+    estimatedTimeline: `${score >= 65 ? '3-9 months' : '9-15 months'} — LatAm funding-crisis cuts are faster than EU/Japan restructuring but typically slower than US distress because runway is the binding constraint. ${runway != null ? `At ${runway}mo runway` : 'Without disclosed runway data'}, the trigger event is the next failed round OR a covenant breach with existing investors.`,
+    keyProtectiveFactor: `Bilingual (English + Spanish/Portuguese) language ability is a meaningful protective factor in this archetype — opens US/EU remote work and multinational hub offices. Combined with technical skills, this is the bridge that keeps total compensation stable even when the local market contracts. ${cd.industry ?? 'Your sector'} expertise also transfers to incumbent banks/retailers consolidating fintech talent.`,
+    synthesis: `${cd.name} (${region}) — LatAm funding crisis archetype. L1: ${L1pct}/100${runway != null ? `, ${runway}mo runway` : ''}. Macro: ${macroContext.split('.')[0]}. Timeline: ${score >= 65 ? '3-9 months' : '9-15 months'}. Action: build USD-income optionality + technical skills now.`,
+    urgencyLevel: score >= 65 ? 'Immediate' : score >= 50 ? 'High' : 'Moderate',
+  };
+}
+
+function buildAPACHyperscalerNarrative(
+  cd: CompanyData,
+  bd: { L1: number; L3: number; L5?: number; D8?: number },
+  score: number,
+  role: string,
+  tenureYears: number,
+): ScenarioNarrative {
+  const L1pct = pct(bd.L1);
+  const L3pct = pct(bd.L3);
+  const D8pct = pct(bd.D8 ?? 0);
+  const region = (cd.region ?? '').toString().toUpperCase();
+
+  const APAC_HUB_CONTEXT: Record<string, string> = {
+    SG: 'Singapore is the regional HQ for most US tech APAC ops; cost arbitrage vs SF/NYC has narrowed (now ~25% vs 50% in 2018) so headcount migrates to KL/Manila/Bangalore',
+    HK: 'Hong Kong APAC functions are being relocated to Singapore/Tokyo post-2020; expat tech workforce shrank ~35% 2020-2026',
+    JP: 'Japan offices are being protected by lifetime-employment culture for Japanese citizens, but expat/contract roles face standard restructuring',
+    AU: 'Australian offices (Sydney/Melbourne) typically protected for English-language regional sales, but engineering/product roles migrate to India',
+    KR: 'Korea offices face localization toward Korean nationals; expat tech roles being eliminated',
+  };
+  const hubContext = APAC_HUB_CONTEXT[region] ?? 'APAC regional functions face consolidation pressure as cost arbitrage with US narrows';
+
+  return {
+    archetype: 'apac_hyperscaler_localization',
+    primaryRiskDriver: `APAC hyperscaler localization is the dominant driver at ${score}/100 — ${cd.name} is consolidating regional ops, replacing expensive expat/regional-hub talent with local-national hires or relocating functions to lower-cost APAC nodes (Manila, KL, Bangalore, Hyderabad). L3: ${L3pct}/100, D8: ${D8pct}/100. Context: ${hubContext}. The pattern is structural, not financial — L1: ${L1pct}/100 confirms the company is profitable; the cuts are cost-optimization driven by parent-company quarterly margin targets.`,
+    sixMonthInactionConsequence: `APAC localization cuts proceed in waves: first wave (Q1-Q2) targets duplicate functions between regional HQ and parent. Second wave (Q3-Q4) targets expat/contract roles that can be re-hired locally at 40-55% cost. Without a function-defensibility argument — a role that genuinely cannot be performed by a local hire — the 12-month outcome is a quiet re-org with a 60-90 day notice. At score ${score}/100 the early signals (frozen headcount, parent-company "efficiency" messaging on earnings calls) usually precede announcement by 4-6 months.`,
+    oneActionThisWeek: `Audit your role through 2 lenses this week: (a) Could this be done by a local national in ${region} or relocated to Manila/KL/Bangalore? (b) Does your role have a defensible regional-judgment / customer-relationship / language requirement that a hire elsewhere can't replicate? Then schedule a 15-min sync with your manager to discuss: "Where does my role sit in the regional capability map for 2027?" At L3: ${L3pct}/100 + D8: ${D8pct}/100, having this conversation now creates a written record that supports retention.`,
+    whatChangesRiskMost: `1. Build defensible regional-specific expertise — local customer relationships, language/cultural fluency, regulatory navigation in ${region}. These reduce L3: ${L3pct}/100 because they're not arbitraged-away by relocation. 2. Build a parallel pipeline at APAC-headquartered companies (Sea Limited, Grab, Lazada, Atlassian, Canva) where regional ops are the core business, not a cost center. 3. Acquire one AI-augmentation skill — D8: ${D8pct}/100 means the parent is also automating, so the next wave of cuts targets generic-AI-substitutable roles regardless of geography.`,
+    estimatedTimeline: `${score >= 65 ? '9-18 months' : '18-30 months'} — hyperscaler localization waves typically have 2-3 quarter announcement cycles. At D8: ${D8pct}/100, expect compounding from AI-efficiency restructuring layered on top.`,
+    keyProtectiveFactor: `Regional expertise that genuinely cannot be replicated by lower-cost APAC nodes — customer relationships built over 5+ years, regulatory navigation in ${region}, native language ability for non-English-primary markets. Engineering and product roles are the most-exposed; sales, customer success, regulatory affairs, and partnerships are the most-protected.`,
+    synthesis: `${cd.name} (${region}) — APAC hyperscaler localization archetype. L3: ${L3pct}/100, D8: ${D8pct}/100. ${hubContext.split(';')[0]}. Timeline: ${score >= 65 ? '9-18 months' : '18-30 months'}. Action: build defensible regional expertise + APAC-native employer pipeline.`,
+    urgencyLevel: score >= 65 ? 'High' : score >= 50 ? 'Moderate' : 'Low',
+  };
+}
+
+function buildUSGovContractNarrative(
+  cd: CompanyData,
+  bd: { L1: number; L2: number; L4?: number; L5?: number },
+  score: number,
+  role: string,
+  tenureYears: number,
+): ScenarioNarrative {
+  const L1pct = pct(bd.L1);
+  const L2pct = pct(bd.L2);
+  const L4pct = pct(bd.L4 ?? 0);
+  const security = (cd as any).securityClearance as string | undefined;
+
+  return {
+    archetype: 'us_gov_contract_risk',
+    primaryRiskDriver: `US government contract risk is the dominant driver at ${score}/100 — ${cd.name} faces compounding pressure from federal budget cuts (DOGE-driven contract terminations 2025-2026), continuing-resolution-driven funding uncertainty, and prime-contractor pass-through cuts. L4 (Industry Headwinds): ${L4pct}/100, L2 (Layoff History): ${L2pct}/100. The risk is bimodal: programs of record continue but new starts are frozen, and subcontractor roles cut first. L1: ${L1pct}/100 shows the company is otherwise stable — the risk is contract-driven, not balance-sheet driven.`,
+    sixMonthInactionConsequence: `Federal contract cancellations follow a predictable cadence: 30-60 day stop-work order, then 60-90 days for the contractor to "ramp down" headcount allocated to the program. Without re-allocation to another active contract within 90 days of a stop-work, roles convert to bench → 30-day notice. At ${cd.name} with L4: ${L4pct}/100, the 6-month risk is being on a program that ends with no follow-on. Severance at federal contractors averages 2 weeks per year of service capped at 12 weeks — lower than commercial tech.`,
+    oneActionThisWeek: `Identify the specific contract / program you're billed to and check its current status via USASpending.gov + the DoD or GSA contracts portal. Search: "${cd.name}" + your program name. Is the option year exercised? Is the funding profile flat or declining? Then update your LinkedIn to surface ${security ? `${security} clearance` : 'security clearance status'} prominently — cleared roles re-employ in <90 days on average vs 180+ days for uncleared. Send 2 applications to other prime contractors (Lockheed, Raytheon, Northrop, L3Harris, Booz Allen, Leidos, SAIC) on different program areas to validate market value.`,
+    whatChangesRiskMost: `1. Re-allocate to a different active contract within ${cd.name} — internal mobility is the fastest L4 hedge (current contract risk is fungible across programs in many primes). 2. Maintain / upgrade security clearance — at ${security ?? 'current clearance level'}, every clearance tier upgrade raises L5 by an estimated 10-15 points in this archetype. 3. Build commercial-sector skills (cloud, cybersecurity, AI/ML) that bridge from defense to commercial tech — gov-tech crossover roles at AWS Federal, Microsoft Federal, Palantir, Anduril have grown 28% YoY 2024-2026.`,
+    estimatedTimeline: `${score >= 65 ? '3-9 months' : '9-15 months'} — federal contract cuts are faster than commercial restructuring because the trigger event (stop-work order) is binary. Continuing Resolution uncertainty compresses planning horizons across the entire industry.`,
+    keyProtectiveFactor: `${security ? `Active ${security} clearance` : 'Active security clearance'} is the strongest protective factor in this archetype — cleared workforce supply is structurally constrained, so re-employment at a peer prime contractor is faster than uncleared equivalents. ${tenureYears}yr tenure at ${cd.name} also helps with internal cross-program transfers.`,
+    synthesis: `${cd.name} — US gov contract risk archetype. L4: ${L4pct}/100, L2: ${L2pct}/100. Federal budget pressure + program-of-record uncertainty. Timeline: ${score >= 65 ? '3-9 months' : '9-15 months'}. Action: clearance maintenance + cross-program transfer + commercial-sector skill bridges.`,
+    urgencyLevel: score >= 65 ? 'High' : score >= 50 ? 'Moderate' : 'Low',
+  };
+}
+
+function buildFintechRegulatoryNarrative(
+  cd: CompanyData,
+  bd: { L1: number; L3: number; L4?: number; L5?: number },
+  score: number,
+  role: string,
+  tenureYears: number,
+): ScenarioNarrative {
+  const L1pct = pct(bd.L1);
+  const L3pct = pct(bd.L3);
+  const L4pct = pct(bd.L4 ?? 0);
+  const region = (cd.region ?? '').toString().toUpperCase();
+
+  // Regulator and current enforcement-action narrative per region.
+  const REGULATOR_CONTEXT: Record<string, string> = {
+    IN: 'RBI digital lending guidelines (2022) + DPDP Act (2023) + UPI fintech tightening (2024-2026) restrict BNPL, P2P lending, and unsecured digital credit. NBFC layer regulation increased compliance hires 32%',
+    SG: 'MAS digital bank licensing tightened 2024-2026; payment-services act revision increased AML staffing requirements 25%; crypto licensing freeze ongoing',
+    DE: 'BaFin AI Act enforcement (Aug 2026) + MiCA crypto regulation + PSD3 readiness; payment institutions face quarterly thematic reviews',
+    GB: 'FCA consumer-duty enforcement + crypto registration backlog + buy-now-pay-later regulation (live 2026); compliance officer headcount up 41% YoY',
+    UK: 'FCA consumer-duty enforcement + crypto registration backlog + BNPL regulation (live 2026); compliance officer headcount up 41% YoY',
+    US: 'CFPB Section 1033 open-banking rules + state-level money-transmitter law harmonization + Treasury / OFAC sanctions enforcement on crypto rails',
+    AU: 'APRA + ASIC dual regulation; CDR (Consumer Data Right) compliance + AUSTRAC AML staffing requirements',
+    BR: 'Banco Central do Brasil open-finance phase 4 + PIX fraud-prevention rules + DREX CBDC pilot driving payment-rails compliance hires',
+    HK: 'HKMA crypto trading platform licensing + stablecoin regulation (2026); SFC virtual-asset licensing creates compliance hiring demand',
+  };
+  const regulatorContext = REGULATOR_CONTEXT[region] ?? `Local financial regulator is tightening AI/fintech oversight in line with global trend (Basel III implementation, AI risk frameworks, payment-services revision)`;
+
+  return {
+    archetype: 'fintech_regulatory_tightening',
+    primaryRiskDriver: `Fintech regulatory tightening is the dominant driver at ${score}/100 — ${cd.name} faces compounding pressure from regulator-driven product restrictions + mandatory compliance hiring offsetting growth-team headcount. L4 (Industry Headwinds): ${L4pct}/100, L3 (Role Displacement): ${L3pct}/100. Regional context: ${regulatorContext}. The pattern is double-edged: compliance/risk hiring is up but product/growth/marketing roles are cut to fund it. L1: ${L1pct}/100 shows the company is profitable — this is strategic reallocation, not financial distress.`,
+    sixMonthInactionConsequence: `Fintech regulatory cuts have a specific signature: simultaneous compliance hiring + growth/marketing/customer-acquisition cuts. Without repositioning toward regulator-aware work (compliance engineering, model risk management, AML automation), the 6-month outcome at score ${score}/100 is being on the displaced side of the reallocation. The roles created (Compliance Engineer, Model Risk Officer, AML Analyst, Privacy Engineer) command 20-35% salary premiums over equivalent-seniority growth roles — but only for candidates who pivoted early.`,
+    oneActionThisWeek: `Acquire one foundational regulatory credential this week (start: free courses): IAPP CIPP for privacy, ACAMS CAMS for AML, GARP FRM for risk management. Then identify the 1 regulator workflow at ${cd.name} (KYC, sanctions screening, AML transaction monitoring, model risk validation) where your existing skills bridge most naturally. Send your manager a 1-pager: "Where I could contribute to the ${regulatorContext.split('.')[0]} compliance roadmap." This action moves you from "growth team that might be cut" to "compliance contributor that might be retained" without a job change.`,
+    whatChangesRiskMost: `1. Acquire one regulatory credential within 90 days (IAPP/ACAMS/GARP/IRM) — directly addresses L4: ${L4pct}/100 by repositioning you on the protected side of the reallocation. 2. Build a portfolio artifact: one compliance-engineering project (regtech automation, AML rule optimization, model validation) — public evidence of pivot. 3. Build a recruiter pipeline at compliance-first fintech (Chainalysis, ComplyAdvantage, Onfido, Persona, Sumsub) and big-bank-compliance-tech functions where the hiring is concentrated.`,
+    estimatedTimeline: `${score >= 65 ? '6-12 months' : '12-18 months'} — fintech regulatory cycles align with quarterly supervisory reviews; the displacement isn't sudden but it's relentless quarter-over-quarter as more regulator-driven workflows come online.`,
+    keyProtectiveFactor: `Existing regulator-touching responsibilities (KYC, compliance reporting, audit liaison, risk modeling) are the strongest protective factor. ${tenureYears}yr tenure at ${cd.name} also helps because regulators expect continuity in named compliance officers — high turnover triggers supervisory scrutiny that companies actively avoid.`,
+    synthesis: `${cd.name} (${region}) — fintech regulatory tightening archetype. L4: ${L4pct}/100. ${regulatorContext.split('.')[0]}. Timeline: ${score >= 65 ? '6-12 months' : '12-18 months'}. Action: pivot toward regulator-aware work (compliance/risk/privacy) within current company before external move.`,
+    urgencyLevel: score >= 65 ? 'High' : score >= 50 ? 'Moderate' : 'Low',
+  };
+}
+
 function buildLowRiskNarrative(
   cd: CompanyData,
   bd: { L1: number; L3: number; L5?: number },
@@ -530,6 +892,21 @@ export function buildScenarioNarrative(
     case 'low_risk_maintain':
       narrative = buildLowRiskNarrative(companyData, breakdown, score, roleTitle, tenureYears);
       break;
+    case 'eu_regulatory_restructuring':
+      narrative = buildEURegulatoryNarrative(companyData, breakdown, score, roleTitle, tenureYears);
+      break;
+    case 'latam_funding_crisis':
+      narrative = buildLatAmFundingNarrative(companyData, breakdown, score, roleTitle, tenureYears);
+      break;
+    case 'apac_hyperscaler_localization':
+      narrative = buildAPACHyperscalerNarrative(companyData, breakdown, score, roleTitle, tenureYears);
+      break;
+    case 'us_gov_contract_risk':
+      narrative = buildUSGovContractNarrative(companyData, breakdown, score, roleTitle, tenureYears);
+      break;
+    case 'fintech_regulatory_tightening':
+      narrative = buildFintechRegulatoryNarrative(companyData, breakdown, score, roleTitle, tenureYears);
+      break;
     default:
       narrative = buildRoleDisplacementNarrative(companyData, breakdown, score, roleTitle, tenureYears, uniquenessDepth, enrichment);
   }
@@ -564,6 +941,16 @@ function buildSecondaryInsight(
       return `Secondary risk: Sector-level headwinds (L4) are compounding the primary risk — industry-wide contraction means company-specific improvements may be partially offset by macro pressure.`;
     case 'individual_resilience_gap':
       return `Secondary risk: Personal resilience factors (L5) are contributing to the score — building differentiated skills and documented achievements would reduce this secondary signal regardless of company or role changes.`;
+    case 'eu_regulatory_restructuring':
+      return `Secondary risk: EU regulatory compliance pressure (AI Act / GDPR / DSA) is also compounding — even if the primary risk is resolved, ${cd.name}'s EU presence creates regulator-driven headcount reallocation independent of financial health.`;
+    case 'latam_funding_crisis':
+      return `Secondary risk: LatAm VC funding pressure is also compounding — even if company-specific signals improve, the regional capital-availability constraint creates contagion risk across the local ecosystem.`;
+    case 'apac_hyperscaler_localization':
+      return `Secondary risk: APAC localization pressure (cost arbitrage, expat-to-local hiring shift) is also compounding — regional ops consolidation operates independently of financial-distress signals.`;
+    case 'us_gov_contract_risk':
+      return `Secondary risk: US government contract risk (budget cuts, continuing-resolution uncertainty) is also compounding — program-level cancellations create contagion across cleared workforce regardless of company financial health.`;
+    case 'fintech_regulatory_tightening':
+      return `Secondary risk: Fintech regulatory tightening (central-bank AI/fintech oversight) is also compounding — compliance-driven headcount reallocation operates independently of L1 financial signals.`;
     default:
       return `A secondary risk dimension is also contributing to your score — see the Risk Breakdown tab for the full dimensional breakdown.`;
   }
@@ -579,6 +966,11 @@ export function getScenarioArchetypeLabel(archetype: ScenarioArchetype): string 
     india_it_bench_risk: 'IT Services Bench Risk',
     individual_resilience_gap: 'Individual Resilience Gap',
     low_risk_maintain: 'Low Risk — Optimization Mode',
+    eu_regulatory_restructuring: 'EU Regulatory Restructuring',
+    latam_funding_crisis: 'LatAm Funding Crisis',
+    apac_hyperscaler_localization: 'APAC Hyperscaler Localization',
+    us_gov_contract_risk: 'US Government Contract Risk',
+    fintech_regulatory_tightening: 'Fintech Regulatory Tightening',
   };
   return labels[archetype] ?? archetype;
 }
@@ -593,6 +985,11 @@ export function getScenarioArchetypeColor(archetype: ScenarioArchetype): string 
     india_it_bench_risk: 'text-blue-600 bg-blue-50 border-blue-200',
     individual_resilience_gap: 'text-indigo-600 bg-indigo-50 border-indigo-200',
     low_risk_maintain: 'text-green-600 bg-green-50 border-green-200',
+    eu_regulatory_restructuring: 'text-sky-700 bg-sky-50 border-sky-200',
+    latam_funding_crisis: 'text-rose-700 bg-rose-50 border-rose-200',
+    apac_hyperscaler_localization: 'text-teal-700 bg-teal-50 border-teal-200',
+    us_gov_contract_risk: 'text-slate-700 bg-slate-100 border-slate-300',
+    fintech_regulatory_tightening: 'text-violet-700 bg-violet-50 border-violet-200',
   };
   return colors[archetype] ?? 'text-slate-600 bg-slate-50 border-slate-200';
 }

@@ -378,6 +378,9 @@ describe('scenarioNarrativeEngine', () => {
       'financial_distress_layoff', 'ai_efficiency_restructuring', 'role_displacement',
       'sector_wave', 'gcc_parent_contagion', 'india_it_bench_risk',
       'individual_resilience_gap', 'low_risk_maintain',
+      'eu_regulatory_restructuring', 'latam_funding_crisis',
+      'apac_hyperscaler_localization', 'us_gov_contract_risk',
+      'fintech_regulatory_tightening',
     ] as const;
     for (const a of archetypes) {
       expect(getScenarioArchetypeLabel(a).length).toBeGreaterThan(0);
@@ -389,6 +392,9 @@ describe('scenarioNarrativeEngine', () => {
       'financial_distress_layoff', 'ai_efficiency_restructuring', 'role_displacement',
       'sector_wave', 'gcc_parent_contagion', 'india_it_bench_risk',
       'individual_resilience_gap', 'low_risk_maintain',
+      'eu_regulatory_restructuring', 'latam_funding_crisis',
+      'apac_hyperscaler_localization', 'us_gov_contract_risk',
+      'fintech_regulatory_tightening',
     ] as const;
     for (const a of archetypes) {
       const color = getScenarioArchetypeColor(a);
