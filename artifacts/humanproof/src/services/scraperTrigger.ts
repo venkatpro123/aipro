@@ -284,11 +284,12 @@ import {
   PRIVATE_COMPANY_QUORUM_SPEC,
   JOB_TYPE_TO_QUORUM_SOURCE,
   evaluateQuorum,
+  quorumSpecForRegime,
   type QuorumSpec,
   type QuorumStatus,
   type SignalClass,
 } from './liveQuorumSpec';
-import { isPrivateCompany } from './companyEntityResolver';
+import { detectPrivateCompanyRegime } from './companyEntityResolver';
 
 export interface AwaitLiveQuorumOptions {
   /** Hard ceiling — default 45s as agreed in plan. */
@@ -345,7 +346,7 @@ export async function awaitLiveQuorum(
   const ceilingMs       = opts.ceilingMs ?? 45_000;
   const pollIntervalMs  = Math.max(250, opts.pollIntervalMs ?? 500);
   const since           = opts.since ?? new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const spec            = opts.spec ?? (isPrivateCompany(companyName) ? PRIVATE_COMPANY_QUORUM_SPEC : DEFAULT_QUORUM_SPEC);
+  const spec            = opts.spec ?? quorumSpecForRegime(detectPrivateCompanyRegime(companyName));
   const escalateAtMs    = opts.escalateAtMs ?? Math.floor(ceilingMs * 0.5);
   const startedAt       = Date.now();
 

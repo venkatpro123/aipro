@@ -16,6 +16,7 @@
 //   * sourceReliability — average reliability of the live sources that won
 
 import type { QuorumStatus } from './liveQuorumSpec';
+import type { PrivateCompanyRegime } from './companyEntityResolver';
 
 export interface ConfidenceInputs {
   /** Quorum status from awaitLiveQuorum / evaluateQuorum. */
@@ -47,6 +48,16 @@ export interface ConfidenceInputs {
    *   D — minimal data (floor 0.35)
    */
   dbReliabilityTier?: 'A' | 'B' | 'C' | 'D';
+  /**
+   * Detected private-company regulatory regime. When set, a hard confidence
+   * ceiling is applied AFTER all other logic to represent the structural
+   * information limit imposed by local corporate disclosure law.
+   *
+   * This ceiling is NOT a quality judgement — it reflects that certain
+   * data classes (real-time financials, WARN Act filings) do not legally
+   * exist in the target jurisdiction regardless of how well the scrape went.
+   */
+  privateCompanyRegime?: PrivateCompanyRegime | null;
 }
 
 export interface ConfidenceResult {
@@ -60,12 +71,68 @@ export interface ConfidenceResult {
     sourceReliability: { score: number; weight: number };
     conflictPenalty:   number;
     liveUnavailableFloor: number | null;
+    /** Regime-specific structural ceiling (null when not a private-company audit). */
+    privateRegimeCeiling: number | null;
   };
   /** Human-readable diagnostic strings — used by the confidence tooltip. */
   rationale: string[];
 }
 
 const clamp = (x: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
+
+/**
+ * Hard confidence ceilings by private-company regulatory regime.
+ *
+ * These are structural limits — not quality scores. A German GmbH that has
+ * excellent Wikipedia + news + LinkedIn coverage still cannot exceed 0.55
+ * because no public financial disclosure is legally required, making
+ * financial-health inferences permanently unverifiable.
+ */
+export const PRIVATE_REGIME_CEILINGS: Record<PrivateCompanyRegime, number> = {
+  german_gmbh:        0.55,
+  uk_private_ltd:     0.60,
+  india_unlisted_pvt: 0.52,
+  us_private:         0.65,
+  apac_private:       0.58,
+  eu_other_private:   0.58,
+};
+
+/**
+ * Specific disclosure strings for each private-company regime.
+ * Replaces the generic "limited data" or "Live intelligence unavailable" with
+ * jurisdiction-accurate language citing the actual regulatory gap.
+ */
+export const PRIVATE_REGIME_DISCLOSURES: Record<PrivateCompanyRegime, string> = {
+  german_gmbh:
+    'Private GmbH — no public financial disclosure required in Germany. ' +
+    'Bundesanzeiger annual accounts have up to 12-month filing lag. ' +
+    'No WARN Act equivalent: Betriebsverfassungsgesetz requires internal ' +
+    'works-council consultation only — no public advance-notice filing. ' +
+    'Handelsregister shows registration details only.',
+  uk_private_ltd:
+    'Private Ltd — Companies House annual accounts required (9-month filing ' +
+    'deadline after year-end). No real-time financial disclosure. ' +
+    'UK collective redundancy law (TULRCA s.188) requires consultation ' +
+    'but no public advance-notice filing comparable to the US WARN Act.',
+  india_unlisted_pvt:
+    'Unlisted private company — no NSE/BSE disclosure required. ' +
+    'MCA21 annual return filing only (no revenue or P&L published). ' +
+    'Companies below INR 500Cr revenue have no mandatory public financial ' +
+    'filing beyond basic MCA forms. Industrial Disputes Act §25-O requires ' +
+    'government permission for large layoffs but no public advance notice.',
+  us_private:
+    'US private company — no SEC EDGAR, no 10-K or 8-K filings. ' +
+    'WARN Act (60-day advance notice) applies only when ≥100 employees; ' +
+    'many US private companies are below this threshold.',
+  apac_private:
+    'APAC private company (Pte Ltd / Pty Ltd) — ACRA / ASIC annual return ' +
+    'filing required but contains limited financial detail. ' +
+    'No real-time financial disclosure or exchange filing required.',
+  eu_other_private:
+    'EU private company — national registry annual accounts required but ' +
+    'filing quality and timeliness vary significantly by country. ' +
+    'No EU-wide mandatory real-time financial disclosure for private entities.',
+};
 
 /**
  * Compute evidence-based confidence. Returns 0–1.
@@ -118,7 +185,6 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
   // ── Conflict penalty ─────────────────────────────────────────────────────
   const conflictPenalty = clamp(inputs.conflictCount * 0.05, 0, 0.20);
   value -= conflictPenalty;
-  value = clamp(value, 0.10, 0.95);
 
   // ── Live-unavailable floor (DB-quality-adjusted) ─────────────────────────
   // v40.0 audit fix: the floor now reflects DB record quality instead of using
@@ -152,6 +218,18 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
     liveUnavailableFloor = floor;
   }
 
+  // ── Private-company regime ceiling ───────────────────────────────────────
+  // Applied AFTER the live-unavailable floor so the ceiling always wins.
+  // Represents the structural information limit imposed by local disclosure
+  // law — not a quality score. See PRIVATE_REGIME_CEILINGS for rationale.
+  let privateRegimeCeiling: number | null = null;
+  if (inputs.privateCompanyRegime) {
+    privateRegimeCeiling = PRIVATE_REGIME_CEILINGS[inputs.privateCompanyRegime];
+    value = Math.min(value, privateRegimeCeiling);
+  }
+
+  value = clamp(value, 0.10, 0.95);
+
   // ── Rationale ────────────────────────────────────────────────────────────
   const rationale: string[] = [];
   rationale.push(
@@ -178,7 +256,13 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
     const tier = inputs.dbReliabilityTier ?? 'C';
     rationale.push(
       `Live intelligence unavailable — confidence anchored to DB quality tier ${tier}`
-      + ` (${Math.round(liveUnavailableFloor * 100)}%).`,
+      + ` (floor ${Math.round(liveUnavailableFloor * 100)}%).`,
+    );
+  }
+  if (privateRegimeCeiling != null && inputs.privateCompanyRegime) {
+    rationale.push(
+      `Confidence ceiling ${Math.round(privateRegimeCeiling * 100)}% — ` +
+      PRIVATE_REGIME_DISCLOSURES[inputs.privateCompanyRegime],
     );
   }
 
@@ -191,6 +275,7 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
       sourceReliability: { score: sourceReliability, weight: W_RELIABILITY },
       conflictPenalty,
       liveUnavailableFloor,
+      privateRegimeCeiling,
     },
     rationale,
   };

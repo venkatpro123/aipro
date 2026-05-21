@@ -40,6 +40,7 @@ import {
   type EvidencePresenceReport,
 } from './evidencePresenceGate';
 import type { ConfidenceInputs as LegacyConfidenceInputs, ConfidenceResult as LegacyConfidenceResult } from './confidenceModel';
+import { PRIVATE_REGIME_CEILINGS, PRIVATE_REGIME_DISCLOSURES } from './confidenceModel';
 import type { ConformalBundle } from './conformalCI';
 import type { SourceIndependentPanelResult } from './swarm/sourceIndependentPanel';
 
@@ -232,6 +233,16 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
 
   // ── Cap (hard upper bound) ──────────────────────────────────────────────
   value = Math.min(value, cap.cap);
+
+  // ── Private-company regime ceiling ─────────────────────────────────────
+  // Applied after presence-gate cap so the structural ceiling always wins.
+  // See PRIVATE_REGIME_CEILINGS in confidenceModel.ts for per-regime rationale.
+  let privateRegimeCeiling: number | null = null;
+  if (inputs.privateCompanyRegime) {
+    privateRegimeCeiling = PRIVATE_REGIME_CEILINGS[inputs.privateCompanyRegime];
+    value = Math.min(value, privateRegimeCeiling);
+  }
+
   value = clamp(value);
 
   // ── Rationale ───────────────────────────────────────────────────────────
@@ -273,6 +284,12 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
   if (cap.cap < 1.0) {
     rationale.push(`Presence cap: ${(cap.cap * 100).toFixed(0)}% — ${cap.reason}`);
   }
+  if (privateRegimeCeiling != null && inputs.privateCompanyRegime) {
+    rationale.push(
+      `Confidence ceiling ${(privateRegimeCeiling * 100).toFixed(0)}% — ` +
+      PRIVATE_REGIME_DISCLOSURES[inputs.privateCompanyRegime],
+    );
+  }
 
   return {
     value,
@@ -283,6 +300,7 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
       sourceReliability: { score: sourceReliability, weight: useNew ? W_SOURCE_RELIABILITY : 0.20 },
       conflictPenalty,
       liveUnavailableFloor: inputs.liveUnavailable ? liveUnavailableFloorVal : null,
+      privateRegimeCeiling,
     },
     rationale,
     presenceReport,

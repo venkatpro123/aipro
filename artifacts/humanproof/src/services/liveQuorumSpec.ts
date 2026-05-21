@@ -14,6 +14,18 @@
 //                          finding zero layoff articles is a meaningful signal).
 //
 // Private companies relax the financial class to min=0 (no public stock data).
+// v40.1: regime-specific quorum specs correctly scope the layoffs source list
+// to the regulatory instruments that actually exist in each jurisdiction.
+// Key corrections:
+//   german_gmbh        — WARN Act does not exist in Germany; SEC EDGAR is US only.
+//                        Bundesanzeiger + Handelsregister exist but are not
+//                        real-time scrapers — workforce class excludes yahoo-fte.
+//   uk_private_ltd     — WARN Act is US-specific; SEC EDGAR is US-only.
+//                        Companies House filing exists but is annual (9-month lag).
+//   india_unlisted_pvt — SEC EDGAR is US-only; BSE/NSE sources irrelevant for
+//                        private companies (no exchange listing). WARN Act US-only.
+
+import type { PrivateCompanyRegime } from './companyEntityResolver';
 
 export type SignalClass = 'workforce' | 'layoffs' | 'financial' | 'hiring';
 
@@ -62,6 +74,104 @@ export const PRIVATE_COMPANY_QUORUM_SPEC: QuorumSpec = {
   ...DEFAULT_QUORUM_SPEC,
   financial: { min: 0, sources: [] },
 };
+
+/**
+ * German GmbH quorum spec.
+ *
+ * Corrections vs DEFAULT_QUORUM_SPEC:
+ *   financial: min=0 — no public ticker, no stock-exchange financial disclosure.
+ *   layoffs: 'warn-act' REMOVED — The US WARN Act does not exist in Germany.
+ *            German law (Betriebsverfassungsgesetz §111-113) requires internal
+ *            works-council consultation but NO public advance-notice filing.
+ *            'sec-edgar' REMOVED — US-only corporate filing system.
+ *   workforce: 'yahoo-fte' REMOVED — requires a valid stock ticker.
+ */
+export const GERMAN_GMBH_QUORUM_SPEC: QuorumSpec = {
+  workforce: {
+    min: 2,
+    sources: ['wikipedia', 'linkedin', 'career-page', 'intelligence-db'],
+  },
+  layoffs: {
+    min: 2,
+    sources: ['rss-news', 'breaking-news-db', 'reddit-flagged'],
+    allowAbsenceAfterMs: 20_000,
+  },
+  financial: { min: 0, sources: [] },
+  hiring: DEFAULT_QUORUM_SPEC.hiring,
+};
+
+/**
+ * UK private Ltd quorum spec.
+ *
+ * Corrections vs DEFAULT_QUORUM_SPEC:
+ *   financial: min=0 — no public stock exchange listing.
+ *   layoffs: 'warn-act' REMOVED — UK equivalent (TULRCA s.188) requires
+ *            collective redundancy consultation but no public advance-notice
+ *            filing comparable to the US WARN Act.
+ *            'sec-edgar' REMOVED — US-only.
+ *   workforce: 'yahoo-fte' REMOVED — requires a valid stock ticker.
+ */
+export const UK_PRIVATE_LTD_QUORUM_SPEC: QuorumSpec = {
+  workforce: {
+    min: 2,
+    sources: ['wikipedia', 'linkedin', 'career-page', 'intelligence-db'],
+  },
+  layoffs: {
+    min: 2,
+    sources: ['rss-news', 'breaking-news-db', 'reddit-flagged'],
+    allowAbsenceAfterMs: 20_000,
+  },
+  financial: { min: 0, sources: [] },
+  hiring: DEFAULT_QUORUM_SPEC.hiring,
+};
+
+/**
+ * India unlisted private company quorum spec.
+ *
+ * Corrections vs DEFAULT_QUORUM_SPEC:
+ *   financial: min=0 — no NSE/BSE listing, no public exchange financial disclosure.
+ *              Sources 'yahoo', 'alphavantage', 'bse', 'nse', 'fmp' all require
+ *              an exchange ticker — none applies to private Indian companies.
+ *   layoffs: 'warn-act' REMOVED — US-only. India has no equivalent mandatory
+ *            public advance-notice regime (Industrial Disputes Act §25-O requires
+ *            government permission for large layoffs but no public filing).
+ *            'sec-edgar' REMOVED — US-only.
+ *            'india-press' KEPT — Indian business press (Economic Times, Mint)
+ *            is a valid layoff signal source.
+ *   workforce: 'yahoo-fte' REMOVED — requires ticker.
+ */
+export const INDIA_UNLISTED_QUORUM_SPEC: QuorumSpec = {
+  workforce: {
+    min: 2,
+    sources: ['wikipedia', 'linkedin', 'career-page', 'intelligence-db'],
+  },
+  layoffs: {
+    min: 2,
+    sources: ['rss-news', 'breaking-news-db', 'reddit-flagged', 'india-press'],
+    allowAbsenceAfterMs: 20_000,
+  },
+  financial: { min: 0, sources: [] },
+  hiring: DEFAULT_QUORUM_SPEC.hiring,
+};
+
+/**
+ * Select the correct quorum spec for a detected private-company regime.
+ *
+ * Falls back to PRIVATE_COMPANY_QUORUM_SPEC for us_private/apac_private/
+ * eu_other_private (where the DEFAULT minus financial-class is the right shape).
+ * Returns DEFAULT_QUORUM_SPEC for null regime (unknown company or public company).
+ */
+export function quorumSpecForRegime(regime: PrivateCompanyRegime | null): QuorumSpec {
+  switch (regime) {
+    case 'german_gmbh':        return GERMAN_GMBH_QUORUM_SPEC;
+    case 'uk_private_ltd':     return UK_PRIVATE_LTD_QUORUM_SPEC;
+    case 'india_unlisted_pvt': return INDIA_UNLISTED_QUORUM_SPEC;
+    case 'us_private':
+    case 'apac_private':
+    case 'eu_other_private':   return PRIVATE_COMPANY_QUORUM_SPEC;
+    default:                   return DEFAULT_QUORUM_SPEC;
+  }
+}
 
 export interface QuorumClassStatus {
   signalClass: SignalClass;

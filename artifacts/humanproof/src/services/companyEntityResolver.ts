@@ -20,6 +20,40 @@
 
 export type Region = 'US' | 'IN' | 'EU' | 'APAC' | 'LATAM' | 'MEA' | 'GLOBAL';
 
+/**
+ * Regulatory filing regime for privately-held companies.
+ * Each value represents a structurally distinct data-availability ceiling
+ * driven by local corporate disclosure law — NOT a company-specific quality
+ * judgement. Used to select the correct quorum spec and apply the correct
+ * confidence ceiling + disclosure string.
+ *
+ * Regime → ceiling rationale:
+ *   german_gmbh        0.55  Handelsregister basic info only. Bundesanzeiger annual
+ *                            accounts have up to 12-month filing lag. No WARN Act
+ *                            equivalent in Germany (Betriebsverfassungsgesetz requires
+ *                            only internal works-council consultation — no public filing).
+ *   uk_private_ltd     0.60  Companies House annual accounts required (9-month filing
+ *                            deadline after year-end). Filing exists but is not
+ *                            real-time; no stock-exchange disclosure required.
+ *   india_unlisted_pvt 0.52  MCA21 annual return only. No NSE/BSE disclosure.
+ *                            Companies below INR 500Cr revenue have no mandatory
+ *                            public financial filing beyond basic MCA forms.
+ *   us_private         0.65  No SEC EDGAR or 10-K. WARN Act applies only when
+ *                            ≥100 employees; many private companies file no
+ *                            advance notice for workforce reductions.
+ *   apac_private       0.58  SG Pte Ltd (ACRA annual return — filing exists but
+ *                            limited financial detail). AU Pty Ltd (ASIC similar).
+ *   eu_other_private   0.58  FR SARL / NL BV / BE BVBA — national registries have
+ *                            annual accounts, quality varies significantly by country.
+ */
+export type PrivateCompanyRegime =
+  | 'german_gmbh'
+  | 'uk_private_ltd'
+  | 'india_unlisted_pvt'
+  | 'us_private'
+  | 'apac_private'
+  | 'eu_other_private';
+
 export interface EntityRecord {
   /** Canonical lowercase name used as the resolver's primary key. */
   canonical: string;
@@ -400,6 +434,83 @@ export function entityFootprint(rawName: string): string[] {
 /** True when the company is privately held — caller should skip Yahoo Finance. */
 export function isPrivateCompany(rawName: string): boolean {
   return resolveCompanyEntity(rawName)?.isPrivate === true;
+}
+
+/**
+ * Detect the private-company regulatory regime from the company name.
+ *
+ * Resolution order:
+ *   1. ENTITIES graph — if the company is known and public (isPrivate=false),
+ *      returns null immediately (no regime applies).
+ *   2. ENTITIES graph — if known and private, infers regime from region.
+ *   3. Legal-suffix matching on the raw name (NOT the normalised form) —
+ *      covers long-tail companies not in the entity graph.
+ *
+ * Returns null when the company is known-public OR when no private regime
+ * can be detected from the name alone (unknown company, name without legal suffix).
+ * The caller should treat null as "regime unknown — use DEFAULT_QUORUM_SPEC."
+ */
+export function detectPrivateCompanyRegime(rawName: string): PrivateCompanyRegime | null {
+  if (!rawName) return null;
+
+  // ── Step 1 & 2: entity graph lookup ────────────────────────────────────────
+  const entity = resolveCompanyEntity(rawName);
+  if (entity) {
+    if (!entity.isPrivate) return null;  // known public, no regime
+    // Infer regime from region for known private entities.
+    switch (entity.region) {
+      case 'IN':     return 'india_unlisted_pvt';
+      case 'APAC':   return 'apac_private';
+      case 'EU':     return 'eu_other_private';
+      case 'US':
+      case 'LATAM':
+      case 'MEA':
+      case 'GLOBAL': return 'us_private';
+    }
+  }
+
+  // ── Step 3: legal-suffix heuristics on the raw name ────────────────────────
+  const lower = rawName.toLowerCase();
+
+  // German legal forms — unambiguous, always private unless AG listed on DAX/MDAX.
+  // GmbH: Gesellschaft mit beschränkter Haftung (German LLC)
+  // GmbH & Co. KG: common partnership structure
+  // KGaA: Kommanditgesellschaft auf Aktien (rare, usually private)
+  if (/\bgmbh\b|\bgmbh\s*&\s*co\.?\s*k\.?g\.?\b|\bkgaa\b/.test(lower)) {
+    return 'german_gmbh';
+  }
+
+  // Indian private — suffix is distinctive and unambiguous.
+  if (/\bpvt\.?\s*ltd\b|\bprivate\s+limited\b|\bpvt\s+limited\b/.test(lower)) {
+    return 'india_unlisted_pvt';
+  }
+
+  // Singapore Pte Ltd / Australian Pty Ltd / Malaysian Sdn Bhd — APAC private.
+  if (/\bpte\.?\s*ltd\b|\bpty\.?\s*ltd\b|\bsdn\.?\s*bhd\b/.test(lower)) {
+    return 'apac_private';
+  }
+
+  // UK / Ireland private Ltd (but NOT PLC — PLC is public).
+  // 'Ltd' or 'Limited' without 'plc' → private Ltd structure.
+  if (/\bltd\b|\blimited\b/.test(lower) && !/\bplc\b/.test(lower)) {
+    return 'uk_private_ltd';
+  }
+
+  // Continental EU private forms.
+  // SARL (FR), SRL (IT/RO), BV (NL), BVBA (BE), AB (SE — Aktiebolag).
+  // NV (NL/BE) excluded — NVs are typically listed or large.
+  if (/\bsarl\b|\bsrl\b|\bbv\b|\bbvba\b|\bsprl\b/.test(lower)) {
+    return 'eu_other_private';
+  }
+
+  // US private legal forms — LLC, LP, or Inc/Corp without a known ticker.
+  // Only apply when the entity resolver returned null (unknown company) to
+  // avoid false-positives on e.g. "IBM Corporation".
+  if (/\bllc\b|\bllp\b|\blp\b/.test(lower)) {
+    return 'us_private';
+  }
+
+  return null;
 }
 
 /**
