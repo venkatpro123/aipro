@@ -2638,6 +2638,60 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
           <EffectiveWeightsPanel segmentCalibration={(result as any).segmentCalibration} />
         </div>
 
+        {/* v40.0: Sector × Region L4 stability multiplier — banking + telecom × CA/US/UK/EU */}
+        {(() => {
+          const srAdj =
+            (result as any).sectorRegionStabilityAdjustment ??
+            (result._engineResult as any)?.sectorRegionStabilityAdjustment;
+          if (!srAdj) return null;
+          const deltaPct = Math.round((srAdj.multiplier - 1.0) * 100);
+          const isLower = srAdj.multiplier < 1.0;
+          return (
+            <div className="mb-6">
+              <SectionHeader
+                title="Sector × Region Stability"
+                description="An L4 calibration multiplier applied when company.region AND company.industry match a known sector-region stability profile (banking + telecom × CA/US/UK/EU)."
+              />
+              <div className="glass-panel p-4">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground opacity-60 font-semibold">
+                    Applied multiplier
+                  </span>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                    {srAdj.key}
+                  </span>
+                  <span
+                    className="font-mono text-xs px-2 py-0.5 rounded font-semibold"
+                    style={{
+                      background: isLower ? 'rgba(16,185,129,0.10)' : 'rgba(245,158,11,0.10)',
+                      color:      isLower ? '#34d399' : '#fbbf24',
+                      borderColor: isLower ? 'rgba(16,185,129,0.30)' : 'rgba(245,158,11,0.30)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                    }}
+                  >
+                    ×{srAdj.multiplier.toFixed(2)} ({isLower ? '−' : '+'}{Math.abs(deltaPct)}%)
+                  </span>
+                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground opacity-50 font-medium">
+                    {srAdj.labeledAs}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                  {srAdj.disclosure}
+                </p>
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground opacity-60 font-mono">
+                  <span>L4 baseline before: {srAdj.baselineBefore.toFixed(3)}</span>
+                  <span>→</span>
+                  <span style={{ color: isLower ? '#34d399' : '#fbbf24' }}>
+                    after: {srAdj.baselineAfter.toFixed(3)}
+                  </span>
+                  <span className="ml-auto">provenance: {srAdj.provenance}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* v8.0: India sector intelligence — only shown for India-region companies */}
         {(result as any).indiaRiskEnrichment && (
           <div className="mb-6">

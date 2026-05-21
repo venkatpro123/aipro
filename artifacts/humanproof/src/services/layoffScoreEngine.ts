@@ -1425,6 +1425,20 @@ export interface ScoreResult {
     disclosure: string;
     labeledAs: 'ESTIMATED';
   };
+  /** Sector × Region L4 stability adjustment — present when industry is banking
+   *  or telecom AND region matches CA/US/UK/EU. Overrides bankingStabilityAdjustment
+   *  for the v40.0 spec-listed pairs. Surfaced in TransparencyTab. */
+  sectorRegionStabilityAdjustment?: {
+    multiplier: number;
+    key: string;
+    sector: 'banking' | 'telecom';
+    region: 'canada' | 'us' | 'uk' | 'eu';
+    baselineBefore: number;
+    baselineAfter: number;
+    provenance: string;
+    disclosure: string;
+    labeledAs: 'ESTIMATED';
+  };
   /** Hyperscaler D8 proxy — true when the +0.12 composite adjustment was applied.
    *  Only fires when D8 flag is inactive, company is a named hyperscaler,
    *  aiInvestmentSignal = 'very-high', and L1 < 0.45 (profitable).
@@ -2038,7 +2052,7 @@ export const calculateMarketConditionsScore = (
     (growthModifier[industryData.growthOutlook] || 0) +
     aiDisruptionFactor;
 
-  // Banking-sector regional stability adjustment.
+  // Banking-sector regional stability adjustment (country-specific).
   // Canadian Big Five (OSFI strict capital, no systemic failure since 1923) → 0.68×.
   // US banks (at-will, aggressive cuts) → 1.00× reference.
   // Japan megabanks (lifetime employment culture + FSA) → 0.65× (lowest).
@@ -2060,6 +2074,38 @@ export const calculateMarketConditionsScore = (
       }
     } catch {
       // Module unavailable — fall through to unadjusted baseline
+    }
+  }
+
+  // Sector × Region stability layer (banking + telecom × CA/US/UK/EU).
+  // Applied AFTER bankingRegulatoryStability so its v40.0 multipliers override
+  // for the listed sector-region pairs (e.g. banking_canada = 0.65 supersedes
+  // the country-level CA=0.68). Also covers telecom which the banking-only
+  // module does not address.
+  if (region) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const { computeSectorRegionStabilityAdjustment } = require('../data/sectorRegionStability') as {
+        computeSectorRegionStabilityAdjustment: (
+          industry: string | null | undefined,
+          region: string | null | undefined,
+          baselineL4: number,
+        ) => { baselineAfter: number; multiplier: number } | null;
+      };
+      // Recompute against the RAW (pre-banking) baseline so the sector-region
+      // multiplier is applied to the original L4 baseline, not to the already-
+      // banking-adjusted figure. This preserves the spec semantics:
+      //   "Apply as L4 multiplier when company.region AND company.industry match."
+      const rawBaseline =
+        industryData.baselineRisk +
+        (growthModifier[industryData.growthOutlook] || 0) +
+        aiDisruptionFactor;
+      const srAdj = computeSectorRegionStabilityAdjustment(industry, region, rawBaseline);
+      if (srAdj) {
+        base = srAdj.baselineAfter;
+      }
+    } catch {
+      // Module unavailable — fall through to current base
     }
   }
 
@@ -4184,6 +4230,54 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     }
   }
 
+  // Sector × Region L4 adjustment metadata (banking + telecom × CA/US/UK/EU).
+  // Surfaced separately in ScoreResult so TransparencyTab can render the spec
+  // disclosure: "Applied sector-region stability multiplier: banking_canada (0.65)
+  // — Canadian banking has structurally lower layoff rates than global banking baseline."
+  let _sectorRegionStabilityAdj: ScoreResult['sectorRegionStabilityAdjustment'] = undefined;
+  if (companyData.region && industryData) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const { computeSectorRegionStabilityAdjustment } = require('../data/sectorRegionStability') as {
+        computeSectorRegionStabilityAdjustment: (
+          industry: string | null | undefined,
+          region: string | null | undefined,
+          baselineL4: number,
+        ) => {
+          multiplier: number;
+          key: string;
+          sector: 'banking' | 'telecom';
+          region: 'canada' | 'us' | 'uk' | 'eu';
+          baselineBefore: number;
+          baselineAfter: number;
+          provenance: string;
+          disclosure: string;
+        } | null;
+      };
+      const rawBaseline = industryData.baselineRisk
+        + ((['growing', 'stable', 'volatile', 'declining'].includes(industryData.growthOutlook)
+            ? { growing: -0.12, stable: 0.0, volatile: 0.1, declining: 0.18 }[industryData.growthOutlook] ?? 0
+            : 0))
+        + industryData.aiAdoptionRate * 0.15;
+      const srAdj = computeSectorRegionStabilityAdjustment(companyData.industry, companyData.region, rawBaseline);
+      if (srAdj) {
+        _sectorRegionStabilityAdj = {
+          multiplier:     srAdj.multiplier,
+          key:            srAdj.key,
+          sector:         srAdj.sector,
+          region:         srAdj.region,
+          baselineBefore: srAdj.baselineBefore,
+          baselineAfter:  srAdj.baselineAfter,
+          provenance:     srAdj.provenance,
+          disclosure:     srAdj.disclosure,
+          labeledAs:      'ESTIMATED',
+        };
+      }
+    } catch {
+      // Module unavailable — leave undefined
+    }
+  }
+
   // Credibility-discount self-reported performance before L5 calculation.
   // A user claiming top performance with no promotion in 5 years, no key relationships,
   // and a generic role receives a discounted effective tier so the claim doesn't silently
@@ -4707,6 +4801,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     hyperscalerD8ProxyApplied:           hyperscalerProxyApplied || undefined,
     hyperscalerD8ProxyAmount:            hyperscalerProxyApplied ? HYPERSCALER_D8_PROXY : undefined,
     bankingStabilityAdjustment:          _bankingStabilityAdj,
+    sectorRegionStabilityAdjustment:     _sectorRegionStabilityAdj,
     recommendations: generateRecommendations(
       breakdown,
       companyData,
