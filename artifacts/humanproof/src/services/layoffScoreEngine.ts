@@ -993,25 +993,44 @@ export const UNIQUENESS_SCORES: Record<UniquenessDepth, number> = {
 };
 
 /**
- * KnowledgeType — disambiguates critical_knowledge into two structurally different situations.
+ * KnowledgeType — disambiguates critical_knowledge into structurally different situations.
  * Only meaningful when uniquenessDepth === 'critical_knowledge'; ignored otherwise.
  *
- * relationship_based: Board trust, investor access, team loyalty. The moat is MOBILE —
- *   it follows the person to a new role. Moat erodes when the person leaves seat,
- *   not when any migration or documentation project completes. Correct action: convert
- *   this capital into market optionality while still in seat.
+ * system_specific:       Legacy code, proprietary systems, institutional memory tied to one
+ *   system. Moat is STATIONARY — erodes when migration or AI substitution completes (~18–36mo).
+ *   Correct action: lateral move to migration architect before documentation phase begins.
  *
- * system_specific:    Legacy code ownership, proprietary process knowledge, institutional
- *   memory tied to one system. The moat is STATIONARY — it erodes when the migration or
- *   AI substitution completes (~18–36 months). Moat is time-bounded by an external clock
- *   the person does not control. Correct action: transition before migration finishes.
+ * client_relationship:   Major account ownership where clients' trust is personal, not corporate.
+ *   The moat is PORTABLE — the trust belongs to you, not the company. Correct action: map
+ *   which clients would follow you, then build the move around those relationships.
  *
- * domain_expertise:   Deep functional knowledge transferable across employers (e.g. a
- *   specialist with 20yr domain depth). Less time-bounded than system_specific but less
- *   mobile than relationship_based. Correct action: document + publish to make expertise
- *   visible outside the current employer.
+ * process_institutional: Undocumented process knowledge — tribal memory that keeps systems
+ *   running but lives only in one person's head. Moat erodes when the company either documents
+ *   it (making you redundant) or hires someone to replace you. Correct action: convert
+ *   process knowledge into formal methodology credentials before documentation begins.
+ *
+ * domain_expert:         Regulatory or specialized domain expertise (20yr depth, niche
+ *   certifications, regulator relationships). Less time-bounded than system_specific but
+ *   requires external visibility to create optionality. Correct action: publish, speak,
+ *   and consult to make expertise legible outside the current employer.
+ *
+ * leadership_capital:    Organizational authority, cultural trust, team loyalty. The moat
+ *   is MOBILE — it follows you. Correct action: identify where leadership is most needed
+ *   outside the current company and build the move around that demand.
+ *
+ * Legacy aliases (backward compat — map to nearest semantic equivalent):
+ *   relationship_based → client_relationship
+ *   domain_expertise   → domain_expert
  */
-export type KnowledgeType = 'relationship_based' | 'system_specific' | 'domain_expertise';
+export type KnowledgeType =
+  | 'system_specific'
+  | 'client_relationship'
+  | 'process_institutional'
+  | 'domain_expert'
+  | 'leadership_capital'
+  // backward-compat aliases
+  | 'relationship_based'
+  | 'domain_expertise';
 
 export interface UserFactors {
   tenureYears: number;

@@ -128,7 +128,20 @@ export interface UserProfile {
   /** ISO timestamp when the user completed their first audit. Null = never seen.
    *  Stored in DB so incognito / new-device sessions don't re-show the wizard. */
   firstAuditCompletedAt?: string | null;
+
+  // ── v40.0 knowledge type ──────────────────────────────────────────────────
+  /** Sub-classification of critical_knowledge uniqueness depth.
+   *  Drives differentiated inaction scenario narratives.
+   *  Only meaningful when uniquenessDepth === 'critical_knowledge'. */
+  uniquenessKnowledgeType?: UniquenessKnowledgeType | null;
 }
+
+export type UniquenessKnowledgeType =
+  | 'system_specific'       // legacy system / migration-deadline moat
+  | 'client_relationship'   // personal client trust — portable to next employer
+  | 'process_institutional' // undocumented tribal process memory
+  | 'domain_expert'         // regulatory / deep-domain specialist
+  | 'leadership_capital';   // organizational authority — mobile, follows person
 
 const REPROMPT_AFTER_DAYS = 90;
 
@@ -166,6 +179,8 @@ const V16_SELECT_COLUMNS = [
   'local_monthly_salary_raw',
   // v40.0 first-audit tracking
   'first_audit_completed_at',
+  // v40.0 knowledge type
+  'uniqueness_knowledge_type',
 ].join(', ');
 
 // ─── Row mapper ───────────────────────────────────────────────────────────────
@@ -209,6 +224,8 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     localMonthlySalaryRaw: data.local_monthly_salary_raw != null ? Number(data.local_monthly_salary_raw) : null,
     // v40.0 first-audit tracking
     firstAuditCompletedAt: data.first_audit_completed_at ?? null,
+    // v40.0 knowledge type
+    uniquenessKnowledgeType: (data.uniqueness_knowledge_type as UniquenessKnowledgeType) ?? null,
   };
 }
 
@@ -276,8 +293,11 @@ export async function upsertUserProfile(
   if (patch.yearsExperience     !== undefined) row.years_experience      = patch.yearsExperience;
 
   // ── v40.0 global currency ────────────────────────────────────────────────
-  if (patch.localCurrencyCode      !== undefined) row.local_currency_code      = patch.localCurrencyCode;
-  if (patch.localMonthlySalaryRaw  !== undefined) row.local_monthly_salary_raw = patch.localMonthlySalaryRaw;
+  if (patch.localCurrencyCode         !== undefined) row.local_currency_code         = patch.localCurrencyCode;
+  if (patch.localMonthlySalaryRaw     !== undefined) row.local_monthly_salary_raw    = patch.localMonthlySalaryRaw;
+
+  // ── v40.0 knowledge type ─────────────────────────────────────────────────
+  if (patch.uniquenessKnowledgeType   !== undefined) row.uniqueness_knowledge_type   = patch.uniquenessKnowledgeType;
 
   const { error } = await supabase
     .from('user_profiles')

@@ -543,12 +543,17 @@ function buildFinancialDistressNarrative(
       }
       let knowledgeNote: string;
       if (uniquenessDepth === 'critical_knowledge') {
-        if (knowledgeType === 'relationship_based') {
-          knowledgeNote = `Relationship capital (board trust, investor relationships, team loyalty) provides partial insulation — senior relationships are the last cut. But financial distress at L1: ${L1pct}/100 may not leave the window open to leverage them; convert this capital to market optionality now while still in seat.`;
-        } else if (knowledgeType === 'domain_expertise') {
-          knowledgeNote = `Domain expertise provides partial insulation — cutting deep specialists creates operational risk. At L1: ${L1pct}/100, externalize and document expertise before budget decisions override that protection.`;
+        if (knowledgeType === 'client_relationship' || knowledgeType === 'relationship_based') {
+          knowledgeNote = `Your value is your clients' personal trust in you. That trust is yours to take — it does not belong to the company. Financial distress at L1: ${L1pct}/100 is the signal to act: understand which clients would follow you to a new employer, then build your move around those relationships before the restructuring announcement forces a rushed exit.`;
+        } else if (knowledgeType === 'leadership_capital') {
+          knowledgeNote = `Your protection is organizational authority. It is mobile — it follows you. Financial distress at L1: ${L1pct}/100 is your signal: begin identifying where your leadership is most needed outside your current company before the announcement compresses your negotiating window.`;
+        } else if (knowledgeType === 'process_institutional') {
+          knowledgeNote = `Undocumented process knowledge provides short-term insulation — companies rarely cut the person holding critical institutional memory during active distress. But financial distress at L1: ${L1pct}/100 accelerates documentation projects: convert your process knowledge into formal methodology credentials before the company hires a replacement and documents it without you.`;
+        } else if (knowledgeType === 'domain_expert' || knowledgeType === 'domain_expertise') {
+          knowledgeNote = `Domain expertise provides partial insulation — cutting deep specialists creates operational risk. At L1: ${L1pct}/100, externalize and document expertise before budget decisions override that protection. Published work and consulting engagements create market optionality that survives the restructuring.`;
         } else {
-          knowledgeNote = `System-specific critical knowledge provides partial insulation during active migration — companies rarely disrupt migration-critical personnel. But financial distress at L1: ${L1pct}/100 can cancel migrations entirely, eliminating this protection before the migration clock completes.`;
+          // system_specific (default for critical_knowledge)
+          knowledgeNote = `Your protection window is the migration timeline (18–36 months). When migration completes, the protection disappears rapidly and simultaneously. The highest-ROI action is lateral movement to a migration architect role before the documentation phase begins — financial distress at L1: ${L1pct}/100 can cancel migrations entirely, eliminating this window before it runs its course.`;
         }
       } else if (uniquenessDepth === 'functional_specialist') {
         knowledgeNote = `Functional specialisation provides partial insulation but does not offset company-level financial distress at L1: ${L1pct}/100.`;
@@ -595,13 +600,20 @@ function buildAIEfficiencyNarrative(
       if (uniquenessDepth !== 'critical_knowledge') {
         return `Building demonstrable AI oversight expertise is the primary protection at D8: ${D8pct}/100 — it directly addresses the condition that triggers this archetype. Generic profiles at L3: ${L3pct}/100 have limited natural protection without it.`;
       }
-      if (knowledgeType === 'relationship_based') {
-        return `Relationship capital (board trust, investor relationships, team loyalty) is the one form of critical knowledge that AI efficiency cuts almost never target — these relationships ARE the value, not a proxy for it. Your ${tenureYears} yr network is a mobile moat. Risk: letting this capital sit unused in seat rather than converting it to market optionality while the company restructures around you.`;
+      if (knowledgeType === 'client_relationship' || knowledgeType === 'relationship_based') {
+        return `Your value is your clients' personal trust in you. That trust is yours to take — it does not belong to the company. AI efficiency cuts almost never target client-facing relationship capital because these relationships ARE the value. Your ${tenureYears} yr network is a mobile moat. The highest-ROI action is to understand which clients would follow you to a new employer, then build your move around those relationships before D8: ${D8pct}/100 restructuring executes.`;
       }
-      if (knowledgeType === 'domain_expertise') {
-        return `Domain expertise partially offsets D8: ${D8pct}/100 — AI efficiency cuts preserve specialists whose judgment cannot be automated. Ensure this expertise is visible externally (published work, speaking, consulting engagements) so it creates market optionality beyond internal protection.`;
+      if (knowledgeType === 'leadership_capital') {
+        return `Your protection is organizational authority. It is mobile — it follows you. AI efficiency cuts at D8: ${D8pct}/100 target execution roles, not leadership that directs and validates AI output. Begin identifying where your leadership is most needed outside your current company — this moat compounds when moved to the right environment rather than sitting in a restructuring company.`;
       }
-      return `System-specific critical knowledge delays AI efficiency cuts — companies preserve migration-critical personnel. But at D8: ${D8pct}/100, this protection is time-bounded: once migration or AI substitution completes (~18–36 months), this moat evaporates entirely. Build transferable skills before the migration clock runs out — it is a hard deadline, not a soft preference.`;
+      if (knowledgeType === 'process_institutional') {
+        return `Undocumented process knowledge partially delays AI efficiency cuts — automating undocumented processes requires human guidance. But at D8: ${D8pct}/100, this is exactly the knowledge companies pay consultants to document before automating. Convert your process knowledge into formal methodology credentials now: a named methodology or playbook with your name on it creates market optionality that survives the automation.`;
+      }
+      if (knowledgeType === 'domain_expert' || knowledgeType === 'domain_expertise') {
+        return `Domain expertise partially offsets D8: ${D8pct}/100 — AI efficiency cuts preserve specialists whose regulatory judgment cannot be automated. Ensure this expertise is visible externally (published work, speaking, consulting engagements) so it creates market optionality beyond internal protection. Deep knowledge that is invisible outside your current employer provides no leverage when the restructuring comes.`;
+      }
+      // system_specific default
+      return `Your protection window is the migration timeline (18–36 months). When migration completes, the protection disappears rapidly and simultaneously. The highest-ROI action is lateral movement to a migration architect role before the documentation phase begins — at D8: ${D8pct}/100, this protection is time-bounded by an external clock you do not control. Build transferable skills before it runs out.`;
     })(),
     synthesis: `${cd.name} is in the AI efficiency restructuring archetype — ${aiSignal} AI investment + documented workforce actions. D8: ${D8pct}/100. The risk is structural, not financial. Displacement horizon: 12–24 months. Protection strategy: reposition as AI oversight, not AI-competing.`,
     urgencyLevel: score >= 65 ? 'High' : score >= 45 ? 'Moderate' : 'Low',
@@ -638,13 +650,20 @@ function buildRoleDisplacementNarrative(
       if (uniquenessDepth !== 'critical_knowledge') {
         return `Generic role profile at L3: ${L3pct}/100 has limited natural protection. Building demonstrable AI oversight skills is the primary protective action — it's the only signal that directly addresses the L3 displacement risk.`;
       }
-      if (knowledgeType === 'relationship_based') {
-        return `Relationship capital partially offsets L3: ${L3pct}/100 — roles anchored in board trust, founder relationships, or team loyalty are harder to eliminate than pure execution roles. Map which tasks require institutional judgment vs generic execution: the former is protected, the latter is already being displaced regardless of your tenure.`;
+      if (knowledgeType === 'client_relationship' || knowledgeType === 'relationship_based') {
+        return `Your value is your clients' personal trust in you. That trust is yours to take — it does not belong to the company. Roles anchored in personal client relationships are harder to automate at L3: ${L3pct}/100 because the value is relational, not executional. The highest-ROI action is to understand which clients would follow you to a new employer, then build your move around those relationships.`;
       }
-      if (knowledgeType === 'domain_expertise') {
-        return `Domain expertise partially offsets L3: ${L3pct}/100, but only the non-automatable components. Externalize this expertise publicly (writing, speaking, consulting) — deep knowledge that is invisible outside your current employer provides no market optionality when the role is displaced.`;
+      if (knowledgeType === 'leadership_capital') {
+        return `Your protection is organizational authority. It is mobile — it follows you. L3: ${L3pct}/100 role displacement risk targets execution layers, not leadership that sets direction and validates AI output. Begin identifying where your leadership is most needed outside your current company — this moat compounds when moved to an environment that needs it rather than sitting in a role that AI is absorbing.`;
       }
-      return `System-specific critical knowledge partially offsets L3: ${L3pct}/100 — but only until migration completes. Track the migration timeline actively: it is the hard deadline for your skill transition, not a soft preference. With ~18–36 months until the moat evaporates, each quarter of inaction reduces viable transition paths.`;
+      if (knowledgeType === 'process_institutional') {
+        return `Undocumented process knowledge partially offsets L3: ${L3pct}/100 — roles that hold critical tribal memory are harder to displace immediately. But this protection erodes once the company documents and automates the process. Convert process knowledge into formal methodology credentials before documentation begins — a named playbook with your authorship creates market optionality that survives displacement.`;
+      }
+      if (knowledgeType === 'domain_expert' || knowledgeType === 'domain_expertise') {
+        return `Domain expertise partially offsets L3: ${L3pct}/100 — regulatory and specialized knowledge that requires years of accumulation is harder to automate than execution tasks. Externalize this expertise publicly (writing, speaking, consulting) — deep knowledge that is invisible outside your current employer provides no market optionality when the role is displaced.`;
+      }
+      // system_specific default
+      return `Your protection window is the migration timeline (18–36 months). When migration completes, the protection disappears rapidly and simultaneously at L3: ${L3pct}/100. The highest-ROI action is lateral movement to a migration architect role before the documentation phase begins. Track the migration timeline actively — it is the hard deadline for your skill transition.`;
     })(),
     synthesis: `${role} at ${cd.name ?? 'your company'} — role displacement archetype. L3: ${L3pct}/100 + D2: ${D2pct}/100. Timeline: ${score >= 55 ? '12–24 months' : '24–36 months'}. Protection strategy: transition from execution to AI oversight within your current role.`,
     urgencyLevel: score >= 65 ? 'High' : score >= 45 ? 'Moderate' : 'Low',

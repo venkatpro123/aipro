@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHumanProof } from '../context/HumanProofContext';
 import { useAuth } from '../context/AuthContext';
 import { shouldRepromptProfile } from '../services/userProfileService';
-import type { SalaryBand, VisaStatus } from '../services/userProfileService';
+import type { SalaryBand, VisaStatus, UniquenessKnowledgeType } from '../services/userProfileService';
 import { inferCurrencyFromContext, convertToUsd, localToUsdLabel, CURRENCY_META } from '../services/currencyService';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -225,6 +225,7 @@ export function ProfileSetupModal() {
   // Step 3 — Skills
   const [selfRatedSkillsRaw, setSelfRatedSkillsRaw] = useState('');
   const [targetSkillsRaw, setTargetSkillsRaw] = useState('');
+  const [uniquenessKnowledgeType, setUniquenessKnowledgeType] = useState<UniquenessKnowledgeType | ''>('');
 
   // Step 0 extension — Role identity (v36)
   const [jobTitle, setJobTitle] = useState('');
@@ -266,6 +267,7 @@ export function ProfileSetupModal() {
       setMetroArea(userProfile?.metroArea ?? '');
       setSelfRatedSkillsRaw(userProfile?.selfRatedSkills?.join(', ') ?? '');
       setTargetSkillsRaw(userProfile?.targetSkills?.join(', ') ?? '');
+      setUniquenessKnowledgeType(userProfile?.uniquenessKnowledgeType ?? '');
       setJobTitle(userProfile?.jobTitle ?? '');
       setIndustryKey(userProfile?.industryKey ?? '');
       setYearsExperience(userProfile?.yearsExperience != null ? String(userProfile.yearsExperience) : '');
@@ -339,8 +341,9 @@ export function ProfileSetupModal() {
       dualIncomeHousehold,
       priorLayoffSurvived,
       metroArea:              metroArea || undefined,
-      selfRatedSkills:        rawToSkills(selfRatedSkillsRaw),
-      targetSkills:           rawToSkills(targetSkillsRaw),
+      selfRatedSkills:           rawToSkills(selfRatedSkillsRaw),
+      targetSkills:              rawToSkills(targetSkillsRaw),
+      uniquenessKnowledgeType:   uniquenessKnowledgeType || undefined,
     });
     setSubmitting(false);
     setOpen(false);
@@ -517,6 +520,40 @@ export function ProfileSetupModal() {
             onChange={(e) => setTargetSkillsRaw(e.target.value)}
             placeholder="Rust, LLMs, System Design…" />
           <SkillTags raw={targetSkillsRaw} />
+        </FieldGroup>
+
+        <FieldGroup
+          label="What makes you uniquely valuable? (optional)"
+          helper="Shapes inaction scenario narratives — the advice you get when you ask 'what happens if I do nothing?'"
+        >
+          <select
+            title="Unique knowledge type"
+            className="input"
+            value={uniquenessKnowledgeType}
+            onChange={(e) => setUniquenessKnowledgeType(e.target.value as UniquenessKnowledgeType | '')}
+          >
+            <option value="">Not sure / doesn't apply</option>
+            <option value="system_specific">System knowledge — I own a legacy system / proprietary platform</option>
+            <option value="client_relationship">Client relationships — my clients trust me personally</option>
+            <option value="process_institutional">Process knowledge — I'm the only one who knows how things work</option>
+            <option value="domain_expert">Domain expertise — deep regulatory / specialized knowledge</option>
+            <option value="leadership_capital">Leadership capital — organizational authority and team loyalty</option>
+          </select>
+          {uniquenessKnowledgeType === 'system_specific' && (
+            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: 'rgba(16,185,129,0.75)', lineHeight: 1.45 }}>
+              Your protection window is the migration timeline (18–36 mo). Highest-ROI action: lateral move to migration architect before documentation begins.
+            </p>
+          )}
+          {uniquenessKnowledgeType === 'client_relationship' && (
+            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: 'rgba(16,185,129,0.75)', lineHeight: 1.45 }}>
+              That trust belongs to you, not the company. Understand which clients would follow you — build your move around those relationships.
+            </p>
+          )}
+          {uniquenessKnowledgeType === 'leadership_capital' && (
+            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: 'rgba(16,185,129,0.75)', lineHeight: 1.45 }}>
+              Organizational authority is mobile — it follows you. Identify where your leadership is most needed outside your current company.
+            </p>
+          )}
         </FieldGroup>
       </div>
     ),

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useLayoff } from "../../context/LayoffContext";
+import { useHumanProof } from "../../context/HumanProofContext";
 import { searchAllCompanies, resolveCompanyData } from "../../data/companyIntelligenceBridge";
 import {
   searchCompanies as searchSupabaseCompanies,
@@ -414,6 +415,7 @@ const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
 
 export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const { state, dispatch } = useLayoff();
+  const { userProfile } = useHumanProof();
   const [step, setStep] = useState(1);
 
   // Step 1 state
@@ -465,10 +467,11 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     (state.userFactors?.isUniqueRole ? 'critical_knowledge' : 'generic')
   );
   // Sub-classification of critical_knowledge — only shown when uniquenessDepth === 'critical_knowledge'.
-  // Drives differentiated inaction narratives: relationship_based (mobile moat) vs system_specific
-  // (migration deadline) vs domain_expertise (externalize to create optionality).
+  // Pre-populated from UserProfile.uniquenessKnowledgeType when not already in per-session state.
   const [knowledgeType, setKnowledgeType] = useState<KnowledgeType>(
-    (state.userFactors as any)?.knowledgeType ?? 'system_specific'
+    (state.userFactors as any)?.knowledgeType
+    ?? (userProfile?.uniquenessKnowledgeType as KnowledgeType | undefined)
+    ?? 'system_specific'
   );
   // Keep isUniqueRole derived for backward compat
   const isUniqueRole = uniquenessDepth === 'critical_knowledge';
@@ -1110,9 +1113,11 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   <ToggleGroup
                     ariaLabel="Knowledge type"
                     options={[
-                      { value: 'system_specific', label: 'System', desc: 'Legacy code / proprietary processes (moat erodes when migration completes)' },
-                      { value: 'relationship_based', label: 'Relationships', desc: 'Board trust / investor access / team loyalty (mobile — follows you to next role)' },
-                      { value: 'domain_expertise', label: 'Domain', desc: 'Deep functional knowledge transferable across employers' },
+                      { value: 'system_specific',       label: 'System',       desc: 'Legacy code / proprietary system — protection ends when migration completes (18–36 mo)' },
+                      { value: 'client_relationship',   label: 'Clients',      desc: 'Personal client trust — portable to your next employer, does not belong to the company' },
+                      { value: 'process_institutional', label: 'Process',      desc: 'Undocumented tribal knowledge — protection ends when company documents and automates it' },
+                      { value: 'domain_expert',         label: 'Domain',       desc: 'Regulatory / deep-domain expertise — transferable but must be externally visible' },
+                      { value: 'leadership_capital',    label: 'Leadership',   desc: 'Organizational authority and team trust — fully mobile, follows you to next role' },
                     ]}
                     value={knowledgeType}
                     onChange={v => setKnowledgeType(v as KnowledgeType)}
