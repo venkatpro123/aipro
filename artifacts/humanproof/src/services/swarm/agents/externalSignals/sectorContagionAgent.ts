@@ -33,6 +33,10 @@
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
 import { detectActiveMetroClusters } from '../../../../data/companyPeers';
+// GAP-A02: route decay constant through DB so recalibrate-engine cron can override it
+// without a code deploy. Falls back to BOOTSTRAP_DECAY_LAMBDA (0.023) when the DB
+// key is absent or null.
+import { getConstant } from '../../../../services/calibration/calibrationConstants';
 
 // Static fallback — used only when no peerLayoffEvents are provided
 const SECTOR_CONTAGION_FALLBACK: Record<string, number> = {
@@ -45,16 +49,27 @@ const SECTOR_CONTAGION_FALLBACK: Record<string, number> = {
   'default':          0.45,
 };
 
-// λ: decay constant — e^(-0.023 × 30) ≈ 0.50
+// λ: decay constant — e^(-0.023 × 30) ≈ 0.50 → half-life ≈ 30 days.
 // A peer cut from 30 days ago carries half the weight of a same-day cut.
 // A peer cut from 150 days ago carries only ~3% weight.
-// Derivation: 30-day half-life chosen to match the empirical observation that
-// contagion propagation from a peer announcement has ~80% of its effect within
-// the first 30 days (sector follow-on announcements cluster in 2–6 weeks per
-// layoffs.fyi 2022-2024 wave analysis). Calibrate via: fit exponential decay
-// to the observed lag distribution between first and follow-on announcements
-// in each sector wave.
-const DECAY_LAMBDA = 0.023;
+//
+// ESTIMATED (uncalibrated_placeholder) — GAP-A02.
+// The 30-day half-life is a developer choice based on qualitative analysis of
+// 2022-2024 sector wave timing (follow-on announcements cluster in 2-6 weeks).
+// It has NOT been regression-fitted to a lag distribution. DB key:
+// sectorContagionAgent.decayLambda (registered by migration 20260623000013).
+//
+// Inconsistency: signalDecayModel.sector_contagion uses a 21-day half-life
+// (λ≈0.033), also ESTIMATED. Both converge to a single value at July 2026
+// calibration (target: fit exponential decay to lag distribution in layoffs.fyi waves).
+const BOOTSTRAP_DECAY_LAMBDA = 0.023;
+
+// DB-routed: allows recalibrate-engine to override without a code deploy.
+// Reads 'sectorContagionAgent.decayLambda'; falls back to BOOTSTRAP_DECAY_LAMBDA.
+const _dbDecayLambda = getConstant<number>('sectorContagionAgent.decayLambda', null);
+const DECAY_LAMBDA: number = (typeof _dbDecayLambda.value === 'number' && _dbDecayLambda.value > 0)
+  ? _dbDecayLambda.value
+  : BOOTSTRAP_DECAY_LAMBDA;
 
 // MACRO_TRIGGER_FRACTION — the fraction of sector companies cutting simultaneously
 // above which individual cuts are more likely macro-driven than causal contagion.

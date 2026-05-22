@@ -170,6 +170,18 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
           </p>
         </div>
       )}
+      {/* GAP-A02: decay constant calibration disclosure */}
+      {contagion.decayCalibrationStatus === 'uncalibrated_placeholder' && (
+        <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
+          background: 'rgba(245,158,11,0.05)',
+          border: '1px solid rgba(245,158,11,0.15)',
+        }}>
+          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(245,158,11,0.55)' }} />
+          <p className="text-[9px]" style={{ color: 'rgba(245,158,11,0.65)' }}>
+            Recency decay: {contagion.decayHalfLifeDays}-day half-life · ESTIMATED — developer choice from 2022–2024 wave timing analysis, not regression-fitted.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

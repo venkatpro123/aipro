@@ -39,6 +39,8 @@ const FALLBACK_RESULT: PeerContagionResult = {
   multipliersCalibrationStatus: 'developer_estimate',
   multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
   multiplierConfidence: 'bootstrap', // v39.0 D4
+  decayCalibrationStatus: 'uncalibrated_placeholder',
+  decayHalfLifeDays: 21, // signalDecayModel.sector_contagion bootstrap default
 };
 
 export const peerContagionLayer: AuditLayer<'peer_contagion'> = {

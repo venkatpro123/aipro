@@ -116,6 +116,15 @@ export interface PeerContagionResult {
    */
   readonly multiplierConfidence: 'bootstrap' | 'calibrated';
   /**
+   * GAP-A02 — Recency decay labeling. The active decay constant is ESTIMATED
+   * (developer choice from qualitative 2022-2024 wave analysis, not regression-fitted).
+   *   'uncalibrated_placeholder' → developer estimate (current default)
+   *   'regression_derived'       → fitted to lag distribution (not yet active)
+   */
+  readonly decayCalibrationStatus: 'uncalibrated_placeholder' | 'regression_derived';
+  /** The half-life in days that was active for recency decay in this result. */
+  readonly decayHalfLifeDays: number;
+  /**
    * Geographic cluster analysis — populated when user's city maps to a known
    * tech cluster metro. Captures local supply-surge risk from co-located peer
    * layoffs. Absent when city is unknown or not in a tracked metro.
@@ -176,12 +185,20 @@ function recencyDecayedWeight(daysAgo: number, baseWeight: number): number {
 }
 
 function recencyWeight(daysAgo: number): number {
-  // Prefer exponential decay when the feature flag is active.
+  // Tier 1: explicit exponential half-life override from DB.
   const expConstant = getConstant<number>('peerContagionEngine.exponentialDecayHalfLife', null);
   if (expConstant.value != null && typeof expConstant.value === 'number') {
     return Math.exp(-daysAgo / expConstant.value);
   }
-  // Fallback: step-band decay (legacy + WS9 calibration compatible).
+  // Tier 2: GAP-A02 fix — when exponentialDecayHalfLife is null, defer to
+  // signalDecayModel.halfLives.sector_contagion (21 days by default; DB-overridable).
+  // Previously this path fell straight to step-band, contradicting the DB comment
+  // on the exponentialDecayHalfLife row ("null here means: defer to sector_contagion").
+  const sectorHalfLife = getConstant<number>('signalDecayModel.halfLives.sector_contagion', null);
+  if (sectorHalfLife.value != null && typeof sectorHalfLife.value === 'number' && sectorHalfLife.value > 0) {
+    return Math.exp(-(Math.LN2 / sectorHalfLife.value) * daysAgo);
+  }
+  // Tier 3: step-band decay (legacy + WS9 calibration compatible fallback).
   const resolved = getConstant<ReadonlyArray<[number, number]>>(
     'peerContagionEngine.recencyDecayBands',
     BOOTSTRAP_RECENCY_DECAY,
@@ -199,6 +216,22 @@ function recencyWeight(daysAgo: number): number {
 // Both approaches are active — recencyWeight() governs internal scoring while
 // recencyDecayedWeight() provides a simpler utility for external callers.
 export { recencyDecayedWeight };
+
+// GAP-A02 — Returns the effective half-life (days) that recencyWeight() is using
+// and the calibration status. Consumed by computePeerContagion to populate
+// the result fields that PeerContagionPanel displays.
+function resolveActiveDecayHalfLife(): { halfLifeDays: number; calibrationStatus: 'uncalibrated_placeholder' | 'regression_derived' } {
+  const expOverride = getConstant<number>('peerContagionEngine.exponentialDecayHalfLife', null);
+  if (expOverride.value != null && typeof expOverride.value === 'number' && expOverride.value > 0) {
+    return { halfLifeDays: expOverride.value, calibrationStatus: 'uncalibrated_placeholder' };
+  }
+  const sectorHalfLife = getConstant<number>('signalDecayModel.halfLives.sector_contagion', null);
+  if (sectorHalfLife.value != null && typeof sectorHalfLife.value === 'number' && sectorHalfLife.value > 0) {
+    return { halfLifeDays: sectorHalfLife.value, calibrationStatus: 'uncalibrated_placeholder' };
+  }
+  // Step-band: report the approximate half-life from the bootstrap bands (90d → 0.50)
+  return { halfLifeDays: 90, calibrationStatus: 'uncalibrated_placeholder' };
+}
 
 function computeWaveIntensity(directCuts: number, adjacentCuts: number, daysWindow: number): ContagionWaveIntensity {
   const totalCuts = directCuts + adjacentCuts;
@@ -448,6 +481,8 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
       multipliersCalibrationStatus: 'developer_estimate',
       multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
       multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
+      decayCalibrationStatus: 'uncalibrated_placeholder' as const,
+      decayHalfLifeDays: resolveActiveDecayHalfLife().halfLifeDays,
       geoCluster,
     };
   }
@@ -533,6 +568,8 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
     multipliersCalibrationStatus: 'developer_estimate',
     multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
     multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
+    decayCalibrationStatus: 'uncalibrated_placeholder' as const,
+    decayHalfLifeDays: resolveActiveDecayHalfLife().halfLifeDays,
     geoCluster,
   };
 }
