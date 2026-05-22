@@ -59,7 +59,7 @@ import { getAutoDeducedDepartment } from "../../data/oracleRoleIndex";
 import { countryCodeToD5Key } from "../../data/companyDatabase";
 import { injectLayoffEvent } from "../../data/layoffNewsCache";
 import { recordScore, buildL4SnapshotFields } from "../../services/scoreDeltaService";
-import { detectCollapseStage } from "../../services/collapsePredictor";
+import { detectCollapseStage, getCollapseStagePrecision } from "../../services/collapsePredictor";
 import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
@@ -716,17 +716,33 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         mostRecentLayoffDate: companyData.layoffsLast24Months?.[0]?.date ?? null,
         filingDelinquent: false,
         userDepartment: effectiveDepartment,
-      }).then(report => {
+      }).then(async report => {
         if (report.stage || (report.departmentRisks && report.departmentRisks.length > 0)) {
+          // GAP-A04: fetch empirical precision for the detected stage (best-effort)
+          const precData = report.stage
+            ? await getCollapseStagePrecision(report.stage).catch(() => null)
+            : null;
+
           dispatch({
             type: "SET_SCORE_RESULT",
             payload: {
               ...mergedResult,
               ...(report.stage ? { collapseStage: report.stage } : {}),
               departmentFreezeScore: report.userDepartmentFreezeScore ?? null,
-              // GAP-A04: forward internal signal quality + precision status
               collapseStageConfidence: report.stage ? report.signalConfidence : null,
               collapsePrecisionStatus: report.stage ? 'uncalibrated_placeholder' : undefined,
+              ...(report.stage && precData ? {
+                collapsePredictor: {
+                  stage: report.stage,
+                  stageConfidence: report.signalConfidence,
+                  stagePrecision: precData.precision,
+                  stageBasedOnNEvents: precData.nEvents,
+                  stagePrecisionLabel: precData.precisionLabel,
+                  stageFprLabel: precData.fprLabel,
+                  stageHorizonDays: precData.horizonDays,
+                  stageGateStatus: precData.gateStatus,
+                },
+              } : {}),
             },
           });
         }

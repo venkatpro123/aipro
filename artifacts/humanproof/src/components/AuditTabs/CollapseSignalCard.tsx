@@ -11,7 +11,11 @@ import {
   getWatchList,
   type CollapseReport,
   type CollapseInputs,
+  type CollapseStageEmpiricalPrecision,
 } from "../../services/collapsePredictor";
+
+// GAP-A04 — suppression threshold: show stage label only when precision >= 0.60
+const PRECISION_DISPLAY_THRESHOLD = 0.60;
 
 interface CollapseSignalCardProps {
   companyName: string;
@@ -24,6 +28,19 @@ interface CollapseSignalCardProps {
   filingDelinquent?: boolean;
   /** v4.0: User's department for personalised cut probability */
   userDepartment?: string;
+  /**
+   * GAP-A04 — Empirical precision bundle from HybridResult.collapsePredictor.
+   * When provided and precision < 0.60, the stage label is suppressed and
+   * "Early warning signals present" is shown instead.
+   */
+  precisionData?: {
+    stagePrecision: number | null;
+    stageBasedOnNEvents: number;
+    stagePrecisionLabel: string;
+    stageFprLabel: string;
+    stageHorizonDays: number;
+    stageGateStatus: 'gate_clears' | 'insufficient_cases' | 'precision_below_gate';
+  };
 }
 
 const STAGE_CONFIG = {
@@ -42,6 +59,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
   mostRecentLayoffDate,
   filingDelinquent = false,
   userDepartment,
+  precisionData,
 }) => {
   const [report, setReport] = useState<CollapseReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,6 +106,10 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
   if (!report) return null;
 
   const stageConf = report.stage ? STAGE_CONFIG[report.stage] : null;
+
+  // GAP-A04 suppression rule: if empirical precision < 0.60 (or UNKNOWN), suppress stage label.
+  const precisionKnown = precisionData?.stagePrecision != null && precisionData.stagePrecision >= PRECISION_DISPLAY_THRESHOLD;
+  const suppressStageLabel = report.stage != null && !precisionKnown;
   // Fallback colour for the score badge when overallRisk > 0 but no Stage
   // 1–3 was assigned (e.g. signals tripped sub-threshold totals). Previously
   // the code used `stageConf!.color` which crashed with "Cannot read
@@ -115,11 +137,13 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
             )}
             <div>
               <div className="font-bold text-sm tracking-tight flex items-center gap-2 flex-wrap">
-                {/* stageLabel already contains the promoted qualifier when isPromoted=true
-                    e.g. "Stage 2 — partial evidence (1/3 Stage 2, 2/3 Stage 1)" */}
-                {report.stageLabel ?? (stageConf?.label ?? "No Collapse Signals Detected")}
+                {/* GAP-A04: suppress stage number when empirical precision < 0.60 */}
+                {suppressStageLabel
+                  ? "Early warning signals present"
+                  : (report.stageLabel ?? (stageConf?.label ?? "No Collapse Signals Detected"))
+                }
                 {/* Promoted badge — shown when cross-stage rule promoted the stage */}
-                {report.isPromoted && report.stage && (
+                {!suppressStageLabel && report.isPromoted && report.stage && (
                   <span
                     className="text-[9px] font-black px-1.5 py-0.5 rounded tracking-widest"
                     style={{ background: `${badgeColor}22`, color: badgeColor }}
@@ -128,18 +152,28 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                     PROMOTED
                   </span>
                 )}
+                {/* Show suppressed badge when precision gate blocks stage label */}
+                {suppressStageLabel && report.stage && (
+                  <span
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }}
+                  >
+                    PRECISION: {precisionData?.stagePrecisionLabel ?? 'UNKNOWN'}
+                  </span>
+                )}
               </div>
               {report.stage && (
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  Estimated timeframe: {report.timeToCollapseRange}
+                  {!suppressStageLabel && `Estimated timeframe: ${report.timeToCollapseRange}`}
                   {report.signalConfidence !== undefined && (
-                    <span className="ml-2 opacity-60">
-                      · {report.signalConfidence >= 0.67 ? 'high' : report.signalConfidence >= 0.33 ? 'moderate' : 'low'} confidence
+                    <span className={suppressStageLabel ? '' : 'ml-2 opacity-60'}>
+                      {suppressStageLabel ? 'Signal quality: ' : '· '}
+                      {report.signalConfidence >= 0.67 ? 'high' : report.signalConfidence >= 0.33 ? 'moderate' : 'low'} signal strength
                     </span>
                   )}
                 </div>
               )}
-              {/* Suppressed stage disclosure */}
+              {/* Suppressed stage disclosure (internal threshold, not precision) */}
               {!report.stage && report.suppressedStage && (
                 <div className="text-[10px] text-amber-400/70 mt-0.5">
                   Stage {report.suppressedStage} signals present but below confidence threshold
@@ -174,6 +208,35 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
         <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
           {report.recommendation}
         </p>
+
+        {/* GAP-A04: empirical precision disclosure */}
+        {report.stage && precisionData && (
+          <div className="mt-3 p-2.5 rounded-lg text-[10px] leading-relaxed"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            {precisionKnown ? (
+              <span style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <span className="font-semibold" style={{ color: badgeColor }}>
+                  Stage {report.stage} classification
+                </span>
+                {' '}({precisionData.stagePrecisionLabel} precision on{' '}
+                {precisionData.stageBasedOnNEvents} historical companies —{' '}
+                meaning {100 - parseInt(precisionData.stagePrecisionLabel)}% of Stage {report.stage} companies
+                did not have a confirmed layoff within {precisionData.stageHorizonDays} days).
+              </span>
+            ) : (
+              <span style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <span className="font-semibold text-amber-400">Early warning signals present.</span>
+                {' '}Stage classification suppressed — empirical precision is{' '}
+                <span className="font-bold text-amber-400">{precisionData.stagePrecisionLabel}</span>
+                {precisionData.stageBasedOnNEvents > 0
+                  ? ` (${precisionData.stageBasedOnNEvents} confirmed outcomes, gate requires ≥20 at ≥60%)`
+                  : ' (requires ≥20 confirmed outcomes to validate)'
+                }.
+                Signals are real but whether they predict a layoff within {precisionData.stageHorizonDays} days is unvalidated.
+              </span>
+            )}
+          </div>
+        )}
 
         {/* v4.0: Department-level cut probability breakdown */}
         {report.stage && report.stage >= 2 && report.departmentRisks && report.departmentRisks.length > 0 && (

@@ -37,6 +37,23 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 
+-- ── 0. Schema fix: scoring_architecture_log missing columns ──────────────────
+-- The table was created in 20260623000001 with only:
+--   dimension_key, formula_weight, status, source_description,
+--   validation_date, notes, created_at, updated_at
+-- Migrations 000012–000019 use additional columns that must exist before
+-- any INSERT runs. Adding them here (idempotent) so all downstream
+-- migrations succeed.
+ALTER TABLE public.scoring_architecture_log
+  ADD COLUMN IF NOT EXISTS change_type   TEXT,
+  ADD COLUMN IF NOT EXISTS description   TEXT,
+  ADD COLUMN IF NOT EXISTS migration_ref TEXT,
+  ADD COLUMN IF NOT EXISTS layer_id      TEXT,
+  ADD COLUMN IF NOT EXISTS finding       TEXT,
+  ADD COLUMN IF NOT EXISTS severity      TEXT,
+  ADD COLUMN IF NOT EXISTS component     TEXT,
+  ADD COLUMN IF NOT EXISTS resolution    TEXT;
+
 -- ── 1. Add main_formula_validation_metadata to engine_calibration_versions ────
 --
 -- Stores the bootstrap calibration metadata that was previously only in TypeScript.

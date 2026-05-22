@@ -421,6 +421,31 @@ export interface HybridResult {
   // Populated asynchronously after detectCollapseStage() resolves in LayoffCalculator.
   // null = no signals detected; 1 = early warning; 2 = active risk; 3 = imminent.
   collapseStage?: 1 | 2 | 3 | null;
+
+  /**
+   * GAP-A04 — Empirical precision bundle for the collapse stage.
+   * Populated alongside collapseStage when a stage is detected.
+   * Contains the stage, severity-weighted signal confidence (internal),
+   * and empirical precision from collapse_predictor_precision_summary.
+   *
+   * stagePrecision: fraction of stage-N predictions confirmed as layoffs
+   *   within the stage's horizon (365/180/90 days). null when < 20 outcomes.
+   * stageBasedOnNEvents: N historical predictions with confirmed outcomes.
+   * stagePrecisionLabel: "62%" or "UNKNOWN".
+   *
+   * UI rule: show "Stage N" label only when stagePrecision >= 0.60.
+   * When stagePrecision < 0.60 or null → show "Early warning signals present".
+   */
+  collapsePredictor?: {
+    stage: 1 | 2 | 3 | null;
+    stageConfidence: number | null;
+    stagePrecision: number | null;
+    stageBasedOnNEvents: number;
+    stagePrecisionLabel: string;
+    stageFprLabel: string;
+    stageHorizonDays: number;
+    stageGateStatus: 'gate_clears' | 'insufficient_cases' | 'precision_below_gate';
+  };
   /**
    * GAP-A04 — Internal signal quality of the collapse detection.
    * Severity-weighted ratio: Σ(severity_score) / max_possible_severity_score.

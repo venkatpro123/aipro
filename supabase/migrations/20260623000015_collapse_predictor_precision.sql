@@ -40,24 +40,30 @@ COMMENT ON COLUMN user_prediction_outcomes.collapse_is_promoted IS
    Promoted stages carry lower confidence and are disclosed as partial evidence.';
 
 -- ── B: Per-stage precision summary VIEW ──────────────────────────────────────
+-- Schema fix: user_prediction_outcomes uses outcome_reported (not actual_outcome),
+-- with values 'laid_off'/'company_closed' for confirmed layoffs and
+-- 'still_employed'/'false_alarm' for non-layoff outcomes.
 
-CREATE OR REPLACE VIEW collapse_predictor_precision_summary AS
+CREATE OR REPLACE VIEW public.collapse_predictor_precision_summary AS
 WITH stage_outcomes AS (
   SELECT
-    collapse_stage_at_prediction                                AS stage,
-    COUNT(*)                                                    AS n_predictions,
-    COUNT(*) FILTER (WHERE collapse_is_promoted = TRUE)         AS n_promoted,
-    COUNT(*) FILTER (WHERE actual_outcome = 'layoff_confirmed') AS n_confirmed_layoff,
-    COUNT(*) FILTER (WHERE actual_outcome IN ('no_layoff', 'company_stable'))
-                                                                AS n_false_positive,
+    collapse_stage_at_prediction                                             AS stage,
+    COUNT(*)                                                                 AS n_predictions,
+    COUNT(*) FILTER (WHERE collapse_is_promoted = TRUE)                      AS n_promoted,
     COUNT(*) FILTER (
-      WHERE actual_outcome = 'layoff_confirmed'
+      WHERE outcome_reported IN ('laid_off', 'company_closed')
+    )                                                                        AS n_confirmed_layoff,
+    COUNT(*) FILTER (
+      WHERE outcome_reported IN ('still_employed', 'false_alarm', 'role_changed', 'left_voluntarily')
+    )                                                                        AS n_false_positive,
+    COUNT(*) FILTER (
+      WHERE outcome_reported IN ('laid_off', 'company_closed')
         AND collapse_is_promoted = FALSE
-    )                                                           AS n_confirmed_primary_only
-  FROM user_prediction_outcomes
+    )                                                                        AS n_confirmed_primary_only
+  FROM public.user_prediction_outcomes
   WHERE
     collapse_stage_at_prediction IS NOT NULL
-    AND actual_outcome IS NOT NULL
+    AND outcome_reported IS NOT NULL
   GROUP BY collapse_stage_at_prediction
 ),
 gated AS (
@@ -102,15 +108,17 @@ COMMENT ON VIEW collapse_predictor_precision_summary IS
    Stage 3 specifically should NOT apply the 0.2× deadline compression until gate clears.';
 
 -- ── C: Register precision status in engine_calibration_constants ─────────────
+-- Schema fix: engine_calibration_constants uses (key, value, provenance, rationale,
+-- cohort_scope, status, created_by) — NOT (constant_key, constant_value, calibrated_at, expires_at).
 
-INSERT INTO engine_calibration_constants (
-  constant_key,
-  constant_value,
-  provenance,
-  description,
-  calibrated_at,
-  expires_at
-) VALUES
+-- Ensure description + added_in_version columns exist (added in 000013 fix).
+ALTER TABLE public.engine_calibration_constants
+  ADD COLUMN IF NOT EXISTS description      TEXT,
+  ADD COLUMN IF NOT EXISTS added_in_version TEXT;
+
+INSERT INTO public.engine_calibration_constants
+  (key, value, provenance, rationale, cohort_scope, status, created_by)
+VALUES
 (
   'collapsePredictor.stage3PrecisionStatus',
   '"UNKNOWN"',
@@ -118,30 +126,25 @@ INSERT INTO engine_calibration_constants (
   'Stage 3 precision rate (fraction of Stage 3 predictions confirmed as layoffs within 90 days). '
   'Currently UNKNOWN — 0 Stage 3 predictions with confirmed outcomes in user_prediction_outcomes. '
   'Precision gate: n >= 20 AND precision >= 0.60. Until gate clears, Stage 3 classifications must '
-  'be disclosed with PRECISION: UNKNOWN badge and the 4-8 week timeline claim must be labeled UNVERIFIED. '
-  'The "Historical median 4-8 weeks" text in collapsePredictor.ts recommendations record has no citation.',
-  NOW(),
-  NOW() + INTERVAL '180 days'
+  'be disclosed with PRECISION: UNKNOWN badge and the 4-8 week timeline claim must be labeled UNVERIFIED.',
+  'GLOBAL', 'active', 'gap-a04-seed'
 ),
 (
   'collapsePredictor.stage2PrecisionStatus',
   '"UNKNOWN"',
   'uncalibrated_placeholder',
-  'Stage 2 precision rate (fraction of Stage 2 predictions confirmed as layoffs within 90 days). '
+  'Stage 2 precision rate (fraction of Stage 2 predictions confirmed as layoffs within 180 days). '
   'Currently UNKNOWN — insufficient confirmed outcomes in user_prediction_outcomes. '
-  'Precision gate: n >= 20 AND precision >= 0.50 for Stage 2 (lower bar than Stage 3).',
-  NOW(),
-  NOW() + INTERVAL '180 days'
+  'Precision gate: n >= 20 AND precision >= 0.60.',
+  'GLOBAL', 'active', 'gap-a04-seed'
 ),
 (
   'collapsePredictor.stage1PrecisionStatus',
   '"UNKNOWN"',
   'uncalibrated_placeholder',
-  'Stage 1 precision rate (fraction of Stage 1 predictions confirmed as layoffs within 90 days). '
-  'Stage 1 is a 12-18 month leading indicator — 90-day confirmation window may undercount true '
-  'positives. Precision gate: n >= 20 AND precision >= 0.35 (lower bar; long lead time).',
-  NOW(),
-  NOW() + INTERVAL '180 days'
+  'Stage 1 precision rate (fraction of Stage 1 predictions confirmed as layoffs within 365 days). '
+  'Stage 1 is a 12-18 month leading indicator. Precision gate: n >= 20 AND precision >= 0.60.',
+  'GLOBAL', 'active', 'gap-a04-seed'
 ),
 (
   'collapsePredictor.stage3TimelineMedianWeeks',
@@ -150,72 +153,25 @@ INSERT INTO engine_calibration_constants (
   'Claimed median time from Stage 3 detection to layoff announcement: 4-8 weeks. '
   'Source: collapsePredictor.ts recommendation text only. NOT derived from user_prediction_outcomes '
   'or any external research citation. Must be labeled UNVERIFIED in UI until validated.',
-  NOW(),
-  NOW() + INTERVAL '180 days'
+  'GLOBAL', 'active', 'gap-a04-seed'
 )
-ON CONFLICT (constant_key) DO UPDATE
-  SET
-    constant_value = EXCLUDED.constant_value,
-    provenance     = EXCLUDED.provenance,
-    description    = EXCLUDED.description,
-    calibrated_at  = NOW(),
-    expires_at     = NOW() + INTERVAL '180 days';
+ON CONFLICT DO NOTHING;
 
--- ── D: Log all findings to scoring_architecture_log ──────────────────────────
-
-INSERT INTO scoring_architecture_log (
-  change_type, affected_component, change_description, rationale, change_author
-) VALUES
-(
-  'gap_finding',
-  'collapsePredictor.ts',
-  'GAP-A04-F1: No collapse_stage_at_prediction column in user_prediction_outcomes. '
-  'Stage 3 precision rate is uncomputable from current schema.',
-  'Stage 3 fires emergency protocol (week-by-week action plan, 0.2× deadline compression). '
-  'Without outcome tracking, a false positive triggers crisis mode for a stable user. '
-  'Added collapse_stage_at_prediction SMALLINT(1/2/3) and collapse_is_promoted BOOLEAN.',
-  'gap_audit_a04'
-),
-(
-  'gap_finding',
-  'collapsePredictor.ts / CollapseReport.signalConfidence',
-  'GAP-A04-F2: CollapseReport.signalConfidence is a severity-weighted internal ratio, '
-  'not an empirical precision rate. It is currently displayed nowhere in the UI — '
-  'the user has no visibility into detection confidence at all.',
-  'signalConfidence = Σ(severity_score) / max_possible. 1.0 = all strong signals. '
-  'This is a signal quality indicator, not a validation metric. Must be disclosed '
-  'alongside PRECISION: UNKNOWN badge so users understand the distinction.',
-  'gap_audit_a04'
-),
-(
-  'gap_finding',
-  'collapsePredictor.ts / Stage 3 recommendation text',
-  'GAP-A04-F3: Stage 3 recommendation cites "Historical median time to layoff '
-  'announcement from Stage 3: 4-8 weeks" with no citation or source.',
-  'This timeline claim appears in the CollapseReport.recommendation for Stage 3 '
-  'and is surfaced to users as a factual anchor. No reference to layoffs.fyi, '
-  'academic research, or internal outcome data. Registered as UNVERIFIED in '
-  'engine_calibration_constants. Must be labeled UNVERIFIED in UI.',
-  'gap_audit_a04'
-),
-(
-  'gap_finding',
-  'HybridResult / collapseStage',
-  'GAP-A04-F4: HybridResult has collapseStage field but no fields for '
-  'signalConfidence or precisionStatus. TransparencyTab shows collapse stage '
-  'with no confidence or precision disclosure.',
-  'Adding collapseStageConfidence (the internal severity-weighted ratio from '
-  'CollapseReport) and collapsePrecisionStatus (uncalibrated_placeholder) '
-  'to HybridResult. These two fields together allow TransparencyTab to show '
-  'the distinction: signal quality (internal) vs validated precision (unknown).',
-  'gap_audit_a04'
-),
-(
-  'schema_change',
-  'user_prediction_outcomes',
-  'Added collapse_stage_at_prediction SMALLINT CHECK IN (1,2,3) and '
-  'collapse_is_promoted BOOLEAN. Added collapse_predictor_precision_summary VIEW.',
-  'Enables empirical precision tracking per stage. Gate: n>=20 AND precision>=0.60 '
-  'for Stage 3. Until gate clears, Stage 3 must carry PRECISION: UNKNOWN disclosure.',
-  'gap_audit_a04'
-);
+-- ── D: Log findings to scoring_architecture_log ──────────────────────────────
+-- Schema fix: correct columns are (dimension_key, change_type, description, migration_ref).
+INSERT INTO public.scoring_architecture_log (dimension_key, change_type, description, migration_ref)
+VALUES (
+  'collapse_predictor_gap_a04',
+  'audit_fix',
+  'GAP-A04: 5 findings in collapsePredictor. '
+  'F1: No collapse_stage_at_prediction column — added (SMALLINT 1/2/3) + collapse_is_promoted. '
+  'F2: signalConfidence is a severity-weighted internal ratio, not empirical precision — now disclosed. '
+  'F3: Stage 3 "4-8 weeks" timeline has no citation — labeled UNVERIFIED. '
+  'F4: HybridResult missing collapseStageConfidence + collapsePrecisionStatus — added. '
+  'F5: Precision gate: n>=20 AND precision>=0.60 required before validated classification. '
+  'View public.collapse_predictor_precision_summary created (fixed: outcome_reported not actual_outcome).',
+  '20260623000015'
+)
+ON CONFLICT (dimension_key) DO UPDATE
+  SET description = EXCLUDED.description,
+      migration_ref = EXCLUDED.migration_ref;

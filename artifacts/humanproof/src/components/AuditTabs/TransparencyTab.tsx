@@ -2439,7 +2439,15 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
           {result.collapseStage != null && (() => {
             const stage      = result.collapseStage as 1 | 2 | 3;
             const sigConf    = result.collapseStageConfidence;
-            const precStatus = result.collapsePrecisionStatus ?? 'uncalibrated_placeholder';
+            const cp         = result.collapsePredictor;
+            const precision  = cp?.stagePrecision ?? null;
+            const nEvents    = cp?.stageBasedOnNEvents ?? 0;
+            const precLabel  = cp?.stagePrecisionLabel ?? 'UNKNOWN';
+            const fprLabel   = cp?.stageFprLabel ?? 'UNKNOWN';
+            const horizonDays = cp?.stageHorizonDays ?? (stage === 1 ? 365 : stage === 2 ? 180 : 90);
+            const gateStatus = cp?.stageGateStatus ?? 'insufficient_cases';
+            const precisionKnown = precision != null && precision >= 0.60;
+
             const stageLabels: Record<1 | 2 | 3, string> = {
               1: 'Stage 1 — Early Warning (12–18 months)',
               2: 'Stage 2 — Displacement in Progress (6–12 months)',
@@ -2457,14 +2465,20 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                   <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: c.text }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {/* Stage label — suppressed when precision < 0.60 */}
                       <h4 className="text-[11px] font-bold uppercase tracking-wide" style={{ color: c.text }}>
-                        Collapse Predictor — {stageLabels[stage]}
+                        Collapse Predictor —{' '}
+                        {precisionKnown ? stageLabels[stage] : 'Early warning signals present'}
                       </h4>
                       <span
                         className="text-[9px] font-black px-2 py-0.5 rounded"
-                        style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.30)' }}
+                        style={{
+                          background: precisionKnown ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
+                          color: precisionKnown ? '#34d399' : '#fbbf24',
+                          border: precisionKnown ? '1px solid rgba(16,185,129,0.30)' : '1px solid rgba(245,158,11,0.30)',
+                        }}
                       >
-                        PRECISION: UNKNOWN
+                        PRECISION: {precLabel}
                       </span>
                       {stage === 3 && (
                         <span
@@ -2476,7 +2490,37 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                       )}
                     </div>
 
-                    {/* Signal confidence vs precision distinction */}
+                    {/* Empirical precision statement */}
+                    <div className="mb-2 p-2.5 rounded-lg text-[10px] leading-relaxed"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      {precisionKnown ? (
+                        <span style={{ color: 'rgba(255,255,255,0.75)' }}>
+                          <span className="font-bold" style={{ color: c.text }}>
+                            {stageLabels[stage]} classification
+                          </span>
+                          {' '}({precLabel} precision on{' '}
+                          <span className="font-semibold">{nEvents} historical companies</span>{' '}
+                          — meaning{' '}
+                          <span className="font-semibold">{fprLabel}</span>{' '}
+                          of Stage {stage} companies did not have a confirmed layoff within{' '}
+                          {horizonDays} days).
+                        </span>
+                      ) : (
+                        <span style={{ color: 'rgba(255,255,255,0.60)' }}>
+                          Stage label suppressed — empirical precision is{' '}
+                          <span className="font-bold text-amber-400">{precLabel}</span>
+                          {nEvents > 0
+                            ? ` (${nEvents} confirmed outcome${nEvents !== 1 ? 's' : ''} collected; gate requires ≥20 at ≥60%)`
+                            : ' (0 confirmed outcomes; requires ≥20 to validate)'}.{' '}
+                          Signals indicate distress but the {horizonDays}-day layoff confirmation rate is unvalidated.
+                          {gateStatus === 'precision_below_gate' && (
+                            <span className="text-rose-400/80"> Precision below 60% gate.</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Signal confidence vs empirical precision — distinguish the two */}
                     {sigConf != null && (
                       <div className="grid grid-cols-2 gap-2 mb-2">
                         <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
@@ -2489,12 +2533,12 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                           </div>
                         </div>
                         <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Validated Precision</div>
-                          <div className="text-xs font-black text-amber-400">
-                            {precStatus === 'precision_validated' ? 'Validated' : 'Unknown'}
+                          <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Empirical Precision</div>
+                          <div className={`text-xs font-black ${precisionKnown ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            {precLabel}
                           </div>
                           <div className="text-[8px] opacity-40 mt-0.5 leading-tight">
-                            0 confirmed cases
+                            {nEvents > 0 ? `n=${nEvents} outcomes` : '0 confirmed cases'}
                           </div>
                         </div>
                       </div>
@@ -2507,14 +2551,14 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                         <AlertTriangle className="w-3 h-3 text-rose-400/60 flex-shrink-0 mt-0.5" />
                         <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
                           <span className="font-bold text-amber-400/80">UNVERIFIED: </span>
-                          Stage 3 recommendation cites "Historical median time to layoff announcement: 4–8 weeks" — this claim has no citation and is not derived from user_prediction_outcomes data. Treat it as an estimate, not an empirically validated timeline.
+                          Stage 3 cites "Historical median time to layoff announcement: 4–8 weeks" — no citation, not derived from outcome data. Treat as an estimate until validated.
                         </p>
                       </div>
                     )}
 
                     {/* Precision gate explanation */}
-                    <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.40)' }}>
-                      Signal Quality ({sigConf != null ? `${Math.round(sigConf * 100)}%` : '—'}) is a severity-weighted ratio of active signals (1.0 = all strong). It is NOT the fraction of Stage {stage} predictions that confirmed as layoffs — that precision rate is currently UNKNOWN (0 confirmed outcome cases). Precision gate: ≥20 outcomes AND precision ≥{stage === 1 ? '0.35' : stage === 2 ? '0.50' : '0.60'} required before the{stage === 3 ? ' emergency protocol and 0.2× deadline compression are' : ' stage classification is'} considered validated.
+                    <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                      Signal Quality ({sigConf != null ? `${Math.round(sigConf * 100)}%` : '—'}) is a severity-weighted ratio of active signals — it is NOT the fraction of Stage {stage} predictions that confirmed as layoffs. Empirical precision gate: ≥20 outcomes AND precision ≥60% required before the stage label is shown. Until then: "Early warning signals present".
                     </p>
                   </div>
                 </div>

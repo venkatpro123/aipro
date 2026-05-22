@@ -7,6 +7,7 @@
 import { getSectorLayoffCount, getCompanyLayoffs } from './dataConnectors/layoffsFyiConnector';
 import { fetchCompanyNewsSignals } from './dataConnectors/rssNewsConnector';
 import { fetchRoleDemandSignal } from './dataConnectors/naukriConnector';
+import { supabase } from '../utils/supabase';
 
 export type CollapseStage = 1 | 2 | 3 | null;
 
@@ -594,4 +595,117 @@ function monthsSince(dateStr: string): number {
   const d = new Date(dateStr);
   const now = new Date();
   return Math.abs((now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()));
+}
+
+// ── Empirical precision service (GAP-A04) ────────────────────────────────────
+
+/**
+ * Confirmation horizon for each stage.
+ * Stage 1: 12-18 months → 365-day window
+ * Stage 2: 6-12 months  → 180-day window
+ * Stage 3: 1-6 months   → 90-day window
+ */
+export const COLLAPSE_STAGE_HORIZONS: Record<1 | 2 | 3, number> = {
+  1: 365,
+  2: 180,
+  3: 90,
+};
+
+/**
+ * GAP-A04 — Empirical precision for a single collapse stage.
+ * Computed from collapse_predictor_precision_summary (live) or
+ * falls back to UNKNOWN when < 20 confirmed outcomes exist.
+ */
+export interface CollapseStageEmpiricalPrecision {
+  stage: 1 | 2 | 3;
+  /** fraction of stage-N predictions confirmed as layoffs, null when < 20 outcomes */
+  precision: number | null;
+  /** total stage-N predictions that have an outcome_reported value */
+  nEvents: number;
+  /** "62%" when known; "UNKNOWN" when nEvents < 20 */
+  precisionLabel: string;
+  /** confirmed layoffs / total predictions (including those without outcomes) */
+  rawPrecision: number | null;
+  horizonDays: number;
+  gateStatus: 'gate_clears' | 'insufficient_cases' | 'precision_below_gate';
+  /** False positive rate label — complement of precision */
+  fprLabel: string;
+}
+
+const COLLAPSE_PRECISION_FALLBACK = (stage: 1 | 2 | 3): CollapseStageEmpiricalPrecision => ({
+  stage,
+  precision: null,
+  nEvents: 0,
+  precisionLabel: 'UNKNOWN',
+  rawPrecision: null,
+  horizonDays: COLLAPSE_STAGE_HORIZONS[stage],
+  gateStatus: 'insufficient_cases',
+  fprLabel: 'UNKNOWN',
+});
+
+// 1-hour cache per stage
+const _collapsePrecisionCache = new Map<number, { data: CollapseStageEmpiricalPrecision; ts: number }>();
+const COLLAPSE_PRECISION_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * GAP-A04 — Query collapse_predictor_precision_summary for the given stage.
+ * Non-fatal: returns UNKNOWN fallback on any error.
+ */
+export async function getCollapseStagePrecision(stage: 1 | 2 | 3): Promise<CollapseStageEmpiricalPrecision> {
+  const cached = _collapsePrecisionCache.get(stage);
+  if (cached && Date.now() - cached.ts < COLLAPSE_PRECISION_TTL_MS) return cached.data;
+
+  try {
+    const { data, error } = await supabase
+      .from('collapse_predictor_precision_summary')
+      .select('stage, n_predictions, n_confirmed_layoff, n_false_positive, precision, gate_status')
+      .eq('stage', stage)
+      .maybeSingle();
+
+    if (error || !data) {
+      const fb = COLLAPSE_PRECISION_FALLBACK(stage);
+      _collapsePrecisionCache.set(stage, { data: fb, ts: Date.now() });
+      return fb;
+    }
+
+    const nPredictions: number = data.n_predictions ?? 0;
+    const nConfirmed: number   = data.n_confirmed_layoff ?? 0;
+    const nFP: number          = data.n_false_positive ?? 0;
+    const nWithResult = nConfirmed + nFP;
+    const livePrecision: number | null = nWithResult >= 1
+      ? Math.round((nConfirmed / nWithResult) * 1000) / 1000
+      : null;
+    const liveFPR: number | null = nWithResult >= 1 ? nFP / nWithResult : null;
+
+    const gateStatus: CollapseStageEmpiricalPrecision['gateStatus'] =
+      (data.gate_status as string) === 'gate_clears' ? 'gate_clears'
+      : nWithResult < 20 ? 'insufficient_cases'
+      : 'precision_below_gate';
+
+    const result: CollapseStageEmpiricalPrecision = {
+      stage,
+      precision: nWithResult >= 20 ? livePrecision : null,
+      nEvents: nWithResult,
+      precisionLabel: nWithResult >= 20 && livePrecision != null
+        ? `${Math.round(livePrecision * 100)}%` : 'UNKNOWN',
+      rawPrecision: nPredictions > 0
+        ? Math.round((nConfirmed / nPredictions) * 1000) / 1000 : null,
+      horizonDays: COLLAPSE_STAGE_HORIZONS[stage],
+      gateStatus,
+      fprLabel: nWithResult >= 20 && liveFPR != null
+        ? `${Math.round(liveFPR * 100)}%` : 'UNKNOWN',
+    };
+
+    _collapsePrecisionCache.set(stage, { data: result, ts: Date.now() });
+    return result;
+  } catch {
+    const fb = COLLAPSE_PRECISION_FALLBACK(stage);
+    _collapsePrecisionCache.set(stage, { data: fb, ts: Date.now() });
+    return fb;
+  }
+}
+
+/** Sync accessor — returns cached value or UNKNOWN fallback. */
+export function getCollapseStagePrecisionSync(stage: 1 | 2 | 3): CollapseStageEmpiricalPrecision {
+  return _collapsePrecisionCache.get(stage)?.data ?? COLLAPSE_PRECISION_FALLBACK(stage);
 }

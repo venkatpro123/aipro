@@ -1530,6 +1530,7 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
             layoffRounds={companyData.layoffRounds}
             mostRecentLayoffDate={companyData.layoffsLast24Months?.[0]?.date ?? null}
             filingDelinquent={false}
+            precisionData={result.collapsePredictor ?? undefined}
           />
         </div>
 
