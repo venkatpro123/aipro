@@ -20,16 +20,8 @@ CREATE TABLE IF NOT EXISTS public.scoring_architecture_log (
   updated_at          TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS public.engine_calibration_constants (
-  constant_key        TEXT        NOT NULL,
-  value               FLOAT,
-  segment             TEXT        NOT NULL DEFAULT 'global',
-  source              TEXT,
-  evidence_count      INT         DEFAULT 0,
-  last_validated_at   TEXT,
-  created_at          TIMESTAMPTZ DEFAULT now(),
-  PRIMARY KEY (constant_key, segment)
-);
+-- engine_calibration_constants already exists with its own schema (key/cohort_scope/JSONB);
+-- session migrations do not insert into it to avoid column mismatch.
 
 CREATE TABLE IF NOT EXISTS public.engine_drift_alerts (
   alert_key           TEXT        PRIMARY KEY,
@@ -108,35 +100,7 @@ DO UPDATE SET
   notes              = EXCLUDED.notes,
   updated_at         = now();
 
--- ── 2. Update engine_calibration_constants for D5 ────────────────────────────
--- Ensures the DB-backed constant lookup returns 0.00 for any downstream consumer
--- that queries by constant_key rather than reading the provenance table.
-
-INSERT INTO engine_calibration_constants (
-  constant_key,
-  value,
-  segment,
-  source,
-  evidence_count,
-  last_validated_at,
-  created_at
-) VALUES (
-  'D5_countryContext_formula_weight',
-  0.00,
-  'global',
-  'regression',
-  200,
-  '2026-05-19',
-  now()
-)
-ON CONFLICT (constant_key, segment)
-DO UPDATE SET
-  value             = EXCLUDED.value,
-  source            = EXCLUDED.source,
-  evidence_count    = EXCLUDED.evidence_count,
-  last_validated_at = EXCLUDED.last_validated_at;
-
--- ── 3. Engine drift alert: flag any future non-zero D5 weight as a drift event ─
+-- ── 2. Engine drift alert: flag any future non-zero D5 weight as a drift event ─
 -- Inserts a baseline measurement so the drift monitor can detect if D5 is
 -- accidentally given a non-zero weight in a future calibration update without
 -- the corresponding documentation requirement being met (n >= 500 events).

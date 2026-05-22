@@ -118,26 +118,6 @@ INSERT INTO synthetic_probe_results (
 )
 ON CONFLICT (scenario_name, probe_run_id) DO NOTHING;
 
--- ── 4. engine_calibration_constants: D8 effective weight states ───────────────
-
-INSERT INTO engine_calibration_constants (
-  constant_key,
-  value,
-  segment,
-  source,
-  evidence_count,
-  last_validated_at,
-  created_at
-) VALUES
-  -- When D8 logistic is active
-  ('D8_aiEfficiencyRestructuring_weight_active',    0.09, 'global', 'regression', 47, '2026-05-10', now()),
-  -- When D8 is inactive (flag off, no heuristic) — effective weight = 0
-  ('D8_aiEfficiencyRestructuring_weight_inactive',  0.00, 'global', 'regression', 47, '2026-05-10', now()),
-  -- Hyperscaler proxy amount
-  ('D8_hyperscaler_proxy_amount',                   0.12, 'global', 'bootstrap',   0, '2026-05-10', now()),
-  -- D8 max formula contribution (D8_value=1.0 × weight=0.09)
-  ('D8_max_formula_contribution',                   0.09, 'global', 'regression', 47, '2026-05-10', now())
-ON CONFLICT (constant_key, segment)
-DO UPDATE SET
-  value             = EXCLUDED.value,
-  last_validated_at = EXCLUDED.last_validated_at;
+-- Note: D8 weight states are documented in scoring_architecture_log above.
+-- engine_calibration_constants uses a different schema (key/cohort_scope/JSONB)
+-- and is managed by its own calibration pipeline.
