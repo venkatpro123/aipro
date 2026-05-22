@@ -1547,11 +1547,33 @@ export interface ScoreResult {
   /** Hyperscaler D8 proxy — true when the +0.12 composite adjustment was applied.
    *  Only fires when D8 flag is inactive, company is a named hyperscaler,
    *  aiInvestmentSignal = 'very-high', and L1 < 0.45 (profitable).
+   *  GUARD: proxy is suppressed when EFFICIENCY cohort heuristic or Condition3 is
+   *  already firing D8 via the formula — that would be a double-count.
    *  Disclosed in TransparencyTab. Will be retired when D8 flag activates. */
   hyperscalerD8ProxyApplied?: boolean;
   /** Amount applied by the hyperscaler proxy (0.12 on 0-1 scale = +12 pts).
    *  Present only when hyperscalerD8ProxyApplied = true. */
   hyperscalerD8ProxyAmount?: number;
+  /**
+   * BUG-02: D8 effective weight state for TransparencyTab disclosure.
+   *
+   * D8's formula weight is 0.09. When the v39_d8_ai_efficiency_active flag is off
+   * AND neither the EFFICIENCY cohort heuristic nor Condition3 fires, D8 = 0 and
+   * the 0.09 weight slot is occupied but inactive. The effective maximum achievable
+   * score from the formula alone is 91, not 100.
+   *
+   *   d8FlagActive: true  → validated logistic path, D8 contributes via formula
+   *   d8HeuristicActive:  → EFFICIENCY cohort or Condition3 heuristic fires, D8 non-zero
+   *   d8EffectiveWeight:  → actual weight D8 is contributing to this score's formula
+   *     0.09 when flag active; effective weight when heuristic active; 0 when neither
+   *
+   * TransparencyTab uses this to show the correct D8 row in EffectiveWeightsPanel
+   * and to surface a disclosure when the 0.09 slot is inactive.
+   */
+  d8FlagActive?: boolean;
+  d8HeuristicActive?: boolean;
+  /** Effective D8 formula weight this audit run. 0 when D8=0, 0.09 when active. */
+  d8EffectiveWeight?: number;
   /**
    * v40.0: floor value for each fired kill-switch, e.g. { confirmed_recent_layoff_news: 72 }.
    * TransparencyTab renders an exact "Score Floor Active" badge per entry so the user
@@ -4678,9 +4700,24 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
 
   // Hyperscaler D8 proxy — applied when D8 flag is inactive and the company
   // matches the hyperscaler pattern (very-high AI + profitable + named hyperscaler).
-  // Disclosed in TransparencyTab as a documented approximation, not the validated D8 term.
+  //
+  // DOUBLE-COUNT GUARD (BUG-02 fix):
+  // The proxy is designed to compensate for D8=0 (the formula's AI-efficiency slot being
+  // inactive). If the EFFICIENCY cohort heuristic or Condition3 has already set D8 to a
+  // non-zero value, D8 is ALREADY contributing through the formula. Applying the proxy on
+  // top would double-count the AI-efficiency signal:
+  //   D8 via formula:  D8_heuristic × 0.09 ≈ 4 pts
+  //   D8 via proxy:    +12 pts
+  //   Combined (buggy): 16 pts   (expected max: 9 pts at D8_value = 1.0)
+  //
+  // Guard: suppress proxy whenever D8 is non-zero from any heuristic path.
+  // When D8 is non-zero, the formula already reflects the AI-efficiency pattern.
+  // The proxy is ONLY valid when D8 = 0 (flag off, no heuristic active).
+  const _d8IsHeuristicActive = _d8EfficiencyCohortActive || _d8Condition3Active;
   const { bonus: hyperscalerProxyBonus, applied: hyperscalerProxyApplied } =
-    computeHyperscalerD8Proxy(companyData, _d8FlagActive, calibrated.L1);
+    _d8IsHeuristicActive
+      ? { bonus: 0, applied: false }  // proxy suppressed: heuristic D8 already active via formula
+      : computeHyperscalerD8Proxy(companyData, _d8FlagActive, calibrated.L1);
 
   const preKillSwitchScore = Math.round(clamp(rawScore + deptMatchBonus + hyperscalerProxyBonus) * 100);
 
@@ -4905,6 +4942,20 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     performanceCredibilityThresholdLabel: performanceCredibility.regionThresholdLabel,
     hyperscalerD8ProxyApplied:           hyperscalerProxyApplied || undefined,
     hyperscalerD8ProxyAmount:            hyperscalerProxyApplied ? HYPERSCALER_D8_PROXY : undefined,
+    // BUG-02: D8 effective weight state — consumed by TransparencyTab.
+    // d8FlagActive:     true when validated logistic path ran.
+    // d8HeuristicActive: true when EFFICIENCY cohort or Condition3 heuristic ran.
+    // d8EffectiveWeight: actual weight D8 contributed. 0 when neither path active.
+    d8FlagActive:                        _d8FlagActive,
+    d8HeuristicActive:                   _d8IsHeuristicActive,
+    d8EffectiveWeight: (() => {
+      if (_d8FlagActive || _d8IsHeuristicActive) {
+        // D8 is active (logistic or heuristic): weight is whatever the blended W set contains.
+        // Use the post-decay W value for accuracy — this matches the actual formula contribution.
+        return Math.round(W.D8_aiEfficiencyRestructuring * 1000) / 1000;
+      }
+      return 0;
+    })(),
     bankingStabilityAdjustment:          _bankingStabilityAdj,
     sectorRegionStabilityAdjustment:     _sectorRegionStabilityAdj,
     recommendations: generateRecommendations(

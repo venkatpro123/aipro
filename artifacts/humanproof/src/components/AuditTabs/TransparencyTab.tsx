@@ -647,7 +647,11 @@ const LAYER_DISPLAY_NAMES: Record<string, string> = {
 
 const EffectiveWeightsPanel: React.FC<{
   segmentCalibration?: SegmentCalibrationResult;
-}> = ({ segmentCalibration: seg }) => {
+  /** BUG-02: D8 effective weight state from calculateLayoffScore. */
+  d8FlagActive?: boolean;
+  d8HeuristicActive?: boolean;
+  d8EffectiveWeight?: number;
+}> = ({ segmentCalibration: seg, d8FlagActive, d8HeuristicActive, d8EffectiveWeight }) => {
   type LayerKey = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
   const layers: LayerKey[] = ['L1', 'L2', 'L3', 'L4', 'L5'];
 
@@ -667,12 +671,21 @@ const EffectiveWeightsPanel: React.FC<{
     return { layer: l, name: LAYER_DISPLAY_NAMES[l], fw, gc, sm, eff };
   });
 
-  const totalEff  = rows.reduce((s, r) => s + r.eff, 0);
+  // BUG-02 — D8 row: formula weight is always 0.09, but effective contribution
+  // depends on flag state. d8EffectiveWeight=0 means the 0.09 slot is occupied
+  // but contributing nothing this run. d8IsActive covers both the validated
+  // logistic path (flag on) and the EFFICIENCY-cohort heuristic fallback.
+  const d8IsActive    = d8FlagActive || d8HeuristicActive;
+  const d8FormulaWt   = 0.09; // COMPOSITE_FORMULA_WEIGHTS.D8_aiEfficiencyRestructuring
+  const d8EffWt       = d8IsActive ? (d8EffectiveWeight ?? d8FormulaWt) : 0;
+  const D8_CAL        = 1.00; // D8 is used as its logistic output directly — no separate cal multiplier
+
+  const totalEff  = rows.reduce((s, r) => s + r.eff, 0) + d8EffWt * D8_CAL;
   const hasSegAdj = seg != null && rows.some((r) => Math.abs(r.sm - 1.0) > 0.01);
 
   const pct  = (v: number) => `${Math.round(v * 100)}%`;
   const mult = (v: number) => v === 1.0 ? '×1.00' : `×${v.toFixed(2)}`;
-  const share = (eff: number) => `${Math.round((eff / totalEff) * 100)}%`;
+  const share = (eff: number) => totalEff > 0 ? `${Math.round((eff / totalEff) * 100)}%` : '0%';
 
   return (
     <div className="glass-panel overflow-hidden">
@@ -680,6 +693,17 @@ const EffectiveWeightsPanel: React.FC<{
         <div className="px-4 py-2 text-[10px] bg-amber-500/10 border-b border-amber-500/20 text-amber-400/80 leading-relaxed">
           <span className="font-bold uppercase tracking-widest mr-1">Segment active:</span>
           {seg!.segmentLabel} — calibration multipliers shift the effective layer contributions below.
+        </div>
+      )}
+      {/* BUG-02 — D8 locked-out banner: shown when D8 holds 9% of the formula budget
+          but contributes 0 because the flag is off and no heuristic path fired. */}
+      {!d8IsActive && (
+        <div className="px-4 py-2 text-[10px] bg-slate-500/10 border-b border-slate-500/20 text-slate-400/80 leading-relaxed">
+          <span className="font-bold uppercase tracking-widest mr-1">D8 weight slot inactive (9%):</span>
+          The AI efficiency restructuring dimension (0.09 formula weight) contributes 0 this audit
+          because the v39_d8_ai_efficiency_active flag is off and this company is not classified as
+          EFFICIENCY cohort. Maximum achievable score from the formula alone is 91 pts. The
+          hyperscaler proxy (+12 pts) compensates only for named hyperscalers with very-high AI investment.
         </div>
       )}
       <div className="overflow-x-auto">
@@ -741,6 +765,66 @@ const EffectiveWeightsPanel: React.FC<{
                 </tr>
               );
             })}
+
+            {/* BUG-02 — D8 row: always shown, state-aware. */}
+            {(() => {
+              const d8Eff      = d8EffWt * D8_CAL;
+              const d8EffShare = totalEff > 0 ? d8Eff / totalEff : 0;
+              const d8Label    = d8FlagActive
+                ? 'AI Efficiency (logistic)'
+                : d8HeuristicActive
+                ? 'AI Efficiency (heuristic)'
+                : 'AI Efficiency (inactive)';
+              return (
+                <tr className={`hover:bg-white/5 transition-colors ${!d8IsActive ? 'opacity-40' : ''}`}>
+                  <td className="py-2.5 px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">D8</span>
+                      <span className="font-medium">{d8Label}</span>
+                      {!d8IsActive && (
+                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                          style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
+                          LOCKED
+                        </span>
+                      )}
+                      {d8IsActive && (
+                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                          style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+                          {d8FlagActive ? 'LOGISTIC' : 'HEURISTIC'}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-4 text-right font-mono opacity-60">{pct(d8FormulaWt)}</td>
+                  <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {d8IsActive ? mult(D8_CAL) : '—'}
+                  </td>
+                  {hasSegAdj && (
+                    <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      —
+                    </td>
+                  )}
+                  <td className="py-2.5 px-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-16 bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${d8EffShare * 100}%`,
+                            background: d8IsActive ? 'var(--cyan)' : 'rgba(100,116,139,0.4)',
+                          }}
+                        />
+                      </div>
+                      <span className="font-mono font-bold w-8 text-right" style={{
+                        color: d8IsActive ? 'var(--cyan)' : 'rgba(100,116,139,0.6)'
+                      }}>
+                        {d8IsActive ? share(d8Eff) : '0%'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })()}
           </tbody>
         </table>
       </div>
@@ -748,6 +832,7 @@ const EffectiveWeightsPanel: React.FC<{
         <p>
           <span className="text-cyan-400/70 font-bold">Eff Share</span> = formula weight × global calibration × segment multiplier, normalized.
           Amber rows deviate &gt;3 pts from the raw formula weight — these are the layers where calibration has most changed the score composition.
+          D6 (AI Agent, 4%) and D7 (Company Health, 7%) are always active and omitted for brevity.
         </p>
         <p className="text-slate-400/70">
           <span className="font-semibold text-slate-300/80">Market Conditions shows 0%</span> — country and sector context
@@ -910,11 +995,13 @@ const MethodologyExplainer: React.FC = () => {
               System Transparency
             </h4>
             <p className="text-xs text-muted-foreground">
-              Formula: 10-term composite (D1–D8, L1, L2), weights summing to exactly 1.00.
-              Empirical calibration details — including training event count, AUC-ROC, and
-              next recalibration date — are shown in the Model Calibration panel above.
-              D8 (AI efficiency restructuring) is regression-calibrated (47 events, AUC 0.76)
-              — deployment gate status shown in Known Model Limitations above.
+              Formula: 10-term composite (D1–D8, L1, L2), weights defined to sum to 1.00.
+              D8 (AI efficiency restructuring, weight 9%) contributes to the score only when
+              the v39_d8_ai_efficiency_active flag is on (validated logistic, 47 events, AUC 0.76)
+              or when the EFFICIENCY cohort heuristic fires. When D8 = 0, the maximum
+              achievable composite from the formula alone is 91 — the D8 weight slot is
+              occupied but inactive. The Effective Layer Weights table above shows D8's
+              current state for this audit. Deployment gate status in Known Model Limitations above.
             </p>
           </div>
         </div>
@@ -2294,10 +2381,17 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                       very-high AI investment — a documented pattern where L1 and L2 are both low
                       (healthy company, no distress) but AI efficiency restructuring is underway.
                     </p>
-                    <p className="text-xs text-violet-200/50 leading-relaxed">
+                    <p className="text-xs text-violet-200/50 leading-relaxed mb-1">
                       This is NOT the validated D8 term. It is a named approximation disclosed here
                       for full transparency. The proxy fires only when:
                       company is a named hyperscaler + aiInvestmentSignal = very-high + L1 &lt; 0.45 (profitable).
+                    </p>
+                    <p className="text-xs text-violet-200/40 leading-relaxed">
+                      Calibration note: proxy (+12 pts) is intentionally set 3 pts above D8&apos;s
+                      maximum formula contribution (+9 pts at D8_value = 1.0). The 33% margin
+                      compensates for the heuristic&apos;s inability to match the full logistic output
+                      range. Proxy is suppressed when the EFFICIENCY cohort heuristic is already
+                      firing D8 through the formula (which would otherwise double-count).
                     </p>
                   </div>
                 </div>
@@ -2659,7 +2753,12 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             title="Effective Layer Weights"
             description="What each layer actually contributes to your score after global calibration multipliers and segment adjustments are applied. Formula weights (e.g. L1=30%) are not the effective contribution — calibration composition changes the share."
           />
-          <EffectiveWeightsPanel segmentCalibration={(result as any).segmentCalibration} />
+          <EffectiveWeightsPanel
+            segmentCalibration={(result as any).segmentCalibration}
+            d8FlagActive={(result as any).d8FlagActive}
+            d8HeuristicActive={(result as any).d8HeuristicActive}
+            d8EffectiveWeight={(result as any).d8EffectiveWeight}
+          />
         </div>
 
         {/* v40.0: Sector × Region L4 stability multiplier — banking + telecom × CA/US/UK/EU */}

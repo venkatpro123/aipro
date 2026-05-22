@@ -443,10 +443,20 @@ export interface HybridResult {
   /** Human-readable label shown in TransparencyTab, e.g. "India IT threshold (5 years)". */
   performanceCredibilityThresholdLabel?: string;
   /** True when the hyperscaler D8 proxy (+0.12 composite) was applied.
-   *  Fires when D8 flag is inactive + company is a named hyperscaler + very-high AI + L1 < 0.45. */
+   *  Fires when D8 flag is inactive + company is a named hyperscaler + very-high AI + L1 < 0.45.
+   *  GUARD: proxy is suppressed when d8HeuristicActive=true (would double-count). */
   hyperscalerD8ProxyApplied?: boolean;
   /** Amount applied by the proxy (0.12 on 0-1 scale = +12 pts on 0-100 composite). */
   hyperscalerD8ProxyAmount?: number;
+  /**
+   * BUG-02 disclosure fields — D8 effective weight state for TransparencyTab.
+   * d8FlagActive: validated logistic path ran this audit.
+   * d8HeuristicActive: EFFICIENCY cohort or Condition3 heuristic ran (D8 non-zero).
+   * d8EffectiveWeight: actual post-decay weight D8 contributed to this score (0 when inactive).
+   */
+  d8FlagActive?: boolean;
+  d8HeuristicActive?: boolean;
+  d8EffectiveWeight?: number;
 
   // ── India Sector Intelligence (v8.0) ───────────────────────────────────────
   /**

@@ -138,6 +138,10 @@ export function mapToHybridResult(
     performanceCredibilityThresholdLabel: isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityThresholdLabel,
     hyperscalerD8ProxyApplied:            isEnsemble(result) ? undefined : (result as ScoreResult).hyperscalerD8ProxyApplied,
     hyperscalerD8ProxyAmount:             isEnsemble(result) ? undefined : (result as ScoreResult).hyperscalerD8ProxyAmount,
+    // BUG-02: D8 effective weight state for TransparencyTab disclosure.
+    d8FlagActive:                         isEnsemble(result) ? undefined : (result as ScoreResult).d8FlagActive,
+    d8HeuristicActive:                    isEnsemble(result) ? undefined : (result as ScoreResult).d8HeuristicActive,
+    d8EffectiveWeight:                    isEnsemble(result) ? undefined : (result as ScoreResult).d8EffectiveWeight,
     meta: {
       usedLiveSignals: (trueLiveSignals ?? result.signalQuality.liveSignals ?? 0) > 0,
       liveSignalCount: trueLiveSignals ?? result.signalQuality.liveSignals ?? 0,
