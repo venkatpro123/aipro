@@ -28,6 +28,7 @@ const NO_DATA_SIGNAL: StealthSignal = {
   confidence: 0,
   rationale: 'stealth detector layer fell back',
   hasAnnouncedRound: false,
+  dataSource: null,
 };
 
 export const stealthLayoffLayer: AuditLayer<'stealth_layoff'> = {

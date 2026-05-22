@@ -8,7 +8,7 @@
 // Mechanism:
 //   1. Read the workforce_velocity_6mo view (DB-backed, see
 //      20260605000001_workforce_snapshots.sql).
-//   2. For the company's most recent LinkedIn snapshot vs the same-source
+//   2. For the company's most recent headcount snapshot vs the same-source
 //      snapshot ~26 weeks prior, compute pct_change_6mo.
 //   3. Cross-reference against breaking_news_events and curated_layoff_events
 //      for the same company in the same window — if a layoff round exists,
@@ -16,23 +16,37 @@
 //   4. Emit a StealthSignal with severity classification and a recommended
 //      score floor adjustment.
 //
-// Severity bands (LinkedIn delta over 6 months, no announced rounds):
+// SINGLE SIGNAL: aggregate headcount 6-month delta (no announced round).
+// "Contractor-only cuts", "silent headcount shrink", and "voluntary attrition
+// acceleration" are MOTIVATING CONTEXT but not separately detected. All three
+// mechanisms produce the same observable: headcount falls without a news
+// announcement. The detector cannot distinguish between them.
+//
+// Severity bands (headcount delta over 26 weeks, no announced rounds):
 //   * STABLE        delta > -2%                 — normal attrition
 //   * SOFT_TRIM     -5% ≤ delta ≤ -2%           — measurable but benign
-//   * SILENT_TRIM   -10% < delta < -5%          — flagged, modest floor
-//   * SILENT_CUT    -20% < delta ≤ -10%         — flagged, material floor
-//   * SILENT_PURGE  delta ≤ -20%                — flagged, emergency floor
+//   * SILENT_TRIM   -10% < delta < -5%          — flagged, floor 60
+//   * SILENT_CUT    -20% < delta ≤ -10%         — flagged, floor 65
+//   * SILENT_PURGE  delta ≤ -20%                — flagged, floor 70
 //
 // Score floor application:
-//   The detector returns a `scoreFloorBoost` that the engine adds to the
-//   composite score (subject to clamp [0, 100]). The floor is NOT
-//   additive to a positive L2 — when an announced layoff round exists
-//   the floor is 0 because L2 already captured the signal.
+//   Hard floors (60/65/70) applied in auditDataPipeline.ts:1700.
+//   applyStealthFloor() exported for external use but NOT called by the
+//   pipeline (deprecated — see below).
+//
+// GAP-A03 SOURCE FIX (migration 20260623000014):
+//   Previously queried source='linkedin' only. LinkedIn rows are NEVER
+//   written by the scraper (stub path). fetchHeadcountVelocity() now
+//   queries in('linkedin','sec-edgar','wikipedia') ordered by confidence.
+//
+// PRECISION GATE (uncleared — 0 fired cases):
+//   Floors should not be applied until precision >= 0.60 on >=20 outcomes.
+//   Gate is tracked in stealth_layoff_precision_summary DB view.
 //
 // Confidence:
-//   LinkedIn snapshots have a known noise floor (people change jobs,
-//   profiles get marked inactive). The detector requires:
-//     * ≥2 LinkedIn snapshots ≥26 weeks apart
+//   Snapshots have a known noise floor (people change jobs, profiles get
+//   marked inactive). The detector requires:
+//     * ≥2 snapshots ≥26 weeks apart from the same source
 //     * Both snapshots above 1000 employees (signal-to-noise floor)
 //   Below either threshold, the detector returns NO_DATA rather than a
 //   misleading false-positive.
@@ -54,11 +68,11 @@ export interface StealthSignal {
   severity:           StealthSeverity;
   /** True when severity is SILENT_TRIM or worse AND no announced rounds exist. */
   flagged:            boolean;
-  /** 6-month % change in LinkedIn headcount, or null when insufficient data. */
+  /** 6-month % change in headcount, or null when insufficient data. */
   pctChange6mo:       number | null;
-  /** Most recent LinkedIn employee count. */
+  /** Most recent employee count. */
   recentEmployeeCount: number | null;
-  /** Prior LinkedIn employee count (26 weeks ago). */
+  /** Prior employee count (26 weeks ago). */
   priorEmployeeCount: number | null;
   /** Recommended score floor boost (0–25 points). 0 when not flagged. */
   scoreFloorBoost:    number;
@@ -68,6 +82,13 @@ export interface StealthSignal {
   rationale:          string;
   /** Whether any announced layoff round was found in the same 6-month window. */
   hasAnnouncedRound:  boolean;
+  /**
+   * GAP-A03 — The DB source that provided headcount data.
+   * 'linkedin' (most accurate, currently stub), 'sec-edgar' (company_intelligence
+   * pipeline, public companies), 'wikipedia' (infobox extract, lowest confidence).
+   * null when NO_DATA was returned (no qualifying snapshot found).
+   */
+  dataSource:         string | null;
 }
 
 const NO_SIGNAL: StealthSignal = {
@@ -78,8 +99,9 @@ const NO_SIGNAL: StealthSignal = {
   priorEmployeeCount: null,
   scoreFloorBoost: 0,
   confidence: 0,
-  rationale: 'Insufficient LinkedIn snapshot data',
+  rationale: 'Insufficient headcount snapshot data',
   hasAnnouncedRound: false,
+  dataSource: null,
 };
 
 // ── Severity classification ─────────────────────────────────────────────────
@@ -114,16 +136,26 @@ interface VelocityRow {
   pct_change_6mo: number;
 }
 
-async function fetchLinkedinVelocity(companyCanonicalName: string): Promise<VelocityRow | null> {
+// GAP-A03 SOURCE FIX: previously filtered source='linkedin' only.
+// The scraper (scrape-workforce-snapshot EF) writes source='sec-edgar'
+// (company_intelligence path) and source='wikipedia' — never 'linkedin'
+// because that path is stub-only. Broadened to all three; workforce_velocity_6mo
+// has a measurement_confidence column so we take the highest-confidence row.
+async function fetchHeadcountVelocity(companyCanonicalName: string): Promise<VelocityRow | null> {
   const { data, error } = await supabase
     .from('workforce_velocity_6mo')
     .select('*')
     .eq('company_canonical_name', companyCanonicalName)
-    .eq('source', 'linkedin')
+    .in('source', ['linkedin', 'sec-edgar', 'wikipedia'])
+    .order('recent_conf', { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (error || !data) return null;
   return data as VelocityRow;
 }
+
+/** @deprecated Legacy name — use fetchHeadcountVelocity. */
+const fetchLinkedinVelocity = fetchHeadcountVelocity;
 
 async function fetchAnnouncedRoundsInWindow(companyName: string, windowDays = 200): Promise<boolean> {
   const since = new Date();
@@ -175,15 +207,16 @@ export async function detectStealthLayoff(input: DetectorInput): Promise<Stealth
   }
 
   const minFloor = input.minEmployeeFloor ?? 1000;
-  const velocity = await fetchLinkedinVelocity(input.companyCanonicalName);
+  const velocity = await fetchHeadcountVelocity(input.companyCanonicalName);
   if (!velocity) return NO_SIGNAL;
 
   if (velocity.recent_count < minFloor || velocity.prior_count < minFloor) {
-    // Below the signal-to-noise floor: LinkedIn churn dominates real
-    // workforce change. Return NO_DATA rather than misclassifying.
+    // Below the signal-to-noise floor: profile churn dominates real workforce
+    // change. Return NO_DATA rather than misclassifying.
     return {
       ...NO_SIGNAL,
-      rationale: `LinkedIn count below noise floor (${minFloor.toLocaleString()} required)`,
+      dataSource: velocity.source,
+      rationale: `Headcount (${velocity.source}) below noise floor (${minFloor.toLocaleString()} required)`,
     };
   }
 
@@ -226,13 +259,19 @@ export async function detectStealthLayoff(input: DetectorInput): Promise<Stealth
     confidence,
     rationale,
     hasAnnouncedRound,
+    dataSource: velocity.source,
   };
 }
 
 /**
- * Apply the detector's score floor to a candidate composite score.
+ * @deprecated GAP-A03 — This function is dead code. auditDataPipeline.ts
+ * applies hard floors (60/65/70 by severity) directly at line ~1700 without
+ * calling this function. The additive scoreFloorBoost approach was superseded
+ * by the hard-floor system during the decay_kill_switch_separation fix
+ * (migration 20260623000005). Left exported to avoid breaking any future
+ * callers that may import it, but it is NOT invoked by the pipeline.
  *
- * Composite score remains in [0, 100]. Floor is additive but capped.
+ * Apply the detector's score floor to a candidate composite score.
  * Returns the original score when the detector did not flag.
  */
 export function applyStealthFloor(originalScore: number, signal: StealthSignal): number {

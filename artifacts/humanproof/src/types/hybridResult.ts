@@ -449,6 +449,14 @@ export interface HybridResult {
    * to fall back to the post-floor score, rendering "Floor: 72 → Formula: 72".
    */
   _formulaScorePreFloor?: number;
+  /**
+   * GAP-A03 — Stealth layoff signal from this audit run. Populated by
+   * auditDataPipeline after mapToHybridResult. TransparencyTab reads this to
+   * show actual delta%, severity, from/to headcount, and data source instead
+   * of the generic static disclosure string. Present when the detector ran
+   * (flag active or shadow); absent when flag=off or detector threw.
+   */
+  _stealthSignal?: import('../services/stealthLayoffDetector').StealthSignal;
   /** True when the hyperscaler D8 proxy (+0.12 composite) was applied.
    *  Fires when D8 flag is inactive + company is a named hyperscaler + very-high AI + L1 < 0.45.
    *  GUARD: proxy is suppressed when d8HeuristicActive=true (would double-count). */

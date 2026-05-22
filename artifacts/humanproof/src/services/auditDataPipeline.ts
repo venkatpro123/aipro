@@ -1852,6 +1852,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // attached to finalResult AFTER all layers ran, breaking the LLM brief's profile
   // context and disabling profile-aware caching.
   (hybridResult as any).userFactors = inputs.userFactors;
+  // GAP-A03: forward stealthSignal from companyData onto hybridResult so
+  // TransparencyTab can show actual delta%, severity, headcount, and data source.
+  // Previously _stealthSignal was attached to companyData only and lost after this point.
+  if ((companyData as any)._stealthSignal) {
+    hybridResult._stealthSignal = (companyData as any)._stealthSignal;
+  }
   // v40.0: surface DAG degradation count collected before hybridResult was assembled
   if (_dagDegradedCount > 0) (hybridResult as any)._dagDegradedLayerCount = _dagDegradedCount;
   // Surface the LOW_DATA confidence-floor warning (set by hybridConsensusBuilder
