@@ -97,13 +97,27 @@ export interface CohortClassification {
   cohortConfidence: number;
   /** Soft probability weights across all three cohorts (sum = 1.0). */
   cohortWeights: CohortWeights;
+  /**
+   * Alias for cohortWeights — passed as `cohortSoftWeights` into ScoreInputs so the
+   * scoring engine can apply probability-weighted blend ratios and dual L4 channel routing
+   * without re-running the classifier.
+   */
+  cohortSoftWeights: CohortWeights;
   /** Human-readable calibration note for transparency / UI display. */
   cohortCalibrationNote: string;
   /** The input signals that had the highest influence on the classification. */
   dominantSignals: string[];
   /**
    * Recommended per-layer weight allocation for the scoring pipeline.
-   * Callers should override COMPOSITE_FORMULA_WEIGHTS if applying cohort-aware scoring.
+   *
+   * v40.0 mixed-cohort fix: no longer a static hard lookup by primaryCohort.
+   * Computed as a probability-weighted blend of all three cohort weight tables
+   * using cohortWeights as coefficients. This ensures that when EFFICIENCY=0.57 and
+   * WAVE=0.35, the L4 slot reflects both the AI-efficiency channel (D8, 22% from
+   * EFFICIENCY) and the sector-contagion channel (D7, 40% from WAVE) in proportion.
+   *
+   * The blend ratio and L4 channel routing in blendCohortWeights() then further use
+   * cohortSoftWeights to split the L4 budget: 62% → D8, 38% → D7 for this example.
    */
   recommendedLayerWeights: CohortLayerWeights;
   /** AUC-ROC from historical validation for the primary cohort. */
@@ -274,6 +288,39 @@ function computeWaveScore(
   }
 
   return { score: Math.min(1, score), signals };
+}
+
+// ─── Probability-weighted layer weight blend ──────────────────────────────────
+
+/**
+ * Compute a probability-weighted blend of the three cohort layer weight tables.
+ *
+ * Previously the classifier returned `COHORT_LAYER_WEIGHTS[primaryCohort]` — a
+ * hard single-cohort lookup that discards all information about the other cohorts'
+ * soft probabilities. For the 2023 US tech pattern (EFFICIENCY=0.57, WAVE=0.35)
+ * this produced pure EFFICIENCY weights, dropping the WAVE sector-contagion signal.
+ *
+ * The correct approach: Σ(cohort probability × cohort layer weights).
+ * Sum invariant: since cohort probs sum to 1.0 and each weight row sums to 1.0,
+ * the result always sums to 1.0. No normalisation needed.
+ *
+ * Example — Google 2023 (eff=0.57, wave=0.35, dist=0.08):
+ *   L4 = 0.08×0.14 + 0.57×0.22 + 0.35×0.40 = 0.011 + 0.125 + 0.140 = 0.276
+ *   vs pure EFFICIENCY: L4 = 0.22
+ *   The extra 0.056 in L4 reflects the WAVE contagion signal — routed to D7 by
+ *   blendCohortWeights() proportional to WAVE's soft probability.
+ */
+function computeWeightedLayerWeights(w: CohortWeights): CohortLayerWeights {
+  const D = COHORT_LAYER_WEIGHTS.DISTRESS;
+  const E = COHORT_LAYER_WEIGHTS.EFFICIENCY;
+  const W = COHORT_LAYER_WEIGHTS.WAVE;
+  return {
+    L1: w.distress * D.L1 + w.efficiency * E.L1 + w.wave * W.L1,
+    L2: w.distress * D.L2 + w.efficiency * E.L2 + w.wave * W.L2,
+    L3: w.distress * D.L3 + w.efficiency * E.L3 + w.wave * W.L3,
+    L4: w.distress * D.L4 + w.efficiency * E.L4 + w.wave * W.L4,
+    L5: w.distress * D.L5 + w.efficiency * E.L5 + w.wave * W.L5,
+  };
 }
 
 // ─── Normalisation ────────────────────────────────────────────────────────────
@@ -450,11 +497,8 @@ export function classifyCohort(input: CohortClassifierInput): CohortClassificati
     cohortCalibrationNote =
       'No cohort reached 40% confidence. Using near-equal layer weights ' +
       '(empirical baseline). Signals are ambiguous — validate with additional data.';
-  } else if (
-    cohortWeights.distress > 0.35 &&
-    cohortWeights.efficiency > 0.35
-  ) {
-    // MIXED case: both DISTRESS and EFFICIENCY are elevated
+  } else if (cohortWeights.distress > 0.35 && cohortWeights.efficiency > 0.35) {
+    // MIXED case A: both DISTRESS and EFFICIENCY are elevated
     // Return EFFICIENCY as primary (the more operationally distinct cohort)
     // but surface the financial stress context
     primaryCohort = 'EFFICIENCY';
@@ -465,6 +509,27 @@ export function classifyCohort(input: CohortClassifierInput): CohortClassificati
       'Classifying as EFFICIENCY (profitable AI substitution) but financial stress is also a ' +
       'material factor. Layer weights blended toward EFFICIENCY pattern. ' +
       'Recommend verifying FCF and revenue trajectory with latest earnings.';
+  } else if (cohortWeights.efficiency > 0.35 && cohortWeights.wave > 0.35) {
+    // MIXED case B: EFFICIENCY and WAVE both elevated — the 2023 US tech pattern.
+    // Profitable company cutting for AI efficiency WHILE the entire sector is restructuring.
+    // Example: Google/Meta/Amazon 2023 — profitable, high AI investment, AND multiple
+    // peer hyperscalers cutting simultaneously.
+    //
+    // Return EFFICIENCY as primary (company-specific, more actionable for the individual user)
+    // but the recommendedLayerWeights will reflect BOTH signals via the weighted blend.
+    // In blendCohortWeights(), the L4 budget is split: efficiency-share → D8, wave-share → D7.
+    primaryCohort = 'EFFICIENCY';
+    dominantSignals = [...efficiencySignals, ...waveSignals].slice(0, 5);
+    cohortCalibrationNote =
+      'MIXED cohort detected: EFFICIENCY and WAVE are both elevated ' +
+      `(efficiency=${cohortWeights.efficiency.toFixed(2)}, wave=${cohortWeights.wave.toFixed(2)}). ` +
+      'This is the 2023 US tech hyperscaler pattern: profitable company cutting for AI efficiency ' +
+      'during a sector-wide restructuring wave. Classifying as EFFICIENCY (company-specific driver) ' +
+      'but the WAVE sector-contagion signal is material. Layer weights are probability-blended across ' +
+      'both archetypes — the L4 industry budget is split between D8 (AI efficiency) and D7 (sector ' +
+      `contagion) at ${(cohortWeights.efficiency / (cohortWeights.efficiency + cohortWeights.wave) * 100).toFixed(0)}% / ` +
+      `${(cohortWeights.wave / (cohortWeights.efficiency + cohortWeights.wave) * 100).toFixed(0)}% respectively. ` +
+      'AUC-ROC reflects EFFICIENCY model (0.76).`';
   } else if (cohortWeights.distress === maxWeight) {
     primaryCohort = 'DISTRESS';
     dominantSignals = distressSignals.slice(0, 5);
@@ -491,8 +556,12 @@ export function classifyCohort(input: CohortClassifierInput): CohortClassificati
       'AUC-ROC: 0.72 on 42-event calibration set.';
   }
 
-  const recommendedLayerWeights =
-    COHORT_LAYER_WEIGHTS[primaryCohort] ?? COHORT_LAYER_WEIGHTS.UNKNOWN;
+  // v40.0 mixed-cohort fix: use probability-weighted blend instead of hard static lookup.
+  // When EFFICIENCY=0.57 and WAVE=0.35, the L4 slot in recommendedLayerWeights will be
+  // 0.276 (blending the 0.22 from EFFICIENCY and 0.40 from WAVE proportionally).
+  // blendCohortWeights() in layoffScoreEngine.ts then splits that L4 budget between
+  // D8 (efficiency-share) and D7 (wave-share) based on cohortSoftWeights.
+  const recommendedLayerWeights = computeWeightedLayerWeights(cohortWeights);
   const calibrationAUC =
     COHORT_AUC[primaryCohort] ?? COHORT_AUC.UNKNOWN;
 
@@ -503,15 +572,18 @@ export function classifyCohort(input: CohortClassifierInput): CohortClassificati
     input.currentScore,
   );
 
+  const roundedCohortWeights: CohortWeights = {
+    distress:   Math.round(cohortWeights.distress   * 1000) / 1000,
+    efficiency: Math.round(cohortWeights.efficiency * 1000) / 1000,
+    wave:       Math.round(cohortWeights.wave       * 1000) / 1000,
+  };
+
   return {
     primaryCohort,
     roleEnrichedLabel,
     cohortConfidence: Math.round(maxWeight * 1000) / 1000,
-    cohortWeights: {
-      distress:   Math.round(cohortWeights.distress   * 1000) / 1000,
-      efficiency: Math.round(cohortWeights.efficiency * 1000) / 1000,
-      wave:       Math.round(cohortWeights.wave       * 1000) / 1000,
-    },
+    cohortWeights:     roundedCohortWeights,
+    cohortSoftWeights: roundedCohortWeights, // alias for ScoreInputs.cohortSoftWeights
     cohortCalibrationNote,
     dominantSignals,
     recommendedLayerWeights,

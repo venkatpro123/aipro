@@ -88,7 +88,7 @@ import { computeCareerVelocity } from "./careerVelocityEngine";
 import { computeSegmentCalibration } from "./segmentedCalibrationEngine";
 import { computeBayesianCI, deriveDataQualityTier } from "./empiricalCalibration";
 // v16.0 intelligence layers (39–46 + enhanced data architecture)
-import { classifyCohort, CohortLayerWeights } from "./cohortClassifier";
+import { classifyCohort, CohortLayerWeights, CohortWeights } from "./cohortClassifier";
 import { computeWARNSignal } from "./warnActService";
 import { computeMacroSignal, fetchLiveMacroSnapshot } from "./blsMacroService";
 import { computeSECEnhancedRisk } from "./secEnhancedService";
@@ -1449,6 +1449,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   //   When ws5_source_independent_swarm is off, the helper still returns
   //   0 to preserve the legacy stub behaviour.
   let preCohortWeights: CohortLayerWeights | undefined;
+  let preCohortSoftWeights: CohortWeights | undefined;
   // WS4 — Pre-pass cohort label kept in scope so the conformalCI post-process
   // (below) can route lookup to the same cohort scope without re-running
   // classification.
@@ -1467,8 +1468,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       industry: shadowCompanyData.industry ?? 'technology',
       isPublic: shadowCompanyData.isPublic ?? false,
     });
-    preCohortWeights = preCohortResult.recommendedLayerWeights;
-    preCohortLabel = preCohortResult.primaryCohort ?? 'GLOBAL';
+    preCohortWeights     = preCohortResult.recommendedLayerWeights;
+    preCohortSoftWeights = preCohortResult.cohortSoftWeights;
+    preCohortLabel       = preCohortResult.primaryCohort ?? 'GLOBAL';
   } catch (e) {
     // Pre-pass cohort failure is non-fatal; engine uses flat weights
   }
@@ -1503,7 +1505,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     department: inputs.department,
     userFactors: inputs.userFactors,
     liveHiringSignal,
-    cohortWeights: preCohortWeights,
+    cohortWeights:     preCohortWeights,
+    cohortSoftWeights: preCohortSoftWeights,
     primaryCohort: (preCohortLabel === 'GLOBAL' ? 'UNKNOWN' : preCohortLabel) as
       'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN',
     signalTimestamps: {

@@ -21,7 +21,8 @@ import { classifyCohort, type CohortClassification } from '../../../services/coh
 const FALLBACK_COHORT: CohortClassification = {
   primaryCohort: 'UNKNOWN',
   cohortConfidence: 0.40,
-  cohortWeights: { distress: 0.34, efficiency: 0.33, wave: 0.33 },
+  cohortWeights:     { distress: 0.34, efficiency: 0.33, wave: 0.33 },
+  cohortSoftWeights: { distress: 0.34, efficiency: 0.33, wave: 0.33 },
   cohortCalibrationNote: 'Classifier degraded — returned UNKNOWN baseline.',
   dominantSignals: [],
   recommendedLayerWeights: { L1: 0.22, L2: 0.20, L3: 0.20, L4: 0.20, L5: 0.18 },

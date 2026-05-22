@@ -40,7 +40,7 @@ import { computeSignalFreshnessWeight, computeSignalFreshnessWeightFromDate, typ
 import { evaluateFlagSync } from "../config/featureFlags";
 // WS9 — uncalibrated sector floors now routed through DB.
 import { getConstant } from "./calibration/calibrationConstants";
-import { CohortLayerWeights } from "./cohortClassifier";
+import { CohortLayerWeights, CohortWeights } from "./cohortClassifier";
 
 // v15.0: Layer-level signal decay. v21.0 flipped to ON-by-default.
 // When enabled, downweights date-sensitive layers (L1/L2/L4) by the freshness
@@ -611,28 +611,60 @@ function blendCohortWeights(
   base: Record<WeightKey, number>,
   cohortW: CohortLayerWeights,
   primaryCohort: string = 'UNKNOWN',
+  /** v40.0: Soft probability weights. When provided, enables probability-weighted blend
+   *  ratio and dual L4 channel routing for mixed EFFICIENCY+WAVE cohorts. */
+  cohortSoftWeights?: CohortWeights,
 ): Record<WeightKey, number> {
-  const blendRatio = COHORT_BLEND_RATIOS[primaryCohort] ?? 0.25;
-  const l4Channel = COHORT_L4_CHANNEL[primaryCohort];
+  // ── Blend ratio ────────────────────────────────────────────────────────────
+  // With soft weights: probability-weighted average of per-cohort blend ratios.
+  // Without: legacy primary-cohort fixed lookup.
+  const blendRatio = cohortSoftWeights
+    ? cohortSoftWeights.distress   * (COHORT_BLEND_RATIOS.DISTRESS   ?? 0.50)
+    + cohortSoftWeights.efficiency * (COHORT_BLEND_RATIOS.EFFICIENCY ?? 0.55)
+    + cohortSoftWeights.wave       * (COHORT_BLEND_RATIOS.WAVE       ?? 0.45)
+    : (COHORT_BLEND_RATIOS[primaryCohort] ?? 0.25);
 
-  // Addressable keys: always include the four base channels; extend with the
-  // L4-mapped key for EFFICIENCY (D8) and WAVE (D7) cohorts.
+  // ── L4 channel routing ─────────────────────────────────────────────────────
+  // Mixed EFFICIENCY+WAVE: both channels active, budget split by probability share.
+  // Pure cohort: winner-take-all (legacy behavior).
+  //
+  // Threshold 0.20 — both must have a material presence before we split the budget.
+  // Below 0.20 the secondary cohort is noise; above it the dual-channel boost is warranted.
+  const effProb = cohortSoftWeights?.efficiency ?? 0;
+  const wavProb = cohortSoftWeights?.wave       ?? 0;
+  const isMixedEW = effProb > 0.20 && wavProb > 0.20;
+
   const addressableKeys: WeightKey[] = [
     'L1_directFinancial',
     'L2_directLayoffHistory',
     'D1_taskAutomatability',
     'D4_experienceProtection',
-    ...(l4Channel ? [l4Channel] as WeightKey[] : []),
   ];
 
-  // Cohort amounts: each addressable key's target allocation from the cohort spec.
   const cohortAmounts: Partial<Record<WeightKey, number>> = {
     L1_directFinancial:      cohortW.L1,
     L2_directLayoffHistory:  cohortW.L2,
     D1_taskAutomatability:   cohortW.L3,
     D4_experienceProtection: cohortW.L5,
   };
-  if (l4Channel) cohortAmounts[l4Channel] = cohortW.L4;
+
+  if (isMixedEW) {
+    // Dual L4 channel: split cohortW.L4 budget between D8 and D7 proportionally.
+    // This captures the 2023 US tech pattern: AI efficiency AND sector wave simultaneously.
+    const totalEWProb   = effProb + wavProb;
+    const effShare      = effProb / totalEWProb;
+    const waveShare     = wavProb / totalEWProb;
+    addressableKeys.push('D8_aiEfficiencyRestructuring', 'D7_companyHealth');
+    cohortAmounts['D8_aiEfficiencyRestructuring'] = cohortW.L4 * effShare;
+    cohortAmounts['D7_companyHealth']             = cohortW.L4 * waveShare;
+  } else {
+    // Winner-take-all (legacy behavior): route entire L4 budget to one channel.
+    const l4Channel = COHORT_L4_CHANNEL[primaryCohort];
+    if (l4Channel) {
+      addressableKeys.push(l4Channel);
+      cohortAmounts[l4Channel] = cohortW.L4;
+    }
+  }
 
   const cohortTotal = addressableKeys.reduce((s, k) => s + (cohortAmounts[k] ?? 0), 0);
   if (cohortTotal === 0) return base;
@@ -1308,6 +1340,27 @@ export interface ScoreInputs {
    * calibration signal that justifies D8 activation.
    */
   primaryCohort?: 'DISTRESS' | 'EFFICIENCY' | 'WAVE' | 'UNKNOWN';
+  /**
+   * Soft probability weights from cohortClassifier.ts (distress + efficiency + wave = 1.0).
+   *
+   * When provided, blendCohortWeights() uses these for two improvements over the
+   * legacy single-cohort path:
+   *
+   * (1) Probability-weighted blend ratio:
+   *     ratio = Σ(cohortProb × COHORT_BLEND_RATIO_FOR_COHORT)
+   *     instead of the primary-cohort's fixed ratio. For EFFICIENCY=0.57 / WAVE=0.35:
+   *     ratio = 0.57×0.55 + 0.35×0.45 + 0.08×0.50 = 0.314 + 0.158 + 0.040 = 0.512
+   *
+   * (2) Dual L4 channel routing when both efficiency and wave are material (both > 0.20):
+   *     L4 budget split: efficiency-share → D8, wave-share → D7
+   *     For eff=0.57, wave=0.35: effShare=0.619, waveShare=0.381
+   *     D8 gets 61.9% of the L4 target, D7 gets 38.1%
+   *     This captures the 2023 US tech pattern where AI efficiency AND sector wave
+   *     are simultaneous risk drivers requiring BOTH D8 and D7 to be elevated.
+   *
+   * Leave undefined when cohortClassifier has not run (falls back to legacy behavior).
+   */
+  cohortSoftWeights?: CohortWeights;
   /**
    * Per-signal fetch/event timestamps for per-signal decay.
    *
@@ -4551,7 +4604,12 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   //   WAVE:       45% blend ratio, D7 + L2 amplified
   //   UNKNOWN:    20% blend ratio, near-baseline weights
   const baseW = inputs.cohortWeights
-    ? blendCohortWeights(archetypeW, inputs.cohortWeights, inputs.primaryCohort ?? 'UNKNOWN')
+    ? blendCohortWeights(
+        archetypeW,
+        inputs.cohortWeights,
+        inputs.primaryCohort ?? 'UNKNOWN',
+        inputs.cohortSoftWeights, // v40.0: probability-weighted ratio + dual L4 routing
+      )
     : archetypeW;
 
   // Per-signal freshness decay (v40.0).
