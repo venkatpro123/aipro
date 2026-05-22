@@ -25,7 +25,7 @@
 
 -- ── 1. Document D8 weight-gate architecture in calibration_provenance ─────────
 
-INSERT INTO calibration_provenance (
+INSERT INTO scoring_architecture_log (
   dimension_key,
   formula_weight,
   status,

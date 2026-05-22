@@ -34,7 +34,7 @@
 --   composite score when both drivers are simultaneously present.
 --   Blend ratio: 0.511 (probability-weighted vs fixed 0.55 for pure EFFICIENCY)
 
-INSERT INTO calibration_provenance (
+INSERT INTO scoring_architecture_log (
   dimension_key,
   formula_weight,
   status,

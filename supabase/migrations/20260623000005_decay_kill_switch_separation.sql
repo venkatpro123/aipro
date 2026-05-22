@@ -45,7 +45,7 @@
 --   Added DISCLOSURE entries for warn_act_filing and stealth_layoff_floor.
 --   Added KS_LABELS entries for both in the badge component.
 
-INSERT INTO calibration_provenance (
+INSERT INTO scoring_architecture_log (
   dimension_key,
   formula_weight,
   status,

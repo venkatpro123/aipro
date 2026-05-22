@@ -9,7 +9,7 @@
 -- These tables may not exist if earlier migrations were marked-applied without
 -- executing their DDL. The IF NOT EXISTS guards make this batch idempotent.
 
-CREATE TABLE IF NOT EXISTS public.calibration_provenance (
+CREATE TABLE IF NOT EXISTS public.scoring_architecture_log (
   dimension_key       TEXT        PRIMARY KEY,
   formula_weight      FLOAT,
   status              TEXT,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS public.synthetic_probe_results (
 -- calibration status chip for D5. Prior record had weight=0.02 (stale comment
 -- value); corrected to 0.00 with full country-context architecture rationale.
 
-INSERT INTO calibration_provenance (
+INSERT INTO scoring_architecture_log (
   dimension_key,
   formula_weight,
   status,

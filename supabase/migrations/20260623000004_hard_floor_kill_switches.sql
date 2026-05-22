@@ -39,7 +39,7 @@
 --   Score already above all floors (score=75): no adjustment
 --   Previously-broken case (score=65, news floor=72): NOW adjusted=72 (sigmoid gave 65)
 
-INSERT INTO calibration_provenance (
+INSERT INTO scoring_architecture_log (
   dimension_key,
   formula_weight,
   status,
