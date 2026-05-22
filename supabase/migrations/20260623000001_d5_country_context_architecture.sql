@@ -4,6 +4,55 @@
 -- a corrected calibration_provenance row so the TransparencyTab's provenance
 -- query returns the accurate zero-weight status with full rationale.
 --
+-- Preamble: CREATE TABLE IF NOT EXISTS guards for the four tracking tables
+-- used by all five session migrations (20260623000001-20260623000005).
+-- These tables may not exist if earlier migrations were marked-applied without
+-- executing their DDL. The IF NOT EXISTS guards make this batch idempotent.
+
+CREATE TABLE IF NOT EXISTS public.calibration_provenance (
+  dimension_key       TEXT        PRIMARY KEY,
+  formula_weight      FLOAT,
+  status              TEXT,
+  source_description  TEXT,
+  validation_date     TEXT,
+  notes               TEXT,
+  created_at          TIMESTAMPTZ DEFAULT now(),
+  updated_at          TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.engine_calibration_constants (
+  constant_key        TEXT        NOT NULL,
+  value               FLOAT,
+  segment             TEXT        NOT NULL DEFAULT 'global',
+  source              TEXT,
+  evidence_count      INT         DEFAULT 0,
+  last_validated_at   TEXT,
+  created_at          TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (constant_key, segment)
+);
+
+CREATE TABLE IF NOT EXISTS public.engine_drift_alerts (
+  alert_key           TEXT        PRIMARY KEY,
+  expected_value      FLOAT,
+  tolerance           FLOAT,
+  alert_message       TEXT,
+  is_active           BOOLEAN     DEFAULT true,
+  created_at          TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.synthetic_probe_results (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  scenario_name   TEXT        NOT NULL,
+  expected_min    INT,
+  expected_max    INT,
+  actual_score    INT,
+  passed          BOOLEAN,
+  segment         TEXT,
+  probe_run_id    TEXT,
+  created_at      TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (scenario_name, probe_run_id)
+);
+--
 -- BUG-01 fix: removes stale "weight: 0.02" documentation that contradicted
 -- the engine source (which had already set D5 to 0.00). Updates the DB record
 -- to match source-of-truth in layoffScoreEngine.ts.
