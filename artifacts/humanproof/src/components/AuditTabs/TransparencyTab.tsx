@@ -36,6 +36,9 @@ import {
   getLiveCalibrationStatus,
   getLiveCalibrationStatusSync,
   type LiveCalibrationStatus,
+  getFormulaHoldoutValidation,
+  getFormulaHoldoutValidationSync,
+  type FormulaHoldoutValidation,
 } from "../../services/empiricalCalibration";
 import {
   getD8ValidationStatus,
@@ -436,7 +439,10 @@ const SourceProvenanceTable: React.FC<{
 
 const CALIBRATION_WARNING_DAYS = 120;
 
-const CalibrationFreshnessPanel: React.FC<{ calibrationCoverage?: number }> = ({ calibrationCoverage }) => {
+const CalibrationFreshnessPanel: React.FC<{
+  calibrationCoverage?: number;
+  holdoutValidation?: FormulaHoldoutValidation;
+}> = ({ calibrationCoverage, holdoutValidation }) => {
   const calibratedAt          = new Date(CALIBRATION_META.calibrated_at);
   const nextAt                = new Date(CALIBRATION_META.next_recalibration_at);
   const now                   = new Date();
@@ -448,6 +454,8 @@ const CalibrationFreshnessPanel: React.FC<{ calibrationCoverage?: number }> = ({
 
   const fmtDate = (d: Date) =>
     d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtDateStr = (s: string) =>
+    fmtDate(new Date(s.includes('T') ? s : s + 'T00:00:00Z'));
 
   return (
     <div className="space-y-3">
@@ -581,6 +589,76 @@ const CalibrationFreshnessPanel: React.FC<{ calibrationCoverage?: number }> = ({
             </p>
           </div>
         </div>
+
+        {/* GAP-A01: Formula accuracy disclosure — live holdout AUC from v_formula_heldout_validation */}
+        {holdoutValidation && (
+          <div className="border-t border-white/8">
+            {/* Recalibration alert — only when live AUC computed AND below threshold */}
+            {holdoutValidation.recalibrationNeeded && (
+              <div className="px-4 py-3 bg-red-500/8 border-b border-red-500/20 flex items-start gap-3">
+                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-300 leading-relaxed">
+                  <span className="font-bold">Hold-out AUC {holdoutValidation.effectiveAuc.toFixed(2)} is below the 0.78 recalibration threshold.</span>{' '}
+                  Formula weights require re-regression against updated outcome data.
+                  Until recalibration runs, treat risk scores as provisional estimates with wider uncertainty.
+                </p>
+              </div>
+            )}
+
+            {/* Formula accuracy row */}
+            <div className="px-4 py-3 bg-white/[0.015]">
+              <div className="flex items-center gap-2 mb-2">
+                <BarChart className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400/80">
+                  Formula Accuracy
+                </span>
+                {holdoutValidation.isLiveComputed ? (
+                  <span className="ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">
+                    Live · {holdoutValidation.holdoutN} events
+                  </span>
+                ) : (
+                  <span className="ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-500/15 text-slate-400 border border-slate-500/20">
+                    Bootstrap fallback
+                  </span>
+                )}
+              </div>
+
+              <p className={`text-[11px] leading-relaxed ${
+                holdoutValidation.effectiveAuc >= 0.80
+                  ? 'text-emerald-400'
+                  : holdoutValidation.effectiveAuc >= 0.78
+                  ? 'text-amber-400'
+                  : 'text-red-400'
+              }`}>
+                Formula accuracy: AUC{' '}
+                <span className="font-black text-sm">
+                  {holdoutValidation.effectiveAuc.toFixed(2)}
+                </span>{' '}
+                on{' '}
+                <span className="font-semibold">
+                  {holdoutValidation.effectiveN.toLocaleString()}-event
+                </span>{' '}
+                held-out validation set
+                {holdoutValidation.effectivePeriodStart && holdoutValidation.effectivePeriodEnd && (
+                  <span className="text-muted-foreground font-normal">
+                    {' '}(events from{' '}
+                    {fmtDateStr(holdoutValidation.effectivePeriodStart)}{' '}
+                    to{' '}
+                    {fmtDateStr(holdoutValidation.effectivePeriodEnd)})
+                  </span>
+                )}
+              </p>
+
+              <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
+                {holdoutValidation.isLiveComputed
+                  ? `Live-computed from ${holdoutValidation.holdoutN} outcome reports (${holdoutValidation.holdoutAuc?.toFixed(2) ?? '—'} raw). ` +
+                    `Training set: ${holdoutValidation.trainingN.toLocaleString()} events before ${holdoutValidation.partitionBoundary}.`
+                  : `Bootstrap anchor (${holdoutValidation.bootstrapN} held-out events from Jan 2026 calibration). ` +
+                    `Live AUC will appear here once ≥ 5 positive and ≥ 5 negative outcomes are collected after ${holdoutValidation.partitionBoundary}.`}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1781,6 +1859,14 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
     getProvenanceSummary().then(s => { if (s) setProvenanceSummary(s); }).catch(() => {});
   }, []);
 
+  // GAP-A01: live holdout AUC from v_formula_heldout_validation (1-hour cache).
+  const [holdoutValidation, setHoldoutValidation] = useState<FormulaHoldoutValidation>(
+    getFormulaHoldoutValidationSync()
+  );
+  useEffect(() => {
+    getFormulaHoldoutValidation().then(setHoldoutValidation).catch(() => {});
+  }, []);
+
   // Derive uncalibrated count from: DB view > HybridResult snapshot count > 0
   const uncalibratedCount =
     provenanceSummary?.uncalibratedCount
@@ -2939,7 +3025,10 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             title="Model Calibration"
             description="When the scoring formula was last calibrated against real outcomes, and how accurate it is."
           />
-          <CalibrationFreshnessPanel calibrationCoverage={(result as any).calibrationCoverage} />
+          <CalibrationFreshnessPanel
+            calibrationCoverage={(result as any).calibrationCoverage}
+            holdoutValidation={holdoutValidation}
+          />
 
           {/* v40.0: Constant provenance chip — shows uncalibrated_placeholder count */}
           {(uncalibratedCount > 0 || totalConstantCount > 0) && (

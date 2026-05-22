@@ -341,6 +341,124 @@ export function resetLiveCalibrationCacheForTesting(): void {
   _liveCalibrationInflight = null;
 }
 
+// ── GAP-A01 extended: v_formula_heldout_validation accessor ──────────────────
+//
+// Reads from the v_formula_heldout_validation Supabase view which computes a
+// live holdout AUC from the combined outcome corpus (main_formula_heldout_events
+// + user_prediction_outcomes with is_holdout=TRUE), partitioned at 2025-01-01.
+//
+// Falls back to the static bootstrap constants (0.81, n=40) when:
+//   - Supabase is unreachable
+//   - < 5 positive or < 5 negative outcomes exist in the holdout partition
+//   - The view returns NULL for holdout_auc
+//
+// The returned `recalibrationNeeded` flag is TRUE when the effective AUC < 0.78.
+// TransparencyTab renders a red banner when this is set.
+
+export interface FormulaHoldoutValidation {
+  /** Effective holdout AUC: live-computed when >= 5 pos + 5 neg, bootstrap (0.81) otherwise. */
+  effectiveAuc: number;
+  /** N events in effective holdout set (live count or bootstrap fallback 40). */
+  effectiveN: number;
+  /** Start of effective holdout period (ISO date). */
+  effectivePeriodStart: string;
+  /** End of effective holdout period (ISO date). */
+  effectivePeriodEnd: string;
+  /** TRUE when effectiveAuc is from live computation vs bootstrap fallback. */
+  isLiveComputed: boolean;
+  /** TRUE when effectiveAuc < 0.78 — formula weights require recalibration. */
+  recalibrationNeeded: boolean;
+  /** Raw live holdout event count (0 when no live holdout data yet). */
+  holdoutN: number;
+  /** Raw live holdout AUC (null when < 5 pos or < 5 neg). */
+  holdoutAuc: number | null;
+  /** Bootstrap fallback AUC from MAIN_FORMULA_HOLDOUT_VALIDATION (always 0.81). */
+  bootstrapAuc: number;
+  /** Bootstrap fallback N (always 40). */
+  bootstrapN: number;
+  /** N events in training set (for UI disclosure). */
+  trainingN: number;
+  /** The chronological partition boundary date. */
+  partitionBoundary: string;
+}
+
+const HOLDOUT_VALIDATION_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+export const HOLDOUT_VALIDATION_FALLBACK: FormulaHoldoutValidation = {
+  effectiveAuc:          MAIN_FORMULA_HOLDOUT_VALIDATION.holdout_auc_roc,
+  effectiveN:            MAIN_FORMULA_HOLDOUT_VALIDATION.holdout_n,
+  effectivePeriodStart:  '2023-01-01',
+  effectivePeriodEnd:    '2025-12-31',
+  isLiveComputed:        false,
+  recalibrationNeeded:   false,
+  holdoutN:              0,
+  holdoutAuc:            null,
+  bootstrapAuc:          MAIN_FORMULA_HOLDOUT_VALIDATION.holdout_auc_roc,
+  bootstrapN:            MAIN_FORMULA_HOLDOUT_VALIDATION.holdout_n,
+  trainingN:             MAIN_FORMULA_HOLDOUT_VALIDATION.train_n,
+  partitionBoundary:     '2025-01-01',
+};
+
+let _holdoutValidationCache: { data: FormulaHoldoutValidation; fetchedAt: number } | null = null;
+let _holdoutValidationInflight: Promise<FormulaHoldoutValidation> | null = null;
+
+/**
+ * GAP-A01 extended — Fetch the live holdout validation stats from
+ * v_formula_heldout_validation.  Non-fatal: returns HOLDOUT_VALIDATION_FALLBACK
+ * on any error so callers always receive a usable value.
+ */
+export async function getFormulaHoldoutValidation(): Promise<FormulaHoldoutValidation> {
+  if (
+    _holdoutValidationCache &&
+    Date.now() - _holdoutValidationCache.fetchedAt < HOLDOUT_VALIDATION_CACHE_TTL_MS
+  ) {
+    return _holdoutValidationCache.data;
+  }
+  if (_holdoutValidationInflight) return _holdoutValidationInflight;
+
+  _holdoutValidationInflight = (async () => {
+    try {
+      const { supabase } = await import('../utils/supabase');
+      const { data, error } = await supabase
+        .from('v_formula_heldout_validation')
+        .select('*')
+        .single();
+
+      if (error || !data) throw new Error(error?.message ?? 'no data');
+
+      const result: FormulaHoldoutValidation = {
+        effectiveAuc:         Number(data.effective_auc          ?? HOLDOUT_VALIDATION_FALLBACK.effectiveAuc),
+        effectiveN:           Number(data.effective_n            ?? HOLDOUT_VALIDATION_FALLBACK.effectiveN),
+        effectivePeriodStart: String(data.effective_period_start ?? HOLDOUT_VALIDATION_FALLBACK.effectivePeriodStart),
+        effectivePeriodEnd:   String(data.effective_period_end   ?? HOLDOUT_VALIDATION_FALLBACK.effectivePeriodEnd),
+        isLiveComputed:       Boolean(data.is_live_computed      ?? false),
+        recalibrationNeeded:  Boolean(data.recalibration_needed  ?? false),
+        holdoutN:             Number(data.holdout_n              ?? 0),
+        holdoutAuc:           data.holdout_auc != null ? Number(data.holdout_auc) : null,
+        bootstrapAuc:         Number(data.bootstrap_auc          ?? 0.81),
+        bootstrapN:           Number(data.bootstrap_n            ?? 40),
+        trainingN:            Number(data.training_n             ?? 160),
+        partitionBoundary:    '2025-01-01',
+      };
+
+      _holdoutValidationCache = { data: result, fetchedAt: Date.now() };
+      return result;
+    } catch {
+      _holdoutValidationCache = { data: HOLDOUT_VALIDATION_FALLBACK, fetchedAt: Date.now() };
+      return HOLDOUT_VALIDATION_FALLBACK;
+    } finally {
+      _holdoutValidationInflight = null;
+    }
+  })();
+
+  return _holdoutValidationInflight;
+}
+
+/** Sync accessor — returns cached value or the bootstrap fallback. */
+export function getFormulaHoldoutValidationSync(): FormulaHoldoutValidation {
+  return _holdoutValidationCache?.data ?? HOLDOUT_VALIDATION_FALLBACK;
+}
+
 // ── L1 threshold point type ───────────────────────────────────────────────────
 // Each point defines the upper bound (exclusive) of a risk bucket and its risk
 // score, plus a provenance label so the Transparency Tab can show whether the
