@@ -24,15 +24,16 @@ interface MarketCacheRow {
   role_key:              string;
   india_openings:        number | null;
   global_openings:       number | null;
-  /** Per-region openings + sources (v40.0 — added by migration 20260520000001).
-   *  Shape: { germany: { count: 1200, source: 'StepStone', asOf: '2026-03-15', isLive: true }, ... }
+  /** Per-region openings + sources (v40.0 — added by migration 20260522000002).
+   *  Shape: { IN: { count: 1200, source: 'Naukri', asOf: '2026-05-19', isLive: true, status: 'success' }, ... }
    *  Eliminates the bug where Berlin users had Naukri (India) data injected into
    *  their LLM brief prompt. */
   regional_openings:     Record<string, {
-    count:    number;
+    count:    number | null;
     source:   string;
     asOf?:    string;
     isLive?:  boolean;
+    status?:  string;
   }> | null;
   demand_trend:          'surging' | 'growing' | 'stable' | 'contracting' | null;
   top_companies_india:   string[] | null;
@@ -45,6 +46,10 @@ interface MarketCacheRow {
   source:                string | null;
   is_live:               boolean;       // true = from live API, false = research estimate
   updated_at:            string;        // ISO timestamp — when this row was written
+  /** Operational freshness columns — added by migration 20260522000002. */
+  scrape_status:              string | null; // 'success'|'parse_failed'|'rate_limited'|'source_blocked'|'network_error'|'no_key'
+  last_successful_scrape_at:  string | null; // ISO timestamp — only set on 'success'; null on failure preserves last good time
+  consecutive_failures:       number;        // reset to 0 on success
 }
 
 // ── Session cache — avoid repeated Supabase calls for same role ──────────────
@@ -194,11 +199,31 @@ export async function writeMarketIntelligenceCache(
  * Only non-null fields are included — callers merge this over the hardcoded baseline.
  */
 function rowToPartialMarket(row: MarketCacheRow): Partial<CareerPathMarket> {
+  // Build a dataSource label that conveys freshness AND failure cause to the UI.
+  // SkillFreshnessLabel reads scrape_status directly from RoleDemandOverlay; this
+  // label is used in the LLM brief prompt and the intelligence panel subtitle.
+  let dataSource: string;
+  if (row.scrape_status === 'source_blocked') {
+    const lastOk = row.last_successful_scrape_at
+      ? `last successful: ${row.last_successful_scrape_at.slice(0, 10)}`
+      : 'no successful refresh on record';
+    dataSource = `Source blocked by anti-bot protection (${lastOk})`;
+  } else if (row.scrape_status === 'rate_limited') {
+    const lastOk = row.last_successful_scrape_at
+      ? `last successful: ${row.last_successful_scrape_at.slice(0, 10)}`
+      : 'no successful refresh on record';
+    dataSource = `Rate limited — serving previous data (${lastOk})`;
+  } else if (row.scrape_status === 'no_key') {
+    dataSource = `Research estimate — ${row.source ?? 'cached (no Serper key configured)'}`;
+  } else if (row.is_live) {
+    dataSource = `Live (weekly Serper refresh) — ${row.source ?? 'job boards'}`;
+  } else {
+    dataSource = `Research estimate — ${row.source ?? 'cached'}`;
+  }
+
   const partial: Partial<CareerPathMarket> = {
     dataAsOf:   row.data_as_of,
-    dataSource: row.is_live
-      ? `Live (Naukri/LinkedIn) — ${row.source ?? 'weekly refresh'}`
-      : `Research estimate — ${row.source ?? 'cached'}`,
+    dataSource,
   };
 
   if (row.india_openings   != null) partial.indiaOpenings       = row.india_openings;

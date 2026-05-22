@@ -27,6 +27,18 @@ export interface SkillDemandLive {
    *   > 90 days → 🔴 Stale — data verification recommended
    */
   ageInDays: number;
+  /**
+   * Outcome of the last refresh attempt — propagated from market_intelligence_cache.scrape_status.
+   * Enables the UI to distinguish scheduled staleness from a blocked/failed scrape.
+   * Optional: null on rows written before migration 20260522000002.
+   */
+  scrapeStatus?: string | null;
+  /**
+   * Timestamp of the last SUCCESSFUL scrape (only updated when scrape_status='success').
+   * When scrapeStatus is 'source_blocked' or 'rate_limited', this preserves the last
+   * known-good timestamp so the UI can show: "source blocked — last good data: 14d ago".
+   */
+  lastSuccessfulScrapeAt?: string | null;
 }
 
 /**

@@ -63,24 +63,30 @@ const _cache = new Map<string, { overlay: RoleDemandOverlay | null; fetchedAt: n
 const CACHE_TTL_MS = 30 * 60 * 1000;
 
 interface CacheRow {
-  role_key:        string;
-  india_openings:  number | null;
-  global_openings: number | null;
-  demand_trend:    'surging' | 'growing' | 'stable' | 'contracting' | null;
-  data_as_of:      string;
-  updated_at:      string;
-  is_live:         boolean;
+  role_key:                  string;
+  india_openings:            number | null;
+  global_openings:           number | null;
+  demand_trend:              'surging' | 'growing' | 'stable' | 'contracting' | null;
+  data_as_of:                string;
+  updated_at:                string;
+  is_live:                   boolean;
+  scrape_status:             string | null;
+  last_successful_scrape_at: string | null;
 }
 
 export interface RoleDemandOverlay {
-  roleKey:      string;
-  indiaCount:   number | null;
-  globalCount:  number | null;
-  demandTrend:  'surging' | 'growing' | 'stable' | 'contracting';
-  dataAsOf:     string;
-  ageInDays:    number;
-  isLive:       boolean;
-  freshness:    'live' | 'stale' | 'very_stale';
+  roleKey:                  string;
+  indiaCount:               number | null;
+  globalCount:              number | null;
+  demandTrend:              'surging' | 'growing' | 'stable' | 'contracting';
+  dataAsOf:                 string;
+  ageInDays:                number;
+  isLive:                   boolean;
+  freshness:                'live' | 'stale' | 'very_stale';
+  /** Operational freshness — added v40.0 migration 20260522000002.
+   *  null when row predates the migration (treated as unknown, not error). */
+  scrapeStatus:             string | null;
+  lastSuccessfulScrapeAt:   string | null; // ISO — only set when scrape_status='success'
 }
 
 /** Fetch demand overlay for a role key. Returns null when cache has no entry. */
@@ -94,7 +100,7 @@ export async function getRoleDemandOverlay(roleKey: string): Promise<RoleDemandO
   try {
     const { data, error } = await supabase
       .from('market_intelligence_cache')
-      .select('role_key, india_openings, global_openings, demand_trend, data_as_of, updated_at, is_live')
+      .select('role_key, india_openings, global_openings, demand_trend, data_as_of, updated_at, is_live, scrape_status, last_successful_scrape_at')
       .eq('role_key', key)
       .maybeSingle();
 
@@ -106,14 +112,16 @@ export async function getRoleDemandOverlay(roleKey: string): Promise<RoleDemandO
     const row = data as CacheRow;
     const ageInDays = Math.round((Date.now() - new Date(row.data_as_of).getTime()) / 86_400_000);
     const overlay: RoleDemandOverlay = {
-      roleKey:     row.role_key,
-      indiaCount:  row.india_openings,
-      globalCount: row.global_openings,
-      demandTrend: row.demand_trend ?? 'stable',
-      dataAsOf:    row.data_as_of,
+      roleKey:                 row.role_key,
+      indiaCount:              row.india_openings,
+      globalCount:             row.global_openings,
+      demandTrend:             row.demand_trend ?? 'stable',
+      dataAsOf:                row.data_as_of,
       ageInDays,
-      isLive:      row.is_live,
-      freshness:   getSkillFreshnessStatus(ageInDays),
+      isLive:                  row.is_live,
+      freshness:               getSkillFreshnessStatus(ageInDays),
+      scrapeStatus:            row.scrape_status ?? null,
+      lastSuccessfulScrapeAt:  row.last_successful_scrape_at ?? null,
     };
 
     _cache.set(key, { overlay, fetchedAt: Date.now() });
@@ -166,11 +174,13 @@ async function buildSkillDemandLive(overlay: RoleDemandOverlay): Promise<SkillDe
     : null;
 
   return {
-    liveJobCount: overlay.indiaCount,
+    liveJobCount:           overlay.indiaCount,
     delta90d,
-    dataAsOf:     overlay.dataAsOf,
-    demandTrend:  overlay.demandTrend,
-    ageInDays:    overlay.ageInDays,
+    dataAsOf:               overlay.dataAsOf,
+    demandTrend:            overlay.demandTrend,
+    ageInDays:              overlay.ageInDays,
+    scrapeStatus:           overlay.scrapeStatus,
+    lastSuccessfulScrapeAt: overlay.lastSuccessfulScrapeAt,
   };
 }
 
