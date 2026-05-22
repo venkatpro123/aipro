@@ -32,7 +32,16 @@ import {
   UserFactors,
   type UniquenessDepth,
 } from "../layoffScoreEngine";
-import { getCachedAnalysis, setCachedAnalysis } from "../cache/analysisCache";
+import {
+  getCachedAnalysis,
+  setCachedAnalysis,
+  buildMarketNeutralKey,
+  getMarketSpecificSlot,
+  setMarketSpecificSlot,
+  mergeMarketSlot,
+  extractMarketSlot,
+  slotFromHiringConnector,
+} from "../cache/analysisCache";
 import { loadScoreHistory, getUserReturnType, computeScoreVelocity } from "../scoreDeltaService";
 import { CompanyData } from "../../data/companyDatabase";
 import { IndustryRisk } from "../../data/industryRiskData";
@@ -154,6 +163,12 @@ export interface EnsembleInputs {
   hasKeyRelationships: boolean;
   roleExposureOverride?: RoleExposure;
   forceRefresh?: boolean;
+  /**
+   * ISO country code or region string for the user (e.g. 'IN', 'US', 'SG').
+   * Used to build the market-specific cache key so US job-count data never
+   * contaminates an India user's audit of the same company.
+   */
+  region?: string;
   /** Optional timing instrumentation — passed from LayoffCalculator. */
   _timer?: PipelineTimerInstance;
   // ── Progress callback for stage-based UI transitions ──────────────────
@@ -309,6 +324,7 @@ export const runFullEnsembleAnalysis = async (
     hasKeyRelationships,
     roleExposureOverride,
     forceRefresh = false,
+    region,
     _timer,
     onSwarmComplete,
   } = inputs;
@@ -316,7 +332,12 @@ export const runFullEnsembleAnalysis = async (
   // ── Step 1: Cache check — FIX: key includes ALL user factors to prevent cross-user collisions ──
   // Previously only contained company/role/dept — two users with different tenure/performance
   // would receive each other's cached scores.
-  const cacheKey = [
+  //
+  // Task C: key is now prefixed with `mn::` (market-neutral). The market-specific portion
+  // (job counts, hiring trend, LLM region text) is stored under a separate `ms::` key so
+  // a US user's San Francisco job data never contaminates an India user's Bengaluru audit
+  // of the same company on the same day.
+  const cacheKey = buildMarketNeutralKey([
     companyName.toLowerCase(),
     roleTitle.toLowerCase(),
     department.toLowerCase(),
@@ -325,8 +346,7 @@ export const runFullEnsembleAnalysis = async (
     uniquenessDepth ?? (isUniqueRole ? 'critical_knowledge' : 'generic'), // prevents cross-user collision
     hasRecentPromotion ? '1' : '0',
     hasKeyRelationships ? '1' : '0',
-    forceRefresh ? 'refresh' : 'standard',
-  ].join('::');
+  ]);
 
   if (!forceRefresh) {
     const cached = await getCachedAnalysis(cacheKey);
@@ -335,6 +355,28 @@ export const runFullEnsembleAnalysis = async (
       const { getCacheTimestamp } = await import('../cache/analysisCache');
       const cachedAt = getCacheTimestamp(cacheKey) ?? (cached._cachedAt as number | undefined);
       console.log("[Ensemble] Cache hit — returning cached result");
+
+      // ── Task C: market-specific slot lookup ─────────────────────────────────
+      // When a region is provided, check for a cached market-specific slot.
+      // Case 1: slot present → merge region-correct hiring data and return.
+      // Case 2: slot absent  → run connector only (fast, no LLM), cache slot, merge.
+      if (region) {
+        const msSlot = await getMarketSpecificSlot(companyName, roleTitle, region);
+        if (msSlot) {
+          return { ...mergeMarketSlot(cached, msSlot), fromCache: true, cachedAt };
+        }
+        // Slot absent — partial rerun: market hiring connector only, no LLM.
+        try {
+          const { fetchRoleDemandSignal } = await import('../dataConnectors/naukriConnector');
+          const roleData = await fetchRoleDemandSignal(roleTitle, companyName, region);
+          const freshSlot = slotFromHiringConnector(roleData, region);
+          setMarketSpecificSlot(companyName, roleTitle, region, freshSlot); // fire-and-forget
+          return { ...mergeMarketSlot(cached, freshSlot), fromCache: true, cachedAt };
+        } catch {
+          // Connector failed — return neutral result without market overlay
+        }
+      }
+
       return { ...cached, fromCache: true, cachedAt };
     }
   }
@@ -1297,6 +1339,21 @@ export const runFullEnsembleAnalysis = async (
   // ── Step 8: Cache for future requests ────────────────────────────────────
   // Embed write timestamp so cross-device cache hits can still display "Cached X min ago"
   await setCachedAnalysis(cacheKey, { ...output, _cachedAt: Date.now() });
+
+  // Task C: also extract and persist the market-specific slot so future cache
+  // hits for this region can be served without an LLM re-run.
+  if (region) {
+    const msSlot = extractMarketSlot(
+      companyData as Record<string, any>,
+      region,
+      {
+        oneActionThisWeek:    (output as any).oneActionThisWeek    ?? null,
+        indiaSpecificInsight: (output as any).indiaSpecificInsight ?? null,
+        whatChangesRiskMost:  (output as any).whatChangesRiskMost  ?? null,
+      },
+    );
+    setMarketSpecificSlot(companyName, roleTitle, region, msSlot);
+  }
 
   return output;
 };

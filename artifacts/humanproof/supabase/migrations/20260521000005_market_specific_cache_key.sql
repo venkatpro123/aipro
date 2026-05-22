@@ -1,0 +1,40 @@
+-- market_specific_cache_key
+-- No schema changes required. Explains the Task C cache key format change.
+--
+-- Before Task C:
+--   layoff_analysis_cache key format:
+--     {company}::{role}::{dept}::{tenure}::{tier}::{depth}::{promo}::{relationships}
+--
+--   Problem: US job-count data (oneActionThisWeek, indiaSpecificInsight, estimated openings)
+--   baked into the same cache entry as the market-neutral score.  A US user auditing
+--   TCS on a given day populates the cache; an India user hits the same cache entry and
+--   receives San Francisco job-market data.
+--
+-- After Task C:
+--   Market-neutral key  →  mn::{8-part-compound}
+--   Market-specific key →  ms::{company}::{role}::{canonical_region}
+--
+--   The market-neutral entry holds score, dimensions, calibration, company signals.
+--   The market-specific slot holds hiring connector outputs + region-scoped LLM text.
+--
+-- Resolution on cache read:
+--   1. neutral HIT  + specific HIT (user.region)  → merge and return immediately
+--   2. neutral HIT  + specific MISS               → run hiring connector only (no LLM),
+--                                                    cache slot, merge, return
+--   3. neutral MISS                               → full compute, split, cache both
+--
+-- The `layoff_analysis_cache` table is unchanged (key TEXT UNIQUE, data JSONB).
+-- Both neutral and specific entries live in the same table under their respective keys.
+-- Index on key is already present from the initial table creation.
+--
+-- localStorage prefixes:
+--   market-neutral:  hp_ensemble_mn_{mn::...}
+--   market-specific: hp_ensemble_ms_{ms::...}
+--
+-- invalidateForCompany() clears all three prefixes:
+--   legacy:   hp_ensemble_{company}::...
+--   neutral:  hp_ensemble_mn_mn::{company}::...
+--   specific: hp_ensemble_ms_ms::{company}::...
+-- and fires Supabase DELETEs for key LIKE '{company}::%', 'mn::{company}::%', 'ms::{company}::%'.
+
+SELECT 1; -- no-op placeholder so Supabase migration runner accepts the file

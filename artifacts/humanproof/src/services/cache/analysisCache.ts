@@ -28,6 +28,218 @@ import { LOCAL_CACHE_TTL_MS, REMOTE_CACHE_TTL_MS, CACHE_HARD_KILL_MS } from './c
 const LOCAL_TTL_MS  = LOCAL_CACHE_TTL_MS;   // WS12: from cacheConfig
 const REMOTE_TTL_MS = REMOTE_CACHE_TTL_MS;  // WS12: from cacheConfig
 
+// ── Market-specific cache slot ─────────────────────────────────────────────────
+//
+// Stores the hiring-connector outputs and region-specific LLM text for one
+// {company, role, region} triple. Cached separately from the market-neutral
+// EnsembleResult so a US user's San Francisco job-count data can never
+// contaminate an India user's Bengaluru audit of the same company.
+//
+// Key format:
+//   market-neutral:  mn::{8-part-compound-key}  (localStorage prefix: hp_ensemble_mn_)
+//   market-specific: ms::{company}::{role}::{canonicalRegion}
+//                    (localStorage prefix: hp_ensemble_ms_)
+//
+// Resolution on cache read:
+//   1. Neutral hit + specific hit (user.region)  → merge and return immediately
+//   2. Neutral hit + specific miss               → run market hiring connector only
+//                                                   (fast, no LLM), cache slot, merge
+//   3. Neutral miss                              → full compute, split, cache both
+//
+// The score is treated as market-neutral (it reflects company-level signals L1-L8
+// primarily; the L9 job-market contribution is minor and doesn't justify a per-region
+// score recomputation on cache hit). The market-specific slot provides the hiring data
+// that drives UI displays (job counts, demand trend) and suppresses cross-region
+// LLM text contamination (oneActionThisWeek, indiaSpecificInsight).
+
+export interface MarketSpecificSlot {
+  /** Canonical region key (e.g., 'IN', 'US', 'SG'). */
+  region: string;
+  /** Hiring posting trend from the market-appropriate connector. */
+  hiringPostingTrend: 'growing' | 'stable' | 'declining' | 'frozen' | null;
+  hiringFreezeScore: number;
+  hiringIsLive: boolean;
+  hiringSource: string;
+  hiringDisclosure: string;
+  estimatedRoleOpenings: number | null;
+  naukriOpenings: number | null;
+  linkedinOpenings: number | null;
+  hiringFetchedAt: string | null;
+  /** Market-specific LLM text — null when slot was hydrated from connector only (no LLM rerun). */
+  oneActionThisWeek: string | null;
+  indiaSpecificInsight: string | null;
+  whatChangesRiskMost: string | null;
+  /** Unix ms timestamp when this slot was computed. */
+  _cachedAt: number;
+}
+
+function canonicalRegion(region: string | null | undefined): string {
+  if (!region) return '';
+  return region.trim().toUpperCase().replace(/[^A-Z0-9]/g, '_');
+}
+
+export function buildMarketNeutralKey(parts: string[]): string {
+  return `mn::${parts.join('::')}`;
+}
+
+export function buildMarketSpecificKey(
+  companyName: string,
+  roleTitle: string,
+  region: string,
+): string {
+  return `ms::${companyName.toLowerCase()}::${roleTitle.toLowerCase()}::${canonicalRegion(region)}`;
+}
+
+const MS_LOCAL_PREFIX = 'hp_ensemble_ms_';
+
+export const getMarketSpecificSlot = async (
+  companyName: string,
+  roleTitle: string,
+  region: string,
+): Promise<MarketSpecificSlot | null> => {
+  const key = buildMarketSpecificKey(companyName, roleTitle, region);
+  const now  = Date.now();
+
+  // ── Layer 1: localStorage ──
+  try {
+    const raw = localStorage.getItem(`${MS_LOCAL_PREFIX}${key}`);
+    if (raw) {
+      const { data, timestamp } = JSON.parse(raw) ?? {};
+      const validTs = typeof timestamp === 'number' && isFinite(timestamp) && timestamp > 0;
+      if (validTs && now - timestamp < LOCAL_TTL_MS) return data as MarketSpecificSlot;
+      try { localStorage.removeItem(`${MS_LOCAL_PREFIX}${key}`); } catch { /* ignore */ }
+    }
+  } catch { /* ignore */ }
+
+  // ── Layer 2: Supabase ──
+  try {
+    const { data } = await supabase
+      .from('layoff_analysis_cache')
+      .select('data, created_at')
+      .eq('key', key)
+      .single();
+    if (data && now - new Date(data.created_at).getTime() < REMOTE_TTL_MS) {
+      try {
+        const ts = new Date(data.created_at).getTime();
+        localStorage.setItem(`${MS_LOCAL_PREFIX}${key}`, JSON.stringify({ data: data.data, timestamp: ts }));
+      } catch { /* storage full */ }
+      return data.data as MarketSpecificSlot;
+    }
+  } catch { /* Supabase unavailable */ }
+
+  return null;
+};
+
+export const setMarketSpecificSlot = (
+  companyName: string,
+  roleTitle: string,
+  region: string,
+  slot: MarketSpecificSlot,
+): void => {
+  const key = buildMarketSpecificKey(companyName, roleTitle, region);
+  try {
+    localStorage.setItem(`${MS_LOCAL_PREFIX}${key}`, JSON.stringify({ data: slot, timestamp: Date.now() }));
+  } catch { /* storage full — non-fatal */ }
+
+  // Fire-and-forget remote write
+  supabase
+    .from('layoff_analysis_cache')
+    .upsert({ key, data: slot, created_at: new Date().toISOString() }, { onConflict: 'key' })
+    .then(({ error }) => {
+      if (error) console.warn('[Cache] MarketSpecificSlot Supabase write failed:', error.message);
+    });
+};
+
+/**
+ * Overlay a MarketSpecificSlot onto a cached EnsembleResult.
+ * Patches all market-sensitive fields with region-correct values.
+ * Returns the merged result — does NOT mutate either argument.
+ */
+export const mergeMarketSlot = (ensembleResult: any, slot: MarketSpecificSlot): any => ({
+  ...ensembleResult,
+  // Hiring connector outputs — override whatever was baked in from the neutral cache
+  _marketSpecific: slot,
+  // oneActionThisWeek and indiaSpecificInsight from the region-appropriate slot;
+  // null when the slot was hydrated from connector only (no LLM re-run).
+  // The UI shows "region-specific guidance" for non-null and falls back gracefully.
+  oneActionThisWeek:    slot.oneActionThisWeek    ?? ensembleResult.oneActionThisWeek    ?? null,
+  indiaSpecificInsight: slot.indiaSpecificInsight  ?? null,   // never serve India text to non-India users
+  whatChangesRiskMost:  slot.whatChangesRiskMost   ?? ensembleResult.whatChangesRiskMost  ?? null,
+});
+
+/**
+ * Build a MarketSpecificSlot from a fresh live hiring-data result (companyData fields).
+ * Called after a full audit compute to extract the market-specific portion for caching.
+ */
+export const extractMarketSlot = (
+  companyData: Record<string, any>,
+  region: string,
+  llmOutputs: {
+    oneActionThisWeek: string | null;
+    indiaSpecificInsight: string | null;
+    whatChangesRiskMost: string | null;
+  },
+): MarketSpecificSlot => ({
+  region: canonicalRegion(region),
+  hiringPostingTrend: companyData._hiringPostingTrend ?? null,
+  hiringFreezeScore:  companyData._hiringFreezeScore  ?? 0.35,
+  hiringIsLive:       companyData._hiringIsLive       ?? false,
+  hiringSource:       companyData._hiringSource       ?? 'heuristic',
+  hiringDisclosure:   companyData._hiringDisclosure   ?? '',
+  estimatedRoleOpenings: companyData._estimatedRoleOpenings ?? null,
+  naukriOpenings:    companyData._naukriOpenings    ?? null,
+  linkedinOpenings:  companyData._linkedinOpenings  ?? null,
+  hiringFetchedAt:   companyData._hiringFetchedAt   ?? null,
+  oneActionThisWeek:    llmOutputs.oneActionThisWeek,
+  indiaSpecificInsight: llmOutputs.indiaSpecificInsight,
+  whatChangesRiskMost:  llmOutputs.whatChangesRiskMost,
+  _cachedAt: Date.now(),
+});
+
+/**
+ * Build a MarketSpecificSlot from a hiring connector result alone (no LLM text).
+ * Used when the neutral cache is hit but the market-specific slot is absent —
+ * we run the connector only and cache the slot without expensive LLM re-generation.
+ */
+export const slotFromHiringConnector = (
+  roleData: {
+    demandTrend: 'rising' | 'stable' | 'falling';
+    hiringFreezeScore: number;
+    isLive: boolean;
+    source: string;
+    disclosure: string;
+    estimatedOpenings: number | null;
+    naukriOpenings: number | null;
+    linkedinOpenings: number | null;
+    fetchedAt: string;
+  },
+  region: string,
+): MarketSpecificSlot => ({
+  region: canonicalRegion(region),
+  hiringPostingTrend:  trendToPosting(roleData.demandTrend),
+  hiringFreezeScore:   roleData.hiringFreezeScore,
+  hiringIsLive:        roleData.isLive,
+  hiringSource:        roleData.source,
+  hiringDisclosure:    roleData.disclosure,
+  estimatedRoleOpenings: roleData.estimatedOpenings,
+  naukriOpenings:      roleData.naukriOpenings,
+  linkedinOpenings:    roleData.linkedinOpenings,
+  hiringFetchedAt:     roleData.fetchedAt,
+  // No LLM outputs — caller gets null; UI falls back gracefully
+  oneActionThisWeek:    null,
+  indiaSpecificInsight: null,
+  whatChangesRiskMost:  null,
+  _cachedAt: Date.now(),
+});
+
+function trendToPosting(
+  trend: 'rising' | 'stable' | 'falling',
+): 'growing' | 'stable' | 'declining' | 'frozen' {
+  if (trend === 'rising')  return 'growing';
+  if (trend === 'falling') return 'declining';
+  return 'stable';
+}
+
 /**
  * v39.0 D6 — SWR metadata wrapper.
  *
@@ -228,21 +440,30 @@ export const getCacheTimestamp = (key: string): number | null => {
  *                     that begin with `{companyName.toLowerCase()}::`.
  */
 export const invalidateForCompany = (companyName: string): void => {
-  const prefix = `hp_ensemble_${companyName.toLowerCase()}::`;
+  const co = companyName.toLowerCase();
+  // Legacy neutral key prefix (pre-Task-C, no mn:: prefix)
+  const legacyPrefix = `hp_ensemble_${co}::`;
+  // Task-C market-neutral prefix
+  const mnPrefix = `hp_ensemble_mn_mn::${co}::`;
+  // Task-C market-specific prefix (company is second segment after ms::)
+  const msPrefix = `hp_ensemble_ms_ms::${co}::`;
   const toDelete: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k?.startsWith(prefix)) toDelete.push(k);
+    if (!k) continue;
+    if (k.startsWith(legacyPrefix) || k.startsWith(mnPrefix) || k.startsWith(msPrefix)) {
+      toDelete.push(k);
+    }
   }
   toDelete.forEach(k => {
     localStorage.removeItem(k);
     console.info(`[Cache] Invalidated by breaking news: ${k}`);
   });
-  // Also invalidate in Supabase (fire-and-forget)
+  // Supabase fire-and-forget — clear legacy, mn::, and ms:: keys for this company
   supabase
     .from('layoff_analysis_cache')
     .delete()
-    .like('key', `${companyName.toLowerCase()}::%`)
+    .or(`key.like.${co}::%,key.like.mn::${co}::%,key.like.ms::${co}::%`)
     .then(({ error }) => {
       if (error) console.warn('[Cache] Remote invalidation failed:', error.message);
     });

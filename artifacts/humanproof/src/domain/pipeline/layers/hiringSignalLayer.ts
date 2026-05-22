@@ -25,6 +25,9 @@ const NEUTRAL_RESULT: HiringSignalResult = {
   interpretation: 'Layer fell back — no hiring signal computed.',
   estimatedAnnouncementDays: null,
   actions: [],
+  hiringMarket: undefined,
+  connectorsAttempted: [],
+  connectorsFailed: [],
 };
 
 export const hiringSignalLayer: AuditLayer<'hiring_signal'> = {

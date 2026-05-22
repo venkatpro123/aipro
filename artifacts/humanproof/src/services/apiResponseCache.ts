@@ -43,16 +43,32 @@ import type { CircuitApiName } from './apiCircuitBreaker';
 
 // ── TTL configuration ─────────────────────────────────────────────────────────
 
-export const API_CACHE_TTL_SECONDS: Record<CircuitApiName, number> = {
-  'sec-edgar':     6  * 3600,   // 6 hours
-  'newsapi':       2  * 3600,   // 2 hours
-  'rss2json':      30 * 60,     // 30 minutes
-  'naukri':        4  * 3600,   // 4 hours
-  'bse':           4  * 3600,   // 4 hours
-  'yahoo-finance': 1  * 3600,   // 1 hour
-  'alphavantage':  8  * 3600,   // 8 hours
-  'serper':        4  * 3600,   // 4 hours
-  'warn-act':      12 * 3600,   // 12 hours
+export const API_CACHE_TTL_SECONDS: Partial<Record<CircuitApiName, number>> = {
+  'sec-edgar':             6  * 3600,   // 6 hours
+  'newsapi':               2  * 3600,   // 2 hours
+  'rss2json':              30 * 60,     // 30 minutes
+  'naukri':                4  * 3600,   // 4 hours
+  'bse':                   4  * 3600,   // 4 hours
+  // yahoo-finance split into per-region keys in migration 20260521000003
+  'yahoo-finance-us':      1  * 3600,   // 1 hour
+  'yahoo-finance-global':  1  * 3600,   // 1 hour
+  'alphavantage':          8  * 3600,   // 8 hours
+  'serper':                4  * 3600,   // 4 hours
+  'warn-act':              12 * 3600,   // 12 hours
+  // Market hiring connectors — same TTL as naukri
+  'indeed-india':      4 * 3600, 'linkedin-india':   4 * 3600,
+  'linkedin-us':       4 * 3600, 'indeed-us':        4 * 3600, 'glassdoor-jobs':   4 * 3600,
+  'linkedin-uk':       4 * 3600, 'indeed-uk':        4 * 3600, 'reed':             4 * 3600, 'jobsite':          4 * 3600,
+  'linkedin-de':       4 * 3600, 'stepstone':        4 * 3600, 'xing':             4 * 3600,
+  'linkedin-sg':       4 * 3600, 'jobsdb':           4 * 3600, 'mycareersfuture':  4 * 3600,
+  'linkedin-au':       4 * 3600, 'seek':             4 * 3600, 'jora':             4 * 3600,
+  'linkedin-ca':       4 * 3600, 'indeed-ca':        4 * 3600, 'job-bank':         4 * 3600,
+  'linkedin-latam':    4 * 3600, 'bumeran':          4 * 3600, 'computrabajo':     4 * 3600,
+  'linkedin-mena':     4 * 3600, 'bayt':             4 * 3600, 'naukrigulf':       4 * 3600,
+  // Remaining core APIs not previously listed
+  'nse-india':              4 * 3600,
+  'london-stock-exchange':  4 * 3600,
+  'sgx':                    4 * 3600,
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────

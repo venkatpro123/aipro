@@ -530,6 +530,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       performanceTier: userFactors.performanceTier,
       hasRecentPromotion: userFactors.hasRecentPromotion,
       hasKeyRelationships: userFactors.hasKeyRelationships,
+      region: companyData.region ?? undefined,
       forceRefresh,
       onSwarmComplete: () => {
         swarmDone = true;
@@ -1168,6 +1169,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         hasRecentPromotion: inputs.userFactors.hasRecentPromotion,
         hasKeyRelationships: inputs.userFactors.hasKeyRelationships,
         roleExposureOverride: fetchedRoleExposure,
+        region: companyData.region ?? undefined,
         _timer: _calcTimer,
         forceRefresh,
         onSwarmComplete: () => {
@@ -1602,7 +1604,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           const primaryAlsoFailed = genuineSignals === 0 || genuineSignals === null;
 
           // Primary scraped APIs — always actionable when open
-          const PRIMARY_APIS: CircuitApiName[] = ['yahoo-finance', 'rss2json', 'naukri'];
+          const PRIMARY_APIS: CircuitApiName[] = ['yahoo-finance-us', 'rss2json', 'naukri'];
           // Fallback-only — only surface when primaries also failed
           const FALLBACK_APIS: CircuitApiName[] = ['alphavantage', 'newsapi', 'serper', 'sec-edgar', 'warn-act', 'bse'];
 
