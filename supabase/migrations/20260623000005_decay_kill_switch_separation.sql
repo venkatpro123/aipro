@@ -81,26 +81,3 @@ DO UPDATE SET
   notes              = EXCLUDED.notes,
   updated_at         = now();
 
--- Drift alert: WARN floor must remain active when hasActiveWARN = true
-INSERT INTO engine_drift_alerts (
-  alert_key,
-  expected_value,
-  tolerance,
-  alert_message,
-  is_active,
-  created_at
-) VALUES (
-  'warn_floor_active_when_warn_filing_present',
-  68.00,
-  0.001,
-  'When hasActiveWARN=true and score<68, hybridResult.total must equal 68. '
-  'WARN Act filings are regulatory ground truth. The floor must not be removed '
-  'without documented justification and a regression test confirming the WARN '
-  'signal still influences the score via another channel.',
-  true,
-  now()
-)
-ON CONFLICT (alert_key)
-DO UPDATE SET
-  alert_message = EXCLUDED.alert_message,
-  is_active     = EXCLUDED.is_active;

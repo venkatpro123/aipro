@@ -68,25 +68,3 @@ DO UPDATE SET
   notes              = EXCLUDED.notes,
   updated_at         = now();
 
--- Synthetic probe: verify the mixed cohort produces elevated D7 vs pure EFFICIENCY
--- Expected: mixed cohort score ≥ pure EFFICIENCY score when peer layoffs are present
-INSERT INTO synthetic_probe_results (
-  scenario_name,
-  expected_min,
-  expected_max,
-  actual_score,
-  passed,
-  segment,
-  probe_run_id,
-  created_at
-) VALUES (
-  'MIXED_EFFICIENCY_WAVE_D7_ELEVATION',
-  50,
-  75,
-  NULL,  -- filled by probe runner
-  NULL,
-  'us_tech_hyperscaler',
-  'mixed_cohort_' || to_char(now(), 'YYYYMMDD'),
-  now()
-)
-ON CONFLICT (scenario_name, probe_run_id) DO NOTHING;

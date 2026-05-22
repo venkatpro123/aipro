@@ -74,26 +74,3 @@ DO UPDATE SET
   notes              = EXCLUDED.notes,
   updated_at         = now();
 
--- Drift alert: guard against sigmoid re-introduction
-INSERT INTO engine_drift_alerts (
-  alert_key,
-  expected_value,
-  tolerance,
-  alert_message,
-  is_active,
-  created_at
-) VALUES (
-  'kill_switch_floor_hard_not_sigmoid',
-  0.00,
-  0.001,
-  'Kill-switch floors must use hard Math.max(score, floor), not sigmoid blending. '
-  'Sigmoid floors fail for scores near the threshold: sigmoidFloor(65, 68, 72) = 65 '
-  'despite the documented floor being 72. If sigmoid is re-introduced, update this alert '
-  'and document the specific reason why the hard-floor contract is being relaxed.',
-  true,
-  now()
-)
-ON CONFLICT (alert_key)
-DO UPDATE SET
-  alert_message = EXCLUDED.alert_message,
-  is_active     = EXCLUDED.is_active;

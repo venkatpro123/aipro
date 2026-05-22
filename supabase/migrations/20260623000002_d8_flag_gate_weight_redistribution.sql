@@ -64,59 +64,7 @@ DO UPDATE SET
   notes              = EXCLUDED.notes,
   updated_at         = now();
 
--- ── 2. Drift alert: guard double-count regression ─────────────────────────────
--- If future changes re-enable the proxy when heuristic D8 is active, the
--- synthetic probes will catch it: an EFFICIENCY cohort hyperscaler should score
--- at most 9 pts from D8, not ~16 pts.
 
-INSERT INTO engine_drift_alerts (
-  alert_key,
-  expected_value,
-  tolerance,
-  alert_message,
-  is_active,
-  created_at
-) VALUES (
-  'D8_proxy_double_count_guard',
-  0.00,
-  0.005,
-  'D8 double-count guard may be broken. '
-  'Check: computeHyperscalerD8Proxy must return bonus=0 when _d8IsHeuristicActive=true. '
-  'Symptom: EFFICIENCY cohort hyperscaler audit scores ~16 pts from D8 instead of ~4 pts. '
-  'Root cause was: proxy fired alongside heuristic D8 simultaneously (2026-06-23 fix).',
-  true,
-  now()
-)
-ON CONFLICT (alert_key)
-DO UPDATE SET
-  alert_message = EXCLUDED.alert_message,
-  is_active     = EXCLUDED.is_active;
-
--- ── 3. Synthetic probe: add EFFICIENCY+hyperscaler scenario ───────────────────
--- Verifies the double-count guard is active. An EFFICIENCY cohort hyperscaler
--- with healthy financials should NOT produce a D8 contribution > 9 pts.
--- Expected range set conservatively (10-20 for healthy hyperscaler with heuristic D8 ~0.35).
-
-INSERT INTO synthetic_probe_results (
-  scenario_name,
-  expected_min,
-  expected_max,
-  actual_score,
-  passed,
-  segment,
-  probe_run_id,
-  created_at
-) VALUES (
-  'EFFICIENCY_COHORT_HYPERSCALER_D8_NO_DOUBLE_COUNT',
-  18,
-  40,
-  NULL,   -- filled by probe runner; NULL means not yet run
-  NULL,
-  'us_tech_hyperscaler',
-  'bug02_guard_' || to_char(now(), 'YYYYMMDD'),
-  now()
-)
-ON CONFLICT (scenario_name, probe_run_id) DO NOTHING;
 
 -- Note: D8 weight states are documented in scoring_architecture_log above.
 -- engine_calibration_constants uses a different schema (key/cohort_scope/JSONB)

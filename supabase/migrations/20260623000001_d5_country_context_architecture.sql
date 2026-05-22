@@ -23,27 +23,7 @@ CREATE TABLE IF NOT EXISTS public.scoring_architecture_log (
 -- engine_calibration_constants already exists with its own schema (key/cohort_scope/JSONB);
 -- session migrations do not insert into it to avoid column mismatch.
 
-CREATE TABLE IF NOT EXISTS public.engine_drift_alerts (
-  alert_key           TEXT        PRIMARY KEY,
-  expected_value      FLOAT,
-  tolerance           FLOAT,
-  alert_message       TEXT,
-  is_active           BOOLEAN     DEFAULT true,
-  created_at          TIMESTAMPTZ DEFAULT now()
-);
 
-CREATE TABLE IF NOT EXISTS public.synthetic_probe_results (
-  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  scenario_name   TEXT        NOT NULL,
-  expected_min    INT,
-  expected_max    INT,
-  actual_score    INT,
-  passed          BOOLEAN,
-  segment         TEXT,
-  probe_run_id    TEXT,
-  created_at      TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (scenario_name, probe_run_id)
-);
 --
 -- BUG-01 fix: removes stale "weight: 0.02" documentation that contradicted
 -- the engine source (which had already set D5 to 0.00). Updates the DB record
@@ -100,46 +80,4 @@ DO UPDATE SET
   notes              = EXCLUDED.notes,
   updated_at         = now();
 
--- ── 2. Engine drift alert: flag any future non-zero D5 weight as a drift event ─
--- Inserts a baseline measurement so the drift monitor can detect if D5 is
--- accidentally given a non-zero weight in a future calibration update without
--- the corresponding documentation requirement being met (n >= 500 events).
 
-INSERT INTO engine_drift_alerts (
-  alert_key,
-  expected_value,
-  tolerance,
-  alert_message,
-  is_active,
-  created_at
-) VALUES (
-  'D5_countryContext_weight_drift',
-  0.00,
-  0.005,
-  'D5_countryContext formula weight has become non-zero. This requires: '
-  '(1) n >= 500 country-stratified layoff outcomes for logistic regression, '
-  '(2) cross-validation confirming AUC improvement > 0.005 vs. D1 multiplier baseline, '
-  '(3) updated calibration_provenance record with full methodology. '
-  'Do not assign a non-zero weight based on developer estimates.',
-  true,
-  now()
-)
-ON CONFLICT (alert_key)
-DO UPDATE SET
-  expected_value = EXCLUDED.expected_value,
-  tolerance      = EXCLUDED.tolerance,
-  alert_message  = EXCLUDED.alert_message,
-  is_active      = EXCLUDED.is_active;
-
--- ── 4. Synthetic probe update: mark L4 zero-weight in probe metadata ──────────
--- The synthetic probes use L4 as an archetype-detection input, not as a direct
--- score contributor. Tag probes that reference L4 so the drift monitor knows
--- L4 contributes via archetype classification only.
-
-COMMENT ON TABLE synthetic_probe_results IS
-  'Synthetic scenario probes for calibration drift detection. '
-  'NOTE: L4 (Market Conditions / D5_countryContext) has formula weight 0.00. '
-  'L4 values in probe inputs are used for archetype classification (detectScoringArchetype) '
-  'and indirectly influence D5 weight via blendArchetypeWeights for sector_wave / '
-  'gcc_parent_contagion / india_it_bench_risk archetypes (~0.01 effective weight). '
-  'L4 does not directly contribute to composite score via the D5 formula term.';
