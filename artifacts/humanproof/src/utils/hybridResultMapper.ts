@@ -39,11 +39,13 @@ export function mapToHybridResult(
   // the pipeline path, which the user perceived as missing data on the
   // ensemble route. Include D6/D7 when the breakdown has them defined.
   const breakdownAny = result.breakdown as unknown as Record<string, number | undefined>;
+  // L4 (Market Headwinds / D5_countryContext) is excluded from display: country context
+  // enters the formula through D1 (country multiplier, w=0.18) and L1 (PPP, w=0.16),
+  // not as a standalone dimension. Showing a 0-weight L4 card provides no user value.
   const dimensions = [
     { key: "L1" as const, label: "Company Health", score: Math.round(result.breakdown.L1 * 100) },
     { key: "L2" as const, label: "Layoff History", score: Math.round(result.breakdown.L2 * 100) },
     { key: "L3" as const, label: "Role Displacement", score: Math.round(result.breakdown.L3 * 100) },
-    { key: "L4" as const, label: "Market Headwinds", score: Math.round(result.breakdown.L4 * 100) },
     { key: "L5" as const, label: "Your Exposure", score: Math.round(result.breakdown.L5 * 100) },
   ] as Array<{
     key: "L1" | "L2" | "L3" | "L4" | "L5" | "D6" | "D7" | "D1" | "D2" | "D3" | "D4" | "D5";

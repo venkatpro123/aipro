@@ -76,15 +76,6 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
     narrativeMid:  "Moderate AI exposure in your role category. The execution layer is being augmented by AI, but oversight and strategy functions remain human-native.",
     narrativeHigh: "High task automatability in your role. AI tools are actively absorbing execution-layer work in this function across the market.",
   },
-  L4: {
-    label: "Industry Risk",
-    fullLabel: "Industry & Market Headwinds",
-    weight: 0.00, // COMPOSITE_FORMULA_WEIGHTS.D5_countryContext — pending country data
-    icon: BarChart,
-    narrativeLow:  "Your industry sector has below-average AI disruption velocity and positive employment growth outlook.",
-    narrativeMid:  "Sector-level AI adoption is accelerating at a moderate pace. Some functions are being consolidated across the industry.",
-    narrativeHigh: "High sector AI adoption rate. Your industry is experiencing above-average workforce rationalization as AI tools mature.",
-  },
   L5: {
     label: "Regional Risk",
     fullLabel: "Regional & Macro Headwinds",
@@ -132,20 +123,6 @@ const D_DIMENSIONS: Record<string, DimMeta> = {
     narrativeLow:  "Strong experience protection. Seniority, track record, and accumulated institutional knowledge provide significant displacement buffering.",
     narrativeMid:  "Moderate experience shield. Some protection from seniority, but execution-layer skills that AI targets may offset the advantage.",
     narrativeHigh: "Experience shield is limited for this role at your level. AI displacement risk applies regardless of tenure in execution-heavy functions.",
-  },
-  D5: {
-    label: "Country Exposure",
-    fullLabel: "Country AI Adoption Exposure",
-    // D5_countryContext formula weight = 0.00. Country context enters the composite
-    // score via two factored channels: (1) D1 country multiplier applied to L3 (weight
-    // 0.18) — Germany QA 0.844×, USA 0.906×, Singapore 0.940×; (2) PPP thresholds
-    // in L1 (weight 0.16). D5 is excluded from formula display until regression on
-    // ≥500 country-stratified outcomes derives a non-zero coefficient.
-    weight: 0.00,
-    icon: Globe,
-    narrativeLow:  "Your country/region has moderate AI adoption pace — below the global vanguard, providing a relative time buffer. Country context is factored into your Role Displacement score (D1) via jurisdiction-specific AI deployment rates.",
-    narrativeMid:  "Your region is at the median of global AI adoption. Country-specific AI deployment rates are already embedded in your role displacement and financial health scores.",
-    narrativeHigh: "Your country is a high-velocity AI adopter. This is reflected in your Role Displacement score (D1) via country-specific enterprise AI deployment rates, not as a separate dimension.",
   },
   D6: {
     label: "Social Capital",
@@ -691,8 +668,9 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
   const { width } = useAdaptiveSystem();
   const isMobile = width < 768;
 
-  // D6 and D7 are always added to dimensions, so isOracle must check for D1-D5 specifically.
-  const isOracle = result.dimensions.some(d => ['D1','D2','D3','D4','D5'].includes(d.key));
+  // D6 and D7 are always added to dimensions, so isOracle must check for D1-D4 specifically.
+  // D5 (countryContext) is excluded from result.dimensions — country context enters via D1/L1.
+  const isOracle = result.dimensions.some(d => ['D1','D2','D3','D4'].includes(d.key));
 
   // Authoritative formula weights — sourced from getEffectiveFormulaWeights() which
   // reads COMPOSITE_FORMULA_WEIGHTS and respects the D8 kill-switch flag.
@@ -754,9 +732,10 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
               {(result as any).segmentCalibration.segmentLabel}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {(['l1','l2','l3','l4','l5'] as const).map(key => {
+              {/* l4 omitted: D5_countryContext = 0.00, L4 multiplier has no formula effect. */}
+              {(['l1','l2','l3','l5'] as const).map(key => {
                 const val: number = (result as any).segmentCalibration[`${key}Multiplier`] ?? 1;
-                const labelMap: Record<string,string> = { l1:'L1', l2:'L2', l3:'L3', l4:'L4', l5:'L5' };
+                const labelMap: Record<string,string> = { l1:'L1', l2:'L2', l3:'L3', l5:'L5' };
                 const isAmplified = val > 1.05;
                 const isSuppressed = val < 0.95;
                 return (

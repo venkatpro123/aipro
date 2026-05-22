@@ -611,27 +611,20 @@ interface MethodologySection {
 // These are disclosed as percentages so users understand why their India BPO
 // score behaves differently from a US Tech score given the same raw signals.
 //
-// ── D5 / L4 = 0.00 — Country Context Architecture Note ────────────────────
-// L4 (Market Conditions) carries formula weight 0.00. Country context is NOT
-// absent from the model — it enters through two factored channels:
+// Country context (D5_countryContext) is NOT a formula row in this table.
+// It enters the composite score via two factored channels and contributes 0
+// as a standalone dimension:
 //   (1) D1 channel (w=0.18): computeD1CountryMultiplier() applies country-
 //       specific enterprise AI deployment rates to the Role Exposure score.
 //       Germany QA = 0.844×, USA = 0.906×, Singapore = 0.940×.
-//   (2) L1 channel (w=0.16): PPP multiplier adjusts financial distress
-//       thresholds — a 10% revenue drop signals differently in USD vs. INR.
-// D5 remains at 0.00 until ≥500 country-stratified layoff outcomes enable
-// a regression-derived country coefficient. See COMPOSITE_FORMULA_WEIGHTS
-// architecture note in layoffScoreEngine.ts for full rationale.
+//   (2) L1 channel (w=0.16): getPPPMultiplier() adjusts financial distress
+//       thresholds for purchasing-power differences across currencies.
+// See COMPOSITE_FORMULA_WEIGHTS architecture note in layoffScoreEngine.ts.
 
 const HYBRID_FORMULA_WEIGHTS_DISPLAY = {
   L1: 0.30,
   L2: 0.25,
   L3: 0.20,
-  // L4 formula weight is 0.00 (D5_countryContext = 0.00 in COMPOSITE_FORMULA_WEIGHTS).
-  // Country context enters via D1 country multiplier (L3 channel) and PPP in L1.
-  // Showing 0.00 here is accurate — the "12%" this previously showed was LAYER_WEIGHTS
-  // (the WhatIf simulator's weight set) mistakenly used as the formula weight.
-  L4: 0.00,
   L5: 0.13,
 } as const;
 
@@ -639,9 +632,6 @@ const LAYER_DISPLAY_NAMES: Record<string, string> = {
   L1: 'Company Health',
   L2: 'Layoff History',
   L3: 'Role Exposure',
-  // L4 label updated: country context is a computation input (archetype detection),
-  // not a direct formula contributor. The score row will show 0% contribution.
-  L4: 'Market Conditions (via D1/L1)',
   L5: 'Personal Factors',
 };
 
@@ -655,14 +645,13 @@ const EffectiveWeightsPanel: React.FC<{
   l1EstimatedFromSector?: boolean;
   l1SectorBaseline?: number;
 }> = ({ segmentCalibration: seg, d8FlagActive, d8HeuristicActive, d8EffectiveWeight, l1EstimatedFromSector, l1SectorBaseline }) => {
-  type LayerKey = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
-  const layers: LayerKey[] = ['L1', 'L2', 'L3', 'L4', 'L5'];
+  type LayerKey = 'L1' | 'L2' | 'L3' | 'L5';
+  const layers: LayerKey[] = ['L1', 'L2', 'L3', 'L5'];
 
   const segMultiplierKey: Record<LayerKey, keyof SegmentCalibrationResult> = {
     L1: 'l1Multiplier',
     L2: 'l2Multiplier',
     L3: 'l3Multiplier',
-    L4: 'l4Multiplier',
     L5: 'l5Multiplier',
   };
 
@@ -854,10 +843,9 @@ const EffectiveWeightsPanel: React.FC<{
           D6 (AI Agent, 4%) and D7 (Company Health, 7%) are always active and omitted for brevity.
         </p>
         <p className="text-slate-400/70">
-          <span className="font-semibold text-slate-300/80">Market Conditions shows 0%</span> — country and sector context
-          enters your score through two factored channels: role AI deployment rates by country (embedded in Role Exposure, weight 18%)
-          and PPP-adjusted financial thresholds (embedded in Company Health, weight 16%).
-          A standalone country dimension will appear here when jurisdiction-stratified regression data reaches n ≥ 500 events.
+          <span className="font-semibold text-slate-300/80">Country context</span> is encoded inside Role Exposure (D1, 18%) via
+          jurisdiction-specific AI deployment rates (e.g. Germany QA = 0.844×, Singapore = 0.940×) and inside Company Health (L1, 16%)
+          via PPP-adjusted financial thresholds — not as a separate formula dimension.
         </p>
         {!hasSegAdj && (
           <p className="opacity-60">
