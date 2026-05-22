@@ -87,6 +87,7 @@ import {
   type QuorumCompanyData,
   buildLimitedDataBanner,
 } from "./ProgressiveQuorumPanel";
+import { hydrateSwarmCache } from "../../services/swarm/swarmCache";
 
 interface Props {
   /** Optional: passed from ToolsPage so action plan links can switch tabs */
@@ -497,6 +498,18 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       });
     }
 
+    // ── Swarm cache hydration — fire immediately when company data lands ─────
+    // hydrateSwarmCache() queries swarm_warm_cache (populated by the Monday
+    // 05:00 UTC warm-swarm-cache EF) and writes the pre-computed SwarmReport
+    // into localStorage. When runSwarmLayer() checks getSwarmCache() ~10s
+    // later, it gets a cache hit and skips all 30 agents — 4-5× speedup for
+    // top-100 combos. Non-blocking: we await it just before the ensemble call.
+    const swarmHydratePromise = hydrateSwarmCache(
+      companyData.name,
+      roleTitle,
+      effectiveDepartment,
+    );
+
     const pipelineQuality: "live" | "partial" | "fallback" =
       source === "live" && (pipelineResult.signalQuality.hardFailures?.length ?? 0) === 0
         ? "live"
@@ -585,6 +598,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             console.warn("[Oracle] Edge Function unreachable:", err);
             return null;
           });
+
+    // Await hydration before the ensemble starts — it almost certainly resolved
+    // during the Oracle + session-cache setup above (~100ms Supabase SELECT vs
+    // the ~2-3s of other setup work). Never throws (safe fallback in hydrateSwarmCache).
+    await swarmHydratePromise;
 
     let swarmDone = false;
     const shadowPromise = runFullEnsembleAnalysis({
