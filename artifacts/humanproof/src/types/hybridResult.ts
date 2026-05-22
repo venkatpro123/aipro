@@ -421,6 +421,22 @@ export interface HybridResult {
   // Populated asynchronously after detectCollapseStage() resolves in LayoffCalculator.
   // null = no signals detected; 1 = early warning; 2 = active risk; 3 = imminent.
   collapseStage?: 1 | 2 | 3 | null;
+  /**
+   * GAP-A04 — Internal signal quality of the collapse detection.
+   * Severity-weighted ratio: Σ(severity_score) / max_possible_severity_score.
+   * 0.0 = all weak signals; 1.0 = all strong signals.
+   * This is CollapseReport.signalConfidence — NOT an empirical precision rate.
+   * Disclosed in TransparencyTab alongside the PRECISION: UNKNOWN badge so users
+   * understand the distinction between signal quality and validated precision.
+   */
+  collapseStageConfidence?: number | null;
+  /**
+   * GAP-A04 — Validation status of the collapse predictor precision.
+   * Always 'uncalibrated_placeholder' until collapse_predictor_precision_summary
+   * VIEW shows gate_clears for this stage (n >= 20, precision >= 0.60).
+   * Controls PRECISION badge color: amber = uncalibrated, emerald = validated.
+   */
+  collapsePrecisionStatus?: 'uncalibrated_placeholder' | 'precision_validated';
 
   // ── Department Freeze Score (v6.0 Fix 7) ─────────────────────────────────
   // The freeze score for the user's specific department (0–100).

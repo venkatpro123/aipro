@@ -2194,6 +2194,93 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
+          {/* GAP-A04: Collapse Predictor precision disclosure — shown when collapseStage is active */}
+          {result.collapseStage != null && (() => {
+            const stage      = result.collapseStage as 1 | 2 | 3;
+            const sigConf    = result.collapseStageConfidence;
+            const precStatus = result.collapsePrecisionStatus ?? 'uncalibrated_placeholder';
+            const stageLabels: Record<1 | 2 | 3, string> = {
+              1: 'Stage 1 — Early Warning (12–18 months)',
+              2: 'Stage 2 — Displacement in Progress (6–12 months)',
+              3: 'Stage 3 — Imminent Risk (1–6 months)',
+            };
+            const stageColors: Record<1 | 2 | 3, { border: string; bg: string; text: string }> = {
+              1: { border: 'rgba(245,158,11,0.35)', bg: 'rgba(245,158,11,0.07)', text: '#fbbf24' },
+              2: { border: 'rgba(249,115,22,0.35)', bg: 'rgba(249,115,22,0.07)', text: '#fb923c' },
+              3: { border: 'rgba(239,68,68,0.40)',  bg: 'rgba(239,68,68,0.09)',  text: '#f87171' },
+            };
+            const c = stageColors[stage];
+            return (
+              <div className="mb-6 p-4 rounded-xl border" style={{ borderColor: c.border, background: c.bg }}>
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: c.text }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide" style={{ color: c.text }}>
+                        Collapse Predictor — {stageLabels[stage]}
+                      </h4>
+                      <span
+                        className="text-[9px] font-black px-2 py-0.5 rounded"
+                        style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.30)' }}
+                      >
+                        PRECISION: UNKNOWN
+                      </span>
+                      {stage === 3 && (
+                        <span
+                          className="text-[9px] font-black px-2 py-0.5 rounded"
+                          style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
+                        >
+                          EMERGENCY PROTOCOL ACTIVE
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Signal confidence vs precision distinction */}
+                    {sigConf != null && (
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                          <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Signal Quality</div>
+                          <div className="text-xs font-black" style={{ color: c.text }}>
+                            {Math.round(sigConf * 100)}%
+                          </div>
+                          <div className="text-[8px] opacity-40 mt-0.5 leading-tight">
+                            severity-weighted · internal
+                          </div>
+                        </div>
+                        <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                          <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Validated Precision</div>
+                          <div className="text-xs font-black text-amber-400">
+                            {precStatus === 'precision_validated' ? 'Validated' : 'Unknown'}
+                          </div>
+                          <div className="text-[8px] opacity-40 mt-0.5 leading-tight">
+                            0 confirmed cases
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stage 3 timeline claim — labeled UNVERIFIED */}
+                    {stage === 3 && (
+                      <div className="flex items-start gap-1.5 mb-2 p-2 rounded-lg"
+                        style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                        <AlertTriangle className="w-3 h-3 text-rose-400/60 flex-shrink-0 mt-0.5" />
+                        <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                          <span className="font-bold text-amber-400/80">UNVERIFIED: </span>
+                          Stage 3 recommendation cites "Historical median time to layoff announcement: 4–8 weeks" — this claim has no citation and is not derived from user_prediction_outcomes data. Treat it as an estimate, not an empirically validated timeline.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Precision gate explanation */}
+                    <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                      Signal Quality ({sigConf != null ? `${Math.round(sigConf * 100)}%` : '—'}) is a severity-weighted ratio of active signals (1.0 = all strong). It is NOT the fraction of Stage {stage} predictions that confirmed as layoffs — that precision rate is currently UNKNOWN (0 confirmed outcome cases). Precision gate: ≥20 outcomes AND precision ≥{stage === 1 ? '0.35' : stage === 2 ? '0.50' : '0.60'} required before the{stage === 3 ? ' emergency protocol and 0.2× deadline compression are' : ' stage classification is'} considered validated.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Circuit breaker disclosure — shown when any API has OPEN/HALF_OPEN circuit */}
           {(() => {
             const avSnap   = getCircuitSnapshot('alphavantage');

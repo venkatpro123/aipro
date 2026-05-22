@@ -724,6 +724,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
               ...mergedResult,
               ...(report.stage ? { collapseStage: report.stage } : {}),
               departmentFreezeScore: report.userDepartmentFreezeScore ?? null,
+              // GAP-A04: forward internal signal quality + precision status
+              collapseStageConfidence: report.stage ? report.signalConfidence : null,
+              collapsePrecisionStatus: report.stage ? 'uncalibrated_placeholder' : undefined,
             },
           });
         }
@@ -1445,6 +1448,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
                 ...enrichedResult,
                 ...(report.stage ? { collapseStage: report.stage } : {}),
                 departmentFreezeScore: userDeptFreeze,
+                // GAP-A04: forward internal signal quality + precision status
+                collapseStageConfidence: report.stage ? report.signalConfidence : null,
+                collapsePrecisionStatus: report.stage ? 'uncalibrated_placeholder' : undefined,
               },
             });
           }
