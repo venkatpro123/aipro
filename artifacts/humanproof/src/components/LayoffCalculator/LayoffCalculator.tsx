@@ -143,6 +143,43 @@ const Toast: React.FC<{
   );
 };
 
+// Derives the user's job-market region for the ms:: market-specific cache key.
+// Priority: localCurrencyCode (explicit user setting) → metroArea slug → metro slug → company region.
+// This ensures a Bengaluru Microsoft SDE gets ms::microsoft::sw_backend::IN (India hiring data)
+// rather than ms::microsoft::sw_backend::US (SF counts, USD salaries).
+const CURRENCY_TO_REGION: Record<string, string> = {
+  INR: 'IN', USD: 'US', GBP: 'GB', SGD: 'SG', EUR: 'EU',
+  PHP: 'PH', AED: 'AE', SAR: 'SA', MYR: 'MY', HKD: 'HK',
+  AUD: 'AU', CAD: 'CA', JPY: 'JP', KRW: 'KR', BRL: 'BR',
+  MXN: 'MX', NZD: 'NZ', CHF: 'CH', ZAR: 'ZA', NGN: 'NG',
+};
+const METRO_TO_REGION: Record<string, string> = {
+  bangalore: 'IN', bengaluru: 'IN', mumbai: 'IN', delhi: 'IN', hyderabad: 'IN',
+  chennai: 'IN', pune: 'IN', kolkata: 'IN', ahmedabad: 'IN', noida: 'IN', gurgaon: 'IN',
+  san_francisco: 'US', new_york: 'US', seattle: 'US', austin: 'US', chicago: 'US',
+  boston: 'US', los_angeles: 'US', denver: 'US', dallas: 'US', atlanta: 'US',
+  london: 'GB', manchester: 'GB', berlin: 'DE', munich: 'DE', frankfurt: 'DE',
+  singapore: 'SG', sydney: 'AU', melbourne: 'AU', toronto: 'CA', vancouver: 'CA',
+  dubai: 'AE', manila: 'PH', kuala_lumpur: 'MY', hong_kong: 'HK',
+  tokyo: 'JP', seoul: 'KR', sao_paulo: 'BR', mexico_city: 'MX',
+};
+
+function resolveUserMarketRegion(
+  profile: { localCurrencyCode?: string | null; metroArea?: string | null; metro?: string | null } | null,
+  companyRegion: string | null | undefined,
+): string | undefined {
+  if (profile?.localCurrencyCode) {
+    const r = CURRENCY_TO_REGION[profile.localCurrencyCode];
+    if (r) return r;
+  }
+  const metroSlug = (profile?.metroArea ?? profile?.metro ?? '').toLowerCase().replace(/[\s-]/g, '_');
+  if (metroSlug) {
+    const r = METRO_TO_REGION[metroSlug];
+    if (r) return r;
+  }
+  return companyRegion ?? undefined;
+}
+
 export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile, profileVersion } = useHumanProof();
@@ -530,7 +567,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       performanceTier: userFactors.performanceTier,
       hasRecentPromotion: userFactors.hasRecentPromotion,
       hasKeyRelationships: userFactors.hasKeyRelationships,
-      region: companyData.region ?? undefined,
+      region: resolveUserMarketRegion(userProfile, companyData.region),
       forceRefresh,
       onSwarmComplete: () => {
         swarmDone = true;
@@ -1169,7 +1206,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         hasRecentPromotion: inputs.userFactors.hasRecentPromotion,
         hasKeyRelationships: inputs.userFactors.hasKeyRelationships,
         roleExposureOverride: fetchedRoleExposure,
-        region: companyData.region ?? undefined,
+        region: resolveUserMarketRegion(userProfile, companyData.region),
         _timer: _calcTimer,
         forceRefresh,
         onSwarmComplete: () => {

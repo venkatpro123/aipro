@@ -159,12 +159,14 @@ export const mergeMarketSlot = (ensembleResult: any, slot: MarketSpecificSlot): 
   ...ensembleResult,
   // Hiring connector outputs — override whatever was baked in from the neutral cache
   _marketSpecific: slot,
-  // oneActionThisWeek and indiaSpecificInsight from the region-appropriate slot;
-  // null when the slot was hydrated from connector only (no LLM re-run).
-  // The UI shows "region-specific guidance" for non-null and falls back gracefully.
-  oneActionThisWeek:    slot.oneActionThisWeek    ?? ensembleResult.oneActionThisWeek    ?? null,
-  indiaSpecificInsight: slot.indiaSpecificInsight  ?? null,   // never serve India text to non-India users
-  whatChangesRiskMost:  slot.whatChangesRiskMost   ?? ensembleResult.whatChangesRiskMost  ?? null,
+  // Use LLM text from the region-specific slot only. Never fall back to the neutral
+  // cache's text: the neutral was generated with companyData.region (company HQ), not
+  // the user's geographic market. A Bengaluru Microsoft SDE must not receive SF action
+  // text just because the connector-only slot has no LLM output. Null is correct here —
+  // the UI handles it with a generic fallback that doesn't assert a wrong geography.
+  oneActionThisWeek:    slot.oneActionThisWeek    ?? null,
+  indiaSpecificInsight: slot.indiaSpecificInsight  ?? null,
+  whatChangesRiskMost:  slot.whatChangesRiskMost   ?? null,
 });
 
 /**
