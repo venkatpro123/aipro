@@ -41,6 +41,12 @@ import {
   type FormulaHoldoutValidation,
 } from "../../services/empiricalCalibration";
 import {
+  getStealthPrecisionStats,
+  getStealthPrecisionStatsSync,
+  type StealthPrecisionStats,
+  type StealthSubSignal,
+} from "../../services/stealthLayoffDetector";
+import {
   getD8ValidationStatus,
   getD8ValidationStatusSync,
   type D8ValidationStatus,
@@ -1867,6 +1873,14 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
     getFormulaHoldoutValidation().then(setHoldoutValidation).catch(() => {});
   }, []);
 
+  // GAP-A03: live stealth detector precision from stealth_layoff_precision_summary (1-hour cache).
+  const [stealthPrecision, setStealthPrecision] = useState<StealthPrecisionStats>(
+    getStealthPrecisionStatsSync()
+  );
+  useEffect(() => {
+    getStealthPrecisionStats().then(setStealthPrecision).catch(() => {});
+  }, []);
+
   // Derive uncalibrated count from: DB view > HybridResult snapshot count > 0
   const uncalibratedCount =
     provenanceSummary?.uncalibratedCount
@@ -2256,6 +2270,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
               severity: string; pctChange6mo: number | null;
               recentEmployeeCount: number | null; priorEmployeeCount: number | null;
               dataSource: string | null; confidence: number; hasAnnouncedRound: boolean;
+              subSignals?: StealthSubSignal[];
             } | undefined;
 
             return (
@@ -2292,53 +2307,118 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                                 min {floorVal}
                               </span>
                             )}
-                            {/* GAP-A03: precision UNKNOWN badge for stealth floor */}
+                            {/* GAP-A03: ESTIMATED label + dynamic precision badge */}
                             {isStealth && (
-                              <span
-                                className="text-[9px] font-bold px-2 py-0.5 rounded"
-                                style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.30)' }}
-                              >
-                                PRECISION: UNKNOWN
-                              </span>
+                              <>
+                                <span
+                                  className="text-[9px] font-bold px-2 py-0.5 rounded"
+                                  style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.30)' }}
+                                >
+                                  ESTIMATED
+                                </span>
+                                <span
+                                  className="text-[9px] font-bold px-2 py-0.5 rounded"
+                                  style={{
+                                    background: stealthPrecision.gateStatus === 'gate_clears'
+                                      ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
+                                    color: stealthPrecision.gateStatus === 'gate_clears'
+                                      ? '#34d399' : '#fbbf24',
+                                    border: stealthPrecision.gateStatus === 'gate_clears'
+                                      ? '1px solid rgba(16,185,129,0.30)' : '1px solid rgba(245,158,11,0.30)',
+                                  }}
+                                >
+                                  PRECISION: {stealthPrecision.precisionLabel}
+                                </span>
+                              </>
                             )}
                           </div>
                           <p className="text-[11px] text-rose-200/85 leading-relaxed font-mono">
                             {disclosure}
                           </p>
-                          {/* GAP-A03: rich stealth signal detail when available */}
-                          {isStealth && stealthSig && stealthSig.pctChange6mo != null && (
-                            <div className="mt-2 space-y-1.5">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="rounded-lg p-2" style={{ background: 'rgba(239,68,68,0.08)' }}>
-                                  <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">6-month delta</div>
-                                  <div className="text-xs font-black" style={{ color: '#f87171' }}>
-                                    {stealthSig.pctChange6mo.toFixed(1)}%
+                          {/* GAP-A03: structured detection signal list with precision disclosure */}
+                          {isStealth && stealthSig && (
+                            <div className="mt-3 space-y-2">
+                              {/* Numbered detection signals */}
+                              {(stealthSig.subSignals ?? []).length > 0 && (
+                                <div className="rounded-lg p-3 space-y-2" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)' }}>
+                                  <div className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">
+                                    Detection signals ({(stealthSig.subSignals ?? []).length})
                                   </div>
-                                </div>
-                                <div className="rounded-lg p-2" style={{ background: 'rgba(239,68,68,0.08)' }}>
-                                  <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Severity</div>
-                                  <div className="text-xs font-black" style={{ color: '#f87171' }}>
-                                    {stealthSig.severity}
-                                  </div>
-                                </div>
-                                {stealthSig.priorEmployeeCount != null && stealthSig.recentEmployeeCount != null && (
-                                  <div className="col-span-2 rounded-lg p-2" style={{ background: 'rgba(239,68,68,0.08)' }}>
-                                    <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Headcount</div>
-                                    <div className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                                      {stealthSig.priorEmployeeCount.toLocaleString()} → {stealthSig.recentEmployeeCount.toLocaleString()}
-                                      {stealthSig.dataSource && (
-                                        <span className="ml-1.5 text-[9px] opacity-50">
-                                          source: {stealthSig.dataSource}
-                                          {stealthSig.dataSource !== 'linkedin' && ' (not LinkedIn — see note)'}
+                                  {(stealthSig.subSignals as StealthSubSignal[]).map((sig, idx) => (
+                                    <div key={idx} className="flex gap-2 items-start">
+                                      <span className="text-[9px] font-black text-rose-400 shrink-0 mt-0.5 w-3">
+                                        {idx + 1}.
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-[10px] font-semibold text-rose-200/90">
+                                          {sig.label}
                                         </span>
-                                      )}
+                                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                                          <span className="text-[9px] text-rose-300/80">
+                                            Observed: <span className="font-black">{sig.observedValue}</span>
+                                          </span>
+                                          <span className="text-[9px] opacity-55">
+                                            Threshold: {sig.threshold}
+                                          </span>
+                                          <span className="text-[9px] opacity-45">
+                                            Window: {sig.windowPeriod}
+                                          </span>
+                                          <span className="text-[9px] opacity-40">
+                                            Source: {sig.dataSource}
+                                            {sig.dataSource !== 'linkedin' && ' (not LinkedIn)'}
+                                          </span>
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
+                                  ))}
+                                  {/* Headcount from→to when available */}
+                                  {stealthSig.priorEmployeeCount != null && stealthSig.recentEmployeeCount != null && (
+                                    <div className="mt-1.5 pt-1.5 border-t border-rose-500/15 flex items-center gap-1.5">
+                                      <span className="text-[9px] opacity-50 uppercase tracking-wider">Headcount:</span>
+                                      <span className="text-[10px] font-mono font-semibold text-rose-200/80">
+                                        {stealthSig.priorEmployeeCount.toLocaleString()}
+                                        {' → '}
+                                        {stealthSig.recentEmployeeCount.toLocaleString()}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* ESTIMATED heuristic note + live precision */}
+                              <div className="rounded-lg p-2.5 space-y-1" style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.18)' }}>
+                                <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(200,200,255,0.65)' }}>
+                                  <span className="font-black text-indigo-300">ESTIMATED</span> — stealth layoff detection is a
+                                  pattern-matching heuristic, not a confirmed event. It detects headcount
+                                  contraction without an announcement; it cannot distinguish mass layoffs,
+                                  contractor re-classification, or voluntary attrition acceleration.
+                                </p>
+                                <div className="flex flex-wrap gap-x-4 gap-y-0.5 pt-0.5">
+                                  <span className="text-[9px]" style={{ color: 'rgba(200,200,255,0.55)' }}>
+                                    Detection precision:{' '}
+                                    <span className={`font-black ${stealthPrecision.gateStatus === 'gate_clears' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                      {stealthPrecision.precisionLabel}
+                                    </span>
+                                  </span>
+                                  <span className="text-[9px]" style={{ color: 'rgba(200,200,255,0.55)' }}>
+                                    False positive rate:{' '}
+                                    <span className={`font-black ${stealthPrecision.gateStatus === 'gate_clears' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                      {stealthPrecision.fprLabel}
+                                    </span>
+                                  </span>
+                                  {stealthPrecision.overallN > 0 && (
+                                    <span className="text-[9px] opacity-40">
+                                      n={stealthPrecision.overallN} confirmed outcomes
+                                    </span>
+                                  )}
+                                </div>
+                                {stealthPrecision.gateStatus === 'insufficient_cases' && (
+                                  <p className="text-[9px] opacity-40 leading-relaxed">
+                                    Precision gate not yet cleared — requires ≥20 confirmed outcomes with outcome_reported.
+                                    Floor applies conservatively until gate clears (precision ≥ 60%).
+                                  </p>
                                 )}
                               </div>
-                              <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.40)' }}>
-                                Signal: aggregate headcount delta only — cannot distinguish mass layoffs, contractor re-classification, or attrition acceleration. Precision gate not yet cleared (0 confirmed cases). Floor applies until gate clears (≥20 outcomes, precision ≥0.60).
-                              </p>
                             </div>
                           )}
                         </div>

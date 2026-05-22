@@ -166,6 +166,11 @@ COMMENT ON VIEW public.stealth_layoff_precision_summary IS
 
 
 -- ── 3. Register precision status in engine_calibration_constants ──────────
+-- Columns added by 20260623000013 schema fix; safe to repeat as IF NOT EXISTS.
+ALTER TABLE public.engine_calibration_constants
+  ADD COLUMN IF NOT EXISTS description      TEXT,
+  ADD COLUMN IF NOT EXISTS added_in_version TEXT;
+
 INSERT INTO public.engine_calibration_constants
   (key, value, provenance, description, status, cohort_scope, added_in_version)
 VALUES

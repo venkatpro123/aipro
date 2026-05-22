@@ -66,6 +66,13 @@
 -- 3. Log to scoring_architecture_log
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+-- ── 0. Schema fix — add missing columns introduced after WS9 table creation ──
+-- engine_calibration_constants was created in 20260615000001 without these
+-- columns. Added here so INSERTs below succeed on a fresh deploy.
+ALTER TABLE public.engine_calibration_constants
+  ADD COLUMN IF NOT EXISTS description      TEXT,
+  ADD COLUMN IF NOT EXISTS added_in_version TEXT;
+
 -- ── 1. Register decay constants in engine_calibration_constants ───────────────
 INSERT INTO public.engine_calibration_constants (key, value, provenance, description, status, cohort_scope, added_in_version)
 VALUES

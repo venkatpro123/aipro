@@ -64,6 +64,42 @@ export type StealthSeverity =
   | 'SILENT_PURGE'
   | 'NO_DATA';
 
+/**
+ * GAP-A03 — One numbered detection signal surfaced in TransparencyTab.
+ * The detector currently has exactly ONE signal type (headcount delta).
+ */
+export interface StealthSubSignal {
+  /** Short label for the signal row in TransparencyTab numbered list */
+  label: string;
+  /** Observed value with unit, e.g. "−8.3% over 26 weeks" */
+  observedValue: string;
+  /** Severity-band threshold that was crossed, e.g. "< −5% (SILENT_TRIM)" */
+  threshold: string;
+  /** Direction the metric moved */
+  direction: 'increase' | 'decrease';
+  /** DB source that provided this data */
+  dataSource: string;
+  /** Measurement window, e.g. "26 weeks (~183 days)" */
+  windowPeriod: string;
+}
+
+/**
+ * GAP-A03 — Live precision stats for the stealth layoff detector.
+ * Aggregated across all severity bands from stealth_layoff_precision_summary.
+ * When < 20 confirmed outcomes, precisionLabel = 'UNKNOWN'.
+ */
+export interface StealthPrecisionStats {
+  /** Total flagged outcomes that have an outcome_reported value (denominator). */
+  overallN: number;
+  /** Fraction of flagged outcomes that were confirmed layoffs. null when overallN < 1. */
+  overallPrecision: number | null;
+  /** "UNKNOWN" when overallN < 20; "71%" when known. */
+  precisionLabel: string;
+  /** "UNKNOWN" when overallN < 20; "29%" when known. */
+  fprLabel: string;
+  gateStatus: 'gate_clears' | 'insufficient_cases' | 'precision_below_gate';
+}
+
 export interface StealthSignal {
   severity:           StealthSeverity;
   /** True when severity is SILENT_TRIM or worse AND no announced rounds exist. */
@@ -89,6 +125,12 @@ export interface StealthSignal {
    * null when NO_DATA was returned (no qualifying snapshot found).
    */
   dataSource:         string | null;
+  /**
+   * GAP-A03 — Structured sub-signals for TransparencyTab numbered disclosure.
+   * Currently always 0 or 1 entry (the single headcount-delta signal).
+   * Empty array when severity is STABLE, SOFT_TRIM, or NO_DATA.
+   */
+  subSignals:         StealthSubSignal[];
 }
 
 const NO_SIGNAL: StealthSignal = {
@@ -102,6 +144,7 @@ const NO_SIGNAL: StealthSignal = {
   rationale: 'Insufficient headcount snapshot data',
   hasAnnouncedRound: false,
   dataSource: null,
+  subSignals: [],
 };
 
 // ── Severity classification ─────────────────────────────────────────────────
@@ -241,13 +284,33 @@ export async function detectStealthLayoff(input: DetectorInput): Promise<Stealth
   const confidence = Math.round(deltaConfidence * (velocity.recent_conf ?? 0.8) * 100) / 100;
 
   const rationale = flagged
-    ? `LinkedIn headcount fell ${velocity.pct_change_6mo.toFixed(1)}% over 26 weeks ` +
+    ? `Headcount (${velocity.source}) fell ${velocity.pct_change_6mo.toFixed(1)}% over 26 weeks ` +
       `with NO announced layoff round in same window. Likely stealth reduction; ` +
       `score floor raised by ${scoreFloorBoost} pts.`
     : severity === 'STABLE' || severity === 'SOFT_TRIM'
-    ? `LinkedIn headcount within normal range (${velocity.pct_change_6mo.toFixed(1)}% over 26 weeks).`
-    : `LinkedIn headcount fell ${velocity.pct_change_6mo.toFixed(1)}% over 26 weeks ` +
+    ? `Headcount (${velocity.source}) within normal range (${velocity.pct_change_6mo.toFixed(1)}% over 26 weeks).`
+    : `Headcount (${velocity.source}) fell ${velocity.pct_change_6mo.toFixed(1)}% over 26 weeks ` +
       `BUT an announced layoff round exists in the same window — already counted in L2.`;
+
+  // GAP-A03 — structured sub-signal for TransparencyTab numbered disclosure.
+  const THRESHOLD_LABELS: Record<StealthSeverity, string> = {
+    STABLE:       '> −2% (no action)',
+    SOFT_TRIM:    '−5% to −2% (no floor)',
+    SILENT_TRIM:  '< −5% → floor 60',
+    SILENT_CUT:   '< −10% → floor 65',
+    SILENT_PURGE: '< −20% → floor 70',
+    NO_DATA:      'insufficient data',
+  };
+  const subSignals: StealthSubSignal[] = flagged
+    ? [{
+        label: 'Aggregate headcount change (26-week delta)',
+        observedValue: `${velocity.pct_change_6mo.toFixed(1)}%`,
+        threshold: THRESHOLD_LABELS[severity],
+        direction: 'decrease',
+        dataSource: velocity.source,
+        windowPeriod: '26 weeks (~183 days)',
+      }]
+    : [];
 
   return {
     severity,
@@ -260,7 +323,77 @@ export async function detectStealthLayoff(input: DetectorInput): Promise<Stealth
     rationale,
     hasAnnouncedRound,
     dataSource: velocity.source,
+    subSignals,
   };
+}
+
+// ── Precision stats ─────────────────────────────────────────────────────────
+
+const STEALTH_PRECISION_FALLBACK: StealthPrecisionStats = {
+  overallN: 0,
+  overallPrecision: null,
+  precisionLabel: 'UNKNOWN',
+  fprLabel: 'UNKNOWN',
+  gateStatus: 'insufficient_cases',
+};
+
+let _stealthPrecisionCache: { data: StealthPrecisionStats; ts: number } | null = null;
+const STEALTH_PRECISION_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * GAP-A03 — Live precision stats from stealth_layoff_precision_summary.
+ * Non-fatal: returns FALLBACK on any DB error (0 cases / UNKNOWN state).
+ * Results cached for 1 hour.
+ */
+export async function getStealthPrecisionStats(): Promise<StealthPrecisionStats> {
+  if (_stealthPrecisionCache && Date.now() - _stealthPrecisionCache.ts < STEALTH_PRECISION_TTL_MS) {
+    return _stealthPrecisionCache.data;
+  }
+  try {
+    const { data, error } = await supabase
+      .from('stealth_layoff_precision_summary')
+      .select('n_flagged, n_confirmed_layoff, n_false_positive, precision, gate_status');
+
+    if (error || !data || data.length === 0) return STEALTH_PRECISION_FALLBACK;
+
+    const totalConfirmed = data.reduce((s: number, r: any) => s + (r.n_confirmed_layoff ?? 0), 0);
+    const totalFP        = data.reduce((s: number, r: any) => s + (r.n_false_positive ?? 0), 0);
+    const totalWithResult = totalConfirmed + totalFP;
+
+    const overallPrecision = totalWithResult >= 1
+      ? Math.round((totalConfirmed / totalWithResult) * 1000) / 1000
+      : null;
+    const overallFPR = totalWithResult >= 1 ? totalFP / totalWithResult : null;
+
+    const gateStatus: StealthPrecisionStats['gateStatus'] =
+      totalWithResult >= 20 && overallPrecision != null && overallPrecision >= 0.60
+        ? 'gate_clears'
+        : totalWithResult < 20
+        ? 'insufficient_cases'
+        : 'precision_below_gate';
+
+    const result: StealthPrecisionStats = {
+      overallN: totalWithResult,
+      overallPrecision,
+      precisionLabel: totalWithResult >= 20 && overallPrecision != null
+        ? `${Math.round(overallPrecision * 100)}%`
+        : 'UNKNOWN',
+      fprLabel: totalWithResult >= 20 && overallFPR != null
+        ? `${Math.round(overallFPR * 100)}%`
+        : 'UNKNOWN',
+      gateStatus,
+    };
+
+    _stealthPrecisionCache = { data: result, ts: Date.now() };
+    return result;
+  } catch {
+    return STEALTH_PRECISION_FALLBACK;
+  }
+}
+
+/** Sync accessor — returns cached value or conservative UNKNOWN fallback. */
+export function getStealthPrecisionStatsSync(): StealthPrecisionStats {
+  return _stealthPrecisionCache?.data ?? STEALTH_PRECISION_FALLBACK;
 }
 
 /**
