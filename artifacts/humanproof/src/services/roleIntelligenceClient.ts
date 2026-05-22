@@ -140,15 +140,15 @@ async function fetchAllRoleIntelligence(): Promise<void> {
   }
 
   try {
+    // BUG-08: Promise.allSettled — a timeout on role_automation_timeline (large table)
+    // must not abort the roles + role_aliases queries that are critical for resolution.
+    const FAIL = { data: null as null, error: new Error('query_rejected') };
+    const extract = <T>(s: PromiseSettledResult<{ data: T | null; error: unknown }>) =>
+      s.status === 'fulfilled' ? s.value : FAIL;
+
     const [
-      { data: roles, error: rolesErr },
-      { data: aliases, error: aliasErr },
-      { data: actions, error: actionsErr },
-      { data: comp, error: compErr },
-      { data: nego, error: negoErr },
-      { data: automation, error: autoErr },
-      { data: demand, error: demandErr },
-    ] = await Promise.all([
+      rolesS, aliasS, actionsS, compS, negoS, autoS, demandS,
+    ] = await Promise.allSettled([
       supabase.from('roles').select('*').eq('is_active', true),
       supabase.from('role_aliases').select('*'),
       supabase.from('role_actions').select('*'),
@@ -158,6 +158,14 @@ async function fetchAllRoleIntelligence(): Promise<void> {
       // v39.0 A1: pull demand overrides into the unified cache
       supabase.from('role_demand_overrides').select('*').eq('is_active', true),
     ]);
+
+    const { data: roles,      error: rolesErr   } = extract(rolesS);
+    const { data: aliases,    error: aliasErr   } = extract(aliasS);
+    const { data: actions,    error: actionsErr } = extract(actionsS);
+    const { data: comp,       error: compErr    } = extract(compS);
+    const { data: nego,       error: negoErr    } = extract(negoS);
+    const { data: automation, error: autoErr    } = extract(autoS);
+    const { data: demand,     error: demandErr  } = extract(demandS);
 
     // If any fundamental query failed, mark unavailable but don't crash
     if (rolesErr || aliasErr) {

@@ -698,10 +698,13 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
     setIntel(baseIntel);
     setCompanyDemand(null);
 
-    Promise.all([
+    // BUG-08: allSettled — a company skill demand timeout must not abort the industry overlay.
+    Promise.allSettled([
       overlaySkillDemand(baseIntel, result.workTypeKey),
       companyName ? getCompanySkillDemand(companyName, result.workTypeKey) : Promise.resolve(null),
-    ]).then(([industryEnriched, companyData]) => {
+    ]).then(([industrySettled, companySettled]) => {
+      const industryEnriched = industrySettled.status === 'fulfilled' ? industrySettled.value : baseIntel;
+      const companyData      = companySettled.status  === 'fulfilled' ? companySettled.value  : null;
       if (companyData) {
         // Company-specific data is available and fresh (≤7 days).
         // Strip the industry-level demandLive from all skills first — the two
@@ -710,10 +713,10 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
         setIntel(applyCompanySkillOverlay(stripped, companyData, result.workTypeKey));
         setCompanyDemand(companyData);
       } else {
-        // No company data: show industry-level overlay as-is.
+        // No company data (or company fetch failed): show industry-level overlay.
         setIntel(industryEnriched);
       }
-    }).catch(() => { setIntel(baseIntel); });
+    });
   }, [baseIntel, result.workTypeKey, companyName]);
 
   // v6.0: Derive uniqueness depth at component level for career path filtering

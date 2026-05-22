@@ -385,11 +385,17 @@ export async function executeRegistry(ctx: AuditContext, opts: ExecuteOptions = 
     const waveRecords: LayerExecutionRecord[] = [];
 
     // Ungrouped: full parallelism.
+    // BUG-08: runLayer always resolves (catches internally), so Promise.allSettled
+    // is equivalent here — but makes the isolation contract explicit and safe for
+    // future refactors that might introduce rejecting runLayer paths.
     if (opts.serial) {
       for (const l of ungrouped) waveRecords.push(await runLayer(l, ctx));
     } else {
-      const parallelResults = await Promise.all(ungrouped.map((l) => runLayer(l, ctx)));
-      waveRecords.push(...parallelResults);
+      const parallelSettled = await Promise.allSettled(ungrouped.map((l) => runLayer(l, ctx)));
+      for (const s of parallelSettled) {
+        if (s.status === 'fulfilled') waveRecords.push(s.value);
+        // Rejected branch is defence-in-depth only — runLayer never rejects.
+      }
     }
 
     // Grouped: serial within each group, groups themselves in parallel.
@@ -403,8 +409,10 @@ export async function executeRegistry(ctx: AuditContext, opts: ExecuteOptions = 
         })(),
       );
     }
-    const groupResults = await Promise.all(groupPromises);
-    for (const arr of groupResults) waveRecords.push(...arr);
+    const groupSettled = await Promise.allSettled(groupPromises);
+    for (const s of groupSettled) {
+      if (s.status === 'fulfilled') waveRecords.push(...s.value);
+    }
 
     records.push(...waveRecords);
 

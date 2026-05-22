@@ -21,10 +21,13 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
 
   if (apiKey) {
     try {
-      const [recession, yieldCurve] = await Promise.all([
-        fetchFred('USREC', apiKey),       // 1 = recession, 0 = expansion
-        fetchFred('T10Y2Y', apiKey),      // Negative = yield curve inversion (recession warning)
+      // BUG-08: allSettled — a T10Y2Y timeout must not abort the USREC fetch.
+      const [recS, yieldS] = await Promise.allSettled([
+        fetchFred('USREC', apiKey),
+        fetchFred('T10Y2Y', apiKey),
       ]);
+      const recession  = recS.status   === 'fulfilled' ? recS.value   : null;
+      const yieldCurve = yieldS.status === 'fulfilled' ? yieldS.value : null;
 
       let signal = 0.35; // base
       if (recession === 1) signal = 0.90; // We're in a recession right now

@@ -273,17 +273,32 @@ export async function detectCollapseStage(inputs: CollapseInputs): Promise<Colla
     aiInvestmentSignal, layoffRounds, mostRecentLayoffDate, filingDelinquent,
     userDepartment } = inputs;
 
-  // v4.0: Fetch department-level freeze scores in parallel with other signals
+  // v4.0: Fetch department-level freeze scores in parallel with other signals.
+  // BUG-08: Two separate Promise.allSettled batches — typed separately so TypeScript
+  // can narrow each result without a wide union. A news timeout must not abort
+  // roleData; a department freeze query must not abort core signals.
   const departmentEntries = Object.entries(DEPARTMENT_ROLES);
-  const [newsData, roleData, sectorCount, ...deptRoleDataArr] = await Promise.all([
+
+  const NEUTRAL_DEPT = { hiringFreezeScore: 0.5, demandTrend: 'stable' as const, isLive: false, estimatedOpenings: null as null, source: 'heuristic' };
+
+  // Batch 1: core signals (typed individually)
+  const [newsSettled, roleSettled, sectorSettled] = await Promise.allSettled([
     fetchCompanyNewsSignals(companyName),
     fetchRoleDemandSignal(roleTitle, companyName),
     getSectorLayoffCount(industry, 180),
-    // Fetch freeze score for one representative role per department
-    ...departmentEntries.map(([, roles]) =>
-      fetchRoleDemandSignal(roles[0], companyName).catch(() => ({ hiringFreezeScore: 0.5, demandTrend: 'stable' as const, isLive: false, estimatedOpenings: null, source: 'heuristic' }))
-    ),
-  ]);
+  ] as const);
+
+  const newsData    = newsSettled.status   === 'fulfilled' ? newsSettled.value
+    : { company: companyName, signals: [], negativeCount: 0, layoffSignalCount: 0, sentimentScore: 0.5, fetchedAt: new Date().toISOString() };
+  const roleData    = roleSettled.status   === 'fulfilled' ? roleSettled.value
+    : { roleTitle, company: companyName, estimatedOpenings: null, naukriOpenings: null, linkedinOpenings: null, demandTrend: 'stable' as const, hiringFreezeScore: 0.5, source: 'heuristic', isLive: false };
+  const sectorCount = sectorSettled.status === 'fulfilled' ? sectorSettled.value : 0;
+
+  // Batch 2: per-department demand signals (homogeneous array — safe to slice/map)
+  const deptSettled = await Promise.allSettled(
+    departmentEntries.map(([, roles]) => fetchRoleDemandSignal(roles[0], companyName)),
+  );
+  const deptRoleDataArr = deptSettled.map(s => s.status === 'fulfilled' ? s.value : NEUTRAL_DEPT);
 
   // Stage 1 signals
   const s1: StageSignal[] = [

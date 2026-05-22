@@ -32,10 +32,13 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
 
   if (apiKey) {
     try {
-      const [unrate, nrou] = await Promise.all([
-        fetchLatestFred('UNRATE', apiKey),   // Actual unemployment rate
-        fetchLatestFred('NROU', apiKey),     // Natural rate of unemployment
+      // BUG-08: allSettled — an NROU timeout must not abort the UNRATE fetch.
+      const [unrateS, nrouS] = await Promise.allSettled([
+        fetchLatestFred('UNRATE', apiKey),
+        fetchLatestFred('NROU', apiKey),
       ]);
+      const unrate = unrateS.status === 'fulfilled' ? unrateS.value : null;
+      const nrou   = nrouS.status   === 'fulfilled' ? nrouS.value   : null;
 
       if (unrate !== null && nrou !== null) {
         const gap = unrate - nrou; // Positive = loose market (higher risk), negative = tight (lower risk)

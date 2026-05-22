@@ -1121,10 +1121,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   let liveQuorum: import('./scraperTrigger').AwaitLiveQuorumResult | null = null;
   try {
     const efTicker = (companyData as any).ticker ?? (companyData as any).stockTicker ?? null;
-    const [liveDataResolved, quorumResolved] = await Promise.all([
+    // BUG-08: Promise.allSettled — both promises have internal .catch(→null) guards,
+    // but allSettled makes the isolation explicit: a quorum-gate rejection (e.g. scraperTrigger
+    // dynamic import failure) must never abort the already-completed live data fetch.
+    const [liveDataSettled, quorumSettled] = await Promise.allSettled([
       _liveDataPromise,
       _liveQuorumPromise,
     ]);
+    const liveDataResolved = liveDataSettled.status === 'fulfilled' ? liveDataSettled.value : null;
+    const quorumResolved   = quorumSettled.status   === 'fulfilled' ? quorumSettled.value   : null;
     let liveData = liveDataResolved;
     liveQuorum = quorumResolved;
 

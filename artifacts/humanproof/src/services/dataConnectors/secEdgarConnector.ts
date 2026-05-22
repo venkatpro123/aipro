@@ -224,10 +224,14 @@ export async function fetchSecEdgar8KSignals(
   // Fan out across layoff-term variants × legal entity names in parallel.
   // 5 queries × up to 2 entity names = up to 10 requests, still well under
   // EDGAR's 10 req/sec fair-use ceiling.
-  const responses = await Promise.all(
+  // BUG-08: Promise.allSettled — a single EDGAR timeout must not abort all N queries.
+  const settled = await Promise.allSettled(
     edgarNames.flatMap((name) =>
       LAYOFF_QUERIES.map((q) => searchOne(q, name, daysBack)),
     ),
+  );
+  const responses = settled.map(s =>
+    s.status === 'fulfilled' ? s.value : { reachable: false, hits: [] as SecEdgarHit[] },
   );
 
   // Dedupe hits by (cik + filedAt + formType). The same 8-K commonly matches
@@ -310,10 +314,15 @@ export async function fetchSecEdgarExecutiveDepartures(
 
   const edgarNames = resolveEdgarNames(company);
 
-  const responses = await Promise.all(
+  // BUG-08: Promise.allSettled — a single executive-departure query timeout must not
+  // abort all other entity×query combinations.
+  const execSettled = await Promise.allSettled(
     edgarNames.flatMap((name) =>
       EXEC_DEPARTURE_QUERIES.map((q) => searchOne(q, name, daysBack)),
     ),
+  );
+  const responses = execSettled.map(s =>
+    s.status === 'fulfilled' ? s.value : { reachable: false, hits: [] as SecEdgarHit[] },
   );
 
   const seen = new Set<string>();

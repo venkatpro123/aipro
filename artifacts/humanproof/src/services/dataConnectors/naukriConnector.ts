@@ -321,7 +321,8 @@ export async function fetchRoleDemandSignal(
 
   if (isLocalhost && devSerperKey && isCallAllowed('serper')) {
     try {
-      const [naukriRes, linkedinRes] = await Promise.all([
+      // BUG-08: Promise.allSettled — a Naukri 5s timeout must not abort the LinkedIn fetch.
+      const [naukriSettled, linkedinSettled] = await Promise.allSettled([
         fetch('https://google.serper.dev/search', {
           method: 'POST',
           headers: { 'X-API-KEY': devSerperKey, 'Content-Type': 'application/json' },
@@ -335,9 +336,12 @@ export async function fetchRoleDemandSignal(
           signal: AbortSignal.timeout(5000),
         }),
       ]);
+      // Rejected fetches degrade gracefully — null response feeds a null count downstream.
+      const naukriRes   = naukriSettled.status   === 'fulfilled' ? naukriSettled.value   : null;
+      const linkedinRes = linkedinSettled.status === 'fulfilled' ? linkedinSettled.value : null;
 
-      const parseCount = async (res: Response): Promise<number | null> => {
-        if (!res.ok) return null;
+      const parseCount = async (res: Response | null): Promise<number | null> => {
+        if (!res || !res.ok) return null;
         const d = await res.json();
         const snippets: string[] = (d?.organic ?? []).slice(0, 3).map((r: any) => r?.snippet ?? '');
         for (const s of snippets) {

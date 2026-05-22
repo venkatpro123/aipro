@@ -577,7 +577,9 @@ export function loadCalibrationSync(hint?: ScopeResolutionHint): CalibrationBund
  * the lazy loader will populate on demand if not called.
  */
 export async function primeCalibrationCache(scopes: CohortScope[] = ['GLOBAL', 'INDIA_IT', 'US_BIG_TECH']): Promise<void> {
-  await Promise.all(scopes.map((s) => loadScopeWithCache(s)));
+  // BUG-08: Promise.allSettled — a failed INDIA_IT scope load must not abort GLOBAL scope.
+  // Each scope that fails simply won't be cached; the on-demand lazy loader handles it later.
+  await Promise.allSettled(scopes.map((s) => loadScopeWithCache(s)));
 }
 
 /**

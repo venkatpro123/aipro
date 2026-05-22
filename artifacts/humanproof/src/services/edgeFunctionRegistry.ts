@@ -122,7 +122,10 @@ export async function checkEdgeFunctionHealth(
     ? EF_REGISTRY.filter(e => names.includes(e.name))
     : EF_REGISTRY;
 
-  const results = await Promise.all(
+  // BUG-08: Promise.allSettled — each entry's async function already catches its own
+  // errors, so rejection is impossible in practice. allSettled makes the isolation
+  // contract explicit: one hung EF health-check cannot abort the rest.
+  const settled = await Promise.allSettled(
     targets.map(async (entry): Promise<EFHealthResult> => {
       const base: Omit<EFHealthResult, 'status'> = {
         name:            entry.name,
@@ -154,6 +157,15 @@ export async function checkEdgeFunctionHealth(
         return { ...base, status: 'unknown' };
       }
     }),
+  );
+  // Inner async functions always return EFHealthResult (catch → 'unknown'), so every
+  // settled result should be fulfilled. The rejected branch is a defence-in-depth fallback.
+  const results: EFHealthResult[] = settled.map((s, i) =>
+    s.status === 'fulfilled'
+      ? s.value
+      : { name: targets[i]?.name ?? 'unknown', impact: targets[i]?.impact ?? 'low',
+          label: targets[i]?.label ?? 'Unknown EF', degradesFeature: targets[i]?.degradesFeature ?? '',
+          checkedAt: Date.now(), status: 'unknown' as const },
   );
 
   // Cache only when checking all EFs (partial check result shouldn't pollute full cache)

@@ -273,22 +273,25 @@ export const SafeCareersPage: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [careersRes, statsRes] = await Promise.all([
+      // BUG-08: allSettled — a stats endpoint failure must not prevent the careers list from loading.
+      const [careersSettled, statsSettled] = await Promise.allSettled([
         fetch("/api/safe-careers"),
         fetch("/api/safe-careers/stats"),
       ]);
-
-      if (!careersRes.ok || !statsRes.ok) {
-        throw new Error("API request failed");
+      if (careersSettled.status === 'rejected' || (careersSettled.status === 'fulfilled' && !careersSettled.value.ok)) {
+        throw new Error("Careers API request failed");
       }
+      const careersRes = careersSettled.value;
+      // Stats are non-critical — a failed stats fetch degrades gracefully (page renders without stats).
+      const statsRes = statsSettled.status === 'fulfilled' && statsSettled.value.ok ? statsSettled.value : null;
 
       const careersData = await careersRes.json();
-      const statsData = await statsRes.json();
+      const statsData   = statsRes ? await statsRes.json().catch(() => null) : null;
 
       // Only use API data if it has entries, otherwise fallback
       if (careersData?.length > 0) {
         setCareers(careersData);
-        setStats(statsData);
+        setStats(statsData ?? FALLBACK_STATS);
       } else {
         setCareers(FALLBACK_CAREERS);
         setStats(FALLBACK_STATS);

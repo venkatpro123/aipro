@@ -644,10 +644,13 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       }
     }, 4000);
 
-    const [resolvedOracle, shadowEnsemble] = await Promise.all([
+    // BUG-08: allSettled — a failed oracle lookup must not abort the shadow ensemble result.
+    const [oracleSettled, shadowSettled] = await Promise.allSettled([
       oraclePromise,
       shadowPromise,
     ]);
+    const resolvedOracle  = oracleSettled.status  === 'fulfilled' ? oracleSettled.value  : null;
+    const shadowEnsemble  = shadowSettled.status  === 'fulfilled' ? shadowSettled.value  : null;
     clearTimeout(stageTimer);
     if (resolvedOracle) setOracleResult(resolvedOracle);
     setEnsembleStage(3);
@@ -1106,7 +1109,8 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       let fetchedRoleExposure: RoleExposure | undefined;
 
       try {
-        const [indRes, roleRes] = await Promise.all([
+        // BUG-08: allSettled — a slow role_exposure_data query must not abort industry data.
+        const [indSettled, roleSettled] = await Promise.allSettled([
           supabase
             .from("industry_risk_data")
             .select("*")
@@ -1118,6 +1122,8 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             .ilike("role_title", state.roleTitle || "")
             .maybeSingle(),
         ]);
+        const indRes  = indSettled.status  === 'fulfilled' ? indSettled.value  : { data: null, error: null };
+        const roleRes = roleSettled.status === 'fulfilled' ? roleSettled.value : { data: null, error: null };
 
         if (indRes.data) {
           fetchedIndustryData = {
@@ -1315,10 +1321,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       let resolvedOracle: any;
 
       try {
-        [ensembleResult, resolvedOracle] = await Promise.all([
+        // BUG-08: allSettled — an oracle failure must not abort the ensemble result.
+        // The outer catch still handles ensemble failure → deterministic engine fallback.
+        const [ensembleSettled, oracleSettled2] = await Promise.allSettled([
           analysisPromise,
           oraclePromise,
         ]);
+        ensembleResult = ensembleSettled.status === 'fulfilled' ? ensembleSettled.value : (() => { throw ensembleSettled.reason; })();
+        resolvedOracle = oracleSettled2.status  === 'fulfilled' ? oracleSettled2.value  : null;
       } catch (err) {
         console.warn(
           "[Ensemble] Critical failure, falling back to deterministic engine:",

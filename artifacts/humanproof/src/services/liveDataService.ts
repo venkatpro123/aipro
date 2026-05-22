@@ -216,9 +216,12 @@ const fetchAlphaVantageOverview = async (
 ): Promise<StockLiveData | null> => {
   try {
     const overviewUrl = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${apiKey}`;
-    const [overviewRes] = await Promise.all([
+    // BUG-08: Single-element array but use allSettled for consistent pattern.
+    const [overviewSettled] = await Promise.allSettled([
       fetch(overviewUrl, { signal: AbortSignal.timeout(8_000) }),
     ]);
+    if (overviewSettled.status === 'rejected') throw overviewSettled.reason;
+    const overviewRes = overviewSettled.value;
 
     if (!overviewRes.ok) throw new Error(`Alpha Vantage HTTP ${overviewRes.status}`);
     const overview = await overviewRes.json();

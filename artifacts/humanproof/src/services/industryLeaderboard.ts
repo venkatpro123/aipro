@@ -80,10 +80,15 @@ export async function getIndustryLeaderboard(): Promise<IndustryLeaderboard> {
 
   // Enrich with live layoff counts from layoffs.fyi
   const industries = [...new Set(BASELINE_ROLES.map(r => r.industry))];
-  const sectorCounts = await Promise.all(
+  // BUG-08: allSettled — a timeout on one sector's layoff count must not abort all others.
+  const sectorSettled = await Promise.allSettled(
     industries.map(ind => getSectorLayoffCount(ind, 180).then(count => ({ ind, count }))),
   );
-  const countMap = Object.fromEntries(sectorCounts.map(({ ind, count }) => [ind, count]));
+  const countMap = Object.fromEntries(
+    sectorSettled
+      .filter((s): s is PromiseFulfilledResult<{ ind: string; count: number }> => s.status === 'fulfilled')
+      .map(s => [s.value.ind, s.value.count]),
+  );
 
   const enriched: RoleRiskEntry[] = BASELINE_ROLES.map((r, i) => ({
     ...r,

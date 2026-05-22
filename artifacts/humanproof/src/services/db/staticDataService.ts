@@ -193,13 +193,20 @@ export async function preloadStaticData(): Promise<void> {
       setTimeout(() => reject(new Error('Supabase timeout')), LOAD_TIMEOUT)
     );
 
+    // BUG-08: Promise.allSettled — a slow role_exposure_data table scan must not
+    // abort the companies + industry_risk_data queries that seed core scoring.
     const fetchAll = async () => {
-      const [companiesRes, roundsRes, industryRes, roleRes] = await Promise.all([
+      const [cS, rS, iS, reS] = await Promise.allSettled([
         supabase.from('companies').select('*'),
         supabase.from('company_layoff_rounds').select('company_id, round_date, percent_cut'),
         supabase.from('industry_risk_data').select('*'),
         supabase.from('role_exposure_data').select('*'),
       ]);
+      const EMPTY = { data: null as null, error: new Error('query_rejected') };
+      const companiesRes = cS.status  === 'fulfilled' ? cS.value  : EMPTY;
+      const roundsRes    = rS.status  === 'fulfilled' ? rS.value  : EMPTY;
+      const industryRes  = iS.status  === 'fulfilled' ? iS.value  : EMPTY;
+      const roleRes      = reS.status === 'fulfilled' ? reS.value : EMPTY;
       return { companiesRes, roundsRes, industryRes, roleRes };
     };
 

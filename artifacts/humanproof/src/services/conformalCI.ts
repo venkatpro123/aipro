@@ -373,7 +373,8 @@ export function computeConformalCISync(
 
 /** Prime caches for known cohorts at app startup. */
 export async function primeConformalCache(): Promise<void> {
-  await Promise.all((['GLOBAL', 'DISTRESS', 'EFFICIENCY', 'WAVE'] as ConformalCohort[]).map(loadSetWithFallback));
+  // BUG-08: allSettled — a DISTRESS cohort fetch failure must not abort GLOBAL priming.
+  await Promise.allSettled((['GLOBAL', 'DISTRESS', 'EFFICIENCY', 'WAVE'] as ConformalCohort[]).map(loadSetWithFallback));
 }
 
 /** Test-only reset hook. */
