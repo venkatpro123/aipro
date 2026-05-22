@@ -641,10 +641,14 @@ const EffectiveWeightsPanel: React.FC<{
   d8FlagActive?: boolean;
   d8HeuristicActive?: boolean;
   d8EffectiveWeight?: number;
+  /** True when D8 flag off + D8=0: its 0.09 was redistributed ⅓ each to D1/D2/D3. */
+  d8WeightRedistributed?: boolean;
+  /** Per-dimension bump added to D1, D2, D3 during redistribution (≈ 0.030). */
+  d8RedistributedBumpPerDimension?: number;
   /** L1 sector-baseline flag: true when revenue + stock absent; L1 ESTIMATED from sector. */
   l1EstimatedFromSector?: boolean;
   l1SectorBaseline?: number;
-}> = ({ segmentCalibration: seg, d8FlagActive, d8HeuristicActive, d8EffectiveWeight, l1EstimatedFromSector, l1SectorBaseline }) => {
+}> = ({ segmentCalibration: seg, d8FlagActive, d8HeuristicActive, d8EffectiveWeight, d8WeightRedistributed, d8RedistributedBumpPerDimension, l1EstimatedFromSector, l1SectorBaseline }) => {
   type LayerKey = 'L1' | 'L2' | 'L3' | 'L5';
   const layers: LayerKey[] = ['L1', 'L2', 'L3', 'L5'];
 
@@ -696,15 +700,27 @@ const EffectiveWeightsPanel: React.FC<{
           company-specific financials. Score may be ±8 pts from true value.
         </div>
       )}
-      {/* BUG-02 — D8 locked-out banner: shown when D8 holds 9% of the formula budget
-          but contributes 0 because the flag is off and no heuristic path fired. */}
-      {!d8IsActive && (
+      {/* BUG-02 — D8 redistributed banner: shown when D8 is flag-gated off and its
+          0.09 weight has been redistributed ⅓ each to D1/D2/D3. */}
+      {d8WeightRedistributed && (
+        <div className="px-4 py-2 text-[10px] bg-slate-500/10 border-b border-slate-500/20 text-slate-400/80 leading-relaxed">
+          <span className="font-bold uppercase tracking-widest mr-1">D8 flag-gated — weight redistributed:</span>
+          D8 (AI efficiency restructuring, 9%) is currently flag-gated. Its 0.09 weight is
+          redistributed equally to D1/D2/D3
+          {d8RedistributedBumpPerDimension != null
+            ? ` (+${Math.round(d8RedistributedBumpPerDimension * 100)}% each)`
+            : ''
+          }, preserving the 1.00 formula sum. The Hyperscaler D8 Proxy (+12 pts) is applied
+          separately when conditions are met and is labeled{' '}
+          <span className="font-semibold text-amber-400/80">ESTIMATED</span>.
+        </div>
+      )}
+      {/* Fallback banner when D8 inactive but redistribution prop not yet wired (legacy). */}
+      {!d8IsActive && !d8WeightRedistributed && (
         <div className="px-4 py-2 text-[10px] bg-slate-500/10 border-b border-slate-500/20 text-slate-400/80 leading-relaxed">
           <span className="font-bold uppercase tracking-widest mr-1">D8 weight slot inactive (9%):</span>
-          The AI efficiency restructuring dimension (0.09 formula weight) contributes 0 this audit
-          because the v39_d8_ai_efficiency_active flag is off and this company is not classified as
-          EFFICIENCY cohort. Maximum achievable score from the formula alone is 91 pts. The
-          hyperscaler proxy (+12 pts) compensates only for named hyperscalers with very-high AI investment.
+          The AI efficiency restructuring dimension (0.09 formula weight) contributes 0 this audit.
+          The hyperscaler proxy (+12 pts) compensates only for named hyperscalers with very-high AI investment.
         </div>
       )}
       <div className="overflow-x-auto">
@@ -782,6 +798,8 @@ const EffectiveWeightsPanel: React.FC<{
                 ? 'AI Efficiency (logistic)'
                 : d8HeuristicActive
                 ? 'AI Efficiency (heuristic)'
+                : d8WeightRedistributed
+                ? 'AI Efficiency (redistributed)'
                 : 'AI Efficiency (inactive)';
               return (
                 <tr className={`hover:bg-white/5 transition-colors ${!d8IsActive ? 'opacity-40' : ''}`}>
@@ -789,7 +807,13 @@ const EffectiveWeightsPanel: React.FC<{
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">D8</span>
                       <span className="font-medium">{d8Label}</span>
-                      {!d8IsActive && (
+                      {d8WeightRedistributed && (
+                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                          style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
+                          →D1/D2/D3
+                        </span>
+                      )}
+                      {!d8IsActive && !d8WeightRedistributed && (
                         <span className="text-[9px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
                           LOCKED
@@ -803,7 +827,7 @@ const EffectiveWeightsPanel: React.FC<{
                       )}
                     </div>
                   </td>
-                  <td className="py-2.5 px-4 text-right font-mono opacity-60">{pct(d8FormulaWt)}</td>
+                  <td className="py-2.5 px-4 text-right font-mono opacity-60">{d8WeightRedistributed ? '0%' : pct(d8FormulaWt)}</td>
                   <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     {d8IsActive ? mult(D8_CAL) : '—'}
                   </td>
@@ -2769,6 +2793,8 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             d8FlagActive={(result as any).d8FlagActive}
             d8HeuristicActive={(result as any).d8HeuristicActive}
             d8EffectiveWeight={(result as any).d8EffectiveWeight}
+            d8WeightRedistributed={(result as any).d8WeightRedistributed}
+            d8RedistributedBumpPerDimension={(result as any).d8RedistributedBumpPerDimension}
             l1EstimatedFromSector={(result as any).l1EstimatedFromSector}
             l1SectorBaseline={(result as any).l1SectorBaseline}
           />

@@ -1629,6 +1629,10 @@ export interface ScoreResult {
   d8HeuristicActive?: boolean;
   /** Effective D8 formula weight this audit run. 0 when D8=0, 0.09 when active. */
   d8EffectiveWeight?: number;
+  /** True when D8 flag is off and D8=0: its 0.09 budget was redistributed to D1/D2/D3. */
+  d8WeightRedistributed?: boolean;
+  /** Per-dimension bump added to D1, D2, D3 when redistribution is active (= 0.09/3 ≈ 0.030). */
+  d8RedistributedBumpPerDimension?: number;
   /**
    * v40.0: floor value for each fired kill-switch, e.g. { confirmed_recent_layoff_news: 72 }.
    * TransparencyTab renders an exact "Score Floor Active" badge per entry so the user
@@ -4685,7 +4689,7 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // the formula weight adjustment and the ScoreResult.signalDecayWeights field.
   let _decayWeights: ScoreResult['signalDecayWeights'] | undefined;
 
-  const W: WeightSet = SCORING_DECAY_ENABLED
+  let W: WeightSet = SCORING_DECAY_ENABLED
     ? (() => {
         const ref      = now;
         const ts       = inputs.signalTimestamps ?? {};
@@ -4752,6 +4756,27 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
         return norm;
       })()
     : (baseW as WeightSet);
+
+  // D8 weight redistribution — preserves the 1.00 formula sum when the flag is off.
+  // Without this, D8's 0.09 budget disappears silently: the neutral-signal score
+  // drifts from 50 → 46 pts and the score ceiling drops from 100 → 91.
+  // Redistribution condition: flag gated off (not just logistic-below-threshold)
+  // and D8 is not contributing anything. Equal third split to D1/D2/D3 (the three
+  // AI-facing dimensions whose signals best proxy AI efficiency restructuring risk
+  // when the validated D8 logistic is unavailable).
+  const _d8RedistributedBump =
+    !_d8FlagActive && D8 === 0 && W.D8_aiEfficiencyRestructuring > 0
+      ? W.D8_aiEfficiencyRestructuring / 3
+      : 0;
+  if (_d8RedistributedBump > 0) {
+    W = {
+      ...W,
+      D1_taskAutomatability:        W.D1_taskAutomatability        + _d8RedistributedBump,
+      D2_aiToolMaturity:            W.D2_aiToolMaturity            + _d8RedistributedBump,
+      D3_augmentationRisk:          W.D3_augmentationRisk          + _d8RedistributedBump,
+      D8_aiEfficiencyRestructuring: 0,
+    };
+  }
 
   const rawScore =
     calibrated.L3  * W.D1_taskAutomatability          +  // D1 — task automatability (calibrated L3)
@@ -5048,10 +5073,15 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
       if (_d8FlagActive || _d8IsHeuristicActive) {
         // D8 is active (logistic or heuristic): weight is whatever the blended W set contains.
         // Use the post-decay W value for accuracy — this matches the actual formula contribution.
+        // After redistribution W.D8 = 0, so this correctly returns 0 for the inactive case.
         return Math.round(W.D8_aiEfficiencyRestructuring * 1000) / 1000;
       }
       return 0;
     })(),
+    d8WeightRedistributed:               _d8RedistributedBump > 0 || undefined,
+    d8RedistributedBumpPerDimension:     _d8RedistributedBump > 0
+                                           ? Math.round(_d8RedistributedBump * 1000) / 1000
+                                           : undefined,
     bankingStabilityAdjustment:          _bankingStabilityAdj,
     sectorRegionStabilityAdjustment:     _sectorRegionStabilityAdj,
     recommendations: generateRecommendations(

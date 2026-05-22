@@ -464,6 +464,10 @@ export interface HybridResult {
   d8FlagActive?: boolean;
   d8HeuristicActive?: boolean;
   d8EffectiveWeight?: number;
+  /** True when D8 flag is off and D8=0: its 0.09 budget was redistributed to D1/D2/D3. */
+  d8WeightRedistributed?: boolean;
+  /** Per-dimension bump added to D1, D2, D3 when redistribution is active (≈ 0.030). */
+  d8RedistributedBumpPerDimension?: number;
 
   // ── India Sector Intelligence (v8.0) ───────────────────────────────────────
   /**
