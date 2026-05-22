@@ -442,6 +442,13 @@ export interface HybridResult {
   performanceCredibilityRegionKey?: 'india' | 'germany' | 'us' | 'default';
   /** Human-readable label shown in TransparencyTab, e.g. "India IT threshold (5 years)". */
   performanceCredibilityThresholdLabel?: string;
+  /**
+   * Formula score before any kill-switch floor was applied.
+   * Used by KillSwitchFloorBadge: "Floor: 72 → Formula: 54".
+   * Previously always undefined (referenced but never populated), causing the badge
+   * to fall back to the post-floor score, rendering "Floor: 72 → Formula: 72".
+   */
+  _formulaScorePreFloor?: number;
   /** True when the hyperscaler D8 proxy (+0.12 composite) was applied.
    *  Fires when D8 flag is inactive + company is a named hyperscaler + very-high AI + L1 < 0.45.
    *  GUARD: proxy is suppressed when d8HeuristicActive=true (would double-count). */

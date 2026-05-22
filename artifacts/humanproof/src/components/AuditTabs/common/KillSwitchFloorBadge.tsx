@@ -14,6 +14,13 @@ interface Props {
   className?: string;
 }
 
+const KS_LABELS: Record<string, string> = {
+  confirmed_recent_layoff_news:      'Confirmed layoff news',
+  financial_distress_triad:          'Financial distress triad',
+  pre_layoff_precursor:              'Pre-layoff precursor',
+  pre_layoff_precursor_inferred:     'Pre-layoff (inferred)',
+};
+
 const KillSwitchFloorBadge: React.FC<Props> = ({
   activatedKillSwitches,
   killSwitchFloors,
@@ -22,11 +29,19 @@ const KillSwitchFloorBadge: React.FC<Props> = ({
 }) => {
   if (!activatedKillSwitches?.length) return null;
 
-  const floorValues = Object.values(killSwitchFloors ?? {});
+  const floors = killSwitchFloors ?? {};
+  const floorValues = Object.values(floors);
   if (!floorValues.length) return null;
 
-  const floorValue = Math.max(...floorValues);
-  const reason = activatedKillSwitches.join(', ');
+  // Winning floor = highest value (hard floors — no sigmoid ambiguity).
+  const winningFloor = Math.max(...floorValues);
+
+  // Build tooltip: every fired switch listed with its floor value.
+  const details = activatedKillSwitches
+    .map(ks => `${KS_LABELS[ks] ?? ks}: floor ${floors[ks] ?? '?'}`)
+    .join(' · ');
+
+  const extraCount = activatedKillSwitches.length - 1;
 
   return (
     <div
@@ -35,14 +50,17 @@ const KillSwitchFloorBadge: React.FC<Props> = ({
         background: 'rgba(249,115,22,0.15)',
         border: '1px solid rgba(249,115,22,0.40)',
       }}
-      title={`A kill-switch raised this score to the floor value (${floorValue}) because: ${reason}`}
+      title={`Score floored to ${winningFloor} (formula: ${formulaScore}). Active floors: ${details}`}
     >
       <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f97316' }} />
       <span
         className="text-[10px] font-mono font-semibold whitespace-nowrap"
         style={{ color: '#f97316' }}
       >
-        Floor: {floorValue} → Formula: {formulaScore}
+        Floor: {winningFloor} → Formula: {formulaScore}
+        {extraCount > 0 && (
+          <span style={{ opacity: 0.75 }}> +{extraCount} more</span>
+        )}
       </span>
     </div>
   );

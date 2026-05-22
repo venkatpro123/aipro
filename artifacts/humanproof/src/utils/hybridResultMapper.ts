@@ -136,6 +136,7 @@ export function mapToHybridResult(
     performanceCredibilityScore:          isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityScore,
     performanceCredibilityRegionKey:      isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityRegionKey,
     performanceCredibilityThresholdLabel: isEnsemble(result) ? undefined : (result as ScoreResult).performanceCredibilityThresholdLabel,
+    _formulaScorePreFloor:                isEnsemble(result) ? undefined : (result as ScoreResult)._formulaScorePreFloor,
     hyperscalerD8ProxyApplied:            isEnsemble(result) ? undefined : (result as ScoreResult).hyperscalerD8ProxyApplied,
     hyperscalerD8ProxyAmount:             isEnsemble(result) ? undefined : (result as ScoreResult).hyperscalerD8ProxyAmount,
     // BUG-02: D8 effective weight state for TransparencyTab disclosure.

@@ -76,10 +76,17 @@ export function SignalAttributionWaterfall({ result }: Props) {
     });
   }
 
-  // Kill-switch adjustment
-  const ksApplied = (result as any).killSwitchApplied;
-  const ksName = (result as any).killSwitchName;
-  const ksAdjustment = ksApplied && result.total > Math.round(running) ? result.total - Math.round(running) : 0;
+  // Kill-switch adjustment — may be multiple floors fired simultaneously.
+  // activatedKillSwitches contains ALL that fired; killSwitchName is the winning (highest) one.
+  const ksApplied            = (result as any).killSwitchApplied;
+  const ksName               = (result as any).killSwitchName as string | null | undefined;
+  const ksAllNames           = ((result as any).activatedKillSwitches ?? []) as string[];
+  const ksAdjustment         = ksApplied && result.total > Math.round(running) ? result.total - Math.round(running) : 0;
+
+  // Build a compact label: "confirmed_recent_layoff_news +2 more" when multiple fired.
+  const ksDisplayLabel = ksAllNames.length > 1
+    ? `${ksName?.replace(/_/g, ' ') ?? 'floor'} +${ksAllNames.length - 1} more`
+    : ksName?.replace(/_/g, ' ') ?? 'floor';
 
   // Archetype adjustment label
   const archetype = (result as any).scoringArchetype as string | undefined;
@@ -200,7 +207,7 @@ export function SignalAttributionWaterfall({ result }: Props) {
                 transition={{ duration: 0.4, delay: bars.length * 0.08 }}
               />
               <text x={x2 + 4} y={y + BAR_HEIGHT / 2 + 3} fontSize="9" fill="#ef4444">
-                +{Math.round(ksAdjustment)} ({ksName?.replace(/_/g, ' ')})
+                +{Math.round(ksAdjustment)} ({ksDisplayLabel})
               </text>
             </g>
           );

@@ -752,27 +752,33 @@ function detectScoringArchetype(
   return 'low_risk_maintain';
 }
 
-// ── v12.0: Score Kill-Switch System (sigmoid) ────────────────────────────────
+// ── v12.0 / v40.0: Score Kill-Switch System (hard floors) ────────────────────
 //
-// When specific high-confidence signals are present, apply a soft score floor
-// using sigmoid blending instead of hard Math.max() so there is no discontinuity
-// at the threshold.
+// When specific high-confidence signals are present, apply a hard score floor
+// using Math.max(score, floor). This guarantees the stated minimum — a company
+// with confirmed recent layoff news will ALWAYS score at least 72.
 //
-// Formula: floor is applied with sigmoid weight at threshold ±10 pts.
-// At score = threshold: ~50% of floor effect applied.
-// At score << threshold: full floor applied.
-// At score >> threshold: no floor applied (sigmoid weight → 0).
+// v40.0 change: sigmoid floors replaced with hard floors. The sigmoid approach
+// produced unreliable results near the threshold: sigmoidFloor(65, 68, 72) = 65
+// (no effect) despite the stated floor being 72. A user at a company with
+// confirmed layoff news and formula score of 65 would see 65, not ≥72.
+// The sigmoid was intended to avoid cliff edges, but the documented contract
+// ("floor at 72") is more important than smoothness. Hard floors match the
+// audit report specification: score = Math.max(killSwitchFloor, rawComposite).
 //
-// Four kill-switches, in priority order:
+// sigmoidFloor() is retained as an exported utility for non-floor use cases.
+//
+// Four kill-switches. ALL that fire are recorded in killSwitchFloors.
+// The highest floor wins (sort by score = sort by floor with hard floors).
 //   KS-A: Breaking news event (confidence=high) within 30 days → floor at 72
 //   KS-B: Financial distress triad (L1>0.75 AND negative FCF AND stock<-30%) → floor at 65
 //   KS-C: Pre-layoff precursor (confirmed hiring freeze + L2 history + sector contagion) → floor at 58
 //   KS-D: Pre-layoff precursor inferred (AI inference from news/Glassdoor) → floor at 52
 //
-// Every floor that fires is returned in killSwitchFloors {name→floor} so the
-// TransparencyTab can render an exact "Score Floor Active" disclosure badge.
-// A floor-adjusted score must never appear as formula-derived — the badge is
-// the primary mechanism that prevents that misrepresentation.
+// Every floor that fires is recorded in killSwitchFloors {name→floor} so the
+// TransparencyTab can render one "Score Floor Active" badge PER FIRED SWITCH.
+// activatedKillSwitches lists ALL of them; killSwitchName is the winning (highest) one.
+// A floor-adjusted score must never appear as formula-derived.
 export function sigmoidFloor(
   score: number,
   threshold: number,
@@ -809,7 +815,7 @@ export function applyKillSwitches(
   const candidates: Array<{ score: number; name: string; floor: number }> = [];
   const firedFloors: Record<string, number> = {};
 
-  // KS-A: High-confidence breaking news within 30 days.
+  // KS-A: High-confidence breaking news within 30 days. Hard floor at 72.
   // newsEventConfidence ≥ 0.85 = curated/verified event (layoffNewsCache.confidence field).
   // Backward-compat: when confidence data is absent, preserve the pre-v40.0 gate (≤14 days).
   const ksAGate =
@@ -818,57 +824,45 @@ export function applyKillSwitches(
       (newsEventConfidence != null && newsEventConfidence >= 0.85 && layoffNewsAgeInDays <= 30) ||
       (newsEventConfidence == null && layoffNewsAgeInDays <= 14)
     );
-  if (ksAGate) {
-    const floored = sigmoidFloor(score, 68, 72, 0.4);
-    if (floored > score) {
-      candidates.push({ score: floored, name: 'confirmed_recent_layoff_news', floor: 72 });
-      firedFloors['confirmed_recent_layoff_news'] = 72;
-    }
+  if (ksAGate && 72 > score) {
+    candidates.push({ score: 72, name: 'confirmed_recent_layoff_news', floor: 72 });
+    firedFloors['confirmed_recent_layoff_news'] = 72;
   }
 
-  // KS-B: Financial distress triad — L1 > 0.75, negative FCF, stock < -30%.
+  // KS-B: Financial distress triad — L1 > 0.75, negative FCF, stock < -30%. Hard floor at 65.
   // Falls back to revenueGrowthYoY < 0 as FCF proxy when SEC data is unavailable.
   const negativeFCF =
     freeCashFlowMargin != null
       ? freeCashFlowMargin < 0
       : (companyData.revenueGrowthYoY !== null && companyData.revenueGrowthYoY < 0);
   const stockCritical = companyData.stock90DayChange !== null && companyData.stock90DayChange < -30;
-  if (L1 > 0.75 && negativeFCF && stockCritical) {
-    const floored = sigmoidFloor(score, 60, 65, 0.35);
-    if (floored > score) {
-      candidates.push({ score: floored, name: 'financial_distress_triad', floor: 65 });
-      firedFloors['financial_distress_triad'] = 65;
-    }
+  if (L1 > 0.75 && negativeFCF && stockCritical && 65 > score) {
+    candidates.push({ score: 65, name: 'financial_distress_triad', floor: 65 });
+    firedFloors['financial_distress_triad'] = 65;
   }
 
   const hiringFrozen = (companyData as any)._hiringPostingTrend === 'frozen';
   const hiringTrendMissing = (companyData as any)._hiringPostingTrend == null;
   const noPriorLayoffs = (companyData.layoffRounds ?? 0) === 0;
 
-  // KS-C: Pre-layoff precursor — confirmed.
+  // KS-C: Pre-layoff precursor — confirmed. Hard floor at 58.
   // Requires: live hiring freeze + documented layoff history (rounds > 0) + elevated sector contagion.
   // History gate replaces the old noPriorLayoffs gate — a company with prior rounds AND a
   // current hiring freeze AND elevated peer contagion is structurally at a different risk
   // level than a first-time cutter.
   const hasLayoffHistory = !noPriorLayoffs;
   const sectorContagionElevated = (sectorContagionRisk ?? 0) >= 0.45;
-  if (hiringFrozen && hasLayoffHistory && sectorContagionElevated) {
-    const floored = sigmoidFloor(score, 53, 58, 0.30);
-    if (floored > score) {
-      candidates.push({ score: floored, name: 'pre_layoff_precursor', floor: 58 });
-      firedFloors['pre_layoff_precursor'] = 58;
-    }
+  if (hiringFrozen && hasLayoffHistory && sectorContagionElevated && 58 > score) {
+    candidates.push({ score: 58, name: 'pre_layoff_precursor', floor: 58 });
+    firedFloors['pre_layoff_precursor'] = 58;
   }
 
-  // KS-D: Pre-layoff precursor — inferred from AI-read news/Glassdoor signals.
+  // KS-D: Pre-layoff precursor — inferred from AI-read news/Glassdoor signals. Hard floor at 52.
   // Private company with no live hiring trend data and extreme financial stress (L1 ≥ 0.68),
   // no prior layoff rounds. Missing trend treated as possible freeze at a softer floor.
-  if (!hiringFrozen && hiringTrendMissing && !companyData.isPublic && L1 >= 0.68 && noPriorLayoffs) {
-    const floored = sigmoidFloor(score, 50, 52, 0.28);
-    if (floored > score) {
-      candidates.push({ score: floored, name: 'pre_layoff_precursor_inferred', floor: 52 });
-      firedFloors['pre_layoff_precursor_inferred'] = 52;
-    }
+  if (!hiringFrozen && hiringTrendMissing && !companyData.isPublic && L1 >= 0.68 && noPriorLayoffs && 52 > score) {
+    candidates.push({ score: 52, name: 'pre_layoff_precursor_inferred', floor: 52 });
+    firedFloors['pre_layoff_precursor_inferred'] = 52;
   }
 
   if (candidates.length === 0) {
@@ -881,12 +875,12 @@ export function applyKillSwitches(
     };
   }
 
-  // Apply the kill-switch that raises the score the most (most conservative floor).
-  // Clamp to [0, 100]: sigmoidFloor can produce fractional values above 100 in rare
-  // edge cases where multiple kill-switches overlap near score = 95–98.
-  const best = candidates.sort((a, b) => b.score - a.score)[0];
+  // With hard floors, score === floor for every candidate, so sort-by-score = sort-by-floor.
+  // The highest floor wins — score can only go up from floors, never down.
+  const best = candidates.sort((a, b) => b.floor - a.floor)[0];
+  // Hard floors are in range [52, 72] so clamp is defensive only.
   return {
-    adjustedScore: Math.max(0, Math.min(100, best.score)),
+    adjustedScore: Math.max(0, Math.min(100, best.floor)),
     killSwitchApplied: true,
     killSwitchName: best.name,
     inferredFreeze: best.name === 'pre_layoff_precursor_inferred',
@@ -1562,6 +1556,14 @@ export interface ScoreResult {
   killSwitchApplied?: boolean;
   /** v12.0: Which kill-switch fired (if any). */
   killSwitchName?: string | null;
+  /**
+   * The formula score BEFORE any kill-switch floor was applied.
+   * Used by KillSwitchFloorBadge: "Floor: 72 → Formula: 54".
+   * When no kill-switch fired, equals the final score.
+   * Previously this field was referenced but never populated, causing the badge to always
+   * show "Floor: 72 → Formula: 72" (the post-floor score), which was meaningless.
+   */
+  _formulaScorePreFloor?: number;
   /** MED-5: Fraction of total formula weight that is regression-derived (0–1).
    *  Currently 0.58 — D2/D3/D6/D7 are developer estimates (0.42 of total weight). */
   calibrationCoverage?: number;
@@ -5032,6 +5034,9 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     scoringArchetype,
     killSwitchApplied: ksResult.killSwitchApplied,
     killSwitchName: ksResult.killSwitchName,
+    // Pre-floor formula score — used by KillSwitchFloorBadge to show "Floor: 72 → Formula: 54".
+    // Previously unreferenced; now populated so the badge has accurate pre-floor context.
+    _formulaScorePreFloor: preKillSwitchScore,
     // MED-5: fraction of total formula weight that is regression-derived
     calibrationCoverage: (() => {
       const entries = Object.values(CALIBRATION_META);
