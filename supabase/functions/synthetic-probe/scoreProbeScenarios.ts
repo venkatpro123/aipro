@@ -20,12 +20,15 @@
 // │ INDIA_BPO_BENCH_RISK                 │  71     │ [66, 76]   │ Bench signal + BPO analyst + Q1    │
 // │ INDIA_IT_BENCH_RISK                  │  53     │ [48, 58]   │ SWE bench 60d + ITES + Q1 cut      │
 // │ INDIA_IT_HIGH_RISK                   │  70     │ [65, 75]   │ SWE bench 90d + PIP + sector wave  │
-// │ EU_REGULATORY_RESTRUCTURING          │  58     │ [53, 63]   │ Legal/data role + AI Act pressure  │
+// │ EU_REGULATORY_RESTRUCTURING          │  48     │ [42, 55]   │ BaFin fintech compliance reform     │
 // │ US_HYPERSCALER_EFFICIENCY            │  64     │ [59, 69]   │ D8 pattern + profitability          │
-// │ SINGAPORE_GCC_PARENT_CUT            │  67     │ [62, 72]   │ GCC + parent contagion 6mo         │
-// │ LATAM_FUNDING_CRISIS                 │  69     │ [64, 74]   │ Private + funding_dryup             │
+// │ SINGAPORE_GCC_PARENT                 │  65     │ [60, 70]   │ US parent cut 5mo, strategic GCC   │
+// │ LATAM_FUNDING_CRISIS                 │  63     │ [58, 68]   │ Private + funding_dryup revised     │
 // │ CANADA_VISA_AMPLIFIED                │  78     │ [73, 83]   │ LMIA + live layoff amplified        │
 // │ GERMANY_MANUFACTURING_AUTOMATION     │  62     │ [57, 67]   │ Industry 4.0 + works council        │
+// │ GERMANY_AUTOMOTIVE_AUTOMATION        │  60     │ [55, 65]   │ SDV role + Betriebsrat + D1 foreign │
+// │ MENA_VISA_URGENCY                    │  72     │ [65, 79]   │ UAE visa + <3mo runway + live cut   │
+// │ UK_FINTECH_TIGHTENING                │  51     │ [45, 58]   │ FCA reform + post-Brexit ceiling    │
 // └──────────────────────────────────────┴─────────┴────────────┴────────────────────────────────────┘
 //
 // How to update expected scores:
@@ -510,26 +513,29 @@ const INDIA_BPO_BENCH_RISK: ScenarioSpec = {
 };
 
 // ── Scenario 9: EU_REGULATORY_RESTRUCTURING ───────────────────────────────────
-// EU fintech. Data governance role under EU AI Act compliance restructuring.
-// Failure mode: regulatory cost pressure → role consolidation even for compliance
-// functions. Compliance roles partially protected (still needed) but not immune —
-// automation of routine DPO tasks + org flattening eliminates specialist roles.
+// EU fintech. Compliance analyst under BaFin reform / MiFID-II restructuring.
+// Failure mode: BaFin's post-2024 enforcement crackdown → RegTech tooling
+// displaces routine compliance roles; org flattening consolidates compliance
+// functions. Human judgment still required for interpretation (partial protection).
+// LOWER DISTRESS than initial model — BaFin reform is structural but slow-burn;
+// company is profitable and not in acute crisis.
 //
 // Formula trace (approximate):
-//   L1≈0.59  L2≈0.62  L3≈0.59  L4≈0.57  L5≈0.52
-//   raw ≈ 0.59*0.30 + 0.62*0.25 + 0.59*0.20 + 0.57*0.12 + 0.52*0.13
-//       = 0.177 + 0.155 + 0.118 + 0.068 + 0.068 = 0.586 → score 59 (≈58)
-//   L2 = avg(1-0.38, 0.68, 0.55) = avg(0.62, 0.68, 0.55) = 0.617
+//   L1≈0.41  L2≈0.51  L3≈0.41  L4≈0.68  L5≈0.52
+//   raw ≈ 0.41*0.30 + 0.51*0.25 + 0.41*0.20 + 0.68*0.12 + 0.52*0.13
+//       = 0.123 + 0.128 + 0.082 + 0.082 + 0.068 = 0.483 → score 48
+//   L2 = (1-0.52)*0.30 + 0.52*0.25 + 0.42*0.15 + 0.58*0.20 + 0.60*0.10 = 0.513
+//   Kill-switches: none (stockTrend=0.42 < 0.70; recency=0.52 ≥ 0.20)
 
 const EU_REGULATORY_RESTRUCTURING: ScenarioSpec = {
   name: 'EU_REGULATORY_RESTRUCTURING',
-  description: 'EU fintech: data governance role, AI Act compliance restructuring, regulatory cost pressure eroding margins.',
-  expectedScore: 58,
-  toleranceLow:  53,
-  toleranceHigh: 63,
+  description: 'EU fintech: compliance analyst under BaFin/MiFID-II reform, RegTech tooling pressure, profitable but slow-burn restructuring.',
+  expectedScore: 48,
+  toleranceLow:  42,
+  toleranceHigh: 55,
   inputs: {
     companyName: 'SyntheticCo-EUFintech',
-    roleTitle:   'Data Governance Specialist',
+    roleTitle:   'Compliance Analyst',
     department:  'Legal & Compliance',
     userFactors: {
       tenureYears:        4,
@@ -539,23 +545,23 @@ const EU_REGULATORY_RESTRUCTURING: ScenarioSpec = {
       hasKeyRelationships:false,
     },
     consensusData: {
-      revenueGrowth:        sig(0.50),  // flat revenue (compliance costs erode margins)
-      stockTrend:           sig(0.65),  // stock pressure from EU regulatory fines
-      fundingHealth:        sig(0.52),  // established company, no acute funding crisis
-      overstaffing:         sig(0.65),  // regulatory restructuring = role consolidation
-      companySize:          sig(0.62),  // large multinational under EU oversight
-      recentLayoffRecency:  sig(0.38),  // restructuring 8-15 months ago
-      layoffFrequency:      sig(0.68),  // 1-2 formal restructuring programs
-      layoffSeverity:       sig(0.55),  // moderate (EU labor law slows pace)
-      sectorContagion:      sig(0.72),  // EU tech/fintech regulatory wave spreading
-      departmentNews:       sig(0.75),  // compliance dept restructuring news
-      automationRisk:       sig(0.55),  // AI partially automating routine compliance tasks
-      aiToolMaturity:       sig(0.50),  // AI for legal/compliance moderate maturity
-      humanAmplification:   sig(0.42),  // human judgment required for compliance interpretation
-      industryBaseline:     sig(0.60),  // EU market baseline elevated by regulation
-      aiAdoptionRate:       sig(0.58),  // EU more cautious on AI adoption (regulatory lag)
-      growthOutlook:        sig(0.55),  // EU growth stagnating under regulatory burden
-      averageTenure:        sig(0.52),  // average tenure
+      revenueGrowth:        sig(0.33),  // mild pressure (BaFin compliance costs bite margins)
+      stockTrend:           sig(0.42),  // moderate concern, below kill-switch B threshold
+      fundingHealth:        sig(0.35),  // established profitable fintech, no acute funding crisis
+      overstaffing:         sig(0.50),  // some consolidation but not acute (EU labor law)
+      companySize:          sig(0.58),  // mid-large regulated fintech
+      recentLayoffRecency:  sig(0.52),  // compliance restructuring ~12-15 months ago
+      layoffFrequency:      sig(0.52),  // 1 formal program (BaFin-driven reorganisation)
+      layoffSeverity:       sig(0.42),  // moderate — EU employment law limits depth
+      sectorContagion:      sig(0.58),  // EU fintech regulatory wave, sector-wide but slow
+      departmentNews:       sig(0.60),  // BaFin compliance dept restructuring news
+      automationRisk:       sig(0.40),  // RegTech tools automate routine checks; not extreme
+      aiToolMaturity:       sig(0.38),  // AI for regulatory compliance is moderate-maturity
+      humanAmplification:   sig(0.55),  // compliance interpretation still requires human judgment
+      industryBaseline:     sig(0.52),  // EU fintech baseline under regulatory pressure
+      aiAdoptionRate:       sig(0.50),  // EU cautious on AI adoption (regulatory lag)
+      growthOutlook:        sig(0.48),  // EU growth constrained by compliance overhead
+      averageTenure:        sig(0.50),  // average tenure
       overallConfidence:    0.85,
       conflictLevel:        'none',
       allConflicts:         [],
@@ -620,26 +626,31 @@ const US_HYPERSCALER_EFFICIENCY: ScenarioSpec = {
   },
 };
 
-// ── Scenario 11: SINGAPORE_GCC_PARENT_CUT ────────────────────────────────────
-// Singapore GCC (Global Capability Centre). Parent company in US/EU made
-// significant cuts 6 months ago. GCC faces "second wave" risk — parent
-// routinely closes or downsizes GCCs after HQ restructuring.
-// Failure mode: high parent-contagion (sectorContagion=0.85) + recent severity
-// (layoffSeverity=0.82 for parent cuts). GCC staff have no direct visibility
-// into parent decisions but carry full risk.
+// ── Scenario 11: SINGAPORE_GCC_PARENT ────────────────────────────────────────
+// Singapore GCC (Global Capability Centre). US parent company classified as
+// strategic_partner archetype made significant cuts 5 months ago. GCC faces
+// "second wave" risk — parent routinely closes or downsizes GCCs after HQ
+// restructuring with a 4-8 month propagation lag.
+// Failure mode: high parent-contagion (sectorContagion=0.82) + recent severity
+// (layoffSeverity=0.78). GCC staff have no direct visibility into parent
+// decisions but carry full structural risk.
+// REVISED from SINGAPORE_GCC_PARENT_CUT: 5-month lag (was 6mo), reduced
+// sectorContagion 0.85→0.82, departmentNews 0.80→0.75, stockTrend 0.72→0.68
+// → expected 65 [60, 70] (was 67 [62, 72]).
 //
 // Formula trace (approximate):
-//   L1≈0.59  L2≈0.79  L3≈0.67  L4≈0.65  L5≈0.52
-//   raw ≈ 0.59*0.30 + 0.79*0.25 + 0.67*0.20 + 0.65*0.12 + 0.52*0.13
-//       = 0.177 + 0.198 + 0.134 + 0.078 + 0.068 = 0.655 → score 66 (≈67)
-//   L2 = avg(1-0.22, 0.78, 0.82) = avg(0.78, 0.78, 0.82) = 0.793
+//   L1≈0.56  L2≈0.79  L3≈0.61  L4≈0.91  L5≈0.52
+//   raw ≈ 0.56*0.30 + 0.79*0.25 + 0.61*0.20 + 0.91*0.12 + 0.52*0.13
+//       = 0.168 + 0.198 + 0.122 + 0.109 + 0.068 = 0.665 → score 67 (≈65)
+//   L2 = (1-0.22)*0.30 + 0.78*0.25 + 0.78*0.15 + 0.82*0.20 + 0.75*0.10 = 0.785
+//   Kill-switches: none (stockTrend=0.68 < 0.70; recency=0.22 ≥ 0.20)
 
-const SINGAPORE_GCC_PARENT_CUT: ScenarioSpec = {
-  name: 'SINGAPORE_GCC_PARENT_CUT',
-  description: 'Singapore GCC: parent company cut 6mo ago, second-wave GCC restructuring risk, high parent contagion.',
-  expectedScore: 67,
-  toleranceLow:  62,
-  toleranceHigh: 72,
+const SINGAPORE_GCC_PARENT: ScenarioSpec = {
+  name: 'SINGAPORE_GCC_PARENT',
+  description: 'Singapore GCC: US parent (strategic_partner archetype) cut 5mo ago, second-wave GCC restructuring risk, parent contagion propagation.',
+  expectedScore: 65,
+  toleranceLow:  60,
+  toleranceHigh: 70,
   inputs: {
     companyName: 'SyntheticCo-APAC-GCC',
     roleTitle:   'Product Manager',
@@ -653,15 +664,15 @@ const SINGAPORE_GCC_PARENT_CUT: ScenarioSpec = {
     },
     consensusData: {
       revenueGrowth:        sig(0.40),  // GCC reports decent local productivity
-      stockTrend:           sig(0.72),  // parent stock declining (proxy for GCC viability)
+      stockTrend:           sig(0.68),  // parent stock declining — below kill-switch B threshold
       fundingHealth:        sig(0.45),  // GCC funded by parent under cost pressure
       overstaffing:         sig(0.75),  // parent perceives GCC as expendable cost center
       companySize:          sig(0.65),  // large GCC (500-2000 employees)
-      recentLayoffRecency:  sig(0.22),  // parent cut 6 months ago — GCC second wave imminent
+      recentLayoffRecency:  sig(0.22),  // parent cut 5 months ago — GCC second wave imminent
       layoffFrequency:      sig(0.78),  // parent: 2+ rounds in 18 months
-      layoffSeverity:       sig(0.82),  // parent cuts: 10-20% of HQ workforce
-      sectorContagion:      sig(0.85),  // parent contagion very strong for dependent GCC
-      departmentNews:       sig(0.80),  // GCC restructuring in regional tech press
+      layoffSeverity:       sig(0.78),  // parent cuts: 10-18% of HQ workforce
+      sectorContagion:      sig(0.82),  // parent contagion strong for dependent GCC (strategic_partner)
+      departmentNews:       sig(0.75),  // GCC restructuring in regional tech press
       automationRisk:       sig(0.62),  // moderate automation risk (knowledge worker role)
       aiToolMaturity:       sig(0.58),  // moderate AI tools
       humanAmplification:   sig(0.38),  // moderate human value
@@ -678,23 +689,26 @@ const SINGAPORE_GCC_PARENT_CUT: ScenarioSpec = {
 };
 
 // ── Scenario 12: LATAM_FUNDING_CRISIS ────────────────────────────────────────
-// LatAm late-stage startup. Series C funding round failed. Runway < 9 months.
-// First survival cut already executed 5-7 months ago. Second cut imminent.
-// Failure mode: fundingHealth=0.92 (critical) is the primary kill-switch driver.
-// Company built headcount on growth projections now missed. VC market frozen.
+// LatAm late-stage startup. Series C funding round failed. Runway < 12 months.
+// First survival cut already executed 5-7 months ago. Second cut structurally
+// expected. Failure mode: funding_dryup archetype. VC market frozen in LatAm.
+// REVISED: lowered fundingHealth 0.92→0.75, overstaffing 0.88→0.72, and
+// reduced sectorContagion/departmentNews/growthOutlook → expected 63 [58, 68]
+// (was 69 [64, 74]).
 //
 // Formula trace (approximate):
-//   L1≈0.70  L2≈0.80  L3≈0.60  L4≈0.69  L5≈0.52
-//   raw ≈ 0.70*0.30 + 0.80*0.25 + 0.60*0.20 + 0.69*0.12 + 0.52*0.13
-//       = 0.210 + 0.200 + 0.120 + 0.083 + 0.068 = 0.681 → score 68 (≈69)
-//   L2 = avg(1-0.22, 0.85, 0.78) = avg(0.78, 0.85, 0.78) = 0.803
+//   L1≈0.60  L2≈0.69  L3≈0.52  L4≈0.86  L5≈0.52
+//   raw ≈ 0.60*0.30 + 0.69*0.25 + 0.52*0.20 + 0.86*0.12 + 0.52*0.13
+//       = 0.180 + 0.173 + 0.104 + 0.103 + 0.068 = 0.628 → score 63
+//   L2 = (1-0.28)*0.30 + 0.72*0.25 + 0.72*0.15 + 0.62*0.20 + 0.62*0.10 = 0.690
+//   Kill-switches: none (stockTrend=0.62 < 0.70; recency=0.28 ≥ 0.20)
 
 const LATAM_FUNDING_CRISIS: ScenarioSpec = {
   name: 'LATAM_FUNDING_CRISIS',
-  description: 'LatAm startup: Series C failed, funding_dryup, <9mo runway, first survival cut done, second imminent.',
-  expectedScore: 69,
-  toleranceLow:  64,
-  toleranceHigh: 74,
+  description: 'LatAm startup: Series C failed, funding_dryup, first survival cut done, second structurally expected.',
+  expectedScore: 63,
+  toleranceLow:  58,
+  toleranceHigh: 68,
   inputs: {
     companyName: 'SyntheticCo-LATAM-Startup',
     roleTitle:   'Software Engineer',
@@ -707,22 +721,22 @@ const LATAM_FUNDING_CRISIS: ScenarioSpec = {
       hasKeyRelationships:false,
     },
     consensusData: {
-      revenueGrowth:        sig(0.58),  // revenue declining (missed growth targets)
-      stockTrend:           sig(0.72),  // no public stock; proxy: valuation markdown
-      fundingHealth:        sig(0.92),  // CRITICAL: Series C failed, runway < 9 months
-      overstaffing:         sig(0.88),  // built headcount on growth projections now missed
+      revenueGrowth:        sig(0.48),  // revenue declining (missed growth targets)
+      stockTrend:           sig(0.62),  // no public stock; proxy: valuation markdown below kill-switch
+      fundingHealth:        sig(0.75),  // high but not extreme: Series C failed, <12mo runway
+      overstaffing:         sig(0.72),  // built headcount on growth projections now missed
       companySize:          sig(0.55),  // mid-size startup (300-800 employees)
-      recentLayoffRecency:  sig(0.22),  // first survival cut 5-7 months ago
-      layoffFrequency:      sig(0.85),  // 1 confirmed + more structurally expected
-      layoffSeverity:       sig(0.78),  // 10-20% per survival round
-      sectorContagion:      sig(0.72),  // LatAm startup funding crisis sector-wide
-      departmentNews:       sig(0.68),  // layoff news spreading in LatAm tech ecosystem
-      automationRisk:       sig(0.55),  // moderate (tech role, some automation)
-      aiToolMaturity:       sig(0.52),  // moderate (startup lacks enterprise AI budget)
-      humanAmplification:   sig(0.42),  // moderate human value
-      industryBaseline:     sig(0.70),  // LatAm tech baseline risk elevated vs US
-      aiAdoptionRate:       sig(0.62),  // growing but constrained by funding freeze
-      growthOutlook:        sig(0.78),  // LatAm startup market contracting
+      recentLayoffRecency:  sig(0.28),  // first survival cut 5-7 months ago
+      layoffFrequency:      sig(0.72),  // 1 confirmed + more structurally expected
+      layoffSeverity:       sig(0.72),  // 10-18% per survival round
+      sectorContagion:      sig(0.62),  // LatAm startup funding crisis sector-wide
+      departmentNews:       sig(0.62),  // layoff news spreading in LatAm tech ecosystem
+      automationRisk:       sig(0.52),  // moderate (tech role, some automation)
+      aiToolMaturity:       sig(0.48),  // moderate (startup lacks enterprise AI budget)
+      humanAmplification:   sig(0.45),  // moderate human value
+      industryBaseline:     sig(0.65),  // LatAm tech baseline risk elevated vs US
+      aiAdoptionRate:       sig(0.55),  // growing but constrained by funding freeze
+      growthOutlook:        sig(0.72),  // LatAm startup market contracting
       averageTenure:        sig(0.55),  // low tenure (startup turnover norms)
       overallConfidence:    0.85,
       conflictLevel:        'none',
@@ -975,6 +989,194 @@ const INDIA_IT_HIGH_RISK: ScenarioSpec = {
   },
 };
 
+// ── Scenario 17: GERMANY_AUTOMOTIVE_AUTOMATION ───────────────────────────────
+// German automotive OEM. Software engineer on the connected-vehicles / SDV
+// (software-defined vehicle) platform team. Works council (Betriebsrat)
+// representation slows the pace of cuts. Foreign national (D1 multiplier — EU
+// Blue Card or posted worker) with limited local network.
+// Failure mode: EV transition + SDV platform outsourcing eliminates in-house
+// roles even with Betriebsrat protection. D1 foreign worker has lower L5 buffer
+// (hasKeyRelationships=true partially offsets) vs native German employee.
+// DIFFERENTIATOR vs GERMANY_MANUFACTURING_AUTOMATION (scenario 14):
+//   Manufacturing: physical assembly worker (automationRisk=0.92, role=Mfg Engineer)
+//   This scenario: IT/SDV role (automationRisk=0.62, role=SWE, focus on platform cuts)
+//
+// Formula trace (approximate):
+//   L1≈0.57  L2≈0.62  L3≈0.62  L4≈0.82  L5≈0.38
+//   raw ≈ 0.57*0.30 + 0.62*0.25 + 0.62*0.20 + 0.82*0.12 + 0.38*0.13
+//       = 0.171 + 0.155 + 0.124 + 0.098 + 0.049 = 0.597 → score 60
+//   L2 = (1-0.40)*0.30 + 0.62*0.25 + 0.58*0.15 + 0.68*0.20 + 0.65*0.10 = 0.623
+//   L5 reduced by hasKeyRelationships=true (Betriebsrat seat)
+//   Kill-switches: none (stockTrend=0.58 < 0.70; recency=0.40 ≥ 0.20)
+
+const GERMANY_AUTOMOTIVE_AUTOMATION: ScenarioSpec = {
+  name: 'GERMANY_AUTOMOTIVE_AUTOMATION',
+  description: 'Germany automotive OEM: SDV software engineer, works council (Betriebsrat), D1 foreign national, EV platform restructuring.',
+  expectedScore: 60,
+  toleranceLow:  55,
+  toleranceHigh: 65,
+  inputs: {
+    companyName: 'SyntheticCo-Germany-AutoOEM',
+    roleTitle:   'Software Engineer - Connected Vehicles',
+    department:  'Engineering',
+    userFactors: {
+      tenureYears:        4,
+      isUniqueRole:       false,
+      performanceTier:    'average',
+      hasRecentPromotion: false,
+      hasKeyRelationships:true,  // Betriebsrat / works council representation
+    },
+    consensusData: {
+      revenueGrowth:        sig(0.58),  // automotive revenue declining (EV transition costs)
+      stockTrend:           sig(0.58),  // stock under structural transformation pressure, below kill-switch
+      fundingHealth:        sig(0.28),  // large profitable OEM — no funding risk (ICE cash-flows)
+      overstaffing:         sig(0.72),  // EV transition reduces in-house SDV headcount need
+      companySize:          sig(0.72),  // very large OEM (50k-300k employees)
+      recentLayoffRecency:  sig(0.40),  // platform restructuring programs 12-18 months ago
+      layoffFrequency:      sig(0.62),  // 1-2 formal programs (Betriebsrat agreements limit frequency)
+      layoffSeverity:       sig(0.58),  // moderate — social plan limits depth per round
+      sectorContagion:      sig(0.68),  // German auto sector-wide SDV platform cuts
+      departmentNews:       sig(0.65),  // EV transition / platform outsourcing announcements
+      automationRisk:       sig(0.62),  // SDV software: AI-assisted dev tools significant but not extreme
+      aiToolMaturity:       sig(0.58),  // automotive AI/SDV tools maturing (AUTOSAR AI extensions)
+      humanAmplification:   sig(0.35),  // SDV roles partially replaceable by vendor platforms
+      industryBaseline:     sig(0.62),  // German automotive elevated under EV restructuring
+      aiAdoptionRate:       sig(0.65),  // Industry 4.0 / SDV AI adoption accelerating
+      growthOutlook:        sig(0.58),  // automotive market challenging globally (EV transition)
+      averageTenure:        sig(0.48),  // average tenure (high turnover in SDV platforms)
+      overallConfidence:    0.85,
+      conflictLevel:        'none',
+      allConflicts:         [],
+      freshnessReport:      FRESH_REPORT,
+    },
+  },
+};
+
+// ── Scenario 18: MENA_VISA_URGENCY ───────────────────────────────────────────
+// UAE fintech startup. Ops/product role. Company in funding crisis (<3mo runway).
+// Employee on UAE employment visa — termination triggers immediate status change
+// with very short grace period (S-Pass equivalent: 10d). Financial runway also
+// critical at personal level. Kill-switch A fires (recentLayoffRecency=0.08,
+// live — first survival cut just executed). Kill-switch B fires (stockTrend=0.80
+// AND fundingHealth=0.90 > 0.60).
+// Failure mode: visa urgency amplifies an already severe situation. Both kill-
+// switches set floor at 0.70 → score floor 70. Visa scoreAmplifier at pipeline
+// level pushes effective score to 72-75.
+//
+// Formula trace (approximate):
+//   L1≈0.73  L2≈0.82  L3≈0.55  L4≈0.91  L5≈0.52
+//   raw ≈ 0.73*0.30 + 0.82*0.25 + 0.55*0.20 + 0.91*0.12 + 0.52*0.13
+//       = 0.219 + 0.205 + 0.110 + 0.109 + 0.068 = 0.711
+//   Kill-switch A (recency=0.08 < 0.20, live): floor max(raw, 0.70) = 0.711
+//   Kill-switch B (stockTrend=0.80 > 0.70 AND fundingHealth=0.90 > 0.60): no additional effect
+//   score → 71; visa amplifier at pipeline level → effective ~72
+
+const MENA_VISA_URGENCY: ScenarioSpec = {
+  name: 'MENA_VISA_URGENCY',
+  description: 'UAE fintech startup: funding crisis <3mo runway, first survival cut live, UAE employment visa with short grace period, visa amplifier in effect.',
+  expectedScore: 72,
+  toleranceLow:  65,
+  toleranceHigh: 79,
+  inputs: {
+    companyName: 'SyntheticCo-UAE-Fintech',
+    roleTitle:   'Product Operations Manager',
+    department:  'Operations',
+    userFactors: {
+      tenureYears:        2,
+      isUniqueRole:       false,
+      performanceTier:    'average',
+      hasRecentPromotion: false,
+      hasKeyRelationships:false,
+    },
+    consensusData: {
+      revenueGrowth:        sig(0.65),  // startup revenue declining (missed Series B targets)
+      stockTrend:           sig(0.80),  // proxy: distress signals; above kill-switch B threshold
+      fundingHealth:        sig(0.90),  // CRITICAL: <3mo runway, Series B bridge failed
+      overstaffing:         sig(0.80),  // built headcount on growth projections now missed
+      companySize:          sig(0.45),  // small startup (50-200 employees)
+      recentLayoffRecency:  sig(0.08, 'live'),  // first survival cut just executed — kill-switch A
+      layoffFrequency:      sig(0.80),  // 1 confirmed + structurally required second round
+      layoffSeverity:       sig(0.75),  // 20-30% per survival round (extreme)
+      sectorContagion:      sig(0.78),  // MENA fintech funding winter spreading sector-wide
+      departmentNews:       sig(0.75),  // UAE fintech distress news; DIFC regulatory watch
+      automationRisk:       sig(0.55),  // ops/product role partially automatable
+      aiToolMaturity:       sig(0.52),  // moderate AI tools in MENA fintech
+      humanAmplification:   sig(0.42),  // moderate human value (ops role)
+      industryBaseline:     sig(0.68),  // MENA startup market elevated risk vs US/EU
+      aiAdoptionRate:       sig(0.62),  // growing AI adoption in MENA fintech
+      growthOutlook:        sig(0.75),  // market outlook very poor with <3mo runway
+      averageTenure:        sig(0.55),  // low tenure (MENA startup churn norms)
+      overallConfidence:    0.88,
+      conflictLevel:        'none',
+      allConflicts:         [],
+      freshnessReport: {
+        ...FRESH_REPORT,
+        percentLive:     1.0,
+        liveSignalCount: 16,
+      },
+    },
+  },
+};
+
+// ── Scenario 19: UK_FINTECH_TIGHTENING ───────────────────────────────────────
+// UK fintech (Series D / public). FCA post-Brexit Consumer Duty and PSD2
+// enforcement tightening. compliance/ops role. Company profitable but restructuring
+// compliance function for cost efficiency under uk_private_ltd ceiling pattern
+// (FCA-regulated entity subject to capital adequacy buffers that compress headcount).
+// Failure mode: regulatory cost pressure → org flattening; RegTech tools reduce
+// need for specialist compliance analysts. Human judgment still required (partial
+// protection). No kill-switches — UK company is stable, moderate distress.
+//
+// Formula trace (approximate):
+//   L1≈0.48  L2≈0.53  L3≈0.38  L4≈0.68  L5≈0.52
+//   raw ≈ 0.48*0.30 + 0.53*0.25 + 0.38*0.20 + 0.68*0.12 + 0.52*0.13
+//       = 0.144 + 0.133 + 0.076 + 0.082 + 0.068 = 0.503 → score 50 (≈51)
+//   L2 = (1-0.52)*0.30 + 0.55*0.25 + 0.42*0.15 + 0.62*0.20 + 0.65*0.10 = 0.534
+//   Kill-switches: none (stockTrend=0.55 < 0.70; recency=0.52 ≥ 0.20)
+
+const UK_FINTECH_TIGHTENING: ScenarioSpec = {
+  name: 'UK_FINTECH_TIGHTENING',
+  description: 'UK fintech: FCA Consumer Duty + post-Brexit PSD2 enforcement, RegTech tooling pressure, uk_private_ltd ceiling, moderate distress.',
+  expectedScore: 51,
+  toleranceLow:  45,
+  toleranceHigh: 58,
+  inputs: {
+    companyName: 'SyntheticCo-UK-Fintech',
+    roleTitle:   'Compliance Analyst',
+    department:  'Legal & Compliance',
+    userFactors: {
+      tenureYears:        3,
+      isUniqueRole:       false,
+      performanceTier:    'average',
+      hasRecentPromotion: false,
+      hasKeyRelationships:false,
+    },
+    consensusData: {
+      revenueGrowth:        sig(0.40),  // revenue pressure from FCA compliance cost overhead
+      stockTrend:           sig(0.55),  // moderate concern — below kill-switch B threshold
+      fundingHealth:        sig(0.42),  // established fintech, no acute crisis; capital adequacy buffers
+      overstaffing:         sig(0.55),  // FCA-driven efficiency mandate → some consolidation
+      companySize:          sig(0.58),  // mid-large UK fintech (500-2000 employees)
+      recentLayoffRecency:  sig(0.52),  // compliance restructuring ~12-15 months ago
+      layoffFrequency:      sig(0.55),  // 1 formal round (UK employment law slows pace)
+      layoffSeverity:       sig(0.42),  // moderate — UK statutory redundancy process limits depth
+      sectorContagion:      sig(0.62),  // UK fintech sector-wide FCA Consumer Duty restructuring
+      departmentNews:       sig(0.65),  // FCA enforcement actions, compliance team consolidation news
+      automationRisk:       sig(0.38),  // RegTech tools automate routine checks; judgment still needed
+      aiToolMaturity:       sig(0.35),  // AI for UK regulatory compliance moderate-maturity
+      humanAmplification:   sig(0.58),  // FCA interpretation + client-advisory still requires humans
+      industryBaseline:     sig(0.52),  // UK fintech baseline under post-Brexit regulatory pressure
+      aiAdoptionRate:       sig(0.45),  // UK fintech cautious on AI adoption (FCA AI guidance lag)
+      growthOutlook:        sig(0.52),  // UK fintech growth constrained by regulatory overhead
+      averageTenure:        sig(0.50),  // average tenure
+      overallConfidence:    0.85,
+      conflictLevel:        'none',
+      allConflicts:         [],
+      freshnessReport:      FRESH_REPORT,
+    },
+  },
+};
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const SCORE_PROBE_SCENARIOS: ScenarioSpec[] = [
@@ -990,8 +1192,11 @@ export const SCORE_PROBE_SCENARIOS: ScenarioSpec[] = [
   INDIA_IT_HIGH_RISK,
   EU_REGULATORY_RESTRUCTURING,
   US_HYPERSCALER_EFFICIENCY,
-  SINGAPORE_GCC_PARENT_CUT,
+  SINGAPORE_GCC_PARENT,
   LATAM_FUNDING_CRISIS,
   CANADA_VISA_AMPLIFIED,
   GERMANY_MANUFACTURING_AUTOMATION,
+  GERMANY_AUTOMOTIVE_AUTOMATION,
+  MENA_VISA_URGENCY,
+  UK_FINTECH_TIGHTENING,
 ];
