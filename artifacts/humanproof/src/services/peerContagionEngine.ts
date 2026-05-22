@@ -124,6 +124,12 @@ export interface PeerContagionResult {
   readonly decayCalibrationStatus: 'uncalibrated_placeholder' | 'regression_derived';
   /** The half-life in days that was active for recency decay in this result. */
   readonly decayHalfLifeDays: number;
+  /** GAP-A02 — Number of co-occurrence pairs used to calibrate the decay λ.
+   *  0 = uncalibrated bootstrap. >= 50 = empirically validated. */
+  readonly decayEvidenceCount: number;
+  /** GAP-A02 — ISO timestamp of most recent recalibrate-engine calibration run.
+   *  null = not yet calibrated. */
+  readonly decayLastValidatedAt: string | null;
   /**
    * Geographic cluster analysis — populated when user's city maps to a known
    * tech cluster metro. Captures local supply-surge risk from co-located peer
@@ -217,20 +223,52 @@ function recencyWeight(daysAgo: number): number {
 // recencyDecayedWeight() provides a simpler utility for external callers.
 export { recencyDecayedWeight };
 
-// GAP-A02 — Returns the effective half-life (days) that recencyWeight() is using
-// and the calibration status. Consumed by computePeerContagion to populate
-// the result fields that PeerContagionPanel displays.
-function resolveActiveDecayHalfLife(): { halfLifeDays: number; calibrationStatus: 'uncalibrated_placeholder' | 'regression_derived' } {
+// GAP-A02 — Returns the effective half-life (days) that recencyWeight() is using,
+// the calibration status, and the evidence metadata from the DB row.
+// Priority: peer_contagion_decay_lambda (canonical empirical key) >
+//           peerContagionEngine.exponentialDecayHalfLife > signalDecayModel.halfLives.sector_contagion > step-band.
+function resolveActiveDecayHalfLife(): {
+  halfLifeDays: number;
+  calibrationStatus: 'uncalibrated_placeholder' | 'regression_derived';
+  evidenceCount: number;
+  lastValidatedAt: string | null;
+} {
+  // Tier 0: canonical empirical key — peer_contagion_decay_lambda stores λ (not half-life).
+  // Convert: halfLife = ln(2) / λ.
+  const empiricalLambda = getConstant<number>('peer_contagion_decay_lambda', null);
+  if (empiricalLambda.value != null && typeof empiricalLambda.value === 'number' && empiricalLambda.value > 0) {
+    const halfLifeDays = Math.LN2 / empiricalLambda.value;
+    const calibrationStatus: 'uncalibrated_placeholder' | 'regression_derived' =
+      empiricalLambda.provenance === 'regression' ? 'regression_derived' : 'uncalibrated_placeholder';
+    return {
+      halfLifeDays,
+      calibrationStatus,
+      evidenceCount:    empiricalLambda.evidenceCount ?? 0,
+      lastValidatedAt:  empiricalLambda.lastValidatedAt ?? null,
+    };
+  }
+  // Tier 1: explicit exponential half-life override from DB.
   const expOverride = getConstant<number>('peerContagionEngine.exponentialDecayHalfLife', null);
   if (expOverride.value != null && typeof expOverride.value === 'number' && expOverride.value > 0) {
-    return { halfLifeDays: expOverride.value, calibrationStatus: 'uncalibrated_placeholder' };
+    return {
+      halfLifeDays:    expOverride.value,
+      calibrationStatus: 'uncalibrated_placeholder',
+      evidenceCount:   expOverride.evidenceCount ?? 0,
+      lastValidatedAt: expOverride.lastValidatedAt ?? null,
+    };
   }
+  // Tier 2: signalDecayModel.halfLives.sector_contagion (21 days by default; DB-overridable).
   const sectorHalfLife = getConstant<number>('signalDecayModel.halfLives.sector_contagion', null);
   if (sectorHalfLife.value != null && typeof sectorHalfLife.value === 'number' && sectorHalfLife.value > 0) {
-    return { halfLifeDays: sectorHalfLife.value, calibrationStatus: 'uncalibrated_placeholder' };
+    return {
+      halfLifeDays:    sectorHalfLife.value,
+      calibrationStatus: 'uncalibrated_placeholder',
+      evidenceCount:   sectorHalfLife.evidenceCount ?? 0,
+      lastValidatedAt: sectorHalfLife.lastValidatedAt ?? null,
+    };
   }
-  // Step-band: report the approximate half-life from the bootstrap bands (90d → 0.50)
-  return { halfLifeDays: 90, calibrationStatus: 'uncalibrated_placeholder' };
+  // Tier 3: step-band bootstrap — report approximate half-life (90d → 0.50 weight)
+  return { halfLifeDays: 90, calibrationStatus: 'uncalibrated_placeholder', evidenceCount: 0, lastValidatedAt: null };
 }
 
 function computeWaveIntensity(directCuts: number, adjacentCuts: number, daysWindow: number): ContagionWaveIntensity {
@@ -464,6 +502,7 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
   if (totalPeersMonitored === 0) {
     // No peer data — still compute geo cluster for the static concentration signal
     const geoCluster = computeGeoClusterRisk(inputs.city, companyKeyNorm, []);
+    const decayInfo = resolveActiveDecayHalfLife();
     return {
       waveIntensity: 'NONE',
       propagationRisk: 'NEGLIGIBLE',
@@ -481,8 +520,10 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
       multipliersCalibrationStatus: 'developer_estimate',
       multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
       multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
-      decayCalibrationStatus: 'uncalibrated_placeholder' as const,
-      decayHalfLifeDays: resolveActiveDecayHalfLife().halfLifeDays,
+      decayCalibrationStatus: decayInfo.calibrationStatus,
+      decayHalfLifeDays:      decayInfo.halfLifeDays,
+      decayEvidenceCount:     decayInfo.evidenceCount,
+      decayLastValidatedAt:   decayInfo.lastValidatedAt,
       geoCluster,
     };
   }
@@ -550,6 +591,7 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
 
   // Compute geographic supply-surge cluster risk using the resolved affected peers.
   const geoCluster = computeGeoClusterRisk(inputs.city, companyKeyNorm, affectedPeers);
+  const decayInfo  = resolveActiveDecayHalfLife();
 
   return {
     waveIntensity,
@@ -568,8 +610,10 @@ export function computePeerContagion(inputs: PeerContagionInputs): PeerContagion
     multipliersCalibrationStatus: 'developer_estimate',
     multipliersCalibrationNote: 'Sector contribution multipliers (direct_competitor=1.0, adjacent_market=0.65, same_sector=0.35–0.50) are developer-estimated. Calibration requires co-occurrence analysis: same-sector layoffs within 90 days of each other across ≥50 paired events.',
     multiplierConfidence: 'bootstrap', // v39.0 D4 — flip to 'calibrated' once Phase E1 regression validates
-    decayCalibrationStatus: 'uncalibrated_placeholder' as const,
-    decayHalfLifeDays: resolveActiveDecayHalfLife().halfLifeDays,
+    decayCalibrationStatus: decayInfo.calibrationStatus,
+    decayHalfLifeDays:      decayInfo.halfLifeDays,
+    decayEvidenceCount:     decayInfo.evidenceCount,
+    decayLastValidatedAt:   decayInfo.lastValidatedAt,
     geoCluster,
   };
 }

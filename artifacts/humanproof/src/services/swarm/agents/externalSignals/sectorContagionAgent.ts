@@ -56,20 +56,31 @@ const SECTOR_CONTAGION_FALLBACK: Record<string, number> = {
 // ESTIMATED (uncalibrated_placeholder) — GAP-A02.
 // The 30-day half-life is a developer choice based on qualitative analysis of
 // 2022-2024 sector wave timing (follow-on announcements cluster in 2-6 weeks).
-// It has NOT been regression-fitted to a lag distribution. DB key:
-// sectorContagionAgent.decayLambda (registered by migration 20260623000013).
+// It has NOT been regression-fitted to a lag distribution. DB keys:
+//   peer_contagion_decay_lambda     — canonical empirical key (migration 000021)
+//   sectorContagionAgent.decayLambda — component-scoped ESTIMATED key (migration 000013)
+//
+// Priority: peer_contagion_decay_lambda (empirical, when calibrated) >
+//           sectorContagionAgent.decayLambda (ESTIMATED) > BOOTSTRAP_DECAY_LAMBDA.
 //
 // Inconsistency: signalDecayModel.sector_contagion uses a 21-day half-life
 // (λ≈0.033), also ESTIMATED. Both converge to a single value at July 2026
 // calibration (target: fit exponential decay to lag distribution in layoffs.fyi waves).
 const BOOTSTRAP_DECAY_LAMBDA = 0.023;
 
-// DB-routed: allows recalibrate-engine to override without a code deploy.
-// Reads 'sectorContagionAgent.decayLambda'; falls back to BOOTSTRAP_DECAY_LAMBDA.
-const _dbDecayLambda = getConstant<number>('sectorContagionAgent.decayLambda', null);
-const DECAY_LAMBDA: number = (typeof _dbDecayLambda.value === 'number' && _dbDecayLambda.value > 0)
-  ? _dbDecayLambda.value
+// GAP-A02: read canonical empirical key first; fall back to component-specific ESTIMATED key.
+const _empiricalLambda = getConstant<number>('peer_contagion_decay_lambda', null);
+const _dbDecayLambda   = getConstant<number>('sectorContagionAgent.decayLambda', null);
+const DECAY_LAMBDA: number =
+  (typeof _empiricalLambda.value === 'number' && _empiricalLambda.value > 0)
+    ? _empiricalLambda.value
+  : (typeof _dbDecayLambda.value === 'number' && _dbDecayLambda.value > 0)
+    ? _dbDecayLambda.value
   : BOOTSTRAP_DECAY_LAMBDA;
+// Expose calibration provenance in metadata so TransparencyTab can show source.
+const DECAY_LAMBDA_PROVENANCE = _empiricalLambda.provenance !== 'manual_seed'
+  ? _empiricalLambda.provenance
+  : (_dbDecayLambda.provenance !== 'manual_seed' ? _dbDecayLambda.provenance : 'uncalibrated_placeholder');
 
 // MACRO_TRIGGER_FRACTION — the fraction of sector companies cutting simultaneously
 // above which individual cuts are more likely macro-driven than causal contagion.
@@ -305,6 +316,9 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
           : clusteringRatio > 0.60
           ? 'Tight temporal cluster — contagion propagation pattern detected; macro attenuation not applied'
           : 'Sparse or no simultaneous cutting — standard decay-weighted contagion signal',
+        // GAP-A02: expose which key produced the active λ
+        decayLambda:           DECAY_LAMBDA,
+        decayLambdaProvenance: DECAY_LAMBDA_PROVENANCE,
         // Metro cluster fields — populated when geographic co-location amplifies signal
         metroClusterFired:   activeClusters.length > 0,
         activeMetroCluster:  topCluster?.metroName ?? null,

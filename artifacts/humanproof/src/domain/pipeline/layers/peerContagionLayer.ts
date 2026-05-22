@@ -41,6 +41,8 @@ const FALLBACK_RESULT: PeerContagionResult = {
   multiplierConfidence: 'bootstrap', // v39.0 D4
   decayCalibrationStatus: 'uncalibrated_placeholder',
   decayHalfLifeDays: 21, // signalDecayModel.sector_contagion bootstrap default
+  decayEvidenceCount: 0,
+  decayLastValidatedAt: null,
 };
 
 export const peerContagionLayer: AuditLayer<'peer_contagion'> = {

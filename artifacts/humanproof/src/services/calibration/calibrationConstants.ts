@@ -65,6 +65,12 @@ export interface ResolvedConstant<T> {
   rationale: string;
   /** The constant key, returned for span tagging. */
   key: string;
+  /** GAP-A02 — Number of training examples or co-occurrence pairs that produced
+   *  this value. 0 = uncalibrated bootstrap. null = not tracked for this key. */
+  evidenceCount: number | null;
+  /** GAP-A02 — ISO timestamp of the most recent recalibrate-engine run that
+   *  validated or updated this constant. null = not yet calibrated. */
+  lastValidatedAt: string | null;
 }
 
 interface ConstantRow {
@@ -72,6 +78,8 @@ interface ConstantRow {
   value: unknown;
   provenance: CalibrationProvenance;
   rationale: string | null;
+  evidence_count: number | null;
+  last_validated_at: string | null;
 }
 
 // ── Snapshot cache ──────────────────────────────────────────────────────────
@@ -92,7 +100,7 @@ async function loadSnapshot(): Promise<void> {
   // extension; the WS9 seed only writes GLOBAL rows.
   const { data, error } = await supabase
     .from('engine_calibration_constants')
-    .select('key, value, provenance, rationale')
+    .select('key, value, provenance, rationale, evidence_count, last_validated_at')
     .eq('status', 'active')
     .eq('cohort_scope', 'GLOBAL');
 
@@ -180,6 +188,8 @@ export function getConstant<T = number>(key: string, bootstrapFallback: T): Reso
       usedBootstrap: true,
       rationale: 'flag_off',
       key,
+      evidenceCount: null,
+      lastValidatedAt: null,
     };
   }
 
@@ -193,6 +203,8 @@ export function getConstant<T = number>(key: string, bootstrapFallback: T): Reso
       usedBootstrap: true,
       rationale: 'db_miss',
       key,
+      evidenceCount: null,
+      lastValidatedAt: null,
     };
   }
 
@@ -203,6 +215,8 @@ export function getConstant<T = number>(key: string, bootstrapFallback: T): Reso
     usedBootstrap: false,
     rationale: row.rationale ?? '',
     key,
+    evidenceCount: row.evidence_count ?? null,
+    lastValidatedAt: row.last_validated_at ?? null,
   };
 }
 
