@@ -3150,6 +3150,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         equityVestMonths:    uf45b.equityVestMonths ?? null,
         metroArea:           uf45b.metroArea ?? null,
       },
+      (hybridResult as any).visaRisk ?? null,
     );
     (hybridResult as any).personalizedActionSet = personalizedActionSet;
     // v40.0 FIX-6: hoist the derived profileSignals to the top of hybridResult so
@@ -3157,6 +3158,19 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     // without re-deriving — preventing threshold drift across services.
     if (personalizedActionSet?.profileSignals) {
       (hybridResult as any).profileSignals = personalizedActionSet.profileSignals;
+    }
+    // Grace-period compression: apply the same deadline remapping to the engine's
+    // recommendation array so TakeActionTab's ActionMatrix reflects the real window.
+    if (personalizedActionSet?.graceCompressionApplied && personalizedActionSet.graceCompressionTier) {
+      const _deadlineMap: Record<string, Record<string, string>> = {
+        critical:   { day1: '6 hours',  week1: '2 days',  month1: '7 days',  quarter1: '7 days'  },
+        compressed: { day1: '24 hours', week1: '3 days',  month1: '10 days', quarter1: '10 days' },
+      };
+      const _dm = _deadlineMap[personalizedActionSet.graceCompressionTier];
+      hybridResult.recommendations = hybridResult.recommendations.map((rec: any) => ({
+        ...rec,
+        deadline: rec.sequencePhase ? (_dm[rec.sequencePhase] ?? rec.deadline) : rec.deadline,
+      }));
     }
   } catch (e) {
     noteEngineFailure('personalizedActionSet', e);

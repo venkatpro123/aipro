@@ -23,8 +23,9 @@ import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
-  BookOpen, Activity, DollarSign, AlertCircle,
+  BookOpen, Activity, DollarSign, AlertCircle, Timer,
 } from 'lucide-react';
+import type { VisaRiskResult } from '../../../services/visaRiskEngine';
 import {
   getMarketBatchStatus,
   type MarketBatchStatus,
@@ -68,7 +69,11 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; icon: React.E
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
-const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean }> = ({ items, emergencyMode }) => {
+const ActionMatrix: React.FC<{
+  items: ActionPlanItem[];
+  emergencyMode?: boolean;
+  phaseLabels?: Record<string, string>;
+}> = ({ items, emergencyMode, phaseLabels }) => {
   const [showAll, setShowAll] = useState(false);
 
   const prioritised = useMemo(() => {
@@ -138,7 +143,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[]; emergencyMode?: boolean 
                     {item.sequencePhase && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
                         style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-                        {({ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string, string>)[item.sequencePhase] ?? item.sequencePhase}
+                        {(phaseLabels ?? { day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string, string>)[item.sequencePhase] ?? item.sequencePhase}
                       </span>
                     )}
                     {item.deadline && (
@@ -325,6 +330,37 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
   const financialRunway = r.financialRunway;
   const runwayUrgent = financialRunway?.monthsCovered != null && financialRunway.monthsCovered < 6;
 
+  // Grace-period-aware phase label compression
+  const visaRisk = r.visaRisk as VisaRiskResult | null | undefined;
+  const _graceIsHigh =
+    visaRisk != null &&
+    (visaRisk.overallVisaRisk === 'HIGH' || visaRisk.overallVisaRisk === 'CRITICAL') &&
+    visaRisk.gracePeriodDays < 30;
+  const _graceTier = _graceIsHigh
+    ? (visaRisk!.gracePeriodDays <= 10 ? 'critical' : 'compressed')
+    : null;
+  const gracePhaseLabels: Record<string, string> | undefined = _graceTier === 'critical'
+    ? { day1: '0–6 hours', week1: 'first 2 days', month1: 'first 7 days', quarter1: 'first 7 days' }
+    : _graceTier === 'compressed'
+      ? { day1: '0–24 hours', week1: 'first 3 days', month1: 'first 10 days', quarter1: 'first 10 days' }
+      : undefined;
+  const VISA_TYPE_LABEL: Partial<Record<string, string>> = {
+    h1b: 'H-1B', l1: 'L-1', opt_stem: 'OPT/STEM', tn: 'TN',
+    uk_skilled_worker: 'UK Skilled Worker visa', eu_blue_card: 'EU Blue Card',
+    eu_blue_card_germany: 'EU Blue Card (Germany)',
+    australia_482_tss: 'Australia 482 TSS visa',
+    singapore_ep: 'Singapore Employment Pass',
+    singapore_s_pass: 'Singapore S Pass',
+    canada_lmia_permit: 'Canada LMIA permit',
+    philippines_9g_aep: 'Philippines 9G/AEP',
+    japan_work_visa: 'Japan work visa',
+    uae_employment_visa: 'UAE employment visa',
+    saudi_iqama: 'Saudi Iqama', qatar_work_permit: 'Qatar work permit',
+    kuwait_work_permit: 'Kuwait work permit', gcc_sponsored: 'GCC sponsored permit',
+    other_work_auth: 'work authorization',
+  };
+  const visaLabel = visaRisk ? (VISA_TYPE_LABEL[visaRisk.visaType] ?? 'your work visa') : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
 
@@ -379,9 +415,29 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         </div>
       )}
 
+      {/* Grace-period compression banner */}
+      {_graceIsHigh && visaRisk && visaLabel && (
+        <div
+          className="rounded-xl px-4 py-3 flex gap-3 items-start"
+          style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.35)' }}
+          role="alert"
+        >
+          <Timer className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#ef4444' }} />
+          <div>
+            <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#f87171' }}>
+              {visaLabel} grace period: {visaRisk.gracePeriodDays} day{visaRisk.gracePeriodDays === 1 ? '' : 's'}
+            </p>
+            <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              All timelines below are compressed to fit your actual legal window.
+              Standard 30-day and 90-day actions are not applicable — act within the window shown.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* T2: Action Priority Matrix */}
       {recommendations.length > 0 && (
-        <ActionMatrix items={recommendations} emergencyMode={isEmergency} />
+        <ActionMatrix items={recommendations} emergencyMode={isEmergency} phaseLabels={gracePhaseLabels} />
       )}
 
       {/* T2: Financial runway — only when urgent */}

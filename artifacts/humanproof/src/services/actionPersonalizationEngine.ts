@@ -20,6 +20,7 @@
 
 import type { ActionPlanItem } from "@/types/hybridResult";
 import type { SeniorityBracket } from "./seniorityActionEngine";
+import type { VisaRiskResult } from "./visaRiskEngine";
 import { canonicalKeyToActionGroup, resolveRoleInput } from "./roleResolution";
 import { getRoleOverride } from "./roleIntelligenceClient";
 // v37.0 multi-industry action pool imports
@@ -94,6 +95,9 @@ export interface PersonalizedActionSet {
    *   'family_anchor', 'dual_income_cushion', 'resilient_repeat'.
    */
   profileSignals?: string[];
+  // Grace-period compression — set when visaRisk is HIGH/CRITICAL and gracePeriodDays < 30
+  graceCompressionApplied?: boolean;
+  graceCompressionTier?: 'critical' | 'compressed';
 }
 
 /**
@@ -3149,6 +3153,9 @@ export function getPersonalizedActions(
   // v39.0 B1: full user profile feeds into selection + framing, not just
   // re-ranking. Callers that don't have a profile yet pass null safely.
   userProfile?: UserProfileLike | null,
+  // Grace-period-aware compression: when HIGH/CRITICAL visa risk + gracePeriodDays < 30,
+  // action deadlines are compressed to fit the actual legal window.
+  visaRisk?: VisaRiskResult | null,
 ): PersonalizedActionSet {
   const roleGroup = resolveRoleGroup(roleTitle);
   const riskLevel = scoreToRiskLevel(score);
@@ -3213,12 +3220,36 @@ export function getPersonalizedActions(
   const profileSummary = deriveProfileSignals(userProfile, score);
   const profileContextNote = buildProfileContextNote(profileSummary, score, companyName);
 
+  // Grace-period-aware phase compression
+  // When visa risk is HIGH/CRITICAL and the grace period is < 30 days, remap each
+  // action's deadline to fit the actual legal window. sequencePhase keys are preserved
+  // (day1/week1/month1/quarter1) so downstream phase-label overrides stay coherent.
+  const _graceIsHigh =
+    visaRisk != null &&
+    (visaRisk.overallVisaRisk === 'HIGH' || visaRisk.overallVisaRisk === 'CRITICAL') &&
+    visaRisk.gracePeriodDays < 30;
+  const graceCompressionTier: 'critical' | 'compressed' | undefined = _graceIsHigh
+    ? (visaRisk!.gracePeriodDays <= 10 ? 'critical' : 'compressed')
+    : undefined;
+  const GRACE_DEADLINE_MAP: Record<'critical' | 'compressed', Record<string, string>> = {
+    critical:   { day1: '6 hours',  week1: '2 days',  month1: '7 days',  quarter1: '7 days'  },
+    compressed: { day1: '24 hours', week1: '3 days',  month1: '10 days', quarter1: '10 days' },
+  };
+  const finalActions = graceCompressionTier
+    ? (actions as Array<Partial<ActionPlanItem>>).map(item => ({
+        ...item,
+        deadline: item.sequencePhase
+          ? (GRACE_DEADLINE_MAP[graceCompressionTier][item.sequencePhase] ?? item.deadline)
+          : item.deadline,
+      }))
+    : actions;
+
   return {
     roleGroup,
     rolePrefixMatch: roleTitle,
     seniorityBracket,
     riskLevel,
-    actions: actions as Array<Partial<ActionPlanItem>>,
+    actions: finalActions as Array<Partial<ActionPlanItem>>,
     indiaSpecificContext,
     companyContextNote,
     isDbOverride,
@@ -3226,6 +3257,8 @@ export function getPersonalizedActions(
     fallbackReason: isGenericFallback ? 'role_not_in_specialized_database' : undefined,
     profileContextNote,
     profileSignals: profileSummary.flags,
+    graceCompressionApplied: graceCompressionTier != null || undefined,
+    graceCompressionTier,
   };
 }
 
