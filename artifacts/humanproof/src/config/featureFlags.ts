@@ -82,7 +82,12 @@ export type FlagKey =
   // kill-switch lets ops disable the DAG runner entirely if a duplicate-write
   // bug ships. Default ON to preserve v38.0 behaviour. Flip to 'off' to fall
   // back to pure legacy compute.
-  | 'v39_dag_runner_active';
+  | 'v39_dag_runner_active'
+  // v40.0 Section 11.5: D8 expansion to WAVE cohort (sector_wave archetype).
+  // Gated on 100-event held-out validation (n≥100, AUC≥0.72, precision≥0.65).
+  // Default OFF — activated to 'shadow' by check_d8_wave_expansion() once gate
+  // clears, then promoted to 'production' after 14-day probe observation.
+  | 'v40_d8_wave_cohort_active';
 
 /**
  * The user-facing result of evaluating a flag for the current user.

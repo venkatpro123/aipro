@@ -11,9 +11,12 @@
 //
 // HOW IT WORKS
 // ────────────
-// 7 hardcoded scenarios with fully deterministic ConsensusData signals cover
+// 12 hardcoded scenarios with fully deterministic ConsensusData signals cover
 // the full score range (17–82) and each probe tests a different dominant
 // formula path (L1 financial, D1 role displacement, D4 tenure, etc.).
+// Scenarios 8–11 test D1 country multiplier paths (added v40.0 global market
+// probes). Scenario 12 (WAVE_EFFICIENCY_HYBRID) tests the D8+L2+D2 interaction
+// for the WAVE cohort expansion gate (Section 11.5).
 // For each scenario, the probe calls calculate-hybrid-risk with the hardcoded
 // signals and compares the actual score against the pre-computed expected range.
 //
@@ -392,6 +395,48 @@ const PROBE_SCENARIOS: ProbeScenario[] = [
       growthOutlook:       { value: 0.68, confidence: 0.75 },
       departmentNews:      { value: 0.55, confidence: 0.70 },
       overallConfidence: 0.76,
+    },
+  },
+  // ── D8 WAVE cohort expansion probe (added v40.0 — 2026-06-23) ────────────────
+  // Tests the combined D8+L2+D2 path for the WAVE cohort: a software engineer
+  // at a PROFITABLE, HIGH-AI-INVESTMENT company in a sector experiencing a
+  // layoff wave. This scenario validates that D8 fires correctly when both the
+  // efficiency signal (D8) and sector-wave signals (L2 high, D3 contagion)
+  // are simultaneously active — the interaction that distinguishes WAVE cohort
+  // from GLOBAL cohort. Expected 62–72 (midpoint 67).
+  //
+  // Key signals:
+  //   recentLayoffRecency/layoffFrequency HIGH  → L2 sector-wave path active
+  //   aiToolMaturity/aiAdoptionRate HIGH        → D2 + D8 efficiency path active
+  //   fundingHealth LOW (= company profitable)  → L1 financial risk reduced
+  //   stockTrend/growthOutlook MODERATE-HIGH    → sector market pressure
+  //
+  // If this probe fails after v40_d8_wave_cohort_active moves to shadow/prod,
+  // it indicates the WAVE cohort D8 weight is miscalibrated or the sector-wave
+  // signal interaction is not computing as expected.
+  {
+    id: 'WAVE_EFFICIENCY_HYBRID',
+    description: 'Software engineer at profitable high-AI company in sector layoff wave — tests D8+L2+D2 WAVE cohort path',
+    formulaPath:  'D8_efficiency + L2_sector_wave + D2_ai_high + D3_contagion',
+    expectedMin:  62,
+    expectedMax:  72,
+    midpoint:     67,
+    userFactors:  { roleTitle: 'software engineer', tenureYears: 3 },
+    consensusData: {
+      stockTrend:          { value: 0.72, confidence: 0.78 },  // sector market pressure
+      revenueGrowth:       { value: 0.52, confidence: 0.75 },  // company stable; sector slowing
+      overstaffing:        { value: 0.60, confidence: 0.75 },  // wave: sector overhired
+      fundingHealth:       { value: 0.30, confidence: 0.80 },  // profitable company — low funding risk
+      recentLayoffRecency: { value: 0.85, confidence: 0.82 },  // wave: many recent cuts in sector
+      layoffFrequency:     { value: 0.88, confidence: 0.82 },  // wave: frequent sector cuts
+      layoffSeverity:      { value: 0.72, confidence: 0.78 },  // meaningful sector cuts
+      aiToolMaturity:      { value: 0.85, confidence: 0.82 },  // high AI maturity — efficiency angle
+      automationRisk:      { value: 0.78, confidence: 0.80 },  // wave roles at automation risk
+      aiAdoptionRate:      { value: 0.82, confidence: 0.82 },  // strong AI adoption
+      humanAmplification:  { value: 0.72, confidence: 0.78 },  // AI being actively deployed
+      growthOutlook:       { value: 0.65, confidence: 0.75 },  // sector growth moderating
+      departmentNews:      { value: 0.68, confidence: 0.75 },  // dept in sector wave news
+      overallConfidence: 0.78,
     },
   },
 ];
