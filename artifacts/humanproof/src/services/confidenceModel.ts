@@ -73,6 +73,15 @@ export interface ConfidenceResult {
     liveUnavailableFloor: number | null;
     /** Regime-specific structural ceiling (null when not a private-company audit). */
     privateRegimeCeiling: number | null;
+    /**
+     * BUG-05 — Evidence-based confidence BEFORE the regime ceiling was applied.
+     * null when no private-company ceiling fired (ceiling = no-op or not applicable).
+     * When non-null, the UI should display both values:
+     *   "Evidence quality: {preRegimeCeilingValue}% → Structural cap: {privateRegimeCeiling * 100}%"
+     * This exposes the information gap: a user at 71% evidence confidence capped to 55%
+     * has a very different data situation than a user who naturally landed at 42%.
+     */
+    preRegimeCeilingValue: number | null;
   };
   /** Human-readable diagnostic strings — used by the confidence tooltip. */
   rationale: string[];
@@ -223,9 +232,15 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
   // Represents the structural information limit imposed by local disclosure
   // law — not a quality score. See PRIVATE_REGIME_CEILINGS for rationale.
   let privateRegimeCeiling: number | null = null;
+  // BUG-05: capture pre-ceiling value BEFORE Math.min so the UI can show
+  // "Evidence quality: X% → Structural cap: Y%" when they differ.
+  let preRegimeCeilingValue: number | null = null;
   if (inputs.privateCompanyRegime) {
     privateRegimeCeiling = PRIVATE_REGIME_CEILINGS[inputs.privateCompanyRegime];
+    const uncapped = value;
     value = Math.min(value, privateRegimeCeiling);
+    // Only record pre-ceiling when the ceiling actually bit (uncapped > ceiling).
+    preRegimeCeilingValue = uncapped > privateRegimeCeiling ? uncapped : null;
   }
 
   value = clamp(value, 0.10, 0.95);
@@ -276,6 +291,7 @@ export function computeConfidence(inputs: ConfidenceInputs): ConfidenceResult {
       conflictPenalty,
       liveUnavailableFloor,
       privateRegimeCeiling,
+      preRegimeCeilingValue,
     },
     rationale,
   };

@@ -1,5 +1,5 @@
 // scoreProbeScenarios.ts
-// 14 canonical fixture scenarios for the score-level synthetic probes.
+// 16 canonical fixture scenarios for the score-level synthetic probes.
 //
 // Each scenario is a fully-specified HybridScoreInputs object whose fixture
 // values have been verified to produce a score within the documented tolerance
@@ -17,7 +17,9 @@
 // │ RECENT_LAYOFF_SURVIVOR               │  72     │ [67, 77]   │ Live layoff fired, survived         │
 // │ PERSONAL_PROTECTION                  │  38     │ [33, 43]   │ Distressed co, 12yr+unique          │
 // ├──────────────────────────────────────┼─────────┼────────────┼────────────────────────────────────┤
-// │ INDIA_BPO_BENCH_RISK                 │  71     │ [66, 76]   │ Bench signal + IT services + Q1    │
+// │ INDIA_BPO_BENCH_RISK                 │  71     │ [66, 76]   │ Bench signal + BPO analyst + Q1    │
+// │ INDIA_IT_BENCH_RISK                  │  53     │ [48, 58]   │ SWE bench 60d + ITES + Q1 cut      │
+// │ INDIA_IT_HIGH_RISK                   │  70     │ [65, 75]   │ SWE bench 90d + PIP + sector wave  │
 // │ EU_REGULATORY_RESTRUCTURING          │  58     │ [53, 63]   │ Legal/data role + AI Act pressure  │
 // │ US_HYPERSCALER_EFFICIENCY            │  64     │ [59, 69]   │ D8 pattern + profitability          │
 // │ SINGAPORE_GCC_PARENT_CUT            │  67     │ [62, 72]   │ GCC + parent contagion 6mo         │
@@ -850,6 +852,129 @@ const GERMANY_MANUFACTURING_AUTOMATION: ScenarioSpec = {
   },
 };
 
+// ── Scenario 15: INDIA_IT_BENCH_RISK ──────────────────────────────────────────
+// India IT services company (TCS / Infosys / Wipro archetype).
+// Software Engineer II on bench 60+ days — no billable project assigned.
+// Q1 seasonal cut cycle (April–June fiscal year start for Indian IT firms).
+// KEY DIFFERENTIATOR FROM INDIA_BPO_BENCH_RISK:
+//   BPO analyst: automationRisk=0.95, humanAmplification=0.08 (near-fully automatable)
+//   SWE:         automationRisk=0.58, humanAmplification=0.42 (AI-augmented, not replaced)
+// Tests the HYPERSCALER_IT_SERVICES_INDIA L3 sector multiplier=1.35 path for SWE roles.
+//
+// Formula trace (exact — all values verified against hybridScoringMath.ts):
+//   L1 = 0.35*0.35 + 0.42*0.25 + 0.25*0.15 + 0.75*0.15 + 0.65*0.10 = 0.4425
+//   L2 = 0.58*0.30 + 0.60*0.25 + 0.55*0.15 + 0.55*0.20 + 0.55*0.10 = 0.5715
+//   L3 = 0.58*0.40 + 0.50*0.30 + (1-0.42)*0.30                     = 0.5560
+//   L4 = min(1, 0.45 + 0.52*0.18 + 0.62*0.15)                      = 0.6366
+//   L5 = 0.50*0.40 + 0.58*0.32 + 0.48*0.28                         = 0.5200
+//   raw = 0.1328+0.1429+0.1112+0.0764+0.0676 = 0.5309 → score 53
+// Kill-switches: none fire (stockTrend=0.42 < 0.70 for B; recency=0.42 ≥ 0.20 for A)
+
+const INDIA_IT_BENCH_RISK: ScenarioSpec = {
+  name: 'INDIA_IT_BENCH_RISK',
+  description: 'India IT services: SWE-II on bench 60+ days, Q1 seasonal cut cycle, moderate AI automation exposure (not BPO).',
+  expectedScore: 53,
+  toleranceLow:  48,
+  toleranceHigh: 58,
+  inputs: {
+    companyName: 'SyntheticCo-IndiaITES',
+    roleTitle:   'Software Engineer II',
+    department:  'Engineering',
+    userFactors: {
+      tenureYears:         3.5,
+      isUniqueRole:        false,
+      performanceTier:     'average',
+      hasRecentPromotion:  false,
+      hasKeyRelationships: false,
+    },
+    consensusData: {
+      revenueGrowth:        sig(0.35),  // ITES revenue under mild pressure (flat digital-transformation bookings)
+      stockTrend:           sig(0.42),  // moderate stock concern (below kill-switch B threshold of 0.70)
+      fundingHealth:        sig(0.25),  // profitable large ITES co (no VC dependency)
+      overstaffing:         sig(0.75),  // bench = strong overstaffing signal
+      companySize:          sig(0.65),  // HYPERSCALER scale (200k+ employees: TCS/Infosys/Wipro)
+      recentLayoffRecency:  sig(0.42),  // seasonal bench cuts 12–15 months ago (last Q1)
+      layoffFrequency:      sig(0.60),  // 2 rounds in 24 months (Q1 seasonal IT services pattern)
+      layoffSeverity:       sig(0.55),  // 2–4% per round (smaller than BPO)
+      sectorContagion:      sig(0.55),  // ITES sector benching — moderate, not BPO-extreme
+      departmentNews:       sig(0.55),  // SWE dept: AI code-gen news, GenAI replacing junior tasks
+      automationRisk:       sig(0.58),  // SWE: GitHub Copilot / Cursor significant but not extreme
+      aiToolMaturity:       sig(0.50),  // AI coding tools v1-products, 2–3 year full-adoption horizon
+      humanAmplification:   sig(0.42),  // SWE valuable for architecture/requirements/debugging
+      industryBaseline:     sig(0.45),  // IT services baseline below hyperscaler but elevated
+      aiAdoptionRate:       sig(0.62),  // AI tools spreading across ITES project delivery
+      growthOutlook:        sig(0.52),  // IT services growth moderating — headcount growth flat
+      averageTenure:        sig(0.52),  // average tenure at large ITES firm
+      overallConfidence:    0.85,
+      conflictLevel:        'none',
+      allConflicts:         [],
+      freshnessReport:      FRESH_REPORT,
+    },
+  },
+};
+
+// ── Scenario 16: INDIA_IT_HIGH_RISK ───────────────────────────────────────────
+// India IT services SWE on bench >90 days with PIP / below-average performance.
+// Q4 fiscal year-end pressure (Jan–Mar for Indian IT); multiple rounds in 12 months.
+// Sector-wide contagion from major IT layoff events (large-scale cuts across ITES peers).
+// KEY DIFFERENTIATORS vs INDIA_IT_BENCH_RISK:
+//   • performanceTier='below' → L5 penalty (PIP status)
+//   • bench 90d+ → overstaffing=0.88 vs 0.75
+//   • recentLayoffRecency=0.28 → more recent cuts (6–8 months ago vs 12–15 months)
+//   • sectorContagion=0.82 → major sector-wave events (vs 0.55 moderate)
+//
+// Formula trace (exact — all values verified against hybridScoringMath.ts):
+//   L1 = 0.58*0.35 + 0.65*0.25 + 0.28*0.15 + 0.88*0.15 + 0.65*0.10 = 0.6045
+//   L2 = 0.72*0.30 + 0.85*0.25 + 0.72*0.15 + 0.82*0.20 + 0.78*0.10 = 0.7785
+//   L3 = 0.75*0.40 + 0.70*0.30 + (1-0.30)*0.30                     = 0.7200
+//   L4 = min(1, 0.58 + 0.62*0.18 + 0.75*0.15)                      = 0.8041
+//   L5 = 0.50*0.40 + 0.58*0.32 + 0.82*0.28                         = 0.6152
+//   raw = 0.1814+0.1946+0.1440+0.0965+0.0800 = 0.6965 → score 70
+// Kill-switches: none fire (stockTrend=0.65 < 0.70 for B; recency=0.28 ≥ 0.20 for A)
+
+const INDIA_IT_HIGH_RISK: ScenarioSpec = {
+  name: 'INDIA_IT_HIGH_RISK',
+  description: 'India IT services: SWE-II bench 90d+, below-average perf (PIP risk), Q4 pressure, sector-wide layoff contagion.',
+  expectedScore: 70,
+  toleranceLow:  65,
+  toleranceHigh: 75,
+  inputs: {
+    companyName: 'SyntheticCo-IndiaITES',
+    roleTitle:   'Software Engineer II',
+    department:  'Engineering',
+    userFactors: {
+      tenureYears:         2.0,
+      isUniqueRole:        false,
+      performanceTier:     'below',  // PIP / below-average rating
+      hasRecentPromotion:  false,
+      hasKeyRelationships: false,
+    },
+    consensusData: {
+      revenueGrowth:        sig(0.58),  // ITES revenue contracting — offshore bookings declining
+      stockTrend:           sig(0.65),  // elevated concern (still below 0.70 kill-switch threshold)
+      fundingHealth:        sig(0.28),  // profitable but margin compression accelerating
+      overstaffing:         sig(0.88),  // bench 90+ days = extreme overstaffing signal
+      companySize:          sig(0.65),  // HYPERSCALER scale (200k+ employees)
+      recentLayoffRecency:  sig(0.28),  // cuts 6–8 months ago — very recent (Q3 cost action)
+      layoffFrequency:      sig(0.85),  // 3+ rounds in 24 months (Q1+Q3 seasonal + ad-hoc)
+      layoffSeverity:       sig(0.72),  // 4–8% per round — larger cuts under margin pressure
+      sectorContagion:      sig(0.82),  // major sector-wave: peer ITES firms also cutting 5-15%
+      departmentNews:       sig(0.78),  // GenAI replacing junior SWE tasks — high dept news volume
+      automationRisk:       sig(0.75),  // advanced AI coding tools now replacing junior SWE work
+      aiToolMaturity:       sig(0.70),  // AI coding tools maturing rapidly (2025–26 cohort)
+      humanAmplification:   sig(0.30),  // lower value-add for this specific role (junior SWE)
+      industryBaseline:     sig(0.58),  // IT services baseline elevated — sector restructuring
+      aiAdoptionRate:       sig(0.75),  // rapid AI adoption across ITES project delivery
+      growthOutlook:        sig(0.62),  // IT services headcount growth contracting significantly
+      averageTenure:        sig(0.52),  // average tenure at large ITES firm
+      overallConfidence:    0.85,
+      conflictLevel:        'none',
+      allConflicts:         [],
+      freshnessReport:      FRESH_REPORT,
+    },
+  },
+};
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export const SCORE_PROBE_SCENARIOS: ScenarioSpec[] = [
@@ -861,6 +986,8 @@ export const SCORE_PROBE_SCENARIOS: ScenarioSpec[] = [
   RECENT_LAYOFF_SURVIVOR,
   PERSONAL_PROTECTION,
   INDIA_BPO_BENCH_RISK,
+  INDIA_IT_BENCH_RISK,
+  INDIA_IT_HIGH_RISK,
   EU_REGULATORY_RESTRUCTURING,
   US_HYPERSCALER_EFFICIENCY,
   SINGAPORE_GCC_PARENT_CUT,
