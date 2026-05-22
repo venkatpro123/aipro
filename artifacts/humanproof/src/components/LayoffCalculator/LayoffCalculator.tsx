@@ -80,6 +80,13 @@ import { resolveRoleInput } from "../../services/roleResolution";
 import { LiveSignalStatusBanner } from "../audit/LiveSignalStatusBanner";
 import { HybridResult } from "../../types/hybridResult";
 import { useHumanProof } from "../../context/HumanProofContext";
+import {
+  ProgressiveQuorumPanel,
+  type QuorumState,
+  type QuorumStatus,
+  type QuorumCompanyData,
+  buildLimitedDataBanner,
+} from "./ProgressiveQuorumPanel";
 
 interface Props {
   /** Optional: passed from ToolsPage so action plan links can switch tabs */
@@ -193,6 +200,18 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   );
   // 0=idle, 1=engine+agents running, 2=gemini synthesizing, 3=done
   const [ensembleStage, setEnsembleStage] = useState(0);
+
+  // ── Progressive quorum disclosure ──────────────────────────────────────────
+  // Tracks which data quorum classes have resolved during calculation.
+  // financial + layoff resolve when company data loads (~10s).
+  // hiring resolves when the swarm completes (~20-30s).
+  // ProgressiveQuorumPanel renders partial cards as each class settles,
+  // eliminating the blank 45-second wait for private companies.
+  const QUORUM_IDLE: QuorumState = {
+    financial: 'pending', layoff: 'pending', hiring: 'pending',
+    companyData: undefined, limitedDataBanner: null,
+  };
+  const [quorumState, setQuorumState] = useState<QuorumState>(QUORUM_IDLE);
   // Data quality flag: 'live' | 'partial' | 'fallback'
   const [dataQuality, setDataQuality] = useState<
     "live" | "partial" | "fallback"
@@ -463,6 +482,21 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     setLiveSignalCount(pipelineResult.signalQuality.liveSignals ?? 0);
     setHeuristicSignalCount(pipelineResult.signalQuality.heuristicSignals ?? 0);
 
+    // ── Progressive quorum: fire financial + layoff as soon as company data lands ──
+    {
+      const qcd: QuorumCompanyData = companyData as QuorumCompanyData;
+      const hasFinancial = qcd.revenueGrowthYoY != null || qcd.stock90DayChange != null;
+      const financialStatus: QuorumStatus = !qcd.isPublic ? 'unavailable' : 'resolved';
+      const layoffStatus: QuorumStatus = !qcd.isPublic && (qcd.layoffRounds ?? 0) === 0 && (qcd.layoffsLast24Months?.length ?? 0) === 0 ? 'unavailable' : 'resolved';
+      setQuorumState({
+        financial: hasFinancial ? 'resolved' : financialStatus,
+        layoff:    layoffStatus,
+        hiring:    'pending',
+        companyData: qcd,
+        limitedDataBanner: buildLimitedDataBanner(qcd),
+      });
+    }
+
     const pipelineQuality: "live" | "partial" | "fallback" =
       source === "live" && (pipelineResult.signalQuality.hardFailures?.length ?? 0) === 0
         ? "live"
@@ -572,6 +606,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       onSwarmComplete: () => {
         swarmDone = true;
         setEnsembleStage(2);
+        // Progressive quorum: hiring signal resolves when swarm completes
+        setQuorumState(prev => ({
+          ...prev,
+          hiring: 'resolved',
+          companyData: prev.companyData
+            ? { ...prev.companyData, ...(companyData as QuorumCompanyData) }
+            : (companyData as QuorumCompanyData),
+        }));
       },
     }).catch((err) => {
       console.warn("[Ensemble] Shadow path failed:", err);
@@ -814,6 +856,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
 
     dispatch({ type: "SET_CALCULATING", payload: true });
     setEnsembleStage(0);
+    setQuorumState(QUORUM_IDLE);
     setDataQuality("live");
     setOracleResult(null);
     setCareerIntelligence(null);
@@ -1128,6 +1171,24 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         inputs.department = getAutoDeducedDepartment(oracleRoleKey);
       }
 
+      // ── Progressive quorum: fire financial + layoff once companyData is known ──
+      {
+        const qcd: QuorumCompanyData = companyData as QuorumCompanyData;
+        const hasFinancial = qcd.revenueGrowthYoY != null || qcd.stock90DayChange != null;
+        const financialStatus: QuorumStatus = !qcd.isPublic ? 'unavailable' : 'resolved';
+        const layoffStatus: QuorumStatus =
+          !qcd.isPublic && (qcd.layoffRounds ?? 0) === 0 && (qcd.layoffsLast24Months?.length ?? 0) === 0
+            ? 'unavailable'
+            : 'resolved';
+        setQuorumState({
+          financial: hasFinancial ? 'resolved' : financialStatus,
+          layoff: layoffStatus,
+          hiring: 'pending',
+          companyData: qcd,
+          limitedDataBanner: buildLimitedDataBanner(qcd),
+        });
+      }
+
       // ── BUG FIX: Stage 1 — Swarm + engine firing ─────────────────────────
       setEnsembleStage(1);
 
@@ -1212,6 +1273,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         onSwarmComplete: () => {
           swarmDone = true;
           setEnsembleStage(2);
+          // Progressive quorum: hiring signal resolves when swarm completes
+          setQuorumState(prev => ({
+            ...prev,
+            hiring: 'resolved',
+            companyData: prev.companyData
+              ? { ...prev.companyData, ...(companyData as QuorumCompanyData) }
+              : (companyData as QuorumCompanyData),
+          }));
         },
       });
 
@@ -1600,6 +1669,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           limitedDataMode={(state.companyData as any)?._limitedDataMode ?? false}
           limitedDataReason={(state.companyData as any)?._limitedDataReason ?? undefined}
         />
+      )}
+
+      {state.isCalculating && !scraperGateActive && quorumState.financial !== 'pending' && (
+        <ProgressiveQuorumPanel quorum={quorumState} />
       )}
 
       {/* Cache-hit banner — shown when result is from 1h localStorage cache */}
