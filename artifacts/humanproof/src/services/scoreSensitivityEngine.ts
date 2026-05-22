@@ -115,8 +115,13 @@ const DIMENSION_CONFIG: Record<string, DimensionConfig> = {
   },
   L4: {
     label: 'Industry / Sector Headwinds',
-    weight: 0.01,
-    fastestAction: () => 'Target companies in adjacent growth sectors (AI infrastructure, healthcare tech, fintech) — L4 drops to ~22/100 in high-growth industries.',
+    // L4 maps to D5_countryContext = 0.00 in COMPOSITE_FORMULA_WEIGHTS.
+    // Country context enters the formula via D1 country multiplier (L3 channel, w=0.18)
+    // and PPP thresholds in L1 (w=0.16), not through this standalone dimension.
+    // Weight = 0.00 means scoreDropIfImproved = 0 for direct L4 improvement — correct.
+    // getEffectiveFormulaWeights() returns 0 for L4; this fallback matches.
+    weight: 0.00,
+    fastestAction: () => 'Country context enters your score via role AI deployment rates (D1) and PPP-adjusted company health (L1), not as a standalone lever. Target a role in a growth sector to improve D1 and L3 simultaneously.',
     actionTimeframe: () => '60–90 days (job search)',
     feasibility: () => 'medium_term',
     confidence: 'High',

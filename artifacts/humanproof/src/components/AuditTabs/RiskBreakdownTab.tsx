@@ -136,11 +136,16 @@ const D_DIMENSIONS: Record<string, DimMeta> = {
   D5: {
     label: "Country Exposure",
     fullLabel: "Country AI Adoption Exposure",
-    weight: 0.08,
+    // D5_countryContext formula weight = 0.00. Country context enters the composite
+    // score via two factored channels: (1) D1 country multiplier applied to L3 (weight
+    // 0.18) — Germany QA 0.844×, USA 0.906×, Singapore 0.940×; (2) PPP thresholds
+    // in L1 (weight 0.16). D5 is excluded from formula display until regression on
+    // ≥500 country-stratified outcomes derives a non-zero coefficient.
+    weight: 0.00,
     icon: Globe,
-    narrativeLow:  "Your country/region has moderate AI adoption pace — below the global vanguard, providing a relative time buffer.",
-    narrativeMid:  "Your region is at the median of global AI adoption. No material amplification or dampening of global displacement trends.",
-    narrativeHigh: "Your country is a high-velocity AI adopter. The local labor market is experiencing above-average AI-driven role restructuring.",
+    narrativeLow:  "Your country/region has moderate AI adoption pace — below the global vanguard, providing a relative time buffer. Country context is factored into your Role Displacement score (D1) via jurisdiction-specific AI deployment rates.",
+    narrativeMid:  "Your region is at the median of global AI adoption. Country-specific AI deployment rates are already embedded in your role displacement and financial health scores.",
+    narrativeHigh: "Your country is a high-velocity AI adopter. This is reflected in your Role Displacement score (D1) via country-specific enterprise AI deployment rates, not as a separate dimension.",
   },
   D6: {
     label: "Social Capital",

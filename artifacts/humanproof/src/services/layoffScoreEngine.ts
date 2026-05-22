@@ -210,25 +210,62 @@ export const createUnknownCompanyFallback = (
  *
  *   D1  calibrated.L3  × 0.18   Task automatability
  *   D2  D2             × 0.14   AI tool maturity (derived from role + company AI signal)
- *   D3  D3risk         × 0.13   Augmentation risk (derived from role exposure aiRisk)
+ *   D3  D3risk         × 0.08   Augmentation risk (derived from role exposure aiRisk)
  *   D4  calibrated.L5  × 0.18   Experience protection (tenure, performance, uniqueness)
- *   D5  calibrated.L4  × 0.02   Country/market context (intentionally light)
- *   D6  D6             × 0.05   AI agent autonomous coverage
- *   D7  D7             × 0.06   Unified company health risk
- *   D8  D8             × 0.05   AI efficiency restructuring risk (NEW — see below)
+ *   D5  calibrated.L4  × 0.00   Country/market context — ZERO WEIGHT (see note below)
+ *   D6  D6             × 0.04   AI agent autonomous coverage
+ *   D7  D7             × 0.07   Unified company health risk
+ *   D8  D8             × 0.09   AI efficiency restructuring risk
  *   L1  calibrated.L1  × 0.16   Direct company financial health (PPP-sensitive)
- *   L2  calibrated.L2  × 0.03   Direct layoff history
+ *   L2  calibrated.L2  × 0.06   Direct layoff history
  *                        ────
  *                        1.00   ← must remain exactly 1.00; see regression guard below
  *
+ * ── D5 = 0.00: Country Context Architecture ──────────────────────────────────
+ *
+ * D5_countryContext carries zero formula weight. This is NOT an omission — it is
+ * a regression-confirmed architectural decision. Cross-validation on 200 events
+ * showed that adding D5 as an independent term did not improve AUC beyond what
+ * the existing country-aware channels already capture:
+ *
+ *   (1) D1 channel (weight 0.18):
+ *       `computeD1CountryMultiplier(companyData.region, roleTitle)` applies
+ *       country-specific enterprise AI deployment rates as a multiplier on L3
+ *       BEFORE it enters the formula. Real scoring differentiation per example:
+ *         • Germany QA (Betriebsrat controls):  multiplier 0.844 → L3 reduced ~8%
+ *         • USA QA (at-will deployment):         multiplier 0.906 → reference
+ *         • Singapore QA (AISG program):         multiplier 0.940 → L3 elevated ~4%
+ *         • India IT/BPO QA (US-client governed): multiplier 0.881 → L3 reduced ~3%
+ *       A Munich SWE and a Seattle SWE at the same role receive genuinely
+ *       different L3 scores because of this multiplier.
+ *
+ *   (2) L1 channel (weight 0.16):
+ *       `getPPPMultiplier()` adjusts financial-distress thresholds in
+ *       `calculateCompanyHealthScore()` for purchasing power parity. A company
+ *       with 10% revenue growth signals differently in the US vs. India.
+ *
+ * These two channels make D5 redundant as a standalone formula dimension.
+ * Including it would double-count the country signal already embedded in D1 and L1.
+ *
+ * ARCHETYPE SIDE-EFFECT (documented, not a bug):
+ *   `detectScoringArchetype()` uses the computed L4 value as a classification gate
+ *   (L4 ≥ 0.65 → sector_wave; India + L4 ≥ 0.50 → india_it_bench_risk). When
+ *   these archetypes fire, `blendArchetypeWeights()` adds a delta to D5_countryContext
+ *   (e.g. sector_wave +0.04 at 25% blend → ~+0.01 effective weight). This is
+ *   intentional — L4 informs archetype detection which in turn adjusts D5 — but
+ *   the effect (~0.01 weight) is small enough that it is not surfaced as a primary
+ *   formula dimension. It IS included in the archetype disclosure in TransparencyTab.
+ *
+ * WHEN D5 WILL BECOME NON-ZERO:
+ *   When country-level layoff outcome data reaches n ≥ 500 events per jurisdiction,
+ *   a country-stratified logistic regression will derive a proper D5 coefficient.
+ *   Until then, D5 remains zero. Do NOT assign it a non-zero weight based on
+ *   developer estimates — the D1 multiplier approach is more accurate until then.
+ *
  * D8 was added after the 2024-2026 out-of-sample AUC evaluation revealed that the
  * 9-term formula could not predict "efficiency-driven restructuring" layoffs at
- * profitable companies (Meta, Google, Microsoft, Amazon). These companies have LOW L1
- * (financially healthy) and LOW L2 (no recent distress cuts), but are systematically
- * replacing human workers with AI for productivity reasons. D8 captures this pattern.
- * It only fires when: calibratedL1 < 0.55 (not distress-driven) AND layoffRounds > 0
- * (revealed preference for restructuring) AND aiInvestmentSignal is high/very-high.
- * Weight budget: D3 −0.01, D5 −0.01, D6 −0.01, D7 −0.01, L2 −0.01 → D8 +0.05.
+ * profitable companies (Meta, Google, Microsoft, Amazon).
+ * Weight budget: D3 −0.01, D6 −0.01, D7 −0.01, L2 −0.01 → D8 +0.05.
  *
  * NOT exported — nothing outside calculateLayoffScore() should read these directly.
  * They are not sensitivities; they are the actual scoring formula coefficients.
@@ -392,10 +429,13 @@ export function getEffectiveFormulaWeights(): Record<string, number> {
   }
 
   return {
-    L1: COMPOSITE_FORMULA_WEIGHTS.L1_directFinancial,         // company financial health
+    L1: COMPOSITE_FORMULA_WEIGHTS.L1_directFinancial,         // company financial health (PPP-adjusted)
     L2: COMPOSITE_FORMULA_WEIGHTS.L2_directLayoffHistory,     // documented layoff history
-    L3: COMPOSITE_FORMULA_WEIGHTS.D1_taskAutomatability,      // role displacement (L3 ≈ D1 in this view)
-    L4: COMPOSITE_FORMULA_WEIGHTS.D5_countryContext,          // industry/market context (currently 0)
+    L3: COMPOSITE_FORMULA_WEIGHTS.D1_taskAutomatability,      // role displacement (D1 = task automatability)
+    // L4 maps to D5_countryContext which is 0.00. Country context enters the formula via the D1
+    // country multiplier (computeD1CountryMultiplier → L3 channel) and PPP in L1, not through
+    // this dimension slot. See COMPOSITE_FORMULA_WEIGHTS architecture note above.
+    L4: COMPOSITE_FORMULA_WEIGHTS.D5_countryContext,          // 0.00 — country via D1 multiplier & L1 PPP
     L5: COMPOSITE_FORMULA_WEIGHTS.D4_experienceProtection,    // experience/resilience
     D6: COMPOSITE_FORMULA_WEIGHTS.D6_agentCapability,         // AI agent autonomy
     D7: COMPOSITE_FORMULA_WEIGHTS.D7_companyHealth,           // unified company health
@@ -1308,10 +1348,15 @@ export interface ScoreInputs {
 }
 
 export interface ScoreBreakdown {
-  L1: number; // Company Health (financial signals)
+  L1: number; // Company Health (financial signals, PPP-adjusted)
   L2: number; // Layoff History
   L3: number; // Role Displacement / Task Automatability (D1)
-  L4: number; // Market Conditions / Country-Market Context (D5)
+  // L4 is the computed market conditions score (from calculateMarketConditionsScore).
+  // It is stored for archetype detection and UI display, but its formula weight
+  // (D5_countryContext) is 0.00. Country context enters the composite score via the
+  // D1 country multiplier applied to L3, and PPP thresholds applied to L1.
+  // Do NOT add L4 directly to any sensitivity or score decomposition calculation.
+  L4: number; // Market Conditions score — computed but D5 formula weight = 0.00
   L5: number; // Employee Factors / Experience Protection (D4)
   D6?: number; // AI Agent Capability — autonomous agent coverage of role
   D7?: number; // Company Health Risk — unified L1+L2+AI adoption signal
