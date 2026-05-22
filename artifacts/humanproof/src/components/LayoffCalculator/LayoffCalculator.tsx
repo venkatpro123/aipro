@@ -229,6 +229,17 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   // ── BUG FIX: Double-submit guard ─────────────────────────────────────────
   const isSubmitting = useRef(false);
 
+  // ── Section 13.2: always-current scoreRequestId ref ──────────────────────
+  // The background refresh callback closes over this ref rather than over
+  // state.scoreRequestId directly. This avoids the stale-closure problem:
+  // the ref is updated on every render via the effect below, so the callback
+  // always sees the scoreRequestId that was live when it fires — not the
+  // value captured when the effect was first set up.
+  const scoreRequestIdRef = useRef<number>(state.scoreRequestId ?? 0);
+  useEffect(() => {
+    scoreRequestIdRef.current = state.scoreRequestId ?? 0;
+  }, [state.scoreRequestId]);
+
   // ── Force-refresh state — set by CachedResultBanner "Recalculate" button ──
   const [isForceRefreshing, setIsForceRefreshing] = useState(false);
   const [apiQuotaStatus, setApiQuotaStatus] = useState<Record<CircuitApiName, ApiQuotaStatus> | null>(null);
@@ -324,10 +335,26 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     // signals come from live scraping, so retrying sooner improves accuracy.
     const isUnknownCo = (state.scoreResult as any)?._liveDataCoverage?.overallSource === 'heuristic'
       || ((state.companyData as any)?.source ?? '').includes('Fallback');
-    const cancel = startBackgroundRefresh(inputs, ({ result }) => {
-      dispatch({ type: 'SET_SCORE_RESULT', payload: result });
+
+    // Section 13.2: capture scoreRequestId at the moment this refresh session
+    // starts (i.e. when this effect runs). Each result the service delivers will
+    // carry this same capturedId. The callback compares it against the always-
+    // current scoreRequestIdRef; if they differ, a new calculation has started
+    // since this refresh was initiated and the result is stale.
+    const capturedId = scoreRequestIdRef.current;
+    const cancel = startBackgroundRefresh(inputs, (fresh) => {
+      if (fresh.requestId !== scoreRequestIdRef.current) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[BackgroundRefresh] Discarding stale result', {
+            resultRequestId: fresh.requestId,
+            currentRequestId: scoreRequestIdRef.current,
+          });
+        }
+        return;
+      }
+      dispatch({ type: 'SET_SCORE_RESULT', payload: fresh.result });
       setApiQuotaStatus(getApiQuotaStatus());
-    }, isUnknownCo);
+    }, isUnknownCo, capturedId);
     return cancel;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.hasCompletedAssessment, state.companyName, state.roleTitle]);
@@ -847,6 +874,14 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     // ── BUG FIX: Prevent concurrent submissions ────────────────────────────
     if (isSubmitting.current) return;
     isSubmitting.current = true;
+
+    // ── Section 13.2: mint a new scoreRequestId for this calculation ───────
+    // Any background refresh result that captured an older scoreRequestId will
+    // be rejected when its callback fires. The synchronous ref increment ensures
+    // the check in the background refresh callback sees the new ID immediately,
+    // even before the React state update from BUMP_SCORE_REQUEST_ID propagates.
+    dispatch({ type: 'BUMP_SCORE_REQUEST_ID' });
+    scoreRequestIdRef.current += 1;
 
     // ── Live Scraper Gate ──────────────────────────────────────────────────
     // On first-run (not forceRefresh), check whether this company was scraped

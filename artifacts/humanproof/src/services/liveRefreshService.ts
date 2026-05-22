@@ -17,22 +17,35 @@ const REFRESH_INTERVAL_UNKNOWN_MS = 10 * 60 * 1000; // 10 minutes — unknown co
 export interface BackgroundRefreshResult {
   result: HybridResult;
   refreshedAt: string;
+  // Section 13.2: scoreRequestId captured from LayoffContext at the moment
+  // startBackgroundRefresh was called. The subscriber compares this against
+  // the context's current scoreRequestId to detect stale results — if the
+  // user switched companies or triggered a new calculation since this refresh
+  // was initiated, the IDs will differ and the result must be discarded.
+  requestId: number;
 }
 
 /**
  * Start background refresh for an active audit session.
  * Returns a cleanup function — call it on component unmount.
  *
- * @param inputs     Audit inputs (company name, role, factors)
- * @param onRefresh  Called with fresh data after each successful refresh
- * @param isUnknown  True when the company was not found in the database.
- *                   Shortens the refresh interval to 10 minutes so scraped
- *                   signals (Wikipedia, career page, news) are retried sooner.
+ * @param inputs             Audit inputs (company name, role, factors)
+ * @param onRefresh          Called with fresh data after each successful refresh
+ * @param isUnknown          True when the company was not found in the database.
+ *                           Shortens the refresh interval to 10 minutes so scraped
+ *                           signals (Wikipedia, career page, news) are retried sooner.
+ * @param capturedRequestId  The scoreRequestId from LayoffContext at the moment this
+ *                           refresh session was initiated. Embedded in every result
+ *                           so the subscriber can detect stale results — if a new
+ *                           calculation started (bumping scoreRequestId) after this
+ *                           refresh was initiated, the IDs will differ and the result
+ *                           should be discarded. See Section 13.2.
  */
 export const startBackgroundRefresh = (
   inputs: AuditInputs,
   onRefresh: (fresh: BackgroundRefreshResult) => void,
   isUnknown?: boolean,
+  capturedRequestId = 0,
 ): () => void => {
   let cancelled = false;
   const intervalMs = isUnknown
@@ -44,7 +57,7 @@ export const startBackgroundRefresh = (
     try {
       const { result } = await fetchAuditData(inputs);
       if (!cancelled) {
-        onRefresh({ result, refreshedAt: new Date().toISOString() });
+        onRefresh({ result, refreshedAt: new Date().toISOString(), requestId: capturedRequestId });
       }
     } catch {
       // Non-fatal — background refresh failure should never surface to the user

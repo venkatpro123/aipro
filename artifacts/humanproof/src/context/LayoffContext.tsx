@@ -51,6 +51,10 @@ type LayoffAction =
   // out-of-order updates. When the dispatcher knows it kicked off request N,
   // a late-arriving request M (M<N) will be ignored.
   | { type: "SET_SCORE_RESULT"; payload: ScoreResult | HybridResult; requestId?: number }
+  // v40.0 Section 13.2: increment scoreRequestId at the start of each calculation
+  // so background refreshes that captured an older ID are recognised as stale.
+  // Dispatched synchronously in handleCalculate before any async work begins.
+  | { type: "BUMP_SCORE_REQUEST_ID" }
   | { type: "SET_HISTORY"; payload: ScoreHistoryEntry[] }
   | { type: "SET_ALERT_DRIFT"; payload: LayoffState["alertDrift"] }
   | { type: "INCREMENT_SAVE_COUNTER" }
@@ -101,6 +105,8 @@ const layoffReducer = (
       return { ...state, oracleKey: action.payload };
     case "SET_CALCULATING":
       return { ...state, isCalculating: action.payload };
+    case "BUMP_SCORE_REQUEST_ID":
+      return { ...state, scoreRequestId: (state.scoreRequestId ?? 0) + 1 };
     case "SET_SCORE_RESULT":
       // v40.0 FIX-8: ignore stale results from prior calculations. The latest
       // requestId is tracked in state; any action with an older requestId is
