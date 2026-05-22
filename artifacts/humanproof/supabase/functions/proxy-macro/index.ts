@@ -117,11 +117,15 @@ async function fetchFREDSeries(series: string, apiKey: string): Promise<number |
 }
 
 async function fetchFREDSnapshot(apiKey: string): Promise<FREDSnapshot | null> {
-  const [fedFunds, t10y2y, nasdaq] = await Promise.all([
+  // allSettled: a FRED series unavailable for one indicator never aborts the other two.
+  const [fedFundsS, t10y2yS, nasdaqS] = await Promise.allSettled([
     fetchFREDSeries('FEDFUNDS',   apiKey),
     fetchFREDSeries('T10Y2Y',     apiKey),
     fetchFREDSeries('NASDAQCOM',  apiKey),
   ]);
+  const fedFunds = fedFundsS.status === 'fulfilled' ? fedFundsS.value : null;
+  const t10y2y   = t10y2yS.status   === 'fulfilled' ? t10y2yS.value   : null;
+  const nasdaq   = nasdaqS.status   === 'fulfilled' ? nasdaqS.value   : null;
 
   if (fedFunds === null && t10y2y === null && nasdaq === null) return null;
 
@@ -228,10 +232,15 @@ serve(async (req) => {
     return json({ error: 'FRED_API_KEY not configured', joltsSnapshot: null, fredSnapshot: null }, 503);
   }
 
-  const [joltsSnapshot, fredSnapshot] = await Promise.all([
+  // allSettled: a BLS API outage never silently aborts the FRED snapshot (and vice versa).
+  // Both functions have internal try/catch → null, so the fallback branch fires only
+  // when the function itself throws unexpectedly (import failure, OOM, etc.).
+  const [joltsS, fredS] = await Promise.allSettled([
     fetchJOLTSSnapshot(),
     fetchFREDSnapshot(fredApiKey),
   ]);
+  const joltsSnapshot = joltsS.status === 'fulfilled' ? joltsS.value : null;
+  const fredSnapshot  = fredS.status  === 'fulfilled' ? fredS.value  : null;
 
   const result: MacroResult = {
     joltsSnapshot: joltsSnapshot ?? BASELINE_JOLTS,

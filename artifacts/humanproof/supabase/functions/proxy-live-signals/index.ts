@@ -558,12 +558,16 @@ async function fetchLinkedInDirect(roleTitle: string, companyName: string): Prom
 async function fetchHiringDirect(roleTitle: string, companyName: string): Promise<HiringResult | null> {
   const errors: string[] = [];
 
-  // Run Naukri, Indeed, and LinkedIn concurrently — independent, no interdependencies
-  const [naukriCount, indeedCount, linkedinCount] = await Promise.all([
-    fetchNaukriDirect(roleTitle, companyName).catch(() => null),
-    fetchIndeedDirect(roleTitle, companyName).catch(() => null),
-    fetchLinkedInDirect(roleTitle, companyName).catch(() => null),
+  // Run Naukri, Indeed, and LinkedIn concurrently — independent, no interdependencies.
+  // allSettled: a site ban on one board never aborts the other two results.
+  const [naukriS, indeedS, linkedinS] = await Promise.allSettled([
+    fetchNaukriDirect(roleTitle, companyName),
+    fetchIndeedDirect(roleTitle, companyName),
+    fetchLinkedInDirect(roleTitle, companyName),
   ]);
+  const naukriCount  = naukriS.status  === 'fulfilled' ? naukriS.value  : null;
+  const indeedCount  = indeedS.status  === 'fulfilled' ? indeedS.value  : null;
+  const linkedinCount = linkedinS.status === 'fulfilled' ? linkedinS.value : null;
 
   // Need at least one source to return a live result
   const anyLive = naukriCount !== null || indeedCount !== null || linkedinCount !== null;
@@ -1051,80 +1055,83 @@ async function fetchHiringForMarket(
   type CountMap = Record<string, number | null>;
   let counts: CountMap = {};
 
+  // allSettled throughout: run() already catches internally, but allSettled makes the
+  // isolation contract explicit — a crashed board never silently drops the others.
+  const settle = (r: PromiseSettledResult<number | null>) =>
+    r.status === 'fulfilled' ? r.value : null;
+
   if (market === 'india') {
-    // Existing Naukri path re-used for India — fetchHiringDirect already handles this
-    // but we go through per-connector accounting here for consistency.
-    const [naukri, indeed, linkedin] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('naukri',         () => fetchNaukriDirect(roleTitle, companyName)),
       run('indeed-india',   () => fetchIndeedMarket(roleTitle, companyName, 'india')),
       run('linkedin-india', () => fetchLinkedInMarket(roleTitle, companyName, 'india')),
     ]);
-    counts = { naukri, 'indeed-india': indeed, 'linkedin-india': linkedin };
+    counts = { naukri: settle(a), 'indeed-india': settle(b), 'linkedin-india': settle(c) };
 
   } else if (market === 'us') {
-    const [linkedin, indeed, glassdoor] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('linkedin-us',    () => fetchLinkedInMarket(roleTitle, companyName, 'us')),
       run('indeed-us',      () => fetchIndeedMarket(roleTitle, companyName, 'us')),
       run('glassdoor-jobs', () => fetchGlassdoorJobsDirect(roleTitle, companyName)),
     ]);
-    counts = { 'linkedin-us': linkedin, 'indeed-us': indeed, 'glassdoor-jobs': glassdoor };
+    counts = { 'linkedin-us': settle(a), 'indeed-us': settle(b), 'glassdoor-jobs': settle(c) };
 
   } else if (market === 'uk') {
-    const [linkedin, indeed, reed, jobsite] = await Promise.all([
+    const [a, b, c, d] = await Promise.allSettled([
       run('linkedin-uk', () => fetchLinkedInMarket(roleTitle, companyName, 'uk')),
       run('indeed-uk',   () => fetchIndeedMarket(roleTitle, companyName, 'uk')),
       run('reed',        () => fetchReedDirect(roleTitle, companyName)),
       run('jobsite',     () => fetchJobsiteDirect(roleTitle, companyName)),
     ]);
-    counts = { 'linkedin-uk': linkedin, 'indeed-uk': indeed, reed, jobsite };
+    counts = { 'linkedin-uk': settle(a), 'indeed-uk': settle(b), reed: settle(c), jobsite: settle(d) };
 
   } else if (market === 'germany') {
-    const [stepstone, linkedin, xing] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('stepstone',   () => fetchStepstoneDirect(roleTitle, companyName)),
       run('linkedin-de', () => fetchLinkedInMarket(roleTitle, companyName, 'germany')),
       run('xing',        () => fetchXingDirect(roleTitle, companyName)),
     ]);
-    counts = { stepstone, 'linkedin-de': linkedin, xing };
+    counts = { stepstone: settle(a), 'linkedin-de': settle(b), xing: settle(c) };
 
   } else if (market === 'singapore') {
-    const [linkedin, jobsdb, mcf] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('linkedin-sg',     () => fetchLinkedInMarket(roleTitle, companyName, 'singapore')),
       run('jobsdb',          () => fetchJobsDBDirect(roleTitle, companyName)),
       run('mycareersfuture', () => fetchMyCareersFutureDirect(roleTitle, companyName)),
     ]);
-    counts = { 'linkedin-sg': linkedin, jobsdb, mycareersfuture: mcf };
+    counts = { 'linkedin-sg': settle(a), jobsdb: settle(b), mycareersfuture: settle(c) };
 
   } else if (market === 'australia') {
-    const [seek, linkedin, jora] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('seek',        () => fetchSeekDirect(roleTitle, companyName)),
       run('linkedin-au', () => fetchLinkedInMarket(roleTitle, companyName, 'australia')),
       run('jora',        () => fetchJoraDirect(roleTitle, companyName)),
     ]);
-    counts = { seek, 'linkedin-au': linkedin, jora };
+    counts = { seek: settle(a), 'linkedin-au': settle(b), jora: settle(c) };
 
   } else if (market === 'canada') {
-    const [linkedin, indeed, jobbank] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('linkedin-ca', () => fetchLinkedInMarket(roleTitle, companyName, 'canada')),
       run('indeed-ca',   () => fetchIndeedMarket(roleTitle, companyName, 'canada')),
       run('job-bank',    () => fetchJobBankDirect(roleTitle, companyName)),
     ]);
-    counts = { 'linkedin-ca': linkedin, 'indeed-ca': indeed, 'job-bank': jobbank };
+    counts = { 'linkedin-ca': settle(a), 'indeed-ca': settle(b), 'job-bank': settle(c) };
 
   } else if (market === 'latam') {
-    const [linkedin, bumeran, computrabajo] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('linkedin-latam', () => fetchLinkedInMarket(roleTitle, companyName, 'latam')),
       run('bumeran',        () => fetchBumeranDirect(roleTitle, companyName)),
       run('computrabajo',   () => fetchComputrabajoDirect(roleTitle, companyName)),
     ]);
-    counts = { 'linkedin-latam': linkedin, bumeran, computrabajo };
+    counts = { 'linkedin-latam': settle(a), bumeran: settle(b), computrabajo: settle(c) };
 
   } else if (market === 'mena') {
-    const [bayt, linkedin, naukrigulf] = await Promise.all([
+    const [a, b, c] = await Promise.allSettled([
       run('bayt',          () => fetchBaytDirect(roleTitle, companyName)),
       run('linkedin-mena', () => fetchLinkedInMarket(roleTitle, companyName, 'mena')),
       run('naukrigulf',    () => fetchNaukriGulfDirect(roleTitle, companyName)),
     ]);
-    counts = { bayt, 'linkedin-mena': linkedin, naukrigulf };
+    counts = { bayt: settle(a), 'linkedin-mena': settle(b), naukrigulf: settle(c) };
   }
 
   // Aggregate: sum all non-null counts; require at least one live result
@@ -1198,10 +1205,13 @@ async function fetchHiringSerper(roleTitle: string, companyName: string, serperK
     }
   }
 
-  const [naukriCount, linkedinCount] = await Promise.all([
+  // allSettled: a Serper rate-limit on one query never discards the other result.
+  const [naukriS, linkedinS] = await Promise.allSettled([
     serperCount(`"${roleTitle}" jobs ${companyName} site:naukri.com`),
     serperCount(`"${roleTitle}" jobs ${companyName} site:linkedin.com/jobs`),
   ]);
+  const naukriCount  = naukriS.status  === 'fulfilled' ? naukriS.value  : null;
+  const linkedinCount = linkedinS.status === 'fulfilled' ? linkedinS.value : null;
 
   const total = (naukriCount ?? 0) + (linkedinCount ?? 0);
   const demandTrend: 'rising' | 'stable' | 'falling' =
@@ -1549,12 +1559,16 @@ async function fetchScrapeData(companyName: string, timeoutMs?: number): Promise
   const errors: string[] = [];
   const start = Date.now();
 
-  // Run all 3 scrapers concurrently — independent, no dependencies
-  const [wiki, career, glassdoor] = await Promise.all([
-    fetchWikipediaHeadcount(companyName).catch(e => { errors.push(`wiki: ${e?.message}`); return null; }),
-    fetchCareerPage(companyName).catch(e => { errors.push(`career: ${e?.message}`); return null; }),
-    fetchGlassdoor(companyName).catch(e => { errors.push(`glassdoor: ${e?.message}`); return null; }),
+  // Run all 3 scrapers concurrently — independent, no dependencies.
+  // allSettled: a parse failure on one scraper never silently drops the other two.
+  const [wikiS, careerS, glassdoorS] = await Promise.allSettled([
+    fetchWikipediaHeadcount(companyName),
+    fetchCareerPage(companyName),
+    fetchGlassdoor(companyName),
   ]);
+  const wiki     = wikiS.status     === 'fulfilled' ? wikiS.value     : (errors.push(`wiki: ${(wikiS as PromiseRejectedResult).reason?.message}`),     null);
+  const career   = careerS.status   === 'fulfilled' ? careerS.value   : (errors.push(`career: ${(careerS as PromiseRejectedResult).reason?.message}`),   null);
+  const glassdoor = glassdoorS.status === 'fulfilled' ? glassdoorS.value : (errors.push(`glassdoor: ${(glassdoorS as PromiseRejectedResult).reason?.message}`), null);
 
   const elapsed = Date.now() - start;
   if (timeoutMs && elapsed > timeoutMs) {

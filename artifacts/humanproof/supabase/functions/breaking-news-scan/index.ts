@@ -196,8 +196,11 @@ serve(async (req) => {
     ]),
   ];
 
-  // Fetch all RSS feeds in parallel
-  const allItems: NewsItem[] = (await Promise.all([
+  // Fetch all RSS feeds in parallel.
+  // allSettled: a single feed being down (CORS change, site error) never aborts
+  // the remaining feeds. fetchRSS/fetchHN already return [] on catch, but allSettled
+  // makes the isolation explicit for future refactors that may remove those guards.
+  const feedSettled = await Promise.allSettled([
     ...RSS_FEEDS.map(url => fetchRSS(url, url.includes('economictimes') ? 'Economic Times'
       : url.includes('livemint') ? 'Livemint'
       : url.includes('moneycontrol') ? 'Moneycontrol'
@@ -209,7 +212,8 @@ serve(async (req) => {
       : 'TechCrunch')),
     // HN search for top watched companies (limit to avoid Algolia rate limits)
     ...watchList.slice(0, 10).map(c => fetchHN(c)),
-  ])).flat();
+  ]);
+  const allItems: NewsItem[] = feedSettled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
 
   let inserted = 0;
   let invalidated = 0;
