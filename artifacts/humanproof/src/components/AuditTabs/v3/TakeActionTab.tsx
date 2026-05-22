@@ -19,12 +19,16 @@
 //     (useHumanProof, useAdaptiveSystem, 30+ imports each) do not block this tab's
 //     initial render.
 
-import React, { Suspense, lazy, useState, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
-  BookOpen, Activity, DollarSign,
+  BookOpen, Activity, DollarSign, AlertCircle,
 } from 'lucide-react';
+import {
+  getMarketBatchStatus,
+  type MarketBatchStatus,
+} from '../../../services/marketBatchStatusService';
 import { ProfileQuickCapture } from '../../ProfileQuickCapture';
 import type { TabProps } from '../common/types';
 import type { CareerContingencyPlan } from '../../../services/careerContingencyPlanEngine';
@@ -215,6 +219,60 @@ const ContingencyUnavailable: React.FC = () => (
   </div>
 );
 
+// ── Market data freshness notice ──────────────────────────────────────────────
+//
+// Shown when the regional batch covering the user's company region has not had
+// a successful scrape in >14 days. This is distinct from the per-skill
+// SkillFreshnessLabel badge — it covers the entire Action Plan tab's market
+// intelligence layer (job counts, hiring trends, transition difficulty signals).
+//
+// Text format: "Market data for {region} {roleTitle}: last updated {N} days ago.
+//               Opening counts may not reflect current demand."
+//
+// Design: amber notice, non-intrusive. Positioned below T1 (emergency/contingency)
+// so it never displaces critical actions. Hidden for users with fresh data.
+
+interface FreshnessNoticeProps {
+  batchStatus: MarketBatchStatus;
+  roleTitle:   string;
+}
+
+const MarketDataFreshnessNotice: React.FC<FreshnessNoticeProps> = ({ batchStatus, roleTitle }) => {
+  const { ageInDays, regionLabel, sourcesBlocked } = batchStatus;
+  if (!batchStatus.isStale || ageInDays === null) return null;
+
+  const blockedNote = sourcesBlocked.length > 0
+    ? ` (${sourcesBlocked.join(', ')} blocked by anti-bot protection)`
+    : '';
+
+  return (
+    <div
+      className="rounded-xl px-4 py-3 flex gap-3 items-start"
+      style={{
+        background:  'rgba(245,158,11,0.07)',
+        border:      '1px solid rgba(245,158,11,0.25)',
+      }}
+      role="status"
+      aria-live="polite"
+    >
+      <AlertCircle
+        className="w-4 h-4 mt-0.5 shrink-0"
+        style={{ color: 'rgba(245,158,11,0.85)' }}
+      />
+      <div>
+        <p className="text-[11px] font-semibold mb-0.5" style={{ color: 'rgba(245,158,11,0.90)' }}>
+          Market data may be outdated
+        </p>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          Market data for {regionLabel} {roleTitle}: last updated {ageInDays} days ago{blockedNote}.
+          Opening counts and hiring trend signals may not reflect current demand.
+          Data refreshes automatically every Monday 06:00 UTC.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const TakeActionTab: React.FC<TabProps> = (props) => {
@@ -223,6 +281,20 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
 
   // Emergency state from parent prop only — no redundant hook call
   const isEmergency = !!emergencyMode;
+
+  // ── Market data freshness — async, non-blocking ───────────────────────────
+  // Fetches batch status for the user's region. 60-minute cache means only
+  // ~7 DB queries/hour regardless of user volume. Never blocks tab render.
+  const [batchStatus, setBatchStatus] = useState<MarketBatchStatus | null>(null);
+  useEffect(() => {
+    const regionCode = (companyData as any)?.region ?? null;
+    if (!regionCode) return;
+    let cancelled = false;
+    getMarketBatchStatus(regionCode).then(s => {
+      if (!cancelled) setBatchStatus(s);
+    });
+    return () => { cancelled = true; };
+  }, [(companyData as any)?.region]);
 
   const QC_KEY = 'hp.quickCapture.done';
   const QC_TTL_MS = 24 * 60 * 60 * 1000;
@@ -275,6 +347,14 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
             ? <ContingencyFailed />
             : <ContingencyUnavailable />
       }
+
+      {/* Market data freshness notice — amber when regional batch is >14d stale */}
+      {batchStatus?.isStale && (
+        <MarketDataFreshnessNotice
+          batchStatus={batchStatus}
+          roleTitle={r.resolvedPattern ?? r.roleTitle ?? 'your role'}
+        />
+      )}
 
       {/* Profile context + generic fallback notice */}
       {personalizedSet?.profileContextNote && (
