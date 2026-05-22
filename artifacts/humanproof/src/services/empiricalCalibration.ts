@@ -124,6 +124,32 @@ D8 (AI efficiency restructuring, weight 0.09) deployment status:
   calculateAIEfficiencyRestructuringRisk().`,
 };
 
+// ── GAP-A01: Main formula holdout validation summary ─────────────────────────
+// Exported so the TransparencyTab and ModelCalibrationPanel can display the
+// correct holdout AUC alongside the (weaker) in-sample claim.
+//
+// CRITICAL DISTINCTION:
+//   holdout_auc_roc (0.81)        — 40-event held-out split. This is the
+//                                   verifiable out-of-sample AUC.
+//   full_model_auc_insample (0.84) — In-sample AUC after adding D2/D3/D6/D7
+//                                   as simultaneous predictors. NOT holdout.
+//                                   The +0.03 marginal gain is in-sample only.
+//
+// DB record: engine_calibration_versions WHERE version='v40.0-bootstrap-2026-01-15'
+// (main_formula_validation_metadata column, added by migration 20260623000012).
+export const MAIN_FORMULA_HOLDOUT_VALIDATION = {
+  train_n:                          160,
+  holdout_n:                         40,
+  holdout_auc_roc:                 0.81,   // VERIFIABLE — use this in public claims
+  full_model_auc_insample:         0.84,   // IN-SAMPLE ONLY — do not cite as holdout
+  d2_d3_d6_d7_marginal_gain_insample: 0.03,
+  d2_d3_d6_d7_holdout_validated:  false,
+  calibrated_at:          '2026-01-15',
+  accuracy_claim:
+    'AUC-ROC 0.81 on 40-event holdout. Full model in-sample AUC 0.84 with ' +
+    'D2/D3/D6/D7 simultaneous regression (marginal +0.03 in-sample; not re-evaluated on holdout).',
+} as const;
+
 // ── D8 calibration status ──────────────────────────────────────────────────
 // D8 (AI Efficiency Restructuring) was added after 2024-2026 out-of-sample
 // evaluation. It captures profitable companies substituting AI for human labour.

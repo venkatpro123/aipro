@@ -286,7 +286,8 @@ export const createUnknownCompanyFallback = (
 //   D3: 0.09 → 0.08  (regression β=0.089; residual analysis confirms over-prediction)
 //   D7: 0.06 → 0.07  (regression β=0.071; leadershipInstability under-weighted)
 //   D2, D6: unchanged (regression confirms developer estimates were accurate)
-// Full model AUC improved from 0.81 to 0.84 with D2/D3/D6/D7 added as predictors.
+// Full model in-sample AUC 0.84 with D2/D3/D6/D7 added (marginal +0.03 in-sample only;
+// holdout AUC remains 0.81 on the 40-event split — D2/D3/D6/D7 terms not re-validated on holdout).
 const COMPOSITE_FORMULA_WEIGHTS = {
   D1_taskAutomatability:        0.18,   // regression-derived: β₃=0.178, 200 events, 2024-Q4
   D2_aiToolMaturity:            0.14,   // regression-derived: β=0.156, 200 events, 2026-05-19
@@ -960,8 +961,8 @@ export const LAYER_WEIGHTS = {
 //   D7: 0.06 → 0.07 (β=0.071 confirmed leadershipInstability under-weighting)
 //   D2, D6: unchanged (developer estimates confirmed by regression)
 //
-// Full model AUC: 0.84 (was 0.81 with L1-L5+D1+D4+D8 only).
-// Marginal AUC gain from adding D2/D3/D6/D7: +0.03.
+// Full model AUC: 0.84 IN-SAMPLE (was 0.81 with L1-L5+D1+D4+D8 only — 0.81 is also the holdout AUC).
+// Marginal in-sample AUC gain from adding D2/D3/D6/D7: +0.03 (in-sample; holdout not re-evaluated).
 //
 export const CALIBRATION_META: Record<string, {
   weight: number;
@@ -979,7 +980,7 @@ export const CALIBRATION_META: Record<string, {
   D2_aiToolMaturity: {
     weight: 0.14,
     status: 'regression_derived',
-    source: 'empiricalCalibration.ts — D_DIMENSION_LOGISTIC_COEFFICIENTS β_D2=0.156. Simultaneous multi-predictor logistic regression, 200 events, marginal contribution after partialling L1-L5/D1/D4/D8. Calibration multiplier: 1.00 (no residual bias). Full model AUC 0.84.',
+    source: 'empiricalCalibration.ts — D_DIMENSION_LOGISTIC_COEFFICIENTS β_D2=0.156. Simultaneous multi-predictor logistic regression, 200 events, marginal contribution after partialling L1-L5/D1/D4/D8. Calibration multiplier: 1.00 (no residual bias). Full model in-sample AUC 0.84 (holdout AUC 0.81; D2 marginal gain is in-sample only).',
     validationDate: '2026-05-19',
     note: 'Confirms developer estimate. β=0.156 → normalised weight 0.14 (D2+D3+D6+D7 budget=0.33).',
   },
