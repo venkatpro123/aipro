@@ -651,7 +651,10 @@ const EffectiveWeightsPanel: React.FC<{
   d8FlagActive?: boolean;
   d8HeuristicActive?: boolean;
   d8EffectiveWeight?: number;
-}> = ({ segmentCalibration: seg, d8FlagActive, d8HeuristicActive, d8EffectiveWeight }) => {
+  /** L1 sector-baseline flag: true when revenue + stock absent; L1 ESTIMATED from sector. */
+  l1EstimatedFromSector?: boolean;
+  l1SectorBaseline?: number;
+}> = ({ segmentCalibration: seg, d8FlagActive, d8HeuristicActive, d8EffectiveWeight, l1EstimatedFromSector, l1SectorBaseline }) => {
   type LayerKey = 'L1' | 'L2' | 'L3' | 'L4' | 'L5';
   const layers: LayerKey[] = ['L1', 'L2', 'L3', 'L4', 'L5'];
 
@@ -695,6 +698,15 @@ const EffectiveWeightsPanel: React.FC<{
           {seg!.segmentLabel} — calibration multipliers shift the effective layer contributions below.
         </div>
       )}
+      {/* L1 ESTIMATED banner: shown when both revenue + stock signals absent; sector baseline used. */}
+      {l1EstimatedFromSector && (
+        <div className="px-4 py-2 text-[10px] bg-amber-500/10 border-b border-amber-500/20 text-amber-400/80 leading-relaxed">
+          <span className="font-bold uppercase tracking-widest mr-1">L1 ESTIMATED (sector baseline):</span>
+          Revenue and stock signals are absent for this company. L1 (direct financial health, 16% weight)
+          uses the industry sector baseline{l1SectorBaseline != null ? ` (${Math.round(l1SectorBaseline * 100)}%)` : ''} rather than
+          company-specific financials. Score may be ±8 pts from true value.
+        </div>
+      )}
       {/* BUG-02 — D8 locked-out banner: shown when D8 holds 9% of the formula budget
           but contributes 0 because the flag is off and no heuristic path fired. */}
       {!d8IsActive && (
@@ -723,12 +735,19 @@ const EffectiveWeightsPanel: React.FC<{
             {rows.map(({ layer, name, fw, gc, sm, eff }) => {
               const effShare    = eff / totalEff;
               const driftFromFw = Math.abs(effShare - fw) > 0.03;
+              const isL1Estimated = layer === 'L1' && l1EstimatedFromSector;
               return (
                 <tr key={layer} className="hover:bg-white/5 transition-colors">
                   <td className="py-2.5 px-4">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">{layer}</span>
                       <span className="font-medium">{name}</span>
+                      {isL1Estimated && (
+                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                          style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
+                          ESTIMATED
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="py-2.5 px-4 text-right font-mono opacity-60">{pct(fw)}</td>
@@ -2762,6 +2781,8 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             d8FlagActive={(result as any).d8FlagActive}
             d8HeuristicActive={(result as any).d8HeuristicActive}
             d8EffectiveWeight={(result as any).d8EffectiveWeight}
+            l1EstimatedFromSector={(result as any).l1EstimatedFromSector}
+            l1SectorBaseline={(result as any).l1SectorBaseline}
           />
         </div>
 

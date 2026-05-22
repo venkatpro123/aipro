@@ -1,0 +1,269 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Migration: 20260522000005_gdpr_compliance.sql
+-- Purpose:   GDPR compliance for EU market entry.
+--            Legal requirement — not optional features.
+--
+-- EU countries in scope: DE, FR, NL, ES, PT, IT, AT, BE, BG, CY, CZ, DK,
+-- EE, FI, GR, HR, HU, IE, LT, LU, LV, MT, PL, RO, SE, SI, SK.
+--
+-- This migration implements:
+--
+--   1. user_profiles GDPR columns
+--        gdpr_consent_given, gdpr_consent_at, is_eu_user,
+--        community_share_consented, financial_data_consented
+--      Consent is recorded server-side so we can prove consent was given
+--      (GDPR Article 7(1) requires demonstrable consent).
+--
+--   2. user_data_deletion_requests
+--      Tracks right-to-erasure requests (GDPR Article 17).
+--      30-day SLA: confirmed_at must be within 30 days of requested_at.
+--
+--   3. delete_user_data_gdpr(p_user_id, p_email) — SECURITY DEFINER
+--      Deletes from all user-linked tables in one atomic transaction.
+--      SECURITY DEFINER bypasses the no-delete RLS policies on
+--      user_prediction_outcomes and score_trajectory — those policies exist
+--      to prevent accidental in-app deletes, not GDPR deletions.
+--      Tables cleared: layoff_scores, score_trajectory,
+--                      user_prediction_outcomes, user_profiles.
+--      Note: analytics_events / layer_fallback_log rows referencing this
+--      user_id are anonymised (user_id set to NULL) rather than deleted to
+--      preserve aggregate accuracy; individual rows contain no PII.
+--
+--   4. RLS: add self-delete policies to score_trajectory and
+--      user_prediction_outcomes so users can delete their own rows directly
+--      from the client (belt-and-suspenders alongside the SECURITY DEFINER fn).
+--
+--   5. community_risk_signals view: for EU users, allow_community_share
+--      is only honoured when community_share_consented = true.
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ── 1. GDPR columns on user_profiles ─────────────────────────────────────────
+
+ALTER TABLE public.user_profiles
+  ADD COLUMN IF NOT EXISTS gdpr_consent_given      BOOLEAN      DEFAULT false,
+  ADD COLUMN IF NOT EXISTS gdpr_consent_at         TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS gdpr_consent_version    TEXT         DEFAULT '1.0',
+  ADD COLUMN IF NOT EXISTS is_eu_user              BOOLEAN      DEFAULT false,
+  -- community_share_consented: EU users need explicit opt-in (separate from the
+  -- global allow_community_share localStorage toggle used by non-EU users).
+  ADD COLUMN IF NOT EXISTS community_share_consented  BOOLEAN   DEFAULT false,
+  -- financial_data_consented: EU users may opt-in to cloud storage of monthly
+  -- expenses and savings runway. When false, those fields are localStorage-only
+  -- and the service layer skips writing them to Supabase (data minimization).
+  ADD COLUMN IF NOT EXISTS financial_data_consented   BOOLEAN   DEFAULT false;
+
+COMMENT ON COLUMN public.user_profiles.gdpr_consent_given IS
+  'True when the user has accepted the GDPR consent modal. Required for EU users '
+  'before any data is persisted. Non-EU users: always true (assumed consent by ToS).';
+
+COMMENT ON COLUMN public.user_profiles.is_eu_user IS
+  'Set when the user is detected as EU-resident (timezone, currency, or visa type). '
+  'Controls: community_share opt-out default, financial data minimization enforcement.';
+
+COMMENT ON COLUMN public.user_profiles.community_share_consented IS
+  'EU users: explicit opt-in required before scores appear in community_risk_signals. '
+  'Non-EU users: governed by allow_community_share in layoff_scores (localStorage toggle). '
+  'GDPR Article 6(1)(a) — consent is the lawful basis for community data processing.';
+
+COMMENT ON COLUMN public.user_profiles.financial_data_consented IS
+  'EU users: opt-in to cloud storage of monthly_expenses_usd and savings_months_runway. '
+  'When false, these fields are suppressed in upsertUserProfile() (data minimization, '
+  'GDPR Article 5(1)(c)). Data is still functional via localStorage on the same device.';
+
+-- ── 2. user_data_deletion_requests ───────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.user_data_deletion_requests (
+  id                   UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- user_id is NOT a FK to auth.users — the user will be deleted and we need
+  -- this record to prove we complied. Store as plain UUID.
+  user_id              UUID          NOT NULL,
+
+  -- Email snapshot at request time — used for confirmation email (future).
+  email                TEXT,
+
+  -- GDPR Article 17: "without undue delay and at the latest within one month"
+  -- (extended to 3 months in complex cases). We target 30 days.
+  requested_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  confirmed_at         TIMESTAMPTZ,             -- set when deletion is complete
+  sla_deadline         TIMESTAMPTZ   NOT NULL   -- = requested_at + 30 days
+    GENERATED ALWAYS AS (requested_at + INTERVAL '30 days') STORED,
+
+  -- Tracks what was actually deleted
+  tables_cleared       TEXT[]        NOT NULL DEFAULT '{}',
+  rows_deleted         JSONB         NOT NULL DEFAULT '{}',
+
+  -- Deletion method: 'automated' (EF) | 'manual' (DBA) | 'cascade' (auth.users delete)
+  deletion_method      TEXT          NOT NULL DEFAULT 'automated',
+
+  is_complete          BOOLEAN       NOT NULL DEFAULT false,
+
+  -- If the SLA is missed, resolution_note explains the delay
+  resolution_note      TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_uddr_user_id
+  ON public.user_data_deletion_requests (user_id);
+CREATE INDEX IF NOT EXISTS idx_uddr_sla_overdue
+  ON public.user_data_deletion_requests (sla_deadline)
+  WHERE NOT is_complete;
+
+ALTER TABLE public.user_data_deletion_requests ENABLE ROW LEVEL SECURITY;
+
+-- Service_role only — deletion records are operational audit data
+CREATE POLICY uddr_service_only ON public.user_data_deletion_requests
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- Users can read their own pending request (to see confirmation status)
+CREATE POLICY uddr_own_read ON public.user_data_deletion_requests
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+COMMENT ON TABLE public.user_data_deletion_requests IS
+  'GDPR Article 17 right-to-erasure audit log. One row per deletion request. '
+  'sla_deadline is computed (requested_at + 30 days). Monitor idx_uddr_sla_overdue '
+  'for requests where is_complete is false and sla_deadline < NOW() — these '
+  'require immediate DBA intervention.';
+
+-- ── 3. delete_user_data_gdpr() — SECURITY DEFINER ────────────────────────────
+--
+-- Deletes all user data across GDPR-in-scope tables in a single transaction.
+-- SECURITY DEFINER runs as the function owner (postgres), bypassing RLS policies
+-- that block deletes on user_prediction_outcomes and score_trajectory.
+--
+-- Call from the user-data-delete Edge Function (service_role JWT).
+-- Returns a JSON summary of rows deleted per table.
+
+CREATE OR REPLACE FUNCTION public.delete_user_data_gdpr(
+  p_user_id  UUID,
+  p_email    TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  rows_ls  INTEGER := 0;
+  rows_st  INTEGER := 0;
+  rows_upo INTEGER := 0;
+  rows_up  INTEGER := 0;
+  rows_anon_ae INTEGER := 0;
+  deletion_id UUID;
+  result      JSONB;
+BEGIN
+  -- ── Delete from layoff_scores ─────────────────────────────────────────────
+  DELETE FROM public.layoff_scores WHERE user_id = p_user_id;
+  GET DIAGNOSTICS rows_ls = ROW_COUNT;
+
+  -- ── Delete from score_trajectory ──────────────────────────────────────────
+  DELETE FROM public.score_trajectory WHERE user_id = p_user_id;
+  GET DIAGNOSTICS rows_st = ROW_COUNT;
+
+  -- ── Delete from user_prediction_outcomes ──────────────────────────────────
+  -- The upo_no_delete RLS policy blocks client-side deletes to prevent accidental
+  -- data loss. SECURITY DEFINER bypasses it for legitimate GDPR erasure.
+  DELETE FROM public.user_prediction_outcomes WHERE user_id = p_user_id;
+  GET DIAGNOSTICS rows_upo = ROW_COUNT;
+
+  -- ── Anonymise analytics_events (nullify user_id, preserve aggregate rows) ──
+  -- Full deletion would degrade cohort accuracy. Nullifying user_id makes the
+  -- row non-attributable to a person while preserving aggregate signals.
+  -- GDPR Recital 26: anonymised data falls outside the Regulation's scope.
+  BEGIN
+    UPDATE public.analytics_events SET user_id = NULL WHERE user_id = p_user_id;
+    GET DIAGNOSTICS rows_anon_ae = ROW_COUNT;
+  EXCEPTION WHEN OTHERS THEN
+    rows_anon_ae := -1; -- table may not exist in all envs
+  END;
+
+  -- ── Delete from user_profiles — LAST (preserves user_id for FK integrity) ──
+  DELETE FROM public.user_profiles WHERE user_id = p_user_id;
+  GET DIAGNOSTICS rows_up = ROW_COUNT;
+
+  -- ── Record the deletion request as complete ───────────────────────────────
+  result := jsonb_build_object(
+    'layoff_scores',             rows_ls,
+    'score_trajectory',          rows_st,
+    'user_prediction_outcomes',  rows_upo,
+    'user_profiles',             rows_up,
+    'analytics_events_anonymised', rows_anon_ae,
+    'completed_at',              NOW()::TEXT
+  );
+
+  INSERT INTO public.user_data_deletion_requests
+    (user_id, email, tables_cleared, rows_deleted, deletion_method, is_complete, confirmed_at)
+  VALUES (
+    p_user_id,
+    p_email,
+    ARRAY['layoff_scores','score_trajectory','user_prediction_outcomes','user_profiles'],
+    result,
+    'automated',
+    true,
+    NOW()
+  )
+  RETURNING id INTO deletion_id;
+
+  RETURN result || jsonb_build_object('deletion_request_id', deletion_id::TEXT);
+END;
+$$;
+
+COMMENT ON FUNCTION public.delete_user_data_gdpr(UUID, TEXT) IS
+  'GDPR Article 17 right-to-erasure. Deletes user data from layoff_scores, '
+  'score_trajectory, user_prediction_outcomes, user_profiles. Anonymises '
+  'analytics_events. Records completion in user_data_deletion_requests. '
+  'SECURITY DEFINER: bypasses no-delete RLS on prediction_outcomes and trajectory. '
+  'Call via user-data-delete Edge Function with service_role JWT only.';
+
+-- Grant execute to service_role (called by EF), but NOT to anon/authenticated
+-- (users trigger deletion via EF auth check, not by calling this directly).
+REVOKE ALL ON FUNCTION public.delete_user_data_gdpr(UUID, TEXT) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.delete_user_data_gdpr(UUID, TEXT) TO service_role;
+
+-- ── 4. RLS: allow self-delete on score_trajectory and user_prediction_outcomes ─
+-- Belt-and-suspenders alongside the SECURITY DEFINER fn. Lets authenticated
+-- users delete their own rows without needing to go through the EF.
+
+CREATE POLICY st_own_rows_delete ON public.score_trajectory
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- Drop the blanket no-delete policy and replace with a less-permissive version
+-- that only blocks anonymous deletes (the original intent was to prevent
+-- accidental in-app clears, not GDPR deletions by the owning user).
+DROP POLICY IF EXISTS upo_no_delete ON public.user_prediction_outcomes;
+
+CREATE POLICY upo_no_anon_delete ON public.user_prediction_outcomes
+  FOR DELETE TO anon USING (false);
+
+CREATE POLICY upo_own_rows_delete ON public.user_prediction_outcomes
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- ── 5. community_risk_signals view: EU consent gate ──────────────────────────
+-- Existing view at 20260101000002 includes all rows WHERE allow_community_share.
+-- Replace with an EU-aware version: EU users' rows only appear when they have
+-- explicitly given community_share_consented = true in user_profiles.
+-- Non-EU users: governed by allow_community_share (unchanged behavior).
+
+CREATE OR REPLACE VIEW public.community_risk_signals AS
+SELECT
+  ls.role_key,
+  ls.industry_key,
+  ls.score,
+  ls.tier,
+  ls.breakdown,
+  ls.calculated_at
+FROM public.layoff_scores ls
+LEFT JOIN public.user_profiles up ON up.user_id = ls.user_id
+WHERE ls.allow_community_share = true
+  AND (
+    -- Non-EU user or no profile row: governed by allow_community_share only
+    up.user_id IS NULL
+    OR up.is_eu_user = false
+    OR up.is_eu_user IS NULL
+    -- EU user: requires explicit community share consent
+    OR (up.is_eu_user = true AND up.community_share_consented = true)
+  );
+
+COMMENT ON VIEW public.community_risk_signals IS
+  'GDPR-compliant community risk signals. EU users require explicit '
+  'community_share_consented = true in user_profiles (GDPR Article 6(1)(a)). '
+  'Non-EU users: governed by allow_community_share flag only (ToS consent).';

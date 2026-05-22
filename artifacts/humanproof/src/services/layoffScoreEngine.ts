@@ -1652,6 +1652,15 @@ export interface ScoreResult {
     L1_effective: number;  // composite L1 decay (max(f_stock, f_revenue * 0.6))
     D7_effective: number;  // composite D7 decay ((f_stock + f_layoff) / 2)
   };
+  /**
+   * true when both primary L1 financial signals (revenueGrowthYoY + stock90DayChange)
+   * were absent for a public company and L1 was derived from the industry sector
+   * baseline instead of company-specific data.
+   * TransparencyTab shows an amber "ESTIMATED" banner + badge in EffectiveWeightsPanel.
+   */
+  l1EstimatedFromSector?: boolean;
+  /** Industry sector baseline used for L1 when l1EstimatedFromSector=true (0–1 scale). */
+  l1SectorBaseline?: number;
 }
 
 // ─── Utility ───
@@ -3349,9 +3358,13 @@ const analyzeSignalQuality = (
   // may carry up to 37.5% of L1 weight (vs its nominal 15%), biasing the score
   // toward the RPE profile rather than actual financial health.
   if (companyData.isPublic && companyData.stock90DayChange === null && companyData.revenueGrowthYoY === null) {
+    const sectorPct = (companyData as any)._l1SectorBaseline != null
+      ? ` (sector baseline: ${Math.round((companyData as any)._l1SectorBaseline * 100)}%)`
+      : '';
     missingFallbacks.push(
-      '⚠ Both stock and revenue signals null — L1 (company health, 16% weight) is driven ' +
-      'solely by overstaffing + funding + size proxies. Score may be ±8 pts from true value.',
+      `⚠ L1 ESTIMATED — both stock and revenue signals absent. ` +
+      `L1 (company health, 16% weight) uses industry sector baseline${sectorPct} ` +
+      `rather than company-specific financials. Score may be ±8 pts from true value.`,
     );
   }
   if (!companyData.layoffsLast24Months || companyData.layoffsLast24Months.length === 0) {
@@ -4201,7 +4214,28 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   // is a pure function of its inputs — identical inputs always produce identical output.
   const now = inputs.referenceDate ?? new Date();
 
-  const L1 = calculateCompanyHealthScore(companyData);
+  const L1raw = calculateCompanyHealthScore(companyData);
+
+  // When both primary L1 financial signals are absent for a public company,
+  // calculateCompanyHealthScore returns a score driven by fundingRisk alone
+  // (public: fixed 0.30). That value is company-agnostic. The sector baseline
+  // (industryData.baselineRisk) is more honest: "unknown company in sector X
+  // → assume sector average risk" rather than "assume all public companies are
+  // at 0.30 risk."
+  // Private companies are excluded — they already receive a funding-recency
+  // proxy for the stock slot, which is structurally meaningful data, not absence.
+  const _l1PrimarySignalsAbsent =
+    companyData.revenueGrowthYoY == null &&
+    companyData.isPublic === true &&
+    companyData.stock90DayChange == null;
+  const _sectorBaselineForL1 = industryData?.baselineRisk;
+  const _l1EstimatedFromSector = _l1PrimarySignalsAbsent && _sectorBaselineForL1 != null;
+  const L1 = _l1EstimatedFromSector ? _sectorBaselineForL1! : L1raw;
+  if (_l1EstimatedFromSector) {
+    (companyData as any)._l1EstimatedFromSector = true;
+    (companyData as any)._l1SectorBaseline = _sectorBaselineForL1;
+  }
+
   const L2 = calculateLayoffHistoryScore(companyData, industryData, department, now);
 
   // L3: blend global role exposure (70%) with company-specific risk from Supabase (30%)
@@ -4248,7 +4282,9 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
   //   c) Size signal — very small companies have higher volatility
   //   d) Public market signal — stock decline amplifies risk
   const _syntheticRiskScore = (() => {
-    let s = 0.5; // neutral baseline
+    // Start from the sector baseline when available — unknown company in a
+    // high-risk sector should default to sector average, not neutral 0.50.
+    let s = industryData?.baselineRisk ?? 0.5;
     const rev = companyData.revenueGrowthYoY;
     if (rev !== null) {
       if (rev < -15) s += 0.20;
@@ -5052,6 +5088,10 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
     // v40.0: per-signal freshness decay weights — surfaced in TransparencyTab
     // so users understand why a signal carries reduced weight due to staleness.
     signalDecayWeights: _decayWeights,
+    // L1 sector-baseline flag: true when both primary L1 signals (revenue + stock)
+    // were absent and L1 used the industry sector baseline (ESTIMATED).
+    l1EstimatedFromSector: _l1EstimatedFromSector || undefined,
+    l1SectorBaseline: _l1EstimatedFromSector ? _sectorBaselineForL1 : undefined,
   };
 };
 
