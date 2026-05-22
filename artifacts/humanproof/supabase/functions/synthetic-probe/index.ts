@@ -75,7 +75,7 @@ interface ConsensusData {
   growthOutlook?:      ResolvedSignal;
   overallConfidence?:  number;
 }
-interface UserFactors { roleTitle?: string; tenureYears?: number; }
+interface UserFactors { roleTitle?: string; tenureYears?: number; region?: string; industry?: string; }
 interface ProbeScenario {
   id:           string;
   description:  string;
@@ -280,6 +280,116 @@ const PROBE_SCENARIOS: ProbeScenario[] = [
       aiAdoptionRate:      { value: 0.55, confidence: 0.75 },
       humanAmplification:  { value: 0.60, confidence: 0.75 },
       growthOutlook:       { value: 0.65, confidence: 0.75 },
+      departmentNews:      { value: 0.55, confidence: 0.70 },
+      overallConfidence: 0.76,
+    },
+  },
+  // ── Global market probes (added v40.0 — 2026-06-23) ────────────────────────
+  // These 4 scenarios specifically test D1 country multiplier paths and global
+  // market calibration. A miscalibrated Germany/India/Singapore/UAE multiplier
+  // would pass all 7 original probes but fail at least one of these.
+  //
+  // Expected scores computed from the EF formula at probe design time (2026-06-23):
+  //   INDIA_IT:    raw=0.62140 → 62 ± 7  [55, 69]
+  //   DE_AUTO:     raw=0.51452 → 51 ± 7  [44, 58]
+  //   SG_GCC:      raw=0.60447 → 60 ± 7  [53, 67]
+  //   MENA_UAE:    raw=0.64443 → 64 ± 7  [57, 71]
+  {
+    id: 'INDIA_IT_BENCH_RISK',
+    description: 'India IT Services QA engineer on bench — tests IN client-side D1 multiplier (0.875) path',
+    formulaPath:  'D1_IN_QA_IT_services + D2_high + D3_moderate + L1_moderate',
+    expectedMin:  55,
+    expectedMax:  69,
+    midpoint:     62,
+    userFactors:  { roleTitle: 'qa engineer', tenureYears: 3, region: 'IN', industry: 'IT Services' },
+    consensusData: {
+      stockTrend:          { value: 0.55, confidence: 0.70 },
+      revenueGrowth:       { value: 0.60, confidence: 0.70 },
+      overstaffing:        { value: 0.65, confidence: 0.75 },  // bench = overstaffed
+      fundingHealth:       { value: 0.45, confidence: 0.70 },
+      recentLayoffRecency: { value: 0.50, confidence: 0.70 },
+      layoffFrequency:     { value: 0.45, confidence: 0.70 },
+      layoffSeverity:      { value: 0.40, confidence: 0.70 },
+      aiToolMaturity:      { value: 0.82, confidence: 0.80 },  // client-side AI tools high
+      automationRisk:      { value: 0.78, confidence: 0.80 },
+      aiAdoptionRate:      { value: 0.76, confidence: 0.80 },
+      humanAmplification:  { value: 0.72, confidence: 0.75 },
+      growthOutlook:       { value: 0.55, confidence: 0.70 },
+      departmentNews:      { value: 0.50, confidence: 0.70 },
+      overallConfidence: 0.74,
+    },
+  },
+  {
+    id: 'DE_AUTOMOTIVE_AUTOMATION',
+    description: 'Germany automotive QA role — tests DE Betriebsrat D1 gate (0.844), lowest EU multiplier',
+    formulaPath:  'D1_DE_QA_betriebsrat + D2_high + D3_low + L1_moderate',
+    expectedMin:  44,
+    expectedMax:  58,
+    midpoint:     51,
+    userFactors:  { roleTitle: 'qa engineer', tenureYears: 5, region: 'DE', industry: 'Automotive' },
+    consensusData: {
+      stockTrend:          { value: 0.55, confidence: 0.75 },
+      revenueGrowth:       { value: 0.58, confidence: 0.75 },
+      overstaffing:        { value: 0.45, confidence: 0.70 },
+      fundingHealth:       { value: 0.50, confidence: 0.75 },
+      recentLayoffRecency: { value: 0.40, confidence: 0.70 },
+      layoffFrequency:     { value: 0.35, confidence: 0.70 },
+      layoffSeverity:      { value: 0.30, confidence: 0.70 },
+      aiToolMaturity:      { value: 0.78, confidence: 0.80 },  // high industry AI maturity
+      automationRisk:      { value: 0.40, confidence: 0.75 },  // Betriebsrat slows deployment
+      aiAdoptionRate:      { value: 0.42, confidence: 0.75 },
+      humanAmplification:  { value: 0.45, confidence: 0.75 },
+      growthOutlook:       { value: 0.52, confidence: 0.72 },
+      departmentNews:      { value: 0.48, confidence: 0.70 },
+      overallConfidence: 0.74,
+    },
+  },
+  {
+    id: 'SG_GCC_PARENT_CONTAGION',
+    description: 'Singapore software engineer at GCC subsidiary — tests SG AISG multiplier (0.916) + L1 contagion',
+    formulaPath:  'D1_SG_SW_aisg + L1_high_contagion + D4_moderate',
+    expectedMin:  53,
+    expectedMax:  67,
+    midpoint:     60,
+    userFactors:  { roleTitle: 'software engineer', tenureYears: 2, region: 'SG', industry: 'Financial Services' },
+    consensusData: {
+      stockTrend:          { value: 0.72, confidence: 0.80 },  // GCC parent distress
+      revenueGrowth:       { value: 0.68, confidence: 0.80 },
+      overstaffing:        { value: 0.55, confidence: 0.75 },
+      fundingHealth:       { value: 0.40, confidence: 0.75 },
+      recentLayoffRecency: { value: 0.35, confidence: 0.70 },
+      layoffFrequency:     { value: 0.30, confidence: 0.70 },
+      layoffSeverity:      { value: 0.28, confidence: 0.70 },
+      aiToolMaturity:      { value: 0.72, confidence: 0.80 },  // AISG-driven
+      automationRisk:      { value: 0.70, confidence: 0.80 },
+      aiAdoptionRate:      { value: 0.68, confidence: 0.80 },
+      humanAmplification:  { value: 0.65, confidence: 0.78 },
+      growthOutlook:       { value: 0.62, confidence: 0.75 },
+      departmentNews:      { value: 0.58, confidence: 0.72 },
+      overallConfidence: 0.76,
+    },
+  },
+  {
+    id: 'MENA_UAE_FINANCIAL_DISTRESS',
+    description: 'UAE financial analyst at distressed company — tests AE D1 default (0.899) + L1 financial crisis',
+    formulaPath:  'D1_AE_default + L1_high_revenue_stock_distress + D4_junior',
+    expectedMin:  57,
+    expectedMax:  71,
+    midpoint:     64,
+    userFactors:  { roleTitle: 'financial analyst', tenureYears: 2, region: 'AE', industry: 'Financial Services' },
+    consensusData: {
+      stockTrend:          { value: 0.78, confidence: 0.80 },  // heavy stock decline
+      revenueGrowth:       { value: 0.72, confidence: 0.80 },
+      overstaffing:        { value: 0.50, confidence: 0.70 },
+      fundingHealth:       { value: 0.62, confidence: 0.78 },
+      recentLayoffRecency: { value: 0.45, confidence: 0.72 },
+      layoffFrequency:     { value: 0.40, confidence: 0.70 },
+      layoffSeverity:      { value: 0.35, confidence: 0.70 },
+      aiToolMaturity:      { value: 0.65, confidence: 0.78 },
+      automationRisk:      { value: 0.68, confidence: 0.78 },
+      aiAdoptionRate:      { value: 0.62, confidence: 0.75 },
+      humanAmplification:  { value: 0.60, confidence: 0.75 },
+      growthOutlook:       { value: 0.68, confidence: 0.75 },
       departmentNews:      { value: 0.55, confidence: 0.70 },
       overallConfidence: 0.76,
     },
@@ -491,9 +601,9 @@ async function persistResults(
     if (alertErr) console.warn('[synthetic-probe] Failed to write probe_alerts:', alertErr.message);
   }
 
-  // 3. Write calibration_drift_events if drift detected
+  // 3. Write calibration_drift_runs if drift detected
   if (drift.detected) {
-    const { error: driftErr } = await sb.from('calibration_drift_events').insert({
+    const { error: driftErr } = await sb.from('calibration_drift_runs').insert({
       run_id:                   runId,
       drift_direction:          drift.direction,
       directional_mean_pts:     drift.directionalMean,
@@ -503,7 +613,7 @@ async function persistResults(
       recalibration_recommended: drift.recalibrationRecommended,
       severity:                 drift.severity,
     });
-    if (driftErr) console.warn('[synthetic-probe] Failed to write drift_events:', driftErr.message);
+    if (driftErr) console.warn('[synthetic-probe] Failed to write drift_runs:', driftErr.message);
   }
 }
 
@@ -531,9 +641,26 @@ serve(async (req: Request) => {
 
   console.log(`[synthetic-probe] Run ${runId} started — ${PROBE_SCENARIOS.length} scenarios`);
 
-  // Run all probes concurrently (each has a 15s per-scenario timeout)
-  const results = await Promise.all(
+  // Run all probes concurrently (each has a 15s per-scenario timeout).
+  // Promise.allSettled ensures one probe network failure cannot abort the whole run.
+  const settled = await Promise.allSettled(
     PROBE_SCENARIOS.map(s => runProbeScenario(s, scoringUrl, serviceKey)),
+  );
+  const results = settled.map((r, i) =>
+    r.status === 'fulfilled'
+      ? r.value
+      : {
+          scenarioId:      PROBE_SCENARIOS[i].id,
+          actualScore:     null,
+          expectedMin:     PROBE_SCENARIOS[i].expectedMin,
+          expectedMax:     PROBE_SCENARIOS[i].expectedMax,
+          midpoint:        PROBE_SCENARIOS[i].midpoint,
+          deviation:       null,
+          signedDeviation: null,
+          passed:          false,
+          alertLevel:      'none' as const,
+          error:           String((r as PromiseRejectedResult).reason),
+        },
   );
 
   const passCount    = results.filter(r => r.passed).length;

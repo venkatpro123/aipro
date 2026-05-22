@@ -102,13 +102,80 @@ function computeD7(cd: ConsensusData): number {
   return (growth * 0.50) + (dept * 0.50);
 }
 
+// ── D1 country multiplier ────────────────────────────────────────────────────
+// Mirrors computeD1CountryMultiplier() in aiEnterpriseDeploymentRates.ts.
+// Formula: 0.80 + (enterpriseDeploymentRate × 0.30) - (labourFlexibility × 0.10)
+// clamped [0.80, 1.10]. LABELED ESTIMATED — research-derived, not measured.
+//
+// Values pre-computed from the source table for key markets.
+// DE: Betriebsrat (BetrVG §87(1)6) gates AI monitoring tools — QA/BPO lowest.
+// IN: IT Services QA/SW governed by client-side (US/EU) deployment, not employer.
+// SG: AISG national program boosts QA/SW adoption beyond aiAdoptionSpeed.
+// JP: Conservative enterprise adoption despite strong research output.
+// AE/SA: High labour flexibility; general AI adoption per UAE national strategy.
+// GB: Strong FinTech/BPO adoption; slightly below US.
+// FR: PSE/CNIL slow AI deployment for monitored-role categories.
+function getD1RegionMultiplier(
+  region: string | undefined,
+  roleTitle: string | undefined,
+  industry: string | undefined,
+): number {
+  if (!region) return 1.0;
+  const r = region.toUpperCase().slice(0, 4);
+
+  const role = (roleTitle ?? '').toLowerCase();
+  const isITServices = /it services|bpo|outsourcing|consulting/i.test(industry ?? '');
+
+  const isQA      = /qa|quality assurance|tester|test engineer|sdet/i.test(role);
+  const isBPO     = /data entry|customer support|back.?office|call cent|operations analyst/i.test(role);
+  const isSW      = /software engineer|developer|backend|frontend|full.?stack|devops|sre/i.test(role);
+  const isContent = /content|writer|copywriter|editor/i.test(role);
+  const isFinance = /financial analyst|accountant|fp&?a|finance/i.test(role);
+
+  // Pre-computed multipliers: { country: { category: multiplier } }
+  // Derived from ENTERPRISE_DEPLOYMENT_RATES × COUNTRY_RISK_PROFILES.labourFlexibility.
+  const table: Record<string, { qa?: number; bpo?: number; sw?: number; content?: number; finance?: number; def: number }> = {
+    // Germany — Betriebsrat (BetrVG §87(1)6) structural gate for QA/BPO/HR/Sales AI
+    DE: { qa: 0.844, bpo: 0.881, sw: 0.880, content: 0.905, finance: 0.914, def: 0.895 },
+    // India — IT Services: client-side governed (US/EU client deployment governs)
+    IN: { qa: isITServices ? 0.875 : 0.881, bpo: isITServices ? 0.936 : 0.941, sw: isITServices ? 0.883 : 0.899, content: 0.904, finance: 0.905, def: 0.890 },
+    // Singapore — AISG national program boosts QA, SW, and content deployment
+    SG: { qa: 0.940, bpo: 0.936, sw: 0.916, content: 0.936, finance: 0.925, def: 0.925 },
+    // Japan — conservative enterprise AI adoption; lifetime employment culture
+    JP: { qa: 0.867, bpo: 0.894, sw: 0.880, content: 0.896, finance: 0.890, def: 0.882 },
+    // UAE / Saudi — high labour flexibility; UAE national AI strategy adoption
+    AE: { def: 0.899 },
+    SA: { def: 0.892 },
+    // UK — strong FinTech/BPO; slightly below US Copilot penetration
+    GB: { qa: 0.895, bpo: 0.952, sw: 0.890, content: 0.936, finance: 0.940, def: 0.905 },
+    // France — PSE consultation + CNIL data restrictions slow monitored-role AI
+    FR: { qa: 0.864, bpo: 0.894, sw: 0.878, content: 0.894, finance: 0.878, def: 0.878 },
+    // Korea — chaebol-driven rapid AI deployment
+    KR: { def: 0.924 },
+    // Canada — close to US adoption curve, minor lag
+    CA: { sw: 0.886, def: 0.900 },
+    // Australia — strong SaaS/FinTech; lower government/banking
+    AU: { def: 0.892 },
+    // Israel — highest startup density, fastest Copilot adoption
+    IL: { sw: 0.946, def: 0.935 },
+  };
+
+  const row = table[r];
+  if (!row) return 1.0; // unknown region → USA-neutral (no adjustment)
+
+  const mult = isQA ? row.qa : isBPO ? row.bpo : isSW ? row.sw : isContent ? row.content : isFinance ? row.finance : undefined;
+  return mult ?? row.def;
+}
+
 // ── D dimensions from userFactors ─────────────────────────────────────────────
 // These are heuristic approximations for server-side scoring. The full
 // client-side engine (layoffScoreEngine.ts) computes these with more context.
 function computeDimensions(uf: UserFactors, cd: ConsensusData) {
-  // D1: Task automatability — role-based heuristic
+  // D1: Task automatability — role-based heuristic, with D1 country multiplier.
+  // getD1RegionMultiplier() replicates computeD1CountryMultiplier() from
+  // aiEnterpriseDeploymentRates.ts using a pre-computed table.
   const roleKey = (uf.roleTitle ?? '').toLowerCase();
-  const d1 =
+  const d1Base =
     roleKey.includes('data entry') || roleKey.includes('customer support') ? 0.88
     : roleKey.includes('content writer') || roleKey.includes('copywriter') ? 0.78
     : roleKey.includes('financial analyst') || roleKey.includes('accountant') ? 0.72
@@ -118,6 +185,7 @@ function computeDimensions(uf: UserFactors, cd: ConsensusData) {
     : roleKey.includes('software engineer') || roleKey.includes('backend') || roleKey.includes('frontend') ? 0.48
     : roleKey.includes('data scientist') ? 0.44
     : 0.55;
+  const d1 = d1Base * getD1RegionMultiplier(uf.region, uf.roleTitle, uf.industry);
 
   // D2: AI tool maturity — sector proxy
   const d2 = cd.aiToolMaturity?.value ?? 0.5;
@@ -214,6 +282,8 @@ interface UserFactors {
   roleTitle?: string;
   tenureYears?: number;
   department?: string;
+  region?: string;
+  industry?: string;
 }
 
 // v40 hardening: validate user-supplied signal blob. Without this, callers
@@ -278,6 +348,12 @@ function sanitizeUserFactors(raw: unknown): UserFactors {
   }
   if (typeof r.tenureYears === 'number' && Number.isFinite(r.tenureYears)) {
     out.tenureYears = Math.min(60, Math.max(0, r.tenureYears));
+  }
+  if (typeof r.region === 'string' && r.region.length <= 10) {
+    out.region = r.region;
+  }
+  if (typeof r.industry === 'string' && r.industry.length <= 100) {
+    out.industry = r.industry;
   }
   return out;
 }
