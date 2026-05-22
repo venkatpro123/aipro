@@ -8,10 +8,16 @@
 //     equity vesting, dependents, dual-income household
 //   — Career history: prior job changes, prior layoff survived, industry years
 //   — Skills: self_rated_skills, target_skills
+//
+// GDPR data minimization (EU users):
+//   monthly_expenses_usd and savings_months_runway are NEVER sent to Supabase
+//   when isFinancialDataLocal() returns true (EU user, no cloud financial consent).
+//   These fields are stored in localStorage via gdprService.setLocalFinancialData().
 //   — Location expansion: metro_area (structured slug), city_tier (India)
 //   — computeFinancialRunway() helper
 
 import { supabase } from '../utils/supabase';
+import { isFinancialDataLocal, setLocalFinancialData } from './gdprService';
 
 export type SalaryBand = '<50k' | '50-100k' | '100-150k' | '150-250k' | '250k+';
 export type VisaStatus =
@@ -267,12 +273,24 @@ export async function upsertUserProfile(
   if (patch.cityTier        !== undefined) row.city_tier      = patch.cityTier;
 
   // ── v16 financial ─────────────────────────────────────────────────────────
+  // GDPR data minimization: monthly_expenses_usd and savings_months_runway are
+  // localStorage-only for EU users who haven't consented to cloud financial storage.
+  // Salary (monthly_salary_usd/inr) is always stored — needed for salary delta.
   if (patch.monthlySalaryUsd    !== undefined) row.monthly_salary_usd    = patch.monthlySalaryUsd;
   if (patch.monthlySalaryInr    !== undefined) row.monthly_salary_inr    = patch.monthlySalaryInr;
-  if (patch.monthlyExpensesUsd  !== undefined) row.monthly_expenses_usd  = patch.monthlyExpensesUsd;
-  if (patch.savingsMonthsRunway !== undefined) row.savings_months_runway = patch.savingsMonthsRunway;
   if (patch.hasEquityVesting    !== undefined) row.has_equity_vesting    = patch.hasEquityVesting;
   if (patch.equityVestMonths    !== undefined) row.equity_vest_months    = patch.equityVestMonths;
+
+  if (isFinancialDataLocal()) {
+    // EU user without cloud financial consent — route to localStorage only.
+    setLocalFinancialData({
+      monthlyExpensesUsd:  patch.monthlyExpensesUsd,
+      savingsMonthsRunway: patch.savingsMonthsRunway,
+    });
+  } else {
+    if (patch.monthlyExpensesUsd  !== undefined) row.monthly_expenses_usd  = patch.monthlyExpensesUsd;
+    if (patch.savingsMonthsRunway !== undefined) row.savings_months_runway = patch.savingsMonthsRunway;
+  }
 
   // ── v16 career ───────────────────────────────────────────────────────────
   if (patch.priorJobChanges     !== undefined) row.prior_job_changes     = patch.priorJobChanges;

@@ -12,6 +12,12 @@ import { useCompanySignalSubscription } from "../../hooks/useCompanySignalSubscr
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
 import WARNAlertBanner from "../WARNAlertBanner";
 import FreshnessBadge from "../FreshnessBadge";
+import { GdprConsentModal } from "../GdprConsentModal";
+import {
+  isEuUser,
+  hasGdprConsent,
+  enforceEuCommunityShareDefault,
+} from "../../services/gdprService";
 
 // Lazy-loaded tab modules for performance
 const OverviewTab = lazy(() => import("../AuditTabs/OverviewTab"));
@@ -186,6 +192,16 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
   const prevTabIndex = TAB_CONFIG.findIndex(t => t.value === prevTabRef.current);
   const slideDirection = tabIndex >= prevTabIndex ? 1 : -1;
 
+  // ── GDPR consent gate — shown once for EU users before first interaction ────
+  // enforceEuCommunityShareDefault() must run BEFORE reading hp_community_share
+  // so EU users start with the correct opt-out default.
+  const [showGdprModal, setShowGdprModal] = useState<boolean>(() => {
+    try {
+      enforceEuCommunityShareDefault();
+      return isEuUser() && !hasGdprConsent();
+    } catch { return false; }
+  });
+
   const [communityShare, setCommunityShare] = useState<boolean>(() => {
     try { return localStorage.getItem('hp_community_share') === '1'; } catch { return false; }
   });
@@ -237,6 +253,17 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
   const showStaleBanner = dataAgeDays > 30 || isFallbackSource;
 
   return (
+    <>
+    {/* GDPR consent modal — blocks interaction for EU users until consent saved */}
+    {showGdprModal && (
+      <GdprConsentModal onConsentSaved={() => {
+        setShowGdprModal(false);
+        // Re-read community share after consent saved
+        try {
+          setCommunityShare(localStorage.getItem('hp_community_share') === '1');
+        } catch { /* ignore */ }
+      }} />
+    )}
     <div className="w-full max-w-7xl mx-auto pb-[var(--space-16)]" style={{ padding: '0 var(--space-6)' }}>
 
       {/* v22.0: real-time freshness badge — confirms continuous intelligence
@@ -534,5 +561,6 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
         }
       `}</style>
     </div>
+    </>
   );
 };
