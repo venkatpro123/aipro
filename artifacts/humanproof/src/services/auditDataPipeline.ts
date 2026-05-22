@@ -39,6 +39,14 @@ import { computeScoreSensitivity } from "./scoreSensitivityEngine";
 import { computeSignalContradictions } from "./signalContradictionEngine";
 import { computeExecutiveMovementRisk, deriveExecutiveDepartures } from "./executiveMovementEngine";
 import { analyzeHiringSignals, deriveHiringSignalInputs } from "./hiringSignalAnalyzer";
+import {
+  detectPrivateCompanyRegime,
+} from "./companyEntityResolver";
+import {
+  quorumSpecForRegime,
+  quorumCeilingForRegime,
+  marketSegmentForRegime,
+} from "./liveQuorumSpec";
 import { computeCompetitiveIntelligence } from "./competitiveIntelligenceEngine";
 import { computeExitTiming } from "./exitTimingOptimizer";
 import { computeCareerResilience } from "./careerResilienceEngine";
@@ -592,6 +600,60 @@ function attachAuditMetadata(
 }
 
 /**
+ * Fire-and-forget latency telemetry write to audit_latency_log.
+ * Never throws — always resolves. Called after awaitLiveQuorum resolves.
+ */
+function _writeQuorumLatency(row: {
+  companyName:     string;
+  marketSegment:   string;
+  regime:          string | null;
+  quorumCeilingMs: number;
+  quorumWaitMs:    number;
+  quorumReached:   boolean;
+}): void {
+  supabase
+    .from('audit_latency_log')
+    .insert({
+      company_name:      row.companyName,
+      market_segment:    row.marketSegment,
+      regime:            row.regime,
+      quorum_ceiling_ms: row.quorumCeilingMs,
+      quorum_wait_ms:    row.quorumWaitMs,
+      quorum_reached:    row.quorumReached,
+    })
+    .then(({ error }) => {
+      if (error) console.debug('[AuditPipeline] latency log write skipped:', error.message);
+    });
+}
+
+/**
+ * Returns true when the regime is a private-company type that has no public
+ * financial data, no WARN Act, and no SEC EDGAR — meaning the quorum ceiling
+ * is deliberately short (15-18s) and users should see a "Limited data" banner.
+ */
+export function isLimitedDataRegime(regime: string | null): boolean {
+  return regime === 'german_gmbh'
+    || regime === 'uk_private_ltd'
+    || regime === 'india_unlisted_pvt'
+    || regime === 'apac_private'
+    || regime === 'eu_other_private';
+}
+
+/**
+ * Human-readable reason for the "Limited data" banner, keyed by regime.
+ */
+export function limitedDataReasonForRegime(regime: string | null): string {
+  switch (regime) {
+    case 'german_gmbh':        return 'German GmbH companies have no public stock listing, no WARN Act, and no SEC filings. Analysis uses news signals, Bundesanzeiger records, and hiring data.';
+    case 'uk_private_ltd':     return 'UK private companies file annually at Companies House with a 9-month lag. No real-time financial disclosure available. Analysis uses news and hiring signals.';
+    case 'india_unlisted_pvt': return 'India private companies are not listed on BSE/NSE. No exchange financial data available. Analysis uses MCA filings, India press signals, and hiring data.';
+    case 'apac_private':       return 'Singapore/APAC private companies are not publicly listed. ACRA/ASIC data is batch-updated, not real-time. Analysis uses available news and hiring signals.';
+    case 'eu_other_private':   return 'EU private companies have no real-time public financial disclosure. Analysis uses available news and hiring signals.';
+    default:                   return 'Limited public data available for this company.';
+  }
+}
+
+/**
  * PRIMARY ENTRY POINT: fetchAuditData
  *
  * Resolution order:
@@ -725,13 +787,54 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // (it indicates either a slow scraper, a stuck job, or an unknown
   // company without any signals). markFallback writes one row to
   // layer_fallback_log so the SLO dashboard surfaces a spike.
+  // Detect regime early so we can use the correct quorum spec AND ceiling.
+  // german_gmbh/uk_private_ltd/india_unlisted_pvt/apac_private → 15-18s ceiling.
+  // us_private → 20s ceiling. Public/unknown → 45s ceiling.
+  const _detectedRegime = detectPrivateCompanyRegime(inputs.companyName);
+  const _quorumSpec     = quorumSpecForRegime(_detectedRegime);
+  const _quorumCeiling  = quorumCeilingForRegime(_detectedRegime);
+  // Market segment bucket for latency telemetry — refined later with isPublic after resolution.
+  const _marketSegment  = marketSegmentForRegime(_detectedRegime, inputs.country ?? null, false);
+
+  // Tag timer with regime metadata before quorum starts.
+  if (_timer && '_timer' in ({} as { _timer?: unknown })) {
+    // PipelineTimerInstance extended in Phase 2 — type-safe via cast
+    const timerWithMeta = _timer as any;
+    if (typeof timerWithMeta.regime !== 'undefined') {
+      timerWithMeta.regime        = _detectedRegime;
+      timerWithMeta.marketSegment = _marketSegment;
+      timerWithMeta.quorumCeilingMs = _quorumCeiling;
+    }
+  }
+
   const _liveQuorumPromise = _forceLiveUnavailable
     ? Promise.resolve(null)
-    : import('./scraperTrigger').then(({ awaitLiveQuorum }) =>
-        awaitLiveQuorum(inputs.companyName, {
-          ceilingMs:      45_000,
+    : import('./scraperTrigger').then(({ awaitLiveQuorum }) => {
+        (_timer as any)?.mark?.('quorum_wait_start');
+        return awaitLiveQuorum(inputs.companyName, {
+          ceilingMs:      _quorumCeiling,
           pollIntervalMs: 500,
+          spec:           _quorumSpec,
+        }).then((result) => {
+          (_timer as any)?.mark?.('quorum_wait_end');
+          // Tag timer with quorum outcome
+          const timerWithMeta = _timer as any;
+          if (timerWithMeta && typeof timerWithMeta.quorumWaitMs !== 'undefined') {
+            timerWithMeta.quorumWaitMs  = result.waitedMs;
+            timerWithMeta.quorumReached = result.reached;
+          }
+          // Fire-and-forget latency telemetry write
+          _writeQuorumLatency({
+            companyName:     inputs.companyName,
+            marketSegment:   _marketSegment,
+            regime:          _detectedRegime,
+            quorumCeilingMs: _quorumCeiling,
+            quorumWaitMs:    result.waitedMs,
+            quorumReached:   result.reached,
+          });
+          return result;
         }).catch((err) => {
+          (_timer as any)?.mark?.('quorum_wait_end');
           markFallback({
             layerId: 'auditDataPipeline.awaitLiveQuorum',
             reason: 'timeout',
@@ -739,8 +842,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
             rationale: err instanceof Error ? err.message : String(err),
           });
           return null;
-        }),
-      ).catch((err) => {
+        });
+      }).catch((err) => {
         markFallback({
           layerId: 'auditDataPipeline.scraperTrigger.import',
           reason: 'exception',
@@ -1068,6 +1171,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       // Live scraping returned null → zero positive classes by definition.
       (companyData as any)._quorumInsufficient        = true;
       (companyData as any)._quorumPositiveClassCount  = 0;
+      // Regime / limited-data flags — consumed by SpyLoadingState banner
+      (companyData as any)._detectedRegime    = _detectedRegime;
+      (companyData as any)._marketSegment     = _marketSegment;
+      (companyData as any)._quorumCeilingMs   = _quorumCeiling;
+      (companyData as any)._limitedDataMode   = isLimitedDataRegime(_detectedRegime);
+      (companyData as any)._limitedDataReason = limitedDataReasonForRegime(_detectedRegime);
       (companyData as any)._liveQuorumStatus = liveQuorum?.status ?? {
         reached: false,
         elapsedMs: 0,
@@ -1101,6 +1210,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       //
       // Promoting Wikipedia into liveData.stockData.employeeCount lets it ALSO
       // flow as a true live signal so confidence reflects it correctly.
+      // Regime / limited-data flags stamped here too so UI has them on success path
+      (companyData as any)._detectedRegime    = _detectedRegime;
+      (companyData as any)._marketSegment     = _marketSegment;
+      (companyData as any)._quorumCeilingMs   = _quorumCeiling;
+      (companyData as any)._limitedDataMode   = isLimitedDataRegime(_detectedRegime);
+      (companyData as any)._limitedDataReason = limitedDataReasonForRegime(_detectedRegime);
+
       const scrapingResultEarly = (liveData as any)._scrapingResult;
       if (scrapingResultEarly) {
         applyScrapingEnrichment(companyData, scrapingResultEarly);

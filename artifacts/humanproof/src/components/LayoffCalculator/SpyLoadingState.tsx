@@ -9,6 +9,15 @@ interface Props {
   companyName?: string;
   roleTitle?: string;
   agentCount?: number;
+  /**
+   * When true, the company is a private entity (GmbH, Pvt Ltd, etc.) with no
+   * public financial data, WARN Act coverage, or SEC EDGAR filings.
+   * The quorum ceiling is reduced to 15-20s and a banner is shown at ~5s
+   * so the user understands WHY the analysis is faster (not a failure).
+   */
+  limitedDataMode?: boolean;
+  /** Short explanation for why data is limited — rendered inside the banner. */
+  limitedDataReason?: string;
 }
 
 interface Phase {
@@ -93,10 +102,15 @@ export const SpyLoadingState: React.FC<Props> = ({
   companyName = "TARGET",
   roleTitle = "DESIGNATION",
   agentCount = 30,
+  limitedDataMode = false,
+  limitedDataReason,
 }) => {
   const [signalsCollected, setSignalsCollected] = useState(0);
   const [activeAgents, setActiveAgents] = useState(0);
   const [showTargetReveal, setShowTargetReveal] = useState(false);
+  // Show the "Limited data" banner after 5s elapsed when limitedDataMode is active.
+  // This prevents flashing it immediately (regime detection completes within ~1s).
+  const [showLimitedBanner, setShowLimitedBanner] = useState(false);
 
   const agentNodes = useMemo(
     () => generateAgentNodes(agentCount),
@@ -137,6 +151,13 @@ export const SpyLoadingState: React.FC<Props> = ({
     }
   }, [companyName]);
 
+  // Show "Limited data" banner after 5s when limitedDataMode is active
+  useEffect(() => {
+    if (!limitedDataMode || stage >= 3) return;
+    const t = setTimeout(() => setShowLimitedBanner(true), 5000);
+    return () => clearTimeout(t);
+  }, [limitedDataMode, stage]);
+
   const currentPhase = PHASES[Math.min(stage, PHASES.length - 1)];
   const progress = ((stage + 1) / (PHASES.length + 1)) * 100;
   const threat = getThreatLevel(progress);
@@ -155,6 +176,37 @@ export const SpyLoadingState: React.FC<Props> = ({
         fontFamily: '"JetBrains Mono", "Fira Code", monospace',
       }}
     >
+      {/* Limited data banner — shown after 5s for private companies with no public financial data */}
+      {showLimitedBanner && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px',
+            background: 'rgba(245, 158, 11, 0.10)',
+            border: '1px solid rgba(245, 158, 11, 0.40)',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            marginBottom: '18px',
+            fontSize: '11px',
+            lineHeight: '1.5',
+            color: '#fcd34d',
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          <span style={{ fontSize: '15px', flexShrink: 0, marginTop: '1px' }}>⚠</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '2px', letterSpacing: '0.04em' }}>
+              LIMITED PUBLIC DATA
+            </strong>
+            <span style={{ color: '#fde68a', opacity: 0.90 }}>
+              {limitedDataReason ?? 'No public exchange listing, WARN Act, or SEC filings available. Analysis uses business registry, news, and hiring signals.'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Header - Classification Badge */}
       <div
         style={{

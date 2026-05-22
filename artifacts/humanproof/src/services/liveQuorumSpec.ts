@@ -29,6 +29,38 @@ import type { PrivateCompanyRegime } from './companyEntityResolver';
 
 export type SignalClass = 'workforce' | 'layoffs' | 'financial' | 'hiring';
 
+/**
+ * Bucketed market segment for latency telemetry.
+ *
+ * Distinct from PrivateCompanyRegime — captures both the jurisdiction AND whether
+ * the company is publicly listed (which determines financial-source availability).
+ *
+ * Mapping logic (quorumCeilingForRegime also uses this):
+ *   null regime → company is public OR we couldn't detect → 'us_public' (safest ceiling)
+ *   german_gmbh        → 'germany_private'
+ *   uk_private_ltd     → 'uk_private'
+ *   india_unlisted_pvt → 'india_private'
+ *   apac_private       → 'singapore'  (umbrella for SEA/APAC private)
+ *   eu_other_private   → 'eu_private'
+ *   us_private         → 'us_private'
+ *
+ * When the company is known-public from ENTITIES graph and has a region:
+ *   region='IN' + listed → 'india_listed'
+ *   region='GB'          → 'uk_public'
+ *   etc. (set by the pipeline after resolution, defaults to 'us_public')
+ */
+export type MarketSegment =
+  | 'us_public'
+  | 'us_private'
+  | 'uk_public'
+  | 'uk_private'
+  | 'germany_private'
+  | 'india_listed'
+  | 'india_private'
+  | 'singapore'
+  | 'eu_private'
+  | 'unknown';
+
 export interface QuorumClassSpec {
   min: number;
   sources: string[];
@@ -171,6 +203,65 @@ export function quorumSpecForRegime(regime: PrivateCompanyRegime | null): Quorum
     case 'eu_other_private':   return PRIVATE_COMPANY_QUORUM_SPEC;
     default:                   return DEFAULT_QUORUM_SPEC;
   }
+}
+
+/**
+ * Regime-aware quorum ceiling.
+ *
+ * Rationale per market:
+ *   null (public/unknown) — 45s: Yahoo Finance + SEC EDGAR + WARN Act are all possible.
+ *                           The full budget is warranted when financial quorum can fire.
+ *   us_private            — 20s: WARN Act exists for ≥100-employee US employers.
+ *                           One filing scan justifies a modest budget.
+ *   german_gmbh           — 15s: Only 3 layoff sources (rss-news, breaking-news-db,
+ *                           reddit-flagged) + 3 workforce sources. All exhaust within 8s.
+ *                           The full 45s ceiling is pure waste; users see no progress.
+ *   uk_private_ltd        — 15s: Same source shape as german_gmbh. WARN Act absent,
+ *                           Companies House filing lag is annual, not real-time.
+ *   india_unlisted_pvt    — 18s: Has india-press (4th layoff source) which takes
+ *                           slightly longer than RSS, justifying 3s extra margin.
+ *   apac_private          — 15s: ACRA/ASIC provide registry data but no real-time
+ *                           filing stream. LinkedIn + career-page are fast.
+ *   eu_other_private      — 15s: National registries (Infogreffe, Handelsregister)
+ *                           are batch-updated, not real-time. Same source shape.
+ */
+export function quorumCeilingForRegime(regime: PrivateCompanyRegime | null): number {
+  switch (regime) {
+    case 'german_gmbh':        return 15_000;
+    case 'uk_private_ltd':     return 15_000;
+    case 'india_unlisted_pvt': return 18_000;
+    case 'us_private':         return 20_000;
+    case 'apac_private':       return 15_000;
+    case 'eu_other_private':   return 15_000;
+    default:                   return 45_000;  // public or undetected — keep full budget
+  }
+}
+
+/**
+ * Map a private-company regime (or public company) to a MarketSegment bucket.
+ * The caller sets isPublicListed=true when the company is known-listed (has exchange ticker).
+ * The region string (ISO-2 or region key from CompanyData) refines the public-company bucket.
+ */
+export function marketSegmentForRegime(
+  regime: PrivateCompanyRegime | null,
+  region?: string | null,
+  isPublicListed?: boolean,
+): MarketSegment {
+  if (regime === 'german_gmbh')        return 'germany_private';
+  if (regime === 'uk_private_ltd')     return 'uk_private';
+  if (regime === 'india_unlisted_pvt') return 'india_private';
+  if (regime === 'us_private')         return 'us_private';
+  if (regime === 'apac_private')       return 'singapore';
+  if (regime === 'eu_other_private')   return 'eu_private';
+
+  // null regime → public or undetected
+  if (!region) return isPublicListed ? 'us_public' : 'unknown';
+  const r = region.toUpperCase();
+  if (r === 'IN')                          return isPublicListed ? 'india_listed' : 'india_private';
+  if (r === 'GB' || r === 'UK')            return isPublicListed ? 'uk_public' : 'uk_private';
+  if (r === 'DE' || r === 'GERMANY')       return 'germany_private';
+  if (r === 'SG' || r === 'SINGAPORE')     return 'singapore';
+  return isPublicListed ? 'us_public' : 'unknown';
 }
 
 export interface QuorumClassStatus {

@@ -1560,6 +1560,8 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           companyName={state.companyName}
           roleTitle={state.roleTitle}
           agentCount={30}
+          limitedDataMode={(state.companyData as any)?._limitedDataMode ?? false}
+          limitedDataReason={(state.companyData as any)?._limitedDataReason ?? undefined}
         />
       )}
 

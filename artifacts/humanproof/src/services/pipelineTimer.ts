@@ -41,6 +41,16 @@ export interface PipelineReport {
   slowestStepPct: number;
   networkCondition: 'fast' | 'moderate' | 'slow' | 'unknown';
   timestamp: string;
+  /** Private-company regulatory regime detected at audit time. Null for public/unknown companies. */
+  regime?: string | null;
+  /** Bucketed market segment for latency telemetry queries (p50/p95 by market). */
+  marketSegment?: string;
+  /** Quorum wait duration in ms. Null when quorum wait was skipped (_forceLiveUnavailable). */
+  quorumWaitMs?: number | null;
+  /** Whether quorum was fully satisfied before the ceiling fired. */
+  quorumReached?: boolean;
+  /** The ceiling used (ms) — regime-specific, not necessarily 45s. */
+  quorumCeilingMs?: number;
 }
 
 // ── Checkpoint labels — every instrumented event in execution order ───────────
@@ -61,6 +71,9 @@ export type CheckpointLabel =
   // Naukri / Serper (via proxy-live-signals hiring action)
   | 'serper_start'
   | 'serper_end'
+  // Live quorum wait (v32+)
+  | 'quorum_wait_start'
+  | 'quorum_wait_end'
   // Deterministic scoring engine
   | 'engine_start'
   | 'engine_end'
@@ -97,6 +110,7 @@ const STEP_PAIRS: Array<{ name: string; start: CheckpointLabel; end: CheckpointL
   { name: 'Alpha Vantage (proxy EF)',start: 'alphavantage_start',  end: 'alphavantage_end'  },
   { name: 'NewsAPI (proxy EF)',      start: 'newsapi_start',       end: 'newsapi_end'       },
   { name: 'Serper/Naukri (EF)',      start: 'serper_start',        end: 'serper_end'        },
+  { name: 'Live quorum wait',        start: 'quorum_wait_start',   end: 'quorum_wait_end'   },
   { name: 'Swarm (30 agents ‖)',     start: 'swarm_start',         end: 'swarm_end', parallel: true },
   { name: 'Swarm slowest agent',     start: 'swarm_slowest_agent_start', end: 'swarm_slowest_agent_end' },
   { name: 'Deterministic engine',   start: 'engine_start',        end: 'engine_end'        },
@@ -138,6 +152,12 @@ export class PipelineTimer implements PipelineTimerInstance {
   private readonly origin: number;
   private readonly marks: TimingMark[] = [];
   private networkCondition: PipelineReport['networkCondition'] = 'unknown';
+  /** Set by auditDataPipeline after regime detection. */
+  regime: string | null = null;
+  marketSegment: string = 'unknown';
+  quorumWaitMs: number | null = null;
+  quorumReached: boolean = false;
+  quorumCeilingMs: number = 45_000;
 
   private constructor(companyName: string) {
     this.companyName = companyName;
@@ -221,6 +241,11 @@ export class PipelineTimer implements PipelineTimerInstance {
       slowestStepPct: slowest && total > 0 ? Math.round((slowest.durationMs / total) * 100) : 0,
       networkCondition: this.networkCondition,
       timestamp:      new Date().toISOString(),
+      regime:         this.regime,
+      marketSegment:  this.marketSegment,
+      quorumWaitMs:   this.quorumWaitMs,
+      quorumReached:  this.quorumReached,
+      quorumCeilingMs: this.quorumCeilingMs,
     };
 
     // Persist to sessionStorage for TransparencyTab and console
