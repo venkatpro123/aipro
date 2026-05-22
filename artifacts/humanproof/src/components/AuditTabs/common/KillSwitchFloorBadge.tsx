@@ -19,6 +19,8 @@ const KS_LABELS: Record<string, string> = {
   financial_distress_triad:          'Financial distress triad',
   pre_layoff_precursor:              'Pre-layoff precursor',
   pre_layoff_precursor_inferred:     'Pre-layoff (inferred)',
+  warn_act_filing:                   'WARN Act filing',
+  stealth_layoff_floor:              'Stealth layoff detected',
 };
 
 const KillSwitchFloorBadge: React.FC<Props> = ({

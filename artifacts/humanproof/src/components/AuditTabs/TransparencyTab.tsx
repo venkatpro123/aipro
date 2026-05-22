@@ -2053,6 +2053,10 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                 'pre_layoff_precursor floor applied — minimum score 58 (confirmed hiring freeze, layoff history, sector contagion detected).',
               pre_layoff_precursor_inferred:
                 'pre_layoff_precursor_inferred floor applied — minimum score 52 (AI inference from news/Glassdoor).',
+              warn_act_filing:
+                'warn_act_filing floor applied — minimum score 68 (active WARN Act filing is regulatory ground truth: company legally confirmed a planned mass layoff).',
+              stealth_layoff_floor:
+                'stealth_layoff_floor floor applied — silent headcount reduction detected without public announcement. LinkedIn snapshot shows material employee count decline with no matching layoff news.',
             };
             return (
               <div className="mb-6 space-y-2">

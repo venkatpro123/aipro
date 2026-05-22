@@ -1693,9 +1693,33 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       });
       if (stealthSignal.flagged) {
         const oldScore = shadowScoreResult.score;
-        shadowScoreResult.score = applyStealthFloor(oldScore, stealthSignal);
+        // Hard floor based on severity — replaces additive applyStealthFloor().
+        // SILENT_TRIM:  floor 60 — mild hidden reduction, some uncertainty
+        // SILENT_CUT:   floor 65 — clear material stealth cut
+        // SILENT_PURGE: floor 70 — severe cut, documented in Section 6.3
+        const stealthFloor =
+          stealthSignal.severity === 'SILENT_PURGE' ? 70 :
+          stealthSignal.severity === 'SILENT_CUT'   ? 65 : 60;
+        if (stealthFloor > oldScore) {
+          shadowScoreResult.score = stealthFloor;
+          // Pre-floor score for badge: "Floor: 70 → Formula: 42"
+          if (!(shadowScoreResult as any)._formulaScorePreFloor) {
+            (shadowScoreResult as any)._formulaScorePreFloor = oldScore;
+          }
+          // Register in the unified kill-switch tracking system.
+          shadowScoreResult.killSwitchFloors = {
+            ...(shadowScoreResult.killSwitchFloors ?? {}),
+            stealth_layoff_floor: stealthFloor,
+          };
+          shadowScoreResult.activatedKillSwitches = [
+            ...(shadowScoreResult.activatedKillSwitches ?? []),
+            'stealth_layoff_floor',
+          ];
+          shadowScoreResult.killSwitchApplied = true;
+          (shadowScoreResult as any).killSwitchName =
+            (shadowScoreResult as any).killSwitchName ?? 'stealth_layoff_floor';
+        }
         (companyData as any)._stealthSignal = stealthSignal;
-        // Surface in transparency.
         shadowScoreResult.signalQuality?.missingDataFallbacks?.push(
           `WS3 stealth floor applied: ${oldScore} → ${shadowScoreResult.score} (${stealthSignal.rationale})`,
         );
@@ -2924,6 +2948,29 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     // Ground-truth override flag: downstream components treat WARN as confirmed, not predicted
     if (warnSignal.hasActiveWARN && warnSignal.warnRiskScore >= 78) {
       (hybridResult as any).warnGroundTruthOverride = true;
+    }
+
+    // WARN hard floor — documented in Section 6.3 but previously never applied.
+    // A WARN Act filing is regulatory ground truth: the company legally must give
+    // 60-day advance notice for mass layoffs. When hasActiveWARN = true, the score
+    // must be at least 68 regardless of formula output or data freshness.
+    //
+    // This runs AFTER mapToHybridResult so it patches hybridResult.total directly.
+    // Kill-switch tracking fields are updated to maintain consistency with
+    // applyKillSwitches() in layoffScoreEngine.ts.
+    if (warnSignal.hasActiveWARN && hybridResult.total < 68) {
+      const warnFloor = 68;
+      const preWarnScore = hybridResult.total;
+      hybridResult.total = warnFloor;
+      // Pre-floor score for badge — only overwrite if a prior kill-switch hasn't already set it.
+      if (!(hybridResult as any)._formulaScorePreFloor) {
+        (hybridResult as any)._formulaScorePreFloor = preWarnScore;
+      }
+      // Register in unified kill-switch tracking.
+      hybridResult.killSwitchFloors = { ...(hybridResult.killSwitchFloors ?? {}), warn_act_filing: warnFloor };
+      hybridResult.activatedKillSwitches = [...(hybridResult.activatedKillSwitches ?? []), 'warn_act_filing'];
+      (hybridResult as any).killSwitchApplied = true;
+      (hybridResult as any).killSwitchName = (hybridResult as any).killSwitchName ?? 'warn_act_filing';
     }
   } catch (e) {
     noteEngineFailure('warnSignal', e);
