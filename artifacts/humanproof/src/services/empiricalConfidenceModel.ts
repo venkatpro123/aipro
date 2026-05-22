@@ -238,9 +238,13 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
   // Applied after presence-gate cap so the structural ceiling always wins.
   // See PRIVATE_REGIME_CEILINGS in confidenceModel.ts for per-regime rationale.
   let privateRegimeCeiling: number | null = null;
+  // BUG-05: capture pre-ceiling value so TransparencyTab can show the split.
+  let preRegimeCeilingValue: number | null = null;
   if (inputs.privateCompanyRegime) {
     privateRegimeCeiling = PRIVATE_REGIME_CEILINGS[inputs.privateCompanyRegime];
+    const uncapped = value;
     value = Math.min(value, privateRegimeCeiling);
+    preRegimeCeilingValue = uncapped > privateRegimeCeiling ? uncapped : null;
   }
 
   value = clamp(value);
@@ -301,6 +305,7 @@ export function computeEmpiricalConfidence(inputs: EmpiricalConfidenceInputs): E
       conflictPenalty,
       liveUnavailableFloor: inputs.liveUnavailable ? liveUnavailableFloorVal : null,
       privateRegimeCeiling,
+      preRegimeCeilingValue,
     },
     rationale,
     presenceReport,

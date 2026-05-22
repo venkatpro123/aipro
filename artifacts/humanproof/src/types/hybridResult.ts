@@ -493,6 +493,19 @@ export interface HybridResult {
   /** Per-dimension bump added to D1, D2, D3 when redistribution is active (≈ 0.030). */
   d8RedistributedBumpPerDimension?: number;
 
+  // ── BUG-05: Private-company regime ceiling disclosure ─────────────────────
+  /**
+   * Evidence-based confidence BEFORE the private-regime structural ceiling was applied.
+   * Only present when the ceiling actually bit (evidence > ceiling).
+   * Allows TransparencyTab to show: "Evidence quality: 71% → Structural cap: 55%"
+   * versus a user who naturally landed at 42% — completely different data situations.
+   */
+  _confidencePreCeiling?: number | null;
+  /** The structural ceiling value that fired (e.g. 0.55 for german_gmbh). */
+  _confidenceRegimeCeiling?: number | null;
+  /** Regime label for UI labeling (e.g. 'german_gmbh'). */
+  _confidenceRegimeLabel?: string | null;
+
   // ── India Sector Intelligence (v8.0) ───────────────────────────────────────
   /**
    * GCC archetype, NASSCOM sector benchmarks, seasonal risk window, and sector

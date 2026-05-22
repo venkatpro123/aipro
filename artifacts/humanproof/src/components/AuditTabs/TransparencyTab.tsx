@@ -2048,6 +2048,81 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
+          {/* BUG-05: Private-company structural ceiling disclosure.
+              Shows "Evidence quality: X% → Structural cap: Y%" only when the ceiling
+              actually fired (evidence > ceiling). Distinguishes a user with strong
+              evidence capped by law from a user who naturally has weak evidence. */}
+          {(() => {
+            const preCeiling = result._confidencePreCeiling;
+            const ceiling = result._confidenceRegimeCeiling;
+            const regimeLabel = result._confidenceRegimeLabel;
+            if (preCeiling == null || ceiling == null) return null;
+            const prePct   = Math.round(preCeiling * 100);
+            const capPct   = Math.round(ceiling * 100);
+            const effPct   = result.confidencePercent ?? capPct;
+            const REGIME_LABELS: Record<string, string> = {
+              german_gmbh:        'German GmbH',
+              uk_private_ltd:     'UK Private Ltd',
+              india_unlisted_pvt: 'India Unlisted Pvt',
+              us_private:         'US Private Co.',
+              apac_private:       'APAC Private',
+              eu_other_private:   'EU Private',
+            };
+            const regimeDisplay = (regimeLabel && REGIME_LABELS[regimeLabel]) ?? regimeLabel ?? 'Private company';
+            return (
+              <div className="mb-6 p-4 rounded-xl border overflow-hidden"
+                style={{ borderColor: 'rgba(251,146,60,0.30)', background: 'rgba(251,146,60,0.06)' }}>
+                <div className="flex gap-3">
+                  <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <h4 className="font-semibold text-orange-300 text-sm">
+                        Structural Confidence Ceiling Applied
+                      </h4>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                        style={{ background: 'rgba(251,146,60,0.15)', color: '#fdba74', border: '1px solid rgba(251,146,60,0.25)' }}>
+                        {regimeDisplay}
+                      </span>
+                    </div>
+                    <p className="text-xs text-orange-200/80 leading-relaxed mb-3">
+                      Evidence quality would have supported <strong className="text-orange-200">{prePct}% confidence</strong>,
+                      but local corporate disclosure law limits verifiable data for this entity type.
+                      Confidence is capped at <strong className="text-orange-200">{capPct}%</strong> regardless of scrape quality.
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                        style={{ background: 'rgba(251,146,60,0.12)', border: '1px solid rgba(251,146,60,0.25)', color: '#fdba74' }}>
+                        Evidence quality
+                        <span className="text-base font-bold text-orange-300">{prePct}%</span>
+                      </div>
+                      <span className="text-orange-400/60 text-xs">→</span>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                        style={{ background: 'rgba(251,146,60,0.18)', border: '1px solid rgba(251,146,60,0.40)', color: '#fb923c' }}>
+                        Structural cap
+                        <span className="text-base font-bold text-orange-200">{capPct}%</span>
+                      </div>
+                      {effPct !== capPct && (
+                        <>
+                          <span className="text-orange-400/60 text-xs">→</span>
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                            style={{ background: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.20)', color: '#fed7aa' }}>
+                            Effective
+                            <span className="text-base font-bold text-orange-200">{effPct}%</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-orange-200/45 mt-2 leading-tight">
+                      This ceiling reflects a jurisdiction-imposed information gap, not a data quality problem.
+                      A company in this regime with 71% evidence confidence shows identically to one with 42%
+                      evidence confidence — this disclosure separates the two cases.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {(((result.signalQuality.hardFailures?.length ?? 0) > 0) ||
             ((result.signalQuality.confidenceCapsApplied?.length ?? 0) > 0)) && (
             <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200">

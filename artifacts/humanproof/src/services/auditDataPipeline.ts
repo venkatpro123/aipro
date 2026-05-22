@@ -1889,6 +1889,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
   }
 
+  // BUG-05: Forward private-regime confidence ceiling disclosure from
+  // hybridConsensusBuilder onto hybridResult so TransparencyTab can show
+  // "Evidence quality: X% → Structural cap: Y%" when the ceiling fires.
+  if (hybridPayload._evidencePreCeiling != null) {
+    hybridResult._confidencePreCeiling  = hybridPayload._evidencePreCeiling;
+    hybridResult._confidenceRegimeCeiling = hybridPayload._evidenceCeilingValue ?? null;
+    hybridResult._confidenceRegimeLabel = hybridPayload._evidenceRegimeLabel ?? null;
+  }
+
   // v32: REMOVED the v31 first-audit 45% cap. The audit pipeline now waits for
   // live quorum upstream (up to 45s) — by the time we reach this point, either
   // quorum was met (full confidence) or the ceiling fired and the confidence

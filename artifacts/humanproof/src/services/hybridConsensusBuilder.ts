@@ -90,6 +90,13 @@ export interface HybridScorePayload {
   _quorumPositiveClassCount?: number;
   /** Raw QuorumStatus from awaitLiveQuorum, for transparency UI. */
   _liveQuorumStatus?: unknown;
+  /** BUG-05 — Evidence-based confidence BEFORE the private-regime structural ceiling was applied.
+   *  null when no ceiling fired (either no regime or ceiling was not-binding). */
+  _evidencePreCeiling?: number | null;
+  /** BUG-05 — The structural ceiling value that was applied (e.g. 0.55 for german_gmbh). */
+  _evidenceCeilingValue?: number | null;
+  /** BUG-05 — Regime label for UI display (e.g. 'german_gmbh'). */
+  _evidenceRegimeLabel?: string | null;
 }
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -803,6 +810,10 @@ export function buildHybridScorePayload({
     dbReliabilityTier: (companyData as any)._dbReliabilityTierOverride
       ?? (companyData as any)._dataQuality?.tier
       ?? undefined,
+    // BUG-05: pass the detected private-company regime so PRIVATE_REGIME_CEILINGS
+    // actually fires. Previously this was computed in auditDataPipeline but never
+    // forwarded here — the ceiling was dead code.
+    privateCompanyRegime: (companyData as any)._detectedRegime ?? null,
   });
 
   // Diagnostic rationale — surfaced via confidenceCapsApplied for UI tooltip.
@@ -886,5 +897,10 @@ export function buildHybridScorePayload({
         ? (companyData as any)._quorumPositiveClassCount
         : undefined,
     _liveQuorumStatus: (companyData as any)._liveQuorumStatus ?? null,
+    // BUG-05: expose pre-ceiling confidence so TransparencyTab can show
+    // "Evidence quality: X% → Structural cap: Y%" when they differ.
+    _evidencePreCeiling: evidenceConfidence.breakdown.preRegimeCeilingValue ?? null,
+    _evidenceCeilingValue: evidenceConfidence.breakdown.privateRegimeCeiling ?? null,
+    _evidenceRegimeLabel: (companyData as any)._detectedRegime ?? null,
   };
 }
