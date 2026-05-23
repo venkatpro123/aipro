@@ -70,6 +70,20 @@ export interface ResilienceInputs {
   escapePaths?: number;               // count of viable escape paths (from escapePathOptimizer)
   jobMarketLiquidityScore?: number;   // from jobMarketLiquidityService
   salaryPreservationPct?: number;     // from competitiveIntelligenceEngine
+  /**
+   * Whether the user supports dependents (children, parents, etc.).
+   * Changes runway thresholds in P1 Financial Buffer: industry baseline is 6 months
+   * for a single adult; sole earners with dependents need 9+ months because dependent
+   * expenses (housing, healthcare, school fees) continue regardless of employment status.
+   */
+  hasDependents?: boolean;
+  /**
+   * Whether a second household income exists (spouse/partner employed).
+   * A dual-income household has a structural income buffer during job search:
+   * the partner's income covers basic household costs even if the runway runs out.
+   * A sole earner (hasDependents && !dualIncomeHousehold) has no such buffer.
+   */
+  dualIncomeHousehold?: boolean;
 }
 
 // ─── Pillar 1: Financial Buffer ───────────────────────────────────────────────
@@ -79,25 +93,70 @@ function scoreFinancialBuffer(inputs: ResilienceInputs): ResiliencePillar {
   const financialRunwayMonths = Math.max(0, inputs.financialRunwayMonths ?? 0);
   const { hasAlternativeIncome } = inputs;
 
+  // Sole earner with dependents: household costs (housing, healthcare, school fees,
+  // food) continue at full rate regardless of employment status — there is no second
+  // income to absorb even a partial gap. The industry baseline of 6 months assumes
+  // a single adult; sole earners with dependents need 9+ months to achieve the same
+  // safety-net level. Thresholds are scaled up 50% for this segment.
+  const isSoleEarner = !!inputs.hasDependents && !inputs.dualIncomeHousehold;
+  const hasDualIncome = !!inputs.hasDependents && !!inputs.dualIncomeHousehold;
+
+  // Runway thresholds in months: { critical, fragile, adequate, strong }
+  const T = isSoleEarner
+    ? { critical: 4, fragile: 9, adequate: 14, strong: 24 }   // sole earner with dependents
+    : hasDualIncome
+    ? { critical: 2, fragile: 5, adequate: 10, strong: 16 }   // dual income: partner absorbs household costs
+    : { critical: 3, fragile: 6, adequate: 12, strong: 18 };  // baseline: single adult
+
   let score = 0;
   let insight = "";
   let topAction = "";
+  const familyContext = isSoleEarner ? " (sole earner with dependents — 50% higher threshold than single-adult baseline)"
+    : hasDualIncome ? " (dual-income household — partner income provides structural buffer)"
+    : "";
 
-  if (financialRunwayMonths >= 18) { score = 90; insight = `${financialRunwayMonths}+ months runway eliminates financial pressure during job search — you can afford to be selective.`; }
-  else if (financialRunwayMonths >= 12) { score = 78; insight = `${financialRunwayMonths} months runway gives you strong search flexibility — most transitions complete within 6 months.`; }
-  else if (financialRunwayMonths >= 6) { score = 60; insight = `${financialRunwayMonths} months runway is adequate for the average search but leaves no buffer for a slow market.`; }
-  else if (financialRunwayMonths >= 3) { score = 38; insight = `${financialRunwayMonths} months runway is below the recommended minimum — adds time pressure that reduces offer quality.`; }
-  else { score = 15; insight = `Critical runway gap — under 3 months creates severe time pressure forcing acceptance of below-market offers.`; }
+  if (financialRunwayMonths >= T.strong) {
+    score = 90;
+    insight = `${financialRunwayMonths}+ months runway eliminates financial pressure during job search${familyContext} — you can afford to be selective.`;
+  } else if (financialRunwayMonths >= T.adequate) {
+    score = 78;
+    insight = `${financialRunwayMonths} months runway gives strong search flexibility${familyContext} — most transitions complete within 6 months.`;
+  } else if (financialRunwayMonths >= T.fragile) {
+    score = isSoleEarner ? 52 : 60;  // fragile for sole earner even in adequate bracket
+    insight = `${financialRunwayMonths} months runway is adequate for the average search but leaves no buffer for a slow market${familyContext}.`;
+  } else if (financialRunwayMonths >= T.critical) {
+    score = isSoleEarner ? 22 : 38;  // steeper penalty for sole earner below threshold
+    insight = isSoleEarner
+      ? `${financialRunwayMonths} months runway is critically low for a sole earner with dependents — below the 9-month minimum. Household expenses continue during job search with no second income to offset. This is not just career pressure — it is a family financial risk.`
+      : `${financialRunwayMonths} months runway is below the recommended minimum — adds time pressure that reduces offer quality.`;
+  } else {
+    score = isSoleEarner ? 8 : 15;
+    insight = isSoleEarner
+      ? `Critical runway gap — under ${T.critical} months with dependents and no second income creates severe household financial risk during a job search. Bridging income is not optional.`
+      : `Critical runway gap — under 3 months creates severe time pressure forcing acceptance of below-market offers.`;
+  }
 
-  if (hasAlternativeIncome) { score = Math.min(100, score + 12); insight += " Alternative income source reduces urgency significantly."; }
+  if (hasAlternativeIncome) {
+    score = Math.min(100, score + 12);
+    insight += " Alternative income source reduces urgency significantly.";
+  }
+  if (hasDualIncome) {
+    insight += " Partner income provides a structural household safety net during transition.";
+  }
 
-  topAction = financialRunwayMonths < 6
-    ? "Build to 6 months liquid emergency fund before anything else — this is the highest-ROI career resilience investment"
-    : financialRunwayMonths < 12
-    ? "Target 12 months runway as next milestone — reduces search pressure and improves offer quality"
-    : !hasAlternativeIncome
-    ? "Develop one alternative income stream (consulting, courses, freelance) to further decouple career from single employer"
-    : "Financial pillar is strong — maintain and protect this buffer";
+  if (isSoleEarner && financialRunwayMonths < T.fragile) {
+    topAction = `Sole earner with dependents: build to 9 months emergency fund (vs. 6 for single adults) — dependent expenses continue during job search regardless of your employment status. This is the highest-priority resilience investment for your household.`;
+  } else if (financialRunwayMonths < T.fragile) {
+    topAction = "Build to 6 months liquid emergency fund before anything else — this is the highest-ROI career resilience investment";
+  } else if (financialRunwayMonths < T.adequate) {
+    topAction = isSoleEarner
+      ? `Target ${T.adequate} months runway as next milestone — sole earners with dependents need more buffer than the 6-month average to reduce search pressure and improve offer quality`
+      : "Target 12 months runway as next milestone — reduces search pressure and improves offer quality";
+  } else if (!hasAlternativeIncome) {
+    topAction = "Develop one alternative income stream (consulting, courses, freelance) to further decouple career from single employer";
+  } else {
+    topAction = "Financial pillar is strong — maintain and protect this buffer";
+  }
 
   return {
     name: "Financial Buffer",
@@ -272,13 +331,27 @@ function classify(score: number): ResilienceClass {
   return "CRITICAL";
 }
 
-function computeProtectionMonths(compositeScore: number, runwayMonths: number): number {
+function computeProtectionMonths(
+  compositeScore: number,
+  runwayMonths: number,
+  hasDependents?: boolean,
+  dualIncomeHousehold?: boolean,
+): number {
   const baseMonths = runwayMonths > 0 ? runwayMonths : 6;
   const resilienceMultiplier = compositeScore >= 75 ? 1.8
     : compositeScore >= 60 ? 1.4
     : compositeScore >= 45 ? 1.0
     : 0.65;
-  return Math.round(Math.min(36, baseMonths * resilienceMultiplier));
+  const raw = Math.min(36, baseMonths * resilienceMultiplier);
+
+  // Sole earner with dependents: household burn rate is higher (dependent expenses
+  // don't scale down during a job search), so effective protection months are shorter.
+  // Apply a 0.75 multiplier — a sole earner with 8 months runway effectively has
+  // 6 months of job-search capacity before household finances reach crisis point.
+  const isSoleEarner = !!hasDependents && !dualIncomeHousehold;
+  const adjustedMonths = isSoleEarner ? raw * 0.75 : raw;
+
+  return Math.round(adjustedMonths);
 }
 
 function buildRiskResilienceInterpretation(
@@ -357,7 +430,7 @@ export function computeCareerResilience(inputs: ResilienceInputs): CareerResilie
     keyStrength,
     resilienceImprovementPlan,
     riskResilienceInterpretation: buildRiskResilienceInterpretation(inputs.currentScore, compositeScore, classification),
-    effectiveProtectionMonths: computeProtectionMonths(compositeScore, inputs.financialRunwayMonths),
+    effectiveProtectionMonths: computeProtectionMonths(compositeScore, inputs.financialRunwayMonths, inputs.hasDependents, inputs.dualIncomeHousehold),
     resilienceHeadline: headlines[classification],
   };
 }

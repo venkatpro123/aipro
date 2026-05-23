@@ -2282,6 +2282,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const escapePathCount = ((hybridResult as any).escapePaths?.paths?.length) ?? 2;
     // Use || instead of ?? because financialRunwayMonths=0 means "not provided" and
     // should default to the 6-month industry standard, not "Critical runway" tier.
+    const uf13 = inputs.userFactors as any;
     const careerResilience = computeCareerResilience({
       currentScore: hybridResult.total,
       financialRunwayMonths: inputs.financialRunwayMonths || 6,
@@ -2289,15 +2290,17 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       oracleKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'generic',
       industry: companyData.industry ?? 'technology',
       region: companyData.region ?? 'US',
-      uniquenessDepth: (inputs.userFactors as any).uniquenessDepth,
-      knowledgeType: (inputs.userFactors as any).knowledgeType,
-      performanceTier: (inputs.userFactors as any).performanceTier,
-      hasAiSkills: (inputs.userFactors as any).hasAiSkills ?? false,
-      hasAlternativeIncome: (inputs.userFactors as any).hasAlternativeIncome ?? false,
-      networkStrengthSelfReport: (inputs.userFactors as any).networkStrength,
+      uniquenessDepth: uf13.uniquenessDepth,
+      knowledgeType: uf13.knowledgeType,
+      performanceTier: uf13.performanceTier,
+      hasAiSkills: uf13.hasAiSkills ?? false,
+      hasAlternativeIncome: uf13.hasAlternativeIncome ?? false,
+      networkStrengthSelfReport: uf13.networkStrength,
       escapePaths: escapePathCount,
       jobMarketLiquidityScore: jobLiquidity?.score,
       salaryPreservationPct: competitive?.salaryPreservationPct,
+      hasDependents: uf13.hasDependents ?? undefined,
+      dualIncomeHousehold: uf13.dualIncomeHousehold ?? undefined,
     });
     (hybridResult as any).careerResilience = careerResilience;
   } catch (e) {
@@ -3399,6 +3402,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       // When present, TRANSITION feasibilityScore is anchored to this figure (60/40 blend)
       // and labeled 'market_successRate' so the UI can show a point estimate with source.
       transitionSuccessRate12mPct: getCareerPathMarketSync(inputs.roleTitle)?.successRate12mPct ?? null,
+      hasDependents: uf17.hasDependents ?? null,
+      dualIncomeHousehold: uf17.dualIncomeHousehold ?? null,
     });
     (hybridResult as any).careerContingencyPlan = careerContingencyPlan;
   } catch (e) {

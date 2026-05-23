@@ -128,6 +128,22 @@ export interface CareerContingencyInput {
    * Range: 0–100 (percent of attempted transitions that land a role within 12 months).
    */
   transitionSuccessRate12mPct?: number | null;
+
+  /**
+   * Whether the user supports dependents (children, parents, etc.).
+   * Combined with dualIncomeHousehold to detect sole-earner status:
+   * hasDependents && !dualIncomeHousehold = sole earner.
+   * A sole earner's income gap during TRANSITION is a household financial crisis,
+   * not just a personal career inconvenience — dependent expenses continue regardless.
+   */
+  hasDependents?: boolean | null;
+  /**
+   * Whether a second household income exists (spouse/partner employed).
+   * Dual-income households have a structural buffer: even if the user's runway
+   * runs out, the partner's income covers household basics during the search.
+   * Sole earners (hasDependents && !dualIncomeHousehold) have no such buffer.
+   */
+  dualIncomeHousehold?: boolean | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -201,6 +217,12 @@ function computeStayFeasibility(input: CareerContingencyInput): number {
   if (input.careerGoal === 'stay_and_grow') score += 10;
   if (input.careerGoal === 'emergency_exit') score -= 20;
 
+  // Sole earner with dependents: staying preserves the only household income stream.
+  // The asymmetry between "staying" and "transitioning" is much larger for this segment
+  // because any income gap has a direct household impact, not just personal inconvenience.
+  const isSoleEarner = !!input.hasDependents && !input.dualIncomeHousehold;
+  if (isSoleEarner) score += 8;
+
   return Math.min(95, Math.max(5, Math.round(score)));
 }
 
@@ -269,6 +291,19 @@ function computeTransitionFeasibility(input: CareerContingencyInput): number {
   // Career goal alignment
   if (input.careerGoal === 'emergency_exit' || input.careerGoal === 'strategic_exit') score += 15;
   if (input.careerGoal === 'stay_and_grow') score -= 10;
+
+  // Sole earner income-gap penalty: if runway can't cover the expected search,
+  // a sole earner with dependents faces a household income crisis — not just
+  // personal financial pressure. Standard runway shortfall penalty is doubled.
+  const isSoleEarnerTransition = !!input.hasDependents && !input.dualIncomeHousehold;
+  if (isSoleEarnerTransition) {
+    const runway = resolveRunwayMonths(input);
+    const searchWeeks = input.roleMarketDemand?.jobSearchRunwayWeeks ?? 12;
+    const searchMonths = searchWeeks / 4.3;
+    if (runway < searchMonths) {
+      score -= 20; // doubled vs. standard runway shortfall penalty of 20 (sole earner = household crisis)
+    }
+  }
 
   // v37.0: role portability modifier — cloud architects and data scientists are highly portable;
   // lawyers and licensed healthcare workers face structural industry-transition constraints.
@@ -456,6 +491,23 @@ function buildTransitionActions(input: CareerContingencyInput): { immediate: str
     shortTerm.push('Filter target companies for confirmed H1B sponsorship history before applying');
   }
 
+  // Sole earner with dependents: surface household-specific bridging actions
+  const isSoleEarnerActions = !!input.hasDependents && !input.dualIncomeHousehold;
+  if (isSoleEarnerActions) {
+    const searchWeeks = input.roleMarketDemand?.jobSearchRunwayWeeks ?? 12;
+    const searchMonths = searchWeeks / 4.3;
+    const runway = resolveRunwayMonths(input);
+    if (runway < searchMonths) {
+      const gapMonths = Math.ceil(searchMonths - runway);
+      immediate.unshift(
+        `SOLE EARNER PRIORITY: ${runway}-month runway cannot cover a ${Math.round(searchMonths)}-month search — ${gapMonths}-month household income gap. Explore bridge income (contracting, consulting, moonlighting) BEFORE committing to full-time search mode`,
+      );
+      shortTerm.push('Negotiate a longer notice period or transition assistance at current employer — this is your most valuable financial buffer for a dependent household');
+    } else {
+      shortTerm.push('As sole earner with dependents, maintain liquid reserve separate from the job-search fund for non-negotiable household costs (rent, healthcare, school fees) throughout the search');
+    }
+  }
+
   return { immediate, shortTerm };
 }
 
@@ -603,6 +655,23 @@ function buildTransitionPath(input: CareerContingencyInput, feasibility: number)
         ? 'Visa sponsorship requirement limits accessible companies'
         : 'Job market conditions may extend search beyond expected timeline',
       'Compensation gap risk — new role may require downward adjustment in current market',
+      // Sole earner income-gap warning: if runway < search timeline AND user is sole earner,
+      // an income gap is a household financial crisis, not just personal career inconvenience.
+      ...(() => {
+        const isSoleEarnerRisk = !!input.hasDependents && !input.dualIncomeHousehold;
+        if (!isSoleEarnerRisk) return [];
+        const searchWeeks = input.roleMarketDemand?.jobSearchRunwayWeeks ?? 12;
+        const searchMonths = searchWeeks / 4.3;
+        if (runway < searchMonths) {
+          const gapMonths = Math.ceil(searchMonths - runway);
+          return [
+            `Sole earner household risk: ${runway}-month runway cannot cover a ${Math.round(searchMonths)}-month search — creates a ${gapMonths}-month income gap with dependents and no second household income. This is not a personal career inconvenience; it directly affects housing, healthcare, and dependent welfare. Bridge income or severance is not optional before transition.`,
+          ];
+        }
+        return [
+          `Sole earner: dependent household expenses (housing, healthcare, school fees) continue throughout the search regardless of your employment status — budget for these explicitly when planning your search timeline.`,
+        ];
+      })(),
       // Equity forfeiture cost: surface dollar amount or vest-months if equity is present.
       // This is the most financially significant cost of early transition that users routinely underestimate.
       ...(() => {
