@@ -1173,6 +1173,13 @@ export interface UserFactors {
   greenCardStageMonths?: number;
   /** AC21 portability (I-485 pending > 180 days) neutralizes GC lock-in risk */
   hasPortabilityEligibility?: boolean;
+  /**
+   * Citizenship / passport region — separate from visa status.
+   * An EU citizen on a Singapore EP is in a fundamentally different position
+   * than a non-EU national on the same visa: they have 27-country EU fallback mobility.
+   * Used by visaRiskEngine to adjust dependencyScore, risk cap, and amplifier.
+   */
+  citizenshipRegion?: 'eu' | 'us_citizen' | 'uk_citizen' | 'au_citizen' | 'ca_citizen' | 'other' | null;
 
   // ── v12.0 Extensions: Career Profile ────────────────────────────────────
   /** Does the user have demonstrated AI skills (Claude, Copilot, etc.)? */

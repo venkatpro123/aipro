@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHumanProof } from '../context/HumanProofContext';
 import { useAuth } from '../context/AuthContext';
 import { shouldRepromptProfile } from '../services/userProfileService';
-import type { SalaryBand, VisaStatus, UniquenessKnowledgeType } from '../services/userProfileService';
+import type { SalaryBand, VisaStatus, UniquenessKnowledgeType, UserProfile } from '../services/userProfileService';
 import { inferCurrencyFromContext, convertToUsd, localToUsdLabel, CURRENCY_META } from '../services/currencyService';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -232,6 +232,9 @@ export function ProfileSetupModal() {
   const [industryKey, setIndustryKey] = useState('');
   const [yearsExperience, setYearsExperience] = useState<string>('');
 
+  // Step 0 extension — Citizenship region (v40.0 EU fallback mobility)
+  const [citizenshipRegion, setCitizenshipRegion] = useState<string>('');
+
   // Bootstrap from existing profile
   useEffect(() => {
     if (!isHydrated || !user) return;
@@ -271,6 +274,7 @@ export function ProfileSetupModal() {
       setJobTitle(userProfile?.jobTitle ?? '');
       setIndustryKey(userProfile?.industryKey ?? '');
       setYearsExperience(userProfile?.yearsExperience != null ? String(userProfile.yearsExperience) : '');
+      setCitizenshipRegion(userProfile?.citizenshipRegion ?? '');
       setOpen(true);
     }
   }, [isHydrated, userProfile, user]);
@@ -344,6 +348,7 @@ export function ProfileSetupModal() {
       selfRatedSkills:           rawToSkills(selfRatedSkillsRaw),
       targetSkills:              rawToSkills(targetSkillsRaw),
       uniquenessKnowledgeType:   uniquenessKnowledgeType || undefined,
+      citizenshipRegion:         (citizenshipRegion as UserProfile['citizenshipRegion']) || undefined,
     });
     setSubmitting(false);
     setOpen(false);
@@ -377,6 +382,24 @@ export function ProfileSetupModal() {
             {VISA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </FieldGroup>
+
+        {/* Citizenship region — shown when visa is an employer-tied work visa other than
+            EU Blue Card (which already encodes EU citizenship context by definition).
+            Lets the engine apply EU fallback mobility discount for EU nationals on
+            non-EU visas (e.g., German on UK Skilled Worker or Singapore EP). */}
+        {visaStatus && !['citizen', 'permanent_resident', 'not_applicable', 'eu_blue_card', 'eu_blue_card_germany', 'uae_golden_visa', ''].includes(visaStatus) && (
+          <FieldGroup label="Your citizenship / passport" helper="Affects visa risk calculation. EU citizens have 27-country fallback mobility even on non-EU work visas.">
+            <select className="input" title="Citizenship / passport region" value={citizenshipRegion} onChange={(e) => setCitizenshipRegion(e.target.value)}>
+              <option value="">Select…</option>
+              <option value="eu">EU / EEA citizen (Germany, France, Netherlands, Spain, etc.)</option>
+              <option value="uk_citizen">UK citizen</option>
+              <option value="us_citizen">US citizen</option>
+              <option value="au_citizen">Australian citizen</option>
+              <option value="ca_citizen">Canadian citizen</option>
+              <option value="other">Other / prefer not to say</option>
+            </select>
+          </FieldGroup>
+        )}
 
         <FieldGroup label="Metro / city">
           <input className="input" type="text" value={metro}

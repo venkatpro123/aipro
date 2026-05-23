@@ -140,6 +140,15 @@ export interface UserProfile {
    *  Drives differentiated inaction scenario narratives.
    *  Only meaningful when uniquenessDepth === 'critical_knowledge'. */
   uniquenessKnowledgeType?: UniquenessKnowledgeType | null;
+
+  // ── v40.0 citizenship region ──────────────────────────────────────────────
+  /**
+   * Citizenship / passport region — separate from visa status.
+   * EU citizens on non-EU work visas have 27-country fallback mobility
+   * that reduces visa dependency score, caps risk at MODERATE, and lowers
+   * the score amplifier in visaRiskEngine. Null = not provided (treated as 'other').
+   */
+  citizenshipRegion?: 'eu' | 'us_citizen' | 'uk_citizen' | 'au_citizen' | 'ca_citizen' | 'other' | null;
 }
 
 export type UniquenessKnowledgeType =
@@ -187,6 +196,8 @@ const V16_SELECT_COLUMNS = [
   'first_audit_completed_at',
   // v40.0 knowledge type
   'uniqueness_knowledge_type',
+  // v40.0 citizenship region
+  'citizenship_region',
 ].join(', ');
 
 // ─── Row mapper ───────────────────────────────────────────────────────────────
@@ -232,6 +243,8 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     firstAuditCompletedAt: data.first_audit_completed_at ?? null,
     // v40.0 knowledge type
     uniquenessKnowledgeType: (data.uniqueness_knowledge_type as UniquenessKnowledgeType) ?? null,
+    // v40.0 citizenship region
+    citizenshipRegion: data.citizenship_region ?? null,
   };
 }
 
@@ -316,6 +329,9 @@ export async function upsertUserProfile(
 
   // ── v40.0 knowledge type ─────────────────────────────────────────────────
   if (patch.uniquenessKnowledgeType   !== undefined) row.uniqueness_knowledge_type   = patch.uniquenessKnowledgeType;
+
+  // ── v40.0 citizenship region ─────────────────────────────────────────────
+  if (patch.citizenshipRegion         !== undefined) row.citizenship_region          = patch.citizenshipRegion;
 
   const { error } = await supabase
     .from('user_profiles')

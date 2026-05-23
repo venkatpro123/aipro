@@ -2409,6 +2409,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         sponsoringCompany: companyData.name,
         region: companyData.region ?? 'US',
         currentScore: hybridResult.total,
+        citizenshipRegion: uf.citizenshipRegion ?? undefined,
       });
       (hybridResult as any).visaRisk = visaRisk;
     }

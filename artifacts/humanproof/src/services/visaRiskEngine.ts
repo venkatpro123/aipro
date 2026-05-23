@@ -115,6 +115,14 @@ export interface VisaRiskInputs {
   region: string;
   /** Current overall risk score — determines whether visa risk amplifies to CRITICAL */
   currentScore: number;
+  /**
+   * Citizenship / passport region — separate from visa status.
+   * EU citizens working abroad on non-EU work visas have 27-country fallback
+   * mobility that fundamentally changes their dependency profile vs. non-EU nationals
+   * on the same visa. Reduces dependencyScore (~22pts), caps risk at MODERATE for
+   * most visa types, and lowers scoreAmplifier to max 1.10.
+   */
+  citizenshipRegion?: 'eu' | 'us_citizen' | 'uk_citizen' | 'au_citizen' | 'ca_citizen' | 'other' | null;
 }
 
 export type VisaRiskLevel = 'NONE' | 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
@@ -220,6 +228,7 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     sponsoringCompany,
     region,
     currentScore,
+    citizenshipRegion,
   } = inputs;
 
   // Citizens and PRs: no visa risk whatsoever
@@ -350,6 +359,26 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     else if (visaExpiryMonths <= 6) dependencyScore = Math.min(100, dependencyScore + 8);
   }
 
+  // EU citizen fallback mobility adjustment.
+  // An EU passport grants unrestricted access to 27 EU/EEA job markets without
+  // sponsorship. A German national on a Singapore EP or UK Skilled Worker visa
+  // who is laid off can immediately pursue roles across the EU — a safety net
+  // completely absent for non-EU nationals on the same visa. This does NOT reduce
+  // the legal mechanics of the host-country visa (the grace period is the same),
+  // but fundamentally changes the dependency calculation: worst case is "return
+  // to EU" not "return to home country and restart from scratch".
+  //
+  // Visa types already modeled for EU citizens specifically (eu_blue_card,
+  // eu_blue_card_germany) are exempt — they already encode EU job market context.
+  const isEuCitizen = citizenshipRegion === 'eu';
+  const isNonEuVisa = visaStatus !== 'eu_blue_card' && visaStatus !== 'eu_blue_card_germany';
+  const euFallbackActive = isEuCitizen && isNonEuVisa;
+  if (euFallbackActive) {
+    // Reduce dependency by 22 points, floor at 40 (never zero — the local grace
+    // period mechanics still apply).
+    dependencyScore = Math.max(40, dependencyScore - 22);
+  }
+
   // Determine overall risk level
   let overallVisaRisk: VisaRiskLevel;
   const isMenaSponsoredVisa = visaStatus === 'uae_employment_visa'
@@ -405,6 +434,18 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
       CRITICAL: 'CRITICAL',
     };
     overallVisaRisk = tnAmplification[overallVisaRisk];
+  }
+
+  // EU citizen risk cap: cap at MODERATE for most non-EU visas.
+  // Singapore S Pass (10-day grace) stays at HIGH — the window is so tight that
+  // even an EU citizen needs pre-emptive action. All other non-EU visa types
+  // cannot reach CRITICAL for an EU citizen; fallback to EU is always available.
+  if (euFallbackActive) {
+    if (visaStatus === 'singapore_s_pass') {
+      if (overallVisaRisk === 'CRITICAL') overallVisaRisk = 'HIGH';
+    } else {
+      if (overallVisaRisk === 'CRITICAL' || overallVisaRisk === 'HIGH') overallVisaRisk = 'MODERATE';
+    }
   }
 
   // WS9 — score-amplifier values sourced from engine_calibration_constants.
@@ -480,6 +521,16 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   } else {
     scoreAmplifier = getConstant<number>('visaRiskEngine.amplifier.baseline', 1.10).value as number;
     amplifierRationale = `${visaStatus.toUpperCase()} work authorization adds an employment-law constraint that increases the cost of a layoff vs. a citizen.`;
+  }
+
+  // EU citizen amplifier cap: EU passport provides 27-country fallback mobility,
+  // which materially limits the worst-case outcome of a layoff. Non-EU nationals
+  // on the same visa face "find new sponsor in this country or depart to one country";
+  // EU citizens face "find new sponsor in this country OR freely work in any EU/EEA state."
+  // Cap amplifier at 1.10 (matching eu_blue_card_germany, the most protected visa).
+  if (euFallbackActive && scoreAmplifier > 1.10) {
+    scoreAmplifier = 1.10;
+    amplifierRationale = `${visaStatus.replace(/_/g, ' ').toUpperCase()} holder (EU citizen). EU passport provides unrestricted access to 27 EU/EEA job markets as a fallback — this significantly reduces worst-case dependency vs. non-EU nationals on the same visa. Amplifier capped at 1.10 accordingly.`;
   }
 
   // Key risks
@@ -562,6 +613,15 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     keyRisks.push('Highly Skilled Professional (HSP) points-based system available if score ≥70 — converts employer-tied to more flexible status; check MHLW calculator if qualified');
   }
 
+  // EU citizen fallback mobility — supplement host-country risks with EU context
+  if (euFallbackActive) {
+    keyRisks.push('EU passport advantage: as an EU/EEA citizen, you have unrestricted right to work across 27 member states without sponsorship — this is your primary fallback if the local job search does not resolve in time');
+    keyRisks.push(`Host-country mechanics still apply: the ${gracePeriodDays}-day grace period on your ${visaStatus.replace(/_/g, ' ')} is a real constraint for finding a new sponsor locally — the EU fallback is an exit, not a local extension`);
+    if (visaStatus === 'uk_skilled_worker') {
+      keyRisks.push('Post-Brexit note: UK Skilled Worker visa requires the same Home Office sponsorship process for EU and non-EU nationals alike — EU citizenship provides no special treatment within the UK, only exit flexibility to the EU');
+    }
+  }
+
   // Immediate actions
   const immediateActions: string[] = [];
   if (overallVisaRisk === 'CRITICAL' || overallVisaRisk === 'HIGH') {
@@ -639,6 +699,18 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
     }
   }
 
+  // EU citizen supplemental actions — add EU-specific escape path guidance
+  if (euFallbackActive && (overallVisaRisk === 'MODERATE' || overallVisaRisk === 'HIGH')) {
+    immediateActions.push('EU fallback path: as an EU citizen, immediately activate your EU job search in parallel — Germany (LinkedIn XING), Netherlands, Ireland, and Sweden have the largest English-language tech job markets accessible with your EU passport and no visa sponsorship required');
+    immediateActions.push('Activate EURES (eures.europa.eu) — the EU\'s official cross-border job mobility portal covers all 27 member states + Iceland, Norway, Liechtenstein; no sponsorship required for EU passport holders');
+    if (visaStatus === 'uk_skilled_worker') {
+      immediateActions.push('UK/EU parallel strategy: target both UK licensed sponsors (gov.uk register) AND EU roles simultaneously — your EU passport lets you accept whichever offer arrives first without visa processing delays on the EU side');
+    }
+    if (visaStatus === 'singapore_ep' || visaStatus === 'singapore_s_pass') {
+      immediateActions.push('Singapore/EU parallel strategy: Singapore EP/S Pass requires fresh MOM processing (3–8 weeks), which EU employers can bypass entirely — run EU applications in parallel to cover the case where Singapore search extends beyond the grace window');
+    }
+  }
+
   // Available options — escape paths and transition programs per visa type
   const availableOptions: string[] = [];
   if (visaStatus === 'singapore_ep') {
@@ -676,6 +748,15 @@ export function computeVisaRisk(inputs: VisaRiskInputs): VisaRiskResult {
   }
   if (visaStatus === 'saudi_iqama') {
     availableOptions.push('نقل كفالة (Iqama transfer): under 2024 Labor Law, some employer permission requirements were eased — verify your contract type via Absher; newer contracts (2021+) have different transfer rules than older sponsored arrangements');
+  }
+
+  // EU citizen fallback options — always available regardless of visa type
+  if (euFallbackActive) {
+    availableOptions.push('EU free movement fallback: as an EU/EEA citizen, you can work without any visa or sponsorship in all 27 EU member states + Iceland, Norway, Liechtenstein — this is your strongest safety net if the local job search extends beyond the grace window');
+    availableOptions.push('EURES cross-border mobility (eures.europa.eu): EU job mobility portal covering all member states; search, apply, and accept roles in any EU country without immigration processing — typically same-day right-to-work verification for EU passport holders');
+    if (visaStatus === 'uk_skilled_worker') {
+      availableOptions.push('EU Youth Mobility / Working Holiday equivalents: some EU countries (Germany, France, Ireland) have bilateral agreements that may provide additional pathways beyond standard free movement for recent graduates or professionals under 35 — check if applicable to your situation');
+    }
   }
 
   return {
