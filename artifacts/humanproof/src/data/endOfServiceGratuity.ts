@@ -1,7 +1,8 @@
 // endOfServiceGratuity.ts — MENA end-of-service gratuity (EOSB) calculator.
 //
 // PURPOSE: MENA employment law mandates a lump-sum end-of-service benefit paid
-// at termination. For a 7-year UAE employee, this represents ~7 months of salary
+// at termination. For a 7-year UAE employee, this represents ~5.5 months of basic
+// salary (≈4.1 months total-pay effective after the 0.75 conservatism adjustment)
 // — a significant financial buffer that the previous runway calculation IGNORED.
 //
 // Effective runway for MENA users:
@@ -9,7 +10,7 @@
 //
 // EXAMPLE: UAE professional, 7 years tenure, 4 months saved
 //   Without gratuity: 4 months runway → tier="critical"
-//   With gratuity:    4 + 6.5 = 10.5 months → tier="comfortable"
+//   With gratuity:    4 + 4.1 = 8.1 months → tier="comfortable"
 //   The displayed urgency is fundamentally different.
 //
 // JURISDICTIONS COVERED:
@@ -232,4 +233,36 @@ export function computeGratuityMonths(
   tenureYears: number,
 ): number {
   return computeGratuity(countryCode, tenureYears)?.effectiveBufferMonths ?? 0;
+}
+
+/**
+ * Derive the ISO-3166-1 alpha-2 country code from a user's visa status.
+ * Returns null when the visa type is non-MENA, ambiguous (gcc_sponsored), or absent.
+ *
+ * Use this to resolve the gratuity country for expatriates whose employer's
+ * registered region (companyData.region) differs from the country where they
+ * actually work and have accrued statutory end-of-service entitlements.
+ *
+ * Example: an Indian engineer on a UAE employment visa working at a Bangalore-
+ * headquartered company would get companyData.region='IN' (no gratuity) unless
+ * we check visaStatus first and see 'uae_employment_visa' → 'AE'.
+ */
+export function resolveGratuityCountryFromVisa(
+  visaStatus: string | null | undefined,
+): string | null {
+  if (!visaStatus) return null;
+  switch (visaStatus) {
+    case 'uae_employment_visa':
+    case 'uae_golden_visa':
+      return 'AE';
+    case 'saudi_iqama':
+      return 'SA';
+    case 'qatar_work_permit':
+      return 'QA';
+    case 'kuwait_work_permit':
+      return 'KW';
+    // gcc_sponsored: country ambiguous — fall back to companyData.region
+    default:
+      return null;
+  }
 }

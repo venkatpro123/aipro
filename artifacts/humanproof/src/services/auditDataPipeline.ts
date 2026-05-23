@@ -33,6 +33,7 @@ import { computeTemporalRisk } from "./temporalRiskAmplifier";
 import { computeParentPropagation } from "./parentSubsidiaryPropagation";
 import { buildPrecisionBrief, detectScenario } from "./scenarioNarrativeEngine";
 import { computeFinancialRunway } from "./financialRunwayIntelligence";
+import { resolveGratuityCountryFromVisa } from "../data/endOfServiceGratuity";
 import { computeDepartmentRisk, mapScenarioToCompanyArchetype } from "./departmentRiskEngine";
 import { computeScoreSensitivity } from "./scoreSensitivityEngine";
 // v11.0 intelligence layers
@@ -2149,14 +2150,23 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     // MENA gratuity wiring: pass country + tenure so the runway engine adds the
     // end-of-service buffer (UAE 21d/yr first 5 + 30d/yr thereafter, Saudi half-
     // month/yr first 5 + month/yr thereafter, etc.) to the effective runway.
-    // For a 7-year UAE employee this lifts effective runway by ~6.5 months, which
-    // can change the urgency tier from "critical" to "comfortable".
+    // For a 7-year UAE employee this lifts effective runway by ~4.1 months effective
+    // (165 days basic × 0.75 → ≈5.5mo basic × 0.75 = 4.1mo total-pay equivalent),
+    // which can change the urgency tier from "critical" to "comfortable".
+    //
+    // CRITICAL: visa status takes priority over companyData.region. An Indian-
+    // headquartered GCC (Infosys UAE, Wipro MENA) has region='IN', so passing
+    // companyData.region alone would give zero gratuity to a UAE-visa holder.
+    // resolveGratuityCountryFromVisa() returns null for non-MENA or ambiguous
+    // (gcc_sponsored) visas, falling back to companyData.region.
+    const gratuityCountryCode =
+      resolveGratuityCountryFromVisa(inputs.userFactors.visaStatus) ?? companyData.region;
     const financialRunway = computeFinancialRunway({
       financialRunwayMonths: runwayMonths,
       currentScore: hybridResult.total,
       escapePaths: (hybridResult as any).escapePaths,
       jobMarketLiquidity: (hybridResult as any).jobMarketLiquidity,
-      countryCode: companyData.region,
+      countryCode: gratuityCountryCode,
       tenureYears: inputs.userFactors.tenureYears,
     });
     (hybridResult as any).financialRunway = financialRunway;

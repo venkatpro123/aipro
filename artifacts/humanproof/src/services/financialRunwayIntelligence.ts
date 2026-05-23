@@ -427,16 +427,16 @@ export function computeFinancialRunway(inputs: FinancialRunwayInputs): Financial
   const savedRunwayMonths = inputs.financialRunwayMonths > 0 ? inputs.financialRunwayMonths : 6;
 
   // MENA end-of-service gratuity: adds months of effective runway at termination.
-  // A 7-year UAE employee accrues ~6.5 months of effective buffer that previously
-  // was completely invisible to the urgency tier classification.
+  // A 7-year UAE employee accrues 165 days basic salary (≈5.5mo basic × 0.75 =
+  // ≈4.1mo total-pay effective) — previously invisible to urgency tier classification.
   const gratuityCalc: GratuityCalculation | null = (countryCode && tenureYears != null && tenureYears > 0)
     ? computeGratuity(countryCode, tenureYears)
     : null;
   const gratuityMonths = gratuityCalc?.effectiveBufferMonths ?? 0;
 
   // Effective runway folds gratuity into the urgency calculation.
-  // A 4-month-savings UAE employee with 7 years tenure (≈6.5 months gratuity) has
-  // effective runway 10.5 months → "comfortable" tier, NOT "critical".
+  // A 4-month-savings UAE employee with 7 years tenure (≈4.1 months gratuity effective)
+  // has effective runway 8.1 months → "comfortable" tier, NOT "critical".
   const runwayMonths = savedRunwayMonths + gratuityMonths;
 
   const tier = resolveRunwayTier(runwayMonths);
