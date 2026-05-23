@@ -249,7 +249,7 @@ export function buildDynamicActions(
     equityVestMonths:   uf.equityVestMonths ?? null,
     metroArea:          uf.metroArea ?? null,
   };
-  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike);
+  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined);
   const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a, i) => ({
     id: `personalized_${i}`,
     title: a.title ?? 'Action',
@@ -1583,7 +1583,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                 dualIncomeHousehold: uf2.dualIncomeHousehold ?? null,
                 priorLayoffSurvived: uf2.priorLayoffSurvived ?? null,
               };
-              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2);
+              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2, undefined, uf2.localCurrencyCode ?? undefined);
               return (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>

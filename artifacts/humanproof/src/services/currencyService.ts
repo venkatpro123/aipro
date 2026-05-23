@@ -267,6 +267,110 @@ export function currencyName(code: string): string {
 }
 
 /**
+ * Localize embedded currency amounts in an action description to the user's
+ * local currency. Converts inline INR (₹) and USD ($) course/certification
+ * cost amounts so a Singapore user sees "S$152" instead of "₹8,500".
+ *
+ * EXCLUSION RULES — amounts are left unchanged when:
+ *   • Followed by " LPA" (Indian annual salary market data, not a course cost)
+ *   • Converted USD equivalent > $20,000 (salary / TC ranges, not course costs)
+ *   • Target currency already matches the source symbol (no identity conversion)
+ *   • Amount is a salary range context ("$40,000–$70,000 salary")
+ *
+ * LABELED: MODELED — rates are static 2024-Q2 approximations, not live FX.
+ *
+ * @param text            Description string potentially containing ₹ / $ amounts
+ * @param toCurrencyCode  ISO 4217 code of the user's local currency (e.g. 'SGD')
+ */
+export function localizeActionCosts(text: string, toCurrencyCode: string): string {
+  if (!text) return text;
+  const toMeta = CURRENCY_META[toCurrencyCode];
+  // No conversion needed when the target is not in our table or is already INR/USD.
+  if (!toMeta) return text;
+
+  const INR_UNITS = CURRENCY_META['INR'].unitsPerUsd; // 83
+  const USD_UNITS = 1;
+
+  /** Format a USD amount into the target currency (exchange rate only — not PPP).
+   *  We use straight exchange rate (not PPP) because certification exam prices are
+   *  set in local markets, not based on purchasing power. PPP is for advice budgets. */
+  function toLocal(usdAmount: number): string {
+    // Skip amounts that look like salary ranges (> $20k USD)
+    if (usdAmount > 20_000) return '';
+    const localAmount = usdAmount * toMeta.unitsPerUsd;
+    return formatCurrency(Math.round(localAmount), toCurrencyCode);
+  }
+
+  // ── Replace INR amounts (₹N or ₹N–₹N ranges) ─────────────────────────────
+  // Skip when: (a) followed by " LPA" (salary data), (b) amount > $20k USD equiv.
+  if (toCurrencyCode !== 'INR') {
+    // Range: ₹12,000–15,000 or ₹12,000–₹15,000
+    text = text.replace(
+      /₹\s?([\d,]+(?:\.\d+)?)\s*[–\-]\s*₹?\s?([\d,]+(?:\.\d+)?)(?!\s*(?:L|LPA|lakh|crore))/g,
+      (match, a, b, offset, str) => {
+        // Skip if followed by LPA
+        const after = str.slice(offset + match.length, offset + match.length + 5);
+        if (/^\s*LPA/i.test(after)) return match;
+        const amtA = parseFloat(a.replace(/,/g, ''));
+        const amtB = parseFloat(b.replace(/,/g, ''));
+        const usdA = amtA / INR_UNITS;
+        const usdB = amtB / INR_UNITS;
+        if (usdA > 20_000 || usdB > 20_000) return match;
+        const locA = toLocal(usdA);
+        const locB = toLocal(usdB);
+        if (!locA || !locB) return match;
+        // Format: "S$152–S$184" (reuse same symbol)
+        return `${locA}–${locB}`;
+      }
+    );
+    // Single: ₹8,500
+    text = text.replace(
+      /₹\s?([\d,]+(?:\.\d+)?)(?!\s*(?:L\b|LPA|lakh|crore|–|-|,\d))/g,
+      (match, a, offset, str) => {
+        const after = str.slice(offset + match.length, offset + match.length + 5);
+        if (/^\s*LPA/i.test(after)) return match;
+        const amt = parseFloat(a.replace(/,/g, ''));
+        const usd = amt / INR_UNITS;
+        if (usd > 20_000) return match;
+        const loc = toLocal(usd);
+        return loc || match;
+      }
+    );
+  }
+
+  // ── Replace USD amounts ($N or $N–$N ranges) ─────────────────────────────
+  // Only when target is NOT USD.
+  if (toCurrencyCode !== 'USD') {
+    // Range: $12,000–$15,000 (but skip salary ranges > $20k)
+    text = text.replace(
+      /\$\s?([\d,]+(?:\.\d+)?)\s*[–\-]\s*\$\s?([\d,]+(?:\.\d+)?)/g,
+      (match, a, b) => {
+        const amtA = parseFloat(a.replace(/,/g, ''));
+        const amtB = parseFloat(b.replace(/,/g, ''));
+        // If either endpoint > $20k it's a salary range — leave intact
+        if (amtA > 20_000 || amtB > 20_000) return match;
+        const locA = toLocal(amtA * USD_UNITS);
+        const locB = toLocal(amtB * USD_UNITS);
+        if (!locA || !locB) return match;
+        return `${locA}–${locB}`;
+      }
+    );
+    // Single: $395
+    text = text.replace(
+      /\$\s?([\d,]+(?:\.\d+)?)(?!\s*(?:k\b|,\d))/g,
+      (match, a) => {
+        const amt = parseFloat(a.replace(/,/g, ''));
+        if (amt > 20_000) return match;
+        const loc = toLocal(amt * USD_UNITS);
+        return loc || match;
+      }
+    );
+  }
+
+  return text;
+}
+
+/**
  * List all supported currency codes, sorted alphabetically.
  */
 export function supportedCurrencies(): string[] {

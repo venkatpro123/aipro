@@ -61,6 +61,7 @@ import { ACTION_DB_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advance
 import { ACTION_DB_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
 // v40.0 Modern role coverage — AI PM, MLOps Platform, RevOps, Growth, CoS, Strategy Ops
 import { ACTION_DB_MODERN_TECH_ROLES } from "../data/actions/modern_tech_roles_actions";
+import { localizeActionCosts } from "./currencyService";
 
 export type RiskLevel = 'critical' | 'high' | 'moderate' | 'low';
 
@@ -98,6 +99,10 @@ export interface PersonalizedActionSet {
   // Grace-period compression — set when visaRisk is HIGH/CRITICAL and gracePeriodDays < 30
   graceCompressionApplied?: boolean;
   graceCompressionTier?: 'critical' | 'compressed';
+  // GAP-P03: set when action cost amounts were converted from INR/USD to user's local currency
+  costsCurrencyConverted?: boolean;
+  /** ISO 4217 code of the currency costs were converted TO (e.g. 'SGD') */
+  costsDisplayCurrency?: string;
 }
 
 /**
@@ -3156,6 +3161,10 @@ export function getPersonalizedActions(
   // Grace-period-aware compression: when HIGH/CRITICAL visa risk + gracePeriodDays < 30,
   // action deadlines are compressed to fit the actual legal window.
   visaRisk?: VisaRiskResult | null,
+  // GAP-P03: ISO 4217 user currency code. When present and ≠ 'INR'/'USD', embedded
+  // cost amounts (₹8,500 exam, $395 cert) are converted to local currency at
+  // exchange-rate parity. LPA salary figures and amounts > $20k are left unchanged.
+  localCurrencyCode?: string,
 ): PersonalizedActionSet {
   const roleGroup = resolveRoleGroup(roleTitle);
   const riskLevel = scoreToRiskLevel(score);
@@ -3235,7 +3244,7 @@ export function getPersonalizedActions(
     critical:   { day1: '6 hours',  week1: '2 days',  month1: '7 days',  quarter1: '7 days'  },
     compressed: { day1: '24 hours', week1: '3 days',  month1: '10 days', quarter1: '10 days' },
   };
-  const finalActions = graceCompressionTier
+  const deadlineAdjusted = graceCompressionTier
     ? (actions as Array<Partial<ActionPlanItem>>).map(item => ({
         ...item,
         deadline: item.sequencePhase
@@ -3243,6 +3252,18 @@ export function getPersonalizedActions(
           : item.deadline,
       }))
     : actions;
+
+  // GAP-P03: localize embedded cost amounts (₹ / $) to user's currency.
+  // Only runs when localCurrencyCode is provided and is not already INR or USD
+  // (those are the source currencies used in the action corpus).
+  const finalActions: Array<Partial<ActionPlanItem>> = (localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD')
+    ? (deadlineAdjusted as Array<Partial<ActionPlanItem>>).map(item => ({
+        ...item,
+        description: item.description
+          ? localizeActionCosts(item.description, localCurrencyCode)
+          : item.description,
+      }))
+    : (deadlineAdjusted as Array<Partial<ActionPlanItem>>);
 
   return {
     roleGroup,
@@ -3259,6 +3280,8 @@ export function getPersonalizedActions(
     profileSignals: profileSummary.flags,
     graceCompressionApplied: graceCompressionTier != null || undefined,
     graceCompressionTier,
+    costsCurrencyConverted: (localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD') ? true : undefined,
+    costsDisplayCurrency: (localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD') ? localCurrencyCode : undefined,
   };
 }
 
