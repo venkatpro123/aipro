@@ -21,6 +21,7 @@
 //   <ProvenanceLabel kind="measured" source="Yahoo Finance" /> — with source name
 
 import React from 'react';
+import { getValueProvenance } from '../../../services/valueProvenance';
 
 export type ProvenanceKind = 'measured' | 'modeled' | 'estimated';
 
@@ -112,9 +113,6 @@ const ProvenanceLabel: React.FC<Props> = ({
   let resolvedSource: string | undefined = source;
 
   if (!explicitKind && field) {
-    // Inline lookup — keeps the component synchronous and avoids importing the
-    // registry at module-eval time (which would create a circular dep).
-    const { getValueProvenance } = require('../../../services/valueProvenance');
     const p = getValueProvenance(field, sourceKey ?? undefined);
     resolvedKind = p.kind;
     resolvedSource = source ?? p.sourceLabel;
