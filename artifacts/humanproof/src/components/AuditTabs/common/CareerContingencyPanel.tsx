@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, TrendingUp, ArrowRightLeft, ChevronDown, ChevronRight,
-  AlertTriangle, Clock, CheckCircle2, XCircle, Zap,
+  AlertTriangle, Clock, CheckCircle2, XCircle, Zap, AlertCircle,
 } from 'lucide-react';
 import type { CareerContingencyPlan, ContingencyPath, ContingencyPathId, ContingencyPathFinancialProjection } from '../../../services/careerContingencyPlanEngine';
 import ProvenanceLabel from './ProvenanceLabel';
@@ -343,6 +343,30 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
             />
           )}
         </div>
+
+        {/* Sole-earner income gap constraint badge — shown on the header so it's
+            visible without expanding. Never hides the path; discloses the constraint. */}
+        {path.incomeGapWarning?.isActive && (
+          <div
+            className="flex items-start gap-2 mt-2.5 rounded-lg px-3 py-2"
+            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.30)' }}
+          >
+            <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#ef4444' }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                <span
+                  className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded"
+                  style={{ background: 'rgba(220,38,38,0.15)', color: '#f87171', border: '1px solid rgba(220,38,38,0.30)' }}
+                >
+                  NOT RECOMMENDED FOR YOUR FINANCIAL PROFILE
+                </span>
+              </div>
+              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                {path.incomeGapWarning.warningText}
+              </p>
+            </div>
+          </div>
+        )}
       </button>
 
       {/* Expanded content */}

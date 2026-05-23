@@ -49,6 +49,17 @@ export interface CareerResilienceResult {
   effectiveProtectionMonths: number;
   /** Short headline for the UI */
   resilienceHeadline: string;
+  /**
+   * Applied when hasDependents=true AND dualIncomeHousehold=false (sole earner).
+   * Structural constraint on mobility: dependent households cannot absorb the
+   * same income gaps, offer-quality trade-offs, or search duration risks as
+   * single adults or dual-income households. The P1 Financial Buffer pillar
+   * already captures runway thresholds; this modifier captures the broader
+   * constraint on all five pillars — the composite score overstates actionable
+   * resilience for sole earners who cannot freely take risks during a search.
+   * Value: 0.85 when applied, 1.0 (absent) when not applicable.
+   */
+  familyObligationModifier?: number;
 }
 
 export interface ResilienceInputs {
@@ -388,9 +399,21 @@ export function computeCareerResilience(inputs: ResilienceInputs): CareerResilie
   // Compute composite from raw (unrounded) pillar scores × weights to avoid
   // per-pillar rounding drift. The displayed pillar scores are rounded to integers
   // but the composite uses full precision before its own final rounding.
-  const compositeScore = Math.round(
-    pillars.reduce((sum, p) => sum + p.score * p.weight, 0),
-  );
+  const rawComposite = pillars.reduce((sum, p) => sum + p.score * p.weight, 0);
+
+  // Sole-earner family obligation modifier: a sole earner with dependents faces
+  // structural mobility constraints that the five pillars do not fully capture
+  // (P1 raises runway thresholds but the other four pillars score as if the user
+  // can freely take risks, accept short-term pay cuts, or sustain a long search).
+  // The × 0.85 modifier corrects this: an "ADEQUATE" sole-earner composite (52)
+  // becomes 44 (FRAGILE), reflecting the real constraint on actionable resilience.
+  const isSoleEarnerForModifier = !!inputs.hasDependents && !inputs.dualIncomeHousehold;
+  const FAMILY_OBLIGATION_MODIFIER = 0.85;
+  const adjustedComposite = isSoleEarnerForModifier
+    ? rawComposite * FAMILY_OBLIGATION_MODIFIER
+    : rawComposite;
+
+  const compositeScore = Math.round(adjustedComposite);
   const classification = classify(compositeScore);
 
   const criticalWeakness = [...pillars].sort((a, b) => a.score - b.score)[0];
@@ -432,5 +455,6 @@ export function computeCareerResilience(inputs: ResilienceInputs): CareerResilie
     riskResilienceInterpretation: buildRiskResilienceInterpretation(inputs.currentScore, compositeScore, classification),
     effectiveProtectionMonths: computeProtectionMonths(compositeScore, inputs.financialRunwayMonths, inputs.hasDependents, inputs.dualIncomeHousehold),
     resilienceHeadline: headlines[classification],
+    ...(isSoleEarnerForModifier ? { familyObligationModifier: FAMILY_OBLIGATION_MODIFIER } : {}),
   };
 }

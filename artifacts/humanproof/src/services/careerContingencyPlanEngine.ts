@@ -90,6 +90,26 @@ export interface ContingencyPath {
    * Scale: 0–1 additive modifier on top of expectedValueScore normalization.
    */
   recommendationStrength?: number;
+
+  /**
+   * Sole-earner income gap warning for TRANSITION path.
+   * Populated when hasDependents=true, dualIncomeHousehold=false, AND the
+   * expected search duration would exhaust runway below the minimum reserve.
+   * The path is NEVER hidden — it is shown with honest constraint disclosure
+   * so the user can evaluate the trade-off with full information.
+   */
+  incomeGapWarning?: {
+    /** True when income_gap_months > (runway - minimumReserveMonths). */
+    isActive: boolean;
+    /** Expected months of income gap during the job search. */
+    incomeGapMonths: number;
+    /** User's stated runway months. */
+    runwayMonths: number;
+    /** Minimum reserve months kept back (household emergency floor). */
+    minimumReserveMonths: number;
+    /** Full warning text for UI display. */
+    warningText: string;
+  };
 }
 
 export interface EquityDilemmaAlert {
@@ -746,6 +766,36 @@ function buildTransitionPath(input: CareerContingencyInput, feasibility: number)
       (input.priorJobChanges ?? 0) >= 2 ? 'Prior job change experience means faster interview ramp' : 'Fresh perspective appealing to companies hiring for culture change',
     ],
     financialProjection: buildPathFinancialProjection('TRANSITION', input),
+    // Sole-earner income gap warning: when the user is a sole earner with dependents
+    // and the expected search would exhaust runway below the minimum household reserve,
+    // surface this as a per-path constraint badge. The path is never hidden — honest
+    // constraint disclosure lets the user weigh the risk with full information.
+    ...(() => {
+      const isSoleEarner = !!input.hasDependents && !input.dualIncomeHousehold;
+      if (!isSoleEarner) return {};
+      const searchWeeks = input.roleMarketDemand?.jobSearchRunwayWeeks ?? 12;
+      const incomeGapMonths = Math.ceil(searchWeeks / 4.3);
+      const runwayMonths = resolveRunwayMonths(input);
+      const minimumReserveMonths = 3; // household emergency floor: 3 months before crisis
+      const usableRunway = runwayMonths - minimumReserveMonths;
+      if (incomeGapMonths <= usableRunway) return {};
+      const dependentsText = 'dependents';
+      const warningText =
+        `This transition requires ${incomeGapMonths} month${incomeGapMonths !== 1 ? 's' : ''} of income gap. ` +
+        `With ${runwayMonths} month${runwayMonths !== 1 ? 's' : ''} runway and ${dependentsText}, ` +
+        `this path would exhaust your reserves before re-employment — leaving ${Math.max(0, runwayMonths - incomeGapMonths)} month${Math.abs(runwayMonths - incomeGapMonths) !== 1 ? 's' : ''} remaining ` +
+        `(below the ${minimumReserveMonths}-month household emergency floor). ` +
+        `Bridge income, negotiated severance, or a longer notice period is required before committing to this path.`;
+      return {
+        incomeGapWarning: {
+          isActive: true,
+          incomeGapMonths,
+          runwayMonths,
+          minimumReserveMonths,
+          warningText,
+        },
+      };
+    })(),
     feasibilityCalibrationStatus: 'developer_estimate',
     // TRANSITION feasibility source: use successRate12mPct from careerPathMarket when
     // available (market research, 2026 estimates) — this is the most honest available
