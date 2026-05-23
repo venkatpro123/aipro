@@ -3162,6 +3162,18 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       seniorityBracketRaw === 'staff_plus' ? 'principal' :
       (seniorityBracketRaw as 'junior' | 'mid' | 'senior' | 'principal');
     const uf45b = inputs.userFactors as any;
+    // GAP-P03: derive riskAppetite from savings runway (mirrors financialContextService
+    // thresholds: < 6mo → conservative, 6–12mo → moderate, > 12mo → aggressive).
+    // We derive inline here because userFinancialRunway (step 46) hasn't run yet.
+    const _savingsMonths45b = uf45b.savingsMonthsRunway ?? null;
+    const _riskAppetite45b: 'conservative' | 'moderate' | 'aggressive' | null =
+      _savingsMonths45b == null ? null :
+      _savingsMonths45b < 6    ? 'conservative' :
+      _savingsMonths45b <= 12  ? 'moderate' : 'aggressive';
+    const _monthlySalary45b: number | null = uf45b.monthlySalaryUsd ?? null;
+    const _maxCost45b: number | null = _monthlySalary45b != null
+      ? Math.round(_monthlySalary45b * 0.1)
+      : null;
     const personalizedActionSet = getPersonalizedActions(
       inputs.roleTitle ?? resolvedRole.canonicalKey ?? 'software_engineer',
       seniorityBracket45b,
@@ -3184,6 +3196,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       // to the user's currency. userProfile.localCurrencyCode was set during
       // ProfileSetupModal or inferred from metro/visaStatus by inferCurrencyFromContext.
       uf45b.localCurrencyCode ?? undefined,
+      _riskAppetite45b,
+      _maxCost45b,
     );
     (hybridResult as any).personalizedActionSet = personalizedActionSet;
     // v40.0 FIX-6: hoist the derived profileSignals to the top of hybridResult so

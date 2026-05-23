@@ -376,3 +376,61 @@ export function localizeActionCosts(text: string, toCurrencyCode: string): strin
 export function supportedCurrencies(): string[] {
   return Object.keys(CURRENCY_META).sort();
 }
+
+/**
+ * PPP-convert a USD cost amount to local currency.
+ * Alias for pppCalibrate() — the optional metroArea param is reserved for future
+ * city-level PPP adjustments; currently ignored.
+ * Use for affordability comparisons (course cost vs. local monthly budget).
+ */
+export function convertPPP(costUsd: number, toCurrencyCode: string, _metroArea?: string): number {
+  return pppCalibrate(costUsd, toCurrencyCode);
+}
+
+/**
+ * Extract the primary USD-equivalent cost from an action item's title + description.
+ * Returns null when no recognisable cost amount is found.
+ *
+ * Rules:
+ *   • ₹ amounts → USD via 83.5 INR/USD
+ *   • $ amounts taken at face value
+ *   • Skip LPA-suffixed amounts (India annual salary data)
+ *   • Skip amounts > $2,000 USD equiv (salary ranges, not course costs)
+ *   • First match wins
+ */
+export function extractCostUsd(title: string, description: string): number | null {
+  const text = `${title ?? ''} ${description ?? ''}`;
+  const INR_PER_USD = 83.5;
+
+  const inrMatch = text.match(/₹\s?([\d,]+(?:\.\d+)?)(?!\s*(?:L\b|LPA|lakh|crore))/);
+  if (inrMatch) {
+    const inr = parseFloat(inrMatch[1].replace(/,/g, ''));
+    const usd = inr / INR_PER_USD;
+    if (usd <= 2_000) return Math.round(usd);
+  }
+
+  const usdMatch = text.match(/\$\s?([\d,]+(?:\.\d+)?)(?!\s*(?:k\b|,\d{3}))/);
+  if (usdMatch) {
+    const usd = parseFloat(usdMatch[1].replace(/,/g, ''));
+    if (usd <= 2_000) return Math.round(usd);
+  }
+
+  return null;
+}
+
+/**
+ * Format an action cost as a localised label with USD reference.
+ * Uses straight exchange rate (not PPP) because exam prices are set in local
+ * markets — the exchange-rate price is what the user actually pays.
+ *
+ * Examples: formatCostLabel(215, 'SGD') → "S$288 (≈$215 USD)"
+ *           formatCostLabel(150, 'GBP') → "£119 (≈$150 USD)"
+ *           formatCostLabel(150, 'USD') → "$150"
+ */
+export function formatCostLabel(costUsd: number, localCurrencyCode: string): string {
+  if (!localCurrencyCode || localCurrencyCode === 'USD') return `$${costUsd}`;
+  const toMeta = CURRENCY_META[localCurrencyCode];
+  if (!toMeta) return `$${costUsd}`;
+  const localAmount = Math.round(costUsd * toMeta.unitsPerUsd);
+  return `${formatCurrency(localAmount, localCurrencyCode)} (≈$${costUsd} USD)`;
+}

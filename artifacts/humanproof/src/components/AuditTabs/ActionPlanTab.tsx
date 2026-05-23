@@ -1071,6 +1071,15 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
             </div>
           )}
 
+          {/* Cost label — only when the engine extracted a cost and converted it */}
+          {item.costDisplayLabel && (
+            <div className="flex items-center gap-1.5 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.60rem' }}>
+              <DollarSign className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#10b981', opacity: 0.75 }} />
+              <span style={{ color: '#10b981', fontWeight: 700 }}>{item.costDisplayLabel}</span>
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.52rem', letterSpacing: '0.05em' }}>MODELED · 2024-Q2</span>
+            </div>
+          )}
+
           {/* Meta row — layer focus + deadline */}
           <div className="flex flex-wrap gap-2 items-center">
             <div style={{

@@ -243,6 +243,15 @@ export interface ActionPlanItem {
   evidenceStats?: string;
   /** GAP F: which other action IDs this depends on (shown as sequencing constraint) */
   dependsOn?: string[];
+  /** GAP-P03: USD-equivalent of the primary cost amount extracted from the action text.
+   *  null = no cost amount detected. Used for affordability filtering on conservative profiles. */
+  costUsd?: number;
+  /** GAP-P03: PPP-calibrated local-currency cost (for affordability comparison). */
+  costLocalCurrency?: number;
+  /** GAP-P03: ISO 4217 code matching costLocalCurrency. */
+  costCurrencyCode?: string;
+  /** GAP-P03: human-readable cost label, e.g. "S$288 (≈$215 USD)". MODELED · 2024-Q2 rates. */
+  costDisplayLabel?: string;
 }
 
 /**

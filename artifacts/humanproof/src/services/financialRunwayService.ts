@@ -117,6 +117,9 @@ export interface FinancialRunwayAssessment {
   actionUrgencyMultiplier: number;
   /** One-sentence plain-English summary for the profile card / tooltip. */
   situationSummary: string;
+  /** GAP-P03: maximum affordable one-time course cost in USD for conservative-profile filtering.
+   *  Computed as monthlySalaryUsd × 0.1. null when salary is unknown. */
+  maxAffordableCourseCostUsd?: number;
 }
 
 // ─── Configuration maps ───────────────────────────────────────────────────────
@@ -324,6 +327,13 @@ export function assessFinancialRunway(ctx: UserFinancialContext): FinancialRunwa
   const equityAnchorMonths = resolveEquityAnchor(ctx);
   const situationSummary = buildSummary(situation, runway);
 
+  // GAP-P03: affordability threshold for conservative-profile course filtering.
+  // 10% of monthly salary is the upper bound a conservative profile can commit to a
+  // one-time course without materially affecting runway. Null when salary unknown.
+  const maxAffordableCourseCostUsd = ctx.monthlySalaryUsd != null
+    ? Math.round(ctx.monthlySalaryUsd * 0.1)
+    : undefined;
+
   return {
     situation,
     situationScore: config.score,
@@ -337,6 +347,7 @@ export function assessFinancialRunway(ctx: UserFinancialContext): FinancialRunwa
     keyStrengths,
     actionUrgencyMultiplier: config.multiplier,
     situationSummary,
+    maxAffordableCourseCostUsd,
   };
 }
 

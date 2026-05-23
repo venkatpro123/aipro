@@ -63,7 +63,7 @@ import { ACTION_DB_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_serv
 import { ACTION_DB_MODERN_TECH_ROLES } from "../data/actions/modern_tech_roles_actions";
 // GAP-P03-B: global (non-India) equivalents for core tech role pools
 import { ACTION_DB_GLOBAL_TECH } from "../data/actions/global_tech_actions";
-import { localizeActionCosts } from "./currencyService";
+import { localizeActionCosts, extractCostUsd, convertPPP, formatCostLabel } from "./currencyService";
 
 export type RiskLevel = 'critical' | 'high' | 'moderate' | 'low';
 
@@ -3167,6 +3167,12 @@ export function getPersonalizedActions(
   // cost amounts (₹8,500 exam, $395 cert) are converted to local currency at
   // exchange-rate parity. LPA salary figures and amounts > $20k are left unchanged.
   localCurrencyCode?: string,
+  // GAP-P03: user's financial risk tolerance — 'conservative' profiles filter out
+  // action items whose extracted cost exceeds maxAffordableCourseCostUsd.
+  riskAppetite?: 'conservative' | 'moderate' | 'aggressive' | null,
+  // GAP-P03: upper cost threshold in USD for conservative filtering (monthly salary × 0.1).
+  // null = no filtering applied (missing salary data or non-conservative profile).
+  maxAffordableCourseCostUsd?: number | null,
 ): PersonalizedActionSet {
   const roleGroup = resolveRoleGroup(roleTitle);
   const riskLevel = scoreToRiskLevel(score);
@@ -3267,14 +3273,49 @@ export function getPersonalizedActions(
   // GAP-P03: localize embedded cost amounts (₹ / $) to user's currency.
   // Only runs when localCurrencyCode is provided and is not already INR or USD
   // (those are the source currencies used in the action corpus).
-  const finalActions: Array<Partial<ActionPlanItem>> = (localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD')
+  const doLocalize = !!(localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD');
+
+  // Step 1: text localization (replaces ₹/$ amounts in description text)
+  const textLocalizedActions: Array<Partial<ActionPlanItem>> = doLocalize
     ? (deadlineAdjusted as Array<Partial<ActionPlanItem>>).map(item => ({
         ...item,
         description: item.description
-          ? localizeActionCosts(item.description, localCurrencyCode)
+          ? localizeActionCosts(item.description, localCurrencyCode!)
           : item.description,
       }))
     : (deadlineAdjusted as Array<Partial<ActionPlanItem>>);
+
+  // Step 2: structured cost annotation — extract USD cost, PPP-convert, build display label.
+  // Extraction runs on the ORIGINAL (pre-localization) description so the ₹/$ patterns
+  // are still present; the display label is formatted separately via formatCostLabel().
+  const costAnnotatedActions: Array<Partial<ActionPlanItem>> = doLocalize
+    ? (deadlineAdjusted as Array<Partial<ActionPlanItem>>).map((origItem, i) => {
+        const textItem = textLocalizedActions[i];
+        const costUsd = extractCostUsd(origItem.title ?? '', origItem.description ?? '');
+        if (costUsd == null) return textItem;
+        return {
+          ...textItem,
+          costUsd,
+          costLocalCurrency: convertPPP(costUsd, localCurrencyCode!),
+          costCurrencyCode: localCurrencyCode!,
+          costDisplayLabel: formatCostLabel(costUsd, localCurrencyCode!),
+        };
+      })
+    : textLocalizedActions;
+
+  // Step 3: affordability filter for conservative profiles.
+  // When riskAppetite is 'conservative' AND the item has a detectable cost that exceeds
+  // maxAffordableCourseCostUsd, the item is suppressed — showing a ₹18,000 certification
+  // to a user with 2 months savings is harmful advice, not actionable guidance.
+  const shouldFilter = riskAppetite === 'conservative' && maxAffordableCourseCostUsd != null && maxAffordableCourseCostUsd > 0;
+  const finalActions: Array<Partial<ActionPlanItem>> = shouldFilter
+    ? costAnnotatedActions.filter(item => {
+        const usd = (item as any).costUsd as number | undefined;
+        // Items without a cost are always kept — only paid items are gated.
+        if (usd == null) return true;
+        return usd <= maxAffordableCourseCostUsd!;
+      })
+    : costAnnotatedActions;
 
   return {
     roleGroup,
@@ -3291,8 +3332,8 @@ export function getPersonalizedActions(
     profileSignals: profileSummary.flags,
     graceCompressionApplied: graceCompressionTier != null || undefined,
     graceCompressionTier,
-    costsCurrencyConverted: (localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD') ? true : undefined,
-    costsDisplayCurrency: (localCurrencyCode && localCurrencyCode !== 'INR' && localCurrencyCode !== 'USD') ? localCurrencyCode : undefined,
+    costsCurrencyConverted: doLocalize ? true : undefined,
+    costsDisplayCurrency: doLocalize ? localCurrencyCode : undefined,
   };
 }
 
