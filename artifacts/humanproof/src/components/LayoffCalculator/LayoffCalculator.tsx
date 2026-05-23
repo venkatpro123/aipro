@@ -342,6 +342,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     // current scoreRequestIdRef; if they differ, a new calculation has started
     // since this refresh was initiated and the result is stale.
     const capturedId = scoreRequestIdRef.current;
+    const initialScore = typeof (state.scoreResult as any)?.total === 'number'
+      ? (state.scoreResult as any).total as number
+      : undefined;
     const cancel = startBackgroundRefresh(inputs, (fresh) => {
       if (fresh.requestId !== scoreRequestIdRef.current) {
         if (process.env.NODE_ENV !== 'production') {
@@ -354,7 +357,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       }
       dispatch({ type: 'SET_SCORE_RESULT', payload: fresh.result });
       setApiQuotaStatus(getApiQuotaStatus());
-    }, isUnknownCo, capturedId);
+    }, isUnknownCo, capturedId, initialScore);
     return cancel;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.hasCompletedAssessment, state.companyName, state.roleTitle]);

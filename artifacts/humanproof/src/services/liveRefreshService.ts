@@ -41,13 +41,21 @@ export interface BackgroundRefreshResult {
  *                           refresh was initiated, the IDs will differ and the result
  *                           should be discarded. See Section 13.2.
  */
+// Minimum score delta to push a background refresh result to the UI.
+// Below this threshold the pipeline ran but produced no meaningful change —
+// avoid re-rendering the dashboard (and suppressing re-attaching the
+// fire-and-forget intelligenceBrief) for a 0pt score move.
+const SCORE_CHANGE_THRESHOLD = 1;
+
 export const startBackgroundRefresh = (
   inputs: AuditInputs,
   onRefresh: (fresh: BackgroundRefreshResult) => void,
   isUnknown?: boolean,
   capturedRequestId = 0,
+  initialScore?: number,
 ): () => void => {
   let cancelled = false;
+  let lastScore: number | null = initialScore ?? null;
   const intervalMs = isUnknown
     ? REFRESH_INTERVAL_UNKNOWN_MS
     : REFRESH_INTERVAL_KNOWN_MS;
@@ -56,7 +64,17 @@ export const startBackgroundRefresh = (
     if (cancelled) return;
     try {
       const { result } = await fetchAuditData(inputs);
-      if (!cancelled) {
+      if (cancelled) return;
+      // Skip UI update when score is unchanged — avoids unnecessary re-renders
+      // and suppresses the fire-and-forget intelligenceBrief DB query when
+      // nothing material has changed. The LLM brief cache (24h TTL, 5pt drift
+      // threshold) is a separate gate that handles brief regeneration correctly.
+      const newScore = typeof result.total === 'number' ? result.total : null;
+      const scoreDelta = newScore != null && lastScore != null
+        ? Math.abs(newScore - lastScore)
+        : Infinity; // first result after initial → always push
+      if (scoreDelta >= SCORE_CHANGE_THRESHOLD) {
+        lastScore = newScore;
         onRefresh({ result, refreshedAt: new Date().toISOString(), requestId: capturedRequestId });
       }
     } catch {
