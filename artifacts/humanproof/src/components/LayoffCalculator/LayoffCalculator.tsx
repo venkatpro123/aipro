@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { getEffectiveCommunityShare } from "../../services/gdprService";
 import { useLayoff } from "../../context/LayoffContext";
 import { LayoffInputForm } from "./LayoffInputForm";
 import { LayoffScoreDisplay } from "./LayoffScoreDisplay";
@@ -802,9 +803,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         data: { session },
       } = await supabase.auth.getSession();
       if (session?.user?.id && state.companyName && state.roleTitle) {
-        const allowCommunityShare = (() => {
-          try { return localStorage.getItem('hp_community_share') === '1'; } catch { return false; }
-        })();
+        const allowCommunityShare = getEffectiveCommunityShare();
         await supabase.from("layoff_scores").insert({
           user_id: session.user.id,
           company_name: state.companyName,

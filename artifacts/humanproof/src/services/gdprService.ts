@@ -364,3 +364,41 @@ export function enforceEuCommunityShareDefault(): void {
     // or by the user explicitly — respect it.
   } catch { /* localStorage unavailable */ }
 }
+
+/**
+ * Initializes the community share localStorage key for non-EU users.
+ * Must be called on app init BEFORE reading hp_community_share.
+ * Non-EU users default to opt-IN on first visit (key absent).
+ *
+ * EU users: governed by enforceEuCommunityShareDefault() — this fn is a no-op for them.
+ * Non-EU users with an existing key ('0' or '1'): no change (user choice respected).
+ * Non-EU users on first visit (key absent): key is set to '1' (opt-in default).
+ */
+export function enforceNonEuCommunityShareDefault(): void {
+  if (isEuUser()) return; // EU path handled separately
+
+  try {
+    const existing = localStorage.getItem('hp_community_share');
+    if (existing === null) {
+      localStorage.setItem('hp_community_share', '1');
+    }
+  } catch { /* localStorage unavailable */ }
+}
+
+/**
+ * Single read-point for community share setting before an audit write.
+ * Applies the correct jurisdiction-aware default when the key has not been set:
+ *   Non-EU: defaults to true (opt-in).
+ *   EU:     defaults to false (opt-out, enforced by enforceEuCommunityShareDefault).
+ *
+ * Replaces the inline `localStorage.getItem('hp_community_share') === '1'`
+ * pattern in LayoffCalculator and LayoffAuditDashboard.
+ */
+export function getEffectiveCommunityShare(): boolean {
+  try {
+    enforceNonEuCommunityShareDefault();
+    return localStorage.getItem('hp_community_share') === '1';
+  } catch {
+    return false;
+  }
+}

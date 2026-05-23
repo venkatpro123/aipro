@@ -41,9 +41,10 @@ interface RoleSignal {
 }
 
 // ── Minimum audit count for a role to qualify as platform data ────────────────
-// Mirrors the community_risk_signals view privacy threshold.
-// Below this: display research estimate. At or above: display platform data.
-export const PLATFORM_DATA_THRESHOLD = 5;
+// Mirrors the community_risk_signals view privacy threshold (n≥20).
+// The view itself enforces n≥20 before returning any row, so this constant
+// must match — setting it lower than 20 would be dead code.
+export const PLATFORM_DATA_THRESHOLD = 20;
 
 // ── Seeded research estimates ─────────────────────────────────────────────────
 // Each entry has an explicit source citation so users know what the estimate

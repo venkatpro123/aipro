@@ -17,6 +17,7 @@ import {
   isEuUser,
   hasGdprConsent,
   enforceEuCommunityShareDefault,
+  getEffectiveCommunityShare,
 } from "../../services/gdprService";
 
 // Lazy-loaded tab modules for performance
@@ -203,7 +204,7 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
   });
 
   const [communityShare, setCommunityShare] = useState<boolean>(() => {
-    try { return localStorage.getItem('hp_community_share') === '1'; } catch { return false; }
+    try { return getEffectiveCommunityShare(); } catch { return false; }
   });
 
   const handleCommunityToggle = () => {
