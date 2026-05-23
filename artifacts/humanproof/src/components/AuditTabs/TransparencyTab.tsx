@@ -3520,6 +3520,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             dbAgeDays={(result as any).companyData?._ageDays}
             liveUnavailableFloor={(result as any).signalQuality?._liveUnavailableFloor ?? null}
             dbReliabilityTier={(result as any).signalQuality?._dbReliabilityTier ?? null}
+            scrapeJobQueueTimeMs={(result as any)._scrapeJobQueueTimeMs ?? null}
           />
         </div>
 

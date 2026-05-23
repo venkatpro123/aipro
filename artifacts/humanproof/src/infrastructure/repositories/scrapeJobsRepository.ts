@@ -15,9 +15,14 @@ export interface ScrapeJobRow {
   status: ScrapeJobStatus;
   dedupe_key: string;
   enqueued_at: string;
+  started_at: string | null;
   finished_at: string | null;
   duration_ms: number | null;
+  queue_time_ms: number | null;
   error_kind: string | null;
+  /** Origin of the job: user_triggered | cron_refresh | background_enrichment */
+  source: string;
+  priority: string;
 }
 
 export class ScrapeJobsRepository extends BaseRepository {
@@ -46,9 +51,11 @@ export class ScrapeJobsRepository extends BaseRepository {
     return this.runQuery<ScrapeJobRow>('findInflightByDedupeKey', async () => {
       const res = await this.client
         .from('scrape_jobs')
-        .select('id,job_type,company_name,status,dedupe_key,enqueued_at,finished_at,duration_ms,error_kind')
+        .select('id,job_type,company_name,status,dedupe_key,enqueued_at,started_at,finished_at,duration_ms,queue_time_ms,error_kind,source,priority')
         .eq('dedupe_key', dedupeKey)
         .in('status', ['queued', 'running'])
+        // user_triggered jobs sorted first; within same source, newest first
+        .order('priority', { ascending: true })
         .order('enqueued_at', { ascending: false })
         .limit(1)
         .maybeSingle();

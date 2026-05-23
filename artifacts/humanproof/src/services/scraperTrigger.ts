@@ -327,6 +327,13 @@ export interface AwaitLiveQuorumResult {
   reached: boolean;
   /** Total wait time. */
   waitedMs: number;
+  /**
+   * Maximum observed queue_time_ms across all user_triggered scrape_jobs polled
+   * during this wait. Null when no job had started_at set (all still queued) or
+   * when no timing data was available. Surfaced in DataFreshnessPanel to warn
+   * "Scraping queue is busy" when > 5 000 ms.
+   */
+  maxQueueTimeMs: number | null;
 }
 
 const TERMINAL_STATUSES = new Set(['succeeded', 'failed', 'blocked']);
@@ -365,6 +372,8 @@ export async function awaitLiveQuorum(
   // attempt at any failed/blocked workers and triggers re-discovery of slugs that
   // may have been missed on the first pass. We fire AT MOST ONCE per quorum wait.
   let escalationFired = false;
+  // SLO tracking: max wall-clock queue time observed across polled user_triggered jobs.
+  let maxQueueTimeMs: number | null = null;
 
   while (true) {
     const elapsedMs = Date.now() - startedAt;
@@ -376,12 +385,15 @@ export async function awaitLiveQuorum(
     try {
       const { data } = await supabase
         .from('scrape_jobs')
-        .select('job_type, status')
+        .select('job_type, status, started_at, enqueued_at, source')
         .eq('company_name', companyName)
         .gte('enqueued_at', since);
 
       if (Array.isArray(data)) {
-        for (const row of data as Array<{ job_type: string; status: string }>) {
+        for (const row of data as Array<{
+          job_type: string; status: string;
+          started_at: string | null; enqueued_at: string | null; source: string | null;
+        }>) {
           const mapping = JOB_TYPE_TO_QUORUM_SOURCE[row.job_type];
           if (!mapping) continue;
           const cls = mapping.signalClass;
@@ -391,6 +403,13 @@ export async function awaitLiveQuorum(
           } else if (TERMINAL_STATUSES.has(row.status)) {
             // succeeded already handled above; remaining terminal = failed|blocked
             exhausted[cls].add(src);
+          }
+          // SLO telemetry: track max queue wait for user_triggered jobs that have started.
+          if (row.source === 'user_triggered' && row.started_at && row.enqueued_at) {
+            const qt = new Date(row.started_at).getTime() - new Date(row.enqueued_at).getTime();
+            if (qt > 0 && (maxQueueTimeMs === null || qt > maxQueueTimeMs)) {
+              maxQueueTimeMs = qt;
+            }
           }
         }
       }
@@ -403,19 +422,21 @@ export async function awaitLiveQuorum(
 
     if (lastStatus.reached) {
       return {
-        status:   lastStatus,
-        timedOut: false,
-        reached:  true,
-        waitedMs: elapsedMs,
+        status:         lastStatus,
+        timedOut:       false,
+        reached:        true,
+        waitedMs:       elapsedMs,
+        maxQueueTimeMs,
       };
     }
 
     if (elapsedMs >= ceilingMs) {
       return {
-        status:   lastStatus,
-        timedOut: true,
-        reached:  false,
-        waitedMs: elapsedMs,
+        status:         lastStatus,
+        timedOut:       true,
+        reached:        false,
+        waitedMs:       elapsedMs,
+        maxQueueTimeMs,
       };
     }
 

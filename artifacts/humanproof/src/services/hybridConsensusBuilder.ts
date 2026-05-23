@@ -90,6 +90,8 @@ export interface HybridScorePayload {
   _quorumPositiveClassCount?: number;
   /** Structural explanation for absent signal classes (e.g. private company legal disclosure). Shown in LiveSignalStatusBanner. */
   _quorumStructuralNote?: string | null;
+  /** Max wall-clock ms between enqueue and worker pickup for user_triggered scrape jobs in this session. Null when no jobs had started_at. */
+  _scrapeJobQueueTimeMs?: number | null;
   /** Raw QuorumStatus from awaitLiveQuorum, for transparency UI. */
   _liveQuorumStatus?: unknown;
   /** BUG-05 — Evidence-based confidence BEFORE the private-regime structural ceiling was applied.
@@ -916,6 +918,10 @@ export function buildHybridScorePayload({
     _quorumStructuralNote:
       typeof (companyData as any)._quorumStructuralNote === 'string'
         ? (companyData as any)._quorumStructuralNote
+        : null,
+    _scrapeJobQueueTimeMs:
+      typeof (companyData as any)._scrapeJobQueueTimeMs === 'number'
+        ? (companyData as any)._scrapeJobQueueTimeMs
         : null,
     _liveQuorumStatus: (companyData as any)._liveQuorumStatus ?? null,
     // BUG-05: expose pre-ceiling confidence so TransparencyTab can show

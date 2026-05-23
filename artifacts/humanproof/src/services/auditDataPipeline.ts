@@ -1336,6 +1336,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         (companyData as any)._liveQuorumReached = liveQuorum.reached;
         (companyData as any)._liveUnavailable   = liveQuorum.timedOut && !liveQuorum.reached;
         (companyData as any)._liveQuorumWaitedMs = liveQuorum.waitedMs;
+        (companyData as any)._scrapeJobQueueTimeMs = liveQuorum.maxQueueTimeMs ?? null;
 
         // Quorum-gate hard refusal — "a score from insufficient sources is not a score".
         // A class is POSITIVELY satisfied when its source minimum is met by real
@@ -1883,9 +1884,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // flags ALSO flow via hybridConsensusBuilder for the hybrid-scorer path,
   // but we re-apply here so legacy / fallback paths also surface the state.
   {
-    const qi = (companyData as any)._quorumInsufficient;
-    const qc = (companyData as any)._quorumPositiveClassCount;
-    const qs = (companyData as any)._quorumStructuralNote;
+    const qi  = (companyData as any)._quorumInsufficient;
+    const qc  = (companyData as any)._quorumPositiveClassCount;
+    const qs  = (companyData as any)._quorumStructuralNote;
+    const sqt = (companyData as any)._scrapeJobQueueTimeMs;
     if (typeof qi === 'boolean') {
       (hybridResult as any)._quorumInsufficient = qi;
     }
@@ -1894,6 +1896,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
     if (typeof qs === 'string' || qs === null) {
       (hybridResult as any)._quorumStructuralNote = qs;
+    }
+    if (typeof sqt === 'number' || sqt === null) {
+      (hybridResult as any)._scrapeJobQueueTimeMs = sqt;
     }
     if ((companyData as any)._liveQuorumStatus) {
       (hybridResult as any)._liveQuorumStatus = (companyData as any)._liveQuorumStatus;

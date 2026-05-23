@@ -44,6 +44,13 @@ interface JobPayload {
    *  audit_blocking gets BullMQ priority=1 and 5-attempt/3s-backoff retries (vs the
    *  background default of 3 attempts at 60s backoff). */
   priority?:   'background' | 'audit_blocking';
+  /**
+   * Origin of the scrape request — maps to scrape_jobs.source.
+   *   user_triggered       = audit session (user is waiting; SLO ≤ 2 s)
+   *   cron_refresh         = background pg_cron poll
+   *   background_enrichment= admin/ops-triggered enrichment job
+   */
+  source?:     'user_triggered' | 'cron_refresh' | 'background_enrichment';
   metadata?:   Record<string, unknown>;
 }
 
@@ -239,10 +246,15 @@ Deno.serve((req) =>
     return Response.json({ ok: true, queued: 0, message: 'no jobs generated' });
   }
 
-  // v32: stamp every job with the requested priority. The Fly.io worker reads
-  // this in queues.ts to pick BullMQ priority + retry config.
+  // v32: stamp every job with the requested priority and source origin.
+  // The Fly.io worker reads priority in queues.ts to pick BullMQ priority + retry config.
+  // source maps to scrape_jobs.source for SLO monitoring.
+  const jobSource: JobPayload['source'] = requestedPriority === 'audit_blocking'
+    ? 'user_triggered'
+    : 'cron_refresh';
   for (const job of jobs) {
     job.priority = requestedPriority;
+    job.source   = jobSource;
     // Compute dedupe key client-side so we can insert the queued scrape_jobs row
     // BEFORE the worker picks the job up. Without a dedupe key, the queued row
     // would orphan and the awaitLiveQuorum poller would never see queued/running
@@ -270,6 +282,7 @@ Deno.serve((req) =>
         started_at:     null,
         finished_at:    null,
         priority:       'audit_blocking',
+        source:         j.source ?? 'user_triggered',
         result_summary: null,
         dedupe_key:     j.dedupeKey,
       }));

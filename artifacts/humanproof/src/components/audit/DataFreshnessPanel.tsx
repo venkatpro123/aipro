@@ -28,6 +28,12 @@ interface DataFreshnessPanelProps {
   liveUnavailableFloor?: number | null;
   /** DB reliability tier that produced the floor — A/B/C/D. */
   dbReliabilityTier?: 'A' | 'B' | 'C' | 'D' | null;
+  /**
+   * Max wall-clock ms between scrape job enqueue and worker pickup for this
+   * audit session. Null when no user_triggered jobs have started yet.
+   * When > 5 000 ms: renders an amber "queue is busy" advisory.
+   */
+  scrapeJobQueueTimeMs?: number | null;
 }
 
 function freshnessLabel(score: number): { label: string; color: string } {
@@ -59,6 +65,7 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
   dbAgeDays,
   liveUnavailableFloor,
   dbReliabilityTier,
+  scrapeJobQueueTimeMs,
 }) => {
   const score = dataFreshnessScore ?? 0;
   const pct   = Math.round(score * 100);
@@ -124,6 +131,25 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
           <span>
             Company profile from DB row ~{dbAgeDays} day{dbAgeDays !== 1 ? "s" : ""} old —
             live rescrape may not have run yet.
+          </span>
+        </div>
+      )}
+
+      {/* Scrape queue backpressure advisory — shown when the scrape worker took
+          > 5 s to pick up a user-triggered job. This is not an error: the worker
+          eventually started and results are still accurate. The advisory prevents
+          users from thinking a delay means the score is wrong. */}
+      {scrapeJobQueueTimeMs != null && scrapeJobQueueTimeMs > 5_000 && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300">
+          <Clock className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-400" />
+          <span>
+            Scraping queue was busy — worker pickup took{" "}
+            <span className="font-semibold">
+              {scrapeJobQueueTimeMs >= 60_000
+                ? `${Math.round(scrapeJobQueueTimeMs / 1_000)}s`
+                : `${(scrapeJobQueueTimeMs / 1_000).toFixed(1)}s`}
+            </span>
+            . Results may be slightly delayed but are still accurate.
           </span>
         </div>
       )}
