@@ -40,6 +40,32 @@ const supabase = SUPABASE_URL && SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
   : null;
 
+// ── Per-isolate in-process cache ─────────────────────────────────────────────
+// Deno isolates are reused across requests for the lifetime of the machine.
+// Caching the breaker state here eliminates the breaker_may_probe() RPC on
+// the hot path (CLOSED state): the common case pays zero DB overhead.
+//
+// TTL = 15 s — short enough that an OPEN transition is visible to the next
+// isolate within a probe window, long enough to amortise across multiple
+// back-to-back EF calls from the same scraper tick.
+//
+// Invalidation: any recordOutcome() call (success or failure) that changes
+// state writes the new state back into the cache immediately, so a state
+// transition is reflected in the same isolate on the very next call.
+const STATE_CACHE_TTL_MS = 15_000;
+interface CachedState { state: 'CLOSED' | 'OPEN' | 'HALF_OPEN'; cachedAt: number }
+const _stateCache = new Map<string, CachedState>();
+
+function _cacheGet(key: string): CachedState | null {
+  const entry = _stateCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.cachedAt > STATE_CACHE_TTL_MS) { _stateCache.delete(key); return null; }
+  return entry;
+}
+function _cacheSet(key: string, state: 'CLOSED' | 'OPEN' | 'HALF_OPEN'): void {
+  _stateCache.set(key, { state, cachedAt: Date.now() });
+}
+
 export type BreakerResult =
   | { kind: 'short_circuited'; breakerKey: string; reason: 'breaker_open' }
   | { kind: 'success'; breakerKey: string; response: Response }
@@ -73,18 +99,31 @@ export interface FetchWithBreakerArgs {
  * The breakerKey is still surfaced in the result so logs are useful.
  */
 export async function fetchWithBreaker(args: FetchWithBreakerArgs): Promise<BreakerResult> {
-  // Probe the breaker (server-side check).
+  // ── Probe the breaker ────────────────────────────────────────────────────
+  // Hot path: if the isolate-local cache says CLOSED within the TTL, skip
+  // the DB round-trip entirely. OPEN is also served from cache (saves a
+  // FOR UPDATE row lock). Only cache misses pay the RPC cost.
   if (supabase) {
-    const { data: probeOk, error: probeErr } = await supabase.rpc('breaker_may_probe', {
-      p_breaker_key: args.breakerKey,
-    });
-    if (probeErr) {
-      // RPC failure: log + fall through to attempting the call. The breaker
-      // is best-effort; we never block on its own failure.
-      console.warn(`[fetchWithBreaker] breaker_may_probe failed for ${args.breakerKey}: ${probeErr.message}`);
-    } else if (probeOk === false) {
+    const cached = _cacheGet(args.breakerKey);
+    if (cached?.state === 'OPEN') {
       return { kind: 'short_circuited', breakerKey: args.breakerKey, reason: 'breaker_open' };
     }
+    if (!cached) {
+      // Cache miss — must ask the DB.
+      const { data: probeOk, error: probeErr } = await supabase.rpc('breaker_may_probe', {
+        p_breaker_key: args.breakerKey,
+      });
+      if (probeErr) {
+        // RPC failure: log + fall through. Breaker is best-effort.
+        console.warn(`[fetchWithBreaker] breaker_may_probe failed for ${args.breakerKey}: ${probeErr.message}`);
+      } else if (probeOk === false) {
+        _cacheSet(args.breakerKey, 'OPEN');
+        return { kind: 'short_circuited', breakerKey: args.breakerKey, reason: 'breaker_open' };
+      } else {
+        _cacheSet(args.breakerKey, 'CLOSED');
+      }
+    }
+    // cached.state === 'CLOSED' or 'HALF_OPEN' → allowed to proceed
   }
 
   // Dispatch the request with a hard timeout.
@@ -98,11 +137,13 @@ export async function fetchWithBreaker(args: FetchWithBreakerArgs): Promise<Brea
     const error = err instanceof Error ? err : new Error(String(err));
     const failureKind = classifyFailure(error);
     const newState = await recordOutcome(args.breakerKey, false, failureKind);
+    _cacheSet(args.breakerKey, newState as 'CLOSED' | 'OPEN' | 'HALF_OPEN');
     return { kind: 'failure', breakerKey: args.breakerKey, error, newState };
   }
 
   if (response.status >= 500) {
     const newState = await recordOutcome(args.breakerKey, false, `http_${response.status}`);
+    _cacheSet(args.breakerKey, newState as 'CLOSED' | 'OPEN' | 'HALF_OPEN');
     return {
       kind: 'failure',
       breakerKey: args.breakerKey,
@@ -112,6 +153,7 @@ export async function fetchWithBreaker(args: FetchWithBreakerArgs): Promise<Brea
   }
   if (response.status === 429) {
     const newState = await recordOutcome(args.breakerKey, false, 'rate_limited');
+    _cacheSet(args.breakerKey, newState as 'CLOSED' | 'OPEN' | 'HALF_OPEN');
     return {
       kind: 'failure',
       breakerKey: args.breakerKey,
@@ -120,9 +162,11 @@ export async function fetchWithBreaker(args: FetchWithBreakerArgs): Promise<Brea
     };
   }
 
-  // 2xx and 4xx (non-429) count as success for breaker purposes — the
-  // upstream is operational, the client may have sent bad input.
-  await recordOutcome(args.breakerKey, true);
+  // 2xx and 4xx (non-429) count as success for breaker purposes.
+  // Fire-and-forget: the response is already in hand — don't make the
+  // caller wait an extra 20-50ms for the DB write confirming CLOSED.
+  _cacheSet(args.breakerKey, 'CLOSED');
+  recordOutcome(args.breakerKey, true).catch(() => {});
   return { kind: 'success', breakerKey: args.breakerKey, response };
 }
 
