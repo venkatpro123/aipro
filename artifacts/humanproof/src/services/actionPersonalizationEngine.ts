@@ -61,6 +61,8 @@ import { ACTION_DB_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/advance
 import { ACTION_DB_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
 // v40.0 Modern role coverage — AI PM, MLOps Platform, RevOps, Growth, CoS, Strategy Ops
 import { ACTION_DB_MODERN_TECH_ROLES } from "../data/actions/modern_tech_roles_actions";
+// GAP-P03-B: global (non-India) equivalents for core tech role pools
+import { ACTION_DB_GLOBAL_TECH } from "../data/actions/global_tech_actions";
 import { localizeActionCosts } from "./currencyService";
 
 export type RiskLevel = 'critical' | 'high' | 'moderate' | 'low';
@@ -3183,8 +3185,17 @@ export function getPersonalizedActions(
     'eng_manager', 'tech_lead', 'principal_engineer', 'staff_engineer', 'distinguished_engineer',
     'solution_architect', 'support_engineer',
   ].includes(roleGroup);
-  const fallbackPool = isEngineeringAdjacent ? ACTION_DB['swe'] : ACTION_DB['professional_services'];
-  const staticPoolHit = ACTION_DB[roleGroup];
+  // GAP-P03-B: global vs India pool dispatch.
+  // India users always receive India-market-specific pools (Naukri, ₹LPA, India company names).
+  // Non-India users prefer the global pool when one exists; fall back to the India pool
+  // only when the role has no global equivalent (handled by cost localization for ₹/$).
+  const globalPoolHit = !isIndia ? ACTION_DB_GLOBAL_TECH[roleGroup] : undefined;
+  // Engineering-adjacent fallback: non-India users fall back to global swe pool so they
+  // don't receive India-market content (Naukri, ₹LPA) for unmapped sub-roles like swe_backend.
+  const fallbackPool = isEngineeringAdjacent
+    ? (globalPoolHit ?? (!isIndia ? ACTION_DB_GLOBAL_TECH['swe'] : undefined) ?? ACTION_DB['swe'])
+    : ACTION_DB['professional_services'];
+  const staticPoolHit = globalPoolHit ?? ACTION_DB[roleGroup];
   const bracketPool = staticPoolHit ?? fallbackPool;
   // v39.0 B6: honest fallback signal — surface this so the UI can warn the user
   // that the guidance is generic-tech/services rather than role-specialised.
