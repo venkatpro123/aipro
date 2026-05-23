@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Clock, AlertTriangle, Scale, DollarSign, Lightbulb } from 'lucide-react';
 import type { VisaRiskResult, VisaRiskLevel } from '../../../services/visaRiskEngine';
-import { computeGratuity } from '../../../data/endOfServiceGratuity';
+import { computeGratuity, resolveGratuityCountryFromVisa } from '../../../data/endOfServiceGratuity';
 
 interface Props {
   visaRisk: VisaRiskResult;
@@ -35,8 +35,13 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
 
   // MENA gratuity: surface statutory end-of-service entitlement so users can fold it
   // into their effective runway calculation rather than counting savings alone.
-  const gratuity = countryCode && tenureYears != null && tenureYears > 0
-    ? computeGratuity(countryCode, tenureYears)
+  // Visa status takes priority over countryCode — an Indian-HQ company (region='IN')
+  // employing a UAE-visa holder still owes UAE EOSB. visaType carries the resolved
+  // visa status from the engine, so we derive the gratuity country from it first.
+  const gratuityCountryCode =
+    resolveGratuityCountryFromVisa(visaRisk.visaType) ?? countryCode;
+  const gratuity = gratuityCountryCode && tenureYears != null && tenureYears > 0
+    ? computeGratuity(gratuityCountryCode, tenureYears)
     : null;
 
   return (
