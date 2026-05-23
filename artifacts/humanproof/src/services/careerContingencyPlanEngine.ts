@@ -82,6 +82,27 @@ export interface ContingencyPath {
    * in the UI so users can verify the provenance of the number.
    */
   feasibilitySourceNote?: string;
+
+  /**
+   * Equity-vest-aware recommendation strength modifier.
+   * Applied to STAY path when equityVestMonths ≤ 3 to reflect the high
+   * financial cost of leaving before the imminent cliff.
+   * Scale: 0–1 additive modifier on top of expectedValueScore normalization.
+   */
+  recommendationStrength?: number;
+}
+
+export interface EquityDilemmaAlert {
+  /** True when equityVestMonths ≤ 6 AND score ≥ 60. */
+  isActive: boolean;
+  /** Days until vest cliff (equityVestMonths × 30). */
+  daysToVest: number;
+  /** Estimated unvested value in USD, or null if unknown. */
+  unvestedValue: number | null;
+  /** Human-readable alert text for the UI. */
+  alertText: string;
+  /** Numeric day countdown — same as daysToVest, exposed for easy formatting. */
+  dayCountdown: number;
 }
 
 export interface CareerContingencyPlan {
@@ -94,6 +115,13 @@ export interface CareerContingencyPlan {
   negotiatePath: ContingencyPath;
   transitionPath: ContingencyPath;
   synthesisNarrative: string; // 2-sentence overall framing
+  /**
+   * Surfaces when the user faces both elevated risk (score ≥ 60) and an
+   * imminent equity vest (≤ 6 months). The dilemma: high risk argues for
+   * leaving soon; the vest argues for staying. UI shows this as a prominent
+   * alert above the contingency paths with an explicit day countdown.
+   */
+  equityDilemmaAlert?: EquityDilemmaAlert;
 }
 
 export interface CareerContingencyInput {
@@ -222,6 +250,13 @@ function computeStayFeasibility(input: CareerContingencyInput): number {
   // because any income gap has a direct household impact, not just personal inconvenience.
   const isSoleEarner = !!input.hasDependents && !input.dualIncomeHousehold;
   if (isSoleEarner) score += 8;
+
+  // Imminent equity cliff (≤ 3 months): staying has a concrete, time-bounded financial
+  // rationale. The expected cost of leaving (forfeited unvested equity) is highest here,
+  // making STAY materially more attractive than the base resilience model would suggest.
+  if (input.hasEquityVesting && (input.equityVestMonths ?? 99) <= 3 && (input.equityVestMonths ?? 99) > 0) {
+    score += 15;
+  }
 
   return Math.min(95, Math.max(5, Math.round(score)));
 }
@@ -566,6 +601,13 @@ function buildStayPath(input: CareerContingencyInput, feasibility: number): Cont
       const { low, high } = estimatedRange(feasibility, FEASIBILITY_UNCERTAINTY.STAY);
       return { feasibilityRangeLow: low, feasibilityRangeHigh: high };
     })(),
+    // Equity-vest strength modifier: when vest is ≤ 3 months, the financial case for
+    // STAY is concrete and time-bounded — expose as recommendationStrength so the UI
+    // can show a stronger recommendation badge.
+    ...(input.hasEquityVesting && (input.equityVestMonths ?? 99) <= 3 && (input.equityVestMonths ?? 99) > 0
+      ? { recommendationStrength: 0.15 }
+      : {}
+    ),
   };
 }
 
@@ -757,6 +799,14 @@ function selectRecommendedPath(
     adjNegEV += GOAL_BONUS;
   }
 
+  // Imminent equity cliff bonus: when vest is ≤ 3 months, staying has concrete
+  // financial upside that the EV formula cannot capture from feasibility alone.
+  // This 15-pt bonus mirrors the computeStayFeasibility adjustment so the
+  // recommendation selection is consistent with the feasibility scoring.
+  if (input.hasEquityVesting && (input.equityVestMonths ?? 99) <= 3 && (input.equityVestMonths ?? 99) > 0) {
+    adjStayEV += 15;
+  }
+
   const scores = [
     { path: 'STAY' as ContingencyPathId, ev: adjStayEV },
     { path: 'NEGOTIATE' as ContingencyPathId, ev: adjNegEV },
@@ -850,6 +900,28 @@ export function computeCareerContingencyPlan(input: CareerContingencyInput): Car
   const synthesisNarrative = buildSynthesisNarrative(recommended, urgency, input.currentScore);
   const criticalDecisionDate = computeCriticalDecisionDate(urgency, runway);
 
+  // Equity dilemma alert: elevated risk (≥ 60) + imminent vest (≤ 6 months) is a
+  // conflicting situation — risk argues for leaving soon, vest argues for staying.
+  // Surface as a prominent UI alert with an explicit day countdown so the user can
+  // make the trade-off with eyes open rather than defaulting to either extreme.
+  const equityDilemmaAlert: EquityDilemmaAlert | undefined = (() => {
+    const vestMonths = input.equityVestMonths ?? 99;
+    if (!input.hasEquityVesting || vestMonths > 6 || vestMonths <= 0) return undefined;
+    if (input.currentScore < 60) return undefined;
+    const daysToVest = Math.round(vestMonths * 30);
+    const unvestedValue = input.exitTiming?.unvestedIfImmediateExit ?? null;
+    const unvestedLabel = unvestedValue != null && unvestedValue > 0
+      ? (unvestedValue >= 1_000
+          ? `~$${Math.round(unvestedValue / 1_000)}K`
+          : `~$${Math.round(unvestedValue)}`)
+      : null;
+    const vestLabel = `${daysToVest} days (${vestMonths} month${vestMonths !== 1 ? 's' : ''})`;
+    const alertText = unvestedLabel
+      ? `Conflicting signals: your risk score (${input.currentScore}/100) argues for an early exit, but your equity cliff is ${vestLabel} away — worth ${unvestedLabel} in unvested value. Recommended approach: begin your job search now, but plan to stay ${vestLabel} to capture the vest. Do not accept an offer with a start date before the vest event unless the offer includes equity compensation to cover the forfeiture.`
+      : `Conflicting signals: your risk score (${input.currentScore}/100) argues for an early exit, but your equity cliff is ${vestLabel} away. Recommended approach: begin your job search now, but target a start date after the vest event. Accept offers only if the role compensates for forfeited equity.`;
+    return { isActive: true, daysToVest, dayCountdown: daysToVest, unvestedValue, alertText };
+  })();
+
   return {
     recommendedPath: recommended,
     pathConfidence: confidence,
@@ -860,5 +932,6 @@ export function computeCareerContingencyPlan(input: CareerContingencyInput): Car
     stayPath,
     negotiatePath,
     transitionPath,
+    ...(equityDilemmaAlert ? { equityDilemmaAlert } : {}),
   };
 }

@@ -59,6 +59,22 @@ export interface ExitTimingResult {
   recommendation: string;
   /** Risk of NOT exiting (staying penalty) when risk is high */
   stayingRiskPenalty: string;
+  /**
+   * Hard equity vest constraint — present when vest is ≤ 6 months away.
+   * Unlike the soft `recommendation` text, this field is a machine-readable
+   * signal consumed by ExitTimingOptimizer UI and contingency plan to surface
+   * the vest as a HARD constraint on transition timing, not a soft suggestion.
+   * The UI renders this as a constraint block, not advice copy.
+   */
+  equityVestHardConstraint?: {
+    isActive: boolean;
+    /** Days until vest cliff (vestMonths × 30). */
+    daysToVest: number;
+    /** Estimated unvested value in USD, or null if unknown/no equity data. */
+    unvestedValue: number | null;
+    /** Single-sentence constraint text for the constraint block. */
+    constraintText: string;
+  };
 }
 
 export interface ExitTimingInputs {
@@ -293,6 +309,25 @@ export function computeExitTiming(inputs: ExitTimingInputs): ExitTimingResult {
     ? `At ${currentScore}/100 risk, waiting ${monthsUntilOptimal} months for the optimal exit window exposes you to potential involuntary exit — losing both the equity AND negotiation control. Weigh staying-risk against exit-cost.`
     : `At ${currentScore}/100, the risk of staying through the optimal window is manageable — waiting is likely worth it.`;
 
+  // Hard equity vest constraint: when the vest cliff is ≤ 6 months away, this is
+  // a hard transition-timing constraint (not a soft recommendation). The UI renders
+  // this as a constraint block to distinguish it from advisory text.
+  const equityVestHardConstraint = (() => {
+    const hasEquity = vestingSchedule !== 'none' && totalGrantValueUSD != null && totalGrantValueUSD > 0;
+    if (!hasEquity || monthsToVest > 6) return undefined;
+    const daysToVest = Math.round(monthsToVest * 30);
+    const unvestedValue = unvestedIfImmediate > 0 ? Math.round(unvestedIfImmediate) : null;
+    const valueLabel = unvestedValue != null && unvestedValue > 0
+      ? (unvestedValue >= 1_000
+          ? `~$${Math.round(unvestedValue / 1_000)}K`
+          : `~$${unvestedValue}`)
+      : null;
+    const constraintText = valueLabel
+      ? `Vest cliff in ${daysToVest} days (${monthsToVest} month${monthsToVest !== 1 ? 's' : ''}) — departing before this date forfeits ${valueLabel} in unvested equity. Do not start a new role before this date unless equity compensation is provided to cover the forfeiture.`
+      : `Vest cliff in ${daysToVest} days (${monthsToVest} month${monthsToVest !== 1 ? 's' : ''}) — departing before this date forfeits unvested equity. Quantify the dollar amount before committing to a start date.`;
+    return { isActive: true, daysToVest, unvestedValue, constraintText };
+  })();
+
   return {
     calendar,
     optimalDepartureWindow: {
@@ -308,6 +343,7 @@ export function computeExitTiming(inputs: ExitTimingInputs): ExitTimingResult {
     isGoldenHandcuffZone,
     recommendation,
     stayingRiskPenalty,
+    ...(equityVestHardConstraint ? { equityVestHardConstraint } : {}),
   };
 }
 

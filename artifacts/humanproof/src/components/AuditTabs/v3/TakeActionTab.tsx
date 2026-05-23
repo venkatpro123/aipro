@@ -374,6 +374,51 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         <EmergencyProtocolPanel emergency={r.emergencyResponse} />
       )}
 
+      {/* Equity dilemma alert: elevated risk + imminent vest creates a conflicting situation.
+          Show BEFORE the contingency paths so the user understands the conflict before
+          reading the STAY/NEGOTIATE/TRANSITION path detail. */}
+      {contingencyPlan?.equityDilemmaAlert?.isActive && (() => {
+        const alert = contingencyPlan.equityDilemmaAlert!;
+        const unvestedLabel = alert.unvestedValue != null && alert.unvestedValue > 0
+          ? (alert.unvestedValue >= 1_000
+              ? `~$${Math.round(alert.unvestedValue / 1_000)}K`
+              : `~$${Math.round(alert.unvestedValue)}`)
+          : null;
+        return (
+          <div
+            className="rounded-xl px-4 py-3.5 flex gap-3 items-start"
+            style={{ background: 'rgba(245,158,11,0.09)', border: '1px solid rgba(245,158,11,0.35)' }}
+            role="alert"
+          >
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#f59e0b' }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span className="text-[11px] font-semibold" style={{ color: '#fbbf24' }}>
+                  Equity Dilemma
+                </span>
+                <span
+                  className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded"
+                  style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.30)' }}
+                >
+                  {alert.dayCountdown} DAYS TO VEST
+                </span>
+                {unvestedLabel && (
+                  <span
+                    className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded"
+                    style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.28)' }}
+                  >
+                    {unvestedLabel} AT STAKE
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                {alert.alertText}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* T1: Career Contingency Plan */}
       {contingencyStatus === 'ready' && contingencyPlan
         ? <CareerContingencyPanel contingencyPlan={contingencyPlan} />
