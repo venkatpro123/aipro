@@ -1177,6 +1177,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       // Live scraping returned null → zero positive classes by definition.
       (companyData as any)._quorumInsufficient        = true;
       (companyData as any)._quorumPositiveClassCount  = 0;
+      (companyData as any)._quorumStructuralNote      = null;
       // Regime / limited-data flags — consumed by SpyLoadingState banner
       (companyData as any)._detectedRegime    = _detectedRegime;
       (companyData as any)._marketSegment     = _marketSegment;
@@ -1353,10 +1354,12 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         ).length;
         (companyData as any)._quorumPositiveClassCount = positiveClassCount;
         (companyData as any)._quorumInsufficient = positiveClassCount === 0;
+        (companyData as any)._quorumStructuralNote = liveQuorum.status?.structuralNote ?? null;
       } else {
         (companyData as any)._liveUnavailable    = true;
         (companyData as any)._quorumInsufficient = true;
         (companyData as any)._quorumPositiveClassCount = 0;
+        (companyData as any)._quorumStructuralNote = null;
       }
       (companyData as any)._liveDataCoverage = {
         liveWonKeys:   reconciledSignals.summary.liveWonKeys,
@@ -1395,6 +1398,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (companyData as any)._dataFreshnessScore = 0;
     (companyData as any)._quorumInsufficient       = true;
     (companyData as any)._quorumPositiveClassCount = 0;
+    (companyData as any)._quorumStructuralNote     = null;
     (companyData as any)._liveUnavailable          = true;
     (companyData as any)._liveDataCoverage = {
       liveWonKeys: [], dbWonKeys: [], liveRatio: 0,
@@ -1881,11 +1885,15 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   {
     const qi = (companyData as any)._quorumInsufficient;
     const qc = (companyData as any)._quorumPositiveClassCount;
+    const qs = (companyData as any)._quorumStructuralNote;
     if (typeof qi === 'boolean') {
       (hybridResult as any)._quorumInsufficient = qi;
     }
     if (typeof qc === 'number') {
       (hybridResult as any)._quorumPositiveClassCount = qc;
+    }
+    if (typeof qs === 'string' || qs === null) {
+      (hybridResult as any)._quorumStructuralNote = qs;
     }
     if ((companyData as any)._liveQuorumStatus) {
       (hybridResult as any)._liveQuorumStatus = (companyData as any)._liveQuorumStatus;

@@ -78,6 +78,13 @@ export interface QuorumSpec {
   layoffs:   QuorumClassSpec;
   financial: QuorumClassSpec;
   hiring:    QuorumClassSpec;
+  /**
+   * Human-readable explanation of why certain signal classes are structurally
+   * unavailable for this regime (e.g. legal disclosure requirements). Surfaced
+   * in LiveSignalStatusBanner so users understand that the score is working
+   * correctly — the absence of financial signals is expected, not a failure.
+   */
+  structuralNote?: string;
 }
 
 export const DEFAULT_QUORUM_SPEC: QuorumSpec = {
@@ -105,6 +112,7 @@ export const DEFAULT_QUORUM_SPEC: QuorumSpec = {
 export const PRIVATE_COMPANY_QUORUM_SPEC: QuorumSpec = {
   ...DEFAULT_QUORUM_SPEC,
   financial: { min: 0, sources: [] },
+  structuralNote: 'Private company — stock-exchange financial signals are unavailable. Score reflects role risk, sector headwinds, workforce trends, and news signals.',
 };
 
 /**
@@ -130,6 +138,7 @@ export const GERMAN_GMBH_QUORUM_SPEC: QuorumSpec = {
   },
   financial: { min: 0, sources: [] },
   hiring: DEFAULT_QUORUM_SPEC.hiring,
+  structuralNote: 'Private company (Germany GmbH) — financial signals are unavailable by law. German law does not require real-time financial disclosure for GmbH companies. Score reflects role risk, sector headwinds, and news signals only.',
 };
 
 /**
@@ -155,6 +164,7 @@ export const UK_PRIVATE_LTD_QUORUM_SPEC: QuorumSpec = {
   },
   financial: { min: 0, sources: [] },
   hiring: DEFAULT_QUORUM_SPEC.hiring,
+  structuralNote: 'Private company (UK Ltd) — financial signals are unavailable by law. UK private companies are not required to publish real-time financial data. Score reflects role risk, sector headwinds, and news signals only.',
 };
 
 /**
@@ -184,6 +194,7 @@ export const INDIA_UNLISTED_QUORUM_SPEC: QuorumSpec = {
   },
   financial: { min: 0, sources: [] },
   hiring: DEFAULT_QUORUM_SPEC.hiring,
+  structuralNote: 'Private company (India unlisted) — financial signals are unavailable. Unlisted Indian companies have no NSE/BSE exchange listing and are not required to publish real-time financial data. Score reflects role risk, sector headwinds, and news signals only.',
 };
 
 /**
@@ -280,6 +291,12 @@ export interface QuorumStatus {
   perClass: Record<SignalClass, QuorumClassStatus>;
   /** Wall-clock ms since the quorum wait started. */
   elapsedMs: number;
+  /**
+   * Propagated from QuorumSpec.structuralNote. Present when the spec explains
+   * why certain signal classes are structurally unavailable (e.g. private company
+   * legal disclosure rules). Surfaced in LiveSignalStatusBanner.
+   */
+  structuralNote?: string;
 }
 
 /**
@@ -337,7 +354,7 @@ export function evaluateQuorum(
     };
   }
 
-  return { reached: allSatisfied, perClass, elapsedMs };
+  return { reached: allSatisfied, perClass, elapsedMs, structuralNote: spec.structuralNote };
 }
 
 /**

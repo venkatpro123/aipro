@@ -88,6 +88,8 @@ export interface HybridScorePayload {
   _quorumInsufficient?: boolean;
   /** Number of POSITIVELY-satisfied quorum classes (0-4). Absence doesn't count. */
   _quorumPositiveClassCount?: number;
+  /** Structural explanation for absent signal classes (e.g. private company legal disclosure). Shown in LiveSignalStatusBanner. */
+  _quorumStructuralNote?: string | null;
   /** Raw QuorumStatus from awaitLiveQuorum, for transparency UI. */
   _liveQuorumStatus?: unknown;
   /** BUG-05 — Evidence-based confidence BEFORE the private-regime structural ceiling was applied.
@@ -911,6 +913,10 @@ export function buildHybridScorePayload({
       typeof (companyData as any)._quorumPositiveClassCount === 'number'
         ? (companyData as any)._quorumPositiveClassCount
         : undefined,
+    _quorumStructuralNote:
+      typeof (companyData as any)._quorumStructuralNote === 'string'
+        ? (companyData as any)._quorumStructuralNote
+        : null,
     _liveQuorumStatus: (companyData as any)._liveQuorumStatus ?? null,
     // BUG-05: expose pre-ceiling confidence so TransparencyTab can show
     // "Evidence quality: X% → Structural cap: Y%" when they differ.

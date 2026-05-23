@@ -32,6 +32,13 @@ interface Props {
   quorumInsufficient?: boolean;
   /** Number of signal classes that reached POSITIVE quorum (0–4). */
   quorumPositiveClassCount?: number;
+  /**
+   * Regime-specific disclosure explaining why certain signal classes are
+   * structurally unavailable (e.g. private company legal requirements).
+   * Rendered as an informational strip — amber, not red — because this is
+   * expected behaviour, not a pipeline failure.
+   */
+  structuralNote?: string | null;
   className?:   string;
 }
 
@@ -97,7 +104,7 @@ const TIER_CONFIG: Record<Tier, {
   },
 };
 
-export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, quorumInsufficient, quorumPositiveClassCount, className }) => {
+export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, quorumInsufficient, quorumPositiveClassCount, structuralNote, className }) => {
   const [dismissed, setDismissed] = useState(false);
 
   // Audit v35: use liveRatio from coverage ONLY — never fall back to freshnessScore.
@@ -213,6 +220,15 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
                   positively confirmed. A score from insufficient sources is not a score:
                   point estimate withheld until evidence reaches the minimum (workforce ≥2,
                   layoffs ≥2 or 20s absence quorum, financial ≥1, hiring ≥1).
+                </span>
+              )}
+              {/* Regime-specific structural note — amber, not red: this is expected, not a failure. */}
+              {structuralNote && !quorumInsufficient && (
+                <span style={{
+                  display: 'block', marginTop: '4px',
+                  color: '#f59e0b', fontWeight: 500,
+                }}>
+                  {structuralNote}
                 </span>
               )}
             </div>

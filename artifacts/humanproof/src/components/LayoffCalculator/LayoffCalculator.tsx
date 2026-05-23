@@ -1889,6 +1889,11 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
                 ?? ((state.companyData as any) ?? {})._quorumPositiveClassCount
                 ?? undefined
               }
+              structuralNote={
+                (state.scoreResult as any)._quorumStructuralNote
+                ?? ((state.companyData as any) ?? {})._quorumStructuralNote
+                ?? null
+              }
             />
           </div>
         )}
