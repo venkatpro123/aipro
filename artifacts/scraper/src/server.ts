@@ -104,6 +104,7 @@ const EnqueueBody = z.object({
     cik:         z.string().max(20).optional(),
     targetUrl:   z.string().url().max(2048).optional(),
     dedupeKey:   z.string().max(64).optional(),
+    priority:    z.enum(['background', 'audit_blocking']).optional(),
     metadata:    z.record(z.unknown()).optional(),
   })).min(1).max(200),
 });
