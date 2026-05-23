@@ -300,6 +300,10 @@ export interface AwaitLiveQuorumOptions {
   since?: string;
   /** Override the default quorum spec (tests / debugging). */
   spec?: QuorumSpec;
+  /** ISO 3166-1 alpha-2 country code — used by the regime fallback when spec is
+   *  not provided, so Indian/Australian "Limited" companies aren't misclassified
+   *  as uk_private_ltd and given the wrong quorum spec. */
+  countryHint?: string | null;
   /** Per-poll callback for UI progress streaming. */
   onProgress?: (status: QuorumStatus) => void;
   /** Per-source positive-evidence injector. Called by the orchestrator after
@@ -346,7 +350,7 @@ export async function awaitLiveQuorum(
   const ceilingMs       = opts.ceilingMs ?? 45_000;
   const pollIntervalMs  = Math.max(250, opts.pollIntervalMs ?? 500);
   const since           = opts.since ?? new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const spec            = opts.spec ?? quorumSpecForRegime(detectPrivateCompanyRegime(companyName));
+  const spec            = opts.spec ?? quorumSpecForRegime(detectPrivateCompanyRegime(companyName, opts.countryHint));
   const escalateAtMs    = opts.escalateAtMs ?? Math.floor(ceilingMs * 0.5);
   const startedAt       = Date.now();
 

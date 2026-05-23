@@ -791,7 +791,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // Detect regime early so we can use the correct quorum spec AND ceiling.
   // german_gmbh/uk_private_ltd/india_unlisted_pvt/apac_private → 15-18s ceiling.
   // us_private → 20s ceiling. Public/unknown → 45s ceiling.
-  const _detectedRegime = detectPrivateCompanyRegime(inputs.companyName);
+  const _detectedRegime = detectPrivateCompanyRegime(inputs.companyName, inputs.country ?? null);
   const _quorumSpec     = quorumSpecForRegime(_detectedRegime);
   const _quorumCeiling  = quorumCeilingForRegime(_detectedRegime);
   // Market segment bucket for latency telemetry — refined later with isPublic after resolution.

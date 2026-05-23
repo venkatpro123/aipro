@@ -450,7 +450,7 @@ export function isPrivateCompany(rawName: string): boolean {
  * can be detected from the name alone (unknown company, name without legal suffix).
  * The caller should treat null as "regime unknown — use DEFAULT_QUORUM_SPEC."
  */
-export function detectPrivateCompanyRegime(rawName: string): PrivateCompanyRegime | null {
+export function detectPrivateCompanyRegime(rawName: string, countryHint?: string | null): PrivateCompanyRegime | null {
   if (!rawName) return null;
 
   // ── Step 1 & 2: entity graph lookup ────────────────────────────────────────
@@ -492,7 +492,16 @@ export function detectPrivateCompanyRegime(rawName: string): PrivateCompanyRegim
 
   // UK / Ireland private Ltd (but NOT PLC — PLC is public).
   // 'Ltd' or 'Limited' without 'plc' → private Ltd structure.
+  // EXCEPTION: India (BSE/NSE), Australia (ASX), New Zealand, Canada (TSX) all
+  // use "Limited" as a suffix for *listed* companies — not UK private structure.
+  // Without a country hint we fall through to uk_private_ltd (conservative), but
+  // when the caller supplies one of these countries we return null so the pipeline
+  // uses the DEFAULT_QUORUM_SPEC instead of the 15s / 60%-capped private regime.
   if (/\bltd\b|\blimited\b/.test(lower) && !/\bplc\b/.test(lower)) {
+    const LIMITED_LISTED_COUNTRIES = new Set(['IN', 'AU', 'NZ', 'CA']);
+    if (countryHint && LIMITED_LISTED_COUNTRIES.has(countryHint.toUpperCase())) {
+      return null;
+    }
     return 'uk_private_ltd';
   }
 
