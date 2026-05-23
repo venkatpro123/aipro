@@ -329,6 +329,13 @@ const fetchNewsAPIHeadlines = async (
         source: article.source?.name || 'NewsAPI',
         url: article.url || '',
         affectedDepartments: extractDepartmentsFromText(rawTitle + ' ' + (article.description || '')),
+        // Raw scraper articles are medium confidence (0.60) — below the 0.85 KS-A
+        // threshold so they do NOT trigger the kill-switch floor. Only curated/
+        // regulatory events (SEC 8-K ≥ 0.90, breaking_news_events DB ≥ 0.80)
+        // should hard-floor the score. Without this field, confidence === undefined
+        // which falls into the backward-compat KS-A path (≤14 days → floor at 72),
+        // causing every company with recent news to converge to the same score.
+        confidence: 0.60,
       };
       injectLayoffEvent(event);
       if (!latestLayoffEvent) latestLayoffEvent = event;
@@ -893,6 +900,8 @@ export const fetchLiveCompanyData = async (
           source: 'SEC EDGAR 8-K',
           url: 'https://efts.sec.gov/LATEST/search-index',
           affectedDepartments: [],
+          // SEC 8-K is a legally required material disclosure — highest confidence.
+          confidence: 0.95,
         });
         derivedLayoffEvents.push({
           date: connectorSignals.secEdgarMostRecentFiling,
@@ -915,11 +924,13 @@ export const fetchLiveCompanyData = async (
         injectLayoffEvent({
           companyName,
           date: connectorSignals.warnMostRecentFiling,
-          headline: `WARN Act notice (${warnAffected ?? 'count undisclosed'} workers across ${connectorSignals.warnNoticeCount} filing${connectorSignals.warnNoticeCount === 1 ? '' : 's'})`,
+          headline: `WARN Act notice (${warnAffected ?? 'count undisclosed'} workers across ${connectorSignals.warnNoticeCount} filing${connectorSignals.warnNoticeCount === 1 ? '' : 'es'})`,
           percentCut: 0,
           source: 'WARN Act',
           url: '',
           affectedDepartments: [],
+          // WARN Act filings are federally required 60-day advance notices — high confidence.
+          confidence: 0.90,
         });
         derivedLayoffEvents.push({
           date: connectorSignals.warnMostRecentFiling,
@@ -982,6 +993,11 @@ export const fetchLiveCompanyData = async (
             source:              row.source,
             url:                 row.source_url ?? '',
             affectedDepartments: [],
+            // Forward the DB-stored confidence so KS-A evaluation uses the
+            // curated value. Without this, confidence is undefined → null,
+            // triggering the backward-compat KS-A path (≤14 days → floor 72)
+            // for every company with a recent breaking_news_events row.
+            confidence: Number(row.confidence) || 0.80,
           });
         }
       }
