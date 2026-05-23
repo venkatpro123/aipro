@@ -586,11 +586,23 @@ function getBingJobCount(_roleTitle: string, _companyName: string, _board: "link
   return Promise.resolve(null);
 }
 
+// Market → Indeed domain mapping
+const INDEED_DOMAIN: Record<string, string> = {
+  in: "www.indeed.co.in",
+  us: "www.indeed.com",
+  uk: "uk.indeed.com",
+  sg: "sg.indeed.com",
+  au: "au.indeed.com",
+  ca: "ca.indeed.com",
+  de: "de.indeed.com",
+  fr: "fr.indeed.com",
+};
+
 // ── HIRING SOURCE 3 (PRIMARY): Indeed job count via HTML scraping ─────────────
-async function getIndeedJobCount(roleTitle: string, companyName: string): Promise<number | null> {
+async function getIndeedJobCount(roleTitle: string, companyName: string, domain = "www.indeed.com"): Promise<number | null> {
   try {
     const q = encodeURIComponent(`${roleTitle} ${companyName}`);
-    const url = `https://www.indeed.com/jobs?q=${q}&from=searchOnDesktop`;
+    const url = `https://${domain}/jobs?q=${q}&from=searchOnDesktop`;
     const res = await fetchWithRetry(url, {
       headers: stealthHeaders("https://www.indeed.com/"),
       signal: AbortSignal.timeout(9_000),
@@ -604,7 +616,43 @@ async function getIndeedJobCount(roleTitle: string, companyName: string): Promis
   } catch { return null; }
 }
 
-// ── HIRING SOURCE 4 (BACKUP): Serper API ─────────────────────────────────────
+// ── HIRING SOURCE 4 (PRIMARY): Reed.co.uk — UK job board, no key ─────────────
+async function getReedJobCount(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const keywords = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://www.reed.co.uk/jobs/${encodeURIComponent(roleTitle.toLowerCase().replace(/\s+/g, "-"))}-jobs?keywords=${keywords}`;
+    const res = await fetchWithRetry(url, {
+      headers: stealthHeaders("https://www.reed.co.uk/"),
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d,]+)\s+(?:jobs?|results?)/i)
+      ?? html.match(/"totalResults"\s*:\s*(\d+)/)
+      ?? html.match(/"jobCount"\s*:\s*(\d+)/);
+    return m ? parseInt(m[1].replace(/,/g, ""), 10) : null;
+  } catch { return null; }
+}
+
+// ── HIRING SOURCE 5 (PRIMARY): JobsDB Singapore — no key ─────────────────────
+async function getJobsDBCount(roleTitle: string, companyName: string): Promise<number | null> {
+  try {
+    const keywords = encodeURIComponent(`${roleTitle} ${companyName}`);
+    const url = `https://sg.jobsdb.com/jobs?keywords=${keywords}`;
+    const res = await fetchWithRetry(url, {
+      headers: stealthHeaders("https://sg.jobsdb.com/"),
+      signal: AbortSignal.timeout(9_000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(/(\d[\d,]+)\s+(?:job|result)/i)
+      ?? html.match(/"totalCount"\s*:\s*(\d+)/)
+      ?? html.match(/"total"\s*:\s*(\d+)/);
+    return m ? parseInt(m[1].replace(/,/g, ""), 10) : null;
+  } catch { return null; }
+}
+
+// ── HIRING SOURCE 6 (BACKUP): Serper API ─────────────────────────────────────
 function parseJobCount(data: Record<string, unknown>): number {
   const sp = data?.searchParameters as Record<string, unknown> | undefined;
   const total = sp?.totalResults;
@@ -644,25 +692,60 @@ async function getSerperJobCounts(roleTitle: string, companyName: string, serper
 }
 
 // ── HIRING: Orchestrated scraping-first signal ────────────────────────────────
-async function getHiringSignals(roleTitle: string, companyName: string, serperKey: string | undefined) {
-  // Run all scraping sources concurrently — no API key needed for primary sources
-  const [naukriDirect, bingLinkedIn, bingIndeed, indeedDirect] = await Promise.allSettled([
-    getNaukriJobCount(roleTitle, companyName),
-    getBingJobCount(roleTitle, companyName, "linkedin"),
-    getBingJobCount(roleTitle, companyName, "indeed"),
-    getIndeedJobCount(roleTitle, companyName),
-  ]);
+// market: 'in' (default) | 'us' | 'uk' | 'sg' — routes to the right job boards.
+//   in → Naukri + Indeed IN          (India)
+//   us → Indeed US                    (United States)
+//   uk → Reed.co.uk + Indeed UK       (United Kingdom)
+//   sg → JobsDB SG + Indeed SG        (Singapore)
+// The naukriOpenings slot in the response doubles as the "primary regional board"
+// count for non-India markets (Reed for UK, JobsDB for SG). scrapeSource names the boards.
+async function getHiringSignals(roleTitle: string, companyName: string, serperKey: string | undefined, market = "in") {
+  const indeedDomain = INDEED_DOMAIN[market] ?? "www.indeed.com";
 
-  const naukriCount = naukriDirect.status === "fulfilled" ? (naukriDirect.value ?? 0) : 0;
-  const linkedinCount = bingLinkedIn.status === "fulfilled" ? (bingLinkedIn.value ?? 0) : 0;
-  const indeedBingCount = bingIndeed.status === "fulfilled" ? (bingIndeed.value ?? 0) : 0;
-  const indeedDirectCount = indeedDirect.status === "fulfilled" ? (indeedDirect.value ?? 0) : 0;
+  let naukriCount = 0, linkedinCount = 0, indeedBest = 0;
+  let scrapeSource: string;
 
-  // Combine LinkedIn + Indeed + Naukri counts (each capped to avoid inflation)
-  const indeedBest = Math.max(indeedBingCount, indeedDirectCount);
+  if (market === "uk") {
+    const [reedRes, indeedRes] = await Promise.allSettled([
+      getReedJobCount(roleTitle, companyName),
+      getIndeedJobCount(roleTitle, companyName, indeedDomain),
+    ]);
+    naukriCount  = reedRes.status   === "fulfilled" ? (reedRes.value   ?? 0) : 0;
+    indeedBest   = indeedRes.status === "fulfilled" ? (indeedRes.value ?? 0) : 0;
+    scrapeSource = "reed+indeed-uk";
+  } else if (market === "sg") {
+    const [jobsdbRes, indeedRes] = await Promise.allSettled([
+      getJobsDBCount(roleTitle, companyName),
+      getIndeedJobCount(roleTitle, companyName, indeedDomain),
+    ]);
+    naukriCount  = jobsdbRes.status === "fulfilled" ? (jobsdbRes.value ?? 0) : 0;
+    indeedBest   = indeedRes.status === "fulfilled" ? (indeedRes.value ?? 0) : 0;
+    scrapeSource = "jobsdb+indeed-sg";
+  } else if (market === "us") {
+    const [indeedRes] = await Promise.allSettled([
+      getIndeedJobCount(roleTitle, companyName, indeedDomain),
+    ]);
+    indeedBest   = indeedRes.status === "fulfilled" ? (indeedRes.value ?? 0) : 0;
+    scrapeSource = "indeed-us";
+  } else {
+    // Default: India — Naukri primary, Bing (disabled but kept for shape), Indeed IN
+    const [naukriDirect, bingLinkedIn, bingIndeed, indeedDirect] = await Promise.allSettled([
+      getNaukriJobCount(roleTitle, companyName),
+      getBingJobCount(roleTitle, companyName, "linkedin"),
+      getBingJobCount(roleTitle, companyName, "indeed"),
+      getIndeedJobCount(roleTitle, companyName, indeedDomain),
+    ]);
+    naukriCount         = naukriDirect.status === "fulfilled" ? (naukriDirect.value ?? 0) : 0;
+    linkedinCount       = bingLinkedIn.status === "fulfilled" ? (bingLinkedIn.value ?? 0) : 0;
+    const indeedBingCount   = bingIndeed.status  === "fulfilled" ? (bingIndeed.value  ?? 0) : 0;
+    const indeedDirectCount = indeedDirect.status === "fulfilled" ? (indeedDirect.value ?? 0) : 0;
+    indeedBest   = Math.max(indeedBingCount, indeedDirectCount);
+    scrapeSource = "naukri+linkedin+indeed";
+  }
+
+  // Combine all active sources (each capped to avoid inflation)
   let totalOpenings = Math.min(naukriCount, 500) + Math.min(linkedinCount, 500) + Math.min(indeedBest, 500);
   let isLive = naukriCount > 0 || linkedinCount > 0 || indeedBest > 0;
-  let scrapeSource = "naukri+linkedin+indeed";
 
   // Fallback to Serper if scraping returned nothing AND key is available
   if (!isLive && serperKey) {
@@ -696,6 +779,7 @@ async function getHiringSignals(roleTitle: string, companyName: string, serperKe
     demandTrend,
     isLive,
     scrapeSource,
+    market,
     serperRateLimited: false,
     fetchedAt: new Date().toISOString(),
   };
@@ -920,7 +1004,7 @@ Deno.serve((req) =>
   // source failures.
   withRun("proxy-live-signals", req, async (_run) => {
   try {
-    const { companyName, ticker, action, roleTitle } = await req.json() as Record<string, string>;
+    const { companyName, ticker, action, roleTitle, market } = await req.json() as Record<string, string>;
     if (!action) return json({ error: "action required (stock|news|both|hiring|scrape)" }, 400);
 
     const newsKey   = Deno.env.get("NEWSAPI_KEY");
@@ -1036,7 +1120,7 @@ Deno.serve((req) =>
         result.hiringData = null;
         result.errors.push("roleTitle and companyName required for hiring signals");
       } else {
-        result.hiringData = await getHiringSignals(roleTitle, companyName, serperKey);
+        result.hiringData = await getHiringSignals(roleTitle, companyName, serperKey, market ?? "in");
         const hd = result.hiringData as Record<string, unknown>;
         console.log(`[proxy] Hiring ✓ (${hd.scrapeSource}) — "${roleTitle}" at "${companyName}": ${hd.estimatedOpenings ?? 0} openings`);
       }

@@ -741,6 +741,72 @@ export const EMPLOYMENT_PROTECTION_LAW: Record<string, EmploymentProtectionRegim
       'EU Blue Card holders: 3-month job-seeking period maintained on termination',
     ],
   },
+  // ── Singapore ─────────────────────────────────────────────────────────────
+  // Employment Act (Cap. 91A) governs most employees; EFMA governs EP/S Pass
+  // holders. No government approval before dismissal — MOM notification is
+  // post-notice. No mandatory redundancy pay; Tripartite Advisory recommends
+  // 1 month/year for 2+ yr employees. Critical for EP/S Pass holders: work
+  // pass must be cancelled within 1 week; MOM provides a 30-day grace pass.
+  SG: {
+    countryCode: 'SG',
+    countryName: 'Singapore',
+    flagEmoji: '🇸🇬',
+    regime: 'Employment Act (Cap. 91A) + EFMA + MOM Retrenchment Guidelines',
+    governanceBody: 'Ministry of Manpower (MOM) + Tripartite Alliance (TAFEP)',
+    collectiveThreshold: 5,   // MOM notification when 5+ retrenchments at 10+ employee company
+    smallCutComponents: [
+      {
+        label: 'Statutory notice period (Employment Act §10)',
+        daysMin: 1,    // 1 day (< 26 weeks service)
+        daysMax: 28,   // 4 weeks (5+ years service)
+        isOptional: false,
+        triggerNote: 'EA §10: 1 day (<26wks), 1 week (26wks–2yr), 2 weeks (2–5yr), 4 weeks (5yr+). Contractual notice (typically 1–3 months for managerial) takes precedence if longer.',
+      },
+    ],
+    largeCutAdditionalComponents: [
+      {
+        label: 'MOM retrenchment notification (5 working days)',
+        daysMin: 5,
+        daysMax: 7,   // 5 working days ≈ 7 calendar days
+        isOptional: false,
+        triggerNote: 'Employers with 10+ employees must notify MOM within 5 working days of issuing retrenchment notices to 5+ employees. Post-notice filing — not prior approval.',
+      },
+      {
+        label: 'TAFEP Tripartite Advisory — redeployment effort',
+        daysMin: 14,
+        daysMax: 28,
+        isOptional: true,
+        triggerNote: 'Best-practice (not statutory): 2–4 weeks to genuinely consider redeployment, retraining, or transfer before finalising retrenchment.',
+      },
+    ],
+    totalDaysSmall:     { min: 1,   max: 28  },
+    totalDaysLarge:     { min: 19,  max: 63  },
+    extensionVsUSBaselineDays: { min: 0, max: 3 },
+    isGovernmentApprovalRequired: false,
+    governmentApprovalNote: 'MOM notification required within 5 working days after issuing retrenchment notices — not prior approval. No statutory prevention mechanism.',
+    hasMandatorySocialPlan: false,
+    socialPlanNote: 'Tripartite Advisory recommends retrenchment benefit: 2 weeks/yr of service (<2yr), 1 month/yr (2yr+). Not statutory — most MNCs follow the advisory.',
+    labeledAs: 'ESTIMATED',
+    labelNote: 'Derived from Employment Act (Cap. 91A) §10, EFMA, MOM Retrenchment Guidelines (2023), TAFEP Tripartite Advisory on Managing Excess Manpower (2025). EP/S Pass holders: pass must be cancelled by employer within 1 week of termination; MOM issues 30-day short-term visit pass for job search.',
+    protectionSummary: '1–4 weeks statutory notice; EP grace period 30 days',
+    disclosureNarrative:
+      'Singapore\'s Employment Act provides statutory notice (1 day to 4 weeks by tenure) but no government-approval ' +
+      'step and no mandatory redundancy pay. For retrenchments affecting 5+ employees at companies with 10+ employees, ' +
+      'MOM must be notified within 5 working days of issuing notices — this is post-notice filing, not prior approval. ' +
+      'The Tripartite Advisory recommends (but does not mandate) 2–4 weeks of genuine redeployment effort and a ' +
+      'retrenchment benefit of 1 month per year of service for employees with 2+ years tenure. Most MNCs follow the advisory. ' +
+      'Critical for EP/S Pass holders: your work pass must be cancelled by your employer within 1 week of termination. ' +
+      'MOM grants a 30-day short-term visit pass for job search — begin your sponsor search on Day 1.',
+    workerActions: [
+      'EP/S Pass holders: MOM grants 30-day visit pass from termination — begin new sponsor search on Day 1',
+      'Verify retrenchment benefit: Tripartite Advisory recommends 1 month/yr for 2+ yr employees',
+      'Check if your company is NTUC-affiliated — collective agreement may provide enhanced notice or benefits',
+      'Register with WSG (Workforce Singapore) for career coaching and the Career Conversion Programme',
+      'Submit SkillsFuture Credit claims — government co-funds MOM-approved retraining; apply within 90 days',
+      'Lodge a claim with MOM if statutory notice pay or agreed retrenchment benefit is unpaid',
+    ],
+  },
+
 };
 
 // ── Resolution helpers ────────────────────────────────────────────────────────

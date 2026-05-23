@@ -19,6 +19,8 @@ import {
   enforceEuCommunityShareDefault,
   getEffectiveCommunityShare,
 } from "../../services/gdprService";
+import { supabase } from "../../utils/supabase";
+import { useAuth } from "../../context/AuthContext";
 
 // Lazy-loaded tab modules for performance
 const OverviewTab = lazy(() => import("../AuditTabs/OverviewTab"));
@@ -180,6 +182,7 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
   onDownload,
   onRecalculate,
 }) => {
+  const { session } = useAuth();
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
   const prevTabRef = useRef<TabValue>('overview');
 
@@ -212,6 +215,26 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
     setCommunityShare(next);
     try { localStorage.setItem('hp_community_share', next ? '1' : '0'); } catch { /* ignore */ }
   };
+
+  // ── Retroactive community share ───────────────────────────────────────────
+  // Calls update_community_share_consent RPC to backfill all historical audit
+  // rows in one shot. Only available to authenticated users who have opted in.
+  type RetroStatus = 'idle' | 'pending' | 'done' | 'error';
+  const [retroStatus, setRetroStatus] = useState<RetroStatus>('idle');
+  const [retroCount, setRetroCount] = useState(0);
+
+  const handleRetroactiveShare = useCallback(async () => {
+    if (!session || retroStatus === 'pending' || retroStatus === 'done') return;
+    setRetroStatus('pending');
+    try {
+      const { data, error } = await supabase.rpc('update_community_share_consent', { p_enable: true });
+      if (error) throw error;
+      setRetroCount((data as { rows_updated: number })?.rows_updated ?? 0);
+      setRetroStatus('done');
+    } catch {
+      setRetroStatus('error');
+    }
+  }, [session, retroStatus]);
 
   // Rate-limit transparency — reactive: re-reads every 30s.
   const [degradation, setDegradation] = useState<DegradationState>(() => getDegradationState());
@@ -539,6 +562,26 @@ export const LayoffAuditDashboard: React.FC<Props> = ({
                   ? 'Your score is included in the AI Risk Intelligence aggregate. No personal data is shared.'
                   : 'Help build accurate industry benchmarks — opt in to share your anonymous risk score.'}
               </p>
+              {communityShare && session && retroStatus !== 'done' && (
+                <button
+                  type="button"
+                  onClick={handleRetroactiveShare}
+                  disabled={retroStatus === 'pending'}
+                  className="mt-1.5 text-[10px] font-mono text-cyan-400/70 hover:text-cyan-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {retroStatus === 'pending' ? '[ APPLYING… ]' : '[ SHARE MY PAST AUDITS ]'}
+                </button>
+              )}
+              {retroStatus === 'done' && (
+                <p className="mt-1.5 text-[10px] font-mono text-emerald-400/70">
+                  ✓ {retroCount} past audit{retroCount !== 1 ? 's' : ''} now included in community benchmarks
+                </p>
+              )}
+              {retroStatus === 'error' && (
+                <p className="mt-1.5 text-[10px] font-mono text-red-400/60">
+                  Failed — please try again
+                </p>
+              )}
             </div>
           </div>
 
