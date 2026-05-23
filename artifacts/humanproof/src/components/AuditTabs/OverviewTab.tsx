@@ -1918,6 +1918,45 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
             Runway not provided — using 6-month industry default. Analysis adjusts when you specify your actual savings buffer.
           </p>
         )}
+
+        {/* MENA end-of-service gratuity breakdown — only when gratuity materially applies */}
+        {runway.gratuityNarrative && runway.gratuityMonths > 0 && (
+          <div
+            className="rounded-lg px-3 py-2.5 mb-3"
+            style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.20)' }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span
+                className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded"
+                style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}
+              >
+                MODELED
+              </span>
+              <span className="text-[10px] font-semibold" style={{ color: '#10b981' }}>
+                End-of-Service Gratuity Included
+              </span>
+            </div>
+            <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              {runway.gratuityNarrative}
+            </p>
+            {runway.savedRunwayMonths != null && (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)' }}>
+                  Savings: {runway.savedRunwayMonths}mo
+                </span>
+                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>+</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                  Gratuity: {runway.gratuityMonths.toFixed(1)}mo
+                </span>
+                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>=</span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: `${color}15`, color }}>
+                  Effective: {runway.runwayMonths.toFixed(1)}mo
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{runway.keyInsight}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">

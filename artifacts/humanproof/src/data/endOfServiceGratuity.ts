@@ -261,6 +261,8 @@ export function resolveGratuityCountryFromVisa(
       return 'QA';
     case 'kuwait_work_permit':
       return 'KW';
+    case 'bahrain_work_permit':
+      return 'BH';
     // gcc_sponsored: country ambiguous — fall back to companyData.region
     default:
       return null;

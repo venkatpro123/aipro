@@ -13,6 +13,8 @@
 //   - Unknown runway is treated as moderate (1.0 multiplier) — we don't want to
 //     manufacture false urgency when the user has not provided financial data.
 
+import { computeGratuity, resolveGratuityCountryFromVisa } from '../data/endOfServiceGratuity';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 /**
@@ -58,6 +60,12 @@ export interface UserFinancialContext {
   displayCurrencyCode?: string | null;
   /** Raw local-currency monthly salary — forwarded to UI so it can show "SGD 8,500 = ~$6,340 USD". */
   localMonthlySalaryRaw?: number | null;
+  /** Visa status string — used to resolve MENA gratuity country when countryCode is absent. */
+  visaStatus?: string | null;
+  /** Years of service at current employer — required for gratuity computation. */
+  tenureYears?: number | null;
+  /** ISO 3166-1 alpha-2 country code — fallback when visaStatus doesn't resolve to a MENA regime. */
+  countryCode?: string | null;
 }
 
 /** Output: full assessment consumed by action-ranking and UI panels. */
@@ -70,8 +78,14 @@ export interface FinancialRunwayAssessment {
    * Used for composite scoring displays and progress-bar UI.
    */
   situationScore: number;
-  /** Raw runway in months (null when unknown). */
+  /** Effective runway = savings + gratuity (for MENA users). Null when unknown. */
   runwayMonths: number | null;
+  /** Raw savings-only runway before gratuity is added. */
+  savedRunwayMonths: number | null;
+  /** MENA end-of-service gratuity contribution in months (0 when non-MENA). MODELED. */
+  gratuityMonths: number;
+  /** ISO country code that produced the gratuity (AE, SA, QA, BH, OM, KW). */
+  gratuityCountryCode?: string;
   /** UI urgency badge level. */
   urgencyLevel: UrgencyLevel;
   /**
@@ -277,12 +291,36 @@ function resolveEquityAnchor(ctx: UserFinancialContext): number | null {
  * ```
  */
 export function assessFinancialRunway(ctx: UserFinancialContext): FinancialRunwayAssessment {
-  const runway = ctx.savingsMonthsRunway;
+  const savedRunway = ctx.savingsMonthsRunway;
+
+  // MENA end-of-service gratuity: legally guaranteed lump-sum at termination.
+  // Adds effective months of runway for urgency classification. A UAE employee with
+  // 3 months savings + 4.1 months gratuity has 7.1 effective months → 'moderate', not 'tight'.
+  const gratuityCountryCode =
+    resolveGratuityCountryFromVisa(ctx.visaStatus ?? null) ?? ctx.countryCode ?? null;
+  const gratuityCalc = (gratuityCountryCode && ctx.tenureYears != null && ctx.tenureYears > 0)
+    ? computeGratuity(gratuityCountryCode, ctx.tenureYears)
+    : null;
+  const gratuityMonths = gratuityCalc?.effectiveBufferMonths ?? 0;
+
+  // Effective runway folds gratuity into urgency tier determination.
+  const runway = savedRunway != null ? savedRunway + gratuityMonths : null;
   const situation = classifyRunway(runway);
   const config = SITUATION_CONFIG[situation];
 
   const keyConstraints = buildConstraints(ctx, situation, runway);
   const keyStrengths = buildStrengths(ctx, situation, runway);
+
+  // Surface gratuity as an explicit financial strength when it meaningfully shifts the picture.
+  if (gratuityMonths >= 1) {
+    const cCode = gratuityCalc!.countryCode;
+    const cLabel: Record<string, string> = { AE: 'UAE', SA: 'Saudi Arabia', QA: 'Qatar', BH: 'Bahrain', OM: 'Oman', KW: 'Kuwait' };
+    keyStrengths.unshift(
+      `${cLabel[cCode] ?? cCode} end-of-service gratuity: ~${gratuityMonths.toFixed(1)} months of effective runway accrued ` +
+      `(legally guaranteed upon termination) — included in your ${runway?.toFixed(1) ?? '?'}-month effective runway total.`,
+    );
+  }
+
   const equityAnchorMonths = resolveEquityAnchor(ctx);
   const situationSummary = buildSummary(situation, runway);
 
@@ -290,6 +328,9 @@ export function assessFinancialRunway(ctx: UserFinancialContext): FinancialRunwa
     situation,
     situationScore: config.score,
     runwayMonths: runway,
+    savedRunwayMonths: savedRunway,
+    gratuityMonths,
+    gratuityCountryCode: gratuityCalc?.countryCode,
     urgencyLevel: config.urgencyLevel,
     equityAnchorMonths,
     keyConstraints,

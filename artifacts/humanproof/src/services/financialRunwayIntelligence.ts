@@ -65,6 +65,9 @@ export interface FinancialRunwayResult {
   gratuityDisclosure?: string;
   /** ISO country code that produced the gratuity calculation (AE, SA, QA, BH, OM, KW). */
   gratuityCountryCode?: string;
+  /** Full panel narrative: "Your N-year UAE tenure includes approximately X.X months of accrued
+   *  end-of-service gratuity ... Effective runway: saved + gratuity = total months." MODELED. */
+  gratuityNarrative?: string;
   tier: RunwayTier;
   tierLabel: string;
   urgencyModifier: number;         // multiplier on action deadlines (Critical: 0.5×, Strong: 2.0×)
@@ -434,6 +437,23 @@ export function computeFinancialRunway(inputs: FinancialRunwayInputs): Financial
     : null;
   const gratuityMonths = gratuityCalc?.effectiveBufferMonths ?? 0;
 
+  // Build panel narrative so the UI can render the statutory breakdown verbatim.
+  const COUNTRY_DISPLAY: Record<string, string> = {
+    AE: 'UAE', SA: 'Saudi Arabia', QA: 'Qatar', BH: 'Bahrain', OM: 'Oman', KW: 'Kuwait',
+  };
+  let gratuityNarrative: string | undefined;
+  if (gratuityCalc && gratuityMonths > 0 && tenureYears != null) {
+    const cName = COUNTRY_DISPLAY[gratuityCalc.countryCode] ?? gratuityCalc.countryName;
+    const tierDesc = tenureYears <= 5
+      ? `21 days/year × ${tenureYears} year${tenureYears !== 1 ? 's' : ''}`
+      : `21 days/year × 5 years + 30 days/year × ${(tenureYears - 5).toFixed(1)} years`;
+    gratuityNarrative =
+      `Your ${tenureYears}-year ${cName} tenure includes approximately ${gratuityMonths.toFixed(1)} months ` +
+      `of accrued end-of-service gratuity (${tierDesc}). ` +
+      `Effective runway: ${savedRunwayMonths} + ${gratuityMonths.toFixed(1)} = ${(savedRunwayMonths + gratuityMonths).toFixed(1)} months. ` +
+      `This is a legally guaranteed payment upon termination.`;
+  }
+
   // Effective runway folds gratuity into the urgency calculation.
   // A 4-month-savings UAE employee with 7 years tenure (≈4.1 months gratuity effective)
   // has effective runway 8.1 months → "comfortable" tier, NOT "critical".
@@ -473,6 +493,7 @@ export function computeFinancialRunway(inputs: FinancialRunwayInputs): Financial
     gratuityMonths,
     gratuityDisclosure: gratuityCalc?.disclosureText,
     gratuityCountryCode: gratuityCalc?.countryCode,
+    gratuityNarrative,
     tier,
     tierLabel: cfg.label,
     urgencyModifier: cfg.urgencyModifier,

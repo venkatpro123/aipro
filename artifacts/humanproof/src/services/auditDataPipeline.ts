@@ -3222,6 +3222,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       hasDependents: uf16.hasDependents ?? false,
       dualIncomeHousehold: uf16.dualIncomeHousehold ?? false,
       priorLayoffSurvived: uf16.priorLayoffSurvived ?? false,
+      visaStatus: uf16.visaStatus ?? null,
+      tenureYears: uf16.tenureYears ?? null,
     });
     (hybridResult as any).userFinancialRunway = userFinancialRunway;
   } catch (e) {
