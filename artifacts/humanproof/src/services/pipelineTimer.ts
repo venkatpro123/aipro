@@ -100,6 +100,9 @@ export type CheckpointLabel =
   // Alpha Vantage proxy (liveDataService — proxy-live-signals EF)
   | 'alphavantage_start'
   | 'alphavantage_end'
+  // DAG phase (migrated layers: macro_snapshot, cohort_class, stealth_layoff, etc.)
+  | 'dag_phase_start'
+  | 'dag_phase_end'
   // Total
   | 'pipeline_end';
 
@@ -116,7 +119,12 @@ const STEP_PAIRS: Array<{ name: string; start: CheckpointLabel; end: CheckpointL
   { name: 'Deterministic engine',   start: 'engine_start',        end: 'engine_end'        },
   { name: 'Oracle EF',              start: 'oracle_start',        end: 'oracle_end'        },
   { name: 'Tier A LLM (Claude)',    start: 'llm_start',           end: 'llm_end'           },
-  { name: 'mapToHybridResult',      start: 'map_to_hybrid_start', end: 'map_to_hybrid_end' },
+  { name: 'mapToHybridResult',      start: 'map_to_hybrid_start',        end: 'map_to_hybrid_end'        },
+  // 55-engine intelligence upgrade block — the only async step inside is
+  // peerContagionLive (layer 22); all other 54 engines are synchronous CPU.
+  // Reported here so computePercentiles() surfaces total engine-layer cost.
+  { name: 'Intelligence layers (55)',start: 'intelligence_upgrade_start', end: 'intelligence_upgrade_end' },
+  { name: 'DAG phase (5 layers)',    start: 'dag_phase_start',            end: 'dag_phase_end'            },
 ];
 
 // ── Network condition heuristic ───────────────────────────────────────────────

@@ -1581,6 +1581,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   })();
   const dagDisabled = dagFlag.mode === 'off' || (dagFlag.mode as any) === 'deprecated';
   let _dagDegradedCount = 0;
+  _timer.mark('dag_phase_start');
   try {
     if (dagDisabled) {
       auditPipelineLog.info('dag.phase.disabled_by_flag', { company: inputs.companyName });
@@ -1630,6 +1631,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
     _dagDegradedCount++;
   }
+  _timer.mark('dag_phase_end');
   // v40.0: track DAG degraded layer count — surfaced on hybridResult after assembly
 
   // WS4 — Conformal CI post-processing (Audit Issue #26).
