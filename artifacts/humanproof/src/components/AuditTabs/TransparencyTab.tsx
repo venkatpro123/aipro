@@ -2730,77 +2730,108 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
-          {/* Performance credibility disclosure.
-              Shown when reportedPerformanceTier exists (meaning the tier was adjusted)
-              and differs from the effective performanceTier.
-              Spec-exact format: "Reported: Top performer. Effective (after credibility
-              analysis): Moderate." This is not punitive — it is accurate. */}
-          {result.reportedPerformanceTier !== undefined &&
-           result.reportedPerformanceTier !== result.performanceTier && (() => {
-            // Tier → human label mapping for the spec disclosure
+          {/* D4 Performance credibility disclosure.
+              Shown when the credibility engine adjusted the effective tier (d4CredibilityAdjustmentApplied).
+              Spec-exact format v2:
+                "Reported performance: Top. Effective (credibility-adjusted): Moderate.
+                 Contradicting signals: no promotion in 5 years (−0.55 credibility)."
+              Falls back to legacy flat fields when d4-prefixed fields are absent. */}
+          {((result as any).d4CredibilityAdjustmentApplied === true ||
+            (result.reportedPerformanceTier !== undefined &&
+             result.reportedPerformanceTier !== result.performanceTier)) && (() => {
+            // Prefer d4-prefixed fields; fall back to legacy flat fields for backwards compat.
+            const reported  = ((result as any).d4ReportedPerformanceTier  ?? result.reportedPerformanceTier) as string | undefined;
+            const effective = ((result as any).d4EffectivePerformanceTier ?? result.performanceTier)         as string | undefined;
+            const contradictingSignals = ((result as any).d4ContradictingSignals ?? []) as Array<{
+              shortLabel: string; penaltyApplied: number; severity: string; signal2: string;
+            }>;
+
+            // Compact tier labels: "Top", "Moderate", "Below average".
             const tierLabel = (t: string | undefined): string => {
-              if (t === 'top')     return 'Top performer';
+              if (t === 'top')     return 'Top';
               if (t === 'average') return 'Moderate';
               if (t === 'below')   return 'Below average';
               return 'Unknown';
             };
-            const reportedLabel  = tierLabel(result.reportedPerformanceTier);
-            const effectiveLabel = tierLabel(result.performanceTier);
+            const reportedLabel  = tierLabel(reported);
+            const effectiveLabel = tierLabel(effective);
             const credPct = result.performanceCredibilityScore != null
               ? Math.round(result.performanceCredibilityScore * 100)
               : null;
 
-            // Region-adjusted threshold context for the disclosure line.
-            // Spec: "Region-adjusted credibility check: no role change in 5 years (India IT threshold)."
-            const regionKey       = (result as any).performanceCredibilityRegionKey as string | undefined;
-            const thresholdLabel  = (result as any).performanceCredibilityThresholdLabel as string | undefined;
+            const regionKey      = (result as any).performanceCredibilityRegionKey as string | undefined;
+            const thresholdLabel = (result as any).performanceCredibilityThresholdLabel as string | undefined;
             const isRegionAdjusted = regionKey === 'india' || regionKey === 'germany';
-
-            // Human-readable threshold noun: India uses "role change" (band/grade shift counts),
-            // all other markets use "promotion".
-            const progressionNoun = regionKey === 'india' ? 'role change' : 'promotion';
-
-            // The noPromotionYearsThreshold isn't threaded to HybridResult directly, so we
-            // derive it from the region key for the disclosure label.
-            const thresholdYears = (regionKey === 'india' || regionKey === 'germany') ? 5 : 3;
+            const progressionNoun  = regionKey === 'india' ? 'role change' : 'promotion';
+            const thresholdYears   = (regionKey === 'india' || regionKey === 'germany') ? 5 : 3;
+            // Downward adjustment (top→average/unknown) vs upward (below→average).
+            const isDownwardAdj = reported === 'top';
 
             return (
               <div className="mb-6 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
                 <div className="flex gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
+                  <div className="w-full">
                     <h4 className="font-semibold text-amber-300 text-sm mb-1.5">
-                      Performance Credibility Analysis
+                      D4 · Performance Credibility Analysis
                     </h4>
 
-                    {/* Spec line 1: reported vs effective */}
-                    <p className="text-sm font-semibold text-amber-200 mb-1">
-                      Performance tier: {reportedLabel} (reported). Effective tier: {effectiveLabel}.
+                    {/* Spec-exact line 1: "Reported performance: Top. Effective (credibility-adjusted): Moderate." */}
+                    <p className="text-sm font-semibold text-amber-200 mb-1.5">
+                      Reported performance: <span className="font-black">{reportedLabel}</span>.{' '}
+                      Effective (credibility-adjusted): <span className="font-black">{effectiveLabel}</span>.
                     </p>
 
-                    {/* Spec line 2: region-specific threshold disclosure */}
+                    {/* Spec-exact line 2: contradicting signals with per-signal penalty.
+                        Format: "Contradicting signals: no promotion in 5 years (−0.55 credibility)." */}
+                    {contradictingSignals.length > 0 && (
+                      <div className="mb-2">
+                        <p className="text-xs font-semibold text-amber-300/90 mb-1">
+                          Contradicting signals:
+                        </p>
+                        <ul className="space-y-1">
+                          {contradictingSignals.map((s, i) => (
+                            <li key={i} className="text-xs text-amber-200/80 flex items-start gap-1.5">
+                              <span className="text-amber-400/60 mt-px shrink-0">•</span>
+                              <span>
+                                {s.shortLabel}
+                                {s.penaltyApplied > 0 && (
+                                  <span className="text-amber-400/70 font-medium">
+                                    {' '}(−{s.penaltyApplied.toFixed(2)} credibility)
+                                  </span>
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Region-adjusted threshold context */}
                     {isRegionAdjusted && thresholdLabel && (
-                      <p className="text-xs font-medium text-amber-300/90 mb-1.5">
-                        Region-adjusted credibility check: no {progressionNoun} in {thresholdYears} years
+                      <p className="text-xs font-medium text-amber-300/80 mb-1.5">
+                        Region threshold: no {progressionNoun} in {thresholdYears} years
                         {' '}({thresholdLabel}).
                       </p>
                     )}
 
-                    <p className="text-xs text-amber-200/75 leading-relaxed">
+                    {/* Credibility score + explanation */}
+                    <p className="text-xs text-amber-200/65 leading-relaxed">
                       {credPct !== null && (
-                        <>Credibility score: <span className="font-bold">{credPct}%</span>. </>
+                        <>Credibility score: <span className="font-bold">{credPct}%</span>.{' '}</>
                       )}
-                      Objective signals — tenure without {progressionNoun}, generic role profile —
-                      contradict the self-reported tier. The engine applied the effective
-                      tier (<span className="font-bold">{effectiveLabel}</span>) to L5 scoring.
+                      {isDownwardAdj
+                        ? <>The engine applied the effective tier (<span className="font-bold">{effectiveLabel}</span>) to L5 scoring.</>
+                        : <>Objective signals suggest the reported tier may be conservative — effective tier used for scoring.</>
+                      }
                     </p>
-                    <p className="text-xs text-amber-200/60 mt-1.5 leading-relaxed">
-                      This is not punitive — it is accurate. A top performer who has had no {progressionNoun}{' '}
-                      in several years is either in a specific circumstance (IC track, flat org
-                      {regionKey === 'india' ? ', lateral rotation' : ''}) or is rating their
-                      performance optimistically. If your situation is the former, your actual
-                      risk is lower than shown.
-                    </p>
+                    {isDownwardAdj && (
+                      <p className="text-xs text-amber-200/50 mt-1.5 leading-relaxed">
+                        This is not punitive — it is accurate. If you are on an IC track, in a flat
+                        org{regionKey === 'india' ? ', or made a lateral rotation' : ''}, your actual
+                        risk is lower than shown. Update your profile to reflect that context.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

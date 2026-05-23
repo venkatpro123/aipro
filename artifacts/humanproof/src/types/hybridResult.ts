@@ -483,6 +483,25 @@ export interface HybridResult {
   performanceCredibilityRegionKey?: 'india' | 'germany' | 'us' | 'default';
   /** Human-readable label shown in TransparencyTab, e.g. "India IT threshold (5 years)". */
   performanceCredibilityThresholdLabel?: string;
+
+  // ── D4 credibility block (d4-prefixed, mirrors d8 naming pattern) ───────────
+  /** Effective tier after credibility analysis — primary source for TransparencyTab D4 panel. */
+  d4EffectivePerformanceTier?: 'top' | 'average' | 'below' | 'unknown';
+  /** Self-reported tier before any credibility adjustment. Always populated when D4 ran. */
+  d4ReportedPerformanceTier?: 'top' | 'average' | 'below' | 'unknown';
+  /** True when the credibility engine changed the effective tier from the reported tier. */
+  d4CredibilityAdjustmentApplied?: boolean;
+  /** Objective signals that contradicted the self-reported tier, each with its penalty.
+   *  Drives the TransparencyTab format:
+   *  "Contradicting signals: no promotion in 5 years (−0.55 credibility)." */
+  d4ContradictingSignals?: Array<{
+    signal1:        string;
+    signal2:        string;
+    shortLabel:     string;
+    severity:       'High' | 'Medium' | 'Low';
+    penaltyApplied: number;
+  }>;
+
   /**
    * Formula score before any kill-switch floor was applied.
    * Used by KillSwitchFloorBadge: "Floor: 72 → Formula: 54".

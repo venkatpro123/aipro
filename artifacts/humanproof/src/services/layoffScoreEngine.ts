@@ -1542,6 +1542,11 @@ export interface ScoreResult {
   performanceCredibilityRegionKey?: CredibilityRegionKey;
   /** Human-readable label for the threshold applied, shown in TransparencyTab. */
   performanceCredibilityThresholdLabel?: string;
+  // D4 credibility block — d4-prefixed to match d8 naming pattern.
+  d4EffectivePerformanceTier?: UserFactors['performanceTier'];
+  d4ReportedPerformanceTier?: UserFactors['performanceTier'];
+  d4CredibilityAdjustmentApplied?: boolean;
+  d4ContradictingSignals?: PerformanceContradiction[];
   /**
    * India-specific sector intelligence — only present when companyData.region === 'IN'.
    * Contains GCC archetype, NASSCOM sector benchmarks, seasonal risk window,
@@ -3115,14 +3120,27 @@ export const CREDIBILITY_REGION_THRESHOLDS = {
 
 export type CredibilityRegionKey = keyof typeof CREDIBILITY_REGION_THRESHOLDS;
 
+/** One objective signal that contradicts the user's self-reported performance tier.
+ *  Used by TransparencyTab to render:
+ *  "Contradicting signals: no promotion in 5 years (−0.55 credibility)." */
+export interface PerformanceContradiction {
+  signal1: string;
+  signal2: string;
+  /** Compact label for inline TransparencyTab display: "no promotion in 7 years". */
+  shortLabel: string;
+  severity: 'High' | 'Medium' | 'Low';
+  /** Credibility penalty this signal contributed (0–1). 0 for upward 'below'-tier corrections. */
+  penaltyApplied: number;
+}
+
 export interface PerformanceCredibility {
   /** The user's original self-reported tier — preserved so callers can show
-   *  "Reported: Top performer. Effective: Moderate." in the UI. */
+   *  "Reported performance: Top. Effective (credibility-adjusted): Moderate." in the UI. */
   reportedTier:     UserFactors['performanceTier'];
   /** The tier actually used for L5 scoring after credibility discounting. */
   effectiveTier:    UserFactors['performanceTier'];
   credibilityScore: number;   // 0–1
-  contradictions:   Array<{ signal1: string; signal2: string; severity: string }>;
+  contradictions:   PerformanceContradiction[];
   /** Which region threshold was applied to the no-promotion penalty. */
   regionKey: CredibilityRegionKey;
   /** Human-readable label surfaced in TransparencyTab credibility disclosure. */
@@ -3171,14 +3189,16 @@ export const analyzePerformanceCredibility = (
     // Symmetric credibility check: challenge over-pessimistic 'below' self-reports.
     // Prevents anxiety-driven users from inflating their own risk score.
     if (performanceTier === 'below') {
-      const belowContradictions: Array<{ signal1: string; signal2: string; severity: string }> = [];
+      const belowContradictions: PerformanceContradiction[] = [];
 
       // Recent promotion is an objective signal that overrides the 'below' self-report
       if (hasRecentPromotion) {
         belowContradictions.push({
-          signal1: 'Below-average performance (self-reported)',
-          signal2: 'Recent promotion — objective signal contradicts self-report',
-          severity: 'High',
+          signal1:        'Below-average performance (self-reported)',
+          signal2:        'Recent promotion — objective signal contradicts self-report',
+          shortLabel:     'recent promotion contradicts below-average self-report',
+          severity:       'High',
+          penaltyApplied: 0,
         });
         return { ...baseResult, reportedTier: performanceTier, effectiveTier: 'average', credibilityScore: 0.65, contradictions: belowContradictions };
       }
@@ -3186,9 +3206,11 @@ export const analyzePerformanceCredibility = (
       // Long tenure + key relationships suggests anxiety-driven under-reporting
       if (tenureYears >= 5 && hasKeyRelationships) {
         belowContradictions.push({
-          signal1: 'Below-average performance (self-reported)',
-          signal2: '5+ years tenure and key relationships — possible anxiety-driven under-reporting',
-          severity: 'Medium',
+          signal1:        'Below-average performance (self-reported)',
+          signal2:        '5+ years tenure and key relationships — possible anxiety-driven under-reporting',
+          shortLabel:     '5+ years tenure with key relationships',
+          severity:       'Medium',
+          penaltyApplied: 0,
         });
         return { ...baseResult, reportedTier: performanceTier, effectiveTier: 'below', credibilityScore: 0.70, contradictions: belowContradictions };
       }
@@ -3196,8 +3218,11 @@ export const analyzePerformanceCredibility = (
     return { ...baseResult, reportedTier: performanceTier, effectiveTier: performanceTier, credibilityScore: 1.0, contradictions: [] };
   }
 
-  const contradictions: Array<{ signal1: string; signal2: string; severity: string }> = [];
+  const contradictions: PerformanceContradiction[] = [];
   let penalty = 0;
+  // India: "role change" counts as progression (band/grade shifts within same title);
+  // all other regions use "promotion" as the canonical progression event.
+  const progressionNoun = regionKey === 'india' ? 'role change' : 'promotion';
 
   if (!hasRecentPromotion) {
     const regionNote = regionKey !== 'us' && regionKey !== 'default'
@@ -3206,16 +3231,20 @@ export const analyzePerformanceCredibility = (
     if (tenureYears >= strongThreshold) {
       penalty += 0.55;
       contradictions.push({
-        signal1: `Self-reported top performer`,
-        signal2: `No promotion in ${tenureYears} years — top performers in most orgs advance within ${moderateThreshold}–${moderateThreshold + 1} years${regionNote}`,
-        severity: 'High',
+        signal1:        `Self-reported top performer`,
+        signal2:        `No ${progressionNoun} in ${tenureYears} years — top performers in most orgs advance within ${moderateThreshold}–${moderateThreshold + 1} years${regionNote}`,
+        shortLabel:     `no ${progressionNoun} in ${Math.floor(tenureYears)} years`,
+        severity:       'High',
+        penaltyApplied: 0.55,
       });
     } else if (tenureYears >= moderateThreshold) {
       penalty += 0.35;
       contradictions.push({
-        signal1: `Self-reported top performer`,
-        signal2: `No promotion in ${tenureYears} years${regionNote} — review cycle timing may explain this, but warrants scrutiny`,
-        severity: 'Medium',
+        signal1:        `Self-reported top performer`,
+        signal2:        `No ${progressionNoun} in ${tenureYears} years${regionNote} — review cycle timing may explain this, but warrants scrutiny`,
+        shortLabel:     `no ${progressionNoun} in ${Math.floor(tenureYears)} years`,
+        severity:       'Medium',
+        penaltyApplied: 0.35,
       });
     }
   }
@@ -3223,9 +3252,11 @@ export const analyzePerformanceCredibility = (
   if (uniquenessDepth === 'generic') {
     penalty += 0.12;
     contradictions.push({
-      signal1: `Self-reported top performer`,
-      signal2: `Generic role profile — top performers usually accumulate differentiated institutional knowledge`,
-      severity: 'Low',
+      signal1:        `Self-reported top performer`,
+      signal2:        `Generic role profile — top performers usually accumulate differentiated institutional knowledge`,
+      shortLabel:     'generic role profile',
+      severity:       'Low',
+      penaltyApplied: 0.12,
     });
   }
 
@@ -5062,6 +5093,15 @@ export const calculateLayoffScore = (inputs: ScoreInputs): ScoreResult => {
       : undefined,
     performanceCredibilityRegionKey:      performanceCredibility.regionKey,
     performanceCredibilityThresholdLabel: performanceCredibility.regionThresholdLabel,
+    // D4 credibility block — d4-prefixed to match d8 naming pattern.
+    // d4EffectivePerformanceTier / d4ReportedPerformanceTier are always populated (no undefined
+    // gating) so TransparencyTab can read them without falling back to the legacy flat fields.
+    d4EffectivePerformanceTier:        performanceCredibility.effectiveTier,
+    d4ReportedPerformanceTier:         performanceCredibility.reportedTier,
+    d4CredibilityAdjustmentApplied:    performanceCredibility.effectiveTier !== performanceCredibility.reportedTier,
+    d4ContradictingSignals:            performanceCredibility.contradictions.length > 0
+      ? performanceCredibility.contradictions
+      : undefined,
     hyperscalerD8ProxyApplied:           hyperscalerProxyApplied || undefined,
     hyperscalerD8ProxyAmount:            hyperscalerProxyApplied ? HYPERSCALER_D8_PROXY : undefined,
     // BUG-02: D8 effective weight state — consumed by TransparencyTab.
