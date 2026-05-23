@@ -365,8 +365,44 @@ function buildStayActions(input: CareerContingencyInput): { immediate: string[];
     shortTerm.push('Upskill in the highest-demand skill adjacent to your current role (see Skills tab)');
   }
 
-  if (input.hasEquityVesting && (input.equityVestMonths ?? 99) < 18) {
-    immediate.push(`Track vesting schedule — ${input.equityVestMonths} months until next cliff`);
+  // Equity vest cliff — surface dollar amount when exitTiming has computed it.
+  // Priority: (1) dollar-grounded message from exitTiming, (2) month-only fallback.
+  if (input.hasEquityVesting) {
+    const vestMonths = input.equityVestMonths ?? 99;
+    const unvestedNow = input.exitTiming?.unvestedIfImmediateExit;
+    const isGoldenHandcuff = input.exitTiming?.isGoldenHandcuffZone;
+
+    if (vestMonths < 6) {
+      // Near-term cliff: vest within 6 months is the primary reason to hold.
+      if (unvestedNow != null && unvestedNow > 0) {
+        // Dollar-grounded: "Hold 4 months to capture ~$67K vest event"
+        const unvestedK = unvestedNow >= 1000
+          ? `~$${Math.round(unvestedNow / 1000)}K`
+          : `~$${Math.round(unvestedNow)}`;
+        immediate.push(
+          `Hold ${vestMonths} month${vestMonths !== 1 ? 's' : ''} to capture ${unvestedK} vest event — departing before this cliff forfeits this amount`,
+        );
+      } else {
+        immediate.push(
+          `Vest cliff in ${vestMonths} month${vestMonths !== 1 ? 's' : ''} — this is the primary reason to hold; departing before it forfeits unvested equity`,
+        );
+      }
+      if (isGoldenHandcuff) {
+        immediate.push('Golden handcuff zone: significant equity vests very soon — this is a bounded, high-return wait before re-evaluating your options');
+      }
+    } else if (vestMonths < 18) {
+      // Medium-term: flag without the urgency of a sub-6-month cliff
+      if (unvestedNow != null && unvestedNow > 0) {
+        const unvestedK = unvestedNow >= 1000
+          ? `~$${Math.round(unvestedNow / 1000)}K`
+          : `~$${Math.round(unvestedNow)}`;
+        shortTerm.push(
+          `Vesting cliff ${vestMonths} months away (${unvestedK} unvested) — factor this into any exit timeline decision`,
+        );
+      } else {
+        shortTerm.push(`Track vesting schedule — ${vestMonths} months until next cliff; factor into any exit timeline`);
+      }
+    }
   }
 
   return { immediate, shortTerm };
@@ -454,7 +490,20 @@ function buildStayPath(input: CareerContingencyInput, feasibility: number): Cont
     ],
     leverageFactors: [
       'Deep institutional knowledge that takes 6–12 months to replace',
-      input.hasEquityVesting ? `Unvested equity creates strong retention incentive` : 'Accumulated tenure and relationship network',
+      (() => {
+        if (!input.hasEquityVesting) return 'Accumulated tenure and relationship network';
+        const vestMonths = input.equityVestMonths;
+        const unvestedNow = input.exitTiming?.unvestedIfImmediateExit;
+        if (unvestedNow != null && unvestedNow > 0 && vestMonths != null) {
+          const unvestedK = unvestedNow >= 1000
+            ? `~$${Math.round(unvestedNow / 1000)}K`
+            : `~$${Math.round(unvestedNow)}`;
+          return `Unvested equity (${unvestedK} at risk) creates strong retention incentive — cliff is ${vestMonths} month${vestMonths !== 1 ? 's' : ''} away`;
+        }
+        return vestMonths != null
+          ? `Unvested equity with a ${vestMonths}-month cliff creates strong retention incentive`
+          : 'Unvested equity creates strong retention incentive';
+      })(),
     ],
     financialProjection: buildPathFinancialProjection('STAY', input),
     feasibilityCalibrationStatus: 'developer_estimate',
@@ -554,6 +603,32 @@ function buildTransitionPath(input: CareerContingencyInput, feasibility: number)
         ? 'Visa sponsorship requirement limits accessible companies'
         : 'Job market conditions may extend search beyond expected timeline',
       'Compensation gap risk — new role may require downward adjustment in current market',
+      // Equity forfeiture cost: surface dollar amount or vest-months if equity is present.
+      // This is the most financially significant cost of early transition that users routinely underestimate.
+      ...(() => {
+        if (!input.hasEquityVesting) return [];
+        const vestMonths = input.equityVestMonths;
+        const unvestedNow = input.exitTiming?.unvestedIfImmediateExit;
+        if (unvestedNow != null && unvestedNow > 0 && vestMonths != null) {
+          const unvestedK = unvestedNow >= 1000
+            ? `$${Math.round(unvestedNow / 1000)}K`
+            : `$${Math.round(unvestedNow)}`;
+          const cliffDate = new Date(Date.now() + vestMonths * 30 * 24 * 60 * 60 * 1000)
+            .toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          return [
+            `Equity cost: transitioning now forfeits ${unvestedK} unvested equity — vest cliff is ${vestMonths} month${vestMonths !== 1 ? 's' : ''} away (${cliffDate}). If financially viable, waiting captures this before departure.`,
+          ];
+        }
+        if (vestMonths != null && vestMonths < 12) {
+          return [
+            `Equity cost: you have unvested equity with a cliff ${vestMonths} month${vestMonths !== 1 ? 's' : ''} away — transitioning before then forfeits it. Quantify this before committing to a timeline.`,
+          ];
+        }
+        if (input.hasEquityVesting) {
+          return [`Equity cost: unvested equity is at risk if you transition before the next vest event — quantify the dollar amount with your equity portal or CFO team before committing to a timeline.`];
+        }
+        return [];
+      })(),
     ],
     leverageFactors: [
       liquidity >= 60 ? 'Strong market demand for your role shortens expected search time' : 'Your role skills transfer to adjacent markets',
@@ -650,6 +725,19 @@ function buildDecisionFramework(
   }
   if (recommended === 'NEGOTIATE') {
     return `You hold ${negF}% leverage feasibility — vesting schedule, market demand, or institutional knowledge creates a negotiating position. Capture value now before the leverage window closes.`;
+  }
+  // Equity vest context: when there's a near-term cliff, that is the primary
+  // reason the STAY recommendation makes sense — surface it in the framework.
+  const vestMonths = input.equityVestMonths;
+  const unvestedNow = input.exitTiming?.unvestedIfImmediateExit;
+  if (input.hasEquityVesting && vestMonths != null && vestMonths < 6) {
+    if (unvestedNow != null && unvestedNow > 0) {
+      const unvestedK = unvestedNow >= 1000
+        ? `~$${Math.round(unvestedNow / 1000)}K`
+        : `~$${Math.round(unvestedNow)}`;
+      return `Stay feasibility: ${stayF}%. You have a ${vestMonths}-month vest cliff worth ${unvestedK} — this is the primary driver of the STAY recommendation. Hold through the vest event, then re-evaluate from a position of financial strength.`;
+    }
+    return `Stay feasibility: ${stayF}%. You have unvested equity vesting in ${vestMonths} month${vestMonths !== 1 ? 's' : ''} — this is the primary driver of the STAY recommendation. Hold through the vest event before committing to an exit decision.`;
   }
   return `Your resilience and the company's current trajectory suggest staying is viable (stay feasibility: ${stayF}%). Focus on visibility and contribution velocity to strengthen your position.`;
 }
