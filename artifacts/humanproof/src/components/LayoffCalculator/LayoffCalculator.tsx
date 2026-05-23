@@ -419,7 +419,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         tenureYears: 1.5,
         careerYears: 1.5,
         isUniqueRole: false,
-        performanceTier: "average" as const,
+        // Seed from UserProfile so returning users don't reset to "average" each session.
+        // LayoffInputForm state takes priority once the form has been submitted.
+        performanceTier: (userProfile?.performanceTier ?? "average") as "top" | "average" | "below" | "unknown",
         hasRecentPromotion: false,
         hasKeyRelationships: false,
       };
@@ -1210,7 +1212,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           const base = state.userFactors || {
             tenureYears: 1.5,
             isUniqueRole: false,
-            performanceTier: "average",
+            performanceTier: (userProfile?.performanceTier ?? "average") as "top" | "average" | "below" | "unknown",
             hasRecentPromotion: false,
             hasKeyRelationships: false,
           };

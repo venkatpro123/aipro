@@ -71,6 +71,17 @@ export interface UserProfile {
   lastConfirmedAt: string | null;
   updatedAt: string | null;
 
+  // ── Performance self-assessment (v40.1) ──────────────────────────────────
+  /**
+   * Self-reported performance tier — feeds D4 (weight 0.18) in the scoring engine.
+   * Persisted here so the LayoffInputForm pre-populates from the last audit rather
+   * than defaulting to "average" every session.
+   * analyzePerformanceCredibility() in layoffScoreEngine.ts may downgrade 'top'
+   * to 'average' when contradicting signals are detected (no promotion in 3+ years,
+   * no key relationships, etc.) — the engine-effective tier may differ from this value.
+   */
+  performanceTier?: 'top' | 'average' | 'below' | 'unknown' | null;
+
   // ── Location & job market (v16) ──────────────────────────────────────────
   /** Structured metro slug, e.g. 'san_francisco', 'bangalore', 'new_york' */
   metroArea?: string | null;
@@ -198,6 +209,8 @@ const V16_SELECT_COLUMNS = [
   'uniqueness_knowledge_type',
   // v40.0 citizenship region
   'citizenship_region',
+  // v40.1 performance tier
+  'performance_tier',
 ].join(', ');
 
 // ─── Row mapper ───────────────────────────────────────────────────────────────
@@ -245,6 +258,8 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     uniquenessKnowledgeType: (data.uniqueness_knowledge_type as UniquenessKnowledgeType) ?? null,
     // v40.0 citizenship region
     citizenshipRegion: data.citizenship_region ?? null,
+    // v40.1 performance tier
+    performanceTier: data.performance_tier ?? null,
   };
 }
 
@@ -332,6 +347,9 @@ export async function upsertUserProfile(
 
   // ── v40.0 citizenship region ─────────────────────────────────────────────
   if (patch.citizenshipRegion         !== undefined) row.citizenship_region          = patch.citizenshipRegion;
+
+  // ── v40.1 performance tier ───────────────────────────────────────────────
+  if (patch.performanceTier           !== undefined) row.performance_tier            = patch.performanceTier;
 
   const { error } = await supabase
     .from('user_profiles')

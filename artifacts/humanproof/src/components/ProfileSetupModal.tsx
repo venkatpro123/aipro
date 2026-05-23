@@ -235,6 +235,9 @@ export function ProfileSetupModal() {
   // Step 0 extension — Citizenship region (v40.0 EU fallback mobility)
   const [citizenshipRegion, setCitizenshipRegion] = useState<string>('');
 
+  // Step 0 extension — Performance tier (v40.1 highest-impact D4 field)
+  const [performanceTier, setPerformanceTier] = useState<string>('');
+
   // Bootstrap from existing profile
   useEffect(() => {
     if (!isHydrated || !user) return;
@@ -275,6 +278,7 @@ export function ProfileSetupModal() {
       setIndustryKey(userProfile?.industryKey ?? '');
       setYearsExperience(userProfile?.yearsExperience != null ? String(userProfile.yearsExperience) : '');
       setCitizenshipRegion(userProfile?.citizenshipRegion ?? '');
+      setPerformanceTier(userProfile?.performanceTier ?? '');
       setOpen(true);
     }
   }, [isHydrated, userProfile, user]);
@@ -349,6 +353,7 @@ export function ProfileSetupModal() {
       targetSkills:              rawToSkills(targetSkillsRaw),
       uniquenessKnowledgeType:   uniquenessKnowledgeType || undefined,
       citizenshipRegion:         (citizenshipRegion as UserProfile['citizenshipRegion']) || undefined,
+      performanceTier:           (performanceTier as UserProfile['performanceTier']) || undefined,
     });
     setSubmitting(false);
     setOpen(false);
@@ -369,26 +374,27 @@ export function ProfileSetupModal() {
   const stepNodes: Record<number, ReactNode> = {
     0: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <FieldGroup label="Salary band (USD)">
-          <select className="input" value={salaryBand} onChange={(e) => setSalaryBand(e.target.value as SalaryBand)}>
-            <option value="">Select…</option>
-            {SALARY_BANDS.map((b) => <option key={b} value={b}>{b}</option>)}
-          </select>
-        </FieldGroup>
+        {/* ── Highest-impact fields first ───────────────────────────────────
+            Field ordering follows personalization impact on the scoring engine:
+            1. visaStatus       — binary catastrophic risk layer (up to 1.40× amplifier)
+            2. tenureYears      — D4 weight 0.18 (tied for 2nd-highest single factor)
+            3. performanceTier  — D4 weight 0.18 (tied for 2nd-highest single factor)
+            4. metroArea        — city-specific action dispatch + geographic optionality
+            5. jobTitle         — 412-role personalized action routing
+            6. industryKey      — L2 sector calibration
+            7. yearsExperience  — oracle bracket (seniority bracket)
+            8. salaryBand       — coarse bucket (overridden by financial step salary)   */}
 
-        <FieldGroup label="Work authorization">
+        <FieldGroup label="Work authorization" helper="Highest impact on risk score — determines visa dependency layer">
           <select className="input" value={visaStatus} onChange={(e) => setVisaStatus(e.target.value as VisaStatus)}>
             <option value="">Select…</option>
             {VISA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </FieldGroup>
 
-        {/* Citizenship region — shown when visa is an employer-tied work visa other than
-            EU Blue Card (which already encodes EU citizenship context by definition).
-            Lets the engine apply EU fallback mobility discount for EU nationals on
-            non-EU visas (e.g., German on UK Skilled Worker or Singapore EP). */}
+        {/* Citizenship region — conditional on employer-tied work visa */}
         {visaStatus && !['citizen', 'permanent_resident', 'not_applicable', 'eu_blue_card', 'eu_blue_card_germany', 'uae_golden_visa', ''].includes(visaStatus) && (
-          <FieldGroup label="Your citizenship / passport" helper="Affects visa risk calculation. EU citizens have 27-country fallback mobility even on non-EU work visas.">
+          <FieldGroup label="Your citizenship / passport" helper="EU citizens have 27-country fallback mobility even on non-EU work visas — reduces calculated dependency score">
             <select className="input" title="Citizenship / passport region" value={citizenshipRegion} onChange={(e) => setCitizenshipRegion(e.target.value)}>
               <option value="">Select…</option>
               <option value="eu">EU / EEA citizen (Germany, France, Netherlands, Spain, etc.)</option>
@@ -401,19 +407,47 @@ export function ProfileSetupModal() {
           </FieldGroup>
         )}
 
-        <FieldGroup label="Metro / city">
-          <input className="input" type="text" value={metro}
-            onChange={(e) => setMetro(e.target.value)}
-            placeholder="e.g. Bengaluru, San Francisco, London" />
-        </FieldGroup>
-
-        <FieldGroup label="Years at current company">
+        <FieldGroup label="Years at current company" helper="Feeds D4 tenure protection score (0.18 weight)">
           <input className="input" type="number" min={0} max={60} step={0.5}
             value={tenureYears} onChange={(e) => setTenureYears(e.target.value)}
             placeholder="e.g. 3.5" />
         </FieldGroup>
 
-        <FieldGroup label="Job title" helper="Helps us personalize actions and seniority recommendations">
+        <FieldGroup label="Performance level" helper="Self-assessed — the engine cross-checks against promotion history and key relationships">
+          <select className="input" title="Performance tier" value={performanceTier} onChange={(e) => setPerformanceTier(e.target.value)}>
+            <option value="">Select…</option>
+            <option value="top">Top performer — consistently above expectations, fast-tracked</option>
+            <option value="average">Solid performer — meets expectations, stable standing</option>
+            <option value="below">Below expectations — recent feedback concerns</option>
+            <option value="unknown">Not sure / no formal reviews</option>
+          </select>
+        </FieldGroup>
+
+        <FieldGroup label="City / Metro area" helper="Personalizes job market data, action plan employers, and financial runway math">
+          <select className="input" value={metroArea} onChange={(e) => setMetroArea(e.target.value)}>
+            <option value="">Select…</option>
+            {(['US', 'India', 'International'] as const).map((group) => (
+              <optgroup key={group} label={group}>
+                {METRO_OPTIONS.filter((o) => o.group === group).map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </FieldGroup>
+
+        {/* metro free-text kept for currency auto-detection (inferCurrencyFromContext)
+            and display in the reprompt summary card. Hidden when metroArea is set
+            since the slug is more accurate for engine routing. */}
+        {!metroArea && (
+          <FieldGroup label="City (free text)" helper="If your city is not in the list above — used for currency detection">
+            <input className="input" type="text" value={metro}
+              onChange={(e) => setMetro(e.target.value)}
+              placeholder="e.g. Bengaluru, San Francisco, London" />
+          </FieldGroup>
+        )}
+
+        <FieldGroup label="Job title" helper="Routes to 412-role personalized action database">
           <input className="input" type="text" value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
             placeholder="e.g. Senior Software Engineer, Product Manager" />
@@ -426,10 +460,17 @@ export function ProfileSetupModal() {
           </select>
         </FieldGroup>
 
-        <FieldGroup label="Total years of professional experience" helper="Across all employers — shapes your seniority bracket">
+        <FieldGroup label="Total years of professional experience" helper="Across all employers — shapes seniority bracket">
           <input className="input" type="number" min={0} max={60} step={1}
             value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)}
             placeholder="e.g. 8" />
+        </FieldGroup>
+
+        <FieldGroup label="Salary band (USD)" helper="Rough band — the financial step captures your precise salary for runway math">
+          <select className="input" value={salaryBand} onChange={(e) => setSalaryBand(e.target.value as SalaryBand)}>
+            <option value="">Select…</option>
+            {SALARY_BANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+          </select>
         </FieldGroup>
       </div>
     ),
@@ -509,19 +550,6 @@ export function ProfileSetupModal() {
         <CheckRow checked={priorLayoffSurvived} onChange={setPriorLayoffSurvived}>
           I've survived a layoff before and successfully re-landed
         </CheckRow>
-
-        <FieldGroup label="Metro Area">
-          <select className="input" value={metroArea} onChange={(e) => setMetroArea(e.target.value)}>
-            <option value="">Select…</option>
-            {(['US', 'India', 'International'] as const).map((group) => (
-              <optgroup key={group} label={group}>
-                {METRO_OPTIONS.filter((o) => o.group === group).map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </FieldGroup>
       </div>
     ),
 
