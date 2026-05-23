@@ -97,6 +97,21 @@ export interface HybridScorePayload {
   _evidenceCeilingValue?: number | null;
   /** BUG-05 — Regime label for UI display (e.g. 'german_gmbh'). */
   _evidenceRegimeLabel?: string | null;
+  /**
+   * The DB quality tier floor applied when the 45-second quorum ceiling was reached
+   * without quorum (liveUnavailable=true). null when live data was available.
+   * Distinct from _evidenceCeilingValue: that is a jurisdiction structural cap;
+   * this is a scraper-timeout floor anchored to DB record completeness.
+   * Exposed so the UI can show "Scraper timeout — confidence anchored to Tier A floor (62%)"
+   * rather than displaying 62% as if it were evidence-derived.
+   */
+  _liveUnavailableFloor?: number | null;
+  /**
+   * The DB reliability tier that produced _liveUnavailableFloor.
+   * A = full record (floor 0.62), B = partial (0.52), C = sparse (0.45), D = minimal (0.35).
+   * null when live data was available and no floor was applied.
+   */
+  _dbReliabilityTier?: 'A' | 'B' | 'C' | 'D' | null;
 }
 
 const clamp = (value: number, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -902,5 +917,14 @@ export function buildHybridScorePayload({
     _evidencePreCeiling: evidenceConfidence.breakdown.preRegimeCeilingValue ?? null,
     _evidenceCeilingValue: evidenceConfidence.breakdown.privateRegimeCeiling ?? null,
     _evidenceRegimeLabel: (companyData as any)._detectedRegime ?? null,
+    // Scraper-timeout floor: expose the floor value and tier so TransparencyTab and
+    // DataFreshnessPanel can distinguish "62% from genuine evidence" from "62% from
+    // Tier A DB floor after the 45s quorum ceiling fired without quorum".
+    _liveUnavailableFloor: evidenceConfidence.breakdown.liveUnavailableFloor ?? null,
+    _dbReliabilityTier: (evidenceConfidence.breakdown.liveUnavailableFloor != null
+      ? ((companyData as any)._dbReliabilityTierOverride
+          ?? (companyData as any)._dataQuality?.tier
+          ?? 'C')
+      : null) as 'A' | 'B' | 'C' | 'D' | null,
   };
 }

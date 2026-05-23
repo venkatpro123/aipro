@@ -2148,6 +2148,64 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             );
           })()}
 
+          {/* Scraper-timeout floor disclosure.
+              Shows when the 45s quorum ceiling fired without quorum — confidence is
+              anchored to the DB quality tier floor, NOT evidence from this session.
+              "62% confidence" from a Tier A floor is categorically different from
+              "62% confidence" from genuine evidence agreement; this block makes that
+              distinction explicit and machine-readable for the user. */}
+          {(() => {
+            const floor = (result as any).signalQuality?._liveUnavailableFloor as number | null | undefined;
+            const tier  = (result as any).signalQuality?._dbReliabilityTier   as 'A'|'B'|'C'|'D' | null | undefined;
+            if (floor == null || tier == null) return null;
+            const floorPct = Math.round(floor * 100);
+            const TIER_LABELS: Record<string, string> = {
+              A: 'A — full record, high completeness',
+              B: 'B — partial record',
+              C: 'C — sparse record',
+              D: 'D — minimal data / unknown company',
+            };
+            return (
+              <div className="mb-6 p-4 rounded-xl border overflow-hidden"
+                style={{ borderColor: 'rgba(244,63,94,0.30)', background: 'rgba(244,63,94,0.06)' }}>
+                <div className="flex gap-3">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <h4 className="font-semibold text-rose-300 text-sm">
+                        Scraper Timeout — DB Quality Floor Applied
+                      </h4>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                        style={{ background: 'rgba(244,63,94,0.15)', color: '#fda4af', border: '1px solid rgba(244,63,94,0.25)' }}>
+                        Tier {tier}
+                      </span>
+                    </div>
+                    <p className="text-xs text-rose-200/80 leading-relaxed mb-3">
+                      Live scraping did not complete within the quorum window (45-second ceiling reached).
+                      Confidence is anchored to the <strong className="text-rose-200">DB record quality floor</strong>,
+                      not to signals collected during this audit session.
+                      A score of <strong className="text-rose-200">{floorPct}%</strong> here means
+                      "the database record for this company is Tier {tier} quality" —
+                      it does <em>not</em> mean evidence collected today supports {floorPct}% confidence.
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                        style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.25)', color: '#fda4af' }}>
+                        DB Tier {tier}
+                        <span className="text-base font-bold text-rose-300 ml-1">{floorPct}%</span>
+                      </div>
+                      <span className="text-rose-400/50 text-xs">floor (not evidence score)</span>
+                    </div>
+                    <p className="text-[9px] text-rose-200/40 mt-2 leading-tight">
+                      {TIER_LABELS[tier] ?? `Tier ${tier}`}.
+                      Re-running the audit when live sources are reachable will replace this floor with an evidence-based score.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* BUG-05: Private-company structural ceiling disclosure.
               Shows "Evidence quality: X% → Structural cap: Y%" only when the ceiling
               actually fired (evidence > ceiling). Distinguishes a user with strong
@@ -3460,6 +3518,8 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             lastUpdated={(result as any).companyData?.lastUpdated}
             staleDb={(result as any).companyData?._staleDb}
             dbAgeDays={(result as any).companyData?._ageDays}
+            liveUnavailableFloor={(result as any).signalQuality?._liveUnavailableFloor ?? null}
+            dbReliabilityTier={(result as any).signalQuality?._dbReliabilityTier ?? null}
           />
         </div>
 

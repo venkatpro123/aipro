@@ -20,6 +20,14 @@ interface DataFreshnessPanelProps {
   staleDb?: boolean;
   /** Age in days of the DB row, if stale */
   dbAgeDays?: number | null;
+  /**
+   * The DB quality tier floor applied when the 45s quorum ceiling fired.
+   * null when live data was available (floor not needed).
+   * When set, the badge names the floor value so users know 62% ≠ genuine evidence.
+   */
+  liveUnavailableFloor?: number | null;
+  /** DB reliability tier that produced the floor — A/B/C/D. */
+  dbReliabilityTier?: 'A' | 'B' | 'C' | 'D' | null;
 }
 
 function freshnessLabel(score: number): { label: string; color: string } {
@@ -49,6 +57,8 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
   lastUpdated,
   staleDb,
   dbAgeDays,
+  liveUnavailableFloor,
+  dbReliabilityTier,
 }) => {
   const score = dataFreshnessScore ?? 0;
   const pct   = Math.round(score * 100);
@@ -118,17 +128,41 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
         </div>
       )}
 
-      {/* v32: live-unavailable badge — no longer mentions a 35% cap. The
-          evidence-based confidence model determines confidence from source
-          agreement + quorum coverage, not a fixed time-based cap. */}
+      {/* Live-unavailable badge. When the 45s quorum ceiling fires without quorum,
+          confidence is anchored to the DB quality tier floor — not evidence acquired
+          during this session. Show the specific tier and floor so "62% confidence"
+          is clearly labelled as a DB-quality floor, not a genuine evidence score. */}
       {isStaticFallback && (
-        <div className="flex items-start gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-300">
-          <WifiOff className="w-3.5 h-3.5 mt-0.5 shrink-0 text-rose-400" />
-          <span>
-            <strong className="font-semibold">Live Intelligence Unavailable</strong> — live
-            sources could not be reached within the quorum window. Score reflects
-            best-available evidence; confidence is scored from what was acquired.
-          </span>
+        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-2.5 space-y-1.5">
+          <div className="flex items-start gap-2 text-xs text-rose-300">
+            <WifiOff className="w-3.5 h-3.5 mt-0.5 shrink-0 text-rose-400" />
+            <span>
+              <strong className="font-semibold">Live Intelligence Unavailable</strong> —
+              live sources did not respond within the quorum window (45s ceiling reached).
+            </span>
+          </div>
+          {liveUnavailableFloor != null && dbReliabilityTier != null ? (
+            <div className="flex items-center gap-2 flex-wrap pl-5 text-xs">
+              <span className="text-white/40">Confidence anchored to:</span>
+              <span
+                className="font-mono font-bold px-1.5 py-0.5 rounded"
+                style={{
+                  background: 'rgba(244,63,94,0.15)',
+                  color: '#fda4af',
+                  border: '1px solid rgba(244,63,94,0.30)',
+                }}
+              >
+                DB Tier {dbReliabilityTier} floor — {Math.round(liveUnavailableFloor * 100)}%
+              </span>
+              <span className="text-white/35 leading-tight">
+                This reflects database record completeness, not signals collected today.
+              </span>
+            </div>
+          ) : (
+            <p className="pl-5 text-xs text-rose-200/60">
+              Score reflects best-available DB evidence; confidence is a quality floor, not an evidence score.
+            </p>
+          )}
         </div>
       )}
     </div>
