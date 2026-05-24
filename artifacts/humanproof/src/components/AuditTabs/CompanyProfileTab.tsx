@@ -129,7 +129,7 @@ const formatMarketCap = (n: number | null | undefined): string => {
 // ── Company Identity Card ─────────────────────────────────────────────────────
 
 const CompanyIdentityCard: React.FC<{
-  companyData: CompanyData & { marketCap?: number | null };
+  companyData: CompanyData;
   provenance: { sourceLabel: string; sourceDetail: string; ageDays: number };
 }> = ({ companyData, provenance }) => {
   type IdentityField = { label: string; value: string; icon: React.ReactNode; hint?: string };
@@ -139,6 +139,7 @@ const CompanyIdentityCard: React.FC<{
     { label: "Headcount", value: formatHeadcount(companyData.employeeCount), icon: <Users className="w-4 h-4 text-emerald-400" />, hint: companyData.employeeCount != null ? `${companyData.employeeCount.toLocaleString()} employees on record` : undefined },
     { label: "Listing", value: companyData.isPublic ? `Public${companyData.ticker ? ` · ${companyData.ticker}` : ""}` : "Private", icon: <Hash className="w-4 h-4 text-cyan-400" /> },
     ...(companyData.marketCap != null ? [{ label: "Market Cap", value: formatMarketCap(companyData.marketCap), icon: <Coins className="w-4 h-4 text-amber-400" />, hint: "From upstream financial connector" }] : []),
+    ...((companyData as any).peRatio != null ? [{ label: "P/E Ratio", value: `${((companyData as any).peRatio as number).toFixed(1)}×`, icon: <TrendingUp className="w-4 h-4 text-sky-400" />, hint: "Price-to-earnings ratio from Finnhub / Yahoo Finance" }] : []),
     ...((companyData as any).lastFundingRound ? [{ label: "Last Funding", value: `${(companyData as any).lastFundingRound}${(companyData as any).monthsSinceLastFunding != null ? ` · ${(companyData as any).monthsSinceLastFunding} mo ago` : ""}`, icon: <Briefcase className="w-4 h-4 text-pink-400" /> }] : []),
   ];
 
@@ -319,6 +320,9 @@ interface HiringPulseSignal {
   isLive: boolean;
   roleTitle: string;
   companySpecificRoleRisk: number | null;
+  /** Which geographic hiring market's connectors ran (india/us/uk/sg/au/ca/de/latam/mena).
+   *  Null when signal is heuristic-only. */
+  hiringMarket: string | null;
 }
 
 const HiringPulseCard: React.FC<{ signal: HiringPulseSignal; companyName: string }> = ({ signal, companyName }) => {
@@ -342,8 +346,24 @@ const HiringPulseCard: React.FC<{ signal: HiringPulseSignal; companyName: string
         <div className="p-2 rounded-lg bg-[var(--violet)]/10 text-[var(--violet)]"><Briefcase className="w-5 h-5" /></div>
         <div className="flex-1">
           <h4 className="text-lg font-bold tracking-tight">Hiring Pulse</h4>
-          <p className="text-[11px] text-muted-foreground">{signal.isLive ? "Live job-board scrape" : "Heuristic baseline (not live)"}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {signal.isLive
+              ? `Live job-board scrape${signal.hiringMarket ? ` · ${signal.hiringMarket.toUpperCase()} market` : ""}`
+              : "Heuristic baseline (not live)"}
+          </p>
         </div>
+        {signal.hiringMarket && (
+          <span
+            className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full"
+            style={{
+              background: signal.isLive ? 'rgba(34,211,238,0.12)' : 'rgba(148,163,184,0.12)',
+              color: signal.isLive ? '#22d3ee' : '#94a3b8',
+              border: `1px solid ${signal.isLive ? 'rgba(34,211,238,0.3)' : 'rgba(148,163,184,0.25)'}`,
+            }}
+          >
+            {signal.hiringMarket.toUpperCase()}
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-3)]">
@@ -1401,10 +1421,7 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
     mktg_brand:          'designer',
   };
 
-  const hiringPulseSignal: {
-    freezeScore: number | null; postingTrend: any; estimatedOpenings: number | null;
-    isLive: boolean; roleTitle: string; companySpecificRoleRisk: number | null;
-  } = useMemo(() => {
+  const hiringPulseSignal: HiringPulseSignal = useMemo(() => {
     const patched = companyData as any;
     const roleRiskMap = patched.roleRiskMap ?? {};
     const riskKey = ORACLE_TO_ROLE_RISK_KEY[result.workTypeKey] ?? result.workTypeKey;
@@ -1418,6 +1435,7 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
       isLive:                 patched._hiringIsLive === true,
       roleTitle:              result.workTypeKey || "this role",
       companySpecificRoleRisk,
+      hiringMarket:           patched._hiringMarket ?? null,
     };
   }, [companyData, result.workTypeKey]);
 

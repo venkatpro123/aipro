@@ -14,6 +14,7 @@ import { fetchCompanyNewsSignals } from './rssNewsConnector';
 import { fetchIndiaPressSignals } from './indiaPressConnector';
 import { fetchSecEdgar8KSignals } from './secEdgarConnector';
 import { fetchWarnNotices } from './warnActConnector';
+import type { HiringMarket } from '../hiringSignalAnalyzer';
 
 export interface EnrichedCompanySignals {
   companyName: string;
@@ -45,6 +46,9 @@ export interface EnrichedCompanySignals {
    * to the UI so heuristic baselines aren't presented as live job-market data.
    */
   roleDemandIsLive: boolean;
+  /** Geographic hiring market whose connectors were used (india/us/uk/etc.).
+   *  Null when the connector fell back to the heuristic baseline. */
+  roleDemandMarket: HiringMarket | null;
   /** Estimated open postings for this role at this company. Null when the
    *  Serper API did not run via proxy-live-signals. */
   estimatedOpenings: number | null;
@@ -200,6 +204,7 @@ export async function enrichCompanySignals(
     roleDemandTrend: roleData.demandTrend,
     hiringFreezeScore: roleData.hiringFreezeScore,
     roleDemandIsLive: roleData.isLive,
+    roleDemandMarket: (roleData as any)._market ?? null,
     estimatedOpenings: roleData.estimatedOpenings,
     naukriOpenings:   (roleData as any).naukriOpenings   ?? null,
     linkedinOpenings: (roleData as any).linkedinOpenings ?? null,

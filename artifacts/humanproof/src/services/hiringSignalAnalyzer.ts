@@ -496,6 +496,12 @@ export function deriveHiringSignalInputs(
   const companySize: HiringSignalInputs["companySize"] =
     ec >= 10000 ? "mega" : ec >= 1000 ? "large" : ec >= 200 ? "mid" : "small";
 
+  // _hiringMarket is written by reconcileCompanySignals (liveDataService.ts)
+  // when live hiring connectors ran. Propagating it here ensures hiringSignal.hiringMarket
+  // is set in HybridResult so UI tabs (HiringPulseCard, TransparencyTab) can display
+  // which job-board market (india/us/uk/sg/au/ca/de/latam/mena) served this audit.
+  const hiringMarket: HiringMarket | undefined = (companyData as any)._hiringMarket ?? undefined;
+
   return {
     overallTrend: trend,
     estimatedOpenRoles,
@@ -504,5 +510,6 @@ export function deriveHiringSignalInputs(
     oracleKey,
     companySize,
     wasAggressiveHirer,
+    hiringMarket,
   };
 }

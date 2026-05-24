@@ -34,6 +34,7 @@ import { markFallback } from './observability/withFallback';
 // v40.0 Task 4.1: entity resolver is now the canonical source for ticker lookup.
 // The local TICKER_MAP below acts as a fallback for companies not yet in the resolver.
 import { resolveEntity } from './companyEntityResolver';
+import type { HiringMarket } from './hiringSignalAnalyzer';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,9 @@ export interface HiringLiveData {
   disclosure: string;
   source: 'supabase-osint' | 'heuristic';
   fetchedAt: string;
+  /** Geographic hiring market whose job-board connectors ran (india/us/uk/etc.).
+   *  Null when the signal is heuristic-only (no connector ran). */
+  market: HiringMarket | null;
 }
 
 export type SignalSourceKind = 'live' | 'db' | 'heuristic' | 'user_input';
@@ -450,13 +454,13 @@ export const fetchLiveCompanyData = async (
 
         // Only use cache if at least stock or news data is present
         if (cachedStock || cachedNews) {
-          return {
+          const cacheResult: LiveDataResult = {
             stockData:  cachedStock,
             newsData:   cachedNews,
             hiringData: null,
             overallSource:           'partial-live',
             liveSignalCount:         cachedStock ? 2 : 0,
-            genuineLiveApiSignals:   0,
+            genuineLiveApiSignals:   cachedStock ? 1 : 0,
             informativeLiveSignals:  0,
             heuristicSignalCount:    0,
             fetchedAt:               cached.fetched_at ?? new Date().toISOString(),
@@ -465,6 +469,15 @@ export const fetchLiveCompanyData = async (
             degradedSignalClasses:   [],
             hardFailures:            [],
           };
+          // Re-attach wiki employee count so auditDataPipeline's headcountConsensus
+          // can still apply it even on a same-day cache hit.
+          if (cached.wiki_employee_count != null) {
+            (cacheResult as any)._scrapingResult = {
+              fetchedAt:   cached.fetched_at ?? new Date().toISOString(),
+              enrichment:  { wikiEmployeeCount: cached.wiki_employee_count },
+            };
+          }
+          return cacheResult;
         }
       }
     } catch { /* cache check failure — proceed with live scraping */ }
@@ -693,6 +706,8 @@ export const fetchLiveCompanyData = async (
           'scraping (no API key). This fallback activates only when all scraped sources return zero results.',
       source:   hiringIsLive ? 'supabase-osint' : 'heuristic',
       fetchedAt: connectorSignals.fetchedAt,
+      // Geographic market whose connectors ran — null for heuristic baseline.
+      market: connectorSignals.roleDemandMarket,
     };
     if (hiringIsLive) liveCount += 1;
 
@@ -885,8 +900,10 @@ export const fetchLiveCompanyData = async (
   // Fallback: Alpha Vantage (API key, 25/day) — also live when it works.
   // News via any free scraped source (Google/Bing/Reddit/ET/MoneyControl/etc. RSS) = 1.
   // Hiring via Naukri/Indeed/LinkedIn/market-specific job boards (no keys) = 1.
-  const stockIsLive = stockData?.source === 'yahoo-finance'
-                   || stockData?.source === 'bse-india' || stockData?.source === 'nse-india';
+  // Any real external stock source counts as live — 'heuristic' is the only non-live source.
+  // Includes: yahoo-finance, yahoo-finance+finnhub, yahoo-finance+sec-edgar, finnhub,
+  //           bse-india, nse-india (all return real market data, not static estimates).
+  const stockIsLive = stockData?.source != null && stockData.source !== 'heuristic';
   const newsIsLive  = newsData != null && newsData.source !== 'none';
   const genuineLiveApiSignals =
     (stockIsLive && stockData!.price90DayChange != null ? 1 : 0) +
@@ -1526,6 +1543,8 @@ export const reconcileCompanySignals = (
     active._estimatedRoleOpenings = live.hiringData.estimatedOpenings;
     active._naukriOpenings = live.hiringData.naukriOpenings;
     active._linkedinOpenings = live.hiringData.linkedinOpenings;
+    // Geographic market used for connector routing — visible in HiringPulseCard.
+    active._hiringMarket = live.hiringData.market ?? null;
     // Signal-level timestamp for per-signal decay in the scoring engine.
     // The engine must decay hiring_posting_trend from this date, not from
     // the global companyData.lastUpdated which reflects the DB row age.

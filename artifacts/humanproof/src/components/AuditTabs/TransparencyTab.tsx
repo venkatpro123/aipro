@@ -1845,7 +1845,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
 // TransparencyTab main component
 // ---------------------------------------------------------------------------
 
-export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
+export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => {
   // v40.0 FIX-8: fetch live calibration status async so ModelCalibrationPanel
   // sees real drift data, not the bootstrap default returned by the sync accessor
   // when the async cache hasn't been primed yet.
@@ -2751,7 +2751,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
           {/* Unknown company inference disclosure — shown when industry/region were
               inferred from the company name because the company wasn't in the DB. */}
           {(() => {
-            const cd = (result as any).companyData ?? (result._engineResult as any)?.companyData;
+            const cd = (companyData as any) ?? (result as any).companyData ?? (result._engineResult as any)?.companyData;
             const industryInferred = cd?._industryInferred;
             const regionInferred   = cd?._regionInferred;
             const l2Floor          = cd?._l2EpistemicFloor;
@@ -2954,7 +2954,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
               The spec also says: "Never show a headcount figure without the
               source and the agreement score that produced it." */}
           {(() => {
-            const cd = (result as any).companyData ?? (result._engineResult as any)?.companyData;
+            const cd = (companyData as any) ?? (result as any).companyData ?? (result._engineResult as any)?.companyData;
             const hc = cd?._headcountConsensus as {
               value: number | null;
               agreement: number;
@@ -3096,7 +3096,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
               is decorative. It must mechanically affect the score." This panel
               makes the mechanical effect visible in the Transparency tab. */}
           {(() => {
-            const cd = (result as any).companyData ?? (result._engineResult as any)?.companyData;
+            const cd = (companyData as any) ?? (result as any).companyData ?? (result._engineResult as any)?.companyData;
             const postingTrend = cd?._hiringPostingTrend as string | undefined;
             const isLive       = cd?._hiringIsLive === true;
             const freezeScore  = cd?._hiringFreezeScore as number | undefined;
@@ -3104,6 +3104,10 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
             const naukriOpenings   = cd?._naukriOpenings as number | null | undefined;
             const linkedinOpenings = cd?._linkedinOpenings as number | null | undefined;
             const disclosure   = cd?._hiringDisclosure as string | undefined;
+            // v41+: geographic market whose job-board connectors ran
+            const hiringMarketRaw = cd?._hiringMarket as string | null | undefined;
+            // Also check result.hiringSignal.hiringMarket as a secondary source
+            const hiringMarket = hiringMarketRaw ?? (result as any).hiringSignal?.hiringMarket ?? null;
 
             if (!postingTrend || postingTrend === 'unknown') return null;
 
@@ -3147,6 +3151,15 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
                           style={{ background: 'rgba(148,163,184,0.15)', color: '#94a3b8' }}
                         >
                           HEURISTIC
+                        </span>
+                      )}
+                      {hiringMarket && (
+                        <span
+                          className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}
+                          title={`Job-board connectors routed to the ${hiringMarket} hiring market`}
+                        >
+                          {hiringMarket.toUpperCase()} market
                         </span>
                       )}
                     </div>

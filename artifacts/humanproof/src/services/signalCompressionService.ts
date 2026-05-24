@@ -204,6 +204,13 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
 // ── Financial Health compression ─────────────────────────────────────────────
 // Subsumes: stock 90d, revenue YoY, funding, SEC enhanced signals
 
+function fmtMarketCap(n: number): string {
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
+  if (n >= 1e9)  return `$${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6)  return `$${(n / 1e6).toFixed(0)}M`;
+  return `$${n.toLocaleString()}`;
+}
+
 export function compressFinancialSignal(result: HybridResult, companyData?: CompanyData): CompressedSignal {
   const r = result as any;
   const cd = (companyData ?? (r.companyData as CompanyData | undefined)) as any;
@@ -212,6 +219,8 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
   const isPublic        = cd?.isPublic === true;
   const monthsSinceRaise = cd?.monthsSinceLastRaise ?? null;
   const fundingStage    = cd?.lastFundingStage ?? null;
+  const marketCap       = typeof cd?.marketCap === 'number' && isFinite(cd.marketCap) ? cd.marketCap as number : null;
+  const peRatio         = typeof cd?.peRatio   === 'number' && isFinite(cd.peRatio)   ? cd.peRatio   as number : null;
   const secMaterial     = r.secEnhancedSignals?.has8kMaterialEvent === true
                        || r.secEnhancedSignals?.goingConcernFlag === true;
 
@@ -231,6 +240,9 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
       else if (revYoy < 0)   { severity += 12; reasons.push(`Revenue ${revYoy}% YoY`); chips.push({ label: 'Revenue', value: `${revYoy}%`, tone: 'warning' }); }
       else if (revYoy >= 10) { chips.push({ label: 'Revenue', value: `+${revYoy}%`, tone: 'ok' }); }
     }
+    // Informational chips — non-scored display signals from Finnhub/Yahoo Finance
+    if (marketCap != null) chips.push({ label: 'Mkt Cap', value: fmtMarketCap(marketCap), tone: 'neutral' });
+    if (peRatio   != null) chips.push({ label: 'P/E', value: `${peRatio.toFixed(1)}×`, tone: 'neutral' });
   } else if (typeof monthsSinceRaise === 'number') {
     if (monthsSinceRaise >= 24)      { severity += 28; reasons.push(`${monthsSinceRaise}mo since last raise`); chips.push({ label: 'Raise', value: `${monthsSinceRaise}mo`, tone: 'critical' }); }
     else if (monthsSinceRaise >= 18) { severity += 18; reasons.push(`${monthsSinceRaise}mo since last raise`); chips.push({ label: 'Raise', value: `${monthsSinceRaise}mo`, tone: 'warning' }); }
@@ -241,7 +253,7 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
   const sourceKind = deriveSourceKind(cd);
   const fetchedAt  = deriveFetchedAt(cd);
 
-  const hasAnyData = stock != null || revYoy != null || fundingStage != null || monthsSinceRaise != null || secMaterial;
+  const hasAnyData = stock != null || revYoy != null || fundingStage != null || monthsSinceRaise != null || secMaterial || marketCap != null || peRatio != null;
   if (!hasAnyData) {
     return {
       id: 'financial',

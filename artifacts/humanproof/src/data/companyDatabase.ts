@@ -36,6 +36,13 @@ export interface CompanyData {
   monthsSinceLastFunding?: number;
   /** Company-specific role risk weights (0–1) from Supabase company_intelligence.role_risk_map */
   roleRiskMap?: Record<string, number>;
+  // ── Live financial display fields (propagated by reconcileCompanySignals from StockLiveData) ─
+  /** Market capitalisation in USD — sourced from Yahoo Finance, BSE, or Finnhub.
+   *  Not scored by the risk engine; displayed in CompanyProfileTab / FinancialHealthCard. */
+  marketCap?: number | null;
+  /** Trailing P/E ratio — sourced from Yahoo Finance, BSE, or Finnhub.
+   *  Not scored by the risk engine; displayed in FinancialHealthCard. */
+  peRatio?: number | null;
   // ── D7 Leadership Independence Fields (all optional — backward compat) ──────
   /** Months current CEO has been in role. <6mo = recent hire = instability signal. */
   ceoTenureMonths?: number;
