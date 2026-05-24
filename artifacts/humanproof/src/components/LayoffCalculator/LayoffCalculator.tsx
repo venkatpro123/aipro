@@ -65,7 +65,7 @@ import { PipelineTimer } from "../../services/pipelineTimer";
 import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
-import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName, CIRCUIT_API_LABELS } from "../../services/apiCircuitBreaker";
+import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName, CIRCUIT_API_LABELS, resetAllOpenCircuits } from "../../services/apiCircuitBreaker";
 // WS0 — shadow runner gates legacy-vs-candidate engine comparison behind
 // `ws0_shadow_runner` flag. Internally invokes auditDataPipeline.fetchAuditData
 // when the flag is off, so downstream consumers see the legacy shape.
@@ -1789,10 +1789,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         </div>
       )}
 
-      {/* Circuit-open banner — covers all 9 tracked APIs.
-          Primary APIs (yahoo-finance, rss2json, naukri): open circuit = real degradation,
+      {/* Circuit-open banner — covers scraped data APIs.
+          Primary APIs (yahoo-finance, naukri): open circuit = real degradation,
           always shown regardless of genuineApiSignals.
-          Fallback-only APIs (alphavantage, newsapi, serper, sec-edgar, warn-act, bse):
+          Secondary APIs (sec-edgar, warn-act, bse):
           only shown when genuineApiSignals = 0 (primary sources also failed).
           Each open API shows "Cached N hours ago" when cached data is available —
           never silently serve stale data as live. */}
@@ -1805,9 +1805,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           const primaryAlsoFailed = genuineSignals === 0 || genuineSignals === null;
 
           // Primary scraped APIs — always actionable when open
-          const PRIMARY_APIS: CircuitApiName[] = ['yahoo-finance-us', 'rss2json', 'naukri'];
-          // Fallback-only — only surface when primaries also failed
-          const FALLBACK_APIS: CircuitApiName[] = ['alphavantage', 'newsapi', 'serper', 'sec-edgar', 'warn-act', 'bse'];
+          const PRIMARY_APIS: CircuitApiName[] = ['yahoo-finance-us', 'naukri'];
+          // Secondary — only surface when primaries also failed
+          const FALLBACK_APIS: CircuitApiName[] = ['sec-edgar', 'warn-act', 'bse'];
 
           const openPrimary  = PRIMARY_APIS.filter(api => apiQuotaStatus[api]?.state === 'OPEN');
           const openFallback = FALLBACK_APIS.filter(api => apiQuotaStatus[api]?.state === 'OPEN');
@@ -1893,6 +1893,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
                 ?? ((state.companyData as any) ?? {})._quorumStructuralNote
                 ?? null
               }
+              onRetry={() => {
+                resetAllOpenCircuits();
+                void handleCalculate(true);
+              }}
             />
           </div>
         )}

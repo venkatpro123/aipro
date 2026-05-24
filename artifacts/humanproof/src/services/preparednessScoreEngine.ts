@@ -602,7 +602,13 @@ function computeOperationalPillar(input: PreparednessInput): PillarScore {
 
 // ── Label + Landing Estimation ────────────────────────────────────────────────
 
-function toReadinessLabel(score: number): ReadinessLabel {
+function toReadinessLabel(score: number, financialScore?: number): ReadinessLabel {
+  // Financial emergency (< 1 month runway → pillar score ≤ 10): override label downward.
+  // "PARTIAL" requires stability that zero-runway users don't have.
+  if (financialScore != null && financialScore <= 10) {
+    if (score >= 60) return 'MOSTLY_READY';
+    return 'UNDERPREPARED';
+  }
   if (score >= 80) return 'READY';
   if (score >= 60) return 'MOSTLY_READY';
   if (score >= 40) return 'PARTIAL';
@@ -657,7 +663,7 @@ export function computePreparednessScore(input: PreparednessInput): Preparedness
     operational.score * PILLAR_WEIGHTS.operational
   );
 
-  const readinessLabel = toReadinessLabel(overallScore);
+  const readinessLabel = toReadinessLabel(overallScore, financial.score);
   const estimatedLandingWeeks = estimateLandingWeeks(overallScore, input.jobMarketLiquidity?.score);
 
   // Top gaps: pillars sorted by score (lowest = biggest drag)

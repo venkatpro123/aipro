@@ -1,22 +1,21 @@
 // gemmaAgent.ts
-// Agent 1: Gemma 3 27B (via OpenRouter) — OSINT & company signal extraction
-// v6.0 Audit Fix: calls go through openRouterProxy (Edge Function) — key never in browser.
+// Agent 1: Gemini (via multi-model-analyze EF) — OSINT & company signal extraction.
+// Primary: DeepSeek-chat. Automatic Gemini fallback handled server-side by the EF.
+// (File kept as gemmaAgent.ts for backward compatibility with orchestrator imports.)
 
 import { checkRateLimit } from '../rateLimit/apiRateLimiter';
-import { callOpenRouterProxy } from './openRouterProxy';
-
-const MODEL = 'google/gemma-3-27b-it:free';
+import { callAiProxy } from './aiProxy';
 
 export interface GemmaSignals {
-  companyHealthSignal: number;      // 0–1, higher = more risk
-  recentLayoffSignal: number;
+  companyHealthSignal:  number;      // 0–1, higher = more risk
+  recentLayoffSignal:   number;
   financialStressSignal: number;
-  aiAdoptionThreat: number;
-  roleSpecificRisk: number;
-  confidence: number;               // 0–1
-  keyRiskFactors: string[];
-  protectiveFactors: string[];
-  reasoning: string;
+  aiAdoptionThreat:     number;
+  roleSpecificRisk:     number;
+  confidence:           number;      // 0–1
+  keyRiskFactors:       string[];
+  protectiveFactors:    string[];
+  reasoning:            string;
 }
 
 export interface GemmaResult {
@@ -27,12 +26,14 @@ export interface GemmaResult {
 }
 
 export const runGemmaOSINT = async (
-  companyName: string,
-  industry: string,
-  roleTitle: string,
-  swarmContext?: string
+  companyName:  string,
+  industry:     string,
+  roleTitle:    string,
+  swarmContext?: string,
 ): Promise<GemmaResult> => {
-  if (!checkRateLimit('openrouter')) return { model: 'gemma-3-27b', success: false, signals: null, rawConfidence: 0 };
+  if (!checkRateLimit('supabase_osint')) {
+    return { model: 'gemma-3-27b', success: false, signals: null, rawConfidence: 0 };
+  }
 
   const swarmSection = swarmContext ? `\n\n${swarmContext}\n` : '';
 
@@ -61,10 +62,24 @@ Respond with ONLY this JSON — no markdown, no explanation:
 Base analysis on known financial performance of ${companyName}, industry trends in ${industry}, and AI automation vulnerability of ${roleTitle} roles. If you have low confidence about ${companyName}, use industry-level signals and set confidence below 0.5.`;
 
   try {
-    const proxyRes = await callOpenRouterProxy({ model: MODEL, prompt, maxTokens: 400, temperature: 0.1, responseFormat: 'json_object' });
-    if (!proxyRes.success || !proxyRes.content) throw new Error(proxyRes.error ?? 'Proxy returned no content');
-    const parsed: GemmaSignals = JSON.parse(proxyRes.content.replace(/```json|```/g, '').trim());
-    return { model: 'gemma-3-27b', success: true, signals: parsed, rawConfidence: parsed.confidence ?? 0.5 };
+    const proxyRes = await callAiProxy({
+      prompt,
+      maxTokens:      400,
+      temperature:    0.1,
+      responseFormat: 'json_object',
+    });
+    if (!proxyRes.success || !proxyRes.content) {
+      throw new Error(proxyRes.error ?? 'AI proxy returned no content');
+    }
+    const parsed: GemmaSignals = JSON.parse(
+      proxyRes.content.replace(/```json|```/g, '').trim(),
+    );
+    return {
+      model:         'gemma-3-27b',
+      success:       true,
+      signals:       parsed,
+      rawConfidence: parsed.confidence ?? 0.5,
+    };
   } catch (error: any) {
     console.warn('[GemmaAgent] Failed:', error.message);
     return { model: 'gemma-3-27b', success: false, signals: null, rawConfidence: 0 };

@@ -273,13 +273,24 @@ const ROLE_KEYWORD_MAP: { pattern: RegExp; exposure: RoleExposure }[] = [
     exposure: { aiRisk: 0.28, layoffRisk: 0.22, demandTrend: 'rising' } },
   { pattern: /\b(nurse|doctor|physician|surgeon|clinical|therapist|pharmacist)\b/i,
     exposure: { aiRisk: 0.08, layoffRisk: 0.10, demandTrend: 'rising' } },
-  // ── Leadership / Seniority tiers ──────────────────────────────────────────────
-  { pattern: /\b(chief|cto|ceo|cfo|coo|ciso|vp|vice president|evp|svp)\b/i,
+  // ── Leadership / Seniority tiers (ordered: most senior first) ────────────────
+  // Tier 1 — C-suite, VP, Fellow, Technical Fellow: very high protection
+  { pattern: /\b(chief|cto|ceo|cfo|coo|ciso|vp|vice president|evp|svp|fellow|distinguished engineer)\b/i,
     exposure: { aiRisk: 0.15, layoffRisk: 0.22, demandTrend: 'stable' } },
+  // Tier 2 — Director, Head of, GM: director-level protection
   { pattern: /\b(director|head of|general manager)\b/i,
     exposure: { aiRisk: 0.20, layoffRisk: 0.28, demandTrend: 'stable' } },
-  { pattern: /\b(senior|staff|principal|lead|architect)\b/i,
-    exposure: { aiRisk: 0.30, layoffRisk: 0.32, demandTrend: 'stable' } },
+  // Tier 3 — Principal, Staff, Distinguished (IC tracks above senior): near-director protection
+  // These roles carry deep institutional knowledge and broad system ownership.
+  { pattern: /\b(principal|staff engineer|staff swe|staff sde|distinguished)\b/i,
+    exposure: { aiRisk: 0.22, layoffRisk: 0.25, demandTrend: 'stable' } },
+  // Tier 4 — Lead, Architect, Tech Lead: strong protection via scope/ownership
+  { pattern: /\b(tech lead|technical lead|engineering lead|lead engineer|architect)\b/i,
+    exposure: { aiRisk: 0.25, layoffRisk: 0.28, demandTrend: 'stable' } },
+  // Tier 5 — Senior (3–7 yr): moderate protection, the largest cohort
+  { pattern: /\b(senior|sr\b|sr\.)\b/i,
+    exposure: { aiRisk: 0.32, layoffRisk: 0.34, demandTrend: 'stable' } },
+  // Tier 6 — Manager / Lead (people manager): cross-team leverage
   { pattern: /\b(manager|mgr)\b/i,
     exposure: { aiRisk: 0.35, layoffRisk: 0.38, demandTrend: 'stable' } },
   // ── Generic technical roles (after domain-specific) ────────────────────────────

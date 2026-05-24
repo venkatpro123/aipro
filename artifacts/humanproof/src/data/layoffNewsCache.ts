@@ -295,7 +295,7 @@ export const refreshFromNewsAPI = async (companyName: string): Promise<number> =
   // Check shared cross-user cache before making a live NewsAPI call.
   // NewsAPI free tier is 100 req/day — without this, 20 users auditing TCS
   // in the same day each burn a call even when the previous result is 10 min old.
-  const cached = await readCache<{ articles: any[] }>('newsapi', cacheKey);
+  const cached = await readCache<{ articles: any[] }>('naukri' /* newsapi legacy key */, cacheKey);
   const rawArticles: any[] = cached ? cached.payload.articles : [];
   let injected = 0;
 
@@ -338,7 +338,7 @@ export const refreshFromNewsAPI = async (companyName: string): Promise<number> =
     if (data.status !== 'ok') return 0;
     const liveArticles = data.articles ?? [];
     // Write to shared cache so other users benefit for the next 2 hours.
-    writeCache('newsapi', cacheKey, { articles: liveArticles });
+    writeCache('naukri' /* newsapi legacy key */, cacheKey, { articles: liveArticles });
     injectArticles(liveArticles);
     return injected;
   } catch {

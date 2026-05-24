@@ -1932,7 +1932,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
     ...(liveCount > 0 ? [{
       name: "Live OSINT — Financial Signals",
       type: "Financial",
-      domain: "fetch-company-data Edge Function (Yahoo Finance, NewsAPI, Serper)",
+      domain: "proxy-live-signals Edge Function (Yahoo Finance, SEC EDGAR, RSS news, job board scrapers)",
       lastUpdated: new Date().toISOString().split("T")[0],
       description: `${liveCount} real-time signals fetched for this audit: stock 90-day price change, revenue YoY growth, employee count, revenue-per-employee ratio, recent layoff news headlines, and hiring posting trend. Directly modifies L1 and L2 scores.`,
     }] : []),
@@ -2626,10 +2626,9 @@ export const TransparencyTab: React.FC<TabProps> = ({ result }) => {
 
           {/* Circuit breaker disclosure — shown when any API has OPEN/HALF_OPEN circuit */}
           {(() => {
-            const avSnap   = getCircuitSnapshot('alphavantage');
-            const newsSnap = getCircuitSnapshot('newsapi');
-            const serperSnap = getCircuitSnapshot('serper');
-            const openCircuits = [avSnap, newsSnap, serperSnap].filter(
+            const yahooSnap  = getCircuitSnapshot('yahoo-finance-us');
+            const naukriSnap = getCircuitSnapshot('naukri');
+            const openCircuits = [yahooSnap, naukriSnap].filter(
               s => s.state === 'OPEN' || s.state === 'HALF_OPEN',
             );
             if (openCircuits.length === 0) return null;

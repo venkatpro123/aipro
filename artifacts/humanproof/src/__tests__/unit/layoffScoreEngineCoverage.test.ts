@@ -168,8 +168,9 @@ describe('layoffScoreEngine — coverage gap fill', () => {
 
   // ── 3. mapStockTrend — all branches via public company ────────────────────
   describe('L1 mapStockTrend — all stock-change branches exercised', () => {
+    // revenueGrowthYoY: null isolates the stock signal — positive revenue dilutes crash signal
     const score = (change: number | null) =>
-      calculateLayoffScore(mkInputs({ isPublic: true, stock90DayChange: change })).breakdown.L1;
+      calculateLayoffScore(mkInputs({ isPublic: true, stock90DayChange: change, revenueGrowthYoY: null as any })).breakdown.L1;
 
     it('null stock → neutral path', () => expect(score(null)).toBeGreaterThan(0));
     it('< -30 → 0.95 (crash)', () => expect(score(-40)).toBeGreaterThan(0.5));

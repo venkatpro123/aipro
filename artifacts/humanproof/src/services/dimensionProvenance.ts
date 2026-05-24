@@ -112,13 +112,13 @@ function detectSource(
 
   const src = companyData.source.toLowerCase();
   const signalSources = result.consensusSnapshot?.signalSources ?? [];
-  const hasAlpha = signalSources.some(s => s.toLowerCase().includes('alpha'));
+  const hasYahoo = signalSources.some(s => s.toLowerCase().includes('yahoo') || s.toLowerCase().includes('alpha'));
   const calcTime = result.meta?.timestamp;
   const dbAge = formatRelativeAge(companyData.lastUpdated, nowMs);
 
   if (cls === 'stock') {
-    if (hasAlpha && calcTime) {
-      return { source: 'Alpha Vantage', ageLabel: formatRelativeAge(calcTime, nowMs), isLive: true };
+    if (hasYahoo && calcTime) {
+      return { source: 'Yahoo Finance', ageLabel: formatRelativeAge(calcTime, nowMs), isLive: true };
     }
     if (src.includes('bse') || src.includes('nse')) {
       return { source: 'BSE/NSE filing', ageLabel: dbAge, isLive: false };
@@ -127,8 +127,8 @@ function detectSource(
   }
 
   if (cls === 'revenue') {
-    if (hasAlpha && calcTime && !src.includes('bse') && !src.includes('nse')) {
-      return { source: 'Alpha Vantage', ageLabel: formatRelativeAge(calcTime, nowMs), isLive: true };
+    if (hasYahoo && calcTime && !src.includes('bse') && !src.includes('nse')) {
+      return { source: 'Yahoo Finance + SEC EDGAR', ageLabel: formatRelativeAge(calcTime, nowMs), isLive: true };
     }
     if (src.includes('bse')) return { source: 'BSE filing', ageLabel: dbAge, isLive: false };
     if (src.includes('nse')) return { source: 'NSE filing', ageLabel: dbAge, isLive: false };

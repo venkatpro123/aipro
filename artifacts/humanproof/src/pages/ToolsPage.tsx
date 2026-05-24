@@ -22,7 +22,6 @@ import UpskillingRoadmap from "../components/UpskillingRoadmap";
 import HumanEdgeJournal from "../components/HumanEdgeJournal";
 import ResilienceBadge from "../components/ResilienceBadge";
 import DailyChallenge from "../components/DailyChallenge";
-import DisplacementForecast from "../components/DisplacementForecast";
 import RiskCalculatorsView from "../components/RiskCalculatorsView";
 import {
   getScoreHistory,

@@ -1,7 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { getCareerIntelligence, resolveIntelligenceKey } from "../../data/intelligence";
+import { beforeAll, describe, expect, it } from "vitest";
+import { ensureCareerIntelligenceLoaded, getCareerIntelligence, resolveIntelligenceKey } from "../../data/intelligence";
 import { getPersonalizedActions } from "../../services/actionPersonalizationEngine";
 import { resolveRoleInput } from "../../services/roleResolution";
+
+beforeAll(async () => {
+  await ensureCareerIntelligenceLoaded();
+});
 
 describe("roleResolution", () => {
   it("resolves Software Developer to the seeded software engineer key", () => {

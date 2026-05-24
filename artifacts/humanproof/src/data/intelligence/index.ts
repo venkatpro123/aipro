@@ -336,7 +336,7 @@ export const resolveIntelligenceKey = (roleKey: string): string => {
   }
 
   const humanAlias = HUMAN_TITLE_TO_INTEL_KEY[normaliseHumanTitle(roleKey)];
-  if (humanAlias && _directCache.has(humanAlias)) {
+  if (humanAlias) {
     _resolvedKeyCache.set(roleKey, humanAlias);
     return humanAlias;
   }

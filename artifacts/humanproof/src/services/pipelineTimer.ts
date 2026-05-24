@@ -62,15 +62,15 @@ export type CheckpointLabel =
   // BSE/NSE connectors (sub-step of OSINT)
   | 'bse_fetch_start'
   | 'bse_fetch_end'
-  // Alpha Vantage (via proxy-live-signals Edge Function)
-  | 'alphavantage_start'
-  | 'alphavantage_end'
-  // NewsAPI (via proxy-live-signals)
-  | 'newsapi_start'
-  | 'newsapi_end'
-  // Naukri / Serper (via proxy-live-signals hiring action)
-  | 'serper_start'
-  | 'serper_end'
+  // Yahoo Finance (via proxy-live-signals — primary stock source, no key)
+  | 'stock_fetch_start'
+  | 'stock_fetch_end'
+  // News scraping (Google/Bing/Reddit/ET RSS via proxy-live-signals)
+  | 'news_scrape_start'
+  | 'news_scrape_end'
+  // Naukri/job-board scraping (via proxy-live-signals hiring action)
+  | 'hiring_scrape_start'
+  | 'hiring_scrape_end'
   // Live quorum wait (v32+)
   | 'quorum_wait_start'
   | 'quorum_wait_end'
@@ -97,9 +97,6 @@ export type CheckpointLabel =
   // Intelligence upgrade layers (v9.0+)
   | 'intelligence_upgrade_start'
   | 'intelligence_upgrade_end'
-  // Alpha Vantage proxy (liveDataService — proxy-live-signals EF)
-  | 'alphavantage_start'
-  | 'alphavantage_end'
   // DAG phase (migrated layers: macro_snapshot, cohort_class, stealth_layoff, etc.)
   | 'dag_phase_start'
   | 'dag_phase_end'
@@ -110,9 +107,9 @@ export type CheckpointLabel =
 const STEP_PAIRS: Array<{ name: string; start: CheckpointLabel; end: CheckpointLabel; parallel?: boolean }> = [
   { name: 'OSINT + live connectors', start: 'osint_start',         end: 'osint_end'         },
   { name: 'BSE/NSE fetch',           start: 'bse_fetch_start',     end: 'bse_fetch_end'     },
-  { name: 'Alpha Vantage (proxy EF)',start: 'alphavantage_start',  end: 'alphavantage_end'  },
-  { name: 'NewsAPI (proxy EF)',      start: 'newsapi_start',       end: 'newsapi_end'       },
-  { name: 'Serper/Naukri (EF)',      start: 'serper_start',        end: 'serper_end'        },
+  { name: 'Yahoo Finance (proxy EF)', start: 'stock_fetch_start',   end: 'stock_fetch_end'   },
+  { name: 'News RSS scraping (EF)',   start: 'news_scrape_start',   end: 'news_scrape_end'   },
+  { name: 'Hiring scraping (EF)',     start: 'hiring_scrape_start', end: 'hiring_scrape_end' },
   { name: 'Live quorum wait',        start: 'quorum_wait_start',   end: 'quorum_wait_end'   },
   { name: 'Swarm (30 agents ‖)',     start: 'swarm_start',         end: 'swarm_end', parallel: true },
   { name: 'Swarm slowest agent',     start: 'swarm_slowest_agent_start', end: 'swarm_slowest_agent_end' },

@@ -1,9 +1,9 @@
 // liveDataService.ts
-// Central live data fetcher — scraping-first, APIs as backup only.
-// PRIORITY: Yahoo Finance (no key) → Bing/Google/HN/Reddit RSS (no key) →
-//           Naukri API + Indeed + LinkedIn direct scraping (no key) →
-//           GNews (100/day) → NewsAPI (100/day) → Serper (paid, last resort)
-// Browser NEVER holds any API keys — all key-gated calls go through Edge Functions.
+// Central live data fetcher — scraping-first, zero paid API keys required.
+// PRIORITY: Yahoo Finance (no key) → 12-source free RSS (no key) →
+//           Naukri/Indeed/LinkedIn + 20 market job boards (no key, scraped) →
+//           Wikipedia/Glassdoor/career-page enrichment (no key, server-side)
+// All sources are free and unlimited. Paid APIs (Alpha Vantage, NewsAPI, Serper) removed.
 
 import { injectLayoffEvent, LayoffNewsEvent } from '../data/layoffNewsCache';
 import { runScrapingPipeline, applyScrapingEnrichment } from './scrapingOrchestrator';
@@ -14,9 +14,6 @@ import { invokeEdgeFunction } from '../infrastructure/requestId';
 import {
   recordApiDegradation,
   isRateLimitError,
-  incrementRequestCount,
-  isQuotaExhausted,
-  isApproachingQuota,
 } from './apiDegradationMonitor';
 import {
   isCallAllowed,
@@ -48,13 +45,15 @@ export interface StockLiveData {
   /** Full-time employee count from Yahoo Finance assetProfile.fullTimeEmployees */
   employeeCount: number | null;
   /**
-   * yahoo-finance = scraped directly from Yahoo Finance API (no key, no limit) — PRIMARY
-   * alphavantage  = Alpha Vantage API (25/day key-gated) — fallback only
+   * yahoo-finance = scraped directly from Yahoo Finance API (no key, unlimited) — PRIMARY
+   * yahoo-finance+sec-edgar = Yahoo chart + SEC EDGAR fundamentals (US stocks)
+   * yahoo-finance+finnhub   = Yahoo chart + Finnhub fundamentals (global/Indian stocks)
+   * finnhub       = Finnhub only (fallback when Yahoo chart also fails)
    * bse-india     = BSE India API (no key, India-listed companies)
    * nse-india     = NSE India API (no key, India-listed companies)
    * heuristic     = static baseline (no live data available)
    */
-  source: 'alphavantage' | 'yahoo-finance' | 'bse-india' | 'nse-india' | 'heuristic';
+  source: 'yahoo-finance' | 'yahoo-finance+sec-edgar' | 'yahoo-finance+finnhub' | 'finnhub' | 'bse-india' | 'nse-india' | 'heuristic';
   fetchedAt: string;
 }
 
@@ -62,7 +61,7 @@ export interface NewsLiveData {
   latestLayoffEvent: LayoffNewsEvent | null;
   recentHeadlineCount: number;  // layoff-related articles in last 30 days
   sentimentSignal: number;      // 0–1, higher = more negative/risky
-  source: 'newsapi' | 'static-cache' | 'google-news-rss' | 'bing-news-rss' | 'hackernews' | 'reddit' | 'gnews' | 'none';
+  source: 'scraped-rss' | 'static-cache' | 'google-news-rss' | 'bing-news-rss' | 'hackernews' | 'reddit' | 'gnews' | 'none';
   fetchedAt: string;
 }
 
@@ -70,17 +69,17 @@ export interface HiringLiveData {
   freezeScore: number | null;   // 0–1, higher = more frozen
   postingTrend: 'growing' | 'stable' | 'declining' | 'frozen' | 'unknown';
   /** Estimated open postings for the user's role at this company. Only
-   *  populated when a live API actually returned a count (Serper); null
-   *  for heuristic baselines so the UI does not present a fake number. */
+   *  populated when a live job-board scraper returned a count; null for
+   *  heuristic baselines so the UI does not present a fake number. */
   estimatedOpenings: number | null;
   /** Naukri-specific count (live only). */
   naukriOpenings: number | null;
   /** LinkedIn-specific count (live only). */
   linkedinOpenings: number | null;
   /**
-   * true  = Serper API was called server-side; counts are live job-board data.
+   * true  = live job-board scraping (Naukri/Indeed/LinkedIn/etc.) succeeded.
    * false = ROLE_DEMAND_BASE static prior from Q1 2026; NOT live data.
-   * UI must show "heuristic" qualifier when false — currently missing in prod.
+   * UI must show "heuristic" qualifier when false.
    */
   isLive: boolean;
   /** Disclosure text for "heuristic" tooltip when isLive = false. */
@@ -154,7 +153,7 @@ export interface LiveDataResult {
    * [AUDIT FIX]: Signals that came from LIVE external API calls in this session only.
    * Does NOT include stale DB values that were returned by the EF and labeled as "live".
    * Used to display honest "X live API signals" vs the inflated liveSignalCount.
-   * Stock from Yahoo Finance = 1-2 genuine, news from NewsAPI = 1 genuine, hiring = 1 if Serper.
+   * Stock from Yahoo Finance = 1-2 genuine, news from free RSS = 1 genuine, hiring = 1 if scraped.
    */
   genuineLiveApiSignals: number;
   /**
@@ -187,7 +186,7 @@ export interface LiveDataResult {
   _scrapingResult?:   any;
 }
 
-// ── Server-side proxy call (Alpha Vantage + NewsAPI — keys never in browser) ──
+// ── Server-side proxy call (Yahoo Finance + multi-source RSS — no keys) ───────
 
 const fetchViaProxy = async (
   companyName: string,
@@ -206,156 +205,6 @@ const fetchViaProxy = async (
     newsData: data?.newsData ?? null,
     errors: data?.errors ?? [],
   };
-};
-
-// ── Alpha Vantage Live Stock + Financials (KEPT for localhost fallback) ───────
-
-const fetchAlphaVantageOverview = async (
-  ticker: string,
-  apiKey: string,
-): Promise<StockLiveData | null> => {
-  try {
-    const overviewUrl = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${apiKey}`;
-    // BUG-08: Single-element array but use allSettled for consistent pattern.
-    const [overviewSettled] = await Promise.allSettled([
-      fetch(overviewUrl, { signal: AbortSignal.timeout(8_000) }),
-    ]);
-    if (overviewSettled.status === 'rejected') throw overviewSettled.reason;
-    const overviewRes = overviewSettled.value;
-
-    if (!overviewRes.ok) throw new Error(`Alpha Vantage HTTP ${overviewRes.status}`);
-    const overview = await overviewRes.json();
-
-    if (!overview.Symbol || overview.Note) {
-      // Rate limited or invalid ticker
-      throw new Error(overview.Note || 'Invalid ticker or limit reached');
-    }
-
-    // Fetch 90-day price change from daily time series
-    let price90DayChange: number | null = null;
-    try {
-      const dailyUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=compact&apikey=${apiKey}`;
-      const dailyRes = await fetch(dailyUrl, { signal: AbortSignal.timeout(8_000) });
-      if (dailyRes.ok) {
-        const dailyData = await dailyRes.json();
-        const series = dailyData['Time Series (Daily)'];
-        if (series) {
-          const dates = Object.keys(series).sort().reverse();
-          if (dates.length >= 63) {  // ~90 calendar days ≈ 63 trading days
-            const recentClose = parseFloat(series[dates[0]]['4. close']);
-            const oldClose    = parseFloat(series[dates[62]]['4. close']);
-            if (oldClose > 0) {
-              price90DayChange = Math.round(((recentClose - oldClose) / oldClose) * 100 * 10) / 10;
-            }
-          }
-        }
-      }
-    } catch (_e) {
-      // Non-fatal — proceed without 90-day change
-    }
-
-    const revenueGrowthYoY = overview.QuarterlyRevenueGrowthYOY
-      ? Math.round(parseFloat(overview.QuarterlyRevenueGrowthYOY) * 100)
-      : null;
-
-    const marketCap = overview.MarketCapitalization
-      ? parseInt(overview.MarketCapitalization)
-      : null;
-
-    const peRatio = overview.PERatio && overview.PERatio !== 'None'
-      ? parseFloat(overview.PERatio)
-      : null;
-
-    return {
-      price90DayChange,
-      revenueGrowthYoY,
-      marketCap,
-      peRatio,
-      employeeCount: null,
-      source: 'alphavantage',
-      fetchedAt: new Date().toISOString(),
-    };
-  } catch (e: any) {
-    console.warn('[LiveDataService] Alpha Vantage failed:', e.message);
-    recordApiDegradation('alphavantage', isRateLimitError(e) ? 'rate_limited' : 'network_error', e.message);
-    return null;
-  }
-};
-
-// ── NewsAPI Live Layoff News ──────────────────────────────────────────────────
-
-const LAYOFF_KEYWORDS = ['layoffs', 'job cuts', 'workforce reduction', 'restructuring', 'headcount reduction'];
-
-const fetchNewsAPIHeadlines = async (
-  companyName: string,
-  apiKey: string,
-): Promise<NewsLiveData | null> => {
-  try {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const from = thirtyDaysAgo.toISOString().split('T')[0];
-
-    const query = encodeURIComponent(`"${companyName}" AND (layoff OR "job cuts" OR restructuring OR "workforce reduction")`);
-    const url = `https://newsapi.org/v2/everything?q=${query}&from=${from}&sortBy=publishedAt&language=en&pageSize=10&apiKey=${apiKey}`;
-
-    const res = await fetch(url, { signal: AbortSignal.timeout(8_000) });
-    if (!res.ok) throw new Error(`NewsAPI HTTP ${res.status}`);
-
-    const data = await res.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'NewsAPI error');
-
-    const articles: any[] = data.articles || [];
-    const recentHeadlineCount = articles.length;
-
-    // Detect a layoff event from headlines.
-    // Only emit a discrete event when the headline explicitly states a workforce
-    // % cut. Without an explicit %, treat as a headline-only signal (counted in
-    // recentHeadlineCount + sentimentSignal) but do not fabricate severity.
-    let latestLayoffEvent: LayoffNewsEvent | null = null;
-    for (const article of articles) {
-      const rawTitle = article.title || '';
-      const title = rawTitle.toLowerCase();
-      const isLayoff = LAYOFF_KEYWORDS.some(kw => title.includes(kw));
-      if (!isLayoff || !article.publishedAt) continue;
-
-      const pct = extractWorkforcePercent(rawTitle);
-      if (pct === null) continue; // skip — no fabricated 5% default
-
-      const event: LayoffNewsEvent = {
-        companyName,
-        date: article.publishedAt.slice(0, 10),
-        headline: rawTitle,
-        percentCut: pct,
-        source: article.source?.name || 'NewsAPI',
-        url: article.url || '',
-        affectedDepartments: extractDepartmentsFromText(rawTitle + ' ' + (article.description || '')),
-        // Raw scraper articles are medium confidence (0.60) — below the 0.85 KS-A
-        // threshold so they do NOT trigger the kill-switch floor. Only curated/
-        // regulatory events (SEC 8-K ≥ 0.90, breaking_news_events DB ≥ 0.80)
-        // should hard-floor the score. Without this field, confidence === undefined
-        // which falls into the backward-compat KS-A path (≤14 days → floor at 72),
-        // causing every company with recent news to converge to the same score.
-        confidence: 0.60,
-      };
-      injectLayoffEvent(event);
-      if (!latestLayoffEvent) latestLayoffEvent = event;
-    }
-
-    // Sentiment: more articles = higher risk signal
-    const sentimentSignal = Math.min(1, recentHeadlineCount / 5);
-
-    return {
-      latestLayoffEvent,
-      recentHeadlineCount,
-      sentimentSignal,
-      source: 'newsapi',
-      fetchedAt: new Date().toISOString(),
-    };
-  } catch (e: any) {
-    console.warn('[LiveDataService] NewsAPI failed:', e.message);
-    recordApiDegradation('newsapi', isRateLimitError(e) ? 'rate_limited' : 'network_error', e.message);
-    return null;
-  }
 };
 
 // ── Text extraction helpers ───────────────────────────────────────────────────
@@ -407,7 +256,7 @@ const extractDepartmentsFromText = (text: string): string[] => {
  * @param companyName  Human-readable company name (e.g. "Google")
  * @param ticker       Stock ticker if known (e.g. "GOOGL"). Pass null for private companies.
  * @param _timer       Optional pipeline timer for performance tracking.
- * @param roleTitle    User's role title — passed to connectors so Serper/Naukri can
+ * @param roleTitle    User's role title — passed to job-board scrapers so Naukri/Indeed/LinkedIn
  *                     return role-specific hiring counts instead of company-wide defaults.
  * @param industry     Company industry — passed to connectors for sector-level layoff counts.
  */
@@ -556,6 +405,71 @@ export const fetchLiveCompanyData = async (
     return null;
   })();
 
+  // ── Same-day company_live_cache check ───────────────────────────────────────
+  // If this company was already audited today (valid_until > now), skip live
+  // scraping and return DB values. Saves ~3-8s of scraping time and EF calls.
+  // The cache is written by proxy-live-signals after every fresh scrape.
+  if (_supabase && companyName) {
+    try {
+      const { data: cached } = await _supabase
+        .from('company_live_cache')
+        .select('price_90d_change,revenue_growth_yoy,market_cap,pe_ratio,employee_count,stock_source,recent_headline_count,sentiment_signal,latest_layoff_event,estimated_openings,demand_trend,hiring_freeze_score,wiki_employee_count,fetched_at')
+        .ilike('company_name', companyName)
+        .gt('valid_until', new Date().toISOString())
+        .order('fetched_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cached) {
+        // Reconstruct StockLiveData from cache
+        const cachedStock: StockLiveData | null =
+          cached.price_90d_change != null || cached.market_cap != null
+            ? {
+                price90DayChange: cached.price_90d_change ?? null,
+                revenueGrowthYoY: cached.revenue_growth_yoy ?? null,
+                marketCap:        cached.market_cap        ?? null,
+                peRatio:          cached.pe_ratio           ?? null,
+                employeeCount:    cached.employee_count     ?? null,
+                source:           (['yahoo-finance','yahoo-finance+finnhub','yahoo-finance+sec-edgar','finnhub','bse-india','nse-india','heuristic'].includes(cached.stock_source ?? '')
+                                    ? cached.stock_source
+                                    : 'yahoo-finance') as StockLiveData['source'],
+                fetchedAt:        cached.fetched_at ?? new Date().toISOString(),
+              }
+            : null;
+
+        const cachedNews: NewsLiveData | null =
+          cached.recent_headline_count != null
+            ? {
+                latestLayoffEvent:    cached.latest_layoff_event ?? null,
+                recentHeadlineCount:  cached.recent_headline_count,
+                sentimentSignal:      cached.sentiment_signal ?? 0,
+                source:               'scraped-rss',
+                fetchedAt:            cached.fetched_at ?? new Date().toISOString(),
+              }
+            : null;
+
+        // Only use cache if at least stock or news data is present
+        if (cachedStock || cachedNews) {
+          return {
+            stockData:  cachedStock,
+            newsData:   cachedNews,
+            hiringData: null,
+            overallSource:           'partial-live',
+            liveSignalCount:         cachedStock ? 2 : 0,
+            genuineLiveApiSignals:   0,
+            informativeLiveSignals:  0,
+            heuristicSignalCount:    0,
+            fetchedAt:               cached.fetched_at ?? new Date().toISOString(),
+            apiErrors:  [`[DB cache hit] Company data from today (${cached.fetched_at?.slice(0,16)}Z) — skipped live scraping`],
+            derivedLayoffEvents:     [],
+            degradedSignalClasses:   [],
+            hardFailures:            [],
+          };
+        }
+      }
+    } catch { /* cache check failure — proceed with live scraping */ }
+  }
+
   // ── Concurrent scraping pipeline — launches before all API calls ────────────
   // Career page + Wikipedia + Glassdoor scraping runs concurrently while
   // the main DB + API fetch chain proceeds. No API keys required.
@@ -592,42 +506,13 @@ export const fetchLiveCompanyData = async (
   // proxy but represent a distinct exchange availability domain.
   const yfCircuitKey = stockCircuitKeyForTicker(resolvedTicker);
 
-  // ── Gate 1: per-session quota guard ──────────────────────────────────────
-  // Stock now uses Yahoo Finance (unlimited, no key) via proxy-live-signals.
-  // `alphavantage` quota is tracked only for the localhost dev fallback path
-  // where VITE_ALPHAVANTAGE_KEY may be set. The proxy path uses no quota.
-  // NewsAPI is still key-gated (100/day), but the proxy tries Google+Bing+Reddit
-  // first — NewsAPI is only last resort.
-  const yFinanceExhausted = isQuotaExhausted('alphavantage');  // localhost AV dev path only
-  const newsExhausted     = isQuotaExhausted('newsapi');
-
-  if (yFinanceExhausted) {
-    errors.push('Stock proxy: localhost Alpha Vantage quota exhausted. Using Yahoo Finance path.');
-    recordApiDegradation('alphavantage', 'rate_limited', 'Session quota exhausted');
-    heuristicCount += 2;
-  }
-  if (newsExhausted) {
-    // NOTE: newsExhausted only blocks the legacy direct-NewsAPI path.
-    // The proxy-live-signals EF now uses Google RSS + Bing RSS first.
-    // Real news scraping continues regardless of this gate.
-    errors.push('NewsAPI session quota exhausted — scraping-first news (Google RSS + Bing RSS) remains active.');
-    recordApiDegradation('newsapi', 'rate_limited', 'Session quota exhausted');
-  }
-
-  // ── Gate 2: circuit breaker ───────────────────────────────────────────────
-  // OPEN circuit = 3+ consecutive failures in the last 5 minutes.
-  // Each service is gated independently — stock open does NOT block news.
-  // yfCircuitKey is ticker-aware: US circuit opening does not block intl tickers.
+  // ── Circuit breaker gate (Yahoo Finance only — the sole stock source) ───────
   const yFinanceCircuitOpen = !isCallAllowed(yfCircuitKey);
-  const newsCircuitOpen     = !isCallAllowed('newsapi');
 
   if (yFinanceCircuitOpen) {
     const yfSnap  = getCircuitSnapshot(yfCircuitKey);
     const yfCache = getCachedResponse<StockLiveData>(yfCircuitKey);
     if (yfCache) {
-      // Serve stale cache as a degraded signal — do NOT count as live. The cached
-      // data is potentially hours/days old and counting it as a real live signal
-      // inflates the live_signal_count and falsely boosts overallConfidence.
       stockData = { ...yfCache.data, fetchedAt: new Date(yfCache.cachedAt).toISOString() };
       errors.push(`Stock proxy circuit OPEN — using cached data from ${yfSnap.cachedAgeLabel ?? 'earlier'}.`);
       heuristicCount += 1;
@@ -639,148 +524,111 @@ export const fetchLiveCompanyData = async (
     }
   }
 
-  if (newsCircuitOpen) {
-    const newsSnap  = getCircuitSnapshot('newsapi');
-    const newsCache = getCachedResponse<NewsLiveData>('newsapi');
-    if (newsCache) {
-      newsData = { ...newsCache.data, fetchedAt: new Date(newsCache.cachedAt).toISOString() };
-      errors.push(`NewsAPI circuit OPEN — using cached data from ${newsSnap.cachedAgeLabel ?? 'earlier'}.`);
-      heuristicCount += 1;
-      degradedSignalClasses.push('layoffs');
-    } else {
-      errors.push(`NewsAPI circuit OPEN (${newsSnap.consecutiveFailures} failures). No cached data — heuristic fallback.`);
-      heuristicCount += 1;
-      degradedSignalClasses.push('layoffs');
-    }
-  }
+  // Determine proxy action — news is always attempted (12 free RSS sources, no quota).
+  const stockNeeded = !yFinanceCircuitOpen;
+  const newsNeeded  = true;
+  const proxyAction: 'stock' | 'news' | 'both' =
+    stockNeeded ? 'both' : 'news';
 
-  // Determine proxy action based on which services are independently available.
-  // Previously the AND-logic caused news to be skipped when stock circuit was open.
-  // Now each service is gated independently and action reflects exactly what's needed.
-  const stockNeeded = !yFinanceExhausted && !yFinanceCircuitOpen;
-  const newsNeeded  = !newsExhausted && !newsCircuitOpen;
-  const proxyAction: 'stock' | 'news' | 'both' | null =
-    stockNeeded && newsNeeded ? 'both'
-    : stockNeeded             ? 'stock'
-    : newsNeeded              ? 'news'
-    : null;
+  try {
+    if (stockNeeded) _timer?.mark('stock_fetch_start');
+    if (newsNeeded)  _timer?.mark('news_scrape_start');
 
-  if (proxyAction) {
-    try {
-      if (stockNeeded && resolvedTicker) incrementRequestCount('alphavantage');
-      if (newsNeeded)                    incrementRequestCount('newsapi');
+    const proxyResult = await fetchViaProxy(companyName, resolvedTicker, proxyAction);
 
-      if (stockNeeded) _timer?.mark('alphavantage_start');
-      if (newsNeeded)  _timer?.mark('newsapi_start');
+    if (stockNeeded) _timer?.mark('stock_fetch_end');
+    if (newsNeeded)  _timer?.mark('news_scrape_end');
 
-      const proxyResult = await fetchViaProxy(companyName, resolvedTicker, proxyAction);
+    errors.push(...proxyResult.errors);
 
-      if (stockNeeded) _timer?.mark('alphavantage_end');
-      if (newsNeeded)  _timer?.mark('newsapi_end');
-
-      errors.push(...proxyResult.errors);
-
-      const flags = (proxyResult as any).rateLimitFlags ?? {};
-      if (flags.avRateLimited) {
-        recordApiDegradation('alphavantage', 'rate_limited', 'Alpha Vantage rate limited');
-      }
-      if (flags.newsRateLimited) {
-        recordApiDegradation('newsapi', 'rate_limited', 'NewsAPI rateLimited response');
-      }
-
-      if (stockNeeded) {
-        const ps = proxyResult.stockData;
-        const stockBlocked = flags.avRateLimited;
-        if (ps && ps.price90DayChange !== undefined && !stockBlocked) {
-          // The EF now uses Yahoo Finance (primary) or Alpha Vantage (fallback).
-          // Preserve the source label returned by the EF so the UI shows the correct source.
-          const resolvedSource = (ps.source === 'yahoo-finance' ? 'yahoo-finance' : 'alphavantage') as StockLiveData['source'];
-          stockData = {
-            price90DayChange: ps.price90DayChange ?? null,
-            revenueGrowthYoY: ps.revenueGrowthYoY ?? null,
-            marketCap: ps.marketCap ?? null,
-            peRatio: ps.peRatio ?? null,
-            employeeCount: typeof ps.employeeCount === 'number' && ps.employeeCount > 0 ? ps.employeeCount : null,
-            source: resolvedSource,
-            fetchedAt: new Date().toISOString(),
-          };
-          circuitSuccess(yfCircuitKey, stockData);
-          if (ps.price90DayChange != null) liveCount += 1; else heuristicCount += 1;
-          if (ps.revenueGrowthYoY != null) liveCount += 1; else heuristicCount += 1;
-        } else {
-          if (resolvedTicker && !stockBlocked) {
-            errors.push(`Stock proxy: no data for ${resolvedTicker}`);
-            circuitFailure(yfCircuitKey, `no data for ${resolvedTicker}`);
-          } else if (!resolvedTicker) {
-            errors.push('No ticker — stock signals unavailable (private/unknown company)');
-          }
-          heuristicCount += 2;
-        }
-      }
-
-      if (newsNeeded) {
-        const pn = proxyResult.newsData;
-        if (pn && pn.recentHeadlineCount !== undefined && !flags.newsRateLimited) {
-          newsData = {
-            latestLayoffEvent: pn.latestLayoffEvent ?? null,
-            recentHeadlineCount: pn.recentHeadlineCount,
-            sentimentSignal: pn.sentimentSignal,
-            source: 'newsapi',
-            fetchedAt: pn.fetchedAt ?? new Date().toISOString(),
-          };
-          circuitSuccess('newsapi', newsData);
-          if (pn.latestLayoffEvent) {
-            injectLayoffEvent(pn.latestLayoffEvent as LayoffNewsEvent);
-            // CRITICAL v30.0 FIX: Also push into derivedLayoffEvents so the event
-            // affects L2.recentLayoffRisk (20–30% of L2 weight), not just newsRisk
-            // (10–30%). Previously news-detected layoffs only triggered newsRisk —
-            // L2.recentLayoffRisk stayed at the sector epistemic floor (0.05–0.14),
-            // dramatically understating the impact of a fresh layoff announcement.
-            // Reconciliation will merge this with any DB-stored events.
-            derivedLayoffEvents.push({
-              date: pn.latestLayoffEvent.date,
-              percentCut: pn.latestLayoffEvent.percentCut ?? 0,
-              source: `news (${pn.latestLayoffEvent.source ?? 'live'})`,
-            });
-          }
-          liveCount += 1;
-        } else {
-          if (!flags.newsRateLimited) {
-            errors.push('NewsAPI: no results from proxy');
-            circuitFailure('newsapi', 'no results from proxy');
-          }
-          heuristicCount += 1;
-        }
-      }
-    } catch (proxyErr: any) {
-      errors.push(`proxy-live-signals: ${proxyErr.message}`);
-      if (stockNeeded) { heuristicCount += 2; circuitFailure(yfCircuitKey, proxyErr.message); }
-      if (newsNeeded)  { heuristicCount += 1; circuitFailure('newsapi',       proxyErr.message); }
-      if (isRateLimitError(proxyErr)) {
-        recordApiDegradation('supabase_osint', 'rate_limited', proxyErr.message);
+    if (stockNeeded) {
+      const ps = proxyResult.stockData;
+      if (ps && ps.price90DayChange !== undefined) {
+        stockData = {
+          price90DayChange: ps.price90DayChange ?? null,
+          revenueGrowthYoY: ps.revenueGrowthYoY ?? null,
+          marketCap: ps.marketCap ?? null,
+          peRatio: ps.peRatio ?? null,
+          employeeCount: typeof ps.employeeCount === 'number' && ps.employeeCount > 0 ? ps.employeeCount : null,
+          source: ps.source ?? 'yahoo-finance',
+          fetchedAt: new Date().toISOString(),
+        };
+        circuitSuccess(yfCircuitKey, stockData);
+        if (ps.price90DayChange != null) liveCount += 1; else heuristicCount += 1;
+        if (ps.revenueGrowthYoY != null) liveCount += 1; else heuristicCount += 1;
       } else {
-        recordApiDegradation('supabase_osint', 'network_error', proxyErr.message);
-      }
-      // localhost dev fallback (only fires on localhost — VITE_ keys present)
-      const alphaKey = (import.meta as any).env?.VITE_ALPHAVANTAGE_KEY as string | undefined;
-      const newsKey  = (import.meta as any).env?.VITE_NEWSAPI_KEY as string | undefined;
-      if (alphaKey && resolvedTicker && !yFinanceExhausted) {
-        stockData = await fetchAlphaVantageOverview(resolvedTicker, alphaKey);
-        if (stockData?.source === 'alphavantage') {
-          liveCount += 2; heuristicCount -= 2;
-        } else {
-          errors.push('Alpha Vantage localhost fallback returned no data');
+        // NOTE: Do NOT call circuitFailure() here.
+        // The circuit tracks proxy availability, not per-ticker Yahoo Finance data.
+        // When Yahoo Finance fails inside the EF (crumb blocked, 403, anti-bot), the
+        // EF returns HTTP 200 with stockData: null — the proxy was reachable.
+        // Calling circuitFailure() here trips the circuit after 3 audits and keeps it
+        // open permanently. circuitFailure() is ONLY called in the catch block below
+        // when the proxy itself throws (network error, EF unavailable, auth failure).
+        // See also: withCircuitBreaker() in apiCircuitBreaker.ts which treats null
+        // result as "not a failure" for exactly the same reason.
+        if (resolvedTicker) {
+          errors.push(`Yahoo Finance: no data for ${resolvedTicker}`);
           degradedSignalClasses.push('financial');
-        }
-      }
-      if (newsKey && !newsExhausted) {
-        newsData = await fetchNewsAPIHeadlines(companyName, newsKey);
-        if (newsData?.source === 'newsapi') {
-          liveCount += 1; heuristicCount -= 1;
         } else {
-          errors.push('NewsAPI localhost fallback returned no data');
-          degradedSignalClasses.push('layoffs');
+          errors.push('No ticker — stock signals unavailable (private/unknown company)');
         }
+        heuristicCount += 2;
+      }
+    }
+
+    if (newsNeeded) {
+      const pn = proxyResult.newsData;
+      if (pn && pn.recentHeadlineCount !== undefined) {
+        newsData = {
+          latestLayoffEvent: pn.latestLayoffEvent ?? null,
+          recentHeadlineCount: pn.recentHeadlineCount,
+          sentimentSignal: pn.sentimentSignal,
+          source: 'scraped-rss',
+          fetchedAt: pn.fetchedAt ?? new Date().toISOString(),
+        };
+        if (pn.latestLayoffEvent) {
+          injectLayoffEvent(pn.latestLayoffEvent as LayoffNewsEvent);
+          // v30.0: push into derivedLayoffEvents so L2.recentLayoffRisk fires
+          // (not just newsRisk). Previously news-detected layoffs only triggered
+          // newsRisk — L2 stayed at the sector epistemic floor, understating risk.
+          derivedLayoffEvents.push({
+            date: pn.latestLayoffEvent.date,
+            percentCut: pn.latestLayoffEvent.percentCut ?? 0,
+            source: `news (${pn.latestLayoffEvent.source ?? 'live'})`,
+          });
+        }
+        if (pn.recentHeadlineCount > 0) liveCount += 1; else heuristicCount += 1;
+      } else {
+        errors.push('RSS news proxy: no results');
+        heuristicCount += 1;
+      }
+    }
+  } catch (proxyErr: any) {
+    const errMsg = proxyErr.message ?? String(proxyErr);
+    errors.push(`proxy-live-signals: ${errMsg}`);
+
+    // 401/403 = auth issue (user not logged in, or session expired).
+    // This is NOT a Yahoo Finance failure — don't trip the circuit.
+    // Same pattern as naukriConnector.ts which explicitly skips auth errors.
+    const isAuthError =
+      errMsg.includes('401') ||
+      errMsg.includes('403') ||
+      errMsg.includes('Unauthorized') ||
+      errMsg.includes('Invalid or expired token') ||
+      errMsg.includes('Insufficient role') ||
+      errMsg.includes('Missing Authorization');
+
+    if (isAuthError) {
+      console.info('[liveDataService] proxy-live-signals auth error — not tripping circuit:', errMsg);
+      if (stockNeeded) heuristicCount += 2;
+      if (newsNeeded)  heuristicCount += 1;
+    } else {
+      if (stockNeeded) { heuristicCount += 2; circuitFailure(yfCircuitKey, errMsg); }
+      if (newsNeeded)  { heuristicCount += 1; }
+      if (isRateLimitError(proxyErr)) {
+        recordApiDegradation('supabase_osint', 'rate_limited', errMsg);
+      } else {
+        recordApiDegradation('supabase_osint', 'network_error', errMsg);
       }
     }
   }
@@ -791,13 +639,12 @@ export const fetchLiveCompanyData = async (
   let hiringData: HiringLiveData | null = null;
   try {
     _timer?.mark('bse_fetch_start');
-    _timer?.mark('serper_start');
-    // Pass roleTitle so Naukri/Serper can fetch role-specific opening counts.
+    _timer?.mark('hiring_scrape_start');
+    // Pass roleTitle so job-board scrapers fetch role-specific posting counts.
     // Pass industry so getSectorLayoffCount returns meaningful peer-company signals.
-    // Previously both were '', making hiring always heuristic and sector count always 0.
     connectorSignals = await enrichCompanySignals(companyName, roleTitle ?? '', industry ?? '', region);
     _timer?.mark('bse_fetch_end');
-    _timer?.mark('serper_end');
+    _timer?.mark('hiring_scrape_end');
 
     // 'Naukri Heuristic' is unconditionally added by the connector — filter it out
     // when deciding whether real connector data was returned.
@@ -819,9 +666,8 @@ export const fetchLiveCompanyData = async (
       liveCount += 1;
     }
 
-    // Hiring signal: live only when Serper API was used via the Edge Function.
-    // The naukriConnector now routes through proxy-live-signals (server-side Serper key).
-    // isLive = true only when the Edge Function confirmed a Serper call was made.
+    // Hiring signal: live only when the EF job-board scraper returned real counts.
+    // The naukriConnector routes through proxy-live-signals (no API keys).
     const hiringIsLive = connectorSignals.roleDemandIsLive;
     // 'frozen' derives from freezeScore: a high freeze score (≥0.75) signals an active
     // hiring halt at this company for this role — postingTrend must reflect that so the
@@ -836,10 +682,10 @@ export const fetchLiveCompanyData = async (
     hiringData = {
       freezeScore:     rawFreezeScore,
       postingTrend:    derivedPostingTrend,
-      // Only forward counts when they came from a live Serper call.
+      // Only forward counts when they came from a live job-board scrape.
       estimatedOpenings: hiringIsLive ? connectorSignals.estimatedOpenings : null,
-      naukriOpenings:    hiringIsLive ? (connectorSignals as any).naukriOpenings ?? null : null,
-      linkedinOpenings:  hiringIsLive ? (connectorSignals as any).linkedinOpenings ?? null : null,
+      naukriOpenings:    hiringIsLive ? connectorSignals.naukriOpenings ?? null : null,
+      linkedinOpenings:  hiringIsLive ? connectorSignals.linkedinOpenings ?? null : null,
       isLive:            hiringIsLive,
       disclosure:        hiringIsLive
         ? ''
@@ -856,7 +702,7 @@ export const fetchLiveCompanyData = async (
         latestLayoffEvent: null,
         recentHeadlineCount: connectorSignals.layoffNewsCount,
         sentimentSignal: connectorSignals.newsSentimentScore,
-        source: 'newsapi',
+        source: 'scraped-rss',
         fetchedAt: connectorSignals.fetchedAt,
       };
       liveCount += 1;
@@ -877,7 +723,7 @@ export const fetchLiveCompanyData = async (
           latestLayoffEvent: null,
           recentHeadlineCount: connectorSignals.indiaPressLayoffCount,
           sentimentSignal: connectorSignals.indiaPressSentimentScore,
-          source: 'newsapi',
+          source: 'scraped-rss',
           fetchedAt: connectorSignals.fetchedAt,
         };
       }
@@ -1017,12 +863,12 @@ export const fetchLiveCompanyData = async (
   const errorText = errors.join(' | ').toLowerCase();
   if (
     errorText.includes('yahoo') || errorText.includes('stock proxy') ||
-    errorText.includes('alphavantage') || errorText.includes('alpha vantage') ||
+    errorText.includes('yahoo finance') ||
     errorText.includes('no ticker') || errorText.includes('fmp')
   ) {
     degradedSignalClasses.push('financial');
   }
-  if (errorText.includes('newsapi') || errorText.includes('breaking_news_events') || errorText.includes('layoff')) {
+  if (errorText.includes('rss') || errorText.includes('breaking_news_events') || errorText.includes('layoff')) {
     degradedSignalClasses.push('layoffs');
   }
   if (!hiringData?.isLive) {
@@ -1037,9 +883,9 @@ export const fetchLiveCompanyData = async (
   // genuineLiveApiSignals: count only signals from real external network calls this session.
   // Primary: Yahoo Finance (scraping, no key, unlimited) — counts fully as live.
   // Fallback: Alpha Vantage (API key, 25/day) — also live when it works.
-  // News via any scraped source (Google RSS, Bing RSS, HN, Reddit, Yahoo RSS) = 1.
-  // Hiring via Naukri+Indeed scraping OR Serper = 1.
-  const stockIsLive = stockData?.source === 'yahoo-finance' || stockData?.source === 'alphavantage'
+  // News via any free scraped source (Google/Bing/Reddit/ET/MoneyControl/etc. RSS) = 1.
+  // Hiring via Naukri/Indeed/LinkedIn/market-specific job boards (no keys) = 1.
+  const stockIsLive = stockData?.source === 'yahoo-finance'
                    || stockData?.source === 'bse-india' || stockData?.source === 'nse-india';
   const newsIsLive  = newsData != null && newsData.source !== 'none';
   const genuineLiveApiSignals =
@@ -1708,6 +1554,11 @@ export const reconcileCompanySignals = (
     // Revenue growth YoY timestamp: revenue figures are quarterly, but the
     // fetch date (from the same stock API call) is the best available proxy.
     active._revenueGrowthFetchedAt = live.stockData.fetchedAt;
+    // marketCap and peRatio are UI-only display fields — not scored by the engine.
+    // They come from Yahoo Finance (US) or BSE (India) and are propagated here
+    // so FinancialHealthCard / CompanyProfileTab can display them.
+    if (live.stockData.marketCap != null) active.marketCap = live.stockData.marketCap;
+    if (live.stockData.peRatio   != null) active.peRatio   = live.stockData.peRatio;
   }
 
   const intendedLiveClasses = [
@@ -1719,7 +1570,7 @@ export const reconcileCompanySignals = (
 
   if (base.isPublic && !live.stockData) {
     degradedSet.add('financial');
-    missingDataFallbacks.push('⚠ Alpha Vantage unavailable for this public company — L1 confidence reduced and DB/heuristic values may remain active.');
+    missingDataFallbacks.push('⚠ Yahoo Finance unavailable for this public company — L1 confidence reduced and DB/heuristic values may remain active.');
   }
   if (!live.newsData && live.derivedLayoffEvents.length === 0) {
     degradedSet.add('layoffs');

@@ -46,7 +46,7 @@ export const EF_REGISTRY: EFRegistryEntry[] = [
   },
   {
     name:            'proxy-live-signals',
-    label:           'Alpha Vantage + NewsAPI Proxy',
+    label:           'Yahoo Finance + RSS News Proxy',
     impact:          'high',
     degradesFeature: 'Live stock + news signals — falls back to heuristics',
   },

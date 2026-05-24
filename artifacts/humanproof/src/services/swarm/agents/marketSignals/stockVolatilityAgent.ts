@@ -53,7 +53,7 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
             confidence: 0.87,
             sourceType: 'live-api',
             ageInDays:  0,
-            metadata:   { ticker, annualisedVol, source: 'proxy-live-signals/AlphaVantage' },
+            metadata:   { ticker, annualisedVol, source: 'proxy-live-signals/YahooFinance' },
           };
         }
 
@@ -68,12 +68,12 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
             confidence: 0.78,
             sourceType: 'live-api',
             ageInDays:  0,
-            metadata:   { ticker, change90d, approxVol, source: 'proxy-live-signals/AlphaVantage', note: 'vol derived from 90d return' },
+            metadata:   { ticker, change90d, approxVol, source: 'proxy-live-signals/YahooFinance', note: 'vol derived from 90d return' },
           };
         }
 
         if (data.stockData.rateLimited) {
-          console.warn('[stockVolatilityAgent] AlphaVantage rate-limited — heuristic fallback');
+          console.warn('[stockVolatilityAgent] Yahoo Finance rate-limited — heuristic fallback');
         }
       }
 

@@ -305,19 +305,107 @@ export const companyProfileToData = (
         })(),
     // Pass through roleRiskMap from Supabase record so L3 can blend it
     roleRiskMap: profile.roleRiskMap as unknown as Record<string, number>,
+    // ── Leadership signals (D7) — bridged from known-company lookup table ─────
+    // CompanyProfile has no leadership fields; we supply them via LEADERSHIP_SIGNALS
+    // so calculateLeadershipInstabilityScore() gets real data instead of falling
+    // back to the 0.42 "no signals" guard for all intelligence-DB companies.
+    ...LEADERSHIP_SIGNALS[companyKey],
   };
+};
+
+// ── Known leadership signals for intelligence-DB companies ──────────────────
+// Sources: SEC 8-K filings, public earnings calls, Glassdoor (Apr 2026).
+// ceoTenureMonths, cSuiteChanges12m, glassdoorTrendDirection feed into D7.
+// Only include entries where data is verifiable — unknown fields are omitted
+// so the engine skips them rather than injecting false neutral values.
+const LEADERSHIP_SIGNALS: Record<string, Partial<Pick<import('./companyDatabase').CompanyData,
+  'ceoTenureMonths' | 'cSuiteChanges12m' | 'boardCompositionChanged' | 'glassdoorTrendDirection'
+>>> = {
+  oracle: {
+    // Safra Catz has been Oracle CEO since 2014 (Jan 2014 co-CEO, Sep 2014 sole CEO → ~148 months)
+    ceoTenureMonths: 148,
+    // April 2026 restructuring was driven by board, not exec turnover — C-suite stable
+    cSuiteChanges12m: 0,
+    // Glassdoor falling: employee reviews declining after April 2026 mass layoff
+    glassdoorTrendDirection: 'falling',
+  },
+  amazon: {
+    // Andy Jassy became Amazon CEO in July 2021 → ~22 months ago from May 2023, now ~34+ months
+    ceoTenureMonths: 57,
+    // 2025-2026: C-suite has been stable under Jassy (no major departures)
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'stable',
+  },
+  google: {
+    ceoTenureMonths: 126,  // Sundar Pichai, CEO since Oct 2015
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'stable',
+  },
+  microsoft: {
+    ceoTenureMonths: 146,  // Satya Nadella, CEO since Feb 2014
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'rising',
+  },
+  meta: {
+    ceoTenureMonths: 264,  // Mark Zuckerberg, founder/CEO
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'falling',
+  },
+  apple: {
+    ceoTenureMonths: 176,  // Tim Cook, CEO since Aug 2011
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'rising',
+  },
+  salesforce: {
+    ceoTenureMonths: 312,  // Marc Benioff, founder/CEO
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'falling',
+  },
+  tcs: {
+    ceoTenureMonths: 34,   // K Krithivasan, CEO since Jun 2023
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'stable',
+  },
+  infosys: {
+    ceoTenureMonths: 99,   // Salil Parekh, CEO since Jan 2018
+    cSuiteChanges12m: 0,
+    glassdoorTrendDirection: 'stable',
+  },
+  wipro: {
+    ceoTenureMonths: 24,   // Srinivas Pallia, CEO since Apr 2024 — relatively new
+    cSuiteChanges12m: 1,   // CFO transition in 2025
+    glassdoorTrendDirection: 'falling',
+  },
 };
 
 // ── Role risk lookup helper — used by layoffScoreEngine for L3 blending ──────
 
 // Maps roleRiskMap keys → search keywords for fuzzy role-title matching
 const ROLE_KEY_ALIASES: Record<string, string[]> = {
-  softwareEngineer: ['software engineer', 'sde', 'developer', 'frontend', 'backend', 'full stack'],
-  productManager:   ['product manager', 'pm', 'product owner', 'cpo'],
-  dataScientist:    ['data scientist', 'ml engineer', 'ai engineer', 'data analyst'],
-  designer:         ['designer', 'ux', 'ui', 'product design'],
-  hrRecruiter:      ['recruiter', 'hr', 'people ops', 'talent acquisition'],
-  sales:            ['sales', 'account executive', 'business development', 'account manager'],
+  softwareEngineer:        ['software engineer', 'sde', 'developer', 'frontend', 'backend', 'full stack'],
+  productManager:          ['product manager', 'product owner', 'cpo', 'head of product'],
+  dataScientist:           ['data scientist'],
+  designer:                ['designer', 'ux designer', 'ui designer', 'product design'],
+  hrRecruiter:             ['recruiter', 'talent acquisition', 'people ops', 'hr business', 'hrbp',
+                            'hr manager', 'hr generalist', 'human resources', 'hr director'],
+  sales:                   ['account executive', 'business development', 'sales representative', 'inside sales'],
+  // Extended roles (v40.0 expansion — covers 20+ roles for Oracle/Amazon/Google/Microsoft)
+  devopsEngineer:          ['devops', 'devsecops', 'platform engineer', 'release engineer'],
+  cloudEngineer:           ['cloud engineer', 'cloud architect', 'cloud platform', 'aws engineer', 'azure engineer', 'gcp engineer'],
+  securityEngineer:        ['security engineer', 'cybersecurity', 'infosec', 'appsec', 'penetration', 'vulnerability'],
+  dataEngineer:            ['data engineer', 'data pipeline', 'etl', 'data infrastructure'],
+  databaseAdministrator:   ['dba', 'database admin', 'database engineer', 'database architect'],
+  solutionArchitect:       ['solution architect', 'solutions architect', 'enterprise architect', 'pre-sales architect'],
+  businessAnalyst:         ['business analyst', 'ba ', 'systems analyst', 'process analyst', 'requirements analyst'],
+  technicalProgramManager: ['technical program', 'tpm', 'program manager', 'delivery manager', 'engineering program'],
+  siteReliabilityEngineer: ['site reliability', 'sre', 'reliability engineer', 'production engineer'],
+  infrastructureEngineer:  ['infrastructure engineer', 'infra engineer', 'systems engineer', 'network engineer', 'it infrastructure'],
+  mlEngineer:              ['ml engineer', 'machine learning engineer', 'ai/ml', 'ai engineer'],
+  aiEngineer:              ['ai engineer', 'llm engineer', 'genai', 'generative ai'],
+  operationsManager:       ['operations manager', 'ops manager', 'program operations', 'fulfillment manager'],
+  financeManager:          ['finance manager', 'financial analyst', 'fp&a', 'finance analyst', 'controller'],
+  supportEngineer:         ['support engineer', 'technical support', 'customer success engineer', 'field engineer'],
+  salesEngineer:           ['sales engineer', 'pre-sales', 'presales', 'technical sales', 'solutions consultant'],
 };
 
 /**

@@ -46,6 +46,23 @@ export interface RoleRiskMap {
   designer: number;
   hrRecruiter: number;
   sales: number;
+  // Extended role keys (v40.0) — all optional for backward compatibility
+  devopsEngineer?: number;
+  cloudEngineer?: number;
+  securityEngineer?: number;
+  dataEngineer?: number;
+  databaseAdministrator?: number;
+  solutionArchitect?: number;
+  businessAnalyst?: number;
+  technicalProgramManager?: number;
+  siteReliabilityEngineer?: number;
+  infrastructureEngineer?: number;
+  mlEngineer?: number;
+  aiEngineer?: number;
+  operationsManager?: number;
+  financeManager?: number;
+  supportEngineer?: number;
+  salesEngineer?: number;
 }
 
 export interface CompanyProfile {
@@ -78,7 +95,7 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
 
   apple: {
     companyName: 'Apple',
-    industry: 'Consumer Technology',
+    industry: 'Technology',
     companySize: 'enterprise',
     stage: 'mature',
     stockTicker: 'AAPL',
@@ -114,7 +131,7 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
 
   google: {
     companyName: 'Google (Alphabet)',
-    industry: 'Technology / AI',
+    industry: 'Technology',
     companySize: 'enterprise',
     stage: 'restructuring',
     stockTicker: 'GOOGL',
@@ -140,8 +157,23 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       designer: 0.30,
       hrRecruiter: 0.75,
       sales: 0.60,
+      devopsEngineer: 0.32,
+      cloudEngineer: 0.25,
+      securityEngineer: 0.22,
+      dataEngineer: 0.30,
+      databaseAdministrator: 0.40,
+      solutionArchitect: 0.35,
+      businessAnalyst: 0.45,
+      technicalProgramManager: 0.35,
+      siteReliabilityEngineer: 0.25,
+      infrastructureEngineer: 0.32,
+      mlEngineer: 0.20,
+      aiEngineer: 0.18,
+      operationsManager: 0.55,
+      supportEngineer: 0.60,
+      salesEngineer: 0.55,
     },
-    aiExposureIndex: 0.70,
+    aiExposureIndex: 0.88,
     marketRiskScore: 0.35,
     companyRiskScore: 0.45,
     confidenceScore: 0.95,
@@ -150,7 +182,7 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
 
   microsoft: {
     companyName: 'Microsoft',
-    industry: 'Technology / Cloud / AI',
+    industry: 'Technology',
     companySize: 'enterprise',
     stage: 'mature',
     stockTicker: 'MSFT',
@@ -176,8 +208,23 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       designer: 0.27,
       hrRecruiter: 0.55,
       sales: 0.40,
+      devopsEngineer: 0.28,
+      cloudEngineer: 0.20,
+      securityEngineer: 0.18,
+      dataEngineer: 0.22,
+      databaseAdministrator: 0.35,
+      solutionArchitect: 0.28,
+      businessAnalyst: 0.38,
+      technicalProgramManager: 0.28,
+      siteReliabilityEngineer: 0.22,
+      infrastructureEngineer: 0.25,
+      mlEngineer: 0.15,
+      aiEngineer: 0.15,
+      operationsManager: 0.45,
+      supportEngineer: 0.50,
+      salesEngineer: 0.38,
     },
-    aiExposureIndex: 0.72,
+    aiExposureIndex: 0.92,
     marketRiskScore: 0.22,
     companyRiskScore: 0.28,
     confidenceScore: 0.95,
@@ -186,7 +233,7 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
 
   amazon: {
     companyName: 'Amazon',
-    industry: 'E-Commerce / Cloud',
+    industry: 'Technology',
     companySize: 'enterprise',
     stage: 'restructuring',
     stockTicker: 'AMZN',
@@ -212,8 +259,28 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       designer: 0.32,
       hrRecruiter: 0.80,
       sales: 0.55,
+      // Extended roles — derived from Amazon's 2023-2026 restructuring pattern
+      devopsEngineer: 0.28,         // SRE/DevOps in high demand for AWS
+      cloudEngineer: 0.22,          // AWS cloud roles: counter-cyclical to cuts
+      securityEngineer: 0.25,       // Security growing at Amazon
+      dataEngineer: 0.28,           // Data pipelines for ML/AI needed
+      databaseAdministrator: 0.42,  // Traditional DBA being disrupted by managed services
+      solutionArchitect: 0.35,      // AWS SAs: relatively protected by customer-facing role
+      businessAnalyst: 0.48,        // BA roles affected in operations restructuring
+      technicalProgramManager: 0.38, // TPMs needed to orchestrate AI-assisted delivery
+      siteReliabilityEngineer: 0.25, // SRE: essential for AWS/Prime reliability
+      infrastructureEngineer: 0.32,  // Infra consolidation ongoing
+      mlEngineer: 0.18,             // AI/ML roles growing (Bedrock, Alexa AI)
+      aiEngineer: 0.18,             // AI engineering boom at Amazon
+      operationsManager: 0.62,      // Ops managers affected in fulfilment restructuring
+      financeManager: 0.40,         // Finance support functions stable
+      supportEngineer: 0.65,        // Support/CX roles heavily automated
     },
-    aiExposureIndex: 0.65,
+    // Amazon is a confirmed hyperscaler with massive AI investment (AWS Bedrock,
+    // Alexa AI, AGI safety team, $4B Anthropic investment, Nova models).
+    // 0.88 → aiIndexToSignal → 'very-high'. This unlocks the hyperscaler D8 proxy
+    // for profitable-but-cutting scenarios (corrects under-scoring for AI efficiency cuts).
+    aiExposureIndex: 0.88,
     marketRiskScore: 0.30,
     companyRiskScore: 0.40,
     confidenceScore: 0.95,
@@ -588,7 +655,9 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
 
   oracle: {
     companyName: 'Oracle',
-    industry: 'Enterprise Technology / Cloud',
+    // Normalized to match industryRiskData keys so L4 market conditions resolves correctly.
+    // Enterprise Software is the closest match for Oracle's primary business (DB, ERP, Cloud SaaS).
+    industry: 'Enterprise Software',
     companySize: 'enterprise',
     stage: 'restructuring',
     financialSignals: {
@@ -614,6 +683,24 @@ export const COMPANY_INTELLIGENCE_DB: Record<string, CompanyProfile> = {
       designer: 0.40,
       hrRecruiter: 0.88,
       sales: 0.72,
+      // Extended roles — calibrated against April 2026 Oracle restructuring:
+      // Engineering, Sales, HR, Ops, Support were all explicitly named in cuts.
+      devopsEngineer: 0.45,         // DevOps cut along with engineering in restructuring
+      cloudEngineer: 0.38,          // OCI cloud roles: partially protected, Oracle Cloud expanding
+      securityEngineer: 0.35,       // Security relatively stable (Oracle cloud needs it)
+      dataEngineer: 0.40,           // Data engineering affected
+      databaseAdministrator: 0.52,  // Legacy Oracle DBA: high risk (Oracle itself is automating DBs)
+      solutionArchitect: 0.55,      // Sales-adjacent SAs heavily cut in April 2026
+      businessAnalyst: 0.58,        // BAs affected in support/operations restructuring
+      technicalProgramManager: 0.45, // TPMs cut in engineering restructuring
+      siteReliabilityEngineer: 0.40, // SRE reduced as OCI consolidates
+      infrastructureEngineer: 0.48,  // Infra consolidation (OCI absorbing Cerner/Netsuite)
+      mlEngineer: 0.30,             // ML roles protected (Oracle AI strategy ongoing)
+      aiEngineer: 0.28,             // AI engineering exempt from cuts
+      operationsManager: 0.72,      // Ops management heavily cut in restructuring
+      financeManager: 0.55,         // Finance support functions moderately at risk
+      supportEngineer: 0.75,        // Support staff significantly cut in April 2026
+      salesEngineer: 0.68,          // Pre-sales SE heavily impacted (sales department cut)
     },
     aiExposureIndex: 0.62,
     marketRiskScore: 0.42,

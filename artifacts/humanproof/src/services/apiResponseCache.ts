@@ -4,10 +4,9 @@
 // PROBLEM SOLVED
 // ──────────────
 // Without this layer, 30 users auditing TCS in the same hour each fire an
-// independent SEC EDGAR / NewsAPI / RSS fetch. The first user to hit the daily
-// quota takes the last call; every subsequent user gets a degraded response.
-// With shared caching, the first user's result benefits all other users until
-// TTL expiry — the live call count drops from O(users) to O(1 per TTL window).
+// independent SEC EDGAR / RSS fetch. The first user to hit an expensive scrape
+// shares it with all other users until TTL expiry — live call count drops from
+// O(users) to O(1 per TTL window).
 //
 // HOW IT WORKS
 // ────────────
@@ -22,21 +21,18 @@
 // ──────────────
 // Every cached payload carries `_cachedAt` (ISO string) and `_cacheAgeSeconds`
 // (integer) in the returned wrapper. Callers MUST surface this in the UI —
-// "Stock data: 2 hours old" is accurate; silently serving 6-hour-old stock
-// data as "live" is a trust violation.
+// "Stock data: 2 hours old" is accurate; silently serving stale data as "live"
+// is a trust violation.
 //
-// TTLs PER API (conservative — chosen to respect free-tier limits)
+// TTLs PER API
 // ─────────────────────────────────────────────────────────────────
-//   sec-edgar     : 6 hours  — SEC EDGAR is rate-limited per IP; 8-K filings
-//                              are not published in real-time anyway.
-//   newsapi       : 2 hours  — NewsAPI 100/day free tier; layoff news rarely
-//                              breaks and re-breaks in a 2-hour window.
-//   rss2json      : 30 min   — rss2json 100/day; breaking news needs faster TTL.
+//   sec-edgar     : 6 hours  — SEC EDGAR is rate-limited per IP.
 //   naukri / bse  : 4 hours  — Hiring data and stock data are semi-daily.
-//   yahoo-finance : 1 hour   — Used as fallback; AlphaVantage 25/day is primary.
-//   alphavantage  : 8 hours  — 25 calls/day max; spread across the day.
-//   serper        : 4 hours  — Paid; rate-limit headroom exists but quota is paid.
+//   yahoo-finance : 1 hour   — Primary stock source; direct Yahoo Finance scrape.
 //   warn-act      : 12 hours — WARN Act filings are published once per business day.
+//
+// NOTE: newsapi, rss2json, alphavantage, serper have been removed — those were
+// paid/limited APIs now replaced with unlimited free scrapers.
 
 import { supabase } from '../utils/supabase';
 import type { CircuitApiName } from './apiCircuitBreaker';
@@ -45,15 +41,11 @@ import type { CircuitApiName } from './apiCircuitBreaker';
 
 export const API_CACHE_TTL_SECONDS: Partial<Record<CircuitApiName, number>> = {
   'sec-edgar':             6  * 3600,   // 6 hours
-  'newsapi':               2  * 3600,   // 2 hours
-  'rss2json':              30 * 60,     // 30 minutes
   'naukri':                4  * 3600,   // 4 hours
   'bse':                   4  * 3600,   // 4 hours
   // yahoo-finance split into per-region keys in migration 20260521000003
   'yahoo-finance-us':      1  * 3600,   // 1 hour
   'yahoo-finance-global':  1  * 3600,   // 1 hour
-  'alphavantage':          8  * 3600,   // 8 hours
-  'serper':                4  * 3600,   // 4 hours
   'warn-act':              12 * 3600,   // 12 hours
   // Market hiring connectors — same TTL as naukri
   'indeed-india':      4 * 3600, 'linkedin-india':   4 * 3600,

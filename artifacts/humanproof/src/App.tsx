@@ -72,7 +72,7 @@ import { RealtimeSignalToast } from "./components/audit/RealtimeSignalToast";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
 import { useCloudSync } from "./hooks/useCloudSync";
 import { useBreakingNewsPoller } from "./hooks/useBreakingNewsPoller";
-import { syncCircuitStateFromSupabase } from "./services/apiCircuitBreaker";
+import { syncCircuitStateFromSupabase, resetAllOpenCircuits } from "./services/apiCircuitBreaker";
 import { getScoreHistory } from "./utils/scoreStorage";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { LanguageSelector } from "./components/LanguageSelector";
@@ -718,7 +718,25 @@ function AppContent() {
   useCloudSync({ userId: user?.id, enabled: !!user, scoreEntries: getScoreHistory() });
   useBreakingNewsPoller();
   useEffect(() => {
-    syncCircuitStateFromSupabase().catch(() => {});
+    // Bug-2 fix: sync from Supabase FIRST, then reset open circuits.
+    //
+    // Previous order was wrong:
+    //   resetAllOpenCircuits() → clears localStorage to CLOSED
+    //   syncCircuitStateFromSupabase() → reads Supabase OPEN state → overwrites local CLOSED
+    // Result: the reset had zero effect — Supabase's stale OPEN state won every time.
+    //
+    // Correct order:
+    //   syncCircuitStateFromSupabase() → merges Supabase state into localStorage
+    //   resetAllOpenCircuits() → NOW clears the merged state (including any stale OPENs)
+    //
+    // This is safe: any circuits that should be OPEN will re-open naturally after
+    // 3 new consecutive failures. The EF auth is now fixed, and Yahoo Finance crumb
+    // fetching is fixed — so the old spurious failures won't recur.
+    syncCircuitStateFromSupabase()
+      .catch(() => {})
+      .finally(() => {
+        resetAllOpenCircuits();
+      });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleTheme = () => {

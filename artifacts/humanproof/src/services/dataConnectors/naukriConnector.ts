@@ -1,9 +1,9 @@
 // naukriConnector.ts
 // Naukri/LinkedIn job posting trend proxy — role demand signal.
 //
-// Live path:  proxy-live-signals Supabase Edge Function (Serper API key held server-side).
-//             The browser NEVER holds the Serper key. Calling Serper directly from
-//             the browser exposed the key in the JS bundle (v6.0 audit finding).
+// Live path:  proxy-live-signals Supabase Edge Function — direct market-specific
+//             job board scraping (Naukri, Indeed, LinkedIn, Reed, SEEK, etc.).
+//             No API keys required. The EF runs server-side, bypassing CORS.
 //
 // Fallback:   ROLE_DEMAND_BASE static priors (Q1 2026 manual review) — labeled
 //             as heuristic so the UI never presents them as live job-market data.
@@ -13,8 +13,6 @@ import { invokeEdgeFunction } from '../../infrastructure/requestId';
 import {
   recordApiDegradation,
   isRateLimitError,
-  incrementRequestCount,
-  isQuotaExhausted,
 } from '../apiDegradationMonitor';
 import {
   isCallAllowed,
@@ -54,7 +52,7 @@ export interface RoleDemandSignal {
   /** True when data is from the static Q1 2026 baseline (not live) */
   _stale?: boolean;
   /** Reason code for falling back to static baseline */
-  _fallbackReason?: 'serper_unavailable' | 'serper_quota_exceeded' | 'serper_error';
+  _fallbackReason?: 'scraper_unavailable' | 'scraper_empty' | 'scraper_error';
   /** ISO date of the static baseline snapshot */
   _baselineDate?: string;
   /** Which geographic market's connectors were used. */
@@ -100,7 +98,7 @@ export function matchRole(roleTitle: string): { trend: 'rising' | 'stable' | 'fa
 function heuristicSignal(
   roleTitle: string,
   company: string,
-  fallbackReason: RoleDemandSignal['_fallbackReason'] = 'serper_unavailable',
+  fallbackReason: RoleDemandSignal['_fallbackReason'] = 'scraper_unavailable',
 ): RoleDemandSignal {
   const base = matchRole(roleTitle);
   return {
@@ -115,7 +113,8 @@ function heuristicSignal(
     isLive:            false,
     disclosure:
       'Static heuristic baseline (Q1 2026 review). Live hiring signals use direct Naukri/Indeed/LinkedIn ' +
-      'scraping (no API key required). This fallback activates only when all scraped sources return zero results.',
+      'job-board scraping via the proxy Edge Function (no API keys required). ' +
+      'This fallback activates only when all scraped sources return zero results.',
     fetchedAt:      new Date().toISOString(),
     _stale:         true,
     _fallbackReason: fallbackReason,
@@ -178,14 +177,9 @@ export async function fetchRoleDemandSignal(
   const market = resolveHiringMarket(region);
   const marketConnectors = MARKET_HIRING_CONNECTORS[market];
 
-  // ── Primary: Direct scraping via proxy-live-signals EF (no API key needed) ─
-  // The EF runs market-appropriate job board scrapers; Serper is last-resort fallback.
-  if (isQuotaExhausted('serper')) {
-    return {
-      ...heuristicSignal(roleTitle, company, 'serper_quota_exceeded'),
-      disclosure: 'Serper daily quota exhausted this session. Primary: market-specific job board scraping (no key).',
-    };
-  }
+  // ── Primary: Direct scraping via proxy-live-signals EF (no API keys needed) ─
+  // The EF runs market-appropriate job board scrapers (Naukri, Indeed, LinkedIn,
+  // Reed, SEEK, StepStone, Bayt, etc.) — all free, no paid APIs.
 
   // Shared cross-user Supabase cache (4h TTL). Market-scoped key so a Singapore
   // result never poisons an India cache for the same role+company.
@@ -213,7 +207,7 @@ export async function fetchRoleDemandSignal(
         _stale: true,
       };
     }
-    return heuristicSignal(roleTitle, company, 'serper_unavailable');
+    return heuristicSignal(roleTitle, company, 'scraper_unavailable');
   }
 
   // Build skipConnectors: connector IDs whose client-side circuits are OPEN.
@@ -236,17 +230,7 @@ export async function fetchRoleDemandSignal(
     if (!error && data?.hiringData?.isLive) {
       const h = data.hiringData;
 
-      if (h.scrapeSource === 'serper') {
-        incrementRequestCount('serper');
-      }
-      if (h.serperRateLimited) {
-        recordApiDegradation('serper', 'rate_limited', 'Serper 429 from proxy-live-signals');
-        return heuristicSignal(roleTitle, company, 'serper_quota_exceeded');
-      }
-
-      // Update per-connector circuits from EF response. The EF returns
-      // connectorResults: { [connectorId]: { openings, failed } } so the client
-      // can track which specific job boards are healthy vs open.
+      // Update per-connector circuits from EF response.
       const connectorResults: Record<string, { openings: number | null; failed: boolean }> =
         data.connectorResults ?? {};
       for (const [connId, outcome] of Object.entries(connectorResults)) {
@@ -258,10 +242,6 @@ export async function fetchRoleDemandSignal(
         }
       }
 
-      const sourceLabel = h.scrapeSource === 'scraped'
-        ? (h.source ?? `${market} job boards (scraped)`)
-        : 'Serper API';
-
       const liveResult: RoleDemandSignal = {
         roleTitle,
         company,
@@ -270,11 +250,9 @@ export async function fetchRoleDemandSignal(
         linkedinOpenings:  h.linkedinOpenings ?? null,
         demandTrend:       h.demandTrend,
         hiringFreezeScore: h.hiringFreezeScore,
-        source:            sourceLabel,
+        source:            h.source ?? `${market} job boards (scraped)`,
         isLive:            true,
-        disclosure:        h.scrapeSource === 'scraped'
-          ? ''
-          : 'Hiring data from Serper API (paid fallback). Primary: market-specific job board scraping.',
+        disclosure:        '',
         fetchedAt:         h.fetchedAt ?? new Date().toISOString(),
         _market:           market,
         _connectorResults: connectorResults,
@@ -286,105 +264,40 @@ export async function fetchRoleDemandSignal(
       return liveResult;
     }
 
-    if (error) {
-      if (isRateLimitError(error)) {
-        recordApiDegradation('serper', 'rate_limited', error.message);
-      } else {
-        recordApiDegradation('serper', 'network_error', error.message);
+    if (!error && data !== null) {
+      // EF responded 200 but hiringData is null (all scrapers returned nothing).
+      // This is NOT an EF failure — the EF itself is reachable. Reset the failure
+      // counter so transient scrape-zero results don't drift the circuit toward OPEN.
+      circuitSuccess('naukri');
+      if (data?.errors?.length) {
+        console.info('[NaukriConnector] Edge Function scrape empty:', data.errors.join('; '));
       }
-      circuitFailure('naukri', error.message);
-    }
-    if (data?.errors?.length) {
-      console.info('[NaukriConnector] Edge Function:', data.errors.join('; '));
+    } else if (error) {
+      const msg = error.message ?? String(error);
+      // 401 = user session expired or not logged in — not a scraper availability problem.
+      // Don't record it as a circuit failure; just fall through to heuristic.
+      if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('Invalid or expired token')) {
+        console.info('[NaukriConnector] Auth error — session may have expired. Not tripping circuit.');
+      } else if (isRateLimitError(error)) {
+        recordApiDegradation('supabase_osint', 'rate_limited', msg);
+        circuitFailure('naukri', msg);
+      } else {
+        recordApiDegradation('supabase_osint', 'network_error', msg);
+        circuitFailure('naukri', msg);
+      }
     }
   } catch (e: any) {
+    const msg = e?.message ?? 'unknown';
     if (isRateLimitError(e)) {
-      recordApiDegradation('serper', 'rate_limited', e?.message);
+      recordApiDegradation('supabase_osint', 'rate_limited', msg);
     } else {
-      recordApiDegradation('serper', 'network_error', e?.message);
+      recordApiDegradation('supabase_osint', 'network_error', msg);
     }
-    circuitFailure('naukri', e?.message ?? 'unknown');
-    console.info('[NaukriConnector] Edge Function unavailable:', e?.message);
+    circuitFailure('naukri', msg);
+    console.info('[NaukriConnector] Edge Function unavailable:', msg);
   }
 
-  // ── Localhost-only fallback: call Serper directly using VITE_SERPER_KEY ────
-  // This path only runs when:
-  //   1. The Edge Function call above failed (e.g. local dev without Supabase running)
-  //   2. The origin is strictly localhost or 127.0.0.1 (not a deployed domain)
-  // In production, the Edge Function always succeeds, so this block is never reached.
-  const isLocalhost = typeof window !== 'undefined'
-    && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-  const devSerperKey = typeof import.meta !== 'undefined'
-    ? (import.meta as any).env?.VITE_SERPER_KEY as string | undefined
-    : undefined;
-
-  if (isLocalhost && devSerperKey && isCallAllowed('serper')) {
-    try {
-      // BUG-08: Promise.allSettled — a Naukri 5s timeout must not abort the LinkedIn fetch.
-      const [naukriSettled, linkedinSettled] = await Promise.allSettled([
-        fetch('https://google.serper.dev/search', {
-          method: 'POST',
-          headers: { 'X-API-KEY': devSerperKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q: `"${roleTitle}" jobs ${company} site:naukri.com`, num: 10 }),
-          signal: AbortSignal.timeout(5000),
-        }),
-        fetch('https://google.serper.dev/search', {
-          method: 'POST',
-          headers: { 'X-API-KEY': devSerperKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q: `"${roleTitle}" jobs ${company} site:linkedin.com/jobs`, num: 10 }),
-          signal: AbortSignal.timeout(5000),
-        }),
-      ]);
-      // Rejected fetches degrade gracefully — null response feeds a null count downstream.
-      const naukriRes   = naukriSettled.status   === 'fulfilled' ? naukriSettled.value   : null;
-      const linkedinRes = linkedinSettled.status === 'fulfilled' ? linkedinSettled.value : null;
-
-      const parseCount = async (res: Response | null): Promise<number | null> => {
-        if (!res || !res.ok) return null;
-        const d = await res.json();
-        const snippets: string[] = (d?.organic ?? []).slice(0, 3).map((r: any) => r?.snippet ?? '');
-        for (const s of snippets) {
-          const m = s.match(/(\d[\d,]+)\s+(?:jobs?|openings?|positions?)/i);
-          if (m) return parseInt(m[1].replace(/,/g, ''), 10);
-        }
-        return (d?.organic ?? []).filter((r: any) =>
-          /jobs?|openings?|hiring|career/i.test(r.title ?? ''),
-        ).length || null;
-      };
-
-      const naukriCount   = await parseCount(naukriRes);
-      const linkedinCount = await parseCount(linkedinRes);
-      const total = (naukriCount ?? 0) + (linkedinCount ?? 0);
-
-      const devResult: RoleDemandSignal = {
-        roleTitle,
-        company,
-        estimatedOpenings: total > 0 ? total : null,
-        naukriOpenings:    naukriCount,
-        linkedinOpenings:  linkedinCount,
-        demandTrend:       total > 10 ? 'rising' : total > 3 ? 'stable' : 'falling',
-        hiringFreezeScore: total === 0 ? 0.85 : total < 3 ? 0.60 : total < 8 ? 0.35 : 0.15,
-        source:            'Serper API',
-        isLive:            true,
-        disclosure:        '',
-        fetchedAt:         new Date().toISOString(),
-      };
-      persistCompanySkillDemand(devResult);
-      circuitSuccess('serper', devResult);
-      return devResult;
-    } catch (e: any) {
-      if (isRateLimitError(e)) {
-        recordApiDegradation('serper', 'rate_limited', `Direct Serper 429: ${e?.message}`);
-        circuitFailure('serper', `rate_limited: ${e?.message}`);
-      } else {
-        circuitFailure('serper', e?.message ?? 'unknown');
-      }
-      /* fall through to heuristic */
-    }
-  }
-
-  return heuristicSignal(roleTitle, company, 'serper_error');
+  return heuristicSignal(roleTitle, company, 'scraper_error');
 }
 
 // ── Hiring freeze detection from job-posting delta ───────────────────────────

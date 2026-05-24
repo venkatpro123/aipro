@@ -3371,7 +3371,7 @@ const analyzeSignalQuality = (
   if (companyData.stock90DayChange === null && companyData.isPublic) {
     missingFallbacks.push(
       'Stock 90-day return null — L1 weight redistributed to funding/size/overstaffing. ' +
-      'Configure Alpha Vantage in proxy-live-signals Edge Function for live data.',
+      'Yahoo Finance is the primary source (no key needed) — check proxy-live-signals EF deployment.',
     );
     heuristicSignals++;
   } else if (companyData.stock90DayChange === null && !companyData.isPublic) {

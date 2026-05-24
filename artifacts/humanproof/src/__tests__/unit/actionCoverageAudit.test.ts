@@ -18,11 +18,13 @@ import {
 } from '../../services/actionCoverageAudit';
 import { getAllOracleRoles } from '../../data/oracleRoleIndex';
 import { getAdaptiveRoleActions, BRACKET_ORDER } from '../../services/seniorityActionEngine';
+import { ensureCareerIntelligenceLoaded } from '../../data/intelligence';
 
 let report: ActionCoverageReport;
 
-beforeAll(() => {
-  report = computeActionCoverage(true); // force fresh computation
+beforeAll(async () => {
+  await ensureCareerIntelligenceLoaded();
+  report = computeActionCoverage(true); // force fresh computation after corpus loaded
 });
 
 // ── Test 1: every role-bracket call returns ≥ 1 action ────────────────────────

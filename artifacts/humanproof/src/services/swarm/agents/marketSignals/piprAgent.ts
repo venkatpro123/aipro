@@ -1,16 +1,17 @@
 // piprAgent.ts
-// Market Signal — Public Interest / Press mentions via NewsAPI sentiment.
-// LIVE: NewsAPI.org (100 req/day free) with heuristic fallback.
+// Market Signal — Public Interest / Press mentions sentiment.
+//
+// NewsAPI direct calls removed (exposed VITE_ key in browser bundle).
+// Now routes through proxy-live-signals EF action=news — same pattern as
+// recentLayoffAgent and costCuttingAgent. Falls back to heuristic on EF error.
 
 import { AgentFn, AgentSignal, SwarmInput } from '../../swarmTypes';
-
-const NEWSAPI_BASE = 'https://newsapi.org/v2/everything';
+import { invokeEdgeFunction } from '../../../../infrastructure/requestId';
 
 const NEGATIVE_KEYWORDS = ['layoff', 'fired', 'bankrupt', 'debt', 'loss', 'decline', 'cut', 'crisis', 'restructur', 'downsize'];
 const POSITIVE_KEYWORDS = ['growth', 'profit', 'expansion', 'hiring', 'record', 'milestone', 'invest'];
 
 const heuristicPIPR = (input: SwarmInput): number => {
-  // Fall back to layoff history as proxy for negative press
   const layoffs = input.companyData.layoffsLast24Months ?? [];
   if (layoffs.length >= 3) return 0.75;
   if (layoffs.length === 2) return 0.58;
@@ -30,7 +31,6 @@ const scoreSentiment = (articles: any[]): number => {
   const total = negCount + posCount;
   if (total === 0) return 0.30;
   const negRatio = negCount / total;
-  // Map neg sentiment ratio to risk signal
   if (negRatio > 0.75) return 0.88;
   if (negRatio > 0.55) return 0.70;
   if (negRatio > 0.40) return 0.52;
@@ -39,29 +39,26 @@ const scoreSentiment = (articles: any[]): number => {
 };
 
 const run = async (input: SwarmInput): Promise<AgentSignal> => {
-  const apiKey = (import.meta as any).env?.VITE_NEWSAPI_KEY;
+  try {
+    const { data, error } = await invokeEdgeFunction<any>('proxy-live-signals', {
+      body: { action: 'news', companyName: input.companyName },
+    });
 
-  if (apiKey) {
-    try {
-      const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      const url  = `${NEWSAPI_BASE}?q=${encodeURIComponent(input.companyName)}&from=${from}&language=en&sortBy=relevancy&pageSize=20&apiKey=${apiKey}`;
-      const res  = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-      const json = await res.json();
-      if (json.status === 'ok') {
-        const signal = scoreSentiment(json.articles ?? []);
-        return {
-          agentId:    'piprAgent',
-          category:   'market',
-          signal,
-          confidence: 0.72,
-          sourceType: 'live-api',
-          ageInDays:  0,
-          metadata:   { articles: json.totalResults, windowDays: 30 },
-        };
-      }
-    } catch (e: any) {
-      console.warn('[piprAgent] API failed:', e.message);
+    if (!error && data?.newsData) {
+      const articles: any[] = data.newsData.articles ?? data.newsData.items ?? [];
+      const signal = scoreSentiment(articles);
+      return {
+        agentId:    'piprAgent',
+        category:   'market',
+        signal,
+        confidence: 0.65,
+        sourceType: 'live-api',
+        ageInDays:  0,
+        metadata:   { articles: articles.length, windowDays: 30, source: 'proxy-live-signals/RSS' },
+      };
     }
+  } catch (e: any) {
+    console.warn('[piprAgent] EF proxy failed:', e?.message);
   }
 
   const signal = heuristicPIPR(input);

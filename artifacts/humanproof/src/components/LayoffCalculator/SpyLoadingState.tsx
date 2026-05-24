@@ -463,7 +463,7 @@ export const SpyLoadingState: React.FC<Props> = ({
             {[
               { label: 'Supabase Intelligence DB', delay: 0,    speed: 0.9, color: '#00d4e0' },
               { label: 'Financial Signals API',     delay: 200,  speed: 0.7, color: '#10b981' },
-              { label: 'NewsAPI Sentiment',          delay: 400,  speed: 0.6, color: '#7c3aed' },
+              { label: 'RSS News Sentiment',          delay: 400,  speed: 0.6, color: '#7c3aed' },
               { label: 'Layoffs.fyi Connector',     delay: 600,  speed: 0.8, color: '#f59e0b' },
               { label: 'SEC EDGAR Regulatory',      delay: 800,  speed: 0.5, color: '#06b6d4' },
               { label: 'Naukri Job Index',          delay: 1000, speed: 0.6, color: '#a78bfa' },

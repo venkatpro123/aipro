@@ -127,14 +127,14 @@ const run = async (input: SwarmInput): Promise<AgentSignal> => {
           effectiveCount,
           maxPercentCut,
           windowDays:     30,
-          source:         'proxy-live-signals/NewsAPI',
+          source:         'proxy-live-signals/RSS',
         },
       };
     }
 
     if (error) console.warn('[recentLayoffAgent] proxy-live-signals error:', error.message);
     if (data?.newsData?.rateLimited) {
-      console.warn('[recentLayoffAgent] NewsAPI rate-limited — heuristic fallback');
+      console.warn('[recentLayoffAgent] RSS quota exhausted — heuristic fallback');
     }
   } catch (e: any) {
     console.warn('[recentLayoffAgent] proxy call failed:', e?.message);

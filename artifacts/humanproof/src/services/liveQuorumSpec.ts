@@ -100,7 +100,7 @@ export const DEFAULT_QUORUM_SPEC: QuorumSpec = {
   },
   financial: {
     min: 1,
-    sources: ['yahoo', 'alphavantage', 'bse', 'nse', 'fmp'],
+    sources: ['yahoo', 'yahoo-finance', 'sec-edgar', 'bse', 'nse', 'fmp'],
   },
   hiring: {
     min: 1,

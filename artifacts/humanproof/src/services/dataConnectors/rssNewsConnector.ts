@@ -1,33 +1,25 @@
 // rssNewsConnector.ts
 // RSS/news signal connector — Economic Times, Google News, Hacker News API.
 //
+// Zero paid APIs and zero proxies. All sources fetched directly:
+//   - Google News RSS (no key, region-aware via hl/gl/ceid params)
+//   - Bing News RSS (no key)
+//   - Yahoo Finance RSS (no key, ticker-targeted)
+//   - Economic Times RSS (direct XML fetch; CORS-blocked feeds silently return [])
+//   - APAC feeds: TechInAsia, CNA Business, e27, Reuters Asia (direct XML fetch)
+//   - Reddit JSON search API (no key, User-Agent required)
+//   - Hacker News Algolia API (no key, no quota)
+//
+// CORS-blocked feeds (ET, some APAC) return [] from the browser; those sources
+// are fully covered server-side by the proxy-live-signals Edge Function action=news.
+//
 // FIXES APPLIED:
-//   1. Glassdoor press RSS removed — the previous URL (glassdoor.com/about-us/press/rss)
-//      fetched Glassdoor's own press releases, not employee reviews or company
-//      sentiment. It provided zero signal about any specific company. Replaced
-//      with Google News RSS (no API key, company-targeted via q= param).
-//
-//   2. Negation detection — "denies layoffs", "no plans to cut", "refutes"
-//      no longer increment the layoff count or drive the signal negative.
-//
-//   3. URL-based deduplication — syndicated articles (same headline on 8 news
-//      aggregator sites) no longer count as 8 separate events. Dedup by URL
-//      and 5-word title fingerprint.
-//
-//   4. rss2json.com fallback — when the proxy fails (100/day free limit),
-//      the connector falls back to the HN Algolia API (no quota) and Google
-//      News direct fetch (CORS permissive for GET requests).
-//
-//   5. Article count cap corrected — totalResults from RSS feeds often
-//      over-counts (feed returns 50 items; only 2 are about the company).
-//      Signal is now based on *matched* articles, not the raw feed size.
+//   1. Glassdoor press RSS removed — provided zero per-company signal.
+//   2. Negation detection — "denies layoffs", "no plans to cut" no longer count.
+//   3. URL-based deduplication — syndicated articles counted once.
+//   4. rss2json proxy removed — was 100/day limited; all feeds now direct.
+//   5. Article count cap corrected — based on *matched* articles, not raw feed size.
 
-import {
-  isCallAllowed,
-  recordSuccess as circuitSuccess,
-  recordFailure as circuitFailure,
-  getCachedResponse,
-} from '../apiCircuitBreaker';
 import { readCache, writeCache } from '../apiResponseCache';
 
 export interface NewsSignal {
@@ -50,11 +42,43 @@ export interface NewsSummary {
   fetchedAt: string;
 }
 
-const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
+// ── Minimal RSS XML parser ─────────────────────────────────────────────────
+// Shared across all direct-fetch paths. No DOM dependency.
 
-// Google News locale table — maps our internal region keys to Google News gl/hl/ceid params.
-// Previously hardcoded to gl=IN for all companies, meaning Singapore/UK/EU queries ran
-// through India's Google News index and de-prioritized TechInAsia, CNA, e27, etc.
+function parseRSSXml(xml: string): Array<{ title: string; link: string; description: string; pubDate: string }> {
+  const items: Array<{ title: string; link: string; description: string; pubDate: string }> = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = itemRegex.exec(xml)) !== null) {
+    const block = m[1];
+    const title       = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block)
+                        ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1]?.trim() ?? '';
+    const link        = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1]?.trim() ?? '';
+    const description = (/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/i.exec(block)
+                        ?? /<description>([\s\S]*?)<\/description>/i.exec(block))?.[1]?.trim() ?? '';
+    const pubDate     = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1]?.trim() ?? '';
+    if (title || link) items.push({ title, link, description, pubDate });
+  }
+  return items;
+}
+
+/** Direct XML fetch — silently returns [] for CORS-blocked or unreachable feeds. */
+async function fetchDirectRSS(url: string, timeoutMs = 6_000): Promise<any[]> {
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { Accept: 'application/rss+xml, application/xml, text/xml, */*' },
+    });
+    if (!res.ok) return [];
+    const text = await res.text();
+    return parseRSSXml(text);
+  } catch {
+    return [];
+  }
+}
+
+// ── Google News locale table ────────────────────────────────────────────────
+
 const GOOGLE_NEWS_LOCALE: Record<string, { hl: string; gl: string; ceid: string }> = {
   IN:   { hl: 'en-IN', gl: 'IN', ceid: 'IN:en' },
   SG:   { hl: 'en-SG', gl: 'SG', ceid: 'SG:en' },
@@ -68,35 +92,30 @@ const GOOGLE_NEWS_LOCALE: Record<string, { hl: string; gl: string; ceid: string 
 };
 const DEFAULT_GOOGLE_LOCALE = { hl: 'en', gl: 'US', ceid: 'US:en' };
 
-// Google News RSS: company-targeted, no API key, region-aware.
 function googleNewsRssUrl(company: string, region?: string): string {
   const loc = (region && GOOGLE_NEWS_LOCALE[region]) ?? DEFAULT_GOOGLE_LOCALE;
   return `https://news.google.com/rss/search?q=${encodeURIComponent(company + ' layoff OR restructuring OR job cut')}&hl=${loc.hl}&gl=${loc.gl}&ceid=${loc.ceid}`;
 }
 
-// Bing News RSS: no API key, company-targeted
 function bingNewsRssUrl(company: string): string {
   return `https://www.bing.com/news/search?q=${encodeURIComponent('"' + company + '" layoff OR restructuring')}&format=RSS`;
 }
 
-// Yahoo Finance News RSS: ticker-targeted, no API key
 function yahooFinanceRssUrl(ticker: string): string {
   return `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(ticker)}&region=US&lang=en-US`;
 }
 
 // APAC/Singapore-specific static feeds — TechInAsia, CNA Business, e27.
-// These are the primary sources that break Singapore tech layoffs 4-8 hours
-// before they reach global English press (TechCrunch, Reuters global).
+// These break Singapore/SEA layoffs 4-8h before global English press.
 const APAC_STATIC_FEEDS = {
-  techInAsia:  'https://www.techinasia.com/feed',
+  techInAsia:      'https://www.techinasia.com/feed',
   cnaBusinessTech: 'https://www.channelnewsasia.com/rssfeeds/8395986',
-  e27:         'https://e27.co/feed/',
-  reutersAsia: 'https://feeds.reuters.com/reuters/technologyNews',
+  e27:             'https://e27.co/feed/',
+  reutersAsia:     'https://feeds.reuters.com/reuters/technologyNews',
 };
 
 const STATIC_FEEDS = {
   economicTimes: 'https://economictimes.indiatimes.com/tech/tech-bytes/rssfeeds/78570561.cms',
-  hnTop: 'https://hnrss.org/frontpage',
 };
 
 const LAYOFF_KEYWORDS = [
@@ -138,110 +157,6 @@ function isNegated(text: string): boolean {
 // 5-word title fingerprint for deduplication
 function titleFingerprint(title: string): string {
   return title.toLowerCase().split(/\s+/).slice(0, 5).join(' ');
-}
-
-async function fetchRSSViaProxy(url: string): Promise<any[]> {
-  // Circuit breaker gate — OPEN means rss2json is unavailable; serve local circuit cache.
-  if (!isCallAllowed('rss2json')) {
-    const cached = getCachedResponse<any[]>('rss2json');
-    return cached?.data ?? [];
-  }
-
-  // Shared cross-user Supabase cache (30 min TTL) — before making a live call.
-  const sharedCacheKey = `rss2json|${url}`;
-  const sharedCached = await readCache<any[]>('rss2json', sharedCacheKey);
-  if (sharedCached) {
-    circuitSuccess('rss2json', sharedCached.payload);
-    return sharedCached.payload;
-  }
-
-  try {
-    const res = await fetch(`${RSS_PROXY}${encodeURIComponent(url)}`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) {
-      circuitFailure('rss2json', `HTTP ${res.status}`);
-      return [];
-    }
-    const data = await res.json();
-    const items = data?.items ?? [];
-    circuitSuccess('rss2json', items);
-    writeCache('rss2json', sharedCacheKey, items);
-    return items;
-  } catch (err: any) {
-    circuitFailure('rss2json', err?.message ?? String(err));
-    return [];
-  }
-}
-
-// Direct Google News RSS fetch (no proxy needed — Google News allows CORS GET)
-async function fetchGoogleNewsRSS(company: string, region?: string): Promise<any[]> {
-  try {
-    const url = googleNewsRssUrl(company, region);
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return [];
-    const text = await res.text();
-    // Minimal XML item parser — extracts title, link, pubDate from RSS items
-    const items: any[] = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
-    let m: RegExpExecArray | null;
-    while ((m = itemRegex.exec(text)) !== null) {
-      const block = m[1];
-      const title   = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block) ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1] ?? '';
-      const link    = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1] ?? '';
-      const pubDate = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1] ?? '';
-      if (title) items.push({ title: title.trim(), link: link.trim(), pubDate: pubDate.trim() });
-    }
-    return items;
-  } catch {
-    return [];
-  }
-}
-
-// Bing News RSS — no API key, company-targeted (CORS-permissive GET endpoint)
-async function fetchBingNewsRSS(company: string): Promise<any[]> {
-  try {
-    const url = bingNewsRssUrl(company);
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return [];
-    const text = await res.text();
-    const items: any[] = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
-    let m: RegExpExecArray | null;
-    while ((m = itemRegex.exec(text)) !== null) {
-      const block = m[1];
-      const title   = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block) ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1] ?? '';
-      const link    = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1] ?? '';
-      const pubDate = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1] ?? '';
-      if (title) items.push({ title: title.trim(), link: link.trim(), pubDate: pubDate.trim() });
-    }
-    return items;
-  } catch {
-    return [];
-  }
-}
-
-// Yahoo Finance News RSS — no API key, ticker-targeted
-async function fetchYahooFinanceRSS(ticker: string): Promise<any[]> {
-  try {
-    const url = yahooFinanceRssUrl(ticker);
-    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-    if (!res.ok) return [];
-    const text = await res.text();
-    const items: any[] = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
-    let m: RegExpExecArray | null;
-    while ((m = itemRegex.exec(text)) !== null) {
-      const block = m[1];
-      const title   = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block) ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1] ?? '';
-      const link    = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1] ?? '';
-      const pubDate = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1] ?? '';
-      if (title) items.push({ title: title.trim(), link: link.trim(), pubDate: pubDate.trim() });
-    }
-    return items;
-  } catch {
-    return [];
-  }
 }
 
 // Reddit search — no API key, company layoff mentions
@@ -307,11 +222,16 @@ async function fetchHNMentions(company: string): Promise<NewsSignal[]> {
 }
 
 /**
- * fetchCompanyNewsSignals — scraping-first, no API key required.
- * Sources: Google News RSS (region-aware) + Bing News RSS + Yahoo Finance RSS (if ticker) +
- *          Reddit JSON + Economic Times RSS + Hacker News Algolia API.
- * For SG/AU/APAC: additionally polls TechInAsia, CNA Business, e27, Reuters Asia.
- * All sources are free-tier with no daily quotas.
+ * fetchCompanyNewsSignals — scraping-first, zero paid APIs, zero proxies.
+ *
+ * Sources:
+ *   - Google News RSS (region-aware, no key)
+ *   - Bing News RSS (no key)
+ *   - Yahoo Finance RSS (ticker-targeted, no key)
+ *   - Economic Times RSS (direct; CORS-blocked feeds silently return [])
+ *   - Hacker News Algolia API (no key, no quota)
+ *   - Reddit JSON (no key, User-Agent required)
+ *   - For SG/AU/APAC: TechInAsia, CNA Business, e27, Reuters Asia (direct fetch)
  *
  * @param region  Optional ISO region code (SG, IN, UK, AU, DE, CA, US, …).
  *                Controls Google News geo-locale and whether APAC feeds are included.
@@ -327,22 +247,22 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string, 
     const isApac = region === 'SG' || region === 'AU' || region === 'MY' || region === 'ID' || region === 'PH';
     const isIndia = region === 'IN';
 
-    // Launch all scraped sources concurrently — no API keys, no quotas.
-    // APAC companies additionally poll TechInAsia, CNA Business, e27, Reuters Asia
-    // because these sources break Singapore/SEA layoffs 4-8h before TechCrunch.
+    // Launch all sources concurrently — no quotas, no keys.
     const fetches: Promise<any>[] = [
-      isIndia || !region ? fetchRSSViaProxy(STATIC_FEEDS.economicTimes) : Promise.resolve([]),  // 0: ET (India only)
-      fetchGoogleNewsRSS(company, region),            // 1: Google News (region-aware)
-      fetchHNMentions(company),                       // 2: Hacker News
-      fetchBingNewsRSS(company),                      // 3: Bing News
-      fetchRedditMentions(company),                   // 4: Reddit
+      isIndia || !region
+        ? fetchDirectRSS(STATIC_FEEDS.economicTimes)   // 0: ET (India / default)
+        : Promise.resolve([]),
+      fetchDirectRSS(googleNewsRssUrl(company, region)), // 1: Google News (region-aware)
+      fetchHNMentions(company),                          // 2: Hacker News
+      fetchDirectRSS(bingNewsRssUrl(company)),           // 3: Bing News
+      fetchRedditMentions(company),                      // 4: Reddit
     ];
-    if (ticker) fetches.push(fetchYahooFinanceRSS(ticker)); // 5: Yahoo Finance RSS (ticker-only)
+    if (ticker) fetches.push(fetchDirectRSS(yahooFinanceRssUrl(ticker))); // 5: Yahoo Finance RSS
     if (isApac) {
-      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.techInAsia));   // 6: TechInAsia
-      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.cnaBusinessTech)); // 7: CNA Business
-      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.e27));          // 8: e27
-      fetches.push(fetchRSSViaProxy(APAC_STATIC_FEEDS.reutersAsia));  // 9: Reuters Asia
+      fetches.push(fetchDirectRSS(APAC_STATIC_FEEDS.techInAsia));      // 6
+      fetches.push(fetchDirectRSS(APAC_STATIC_FEEDS.cnaBusinessTech)); // 7
+      fetches.push(fetchDirectRSS(APAC_STATIC_FEEDS.e27));             // 8
+      fetches.push(fetchDirectRSS(APAC_STATIC_FEEDS.reutersAsia));     // 9
     }
 
     const settled = await Promise.allSettled(fetches);
@@ -354,7 +274,6 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string, 
       settled[4].status === 'fulfilled' ? settled[4].value : [] as NewsSignal[],
     ];
     const yfItems = ticker && settled[5]?.status === 'fulfilled' ? settled[5].value as any[] : [];
-    // APAC supplemental feeds (indices 6-9, only populated when isApac)
     const apacItems: any[] = isApac
       ? [6, 7, 8, 9].flatMap(i => settled[i]?.status === 'fulfilled' ? settled[i].value : [])
       : [];
@@ -396,36 +315,32 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string, 
       };
     };
 
-    // Process ET items
+    // Economic Times
     for (const item of etItems) {
       const sig = processItem(item, 'Economic Times');
       if (sig) allSignals.push(sig);
     }
 
-    // Process Google News items (company-targeted, already filtered)
+    // Google News
     for (const item of gnItems) {
       const sig = processItem(item, 'Google News');
       if (sig) allSignals.push(sig);
     }
 
-    // Process Bing News items
+    // Bing News
     for (const item of bingItems) {
       const sig = processItem(item, 'Bing News');
       if (sig) allSignals.push(sig);
     }
 
-    // Process Yahoo Finance RSS items (already company-specific via ticker)
+    // Yahoo Finance RSS
     for (const item of yfItems) {
       const sig = processItem(item, 'Yahoo Finance');
       if (sig) allSignals.push(sig);
     }
 
-    // Process APAC supplemental items (TechInAsia, CNA, e27, Reuters Asia)
-    const APAC_SOURCE_NAMES = ['TechInAsia', 'CNA Business', 'e27', 'Reuters Asia'];
-    for (let i = 0; i < apacItems.length; i++) {
-      const item = apacItems[i];
-      // Source name not available per-item since they're mixed from 4 feeds;
-      // label by best-guess domain from link, fallback to 'APAC Press'.
+    // APAC supplemental (TechInAsia, CNA, e27, Reuters Asia)
+    for (const item of apacItems) {
       const link = String(item.link ?? item.url ?? '');
       const sourceName = link.includes('techinasia') ? 'TechInAsia'
         : link.includes('channelnewsasia') ? 'CNA Business'
@@ -436,7 +351,7 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string, 
       if (sig) allSignals.push(sig);
     }
 
-    // Process HN items (already typed as NewsSignal)
+    // Hacker News (pre-typed as NewsSignal)
     for (const hn of hnSignals as NewsSignal[]) {
       const url = hn.url;
       const fp = titleFingerprint(hn.title);
@@ -447,7 +362,7 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string, 
       allSignals.push(hn);
     }
 
-    // Process Reddit items (already typed as NewsSignal)
+    // Reddit (pre-typed as NewsSignal)
     for (const r of redditSignals as NewsSignal[]) {
       const url = r.url;
       const fp = titleFingerprint(r.title);
@@ -458,10 +373,10 @@ export async function fetchCompanyNewsSignals(company: string, ticker?: string, 
       allSignals.push(r);
     }
 
-    const negCount = allSignals.filter(s => s.sentiment === 'negative').length;
-    const posCount = allSignals.filter(s => s.sentiment === 'positive').length;
+    const negCount    = allSignals.filter(s => s.sentiment === 'negative').length;
+    const posCount    = allSignals.filter(s => s.sentiment === 'positive').length;
     const layoffCount = allSignals.filter(s => s.layoffMentioned).length;
-    const total = allSignals.length || 1;
+    const total       = allSignals.length || 1;
 
     return {
       company,

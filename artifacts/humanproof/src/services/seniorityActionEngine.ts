@@ -234,7 +234,7 @@ const HR_ACTIONS: SeniorityActions = {
   ],
   senior: [
     {
-      title: "Establish the AI-Augmented Talent Architecture for Your Organization",
+      title: "Establish the AI-Augmented Talent Architecture for Your Department",
       description: "Define which parts of the talent lifecycle (sourcing, screening, development, retention) will be AI-augmented in the next 2 years. What tools, what oversight, what skills does HR need. Present to CHRO and CEO. Senior HR leaders who define the AI talent architecture are the rarest hire in 2025 — every organization above 500 employees needs one.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 32,
@@ -285,7 +285,7 @@ const LEG_ACTIONS: SeniorityActions = {
   ],
   mid: [
     {
-      title: "Own Your Firm's AI Legal Tool Governance Framework",
+      title: "Own Your Firm's AI Legal Tool Selection and Oversight Process",
       description: "Define which AI tools are approved for client work, what quality review is required, what the liability framework is if AI generates an error. Present to managing partner or general counsel. Mid-level lawyers who own AI governance are being made practice group leads 3–4 years earlier than their peers — the skill is scarce and the demand is urgent.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 28,
@@ -317,7 +317,7 @@ const LEG_ACTIONS: SeniorityActions = {
   ],
   principal: [
     {
-      title: "Define Your Firm's or Client's 3-Year AI Legal Strategy",
+      title: "Define Your Organization's 3-Year AI Legal Risk and Compliance Strategy",
       description: "At partner level, the question is not what AI tools to use — it is what the firm looks like in 3 years. Which practices grow (AI regulation, IP, data privacy)? Which shrink (commodity contract review, basic research)? Where do you need to hire, retrain, or exit talent? Partners who present this strategy to their managing committee are leading the transformation; those who don't are subject to it.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 40,
@@ -352,7 +352,7 @@ const CNT_ACTIONS: SeniorityActions = {
   ],
   mid: [
     {
-      title: "Build Your Content Strategy + AI Workflow System for Clients",
+      title: "Own Your Content Strategy + AI Workflow System for Clients",
       description: "Document a repeatable AI-augmented content production system: brief → AI draft → editorial layer → distribution → performance measurement. Turn it into a 2-page process document or pitch deck. Mid-level content strategists who can deliver 5× the output at the same quality are being retained while execution-only writers are cut. Your system is the product.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 26,
@@ -384,7 +384,7 @@ const CNT_ACTIONS: SeniorityActions = {
   ],
   principal: [
     {
-      title: "Define Your Brand's AI Content Strategy and Ethical Framework",
+      title: "Define Your Organization's AI Content Strategy and Ethical Framework",
       description: "At VP/Director level, the question is strategic: how does your brand maintain authenticity, trust, and engagement when most content can be AI-generated? Write the brief for your board or CEO: AI's role in your content stack, what stays human, what the governance model is, how you measure brand equity in an AI-content world. Executives who answer this question proactively set brand policy; those who don't respond to brand crises.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 38,
@@ -419,7 +419,7 @@ const HC_ACTIONS: SeniorityActions = {
   ],
   mid: [
     {
-      title: "Lead Your Department's Clinical AI Tool Evaluation",
+      title: "Lead Your Team's Clinical AI Tool Evaluation",
       description: "Volunteer to lead the 90-day evaluation of a clinical AI tool (Tempus, PathAI, Google Health). Define the metrics: diagnostic accuracy vs baseline, clinician time saved, patient outcome delta. Present findings to department head. Mid-level clinicians who own AI tool evaluation are classified as innovation champions — which is one of the strongest retention signals in hospital restructuring decisions.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 25,
@@ -582,7 +582,7 @@ const ML_ACTIONS: SeniorityActions = {
   ],
   senior: [
     {
-      title: "Establish Your Organization's Model Governance and Deployment Standards",
+      title: "Establish the Department-Wide Model Governance and Deployment Standards",
       description: "Create the architectural decision records (ADRs): which models are approved for production, what evaluation criteria must be met before deployment, what the human oversight requirements are, how to handle model failures at scale. Present to engineering leadership and legal. Senior ML engineers who define these standards are the de facto AI policy owners — a role that organizations pay to retain regardless of headcount pressure.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 30,
@@ -657,7 +657,7 @@ const DATA_ACTIONS: SeniorityActions = {
   ],
   senior: [
     {
-      title: "Establish Your Organization's Data Governance Architecture for AI-Augmented Analytics",
+      title: "Establish the Data Governance Architecture for Your Department",
       description: "Define: which datasets are approved for AI training, what the data lineage requirements are, how to manage consent and compliance for ML pipelines, what quality standards apply to AI-generated insights. Present to the CDO or Head of Data. Senior data professionals who define governance are protecting their organization from the regulatory wave (EU AI Act data provisions, India DPDP Act) while cementing their own irreplaceability.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 30,
@@ -732,7 +732,7 @@ const PROD_ACTIONS: SeniorityActions = {
   ],
   senior: [
     {
-      title: "Establish Your Organization's AI Product Governance and Safety Gate Framework",
+      title: "Establish the Department-Level AI Product Governance and Safety Gate Framework",
       description: "Create the governance layer: which AI features require ethics review, what the evaluation gates are before production (accuracy, bias, safety), what the human oversight model is, how to handle AI failures. Present to CPO and legal. Senior PMs who own AI governance are making company-wide product policy — a role that has no budget line item in restructurings because cutting it creates regulatory and reputational risk.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 30,
@@ -823,7 +823,7 @@ const QA_ACTIONS: SeniorityActions = {
   ],
   principal: [
     {
-      title: "Define the Organization-Wide Quality Engineering Strategy for AI-Augmented Development",
+      title: "Define Your Organization's Quality Engineering Strategy for AI-Augmented Development",
       description: "At principal/VP QA level, the question is systemic: how does your organization maintain software quality when 30–70% of code is AI-assisted, and how do you test AI systems themselves? Write the strategy brief: quality engineering maturity model, AI testing governance, required tooling and training, headcount implications as manual QA declines. Present to CTO and engineering leadership. Principals who define this strategy own quality at the organizational level — a role that cannot be automated by the same AI that generates the code.",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 38,

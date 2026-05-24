@@ -117,9 +117,13 @@ const formatHeadcount = (n: number | null | undefined): string => {
 
 const formatMarketCap = (n: number | null | undefined): string => {
   if (n == null || !Number.isFinite(n)) return "—";
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(2)}T`;
-  if (n >= 1) return `$${n.toFixed(1)}B`;
-  return `$${(n * 1_000).toFixed(0)}M`;
+  // Yahoo Finance returns raw USD; BSE returns crores INR (much smaller scale).
+  // Treat values < 1e6 as crores INR (convert to approx USD billions at ~0.012).
+  if (n < 1e6 && n > 0) return `₹${n.toLocaleString()}Cr`;
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
+  if (n >= 1e9)  return `$${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6)  return `$${(n / 1e6).toFixed(0)}M`;
+  return `$${n.toLocaleString()}`;
 };
 
 // ── Company Identity Card ─────────────────────────────────────────────────────

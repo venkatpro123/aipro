@@ -1,7 +1,8 @@
 // indiaPressConnector.ts
 // Aggregates Indian business-press RSS feeds (moneycontrol, livemint, Inc42,
-// YourStory, BS Tech). All feeds are public, no key required. Uses the
-// rss2json.com proxy to bridge XML → JSON the same way rssNewsConnector does.
+// YourStory, BS Tech). All feeds are public, no key required. All fetched
+// directly — no proxy. CORS-blocked feeds silently return [] from the browser;
+// they are covered server-side by the proxy-live-signals Edge Function action=news.
 //
 // Why a separate connector from rssNewsConnector?
 //   rssNewsConnector covers Economic Times + Hacker News which biases toward
@@ -40,25 +41,14 @@ export interface IndiaPressSummary {
   fetchedAt: string;
 }
 
-const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
-
-// Feeds whose XML endpoints are directly CORS-accessible (tested May 2026).
-// These are tried with a raw fetch before falling back to rss2json.com so that
-// the 100-req/day rss2json quota is not consumed when direct access works.
-const DIRECT_FEEDS: Record<string, string> = {
+// All feeds are attempted via direct fetch. CORS-blocked ones return [] silently.
+const FEEDS: Record<string, string> = {
   inc42:               'https://inc42.com/feed/',
   yourStory:           'https://yourstory.com/feed',
-};
-
-// Feeds that require the rss2json proxy (CORS-blocked for direct browser fetch)
-const PROXIED_FEEDS: Record<string, string> = {
   moneycontrol:        'https://www.moneycontrol.com/rss/business.xml',
   livemintCompanies:   'https://www.livemint.com/rss/companies',
   businessStandardTech:'https://www.business-standard.com/rss/technology-108.rss',
 };
-
-// Union of all feeds — preserved for downstream callers that reference FEEDS directly
-const FEEDS: Record<string, string> = { ...DIRECT_FEEDS, ...PROXIED_FEEDS };
 
 const LAYOFF_KEYWORDS = [
   'layoff', 'laid off', 'lays off', 'fires', 'firing', 'job cut', 'job cuts',
@@ -77,7 +67,8 @@ const POSITIVE_KEYWORDS = [
   'launch', 'partnership', 'acquired', 'funded', 'funding round', 'ipo',
 ];
 
-// Minimal RSS XML → item-array parser for direct-fetch path
+// ── Minimal RSS XML parser ─────────────────────────────────────────────────
+
 function parseRSSXml(xml: string): any[] {
   const items: any[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
@@ -95,44 +86,20 @@ function parseRSSXml(xml: string): any[] {
   return items;
 }
 
-async function fetchFeedDirect(url: string): Promise<any[] | null> {
+async function fetchFeed(_feedName: string, url: string): Promise<any[]> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(5000),
-      headers: { Accept: 'application/rss+xml, application/xml, text/xml' },
-    });
-    if (!res.ok) return null;
-    const text = await res.text();
-    const items = parseRSSXml(text);
-    return items.length > 0 ? items : null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchFeedViaProxy(url: string): Promise<any[]> {
-  try {
-    const res = await fetch(`${RSS_PROXY}${encodeURIComponent(url)}`, {
-      signal: AbortSignal.timeout(5000),
+      headers: { Accept: 'application/rss+xml, application/xml, text/xml, */*' },
     });
     if (!res.ok) return [];
-    const data = await res.json();
-    if (data?.status !== 'ok') return [];
-    return Array.isArray(data?.items) ? data.items : [];
+    const text = await res.text();
+    const items = parseRSSXml(text);
+    return items;
   } catch {
+    // CORS-blocked, network failure, timeout — silently return empty
     return [];
   }
-}
-
-async function fetchFeed(feedName: string, feedUrl: string): Promise<any[]> {
-  // For feeds categorised as direct-accessible, try the raw URL first to
-  // avoid consuming the rss2json quota. Fall back to the proxy on any failure.
-  if (feedName in DIRECT_FEEDS) {
-    const direct = await fetchFeedDirect(feedUrl);
-    if (direct) return direct;
-  }
-  // Proxy path (default for CORS-blocked feeds and fallback for direct-accessible)
-  return fetchFeedViaProxy(feedUrl);
 }
 
 // Word-boundary match — same shape as the proxy-live-signals matcher so

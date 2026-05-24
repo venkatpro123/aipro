@@ -132,13 +132,6 @@ export default defineConfig(({ command }) => {
       strict: true,
       deny: ["**/.*"],
     },
-    // Proxy API calls to the backend server during development
-    proxy: {
-      "/api": {
-        target: "http://localhost:3001",
-        changeOrigin: true,
-      },
-    },
   },
   preview: {
     port,

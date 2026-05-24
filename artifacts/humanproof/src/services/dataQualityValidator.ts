@@ -485,7 +485,7 @@ export function validateDataQuality(companyData: CompanyData): DataQualityReport
   if (missingCritical.includes('revenueGrowthYoY')) {
     suggestedActions.push(
       companyData.isPublic
-        ? 'Revenue growth missing — configure Yahoo Finance or Alpha Vantage in proxy-live-signals for live quarterly data'
+        ? 'Revenue growth missing — Yahoo Finance + SEC EDGAR are primary sources via proxy-live-signals (no API key needed)'
         : 'Private company: revenue growth unavailable publicly — L1 weight redistributed to funding age and employee efficiency',
     );
   }

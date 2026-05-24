@@ -1,7 +1,7 @@
 // auditDataPipeline.ts
 // Hierarchical data retrieval and normalization for Layoff Audit dashboards.
 // Phase 1 Fix 4: liveSignalCount is now truthful (was hardcoded 5 even when source was DB).
-// Phase 2: Integrates fetchLiveCompanyData for Alpha Vantage + NewsAPI enrichment.
+// Phase 2: Integrates fetchLiveCompanyData for Yahoo Finance + RSS news enrichment.
 
 import { CompanyData, normalizeRegion } from "../data/companyDatabase";
 import { getCompanySync as getCompanyByName } from "./db/staticDataService";
@@ -659,7 +659,7 @@ export function limitedDataReasonForRegime(regime: string | null): string {
  *
  * Resolution order:
  *   1. Live OSINT (Supabase Edge Function)
- *   2. Live enrichment (Alpha Vantage + NewsAPI patch onto static DB data)
+ *   2. Live enrichment (Yahoo Finance + RSS news patch onto static DB data)
  *   3. CompanyIntelligenceDB (50 companies, static baseline)
  *   4. Legacy companyDatabase (exact-match historical)
  *   5. Unknown fallback — honest ±30pt warning
@@ -1091,18 +1091,18 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const { data: sessionData } = await supabase.auth.getSession();
     userId = sessionData?.session?.user?.id ?? null;
     if (userId) {
-      // Increment AV counter and check if within per-user budget (5/day default).
+      // Increment per-user proxy call counter and check within daily budget.
       // fire-and-forget the check — if it fails, allow the call (fail open for auth errors)
       const { data: allowed } = await supabase.rpc('increment_user_quota', {
         p_user_id: userId,
-        p_service:  'alphavantage',
-        p_budget:   25, // Alpha Vantage free tier: 25 requests/day
+        p_service:  'alphavantage', // legacy key — retained for DB compatibility
+        p_budget:   25,
       });
       userAllowedLiveCalls = allowed !== false; // null/undefined = allow (RPC error = fail open)
       if (!userAllowedLiveCalls) {
-        console.info('[AuditPipeline] Per-user Alpha Vantage quota exhausted for today — heuristic fallback');
+        console.info('[AuditPipeline] Per-user live-signal quota exhausted for today — heuristic fallback');
         import('./apiDegradationMonitor').then(({ recordApiDegradation }) => {
-          recordApiDegradation('alphavantage', 'rate_limited', 'Per-user daily budget exhausted (25/day)');
+          recordApiDegradation('supabase_osint', 'rate_limited', 'Per-user daily budget exhausted');
         }).catch(() => {}); // arch-allow:R2 fire-and-forget telemetry note
       }
     }
@@ -1151,6 +1151,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
           inputs.roleTitle,
           companyData.industry,
           dataSource === 'fallback',  // unknown company → extended scraping timeout
+          inputs.country,             // region: drives hiring market connector selection
         );
         // Merge: use supplemented stock/revenue data, keep everything else from early run
         if (supplemented.stockData !== null) {

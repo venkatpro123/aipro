@@ -1,30 +1,25 @@
 // deepseekAgent.ts
-// Agent 2: DeepSeek-V3 (via OpenRouter) — Financial signal analysis
-// Free tier via openrouter.ai, exceptional reasoning for financial patterns
+// Agent 2: DeepSeek-V3 (direct API via multi-model-analyze EF) — Financial signal analysis.
+// Primary model: deepseek-chat. Automatic Gemini fallback handled server-side by the EF.
 
 import { checkRateLimit } from '../rateLimit/apiRateLimiter';
 import { LayoffRound } from '../../data/companyDatabase';
-
-import { callOpenRouterProxy } from './openRouterProxy';
-const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
+import { callAiProxy } from './aiProxy';
 
 export interface DeepSeekSignals {
-  financialPressureScore: number;    // 0–1
-  industryContagionRisk: number;
-  sectorHealthScore: number;
-  overstaffingRisk: number;
-  marketCycleRisk: number;
-  compositeFinancialRisk: number;    // 0–1, main output
-  confidence: number;
-  primaryRiskDriver: string;
-  timeHorizon: '3months' | '6months' | '12months' | 'beyond12months';
+  financialPressureScore:  number;    // 0–1
+  industryContagionRisk:   number;
+  sectorHealthScore:       number;
+  overstaffingRisk:        number;
+  marketCycleRisk:         number;
+  compositeFinancialRisk:  number;    // 0–1, main output
+  confidence:              number;
+  primaryRiskDriver:       string;
+  timeHorizon:             '3months' | '6months' | '12months' | 'beyond12months';
   /**
    * v7.0: patternId from the HISTORICAL_PATTERNS database, or null.
-   * Claude selects from a pre-computed candidate list — it cannot invent patterns.
+   * The model selects from a pre-computed candidate list — it cannot invent patterns.
    * The ID is validated against HISTORICAL_PATTERNS before display.
-   *
-   * Deprecated: 'early-warning' | 'developing' | 'acute' | 'stable' enum values
-   * are no longer valid; they had no structured data backing.
    */
   patternMatch: string | null;
 }
@@ -37,13 +32,15 @@ export interface DeepSeekResult {
 }
 
 export const runDeepSeekFinancial = async (
-  companyName: string,
-  industry: string,
-  companySize: number | string,
+  companyName:   string,
+  industry:      string,
+  companySize:   number | string,
   layoffHistory: LayoffRound[],
-  swarmContext?: string
+  swarmContext?: string,
 ): Promise<DeepSeekResult> => {
-  if (!checkRateLimit('openrouter')) return { model: 'deepseek-v3', success: false, signals: null, rawConfidence: 0 };
+  if (!checkRateLimit('supabase_osint')) {
+    return { model: 'deepseek-v3', success: false, signals: null, rawConfidence: 0 };
+  }
 
   const swarmSection = swarmContext ? `\n\n${swarmContext}\n` : '';
 
@@ -73,14 +70,28 @@ Return ONLY this JSON structure — no markdown or explanation:
   "confidence": <0.0-1.0>,
   "primaryRiskDriver": "<one sentence>",
   "timeHorizon": "<3months|6months|12months|beyond12months>",
-  "patternMatch": "<early-warning|developing|acute|stable>"
+  "patternMatch": "<pattern-id or null>"
 }`;
 
   try {
-    const proxyRes = await callOpenRouterProxy({ model: MODEL, prompt, maxTokens: 350, temperature: 0.05, responseFormat: 'json_object' });
-    if (!proxyRes.success || !proxyRes.content) throw new Error(proxyRes.error ?? 'Proxy returned no content');
-    const parsed: DeepSeekSignals = JSON.parse(proxyRes.content.replace(/```json|```/g, '').trim());
-    return { model: 'deepseek-v3', success: true, signals: parsed, rawConfidence: parsed.confidence ?? 0.5 };
+    const proxyRes = await callAiProxy({
+      prompt,
+      maxTokens:      350,
+      temperature:    0.05,
+      responseFormat: 'json_object',
+    });
+    if (!proxyRes.success || !proxyRes.content) {
+      throw new Error(proxyRes.error ?? 'AI proxy returned no content');
+    }
+    const parsed: DeepSeekSignals = JSON.parse(
+      proxyRes.content.replace(/```json|```/g, '').trim(),
+    );
+    return {
+      model:         'deepseek-v3',
+      success:       true,
+      signals:       parsed,
+      rawConfidence: parsed.confidence ?? 0.5,
+    };
   } catch (error: any) {
     console.warn('[DeepSeekAgent] Failed:', error.message);
     return { model: 'deepseek-v3', success: false, signals: null, rawConfidence: 0 };

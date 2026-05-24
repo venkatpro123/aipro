@@ -3,7 +3,7 @@
 // live data coverage tier, sources active, and any fallback warnings.
 // Design: compact single row, color-coded by tier, dismissible.
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface LiveDataCoverage {
@@ -39,6 +39,11 @@ interface Props {
    * expected behaviour, not a pipeline failure.
    */
   structuralNote?: string | null;
+  /**
+   * Callback fired when the user clicks "Retry" on a db/static tier banner.
+   * Should reset stale circuit breakers and re-run the analysis.
+   */
+  onRetry?: () => void;
   className?:   string;
 }
 
@@ -104,8 +109,18 @@ const TIER_CONFIG: Record<Tier, {
   },
 };
 
-export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, quorumInsufficient, quorumPositiveClassCount, structuralNote, className }) => {
+export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessScore, degradationReason, degradationDetail, quorumInsufficient, quorumPositiveClassCount, structuralNote, onRetry, className }) => {
   const [dismissed, setDismissed] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetry = useCallback(() => {
+    setRetrying(true);
+    // Give a brief visual pulse before firing the callback
+    setTimeout(() => {
+      setRetrying(false);
+      onRetry?.();
+    }, 300);
+  }, [onRetry]);
 
   // Audit v35: use liveRatio from coverage ONLY — never fall back to freshnessScore.
   // freshnessScore reflects seeded-DB staleness and has nothing to do with live APIs;
@@ -247,6 +262,34 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
               />
             </div>
           </div>
+
+          {/* Retry button for db/static tiers — resets circuits and re-runs analysis */}
+          {forceVisible && onRetry && (
+            <button
+              onClick={handleRetry}
+              disabled={retrying}
+              style={{
+                background: retrying ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.10)',
+                border: `1px solid ${cfg.border}`,
+                borderRadius: '6px',
+                cursor: retrying ? 'wait' : 'pointer',
+                color: cfg.text,
+                fontSize: '0.65rem',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                lineHeight: 1,
+                padding: '5px 10px',
+                flexShrink: 0,
+                transition: 'background 0.15s, opacity 0.15s',
+                opacity: retrying ? 0.6 : 1,
+                whiteSpace: 'nowrap',
+              }}
+              aria-label="Retry fetching live data"
+            >
+              {retrying ? '↻ …' : '↻ Retry'}
+            </button>
+          )}
 
           {/* Dismiss button for live/partial */}
           {!forceVisible && (

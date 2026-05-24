@@ -2,23 +2,26 @@
 // Rate-limit and API failure tracking — per-session, per-service.
 //
 // Problem it solves:
-//   When Alpha Vantage (25 req/day), Serper, or NewsAPI (100/day) hit their
-//   daily limits, the system silently falls back to heuristics. Without this
-//   module, the UI would continue showing "12 live signals" — actively lying.
+//   When external APIs hit errors or are unavailable, the system silently falls
+//   back to heuristics. Without this module, the UI would continue showing
+//   "12 live signals" — actively lying.
 //
 // What this module does:
-//   1. Records API failure events by SPECIFIC service (alphavantage, newsapi, serper)
+//   1. Records API failure events by SPECIFIC service
 //   2. Tracks per-session request counts per API to warn before quota is exhausted
 //   3. Exposes a React-readable degradation signal for the banner component
-//   4. Persists to sessionStorage (cleared on page reload — rate limits are daily)
+//   4. Persists to sessionStorage (cleared on page reload)
 //
 // Degradation window:
-//   rate_limited events: 24 hours (Alpha Vantage quota resets daily at midnight UTC)
+//   rate_limited events: 24 hours
 //   transient errors (timeout, network): 10 minutes
 //   auth_error: 24 hours
+//
+// NOTE: Alpha Vantage, NewsAPI, and Serper have been removed from the system
+// (replaced with unlimited free sources). The ApiService type no longer includes
+// them. Any legacy sessionStorage events referencing those services are ignored.
 
-// 'alphavantage' covers all stock proxy calls — proxy-live-signals EF uses ALPHAVANTAGE_API_KEY.
-export type ApiService = 'alphavantage' | 'newsapi' | 'serper' | 'openrouter' | 'supabase_osint';
+export type ApiService = 'openrouter' | 'supabase_osint';
 
 export interface DegradationEvent {
   service: ApiService;
@@ -28,12 +31,9 @@ export interface DegradationEvent {
 }
 
 // Per-API daily quota thresholds (free tier)
-// When session_request_count / DAILY_QUOTA >= WARN_FRACTION, show proactive warning.
-export const DAILY_QUOTAS: Partial<Record<ApiService, number>> = {
-  alphavantage:  25,  // Alpha Vantage free tier: 25 requests/day
-  newsapi:       100, // NewsAPI free tier: 100 requests/day
-  serper:        100, // Serper free tier varies; 100 is conservative
-};
+// Alpha Vantage, NewsAPI, and Serper have been removed — all sources are now
+// unlimited free scraping. This object is kept for forward compatibility.
+export const DAILY_QUOTAS: Partial<Record<ApiService, number>> = {};
 const WARN_FRACTION = 0.80; // warn at 80% of quota (e.g. 20/25 for AV)
 
 const SESSION_KEY    = 'hp_api_degradation';
@@ -42,13 +42,10 @@ const MAX_EVENTS     = 50;
 const TRANSIENT_WINDOW_MS  = 10  * 60 * 1000;  // 10 minutes for timeouts/network
 const RATE_LIMIT_WINDOW_MS = 24  * 60 * 60 * 1000; // 24 hours for quota events
 
-// Circuit-breaker bridge — these four services have a cross-session circuit
-// breaker that writes to the shared `api_circuit_status` table. Recording a
-// degradation event for one of them also advances the breaker state so other
-// sessions and Edge Functions immediately know the API is unhealthy.
-const CIRCUIT_BACKED_SERVICES: ReadonlySet<ApiService> = new Set([
-  'alphavantage', 'newsapi', 'serper',
-]);
+// Circuit-breaker bridge — services with a cross-session circuit breaker that
+// writes to the shared `api_circuit_status` table. Alpha Vantage, NewsAPI, and
+// Serper have been removed; no remaining services need cross-session circuit tracking.
+const CIRCUIT_BACKED_SERVICES: ReadonlySet<ApiService> = new Set<ApiService>();
 
 // ── Record a failure ──────────────────────────────────────────────────────────
 
@@ -64,16 +61,9 @@ export function recordApiDegradation(
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(events.slice(-MAX_EVENTS)));
   } catch { /* storage unavailable */ }
 
-  // v22.0 — feed the cross-session circuit breaker for services it covers.
-  // Lazy-require to avoid an import cycle (apiCircuitBreaker imports from
-  // utils/supabase, which doesn't depend on this module).
+  // Cross-session circuit breaker bridge (empty — no quota-based services remain)
   if (CIRCUIT_BACKED_SERVICES.has(service)) {
-    try {
-      // Dynamic import resolves at module-load time; no top-level dep cycle.
-      void import('./apiCircuitBreaker').then(({ recordFailure }) => {
-        recordFailure(service as 'alphavantage' | 'newsapi' | 'serper', detail);
-      }).catch(() => { /* import failure non-fatal */ });
-    } catch { /* dynamic-import unsupported runtime — non-fatal */ }
+    // No-op: set is empty; branch kept for forward compatibility.
   }
 }
 
@@ -142,9 +132,6 @@ export interface DegradationState {
 }
 
 const serviceLabels: Record<ApiService, string> = {
-  alphavantage:   'Alpha Vantage (stock data via proxy-live-signals EF, 25/day)',
-  newsapi:        'NewsAPI (layoff news, 100/day free)',
-  serper:         'Serper (hiring data)',
   openrouter:     'Multi-model LLM',
   supabase_osint: 'Company Intelligence DB',
 };

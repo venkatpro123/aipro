@@ -2,45 +2,33 @@
 // Lightweight page-load RSS poll for breaking layoff signals.
 //
 // Runs on every page load (throttled to once per 15 minutes per session).
-// Fetches the last 3 items from three feeds, scans for company name + layoff
+// Fetches the last 3 items from each feed, scans for company name + layoff
 // keyword co-occurrence, and injects any matches into layoffNewsCache via
 // injectLayoffEvent(). The existing BreakingNewsBanner component subscribes
 // to onNewLayoffEvent() and fires automatically when a match is injected.
 //
 // DESIGN DECISIONS
 // ────────────────
-// 1. Feed limit: 3 items per feed. We want recency, not volume. Fetching 3
-//    items is ~10KB per feed; fetching 20 would be 60KB+ with no signal gain
-//    since older items are already in the seeded layoffNewsCache.
+// 1. Feed limit: 3 items per feed. We want recency, not volume.
 //
 // 2. Title-only company matching: company name must appear in the article
 //    TITLE (not just the description). Description matching produces too many
-//    false positives — an article about "Amazon's new AI service" in a
-//    description field would incorrectly trigger for any Amazon employee.
+//    false positives.
 //
 // 3. Session throttle: sessionStorage key prevents re-polling within the
-//    same browser tab session more than once per MIN_POLL_INTERVAL_MS. This
-//    avoids hammering the rss2json proxy on every route change.
+//    same browser tab session more than once per MIN_POLL_INTERVAL_MS.
 //
-// 4. No API key required: all feeds are public RSS; rss2json.com free tier
-//    allows 1 req/sec and up to 1M requests/month — suitable for this use.
+// 4. No API key required: all feeds are public RSS fetched directly — no
+//    rss2json.com proxy. Feeds that are CORS-blocked from the browser
+//    silently return empty; they are covered server-side by the EF.
 //
-// 5. Fires and forgets: the poller is best-effort. Any network failure silently
-//    returns an empty match list — the caller (useBreakingNewsPoller hook) does
-//    not surface errors to the user if RSS is unavailable.
+// 5. Fires and forgets: any network failure silently returns an empty match
+//    list — the caller (useBreakingNewsPoller hook) never surfaces RSS errors.
 
 import { injectLayoffEvent } from '../data/layoffNewsCache';
 import type { LayoffNewsEvent } from '../data/layoffNewsCache';
-import {
-  isCallAllowed,
-  recordSuccess as circuitSuccess,
-  recordFailure as circuitFailure,
-  getCachedResponse,
-} from './apiCircuitBreaker';
 
 // ── Feed configuration ─────────────────────────────────────────────────────
-
-const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
 const BREAKING_FEEDS = [
   {
@@ -74,6 +62,27 @@ const BREAKING_FEEDS = [
     region: 'GLOBAL' as const,
   },
 ];
+
+// ── Minimal RSS XML parser ────────────────────────────────────────────────
+// Same pattern used by indiaPressConnector and the proxy-live-signals EF.
+// No DOM dependency — safe in all environments.
+
+function parseRSSXml(xml: string): Array<{ title: string; link: string; description: string; pubDate: string }> {
+  const items: Array<{ title: string; link: string; description: string; pubDate: string }> = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = itemRegex.exec(xml)) !== null) {
+    const block = m[1];
+    const title       = (/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i.exec(block)
+                        ?? /<title>([\s\S]*?)<\/title>/i.exec(block))?.[1]?.trim() ?? '';
+    const link        = (/<link>([\s\S]*?)<\/link>/i.exec(block))?.[1]?.trim() ?? '';
+    const description = (/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/i.exec(block)
+                        ?? /<description>([\s\S]*?)<\/description>/i.exec(block))?.[1]?.trim() ?? '';
+    const pubDate     = (/<pubDate>([\s\S]*?)<\/pubDate>/i.exec(block))?.[1]?.trim() ?? '';
+    if (title || link) items.push({ title, link, description, pubDate });
+  }
+  return items;
+}
 
 // ── Keyword detection ──────────────────────────────────────────────────────
 //
@@ -200,46 +209,28 @@ function markPolled(names: string[]): void {
 // ── Feed fetch ─────────────────────────────────────────────────────────────
 
 /**
- * Fetch RSS items via rss2json proxy with circuit breaker protection.
+ * Fetch RSS items directly (no proxy, no API keys).
  *
- * When 'rss2json' circuit is OPEN: return cached items (labeled fromCache=true
- * via caller) — never silently serve stale data as live.
- * When HALF_OPEN: one probe call; success→CLOSED, failure stays OPEN.
- *
- * Cache key for rss2json is shared across all feeds because the breaker tracks
- * the proxy health (one proxy, many feeds). Per-feed item-level caching is
- * handled by the sessionStorage throttle layer above.
+ * Feeds that are CORS-blocked from the browser silently return []; they are
+ * covered server-side by the proxy-live-signals Edge Function action=news.
+ * Failures are always swallowed — this poller is a best-effort safety net.
  */
 async function fetchFeedItems(
   url: string,
   limit = 3,
-): Promise<{ items: any[]; fromCircuitBreaker: boolean; cachedAt: number | null }> {
-  if (!isCallAllowed('rss2json')) {
-    // Circuit OPEN — return cached items if available
-    const cached = getCachedResponse<any[]>('rss2json');
-    return {
-      items:               (cached?.data ?? []).slice(0, limit),
-      fromCircuitBreaker:  true,
-      cachedAt:            cached?.cachedAt ?? null,
-    };
-  }
-
+): Promise<{ items: any[] }> {
   try {
-    const res = await fetch(
-      `${RSS_PROXY}${encodeURIComponent(url)}&count=${limit}`,
-      { signal: AbortSignal.timeout(8_000) },
-    );
-    if (!res.ok) {
-      circuitFailure('rss2json', `HTTP ${res.status}`);
-      return { items: [], fromCircuitBreaker: false, cachedAt: null };
-    }
-    const data = await res.json();
-    const items = (data?.items ?? []).slice(0, limit);
-    circuitSuccess('rss2json', items);
-    return { items, fromCircuitBreaker: false, cachedAt: null };
-  } catch (err: any) {
-    circuitFailure('rss2json', err?.message ?? String(err));
-    return { items: [], fromCircuitBreaker: false, cachedAt: null };
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(8_000),
+      headers: { Accept: 'application/rss+xml, application/xml, text/xml, */*' },
+    });
+    if (!res.ok) return { items: [] };
+    const xml = await res.text();
+    const parsed = parseRSSXml(xml);
+    return { items: parsed.slice(0, limit) };
+  } catch {
+    // CORS-blocked, network failure, timeout — all silent
+    return { items: [] };
   }
 }
 
@@ -258,14 +249,10 @@ export interface BreakingNewsMatch {
   isPrimaryKeyword:  boolean;
   /** Which feed region the match came from. */
   feedRegion:        'US' | 'IN' | 'SG' | 'UK' | 'EU' | 'APAC' | 'GLOBAL';
-  /** True when this match came from circuit breaker cache (rss2json OPEN). */
-  fromCircuitBreaker: boolean;
-  /** Unix ms timestamp of when the cached item was fetched. Null when live. */
-  cachedAt:          number | null;
 }
 
 /**
- * Poll the three breaking-news RSS feeds for layoff signals matching any of
+ * Poll the breaking-news RSS feeds for layoff signals matching any of
  * the provided company names.
  *
  * THROTTLE: Each company has an independent 15-minute sessionStorage window
@@ -307,7 +294,6 @@ export async function pollBreakingNews(
   markPolled(dueNames);
 
   // Fetch all feeds concurrently — individual failures don't abort others.
-  // Each fetchFeedItems call returns { items, fromCircuitBreaker, cachedAt }.
   const feedResults = await Promise.allSettled(
     BREAKING_FEEDS.map(feed =>
       fetchFeedItems(feed.url, 3).then(result => ({ feed, ...result })),
@@ -318,11 +304,11 @@ export async function pollBreakingNews(
 
   for (const result of feedResults) {
     if (result.status !== 'fulfilled') continue;
-    const { feed, items, fromCircuitBreaker, cachedAt } = result.value;
+    const { feed, items } = result.value;
 
     for (const item of items) {
       const title       = (item.title ?? '').trim();
-      const description = (item.description ?? item.content ?? '').trim();
+      const description = (item.description ?? '').trim();
       const fullText    = `${title} ${description}`;
 
       // Must contain a layoff keyword anywhere in the article text
@@ -333,8 +319,8 @@ export async function pollBreakingNews(
       for (const companyName of dueNames) {
         if (!titleMatchesCompany(title, companyName)) continue;
 
-        const publishedAt      = new Date(item.pubDate ?? item.published ?? Date.now());
-        const url              = item.link ?? item.url ?? '';
+        const publishedAt      = new Date(item.pubDate ?? Date.now());
+        const url              = item.link ?? '';
         const isPrimaryKeyword = hasPrimaryKeyword(fullText);
 
         const event: LayoffNewsEvent = {
@@ -345,10 +331,8 @@ export async function pollBreakingNews(
           source:              feed.name,
           url,
           affectedDepartments: [],
-          // Circuit breaker provenance — preserved through injectLayoffEvent
-          // spread so BreakingNewsBanner can label stale cache items.
-          _fromCircuitBreaker: fromCircuitBreaker,
-          _cachedAt:           fromCircuitBreaker ? (cachedAt ?? null) : null,
+          _fromCircuitBreaker: false,
+          _cachedAt:           null,
         };
 
         // injectLayoffEvent() deduplicates by company+date and notifies all
@@ -364,10 +348,6 @@ export async function pollBreakingNews(
           timeAgo:           formatTimeAgo(publishedAt),
           isPrimaryKeyword,
           feedRegion:        feed.region,
-          // Circuit breaker provenance — BreakingNewsBanner uses this to
-          // display "Cached [N] hours ago" when rss2json circuit is OPEN.
-          fromCircuitBreaker,
-          cachedAt: cachedAt ?? null,
         });
 
         // One article should only match once even if multiple company names hit

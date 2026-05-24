@@ -68,7 +68,7 @@ const SIGNAL_CLUSTERS: SignalCluster[] = [
   {
     name: 'layoff_evidence',
     agents: ['recentLayoffAgent', 'layoffVelocityAgent', 'costCuttingAgent', 'piprAgent'],
-    r_mean: 0.55, // Three agents share layoffsLast24Months; costCutting uses NewsAPI (independent)
+    r_mean: 0.55, // Three agents share layoffsLast24Months; costCutting+pipr use RSS proxy (independent)
   },
   // ai_displacement: no longer a cluster — single roleDisplacementAgent, weight = 1.0
   {
@@ -294,7 +294,7 @@ export const aggregateSwarmResults = (
     // liveCount === 0 but have different remediation paths.
     anomalies.push(
       'No live-API signals — all 30 agents ran on heuristic/static data. ' +
-      'If proxy-live-signals Edge Function is deployed, quota may be exhausted (AlphaVantage: 25/day, NewsAPI: 100/day). ' +
+      'If proxy-live-signals Edge Function is deployed, scraping may be blocked by target sites (Yahoo Finance, RSS feeds, job boards). ' +
       'Confidence capped at 45% — score reflects historical baselines only.',
     );
   }

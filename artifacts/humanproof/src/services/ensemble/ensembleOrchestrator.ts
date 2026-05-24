@@ -1,10 +1,10 @@
 // ensembleOrchestrator.ts
 // Master controller — deterministic engine + swarm + tiered LLM analysis.
-// API keys never reach the browser. llm-analyze Edge Function holds ANTHROPIC_API_KEY.
+// API keys never reach the browser. llm-analyze Edge Function holds DEEPSEEK_API_KEY + GEMINI_API_KEY.
 //
 // ── 3-TIER LLM ARCHITECTURE ──────────────────────────────────────────────────
 // Tier A: Globally known company (top 500 + top 100 India) with real financial data
-//         → Call Claude with full signal context. Produces genuine grounded narrative.
+//         → Call DeepSeek (primary) / Gemini (fallback) with full signal context.
 // Tier B: Known sector company (in DB but not top-tier, or partial data)
 //         → Deterministic template narrative personalized at variable level.
 //         → No API cost, honest framing, still useful.
@@ -800,7 +800,7 @@ export const runFullEnsembleAnalysis = async (
     console.log('[Ensemble] Tier B — deterministic template narrative');
 
   } else {
-    // Tier A: call Claude with real signals + priority sequencing
+    // Tier A: call DeepSeek (primary) / Gemini (fallback) with real signals + priority sequencing
     // Priority 10: Detect user context to sequence questions by urgency.
     // A returning user whose score jumped needs "what changed" first.
     // A Stage 3 user needs "inaction consequence + 6-week protocol" first.
@@ -1215,8 +1215,9 @@ export const runFullEnsembleAnalysis = async (
     }
   }
 
-  // ── Step 4: Aggregate — engine score is authoritative, Claude provides narrative ──
+  // ── Step 4: Aggregate — engine score is authoritative, AI provides narrative ──
   // Build stub results so aggregateEnsembleResults still works (it only blends scores).
+  const _aiModel = (claudeAnalysis as any).model ?? 'deepseek-chat';
   const stubAgent = (model: string): GemmaResult => ({
     model: model as any, success: false, signals: null, rawConfidence: 0,
   });
@@ -1224,7 +1225,7 @@ export const runFullEnsembleAnalysis = async (
   const deepseekResult: DeepSeekResult = stubAgent('deepseek-v3') as any;
   const llamaResult: LlamaResult = stubAgent('llama-3.3-70b') as any;
   const geminiResult: GeminiResult = {
-    model: 'claude-haiku-4-5' as any,
+    model: _aiModel as any,
     success: claudeAnalysis.success,
     synthesis: claudeAnalysis.success ? {
       finalScore: engineResult.score,
@@ -1256,7 +1257,7 @@ export const runFullEnsembleAnalysis = async (
     swarmConfidence: swarmReport?.swarmConfidence, // Gate: skip blend when < 20%
   });
 
-  const modelsUsed = ['engine', ...(claudeAnalysis.success ? ['claude-haiku-4-5'] : [])];
+  const modelsUsed = ['engine', ...(claudeAnalysis.success ? [_aiModel] : [])];
 
   const agentStatus: AgentStatusMap = {
     gemma: 'failed', deepseek: 'failed', llama: 'failed',

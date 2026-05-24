@@ -1,11 +1,11 @@
 // apiCircuitBreaker.ts
 // Circuit breaker for all external APIs.
 //
-// Covered APIs (13 total):
-//   alphavantage         — Alpha Vantage stock data (25/day free tier, localhost dev only)
-//   newsapi              — NewsAPI headlines (100/day free tier)
-//   serper               — Serper.dev search (paid, fallback only)
-//   rss2json             — rss2json.com RSS proxy (shared by breakingNewsPoller + rssNewsConnector)
+// NOTE: Alpha Vantage, NewsAPI, Serper, and rss2json have been removed from
+// the system (all replaced with unlimited free sources). Their CircuitApiName
+// entries are removed; any legacy localStorage state for those names is inert.
+//
+// Covered APIs:
 //   yahoo-finance-us     — Yahoo Finance for US-listed tickers (no suffix / .N / .O) via proxy EF
 //   yahoo-finance-global — Yahoo Finance for internationally-listed tickers (.NS, .BO, .L, .SI, .AX, etc.)
 //                          Isolated from yahoo-finance-us so a US data-centre outage does not block
@@ -50,10 +50,6 @@ import { supabase } from '../utils/supabase';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type CircuitApiName =
-  | 'alphavantage'
-  | 'newsapi'
-  | 'serper'
-  | 'rss2json'
   | 'yahoo-finance-us'
   | 'yahoo-finance-global'
   | 'naukri'
@@ -103,7 +99,6 @@ export type CircuitApiName =
 
 /** All APIs tracked by the circuit breaker — used for sync and quota snapshots. */
 export const ALL_CIRCUIT_APIS: CircuitApiName[] = [
-  'alphavantage', 'newsapi', 'serper', 'rss2json',
   'yahoo-finance-us', 'yahoo-finance-global',
   'naukri', 'sec-edgar', 'warn-act',
   'bse', 'nse-india', 'london-stock-exchange', 'sgx',
@@ -129,10 +124,6 @@ export const ALL_CIRCUIT_APIS: CircuitApiName[] = [
 
 /** Human-readable labels for circuit breaker API names. */
 export const CIRCUIT_API_LABELS: Record<CircuitApiName, string> = {
-  'alphavantage':           'Alpha Vantage',
-  'newsapi':                'NewsAPI',
-  'serper':                 'Serper',
-  'rss2json':               'RSS Proxy (rss2json)',
   'yahoo-finance-us':       'Yahoo Finance (US)',
   'yahoo-finance-global':   'Yahoo Finance (International)',
   'naukri':                 'Naukri',
@@ -222,8 +213,7 @@ export interface CircuitCallResult<T> {
   dataAgeSeconds:      number | null;
   // WS12 — the failure reason that caused the breaker to serve cache.
   // Useful for the SLO dashboard: a sustained `circuit_open` reason for
-  // alphavantage means we're paying Alpha Vantage but burning quota
-  // through retries — switch to backup provider.
+  // a scraping connector means the job board is blocking — back off.
   servedReason:        'fresh' | 'cached_open' | 'cached_failure' | null;
 }
 
@@ -335,12 +325,24 @@ export async function syncCircuitStateFromSupabase(): Promise<void> {
       const api = row.api_name as CircuitApiName;
       const local = readStatus(api);
       const remoteState = row.state as CircuitState;
+      const remoteOpenedAt = row.opened_at ? new Date(row.opened_at).getTime() : null;
+
+      // Age-check: if the remote state is OPEN but the OPEN_DURATION_MS has elapsed,
+      // downgrade it to HALF_OPEN. Without this, a circuit that was opened 30 minutes ago
+      // in another session would still be propagated as OPEN here even though it would
+      // have auto-transitioned to HALF_OPEN had the same tab read it locally.
+      let effectiveRemoteState = remoteState;
+      if (remoteState === 'OPEN' && remoteOpenedAt !== null) {
+        if (Date.now() - remoteOpenedAt >= OPEN_DURATION_MS) {
+          effectiveRemoteState = 'HALF_OPEN';
+        }
+      }
 
       // Merge: take the more pessimistic (higher severity) state
       const merged: CircuitStatus = {
-        state: SEVERITY[remoteState] > SEVERITY[local.state] ? remoteState : local.state,
+        state: SEVERITY[effectiveRemoteState] > SEVERITY[local.state] ? effectiveRemoteState : local.state,
         consecutiveFailures: Math.max(local.consecutiveFailures, row.consecutive_failures ?? 0),
-        openedAt:      row.opened_at ? new Date(row.opened_at).getTime() : local.openedAt,
+        openedAt:      remoteOpenedAt ?? local.openedAt,
         lastFailureAt: row.last_failure_at ? new Date(row.last_failure_at).getTime() : local.lastFailureAt,
         lastSuccessAt: row.last_success_at ? new Date(row.last_success_at).getTime() : local.lastSuccessAt,
         probeAllowedAt: row.probe_allowed_at ? new Date(row.probe_allowed_at).getTime() : local.probeAllowedAt,
@@ -508,8 +510,8 @@ export function getCircuitSnapshot(api: CircuitApiName): CircuitSnapshot {
  *
  * Usage:
  *   const { data, fromCircuitBreaker, cachedAt } = await withCircuitBreaker(
- *     'alphavantage',
- *     () => fetchAlphaVantageOverview(ticker, key),
+ *     'yahoo-finance-us',
+ *     () => fetchYahooFinanceQuote(ticker),
  *   );
  *   if (fromCircuitBreaker) showCachedLabel(cachedAt);
  */
@@ -610,4 +612,32 @@ export function resetCircuit(api: CircuitApiName): void {
   writeStatus(api, reset);
   releaseProbe(api);
   syncToSupabase(api, reset);
+}
+
+/**
+ * Reset all OPEN/HALF_OPEN circuits to CLOSED.
+ *
+ * Call this at app startup after fixing an auth issue that caused
+ * circuits to open spuriously (e.g. a 401 from an unauthenticated EF
+ * call before session was established). Circuits that opened for real
+ * scraper failures will naturally re-open after 3 new failures, so
+ * it's safe to reset all of them on a fresh session.
+ */
+export function resetAllOpenCircuits(): void {
+  for (const api of ALL_CIRCUIT_APIS) {
+    const s = readStatus(api);
+    if (s.state === 'OPEN' || s.state === 'HALF_OPEN') {
+      resetCircuit(api);
+    }
+  }
+}
+
+/**
+ * Reset ALL circuits unconditionally (including CLOSED).
+ * Use only from the dev admin panel or test harness.
+ */
+export function resetAllCircuits(): void {
+  for (const api of ALL_CIRCUIT_APIS) {
+    resetCircuit(api);
+  }
 }

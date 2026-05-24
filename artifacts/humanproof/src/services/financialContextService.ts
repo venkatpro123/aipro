@@ -220,7 +220,7 @@ export function deriveFinancialProfile(
     runwayTier = 'CRITICAL';
   } else if (runwayMonths < 6) {
     runwayTier = 'HIGH';
-  } else if (runwayMonths <= 12) {
+  } else if (runwayMonths < 9) {
     runwayTier = 'MODERATE';
   } else {
     runwayTier = 'LOW';
