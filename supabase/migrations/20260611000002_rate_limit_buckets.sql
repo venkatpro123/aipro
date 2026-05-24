@@ -68,12 +68,13 @@ CREATE OR REPLACE FUNCTION public.consume_token(
 RETURNS TABLE (allowed BOOLEAN, balance NUMERIC, capacity INTEGER, retry_after_ms INTEGER)
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-  v_policy   public.rate_limit_policies%ROWTYPE;
-  v_now      TIMESTAMPTZ := NOW();
-  v_elapsed  NUMERIC;
-  v_refill   NUMERIC;
-  v_cost     INTEGER;
-  v_balance  NUMERIC;
+  v_policy          public.rate_limit_policies%ROWTYPE;
+  v_now             TIMESTAMPTZ := NOW();
+  v_last_refilled   TIMESTAMPTZ;   -- holds last_refilled_at from the bucket row
+  v_elapsed         NUMERIC;       -- seconds since last refill (computed below)
+  v_refill          NUMERIC;
+  v_cost            INTEGER;
+  v_balance         NUMERIC;
 BEGIN
   SELECT * INTO v_policy FROM public.rate_limit_policies WHERE bucket_key = p_bucket_key;
   IF NOT FOUND OR NOT v_policy.enabled THEN
@@ -93,12 +94,12 @@ BEGIN
    WHERE bucket_key = p_bucket_key AND subject = p_subject
    FOR UPDATE;
 
-  SELECT token_balance, last_refilled_at INTO v_balance, v_elapsed
+  SELECT token_balance, last_refilled_at INTO v_balance, v_last_refilled
     FROM public.rate_limit_buckets
    WHERE bucket_key = p_bucket_key AND subject = p_subject;
 
   -- Refill: tokens accrue at tokens_per_second up to capacity.
-  v_elapsed := EXTRACT(EPOCH FROM (v_now - v_elapsed));
+  v_elapsed := EXTRACT(EPOCH FROM (v_now - v_last_refilled));
   v_refill  := v_elapsed * v_policy.tokens_per_second;
   v_balance := LEAST(v_policy.capacity::NUMERIC, v_balance + v_refill);
 

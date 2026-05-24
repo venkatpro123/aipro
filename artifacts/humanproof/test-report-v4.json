@@ -1,0 +1,168 @@
+{
+  "completedAt": null,
+  "bodyText": "Skip to main content\nHumanShield\nLayoff Audit\nRisk Oracle\nEnglish\nGet Access\n● LIVE · NODE CONNECTIVITY\nMY DASHBOARD\n\nAI displacement intelligence across thousands of global roles\n\n0%\n0/3 MODULES\nComplete all for full analysis\nExport\nShare\n📉\nLayoff Audit\n🎯\nRisk Oracle\n⛔\nPrimary data source unavailable\nNaukri — no cached data\n\nCircuit open after 3 consecutive failures. Probe will retry in 5 minutes. Scores are based on cached or heuristic data — not live signals.\n\nMy Risk\nMODERATE\nTake Action\nExplore\n2 live\nT1 · CORE\n45\n/100\nMODERATE RISK\n\n45% confidence\n\nMODELED\n\nModerate signals present. Monitor and maintain readiness.\n\nScore reflects company & market risk only\n\nVisa status, financial runway, and family situation not yet included. These can shift your personal score by ±8–25 pts. Add your profile →\n\nPartial live data — some signals are cached or estimated.\n\nCalibration note: Calibration has no training events for region \"global\" — use scores as directional only.\n\nCONFIDENCE\n45%\nmoderate\nREADINESS\n51\nPARTIAL\nLIVE SIGNALS\n2\npartial\nDATA AGE\n26d\nstale\nWHY YOUR SCORE IS WHERE IT IS\nT1\nMODELED\n78\n\nMarket Headwinds\n\nMultiple contributing signals\n\n55\n\nExperience Protection\n\nMultiple contributing signals\n\n49\n\nCompany Health\n\nMultiple contributing signals\n\nVIEW ALL SIGNAL WEIGHTS  →\nDO THIS WEEK\nT1\n1\n\nIndustry Headwinds\n\nQuarter 1\n\n2\n\nInternal Position Vulnerable\n\nMonth 1\n\nRisk dimensions breakdown\n\nT2\nHow each layer contributes to your score\n\nPartial live data. Score supplemented with cached historical baselines.\n\nCOMPANY PULSE\nT1\nSOFTENING\n\nWorkforce: No data · Financial: Softening\n\nWORKFORCE STABILITY\n\nNo data\n\nNo workforce signals surfaced for this company.\n\nFINANCIAL HEALTH\n\nSoftening\n\nStock -27.2% (90d)\n\nIndustry data: Q1 2026 — refresh due\n\nPersonal risk adjustment\n\nT2\nYour individual circumstances move the score beyond the company baseline\n\nYour risk timeline\n\nT2\nDisplacement window based on stage compression and personal context\n\nLayoff history & company signals\n\nT3\nHeadcount velocity, Glassdoor, M&A activity\n\nGround truth signals\n\nT4\nLegally filed or regulatory-sourced — highest confidence\nREGULATORY\n\nMarket environment\n\nT4\nRole demand, peer contagion, macro risk\n\nCross-source event timeline\n\nT4\nRaw events from news, filings, and signals\nHumanShield\n\nThe high-fidelity standard for career protection in the AI era. Powered by frontier AI systems and verified global research.\n\nSubscribe\nPLATFORM\nRisk Oracle\nLearning Hub\nSafe Careers\nRisk Index\nAbout\nLEGAL\nPrivacy Policy\nTerms of Use\nAudit Log\nBlog\nContact\n© 2026 HumanShield · All rights reserved\nLIVE · Q1 2026 DATASET",
+  "pulseAnalysis": {
+    "pulseSection": "NOT FOUND",
+    "financialLines": [
+      "Workforce: No data · Financial: Softening",
+      "WORKFORCE STABILITY",
+      "No workforce signals surfaced for this company.",
+      "Headcount velocity, Glassdoor, M&A activity"
+    ],
+    "dashLines": [],
+    "metricsLines": [
+      "0%",
+      "45% confidence",
+      "45%",
+      "SOFTENING",
+      "Workforce: No data · Financial: Softening",
+      "No data",
+      "Softening"
+    ]
+  },
+  "chipValues": [
+    {
+      "tag": "DIV",
+      "class": "badge badge-cyan",
+      "text": "Live · Q1 2026 Dataset"
+    }
+  ],
+  "uniqueNetworkErrors": [
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crationale%2Cevidence_count%2Clast_vali",
+      "status": 400,
+      "body": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column engine_calibration_constants.evidence_count does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%28company_",
+      "status": 500,
+      "body": "{\"code\":\"57014\",\"details\":null,\"hint\":null,\"message\":\"canceling statement due to statement timeout\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 400,
+      "body": "{\"code\":\"22P02\",\"details\":null,\"hint\":null,\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:15:07.098425+00\\\"\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "body": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url",
+      "status": 404,
+      "body": "{\"code\":\"PGRST205\",\"details\":null,\"hint\":\"Perhaps you meant the table 'public.company_layoff_rounds'\",\"message\":\"Could not find the table 'public.curated_layoff_events' in the schema cache\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "body": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "body": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score&predicted",
+      "status": 400,
+      "body": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column user_prediction_outcomes.predicted_ci_low does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_constant_resolutions",
+      "status": 400,
+      "body": "{\"code\":\"23514\",\"details\":null,\"hint\":null,\"message\":\"no partition of relation \\\"engine_constant_resolutions\\\" found for row\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/swarm_warm_cache?select=swarm_report%2Cexpires_at&cache_key=eq.swarm_cache%3A%3Ainfosys+ltd%3A%3Asoft",
+      "status": 404,
+      "body": "{\"code\":\"PGRST205\",\"details\":null,\"hint\":\"Perhaps you meant the table 'public.macro_regime_cache'\",\"message\":\"Could not find the table 'public.swarm_warm_cache' in the schema cache\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/layoff_analysis_cache?select=data%2Ccreated_at&key=eq.mn%3A%3Ainfosys+ltd%3A%3Asoftware+engineer%3A%3",
+      "status": 406,
+      "body": "{\"code\":\"PGRST116\",\"details\":\"The result contains 0 rows\",\"hint\":null,\"message\":\"Cannot coerce the result to a single JSON object\"}"
+    }
+  ],
+  "efResponses": [
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "body": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "body": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "body": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "body": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 200,
+      "body": "{\"companyName\":\"Infosys Ltd\",\"data\":{\"company_name\":\"Infosys Ltd\",\"ticker\":null,\"is_public\":true,\"industry\":\"Information Technology Services\",\"region\":\"GLOBAL\",\"employee_count\":328594,\"revenue_yoy\":null,\"stock_90d_change\":null,\"annual_revenue\":null,\"revenue_per_employee\":null,\"recent_layoffs\":[],\"layoff_rounds\":0,\"total_layoffs\":0,\"last_layoff_date\":\"No History\",\"last_layoff_percent\":null,\"recent_layoff_news\":false,\"ai_investment_signal\":\"medium\",\"last_updated\":\"2026-04-28T00:00:00.000Z\",\"source\":\"expansion_batch_2026_real\"},\"source\":\"supabase.company_intelligence\",\"sourcePath\":\"edge_canonical"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 200,
+      "body": "{\"companyName\":\"Infosys Ltd\",\"data\":{\"company_name\":\"Infosys Ltd\",\"ticker\":null,\"is_public\":true,\"industry\":\"Information Technology Services\",\"region\":\"GLOBAL\",\"employee_count\":328594,\"revenue_yoy\":null,\"stock_90d_change\":null,\"annual_revenue\":null,\"revenue_per_employee\":null,\"recent_layoffs\":[],\"layoff_rounds\":0,\"total_layoffs\":0,\"last_layoff_date\":\"No History\",\"last_layoff_percent\":null,\"recent_layoff_news\":false,\"ai_investment_signal\":\"medium\",\"last_updated\":\"2026-04-28T00:00:00.000Z\",\"source\":\"expansion_batch_2026_real\"},\"source\":\"supabase.company_intelligence\",\"sourcePath\":\"edge_canonical"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-macro",
+      "status": 200,
+      "body": "{\"fredSnapshot\":{\"fedFundsRate\":3.64,\"yieldCurveSpread\":0.43,\"isInvertedCurve\":false,\"nasdaqChange90d\":16.2,\"dataDate\":\"2026-04-01\"},\"joltsSnapshot\":{\"sector\":\"information_technology\",\"quitsRate\":32,\"layoffsRate\":66,\"jobOpeningsRate\":null,\"hiringRate\":null,\"quitsTrend\":\"stable\",\"dataMonth\":\"2026-03-01\"},\"dataSource\":\"live\",\"fetchedAt\":\"2026-05-24T13:15:11.692Z\",\"fromCache\":false}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-macro",
+      "status": 200,
+      "body": "{\"fredSnapshot\":{\"fedFundsRate\":3.64,\"yieldCurveSpread\":0.43,\"isInvertedCurve\":false,\"nasdaqChange90d\":16.2,\"dataDate\":\"2026-04-01\"},\"joltsSnapshot\":{\"sector\":\"information_technology\",\"quitsRate\":32,\"layoffsRate\":66,\"jobOpeningsRate\":null,\"hiringRate\":null,\"quitsTrend\":\"stable\",\"dataMonth\":\"2026-03-01\"},\"dataSource\":\"live\",\"fetchedAt\":\"2026-05-24T13:15:12.077Z\",\"fromCache\":false}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 200,
+      "body": "{\"result\":{\"score\":43,\"confidenceInterval\":{\"low\":39,\"high\":47,\"range\":8,\"isEstimate\":true},\"confidencePercent\":45,\"tier\":{\"label\":\"Moderate risk\",\"color\":\"amber\",\"advice\":\"Monitor closely — preparation is wise.\"},\"breakdown\":{\"L1\":0.49149999999999994,\"L2\":0.15000000000000002,\"L3\":0.4154999999999999,\"L4\":0.7849000000000002,\"L5\":0.552},\"confidence\":\"Medium\",\"calculatedAt\":\"2026-05-24T13:15:53.132Z\",\"nextUpdateDue\":\"2026-05-31T13:15:53.132Z\",\"disclaimer\":\"This is a risk estimation based on the latest available signals. It is not a prediction or guarantee.\",\"dataFreshness\":{\"lastUpdated\":\"2026-05"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 200,
+      "body": "{\"result\":{\"score\":43,\"confidenceInterval\":{\"low\":39,\"high\":47,\"range\":8,\"isEstimate\":true},\"confidencePercent\":45,\"tier\":{\"label\":\"Moderate risk\",\"color\":\"amber\",\"advice\":\"Monitor closely — preparation is wise.\"},\"breakdown\":{\"L1\":0.49149999999999994,\"L2\":0.15000000000000002,\"L3\":0.4154999999999999,\"L4\":0.7849000000000002,\"L5\":0.552},\"confidence\":\"Medium\",\"calculatedAt\":\"2026-05-24T13:15:53.070Z\",\"nextUpdateDue\":\"2026-05-31T13:15:53.070Z\",\"disclaimer\":\"This is a risk estimation based on the latest available signals. It is not a prediction or guarantee.\",\"dataFreshness\":{\"lastUpdated\":\"2026-05"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/compute-oracle",
+      "status": 200,
+      "body": "{\"total\":64,\"dimensions\":[{\"key\":\"D1\",\"label\":\"Task Automatability\",\"score\":65,\"weight\":28,\"reason\":\"Moderate AI task coverage in Information Technology Services sector.\"},{\"key\":\"D2\",\"label\":\"AI Tool Maturity\",\"score\":76,\"weight\":20,\"reason\":\"AI tools for this role category are production-deployed at scale.\"},{\"key\":\"D3\",\"label\":\"Human Amplification\",\"score\":57,\"weight\":18,\"reason\":\"Moderate human-specific value in this role.\"},{\"key\":\"D4\",\"label\":\"Experience Shield\",\"score\":68,\"weight\":16,\"reason\":\"0-2 years of experience provides limited protection.\"},{\"key\":\"D5\",\"label\":\"Country Context\",\""
+    }
+  ],
+  "importantConsoleLogs": [
+    {
+      "type": "info",
+      "text": "[AuditPipeline] Live data gaps: [[DB cache hit] Company data from today (2026-05-24T10:05Z) — skipped live scraping, Hiring trend is heuristic-only — live job-posting signals were not available for this audit.]",
+      "location": {
+        "url": "http://localhost:5173/src/services/auditDataPipeline.ts",
+        "line": 965,
+        "column": 16,
+        "lineNumber": 965,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "info",
+      "text": "[AuditPipeline] Live data gaps: [[DB cache hit] Company data from today (2026-05-24T10:05Z) — skipped live scraping, Hiring trend is heuristic-only — live job-posting signals were not available for this audit.]",
+      "location": {
+        "url": "http://localhost:5173/src/services/auditDataPipeline.ts",
+        "line": 965,
+        "column": 16,
+        "lineNumber": 965,
+        "columnNumber": 16
+      }
+    }
+  ]
+}

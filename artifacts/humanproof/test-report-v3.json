@@ -1,0 +1,45 @@
+{
+  "completedAt": 0,
+  "bodyText": "Skip to main content\nHumanShield\nLayoff Audit\nRisk Oracle\nEnglish\nGet Access\n● LIVE · NODE CONNECTIVITY\nMY DASHBOARD\n\nAI displacement intelligence across thousands of global roles\n\n0%\n0/3 MODULES\nComplete all for full analysis\nExport\nShare\n📉\nLayoff Audit\n🎯\nRisk Oracle\n🟢 LOW THREAT\nNETWORK SECURITY: ACTIVE\n/// TARGET DESIGNATION ///\nINFOSYS\nROLE: SOFTWARE ENGINEER\n● AGENTS: 9/30\n◈ SIGNALS: 23\n◈ INTELLIGENCE DATA STREAMS\nSupabase Intelligence DB\nLOADING\nFinancial Signals API\nLOADING\nRSS News Sentiment\nLOADING\nLayoffs.fyi Connector\nLOADING\nSEC EDGAR Regulatory\nLOADING\nNaukri Job Index\nLOADING\nSwarm Analysis (30 agents)\nLOADING\nIntelligence Synthesis\nLOADING\n🛫\nDEPLOYING AGENTS\nSending 30+ field agents to target\nINTELLIGENCE GATHERED\n33%\nNETWORK ID: HP-23JWB5\n2026-05-24 13:13:43Z\nHumanShield\n\nThe high-fidelity standard for career protection in the AI era. Powered by frontier AI systems and verified global research.\n\nSubscribe\nPLATFORM\nRisk Oracle\nLearning Hub\nSafe Careers\nRisk Index\nAbout\nLEGAL\nPrivacy Policy\nTerms of Use\nAudit Log\nBlog\nContact\n© 2026 HumanShield · All rights reserved\nLIVE · Q1 2026 DATASET",
+  "companyPulseText": "NOT FOUND IN PAGE",
+  "missingIndicators": {
+    "dashLines": [],
+    "undefinedLines": [],
+    "naLines": []
+  },
+  "chips": [
+    "0%0/3 ModulesComplete all for full analysis",
+    "📉Layoff Audit🎯Risk Oracle",
+    "/// TARGET DESIGNATION ///INFOSYSROLE: SOFTWARE ENGINEER",
+    "● AGENTS: 9/30◈ SIGNALS: 23",
+    "Live · Q1 2026 Dataset"
+  ],
+  "networkErrors": [
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crational",
+      "status": 400,
+      "body": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column engine_calibration_constants.evidence_count does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score",
+      "status": 500,
+      "body": "{\"code\":\"57014\",\"details\":null,\"hint\":null,\"message\":\"canceling statement due to statement timeout\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 400,
+      "body": "{\"code\":\"22P02\",\"details\":null,\"hint\":null,\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:13:37.643697+00\\\"\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "body": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "body": ""
+    }
+  ],
+  "consoleLogs": []
+}

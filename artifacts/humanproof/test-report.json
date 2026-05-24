@@ -1,0 +1,3435 @@
+{
+  "consoleErrors": [
+    {
+      "type": "error",
+      "text": "The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 31,
+        "column": 0,
+        "lineNumber": 31,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to fetch assessments: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+      "location": {
+        "url": "http://localhost:5173/src/utils/apiClient.ts",
+        "line": 25,
+        "column": 14,
+        "lineNumber": 25,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crationale%2Cevidence_count%2Clast_validated_at&status=eq.active&cohort_scope=eq.GLOBAL",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%28company_name.ilike.%25Infosys%25%2Csearch_haystack.ilike.%25Infosys%25%29&limit=10",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked.",
+      "location": {
+        "url": "http://localhost:5173/src/components/LayoffCalculator/LayoffInputForm.tsx",
+        "line": 826,
+        "column": 0,
+        "lineNumber": 826,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys. Refused to connect because it violates the document's Content Security Policy.",
+      "location": {
+        "url": "http://localhost:5173/src/components/LayoffCalculator/LayoffInputForm.tsx",
+        "line": 826,
+        "column": 0,
+        "lineNumber": 826,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/multi-model-analyze' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/multi-model-analyze",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://api.deepseek.com/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 44,
+        "column": 0,
+        "lineNumber": 44,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://api.deepseek.com/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 44,
+        "column": 0,
+        "lineNumber": 44,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()",
+      "location": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDOYgP_EwmkXggXTVbMo4weiTNuXG_UMPw",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://api.groq.com/openai/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 99,
+        "column": 0,
+        "lineNumber": 99,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://api.groq.com/openai/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 99,
+        "column": 0,
+        "lineNumber": 99,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/scraper-enqueue' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/scraper-enqueue",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score&predicted_ci_low=not.is.null&predicted_ci_high=not.is.null&actual_outcome_score=not.is.null&limit=500",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "consoleWarnings": [
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:1 (2.101.1) 2026-05-24T13:06:56.100Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+        "line": 14692,
+        "column": 14,
+        "lineNumber": 14692,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:2 (2.101.1) 2026-05-24T13:06:56.101Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+        "line": 14692,
+        "column": 14,
+        "lineNumber": 14692,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:06:58.701Z\",\"level\":\"warn\",\"service\":\"calibration-constants\",\"event\":\"snapshot.load_failed\",\"fields\":{\"errorMessage\":\"column engine_calibration_constants.evidence_count does not exist\",\"code\":\"42703\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[staticData] companies table empty — using bundled static data. Run scripts/seed_static_data.ts to populate.",
+      "location": {
+        "url": "http://localhost:5173/src/services/db/staticDataService.ts",
+        "line": 113,
+        "column": 14,
+        "lineNumber": 113,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev DeepSeek error: Failed to fetch",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 57,
+        "column": 16,
+        "lineNumber": 57,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Gemini failed — trying Groq",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 83,
+        "column": 16,
+        "lineNumber": 83,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Groq error: Failed to fetch",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 111,
+        "column": 16,
+        "lineNumber": 111,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[QuickProfiler] AI proxy returned no content",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/quickProfilerAgent.ts",
+        "line": 27,
+        "column": 14,
+        "lineNumber": 27,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:07:41.060Z\",\"level\":\"warn\",\"service\":\"rate-limiter\",\"event\":\"consume_token.rpc_error\",\"fields\":{\"bucket\":\"scrape_trigger\",\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:07:36.445451+00\\\"\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:08:26.102Z\",\"level\":\"warn\",\"service\":\"rate-limiter\",\"event\":\"consume_token.rpc_error\",\"fields\":{\"bucket\":\"audit\",\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:08:21.562182+00\\\"\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    }
+  ],
+  "importantLogs": [
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:1 (2.101.1) 2026-05-24T13:06:56.100Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+        "line": 14692,
+        "column": 14,
+        "lineNumber": 14692,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:2 (2.101.1) 2026-05-24T13:06:56.101Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+        "line": 14692,
+        "column": 14,
+        "lineNumber": 14692,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to fetch assessments: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+      "location": {
+        "url": "http://localhost:5173/src/utils/apiClient.ts",
+        "line": 25,
+        "column": 14,
+        "lineNumber": 25,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:06:58.701Z\",\"level\":\"warn\",\"service\":\"calibration-constants\",\"event\":\"snapshot.load_failed\",\"fields\":{\"errorMessage\":\"column engine_calibration_constants.evidence_count does not exist\",\"code\":\"42703\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev DeepSeek error: Failed to fetch",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 57,
+        "column": 16,
+        "lineNumber": 57,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Groq error: Failed to fetch",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 111,
+        "column": 16,
+        "lineNumber": 111,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:07:41.060Z\",\"level\":\"warn\",\"service\":\"rate-limiter\",\"event\":\"consume_token.rpc_error\",\"fields\":{\"bucket\":\"scrape_trigger\",\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:07:36.445451+00\\\"\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:08:26.102Z\",\"level\":\"warn\",\"service\":\"rate-limiter\",\"event\":\"consume_token.rpc_error\",\"fields\":{\"bucket\":\"audit\",\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:08:21.562182+00\\\"\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    }
+  ],
+  "allConsoleLogs": [
+    {
+      "type": "error",
+      "text": "The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 31,
+        "column": 0,
+        "lineNumber": 31,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "location": {
+        "url": "http://localhost:5173/@vite/client",
+        "line": 732,
+        "column": 8,
+        "lineNumber": 732,
+        "columnNumber": 8
+      }
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected.",
+      "location": {
+        "url": "http://localhost:5173/@vite/client",
+        "line": 826,
+        "column": 11,
+        "lineNumber": 826,
+        "columnNumber": 11
+      }
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=918735ea",
+        "line": 17986,
+        "column": 53,
+        "lineNumber": 17986,
+        "columnNumber": 53
+      }
+    },
+    {
+      "type": "log",
+      "text": "{\"ts\":\"2026-05-24T13:06:56.061Z\",\"level\":\"info\",\"service\":\"app-bootstrap\",\"event\":\"app.boot.start\",\"fields\":{\"release\":\"unknown\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 56,
+        "column": 17,
+        "lineNumber": 56,
+        "columnNumber": 17
+      }
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:1 (2.101.1) 2026-05-24T13:06:56.100Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+        "line": 14692,
+        "column": 14,
+        "lineNumber": 14692,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:2 (2.101.1) 2026-05-24T13:06:56.101Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "location": {
+        "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+        "line": 14692,
+        "column": 14,
+        "lineNumber": 14692,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to fetch assessments: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+      "location": {
+        "url": "http://localhost:5173/src/utils/apiClient.ts",
+        "line": 25,
+        "column": 14,
+        "lineNumber": 25,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crationale%2Cevidence_count%2Clast_validated_at&status=eq.active&cohort_scope=eq.GLOBAL",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:06:58.701Z\",\"level\":\"warn\",\"service\":\"calibration-constants\",\"event\":\"snapshot.load_failed\",\"fields\":{\"errorMessage\":\"column engine_calibration_constants.evidence_count does not exist\",\"code\":\"42703\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[staticData] companies table empty — using bundled static data. Run scripts/seed_static_data.ts to populate.",
+      "location": {
+        "url": "http://localhost:5173/src/services/db/staticDataService.ts",
+        "line": 113,
+        "column": 14,
+        "lineNumber": 113,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%28company_name.ilike.%25Infosys%25%2Csearch_haystack.ilike.%25Infosys%25%29&limit=10",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked.",
+      "location": {
+        "url": "http://localhost:5173/src/components/LayoffCalculator/LayoffInputForm.tsx",
+        "line": 826,
+        "column": 0,
+        "lineNumber": 826,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys. Refused to connect because it violates the document's Content Security Policy.",
+      "location": {
+        "url": "http://localhost:5173/src/components/LayoffCalculator/LayoffInputForm.tsx",
+        "line": 826,
+        "column": 0,
+        "lineNumber": 826,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/multi-model-analyze' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/multi-model-analyze",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://api.deepseek.com/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 44,
+        "column": 0,
+        "lineNumber": 44,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://api.deepseek.com/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 44,
+        "column": 0,
+        "lineNumber": 44,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev DeepSeek error: Failed to fetch",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 57,
+        "column": 16,
+        "lineNumber": 57,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()",
+      "location": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDOYgP_EwmkXggXTVbMo4weiTNuXG_UMPw",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Gemini failed — trying Groq",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 83,
+        "column": 16,
+        "lineNumber": 83,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://api.groq.com/openai/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 99,
+        "column": 0,
+        "lineNumber": 99,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://api.groq.com/openai/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy.",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 99,
+        "column": 0,
+        "lineNumber": 99,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Groq error: Failed to fetch",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/aiProxy.ts",
+        "line": 111,
+        "column": 16,
+        "lineNumber": 111,
+        "columnNumber": 16
+      }
+    },
+    {
+      "type": "warning",
+      "text": "[QuickProfiler] AI proxy returned no content",
+      "location": {
+        "url": "http://localhost:5173/src/services/ensemble/quickProfilerAgent.ts",
+        "line": 27,
+        "column": 14,
+        "lineNumber": 27,
+        "columnNumber": 14
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:07:41.060Z\",\"level\":\"warn\",\"service\":\"rate-limiter\",\"event\":\"consume_token.rpc_error\",\"fields\":{\"bucket\":\"scrape_trigger\",\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:07:36.445451+00\\\"\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/scraper-enqueue' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/scraper-enqueue",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "info",
+      "text": "[Gate] scraper unreachable (gate will timeout gracefully): Failed to send a request to the Edge Function",
+      "location": {
+        "url": "http://localhost:5173/src/components/LayoffCalculator/LayoffCalculator.tsx",
+        "line": 718,
+        "column": 48,
+        "lineNumber": 718,
+        "columnNumber": 48
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "warning",
+      "text": "{\"ts\":\"2026-05-24T13:08:26.102Z\",\"level\":\"warn\",\"service\":\"rate-limiter\",\"event\":\"consume_token.rpc_error\",\"fields\":{\"bucket\":\"audit\",\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:08:21.562182+00\\\"\"}}",
+      "location": {
+        "url": "http://localhost:5173/src/shared/logger.ts",
+        "line": 55,
+        "column": 46,
+        "lineNumber": 55,
+        "columnNumber": 46
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+      "location": {
+        "url": "http://localhost:5173/terminal",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score&predicted_ci_low=not.is.null&predicted_ci_high=not.is.null&actual_outcome_score=not.is.null&limit=500",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "location": {
+        "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "networkFailures": [
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crationale%2Cevidence_count%2Clast_validated_at&status=eq.active&cohort_scope=eq.GLOBAL",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column engine_calibration_constants.evidence_count does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%28company_name.ilike.%25Infosys%25%2Csearch_haystack.ilike.%25Infosys%25%29&limit=10",
+      "status": 500,
+      "bodyPreview": "{\"code\":\"57014\",\"details\":null,\"hint\":null,\"message\":\"canceling statement due to statement timeout\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"22P02\",\"details\":null,\"hint\":null,\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:07:36.445451+00\\\"\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"22P02\",\"details\":null,\"hint\":null,\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:08:21.562182+00\\\"\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "bodyPreview": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "bodyPreview": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+      "status": 404,
+      "bodyPreview": "{\"code\":\"PGRST205\",\"details\":null,\"hint\":\"Perhaps you meant the table 'public.company_layoff_rounds'\",\"message\":\"Could not find the table 'public.curated_layoff_events' in the schema cache\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+      "status": 404,
+      "bodyPreview": "{\"code\":\"PGRST205\",\"details\":null,\"hint\":\"Perhaps you meant the table 'public.company_layoff_rounds'\",\"message\":\"Could not find the table 'public.curated_layoff_events' in the schema cache\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "bodyPreview": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "bodyPreview": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "bodyPreview": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "bodyPreview": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score&predicted_ci_low=not.is.null&predicted_ci_high=not.is.null&actual_outcome_score=not.is.null&limit=500",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column user_prediction_outcomes.predicted_ci_low does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    }
+  ],
+  "supabaseResponses": [
+    {
+      "url": "http://localhost:5173/@fs/C:/supabase/humanproofs1/node_modules/.pnpm/vite@7.3.1_@types+node@25.3_847d3f1dfd8a5a4dca3b40dafc2c9d32/node_modules/vite/dist/client/env.mjs",
+      "status": 200,
+      "bodyPreview": "//#region src/client/env.ts\nconst context = (() => {\n\tif (typeof globalThis !== \"undefined\") return globalThis;\n\telse if (typeof self !== \"undefined\") return self;\n\telse if (typeof window !== \"undefined\") return window;\n\telse return Function(\"return this\")();\n})();\nconst defines = {};\nObject.keys(defines).forEach((key) => {\n\tconst segments = key.split(\".\");\n\tlet target = context;\n\tfor (let i = 0; i < segments.length; i++) {\n\t\tconst segment = segments[i];\n\t\tif (i === segments.length - 1) target[segment] = defines[key];\n\t\telse target = target[segment] || (target[segment] = {});\n\t}\n});\n\n//#endregion\n//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImVudi5tanMiXSwic291cmNlc0NvbnRlbnQiOlsiLy8jcmVnaW9uIHNyYy9jbGllbnQvZW52LnRzXG5jb25zdCBjb250ZXh0ID0gKCgpID0+IHtcbl"
+    },
+    {
+      "url": "http://localhost:5173/src/utils/supabase.ts",
+      "status": 200,
+      "bodyPreview": "import.meta.env = {\"BASE_URL\": \"/\", \"DEV\": true, \"MODE\": \"development\", \"PROD\": false, \"SSR\": false, \"VITE_BUILD_DATE\": \"2026-05-24\", \"VITE_DEEPSEEK_API_KEY\": \"sk-cdb7bdc4360b47a897d1a00999bf9f0f\", \"VITE_FRED_API_KEY\": \"05e0ea98d76d00700de8f84745e4d472\", \"VITE_GEMINI_API_KEY\": \"AIzaSyDOYgP_EwmkXggXTVbMo4weiTNuXG_UMPw\", \"VITE_GROQ_API_KEY\": \"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\", \"VITE_MEILISEARCH_HOST\": \"https://ms-14abd1ddc618-47817.sgp.meilisearch.io\", \"VITE_MEILISEARCH_SEARCH_KEY\": \"2800ec4694d8ff3cc3150a420b48c43a2daea1c1cbd420b7f35f6a9f06e2ecbd\", \"VITE_RESEND_API_KEY\": \"re_dVwLnMk7_JVwnTSMcsCmyt39YvWbUQBu7\", \"VITE_SCORING_DECAY_ENABLED\": \"0\", \"VITE_SUPABASE_ANON_KEY\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZW5pbWN6ZWFzbWFlb2p6bGt0"
+    },
+    {
+      "url": "http://localhost:5173/node_modules/.vite/deps/@supabase_supabase-js.js?v=918735ea",
+      "status": 200,
+      "bodyPreview": "import {\n  __awaiter,\n  __rest\n} from \"/node_modules/.vite/deps/chunk-PRW752IW.js?v=918735ea\";\nimport \"/node_modules/.vite/deps/chunk-G3PMV62Z.js?v=918735ea\";\n\n// ../../node_modules/.pnpm/@supabase+functions-js@2.101.1/node_modules/@supabase/functions-js/dist/module/helper.js\nvar resolveFetch = (customFetch) => {\n  if (customFetch) {\n    return (...args) => customFetch(...args);\n  }\n  return (...args) => fetch(...args);\n};\n\n// ../../node_modules/.pnpm/@supabase+functions-js@2.101.1/node_modules/@supabase/functions-js/dist/module/types.js\nvar FunctionsError = class extends Error {\n  constructor(message, name = \"FunctionsError\", context) {\n    super(message);\n    this.name = name;\n    this.context = context;\n  }\n};\nvar FunctionsFetchError = class extends FunctionsError {\n  constructor(contex"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crationale%2Cevidence_count%2Clast_validated_at&status=eq.active&cohort_scope=eq.GLOBAL",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column engine_calibration_constants.evidence_count does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_exposure_data?select=*",
+      "status": 200,
+      "bodyPreview": "[{\"id\":\"e8df3686-7bce-43c4-b3da-a310b53aa553\",\"role_title\":\"Data Entry Specialist\",\"ai_risk\":0.97,\"layoff_risk\":0.88,\"demand_trend\":\"falling\",\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"515c2c60-5d57-4801-b9ad-674a22194d49\",\"role_title\":\"Telemarketer\",\"ai_risk\":0.95,\"layoff_risk\":0.90,\"demand_trend\":\"falling\",\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"c867d2a5-4f6d-4ac4-8e70-572d374a58db\",\"role_title\":\"Customer Service Representative\",\"ai_risk\":0.85,\"layoff_risk\":0.82,\"demand_trend\":\"falling\",\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"08460804-5f48-4d89-9b4d-e195e730f412\",\"role_title\":\"Bookkeeper\",\"ai_"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/company_layoff_rounds?select=company_id%2Cround_date%2Cpercent_cut",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/industry_risk_data?select=*",
+      "status": 200,
+      "bodyPreview": "[{\"id\":\"07d3cdc1-e4a0-4825-9410-009db1328ec4\",\"sector_name\":\"Technology\",\"baseline_risk\":0.58,\"ai_adoption_rate\":0.80,\"growth_outlook\":\"volatile\",\"avg_layoff_rate_2025\":0.07,\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"b210f5d2-a3da-4fc6-b060-02a2a0de0952\",\"sector_name\":\"E-commerce\",\"baseline_risk\":0.55,\"ai_adoption_rate\":0.75,\"growth_outlook\":\"stable\",\"avg_layoff_rate_2025\":0.05,\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"b3296b16-71e8-4b2d-8f0a-7854ed92b320\",\"sector_name\":\"Gaming\",\"baseline_risk\":0.65,\"ai_adoption_rate\":0.70,\"growth_outlook\":\"declining\",\"avg_layoff_rate_2025\":0.09,\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/companies?select=*",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_feature_flags?select=flag_key%2Cmode%2Ccanary_user_ids%2Ccanary_pct%2Cdescription%2Cworkstream%2Cconfig%2Clast_changed_at",
+      "status": 200,
+      "bodyPreview": "[{\"flag_key\":\"ws0_shadow_runner\",\"mode\":\"shadow\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Write audit_shadow_comparison rows for every audit\",\"workstream\":\"WS0\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws1_otel_spans\",\"mode\":\"off\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Emit per-layer OpenTelemetry spans\",\"workstream\":\"WS1\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws2_outcome_calibration\",\"mode\":\"off\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Load D8 + LAYER_CALIBRATION from engine_calibration_metrics\",\"workstream\":\"WS2\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws2_implicit_outcome_ingest\",\"mode\":\"off\",\"canary_user_ids\":[],\"canary_pct\":0,\""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/api_circuit_status?select=api_name%2Cstate%2Cconsecutive_failures%2Clast_failure_at%2Clast_success_at%2Copened_at%2Cprobe_allowed_at&api_name=in.%28yahoo-finance-us%2Cyahoo-finance-global%2Cnaukri%2Csec-edgar%2Cwarn-act%2Cbse%2Cnse-india%2Clondon-stock-exchange%2Csgx%2Cindeed-india%2Clinkedin-india%2Clinkedin-us%2Cindeed-us%2Cglassdoor-jobs%2Clinkedin-uk%2Cindeed-uk%2Creed%2Cjobsite%2Clinkedin-de%2Cstepstone%2Cxing%2Clinkedin-sg%2Cjobsdb%2Cmycareersfuture%2Clinkedin-au%2Cseek%2Cjora%2Clinkedin-ca%2Cindeed-ca%2Cjob-bank%2Clinkedin-latam%2Cbumeran%2Ccomputrabajo%2Clinkedin-mena%2Cbayt%2Cnaukrigulf%29",
+      "status": 200,
+      "bodyPreview": "[{\"api_name\":\"sec-edgar\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed_at\":null}, \n {\"api_name\":\"warn-act\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed_at\":null}, \n {\"api_name\":\"bse\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed_at\":null}, \n {\"api_name\":\"nse-india\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed_at\":null}, \n {\"api_name\":\"london-stock-exchange\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed_at\":null}, \n {\"api_nam"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%28company_name.ilike.%25Infosys%25%2Csearch_haystack.ilike.%25Infosys%25%29&limit=10",
+      "status": 500,
+      "bodyPreview": "{\"code\":\"57014\",\"details\":null,\"hint\":null,\"message\":\"canceling statement due to statement timeout\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=id&company_name=eq.Infosys&status=eq.succeeded&finished_at=gte.2026-05-24T12%3A37%3A39.558Z&limit=1",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"22P02\",\"details\":null,\"hint\":null,\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:07:36.445451+00\\\"\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A07%3A40.550Z",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"22P02\",\"details\":null,\"hint\":null,\"message\":\"invalid input syntax for type numeric: \\\"2026-05-24 13:08:21.562182+00\\\"\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_feature_flags?select=flag_key%2Cmode%2Ccanary_user_ids%2Ccanary_pct%2Cdescription%2Cworkstream%2Cconfig%2Clast_changed_at",
+      "status": 200,
+      "bodyPreview": "[{\"flag_key\":\"ws0_shadow_runner\",\"mode\":\"shadow\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Write audit_shadow_comparison rows for every audit\",\"workstream\":\"WS0\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws1_otel_spans\",\"mode\":\"off\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Emit per-layer OpenTelemetry spans\",\"workstream\":\"WS1\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws2_outcome_calibration\",\"mode\":\"off\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Load D8 + LAYER_CALIBRATION from engine_calibration_metrics\",\"workstream\":\"WS2\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws2_implicit_outcome_ingest\",\"mode\":\"off\",\"canary_user_ids\":[],\"canary_pct\":0,\""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "bodyPreview": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401,
+      "bodyPreview": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_aliases?select=*",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_actions?select=*",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_compensation_bands?select=*",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_negotiation_scripts?select=*",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_demand_overrides?select=*&is_active=eq.true",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/company_live_cache?select=price_90d_change%2Crevenue_growth_yoy%2Cmarket_cap%2Cpe_ratio%2Cemployee_count%2Cstock_source%2Crecent_headline_count%2Csentiment_signal%2Clatest_layoff_event%2Cestimated_openings%2Cdemand_trend%2Chiring_freeze_score%2Cwiki_employee_count%2Cfetched_at&company_name=ilike.Infosys&valid_until=gt.2026-05-24T13%3A08%3A26.245Z&order=fetched_at.desc&limit=1",
+      "status": 200,
+      "bodyPreview": "[{\"price_90d_change\":-27.2,\"revenue_growth_yoy\":9.6,\"market_cap\":57739387852,\"pe_ratio\":16.3,\"employee_count\":null,\"stock_source\":\"yahoo-finance+finnhub\",\"recent_headline_count\":90,\"sentiment_signal\":1,\"latest_layoff_event\":{\"url\": \"https://news.google.com/rss/articles/CBMi1AFBVV95cUxOU2l6UDR1dVg0QUNzUGYtWVExTHNWUm9WazhiVFlKX2h5MG1RRjFJZE8zWldHT1ZRdWNyZ3hBRjdZVG1JbHNkWDN1TV9RT1UxTkx2S2tTVUlpZ1ZhV3hGT2t6ZmdCWDVPX0l1N2JXSkhYZDlEX1NnblNTbUVCbVd2cVNEbkhoSGl4eWNUb0pjRExQYy1mRHlHMm94eXJLN1MwUEtZOHkxdmZiN3FSaTJjcWs5Qjk1Z3lMM1dCUjNhY2Q5NGhVUlhDQkVhZFBxUURERVBmZNIB2gFBVV95cUxNQWxpc0pGcUlXamZna29PcWJXR1I1c2E1SDhadFA2WmNOckxPSWZRcE5qUHJNdkFqS1FVWktLeEVLVENoZXAyc3lYYjZmNkxod2pFblNvTGRIZXRSdlk2MGtyQ2x3VEZkekw2aUZvTmdzS1lPUWNsWF92WXMxckd4UHBYbWN4cHRtR3ZyNXVzU2hERE9qY0d4ZGd6WE5WWjdLRWJnS0cwcng0Vm5tNDEzeW"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=*&outcome_reported=not.is.null",
+      "status": 200,
+      "bodyPreview": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_automation_timeline?select=*",
+      "status": 200,
+      "bodyPreview": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/company_live_cache?select=price_90d_change%2Crevenue_growth_yoy%2Cmarket_cap%2Cpe_ratio%2Cemployee_count%2Cstock_source%2Crecent_headline_count%2Csentiment_signal%2Clatest_layoff_event%2Cestimated_openings%2Cdemand_trend%2Chiring_freeze_score%2Cwiki_employee_count%2Cfetched_at&company_name=ilike.Infosys&valid_until=gt.2026-05-24T13%3A08%3A26.240Z&order=fetched_at.desc&limit=1",
+      "status": 200,
+      "bodyPreview": "[{\"price_90d_change\":-27.2,\"revenue_growth_yoy\":9.6,\"market_cap\":57739387852,\"pe_ratio\":16.3,\"employee_count\":null,\"stock_source\":\"yahoo-finance+finnhub\",\"recent_headline_count\":90,\"sentiment_signal\":1,\"latest_layoff_event\":{\"url\": \"https://news.google.com/rss/articles/CBMi1AFBVV95cUxOU2l6UDR1dVg0QUNzUGYtWVExTHNWUm9WazhiVFlKX2h5MG1RRjFJZE8zWldHT1ZRdWNyZ3hBRjdZVG1JbHNkWDN1TV9RT1UxTkx2S2tTVUlpZ1ZhV3hGT2t6ZmdCWDVPX0l1N2JXSkhYZDlEX1NnblNTbUVCbVd2cVNEbkhoSGl4eWNUb0pjRExQYy1mRHlHMm94eXJLN1MwUEtZOHkxdmZiN3FSaTJjcWs5Qjk1Z3lMM1dCUjNhY2Q5NGhVUlhDQkVhZFBxUURERVBmZNIB2gFBVV95cUxNQWxpc0pGcUlXamZna29PcWJXR1I1c2E1SDhadFA2WmNOckxPSWZRcE5qUHJNdkFqS1FVWktLeEVLVENoZXAyc3lYYjZmNkxod2pFblNvTGRIZXRSdlk2MGtyQ2x3VEZkekw2aUZvTmdzS1lPUWNsWF92WXMxckd4UHBYbWN4cHRtR3ZyNXVzU2hERE9qY0d4ZGd6WE5WWjdLRWJnS0cwcng0Vm5tNDEzeW"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+      "status": 404,
+      "bodyPreview": "{\"code\":\"PGRST205\",\"details\":null,\"hint\":\"Perhaps you meant the table 'public.company_layoff_rounds'\",\"message\":\"Could not find the table 'public.curated_layoff_events' in the schema cache\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/roles?select=*&is_active=eq.true",
+      "status": 200,
+      "bodyPreview": "[{\"role_key\":\"swe\",\"display_name\":\"Software Engineer\",\"role_family\":\"tech\",\"industry\":\"software\",\"category\":\"individual_contributor\",\"is_active\":true,\"description\":null,\"typical_seniority_distribution\":null,\"created_at\":\"2026-05-16T09:22:31.744484+00:00\",\"updated_at\":\"2026-05-16T09:22:31.744484+00:00\"}, \n {\"role_key\":\"senior_swe\",\"display_name\":\"Senior Software Engineer\",\"role_family\":\"tech\",\"industry\":\"software\",\"category\":\"individual_contributor\",\"is_active\":true,\"description\":null,\"typical_seniority_distribution\":null,\"created_at\":\"2026-05-16T09:22:31.744484+00:00\",\"updated_at\":\"2026-05-16T09:22:31.744484+00:00\"}, \n {\"role_key\":\"staff_engineer\",\"display_name\":\"Staff Engineer\",\"role_family\":\"tech\",\"industry\":\"software\",\"category\":\"individual_contributor\",\"is_active\":true,\"description\":nu"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url%2Caffected_departments&order=event_date.desc&limit=100",
+      "status": 404,
+      "bodyPreview": "{\"code\":\"PGRST205\",\"details\":null,\"hint\":\"Perhaps you meant the table 'public.company_layoff_rounds'\",\"message\":\"Could not find the table 'public.curated_layoff_events' in the schema cache\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=*&outcome_reported=eq.layoff_occurred",
+      "status": 200,
+      "bodyPreview": ""
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "bodyPreview": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "bodyPreview": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTypes.ts for the full HybridScoreInputs shape.\",\"code\":\"INVALID_PAYLOAD\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "bodyPreview": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "bodyPreview": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score&predicted_ci_low=not.is.null&predicted_ci_high=not.is.null&actual_outcome_score=not.is.null&limit=500",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column user_prediction_outcomes.predicted_ci_low does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 200,
+      "bodyPreview": "{\"companyName\":\"Infosys Ltd\",\"data\":{\"company_name\":\"Infosys Ltd\",\"ticker\":null,\"is_public\":true,\"industry\":\"Information Technology Services\",\"region\":\"GLOBAL\",\"employee_count\":328594,\"revenue_yoy\":null,\"stock_90d_change\":null,\"annual_revenue\":null,\"revenue_per_employee\":null,\"recent_layoffs\":[],\"layoff_rounds\":0,\"total_layoffs\":0,\"last_layoff_date\":\"No History\",\"last_layoff_percent\":null,\"recent_layoff_news\":false,\"ai_investment_signal\":\"medium\",\"last_updated\":\"2026-04-28T00:00:00.000Z\",\"source\":\"expansion_batch_2026_real\"},\"source\":\"supabase.company_intelligence\",\"sourcePath\":\"edge_canonical\",\"provenance\":[\"supabase.company_intelligence\"],\"matchedCompanyName\":\"Infosys Ltd\",\"matchConfidence\":1,\"matchType\":\"exact\",\"authoritativeSignals\":{\"layoff_rounds\":{\"key\":\"layoff_rounds\",\"value\":0,\"so"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 200,
+      "bodyPreview": "{\"companyName\":\"Infosys Ltd\",\"data\":{\"company_name\":\"Infosys Ltd\",\"ticker\":null,\"is_public\":true,\"industry\":\"Information Technology Services\",\"region\":\"GLOBAL\",\"employee_count\":328594,\"revenue_yoy\":null,\"stock_90d_change\":null,\"annual_revenue\":null,\"revenue_per_employee\":null,\"recent_layoffs\":[],\"layoff_rounds\":0,\"total_layoffs\":0,\"last_layoff_date\":\"No History\",\"last_layoff_percent\":null,\"recent_layoff_news\":false,\"ai_investment_signal\":\"medium\",\"last_updated\":\"2026-04-28T00:00:00.000Z\",\"source\":\"expansion_batch_2026_real\"},\"source\":\"supabase.company_intelligence\",\"sourcePath\":\"edge_canonical\",\"provenance\":[\"supabase.company_intelligence\"],\"matchedCompanyName\":\"Infosys Ltd\",\"matchConfidence\":1,\"matchType\":\"exact\",\"authoritativeSignals\":{\"layoff_rounds\":{\"key\":\"layoff_rounds\",\"value\":0,\"so"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-macro",
+      "status": 200,
+      "bodyPreview": "{\"fredSnapshot\":{\"fedFundsRate\":3.64,\"yieldCurveSpread\":0.43,\"isInvertedCurve\":false,\"nasdaqChange90d\":16.2,\"dataDate\":\"2026-04-01\"},\"joltsSnapshot\":{\"sector\":\"information_technology\",\"quitsRate\":32,\"layoffsRate\":66,\"jobOpeningsRate\":null,\"hiringRate\":null,\"quitsTrend\":\"stable\",\"dataMonth\":\"2026-03-01\"},\"dataSource\":\"live\",\"fetchedAt\":\"2026-05-24T13:08:24.769Z\",\"fromCache\":false}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-macro",
+      "status": 200,
+      "bodyPreview": "{\"fredSnapshot\":{\"fedFundsRate\":3.64,\"yieldCurveSpread\":0.43,\"isInvertedCurve\":false,\"nasdaqChange90d\":16.2,\"dataDate\":\"2026-04-01\"},\"joltsSnapshot\":{\"sector\":\"information_technology\",\"quitsRate\":32,\"layoffsRate\":66,\"jobOpeningsRate\":null,\"hiringRate\":null,\"quitsTrend\":\"stable\",\"dataMonth\":\"2026-03-01\"},\"dataSource\":\"live\",\"fetchedAt\":\"2026-05-24T13:08:24.856Z\",\"fromCache\":false}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T13%3A03%3A26.259Z",
+      "status": 400,
+      "bodyPreview": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column scrape_jobs.source does not exist\"}"
+    }
+  ],
+  "bodyTextPreview": "Skip to main content\nHumanShield\nLayoff Audit\nRisk Oracle\nEnglish\nGet Access\n● LIVE · NODE CONNECTIVITY\nMY DASHBOARD\n\nAI displacement intelligence across thousands of global roles\n\n0%\n0/3 MODULES\nComplete all for full analysis\nExport\nShare\n📉\nLayoff Audit\n🎯\nRisk Oracle\n🟢 LOW THREAT\nNETWORK SECURITY: ACTIVE\n/// TARGET DESIGNATION ///\nINFOSYS\nROLE: SOFTWARE ENGINEER\n● AGENTS: 15/30\n◈ SIGNALS: 30\n◈ INTELLIGENCE DATA STREAMS\nSupabase Intelligence DB\nLOADING\nFinancial Signals API\nLOADING\nRSS News Sentiment\nLOADING\nLayoffs.fyi Connector\nLOADING\nSEC EDGAR Regulatory\nLOADING\nNaukri Job Index\nLOADING\nSwarm Analysis (30 agents)\nLOADING\nIntelligence Synthesis\nLOADING\n🛫\nDEPLOYING AGENTS\nSending 30+ field agents to target\nINTELLIGENCE GATHERED\n33%\nNETWORK ID: HP-UEGBNW\n2026-05-24 13:08:28Z\nHumanShield\n\nThe high-fidelity standard for career protection in the AI era. Powered by frontier AI systems and verified global research.\n\nSubscribe\nPLATFORM\nRisk Oracle\nLearning Hub\nSafe Careers\nRisk Index\nAbout\nLEGAL\nPrivacy Policy\nTerms of Use\nAudit Log\nBlog\nContact\n© 2026 HumanShield · All rights reserved\nLIVE · Q1 2026 DATASET",
+  "pulseCardContent": {},
+  "dashValues": [],
+  "financialChips": []
+}

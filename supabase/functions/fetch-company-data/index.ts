@@ -9,7 +9,7 @@ import { withRun } from "../_shared/otel.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-request-id",
 };
 
 type JsonObject = Record<string, any>;
