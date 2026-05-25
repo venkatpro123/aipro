@@ -257,13 +257,24 @@ export async function withRun(
     // calls work regardless of whether the handler included them. The handler
     // typically uses Response.json() which has no CORS headers, causing the
     // browser to block the response even on a 200 OK.
+    //
+    // BUG FIX (v42.4): Do NOT use object-spread to merge headers.
+    //   new Headers({ ...response.headers.entries(), ...corsHeaders })
+    // fails because .entries() returns lowercase keys ('access-control-allow-origin')
+    // while corsHeaders has capitalized keys ('Access-Control-Allow-Origin').
+    // JavaScript object spread treats them as different keys, so Headers()
+    // appends both, producing the INVALID value "*, *" which browsers reject.
+    //
+    // Correct approach: copy handler headers then use .set() (case-insensitive
+    // overwrite) so corsHeaders always wins regardless of what the handler set.
+    const mergedHeaders = new Headers(response.headers);
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      mergedHeaders.set(key, value);
+    }
     const merged = new Response(response.body, {
       status:     response.status,
       statusText: response.statusText,
-      headers:    new Headers({
-        ...Object.fromEntries(response.headers.entries()),
-        ...corsHeaders,
-      }),
+      headers:    mergedHeaders,
     });
     return merged;
   } catch (err) {
