@@ -37,6 +37,8 @@ const CSP_CONNECT_SRC_HOSTS = [
   '*.datadoghq.com',
   'openrouter.ai',
   'google.serper.dev',
+  'api.deepseek.com',  // dev fallback in aiProxy.ts (VITE_DEEPSEEK_API_KEY)
+  'api.groq.com',      // dev fallback in aiProxy.ts (VITE_GROQ_API_KEY)
 ];
 
 function matchesAllowlist(host: string): boolean {

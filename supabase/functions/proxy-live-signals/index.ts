@@ -2115,16 +2115,26 @@ serve(async (req) => {
     // STOCK: Yahoo Finance (primary + only source — no paid API fallback)
     if ((action === 'stock' || action === 'both') && ticker) {
       const yahoo = await fetchStockYahoo(ticker);
-      if (yahoo && (yahoo.price90DayChange !== null || yahoo.revenueGrowthYoY !== null)) {
+      // Accept the result if ANY financial field is non-null — not just price/revenue.
+      // marketCap and peRatio alone are valuable signals (e.g. Indian stocks where
+      // Yahoo chart works but quoteSummary may be partially blocked from Deno Deploy IPs).
+      const hasAnyStockData = yahoo && (
+        yahoo.price90DayChange !== null ||
+        yahoo.revenueGrowthYoY !== null ||
+        yahoo.marketCap       !== null ||
+        yahoo.peRatio         !== null ||
+        yahoo.employeeCount   !== null
+      );
+      if (hasAnyStockData) {
         stockData = {
-          price90DayChange: yahoo.price90DayChange,
-          revenueGrowthYoY: yahoo.revenueGrowthYoY,
-          marketCap:        yahoo.marketCap,
-          peRatio:          yahoo.peRatio,
-          employeeCount:    yahoo.employeeCount,
-          source:           yahoo.source,
+          price90DayChange: yahoo!.price90DayChange,
+          revenueGrowthYoY: yahoo!.revenueGrowthYoY,
+          marketCap:        yahoo!.marketCap,
+          peRatio:          yahoo!.peRatio,
+          employeeCount:    yahoo!.employeeCount,
+          source:           yahoo!.source,
         };
-        errors.push(...(yahoo.errors.length > 0 ? yahoo.errors : []));
+        errors.push(...(yahoo!.errors.length > 0 ? yahoo!.errors : []));
       } else {
         errors.push(`Yahoo Finance returned no data for ${ticker}`);
         if (yahoo?.errors.length) errors.push(...yahoo.errors);
