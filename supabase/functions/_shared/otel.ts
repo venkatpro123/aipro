@@ -253,7 +253,19 @@ export async function withRun(
   try {
     const response = await handler(run);
     await run.finalize(null);
-    return response;
+    // Inject CORS headers into the handler's response so browser cross-origin
+    // calls work regardless of whether the handler included them. The handler
+    // typically uses Response.json() which has no CORS headers, causing the
+    // browser to block the response even on a 200 OK.
+    const merged = new Response(response.body, {
+      status:     response.status,
+      statusText: response.statusText,
+      headers:    new Headers({
+        ...Object.fromEntries(response.headers.entries()),
+        ...corsHeaders,
+      }),
+    });
+    return merged;
   } catch (err) {
     const errorCode = err instanceof Error ? err.name : 'unknown';
     const errorMessage = err instanceof Error ? err.message : String(err);
