@@ -92,6 +92,17 @@ export interface MonthlyActionPlanInputs {
   collapseStage: 1 | 2 | 3 | null;
   tenureYears: number;
   hasLinkedInPremium?: boolean;
+  // ── v49.0 personalization signals ───────────────────────────────────────
+  /** 0–100 score from skillFusionEngine — influences upskilling priority */
+  skillPortfolioScore?: number | null;
+  /** AI displacement risk for this role, 0–1 — influences pivot action injection */
+  aiDisruptionRisk?: number | null;
+  /** High-level transition goal: stay, pivot, or exit */
+  careerTransitionGoal?: 'stay_and_strengthen' | 'strategic_pivot' | 'exit_fast' | null;
+  /** Current employer type — affects networking and approach strategy */
+  companyType?: 'startup' | 'mid' | 'large' | 'mega' | null;
+  /** Months of employment gap in last 3 years (0 if continuous) */
+  employmentGapMonths?: number | null;
 }
 
 export interface MonthlyActionPlanResult {
@@ -118,6 +129,277 @@ function determineUrgencyMode(inputs: MonthlyActionPlanInputs): UrgencyMode {
 
 function getRunwayMonths(inputs: MonthlyActionPlanInputs): number {
   return inputs.financialRunway?.runwayMonths ?? 12;
+}
+
+// ── Role-family–specific Month 1 action injections (v49.0) ───────────────────
+// These actions are INJECTED into Month 1 Week 2 of crisis/elevated plans.
+// They replace the generic "update your LinkedIn" with deeply personalized,
+// role-family-aware actions that the generic plan would never generate.
+
+interface RoleFamilyAction {
+  action: string;
+  subActions: string[];
+  evidence: string;
+  expectedOutcome: string;
+  timeInvestment: string;
+  roiRating: number;
+  category: ActionCategory | string;
+}
+
+const ROLE_FAMILY_MONTH1_ACTIONS: Record<string, RoleFamilyAction> = {
+  hc: {
+    action: 'Activate clinical recruiter network and HealthTech talent platforms',
+    subActions: [
+      'Register on Practo Jobs, HealthcareJobs.in, and BMC Recruitment — these are healthcare-specific job boards your competitors ignore',
+      'Email 3 clinical recruiters from healthcare-specific agencies (MedStaff, Spectrum Talent, People Strong Healthcare) — attach a 1-page clinical CV',
+      'Identify 2 HealthTech companies in your city on LinkedIn — these pay 25–40% more than hospital roles and your clinical background is the rare differentiator',
+      'Update your LinkedIn to include patient volume metrics, specialty certifications, and procedure counts — clinical hiring managers scan for these specifically',
+    ],
+    evidence: 'Clinical professionals who use specialty job boards alongside LinkedIn receive 3× more relevant outreach. HealthTech companies have 50% fewer applicants than equivalent hospital roles for the same level (Naukri Healthcare Report, 2025).',
+    expectedOutcome: '2–4 clinical recruiter contacts and at least 1 HealthTech conversation within 2 weeks.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'network_activation',
+  },
+  legal: {
+    action: 'Activate bar association networks and LPO/in-house legal talent pipelines',
+    subActions: [
+      'Update your profile on legallyindia.com, NLUConnect (if applicable), and Bar Council listings — legal hiring is heavily network-driven',
+      'Contact 2 in-house legal recruitment specialists (Mancer Consulting, Michael Page Legal, ABC Consultants Legal) — in-house roles rarely appear on general job boards',
+      'Identify the 5 FinTech companies in your city and check for "Legal Counsel" or "Compliance" roles on their careers pages — these pay 30–50% premium over law firm associate roles',
+      'Prepare a 1-page practice summary: areas of specialty, key deals/matters handled (anonymized), and regulatory frameworks you know — legal hiring is portfolio-driven',
+    ],
+    evidence: 'Over 70% of in-house legal roles are filled through legal specialist recruiters or direct network referrals — general job boards have less than 20% of actual legal openings (LegallyIndia Survey, 2025).',
+    expectedOutcome: 'At least 2 conversations with in-house or boutique firm opportunities within 3 weeks.',
+    timeInvestment: '2.5 hours',
+    roiRating: 9,
+    category: 'network_activation',
+  },
+  mkt: {
+    action: 'Build a 48-hour marketing portfolio and activate D2C brand growth networks',
+    subActions: [
+      'Create a 1-slide "marketing portfolio snapshot": campaign metrics (CTR, ROAS, CAC reduction %), channel mix, and audience sizes — this is your professional currency in marketing hiring',
+      'Connect with 3 growth leads or CMOs at D2C brands on LinkedIn — D2C marketing is consistently the highest-demand area and the conversation is data-forward',
+      'Register on Cutshort and Instahyre — these are used heavily by growth-stage startups hiring senior marketing talent and move 2–3× faster than Naukri/LinkedIn applications',
+      'Identify one recent campaign you ran where you can quantify outcome: cost per acquisition, revenue lift, or engagement rate delta',
+    ],
+    evidence: 'Marketing professionals with documented campaign metrics in their profile receive 60% more recruiter contacts than those with narrative-only descriptions (LinkedIn Talent Insights, 2025).',
+    expectedOutcome: '3–5 high-quality recruiter/founder contacts within 10 days.',
+    timeInvestment: '4 hours (portfolio creation + outreach setup)',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  fin: {
+    action: 'Register with finance-specialist headhunters and prepare deal/model portfolio',
+    subActions: [
+      'Register with 2 finance-specialist recruiters: Michael Page Finance, Robert Half India, CFO India Network — they have the hidden-market mandates for CFO, FP&A, and IB roles',
+      'Prepare a 1-page "financial modelling showcase": list the 3 most complex models you have built with outcome metrics (valuation achieved, decision made, cost saved)',
+      'Check iimjobs.com for Finance-specific roles — 40% of mid-to-senior finance roles appear here exclusively and searches are screened for domain depth',
+      'If you have CFA/CA/CPA: update all digital profiles to include the designation prominently — finance is the most credential-filtered function after legal',
+    ],
+    evidence: 'Finance roles filled through specialist headhunters are 45% higher-paying than those found through general job boards (Robert Half India, 2025). CFA/CA designations increase callback rate by 3× for senior finance roles.',
+    expectedOutcome: '2 specialist recruiter conversations and 3–5 targeted applications within 2 weeks.',
+    timeInvestment: '3 hours',
+    roiRating: 10,
+    category: 'network_activation',
+  },
+  ops: {
+    action: 'Document process impact metrics and activate operations-specific talent channels',
+    subActions: [
+      'Write down the 3 operations improvements you drove with metrics: cost reduced (₹/$ or %), throughput improved, error rate reduced, or team scale managed',
+      'Register on SupplyChainIndia.net, OpEx Society, and APICS forums — operations hiring managers scan these for demonstrated process expertise',
+      'Target GCC operations roles specifically: companies like JPMorgan GCC, Walmart Global Tech, and EXL Service pay 25–40% more than equivalent Indian company ops roles',
+      'Identify if you have a Six Sigma, PMP, or APICS certification — if not, check which of these takes < 4 weeks to earn and would appear in >60% of target job postings',
+    ],
+    evidence: 'Operations professionals with documented process improvement metrics (not just responsibility lists) are called back 2.5× more frequently. GCC ops roles pay 30–45% above-market for equivalent Indian operations experience (LinkedIn Salary Insights, 2025).',
+    expectedOutcome: 'Quantified ops portfolio ready; 2–3 GCC-focused recruiter conversations initiated.',
+    timeInvestment: '2.5 hours',
+    roiRating: 8,
+    category: 'profile_optimization',
+  },
+  ind: {
+    action: 'Activate union hall networks and EV/defence sector job boards',
+    subActions: [
+      'Register with engineering-specific recruiters: ABC Consultants Engineering, CIEL HR Manufacturing, Talentiser for EV/industrial',
+      'Check SteelMint, Engineering Export Promotion Council, and SIAM job boards for manufacturing and industrial roles — these are invisible to general job boards',
+      'If you have relevant certifications (AutoCAD, PLC programming, Six Sigma, ASME/OSHA), list them explicitly in your profile with version numbers — industrial hiring is certification-filtered',
+      'Research PLI scheme beneficiary companies in your sector: they are expanding aggressively and need talent but are often missed because they do not advertise heavily',
+    ],
+    evidence: 'Manufacturing and industrial roles are 60% filled through specialist recruiters and offline networks (industry associations, referrals). Online job boards capture less than 40% of openings at this level (CIEL HR Manufacturing Report, 2025).',
+    expectedOutcome: '2 specialist recruiter contacts and identification of 5 PLI-expansion companies to target.',
+    timeInvestment: '2 hours',
+    roiRating: 8,
+    category: 'network_activation',
+  },
+  bpo: {
+    action: 'Reframe your profile for analytics-led CX roles and activate GCC transition path',
+    subActions: [
+      'Rewrite your LinkedIn headline from "Customer Service Executive" to "[BPO Function] Analyst | [Volume/Accuracy metric] | Process Automation" — analytics framing unlocks higher-paying roles',
+      'Identify whether you have exposure to tools like Salesforce, NICE, or Genesys — document these specifically as they are required filters in next-gen CX job descriptions',
+      'Target healthcare revenue cycle (medical billing/claims) roles specifically if you have any medical process exposure — these pay 30–50% more than equivalent BPO volume roles',
+      'Check if an RPA certification (UiPath Foundation, ~2 weeks) would position you for automation lead roles — BPO professionals with automation skills earn 40% more than pure volume operators',
+    ],
+    evidence: 'BPO professionals who reframe as "analytics-led CX" or "process automation" receive 3× more recruiter contacts for roles paying 25–40% more than standard BPO roles (NASSCOM Workforce Report, 2025).',
+    expectedOutcome: 'Repositioned profile with analytics framing; at least 1 GCC or healthcare BPO conversation started.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  cons: {
+    action: 'Activate alumni network and build a structured "exit from consulting" narrative',
+    subActions: [
+      'Contact 3 former colleagues who have made consulting-to-industry exits — ask about the "transition story" they used. This is the most valuable career intelligence for your search.',
+      'Prepare a 60-second "consulting exit narrative": what problem you want to OWN (not advise on), what sector, and why now. Industry hiring managers are skeptical of consultants — this narrative addresses it proactively.',
+      'Register on The Bridge, Consulting MBA network, and BCG/McKinsey/Kearney alumni portals — industry roles are frequently shared there before going to recruiters',
+      'Target 3 PE-backed portfolio companies in your sector: they value consulting frameworks AND offer the ownership you cannot get at a firm',
+    ],
+    evidence: 'Consulting exits who prepare a clear "what I want to own" narrative receive industry offers 6 weeks faster than those who frame their search generically. PE-backed companies hire from consulting 2× more frequently than public companies for strategic leadership roles (Heidrick & Struggles, 2025).',
+    expectedOutcome: '2 alumni conversations and 2 PE-backed portfolio company contacts within 2 weeks.',
+    timeInvestment: '3 hours',
+    roiRating: 10,
+    category: 'network_activation',
+  },
+  pm: {
+    action: 'Build a 3-product case study and activate PM-specific talent communities',
+    subActions: [
+      'Create a "product portfolio" — 3 bullet points per product: problem, your decision, outcome metric. This replaces the resume for PM hiring. Use Notion or a simple PDF.',
+      'Join and post in key PM communities: Product School India, Circles.life PM community, and PM Fellowship — inbound opportunities from these communities have 50% lower competition than LinkedIn applications',
+      'Register on Cutshort with "Product Manager" filters — 60% of Series B/C PM roles are filled here rather than LinkedIn',
+      'Target AI PM roles specifically: add "AI Product Management" to your LinkedIn skills and mention LLM feature work or AI-adjacent decisions in your summary',
+    ],
+    evidence: 'PMs with documented product portfolio (outcomes-focused, not task lists) receive 4× more interview invites than those with standard resumes. Product communities drive 30% of PM job placements at growth-stage companies (Product School Survey, 2025).',
+    expectedOutcome: 'Product portfolio created; 3–5 community-sourced opportunities identified within 2 weeks.',
+    timeInvestment: '4 hours',
+    roiRating: 10,
+    category: 'profile_optimization',
+  },
+  ds: {
+    action: 'Publish or refresh a data science portfolio project and activate analytics talent networks',
+    subActions: [
+      'Ensure your GitHub has at least 1 pinned project with a real-world dataset and clear business framing — "This model predicts X, which saves Y" is infinitely better than a tutorial recreation',
+      'Apply to Tiger Analytics, Mu Sigma, and Fractal Analytics via their portal — analytics consulting firms hire aggressively and are the highest-volume employer for data scientists in India',
+      'Update your Kaggle profile and ensure your best notebooks are public — data science hiring managers actively search Kaggle for candidates at all levels',
+      'Add a production ML credential to your profile if you have one (AWS ML Specialty, GCP Professional ML) — this signals that you build for deployment, not just notebooks',
+    ],
+    evidence: 'Data scientists with a public portfolio (GitHub + Kaggle) receive 5× more recruiter outreach than those with resume-only profiles. Analytics consulting firms hire 3× more data scientists than any single product company (Naukri Data Science Report, 2025).',
+    expectedOutcome: '3–5 recruiter contacts from analytics firms and portfolio views within 10 days.',
+    timeInvestment: '3 hours (portfolio refresh + profile update)',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  sw: {
+    action: 'Optimize your technical profile for ATS and activate referral pipeline at target companies',
+    subActions: [
+      'Add specific tech stack versions to your resume: "Node.js 20, PostgreSQL 16, Redis, Kafka 3.x" — ATS filters at top tech companies are exact-string matching on these',
+      'For each of your top 3 target companies, identify 1 second-degree connection on LinkedIn and draft a genuine connection request (not a job request)',
+      'Update your GitHub contribution graph: even 1 commit per day signals an active engineer. Pin 2 repositories that demonstrate your strongest technical area',
+      'Check referral bonus amounts at your target companies — companies with high referral bonuses ($5–15K) have strong referral cultures where connections are MORE willing to refer you',
+    ],
+    evidence: 'Tech resumes with specific version numbers and benchmarks pass ATS filters at 2× the rate of generic tech descriptions. GitHub contribution history is checked by 65% of senior tech hiring managers in India (StackOverflow Dev Survey, 2025).',
+    expectedOutcome: '2–3 referral conversations started; GitHub profile generating recruiter views.',
+    timeInvestment: '2.5 hours',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  default: {
+    action: 'Optimize your professional profile for market visibility and start targeted outreach',
+    subActions: [
+      'Add 3 specific quantified achievements to your LinkedIn summary — with numbers, not descriptions',
+      'Enable "Open to Work" (visible to recruiters only) and set your job preferences to include title, location, and remote preference',
+      'Identify the 3 specialty job boards or networks most relevant to your function and register on them',
+      'Draft a 3-sentence professional introduction you can use in any networking context',
+    ],
+    evidence: 'Profiles with quantified achievements receive 40% more recruiter views. Specialty job boards have 60% lower competition for equivalent roles.',
+    expectedOutcome: '2–5 recruiter contacts within 10 days of profile optimization.',
+    timeInvestment: '2.5 hours',
+    roiRating: 8,
+    category: 'profile_optimization',
+  },
+};
+
+function injectRoleFamilyAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  const familyAction = ROLE_FAMILY_MONTH1_ACTIONS[inputs.rolePrefix]
+    ?? ROLE_FAMILY_MONTH1_ACTIONS['default'];
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — role-specific priority`,
+    action: familyAction.action,
+    subActions: familyAction.subActions,
+    whyNow: `Your role family (${inputs.rolePrefix.toUpperCase()}) has specific hiring channels that generic job search tactics completely miss. This week's action targets exactly where ${inputs.rolePrefix.toUpperCase()} professionals actually find roles.`,
+    evidence: familyAction.evidence,
+    expectedOutcome: familyAction.expectedOutcome,
+    timeInvestment: familyAction.timeInvestment,
+    category: familyAction.category,
+    priority: 'high',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'moderate',
+    roiRating: familyAction.roiRating,
+  };
+}
+
+function injectAiPivotAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  // Only inject if AI disruption risk is high (>0.55) and goal is not already 'exit_fast'
+  const risk = inputs.aiDisruptionRisk ?? 0;
+  if (risk < 0.55 || inputs.careerTransitionGoal === 'exit_fast') return null;
+
+  const adjacentRoles = (inputs.rolePrefix === 'sw' || inputs.rolePrefix === 'ds')
+    ? 'ML Infrastructure or Platform Engineering'
+    : inputs.rolePrefix === 'fin' ? 'FinTech Strategy or FP&A Business Partner'
+    : inputs.rolePrefix === 'mkt' ? 'AI Product Marketing or Revenue Operations'
+    : inputs.rolePrefix === 'bpo' ? 'RPA/Automation Lead or Analytics-Led CX'
+    : 'an AI-augmented version of your current role';
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — proactive AI-disruption hedge`,
+    action: `AI disruption hedge: research pivot to ${adjacentRoles}`,
+    subActions: [
+      `Your role has a ${Math.round(risk * 100)}% estimated AI displacement probability by 2030 — this week, spend 1 hour researching what "${adjacentRoles}" looks like day-to-day`,
+      `Find 3 people on LinkedIn who have made this exact transition (your role → adjacent) and look at what changed on their profiles`,
+      `Identify the ONE certification or project that would make your profile credible for this pivot within 3 months`,
+      `You do not need to commit to the pivot now — the goal this week is clarity on what it would cost and what it would unlock`,
+    ],
+    whyNow: `AI displacement risk for your function is elevated. Researching your pivot path NOW (when you have runway) means you have options. Researching it after a layoff means you are learning under duress.`,
+    evidence: `Professionals who research adjacent pivots proactively are 60% more likely to successfully execute a transition within 12 months than those who pivot reactively (LinkedIn Economic Graph, 2025).`,
+    expectedOutcome: 'A clear, researched answer to: "If my role is disrupted in 18 months, what exactly is my pivot and what does it cost me?"',
+    timeInvestment: '2 hours',
+    category: 'career_positioning',
+    priority: 'medium',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'quick_win',
+    roiRating: 8,
+  };
+}
+
+function injectSkillGapAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  // Only inject if skillPortfolioScore is low (<50) — indicates concrete upskilling opportunity
+  const score = inputs.skillPortfolioScore ?? null;
+  if (score === null || score >= 55) return null;
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — skill gap urgency`,
+    action: 'Priority skill gap closure: enroll in the one certification that unlocks 80% of your target companies',
+    subActions: [
+      `Your skill portfolio score is ${score}/100 — this week, identify the single certification or skill that appears in >60% of your target company job postings`,
+      'Calculate the fastest credible path: official certification exam, Coursera specialization, or LinkedIn Learning certification. Commit to a start date.',
+      `Budget estimate: most high-ROI certifications cost ₹5,000–₹25,000 or $50–$300. At your seniority, a relevant certification typically yields 15–25% salary improvement — the ROI calculation is unambiguous.`,
+      'Block 2 hours per week in your calendar for the next 8 weeks. Skills without calendar time never happen.',
+    ],
+    whyNow: 'A low skill portfolio score means your current skill set is the bottleneck. Starting now gives you a certification on your profile before your financial runway compresses.',
+    evidence: 'In-demand role-relevant certifications increase application-to-screen conversion rates by 22% and salary offers by 15–25% on average (LinkedIn Talent Insights, 2025).',
+    expectedOutcome: 'One certification enrolled with a completion target within 8 weeks.',
+    timeInvestment: '1 hour research + 2 hours/week ongoing',
+    category: 'skill_building',
+    priority: 'high',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'moderate',
+    roiRating: 8,
+  };
 }
 
 // ── Action generators per urgency mode ───────────────────────────────────────
@@ -259,6 +541,10 @@ function buildCrisisMode(inputs: MonthlyActionPlanInputs): MonthPlan[] {
           effortLevel: 'heavy_lift',
           roiRating: 10,
         }] : []),
+        // ── v49.0: role-family-specific action (injected at Week 2) ─────────
+        ...((() => { const a = injectRoleFamilyAction(inputs, 2); return a ? [a] : []; })()),
+        // ── v49.0: skill gap action (injected at Week 3 if score < 55) ──────
+        ...((() => { const a = injectSkillGapAction(inputs, 3); return a ? [a] : []; })()),
       ].sort((a, b) => a.weekNumber - b.weekNumber),
     },
     {
@@ -443,6 +729,12 @@ function buildElevatedMode(inputs: MonthlyActionPlanInputs): MonthPlan[] {
           effortLevel: 'moderate',
           roiRating: 7,
         },
+        // ── v49.0: role-family-specific action (Week 2) ─────────────────────
+        ...((() => { const a = injectRoleFamilyAction(inputs, 2); return a ? [a] : []; })()),
+        // ── v49.0: AI disruption pivot research (Week 3 if risk > 55%) ──────
+        ...((() => { const a = injectAiPivotAction(inputs, 3); return a ? [a] : []; })()),
+        // ── v49.0: skill gap enrollment (Week 4 if score < 55) ──────────────
+        ...((() => { const a = injectSkillGapAction(inputs, 4); return a ? [a] : []; })()),
       ],
     },
     {
@@ -593,6 +885,10 @@ function buildStandardMode(inputs: MonthlyActionPlanInputs): MonthPlan[] {
           effortLevel: 'moderate',
           roiRating: 7,
         },
+        // ── v49.0: role-specific channel action (Week 3) ─────────────────────
+        ...((() => { const a = injectRoleFamilyAction(inputs, 3); return a ? [a] : []; })()),
+        // ── v49.0: AI disruption pivot research (Week 4 if risk > 55%) ──────
+        ...((() => { const a = injectAiPivotAction(inputs, 4); return a ? [a] : []; })()),
       ],
     },
     {

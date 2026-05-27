@@ -176,6 +176,91 @@ const ROLE_SECTOR_AFFINITY: Record<string, {
       { sector: 'High-Growth Startups', demandLevel: 'surge', whyHiring: 'Rapid scaling companies need HR business partners who can build culture infrastructure from scratch at Series B/C', sampleCompanies: ['Zomato', 'Ola', 'Urban Company', 'PharmEasy', 'Cred'], salaryPremiumPct: 15 },
     ],
   },
+
+  // ── v49.0 expanded role families ─────────────────────────────────────────
+  hc: {
+    hotSectors: [
+      { sector: 'Health Systems / Hospital Networks', demandLevel: 'strong', whyHiring: 'Post-pandemic care backlog and nurse staffing shortages drive persistent demand for clinically-trained professionals across specialties', sampleCompanies: ['Apollo Hospitals', 'Fortis Healthcare', 'Narayana Health', 'HCA Healthcare', 'Aster DM Healthcare'], salaryPremiumPct: 10 },
+      { sector: 'HealthTech / Digital Health', demandLevel: 'surge', whyHiring: 'Telemedicine, remote patient monitoring, and AI diagnostics require clinically-trained professionals who can bridge medicine and technology', sampleCompanies: ['Practo', 'Niramai', 'mFine', 'Teladoc', 'Doceree'], salaryPremiumPct: 22 },
+      { sector: 'Pharma / Biotech / CRO', demandLevel: 'steady', whyHiring: 'Clinical trials, pharmacovigilance, and medical affairs functions require trained healthcare professionals with regulatory awareness', sampleCompanies: ['Sun Pharma', "Dr. Reddy's", 'Cipla', 'Pfizer India', 'IQVIA India'], salaryPremiumPct: 15 },
+    ],
+  },
+  legal: {
+    hotSectors: [
+      { sector: 'Technology / AI / IP Law', demandLevel: 'surge', whyHiring: 'AI regulation, data privacy (DPDP Act, GDPR), and IP protection for software products require specialized legal professionals who understand both law and technology', sampleCompanies: ['Khaitan & Co', 'AZB & Partners', 'Trilegal', 'Cyril Amarchand Mangaldas', 'Nishith Desai Associates'], salaryPremiumPct: 28 },
+      { sector: 'FinTech / Financial Services Compliance', demandLevel: 'strong', whyHiring: 'RBI/SEBI regulatory complexity, payment aggregator licensing, and fintech compliance require specialized in-house and firm legal teams', sampleCompanies: ['Razorpay Legal', 'PhonePe', 'HDFC Bank Legal', 'Kotak Mahindra Legal', 'Paytm Compliance'], salaryPremiumPct: 20 },
+      { sector: 'Legal Process Outsourcing (LPO)', demandLevel: 'strong', whyHiring: 'Global law firms and multinationals offshore contract review, due diligence, e-discovery, and regulatory research to India at scale', sampleCompanies: ['UnitedLex', 'Integreon', 'QuisLex', 'EXL Legal', 'Epiq Systems India'], salaryPremiumPct: 12 },
+    ],
+  },
+  mkt: {
+    hotSectors: [
+      { sector: 'D2C / E-commerce Brand Marketing', demandLevel: 'surge', whyHiring: 'Performance marketing, retention marketing, and brand building are top investment areas for D2C brands competing for digital shelf space', sampleCompanies: ['Mamaearth', 'boAt', 'Nykaa', 'Mensa Brands', 'Sugar Cosmetics'], salaryPremiumPct: 18 },
+      { sector: 'B2B SaaS Demand Generation', demandLevel: 'strong', whyHiring: 'B2B SaaS companies need demand gen, account-based marketing, and content marketing to build enterprise pipeline at scale', sampleCompanies: ['Freshworks', 'Zoho', 'CleverTap', 'WebEngage', 'MoEngage'], salaryPremiumPct: 22 },
+      { sector: 'FinTech / Consumer Super-Apps', demandLevel: 'strong', whyHiring: 'Consumer FinTech brands require growth marketing, CRM, and lifecycle campaigns to acquire and retain users at sustainable CAC', sampleCompanies: ['CRED', 'PhonePe', 'Groww', 'Jupiter Money', 'Fi Money'], salaryPremiumPct: 16 },
+    ],
+  },
+  ops: {
+    hotSectors: [
+      { sector: 'QuickCommerce / E-commerce Operations', demandLevel: 'surge', whyHiring: 'Last-mile delivery, dark store operations, and supply chain optimization require ops professionals who can manage high-velocity, complex fulfillment networks with shrinking margins', sampleCompanies: ['Zepto', 'Blinkit', 'Swiggy Instamart', 'Delhivery', 'Ecom Express'], salaryPremiumPct: 12 },
+      { sector: 'EV / Manufacturing Expansion', demandLevel: 'strong', whyHiring: 'PLI scheme beneficiaries and EV manufacturers require supply chain and operations talent as they rapidly scale domestic manufacturing capacity', sampleCompanies: ['Ola Electric', 'Tata Motors EV', 'Mahindra', 'Bosch India', 'Maruti Suzuki'], salaryPremiumPct: 10 },
+      { sector: 'GCC Shared Services / Process Excellence', demandLevel: 'strong', whyHiring: 'Global Capability Centres expanding in India need operations managers and process excellence leads to build and run shared services at global standards', sampleCompanies: ['JPMorgan GCC', 'Walmart Global Tech', 'Concentrix', 'EXL Service', 'WNS Global'], salaryPremiumPct: 15 },
+    ],
+  },
+  cons: {
+    hotSectors: [
+      { sector: 'Technology Consulting / Big 4 Advisory', demandLevel: 'strong', whyHiring: 'Digital transformation, cloud migration, and GenAI implementation mandates from enterprises create sustained demand for consultants who blend strategy and tech', sampleCompanies: ['Deloitte India', 'EY India', 'KPMG India', 'PwC India', 'McKinsey Technology'], salaryPremiumPct: 24 },
+      { sector: 'Strategy Boutiques / Independents', demandLevel: 'steady', whyHiring: 'M&A advisory, market entry, and strategic planning mandates from PE-backed mid-market companies pay premium for senior consultants', sampleCompanies: ['Alvarez & Marsal India', 'Kearney India', 'BCG India', 'Roland Berger', 'LEK Consulting India'], salaryPremiumPct: 32 },
+      { sector: 'Sector-Specialist Consultancies', demandLevel: 'strong', whyHiring: 'Deep domain expertise (HealthTech, FinTech, climate) commands premium from boutique consultancies serving those sectors', sampleCompanies: ['Praxis Global Alliance', 'Redseer Strategy', 'Valoris Consulting', 'Avanteum Advisors', 'Kearney Operations'], salaryPremiumPct: 18 },
+    ],
+  },
+  design: {
+    hotSectors: [
+      { sector: 'SaaS / FinTech Product Design', demandLevel: 'strong', whyHiring: 'Product design and user research are board-level investment areas as SaaS companies compete on experience quality and AI-assisted interface design', sampleCompanies: ['Razorpay Design', 'Freshworks UX', 'Figma', 'Framer', 'Lottiefiles'], salaryPremiumPct: 20 },
+      { sector: 'E-commerce & Consumer Super-Apps', demandLevel: 'surge', whyHiring: 'High-stakes conversion optimization and mobile-first design require senior UX designers who can connect design decisions to measurable revenue impact', sampleCompanies: ['Meesho Design', 'Swiggy UX', 'CRED Design', 'PhonePe', 'Flipkart'], salaryPremiumPct: 16 },
+      { sector: 'Design Tools / Creative Technology', demandLevel: 'strong', whyHiring: 'Design-tools companies need designers who deeply understand the designer persona — domain expertise beats general UX skill here', sampleCompanies: ['Canva India', 'Adobe India', 'InVision', 'Zeplin', 'Pika Labs'], salaryPremiumPct: 24 },
+    ],
+  },
+  ind: {
+    hotSectors: [
+      { sector: 'Electric Vehicles / Clean Energy', demandLevel: 'surge', whyHiring: 'EV manufacturing scale-up and battery technology development require mechanical engineers, production managers, and skilled trades at levels the market cannot currently supply', sampleCompanies: ['Ola Electric', 'Tata Motors EV', 'Mahindra Electric', 'Ather Energy', 'Hero Electric'], salaryPremiumPct: 15 },
+      { sector: 'Defence / Aerospace Indigenization', demandLevel: 'strong', whyHiring: 'Atmanirbhar Bharat defence programs and NewSpace sector privatization create sustained demand for specialized industrial and systems engineering roles', sampleCompanies: ['HAL', 'BEL', 'Tata Advanced Systems', 'Larsen & Toubro Defence', 'Godrej Aerospace'], salaryPremiumPct: 10 },
+      { sector: 'PLI Electronics / Pharma Manufacturing', demandLevel: 'strong', whyHiring: 'Production-linked incentive scheme beneficiaries in electronics and pharmaceuticals are expanding capacity, requiring manufacturing operations talent for greenfield facilities', sampleCompanies: ['Dixon Technologies', 'Motherson Sumi', 'Lupin', 'Tata Electronics', 'Foxconn India'], salaryPremiumPct: 8 },
+    ],
+  },
+  bpo: {
+    hotSectors: [
+      { sector: 'Analytics-Led CX / Next-Gen BPO', demandLevel: 'strong', whyHiring: 'AI-augmented support, CX analytics, and process automation roles are replacing pure-volume BPO work — companies urgently need upskilled talent who can manage AI-assisted workflows', sampleCompanies: ['Concentrix Analytics', 'WNS Advanced Analytics', 'EXL Service', 'Teleperformance Digital', 'iEnergizer'], salaryPremiumPct: 12 },
+      { sector: 'Healthcare Revenue Cycle / Claims', demandLevel: 'strong', whyHiring: 'US healthcare claims adjudication, revenue cycle management, and medical billing continue to offshore to India with growing demand for experienced BPO professionals with clinical knowledge', sampleCompanies: ['Omega Healthcare', 'Firstsource Solutions', 'Sutherland Healthcare', 'nThrive', 'GeBBS Healthcare'], salaryPremiumPct: 14 },
+      { sector: 'BFSI BPO / RegTech Processing', demandLevel: 'surge', whyHiring: 'Mortgage, insurance, and banking back-office automation has increased the skill bar — roles that survive are analytics-led, requiring data literacy and process improvement skills', sampleCompanies: ['Genpact BFSI', 'Mphasis', 'Hexaware Financial', 'Coforge', 'NIIT Technologies'], salaryPremiumPct: 10 },
+    ],
+  },
+  pm: {
+    hotSectors: [
+      { sector: 'Consumer Tech / Super-App Product', demandLevel: 'surge', whyHiring: 'Product managers who own high-impact consumer features at scale are consistently the hardest PM archetype to hire — demand is structurally higher than supply', sampleCompanies: ['Meesho', 'CRED', 'Swiggy', 'PhonePe', 'Ola'], salaryPremiumPct: 28 },
+      { sector: 'B2B SaaS / Developer Tools', demandLevel: 'strong', whyHiring: 'Enterprise SaaS building AI-native features needs technical PMs who understand both LLM capabilities and enterprise customer pain points', sampleCompanies: ['Freshworks', 'Zoho', 'Chargebee', 'Postman', 'Hasura'], salaryPremiumPct: 22 },
+      { sector: 'FinTech / Lending / WealthTech', demandLevel: 'strong', whyHiring: 'Payments, credit, and wealth products require PMs who understand financial regulation, compliance constraints, and high-frequency user psychology simultaneously', sampleCompanies: ['Razorpay Product', 'Zerodha', 'Jupiter Money', 'Groww', 'Paytm'], salaryPremiumPct: 24 },
+    ],
+  },
+  edu: {
+    hotSectors: [
+      { sector: 'Professional Upskilling / EdTech', demandLevel: 'strong', whyHiring: 'Upskilling platforms and professional certification providers need curriculum designers, instructional technologists, and expert instructors with real-world practitioner backgrounds', sampleCompanies: ['upGrad', 'Great Learning', 'Simplilearn', 'Coursera India', 'Scaler Academy'], salaryPremiumPct: 14 },
+      { sector: 'Corporate L&D / GCC Learning', demandLevel: 'steady', whyHiring: 'Large enterprises and GCCs invest heavily in L&D capability-building programs, requiring experienced training and organizational development professionals', sampleCompanies: ['Infosys Learning', 'Wipro Learning', 'Accenture Academy', 'IBM Learning', 'TCS iON'], salaryPremiumPct: 10 },
+    ],
+  },
+  gov: {
+    hotSectors: [
+      { sector: 'Digital India / GovTech', demandLevel: 'steady', whyHiring: 'India Stack, ONDC, Digital India, and e-governance programs need professionals who bridge government operations and modern technology delivery', sampleCompanies: ['NPCI', 'NSDL', 'iSPIRT', 'EkStep Foundation', 'Samagra Governance'], salaryPremiumPct: 5 },
+      { sector: 'Multilateral / Development Finance Institutions', demandLevel: 'steady', whyHiring: 'World Bank, ADB, and UN bodies running India programs require professionals with government-sector expertise and development economics understanding', sampleCompanies: ['World Bank India', 'Asian Development Bank India', 'UNDP India', 'Bill & Melinda Gates Foundation India', 'Aga Khan Foundation'], salaryPremiumPct: 22 },
+    ],
+  },
+  ds: {
+    hotSectors: [
+      { sector: 'Analytics Consulting / AI Platforms', demandLevel: 'surge', whyHiring: 'The AI economy requires data scientists who can build interpretable, maintainable, production-grade models — not just notebooks. Analytics consulting firms see the highest demand for this profile', sampleCompanies: ['Mu Sigma', 'Tiger Analytics', 'Fractal Analytics', 'Sigmoid', 'LatentView Analytics'], salaryPremiumPct: 22 },
+      { sector: 'FinTech / Risk & Credit Analytics', demandLevel: 'strong', whyHiring: 'Credit risk models, alternative data scoring, and fraud detection require data scientists with financial domain expertise and strong statistical fundamentals', sampleCompanies: ['CIBIL', 'Lendingkart', 'Perfios', 'CredAvenue', 'Kissht'], salaryPremiumPct: 20 },
+      { sector: 'E-commerce / Personalization Platforms', demandLevel: 'strong', whyHiring: 'Recommendation engines, demand forecasting, and dynamic pricing pipelines require data scientists who own the full model lifecycle from training to production monitoring', sampleCompanies: ['Flipkart AI', 'Amazon India', 'BigBasket', 'Nykaa', 'Myntra'], salaryPremiumPct: 16 },
+    ],
+  },
+
   // Default for unmapped role prefixes
   default: {
     hotSectors: [
@@ -183,6 +268,74 @@ const ROLE_SECTOR_AFFINITY: Record<string, {
       { sector: 'Global Capability Centres', demandLevel: 'steady', whyHiring: 'GCCs of global companies are expanding India headcount in specialised functions', sampleCompanies: ['JPMorgan GCC', 'Goldman Sachs GCC', 'Wells Fargo GCC', 'Walmart Global Tech', 'Marriott GCC'], salaryPremiumPct: 10 },
     ],
   },
+};
+
+// ── Adjacent role map (career transition intelligence) ────────────────────────
+// Maps a role family to safer, higher-demand adjacent roles the user can pivot to.
+// Used by Action Plan and Job Targeting panels to surface non-obvious opportunities.
+
+export interface AdjacentRoleTarget {
+  targetRole: string;
+  transitionDifficulty: 'easy' | 'medium' | 'hard';
+  timeToTransition: string;         // "2–3 months"
+  whyFit: string;                   // Why this user profile maps well
+  keySkillsToAdd: string[];         // 2–3 specific skills/certs to add
+  aiDisruptionResistance: number;   // 1–10, higher = more AI-resistant
+  salaryDeltaPct: number;           // % change vs. current role (can be +/-)
+}
+
+export const ADJACENT_ROLE_MAP: Record<string, AdjacentRoleTarget[]> = {
+  sw: [
+    { targetRole: 'Platform Engineering / DevOps', transitionDifficulty: 'easy', timeToTransition: '1–3 months', whyFit: 'Backend engineers already understand CI/CD pipelines and infrastructure — DevOps roles pay 15–20% more with lower interview bar than senior SWE', keySkillsToAdd: ['Kubernetes + Helm', 'Terraform IaC', 'Observability (Datadog / OpenTelemetry)'], aiDisruptionResistance: 8, salaryDeltaPct: 15 },
+    { targetRole: 'ML Infrastructure Engineering', transitionDifficulty: 'medium', timeToTransition: '3–5 months', whyFit: 'Backend engineers with Python proficiency are natural ML infrastructure candidates — model serving, feature stores, and training pipelines are backend problems at their core', keySkillsToAdd: ['PyTorch basics (inference, not training)', 'MLflow / Kubeflow', 'Feature store design'], aiDisruptionResistance: 9, salaryDeltaPct: 28 },
+    { targetRole: 'Solutions Architecture', transitionDifficulty: 'medium', timeToTransition: '2–4 months', whyFit: 'Senior engineers with client-facing experience are natural solutions architects — higher comp, reduced code-review overhead, and strong AI disruption resistance', keySkillsToAdd: ['AWS/GCP Professional certification', 'Pre-sales communication', 'Technical storytelling for non-engineers'], aiDisruptionResistance: 8, salaryDeltaPct: 20 },
+  ],
+  ds: [
+    { targetRole: 'ML Engineering', transitionDifficulty: 'medium', timeToTransition: '3–5 months', whyFit: 'Data scientists who add production ML deployment and system design skills transition to higher-paying ML engineering roles where notebook-only skills are insufficient', keySkillsToAdd: ['MLOps tooling (MLflow, Seldon)', 'REST API development', 'System design for ML systems'], aiDisruptionResistance: 9, salaryDeltaPct: 25 },
+    { targetRole: 'Product / Growth Analytics Lead', transitionDifficulty: 'easy', timeToTransition: '1–2 months', whyFit: 'Data scientists with business acumen are premium hires in product analytics — the combination of model-building and product intuition is rare and well-compensated', keySkillsToAdd: ['A/B testing design and inference', 'Product sense frameworks', 'Executive-level data storytelling'], aiDisruptionResistance: 7, salaryDeltaPct: 10 },
+    { targetRole: 'AI Product Management', transitionDifficulty: 'hard', timeToTransition: '8–14 months', whyFit: 'Data scientists with strong product instinct are among the most sought-after AI PM profiles — you understand what AI can and cannot do, which most PMs do not', keySkillsToAdd: ['Product management certification (PM school or AIPMM)', 'User research methods', 'OKR and roadmap frameworks'], aiDisruptionResistance: 9, salaryDeltaPct: 35 },
+  ],
+  fin: [
+    { targetRole: 'FP&A / Business Finance Partner', transitionDifficulty: 'easy', timeToTransition: '1–2 months', whyFit: 'Financial analysts transition naturally to FP&A where business partnering and strategic storytelling replace pure modelling — senior FPAR roles pay 20–30% more', keySkillsToAdd: ['Executive communication and narrative finance', 'Planning tools (Anaplan / Adaptive Insights)', 'Business driver analysis'], aiDisruptionResistance: 7, salaryDeltaPct: 20 },
+    { targetRole: 'FinTech / Startup Finance Lead', transitionDifficulty: 'easy', timeToTransition: '1–3 months', whyFit: 'Financial domain expertise is a premium in FinTech — analysts command 20–30% more than in traditional finance and contribute directly to product and growth decisions', keySkillsToAdd: ['Unit economics frameworks (LTV, CAC, payback)', 'SQL for self-serve analysis', 'FinTech regulatory basics (RBI, SEBI)'], aiDisruptionResistance: 6, salaryDeltaPct: 22 },
+    { targetRole: 'Investment Analyst (VC / PE)', transitionDifficulty: 'hard', timeToTransition: '12–24 months', whyFit: 'Top-quartile financial analysts can transition to VC/PE with the right MBA or deal execution experience — comp ceiling is significantly higher', keySkillsToAdd: ['M&A deal execution experience', 'VC deal sourcing and term sheet basics', 'Portfolio company operator mindset'], aiDisruptionResistance: 8, salaryDeltaPct: 50 },
+  ],
+  hc: [
+    { targetRole: 'HealthTech Clinical Operations', transitionDifficulty: 'easy', timeToTransition: '1–3 months', whyFit: 'Clinical professionals are the most valuable hire for HealthTech startups — your credibility with patients and protocols is not replicable by non-clinicians', keySkillsToAdd: ['Telemedicine platform operations', 'Clinical data interpretation for non-clinical stakeholders', 'Regulatory basics (FDA/CE mark/CDSCO)'], aiDisruptionResistance: 9, salaryDeltaPct: 25 },
+    { targetRole: 'Pharma Medical Affairs / MSL', transitionDifficulty: 'medium', timeToTransition: '4–8 months', whyFit: 'Clinicians transitioning to pharma MSL or medical affairs roles command significant compensation premiums over clinical roles with far better work-life balance', keySkillsToAdd: ['Pharmacovigilance basics (ICH E6)', 'KOL engagement and scientific exchange', 'Medical communication writing'], aiDisruptionResistance: 8, salaryDeltaPct: 30 },
+  ],
+  mkt: [
+    { targetRole: 'Product Marketing / GTM Lead', transitionDifficulty: 'easy', timeToTransition: '1–2 months', whyFit: 'Brand/growth marketers who develop product positioning and competitive intelligence skills are among the highest-paid in the marketing function', keySkillsToAdd: ['Product positioning frameworks (Crossing the Chasm, Positioning by Al Ries)', 'Competitive intelligence methodology', 'GTM playbook development'], aiDisruptionResistance: 7, salaryDeltaPct: 22 },
+    { targetRole: 'Customer Success / Revenue Operations', transitionDifficulty: 'medium', timeToTransition: '3–5 months', whyFit: 'Marketers with analytical skills and strong communication are natural customer success leaders — the role combines marketing instincts with retention ownership', keySkillsToAdd: ['CRM tooling (Salesforce / HubSpot)', 'NPS, retention, and expansion metrics', 'Account health scoring and QBR design'], aiDisruptionResistance: 8, salaryDeltaPct: 15 },
+  ],
+  pm: [
+    { targetRole: 'Technical Product Management', transitionDifficulty: 'easy', timeToTransition: '2–4 months', whyFit: 'PMs with engineering backgrounds command 25–40% salary premiums in API, infrastructure, and developer tool product roles where technical credibility is the entry requirement', keySkillsToAdd: ['API design and OpenAPI specification', 'Technical architecture diagrams (C4, sequence)', 'Developer persona research'], aiDisruptionResistance: 8, salaryDeltaPct: 30 },
+    { targetRole: 'AI Product Management', transitionDifficulty: 'medium', timeToTransition: '3–6 months', whyFit: 'AI PM is the fastest-growing PM specialty — PMs who understand LLM evaluation, prompt engineering, and AI product failure modes are in exceptional demand globally', keySkillsToAdd: ['LLM prompting and evaluation frameworks', 'AI safety and hallucination management basics', 'ML metrics and model quality KPIs'], aiDisruptionResistance: 9, salaryDeltaPct: 40 },
+  ],
+  cons: [
+    { targetRole: 'Corporate Strategy / Strategic Finance', transitionDifficulty: 'medium', timeToTransition: '4–8 months', whyFit: 'Consultants with 3–5 years of experience are premium exits for strategy director and corp dev roles at large enterprises — applying your frameworks internally with P&L accountability', keySkillsToAdd: ['Internal stakeholder management and influence', 'M&A process management (LOI to close)', 'Long-horizon strategy execution (18–36 month plans)'], aiDisruptionResistance: 8, salaryDeltaPct: 20 },
+    { targetRole: 'Startup Operator / VC-Backed COO', transitionDifficulty: 'hard', timeToTransition: '8–18 months', whyFit: 'Consultants with sector depth are among the most sought-after profiles for early-stage operator roles — you think in frameworks, which founders desperately need as they scale', keySkillsToAdd: ['Full P&L ownership experience', 'Founder and VC network development', 'Cross-functional team leadership without authority'], aiDisruptionResistance: 9, salaryDeltaPct: 0 },
+  ],
+  bpo: [
+    { targetRole: 'Process Automation / RPA Analyst', transitionDifficulty: 'easy', timeToTransition: '2–3 months', whyFit: 'BPO operations professionals who learn automation tools are the most credible RPA implementors — you understand the process, which is the hardest part to replicate', keySkillsToAdd: ['UiPath / Automation Anywhere fundamentals', 'Process mapping and documentation', 'Basic Python for automation scripting'], aiDisruptionResistance: 8, salaryDeltaPct: 40 },
+    { targetRole: 'CX Analytics / Quality Lead', transitionDifficulty: 'easy', timeToTransition: '1–2 months', whyFit: 'BPO professionals with strong data and quality instincts move into analytics-led CX roles — the domain knowledge is irreplaceable and the pay premium is significant', keySkillsToAdd: ['CX analytics platforms (Qualtrics, Medallia)', 'SQL for call volume and CSAT analysis', 'Statistical process control basics'], aiDisruptionResistance: 7, salaryDeltaPct: 25 },
+  ],
+  legal: [
+    { targetRole: 'In-House Legal Counsel (Tech/FinTech)', transitionDifficulty: 'medium', timeToTransition: '3–8 months', whyFit: 'Law firm associates who develop FinTech or technology expertise are premium in-house candidates — general counsel at Series B+ startups earn 30–50% more than equivalent firm experience', keySkillsToAdd: ['Technology contracts and SaaS agreements', 'Data privacy implementation (GDPR/DPDP)', 'Corporate governance basics (board management, cap table)'], aiDisruptionResistance: 8, salaryDeltaPct: 30 },
+    { targetRole: 'Legal Operations / LegalTech', transitionDifficulty: 'medium', timeToTransition: '2–5 months', whyFit: 'Legal professionals who embrace technology are uniquely positioned for legal operations roles — combining legal judgment with process automation expertise is extremely rare', keySkillsToAdd: ['Contract management systems (Ironclad, Clio)', 'Legal workflow automation', 'Matter management analytics'], aiDisruptionResistance: 9, salaryDeltaPct: 20 },
+  ],
+  ops: [
+    { targetRole: 'Supply Chain Analytics / Digital Ops', transitionDifficulty: 'medium', timeToTransition: '2–4 months', whyFit: 'Operations professionals who add data and analytics skills transition to higher-paying roles where strategic supply chain insights are valued over pure execution', keySkillsToAdd: ['SQL for operational data analysis', 'Supply chain planning software (SAP APO, o9)', 'Process automation and RPA basics'], aiDisruptionResistance: 7, salaryDeltaPct: 20 },
+    { targetRole: 'General Manager / P&L Owner', transitionDifficulty: 'hard', timeToTransition: '12–24 months', whyFit: 'Operations leads who develop commercial and P&L accountability are the most promotable profiles in operations — the GM career track is one of the highest-paying exits', keySkillsToAdd: ['P&L management and financial modelling', 'Commercial negotiation and vendor management', 'Cross-functional team leadership'], aiDisruptionResistance: 9, salaryDeltaPct: 45 },
+  ],
+  design: [
+    { targetRole: 'Design Systems Lead', transitionDifficulty: 'easy', timeToTransition: '1–3 months', whyFit: 'UI/UX designers who own component libraries and design systems are highly valued across all product orgs — the role is a natural senior career path with strong AI resistance', keySkillsToAdd: ['Figma variables and tokenization', 'Design system governance and documentation', 'Cross-team design advocacy'], aiDisruptionResistance: 8, salaryDeltaPct: 18 },
+    { targetRole: 'AI-Augmented Product Designer', transitionDifficulty: 'easy', timeToTransition: '2–4 months', whyFit: 'Designers who embrace generative AI tools and learn to design AI-native experiences are positioned as the most future-proof design profile in the next 5 years', keySkillsToAdd: ['Generative AI design tools (Midjourney, Adobe Firefly, Galileo)', 'AI UX patterns (progressive disclosure, confidence indicators)', 'Prompt-to-design workflows'], aiDisruptionResistance: 9, salaryDeltaPct: 25 },
+  ],
+  ind: [
+    { targetRole: 'EV / Battery Systems Engineering', transitionDifficulty: 'medium', timeToTransition: '4–8 months', whyFit: 'Mechanical and electrical engineers with manufacturing experience are highly sought-after in the EV transition — the combination of systems thinking and manufacturing knowledge is the bottleneck skill', keySkillsToAdd: ['Battery management system basics', 'EV powertrain architecture', 'IEC 61851 / ISO 26262 functional safety'], aiDisruptionResistance: 9, salaryDeltaPct: 20 },
+    { targetRole: 'Industrial Automation / Robotics', transitionDifficulty: 'medium', timeToTransition: '3–6 months', whyFit: 'Industrial engineers who learn PLC programming and robotics integration are one of the most future-proof manufacturing profiles — automating manufacturing requires deep process knowledge', keySkillsToAdd: ['PLC programming (Siemens / Allen-Bradley)', 'Robot integration (KUKA / Fanuc)', 'Industry 4.0 / IIoT sensor platforms'], aiDisruptionResistance: 9, salaryDeltaPct: 15 },
+  ],
 };
 
 // ── Company hiring profiles ───────────────────────────────────────────────────
@@ -406,26 +559,66 @@ function scoreTarget(
   const matchReasons: string[] = [];
   const cautions: string[] = [];
 
-  // Hiring urgency bonus
+  // ── 1. Hiring urgency ────────────────────────────────────────────────────
   if (target.hiringUrgency === 'urgent') { score += 20; matchReasons.push('Urgently hiring in your function'); }
   else if (target.hiringUrgency === 'active') { score += 12; matchReasons.push('Actively growing your function'); }
   else if (target.hiringUrgency === 'steady') { score += 5; }
   else { score -= 5; cautions.push('Passive hiring mode — expect longer timelines'); }
 
-  // Channel quality
+  // ── 2. Channel quality ───────────────────────────────────────────────────
   if (target.recommendedChannel === 'employee_referral') { score += 10; matchReasons.push('Strong referral culture — network-based entry'); }
+  else if (target.recommendedChannel === 'direct_apply') { score += 5; }
 
-  // Role alignment
+  // ── 3. Role alignment ────────────────────────────────────────────────────
   const roleAligned = target.openRoleCategories.some(r =>
     r.toLowerCase().includes(inputs.rolePrefix) || inputs.workTypeKey.split('_').some(w => r.toLowerCase().includes(w))
   );
   if (roleAligned) { score += 15; matchReasons.push('Direct role match confirmed'); }
 
-  // Anti-contagion bonus
+  // ── 4. Anti-contagion bonus ──────────────────────────────────────────────
   if (target.targetingRationale === 'anti_contagion') { score += 8; matchReasons.push('Not in the same layoff wave — safer market'); }
+  if (target.targetingRationale === 'ai_safe_growth') { score += 10; matchReasons.push('Company growing because of AI, not disrupted by it'); }
 
-  // Timing
+  // ── 5. Timing signal ─────────────────────────────────────────────────────
   if (target.timingSignal === 'apply_now') { score += 5; }
+  else if (target.timingSignal === 'wait_for_q') { score -= 8; cautions.push('Timing suboptimal — budget cycle may delay hiring'); }
+
+  // ── 6. Company stage fit vs. candidate background ────────────────────────
+  if (inputs.currentCompanySize === 'startup' && target.companyStage === 'growth') { score += 5; matchReasons.push('Growth-stage target matches startup-speed background'); }
+  if (inputs.currentCompanySize === 'mega' && target.companyStage === 'enterprise') { score += 5; matchReasons.push('Enterprise scale matches your operating context'); }
+  if (inputs.currentCompanySize === 'mega' && target.companyStage === 'startup') { score -= 8; cautions.push('Significant culture shift from mega-corp to startup — verify readiness'); }
+
+  // ── 7. Seniority signal ──────────────────────────────────────────────────
+  const seniorRoleSignals = ['staff', 'principal', 'director', 'vp', 'lead'];
+  const isTargetingSeniorRole = target.openRoleCategories.some(r =>
+    seniorRoleSignals.some(s => r.toLowerCase().includes(s))
+  );
+  if (['director', 'executive'].includes(inputs.seniorityBracket) && isTargetingSeniorRole) {
+    score += 6;
+    matchReasons.push('Seniority level aligns with open leadership roles');
+  }
+
+  // ── 8. AI disruption resistance of the sector ────────────────────────────
+  // Check if this sector is in the surge category for AI-safe roles
+  const affinityEntry = ROLE_SECTOR_AFFINITY[inputs.workTypeKey] ?? ROLE_SECTOR_AFFINITY[inputs.rolePrefix] ?? null;
+  const sectorInAffinity = affinityEntry?.hotSectors.some(
+    s => s.sector.toLowerCase() === target.industry.toLowerCase() && s.demandLevel === 'surge'
+  );
+  if (sectorInAffinity) { score += 6; matchReasons.push('Your sector is in surge demand within this industry'); }
+
+  // ── 9. Geographic alignment ──────────────────────────────────────────────
+  const regionLocations = getRegionLocations(inputs.region);
+  const locationMatch = target.location.some(l => regionLocations.includes(l));
+  if (locationMatch) { score += 4; }
+  if (target.remotePolicy === 'full_remote') { score += 4; matchReasons.push('Full-remote policy removes geographic friction'); }
+
+  // ── 10. Visa constraint penalty ──────────────────────────────────────────
+  if (inputs.visaStatus && inputs.visaStatus !== 'citizen' && inputs.visaStatus !== 'permanent_resident') {
+    if (!target.hiringFromCompanies.length) {
+      score -= 5;
+      cautions.push('Verify visa sponsorship before applying — not all companies sponsor');
+    }
+  }
 
   // Cap
   score = Math.min(99, Math.max(20, score));
@@ -439,6 +632,14 @@ function scoreTarget(
     matchReasons: matchReasons.slice(0, 3),
     cautions: cautions.slice(0, 2),
   };
+}
+
+/**
+ * Returns adjacent role opportunities for the given role prefix.
+ * Used by Action Plan panels to surface career pivots.
+ */
+export function getAdjacentRoles(rolePrefix: string): AdjacentRoleTarget[] {
+  return ADJACENT_ROLE_MAP[rolePrefix] ?? [];
 }
 
 function buildMarketAssessment(inputs: JobTargetingInputs, targets: JobTarget[]): {
