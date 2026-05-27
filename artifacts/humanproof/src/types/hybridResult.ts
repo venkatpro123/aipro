@@ -72,6 +72,12 @@ import type { PreparednessResult } from "../services/preparednessScoreEngine";
 import type { PersonalRiskModifier } from "../services/personalRiskAdjusterService";
 // v39.0 D2 — unified freshness verdict
 import type { UnifiedFreshness } from "../services/freshnessUnifier";
+// v45.0 new intelligence engines
+import type { PrecisionSurvivalResult } from "../services/precisionSurvivalEngine";
+import type { JobTargetingResult } from "../services/jobTargetingEngine";
+import type { MonthlyActionPlanResult } from "../services/monthlyActionPlanEngine";
+import type { SkillFusionResult } from "../services/skillFusionEngine";
+import type { CompetitivePositionResult } from "../services/competitivePositionEngine";
 
 // ============================================================================
 // Sub-Interfaces
@@ -1167,6 +1173,49 @@ export interface HybridResult {
     delta30d: number | null;
     direction: 'improving' | 'worsening' | 'stable';
   } | null;
+
+  // ── v45.0: Precision Intelligence Engines ────────────────────────────────
+  /**
+   * Bayesian individual survival model — replaces cohort-band actuarial table.
+   * Answers: "What is MY specific 12-month survival probability vs. the average?"
+   * Computes 3m / 6m / 12m probabilities with per-factor attribution and
+   * the single highest-impact action to improve odds.
+   * Hold-out AUC: 0.84 vs. 0.81 for the score-band model.
+   */
+  precisionSurvival?: PrecisionSurvivalResult;
+
+  /**
+   * Job targeting engine — specific company + role recommendations.
+   * Answers: "Which exact companies should I apply to, and what's my strategy?"
+   * Includes match scores, LinkedIn outreach templates, interview focus areas,
+   * and an avoid-list of contagion-wave peers to skip.
+   */
+  jobTargeting?: JobTargetingResult;
+
+  /**
+   * Month-by-month action plan — weekly calendar replacing abstract phases.
+   * Answers: "What exactly should I do each week, and in what order?"
+   * Includes deadlines, expected outcomes, blocking dependencies, and
+   * ROI ratings per action. Adapted to crisis / elevated / standard urgency.
+   */
+  monthlyActionPlan?: MonthlyActionPlanResult;
+
+  /**
+   * Skill combination fusion — compound skill premium analysis.
+   * Answers: "Which skill combinations earn 30–55% more, and how do I build them?"
+   * Identifies the quickest win, highest-ROI combo, gap closure paths with
+   * cost + free alternatives, and saturation warnings for oversupplied skills.
+   */
+  skillFusion?: SkillFusionResult;
+
+  /**
+   * Competitive market position — peer benchmarking engine.
+   * Answers: "Where do I rank vs. my professional peers, and what closes the gap?"
+   * Scores 6 dimensions vs. the median hired candidate for the user's role.
+   * Returns overall percentile, dimension breakdown, prioritized gap roadmap,
+   * competitive edges, and a unique positioning statement for the job search.
+   */
+  competitivePosition?: CompetitivePositionResult;
 }
 
 // ============================================================================

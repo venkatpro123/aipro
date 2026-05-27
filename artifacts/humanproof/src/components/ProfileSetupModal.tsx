@@ -110,29 +110,18 @@ const SLIDE_TRANSITION = { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const };
 
 function FieldGroup({ label, helper, children }: { label: string; helper?: string; children: ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.82)' }}>
-        {label}
-      </span>
+    <div className="profile-field-group">
+      <span className="profile-field-label">{label}</span>
       {children}
-      {helper && (
-        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.38)', lineHeight: 1.4 }}>
-          {helper}
-        </span>
-      )}
+      {helper && <span className="profile-field-helper">{helper}</span>}
     </div>
   );
 }
 
 function CheckRow({ checked, onChange, children }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.88rem', color: 'rgba(255,255,255,0.75)' }}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        style={{ width: 16, height: 16, accentColor: 'var(--cyan, #00d4e0)', flexShrink: 0 }}
-      />
+    <label className="profile-check-row">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       {children}
     </label>
   );
@@ -142,16 +131,8 @@ function SkillTags({ raw }: { raw: string }) {
   const tags = raw.split(',').map((s) => s.trim()).filter(Boolean);
   if (tags.length === 0) return null;
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-      {tags.map((t) => (
-        <span key={t} style={{
-          padding: '2px 10px', borderRadius: 999,
-          background: 'rgba(0,212,224,0.10)', border: '1px solid rgba(0,212,224,0.25)',
-          fontSize: '0.75rem', color: 'var(--cyan, #00d4e0)',
-        }}>
-          {t}
-        </span>
-      ))}
+    <div className="profile-skill-tags">
+      {tags.map((t) => <span key={t} className="profile-skill-tag">{t}</span>)}
     </div>
   );
 }
@@ -171,16 +152,16 @@ function StepIndicator({ step }: { step: number }) {
           </Fragment>
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+      <div className="profile-step-label-row">
         {STEP_LABELS.map((label, i) => (
-          <span key={i} style={{
-            fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em',
-            textTransform: 'uppercase', flex: 1,
-            textAlign: i === 0 ? 'left' : i === STEP_LABELS.length - 1 ? 'right' : 'center',
-            color: i === step
-              ? 'var(--cyan, #00d4e0)'
-              : i < step ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.20)',
-          }}>
+          <span
+            key={i}
+            className="profile-step-label"
+            style={{
+              textAlign: i === 0 ? 'left' : i === STEP_LABELS.length - 1 ? 'right' : 'center',
+              color: i === step ? 'var(--cyan, #00d4e0)' : i < step ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.20)',
+            }}
+          >
             {label}
           </span>
         ))}
@@ -373,7 +354,7 @@ export function ProfileSetupModal() {
 
   const stepNodes: Record<number, ReactNode> = {
     0: (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="profile-step-body">
         {/* ── Highest-impact fields first ───────────────────────────────────
             Field ordering follows personalization impact on the scoring engine:
             1. visaStatus       — binary catastrophic risk layer (up to 1.40× amplifier)
@@ -476,10 +457,8 @@ export function ProfileSetupModal() {
     ),
 
     1: (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={{ margin: 0, fontSize: '0.80rem', color: 'rgba(255,255,255,0.40)', lineHeight: 1.5 }}>
-          Stays private — shapes runway estimates and urgency of recommended actions.
-        </p>
+      <div className="profile-step-body">
+        <p className="profile-hint-text">Stays private — shapes runway estimates and urgency of recommended actions.</p>
 
         <FieldGroup label="Currency" helper="Auto-detected from your location and visa status — override if needed">
           <select className="input" aria-label="Currency" value={localCurrencyCode} onChange={(e) => setLocalCurrencyCode(e.target.value)}>
@@ -521,7 +500,7 @@ export function ProfileSetupModal() {
             onChange={(e) => setSavingsMonthsRunway(e.target.value)} placeholder="e.g. 6" />
         </FieldGroup>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="profile-equity-group">
           <CheckRow checked={hasEquityVesting} onChange={setHasEquityVesting}>
             I have unvested equity (RSUs/options)
           </CheckRow>
@@ -536,10 +515,8 @@ export function ProfileSetupModal() {
     ),
 
     2: (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={{ margin: 0, fontSize: '0.80rem', color: 'rgba(255,255,255,0.40)', lineHeight: 1.5 }}>
-          Life context shapes action recommendations and risk urgency scoring.
-        </p>
+      <div className="profile-step-body">
+        <p className="profile-hint-text">Life context shapes action recommendations and risk urgency scoring.</p>
 
         <CheckRow checked={hasDependents} onChange={setHasDependents}>
           I support dependents (children, parents, etc.)
@@ -554,10 +531,8 @@ export function ProfileSetupModal() {
     ),
 
     3: (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={{ margin: 0, fontSize: '0.80rem', color: 'rgba(255,255,255,0.40)', lineHeight: 1.5 }}>
-          Skills power escape-path scoring and alternative role suggestions.
-        </p>
+      <div className="profile-step-body">
+        <p className="profile-hint-text">Skills power escape-path scoring and alternative role suggestions.</p>
 
         <FieldGroup label="Current Skills">
           <input className="input" type="text" value={selfRatedSkillsRaw}
@@ -591,17 +566,17 @@ export function ProfileSetupModal() {
             <option value="leadership_capital">Leadership capital — organizational authority and team loyalty</option>
           </select>
           {uniquenessKnowledgeType === 'system_specific' && (
-            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: 'rgba(16,185,129,0.75)', lineHeight: 1.45 }}>
+            <p className="profile-hint-emerald">
               Your protection window is the migration timeline (18–36 mo). Highest-ROI action: lateral move to migration architect before documentation begins.
             </p>
           )}
           {uniquenessKnowledgeType === 'client_relationship' && (
-            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: 'rgba(16,185,129,0.75)', lineHeight: 1.45 }}>
+            <p className="profile-hint-emerald">
               That trust belongs to you, not the company. Understand which clients would follow you — build your move around those relationships.
             </p>
           )}
           {uniquenessKnowledgeType === 'leadership_capital' && (
-            <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: 'rgba(16,185,129,0.75)', lineHeight: 1.45 }}>
+            <p className="profile-hint-emerald">
               Organizational authority is mobile — it follows you. Identify where your leadership is most needed outside your current company.
             </p>
           )}
@@ -618,32 +593,15 @@ export function ProfileSetupModal() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-setup-title"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(5,7,12,0.80)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-        padding: 16,
-        overflowY: 'auto',
-      }}
+      className="profile-modal-shell"
     >
-      <div style={{
-        background: 'var(--elevation-3, #1e2136)',
-        color: 'var(--fg, #E6E6F0)',
-        borderRadius: 'var(--radius-xl, 16px)',
-        maxWidth: 520, width: '100%',
-        padding: 28,
-        border: '1px solid rgba(0,212,224,0.20)',
-        boxShadow: 'var(--shadow-modal, 0 20px 60px rgba(0,0,0,0.60))',
-        marginTop: 24, marginBottom: 24,
-      }}>
+      <div className="profile-modal-card">
 
         {/* Title + subtitle */}
-        <h2 id="profile-setup-title" style={{ fontSize: '1.18rem', marginTop: 0, marginBottom: 6, fontWeight: 700 }}>
+        <h2 id="profile-setup-title" className="profile-modal-title">
           {isReprompt ? 'Is your profile still accurate?' : 'Personalize your audit'}
         </h2>
-        <p style={{ margin: '0 0 20px', fontSize: '0.875rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.55 }}>
+        <p className="profile-modal-subtitle">
           {isReprompt
             ? 'Refresh personalization every 90 days. Confirm or update so your audit stays calibrated.'
             : 'These answers shape action ranking, runway math, and exit timing. Stored privately on your account.'}
@@ -654,59 +612,34 @@ export function ProfileSetupModal() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              background: 'rgba(0,212,224,0.05)',
-              border: '1px solid rgba(0,212,224,0.15)',
-              borderRadius: 12,
-              padding: '14px 16px',
-              marginBottom: 16,
-            }}
+            className="profile-reprompt-card"
           >
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px', marginBottom: 16, fontSize: '0.875rem' }}>
+            <div className="profile-reprompt-grid">
               <div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', marginBottom: 2 }}>Salary band</div>
-                <div style={{ fontWeight: 600 }}>{userProfile?.salaryBand ?? '—'}</div>
+                <div className="profile-reprompt-field-label">Salary band</div>
+                <div className="profile-reprompt-field-value">{userProfile?.salaryBand ?? '—'}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', marginBottom: 2 }}>Visa</div>
-                <div style={{ fontWeight: 600 }}>{userProfile?.visaStatus ?? '—'}</div>
+                <div className="profile-reprompt-field-label">Visa</div>
+                <div className="profile-reprompt-field-value">{userProfile?.visaStatus ?? '—'}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', marginBottom: 2 }}>Metro</div>
-                <div style={{ fontWeight: 600 }}>{userProfile?.metro ?? '—'}</div>
+                <div className="profile-reprompt-field-label">Metro</div>
+                <div className="profile-reprompt-field-value">{userProfile?.metro ?? '—'}</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.38)', marginBottom: 2 }}>Tenure</div>
-                <div style={{ fontWeight: 600 }}>
+                <div className="profile-reprompt-field-label">Tenure</div>
+                <div className="profile-reprompt-field-value">
                   {userProfile?.tenureYears != null ? `${userProfile.tenureYears} yrs` : '—'}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                onClick={handleConfirmExisting}
-                disabled={submitting}
-                style={{
-                  flex: 1, padding: '9px 16px', borderRadius: 8,
-                  background: 'var(--cyan, #00d4e0)', color: '#000',
-                  border: 'none', fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
+            <div className="profile-reprompt-actions">
+              <button type="button" onClick={handleConfirmExisting} disabled={submitting} className="profile-btn-confirm">
                 {submitting ? 'Confirming…' : '✓ Still accurate'}
               </button>
-              <button
-                type="button"
-                onClick={() => { setShowUpdateForm(true); setStep(0); }}
-                style={{
-                  padding: '9px 16px', borderRadius: 8,
-                  background: 'transparent', color: 'var(--fg, #E6E6F0)',
-                  border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
+              <button type="button" onClick={() => { setShowUpdateForm(true); setStep(0); }} className="profile-btn-update">
                 Update
               </button>
             </div>
@@ -720,16 +653,9 @@ export function ProfileSetupModal() {
             <StepIndicator step={step} />
 
             {/* Step heading */}
-            <div style={{ marginBottom: 20 }}>
-              <span style={{
-                fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.12em',
-                textTransform: 'uppercase', color: 'var(--cyan, #00d4e0)',
-              }}>
-                Step {step + 1} of {TOTAL_STEPS}
-              </span>
-              <h3 style={{ margin: '4px 0 0', fontSize: '1.05rem', fontWeight: 700, color: 'rgba(255,255,255,0.92)' }}>
-                {STEP_TITLES[step]}
-              </h3>
+            <div className="profile-step-block">
+              <span className="profile-step-heading">Step {step + 1} of {TOTAL_STEPS}</span>
+              <h3 className="profile-step-title">{STEP_TITLES[step]}</h3>
             </div>
 
             {/* Animated step content */}
@@ -746,64 +672,18 @@ export function ProfileSetupModal() {
             </AnimatePresence>
 
             {/* Step navigation */}
-            <div style={{ display: 'flex', gap: 8, marginTop: 24, alignItems: 'center' }}>
+            <div className="profile-nav-row">
               {step > 0 && (
-                <button
-                  type="button"
-                  onClick={goBack}
-                  style={{
-                    padding: '10px 16px', borderRadius: 8,
-                    background: 'transparent', color: 'rgba(255,255,255,0.70)',
-                    border: '1px solid rgba(255,255,255,0.18)', cursor: 'pointer',
-                    fontSize: '0.875rem', fontWeight: 500,
-                  }}
-                >
-                  ← Back
-                </button>
+                <button type="button" onClick={goBack} className="profile-btn-back">← Back</button>
               )}
-
-              <div style={{ flex: 1 }} />
-
+              <div className="flex-1" />
               {step === 0 && (
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  style={{
-                    padding: '10px 14px', borderRadius: 8,
-                    background: 'transparent', color: 'rgba(255,255,255,0.35)',
-                    border: 'none', cursor: 'pointer', fontSize: '0.85rem',
-                  }}
-                >
-                  Skip for now
-                </button>
+                <button type="button" onClick={() => setOpen(false)} className="profile-btn-skip">Skip for now</button>
               )}
-
               {step < TOTAL_STEPS - 1 ? (
-                <button
-                  type="button"
-                  onClick={goNext}
-                  style={{
-                    padding: '10px 22px', borderRadius: 8,
-                    background: 'var(--cyan, #00d4e0)', color: '#000',
-                    border: 'none', fontWeight: 700, cursor: 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  Next →
-                </button>
+                <button type="button" onClick={goNext} className="profile-btn-primary">Next →</button>
               ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  style={{
-                    padding: '10px 22px', borderRadius: 8,
-                    background: 'var(--cyan, #00d4e0)', color: '#000',
-                    border: 'none', fontWeight: 700,
-                    cursor: submitting ? 'wait' : 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
+                <button type="button" onClick={handleSubmit} disabled={submitting} className="profile-btn-primary">
                   {submitting ? 'Saving…' : 'Save profile'}
                 </button>
               )}
@@ -813,15 +693,7 @@ export function ProfileSetupModal() {
 
         {/* Reprompt dismiss */}
         {isReprompt && !showUpdateForm && (
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            style={{
-              display: 'block', width: '100%', marginTop: 10, padding: '8px',
-              background: 'transparent', color: 'rgba(255,255,255,0.30)',
-              border: 'none', cursor: 'pointer', fontSize: '0.82rem', textAlign: 'center',
-            }}
-          >
+          <button type="button" onClick={() => setOpen(false)} className="profile-btn-dismiss">
             Remind me later
           </button>
         )}

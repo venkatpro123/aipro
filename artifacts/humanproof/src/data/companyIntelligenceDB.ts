@@ -3886,3 +3886,148 @@ export const resolveCompanyProfile = (name: string): CompanyProfile | null => {
   results.sort((a, b) => a.companyName.length - b.companyName.length);
   return results[0];
 };
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VERIFIED COMPANY DATA — enterprise-grade DB query (v45.0 migration)
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Shape of a row from the `verified_company_intelligence` table.
+ * Every data field has an explicit source, verified_at, and confidence
+ * companion — unlike the legacy `company_intelligence` table which mixed
+ * synthetic heuristics with real data.
+ */
+export interface VerifiedCompanyRow {
+  id: string;
+  canonical_name: string;
+  display_name: string;
+  ticker: string | null;
+  exchange: string | null;
+  industry: string | null;
+  sector: string | null;
+  is_public: boolean;
+  country_code: string | null;
+
+  // Workforce (REAL — authoritative external sources)
+  workforce_count: number | null;
+  workforce_source: string | null;
+  workforce_verified_at: string | null;
+  workforce_confidence: number | null;
+
+  // Financials (SEMI-LIVE — Yahoo Finance scrape)
+  stock_price: number | null;
+  market_cap_usd: number | null;
+  pe_ratio: number | null;
+  revenue_ttm_usd: number | null;
+  stock_90d_change: number | null;
+  financials_source: string;
+  financials_verified_at: string | null;
+  financials_confidence: number | null;
+
+  // Layoffs (SEMI-LIVE — breaking_news_events + RSS)
+  recent_layoff_count: number;
+  largest_layoff_pct: number | null;
+  layoff_last_event_at: string | null;
+  layoff_source: string | null;
+  layoff_verified_at: string | null;
+  layoff_confidence: number | null;
+
+  // Hiring (SEMI-LIVE — company_skill_demand_cache)
+  hiring_velocity_score: number | null;
+  total_open_roles: number | null;
+  hiring_source: string | null;
+  hiring_verified_at: string | null;
+  hiring_confidence: number | null;
+
+  // Meta
+  data_quality_tier: 'verified' | 'live' | 'seed' | 'heuristic';
+  enrichment_version: string | null;
+  last_enriched_at: string | null;
+  conflict_flags: unknown[];
+  created_at: string;
+  updated_at: string;
+}
+
+/** Minimal Supabase client interface for getVerifiedCompanyData */
+interface SupabaseClientLike {
+  from(table: string): {
+    select(cols: string): {
+      eq(col: string, val: string): {
+        maybeSingle(): Promise<{ data: VerifiedCompanyRow | null; error: { message: string } | null }>;
+      };
+      ilike(col: string, val: string): {
+        order(col: string, opts: { ascending: boolean }): {
+          limit(n: number): {
+            maybeSingle(): Promise<{ data: VerifiedCompanyRow | null; error: { message: string } | null }>;
+          };
+        };
+      };
+    };
+  };
+}
+
+const VCI_TIER_ORDER: Record<string, number> = { heuristic: 0, seed: 1, live: 2, verified: 3 };
+
+/**
+ * Query `verified_company_intelligence` for a company by canonical name.
+ *
+ * Prefer this over `getCompanyProfile()` when a Supabase client is available —
+ * it returns real sourced data (workforce from Wikipedia, financials from Yahoo
+ * Finance, layoffs from breaking_news_events) instead of the static seeded
+ * snapshot in COMPANY_INTELLIGENCE_DB.
+ *
+ * Falls back to `null` when the company has not been migrated yet, or when the
+ * row's data_quality_tier is below the requested minimum.
+ *
+ * @param supabase       Supabase client (anon or service role)
+ * @param name           Company name (will be normalised to canonical form)
+ * @param options.requireTier  Minimum acceptable tier (default 'seed')
+ *                             'verified' > 'live' > 'seed' > 'heuristic'
+ */
+export async function getVerifiedCompanyData(
+  supabase: SupabaseClientLike,
+  name: string,
+  options: { requireTier?: 'verified' | 'live' | 'seed' } = {},
+): Promise<VerifiedCompanyRow | null> {
+  if (!name || name.length < 2) return null;
+
+  const canonical = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const minTierScore = VCI_TIER_ORDER[options.requireTier ?? 'seed'] ?? 1;
+
+  try {
+    // Exact canonical match
+    const { data: exact } = await supabase
+      .from('verified_company_intelligence')
+      .select('*')
+      .eq('canonical_name', canonical)
+      .maybeSingle();
+
+    if (exact && (VCI_TIER_ORDER[exact.data_quality_tier] ?? 0) >= minTierScore) {
+      return exact;
+    }
+
+    // Fuzzy fallback (catches minor normalisation differences)
+    const { data: fuzzy } = await supabase
+      .from('verified_company_intelligence')
+      .select('*')
+      .ilike('canonical_name', `%${canonical}%`)
+      .order('last_enriched_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (fuzzy && (VCI_TIER_ORDER[fuzzy.data_quality_tier] ?? 0) >= minTierScore) {
+      return fuzzy;
+    }
+
+    return null;
+  } catch {
+    // Non-fatal — table may not exist yet during migration period
+    return null;
+  }
+}

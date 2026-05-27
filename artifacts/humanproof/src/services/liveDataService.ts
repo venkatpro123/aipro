@@ -389,12 +389,18 @@ export const fetchLiveCompanyData = async (
     deloitte: 'N/A', pwc: 'N/A', ey: 'N/A', kpmg: 'N/A',  // private
     // capgemini already mapped above under Europe section (CAPMF) — duplicate removed
   };
+  // v42.5: Resolve entity FIRST and pull canonical name for cache key consistency.
+  // 'Infosys Ltd' and 'Infosys' both resolve to canonical 'infosys', so they share
+  // one cache row instead of writing two separate rows — preventing the race where a
+  // news-only call (ticker=null) overwrites a stock call's marketCap/peRatio with null.
+  const resolvedEntity = resolveEntity(companyName);
+  const canonicalCompanyName = resolvedEntity?.canonical ?? companyName.toLowerCase().trim();
+
   const resolvedTicker = ticker ?? (() => {
     // v40.0: Check entity resolver first (canonical single source of truth).
-    const entity = resolveEntity(companyName);
-    if (entity) {
+    if (resolvedEntity) {
       // Entity resolver returns null for private companies — correct behaviour.
-      return entity.ticker;
+      return resolvedEntity.ticker;
     }
     // Fallback: local TICKER_MAP for companies not yet in the entity resolver.
     const lower = companyName.toLowerCase();
@@ -418,7 +424,7 @@ export const fetchLiveCompanyData = async (
       const { data: cached } = await _supabase
         .from('company_live_cache')
         .select('price_90d_change,revenue_growth_yoy,market_cap,pe_ratio,employee_count,stock_source,recent_headline_count,sentiment_signal,latest_layoff_event,estimated_openings,demand_trend,hiring_freeze_score,wiki_employee_count,fetched_at')
-        .ilike('company_name', companyName)
+        .ilike('company_name', canonicalCompanyName)
         .gt('valid_until', new Date().toISOString())
         .order('fetched_at', { ascending: false })
         .limit(1)
@@ -496,7 +502,7 @@ export const fetchLiveCompanyData = async (
   // (Glassdoor anti-bot, Naukri rate-limit, Wikipedia parser drift) is
   // visible on the SLO dashboard instead of being silently masked.
   const _scrapingPipelinePromise = runScrapingPipeline(
-    companyName, null,
+    canonicalCompanyName || companyName, null,
     isUnknownCompany ? { isUnknownCompany: true } : undefined,
   ).catch((err: unknown) => {
     markFallback({
@@ -547,7 +553,9 @@ export const fetchLiveCompanyData = async (
     if (stockNeeded) _timer?.mark('stock_fetch_start');
     if (newsNeeded)  _timer?.mark('news_scrape_start');
 
-    const proxyResult = await fetchViaProxy(companyName, resolvedTicker, proxyAction);
+    // Use canonical name so the EF writes to a consistent cache key (e.g.
+    // 'infosys' not 'infosys ltd') — prevents news-only writes from clobbering stock data.
+    const proxyResult = await fetchViaProxy(canonicalCompanyName || companyName, resolvedTicker, proxyAction);
 
     if (stockNeeded) _timer?.mark('stock_fetch_end');
     if (newsNeeded)  _timer?.mark('news_scrape_end');
@@ -655,7 +663,7 @@ export const fetchLiveCompanyData = async (
     _timer?.mark('hiring_scrape_start');
     // Pass roleTitle so job-board scrapers fetch role-specific posting counts.
     // Pass industry so getSectorLayoffCount returns meaningful peer-company signals.
-    connectorSignals = await enrichCompanySignals(companyName, roleTitle ?? '', industry ?? '', region);
+    connectorSignals = await enrichCompanySignals(canonicalCompanyName || companyName, roleTitle ?? '', industry ?? '', region);
     _timer?.mark('bse_fetch_end');
     _timer?.mark('hiring_scrape_end');
 
@@ -667,10 +675,14 @@ export const fetchLiveCompanyData = async (
 
     // BSE/NSE stock signal (real network call — bseConnector, no Yahoo Finance)
     if (stockData === null && connectorSignals.stock90DayChange !== null) {
+      // marketCapCr is in crore INR (₹1Cr = ₹10M). Convert to USD using ~83 INR/USD rate
+      // so fmtMarketCap receives a USD value and displays correctly (e.g. "$57.4B" not "$585,000").
+      const mcapCr = connectorSignals.marketCapCr;
+      const mcapUsd = mcapCr != null ? Math.round(mcapCr * 10_000_000 / 83) : null;
       stockData = {
         price90DayChange: connectorSignals.stock90DayChange,
         revenueGrowthYoY: connectorSignals.revenueYoY,
-        marketCap: connectorSignals.marketCapCr,
+        marketCap: mcapUsd,
         peRatio: connectorSignals.peRatio,
         employeeCount: null,
         source: 'bse-india',

@@ -545,6 +545,166 @@ Deno.serve((req) =>
       );
     }
 
+    // v45.1 — Check verified_company_intelligence FIRST (enterprise table, real sources).
+    // This table is populated by the migrate-company-intelligence EF and updated
+    // by the write-back path in this EF.  When a 'verified' or 'live' row exists,
+    // we serve it directly without hitting the legacy company_intelligence table,
+    // because the VCI row has sourced workforce (Wikipedia), live financials
+    // (Yahoo Finance), and breaking_news layoff counts — all with provenance.
+    // Falls through to legacy path when VCI row is missing or has tier 'heuristic'.
+    //
+    // Alias resolution (v45.1): companies like "TCS" and "Tata Consultancy" both
+    // map to the same KNOWN_HEADCOUNTS count (613 000).  The migrated VCI row is
+    // stored under the longer canonical key ("tata consultancy"), so a direct
+    // normalise("TCS") = "tcs" search misses it.  Fix: collect all KNOWN_HEADCOUNTS
+    // keys that share the same headcount value → try ALL of them in one OR filter.
+    try {
+      const vciCanonical = normalise(companyName);
+
+      // Explicit alias map for cases that cannot be resolved algorithmically:
+      // - "google" ↔ "alphabet" (different names, same company)
+      // - "hcl tech" ↔ "hcltech" (space vs. no-space, same company)
+      // - "facebook" ↔ "meta" (rebrand, same company)
+      // - "hcl_tech" ↔ "hcl tech" (underscore vs. space)
+      // - "tech_mahindra" ↔ "tech mahindra"
+      // - "tata_motors" ↔ "tata motors"
+      // - "tata_steel" ↔ "tata steel"
+      const VCI_EXPLICIT_ALIASES: Record<string, string[]> = {
+        "google":       ["alphabet"],
+        "alphabet":     ["google"],
+        "facebook":     ["meta"],
+        "meta":         ["facebook"],
+        "hcl tech":     ["hcltech", "hcl_tech"],
+        "hcltech":      ["hcl tech", "hcl_tech"],
+        "hcl_tech":     ["hcl tech", "hcltech"],
+        "tech mahindra":["tech_mahindra"],
+        "tech_mahindra":["tech mahindra"],
+        "tata motors":  ["tata_motors"],
+        "tata_motors":  ["tata motors"],
+        "tata steel":   ["tata_steel"],
+        "tata_steel":   ["tata steel"],
+        "ltimindtree":  ["lti"],
+        "lti":          ["ltimindtree"],
+      };
+
+      // Build a deduplicated list of canonical names to try.
+      // Strategy:
+      //   1. Explicit alias map (google↔alphabet, hcl tech↔hcltech, etc.)
+      //   2. Same-count KNOWN_HEADCOUNTS keys that share a word OR are acronyms (≤4 chars)
+      //   3. ilike fallback on the primary canonical form
+      const vciLookupNames: string[] = [vciCanonical];
+      const vciAliasKey = findKnownHeadcountKey(companyName.toLowerCase());
+
+      // Add explicit aliases first
+      const explicitAliases = VCI_EXPLICIT_ALIASES[vciCanonical] ?? [];
+      for (const ea of explicitAliases) {
+        if (!vciLookupNames.includes(ea)) vciLookupNames.push(ea);
+      }
+      if (vciAliasKey && !vciLookupNames.includes(vciAliasKey)) vciLookupNames.push(vciAliasKey);
+      for (const ea of VCI_EXPLICIT_ALIASES[vciAliasKey ?? ""] ?? []) {
+        if (!vciLookupNames.includes(ea)) vciLookupNames.push(ea);
+      }
+
+      // Also add same-count KNOWN_HEADCOUNTS keys (algorithmic, with safety guards)
+      if (vciAliasKey) {
+        const aliasCount = KNOWN_HEADCOUNTS[vciAliasKey];
+        const aliasNorm  = vciAliasKey.replace(/_/g, "").replace(/\s/g, ""); // for substring check
+        const aliasWords = new Set(vciAliasKey.replace(/_/g, " ").split(/\s+/).filter(w => w.length >= 2));
+        for (const k of Object.keys(KNOWN_HEADCOUNTS)) {
+          if (KNOWN_HEADCOUNTS[k] !== aliasCount || vciLookupNames.includes(k)) continue;
+          const kNorm  = k.replace(/_/g, "").replace(/\s/g, "");
+          const kWords = k.replace(/_/g, " ").split(/\s+/).filter(w => w.length >= 2);
+          // Accept if: shares a word, one is substring of other (hcl tech ≡ hcltech),
+          // or one is a true acronym (≤4 chars, e.g. "tcs", "lti", "meta")
+          const sharesWord   = kWords.some(w => aliasWords.has(w));
+          const isSubstring  = aliasNorm.includes(kNorm) || kNorm.includes(aliasNorm);
+          const isAcronymPair = vciAliasKey.length <= 4 || k.length <= 4;
+          if (sharesWord || isSubstring || isAcronymPair) {
+            vciLookupNames.push(k);
+          }
+        }
+      }
+
+      // Build Supabase OR filter: exact match on each alias + ilike on the primary.
+      const vciOrParts = [
+        ...vciLookupNames.map(n => `canonical_name.eq.${n}`),
+        `canonical_name.ilike.%${vciCanonical}%`,
+      ];
+
+      const { data: vciRow } = await supabaseClient
+        .from("verified_company_intelligence")
+        .select("*")
+        .or(vciOrParts.join(","))
+        .order("last_enriched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (vciRow && vciRow.data_quality_tier !== "heuristic") {
+        // Map VCI row → the legacy normalizeFromCompanyIntel shape so the rest of
+        // the pipeline (conflict detection, authoritativeSignals, response) works
+        // unchanged.
+        // Strip legacy DB-category suffixes like "(India Giant)" from display_name
+        // in case the row was migrated before the stripDbTag fix landed.
+        const vciDisplayName = String(vciRow.display_name ?? companyName)
+          .replace(/\s*\([^)]*\)\s*$/, "").trim();
+        const vciMerged = {
+          company_name: vciDisplayName,
+          ticker: vciRow.ticker ?? null,
+          is_public: vciRow.is_public ?? false,
+          industry: vciRow.industry ?? "Technology",
+          region: vciRow.country_code ?? "GLOBAL",
+          employee_count: vciRow.workforce_count ?? 5000,
+          revenue_yoy: null,
+          stock_90d_change: vciRow.stock_90d_change ?? null,
+          annual_revenue: null,
+          revenue_per_employee: null,
+          recent_layoffs: vciRow.recent_layoff_count > 0
+            ? [{ date: vciRow.layoff_last_event_at ?? new Date().toISOString(), percentCut: vciRow.largest_layoff_pct ?? 5, source: vciRow.layoff_source ?? "breaking_news_events" }]
+            : [],
+          layoff_rounds: vciRow.recent_layoff_count,
+          total_layoffs: null,
+          last_layoff_date: vciRow.layoff_last_event_at ?? null,
+          last_layoff_percent: vciRow.largest_layoff_pct ?? null,
+          recent_layoff_news: vciRow.recent_layoff_count > 0,
+          ai_investment_signal: "medium" as const,
+          last_updated: vciRow.last_enriched_at ?? vciRow.updated_at,
+          source: "verified_company_intelligence",
+        };
+
+        const vciTierMap: Record<string, string> = { verified: "LIVE_OR_REFRESHED", live: "LIVE_OR_REFRESHED", seed: "PARTIAL_STALE" };
+        const vciDataQuality = vciTierMap[vciRow.data_quality_tier] ?? "PARTIAL_STALE";
+
+        return new Response(
+          JSON.stringify({
+            companyName: vciMerged.company_name,
+            data: vciMerged,
+            source: `verified_company_intelligence (${vciRow.data_quality_tier})`,
+            sourcePath: "edge_canonical",
+            provenance: [
+              `vci.workforce.${vciRow.workforce_source ?? "unknown"}`,
+              vciRow.financials_verified_at ? "vci.financials.yahoo_finance" : null,
+              vciRow.layoff_verified_at ? "vci.layoffs.breaking_news_events" : null,
+            ].filter(Boolean),
+            matchedCompanyName: vciMerged.company_name,
+            matchConfidence: 1.0,
+            matchType: "exact",
+            authoritativeSignals: {},
+            conflicts: [],
+            dataQuality: vciDataQuality,
+            dataFreshness: {
+              lastUpdated: vciMerged.last_updated,
+              stale: false,
+              staleThresholdHours: STALE_HOURS,
+              vciTier: vciRow.data_quality_tier,
+              workforceSource: vciRow.workforce_source,
+              workforceConfidence: vciRow.workforce_confidence,
+            },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    } catch { /* VCI table may not exist yet — fall through to legacy path */ }
+
     // v35.1.2 — CANONICAL-AWARE row selection.
     //
     // The DB contains multiple snapshot rows for famous companies (Oracle: 5
@@ -892,8 +1052,65 @@ Deno.serve((req) =>
       .from("cached_company_intelligence")
       .upsert(cachePayload, { onConflict: "company_name" });
 
+    // v45.0 — Write-back to verified_company_intelligence after live enrichment.
+    // This ensures the new enterprise table stays current without a separate
+    // migration job.  Only writes when we have at least one live signal so we
+    // don't overwrite a good verified row with a heuristic fallback.
+    const hasLiveSignal =
+      provenance.some((p) => p.startsWith("alpha_vantage.") || p.startsWith("newsapi."));
+    if (hasLiveSignal || (intelRow && !intelRow._staleDb)) {
+      try {
+        const vciTier: string = hasLiveSignal ? "live"
+          : intelRow && !intelRow._staleDb ? "seed"
+          : "heuristic";
+        const vciCanonical = normalise(merged.company_name ?? normalized);
+        // Only upsert when a prior row already exists (migration already ran)
+        // so we don't pollute the table with every unknown company.
+        // Use a .maybeSingle() check first — if no row exists, skip write.
+        const { data: existingVci } = await supabaseClient
+          .from("verified_company_intelligence")
+          .select("id")
+          .eq("canonical_name", vciCanonical)
+          .maybeSingle();
+
+        if (existingVci) {
+          await supabaseClient
+            .from("verified_company_intelligence")
+            .update({
+              stock_90d_change: merged.stock_90d_change ?? undefined,
+              stock_price: null, // not available from current enrichment path
+              financials_verified_at:
+                provenance.some((p) => p.startsWith("alpha_vantage."))
+                  ? new Date().toISOString()
+                  : undefined,
+              financials_confidence:
+                provenance.some((p) => p.startsWith("alpha_vantage."))
+                  ? 0.85
+                  : undefined,
+              recent_layoff_count:
+                Array.isArray(merged.recent_layoffs) ? merged.recent_layoffs.length : 0,
+              largest_layoff_pct: merged.last_layoff_percent ?? undefined,
+              layoff_last_event_at:
+                Array.isArray(merged.recent_layoffs) && merged.recent_layoffs.length > 0
+                  ? String(merged.recent_layoffs[0]?.date ?? "")
+                  : undefined,
+              layoff_verified_at:
+                provenance.some((p) => p.startsWith("newsapi."))
+                  ? new Date().toISOString()
+                  : undefined,
+              layoff_confidence:
+                provenance.some((p) => p.startsWith("newsapi.")) ? 0.75 : undefined,
+              data_quality_tier: vciTier,
+              last_enriched_at: new Date().toISOString(),
+              enrichment_version: "fetch-company-data-v45.0",
+            })
+            .eq("canonical_name", vciCanonical);
+        }
+      } catch { /* non-fatal — write-back is best-effort */ }
+    }
+
     const stale = isStale(merged.last_updated);
-    const authoritativeSignals: Record<string, ProvenancedSignal<any>> = {};
+    const authoritativeSignals: Record<string, ProvenancedSignal<unknown>> = {};
     const signalObservedAt = toIsoDate(merged.last_updated);
     const dbObservedAt = toIsoDate(baselineMerged.last_updated);
     const hasLiveStockProvenance = provenance.some((entry) =>
@@ -993,8 +1210,8 @@ Deno.serve((req) =>
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

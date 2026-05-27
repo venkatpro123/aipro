@@ -313,16 +313,26 @@ async function fetchFinnhubProfile(
 ): Promise<{ employees: number | null; marketCap: number | null; industry: string | null; weburl: string | null } | null> {
   const key = Deno.env.get('FINNHUB_API_KEY');
   if (!key) return null;
-  // Finnhub uses bare ticker (strip exchange suffix for Indian stocks NSE uses same symbol)
-  const sym = ticker.replace(/\.(NS|BO|L|SI|HK|AX|TO|PA|DE|MI|MC)$/i, '');
+  // Strip suffix to get bare symbol (INFY works because it's a NYSE ADR).
+  // For NSE-only stocks (TCS, HDFCBANK, etc.) that have no US ADR, the bare symbol
+  // may not be found by Finnhub → fall back to NSE: prefixed lookup.
+  const bare = ticker.replace(/\.(NS|BO|L|SI|HK|AX|TO|PA|DE|MI|MC)$/i, '');
+  const hasNS = /\.NS$/i.test(ticker);
+  const candidates = hasNS ? [bare, `NSE:${bare}`] : [bare];
+  let d: Record<string, unknown> | null = null;
+  for (const sym of candidates) {
+    try {
+      const res = await fetch(
+        `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(sym)}&token=${key}`,
+        { headers: { 'User-Agent': UA() }, signal: AbortSignal.timeout(6_000) },
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.name) { d = data; break; }
+    } catch { continue; }
+  }
+  if (!d?.name) return null;
   try {
-    const res = await fetch(
-      `https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(sym)}&token=${key}`,
-      { headers: { 'User-Agent': UA() }, signal: AbortSignal.timeout(6_000) },
-    );
-    if (!res.ok) return null;
-    const d = await res.json();
-    if (!d?.name) return null;
     // Finnhub returns marketCapitalization in millions of the local currency.
     // INR stocks (NSE/BSE) return INR millions — convert to USD using ~83 rate.
     // USD stocks return USD millions directly.
@@ -335,8 +345,8 @@ async function fetchFinnhubProfile(
     return {
       employees:  typeof d.employeeTotal === 'number' && d.employeeTotal > 0 ? d.employeeTotal : null,
       marketCap:  mcUsd,
-      industry:   d.finnhubIndustry ?? null,
-      weburl:     d.weburl ?? null,
+      industry:   typeof d.finnhubIndustry === 'string' ? d.finnhubIndustry : null,
+      weburl:     typeof d.weburl === 'string' ? d.weburl : null,
     };
   } catch { return null; }
 }
@@ -346,23 +356,28 @@ async function fetchFinnhubBasicFinancials(
 ): Promise<{ peRatio: number | null; revenueGrowthYoY: number | null } | null> {
   const key = Deno.env.get('FINNHUB_API_KEY');
   if (!key) return null;
-  const sym = ticker.replace(/\.(NS|BO|L|SI|HK|AX|TO|PA|DE|MI|MC)$/i, '');
-  try {
-    const res = await fetch(
-      `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(sym)}&metric=all&token=${key}`,
-      { headers: { 'User-Agent': UA() }, signal: AbortSignal.timeout(6_000) },
-    );
-    if (!res.ok) return null;
-    const d = await res.json();
-    const m = d?.metric;
-    if (!m) return null;
-    const pe  = typeof m.peNormalizedAnnual === 'number' && isFinite(m.peNormalizedAnnual) && m.peNormalizedAnnual > 0
-      ? Math.round(m.peNormalizedAnnual * 10) / 10 : null;
-    // Finnhub returns revenueGrowthTTMYoy already as a percentage (e.g. 9.61 = 9.61%)
-    const rg  = typeof m.revenueGrowthTTMYoy === 'number' && isFinite(m.revenueGrowthTTMYoy)
-      ? Math.round(m.revenueGrowthTTMYoy * 10) / 10 : null;
-    return { peRatio: pe, revenueGrowthYoY: rg };
-  } catch { return null; }
+  const bare = ticker.replace(/\.(NS|BO|L|SI|HK|AX|TO|PA|DE|MI|MC)$/i, '');
+  const hasNS = /\.NS$/i.test(ticker);
+  const candidates = hasNS ? [bare, `NSE:${bare}`] : [bare];
+  for (const sym of candidates) {
+    try {
+      const res = await fetch(
+        `https://finnhub.io/api/v1/stock/metric?symbol=${encodeURIComponent(sym)}&metric=all&token=${key}`,
+        { headers: { 'User-Agent': UA() }, signal: AbortSignal.timeout(6_000) },
+      );
+      if (!res.ok) continue;
+      const d: Record<string, unknown> = await res.json();
+      const m = d?.metric as Record<string, unknown> | undefined;
+      if (!m) continue;
+      const pe  = typeof m.peNormalizedAnnual === 'number' && isFinite(m.peNormalizedAnnual) && m.peNormalizedAnnual > 0
+        ? Math.round(m.peNormalizedAnnual * 10) / 10 : null;
+      // Finnhub returns revenueGrowthTTMYoy already as a percentage (e.g. 9.61 = 9.61%)
+      const rg  = typeof m.revenueGrowthTTMYoy === 'number' && isFinite(m.revenueGrowthTTMYoy)
+        ? Math.round(m.revenueGrowthTTMYoy * 10) / 10 : null;
+      if (pe !== null || rg !== null) return { peRatio: pe, revenueGrowthYoY: rg };
+    } catch { continue; }
+  }
+  return null;
 }
 
 // ── 1. STOCK — Yahoo Finance (primary, no API key) ────────────────────────────

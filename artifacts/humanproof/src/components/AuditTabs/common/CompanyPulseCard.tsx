@@ -39,6 +39,17 @@ interface Props {
   defaultOpen?: boolean;
 }
 
+// Map VERDICT_TONE hex strings → semantic data-tone attribute value
+const hexToTone = (hex: string): string => {
+  if (hex === '#dc2626' || hex.startsWith('#ef4')) return 'red';
+  if (hex === '#f97316') return 'orange';
+  if (hex === '#f59e0b' || hex.startsWith('#eab')) return 'amber';
+  if (hex === '#10b981' || hex.startsWith('#34d')) return 'emerald';
+  if (hex.startsWith('#00d') || hex.startsWith('#06b')) return 'cyan';
+  if (hex.startsWith('#a78') || hex.startsWith('#8b5') || hex.startsWith('#7c3')) return 'violet';
+  return 'slate';
+};
+
 const VERDICT_LABEL: Record<VerdictLabel, string> = {
   critical:           'Critical',
   distressed:         'Distressed',
@@ -86,11 +97,8 @@ const SubVerdictChip: React.FC<{
   icon: React.ElementType;
 }> = ({ signal, icon: Icon }) => (
   <div
-    className="flex-1 rounded-xl p-2.5 min-w-0"
-    style={{
-      background: signal.tone + '12',
-      border: `1px solid ${signal.tone}30`,
-    }}
+    className="signal-card flex-1 rounded-xl p-2.5 min-w-0"
+    data-tone={hexToTone(signal.tone)}
   >
     <div className="flex items-center gap-1.5 mb-1">
       <Icon className="w-3 h-3 flex-shrink-0" style={{ color: signal.tone }} />
@@ -115,8 +123,8 @@ const ChipRow: React.FC<{ signal: CompressedSignal }> = ({ signal }) =>
         return (
           <span
             key={`${c.label}-${i}`}
-            className="text-[10px] px-2 py-0.5 rounded-md font-semibold"
-            style={{ background: tone + '15', color: tone, border: `1px solid ${tone}30` }}
+            className="signal-chip text-[10px] px-2 py-0.5 rounded-md font-semibold"
+            data-tone={hexToTone(tone)}
           >
             {c.label}: {c.value}
           </span>
@@ -193,8 +201,8 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
             className="px-3 pt-3 pb-0"
           >
             <div
-              className="flex items-start gap-2 px-3 py-2 rounded-xl mb-2"
-              style={{ background: bg, border: `1px solid ${border}` }}
+              className="signal-card flex items-start gap-2 px-3 py-2 rounded-xl mb-2"
+              data-tone={freshnessTier === 'heuristic' ? 'amber' : 'slate'}
             >
               <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color }} />
               <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
@@ -250,8 +258,8 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         const color = freshness.ageDays > 120 ? '#f97316' : '#f59e0b';
         return (
           <div
-            className="mx-3 mb-3 px-2.5 py-1.5 rounded-lg flex items-center gap-2"
-            style={{ background: color + '12', border: `1px solid ${color}30` }}
+            className="signal-card mx-3 mb-3 px-2.5 py-1.5 rounded-lg flex items-center gap-2"
+            data-tone={freshness.ageDays > 120 ? 'orange' : 'amber'}
           >
             <span
               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -277,8 +285,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
             style={{ borderTop: `1px solid ${tone}20` }}
           >
             <div className="p-3 space-y-3">
-              <div className="rounded-xl p-3"
-                style={{ background: workforce.tone + '0d', border: `1px solid ${workforce.tone}28` }}>
+              <div className="signal-card rounded-xl p-3" data-tone={hexToTone(workforce.tone)}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Users className="w-3.5 h-3.5" style={{ color: workforce.tone }} />
                   <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
@@ -291,8 +298,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <ChipRow signal={workforce} />
               </div>
 
-              <div className="rounded-xl p-3"
-                style={{ background: financial.tone + '0d', border: `1px solid ${financial.tone}28` }}>
+              <div className="signal-card rounded-xl p-3" data-tone={hexToTone(financial.tone)}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <LineChart className="w-3.5 h-3.5" style={{ color: financial.tone }} />
                   <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>

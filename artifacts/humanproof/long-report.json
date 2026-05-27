@@ -1,0 +1,800 @@
+{
+  "hasDashboard": false,
+  "stillLoading": false,
+  "errors": [
+    "The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element.",
+    "Failed to fetch assessments: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+    "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/multi-model-analyze' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response.",
+    "Failed to load resource: net::ERR_FAILED",
+    "Connecting to 'https://api.deepseek.com/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.s",
+    "Fetch API cannot load https://api.deepseek.com/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy.",
+    "Failed to load resource: the server responded with a status of 429 ()",
+    "Connecting to 'https://api.groq.com/openai/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fre",
+    "Fetch API cannot load https://api.groq.com/openai/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy.",
+    "Failed to load resource: the server responded with a status of 500 ()",
+    "Connecting to 'https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsap",
+    "Fetch API cannot load https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys. Refused to connect because it violates the document's Content Security Policy.",
+    "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/scraper-enqueue' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 401 ()",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Failed to load resource: the server responded with a status of 500 ()",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Failed to load resource: the server responded with a status of 500 ()"
+  ],
+  "networkFails": [
+    {
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDOYgP_EwmkXggXTVbMo4weiTNuXG_UMPw",
+      "status": 429
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%28company_",
+      "status": 500
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/",
+      "status": 401
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url",
+      "status": 400
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2Csource_url",
+      "status": 400
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score&predicted",
+      "status": 400
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500
+    }
+  ],
+  "supabaseCalls": [
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_feature_flags?select=flag_key%2Cmode%2Ccanary_user_ids%2Ccanary_pct%2Cdescription%2C",
+      "status": 200,
+      "body": "[{\"flag_key\":\"ws0_shadow_runner\",\"mode\":\"shadow\",\"canary_user_ids\":[],\"canary_pct\":0,\"description\":\"Write audit_shadow_comparison rows for every audit\",\"workstream\":\"WS0\",\"config\":{},\"last_changed_at\":\"2026-05-15T03:32:25.488845+00:00\"}, \n {\"flag_key\":\"ws1_otel_spans\",\"mode\":\"off\",\"canary_user_ids\":"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/company_layoff_rounds?select=company_id%2Cround_date%2Cpercent_cut",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_exposure_data?select=*",
+      "status": 200,
+      "body": "[{\"id\":\"e8df3686-7bce-43c4-b3da-a310b53aa553\",\"role_title\":\"Data Entry Specialist\",\"ai_risk\":0.97,\"layoff_risk\":0.88,\"demand_trend\":\"falling\",\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"515c2c60-5d57-4801-b9ad-674a22194d49\",\"role_title\":"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/companies?select=*",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/industry_risk_data?select=*",
+      "status": 200,
+      "body": "[{\"id\":\"07d3cdc1-e4a0-4825-9410-009db1328ec4\",\"sector_name\":\"Technology\",\"baseline_risk\":0.58,\"ai_adoption_rate\":0.80,\"growth_outlook\":\"volatile\",\"avg_layoff_rate_2025\":0.07,\"created_at\":\"2026-04-05T10:20:47.245359+00:00\",\"updated_at\":\"2026-04-05T10:20:47.245359+00:00\"}, \n {\"id\":\"b210f5d2-a3da-4fc6-"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/engine_calibration_constants?select=key%2Cvalue%2Cprovenance%2Crationale%2Cevidence_count%2",
+      "status": 200,
+      "body": "[{\"key\":\"layoffScoreEngine.layoffRoundRisk.4plus\",\"value\":0.95,\"provenance\":\"uncalibrated_placeholder\",\"rationale\":\"UNCALIBRATED — layoffScoreEngine.ts:1312.\",\"evidence_count\":null,\"last_validated_at\":null}, \n {\"key\":\"layoffScoreEngine.sectorFloor.unknownData\",\"value\":0.25,\"provenance\":\"uncalibrated"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/api_circuit_status?select=api_name%2Cstate%2Cconsecutive_failures%2Clast_failure_at%2Clast_",
+      "status": 200,
+      "body": "[{\"api_name\":\"sec-edgar\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed_at\":null}, \n {\"api_name\":\"warn-act\",\"state\":\"CLOSED\",\"consecutive_failures\":0,\"last_failure_at\":null,\"last_success_at\":null,\"opened_at\":null,\"probe_allowed"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/v_company_canonical?select=company_name%2Cindustry%2Ccompany_risk_score%2Cn_duplicates&or=%",
+      "status": 500,
+      "body": "{\"code\":\"57014\",\"details\":null,\"hint\":null,\"message\":\"canceling statement due to statement timeout\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=id&company_name=eq.Infosys&status=eq.succeeded&finished_at=gte.2026-05-2",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 200,
+      "body": "[{\"allowed\":true,\"balance\":4,\"capacity\":5,\"retry_after_ms\":0}]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/rpc/consume_token",
+      "status": 200,
+      "body": "[{\"allowed\":true,\"balance\":59,\"capacity\":60,\"retry_after_ms\":0}]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=status&company_name=eq.Infosys&enqueued_at=gte.2026-05-24T14%3A21%3A42.5",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_automation_timeline?select=*",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_aliases?select=*",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_actions?select=*",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals",
+      "status": 200,
+      "body": "{\"stockData\":null,\"newsData\":null,\"errors\":[],\"rateLimitFlags\":{}}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_compensation_bands?select=*",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_negotiation_scripts?select=*",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/role_demand_overrides?select=*&is_active=eq.true",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/company_live_cache?select=price_90d_change%2Crevenue_growth_yoy%2Cmarket_cap%2Cpe_ratio%2Ce",
+      "status": 200,
+      "body": "[{\"price_90d_change\":-27.2,\"revenue_growth_yoy\":9.6,\"market_cap\":57739387852,\"pe_ratio\":16.3,\"employee_count\":null,\"stock_source\":\"yahoo-finance+finnhub\",\"recent_headline_count\":90,\"sentiment_signal\":1,\"latest_layoff_event\":{\"url\": \"https://news.google.com/rss/articles/CBMi1AFBVV95cUxOU2l6UDR1dVg0QU"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/company_live_cache?select=price_90d_change%2Crevenue_growth_yoy%2Cmarket_cap%2Cpe_ratio%2Ce",
+      "status": 200,
+      "body": "[{\"price_90d_change\":-27.2,\"revenue_growth_yoy\":9.6,\"market_cap\":57739387852,\"pe_ratio\":16.3,\"employee_count\":null,\"stock_source\":\"yahoo-finance+finnhub\",\"recent_headline_count\":90,\"sentiment_signal\":1,\"latest_layoff_event\":{\"url\": \"https://news.google.com/rss/articles/CBMi1AFBVV95cUxOU2l6UDR1dVg0QU"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2C",
+      "status": 400,
+      "body": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column curated_layoff_events.headline does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/roles?select=*&is_active=eq.true",
+      "status": 200,
+      "body": "[{\"role_key\":\"swe\",\"display_name\":\"Software Engineer\",\"role_family\":\"tech\",\"industry\":\"software\",\"category\":\"individual_contributor\",\"is_active\":true,\"description\":null,\"typical_seniority_distribution\":null,\"created_at\":\"2026-05-16T09:22:31.744484+00:00\",\"updated_at\":\"2026-05-16T09:22:31.744484+00:0"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-live-signals",
+      "status": 200,
+      "body": "{\"stockData\":null,\"newsData\":null,\"errors\":[],\"rateLimitFlags\":{}}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/curated_layoff_events?select=company_name%2Cevent_date%2Cheadline%2Cpercent_cut%2Csource%2C",
+      "status": 400,
+      "body": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column curated_layoff_events.headline does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/user_prediction_outcomes?select=predicted_ci_low%2Cpredicted_ci_high%2Cactual_outcome_score",
+      "status": 400,
+      "body": "{\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column user_prediction_outcomes.actual_outcome_score does not exist\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-macro",
+      "status": 200,
+      "body": "{\"fredSnapshot\":{\"fedFundsRate\":3.64,\"yieldCurveSpread\":0.43,\"isInvertedCurve\":false,\"nasdaqChange90d\":16.2,\"dataDate\":\"2026-04-01\"},\"joltsSnapshot\":{\"sector\":\"information_technology\",\"quitsRate\":32,\"layoffsRate\":66,\"jobOpeningsRate\":null,\"hiringRate\":null,\"quitsTrend\":\"stable\",\"dataMonth\":\"2026-03-"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "body": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTy"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/proxy-macro",
+      "status": 200,
+      "body": "{\"fredSnapshot\":{\"fedFundsRate\":3.64,\"yieldCurveSpread\":0.43,\"isInvertedCurve\":false,\"nasdaqChange90d\":16.2,\"dataDate\":\"2026-04-01\"},\"joltsSnapshot\":{\"sector\":\"information_technology\",\"quitsRate\":32,\"layoffsRate\":66,\"jobOpeningsRate\":null,\"hiringRate\":null,\"quitsTrend\":\"stable\",\"dataMonth\":\"2026-03-"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "body": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/calculate-hybrid-risk",
+      "status": 400,
+      "body": "{\"error\":\"Request body must include { companyName, roleTitle, department, userFactors, consensusData }. Optional reconciliation fields include provenance, reconciliationSummary, missingDataFallbacks, degradedSignalClasses, hardFailures, confidenceCap, and confidenceCapsApplied. See _shared/scoringTy"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 500,
+      "body": "{\"error\":\"companyName is required\"}"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 200,
+      "body": "{\"companyName\":\"Infosys Ltd\",\"data\":{\"company_name\":\"Infosys Ltd\",\"ticker\":null,\"is_public\":true,\"industry\":\"Information Technology Services\",\"region\":\"GLOBAL\",\"employee_count\":328594,\"revenue_yoy\":null,\"stock_90d_change\":null,\"annual_revenue\":null,\"revenue_per_employee\":null,\"recent_layoffs\":[],\"la"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/fetch-company-data",
+      "status": 200,
+      "body": "{\"companyName\":\"Infosys Ltd\",\"data\":{\"company_name\":\"Infosys Ltd\",\"ticker\":null,\"is_public\":true,\"industry\":\"Information Technology Services\",\"region\":\"GLOBAL\",\"employee_count\":328594,\"revenue_yoy\":null,\"stock_90d_change\":null,\"annual_revenue\":null,\"revenue_per_employee\":null,\"recent_layoffs\":[],\"la"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    },
+    {
+      "url": "https://ysenimczeasmaeojzlkt.supabase.co/rest/v1/scrape_jobs?select=job_type%2Cstatus%2Cstarted_at%2Cenqueued_at%2Csource&company_name=eq.In",
+      "status": 200,
+      "body": "[]"
+    }
+  ],
+  "allLogs": [
+    {
+      "type": "error",
+      "text": "The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "{\"ts\":\"2026-05-24T14:21:30.213Z\",\"level\":\"info\",\"service\":\"app-bootstrap\",\"event\":\"app.boot.start\",\"fields\":{\"release\":\"unknown\"}}"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:1 (2.101.1) 2026-05-24T14:21:30.260Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-ysenimczeasmaeojzlkt-auth-token:2 (2.101.1) 2026-05-24T14:21:30.261Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+    },
+    {
+      "type": "error",
+      "text": "Failed to fetch assessments: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+    },
+    {
+      "type": "warning",
+      "text": "[staticData] companies table empty — using bundled static data. Run scripts/seed_static_data.ts to populate."
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/multi-model-analyze' from origin 'http://localhost:5173' has been blocked by CORS policy: Request header field x-request-id is not allowed by Access-Control-Allow-Headers in preflight response."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://api.deepseek.com/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked."
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://api.deepseek.com/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy."
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev DeepSeek error: Failed to fetch"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 ()"
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Gemini failed — trying Groq"
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://api.groq.com/openai/v1/chat/completions' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked."
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://api.groq.com/openai/v1/chat/completions. Refused to connect because it violates the document's Content Security Policy."
+    },
+    {
+      "type": "warning",
+      "text": "[aiProxy] Dev Groq error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "[QuickProfiler] AI proxy returned no content"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()"
+    },
+    {
+      "type": "error",
+      "text": "Connecting to 'https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys' violates the following Content Security Policy directive: \"connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://*.alphavantage.co https://newsapi.org https://api.fred.stlouisfed.org https://api.bls.gov https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.openrouter.ai https://generativelanguage.googleapis.com\". The action has been blocked."
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://autocomplete.clearbit.com/v1/companies/suggest?query=Infosys. Refused to connect because it violates the document's Content Security Policy."
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ysenimczeasmaeojzlkt.supabase.co/functions/v1/scraper-enqueue' from origin 'http://localhost:5173' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "info",
+      "text": "[Gate] scraper unreachable (gate will timeout gracefully): Failed to send a request to the Edge Function"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 ()"
+    }
+  ],
+  "pageTextPreview": "Skip to main content\nHumanShield\nLayoff Audit\nRisk Oracle\nEnglish\nGet Access\n● LIVE · NODE CONNECTIVITY\nMY DASHBOARD\n\nAI displacement intelligence across thousands of global roles\n\n0%\n0/3 MODULES\nComplete all for full analysis\nExport\nShare\n📉\nLayoff Audit\n🎯\nRisk Oracle\n🟢 LOW THREAT\nNETWORK SECURITY: ACTIVE\n/// TARGET DESIGNATION ///\nINFOSYS\nROLE: SOFTWARE ENGINEER\n● AGENTS: 15/30\n◈ SIGNALS: 30\n◈ INTELLIGENCE DATA STREAMS\nSupabase Intelligence DB\nLOADING\nFinancial Signals API\nLOADING\nRSS News Sentiment\nLOADING\nLayoffs.fyi Connector\nLOADING\nSEC EDGAR Regulatory\nLOADING\nNaukri Job Index\nLOADING\nSwarm Analysis (30 agents)\nLOADING\nIntelligence Synthesis\nLOADING\n🛫\nDEPLOYING AGENTS\nSending 30+ field agents to target\nINTELLIGENCE GATHERED\n33%\nNETWORK ID: HP-49STWK\n2026-05-24 14:22:30Z\nHumanShield\n\nThe high-fidelity standard for career protection in the AI era. Powered by frontier AI systems and verified global research.\n\nSubscribe\nPLATFORM\nRisk Oracle\nLearning Hub\nSafe Careers\nRisk Index\nAbout\nLEGAL\nPrivacy Policy\nTerms of Use\nAudit Log\nBlog\nContact\n© 2026 HumanShield · All rights reserved\nLIVE · Q1 2026 DATASET"
+}

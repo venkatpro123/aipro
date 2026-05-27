@@ -59,11 +59,9 @@ interface Props {
 // ── Tab loader ────────────────────────────────────────────────────────────────
 
 const TabLoader: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16">
-    <div className="w-8 h-8 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan,#00d4e0)] animate-spin mb-4" />
-    <p className="text-[10px] tracking-[0.3em] font-mono" style={{ color: 'rgba(0,212,224,0.5)' }}>
-      LOADING…
-    </p>
+  <div className="audit-loader">
+    <div className="w-7 h-7 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan)] animate-spin" />
+    <p className="audit-loader-stage">Loading…</p>
   </div>
 );
 
@@ -162,27 +160,25 @@ const StickyCompanyHeader: React.FC<{
             {/* Profile drawer icon */}
             <button
               onClick={onProfileOpen}
-              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+              className="icon-btn w-7 h-7"
               aria-label="View profile & preparedness"
             >
-              <User className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.55)' }} />
+              <User className="w-3.5 h-3.5" />
             </button>
             {/* Methodology drawer icon */}
             <button
               onClick={onMethodologyOpen}
-              className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+              className="icon-btn w-7 h-7"
               aria-label="View methodology"
             >
-              <HelpCircle className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.55)' }} />
+              <HelpCircle className="w-3.5 h-3.5" />
             </button>
             <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{ background: color + '22', border: `1px solid ${color}40` }}
+              className="signal-chip flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{ background: color + '1a', border: `1px solid ${color}35`, color }}
             >
-              <span className="text-[12px] font-black" style={{ color }}>{score}</span>
-              <span className="text-[9px] font-bold tracking-wide" style={{ color: color + 'cc' }}>
+              <span className="text-[12px] font-black">{score}</span>
+              <span className="text-[9px] font-bold tracking-wide" style={{ opacity: 0.8 }}>
                 {riskLabel(score)}
               </span>
             </div>
@@ -207,17 +203,21 @@ const DesktopTabBar: React.FC<{
     data-tab-bar
     role="tablist"
     aria-label="Dashboard sections"
-    className="hidden sm:flex items-center gap-1 px-2 py-2"
+    className="hidden sm:flex items-center"
     style={{
-      background: 'rgba(9,12,20,0.92)',
+      background: isEmergency ? 'rgba(30,6,6,0.95)' : 'rgba(9,12,20,0.92)',
       backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(255,255,255,0.07)',
+      borderBottom: `1px solid ${isEmergency ? 'rgba(220,38,38,0.20)' : 'rgba(255,255,255,0.07)'}`,
+      paddingLeft: 'var(--space-2)',
+      paddingRight: 'var(--space-2)',
     }}
   >
     {TAB_CONFIG.map(({ value, label, Icon, getBadge }) => {
       const isActive = value === active;
       const badge    = getBadge?.(result);
       const isActEmergency = isEmergency && value === 'actions';
+      const btnClass = `audit-tab-btn${isActEmergency ? ' emergency' : isActive ? ' active' : ''}`;
+      const isLiveBadge = badge?.color === '#10b981';
       return (
         <button
           key={value}
@@ -225,20 +225,12 @@ const DesktopTabBar: React.FC<{
           aria-selected={isActive}
           aria-current={isActive ? 'page' : undefined}
           onClick={() => onChange(value)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap relative"
-          style={{
-            background: isActEmergency
-              ? 'rgba(220,38,38,0.12)'
-              : isActive ? 'rgba(0,212,224,0.12)' : 'transparent',
-            border: `1px solid ${isActEmergency ? 'rgba(220,38,38,0.50)' : isActive ? 'rgba(0,212,224,0.30)' : 'transparent'}`,
-            color: isActEmergency ? '#dc2626' : isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.50)',
-          }}
+          className={btnClass}
         >
-          <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="text-[12px] font-semibold">{label}</span>
+          <Icon className="tab-icon w-3.5 h-3.5 flex-shrink-0" />
+          <span className="tab-label-text">{label}</span>
           {badge && (
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
-              style={{ background: badge.color + '22', color: badge.color }}>
+            <span className={`audit-tab-badge${isLiveBadge ? ' info' : ''}`}>
               {badge.text}
             </span>
           )}
@@ -250,21 +242,19 @@ const DesktopTabBar: React.FC<{
     <div className="flex-1" />
     <button
       onClick={onProfileOpen}
-      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+      className="icon-btn w-8 h-8"
       aria-label="View profile & preparedness"
       title="Profile & Career Signals"
     >
-      <User className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.50)' }} />
+      <User className="w-3.5 h-3.5" />
     </button>
     <button
       onClick={onMethodologyOpen}
-      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+      className="icon-btn w-8 h-8"
       aria-label="View methodology"
       title="How This Score Was Calculated"
     >
-      <HelpCircle className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.50)' }} />
+      <HelpCircle className="w-3.5 h-3.5" />
     </button>
   </div>
 );
@@ -528,7 +518,7 @@ export const LayoffAuditDashboardV4: React.FC<Props> = (props) => {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             className="px-4 pt-4 sm:px-0 sm:pt-0"
             style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
           >

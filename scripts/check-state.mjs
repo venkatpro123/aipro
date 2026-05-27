@@ -1,0 +1,10 @@
+import pg from 'pg';
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+await db.connect();
+const { rows } = await db.query(`SELECT canonical_name, country_code, total_open_roles, hiring_source FROM verified_company_intelligence WHERE total_open_roles IS NULL ORDER BY country_code, canonical_name`);
+console.log('NULL companies:', rows.length);
+rows.forEach(r => console.log(`  [${r.country_code}] ${r.canonical_name}`));
+const { rows: r2 } = await db.query(`SELECT canonical_name, total_open_roles, hiring_source FROM verified_company_intelligence WHERE canonical_name IN ('qlik','noom','meituan','alnylam pharmaceuticals','vanguard') ORDER BY canonical_name`);
+console.log('\nSpot check:');
+r2.forEach(r => console.log(`  ${r.canonical_name}: ${r.total_open_roles} | ${r.hiring_source}`));
+await db.end();

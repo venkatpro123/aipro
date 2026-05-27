@@ -5,6 +5,8 @@ import {
   useCallback,
   useMemo,
   Component,
+  lazy,
+  Suspense,
 } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,8 +18,14 @@ import ScoreDriftTracker, {
   ScoreDriftBanner,
   PlotScoreInversionBanner,
 } from "../components/ScoreDriftTracker";
-import { LayoffCalculator } from "../components/LayoffCalculator/LayoffCalculator";
-import AuditTerminalPage from "./AuditTerminalPage";
+
+// Lazy-loaded heavy tab components — split into separate chunks to keep peak
+// build memory within Vercel's container limits. Each tab is its own chunk
+// so the scoring engine (3MB) is processed separately during minification.
+const LayoffCalculator = lazy(() =>
+  import('../components/LayoffCalculator/LayoffCalculator').then(m => ({ default: m.LayoffCalculator }))
+);
+const AuditTerminalPage = lazy(() => import('./AuditTerminalPage'));
 import UpskillingRoadmap from "../components/UpskillingRoadmap";
 import HumanEdgeJournal from "../components/HumanEdgeJournal";
 import ResilienceBadge from "../components/ResilienceBadge";
@@ -312,10 +320,12 @@ export default function ToolsPage() {
                 >
                   {mountedTabs.has(tab.id) && (
                     <TabErrorBoundary tabId={tab.id}>
-                      {tab.id === "layoff-audit" && (
-                        <LayoffCalculator onSwitchTab={switchTab} />
-                      )}
-                      {tab.id === "risk-oracle" && <AuditTerminalPage />}
+                      <Suspense fallback={null}>
+                        {tab.id === "layoff-audit" && (
+                          <LayoffCalculator onSwitchTab={switchTab} />
+                        )}
+                        {tab.id === "risk-oracle" && <AuditTerminalPage />}
+                      </Suspense>
                     </TabErrorBoundary>
                   )}
                 </motion.div>

@@ -939,7 +939,7 @@ const ACTION_TRACK_CFG = [
   { track: 'intensive' as TrackType, hours: 20, key: 'w20' as const },
 ] as const;
 
-// Priority color tokens for action items — richer than the old map
+// Priority color tokens for action items
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
   Critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.20)',  label: 'CRITICAL' },
   High:     { color: '#f97316', bg: 'rgba(249,115,22,0.06)', border: 'rgba(249,115,22,0.18)', label: 'HIGH' },
@@ -947,50 +947,56 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: strin
   Low:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.04)',border: 'rgba(148,163,184,0.14)',label: 'LOW' },
 };
 
+// Phase-based visual mapping — left border class + time horizon labels
+const PHASE_CARD_CLASS: Record<string, string> = {
+  Critical: 'action-card-phase-day1',
+  High:     'action-card-phase-week1',
+  Medium:   'action-card-phase-month1',
+  Low:      'action-card-phase-quarter1',
+};
+const PHASE_LABEL: Record<string, string> = {
+  Critical: 'TODAY',
+  High:     'THIS WEEK',
+  Medium:   'THIS MONTH',
+  Low:      'LONG-TERM',
+};
+const PHASE_SUBTITLE: Record<string, string> = {
+  Critical: '24–48 hours',
+  High:     '7-day window',
+  Medium:   '30-day horizon',
+  Low:      '3+ months',
+};
+
 const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, index, isLocked = false, selectedTrack, isTopRoiInPhase = false }) => {
   const cfg = PRIORITY_CONFIG[item.priority] ?? PRIORITY_CONFIG.Medium;
+  const phaseClass = PHASE_CARD_CLASS[item.priority] ?? 'action-card-phase-month1';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.4), ease: [0.34, 1.56, 0.64, 1] }}
-      className={`group transition-all duration-250 ${isLocked ? 'opacity-35 pointer-events-none' : ''}`}
-      style={{
-        borderRadius: '12px',
-        border: `1px solid ${cfg.border}`,
-        background: isCompleted ? 'rgba(255,255,255,0.02)' : cfg.bg,
-        overflow: 'hidden',
-        opacity: isCompleted ? 0.55 : 1,
-      }}
-      whileHover={isLocked ? {} : { boxShadow: `0 4px 20px ${cfg.color}14` } as any}
+      className={`action-card ${phaseClass}${isLocked ? ' opacity-35 pointer-events-none' : ''}`}
+      style={{ opacity: isCompleted ? 0.5 : 1 }}
     >
-      {/* Top accent stripe */}
-      <div style={{
-        height: '2px',
-        background: isCompleted ? 'rgba(255,255,255,0.08)' : `linear-gradient(90deg, ${cfg.color} 0%, ${cfg.color}40 100%)`,
-        opacity: isCompleted ? 0.4 : 0.65,
-      }} />
+      {/* Checkbox */}
+      <button
+        onClick={isLocked ? undefined : onToggle}
+        disabled={isLocked}
+        className="flex-shrink-0 mt-0.5 focus:outline-none"
+        style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+        aria-checked={isCompleted}
+        aria-disabled={isLocked}
+        role="checkbox"
+      >
+        {isCompleted ? (
+          <CheckCircle className="w-5 h-5" style={{ color: '#10b981' }} />
+        ) : (
+          <Circle className="w-5 h-5" style={{ color: cfg.color, opacity: 0.5 }} />
+        )}
+      </button>
 
-      <div className="flex items-start gap-3 p-4">
-        {/* Checkbox */}
-        <button
-          onClick={isLocked ? undefined : onToggle}
-          disabled={isLocked}
-          className="flex-shrink-0 mt-0.5 focus:outline-none transition-transform"
-          style={{ transform: 'scale(1)', cursor: isLocked ? 'not-allowed' : 'pointer' }}
-          aria-checked={isCompleted}
-          aria-disabled={isLocked}
-          role="checkbox"
-        >
-          {isCompleted ? (
-            <CheckCircle className="w-5 h-5" style={{ color: '#10b981' }} />
-          ) : (
-            <Circle className="w-5 h-5" style={{ color: cfg.color, opacity: 0.5 }} />
-          )}
-        </button>
-
-        <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0">
           {/* Title + badges row */}
           <div className="flex flex-wrap items-start gap-2 mb-2">
             <h4 style={{
@@ -1119,7 +1125,6 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
             )}
           </div>
         </div>
-      </div>
     </motion.div>
   );
 };
@@ -1807,39 +1812,40 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                 );
                 if (priorityItems.length === 0) return null;
                 const cfg = PRIORITY_CONFIG[priority];
-                const completedCount = priorityItems.filter(item => completedItems[item.id]).length;
+                const sectionCompleted = priorityItems.filter(item => completedItems[item.id]).length;
                 return (
                   <div key={priority}>
-                    {/* Section header */}
-                    <div className="priority-section-header flex items-center gap-2 mb-3" style={{ '--priority-color': cfg.color } as React.CSSProperties}>
-                      <div style={{
-                        width: '6px', height: '6px', borderRadius: '50%',
-                        background: cfg.color, boxShadow: `0 0 8px ${cfg.color}`,
-                        flexShrink: 0,
-                        animation: priority === 'Critical' ? 'pulse-live 1.8s ease-in-out infinite' : 'none',
-                      }} />
-                      <span>{cfg.label} PRIORITY</span>
-                      <span style={{
-                        marginLeft: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
-                        fontWeight: 700, color: cfg.color, opacity: 0.6,
-                      }}>
-                        {completedCount}/{priorityItems.length}
-                      </span>
-                      {completedCount > 0 && (
+                    {/* Section header — time-based phase label */}
+                    <div className="audit-section-head" style={{ marginBottom: 'var(--space-3)' }}>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <div style={{
-                          marginLeft: 'auto',
-                          height: '3px', width: `${Math.round((completedCount / priorityItems.length) * 60)}px`,
-                          background: '#10b981', borderRadius: '2px',
-                          boxShadow: '0 0 8px #10b98140',
+                          width: '6px', height: '6px', borderRadius: '50%',
+                          background: cfg.color, boxShadow: `0 0 8px ${cfg.color}`,
+                          flexShrink: 0,
+                          animation: priority === 'Critical' ? 'pulse-live 1.8s ease-in-out infinite' : 'none',
+                        }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.1em', color: cfg.color }}>
+                          {PHASE_LABEL[priority]}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--text-3)', fontWeight: 600 }}>
+                          {PHASE_SUBTITLE[priority]}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 700, color: cfg.color, opacity: 0.5 }}>
+                          · {sectionCompleted}/{priorityItems.length}
+                        </span>
+                      </div>
+                      {sectionCompleted > 0 && (
+                        <div style={{
+                          height: '3px', width: `${Math.round((sectionCompleted / priorityItems.length) * 60)}px`,
+                          background: '#10b981', borderRadius: '2px', boxShadow: '0 0 8px #10b98140',
                         }} />
                       )}
                     </div>
 
-                    {/* Items in this priority group */}
+                    {/* Items in this phase group */}
                     <div className="space-y-2">
                       {priorityItems.map((item, i) => {
                         const itemPhase = assignPhase(item);
-                        // lockedPhases can contain 1, 2, or 3 — Phase 1 locks when Phase 0 is incomplete
                         const itemIsLocked = itemPhase >= 1 && lockedPhases.has(itemPhase as 1 | 2 | 3);
                         return (
                           <ActionItem

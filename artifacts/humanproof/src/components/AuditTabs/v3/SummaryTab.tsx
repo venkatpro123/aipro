@@ -23,6 +23,7 @@
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import NumberFlow from '@number-flow/react';
 import {
   TrendingUp, TrendingDown, Minus,
   Zap, Shield, Clock, Signal, AlertTriangle, Info, User, AlertOctagon,
@@ -48,93 +49,87 @@ const readinessColor = (label: string) => ({
 }[label] ?? '#f59e0b');
 
 // ── Score Ring Hero ───────────────────────────────────────────────────────────
+// Uses CSS clamp via .score-hero-ring — no JS mobile detection needed.
+
+const RING_SIZE = 172; // internal SVG coordinate system (CSS handles display size)
+const RING_R    = (RING_SIZE - 14) / 2;
+const RING_CIRC = 2 * Math.PI * RING_R;
 
 const ScoreRingHero: React.FC<{
   score: number;
   confidence: number;
-  isMobile: boolean;
   calibrationMode?: string;
-}> = ({ score, confidence, isMobile, calibrationMode }) => {
-  const size  = isMobile ? 144 : 176;
-  const r     = (size - 14) / 2;
-  const circ  = 2 * Math.PI * r;
+}> = ({ score, confidence, calibrationMode }) => {
   const color = riskColor(score);
   const label = riskLabel(score);
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        <div className="absolute inset-0 rounded-full" style={{
-          boxShadow: `0 0 ${isMobile ? 32 : 44}px ${color}30`,
-        }} />
+      {/* .score-hero-ring uses CSS clamp for responsive sizing */}
+      <div className="score-hero-ring">
+        <div className="absolute inset-0 rounded-full" style={{ boxShadow: `0 0 44px ${color}28` }} />
         <svg
-          width={size} height={size} className="-rotate-90"
+          viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+          className="-rotate-90"
           role="img"
           aria-label={`Risk score ${score} out of 100 — ${label}`}
         >
-          <circle cx={size/2} cy={size/2} r={r} fill="none"
-            stroke="rgba(255,255,255,0.06)" strokeWidth={10} />
+          <circle
+            cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+            fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={10}
+          />
           <motion.circle
-            cx={size/2} cy={size/2} r={r} fill="none"
-            stroke={color} strokeWidth={10} strokeLinecap="round"
-            strokeDasharray={circ}
-            initial={{ strokeDashoffset: circ }}
-            animate={{ strokeDashoffset: circ - (score / 100) * circ }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
+            cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+            fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
+            strokeDasharray={RING_CIRC}
+            initial={{ strokeDashoffset: RING_CIRC }}
+            animate={{ strokeDashoffset: RING_CIRC - (score / 100) * RING_CIRC }}
+            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {/* .score-hero-number: position relative z-index 1 — sits above SVG */}
+        <div className="flex flex-col items-center" style={{ position: 'relative', zIndex: 1 }}>
           <motion.span
-            initial={{ opacity: 0, scale: 0.7 }}
+            initial={{ opacity: 0, scale: 0.75 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="font-black leading-none"
-            style={{ fontSize: isMobile ? 46 : 58, color }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="score-hero-number"
+            style={{ color }}
           >
-            {score}
+            <NumberFlow value={score} respectMotionPreference />
           </motion.span>
-          <span className="text-[10px] font-mono mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <span style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
             /100
           </span>
         </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
+      {/* Tier label — uses .score-hero-label CSS class */}
+      <motion.span
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="mt-3 px-4 py-1.5 rounded-full flex items-center gap-1.5"
-        style={{
-          background: color + '20',
-          border: `1px solid ${color}50`,
-          boxShadow: `0 2px 12px ${color}20`,
-        }}
+        transition={{ delay: 0.38 }}
+        className="score-hero-label"
+        style={{ color, background: color + '14', marginTop: 'var(--space-3)' }}
       >
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-        <span className="text-[11px] font-black tracking-[0.12em]" style={{ color }}>
-          {label} RISK
-        </span>
-      </motion.div>
+        {label} Risk
+      </motion.span>
 
-      <div className="mt-2 flex flex-col items-center gap-1">
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <div className="flex flex-col items-center gap-1" style={{ marginTop: 'var(--space-2)' }}>
+        <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>
           {confidence}% confidence
         </p>
-        {/* The layoff risk score is always a model output — never a direct measurement.
-            Surface this explicitly so the user knows what kind of number they're reading. */}
-        <div className="flex items-center gap-1.5">
-          <ProvenanceLabel
-            kind="modeled"
-            tooltip={
-              calibrationMode === 'live_empirical'
-                ? 'MODELED — score computed by a formula calibrated against 200+ real outcomes'
-                : calibrationMode === 'live_developing'
-                ? 'MODELED — formula calibrated on developing outcome dataset (47–200 outcomes)'
-                : 'MODELED — formula uses conservative bootstrap priors; empirical calibration in progress'
-            }
-            size="xs"
-          />
-        </div>
+        <ProvenanceLabel
+          kind="modeled"
+          tooltip={
+            calibrationMode === 'live_empirical'
+              ? 'MODELED — score computed by a formula calibrated against 200+ real outcomes'
+              : calibrationMode === 'live_developing'
+              ? 'MODELED — formula calibrated on developing outcome dataset (47–200 outcomes)'
+              : 'MODELED — formula uses conservative bootstrap priors; empirical calibration in progress'
+          }
+          size="xs"
+        />
       </div>
     </div>
   );
@@ -147,8 +142,7 @@ const ScoreRingHero: React.FC<{
 
 const ScoreRangeHero: React.FC<{
   gate: ScoreSufficiency;
-  isMobile: boolean;
-}> = ({ gate, isMobile }) => {
+}> = ({ gate }) => {
   const { ciLow, ciHigh, ciRange, confPct, message } = gate;
 
   // The range bar fills the zone [ciLow, ciHigh] across the 0-100 axis.
@@ -187,23 +181,14 @@ const ScoreRangeHero: React.FC<{
       {/* Bound numbers */}
       <div className="flex items-end gap-3 mb-3">
         <div className="text-center">
-          <span
-            className="font-black leading-none"
-            style={{ fontSize: isMobile ? 38 : 46, color: 'rgba(255,255,255,0.55)' }}
-          >
+          <span className="score-range-bound" style={{ color: 'rgba(255,255,255,0.55)' }}>
             {ciLow}
           </span>
           <p className="text-[9px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>LOW</p>
         </div>
-        <span
-          className="pb-5 font-black text-xl"
-          style={{ color: 'rgba(255,255,255,0.25)' }}
-        >—</span>
+        <span className="pb-5 font-black text-xl" style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
         <div className="text-center">
-          <span
-            className="font-black leading-none"
-            style={{ fontSize: isMobile ? 38 : 46, color: worstColor }}
-          >
+          <span className="score-range-bound" style={{ color: worstColor }}>
             {ciHigh}
           </span>
           <p className="text-[9px] font-mono mt-0.5" style={{ color: worstColor + 'aa' }}>HIGH</p>
@@ -212,12 +197,8 @@ const ScoreRangeHero: React.FC<{
 
       {/* Range bar */}
       <div
-        className="relative rounded-full overflow-hidden mb-2"
-        style={{
-          width: isMobile ? 220 : 270,
-          height: 8,
-          background: 'rgba(255,255,255,0.08)',
-        }}
+        className="score-range-bar relative rounded-full overflow-hidden mb-2"
+        style={{ height: 8, background: 'rgba(255,255,255,0.08)' }}
         aria-label={`Score range ${ciLow} to ${ciHigh} out of 100`}
         role="img"
       >
@@ -244,10 +225,7 @@ const ScoreRangeHero: React.FC<{
       </div>
 
       {/* Axis label */}
-      <div
-        className="flex justify-between mb-3"
-        style={{ width: isMobile ? 220 : 270 }}
-      >
+      <div className="score-range-labels flex justify-between mb-3">
         <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>0</span>
         <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>100</span>
       </div>
@@ -344,6 +322,9 @@ interface ActionItem {
   sequencePhase?: string;
 }
 
+const toneForScore = (s: number) =>
+  s >= 65 ? 'red' : s >= 45 ? 'amber' : s >= 25 ? 'orange' : 'emerald';
+
 const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
   if (drivers.length === 0) return null;
   return (
@@ -351,46 +332,55 @@ const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="rounded-2xl p-3"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      <div className="flex items-center gap-1.5 mb-2.5">
-        <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
-        <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          WHY YOUR SCORE IS WHERE IT IS
-        </span>
-        <TierBadge tier={1} />
-        <ProvenanceLabel
-          kind="modeled"
-          tooltip="These dimension scores are computed by HumanProof's scoring formula. Individual signals feeding them may be MEASURED or ESTIMATED — expand each driver to see sources."
-          size="xs"
-        />
+      <div className="audit-section-head">
+        <div className="audit-section-title">
+          <AlertTriangle size={12} style={{ color: 'var(--amber)' }} />
+          Top Risk Drivers
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TierBadge tier={1} />
+          <ProvenanceLabel
+            kind="modeled"
+            tooltip="These dimension scores are computed by HumanProof's scoring formula. Individual signals feeding them may be MEASURED or ESTIMATED — expand each driver to see sources."
+            size="xs"
+          />
+        </div>
       </div>
-      <div className="space-y-1.5">
-        {drivers.slice(0, 3).map(d => (
-          <div key={d.key} className="flex items-start gap-2.5">
-            <div className="flex-shrink-0 px-1.5 py-0.5 rounded-md min-w-[36px] text-center"
-              style={{
-                background: riskColor(d.score) + '22',
-                border: `1px solid ${riskColor(d.score)}38`,
-              }}>
-              <span className="text-[11px] font-black" style={{ color: riskColor(d.score) }}>
+      <div className="driver-strip">
+        {drivers.slice(0, 3).map((d, i) => (
+          <motion.div
+            key={d.key}
+            className="driver-card"
+            data-tone={toneForScore(d.score)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.07, duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <span className="driver-card-rank">#{i + 1}</span>
+              <span className="driver-card-score" style={{ color: riskColor(d.score) }}>
                 {d.score}
               </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                {d.label}
-              </p>
-              <p className="text-[10px] leading-snug line-clamp-2" style={{ color: 'rgba(255,255,255,0.50)' }}>
-                {d.why}
-              </p>
-            </div>
-          </div>
+            <div className="driver-card-label">{d.label}</div>
+            <div className="driver-card-reason">{d.why}</div>
+          </motion.div>
         ))}
       </div>
     </motion.div>
   );
+};
+
+const phaseClass = (priority: string) =>
+  priority === 'Critical' ? 'action-card-phase-day1'
+    : priority === 'High'   ? 'action-card-phase-week1'
+    : 'action-card-phase-month1';
+
+const phaseLabel = (a: ActionItem): string => {
+  if (a.sequencePhase)
+    return ({ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string,string>)[a.sequencePhase] ?? a.timeline;
+  return a.timeline;
 };
 
 const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> = ({ actions, total }) => {
@@ -400,52 +390,34 @@ const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> 
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.14 }}
-      className="rounded-2xl p-3"
-      style={{ background: 'rgba(0,212,224,0.04)', border: '1px solid rgba(0,212,224,0.18)' }}
     >
-      <div className="flex items-center gap-1.5 mb-2.5">
-        <Zap className="w-3.5 h-3.5" style={{ color: 'var(--cyan,#00d4e0)' }} />
-        <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(0,212,224,0.90)' }}>
-          DO THIS WEEK
-        </span>
-        <TierBadge tier={1} />
-        {total > 3 && (
-          <span className="ml-auto text-[9px] font-semibold" style={{ color: 'rgba(255,255,255,0.40)' }}>
-            +{total - 3} more in Action Plan
-          </span>
-        )}
+      <div className="audit-section-head">
+        <div className="audit-section-title">
+          <Zap size={12} style={{ color: 'var(--cyan)' }} />
+          Do This Week
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TierBadge tier={1} />
+          {total > 3 && (
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+              +{total - 3} more in Action Plan
+            </span>
+          )}
+        </div>
       </div>
-      <div className="space-y-1.5">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
         {actions.slice(0, 3).map((a, i) => (
-          <div key={`${a.priority}-${i}`} className="flex items-start gap-2.5">
-            <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{
-                background: a.priority === 'Critical' ? '#dc262622'
-                  : a.priority === 'High' ? '#f9731622' : '#06b6d422',
-                border: `1px solid ${a.priority === 'Critical' ? '#dc262648'
-                  : a.priority === 'High' ? '#f9731648' : '#06b6d448'}`,
-              }}>
-              <span className="text-[10px] font-black"
-                style={{
-                  color: a.priority === 'Critical' ? '#dc2626'
-                    : a.priority === 'High' ? '#f97316' : '#06b6d4',
-                }}>{i + 1}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-tight"
-                style={{ color: 'rgba(255,255,255,0.90)' }}>{a.title}</p>
-              <p className="text-[10px] leading-snug"
-                style={{ color: 'rgba(255,255,255,0.45)' }}>
-                {a.sequencePhase
-                  ? { day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' }[a.sequencePhase] ?? a.timeline
-                  : a.timeline
-                }{a.step ? ` · ${a.step}` : ''}
+          <div key={`${a.priority}-${i}`} className={`action-card ${phaseClass(a.priority)}`}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
+                <span className="action-effort-badge">{phaseLabel(a)}</span>
+                {a.step && <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>· {a.step}</span>}
+              </div>
+              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.35, marginBottom: a.evidenceStats ? 'var(--space-1)' : 0 }}>
+                {a.title}
               </p>
-              {/* evidenceStats is the one-liner "why this works" — surfaces data
-                  behind the recommendation so the action feels earned, not templated */}
               {a.evidenceStats && (
-                <p className="text-[10px] italic mt-0.5 leading-snug line-clamp-2"
-                  style={{ color: 'rgba(255,255,255,0.32)' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', fontStyle: 'italic', lineHeight: 1.4 }}>
                   {a.evidenceStats}
                 </p>
               )}
@@ -490,15 +462,16 @@ const TrustCallout: React.FC<{
 
   if (alerts.length === 0) return null;
 
+  const alertTone = (color: string) =>
+    color === '#dc2626' ? 'red' : color === '#f97316' ? 'orange' : 'amber';
+
   return (
-    <div className="space-y-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
       {alerts.map((a, i) => (
-        <div key={i} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5"
-          style={{ background: a.color + '12', border: `1px solid ${a.color}30` }}>
-          <a.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: a.color }} />
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.70)' }}>
-            {a.text}
-          </p>
+        <div key={i} className="signal-card" data-tone={alertTone(a.color)}
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
+          <a.icon size={14} style={{ color: a.color, flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: 'var(--text-2)' }}>{a.text}</p>
         </div>
       ))}
     </div>
@@ -510,7 +483,6 @@ const TrustCallout: React.FC<{
 export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const r     = result as any;
   const score = result.total;
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   const adaptation = useDashboardAdaptation(result, companyData);
 
@@ -638,21 +610,16 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="rounded-xl px-4 py-3 flex items-start gap-3"
-          style={{
-            background: 'rgba(220, 38, 38, 0.10)',
-            border: '1px solid rgba(220, 38, 38, 0.35)',
-          }}
+          className="signal-card"
+          data-tone="red"
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
         >
-          <div
-            className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-            style={{ background: '#dc2626', boxShadow: '0 0 8px #dc2626' }}
-          />
-          <div className="flex-1">
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: '#dc2626' }}>
+          <div className="audit-step-dot active" style={{ width: 8, height: 8, marginTop: 4, flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--red)', marginBottom: 'var(--space-1)', fontWeight: 800 }}>
               Emergency Mode · Action Plan Tab Primary
             </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>
+            <p style={{ fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--text-2)' }}>
               {(result as any).warnSignal?.hasActiveWARN
                 ? 'A WARN Act filing has been detected — this is a legally-confirmed layoff signal. Open the Action Plan tab immediately.'
                 : `Risk score ${score} sits in the critical band. The Action Plan tab has been promoted; review immediate-7-day actions first, score-context second.`}
@@ -681,8 +648,8 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
         {/* Gate: if CI range > 50 or confidence < 20%, show range instead of point score */}
         {scoreSufficiency.sufficient
-          ? <ScoreRingHero score={score} confidence={confPct} isMobile={isMobile} calibrationMode={calibrationMode} />
-          : <ScoreRangeHero gate={scoreSufficiency} isMobile={isMobile} />
+          ? <ScoreRingHero score={score} confidence={confPct} calibrationMode={calibrationMode} />
+          : <ScoreRangeHero gate={scoreSufficiency} />
         }
         {/* Verdict line — suppressed when range is shown (it would imply a tier) */}
         {scoreSufficiency.sufficient && (
@@ -714,36 +681,30 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
-          className="flex items-start gap-2.5 rounded-xl px-3.5 py-3 cursor-pointer"
-          style={{
-            background: 'rgba(251,191,36,0.07)',
-            border: '1px solid rgba(251,191,36,0.30)',
-          }}
+          className="signal-card"
+          data-tone="amber"
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)', cursor: 'pointer' }}
           onClick={() => {
-            try {
-              window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } }));
-            } catch { /* SSR */ }
+            try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } })); } catch { /* SSR */ }
           }}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
-              try {
-                window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } }));
-              } catch { /* SSR */ }
+              try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } })); } catch { /* SSR */ }
             }
           }}
           aria-label="Your personal risk factors are not yet included. Click to add your profile."
         >
-          <User className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#fbbf24' }} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: '#fbbf24' }}>
-              Score reflects company & market risk only
+          <User size={14} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--amber)', marginBottom: 'var(--space-1)' }}>
+              Score reflects company &amp; market risk only
             </p>
-            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
-              Your visa status, financial runway, and family situation haven't been included yet.
-              These can shift your personal score by ±8–25 points.{' '}
-              <span style={{ color: '#fbbf24', fontWeight: 600 }}>Add your profile →</span>
+            <p style={{ fontSize: '0.775rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+              Visa status, financial runway, and family situation not yet included.
+              Personal factors can shift your score by ±8–25 pts.{' '}
+              <span style={{ color: 'var(--amber)', fontWeight: 600 }}>Add your profile →</span>
             </p>
           </div>
         </motion.div>
@@ -762,29 +723,26 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         const tier = result.unifiedFreshness?.tier;
         if (tier === 'heuristic') {
           return (
-            <div
-              className="flex items-start gap-2.5 rounded-xl px-3.5 py-3"
-              style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}
+            <div className="signal-card" data-tone="amber"
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
             >
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
-              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
-                <span className="font-semibold text-amber-400">Heuristic baseline — </span>
-                no live data retrieved for this company. Analysis draws from historical sector averages.
-                Accuracy improves once live signals are available.
+              <AlertTriangle size={13} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }} />
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 700, color: 'var(--amber)' }}>Heuristic baseline — </span>
+                no live data retrieved. Analysis draws from historical sector averages.
               </p>
             </div>
           );
         }
         if (tier === 'stale') {
           return (
-            <div
-              className="flex items-start gap-2.5 rounded-xl px-3.5 py-3"
-              style={{ background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.20)' }}
+            <div className="signal-card" data-tone="slate"
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
             >
-              <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#94a3b8' }} />
-              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                <span className="font-semibold" style={{ color: '#94a3b8' }}>Partial live data — </span>
-                some signals are cached. Score reflects available data supplemented by cached baselines.
+              <Clock size={13} style={{ color: 'var(--text-3)', flexShrink: 0, marginTop: 1 }} />
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 700 }}>Partial live data — </span>
+                some signals are cached. Score uses available data supplemented by cached baselines.
               </p>
             </div>
           );
@@ -792,15 +750,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         return null;
       })()}
 
-      {/* v40.0: Calibration limitation chip for underrepresented segments */}
       {calibrationLimitation.limited && calibrationLimitation.reason && (
-        <div
-          className="flex items-start gap-2.5 rounded-xl px-3.5 py-2.5"
-          style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.20)' }}
+        <div className="signal-card" data-tone="amber"
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
         >
-          <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            <span className="font-semibold" style={{ color: '#f59e0b' }}>Calibration note: </span>
+          <Info size={13} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: '0.775rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700, color: 'var(--amber)' }}>Calibration note: </span>
             {calibrationLimitation.reason}
           </p>
         </div>

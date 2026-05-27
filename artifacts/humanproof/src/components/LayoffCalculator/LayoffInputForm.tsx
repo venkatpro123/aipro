@@ -12,7 +12,7 @@ import {
 } from "../../services/companyIntelligenceService";
 import { CompanyData } from "../../data/companyDatabase";
 import { profileUnknownCompany } from "../../services/ensemble/quickProfilerAgent";
-import { Building, Info, Zap, Shield, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Zap, Shield, TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
 import type { UniquenessDepth, KnowledgeType } from "../../services/layoffScoreEngine";
 import {
   searchOracleRoles,
@@ -25,12 +25,50 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getCareerIntelligence } from "../../data/careerIntelligenceDB";
 import { resolveRoleInput } from "../../services/roleResolution";
 
+// Pre-loaded company suggestions — replaces CSP-blocked Clearbit autocomplete
+const LOCAL_COMPANY_SUGGESTIONS: string[] = [
+  'Apple', 'Google', 'Microsoft', 'Amazon', 'Meta', 'Netflix', 'Tesla', 'NVIDIA',
+  'Intel', 'AMD', 'Qualcomm', 'Dell', 'HP', 'IBM', 'Oracle', 'SAP', 'Cisco',
+  'Salesforce', 'Adobe', 'Intuit', 'ServiceNow', 'Workday', 'Snowflake', 'Palantir',
+  'Cloudflare', 'Datadog', 'Okta', 'Twilio', 'HubSpot', 'Zendesk', 'Stripe',
+  'Infosys', 'TCS', 'Wipro', 'HCL Technologies', 'Tech Mahindra', 'Persistent Systems',
+  'Mphasis', 'Hexaware', 'Mindtree', 'L&T Technology Services', 'Cyient',
+  'Accenture', 'Cognizant', 'Capgemini', 'Deloitte', 'McKinsey', 'BCG', 'Bain',
+  'PwC', 'EY', 'KPMG', 'Booz Allen Hamilton',
+  'JPMorgan Chase', 'Goldman Sachs', 'Morgan Stanley', 'Bank of America', 'Citigroup',
+  'Wells Fargo', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank',
+  'Barclays', 'Deutsche Bank', 'HSBC', 'UBS', 'BNP Paribas',
+  'Walmart', 'Target', 'Nike', 'Samsung', 'Sony',
+  'Uber', 'Airbnb', 'Lyft', 'Spotify', 'Twitter', 'LinkedIn',
+  'Databricks', 'OpenAI', 'Anthropic', 'ByteDance', 'Grab', 'Gojek',
+];
+
 interface Props {
   onNext: () => void;
 }
 
+// ── Step progress dots ───────────────────────────────────────────────────────
+const StepProgress: React.FC<{ current: number; total: number }> = ({ current, total }) => (
+  <div className="audit-step-progress">
+    {Array.from({ length: total }, (_, i) => (
+      <div
+        key={i}
+        className={`audit-step-dot${i + 1 === current ? ' active' : i + 1 < current ? ' done' : ''}`}
+      />
+    ))}
+  </div>
+);
+
+// ── Wizard toggle group (replaces inline-styled ToggleGroup) ─────────────────
+interface ToggleOption {
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
+  desc?: string;
+}
+
 const ToggleGroup: React.FC<{
-  options: { value: string; label: string; icon?: React.ReactNode; desc?: string }[];
+  options: ToggleOption[];
   value: string;
   onChange: (val: string) => void;
   ariaLabel: string;
@@ -38,12 +76,8 @@ const ToggleGroup: React.FC<{
   <div
     role="radiogroup"
     aria-label={ariaLabel}
-    style={{
-      display: "grid",
-      gridTemplateColumns: options.length > 2 ? "repeat(auto-fit, minmax(120px, 1fr))" : "1fr 1fr",
-      gap: "10px",
-      marginBottom: "20px",
-    }}
+    className={options.length > 2 ? 'audit-grid-3col' : 'audit-grid-2col'}
+    style={{ marginBottom: 'var(--space-5)' }}
   >
     {options.map((opt) => {
       const active = value === opt.value;
@@ -53,53 +87,46 @@ const ToggleGroup: React.FC<{
           role="radio"
           aria-checked={active}
           onClick={() => onChange(opt.value)}
-          className={`card card-hover ${active ? "glow-border" : ""}`}
-          style={{
-            padding: "12px",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "6px",
-            background: active ? "var(--cyan-dim)" : "rgba(255,255,255,0.03)",
-            borderColor: active ? "var(--cyan)" : "var(--border)",
-            cursor: "pointer",
-            transition: "all 0.2s ease-out",
-          }}
+          className={`wizard-toggle-btn${active ? ' active' : ''}`}
         >
-          {opt.icon && <div style={{ fontSize: "1.2rem", color: active ? "var(--cyan)" : "var(--text-3)" }}>{opt.icon}</div>}
-          <div style={{ fontWeight: 700, fontSize: "0.85rem", color: active ? "var(--text)" : "var(--text-2)" }}>{opt.label}</div>
-          {opt.desc && <div style={{ fontSize: "0.65rem", color: "var(--text-3)", lineHeight: 1.2 }}>{opt.desc}</div>}
+          {opt.icon && <span className="toggle-icon">{opt.icon}</span>}
+          <span className="toggle-label">{opt.label}</span>
+          {opt.desc && <span className="toggle-desc">{opt.desc}</span>}
         </button>
       );
     })}
   </div>
 );
 
+// ── Live risk pulse bar ───────────────────────────────────────────────────────
 const RiskPulse: React.FC<{ score: number }> = ({ score }) => {
   const color = riskScoreColor(score);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '24px' }}>
-      <div style={{ position: 'relative', width: 12, height: 12 }}>
-        <motion.div 
-          animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0.2, 0.6] }}
+    <div className="signal-card" data-tone={score >= 65 ? 'red' : score >= 45 ? 'amber' : 'emerald'}
+      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}
+    >
+      <div style={{ position: 'relative', width: 12, height: 12, flexShrink: 0 }}>
+        <motion.div
+          animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0.15, 0.6] }}
           transition={{ duration: 2, repeat: Infinity }}
-          style={{ position: 'absolute', inset: -4, borderRadius: '50%', background: color }} 
+          style={{ position: 'absolute', inset: -4, borderRadius: '50%', background: color }}
         />
         <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '50%', background: color, boxShadow: `0 0 10px ${color}` }} />
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-3)' }}>LIVE RISK PULSE</span>
-          <span style={{ fontSize: '0.85rem', fontWeight: 800, color }}>{score}%</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
+          <span style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Live Risk Pulse
+          </span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>{score}%</span>
         </div>
         <div className="gauge-track" style={{ height: 4 }}>
-          <motion.div 
+          <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${score}%` }}
             transition={{ type: "spring", damping: 20 }}
-            className="gauge-fill" 
-            style={{ background: color }} 
+            className="gauge-fill"
+            style={{ background: color }}
           />
         </div>
       </div>
@@ -107,14 +134,10 @@ const RiskPulse: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-// ── Mini risk trend sparkline ────────────────────────────────────────────
-const MiniSparkline: React.FC<{ trend: { riskScore: number }[]; color: string }> = ({
-  trend,
-  color,
-}) => {
+// ── Mini risk trend sparkline ────────────────────────────────────────────────
+const MiniSparkline: React.FC<{ trend: { riskScore: number }[]; color: string }> = ({ trend, color }) => {
   if (!trend || trend.length < 2) return null;
-  const W = 52,
-    H = 20;
+  const W = 52, H = 20;
   const min = Math.min(...trend.map((t) => t.riskScore));
   const max = Math.max(...trend.map((t) => t.riskScore));
   const range = max - min || 1;
@@ -130,149 +153,92 @@ const MiniSparkline: React.FC<{ trend: { riskScore: number }[]; color: string }>
   );
 };
 
-// ── Risk direction icon ──────────────────────────────────────────────────
+// ── Risk direction icon ──────────────────────────────────────────────────────
 const DirectionIcon: React.FC<{ direction: OracleRoleEntry["riskDirection"]; size?: number }> = ({
-  direction,
-  size = 12,
+  direction, size = 12,
 }) => {
-  if (direction === "rising")
-    return <TrendingUp size={size} color="#ef4444" />;
-  if (direction === "falling")
-    return <TrendingDown size={size} color="#10b981" />;
+  if (direction === "rising")  return <TrendingUp size={size} color="#ef4444" />;
+  if (direction === "falling") return <TrendingDown size={size} color="#10b981" />;
   return <Minus size={size} color="#f59e0b" />;
 };
 
-// ── Role Intelligence Preview Card (shown after role selection) ──────────
+// ── Role Intelligence Preview Card ───────────────────────────────────────────
 const RoleIntelPreviewCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
   const riskColor = riskScoreColor(entry.currentRiskScore);
+  const tone = entry.currentRiskScore >= 65 ? 'red' : entry.currentRiskScore >= 45 ? 'amber' : 'emerald';
   return (
     <div
-      style={{
-        margin: "8px 0 20px",
-        padding: "14px 16px",
-        background: `${riskColor}08`,
-        border: `1px solid ${riskColor}30`,
-        borderRadius: "10px",
-        animation: "slideDown 0.25s ease-out",
-      }}
+      className="signal-card"
+      data-tone={tone}
+      style={{ margin: 'var(--space-2) 0 var(--space-5)', animation: 'slideDown 0.25s ease-out' }}
     >
-      {/* Header row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
         <div>
-          <div
-            style={{
-              color: riskColor,
-              fontSize: "0.62rem",
-              letterSpacing: "1.5px",
-              fontFamily: "monospace",
-              marginBottom: "2px",
-              textTransform: "uppercase",
-            }}
-          >
-            ORACLE ROLE INTELLIGENCE
+          <div style={{ color: riskColor, fontSize: '0.6rem', letterSpacing: '1.5px', fontFamily: 'var(--font-mono)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', fontWeight: 700 }}>
+            Oracle Role Intelligence
           </div>
-          <div style={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem" }}>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: '0.95rem' }}>
             {entry.displayTitle}
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-1)' }}>
           <div
-            style={{
-              background: `${riskColor}18`,
-              border: `1px solid ${riskColor}40`,
-              borderRadius: "6px",
-              padding: "3px 10px",
-              color: riskColor,
-              fontSize: "0.85rem",
-              fontWeight: 800,
-              fontFamily: "monospace",
-            }}
+            className={`audit-role-displacement ${entry.currentRiskScore >= 65 ? 'high' : entry.currentRiskScore >= 45 ? 'medium' : 'low'}`}
+            style={{ fontSize: '0.875rem', padding: '4px 12px' }}
           >
             {entry.currentRiskScore}%
           </div>
-          <div style={{ color: "#6b7280", fontSize: "0.62rem", fontFamily: "monospace" }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '0.62rem', fontFamily: 'var(--font-mono)' }}>
             {riskScoreLabel(entry.currentRiskScore)}
           </div>
         </div>
       </div>
 
-      {/* Summary */}
-      <p style={{ margin: "0 0 10px", color: "#9ba5b4", fontSize: "0.82rem", lineHeight: 1.5 }}>
-        {entry.summary.length > 120 ? entry.summary.slice(0, 120) + "…" : entry.summary}
+      <p style={{ margin: '0 0 var(--space-3)', color: 'var(--text-3)', fontSize: '0.82rem', lineHeight: 1.5 }}>
+        {entry.summary.length > 120 ? entry.summary.slice(0, 120) + '…' : entry.summary}
       </p>
 
-      {/* Stats row */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
-        {/* Safe skill */}
+      <div className="audit-stat-row" style={{ marginBottom: 'var(--space-3)' }}>
         {entry.topSafeSkill && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              background: "rgba(16,185,129,0.08)",
-              border: "1px solid rgba(16,185,129,0.2)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-              fontSize: "0.72rem",
-              color: "#10b981",
-            }}
-          >
+          <div className="signal-chip signal-chip-live">
             <Shield size={10} />
-            {entry.topSafeSkill.length > 28 ? entry.topSafeSkill.slice(0, 28) + "…" : entry.topSafeSkill}
+            {entry.topSafeSkill.length > 28 ? entry.topSafeSkill.slice(0, 28) + '…' : entry.topSafeSkill}
           </div>
         )}
-        {/* At-risk skill */}
-        {entry.topAtRiskSkill && entry.topAtRiskSkill !== "None" && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              background: "rgba(245,158,11,0.08)",
-              border: "1px solid rgba(245,158,11,0.2)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-              fontSize: "0.72rem",
-              color: "#f59e0b",
-            }}
-          >
+        {entry.topAtRiskSkill && entry.topAtRiskSkill !== 'None' && (
+          <div className="signal-chip signal-chip-mixed">
             <Zap size={10} />
-            {entry.topAtRiskSkill.length > 28 ? entry.topAtRiskSkill.slice(0, 28) + "…" : entry.topAtRiskSkill}
+            {entry.topAtRiskSkill.length > 28 ? entry.topAtRiskSkill.slice(0, 28) + '…' : entry.topAtRiskSkill}
           </div>
         )}
       </div>
 
-      {/* Trend + tags */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           <MiniSparkline trend={entry.riskTrend} color={riskColor} />
-          <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
             <DirectionIcon direction={entry.riskDirection} size={11} />
-            <span
-              style={{
-                color: entry.riskDirection === "rising" ? "#ef4444" : entry.riskDirection === "falling" ? "#10b981" : "#f59e0b",
-                fontSize: "0.65rem",
-                fontFamily: "monospace",
-              }}
-            >
-              {entry.riskDirection === "rising" ? "Risk rising" : entry.riskDirection === "falling" ? "Risk falling" : "Stable"}
+            <span style={{
+              color: entry.riskDirection === 'rising' ? '#ef4444' : entry.riskDirection === 'falling' ? '#10b981' : '#f59e0b',
+              fontSize: '0.65rem', fontFamily: 'var(--font-mono)',
+            }}>
+              {entry.riskDirection === 'rising' ? 'Risk rising' : entry.riskDirection === 'falling' ? 'Risk falling' : 'Stable'}
             </span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {entry.contextTags.slice(0, 2).map((tag) => (
             <span
               key={tag}
               style={{
-                background: "rgba(124,58,255,0.12)",
-                border: "1px solid rgba(124,58,255,0.25)",
-                borderRadius: "4px",
-                padding: "2px 6px",
-                fontSize: "0.6rem",
-                color: "#a78bfa",
-                fontFamily: "monospace",
-                letterSpacing: "0.5px",
+                background: 'rgba(124,58,255,0.12)',
+                border: '1px solid rgba(124,58,255,0.25)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '2px 6px',
+                fontSize: '0.6rem',
+                color: '#a78bfa',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.5px',
               }}
             >
               {tag}
@@ -281,31 +247,14 @@ const RoleIntelPreviewCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
         </div>
       </div>
 
-      {/* Confidence */}
-      <div
-        style={{
-          marginTop: "8px",
-          fontSize: "0.62rem",
-          color: "#4b5563",
-          fontFamily: "monospace",
-          textAlign: "right",
-        }}
-      >
+      <div style={{ marginTop: 'var(--space-2)', fontSize: '0.62rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
         Oracle confidence: {entry.confidenceScore}%
       </div>
     </div>
   );
 };
 
-// ── RoleResolutionBanner ──────────────────────────────────────────────────────
-// Shown below RoleIntelPreviewCard after the user selects a role.
-// Two states:
-//   found    → confirms the resolved key + coverage stats so the user knows
-//              what the Skills & Career tab will show before they submit.
-//   fallback → the oracle key has no career intelligence entry; the dashboard
-//              will use buildFallbackIntel (score-derived generic content).
-//              Shows a feedback link so users can request database coverage.
-
+// ── Role Resolution Banner ────────────────────────────────────────────────────
 const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
   const intel = useMemo(() => getCareerIntelligence(entry.oracleKey), [entry.oracleKey]);
 
@@ -313,106 +262,69 @@ const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
     const atRiskCount = intel.skills.at_risk?.length ?? 0;
     const safeCount   = intel.skills.safe?.length ?? 0;
     const pathCount   = intel.careerPaths?.length ?? 0;
-
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          padding: '10px 14px',
-          borderRadius: '8px',
-          background: 'rgba(16,185,129,0.06)',
-          border: '1px solid rgba(16,185,129,0.22)',
-          marginTop: '-12px',
-          marginBottom: '16px',
-        }}
-      >
-        {/* Resolution confirmation line */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ color: '#10b981', fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            ✓ Resolved
-          </span>
-          <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', fontWeight: 600 }}>
+      <div className="signal-card" data-tone="emerald" style={{ marginTop: 'calc(var(--space-2) * -1)', marginBottom: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
+          <span className="signal-chip signal-chip-live">✓ Resolved</span>
+          <span style={{ color: 'var(--text)', fontSize: '0.82rem', fontWeight: 600 }}>
             Analyzing as: {intel.displayRole}
           </span>
-          <span
-            style={{
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: '0.65rem',
-              fontFamily: 'monospace',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '4px',
-              padding: '1px 6px',
-            }}
-          >
-            key: {entry.oracleKey}
+          <span style={{
+            color: 'var(--text-3)', fontSize: '0.65rem', fontFamily: 'var(--font-mono)',
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 'var(--radius-sm)', padding: '1px 6px',
+          }}>
+            {entry.oracleKey}
           </span>
         </div>
-        {/* Coverage stats */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>Intelligence coverage:</span>
+        <div className="audit-stat-row">
+          <span style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>Coverage:</span>
           {atRiskCount > 0 && (
-            <span style={{ color: '#f59e0b', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+            <span style={{ color: 'var(--amber)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
               {atRiskCount} at-risk skill{atRiskCount !== 1 ? 's' : ''}
             </span>
           )}
           {safeCount > 0 && (
-            <span style={{ color: '#10b981', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+            <span style={{ color: 'var(--emerald)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
               {safeCount} safe skill{safeCount !== 1 ? 's' : ''}
             </span>
           )}
           {pathCount > 0 && (
-            <span style={{ color: '#818cf8', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+            <span style={{ color: '#818cf8', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
               {pathCount} transition path{pathCount !== 1 ? 's' : ''}
             </span>
           )}
           {atRiskCount === 0 && safeCount === 0 && pathCount === 0 && (
-            <span style={{ color: '#6b7280', fontSize: '0.72rem' }}>basic</span>
+            <span style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>basic</span>
           )}
         </div>
       </div>
     );
   }
 
-  // Fallback — no CareerIntelligence entry for this oracle key
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        padding: '10px 14px',
-        borderRadius: '8px',
-        background: 'rgba(245,158,11,0.06)',
-        border: '1px solid rgba(245,158,11,0.25)',
-        marginTop: '-12px',
-        marginBottom: '16px',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-        <span style={{ color: '#f59e0b', fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
-          ⚠ Limited Coverage
-        </span>
-        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem' }}>
-          Role not in our database — analysis generated from risk score.
+    <div className="signal-card" data-tone="amber" style={{ marginTop: 'calc(var(--space-2) * -1)', marginBottom: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
+        <span className="signal-chip signal-chip-mixed">⚠ Limited Coverage</span>
+        <span style={{ color: 'var(--text-2)', fontSize: '0.8rem' }}>
+          Role not in database — analysis from risk score.
         </span>
       </div>
-      <div style={{ color: '#6b7280', fontSize: '0.72rem', lineHeight: 1.5 }}>
-        Coverage: <span style={{ color: '#f59e0b' }}>basic</span>. Skills &amp; Career tab will show general guidance, not role-specific intelligence.{' '}
+      <div style={{ color: 'var(--text-3)', fontSize: '0.72rem', lineHeight: 1.5 }}>
+        Skills &amp; Career tab will show general guidance.{' '}
         <a
           href="/contact"
           style={{ color: '#818cf8', textDecoration: 'underline', cursor: 'pointer' }}
           onClick={e => { e.stopPropagation(); window.open('/contact', '_blank'); }}
         >
-          Request coverage for your role →
+          Request coverage →
         </a>
       </div>
     </div>
   );
 };
 
+// ── Main export ───────────────────────────────────────────────────────────────
 export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile } = useHumanProof();
@@ -428,52 +340,39 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   );
   const [isProfiling, setIsProfiling] = useState(false);
   const [profileFailed, setProfileFailed] = useState(false);
-  // v6.0 Audit Fix: Disambiguation state — when Supabase returns multiple fuzzy matches
   const [disambiguationCandidates, setDisambiguationCandidates] = useState<Array<{
     name: string; industry: string; region: string; riskScore: number;
   }>>([]);
   const [showDisambiguation, setShowDisambiguation] = useState(false);
-
-  // Match confirmation prompt — shown when user clicks a result with confidence < 0.8.
-  // The pending company is held here; it is NOT committed to selectedCompany until
-  // the user explicitly confirms. This prevents a word_overlap match from driving a
-  // score without the user knowing which company was actually matched.
   const [pendingMatchConfirmation, setPendingMatchConfirmation] = useState<{
-    company:     any;           // the search result object
-    matchedName: string;        // the DB company name that was matched
-    confidence:  number;        // 0.5 or 0.7
-    matchType:   MatchType;
-    userQuery:   string;        // what the user originally typed
+    company: any;
+    matchedName: string;
+    confidence: number;
+    matchType: MatchType;
+    userQuery: string;
   } | null>(null);
 
-  // Role search state — oracle-backed
+  // Role search state
   const [roleTitle, setRoleTitle] = useState(state.roleTitle || "");
   const [selectedOracleEntry, setSelectedOracleEntry] = useState<OracleRoleEntry | null>(null);
   const [roleSuggestions, setRoleSuggestions] = useState<OracleRoleEntry[]>([]);
   const [showRoleSuggestions, setShowRoleSuggestions] = useState(false);
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState(-1);
-  // Tracks whether a previously confirmed selection was cleared by editing the field.
-  // When true, a warning badge is shown so the user knows calibrated data is no longer linked.
   const [oracleSelectionCleared, setOracleSelectionCleared] = useState(false);
   const roleInputRef = useRef<HTMLInputElement>(null);
 
   // Step 2 state
   const [tenureYears, setTenureYears] = useState(state.userFactors?.tenureYears || 1.5);
-  /** BUG-C1 FIX: Total career years across ALL jobs (not just current company) */
   const [careerYears, setCareerYears] = useState(state.userFactors?.careerYears ?? 5);
-  // Priority 3: 3-level uniqueness depth replaces Yes/No toggle
   const [uniquenessDepth, setUniquenessDepth] = useState<UniquenessDepth>(
     state.userFactors?.uniquenessDepth ??
     (state.userFactors?.isUniqueRole ? 'critical_knowledge' : 'generic')
   );
-  // Sub-classification of critical_knowledge — only shown when uniquenessDepth === 'critical_knowledge'.
-  // Pre-populated from UserProfile.uniquenessKnowledgeType when not already in per-session state.
   const [knowledgeType, setKnowledgeType] = useState<KnowledgeType>(
     (state.userFactors as any)?.knowledgeType
     ?? (userProfile?.uniquenessKnowledgeType as KnowledgeType | undefined)
     ?? 'system_specific'
   );
-  // Keep isUniqueRole derived for backward compat
   const isUniqueRole = uniquenessDepth === 'critical_knowledge';
   const [performanceTier, setPerformanceTier] = useState(
     state.userFactors?.performanceTier || "average"
@@ -481,15 +380,11 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const [hasRecentPromotion, setHasRecentPromotion] = useState(
     state.userFactors?.hasRecentPromotion ?? false
   );
-  // v10.0: Financial runway — months of expenses covered. 0 = not provided.
   const [financialRunwayMonths, setFinancialRunwayMonths] = useState<number>(0);
-
   const [hasKeyRelationships, setHasKeyRelationships] = useState(
     state.userFactors?.hasKeyRelationships ?? false
   );
 
-  // ── Step 2 Logic Hits Unconditionally ────────────────────────────────
-  // Simple heuristic for "Pulse" score calculation
   const pulseScore = useMemo(() => {
     let base = selectedOracleEntry?.currentRiskScore || 45;
     if (performanceTier === 'top') base -= 15;
@@ -503,10 +398,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     return Math.min(99, Math.max(1, base));
   }, [selectedOracleEntry, performanceTier, tenureYears, uniquenessDepth, hasRecentPromotion, hasKeyRelationships]);
 
-  // ── Company search with debounce — queries Supabase 2000-company table first ──
-  // Resolution order: Supabase (2000 companies) → local bridge (50) → Clearbit (name/logo only)
-  // v13.0 fix: AbortController cancels in-flight requests when the query changes,
-  // preventing stale results from a slow previous request from overwriting fresh ones.
+  // ── Company search with debounce ──────────────────────────────────────────
   useEffect(() => {
     const controller = new AbortController();
     const tid = setTimeout(async () => {
@@ -514,19 +406,17 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         setSearchResults([]);
         return;
       }
-      // Reject queries that are pure whitespace or excessively long (prevents ILIKE abuse)
       const trimmed = companySearch.trim();
       if (trimmed.length === 0 || trimmed.length > 100) {
         setSearchResults([]);
         return;
       }
 
-      // 1. Supabase company_intelligence (2000 companies) — try first
-      // If multiple candidates with the same root name exist, surface disambiguation
       let merged: any[] = [];
+
+      // 1. Supabase company_intelligence (2000 companies)
       try {
         const supabaseResults = await searchSupabaseCompanies(companySearch, 10);
-        // Disambiguation: if ≥2 results share the first word of the query, let the user pick
         const rootWord = (companySearch ?? '').split(' ')[0].toLowerCase();
         const sameRootCount = supabaseResults.filter(r =>
           r.name != null && r.name.toLowerCase().startsWith(rootWord)
@@ -540,30 +430,22 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           setShowDisambiguation(false);
           setDisambiguationCandidates([]);
         }
-        // Only push entries with valid names — null company_name from DB would
-        // crash every subsequent .name.toLowerCase() call in this effect.
-        supabaseResults.filter(r => r.name != null && r.name.length > 0).slice(0, 8).forEach(r => {
-          merged.push({
-            name: r.name,
-            industry: r.industry,
-            isPublic: false,
-            region: "GLOBAL",
-            employeeCount: 0,
-            layoffsLast24Months: [],
-            layoffRounds: 0,
-            lastLayoffPercent: null,
-            revenuePerEmployee: 150000,
-            aiInvestmentSignal: "medium",
-            source: "Supabase Intelligence",
-            lastUpdated: new Date().toISOString(),
-            riskScore: r.riskScore,
-            isExternal: false,
-            fromSupabase: true,
-          } as any);
-        });
-      } catch (_) { /* Supabase unavailable — fall through */ }
+        supabaseResults
+          .filter(r => r.name != null && r.name.length > 0)
+          .slice(0, 8)
+          .forEach(r => {
+            merged.push({
+              name: r.name, industry: r.industry, isPublic: false, region: "GLOBAL",
+              employeeCount: 0, layoffsLast24Months: [], layoffRounds: 0,
+              lastLayoffPercent: null, revenuePerEmployee: 150000,
+              aiInvestmentSignal: "medium", source: "Supabase Intelligence",
+              lastUpdated: new Date().toISOString(), riskScore: r.riskScore,
+              isExternal: false, fromSupabase: true,
+            } as any);
+          });
+      } catch (_) { /* Supabase unavailable */ }
 
-      // 2. Local code-side bridge (50 companies) — supplement Supabase results
+      // 2. Local code-side bridge (50 companies)
       const local = searchAllCompanies(companySearch).map((c) => {
         const fullData = resolveCompanyData(c.key);
         return { ...(fullData as any), isExternal: false, fromSupabase: false };
@@ -574,50 +456,34 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         }
       });
 
-      // 3. Clearbit fallback for name/logo only (when Supabase + local have < 3 results)
+      // 3. Local fallback suggestions (replaces CSP-blocked Clearbit)
       if (merged.length < 3) {
-        try {
-          const resp = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(companySearch)}`);
-          if (resp.ok) {
-            const external = await resp.json();
-            external.forEach((ext: any) => {
-              if (ext.name && !merged.find((m) => m.name != null && m.name.toLowerCase() === ext.name.toLowerCase())) {
-                merged.push({
-                  name: ext.name,
-                  logo: ext.logo,
-                  domain: ext.domain,
-                  isPublic: false,
-                  industry: "Unknown — full analysis on submit",
-                  region: "GLOBAL",
-                  employeeCount: 0,
-                  layoffsLast24Months: [],
-                  layoffRounds: 0,
-                  lastLayoffPercent: null,
-                  revenuePerEmployee: 150000,
-                  aiInvestmentSignal: "medium",
-                  source: "Clearbit",
-                  lastUpdated: new Date().toISOString(),
-                  isExternal: true,
-                } as any);
-              }
-            });
-          }
-        } catch (_) { /* Clearbit unavailable */ }
+        const q = companySearch.toLowerCase();
+        LOCAL_COMPANY_SUGGESTIONS
+          .filter(n => n.toLowerCase().includes(q))
+          .slice(0, Math.max(0, 5 - merged.length))
+          .forEach(name => {
+            if (!merged.find(m => m.name != null && m.name.toLowerCase() === name.toLowerCase())) {
+              merged.push({
+                name, isPublic: false, industry: "Company",
+                region: "GLOBAL", employeeCount: 0,
+                layoffsLast24Months: [], layoffRounds: 0,
+                lastLayoffPercent: null, revenuePerEmployee: 150000,
+                aiInvestmentSignal: "medium", source: "Suggestions",
+                lastUpdated: new Date().toISOString(), isExternal: true,
+              } as any);
+            }
+          });
       }
 
-      // Only update state if this request was not cancelled by a newer search
       if (!controller.signal.aborted) {
         setSearchResults(merged.slice(0, 10));
       }
     }, 300);
-    return () => {
-      clearTimeout(tid);
-      controller.abort(); // cancel any in-flight async operations from this effect
-    };
+    return () => { clearTimeout(tid); controller.abort(); };
   }, [companySearch, selectedCompany]);
 
-
-  // ── Oracle role search with debounce ─────────────────────────────────
+  // ── Oracle role search with debounce ──────────────────────────────────────
   useEffect(() => {
     const tid = setTimeout(() => {
       if (roleTitle.length >= 2) {
@@ -625,8 +491,6 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         setRoleSuggestions(results);
         setShowRoleSuggestions(results.length > 0);
         setFocusedSuggestionIndex(-1);
-        // If user edited the field past the point where it still matches the confirmed
-        // selection, clear it and raise the warning flag so the UI can tell the user.
         if (selectedOracleEntry && roleTitle && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
           setSelectedOracleEntry(null);
           setOracleSelectionCleared(true);
@@ -647,11 +511,10 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     setShowRoleSuggestions(false);
   };
 
-  // Handle keyboard navigation for role suggestions — ENHANCEMENT-E3
+  // Keyboard navigation for role suggestions
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!showRoleSuggestions || roleSuggestions.length === 0) return;
-
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setFocusedSuggestionIndex(prev => (prev < roleSuggestions.length - 1 ? prev + 1 : prev));
@@ -669,7 +532,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     return () => window.removeEventListener("keydown", handler);
   }, [showRoleSuggestions, roleSuggestions, focusedSuggestionIndex]);
 
-  // Close on outside click
+  // Close role suggestions on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (roleInputRef.current && !roleInputRef.current.contains(e.target as Node)) {
@@ -680,28 +543,21 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // ── Company search trigger ──────────────────────────────────────────
+  // ── Company select handler ────────────────────────────────────────────────
   const handleCompanySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setCompanySearch(val);
     setSelectedCompany(null);
-    setPendingMatchConfirmation(null);  // dismiss stale prompt when user retypes
+    setPendingMatchConfirmation(null);
   };
 
   const selectCompany = async (comp: any, skipConfidenceCheck = false) => {
-    // Compute match confidence between what the user typed and the result name.
-    // word_overlap (0.5) must never drive a score without explicit confirmation —
-    // "Wipro BPO" → "Wipro" is a different legal entity and a different risk profile.
     if (!skipConfidenceCheck && companySearch && comp.name) {
       const { score: confidence, matchType } = computeMatchConfidence(companySearch, comp.name);
       if (confidence < MATCH_CONFIRMATION_THRESHOLD) {
-        // Hold the result pending user confirmation; do not commit yet.
         setPendingMatchConfirmation({
-          company:     comp,
-          matchedName: comp.name,
-          confidence,
-          matchType,
-          userQuery:   companySearch,
+          company: comp, matchedName: comp.name,
+          confidence, matchType, userQuery: companySearch,
         });
         setSearchResults([]);
         return;
@@ -711,26 +567,19 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     setCompanySearch(comp.name);
     setSearchResults([]);
     if (comp.isExternal) {
-      // BUG-B20 FIX: Quick re-lookup in local DB before firing expensive profile API.
-      // Clearbit might return "Meta" while DB has "Meta Platforms" — we want to find the DB entry if possible.
       const localMatch = resolveCompanyData(comp.name);
       if (localMatch && localMatch.name && comp.name && localMatch.name.toLowerCase() === comp.name.toLowerCase()) {
         setSelectedCompany(localMatch);
         return;
       }
-
       setIsProfiling(true);
       const profile = await profileUnknownCompany(comp.name);
       setIsProfiling(false);
       if (profile) {
         const fullComp: CompanyData = {
-          ...comp,
-          industry: profile.industry,
-          isPublic: profile.isPublic,
-          employeeCount: profile.employeeCount,
-          region: profile.region,
-          ticker: profile.ticker,
-          source: `AI Profile (${comp.name})`,
+          ...comp, industry: profile.industry, isPublic: profile.isPublic,
+          employeeCount: profile.employeeCount, region: profile.region,
+          ticker: profile.ticker, source: `AI Profile (${comp.name})`,
         };
         setSelectedCompany(fullComp);
       } else {
@@ -756,25 +605,17 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
       if (!profile) setProfileFailed(true);
       else setProfileFailed(false);
       finalCompany = {
-        name: companySearch,
-        isPublic: profile?.isPublic ?? false,
-        industry: profile?.industry ?? "Technology",
-        region: profile?.region ?? "GLOBAL",
-        employeeCount: profile?.employeeCount ?? 500,
-        ticker: profile?.ticker,
-        revenueGrowthYoY: null,
-        stock90DayChange: null,
-        layoffsLast24Months: [],
-        layoffRounds: 0,
-        lastLayoffPercent: null,
-        revenuePerEmployee: 150000,
-        aiInvestmentSignal: "medium",
+        name: companySearch, isPublic: profile?.isPublic ?? false,
+        industry: profile?.industry ?? "Technology", region: profile?.region ?? "GLOBAL",
+        employeeCount: profile?.employeeCount ?? 500, ticker: profile?.ticker,
+        revenueGrowthYoY: null, stock90DayChange: null,
+        layoffsLast24Months: [], layoffRounds: 0, lastLayoffPercent: null,
+        revenuePerEmployee: 150000, aiInvestmentSignal: "medium",
         source: profile ? `AI Profile (${companySearch})` : "User Input",
         lastUpdated: new Date().toISOString(),
       };
     }
 
-    // Auto-derive department from oracle key
     const department = resolvedRole.canonicalKey
       ? getAutoDeducedDepartment(resolvedRole.canonicalKey)
       : "Operations";
@@ -783,37 +624,27 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     dispatch({
       type: "SET_INPUTS",
       payload: {
-        companyName: finalCompany.name,
-        roleTitle: roleTitle.trim(),
-        department,
-        oracleKey: resolvedRole.canonicalKey,
+        companyName: finalCompany.name, roleTitle: roleTitle.trim(),
+        department, oracleKey: resolvedRole.canonicalKey,
       },
     });
     setStep(2);
   };
 
   const handleCalculate = () => {
-    // BUG-GAP8 FIX: Logic validation — career years cannot be less than company tenure
     let validatedCareerYears = careerYears;
     if (careerYears < tenureYears) {
       validatedCareerYears = tenureYears;
       setCareerYears(tenureYears);
     }
-
     dispatch({
       type: "SET_INPUTS",
       payload: {
         userFactors: {
-          tenureYears,
-          careerYears: validatedCareerYears,
-          isUniqueRole,
-          uniquenessDepth,
-          // knowledgeType is only meaningful when uniquenessDepth === 'critical_knowledge'
+          tenureYears, careerYears: validatedCareerYears, isUniqueRole, uniquenessDepth,
           knowledgeType: uniquenessDepth === 'critical_knowledge' ? knowledgeType : undefined,
           performanceTier: performanceTier as "top" | "average" | "below" | "unknown",
-          hasRecentPromotion,
-          hasKeyRelationships,
-          financialRunwayMonths, // v10.0: passed to fetchAuditData for personalized strategy
+          hasRecentPromotion, hasKeyRelationships, financialRunwayMonths,
         } as any,
       },
     });
@@ -828,97 +659,108 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     roleTitle.trim().length > 0 &&
     !!resolvedRolePreview.canonicalKey;
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "12px 16px",
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "8px",
-    color: "#fff",
-    marginBottom: "16px",
-    fontSize: "1rem",
-    outline: "none",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    marginBottom: "8px",
-    color: "#d1d5db",
-    fontSize: "0.9rem",
-  };
-
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth: "520px", margin: "0 auto" }}>
+    <div className="audit-wizard-shell">
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 10 }}
+          initial={{ opacity: 0, x: step === 1 ? -12 : 12 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
-          transition={{ duration: 0.3 }}
-          className="glass-panel"
-          style={{ padding: 'clamp(20px, 5vw, 32px)', borderRadius: 'var(--radius-xl)' }}
+          exit={{ opacity: 0, x: step === 1 ? 12 : -12 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="audit-wizard-card"
         >
+          <StepProgress current={step} total={2} />
+
           {step === 1 ? (
-             <div>
-              <header style={{ marginBottom: '32px' }}>
-                <div className="badge badge-cyan" style={{ marginBottom: '12px' }}>STEP 01/02</div>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '8px' }}>Target Identification</h2>
-                <p style={{ color: 'var(--text-3)', fontSize: '0.9rem' }}>Specify the company and role to initialize the Oracle sensors.</p>
-              </header>
+            <div>
+              {/* Step header */}
+              <div className="audit-step-header">
+                <div className="audit-step-number">Step 1 of 2</div>
+                <h2 className="audit-step-title">Target Identification</h2>
+                <p className="audit-step-sub">Specify the company and role to initialize the Oracle sensors.</p>
+              </div>
 
               {profileFailed && (
-                <div style={{
-                  background: "rgba(245,158,11,0.1)", border: "1px solid #f59e0b",
-                  borderRadius: "8px", padding: "12px", marginBottom: "20px",
-                  fontSize: "0.82rem", color: "#f59e0b", display: "flex", gap: "10px",
-                }}>
+                <div className="signal-card" data-tone="amber" style={{ marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
                   <span>⚠</span>
-                  <p>Company not found in our verified database. Using industry defaults.</p>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--amber)', margin: 0 }}>
+                    Company not found in our verified database. Using industry defaults.
+                  </p>
                 </div>
               )}
 
-              <div className="input-wrap" style={{ marginBottom: '24px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.05em' }}>COMPANY NAME</label>
-                <div style={{ position: "relative" }}>
+              {/* Company input */}
+              <div className="audit-field-group" style={{ position: 'relative' }}>
+                <label htmlFor="company-input">Company Name</label>
+                <div style={{ position: 'relative' }}>
+                  <Search
+                    size={15}
+                    style={{
+                      position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                      color: 'var(--text-3)', pointerEvents: 'none', zIndex: 1,
+                    }}
+                  />
                   <input
+                    id="company-input"
                     type="text"
                     placeholder="Search company..."
                     value={companySearch}
                     onChange={handleCompanySearch}
                     className="input"
-                    style={{ paddingRight: '100px' }}
+                    style={{ paddingLeft: 38, paddingRight: isProfiling ? 100 : selectedCompany ? 90 : 16 }}
+                    autoComplete="off"
                   />
-                  {isProfiling && <div style={{ position: 'absolute', right: '12px', top: '16px' }} className="spinner" />}
-                  {selectedCompany && !isProfiling && <span style={{ position: 'absolute', right: '12px', top: '16px', fontSize: '0.65rem', color: 'var(--cyan)', fontWeight: 800 }}>VERIFIED</span>}
+                  {isProfiling && (
+                    <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}
+                      className="spinner" />
+                  )}
+                  {selectedCompany && !isProfiling && (
+                    <span style={{
+                      position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                      fontSize: '0.62rem', color: 'var(--cyan)', fontWeight: 800,
+                      fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
+                    }}>
+                      VERIFIED
+                    </span>
+                  )}
                 </div>
+
+                {/* Search results dropdown */}
                 {searchResults.length > 0 && (
-                  <div className="glass-panel-heavy" style={{ position: "absolute", zIndex: 100, width: '100%', marginTop: '56px', borderRadius: '12px', overflow: 'hidden', maxHeight: '300px', overflowY: 'auto' }}>
+                  <div className="audit-suggest-list">
                     {searchResults.map(res => {
-                      // Compute match ratio between what the user typed and this result name.
-                      // Shown as a subtle indicator so users can spot when the result
-                      // is a partial/parent-company match (e.g. "Wipro BPO" → "Wipro").
                       const ratio = computeMatchRatio(companySearch, res.name);
                       const isPartialMatch = ratio < 0.80 && ratio >= FUZZY_MATCH_MIN_RATIO;
                       const isBelowThreshold = ratio < FUZZY_MATCH_MIN_RATIO;
                       return (
-                        <div key={res.name} onClick={() => selectCompany(res)} className="tab-btn" style={{ width: '100%', justifyContent: 'flex-start', padding: '12px 16px', height: 'auto', borderRadius: 0, borderBottom: '1px solid var(--border)', opacity: isBelowThreshold ? 0.45 : 1 }}>
-                          <div style={{ flex: 1, textAlign: 'left' }}>
-                            <div style={{ fontWeight: 700 }}>{res.name}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+                        <div
+                          key={res.name}
+                          onClick={() => selectCompany(res)}
+                          className="audit-suggest-item"
+                          style={{ opacity: isBelowThreshold ? 0.45 : 1 }}
+                        >
+                          <div className="company-meta">
+                            <div className="company-name">{res.name}</div>
+                            <div className="company-industry">
                               {res.industry}
                               {(res as any).fromSupabase && (
                                 <span style={{ marginLeft: 6, color: 'var(--cyan)', fontWeight: 700 }}>· Intelligence DB</span>
                               )}
                               {isPartialMatch && (
-                                <span style={{ marginLeft: 6, color: '#f59e0b', fontWeight: 700 }}>· partial match</span>
+                                <span style={{ marginLeft: 6, color: 'var(--amber)', fontWeight: 700 }}>· partial match</span>
                               )}
                             </div>
                           </div>
                           {(res as any).riskScore != null && (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: (res as any).riskScore >= 65 ? '#ef4444' : (res as any).riskScore >= 45 ? '#f59e0b' : '#10b981' }}>
+                            <span
+                              className={`company-chip ${(res as any).riskScore >= 65 ? 'high' : (res as any).riskScore >= 45 ? 'medium' : 'low'}`}
+                              style={{
+                                background: (res as any).riskScore >= 65 ? 'rgba(239,68,68,0.15)' : (res as any).riskScore >= 45 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
+                                color: (res as any).riskScore >= 65 ? 'var(--red)' : (res as any).riskScore >= 45 ? 'var(--amber)' : 'var(--emerald)',
+                              }}
+                            >
                               {(res as any).riskScore}
                             </span>
                           )}
@@ -928,63 +770,51 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   </div>
                 )}
 
-                {/* Match confirmation prompt — shown when confidence < 0.8 */}
+                {/* Match confirmation prompt */}
                 {pendingMatchConfirmation && (
-                  <div style={{ marginTop: '4px', padding: '12px 14px', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.08)' }}>
-                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#f59e0b', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  <div className="signal-card" data-tone="amber" style={{ marginTop: 'var(--space-2)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--amber)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}>
                       Confirm company match
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', marginBottom: 10, lineHeight: 1.5 }}>
-                      You typed <span style={{ fontWeight: 700, color: 'var(--text)' }}>"{pendingMatchConfirmation.userQuery}"</span>.
-                      {' '}The closest match is <span style={{ fontWeight: 700, color: 'var(--text)' }}>{pendingMatchConfirmation.matchedName}</span>.
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', marginBottom: 'var(--space-3)', lineHeight: 1.5 }}>
+                      You typed <strong style={{ color: 'var(--text)' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
+                      {' '}Closest match: <strong style={{ color: 'var(--text)' }}>{pendingMatchConfirmation.matchedName}</strong>.
                       {pendingMatchConfirmation.matchType === 'word_overlap' && (
-                        <span style={{ color: '#f59e0b' }}> These may be different entities — confirm before scores are calculated.</span>
+                        <span style={{ color: 'var(--amber)' }}> These may be different entities.</span>
                       )}
                     </p>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                       <button
-                        onClick={() => {
-                          // User confirmed — proceed with the matched company
-                          selectCompany(pendingMatchConfirmation.company, true);
-                        }}
-                        style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
+                        onClick={() => selectCompany(pendingMatchConfirmation.company, true)}
+                        className="btn btn-ghost btn-sm"
+                        style={{ background: 'rgba(245,158,11,0.15)', borderColor: 'rgba(245,158,11,0.3)', color: 'var(--amber)', fontWeight: 700 }}
                       >
                         Yes, use {pendingMatchConfirmation.matchedName}
                       </button>
                       <button
-                        onClick={() => {
-                          // User rejected — fall back to unknown company using their original query.
-                          // This triggers the Tier C scoring path (scope framing, no hallucinated data).
-                          setPendingMatchConfirmation(null);
-                          setSearchResults([]);
-                          // Keep companySearch as the user's original text so they can refine it,
-                          // but clear selectedCompany so no matched data feeds the score.
-                          setSelectedCompany(null);
-                        }}
-                        style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-3)', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer' }}
+                        onClick={() => { setPendingMatchConfirmation(null); setSearchResults([]); setSelectedCompany(null); }}
+                        className="btn btn-ghost btn-sm"
                       >
-                        No, search again
+                        Search again
                       </button>
                     </div>
-                    <div style={{ marginTop: 8, fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4 }}>
-                      If you proceed without confirming, your company will be treated as unknown and scored using role and industry signals only.
-                    </div>
+                    <p style={{ marginTop: 'var(--space-2)', fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4 }}>
+                      Without confirmation, company is treated as unknown and scored via role + industry signals only.
+                    </p>
                   </div>
                 )}
 
-                {/* v6.0 Audit Fix: Disambiguation banner — multiple Supabase entities share this name */}
+                {/* Disambiguation */}
                 {showDisambiguation && disambiguationCandidates.length > 0 && (
-                  <div style={{ marginTop: '4px', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--amber, #f59e0b)', background: 'rgba(245,158,11,0.08)' }}>
-                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--amber, #f59e0b)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  <div className="signal-card" data-tone="amber" style={{ marginTop: 'var(--space-2)' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--amber)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}>
                       Multiple entities found — confirm which one:
                     </div>
                     {disambiguationCandidates.map(c => (
-                      <button key={c.name} onClick={() => {
-                        setCompanySearch(c.name);
-                        setShowDisambiguation(false);
-                        setDisambiguationCandidates([]);
-                      }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: '4px 0', cursor: 'pointer', fontSize: '0.75rem', color: 'var(--text-2)', fontWeight: 600 }}
+                      <button
+                        key={c.name}
+                        onClick={() => { setCompanySearch(c.name); setShowDisambiguation(false); setDisambiguationCandidates([]); }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: 'var(--space-1) 0', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text-2)', fontWeight: 600 }}
                       >
                         → {c.name} <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>({c.industry})</span>
                       </button>
@@ -993,44 +823,74 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 )}
               </div>
 
-              <div className="input-wrap" style={{ marginBottom: '32px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.05em' }}>JOB ROLE</label>
-                <div style={{ position: "relative" }}>
+              {/* Role input */}
+              <div className="audit-field-group" style={{ position: 'relative', marginBottom: 'var(--space-8)' }} ref={roleInputRef}>
+                <label htmlFor="role-input">Job Role</label>
+                <div style={{ position: 'relative' }}>
+                  <Search
+                    size={15}
+                    style={{
+                      position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+                      color: 'var(--text-3)', pointerEvents: 'none', zIndex: 1,
+                    }}
+                  />
                   <input
+                    id="role-input"
                     type="text"
                     placeholder="Search role..."
                     value={roleTitle}
                     onChange={(e) => setRoleTitle(e.target.value)}
                     className="input"
+                    style={{ paddingLeft: 38 }}
+                    autoComplete="off"
                   />
                 </div>
+
+                {/* Role suggestions dropdown */}
                 {showRoleSuggestions && (
-                   <div className="glass-panel-heavy" style={{ position: "absolute", zIndex: 100, width: '100%', marginTop: '80px', borderRadius: '12px', overflow: 'hidden', maxHeight: '300px', overflowY: 'auto' }}>
-                    {roleSuggestions.map(entry => (
-                      <div key={entry.oracleKey} onClick={() => selectRole(entry)} className="tab-btn" style={{ width: '100%', justifyContent: 'space-between', padding: '12px 16px', height: 'auto', borderRadius: 0, borderBottom: '1px solid var(--border)' }}>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: 700 }}>{entry.displayTitle}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{entry.summary.slice(0, 40)}...</div>
+                  <div className="audit-suggest-list">
+                    {roleSuggestions.map((entry, idx) => {
+                      const rColor = riskScoreColor(entry.currentRiskScore);
+                      const dispClass = entry.currentRiskScore >= 65 ? 'high' : entry.currentRiskScore >= 45 ? 'medium' : 'low';
+                      return (
+                        <div
+                          key={entry.oracleKey}
+                          onClick={() => selectRole(entry)}
+                          className={`audit-role-item${idx === focusedSuggestionIndex ? ' highlighted' : ''}`}
+                        >
+                          <div>
+                            <div className="role-name">{entry.displayTitle}</div>
+                            <div className="role-desc">{entry.summary.slice(0, 50)}…</div>
+                          </div>
+                          <span className={`audit-role-displacement ${dispClass}`}>
+                            {entry.currentRiskScore}%
+                          </span>
                         </div>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: riskScoreColor(entry.currentRiskScore) }}>{entry.currentRiskScore}%</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
+              {/* Oracle preview cards */}
               {selectedOracleEntry && <RoleIntelPreviewCard entry={selectedOracleEntry} />}
               {selectedOracleEntry && <RoleResolutionBanner entry={selectedOracleEntry} />}
+
+              {/* Warning states */}
               {oracleSelectionCleared && !selectedOracleEntry && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', marginTop: '8px' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>No role linked</span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>Your edit cleared the selected role. Pick from the suggestions to restore calibrated data.</span>
+                <div className="signal-card" data-tone="amber" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+                  <span className="signal-chip signal-chip-mixed">No role linked</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                    Pick from suggestions to restore calibrated data.
+                  </span>
                 </div>
               )}
               {!selectedOracleEntry && roleTitle.trim().length > 1 && !resolvedRolePreview.canonicalKey && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', marginTop: '8px' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--red)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Unresolved role</span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>Select a suggested role or use a canonical title like Software Developer, Backend Developer, or Database Administrator.</span>
+                <div className="signal-card" data-tone="red" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+                  <span className="signal-chip" style={{ background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)', color: 'var(--red)' }}>Unresolved role</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                    Select a suggestion or use a title like "Software Developer" or "Data Analyst".
+                  </span>
                 </div>
               )}
 
@@ -1038,166 +898,168 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 onClick={handleNextStep1}
                 disabled={!canProceedStep1}
                 className="btn btn-cyan btn-lg btn-full"
-                style={{ marginTop: '24px' }}
+                style={{ marginTop: 'var(--space-6)' }}
               >
                 Continue Analysis →
               </button>
             </div>
           ) : (
             <div>
-              <header style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                   <div className="badge badge-cyan">STEP 02/02</div>
-                   <button onClick={() => setStep(1)} className="btn btn-ghost btn-sm" style={{ padding: 0, color: 'var(--text-3)' }}>← Back</button>
-                </div>
-                <h2 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '8px' }}>Individual Factors</h2>
-                <p style={{ color: 'var(--text-3)', fontSize: '0.9rem' }}>Contextual data for human amplification and shield metrics.</p>
-              </header>
+              {/* Step header */}
+              <div className="audit-step-header">
+                <div className="audit-step-number">Step 2 of 2</div>
+                <h2 className="audit-step-title">Individual Factors</h2>
+                <p className="audit-step-sub">Contextual data for personalized risk amplification and shield metrics.</p>
+              </div>
 
               <RiskPulse score={pulseScore} />
 
-              <div className="grid-2" style={{ gap: '20px', marginBottom: '24px' }}>
-                 <div className="input-wrap">
-                    <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-3)' }}>COMPANY TENURE</label>
-                    <select value={tenureYears} onChange={(e) => setTenureYears(Number(e.target.value))} className="input">
-                      <option value={0.3}>&lt; 6 months</option>
-                      <option value={1.5}>1–2 years</option>
-                      <option value={5}>5+ years</option>
-                    </select>
-                 </div>
-                 <div className="input-wrap">
-                    <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-3)' }}>TOTAL EXPERIENCE</label>
-                    <select value={careerYears} onChange={(e) => setCareerYears(Number(e.target.value))} className="input">
-                      <option value={2}>&lt; 2 years</option>
-                      <option value={7}>5–10 years</option>
-                      <option value={15}>15+ years</option>
-                    </select>
-                 </div>
+              {/* Tenure + Experience row */}
+              <div className="audit-field-row" style={{ marginBottom: 'var(--space-6)' }}>
+                <div className="audit-field-group" style={{ marginBottom: 0 }}>
+                  <label htmlFor="tenure-select">Company Tenure</label>
+                  <select id="tenure-select" value={tenureYears} onChange={(e) => setTenureYears(Number(e.target.value))} className="input">
+                    <option value={0.3}>&lt; 6 months</option>
+                    <option value={1.5}>1–2 years</option>
+                    <option value={5}>5+ years</option>
+                  </select>
+                </div>
+                <div className="audit-field-group" style={{ marginBottom: 0 }}>
+                  <label htmlFor="career-select">Total Experience</label>
+                  <select id="career-select" value={careerYears} onChange={(e) => setCareerYears(Number(e.target.value))} className="input">
+                    <option value={2}>&lt; 2 years</option>
+                    <option value={7}>5–10 years</option>
+                    <option value={15}>15+ years</option>
+                  </select>
+                </div>
               </div>
 
-              <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-3)', display: 'block', marginBottom: '8px' }}>PERFORMANCE TIER</label>
+              {/* Performance tier */}
+              <div className="audit-field-group" style={{ marginBottom: 'var(--space-1)' }}>
+                <label>Performance Tier</label>
+              </div>
               <ToggleGroup
                 ariaLabel="Performance"
                 options={[
-                  { value: 'top', label: 'Top', icon: '★', desc: 'Exceeding targets' },
-                  { value: 'average', label: 'High', icon: '✔', desc: 'Meeting goals' },
-                  { value: 'below', label: 'Dev', icon: '⚠', desc: 'Needs improvement' }
+                  { value: 'top',     label: 'Top',    icon: '★', desc: 'Exceeding targets' },
+                  { value: 'average', label: 'High',   icon: '✔', desc: 'Meeting goals' },
+                  { value: 'below',   label: 'Dev',    icon: '⚠', desc: 'Needs improvement' },
                 ]}
                 value={performanceTier}
                 onChange={v => setPerformanceTier(v as "top" | "average" | "below" | "unknown")}
               />
 
-              {/* Priority 3: 3-Level Uniqueness Depth (replaces Yes/No toggle) */}
-              <div style={{ marginBottom: uniquenessDepth === 'critical_knowledge' ? '12px' : '24px' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Role Uniqueness 💎
-                </div>
-                <ToggleGroup
-                  ariaLabel="Role uniqueness depth"
-                  options={[
-                    { value: 'generic', label: 'Generic', desc: 'Role exists at thousands of companies' },
-                    { value: 'functional_specialist', label: 'Specialist', desc: 'Unique expertise, replaceable with hiring' },
-                    { value: 'critical_knowledge', label: 'Critical', desc: 'Irreplaceable institutional knowledge' },
-                  ]}
-                  value={uniquenessDepth}
-                  onChange={v => setUniquenessDepth(v as UniquenessDepth)}
-                />
+              {/* Role uniqueness */}
+              <div className="audit-field-group" style={{ marginBottom: uniquenessDepth === 'critical_knowledge' ? 'var(--space-1)' : 'var(--space-1)' }}>
+                <label>Role Uniqueness</label>
               </div>
-              {/* Knowledge type sub-classification — only shown for critical knowledge holders.
-                  Drives differentiated inaction narratives: mobile moat vs migration deadline. */}
+              <ToggleGroup
+                ariaLabel="Role uniqueness depth"
+                options={[
+                  { value: 'generic',               label: 'Generic',    desc: 'Role exists at thousands of companies' },
+                  { value: 'functional_specialist',  label: 'Specialist', desc: 'Unique expertise, replaceable with hiring' },
+                  { value: 'critical_knowledge',     label: 'Critical',   desc: 'Irreplaceable institutional knowledge' },
+                ]}
+                value={uniquenessDepth}
+                onChange={v => setUniquenessDepth(v as UniquenessDepth)}
+              />
+
+              {/* Knowledge type sub-classification */}
               {uniquenessDepth === 'critical_knowledge' && (
-                <div style={{ marginBottom: '24px', paddingLeft: '8px', borderLeft: '2px solid var(--cyan-dim)' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-3)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    What type of institutional knowledge?
+                <div style={{ marginBottom: 'var(--space-5)', paddingLeft: 'var(--space-4)', borderLeft: '2px solid rgba(0,212,224,0.2)' }}>
+                  <div className="audit-field-group" style={{ marginBottom: 'var(--space-1)' }}>
+                    <label>Type of institutional knowledge</label>
                   </div>
                   <ToggleGroup
                     ariaLabel="Knowledge type"
                     options={[
-                      { value: 'system_specific',       label: 'System',       desc: 'Legacy code / proprietary system — protection ends when migration completes (18–36 mo)' },
-                      { value: 'client_relationship',   label: 'Clients',      desc: 'Personal client trust — portable to your next employer, does not belong to the company' },
-                      { value: 'process_institutional', label: 'Process',      desc: 'Undocumented tribal knowledge — protection ends when company documents and automates it' },
-                      { value: 'domain_expert',         label: 'Domain',       desc: 'Regulatory / deep-domain expertise — transferable but must be externally visible' },
-                      { value: 'leadership_capital',    label: 'Leadership',   desc: 'Organizational authority and team trust — fully mobile, follows you to next role' },
+                      { value: 'system_specific',       label: 'System',     desc: 'Legacy code / proprietary system' },
+                      { value: 'client_relationship',   label: 'Clients',    desc: 'Personal client trust — portable' },
+                      { value: 'process_institutional', label: 'Process',    desc: 'Undocumented tribal knowledge' },
+                      { value: 'domain_expert',         label: 'Domain',     desc: 'Regulatory / deep-domain expertise' },
+                      { value: 'leadership_capital',    label: 'Leadership', desc: 'Org authority and team trust' },
                     ]}
                     value={knowledgeType}
                     onChange={v => setKnowledgeType(v as KnowledgeType)}
                   />
                 </div>
               )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-                  {[
-                    { key: 'promo', label: 'Recent Promotion', active: hasRecentPromotion, setter: setHasRecentPromotion, icon: '↗' },
-                    { key: 'stake', label: 'Key Relationships', active: hasKeyRelationships, setter: setHasKeyRelationships, icon: '🤝' }
-                  ].map(item => (
-                    <button
-                      key={item.key}
-                      onClick={() => item.setter(!item.active)}
-                      className="card card-hover"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
-                        background: item.active ? 'var(--cyan-dim)' : 'rgba(255,255,255,0.03)',
-                        borderColor: item.active ? 'var(--cyan)' : 'var(--border)',
-                        justifyContent: 'flex-start'
-                      }}
-                    >
-                      <div style={{ fontSize: '1rem' }}>{item.icon}</div>
-                      <div style={{ flex: 1, textAlign: 'left', fontSize: '0.85rem', fontWeight: 700 }}>{item.label}</div>
-                      {item.active && <div style={{ fontSize: '0.7rem', color: 'var(--cyan)', fontWeight: 800 }}>ACTIVE</div>}
-                    </button>
-                  ))}
+
+              {/* Signal toggles */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
+                {[
+                  { key: 'promo',  label: 'Recent Promotion',  active: hasRecentPromotion,   setter: setHasRecentPromotion,   icon: '↗', desc: 'Promoted in the last 12 months' },
+                  { key: 'stake',  label: 'Key Relationships', active: hasKeyRelationships,  setter: setHasKeyRelationships,  icon: '🤝', desc: 'Own critical client/stakeholder relationships' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => item.setter(!item.active)}
+                    className={`signal-card${item.active ? '' : ''}`}
+                    data-tone={item.active ? 'cyan' : 'slate'}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+                      width: '100%', textAlign: 'left', cursor: 'pointer',
+                      transition: 'all var(--dur-base) var(--ease-out)',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{item.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)' }}>{item.label}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{item.desc}</div>
+                    </div>
+                    {item.active && (
+                      <span className="signal-chip signal-chip-live" style={{ flexShrink: 0 }}>Active</span>
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {/* v10.0: Financial Runway — personalizes job search strategy */}
-              <div style={{ marginBottom: '28px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Financial Runway 💰 <span style={{ fontWeight: 400, opacity: 0.6 }}>(optional)</span>
-                  </div>
+              {/* Financial runway */}
+              <div style={{ marginBottom: 'var(--space-7)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
+                  <div className="audit-section-title">Financial Runway <span style={{ fontWeight: 400, opacity: 0.5, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
                   <div style={{
                     fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 800,
                     color: financialRunwayMonths === 0 ? 'var(--text-3)'
-                      : financialRunwayMonths < 3 ? '#ef4444'
-                      : financialRunwayMonths < 6 ? '#f97316'
-                      : financialRunwayMonths < 12 ? '#f59e0b'
-                      : '#10b981',
-                    padding: '2px 8px', borderRadius: '5px',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                      : financialRunwayMonths < 3  ? 'var(--red)'
+                      : financialRunwayMonths < 6  ? 'var(--orange)'
+                      : financialRunwayMonths < 12 ? 'var(--amber)'
+                      : 'var(--emerald)',
+                    padding: 'var(--space-1) var(--space-3)',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
                   }}>
                     {financialRunwayMonths === 0 ? 'Not specified'
-                      : financialRunwayMonths < 3 ? `${financialRunwayMonths}mo — Critical`
-                      : financialRunwayMonths < 6 ? `${financialRunwayMonths}mo — Elevated`
+                      : financialRunwayMonths < 3  ? `${financialRunwayMonths}mo — Critical`
+                      : financialRunwayMonths < 6  ? `${financialRunwayMonths}mo — Elevated`
                       : financialRunwayMonths < 12 ? `${financialRunwayMonths}mo — Comfortable`
                       : `${financialRunwayMonths}mo — Strong`}
                   </div>
                 </div>
 
                 <input
-                  type="range"
-                  min={0}
-                  max={24}
-                  step={1}
+                  type="range" min={0} max={24} step={1}
                   value={financialRunwayMonths}
                   onChange={e => setFinancialRunwayMonths(Number(e.target.value))}
                   style={{
                     width: '100%',
                     accentColor: financialRunwayMonths === 0 ? 'var(--text-3)'
-                      : financialRunwayMonths < 3 ? '#ef4444'
-                      : financialRunwayMonths < 6 ? '#f97316'
+                      : financialRunwayMonths < 3  ? '#ef4444'
+                      : financialRunwayMonths < 6  ? '#f97316'
                       : financialRunwayMonths < 12 ? '#f59e0b'
                       : '#10b981',
-                    cursor: 'pointer',
-                    height: '6px',
-                    borderRadius: '3px',
+                    cursor: 'pointer', height: '6px', borderRadius: '3px',
                   }}
                 />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-2)' }}>
                   {[
-                    { label: 'Not set', val: 0 },
-                    { label: 'Critical', val: 3, color: '#ef4444' },
-                    { label: 'Elevated', val: 6, color: '#f97316' },
-                    { label: 'Comfortable', val: 12, color: '#f59e0b' },
-                    { label: 'Strong 24+', val: 24, color: '#10b981' },
+                    { label: 'Not set',    val: 0 },
+                    { label: 'Critical',   val: 3,  color: 'var(--red)' },
+                    { label: 'Elevated',   val: 6,  color: 'var(--orange)' },
+                    { label: 'Comfortable',val: 12, color: 'var(--amber)' },
+                    { label: '24+ Strong', val: 24, color: 'var(--emerald)' },
                   ].map(m => (
                     <button
                       key={m.val}
@@ -1207,7 +1069,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                         fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 700,
                         color: financialRunwayMonths >= m.val && m.val > 0 ? (m.color ?? 'var(--text-2)') : 'var(--text-3)',
                         background: 'none', border: 'none', cursor: 'pointer',
-                        padding: '2px 0', opacity: financialRunwayMonths === m.val ? 1 : 0.5,
+                        padding: 'var(--space-1) 0',
+                        opacity: financialRunwayMonths === m.val ? 1 : 0.5,
                         textTransform: 'uppercase', letterSpacing: '0.04em',
                       }}
                     >
@@ -1216,18 +1079,24 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   ))}
                 </div>
 
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '6px', lineHeight: 1.4, opacity: 0.7 }}>
-                  Months of living expenses you have saved. Personalizes your job search strategy and move sequence.
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 'var(--space-2)', lineHeight: 1.4, opacity: 0.7 }}>
+                  Months of living expenses saved. Personalizes your job search strategy and move sequence.
                 </p>
               </div>
 
-              <button
-                onClick={handleCalculate}
-                className="btn btn-primary btn-lg btn-full"
-                style={{ background: 'var(--text)', color: 'var(--bg)' }}
-              >
-                Execute Full Audit →
-              </button>
+              {/* CTA row */}
+              <div className="audit-cta-row">
+                <button onClick={() => setStep(1)} className="btn-back">
+                  ← Back
+                </button>
+                <button
+                  onClick={handleCalculate}
+                  className="btn btn-primary btn-lg"
+                  style={{ flex: 1 }}
+                >
+                  Execute Full Audit →
+                </button>
+              </div>
             </div>
           )}
         </motion.div>
