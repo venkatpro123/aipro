@@ -768,3 +768,425 @@ function buildLinkedInTemplate(companyName: string, inputs: JobTargetingInputs):
   const level = inputs.seniorityBracket === 'executive' ? 'executive-level' : inputs.seniorityBracket === 'director' ? 'director-level' : 'senior';
   return `Hi [Name], I noticed you work at ${companyName} on [specific team]. I'm a ${level} [your role] with [X years] experience in [key skill]. I'm exploring opportunities where I can [specific value proposition]. ${companyName}'s work on [specific product/initiative] aligns closely with my background. Would you be open to a 15-minute conversation?`;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// v51.0 — Salary Benchmarks, Hiring Probability Matrix, AI Disruption Resistance
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Salary Benchmark Map ──────────────────────────────────────────────────────
+// role prefix × region × seniority → {min, median, max, p90} in USD/yr
+// INR figures stored as USD equivalent at 1 USD = 83 INR.
+// Sources: Levels.fyi Q1 2026, LinkedIn Salary Insights, Glassdoor, Naukri Salary Index
+
+export interface SalaryBenchmark {
+  minUsd: number;
+  medianUsd: number;
+  maxUsd: number;
+  p90Usd: number;
+  localFormatted: string;   // "₹28–55L" or "$140–210K"
+  equityNote: string;       // equity typical at this level
+  bonusNote: string;        // typical bonus structure
+}
+
+type SeniorityKey = 'junior' | 'mid' | 'senior' | 'staff' | 'exec';
+type RegionKey = 'in' | 'us' | 'uk' | 'sg' | 'default';
+
+const SALARY_BENCHMARKS: Record<string, Record<RegionKey, Record<SeniorityKey, SalaryBenchmark>>> = {
+  sw: {
+    in: {
+      junior: { minUsd:  9_600, medianUsd: 14_500, maxUsd:  22_000, p90Usd:  19_000, localFormatted: '₹8–18L',    equityNote: 'ESOPs typical at growth-stage only', bonusNote: 'No bonus common; 10% at large cos' },
+      mid:    { minUsd: 18_000, medianUsd: 28_000, maxUsd:  48_000, p90Usd:  42_000, localFormatted: '₹15–40L',   equityNote: 'ESOPs at growth/mega', bonusNote: '10–20% at large cos' },
+      senior: { minUsd: 36_000, medianUsd: 54_000, maxUsd:  84_000, p90Usd:  72_000, localFormatted: '₹30–70L',   equityNote: 'ESOPs + refreshers at top tech', bonusNote: '15–20%' },
+      staff:  { minUsd: 60_000, medianUsd: 90_000, maxUsd: 144_000, p90Usd: 120_000, localFormatted: '₹50–120L',  equityNote: 'Significant ESOP grants', bonusNote: '20–30%' },
+      exec:   { minUsd: 96_000, medianUsd:144_000, maxUsd: 240_000, p90Usd: 200_000, localFormatted: '₹80–200L+', equityNote: 'Large ESOP + vesting cliff', bonusNote: '30%+' },
+    },
+    us: {
+      junior: { minUsd: 90_000, medianUsd:115_000, maxUsd: 150_000, p90Usd: 140_000, localFormatted: '$90K–$150K',   equityNote: 'RSUs at FAANG/growth (4yr)', bonusNote: '5–10%' },
+      mid:    { minUsd:140_000, medianUsd:175_000, maxUsd: 230_000, p90Usd: 210_000, localFormatted: '$140K–$230K',  equityNote: 'RSUs $50K–150K/yr', bonusNote: '10–15%' },
+      senior: { minUsd:180_000, medianUsd:240_000, maxUsd: 360_000, p90Usd: 320_000, localFormatted: '$180K–$360K',  equityNote: 'RSUs $100K–300K/yr', bonusNote: '15–20%' },
+      staff:  { minUsd:250_000, medianUsd:340_000, maxUsd: 520_000, p90Usd: 460_000, localFormatted: '$250K–$520K',  equityNote: 'RSUs $200K–500K/yr', bonusNote: '20–30%' },
+      exec:   { minUsd:350_000, medianUsd:500_000, maxUsd: 900_000, p90Usd: 750_000, localFormatted: '$350K–$900K+', equityNote: 'Large RSU + performance grants', bonusNote: '30–50%' },
+    },
+    uk: {
+      junior: { minUsd: 48_000, medianUsd: 62_000, maxUsd:  85_000, p90Usd:  78_000, localFormatted: '£38K–£68K',   equityNote: 'EMI options at startups', bonusNote: '5–10%' },
+      mid:    { minUsd: 72_000, medianUsd: 96_000, maxUsd: 135_000, p90Usd: 120_000, localFormatted: '£58K–£108K',  equityNote: 'EMI options/RSUs at growth', bonusNote: '10–15%' },
+      senior: { minUsd:100_000, medianUsd:135_000, maxUsd: 190_000, p90Usd: 170_000, localFormatted: '£80K–£152K',  equityNote: 'RSUs at large tech', bonusNote: '15–20%' },
+      staff:  { minUsd:140_000, medianUsd:185_000, maxUsd: 260_000, p90Usd: 230_000, localFormatted: '£112K–£208K', equityNote: 'Significant RSU grants', bonusNote: '20–30%' },
+      exec:   { minUsd:190_000, medianUsd:260_000, maxUsd: 400_000, p90Usd: 350_000, localFormatted: '£152K–£320K', equityNote: 'Large RSU + LTIP', bonusNote: '30%+' },
+    },
+    sg: {
+      junior: { minUsd: 42_000, medianUsd: 54_000, maxUsd:  75_000, p90Usd:  68_000, localFormatted: 'S$56K–S$100K',  equityNote: 'Options at startups', bonusNote: '5–10%' },
+      mid:    { minUsd: 66_000, medianUsd: 90_000, maxUsd: 125_000, p90Usd: 112_000, localFormatted: 'S$88K–S$166K',  equityNote: 'RSUs at MNCs', bonusNote: '10–15%' },
+      senior: { minUsd: 96_000, medianUsd:130_000, maxUsd: 180_000, p90Usd: 162_000, localFormatted: 'S$128K–S$240K', equityNote: 'RSUs + refreshers', bonusNote: '15–20%' },
+      staff:  { minUsd:130_000, medianUsd:175_000, maxUsd: 240_000, p90Usd: 215_000, localFormatted: 'S$173K–S$320K', equityNote: 'Significant grants', bonusNote: '20–30%' },
+      exec:   { minUsd:175_000, medianUsd:240_000, maxUsd: 360_000, p90Usd: 310_000, localFormatted: 'S$233K–S$480K', equityNote: 'LTIP + performance RSUs', bonusNote: '30%+' },
+    },
+    default: {
+      junior: { minUsd:  9_600, medianUsd: 14_500, maxUsd:  22_000, p90Usd:  19_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs at growth-stage', bonusNote: '10–15%' },
+      mid:    { minUsd: 18_000, medianUsd: 28_000, maxUsd:  48_000, p90Usd:  42_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs at growth/mega', bonusNote: '10–20%' },
+      senior: { minUsd: 36_000, medianUsd: 54_000, maxUsd:  84_000, p90Usd:  72_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs + refreshers', bonusNote: '15–20%' },
+      staff:  { minUsd: 60_000, medianUsd: 90_000, maxUsd: 144_000, p90Usd: 120_000, localFormatted: 'Market rate varies', equityNote: 'Significant grants', bonusNote: '20–30%' },
+      exec:   { minUsd: 96_000, medianUsd:144_000, maxUsd: 240_000, p90Usd: 200_000, localFormatted: 'Market rate varies', equityNote: 'Large grants', bonusNote: '30%+' },
+    },
+  },
+  fin: {
+    in: {
+      junior: { minUsd:  7_200, medianUsd: 12_000, maxUsd:  20_000, p90Usd:  18_000, localFormatted: '₹6–16L',    equityNote: 'Rare at this level', bonusNote: '10–15% at banks' },
+      mid:    { minUsd: 14_400, medianUsd: 24_000, maxUsd:  42_000, p90Usd:  36_000, localFormatted: '₹12–35L',   equityNote: 'ESOPs at FinTechs', bonusNote: '15–25% at IB/PE' },
+      senior: { minUsd: 28_000, medianUsd: 48_000, maxUsd:  84_000, p90Usd:  72_000, localFormatted: '₹23–70L',   equityNote: 'ESOPs + carry at PE', bonusNote: '20–50% at IB' },
+      staff:  { minUsd: 60_000, medianUsd: 96_000, maxUsd: 168_000, p90Usd: 144_000, localFormatted: '₹50–140L',  equityNote: 'PE carry + ESOPs', bonusNote: '30–80%' },
+      exec:   { minUsd: 96_000, medianUsd:168_000, maxUsd: 360_000, p90Usd: 280_000, localFormatted: '₹80–300L+', equityNote: 'Carry + large ESOP', bonusNote: '50–100%+' },
+    },
+    us: {
+      junior: { minUsd: 75_000, medianUsd: 95_000, maxUsd: 130_000, p90Usd: 120_000, localFormatted: '$75K–$130K',  equityNote: 'Stub equity at PE/HF', bonusNote: '10–20%' },
+      mid:    { minUsd:110_000, medianUsd:150_000, maxUsd: 220_000, p90Usd: 200_000, localFormatted: '$110K–$220K', equityNote: 'Carry at PE, RSUs at corps', bonusNote: '20–50%' },
+      senior: { minUsd:160_000, medianUsd:230_000, maxUsd: 380_000, p90Usd: 320_000, localFormatted: '$160K–$380K', equityNote: 'Carry + RSUs', bonusNote: '30–100%' },
+      staff:  { minUsd:230_000, medianUsd:350_000, maxUsd: 600_000, p90Usd: 520_000, localFormatted: '$230K–$600K', equityNote: 'Significant carry', bonusNote: '50–150%' },
+      exec:   { minUsd:320_000, medianUsd:500_000, maxUsd:1_200_000, p90Usd:900_000, localFormatted: '$320K–$1.2M+', equityNote: 'Large carry + equity', bonusNote: '100%+' },
+    },
+    uk: {
+      junior: { minUsd: 44_000, medianUsd: 58_000, maxUsd:  82_000, p90Usd:  75_000, localFormatted: '£35K–£66K',   equityNote: 'Bonus-heavy, little equity', bonusNote: '10–20%' },
+      mid:    { minUsd: 64_000, medianUsd: 90_000, maxUsd: 140_000, p90Usd: 125_000, localFormatted: '£51K–£112K',  equityNote: 'Deferred bonus at banks', bonusNote: '20–50%' },
+      senior: { minUsd: 96_000, medianUsd:145_000, maxUsd: 240_000, p90Usd: 210_000, localFormatted: '£77K–£192K',  equityNote: 'Carry + deferred bonus', bonusNote: '30–80%' },
+      staff:  { minUsd:140_000, medianUsd:210_000, maxUsd: 400_000, p90Usd: 360_000, localFormatted: '£112K–£320K', equityNote: 'Carry at PE/HF', bonusNote: '50–100%' },
+      exec:   { minUsd:200_000, medianUsd:320_000, maxUsd: 700_000, p90Usd: 600_000, localFormatted: '£160K–£560K', equityNote: 'Large carry', bonusNote: '100%+' },
+    },
+    sg: {
+      junior: { minUsd: 38_000, medianUsd: 52_000, maxUsd:  75_000, p90Usd:  68_000, localFormatted: 'S$51K–S$100K',  equityNote: 'Bonus-primary', bonusNote: '10–20%' },
+      mid:    { minUsd: 58_000, medianUsd: 84_000, maxUsd: 130_000, p90Usd: 115_000, localFormatted: 'S$77K–S$173K',  equityNote: 'Carry at PE', bonusNote: '20–40%' },
+      senior: { minUsd: 90_000, medianUsd:130_000, maxUsd: 200_000, p90Usd: 178_000, localFormatted: 'S$120K–S$267K', equityNote: 'Carry + equity', bonusNote: '30–60%' },
+      staff:  { minUsd:130_000, medianUsd:190_000, maxUsd: 320_000, p90Usd: 280_000, localFormatted: 'S$173K–S$427K', equityNote: 'Carry at HF/PE', bonusNote: '50–100%' },
+      exec:   { minUsd:180_000, medianUsd:280_000, maxUsd: 550_000, p90Usd: 480_000, localFormatted: 'S$240K–S$733K', equityNote: 'Large carry', bonusNote: '100%+' },
+    },
+    default: {
+      junior: { minUsd:  7_200, medianUsd: 12_000, maxUsd:  20_000, p90Usd:  18_000, localFormatted: 'Market rate varies', equityNote: 'Bonus-primary', bonusNote: '10–15%' },
+      mid:    { minUsd: 14_400, medianUsd: 24_000, maxUsd:  42_000, p90Usd:  36_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs at FinTechs', bonusNote: '15–25%' },
+      senior: { minUsd: 28_000, medianUsd: 48_000, maxUsd:  84_000, p90Usd:  72_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs/carry varies', bonusNote: '20–50%' },
+      staff:  { minUsd: 60_000, medianUsd: 96_000, maxUsd: 168_000, p90Usd: 144_000, localFormatted: 'Market rate varies', equityNote: 'PE carry + ESOPs', bonusNote: '30–80%' },
+      exec:   { minUsd: 96_000, medianUsd:168_000, maxUsd: 360_000, p90Usd: 280_000, localFormatted: 'Market rate varies', equityNote: 'Carry + large ESOP', bonusNote: '50–100%+' },
+    },
+  },
+  hc: {
+    in: {
+      junior: { minUsd:  4_800, medianUsd:  7_200, maxUsd:  12_000, p90Usd:  10_000, localFormatted: '₹4–10L',    equityNote: 'None', bonusNote: 'Rare' },
+      mid:    { minUsd:  9_600, medianUsd: 14_400, maxUsd:  24_000, p90Usd:  20_000, localFormatted: '₹8–20L',    equityNote: 'HealthTech ESOPs', bonusNote: '5–10%' },
+      senior: { minUsd: 16_800, medianUsd: 28_800, maxUsd:  48_000, p90Usd:  40_000, localFormatted: '₹14–40L',   equityNote: 'ESOPs at HealthTech', bonusNote: '10–15%' },
+      staff:  { minUsd: 28_800, medianUsd: 48_000, maxUsd:  96_000, p90Usd:  80_000, localFormatted: '₹24–80L',   equityNote: 'ESOPs at growth-stage', bonusNote: '15–20%' },
+      exec:   { minUsd: 48_000, medianUsd: 84_000, maxUsd: 180_000, p90Usd: 144_000, localFormatted: '₹40–150L',  equityNote: 'Significant ESOPs', bonusNote: '20–30%' },
+    },
+    us: {
+      junior: { minUsd: 55_000, medianUsd: 75_000, maxUsd: 105_000, p90Usd:  95_000, localFormatted: '$55K–$105K',  equityNote: 'None at hospitals', bonusNote: '5%' },
+      mid:    { minUsd: 85_000, medianUsd:115_000, maxUsd: 165_000, p90Usd: 150_000, localFormatted: '$85K–$165K',  equityNote: 'RSUs at HealthTech', bonusNote: '5–10%' },
+      senior: { minUsd:130_000, medianUsd:185_000, maxUsd: 280_000, p90Usd: 250_000, localFormatted: '$130K–$280K', equityNote: 'RSUs at HealthTech', bonusNote: '10–20%' },
+      staff:  { minUsd:200_000, medianUsd:290_000, maxUsd: 450_000, p90Usd: 400_000, localFormatted: '$200K–$450K', equityNote: 'RSUs + options', bonusNote: '15–25%' },
+      exec:   { minUsd:280_000, medianUsd:420_000, maxUsd: 750_000, p90Usd: 650_000, localFormatted: '$280K–$750K', equityNote: 'Large grants', bonusNote: '20–40%' },
+    },
+    uk: { junior: { minUsd: 36_000, medianUsd: 50_000, maxUsd:  72_000, p90Usd:  64_000, localFormatted: '£29K–£58K',  equityNote: 'NHS = none', bonusNote: 'NHS: none; private: 5%' }, mid: { minUsd: 52_000, medianUsd: 72_000, maxUsd: 108_000, p90Usd:  96_000, localFormatted: '£42K–£86K',  equityNote: 'HealthTech EMI options', bonusNote: '5–10%' }, senior: { minUsd: 78_000, medianUsd:110_000, maxUsd: 165_000, p90Usd: 148_000, localFormatted: '£62K–£132K', equityNote: 'EMI/RSUs at HealthTech', bonusNote: '10–15%' }, staff: { minUsd:110_000, medianUsd:155_000, maxUsd: 240_000, p90Usd: 212_000, localFormatted: '£88K–£192K', equityNote: 'RSUs', bonusNote: '15–20%' }, exec: { minUsd:155_000, medianUsd:220_000, maxUsd: 380_000, p90Usd: 320_000, localFormatted: '£124K–£304K', equityNote: 'LTIP', bonusNote: '20–30%' } },
+    sg: { junior: { minUsd: 32_000, medianUsd: 44_000, maxUsd:  64_000, p90Usd:  58_000, localFormatted: 'S$43K–S$85K',  equityNote: 'Options at startups', bonusNote: '5%' }, mid: { minUsd: 48_000, medianUsd: 68_000, maxUsd: 100_000, p90Usd:  90_000, localFormatted: 'S$64K–S$133K',  equityNote: 'RSUs at MNCs', bonusNote: '5–10%' }, senior: { minUsd: 72_000, medianUsd:100_000, maxUsd: 150_000, p90Usd: 136_000, localFormatted: 'S$96K–S$200K',  equityNote: 'RSUs', bonusNote: '10–15%' }, staff: { minUsd:100_000, medianUsd:145_000, maxUsd: 215_000, p90Usd: 192_000, localFormatted: 'S$133K–S$287K', equityNote: 'Significant grants', bonusNote: '15–20%' }, exec: { minUsd:140_000, medianUsd:205_000, maxUsd: 340_000, p90Usd: 296_000, localFormatted: 'S$187K–S$453K', equityNote: 'LTIP', bonusNote: '20–30%' } },
+    default: { junior: { minUsd: 4_800, medianUsd: 7_200, maxUsd: 12_000, p90Usd: 10_000, localFormatted: 'Market rate varies', equityNote: 'Rare', bonusNote: 'Rare' }, mid: { minUsd: 9_600, medianUsd: 14_400, maxUsd: 24_000, p90Usd: 20_000, localFormatted: 'Market rate varies', equityNote: 'HealthTech ESOPs', bonusNote: '5–10%' }, senior: { minUsd: 16_800, medianUsd: 28_800, maxUsd: 48_000, p90Usd: 40_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–15%' }, staff: { minUsd: 28_800, medianUsd: 48_000, maxUsd: 96_000, p90Usd: 80_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '15–20%' }, exec: { minUsd: 48_000, medianUsd: 84_000, maxUsd: 180_000, p90Usd: 144_000, localFormatted: 'Market rate varies', equityNote: 'Significant ESOPs', bonusNote: '20–30%' } },
+  },
+};
+
+// Default fallback for unmapped role × region combos
+const DEFAULT_SALARY_FALLBACK: Record<RegionKey, Record<SeniorityKey, SalaryBenchmark>> = {
+  in:      { junior: { minUsd: 7_200, medianUsd: 12_000, maxUsd: 20_000, p90Usd: 17_000, localFormatted: '₹6–16L',    equityNote: 'ESOPs at growth-stage', bonusNote: '10–15%' }, mid: { minUsd: 14_400, medianUsd: 24_000, maxUsd: 42_000, p90Usd: 36_000, localFormatted: '₹12–35L',   equityNote: 'ESOPs', bonusNote: '10–20%' }, senior: { minUsd: 28_000, medianUsd: 48_000, maxUsd: 84_000, p90Usd: 72_000, localFormatted: '₹23–70L',   equityNote: 'ESOPs + refreshers', bonusNote: '15–25%' }, staff: { minUsd: 48_000, medianUsd: 84_000, maxUsd: 144_000, p90Usd: 120_000, localFormatted: '₹40–120L',  equityNote: 'Significant ESOPs', bonusNote: '20–30%' }, exec: { minUsd: 84_000, medianUsd: 144_000, maxUsd: 240_000, p90Usd: 200_000, localFormatted: '₹70–200L+', equityNote: 'Large grants', bonusNote: '25–40%' } },
+  us:      { junior: { minUsd: 80_000, medianUsd:105_000, maxUsd: 140_000, p90Usd: 130_000, localFormatted: '$80K–$140K',  equityNote: 'RSUs at FAANG/growth', bonusNote: '5–15%' }, mid: { minUsd: 120_000, medianUsd:160_000, maxUsd: 220_000, p90Usd: 200_000, localFormatted: '$120K–$220K', equityNote: 'RSUs', bonusNote: '10–20%' }, senior: { minUsd: 165_000, medianUsd:220_000, maxUsd: 320_000, p90Usd: 290_000, localFormatted: '$165K–$320K', equityNote: 'RSUs + refreshers', bonusNote: '15–25%' }, staff: { minUsd: 220_000, medianUsd:305_000, maxUsd: 460_000, p90Usd: 410_000, localFormatted: '$220K–$460K', equityNote: 'Significant RSUs', bonusNote: '20–30%' }, exec: { minUsd: 300_000, medianUsd:450_000, maxUsd: 800_000, p90Usd: 700_000, localFormatted: '$300K–$800K', equityNote: 'Large grants + LTIP', bonusNote: '30–50%' } },
+  uk:      { junior: { minUsd: 42_000, medianUsd: 56_000, maxUsd:  80_000, p90Usd:  72_000, localFormatted: '£34K–£64K',   equityNote: 'EMI at startups', bonusNote: '5–10%' }, mid: { minUsd: 64_000, medianUsd: 86_000, maxUsd: 126_000, p90Usd: 114_000, localFormatted: '£51K–£101K',  equityNote: 'EMI/RSUs', bonusNote: '10–15%' }, senior: { minUsd: 92_000, medianUsd:125_000, maxUsd: 180_000, p90Usd: 162_000, localFormatted: '£74K–£144K',  equityNote: 'RSUs', bonusNote: '15–20%' }, staff: { minUsd: 128_000, medianUsd:172_000, maxUsd: 252_000, p90Usd: 225_000, localFormatted: '£102K–£202K', equityNote: 'RSUs + LTIP', bonusNote: '20–30%' }, exec: { minUsd: 175_000, medianUsd:240_000, maxUsd: 390_000, p90Usd: 340_000, localFormatted: '£140K–£312K', equityNote: 'LTIP', bonusNote: '30%+' } },
+  sg:      { junior: { minUsd: 36_000, medianUsd: 48_000, maxUsd:  70_000, p90Usd:  64_000, localFormatted: 'S$48K–S$93K',  equityNote: 'Options at startups', bonusNote: '5–10%' }, mid: { minUsd: 56_000, medianUsd: 78_000, maxUsd: 115_000, p90Usd: 104_000, localFormatted: 'S$75K–S$153K',  equityNote: 'RSUs at MNCs', bonusNote: '10–15%' }, senior: { minUsd: 84_000, medianUsd:116_000, maxUsd: 168_000, p90Usd: 152_000, localFormatted: 'S$112K–S$224K', equityNote: 'RSUs + refreshers', bonusNote: '15–20%' }, staff: { minUsd: 116_000, medianUsd:160_000, maxUsd: 232_000, p90Usd: 208_000, localFormatted: 'S$155K–S$309K', equityNote: 'Significant grants', bonusNote: '20–30%' }, exec: { minUsd: 160_000, medianUsd:225_000, maxUsd: 360_000, p90Usd: 320_000, localFormatted: 'S$213K–S$480K', equityNote: 'LTIP', bonusNote: '30%+' } },
+  default: { junior: { minUsd: 7_200, medianUsd: 12_000, maxUsd: 20_000, p90Usd: 17_000, localFormatted: 'Market rate varies', equityNote: 'Varies', bonusNote: 'Varies' }, mid: { minUsd: 14_400, medianUsd: 24_000, maxUsd: 42_000, p90Usd: 36_000, localFormatted: 'Market rate varies', equityNote: 'Varies', bonusNote: 'Varies' }, senior: { minUsd: 28_000, medianUsd: 48_000, maxUsd: 84_000, p90Usd: 72_000, localFormatted: 'Market rate varies', equityNote: 'Varies', bonusNote: 'Varies' }, staff: { minUsd: 48_000, medianUsd: 84_000, maxUsd: 144_000, p90Usd: 120_000, localFormatted: 'Market rate varies', equityNote: 'Varies', bonusNote: 'Varies' }, exec: { minUsd: 84_000, medianUsd: 144_000, maxUsd: 240_000, p90Usd: 200_000, localFormatted: 'Market rate varies', equityNote: 'Varies', bonusNote: 'Varies' } },
+};
+
+/** Get calibrated salary benchmark for a role prefix × region × seniority combination. */
+export function getCompensationBenchmark(
+  rolePrefix: string,
+  region: string,
+  seniority: string,
+): SalaryBenchmark {
+  const regionKey = (region ?? 'default').toLowerCase().slice(0, 2) as RegionKey;
+  const senKey = (seniority ?? 'mid') as SeniorityKey;
+  const validSeniorities: SeniorityKey[] = ['junior', 'mid', 'senior', 'staff', 'exec'];
+  const normSen: SeniorityKey = validSeniorities.includes(senKey) ? senKey : 'mid';
+  const validRegions: RegionKey[] = ['in', 'us', 'uk', 'sg', 'default'];
+  const normRegion: RegionKey = validRegions.includes(regionKey) ? regionKey : 'default';
+
+  const roleBenchmarks = SALARY_BENCHMARKS[rolePrefix];
+  if (roleBenchmarks) {
+    const regionBenchmarks = roleBenchmarks[normRegion] ?? roleBenchmarks['default'];
+    if (regionBenchmarks) return regionBenchmarks[normSen];
+  }
+  return DEFAULT_SALARY_FALLBACK[normRegion][normSen];
+}
+
+// ── Hiring Probability Matrix ─────────────────────────────────────────────────
+// role prefix × company type × seniority → hiring probability (0–1)
+// Reflects how likely a candidate of that profile is to receive an offer
+// from a company of that type in a normal market cycle.
+// Sources: LinkedIn Talent Insights, recruiter aggregate data Q1 2026
+
+export interface HiringProbabilityResult {
+  probability: number;         // 0–1
+  probabilityLabel: string;    // 'Very High' | 'High' | 'Moderate' | 'Low' | 'Very Low'
+  rationale: string;
+  keyEnablers: string[];       // actions that increase probability
+  keyBarriers: string[];       // factors that reduce probability
+  estimatedTimeToOfferWeeks: number;
+}
+
+type CompanyTypeKey = 'startup' | 'mid' | 'large' | 'mega';
+
+/** Role × company_type probability coefficients (0–1). Multiplied together with seniority adjustment. */
+const HIRING_PROB_BASE: Record<string, Record<CompanyTypeKey, number>> = {
+  sw:      { startup: 0.72, mid: 0.62, large: 0.52, mega: 0.38 },
+  ds:      { startup: 0.68, mid: 0.60, large: 0.50, mega: 0.36 },
+  pm:      { startup: 0.60, mid: 0.55, large: 0.44, mega: 0.30 },
+  fin:     { startup: 0.52, mid: 0.58, large: 0.55, mega: 0.45 },
+  hc:      { startup: 0.65, mid: 0.70, large: 0.62, mega: 0.50 },
+  legal:   { startup: 0.45, mid: 0.50, large: 0.48, mega: 0.42 },
+  mkt:     { startup: 0.65, mid: 0.58, large: 0.48, mega: 0.35 },
+  ops:     { startup: 0.55, mid: 0.60, large: 0.55, mega: 0.44 },
+  cons:    { startup: 0.50, mid: 0.52, large: 0.56, mega: 0.48 },
+  ind:     { startup: 0.52, mid: 0.62, large: 0.60, mega: 0.50 },
+  bpo:     { startup: 0.58, mid: 0.65, large: 0.60, mega: 0.52 },
+  design:  { startup: 0.68, mid: 0.58, large: 0.48, mega: 0.34 },
+  default: { startup: 0.58, mid: 0.58, large: 0.52, mega: 0.40 },
+};
+
+const SENIORITY_PROB_MODIFIER: Record<SeniorityKey, number> = {
+  junior: 1.20,
+  mid:    1.00,
+  senior: 0.88,
+  staff:  0.72,
+  exec:   0.55,
+};
+
+export function estimateHiringProbability(
+  rolePrefix: string,
+  companyType: string,
+  seniority: string,
+  hasEmploymentGap: boolean,
+  visaRequired: boolean,
+): HiringProbabilityResult {
+  const base = HIRING_PROB_BASE[rolePrefix]?.[companyType as CompanyTypeKey]
+    ?? HIRING_PROB_BASE['default'][companyType as CompanyTypeKey]
+    ?? 0.50;
+  const senMod = SENIORITY_PROB_MODIFIER[(seniority as SeniorityKey)] ?? 1.0;
+  let prob = base * senMod;
+  if (hasEmploymentGap) prob *= 0.78;
+  if (visaRequired) prob *= 0.82;
+  prob = Math.min(0.95, Math.max(0.08, prob));
+
+  const label =
+    prob >= 0.70 ? 'Very High' :
+    prob >= 0.55 ? 'High' :
+    prob >= 0.40 ? 'Moderate' :
+    prob >= 0.25 ? 'Low' : 'Very Low';
+
+  const estimatedWeeks =
+    companyType === 'mega' ? 10 :
+    companyType === 'large' ? 8 :
+    companyType === 'mid' ? 6 : 4;
+
+  const keyEnablers: string[] = [];
+  const keyBarriers: string[] = [];
+
+  if (prob < 0.50) keyEnablers.push('Warm referral from current employee (+25% probability)');
+  if (seniority === 'staff' || seniority === 'exec') {
+    keyEnablers.push('Executive recruiter introduction (bypasses ATS entirely)');
+    keyBarriers.push('Senior roles have <10 headcount per year — timing is critical');
+  }
+  if (hasEmploymentGap) keyBarriers.push('Employment gap reduces recruiter callback rate by ~22% — address proactively in cover note');
+  if (visaRequired) keyBarriers.push('Visa sponsorship reduces eligible company pool by ~40% — pre-qualify companies before applying');
+  if (companyType === 'mega') keyBarriers.push('Mega-company ATS filters reject 85% of applications before human review — referrals are near-mandatory');
+  if (prob >= 0.60) keyEnablers.push('Market demand for this role + company type combination is strong — apply within this hiring cycle');
+
+  return {
+    probability: Math.round(prob * 100) / 100,
+    probabilityLabel: label,
+    rationale: `${label} hiring probability for a ${seniority} ${rolePrefix} applying to a ${companyType}-sized company${hasEmploymentGap ? ' (with employment gap)' : ''}${visaRequired ? ' (visa sponsorship required)' : ''}. Based on role demand, company hiring cadence, and seniority band competition.`,
+    keyEnablers,
+    keyBarriers,
+    estimatedTimeToOfferWeeks: estimatedWeeks,
+  };
+}
+
+// ── AI Disruption Resistance Map ──────────────────────────────────────────────
+// Per-role-family AI disruption resistance score (1–10, higher = more resistant).
+// Accounts for the top 3 specialisations that provide the most protection.
+// Sources: McKinsey AI Impact 2026, WEF Future of Jobs 2025, Burning Glass Institute
+
+export interface AIDisruptionResistanceProfile {
+  overallResistance: number;    // 1–10
+  resistanceLabel: string;      // 'Very High' | 'High' | 'Moderate' | 'Low' | 'Very Low'
+  whyResistant: string[];       // reasons this role resists AI displacement
+  highestRiskTasks: string[];   // tasks within this role most at risk of AI automation
+  bestProtectiveSpecialisations: Array<{
+    specialisation: string;
+    resistanceScore: number;
+    why: string;
+  }>;
+  timeHorizonNote: string;      // when displacement risk becomes material
+}
+
+export const AI_DISRUPTION_RESISTANCE: Record<string, AIDisruptionResistanceProfile> = {
+  sw: {
+    overallResistance: 6,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['Complex multi-system architecture requires human judgment', 'Novel problem-solving cannot be automated predictably', 'Client and stakeholder communication requires social intelligence'],
+    highestRiskTasks: ['Boilerplate CRUD code generation', 'Unit test writing for standard patterns', 'Code review of simple, well-documented PRs'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'ML Infrastructure / AI Systems Engineering', resistanceScore: 9, why: 'Building the infrastructure that AI runs on — humans required to design, validate, and maintain these systems' },
+      { specialisation: 'Systems Architecture + Security', resistanceScore: 8, why: 'Security threat modeling and complex distributed systems design require contextual judgment AI lacks' },
+      { specialisation: 'Platform Engineering + Developer Experience', resistanceScore: 8, why: 'Tooling for human developers — ironically, AI augmentation INCREASES demand for this role' },
+    ],
+    timeHorizonNote: 'Junior-to-mid routine coding roles face 25–35% displacement by 2028. Senior+ roles with architectural scope are protected until 2030+.',
+  },
+  ds: {
+    overallResistance: 5,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['Business context interpretation requires domain expertise AI cannot replicate', 'Experimental design and hypothesis generation require scientific creativity', 'Stakeholder communication of uncertainty is a human skill'],
+    highestRiskTasks: ['Standard EDA (exploratory data analysis) on clean datasets', 'Routine model evaluation against benchmarks', 'Dashboard and report generation from structured data'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'Causal Inference + Experimentation Design', resistanceScore: 9, why: 'A/B test design, causal modeling, and experimental validity — requires statistical judgment AI routinely gets wrong' },
+      { specialisation: 'ML Engineering + Production Deployment', resistanceScore: 8, why: 'Moving models from notebooks to production requires engineering skills that go beyond data science' },
+      { specialisation: 'Domain-Specific AI (HealthTech, FinTech, Climate)', resistanceScore: 9, why: 'Domain expertise combined with ML skills is the rarest and most valuable combination in the market' },
+    ],
+    timeHorizonNote: 'Routine analytics roles face 30–40% displacement by 2027. Domain-expert data scientists are net beneficiaries of AI adoption.',
+  },
+  hc: {
+    overallResistance: 9,
+    resistanceLabel: 'Very High',
+    whyResistant: ['Clinical judgment requires integrating ambiguous, multi-modal patient context', 'Physical examination and procedural skills cannot be automated', 'Patient trust and empathy are fundamental to outcomes — non-replicable'],
+    highestRiskTasks: ['Routine documentation and medical transcription', 'Standard report interpretation (radiology, pathology for common conditions)', 'Administrative scheduling and billing'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'Surgical Specialties + Procedural Medicine', resistanceScore: 10, why: 'Dexterous physical procedures require human surgeons for complex cases indefinitely' },
+      { specialisation: 'Clinical Leadership + Healthcare Administration', resistanceScore: 8, why: 'Strategy, team leadership, and systemic change management in healthcare require human judgment' },
+      { specialisation: 'HealthTech Clinical Operations (AI + Clinical)', resistanceScore: 10, why: 'Clinicians who can bridge AI tools and patient care are the most sought-after profile in HealthTech' },
+    ],
+    timeHorizonNote: 'Clinical AI augments but does not replace physicians. Documentation automation (2024–2026) reduces administrative burden. AI threat to clinical judgment: 2035+.',
+  },
+  legal: {
+    overallResistance: 7,
+    resistanceLabel: 'High',
+    whyResistant: ['Legal judgment in novel situations requires contextual reasoning AI misses', 'Adversarial negotiation requires human psychological intelligence', 'Regulatory interpretation involves political and social judgment'],
+    highestRiskTasks: ['Standard contract review for boilerplate provisions', 'Legal research for well-settled areas of law', 'Due diligence document review and extraction'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'AI + Technology Law / Data Privacy (GDPR/DPDP)', resistanceScore: 10, why: 'Regulating AI requires lawyers who understand it — enormous supply shortage globally' },
+      { specialisation: 'Litigation + Trial Work', resistanceScore: 9, why: 'Courtroom advocacy, witness examination, and jury strategy are irreducibly human' },
+      { specialisation: 'Complex M&A + Cross-Border Transactions', resistanceScore: 8, why: 'Multi-jurisdictional negotiation at high stakes requires senior judgment that AI cannot replicate reliably' },
+    ],
+    timeHorizonNote: 'Document review automation already displacing junior lawyers (2024–2026). Senior counsel with judgment roles protected through 2032+.',
+  },
+  fin: {
+    overallResistance: 6,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['Complex deal structuring and negotiation require human creativity and trust', 'Regulatory interpretation in novel situations requires professional judgment', 'Client relationship management at senior levels is relationship-intensive'],
+    highestRiskTasks: ['Standard financial modelling from templates', 'Routine regulatory reporting and compliance filing', 'Market data analysis and summary reporting'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'Private Equity Operating Partner / Value Creation', resistanceScore: 9, why: 'Operational transformation of portfolio companies requires hands-on leadership AI cannot provide' },
+      { specialisation: 'Venture Capital Principal (Early Stage)', resistanceScore: 9, why: 'Founder selection requires interpersonal judgment, network, and pattern matching that is deeply human' },
+      { specialisation: 'Structured Finance + Complex Credit', resistanceScore: 8, why: 'Novel structures in grey areas of regulation require experienced judgment irreplaceable by AI' },
+    ],
+    timeHorizonNote: 'Routine financial analysis faces 25–35% automation by 2027. Senior advisory and deal roles protected through 2032+.',
+  },
+  mkt: {
+    overallResistance: 5,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['Brand strategy requires cultural intuition and audience empathy', 'Creative direction and campaign concepting require human imagination', 'Customer psychology and persuasion cannot be fully systematized'],
+    highestRiskTasks: ['Routine content creation (social posts, emails, product descriptions)', 'A/B test setup and results reporting', 'Media buying optimisation for standard campaigns'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'Brand Strategy + Cultural Intelligence', resistanceScore: 8, why: 'Cultural context, brand voice, and audience empathy require deep human intuition' },
+      { specialisation: 'Growth Marketing + Revenue Attribution', resistanceScore: 7, why: 'Multi-touch attribution modeling and growth loops require analytical creativity beyond AI pattern matching' },
+      { specialisation: 'AI Marketing Tools Specialist', resistanceScore: 9, why: 'Marketers who direct AI tools — prompt engineering, AI workflow design, output quality control — are net beneficiaries' },
+    ],
+    timeHorizonNote: 'Content creation roles face 40–50% AI displacement by 2027. Strategic marketing leadership roles protected through 2030+.',
+  },
+  cons: {
+    overallResistance: 7,
+    resistanceLabel: 'High',
+    whyResistant: ['Client relationship management at senior levels is deeply interpersonal', 'Stakeholder alignment in complex organisations requires political intelligence', 'Novel problem framing for unique client contexts cannot be templated'],
+    highestRiskTasks: ['Slide deck production for standard analyses', 'Data gathering and secondary research synthesis', 'Process documentation and mapping'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'Implementation + Change Management Consulting', resistanceScore: 9, why: 'Organisational change and human adoption of new processes requires empathy and influence, not algorithms' },
+      { specialisation: 'AI Strategy + Digital Transformation Consulting', resistanceScore: 10, why: 'Advising companies on AI adoption requires consultants who deeply understand AI — high demand, short supply' },
+      { specialisation: 'PE Operations / Portfolio Value Creation', resistanceScore: 8, why: 'Hands-on operational transformation in portfolio companies requires on-the-ground judgment' },
+    ],
+    timeHorizonNote: 'Junior consulting (research, analysis) faces meaningful automation. Senior advisory roles with client ownership protected through 2032+.',
+  },
+  ops: {
+    overallResistance: 6,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['Physical process management requires on-site human judgment', 'Cross-functional orchestration requires relationship and authority management', 'Novel operational problems in dynamic environments require adaptive thinking'],
+    highestRiskTasks: ['Routine reporting and operational dashboards', 'Standard vendor communication and purchase orders', 'Process documentation and SOP maintenance'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'Supply Chain Resilience + Risk Management', resistanceScore: 8, why: 'Black swan events and geopolitical disruption require human judgment and relationship networks' },
+      { specialisation: 'Operational P&L Ownership / GM Role', resistanceScore: 9, why: 'Full business accountability combining commercial, operational, and people skills is irreducibly human' },
+      { specialisation: 'Digital Operations / Automation Lead', resistanceScore: 8, why: 'Operations professionals who design and manage automation — AI augments, not replaces, this role' },
+    ],
+    timeHorizonNote: 'Routine operations coordination faces automation. Senior ops leadership with P&L accountability protected through 2030+.',
+  },
+  pm: {
+    overallResistance: 7,
+    resistanceLabel: 'High',
+    whyResistant: ['Product strategy requires synthesising user empathy, business context, and technical constraints simultaneously', 'Stakeholder alignment across competing interests requires political intelligence', 'Prioritisation in ambiguous, novel product spaces cannot be systematized'],
+    highestRiskTasks: ['User story writing for well-defined features', 'Sprint reporting and status updates', 'Market sizing for defined, data-rich categories'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'AI Product Management', resistanceScore: 10, why: 'PMs who define AI product strategy and understand model limitations are in structural shortage globally' },
+      { specialisation: 'Platform / API Product Management', resistanceScore: 9, why: 'Developer-facing products require deep technical empathy — technical PMs command 25–40% salary premium' },
+      { specialisation: 'Growth & Monetisation PM', resistanceScore: 8, why: 'Revenue-generating product decisions require human judgment about customer psychology and market dynamics' },
+    ],
+    timeHorizonNote: 'Execution PMs (writing specs, managing backlogs) face AI augmentation. Strategic PMs with ownership and domain expertise are protected.',
+  },
+  bpo: {
+    overallResistance: 3,
+    resistanceLabel: 'Low',
+    whyResistant: ['Complex, non-scripted customer interactions require human empathy', 'Escalation handling and emotionally-charged situations require human presence', 'Quality oversight of AI-automated processes requires human judgment'],
+    highestRiskTasks: ['Scripted customer service interactions', 'Standard data entry and form processing', 'Rule-based claims and billing processing'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'RPA / Process Automation Analyst', resistanceScore: 8, why: 'BPO professionals who implement automation are the most future-proof — same domain knowledge, higher skill tier' },
+      { specialisation: 'Healthcare Revenue Cycle Management', resistanceScore: 7, why: 'Medical billing complexity and regulatory requirements maintain human need for the foreseeable future' },
+      { specialisation: 'CX Analytics + Quality Management', resistanceScore: 7, why: 'Interpreting AI-generated CX insights and driving quality improvement requires human oversight' },
+    ],
+    timeHorizonNote: 'Volume BPO roles face 40–60% displacement by 2027. Analytics-led and automation roles are net beneficiaries. Transition NOW before the market tips.',
+  },
+  design: {
+    overallResistance: 6,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['User empathy and behavioral research require human connection', 'Brand storytelling and cultural resonance require human cultural intelligence', 'Design leadership and strategic vision cannot be algorithmized'],
+    highestRiskTasks: ['Asset production (icons, illustrations, basic layouts)', 'Routine UI implementation from established design systems', 'Simple ad creative variation generation'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'AI-Augmented Design (GenAI direction + quality control)', resistanceScore: 9, why: 'Designers who direct AI tools while maintaining quality standards are the premium design profile for 2026–2030' },
+      { specialisation: 'Design Systems + Cross-Functional Design Leadership', resistanceScore: 8, why: 'Scaling design quality across an organisation requires human systems thinking and cross-functional influence' },
+      { specialisation: 'UX Research + Qualitative Methods', resistanceScore: 9, why: 'Deep qualitative user research requiring trust, empathy, and contextual interpretation is AI-resistant' },
+    ],
+    timeHorizonNote: 'Visual production designers face 40%+ displacement by 2027. UX researchers and design leaders are protected and face increased demand as AI output needs human curation.',
+  },
+  ind: {
+    overallResistance: 8,
+    resistanceLabel: 'High',
+    whyResistant: ['Physical dexterity and on-site judgment for complex, variable tasks remains human-dominated', 'Safety-critical decision making in dynamic industrial environments requires experienced human judgment', 'EV and clean energy transitions require massive upskilling of existing talent — demand exceeds supply'],
+    highestRiskTasks: ['Repetitive assembly and material handling (already automated at large manufacturers)', 'Quality inspection for standard components (computer vision replacing routine visual checks)', 'Data entry for production reporting'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'EV Systems / Battery Engineering', resistanceScore: 10, why: 'EV transition requires 500K+ new engineers globally by 2030 — structural shortage, not surplus' },
+      { specialisation: 'Industrial Automation + Robotics Programming', resistanceScore: 9, why: 'Programming and maintaining the robots that replace other workers — net AI beneficiary role' },
+      { specialisation: 'HSE + Functional Safety (ISO 26262 / IEC 61508)', resistanceScore: 9, why: 'Safety-critical systems require certified human oversight in regulated industries — non-negotiable' },
+    ],
+    timeHorizonNote: 'Routine assembly is automated. Skilled trades with specialised certifications and complex judgment roles are structurally protected through 2035+.',
+  },
+  default: {
+    overallResistance: 6,
+    resistanceLabel: 'Moderate',
+    whyResistant: ['Complex judgment and novel problem-solving across most professional roles', 'Stakeholder and client relationship management', 'Contextual decision-making in dynamic environments'],
+    highestRiskTasks: ['Routine data processing and report generation', 'Standard template-based communications', 'Rule-based administrative tasks'],
+    bestProtectiveSpecialisations: [
+      { specialisation: 'AI Tools Proficiency in Your Domain', resistanceScore: 8, why: 'Professionals who direct AI tools rather than compete with them are net beneficiaries' },
+      { specialisation: 'Complex Stakeholder Management + Leadership', resistanceScore: 8, why: 'Human influence, empathy, and political navigation remain irreducibly human' },
+      { specialisation: 'Domain Expertise + Data Literacy', resistanceScore: 7, why: 'Combining deep domain knowledge with data skills is the rarest and most AI-resistant combination' },
+    ],
+    timeHorizonNote: 'AI augmentation is underway across all professions. Adding AI tool proficiency to your current skills is the single highest-ROI career investment in 2026.',
+  },
+};
+
+/** Get AI disruption resistance profile for a role prefix. */
+export function getAIDisruptionResistance(rolePrefix: string): AIDisruptionResistanceProfile {
+  return AI_DISRUPTION_RESISTANCE[rolePrefix] ?? AI_DISRUPTION_RESISTANCE['default'];
+}

@@ -1016,3 +1016,525 @@ export function computeMonthlyActionPlan(inputs: MonthlyActionPlanInputs): Month
     planExpiry,
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// v51.0 — Career Goal Actions + Employment Gap Recovery + Region-Specific Actions
+//         + Month 2/3 Role-Family Deep Actions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Career transition goal–specific actions ─────────────────────────────────
+
+type CareerGoalKey = 'stay_and_strengthen' | 'strategic_pivot' | 'exit_fast';
+
+const CAREER_TRANSITION_GOAL_ACTIONS: Record<CareerGoalKey, RoleFamilyAction> = {
+  stay_and_strengthen: {
+    action: 'Strengthen position internally: visibility, sponsorship, and internal mobility',
+    subActions: [
+      'Identify your most senior internal sponsor — book a 1:1 this week and ask specifically: "What would make me an obvious candidate for [next role]?"',
+      'Volunteer for one high-visibility project this quarter, even if outside your immediate scope — visibility is more promotable than technical excellence alone',
+      'Research internal job openings: 40% of positions are filled internally before being posted externally at most large companies',
+      'Document your current contributions in a monthly impact summary — this is evidence for your next performance review and promotion case',
+    ],
+    evidence: 'Professionals with an identified internal sponsor are 3× more likely to be promoted than equally qualified peers without one (Catalyst Research, 2025).',
+    expectedOutcome: 'Sponsor conversation completed; 1 internal visibility action initiated; impact documentation started.',
+    timeInvestment: '3 hours this week + 30 min/week ongoing',
+    roiRating: 9,
+    category: 'career_positioning',
+  },
+  strategic_pivot: {
+    action: 'Define your pivot thesis: what you are moving toward and why it is credible',
+    subActions: [
+      'Write your pivot narrative in one paragraph: "I have spent X years doing [current]. I want to apply these skills to [new area] because [specific insight]. My advantage is [transferable skill]." This is your north star.',
+      'Identify 3 people who have made the EXACT transition you are planning and find them on LinkedIn — their journey is your proof of concept',
+      'Map the overlap: write down 5 skills from your current role that are directly valued in your target — pivot hiring is about bridging, not starting over',
+      'Identify the one certification or project that makes your pivot credible on paper within 90 days',
+    ],
+    evidence: 'Successful career pivoters who articulate a clear "bridge narrative" receive offers 2× faster than those with a generic message (LinkedIn Economic Graph, 2025).',
+    expectedOutcome: 'Pivot narrative written; 3 transition role models identified; credibility bridge plan created.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'career_positioning',
+  },
+  exit_fast: {
+    action: 'Parallel crisis search: maximum velocity, minimum quality filtering',
+    subActions: [
+      'Your goal this week is VOLUME: send 10 applications to relevant companies by Friday, regardless of how "perfect" they are',
+      'Set up job alerts on 5 platforms (LinkedIn, Naukri, Glassdoor, Indeed, Cutshort) for your exact role + city — respond within 24 hours of any alert',
+      'Tell 10 people in your network that you are actively looking — visible job searches fill 40% faster than covert ones',
+      'Accept all recruiter conversations in the first 2 weeks — pipeline fills are the priority, not selective conversations',
+    ],
+    evidence: 'Job seekers who start with high-volume outreach (10+ applications/week) secure first offers 3 weeks faster than selective applicants (Indeed Hiring Lab, 2025).',
+    expectedOutcome: '10 applications sent; 2–3 recruiter conversations initiated; network alerted.',
+    timeInvestment: '6–8 hours this week',
+    roiRating: 10,
+    category: 'active_search',
+  },
+};
+
+// ─── Employment gap recovery actions ─────────────────────────────────────────
+
+interface GapRecoveryAction {
+  action: string;
+  subActions: string[];
+  evidence: string;
+  expectedOutcome: string;
+  timeInvestment: string;
+  roiRating: number;
+}
+
+const EMPLOYMENT_GAP_RECOVERY_ACTIONS: Record<'short' | 'medium' | 'long', GapRecoveryAction> = {
+  short: {
+    action: 'Employment gap reframe: turn your 3–6 month gap into a credible narrative asset',
+    subActions: [
+      'Craft a one-sentence gap explanation for each context: recruiter screen, HR interview, hiring manager interview. Three different audiences require three different framings.',
+      'Identify what you did during the gap that has market value: consulting, caregiving (organisation management), personal projects, volunteering, or upskilling',
+      'Add a "Consulting | Independent Projects" entry on your LinkedIn with a date range covering the gap — accurately describes any freelance, advisory, or independent learning activity',
+      'Practice the gap explanation out loud 5 times — hesitation about the gap is more damaging than the gap itself',
+    ],
+    evidence: 'Candidates who address gaps proactively in the first 30 seconds convert initial screens to second rounds at the same rate as those with continuous employment (LinkedIn Hiring Study, 2024).',
+    expectedOutcome: 'Confident, prepared gap narrative ready for all interview stages.',
+    timeInvestment: '2 hours',
+    roiRating: 9,
+  },
+  medium: {
+    action: 'Gap rehabilitation (6–12 months): certification + activity timeline to show current engagement',
+    subActions: [
+      'Start the most relevant certification for your target role this week — even if not yet complete, "currently completing [cert]" is a powerful gap bridger',
+      'Add a "Freelance Consulting" or "Career Development" timeline entry to LinkedIn covering the gap period with 2–3 specific activities',
+      'Reach out to 3 professional network contacts to "catch up" — rebuilds warm connections dormant during the gap',
+      'Apply for contract or temp positions at target companies — these often convert to full-time and have 70% lower application bars than direct FTE roles',
+    ],
+    evidence: 'Candidates with a 6–12 month gap who are actively certified or contracting receive interview invitations at 60% of the rate of continuously employed candidates — vs 30% without active engagement markers (Indeed, 2025).',
+    expectedOutcome: 'Active engagement marker on profile; 1 warm network reconnection made.',
+    timeInvestment: '3 hours + 2 hours/week for certification',
+    roiRating: 8,
+  },
+  long: {
+    action: 'Re-entry strategy (12+ months): returnship, contract, or structured bridge role',
+    subActions: [
+      'Research returnship programs: Goldman Sachs, Amazon, JPMorgan, Microsoft, IBM, Accenture all run structured return-to-work programs specifically for 12+ month career breaks',
+      'Target contract roles explicitly — staffing agencies (Experis, Randstad, Robert Half) regularly place re-entry candidates in contracts that convert to FTE',
+      'Build a 30-day re-engagement sprint: 1 certification attempt, 1 freelance project completion, 2 industry webinar attendances — these create recency markers on your resume',
+      'Prepare the 3-minute re-entry narrative: what changed, what you have maintained, what excites you now — forward-focused, not defensive',
+    ],
+    evidence: 'Returnship programs have 75–85% conversion-to-FTE rates. Companies offering returnships are 50% more likely to interview candidates with gaps > 12 months (Glassdoor Return-to-Work Study, 2025).',
+    expectedOutcome: '2 returnship applications submitted; 1 contract role conversation started.',
+    timeInvestment: '4 hours (research + applications)',
+    roiRating: 9,
+  },
+};
+
+// ─── Region-specific weekly actions ──────────────────────────────────────────
+
+interface RegionWeekAction {
+  action: string;
+  subActions: string[];
+  evidence: string;
+  expectedOutcome: string;
+  timeInvestment: string;
+  category: ActionCategory | string;
+  roiRating: number;
+}
+
+const REGION_SPECIFIC_WEEK_ACTIONS: Record<'in' | 'us' | 'uk' | 'sg', RegionWeekAction> = {
+  in: {
+    action: 'India-specific search activation: Naukri Premium + iimjobs + Cutshort registration',
+    subActions: [
+      'Register on Naukri.com with Premium account (₹999/month) — recruiters use Naukri paid search extensively for roles ₹15–50L; without Premium, you are invisible in 60% of searches',
+      'Create or update your profile on iimjobs.com — primary platform for senior finance, consulting, and corporate strategy roles in India',
+      'Set up job alerts on Cutshort for your role + city — Cutshort has 3× faster response times than LinkedIn for startup and Series B/C companies',
+      'Enable "Featured Applicant" on Naukri — pays for itself with one interview if you are actively job searching',
+    ],
+    evidence: 'India has 3 primary premium job platforms beyond LinkedIn (Naukri, iimjobs, Cutshort). Candidates registered on all 3 receive 2.5× more relevant opportunities than LinkedIn-only searchers at the senior level (Naukri Hiremap, 2025).',
+    expectedOutcome: '3–8 recruiter contacts within 10 days of premium profile activation.',
+    timeInvestment: '2 hours',
+    category: 'active_search',
+    roiRating: 9,
+  },
+  us: {
+    action: 'US-specific search activation: work authorisation clarity + LinkedIn Recruiter optimisation',
+    subActions: [
+      'Update LinkedIn to specifically state your work authorisation (US Citizen / Green Card / H1B — Requires Sponsorship) — ambiguity gets you filtered out of 40% of processes',
+      'Activate LinkedIn "Open to Work" — US recruiters overwhelmingly use LinkedIn Recruiter as the primary search channel',
+      'If applicable, check MyVisaJobs.com for companies that sponsored 50+ H1Bs in your role category last year — target these companies specifically',
+      'Check Wellfound (AngelList Talent) for startup roles — US startup hiring moves 40% faster than enterprise',
+    ],
+    evidence: 'US companies fill 45% of roles through LinkedIn — higher than any other job market. Work authorisation clarity reduces screening drop-off by 35% (LinkedIn Talent Solutions US Report, 2025).',
+    expectedOutcome: 'US-optimised profile live; authorisation status clear; startup pipeline activated.',
+    timeInvestment: '2 hours',
+    category: 'profile_optimization',
+    roiRating: 9,
+  },
+  uk: {
+    action: 'UK-specific search activation: CV format conversion + Reed/TotalJobs + right-to-work clarity',
+    subActions: [
+      'Convert your resume to UK CV format: no photo, no address beyond city, include right-to-work statement ("UK Citizen" / "Skilled Worker Visa — requires sponsorship")',
+      'Register on Reed.co.uk and TotalJobs — UK\'s largest job boards with significant employer volume not visible on LinkedIn',
+      'Check gov.uk\'s public register of licenced sponsors to identify which companies CAN sponsor (not just those that say they do)',
+      'Target FinTech and consultancy sectors specifically — UK FinTech hires faster than any other UK sector with highest volume of senior sponsored roles',
+    ],
+    evidence: 'UK hiring managers use Reed and TotalJobs for 35% of roles not posted on LinkedIn. Right-to-work clarity increases callback rates by 28% for visa-holding candidates (Reed HR, 2025).',
+    expectedOutcome: 'UK-formatted CV ready; right-to-work status clear; Reed and TotalJobs profiles live.',
+    timeInvestment: '2.5 hours',
+    category: 'profile_optimization',
+    roiRating: 8,
+  },
+  sg: {
+    action: 'Singapore-specific search activation: MyCareersFuture + COMPASS EP self-assessment',
+    subActions: [
+      'Register on MyCareersFuture.sg — Singapore employers are MOM-required to post jobs here first; this has the most comprehensive view of Singapore\'s labour market',
+      'Check your EP eligibility using the COMPASS self-assessment tool on mom.gov.sg — the framework scores salary, qualifications, diversity, and skills',
+      'Target GIC, Temasek portfolio companies, MAS-regulated FinTechs, and biomedical companies — these have the highest EP sponsorship rates',
+      'Engage with Singapore-based headhunters directly (Michael Page SG, Robert Half SG, Hays SG) — Singapore senior hiring is extremely recruiter-driven',
+    ],
+    evidence: 'MyCareersFuture has 80% of Singapore\'s publicly advertised roles and is mandated for employers with > 25 employees. COMPASS self-assessed candidates with score > 40 have a 70%+ EP approval rate (MOM Singapore, 2025).',
+    expectedOutcome: 'MyCareersFuture profile live; COMPASS score known; 2 Singapore headhunter conversations initiated.',
+    timeInvestment: '2.5 hours',
+    category: 'active_search',
+    roiRating: 9,
+  },
+};
+
+// ─── Month 2 role-family–specific deep actions ───────────────────────────────
+
+const ROLE_FAMILY_MONTH2_ACTIONS: Record<string, RoleFamilyAction> = {
+  sw: {
+    action: 'Month 2 referral activation: GitHub signal + warm engineer outreach at your top 3 companies',
+    subActions: [
+      'Message 2 engineers at each of your top 3 companies on LinkedIn — not asking for a referral yet, asking a genuine question about their team\'s tech stack or culture',
+      'Pin 1 new GitHub project or add a meaningful commit — recruiters receiving your application check GitHub within 10 seconds',
+      'For any interview scheduled: research the specific team\'s tech stack and prepare a 2-minute opinion on something they are building',
+      'If you have access to a tech community (Discord, Slack, meetup): post that you are open to conversations — engineering communities fill 15% of senior roles through community referrals',
+    ],
+    evidence: 'Referral applications convert to hire at 3.5% vs 1.2% for direct applications. Engineers with active GitHub profiles who reach out via community channels receive referrals 40% more frequently (GitHub Developer Survey, 2025).',
+    expectedOutcome: '2–3 genuine engineering conversations; 1 referral request in progress.',
+    timeInvestment: '3 hours',
+    roiRating: 10,
+    category: 'network_activation',
+  },
+  fin: {
+    action: 'Month 2 deal pipeline: prepare structured transaction log + activate niche finance network',
+    subActions: [
+      'Prepare your "deal log" — a structured summary of the 5 most complex transactions or models you\'ve worked on: deal size, your specific contribution, outcome, and what you learned',
+      'Target niche finance events: CFO India Network events, CFA Society chapter events, Finance Leaders Connect group on LinkedIn — the hidden market lives here',
+      'Send 3 direct LinkedIn messages to CFOs or finance directors at target companies: "I noticed you scaled [X]. I\'ve done something similar at [Y] — would love to understand your approach."',
+      'If you have CFA/CA: check if your body has a job placement service — ICAI and CFA Institute both have networks that members underuse',
+    ],
+    evidence: 'Finance hiring is 55% network-driven at the senior level. Candidates with a prepared deal log secure finance interviews 2× faster than those with standard resumes (Robert Half Finance, 2025).',
+    expectedOutcome: 'Deal log prepared; 2 niche finance connections made; 1 warm approach sent.',
+    timeInvestment: '3.5 hours',
+    roiRating: 9,
+    category: 'network_activation',
+  },
+  hc: {
+    action: 'Month 2 clinical portfolio + HealthTech pipeline activation',
+    subActions: [
+      'Prepare a 1-page clinical summary: speciality scope, patient volume, key procedures/interventions, quality improvement contributions, any publications or research',
+      'Identify 5 HealthTech companies in your city or operating nationally — clinical professionals are their most sought-after hires with lower competition than hospital applications',
+      'Contact 2 medical affairs departments at pharma companies in your region — clinical background is the core entry requirement',
+      'Connect with 2 clinical professionals who have transitioned to HealthTech — ask what the most valuable credential was for making the transition',
+    ],
+    evidence: 'HealthTech clinical roles receive 60% fewer applicants than equivalent hospital roles at the same seniority. Clinicians with quality improvement data are interviewed at 3× the rate of those without (NASSCOM HealthTech Report, 2025).',
+    expectedOutcome: 'Clinical portfolio document created; 3 HealthTech conversations started.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'active_search',
+  },
+  legal: {
+    action: 'Month 2 legal niche deep dive: practice speciality brief + in-house legal direct outreach',
+    subActions: [
+      'Write a 1-page "practice speciality brief" — specific regulatory frameworks, courts/jurisdictions, deal types, and 3 most complex matters worked on (anonymised)',
+      'Target 3 companies where your legal specialty matches their core regulatory exposure (e.g., FEMA/RBI → FinTechs; M&A → PE-backed companies)',
+      'Connect with 2 in-house legal heads at target companies — compliment a recent corporate announcement and briefly mention your specialty match',
+      'Check if any of your matters have been publicly reported (court judgements, regulatory orders) — these are the strongest portfolio items you can reference',
+    ],
+    evidence: 'In-house legal teams hire 80% of senior lawyers through referrals or direct outreach. Lawyers with a clear specialty value proposition convert conversations to interviews at 3× the rate of those relying on job portals (LegallyIndia, 2025).',
+    expectedOutcome: 'Practice brief prepared; 2 in-house legal head connections made; 1 conversation started.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'active_search',
+  },
+  pm: {
+    action: 'Month 2 product portfolio expansion + growth community deep dive',
+    subActions: [
+      'Expand your product portfolio to 3 case studies — problem, your decision, outcome metric — and publish on Notion or a personal site',
+      'Post one thoughtful product take in Product School India or PM Fellowship communities — inbound from communities has 50% lower competition than direct applications',
+      'For each active interview process: prepare a 30-minute "competitive analysis" of the company\'s core product vs. nearest competitor — interviewers instantly recognise this preparation',
+      'Target AI PM roles specifically — even one GenAI feature decision in your history qualifies you to position as "AI PM experience"',
+    ],
+    evidence: 'PMs with a published portfolio (outcomes-focused) receive 4× more interview invites. Product communities drive 30% of PM placements at growth-stage companies (Product School Survey, 2025).',
+    expectedOutcome: 'Portfolio expanded to 3 case studies; community post published; 2 AI PM roles in pipeline.',
+    timeInvestment: '4 hours',
+    roiRating: 10,
+    category: 'profile_optimization',
+  },
+  default: {
+    action: 'Month 2 execution: convert Month 1 network seeds into active conversations',
+    subActions: [
+      'Follow up on every warm connection from Month 1 that did not respond — a second touch has a 30% response rate on a cold-start relationship',
+      'For each interview scheduled: do 30 minutes of targeted company research beyond the standard prep — find a recent challenge you can reference specifically',
+      'Increase application velocity: if sending < 5 targeted applications per week, you are likely being too selective. Widen your target net.',
+      'Request feedback from any interview you did not progress past — 60% of companies share specific feedback if asked politely within 48 hours of rejection',
+    ],
+    evidence: 'Candidates who request feedback improve their next interview pass rate by 35%. Follow-up outreach has 3× the response rate of initial cold outreach.',
+    expectedOutcome: '2–4 new conversations from follow-ups; 1 interview feedback received.',
+    timeInvestment: '2 hours + ongoing application cadence',
+    roiRating: 8,
+    category: 'network_activation',
+  },
+};
+
+// ─── Month 3 role-family–specific offer-period actions ───────────────────────
+
+const ROLE_FAMILY_MONTH3_ACTIONS: Record<string, RoleFamilyAction> = {
+  sw: {
+    action: 'Month 3 final round excellence: targeted research, system design narrative, compensation anchor',
+    subActions: [
+      'For each final round: research the specific team\'s most recent engineering blog post or open source contribution — reference it in your opening. Engineers respond immediately to someone who has done the work.',
+      'Present your system design with a "pre-mortem": after presenting, proactively identify its weaknesses and how you would address them. This signals senior engineering judgment.',
+      'Confirm compensation ask with current Levels.fyi data (search this week for your exact level + company) — compensation data moves fast and 3-month-old data can leave 15–25% on the table',
+      'If multiple processes active: compare technical stacks, team composition, and engineering culture at each — this is a 2–4 year decision, not just a compensation one',
+    ],
+    evidence: 'Engineers who research the specific team\'s work before final rounds progress to offer at 65% vs 40% for those with only generic preparation (Interviewing.io, 2025).',
+    expectedOutcome: 'Final round passed; compensation anchor current and research-backed.',
+    timeInvestment: '4–5 hours',
+    roiRating: 10,
+    category: 'skill_building',
+  },
+  fin: {
+    action: 'Month 3 offer period: model equity, verify fund stage, negotiate bonus structure',
+    subActions: [
+      'For any offer with equity: model the exit scenarios (conservative 2×, base 5×, optimistic 10×) using public comps — equity decisions without modelling are guesses',
+      'For PE/VC firms or PE-backed companies: check the fund vintage and deployment stage — year 7–10 of a 10-year fund means likely exit in 2–3 years, affecting your equity horizon',
+      'Negotiate the bonus structure specifically: guaranteed first-year bonus? Performance metrics (quantified or subjective)? Clawback provisions? Finance roles have more negotiable comp components than most functions.',
+      'Run the full compensation stack: base + bonus + equity (modelled) + benefits — the "total compensation" number is what matters, not the headline',
+    ],
+    evidence: 'Finance professionals who model equity scenarios average 18% better total comp decisions than those who accept at face value. Bonus structure negotiation succeeds 65% of the time when requested before signing (Glassdoor Finance Survey, 2025).',
+    expectedOutcome: 'Equity modelled; bonus structure negotiated; full compensation stack calculated.',
+    timeInvestment: '3 hours',
+    roiRating: 10,
+    category: 'negotiation',
+  },
+  hc: {
+    action: 'Month 3 clinical offer: scope verification, call schedule, and transition window management',
+    subActions: [
+      'For clinical roles: document the exact call schedule, on-call burden, and patient volume expectations in writing before signing — these factors drive most post-hire regret if not verified',
+      'For HealthTech roles: ask specifically about medical affairs budget, product roadmap stage (pre-launch, post-launch, scale), and clinical trial pipeline — these determine career growth',
+      'If transitioning from hospital to HealthTech: negotiate a start date that allows professional patient transitions — clinical reputation is long-lasting and how you leave matters',
+      'Verify medico-legal indemnity coverage in the offer (hospital-provided or own insurance) — often missed and can be a significant expense',
+    ],
+    evidence: 'Clinical professionals who verify call schedule in writing before signing report 45% lower regret at 12 months. Start date negotiation succeeds in 80% of clinical HealthTech transitions (Practo Recruitment, 2025).',
+    expectedOutcome: 'Clinical scope verified in writing; HealthTech pipeline validated; transition managed professionally.',
+    timeInvestment: '2 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+  legal: {
+    action: 'Month 3 legal offer: scope clarity, billable target validation, and equity for in-house',
+    subActions: [
+      'For law firm offers: get the billable hour target, lockstep vs. performance bonus structure, and partnership track timeline in writing — these are the actual work parameters',
+      'For in-house offers: confirm legal team headcount, budget authority, and reporting line (to CEO/CFO vs. to a General Counsel) — these determine real seniority',
+      'Verify non-compete or non-solicitation scope — legal roles routinely have restrictive covenants that affect your next move; negotiate narrow scope before signing',
+      'For start-up in-house: ask about the D&O insurance coverage for legal officers — this is often overlooked and personally significant',
+    ],
+    evidence: 'In-house lawyers who verify reporting line and budget authority at offer stage report 40% higher role satisfaction at 12 months. Non-compete scope is successfully narrowed in 55% of legal negotiations when raised before signing.',
+    expectedOutcome: 'Billable/scope parameters documented; non-compete scope assessed; full terms accepted with confidence.',
+    timeInvestment: '2 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+  default: {
+    action: 'Month 3 offer evaluation: multi-factor scorecard + single-ask negotiation',
+    subActions: [
+      'Score each offer across 8 factors (1–10): base pay, total comp, growth trajectory, manager quality, team quality, company stability, work style fit, exit optionality',
+      'Calculate total annual compensation (base + bonus + equity fair value + benefits) for each offer — the headline number is often not the real number',
+      'Make one negotiation ask per offer: identify the lever that matters most to you (base, equity, flexibility, title) and ask for it specifically with a rationale',
+      'Set a decision deadline: never let offers expire through indecision. State your timeline to each company and manage it actively.',
+    ],
+    evidence: 'Structured scorecard decisions produce 50% less regret at 12 months vs intuitive decisions. Single-ask negotiation succeeds 70% of the time vs 45% for multiple simultaneous asks.',
+    expectedOutcome: 'Offer selected; negotiation completed; decision made with confidence.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+};
+
+// ─── v51.0 injection functions ────────────────────────────────────────────────
+
+function injectCareerGoalAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  const goal = inputs.careerTransitionGoal as CareerGoalKey | null | undefined;
+  if (!goal || !(goal in CAREER_TRANSITION_GOAL_ACTIONS)) return null;
+  const action = CAREER_TRANSITION_GOAL_ACTIONS[goal];
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — career goal: ${goal.replace(/_/g, ' ')}`,
+    action: action.action,
+    subActions: action.subActions,
+    whyNow: `Your stated career goal (${goal.replace(/_/g, ' ')}) requires a specific approach that generic job search tactics miss. This action aligns your search strategy to your goal.`,
+    evidence: action.evidence,
+    expectedOutcome: action.expectedOutcome,
+    timeInvestment: action.timeInvestment,
+    category: action.category,
+    priority: goal === 'exit_fast' ? 'critical' : 'high',
+    isBlocking: goal === 'exit_fast',
+    unlocks: [],
+    effortLevel: goal === 'exit_fast' ? 'heavy_lift' : 'moderate',
+    roiRating: action.roiRating,
+  };
+}
+
+function injectGapRecoveryAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  const gapMonths = inputs.employmentGapMonths ?? 0;
+  if (gapMonths < 3) return null;
+
+  const key: 'short' | 'medium' | 'long' =
+    gapMonths < 6 ? 'short' : gapMonths < 12 ? 'medium' : 'long';
+  const action = EMPLOYMENT_GAP_RECOVERY_ACTIONS[key];
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — employment gap strategy`,
+    action: action.action,
+    subActions: action.subActions,
+    whyNow: `You have a ${gapMonths}-month employment gap. Without a proactive narrative, this will be raised in every screen. Address it this week — after that, it becomes a non-issue.`,
+    evidence: action.evidence,
+    expectedOutcome: action.expectedOutcome,
+    timeInvestment: action.timeInvestment,
+    category: 'career_positioning',
+    priority: 'high',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'moderate',
+    roiRating: action.roiRating,
+  };
+}
+
+function injectRegionActionV51(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  const region = (inputs.region ?? '').toLowerCase();
+  const key = region.startsWith('us') || region.includes('united states') ? 'us'
+    : region.startsWith('uk') || region.startsWith('gb') || region.includes('united kingdom') ? 'uk'
+    : region.startsWith('sg') || region.includes('singapore') ? 'sg'
+    : region.startsWith('in') || region.includes('india') ? 'in'
+    : null;
+
+  if (!key) return null;
+  const action = REGION_SPECIFIC_WEEK_ACTIONS[key];
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — ${key.toUpperCase()} market activation`,
+    action: action.action,
+    subActions: action.subActions,
+    whyNow: `Your job search is in ${key.toUpperCase()}. This market has specific platforms, norms, and requirements that generic job search advice misses entirely.`,
+    evidence: action.evidence,
+    expectedOutcome: action.expectedOutcome,
+    timeInvestment: action.timeInvestment,
+    category: action.category,
+    priority: 'high',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'moderate',
+    roiRating: action.roiRating,
+  };
+}
+
+function injectMonth2RoleFamilyAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction {
+  const familyAction = ROLE_FAMILY_MONTH2_ACTIONS[inputs.rolePrefix]
+    ?? ROLE_FAMILY_MONTH2_ACTIONS['default'];
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — Month 2 role-specific execution`,
+    action: familyAction.action,
+    subActions: familyAction.subActions,
+    whyNow: `Month 2 for ${inputs.rolePrefix.toUpperCase()} roles means moving from profile optimisation to active pipeline building using the channels specific to your function.`,
+    evidence: familyAction.evidence,
+    expectedOutcome: familyAction.expectedOutcome,
+    timeInvestment: familyAction.timeInvestment,
+    category: familyAction.category,
+    priority: 'high',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'moderate',
+    roiRating: familyAction.roiRating,
+  };
+}
+
+function injectMonth3RoleFamilyAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction {
+  const familyAction = ROLE_FAMILY_MONTH3_ACTIONS[inputs.rolePrefix]
+    ?? ROLE_FAMILY_MONTH3_ACTIONS['default'];
+
+  return {
+    weekNumber,
+    deadline: `Week ${weekNumber} — Month 3 offer-period focus`,
+    action: familyAction.action,
+    subActions: familyAction.subActions,
+    whyNow: `Month 3 is the offer-period phase. ${inputs.rolePrefix.toUpperCase()} roles have specific evaluation and negotiation considerations that apply directly to your decisions this month.`,
+    evidence: familyAction.evidence,
+    expectedOutcome: familyAction.expectedOutcome,
+    timeInvestment: familyAction.timeInvestment,
+    category: familyAction.category,
+    priority: 'high',
+    isBlocking: false,
+    unlocks: [],
+    effortLevel: 'moderate',
+    roiRating: familyAction.roiRating,
+  };
+}
+
+// ─── v51.0 enriched plan computation ─────────────────────────────────────────
+
+/**
+ * computeMonthlyActionPlanV51
+ *
+ * Extends computeMonthlyActionPlan output with v51.0 personalisation:
+ * - Career goal–specific actions (stay_and_strengthen / strategic_pivot / exit_fast)
+ * - Employment gap recovery actions (when gap > 3 months)
+ * - Region-specific platform actions (IN / US / UK / SG)
+ * - Month 2/3 role-family–specific deep actions
+ *
+ * Returns the same MonthlyActionPlanResult shape with augmented months[].weeklyActions.
+ */
+export function computeMonthlyActionPlanV51(inputs: MonthlyActionPlanInputs): MonthlyActionPlanResult {
+  const base = computeMonthlyActionPlan(inputs);
+
+  const enrichedMonths = base.months.map(monthPlan => {
+    const extraActions: WeeklyAction[] = [];
+
+    if (monthPlan.month === 1) {
+      const goalAction = injectCareerGoalAction(inputs, 1);
+      if (goalAction) extraActions.push(goalAction);
+
+      const gapAction = injectGapRecoveryAction(inputs, 1);
+      if (gapAction) extraActions.push(gapAction);
+
+      const regionAction = injectRegionActionV51(inputs, 2);
+      if (regionAction) extraActions.push(regionAction);
+    }
+
+    if (monthPlan.month === 2) {
+      extraActions.push(injectMonth2RoleFamilyAction(inputs, 5));
+
+      const regionAction = injectRegionActionV51(inputs, 6);
+      if (regionAction) extraActions.push({ ...regionAction, weekNumber: 6 });
+    }
+
+    if (monthPlan.month === 3) {
+      extraActions.push(injectMonth3RoleFamilyAction(inputs, 9));
+    }
+
+    if (extraActions.length === 0) return monthPlan;
+
+    return {
+      ...monthPlan,
+      weeklyActions: [...monthPlan.weeklyActions, ...extraActions]
+        .sort((a, b) => a.weekNumber - b.weekNumber),
+    };
+  });
+
+  return {
+    ...base,
+    months: enrichedMonths,
+  };
+}

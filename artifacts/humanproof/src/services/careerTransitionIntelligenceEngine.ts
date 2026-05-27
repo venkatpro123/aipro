@@ -511,3 +511,519 @@ export function computeCareerTransition(input: TransitionIntelligenceInput): Car
 
 // ─── Convenience export for pipeline ─────────────────────────────────────────
 export { getRoleFamilyForKey };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// v51.0 — Income Bridge Strategy + Regional Demand Intelligence
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Income bridge types ──────────────────────────────────────────────────────
+
+export interface IncomeBridgeOption {
+  type: 'freelance' | 'consulting' | 'part_time' | 'contract' | 'teaching' | 'gig';
+  title: string;
+  description: string;
+  estimatedMonthlyIncome: string;
+  timeToFirstRevenue: string;
+  hoursPerWeek: number;
+  skillOverlap: string;
+  platforms: string[];
+  riskToMainSearch: 'low' | 'medium' | 'high';
+}
+
+export interface IncomeBridgeStrategy {
+  transitionFeasibilityLabel: TransitionFeasibilityLabel;
+  primaryBridge: IncomeBridgeOption;
+  alternativeBridges: IncomeBridgeOption[];
+  keyMessage: string;
+  totalHoursPerWeek: number;
+  financialProjection: string;
+}
+
+// ─── Income bridge options by role family ────────────────────────────────────
+
+const INCOME_BRIDGE_BY_FAMILY: Partial<Record<RoleFamily, IncomeBridgeOption[]>> = {
+  tech: [
+    {
+      type: 'freelance',
+      title: 'Freelance Software Development',
+      description: 'Short-term freelance sprints on Toptal, Upwork, or Gun.io — 1–4 week projects at senior rates',
+      estimatedMonthlyIncome: '₹80,000–₹2,50,000 / $2,000–$8,000',
+      timeToFirstRevenue: '1–2 weeks',
+      hoursPerWeek: 15,
+      skillOverlap: 'Direct use of existing engineering skills — zero ramp-up time',
+      platforms: ['Toptal', 'Upwork', 'Gun.io', 'Fiverr Pro', 'Braintrust'],
+      riskToMainSearch: 'low',
+    },
+    {
+      type: 'contract',
+      title: 'Part-time Contract Engineering',
+      description: '20hr/week contract via staffing agency — full-time search continues alongside',
+      estimatedMonthlyIncome: '₹60,000–₹1,50,000 / $2,500–$5,000',
+      timeToFirstRevenue: '2–3 weeks',
+      hoursPerWeek: 20,
+      skillOverlap: 'Identical to full-time role — agencies place contractors in 1–3 weeks',
+      platforms: ['Experis', 'TEKsystems', 'Randstad Tech', 'Hays Technology', 'Robert Half Tech'],
+      riskToMainSearch: 'medium',
+    },
+  ],
+  data_science: [
+    {
+      type: 'freelance',
+      title: 'Freelance Data Analysis & Reporting',
+      description: 'Data analysis, dashboard creation, or model deployment for SMBs via freelance',
+      estimatedMonthlyIncome: '₹60,000–₹1,80,000 / $1,500–$5,000',
+      timeToFirstRevenue: '1–3 weeks',
+      hoursPerWeek: 12,
+      skillOverlap: 'SQL, Python, BI tools transfer directly — SMBs pay well for skills you find routine',
+      platforms: ['Upwork', 'Freelancer', 'Toptal', 'Kaggle consulting'],
+      riskToMainSearch: 'low',
+    },
+    {
+      type: 'teaching',
+      title: 'Data Science Bootcamp Instructor',
+      description: 'Part-time instructor for bootcamps or online platforms — flexible hours, strong networking',
+      estimatedMonthlyIncome: '₹30,000–₹80,000 / $800–$2,500',
+      timeToFirstRevenue: '2–4 weeks',
+      hoursPerWeek: 8,
+      skillOverlap: 'Teach what you already know — excellent for portfolio visibility',
+      platforms: ['Coursera Teach', 'Udemy', 'Springboard', 'General Assembly', 'Masai School'],
+      riskToMainSearch: 'low',
+    },
+  ],
+  finance: [
+    {
+      type: 'consulting',
+      title: 'Fractional CFO / Finance Advisory',
+      description: 'Serve 2–3 startups as fractional finance head — retainers ₹50K–₹1.5L/month per client',
+      estimatedMonthlyIncome: '₹80,000–₹3,00,000 / $2,000–$8,000',
+      timeToFirstRevenue: '2–4 weeks',
+      hoursPerWeek: 16,
+      skillOverlap: 'Modeling, FP&A, and financial strategy — startups need senior finance without full-time cost',
+      platforms: ['CFO Alliance', 'Toptal Finance', 'Growth Mentor', 'EFM India', 'LinkedIn outbound'],
+      riskToMainSearch: 'low',
+    },
+    {
+      type: 'teaching',
+      title: 'Finance Certification Coaching',
+      description: 'Coach CFA/CA/CPA aspirants — ₹3,000–₹8,000 per student per session',
+      estimatedMonthlyIncome: '₹40,000–₹1,20,000 / $1,000–$3,000',
+      timeToFirstRevenue: '1–2 weeks',
+      hoursPerWeek: 8,
+      skillOverlap: 'Your credentials and experience are the product — no additional investment needed',
+      platforms: ['Superprof', 'UrbanPro', 'LinkedIn (direct)', 'Reddit r/CFA study groups'],
+      riskToMainSearch: 'low',
+    },
+  ],
+  consulting: [
+    {
+      type: 'consulting',
+      title: 'Independent Strategy Consultant',
+      description: 'Take 1 project at a time as independent consultant — consulting alumni earn $300–$600/hr freelancing',
+      estimatedMonthlyIncome: '₹1,50,000–₹5,00,000 / $5,000–$15,000',
+      timeToFirstRevenue: '3–6 weeks',
+      hoursPerWeek: 20,
+      skillOverlap: 'Identical skill set — your consulting brand is your calling card for independent work',
+      platforms: ['Expert360', 'BTG (Business Talent Group)', 'Catalant', 'Graphite', 'Eden McCallum'],
+      riskToMainSearch: 'medium',
+    },
+  ],
+  healthcare_clinical: [
+    {
+      type: 'contract',
+      title: 'Locum / Contract Clinical Positions',
+      description: 'Locum shifts at private clinics or hospitals — pay is 30–50% above regular employment rates',
+      estimatedMonthlyIncome: '₹80,000–₹2,50,000 / $3,000–$10,000',
+      timeToFirstRevenue: '1–2 weeks',
+      hoursPerWeek: 24,
+      skillOverlap: 'Direct clinical skills — zero ramp-up, immediate deployment',
+      platforms: ['Doctemps', 'Practo Consult', 'Medi Staff', 'Staffconnect (UK)', 'Locumstory (US)'],
+      riskToMainSearch: 'medium',
+    },
+    {
+      type: 'teaching',
+      title: 'Clinical Education & Medical Writing',
+      description: 'Medical writing for pharma/device companies or clinical education content creation',
+      estimatedMonthlyIncome: '₹40,000–₹1,20,000 / $2,000–$5,000',
+      timeToFirstRevenue: '2–4 weeks',
+      hoursPerWeek: 10,
+      skillOverlap: 'Clinical expertise is the core product — companies pay premium for credentialed medical writers',
+      platforms: ['AMWA', 'Upwork', 'Freelance MD', 'Contently for medical'],
+      riskToMainSearch: 'low',
+    },
+  ],
+  legal: [
+    {
+      type: 'consulting',
+      title: 'Freelance Legal Consulting / Contract Review',
+      description: 'Contract review and legal opinions for SMBs on retainer or per-document basis',
+      estimatedMonthlyIncome: '₹60,000–₹2,00,000 / $3,000–$8,000',
+      timeToFirstRevenue: '2–3 weeks',
+      hoursPerWeek: 12,
+      skillOverlap: 'Direct legal skills — no additional investment needed',
+      platforms: ['Lawpath', 'UpCounsel', 'LawTrades', 'Bar association referrals'],
+      riskToMainSearch: 'low',
+    },
+  ],
+  marketing: [
+    {
+      type: 'freelance',
+      title: 'Fractional CMO / Growth Consultant',
+      description: 'Serve 2–3 growth-stage startups as fractional head of marketing or growth',
+      estimatedMonthlyIncome: '₹60,000–₹2,00,000 / $2,000–$7,000',
+      timeToFirstRevenue: '2–3 weeks',
+      hoursPerWeek: 15,
+      skillOverlap: 'Strategy, execution, and measurement skills transfer directly',
+      platforms: ['Growth Collective', 'Toptal Marketing', 'LinkedIn outbound'],
+      riskToMainSearch: 'low',
+    },
+  ],
+};
+
+const DEFAULT_INCOME_BRIDGE_OPTIONS: IncomeBridgeOption[] = [
+  {
+    type: 'freelance',
+    title: 'Domain Expertise Consulting',
+    description: 'Consulting or freelance services in your domain to SMBs or startups',
+    estimatedMonthlyIncome: '₹40,000–₹1,20,000 / $1,500–$4,000',
+    timeToFirstRevenue: '2–4 weeks',
+    hoursPerWeek: 12,
+    skillOverlap: 'Core skills are deployable immediately',
+    platforms: ['Upwork', 'Freelancer', 'LinkedIn outbound', 'AngelList', 'Toptal'],
+    riskToMainSearch: 'low',
+  },
+  {
+    type: 'teaching',
+    title: 'Domain Expert Coaching',
+    description: 'Coach aspiring professionals in your domain via bootcamps or 1-on-1 sessions',
+    estimatedMonthlyIncome: '₹25,000–₹80,000 / $800–$2,500',
+    timeToFirstRevenue: '1–2 weeks',
+    hoursPerWeek: 8,
+    skillOverlap: 'Teaching what you know deepens expertise and expands network',
+    platforms: ['Superprof', 'UrbanPro', 'Coursera Teach', 'Maven', 'LinkedIn Learning'],
+    riskToMainSearch: 'low',
+  },
+];
+
+export function computeIncomeBridgeStrategy(
+  sourceFamily: RoleFamily | null,
+  transitionLabel: TransitionFeasibilityLabel,
+  financialRunwayMonths: number | null,
+  region: string,
+): IncomeBridgeStrategy | null {
+  if (transitionLabel === 'READY_NOW') return null;
+
+  const bridgeOptions = (sourceFamily ? INCOME_BRIDGE_BY_FAMILY[sourceFamily] : null)
+    ?? DEFAULT_INCOME_BRIDGE_OPTIONS;
+  const primaryBridge = bridgeOptions[0];
+  const alternativeBridges = bridgeOptions.slice(1);
+
+  const coverageLabel =
+    transitionLabel === 'SHORT_BRIDGE' ? '60–80%'
+    : transitionLabel === 'ACHIEVABLE' ? '50–70%'
+    : transitionLabel === 'CHALLENGING' ? '40–60%'
+    : '30–50%';
+
+  const urgencyNote = financialRunwayMonths !== null && financialRunwayMonths <= 3
+    ? 'Your runway is critically short — start the income bridge this week alongside your search.'
+    : financialRunwayMonths !== null && financialRunwayMonths <= 6
+    ? 'Start building the income bridge in Month 1 to extend your effective runway.'
+    : 'Your runway is adequate — the income bridge is optional but reduces financial pressure.';
+
+  const totalHours = primaryBridge.hoursPerWeek + (alternativeBridges[0]?.hoursPerWeek ?? 0) * 0.5;
+  const regionSuffix = (region === 'in' || region.startsWith('in')) ? ' (INR estimates above)' : ' (USD estimates above)';
+
+  return {
+    transitionFeasibilityLabel: transitionLabel,
+    primaryBridge,
+    alternativeBridges,
+    keyMessage: `${urgencyNote} This bridge covers approximately ${coverageLabel} of your monthly expenses${regionSuffix} while you complete the transition.`,
+    totalHoursPerWeek: Math.round(totalHours),
+    financialProjection: `Estimated income bridge: ${primaryBridge.estimatedMonthlyIncome}/month for ~${primaryBridge.hoursPerWeek} hrs/week. Covers ${coverageLabel} of typical monthly expenses.`,
+  };
+}
+
+// ─── Regional demand data per role family ─────────────────────────────────────
+
+export interface RegionalTransitionDemand {
+  region: string;
+  demandScore: number;
+  hiringVelocity: 'fast' | 'moderate' | 'slow';
+  avgTimeToOfferWeeks: number;
+  topHiringCities: string[];
+  remoteAvailability: 'high' | 'medium' | 'low';
+  salaryPremiumVsMedian: number;
+  keyInsight: string;
+  topJobBoards: string[];
+}
+
+const REGIONAL_DEMAND_DATA: Partial<Record<RoleFamily, Partial<Record<string, RegionalTransitionDemand>>>> = {
+  tech: {
+    in: {
+      region: 'India',
+      demandScore: 85,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 5,
+      topHiringCities: ['Bengaluru', 'Hyderabad', 'Pune', 'Chennai', 'Gurugram'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: -30,
+      keyInsight: 'India is one of the top 3 global tech hiring markets. Bengaluru alone has 40K+ open tech roles at any time. Competition is high but volume is highest.',
+      topJobBoards: ['Naukri', 'LinkedIn', 'Cutshort', 'Instahyre', 'AngelList Talent'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 90,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 8,
+      topHiringCities: ['San Francisco', 'Seattle', 'New York', 'Austin', 'Boston'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 80,
+      keyInsight: 'US tech market pays the global premium — 2–4× India rates. Longer hiring cycles (8–12 weeks). Strong remote options.',
+      topJobBoards: ['LinkedIn', 'Indeed', 'Levels.fyi', 'Glassdoor', 'Greenhouse'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 72,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['London', 'Manchester', 'Edinburgh', 'Bristol', 'Cambridge'],
+      remoteAvailability: 'medium',
+      salaryPremiumVsMedian: 30,
+      keyInsight: 'UK tech market is strong but smaller than US. London pays 25–40% above rest of UK. FinTech particularly active.',
+      topJobBoards: ['LinkedIn', 'Reed', 'CWJobs', 'StackOverflow Jobs', 'TechCrunch Jobs'],
+    },
+    sg: {
+      region: 'Singapore',
+      demandScore: 78,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 5,
+      topHiringCities: ['Singapore (citywide)'],
+      remoteAvailability: 'medium',
+      salaryPremiumVsMedian: 60,
+      keyInsight: "Singapore is Asia-Pacific's tech hub. Shorter hiring cycles, strong EP sponsorship for senior tech roles.",
+      topJobBoards: ['LinkedIn', 'JobsDB', 'MyCareersFuture', 'Glassdoor SG', 'NodeFlair'],
+    },
+  },
+  data_science: {
+    in: {
+      region: 'India',
+      demandScore: 88,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 4,
+      topHiringCities: ['Bengaluru', 'Hyderabad', 'Mumbai', 'Pune', 'NCR'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: -25,
+      keyInsight: 'Analytics consulting firms (Mu Sigma, Fractal, Tiger Analytics) hire aggressively and are the highest-volume data science employer in India.',
+      topJobBoards: ['Naukri', 'LinkedIn', 'Cutshort', 'Kaggle (profile)', 'Analytics Vidhya Jobs'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 92,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 9,
+      topHiringCities: ['San Francisco', 'New York', 'Seattle', 'Boston', 'Chicago'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 90,
+      keyInsight: 'AI/ML skills command extraordinary premiums in the US. LLM and production ML skills can add 30–50% to data scientist compensation.',
+      topJobBoards: ['LinkedIn', 'Indeed', 'Glassdoor', 'aidirectory.io', 'AngelList'],
+    },
+  },
+  ml_ai: {
+    in: {
+      region: 'India',
+      demandScore: 95,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 4,
+      topHiringCities: ['Bengaluru', 'Hyderabad', 'Chennai', 'Pune'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: -20,
+      keyInsight: "India's highest-demand role family right now. MAANG, unicorns, and GCCs all actively hiring. LLM/GenAI skills command 40–80% salary premium.",
+      topJobBoards: ['LinkedIn', 'Cutshort', 'Naukri', 'GitHub Jobs', 'Hugging Face Jobs'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 98,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 6,
+      topHiringCities: ['San Francisco/Bay Area', 'Seattle', 'New York', 'Boston'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 120,
+      keyInsight: 'AI talent is in extreme shortage globally. FAANG AI research roles can exceed $500K total comp. Even mid-level ML engineers earn $250–400K.',
+      topJobBoards: ['LinkedIn', 'aidirectory.io', 'levels.fyi/jobs', 'Hugging Face Jobs', 'AngelList'],
+    },
+  },
+  finance: {
+    in: {
+      region: 'India',
+      demandScore: 72,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['Mumbai', 'Gurugram', 'Bengaluru', 'Chennai', 'Pune'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: -40,
+      keyInsight: 'Mumbai dominates finance hiring. GCC finance roles (JPMorgan, Goldman India) pay 25–45% above Indian finance employers. CA/CFA required for 80% of senior roles.',
+      topJobBoards: ['iimjobs', 'LinkedIn', 'Naukri Premium', 'Michael Page Finance', 'CIEL HR Finance'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 80,
+      hiringVelocity: 'slow',
+      avgTimeToOfferWeeks: 12,
+      topHiringCities: ['New York', 'Chicago', 'San Francisco', 'Boston', 'Charlotte'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 100,
+      keyInsight: 'US finance is the global premium market. Hiring cycles are 10–16 weeks. Top bulge bracket roles heavily network-dependent.',
+      topJobBoards: ['eFinancialCareers', 'LinkedIn', 'Wall Street Oasis', 'Indeed Finance'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 75,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 9,
+      topHiringCities: ['London (City/Canary Wharf)', 'Edinburgh', 'Manchester'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 50,
+      keyInsight: "London is Europe's financial capital. FinTech (Revolut, Monzo, Wise) offers 20–30% premiums over traditional banks with faster hiring cycles.",
+      topJobBoards: ['eFinancialCareers', 'LinkedIn', 'Reed Finance', 'Robert Half UK', 'Morgan McKinley'],
+    },
+  },
+  consulting: {
+    in: {
+      region: 'India',
+      demandScore: 70,
+      hiringVelocity: 'slow',
+      avgTimeToOfferWeeks: 10,
+      topHiringCities: ['Mumbai', 'NCR', 'Bengaluru', 'Hyderabad'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: -35,
+      keyInsight: 'Most senior consulting hiring is referral-driven — cold applications rarely work at Partner/Principal level.',
+      topJobBoards: ['LinkedIn', 'iimjobs', 'Naukri Premium', 'Firm career pages (direct)'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 78,
+      hiringVelocity: 'slow',
+      avgTimeToOfferWeeks: 12,
+      topHiringCities: ['New York', 'Chicago', 'Washington DC', 'Boston', 'San Francisco'],
+      remoteAvailability: 'medium',
+      salaryPremiumVsMedian: 90,
+      keyInsight: 'MBB total comp can reach $350–500K at Partner level. Lateral hiring is highly selective and network-driven.',
+      topJobBoards: ['LinkedIn', 'Management Consulted board', 'Glassdoor', 'Firm career pages'],
+    },
+  },
+  healthcare_clinical: {
+    in: {
+      region: 'India',
+      demandScore: 80,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 4,
+      topHiringCities: ['Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: -50,
+      keyInsight: 'HealthTech companies (Practo, Tata Health, Apollo 24/7) pay 30–50% above hospital roles and are the highest-growth clinical employer.',
+      topJobBoards: ['Practo Jobs', 'HealthcareJobs.in', 'Naukri Healthcare', 'LinkedIn', 'BMC Recruitment'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 88,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 5,
+      topHiringCities: ['New York', 'Houston', 'Los Angeles', 'Chicago', 'Boston'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 150,
+      keyInsight: 'US clinical demand is extremely high with genuine supply shortage. Physician shortages are at historical highs. Locum rates up 30% since 2022.',
+      topJobBoards: ['Health eCareers', 'PracticeLink', 'Doximity', 'Physicians Employment', 'DocCafe'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 82,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 6,
+      topHiringCities: ['London', 'Manchester', 'Birmingham', 'Leeds', 'Bristol'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 60,
+      keyInsight: 'NHS has persistent clinical shortages. Private sector pays 40–80% above NHS rates. IMGs actively recruited.',
+      topJobBoards: ['NHS Jobs', 'BMJ Careers', 'MedJobsUK', 'Healthjobs UK', 'The Lancet Careers'],
+    },
+  },
+};
+
+const DEFAULT_REGIONAL_DEMAND: RegionalTransitionDemand = {
+  region: 'Global',
+  demandScore: 60,
+  hiringVelocity: 'moderate',
+  avgTimeToOfferWeeks: 8,
+  topHiringCities: ['Major metros in your region'],
+  remoteAvailability: 'medium',
+  salaryPremiumVsMedian: 0,
+  keyInsight: 'Regional demand data being compiled for this role family. Focus on LinkedIn Jobs and specialist job boards for your sector.',
+  topJobBoards: ['LinkedIn', 'Indeed', 'Glassdoor', 'Domain-specific job boards'],
+};
+
+export function getRegionalTransitionDemand(
+  targetFamily: RoleFamily,
+  region: string,
+): RegionalTransitionDemand {
+  const familyData = REGIONAL_DEMAND_DATA[targetFamily];
+  if (!familyData) return DEFAULT_REGIONAL_DEMAND;
+
+  const normRegion = region.toLowerCase();
+  const key = normRegion.startsWith('us') || normRegion.includes('united states') ? 'us'
+    : normRegion.startsWith('uk') || normRegion.startsWith('gb') || normRegion.includes('united kingdom') ? 'uk'
+    : normRegion.startsWith('sg') || normRegion.includes('singapore') ? 'sg'
+    : normRegion.startsWith('in') || normRegion.includes('india') ? 'in'
+    : normRegion;
+
+  return familyData[key] ?? DEFAULT_REGIONAL_DEMAND;
+}
+
+// ─── Enriched result with v51.0 intelligence ─────────────────────────────────
+
+export interface CareerTransitionResultV51 extends CareerTransitionResult {
+  incomeBridgeStrategy: IncomeBridgeStrategy | null;
+  regionalDemand: RegionalTransitionDemand | null;
+  marketCompetitivenessScore: number | null;
+  marketCompetitivenessNote: string | null;
+}
+
+export function computeCareerTransitionV51(
+  input: TransitionIntelligenceInput & { region?: string },
+): CareerTransitionResultV51 {
+  const base = computeCareerTransition(input);
+  const region = input.region ?? 'in';
+
+  const targetFamily = base.directTransition?.targetRoleFamily
+    ?? base.recommendedTransitions[0]?.targetRoleFamily
+    ?? null;
+
+  const incomeBridgeStrategy = base.directTransition
+    ? computeIncomeBridgeStrategy(
+        base.currentRoleFamily,
+        base.directTransition.feasibilityLabel,
+        input.financialRunwayMonths ?? null,
+        region,
+      )
+    : null;
+
+  let regionalDemand: RegionalTransitionDemand | null = null;
+  let marketCompetitivenessScore: number | null = null;
+  let marketCompetitivenessNote: string | null = null;
+
+  if (targetFamily) {
+    regionalDemand = getRegionalTransitionDemand(targetFamily, region);
+    const feasibilityScore = base.directTransition?.feasibilityScore ?? 50;
+    marketCompetitivenessScore = Math.round(regionalDemand.demandScore * 0.6 + feasibilityScore * 0.4);
+    marketCompetitivenessNote = marketCompetitivenessScore >= 75
+      ? `Strong position: high demand in ${regionalDemand.region} with good feasibility — expect active hiring market.`
+      : marketCompetitivenessScore >= 55
+      ? `Moderate position: decent demand but expect competition. Differentiation through portfolio and network is key.`
+      : `Challenging market: either demand is lower or transition gap is significant. Focus on bridge roles and warm network.`;
+  }
+
+  return {
+    ...base,
+    incomeBridgeStrategy,
+    regionalDemand,
+    marketCompetitivenessScore,
+    marketCompetitivenessNote,
+  };
+}
