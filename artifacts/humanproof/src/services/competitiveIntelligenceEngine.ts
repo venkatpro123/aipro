@@ -127,16 +127,105 @@ const ROLE_SUPPLY_INDEX: Record<string, number> = {
 
 // ─── Regional multipliers ────────────────────────────────────────────────────
 // >1 = more competitive (more candidates), <1 = less competitive (fewer candidates)
+// v47.0: expanded to 30 regions with role-family overrides
 
 const REGION_SUPPLY_MULTIPLIER: Record<string, number> = {
   "IN": 1.45,   // India — large talent pool, high supply
   "US": 0.90,   // USA — tight market overall
   "CA": 0.95,   // Canada
   "GB": 0.92,   // UK
-  "DE": 0.88,   // Germany
+  "DE": 0.88,   // Germany — tight (engineering shortage)
   "SG": 0.85,   // Singapore — very tight
   "AU": 0.91,   // Australia
+  // v47.0 additions
+  "AE": 0.82,   // UAE — very tight, high demand for expats
+  "NL": 0.89,   // Netherlands — tight for tech/finance
+  "FR": 0.93,   // France
+  "JP": 0.87,   // Japan — tight for bilingual tech roles
+  "KR": 0.91,   // South Korea
+  "BR": 1.20,   // Brazil — looser market, lower salaries
+  "MX": 1.18,   // Mexico — near-shoring demand but high local supply
+  "PH": 1.40,   // Philippines — BPO/tech talent surplus
+  "PK": 1.50,   // Pakistan — very large talent pool
+  "NG": 1.35,   // Nigeria — growing talent but crowded
+  "ZA": 1.15,   // South Africa — moderate
+  "SE": 0.88,   // Sweden — tight
+  "CH": 0.84,   // Switzerland — very tight (fintech/pharma premium)
+  "IE": 0.87,   // Ireland — tight (EMEA tech hubs)
+  "PL": 1.05,   // Poland — moderate (near-shore destination)
+  "RO": 1.10,   // Romania — near-shore destination, moderate
+  "UA": 1.25,   // Ukraine — surplus (conflict displacement)
+  "HK": 0.86,   // Hong Kong — tight (financial hub)
+  "MY": 1.15,   // Malaysia — moderate
+  "ID": 1.30,   // Indonesia — growing pool
+  "VN": 1.25,   // Vietnam — near-shore destination
+  "EG": 1.30,   // Egypt — growing tech talent
+  "IL": 0.80,   // Israel — very tight (startup density)
   "GLOBAL": 1.0,
+};
+
+// ─── Role-family × region tightness overrides (v47.0) ────────────────────────
+// Some role families behave very differently from the general market.
+// Key: `${region}_${roleFamily}` → multiplier override.
+// When present, this replaces REGION_SUPPLY_MULTIPLIER × role base.
+// Derived from Adzuna opening counts, LinkedIn talent insights Q1 2026.
+
+const ROLE_REGION_OVERRIDE: Record<string, number> = {
+  // India: HUGE engineering pool but very tight for senior/specialized roles
+  "IN_ml_engineer":          1.15,   // ML is competitive even in India
+  "IN_security_engineer":    1.10,   // Security is tight globally
+  "IN_staff_engineer":       1.20,   // Staff+ still scarce in India
+  "IN_product_manager":      1.35,   // India PM pipeline is deep
+  "IN_data_analyst":         1.60,   // Data analyst is saturated in India
+  "IN_content_writer":       1.80,   // Content is flooded
+  "IN_customer_support":     1.90,   // BPO surplus
+  "IN_recruiter":            1.70,   // TA frozen in many companies
+
+  // US: Tight overall but loose for some roles post-2022 layoffs
+  "US_software_engineer":    0.85,   // Still tight despite layoffs
+  "US_ml_engineer":          0.60,   // Very tight — AI era demand
+  "US_data_scientist":       0.88,   // Still reasonably tight
+  "US_junior_developer":     1.20,   // Flooded post-bootcamp era
+  "US_marketing_manager":    1.15,   // Marketing cut hard in 2023-24
+  "US_recruiter":            1.60,   // TA was hardest hit in tech layoffs
+  "US_content_writer":       1.80,   // AI content disruption is severe
+
+  // Singapore: Very tight for tech, moderate for others
+  "SG_software_engineer":    0.70,   // Singapore tech is very tight
+  "SG_ml_engineer":          0.55,   // Critically tight — regional AI hub
+  "SG_finance_analyst":      0.80,   // Strong fintech sector
+  "SG_customer_support":     1.05,   // Average — ASEAN CX hubs compete
+
+  // UAE: Finance + tech command premium, supply tight
+  "AE_finance_analyst":      0.75,   // ADGM/DIFC pull demand up
+  "AE_software_engineer":    0.78,   // Tight in Dubai tech scene
+  "AE_marketing_manager":    0.90,   // Moderate
+
+  // UK: Post-Brexit engineering shortage
+  "GB_software_engineer":    0.82,   // Tight post-Brexit
+  "GB_data_engineer":        0.80,   // Very tight
+  "GB_finance_analyst":      0.85,   // London finance demand high
+  "GB_content_writer":       1.50,   // Flooded — many media layoffs
+
+  // Germany: Engineering shortage across the board
+  "DE_software_engineer":    0.75,   // Critical shortage
+  "DE_data_engineer":        0.72,   // Very tight
+  "DE_ml_engineer":          0.68,   // Critically tight
+
+  // Philippines: BPO surplus, tech tighter
+  "PH_customer_support":     2.10,   // Very flooded BPO market
+  "PH_software_engineer":    1.10,   // Tighter than BPO but still accessible
+  "PH_data_analyst":         1.50,   // Moderate-high supply
+
+  // Switzerland: Premium specialized roles
+  "CH_finance_analyst":      0.70,   // Very tight — UBS/CS talent wars
+  "CH_ml_engineer":          0.62,   // Critically tight
+  "CH_compliance":           0.75,   // Fintech/pharma compliance demand
+
+  // Israel: Startup ecosystem drives scarcity
+  "IL_software_engineer":    0.70,   // Very tight
+  "IL_ml_engineer":          0.55,   // Critically tight — military/startup demand
+  "IL_cybersecurity":        0.52,   // Exceptionally tight — Unit 8200 pipeline
 };
 
 // ─── Seniority multipliers (more senior = fewer competitors) ─────────────────
@@ -295,7 +384,13 @@ export function computeCompetitiveIntelligence(
   const baseSupplyIndex = ROLE_SUPPLY_INDEX[inputs.oracleKey]
     ?? ROLE_SUPPLY_INDEX["generic"]
     ?? 35;
-  const regionMultiplier = REGION_SUPPLY_MULTIPLIER[inputs.region] ?? 1.0;
+
+  // v47.0: check for role-family × region override before falling back to flat multiplier
+  const overrideKey = `${inputs.region}_${inputs.oracleKey}`;
+  const regionMultiplier = ROLE_REGION_OVERRIDE[overrideKey]
+    ?? REGION_SUPPLY_MULTIPLIER[inputs.region]
+    ?? 1.0;
+
   const seniorityMultiplier = getSeniorityMultiplier(inputs.tenureYears);
 
   // If external liquidity score is available, blend it into the supply index.

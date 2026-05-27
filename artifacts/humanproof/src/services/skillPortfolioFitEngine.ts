@@ -128,6 +128,151 @@ const SKILL_SIGNALS: Record<string, Omit<SkillSignal, 'skill' | 'demandIn3Months
   'observability':        { demandScore: 80, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.28 },
   'vector database':      { demandScore: 82, trend: 'SURGING',  halfLifeYears: 3.0, automatabilityRisk: 0.20 },
   'agent framework':      { demandScore: 88, trend: 'SURGING',  halfLifeYears: 3.5, automatabilityRisk: 0.18 },
+
+  // ── v47.0 Non-Tech Expansion ─────────────────────────────────────────────
+
+  // ── Finance & Accounting ──────────────────────────────────────────────────
+  'dcf valuation':          { demandScore: 72, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.58 },
+  'lbo modeling':           { demandScore: 76, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.52 },
+  'm&a due diligence':      { demandScore: 74, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.45 },
+  'fp&a':                   { demandScore: 70, trend: 'STABLE',   halfLifeYears: 3.5, automatabilityRisk: 0.60 },
+  'variance analysis':      { demandScore: 62, trend: 'DECLINING', halfLifeYears: 2.5, automatabilityRisk: 0.72 },
+  'gaap accounting':        { demandScore: 68, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.65 },
+  'ifrs':                   { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.62 },
+  'tax compliance':         { demandScore: 70, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.58 },
+  'transfer pricing':       { demandScore: 74, trend: 'GROWING',  halfLifeYears: 5.0, automatabilityRisk: 0.45 },
+  'risk management':        { demandScore: 78, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.42 },
+  'basel iii / iv':         { demandScore: 72, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.38 },
+  'credit analysis':        { demandScore: 68, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.62 },
+  'treasury management':    { demandScore: 70, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.55 },
+  'investor relations':     { demandScore: 68, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.40 },
+  'corporate finance':      { demandScore: 72, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.50 },
+  'quantitative finance':   { demandScore: 82, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.28 },
+  'bloomberg terminal':     { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'alteryx':                { demandScore: 55, trend: 'DECLINING', halfLifeYears: 2.0, automatabilityRisk: 0.68 },
+
+  // ── Healthcare & Clinical ────────────────────────────────────────────────
+  'epic emr':               { demandScore: 82, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.35 },
+  'cerner':                 { demandScore: 72, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.42 },
+  'clinical documentation': { demandScore: 70, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'clinical trials':        { demandScore: 76, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.35 },
+  'fda regulatory':         { demandScore: 80, trend: 'GROWING',  halfLifeYears: 7.0, automatabilityRisk: 0.28 },
+  'medical coding':         { demandScore: 52, trend: 'DECLINING', halfLifeYears: 2.0, automatabilityRisk: 0.82 },
+  'icd-10':                 { demandScore: 55, trend: 'DECLINING', halfLifeYears: 2.5, automatabilityRisk: 0.78 },
+  'nursing care':           { demandScore: 85, trend: 'SURGING',  halfLifeYears: 8.0, automatabilityRisk: 0.12 },
+  'patient assessment':     { demandScore: 82, trend: 'GROWING',  halfLifeYears: 7.5, automatabilityRisk: 0.15 },
+  'pharmacovigilance':      { demandScore: 78, trend: 'GROWING',  halfLifeYears: 7.0, automatabilityRisk: 0.30 },
+  'health informatics':     { demandScore: 80, trend: 'SURGING',  halfLifeYears: 6.0, automatabilityRisk: 0.32 },
+  'population health':      { demandScore: 78, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.35 },
+  'telemedicine':           { demandScore: 75, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.30 },
+  'medical imaging ai':     { demandScore: 85, trend: 'SURGING',  halfLifeYears: 5.0, automatabilityRisk: 0.20 },
+  'gcp clinical':           { demandScore: 74, trend: 'GROWING',  halfLifeYears: 6.5, automatabilityRisk: 0.30 },
+  'bioinformatics':         { demandScore: 80, trend: 'SURGING',  halfLifeYears: 6.0, automatabilityRisk: 0.25 },
+
+  // ── Legal & Compliance ────────────────────────────────────────────────────
+  'contract negotiation':   { demandScore: 74, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.42 },
+  'contract drafting':      { demandScore: 65, trend: 'DECLINING', halfLifeYears: 2.5, automatabilityRisk: 0.72 },
+  'e-discovery':            { demandScore: 60, trend: 'DECLINING', halfLifeYears: 2.0, automatabilityRisk: 0.80 },
+  'legal research':         { demandScore: 55, trend: 'DECLINING', halfLifeYears: 2.0, automatabilityRisk: 0.82 },
+  'gdpr compliance':        { demandScore: 78, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.38 },
+  'aml/kyc':                { demandScore: 80, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.40 },
+  'securities law':         { demandScore: 74, trend: 'STABLE',   halfLifeYears: 5.5, automatabilityRisk: 0.38 },
+  'employment law':         { demandScore: 70, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.42 },
+  'ip law':                 { demandScore: 76, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.35 },
+  'data privacy law':       { demandScore: 82, trend: 'SURGING',  halfLifeYears: 6.0, automatabilityRisk: 0.32 },
+  'regulatory affairs':     { demandScore: 78, trend: 'GROWING',  halfLifeYears: 6.5, automatabilityRisk: 0.30 },
+
+  // ── Marketing & Growth ────────────────────────────────────────────────────
+  'seo':                    { demandScore: 62, trend: 'DECLINING', halfLifeYears: 2.5, automatabilityRisk: 0.72 },
+  'google ads':             { demandScore: 68, trend: 'STABLE',   halfLifeYears: 3.0, automatabilityRisk: 0.65 },
+  'meta ads':               { demandScore: 65, trend: 'STABLE',   halfLifeYears: 2.5, automatabilityRisk: 0.68 },
+  'programmatic advertising': { demandScore: 66, trend: 'STABLE', halfLifeYears: 3.0, automatabilityRisk: 0.60 },
+  'hubspot':                { demandScore: 68, trend: 'STABLE',   halfLifeYears: 3.0, automatabilityRisk: 0.62 },
+  'marketo':                { demandScore: 60, trend: 'DECLINING', halfLifeYears: 2.5, automatabilityRisk: 0.68 },
+  'salesforce marketing cloud': { demandScore: 65, trend: 'STABLE', halfLifeYears: 3.5, automatabilityRisk: 0.60 },
+  'content strategy':       { demandScore: 64, trend: 'STABLE',   halfLifeYears: 3.0, automatabilityRisk: 0.65 },
+  'brand strategy':         { demandScore: 70, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.50 },
+  'product marketing':      { demandScore: 75, trend: 'GROWING',  halfLifeYears: 4.5, automatabilityRisk: 0.42 },
+  'go-to-market':           { demandScore: 78, trend: 'GROWING',  halfLifeYears: 5.0, automatabilityRisk: 0.38 },
+  'growth hacking':         { demandScore: 65, trend: 'STABLE',   halfLifeYears: 3.0, automatabilityRisk: 0.55 },
+  'crm management':         { demandScore: 65, trend: 'STABLE',   halfLifeYears: 3.0, automatabilityRisk: 0.65 },
+  'ai-generated content':   { demandScore: 78, trend: 'SURGING',  halfLifeYears: 2.5, automatabilityRisk: 0.25 },
+
+  // ── Human Resources ──────────────────────────────────────────────────────
+  'workday hris':           { demandScore: 72, trend: 'GROWING',  halfLifeYears: 5.0, automatabilityRisk: 0.48 },
+  'successfactors':         { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.52 },
+  'talent acquisition':     { demandScore: 60, trend: 'DECLINING', halfLifeYears: 2.0, automatabilityRisk: 0.72 },
+  'organizational design':  { demandScore: 72, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.38 },
+  'compensation benchmarking': { demandScore: 70, trend: 'STABLE', halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'employee experience':    { demandScore: 72, trend: 'GROWING',  halfLifeYears: 5.0, automatabilityRisk: 0.42 },
+  'people analytics':       { demandScore: 82, trend: 'SURGING',  halfLifeYears: 5.5, automatabilityRisk: 0.32 },
+  'learning management':    { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'diversity equity inclusion': { demandScore: 70, trend: 'GROWING', halfLifeYears: 5.0, automatabilityRisk: 0.40 },
+  'change management':      { demandScore: 74, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.38 },
+
+  // ── Operations & Supply Chain ────────────────────────────────────────────
+  'supply chain management':{ demandScore: 78, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.38 },
+  'demand forecasting':     { demandScore: 72, trend: 'GROWING',  halfLifeYears: 4.5, automatabilityRisk: 0.55 },
+  'erp sap s4':             { demandScore: 76, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.48 },
+  'oracle erp':             { demandScore: 70, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.52 },
+  'lean six sigma':         { demandScore: 68, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.50 },
+  'operations research':    { demandScore: 74, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.40 },
+  'procurement':            { demandScore: 70, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.52 },
+  'logistics optimization': { demandScore: 76, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.42 },
+  'inventory management':   { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.60 },
+  'process automation':     { demandScore: 80, trend: 'SURGING',  halfLifeYears: 5.0, automatabilityRisk: 0.30 },
+
+  // ── Project & Program Management ─────────────────────────────────────────
+  'pmp certification':      { demandScore: 68, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.52 },
+  'agile scrum':            { demandScore: 72, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'safe agile':             { demandScore: 65, trend: 'STABLE',   halfLifeYears: 3.5, automatabilityRisk: 0.55 },
+  'jira':                   { demandScore: 70, trend: 'STABLE',   halfLifeYears: 3.5, automatabilityRisk: 0.60 },
+  'program management':     { demandScore: 72, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.48 },
+  'stakeholder management': { demandScore: 74, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.38 },
+  'executive communication':{ demandScore: 78, trend: 'GROWING',  halfLifeYears: 7.0, automatabilityRisk: 0.28 },
+
+  // ── Sales & Business Development ──────────────────────────────────────────
+  'enterprise sales':       { demandScore: 80, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.35 },
+  'salesforce crm':         { demandScore: 72, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'consultative selling':   { demandScore: 76, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.35 },
+  'solution selling':       { demandScore: 74, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.38 },
+  'channel partnerships':   { demandScore: 72, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.42 },
+  'revenue operations':     { demandScore: 80, trend: 'SURGING',  halfLifeYears: 5.0, automatabilityRisk: 0.40 },
+  'ai sales automation':    { demandScore: 82, trend: 'SURGING',  halfLifeYears: 3.5, automatabilityRisk: 0.30 },
+
+  // ── Design & Creative ────────────────────────────────────────────────────
+  'figma':                  { demandScore: 82, trend: 'GROWING',  halfLifeYears: 4.0, automatabilityRisk: 0.45 },
+  'ux research':            { demandScore: 78, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.35 },
+  'design systems':         { demandScore: 80, trend: 'GROWING',  halfLifeYears: 5.0, automatabilityRisk: 0.38 },
+  'motion design':          { demandScore: 68, trend: 'STABLE',   halfLifeYears: 3.5, automatabilityRisk: 0.55 },
+  'brand identity':         { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.52 },
+  'video production':       { demandScore: 62, trend: 'DECLINING', halfLifeYears: 2.5, automatabilityRisk: 0.68 },
+  'ai image generation':    { demandScore: 75, trend: 'SURGING',  halfLifeYears: 2.5, automatabilityRisk: 0.22 },
+  'accessibility design':   { demandScore: 78, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.30 },
+
+  // ── Engineering & Manufacturing ───────────────────────────────────────────
+  'autocad':                { demandScore: 65, trend: 'STABLE',   halfLifeYears: 4.0, automatabilityRisk: 0.55 },
+  'solidworks':             { demandScore: 68, trend: 'STABLE',   halfLifeYears: 4.5, automatabilityRisk: 0.52 },
+  'ansys simulation':       { demandScore: 72, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.40 },
+  'plc programming':        { demandScore: 76, trend: 'GROWING',  halfLifeYears: 6.0, automatabilityRisk: 0.35 },
+  'industrial automation':  { demandScore: 82, trend: 'SURGING',  halfLifeYears: 6.5, automatabilityRisk: 0.28 },
+  'digital twin':           { demandScore: 80, trend: 'SURGING',  halfLifeYears: 5.5, automatabilityRisk: 0.28 },
+  'quality management':     { demandScore: 68, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.50 },
+  'iso 9001':               { demandScore: 65, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.52 },
+
+  // ── Consulting & Strategy ────────────────────────────────────────────────
+  'strategy consulting':    { demandScore: 76, trend: 'STABLE',   halfLifeYears: 5.5, automatabilityRisk: 0.35 },
+  'business transformation':{ demandScore: 78, trend: 'GROWING',  halfLifeYears: 5.5, automatabilityRisk: 0.32 },
+  'management consulting':  { demandScore: 74, trend: 'STABLE',   halfLifeYears: 5.0, automatabilityRisk: 0.38 },
+  'digital transformation': { demandScore: 82, trend: 'GROWING',  halfLifeYears: 5.0, automatabilityRisk: 0.30 },
+
+  // ── Cross-functional / Universal High Value ───────────────────────────────
+  'executive leadership':   { demandScore: 80, trend: 'STABLE',   halfLifeYears: 8.0, automatabilityRisk: 0.20 },
+  'critical thinking':      { demandScore: 82, trend: 'GROWING',  halfLifeYears: 10.0, automatabilityRisk: 0.15 },
+  'cross-functional leadership': { demandScore: 80, trend: 'GROWING', halfLifeYears: 8.0, automatabilityRisk: 0.18 },
+  'technical communication':{ demandScore: 78, trend: 'GROWING',  halfLifeYears: 7.0, automatabilityRisk: 0.22 },
+  'business acumen':        { demandScore: 78, trend: 'GROWING',  halfLifeYears: 8.0, automatabilityRisk: 0.20 },
+  'negotiation':            { demandScore: 76, trend: 'STABLE',   halfLifeYears: 7.0, automatabilityRisk: 0.25 },
 };
 
 // Trend growth rates for forward projection (demand change per quarter)

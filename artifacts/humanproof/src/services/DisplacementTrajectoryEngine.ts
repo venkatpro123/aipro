@@ -143,6 +143,127 @@ const ROLE_GROWTH_PROFILES: Record<string, GrowthProfile> = {
   mfg_plant_mgr:            { baseGrowth: 2.0, pessimisticExtra: 3.0, optimisticSave: 1.5 },
   mfg_automation:           { baseGrowth: 0.5, pessimisticExtra: 1.0, optimisticSave: 0.3 }, // in demand
 
+  // ── v47.0 additions: 100+ roles ─────────────────────────────────────────
+
+  // ── Tech / Engineering extensions ─────────────────────────────────────────
+  sw_mobile:                { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  sw_security:              { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.4 }, // always in demand
+  sw_qa:                    { baseGrowth: 4.0, pessimisticExtra: 4.5, optimisticSave: 3.0 }, // AI test gen displacing
+  sw_platform:              { baseGrowth: 0.8, pessimisticExtra: 1.2, optimisticSave: 0.6 },
+  sw_staff:                 { baseGrowth: 0.5, pessimisticExtra: 1.0, optimisticSave: 0.4 },
+  sw_principal:             { baseGrowth: 0.4, pessimisticExtra: 0.8, optimisticSave: 0.3 },
+  ml_research:              { baseGrowth: 0.3, pessimisticExtra: 0.6, optimisticSave: 0.2 },
+  data_analyst:             { baseGrowth: 3.5, pessimisticExtra: 4.0, optimisticSave: 2.5 }, // AI BI tools
+  biz_analyst:              { baseGrowth: 3.8, pessimisticExtra: 4.5, optimisticSave: 3.0 },
+  tech_pm:                  { baseGrowth: 2.0, pessimisticExtra: 2.8, optimisticSave: 1.8 },
+  scrum_master:             { baseGrowth: 3.5, pessimisticExtra: 4.0, optimisticSave: 2.5 },
+  devrel:                   { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+  solutions_architect:      { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  it_support:               { baseGrowth: 4.5, pessimisticExtra: 5.0, optimisticSave: 3.5 },
+  it_manager:               { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+
+  // ── Finance ──────────────────────────────────────────────────────────────
+  fin_investment_banker:    { baseGrowth: 2.5, pessimisticExtra: 3.5, optimisticSave: 2.0 },
+  fin_private_equity:       { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.0 },
+  fin_hedge_fund:           { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  fin_credit_analyst:       { baseGrowth: 3.5, pessimisticExtra: 4.0, optimisticSave: 2.5 },
+  fin_risk_analyst:         { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 1.8 },
+  fin_cfo:                  { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  fin_controller:           { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  fin_treasury:             { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.0 },
+  fin_compliance:           { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.0 },
+  fin_actuary:              { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  fin_insurance_underwriter:{ baseGrowth: 4.5, pessimisticExtra: 5.5, optimisticSave: 3.5 },
+  fin_mortgage_originator:  { baseGrowth: 5.0, pessimisticExtra: 6.0, optimisticSave: 4.0 },
+  fin_tax_analyst:          { baseGrowth: 3.0, pessimisticExtra: 4.0, optimisticSave: 2.5 },
+
+  // ── Healthcare ───────────────────────────────────────────────────────────
+  hc_physician:             { baseGrowth: 0.3, pessimisticExtra: 0.5, optimisticSave: 0.2 },
+  hc_specialist:            { baseGrowth: 0.4, pessimisticExtra: 0.6, optimisticSave: 0.3 },
+  hc_radiologist:           { baseGrowth: 2.5, pessimisticExtra: 4.0, optimisticSave: 1.5 }, // AI radiology
+  hc_pathologist:           { baseGrowth: 2.0, pessimisticExtra: 3.5, optimisticSave: 1.2 },
+  hc_pharmacist:            { baseGrowth: 2.0, pessimisticExtra: 3.0, optimisticSave: 1.5 },
+  hc_physical_therapist:    { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.3 },
+  hc_clinical_researcher:   { baseGrowth: 0.8, pessimisticExtra: 1.2, optimisticSave: 0.5 },
+  hc_biotech_analyst:       { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  hc_informatics:           { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.7 },
+  hc_regulatory_affairs:    { baseGrowth: 0.8, pessimisticExtra: 1.2, optimisticSave: 0.5 },
+  hc_revenue_cycle:         { baseGrowth: 3.5, pessimisticExtra: 4.5, optimisticSave: 2.8 },
+
+  // ── Legal ─────────────────────────────────────────────────────────────────
+  leg_partner:              { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  leg_associate:            { baseGrowth: 2.5, pessimisticExtra: 3.5, optimisticSave: 2.0 },
+  leg_contract_attorney:    { baseGrowth: 4.0, pessimisticExtra: 5.0, optimisticSave: 3.0 },
+  leg_compliance_officer:   { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  leg_ip_attorney:          { baseGrowth: 0.8, pessimisticExtra: 1.2, optimisticSave: 0.5 },
+  leg_privacy_counsel:      { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.3 },
+  leg_paralegal_v2:         { baseGrowth: 4.0, pessimisticExtra: 5.0, optimisticSave: 3.0 },
+
+  // ── HR ────────────────────────────────────────────────────────────────────
+  hr_talent_partner:        { baseGrowth: 3.0, pessimisticExtra: 3.5, optimisticSave: 2.5 },
+  hr_comp_benefits:         { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  hr_chro:                  { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  hr_people_analytics:      { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.6 },
+  hr_dei:                   { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 }, // budget pressure
+  hr_ld:                    { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+
+  // ── Marketing ────────────────────────────────────────────────────────────
+  mkt_cmo:                  { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.2 },
+  mkt_growth_pm:            { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  mkt_performance:          { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+  mkt_copywriter:           { baseGrowth: 5.5, pessimisticExtra: 6.0, optimisticSave: 4.0 },
+  mkt_pmm:                  { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  mkt_analyst:              { baseGrowth: 3.5, pessimisticExtra: 4.0, optimisticSave: 2.5 },
+  mkt_social_media:         { baseGrowth: 4.5, pessimisticExtra: 5.0, optimisticSave: 3.5 },
+
+  // ── Operations ────────────────────────────────────────────────────────────
+  ops_supply_chain:         { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.0 },
+  ops_procurement:          { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 1.8 },
+  ops_facilities:           { baseGrowth: 3.0, pessimisticExtra: 3.5, optimisticSave: 2.5 },
+  ops_logistics_mgr:        { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  ops_coo:                  { baseGrowth: 0.8, pessimisticExtra: 1.2, optimisticSave: 0.5 },
+  ops_process_excellence:   { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+
+  // ── Sales ─────────────────────────────────────────────────────────────────
+  sales_enterprise_ae:      { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.2 },
+  sales_se:                 { baseGrowth: 1.2, pessimisticExtra: 1.8, optimisticSave: 1.0 },
+  sales_sdr:                { baseGrowth: 5.0, pessimisticExtra: 6.0, optimisticSave: 4.0 }, // AI outreach
+  sales_cs_manager:         { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+  sales_revops:             { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.2 },
+
+  // ── Design & Creative ─────────────────────────────────────────────────────
+  des_ux_researcher:        { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+  des_product:              { baseGrowth: 2.5, pessimisticExtra: 3.0, optimisticSave: 2.0 },
+  des_motion:               { baseGrowth: 4.0, pessimisticExtra: 5.0, optimisticSave: 3.0 },
+  des_brand:                { baseGrowth: 3.5, pessimisticExtra: 4.5, optimisticSave: 2.5 },
+  des_illustrator:          { baseGrowth: 5.0, pessimisticExtra: 6.0, optimisticSave: 4.0 },
+
+  // ── Industrial / Trades ───────────────────────────────────────────────────
+  ind_mech_engineer:        { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.0 },
+  ind_electrical_engineer:  { baseGrowth: 1.2, pessimisticExtra: 1.8, optimisticSave: 0.8 },
+  ind_civil_engineer:       { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.7 },
+  ind_robotics:             { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.3 }, // growing field
+  ind_electrician:          { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.3 },
+  ind_plumber:              { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.3 },
+  ind_welder:               { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.7 },
+  ind_hvac:                 { baseGrowth: 0.5, pessimisticExtra: 0.8, optimisticSave: 0.3 },
+
+  // ── Education ────────────────────────────────────────────────────────────
+  edu_professor:            { baseGrowth: 1.2, pessimisticExtra: 1.8, optimisticSave: 0.8 },
+  edu_curriculum_designer:  { baseGrowth: 2.0, pessimisticExtra: 3.0, optimisticSave: 1.5 },
+  edu_corporate_trainer:    { baseGrowth: 3.0, pessimisticExtra: 4.0, optimisticSave: 2.5 },
+
+  // ── Public Sector / Government ────────────────────────────────────────────
+  gov_policy_analyst:       { baseGrowth: 1.0, pessimisticExtra: 1.5, optimisticSave: 0.8 },
+  gov_federal_employee:     { baseGrowth: 1.5, pessimisticExtra: 2.0, optimisticSave: 1.0 },
+  gov_defense_contractor:   { baseGrowth: 0.8, pessimisticExtra: 1.2, optimisticSave: 0.5 },
+
+  // ── Media / Entertainment ────────────────────────────────────────────────
+  med_journalist:           { baseGrowth: 4.5, pessimisticExtra: 5.5, optimisticSave: 3.5 },
+  med_voice_actor:          { baseGrowth: 5.5, pessimisticExtra: 7.0, optimisticSave: 4.0 },
+  med_animator:             { baseGrowth: 4.0, pessimisticExtra: 5.5, optimisticSave: 3.0 },
+  med_game_designer:        { baseGrowth: 2.0, pessimisticExtra: 2.5, optimisticSave: 1.5 },
+
   // ── Default fallback ─────────────────────────────────────────────────────
   generic:                  { baseGrowth: 3.0, pessimisticExtra: 3.5, optimisticSave: 2.5 },
 };
