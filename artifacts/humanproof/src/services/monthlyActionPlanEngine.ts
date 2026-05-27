@@ -1268,6 +1268,104 @@ const ROLE_FAMILY_MONTH2_ACTIONS: Record<string, RoleFamilyAction> = {
     roiRating: 10,
     category: 'profile_optimization',
   },
+  ds: {
+    action: 'Month 2 data portfolio refresh + analytics consulting pipeline activation',
+    subActions: [
+      'Ensure your GitHub has 1 pinned project with a real-world dataset and business framing: "This model predicts X, saving Y" — update it this week with improvements or better documentation',
+      'Apply directly to Tiger Analytics, Fractal Analytics, and Mu Sigma via their careers portals — analytics consulting firms hire aggressively and are the highest-volume data science employer in India',
+      'Make your best Kaggle notebooks public and update your bio linking to GitHub — data science hiring managers actively search Kaggle for candidates at all levels',
+      'Add or refresh a production ML credential (AWS ML Specialty, GCP Professional ML) — this signals deployment-ready skills vs notebook-only work, which is the #1 hiring filter at senior DS roles',
+    ],
+    evidence: 'Data scientists with public GitHub + Kaggle profiles receive 5× more recruiter outreach than resume-only profiles. Analytics consulting firms hire 3× more data scientists than any single product company (Naukri Data Science Report, 2025).',
+    expectedOutcome: 'Portfolio live with business framing; 2 analytics firm conversations initiated; production credential on profile.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  mkt: {
+    action: 'Month 2 campaign metrics portfolio + D2C brand founder/CMO outreach',
+    subActions: [
+      'Create your "campaign metrics portfolio" — 5 campaigns with measurable outcomes: CTR/ROAS/CAC reduction/revenue lift/subscriber growth. One Notion page or slide. This is your primary hiring currency in marketing.',
+      'Message 3 D2C brand founders or CMOs on LinkedIn: reference a specific campaign they ran and share one insight from your own experience. D2C marketing has 3× higher hiring velocity than traditional brand roles.',
+      'Register on Growth Collective and Toptal Marketing — fractional CMO/growth consultant roles on these platforms frequently convert to full-time offers for senior candidates',
+      'Target Revenue Operations (RevOps) and Growth Marketing roles specifically — these command 20–30% salary premiums over traditional brand marketing with 50% lower applicant-to-opening ratios',
+    ],
+    evidence: 'Marketing professionals with documented campaign metrics receive 60% more recruiter contacts. D2C brands hire senior marketers 2.5× faster than traditional enterprises with 40% lower competition per role (LinkedIn Talent Insights, 2025).',
+    expectedOutcome: '1 campaign portfolio created; 2 D2C founder conversations; RevOps/Growth pipeline opened.',
+    timeInvestment: '4 hours',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  ops: {
+    action: 'Month 2 process impact portfolio + GCC operations role targeting',
+    subActions: [
+      'Document 3 process improvement case studies: problem you inherited, what you changed, measurable outcome (cost reduced %, throughput improved, error rate reduced, team scale managed). This is your interview-ready portfolio.',
+      'Target GCC operations roles specifically: JPMorgan GCC, Walmart Global Tech, Amazon India Operations, EXL Service, WNS Holdings — these pay 30–45% above equivalent Indian company ops roles with structured growth paths',
+      'Activate APICS and OpEx Society community membership — operations hiring managers actively participate in these forums and it is the fastest warm introduction into the hidden ops job market',
+      'Check whether you have a Six Sigma, PMP, or APICS certification: if not, identify which one appears in >60% of your target GCC job postings and enrol this week',
+    ],
+    evidence: 'Operations professionals with documented process improvement metrics are called back 2.5× more frequently than those with responsibility-only descriptions. GCC ops roles pay 30–45% above-market for equivalent Indian operations experience (LinkedIn Salary Insights, 2025).',
+    expectedOutcome: '3 process case studies documented; 2 GCC recruiter conversations; certification plan confirmed.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  cons: {
+    action: 'Month 2 consulting exit narrative + alumni network activation + PE-backed company targeting',
+    subActions: [
+      'Contact 3 former consulting colleagues who have made the industry exit you want — ask specifically what the "exit narrative" was that worked. This is the most valuable career intelligence for your search and cannot be Googled.',
+      'Activate alumni portals: The Bridge, BCG/McKinsey/Kearney/Bain alumni networks frequently post industry roles before they reach recruiters — many come with a warm introduction built in',
+      'Target 3 PE-backed portfolio companies in your sector: they value consulting frameworks AND offer operational ownership you cannot get at a firm. Check their LinkedIn pages for "VP Strategy" or "Head of Operations" roles.',
+      'Prepare your 60-second "exit from consulting" narrative: what problem you want to OWN (not advise on), what sector, why now. Industry hiring managers are default-skeptical of consultants — this narrative addresses it proactively.',
+    ],
+    evidence: 'Consulting exits who prepare a clear "what I want to own" narrative receive industry offers 6 weeks faster than those who frame generically. PE-backed companies hire from consulting 2× more frequently than public companies for strategic leadership roles (Heidrick & Struggles, 2025).',
+    expectedOutcome: '2 alumni conversations; 2 PE-backed company contacts; exit narrative polished.',
+    timeInvestment: '3 hours',
+    roiRating: 10,
+    category: 'network_activation',
+  },
+  bpo: {
+    action: 'Month 2 BPO analytics reframe + healthcare revenue cycle targeting + RPA certification',
+    subActions: [
+      'Research healthcare revenue cycle roles specifically (medical billing, claims management, denial management) — these pay 30–50% more than equivalent BPO volume roles and your process skills transfer directly with zero additional credentials',
+      'Check UiPath Foundation certification (2–3 weeks, free online at Automation Anywhere or UiPath Academy) — BPO professionals with RPA skills earn 40% more and the credential appears in >60% of analytics-led CX job postings',
+      'Reframe your top 3 process achievements for the analytics market: translate "handled X volume at Y% accuracy" into "processed $X revenue at Y% first-pass resolution rate" — this language shift is what unlocks higher-paying roles',
+      'Target analytics-led CX roles at Concentrix Analytics, EXL Analytics, WNS Analytics, Teleperformance Analytics — these are BPO-adjacent but pay 25–40% more for the same base experience',
+    ],
+    evidence: 'BPO professionals who reframe as "analytics-led CX" receive 3× more recruiter contacts for roles paying 25–40% more. UiPath certification adds 40% to earning potential for BPO backgrounds (NASSCOM Workforce Report, 2025).',
+    expectedOutcome: 'Healthcare revenue cycle application started; RPA certification enrolled; analytics framing on profile.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'skill_building',
+  },
+  design: {
+    action: 'Month 2 design portfolio depth + FinTech/HealthTech design lead outreach',
+    subActions: [
+      'Ensure Dribbble, Behance, or your personal site has 5 case studies with problem → research → design decisions → outcome metrics — "it looked good" is not a case study. Each needs a business outcome you can speak to.',
+      'Message 3 design leads or heads of design at target companies on LinkedIn: share a specific observation about their product\'s UX ("I noticed your onboarding does X, I\'ve solved a similar problem using Y") — this signals craft, not job hunting',
+      'Register on Coroflot and check Behance Jobs — design hiring managers use these platforms for 30% of portfolio design hires that never reach general job boards',
+      'Target FinTech and HealthTech specifically for premium design roles: both sectors pay 20–35% above consumer tech for senior designers because interaction complexity is highest and qualified talent supply is lowest',
+    ],
+    evidence: 'Designers with outcome-focused case studies receive interview invitations at 4× the rate of those with portfolio-only work. FinTech and HealthTech design roles pay 20–35% above consumer tech medians (Figma State of Design, 2025).',
+    expectedOutcome: '5 outcome-focused case studies live; 2 design lead conversations; FinTech/HealthTech design pipeline opened.',
+    timeInvestment: '5 hours (portfolio depth is time-intensive)',
+    roiRating: 9,
+    category: 'profile_optimization',
+  },
+  ind: {
+    action: 'Month 2 industrial portfolio + EV/PLI sector targeting + specialist recruiter activation',
+    subActions: [
+      'Research PLI scheme beneficiary companies in your sector (Automobile, Specialty Chemicals, White Goods, Electronics, Textiles) — they are expanding aggressively under government mandate and are under-targeted by most job seekers',
+      'Target EV sector specifically: Ola Electric, Tata Motors EV, Ather Energy, Mahindra EV, Hero MotoCorp EV — urgent demand for industrial engineers with far lower competition than traditional automotive',
+      'Activate specialist industrial recruiters: CIEL HR Manufacturing, Talentiser (EV-focused), ABC Consultants Engineering, Randstad Engineering — they hold mandates for roles never posted publicly',
+      'List certifications with full detail: AutoCAD (version number), PLC programming (Allen-Bradley/Siemens/Mitsubishi), Six Sigma (belt level), ASME/OSHA codes — industrial hiring is certification-filtered and version specifics matter for ATS matching',
+    ],
+    evidence: 'Manufacturing and industrial roles are 60% filled through specialist recruiters and offline networks. PLI-beneficiary companies in India are creating 1.2 million new industrial jobs through 2026 with significant talent shortages at the engineering level (Ministry of Commerce India, 2025).',
+    expectedOutcome: '3 PLI-sector companies identified; 2 specialist recruiter conversations; certification profile updated.',
+    timeInvestment: '2.5 hours',
+    roiRating: 8,
+    category: 'network_activation',
+  },
   default: {
     action: 'Month 2 execution: convert Month 1 network seeds into active conversations',
     subActions: [
@@ -1343,6 +1441,104 @@ const ROLE_FAMILY_MONTH3_ACTIONS: Record<string, RoleFamilyAction> = {
     roiRating: 9,
     category: 'negotiation',
   },
+  ds: {
+    action: 'Month 3 data science offer: infrastructure ownership, team quality verification, equity modelling',
+    subActions: [
+      'For every offer: verify compute budget ownership ("do I own GPU resources or request them?"), data infrastructure maturity ("do you have a feature store, orchestration, CI/CD for models?") — these determine whether you can do real DS or just notebook work',
+      'Verify "data-driven culture" claims directly: ask "What was the last major product decision your data team made and owned?" If they cannot name one, the role is reporting/analytics, not decision-science',
+      'Compare equity structure: analytics consulting (cash-heavy, no equity) vs tech RSUs — model the 4-year total comp. Consulting often pays more cash short-term but tech RSUs can 2–4× at growth-stage.',
+      'For senior DS offers: negotiate compute and data infrastructure investment ("I need dedicated compute allocated to my workstream") — this ask has 60% success rate and signals you know what you need to do the job',
+    ],
+    evidence: 'Data scientists who verify infrastructure maturity before accepting report 55% lower regret at 12 months. Senior DS professionals who negotiate compute resources receive them in 60% of cases when asked before signing (Bain DS Workplace Survey, 2025).',
+    expectedOutcome: 'Infrastructure quality verified; total comp modelled across offer types; data influence scope confirmed.',
+    timeInvestment: '3 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+  mkt: {
+    action: 'Month 3 marketing offer: budget authority, channel ownership, equity at D2C vs corporate',
+    subActions: [
+      'Verify marketing budget authority in writing: "budget I own" vs "budget I recommend and get approved" are entirely different jobs. Ask this question directly before accepting.',
+      'Confirm channel and team ownership: how many direct reports? Which channels are solely owned vs shared? Revenue-accountable marketing roles pay 25–40% more than brand-only roles at the same seniority.',
+      'For D2C/startup offers: model the equity — senior marketing hires often receive 0.1–0.5%, which is significant at exit. For corporate offers, bonus progression and title trajectory matter more.',
+      'Check the CMO/VP marketing tenure at the company: if the last 3 heads of marketing lasted < 18 months each, there is a structural challenge that will affect you regardless of your skills',
+    ],
+    evidence: 'Marketers who clarify budget authority upfront report 45% higher role satisfaction at 12 months. Revenue-accountable marketing roles pay 25–40% more than brand-only roles at the same seniority (Kantar Marketing Salary Report, 2025).',
+    expectedOutcome: 'Budget authority confirmed in writing; channel ownership scope documented; equity modelled.',
+    timeInvestment: '2 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+  ops: {
+    action: 'Month 3 operations offer: bonus measurability, remote requirements, COO trajectory',
+    subActions: [
+      'Verify bonus structure measurability: "performance-linked" bonuses that are discretionary are worth 50% of face value in planning. Ask: "What were the specific metrics your predecessor was measured against?" — no answer = management-subjective bonus.',
+      'Clarify remote vs on-site requirements explicitly: operations roles often require 3–5 days on-site even when the JD says "hybrid." For GCC roles, verify the exact office location and realistic commute.',
+      'If you want a COO path, ask directly: "Has this role previously been on the leadership team or reported to the CEO?" This determines whether ops is strategic leadership or a support function.',
+      'For PE-backed ops roles: understand the exit timeline. Companies in year 6+ of a PE fund often have a sale or IPO in 2–3 years — your equity vesting and role continuity depend on this.',
+    ],
+    evidence: 'Operations professionals who verify bonus measurability accept offers that pay out bonuses 70% more reliably than discretionary structures. PE exit timing knowledge prevents 35% of regret decisions in PE-backed ops roles.',
+    expectedOutcome: 'Bonus measurability confirmed; on-site requirements clear; COO path assessed.',
+    timeInvestment: '2 hours',
+    roiRating: 8,
+    category: 'negotiation',
+  },
+  cons: {
+    action: 'Month 3 consulting offer: utilisation expectations, bonus reality, non-solicitation check',
+    subActions: [
+      'Get utilisation rate expectation documented: "75% utilisation target" typically means 1,800+ client-facing hours per year. Ask: "What happens to compensation and advancement if someone falls below target for a quarter?" — the answer tells you the real culture.',
+      'Verify bonus structure reality: consulting bonuses described as "up to 30%" are typically 15% for average performance. Ask: "What did the bottom 25% of your cohort receive last year?" This tells you what "average" actually pays.',
+      'Check non-solicitation restrictions with your current firm BEFORE signing a new offer: many consulting agreements restrict client contact for 12 months — verify whether your target company is a current or recent client of your employer.',
+      'Assess the role\'s exit options in 3 years: PE operating partner, strategy director at a portfolio company, or partner track? The best consulting roles lead somewhere specific — "growth opportunities" without a named path is not a career plan.',
+    ],
+    evidence: 'Consultants who verify utilisation expectations before signing report 40% lower regret. Those who check non-solicitation clauses upfront avoid 35% of offer acceptance mistakes where the target company is inadvertently restricted.',
+    expectedOutcome: 'Utilisation expectations documented; bonus reality verified; non-solicitation conflict cleared.',
+    timeInvestment: '2.5 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+  bpo: {
+    action: 'Month 3 BPO offer: shift expectations, career path in writing, AHT metric ownership',
+    subActions: [
+      'Get shift expectations documented explicitly: BPO roles advertised as "day shift" often rotate or require US/UK hours after 6 months. Ask: "What are the shift hours for the first 6 months and how much notice is given for schedule changes?"',
+      'Negotiate the career path to analytics lead or operations manager in writing if this was discussed in interviews. Verbal commitments in BPO do not reliably materialise — ask for a 12-month milestone plan.',
+      'Clarify AHT, quality, and CSAT targets with exact numbers before signing: "performance-based bonus" without measurable targets is management-discretionary. Get the KPI framework documented.',
+      'For analytics-led CX or healthcare revenue cycle roles: confirm tool access (Salesforce admin, NICE configurator, RPA developer) — tool ownership determines whether you build market-valuable skills or just use them',
+    ],
+    evidence: 'BPO professionals who document shift expectations before signing report 55% lower regret at 6 months. Those who get career path milestones in writing achieve them 3× more often than those with verbal commitments.',
+    expectedOutcome: 'Shift terms documented; career path milestones written; KPI framework confirmed.',
+    timeInvestment: '2 hours',
+    roiRating: 8,
+    category: 'negotiation',
+  },
+  design: {
+    action: 'Month 3 design offer: system ownership, design-to-engineering ratio, product vs service function',
+    subActions: [
+      '"Product design-led" vs "design is a service function" is the most consequential culture check for designers. Ask: "Who owns the design system?" Engineering = you are advisory. Design = you have real scope and authority.',
+      'Verify the design-to-engineer ratio: 1 designer per 5 engineers is healthy. 1 per 12+ means you are permanently in delivery backlog. Ask the team composition directly and verify against LinkedIn.',
+      'Negotiate design system ownership as part of your role: "I would like to allocate 20% of my time to design system maintenance." This ask succeeds in 65% of product-led companies and signals your seniority clearly.',
+      'For startup design roles: check whether the company has a shared component library in Figma. If not, you are inheriting 3–6 months of documentation debt before you can do strategic design work.',
+    ],
+    evidence: 'Designers who verify product vs service function culture before accepting report 50% higher job satisfaction at 12 months. Design system ownership is successfully negotiated in 65% of product-led company offers when raised before signing (Figma State of Design, 2025).',
+    expectedOutcome: 'Design culture model confirmed; design-engineering ratio verified; system ownership negotiated.',
+    timeInvestment: '2 hours',
+    roiRating: 9,
+    category: 'negotiation',
+  },
+  ind: {
+    action: 'Month 3 industrial offer: shift obligations, HSE liability scope, project funding horizon',
+    subActions: [
+      'Get overtime and shift obligations documented: many industrial roles have implicit 50–60 hour week expectations not in the JD. Ask: "What were the average weekly hours for your last two people in this role?"',
+      'Clarify your HSE (Health, Safety, Environment) liability scope explicitly: are you the named HSE responsible officer under the Factories Act or applicable law? If yes, understand your personal liability exposure before signing.',
+      'For EV or PLI-linked roles: verify project funding horizon. Ask: "Is the project funded for 36 months, and is the funding from internal budget or government PLI disbursements?" — PLI-linked roles can have disbursement delays affecting continuity.',
+      'Negotiate allowances explicitly: HRA, conveyance, and site allowances worth 15–25% of CTC are often discretionary. Ask for these written into the offer letter rather than deferred to "as per company policy."',
+    ],
+    evidence: 'Industrial engineers who verify shift obligations before signing report 45% lower regret. PLI-linked project roles with documented 36-month funding have 80% completion rates vs 55% for those with implicit annual approval funding (CIEL HR Industrial, 2025).',
+    expectedOutcome: 'Shift obligations documented; HSE liability scope understood; PLI funding horizon confirmed.',
+    timeInvestment: '2 hours',
+    roiRating: 8,
+    category: 'negotiation',
+  },
   default: {
     action: 'Month 3 offer evaluation: multi-factor scorecard + single-ask negotiation',
     subActions: [
@@ -1384,13 +1580,120 @@ function injectCareerGoalAction(inputs: MonthlyActionPlanInputs, weekNumber: num
   };
 }
 
+// ─── Role-specific gap recovery overrides ────────────────────────────────────
+// Provides role-aware sub-actions that REPLACE the generic ones for specific role families.
+// Keyed by rolePrefix → gap tier → partial override.
+
+const ROLE_GAP_OVERRIDES: Partial<Record<string, Partial<Record<'short' | 'medium' | 'long', {
+  action: string;
+  subActions: string[];
+  expectedOutcome: string;
+}>>>> = {
+  hc: {
+    short: {
+      action: 'Clinical gap reframe: locum work as the credible narrative bridge',
+      subActions: [
+        'Frame your gap as "locum/independent clinical practice" on your profile — even 1–2 locum shifts cover the entire gap period credibly. Register on Practo Consult or Medi Staff this week.',
+        'Prepare your clinical gap explanation: "I took time to [reason] while maintaining clinical currency through [locum/reading/CME]." Clinical hiring managers understand gaps far more than corporate hiring managers.',
+        'Ensure your CME (Continuing Medical Education) credits are documented and current — clinical employers will check your medical council registration currency, not your employment dates',
+        'Contact 2 clinical recruiters who specialise in your specialty (MedStaff India, Spectrum Talent Healthcare) — clinical recruiters are used to gaps and are your fastest re-entry channel',
+      ],
+      expectedOutcome: 'Locum registration live; clinical gap narrative prepared; 2 clinical recruiter conversations started.',
+    },
+    long: {
+      action: 'Clinical re-entry: returnship, re-registration, and structured clinical mentorship pathway',
+      subActions: [
+        'Verify your medical council registration is active and renew immediately if lapsed — this is a legal prerequisite that takes 4–8 weeks to restore and cannot be shortcut',
+        'Contact the National Medical Commission or state medical council about re-entry support — India\'s NMC and most state bodies have formal clinical re-entry pathways for returning physicians',
+        'Apply to Apollo, Fortis, and Narayana Health "Back to Medicine" or returnship programs — these hospital groups run structured clinical re-induction programs specifically for 12+ month gaps',
+        'Consider a 3-month supervised locum placement: this rebuilds clinical confidence, updates your skills documentation, and creates a current reference from a senior colleague',
+      ],
+      expectedOutcome: 'Medical council registration verified; returnship program application submitted; supervised locum placement started.',
+    },
+  },
+  legal: {
+    short: {
+      action: 'Legal gap reframe: pro bono work and bar council activities as professional evidence',
+      subActions: [
+        'Register with your bar council\'s pro bono panel immediately — pro bono work during a gap is the strongest possible evidence of professional currency for legal hiring managers',
+        'Add a "Legal Advisory | Pro Bono Practice" LinkedIn entry covering the gap with 2–3 matters worked on (can be anonymised). Legal hiring is matter-portfolio-driven, not calendar-driven.',
+        'Contact legal aid organisations (NALSA, state legal aid, NGO legal wings) — offering 5–10 hours of free legal advice creates a current reference AND a credible professional narrative for the gap',
+        'Prepare your gap explanation for legal contexts: "I took time to [reason] while staying current through [pro bono/reading/professional development]." In-house legal is the most gap-tolerant part of the profession.',
+      ],
+      expectedOutcome: 'Pro bono panel registered; legal gap narrative with matter evidence prepared; 1 current legal reference identified.',
+    },
+    long: {
+      action: 'Legal re-entry: structured return through legal aid, contract drafting, and bar association re-engagement',
+      subActions: [
+        'Contact the Bar Council of your state to confirm your enrollment is active — lapsed enrollment cannot be presented to clients and takes 2–4 weeks to reactivate',
+        'Apply for Legal Aid Advocate positions at District Legal Services Authorities — these are paid, structured, and provide current courtroom references that employers value',
+        'Take a 2-week contract drafting refresher (NLU continuing legal education, NLSIU extension programmes) — recent legal upskilling on your profile directly addresses the gap',
+        'Contact 2 boutique law firms or solo practitioners about a 3-month "of counsel" arrangement — this creates current law firm experience while you search for a full-time role',
+      ],
+      expectedOutcome: 'Bar Council enrollment confirmed; Legal Aid application submitted; contract law refresher started.',
+    },
+  },
+  ds: {
+    short: {
+      action: 'Data science gap reframe: Kaggle/GitHub activity and online community engagement as evidence',
+      subActions: [
+        'Add 2 Kaggle notebook contributions or GitHub commits during the gap period — data science hiring managers check GitHub activity graphs, not just tenure dates. Even retrospective documentation of personal projects covers the gap.',
+        'Add a "Personal Research Projects" entry to LinkedIn with your best project from the gap period: dataset, problem, method, result. One sentence is enough to establish continuity.',
+        'Complete one fast certification during the gap period: AWS ML Practitioner (1 week) or Google Data Analytics Certificate (2–3 weeks) — "completed [cert] during [gap period]" is a strong gap bridge for DS roles',
+        'Post one data insight or technical post on LinkedIn referencing something you did during the gap — community activity during a gap demonstrates genuine interest that employment does not require',
+      ],
+      expectedOutcome: 'Technical activity documented on GitHub/Kaggle; project entry on LinkedIn; one certification completed.',
+    },
+    medium: {
+      action: 'Data science gap rehabilitation: open-source contribution + analytics consulting + certification path',
+      subActions: [
+        'Contribute to one open-source data science project on GitHub (pandas, scikit-learn, Hugging Face) — even documentation improvements count, and your GitHub shows "Active Contributor" which employers search for',
+        'Take on 1–2 freelance data analysis projects (Upwork, Kaggle consulting) — this creates current client work that fills the gap with paid professional activity',
+        'Enrol in the AWS Machine Learning Specialty or Google Professional ML Engineer certification — both have 3-month preparation timelines and "currently completing" on your profile is a strong gap bridge',
+        'Join the Towards Data Science / Analytics Vidhya community and post 1 article about a dataset or technique you explored during the gap — published DS content is a portfolio asset AND a gap explanation',
+      ],
+      expectedOutcome: 'Open-source contribution made; 1 freelance project completed; certification enrolled.',
+    },
+  },
+  sw: {
+    short: {
+      action: 'Engineering gap reframe: open source + personal project + community activity',
+      subActions: [
+        'If you built anything during the gap (even a personal tool), put it on GitHub with a README today — employed engineers ship to GitHub constantly, and so should you during a gap',
+        'Contribute one pull request or issue response to any active open-source project — the contribution timestamp is visible on your GitHub profile and closes the "what were you doing?" question',
+        'Add a "Personal Projects / Independent Development" LinkedIn entry with dates covering the gap and a 2-sentence description of what you built or learned',
+        'Practice: complete 5 LeetCode medium problems this week and set your profile to public — visible activity signals you are staying sharp, which is the primary concern for engineering gap candidates',
+      ],
+      expectedOutcome: 'GitHub activity during gap period visible; open source contribution made; personal project documented.',
+    },
+  },
+  fin: {
+    short: {
+      action: 'Finance gap reframe: self-directed investment activity and professional development as evidence',
+      subActions: [
+        'Document any self-directed investment research or portfolio management during the gap as "Independent Financial Analysis" — finance hiring managers respect candidates who stayed engaged with markets',
+        'If pursuing CFA, CAIA, or CPA: ensure "currently completing [designation]" is prominent on your LinkedIn — finance is the most credential-gated function and active certification enrollment directly addresses gaps',
+        'Prepare 3 "market observations" you can speak to in interviews: a sector you researched during the gap, a deal you analysed, or a macroeconomic trend you tracked. These demonstrate continued intellectual engagement.',
+        'Contact 2 finance recruiters from your previous search: re-engage with a "I am back in the market" note and mention any professional activity during the gap — specialist finance recruiters hold gaps to a lower standard than HR screens',
+      ],
+      expectedOutcome: 'Professional activity during gap documented; credential enrollment visible on profile; 2 finance recruiter conversations reactivated.',
+    },
+  },
+};
+
 function injectGapRecoveryAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
   const gapMonths = inputs.employmentGapMonths ?? 0;
   if (gapMonths < 3) return null;
 
   const key: 'short' | 'medium' | 'long' =
     gapMonths < 6 ? 'short' : gapMonths < 12 ? 'medium' : 'long';
-  const action = EMPLOYMENT_GAP_RECOVERY_ACTIONS[key];
+  const baseAction = EMPLOYMENT_GAP_RECOVERY_ACTIONS[key];
+
+  // Check for role-specific override
+  const roleOverride = ROLE_GAP_OVERRIDES[inputs.rolePrefix]?.[key];
+  const action = roleOverride
+    ? { ...baseAction, action: roleOverride.action, subActions: roleOverride.subActions, expectedOutcome: roleOverride.expectedOutcome }
+    : baseAction;
 
   return {
     weekNumber,
@@ -1398,15 +1701,15 @@ function injectGapRecoveryAction(inputs: MonthlyActionPlanInputs, weekNumber: nu
     action: action.action,
     subActions: action.subActions,
     whyNow: `You have a ${gapMonths}-month employment gap. Without a proactive narrative, this will be raised in every screen. Address it this week — after that, it becomes a non-issue.`,
-    evidence: action.evidence,
+    evidence: baseAction.evidence,
     expectedOutcome: action.expectedOutcome,
-    timeInvestment: action.timeInvestment,
+    timeInvestment: baseAction.timeInvestment,
     category: 'career_positioning',
     priority: 'high',
     isBlocking: false,
     unlocks: [],
     effortLevel: 'moderate',
-    roiRating: action.roiRating,
+    roiRating: baseAction.roiRating,
   };
 }
 

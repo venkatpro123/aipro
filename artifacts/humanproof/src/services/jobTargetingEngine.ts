@@ -885,6 +885,171 @@ const SALARY_BENCHMARKS: Record<string, Record<RegionKey, Record<SeniorityKey, S
     sg: { junior: { minUsd: 32_000, medianUsd: 44_000, maxUsd:  64_000, p90Usd:  58_000, localFormatted: 'S$43K–S$85K',  equityNote: 'Options at startups', bonusNote: '5%' }, mid: { minUsd: 48_000, medianUsd: 68_000, maxUsd: 100_000, p90Usd:  90_000, localFormatted: 'S$64K–S$133K',  equityNote: 'RSUs at MNCs', bonusNote: '5–10%' }, senior: { minUsd: 72_000, medianUsd:100_000, maxUsd: 150_000, p90Usd: 136_000, localFormatted: 'S$96K–S$200K',  equityNote: 'RSUs', bonusNote: '10–15%' }, staff: { minUsd:100_000, medianUsd:145_000, maxUsd: 215_000, p90Usd: 192_000, localFormatted: 'S$133K–S$287K', equityNote: 'Significant grants', bonusNote: '15–20%' }, exec: { minUsd:140_000, medianUsd:205_000, maxUsd: 340_000, p90Usd: 296_000, localFormatted: 'S$187K–S$453K', equityNote: 'LTIP', bonusNote: '20–30%' } },
     default: { junior: { minUsd: 4_800, medianUsd: 7_200, maxUsd: 12_000, p90Usd: 10_000, localFormatted: 'Market rate varies', equityNote: 'Rare', bonusNote: 'Rare' }, mid: { minUsd: 9_600, medianUsd: 14_400, maxUsd: 24_000, p90Usd: 20_000, localFormatted: 'Market rate varies', equityNote: 'HealthTech ESOPs', bonusNote: '5–10%' }, senior: { minUsd: 16_800, medianUsd: 28_800, maxUsd: 48_000, p90Usd: 40_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–15%' }, staff: { minUsd: 28_800, medianUsd: 48_000, maxUsd: 96_000, p90Usd: 80_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '15–20%' }, exec: { minUsd: 48_000, medianUsd: 84_000, maxUsd: 180_000, p90Usd: 144_000, localFormatted: 'Market rate varies', equityNote: 'Significant ESOPs', bonusNote: '20–30%' } },
   },
+
+  // ── Data Science ────────────────────────────────────────────────────────────
+  ds: {
+    in: {
+      junior: { minUsd:  7_200, medianUsd: 12_000, maxUsd:  18_000, p90Usd:  15_600, localFormatted: '₹6–15L',   equityNote: 'ESOPs at analytics startups', bonusNote: '8–12%' },
+      mid:    { minUsd: 14_400, medianUsd: 24_000, maxUsd:  36_000, p90Usd:  30_000, localFormatted: '₹12–30L',  equityNote: 'ESOPs at tech/fintech', bonusNote: '10–15%' },
+      senior: { minUsd: 24_000, medianUsd: 40_000, maxUsd:  60_000, p90Usd:  52_000, localFormatted: '₹20–50L',  equityNote: 'ESOPs + refreshers', bonusNote: '15–20%' },
+      staff:  { minUsd: 42_000, medianUsd: 72_000, maxUsd:  96_000, p90Usd:  84_000, localFormatted: '₹35–80L',  equityNote: 'Significant ESOPs', bonusNote: '20–25%' },
+      exec:   { minUsd: 72_000, medianUsd:108_000, maxUsd: 144_000, p90Usd: 126_000, localFormatted: '₹60–120L', equityNote: 'Large ESOP grants', bonusNote: '25–35%' },
+    },
+    us: {
+      junior: { minUsd: 95_000, medianUsd:120_000, maxUsd: 150_000, p90Usd: 140_000, localFormatted: '$95K–$150K',  equityNote: 'RSUs at tech companies', bonusNote: '5–10%' },
+      mid:    { minUsd:130_000, medianUsd:165_000, maxUsd: 200_000, p90Usd: 190_000, localFormatted: '$130K–$200K', equityNote: 'RSUs', bonusNote: '10–15%' },
+      senior: { minUsd:185_000, medianUsd:240_000, maxUsd: 300_000, p90Usd: 280_000, localFormatted: '$185K–$300K', equityNote: 'Significant RSUs', bonusNote: '15–20%' },
+      staff:  { minUsd:250_000, medianUsd:320_000, maxUsd: 400_000, p90Usd: 370_000, localFormatted: '$250K–$400K', equityNote: 'Large RSU grants', bonusNote: '20–25%' },
+      exec:   { minUsd:350_000, medianUsd:480_000, maxUsd: 600_000, p90Usd: 560_000, localFormatted: '$350K–$600K', equityNote: 'Large grants + LTIP', bonusNote: '25–35%' },
+    },
+    uk: {
+      junior: { minUsd: 50_000, medianUsd: 64_000, maxUsd:  88_000, p90Usd:  80_000, localFormatted: '£40K–£70K',   equityNote: 'EMI at startups', bonusNote: '5–10%' },
+      mid:    { minUsd: 69_000, medianUsd: 88_000, maxUsd: 119_000, p90Usd: 108_000, localFormatted: '£55K–£95K',   equityNote: 'EMI/RSUs', bonusNote: '10–15%' },
+      senior: { minUsd:100_000, medianUsd:128_000, maxUsd: 176_000, p90Usd: 158_000, localFormatted: '£80K–£140K',  equityNote: 'RSUs', bonusNote: '15–20%' },
+      staff:  { minUsd:138_000, medianUsd:176_000, maxUsd: 238_000, p90Usd: 213_000, localFormatted: '£110K–£190K', equityNote: 'RSUs + LTIP', bonusNote: '20–30%' },
+      exec:   { minUsd:188_000, medianUsd:240_000, maxUsd: 326_000, p90Usd: 294_000, localFormatted: '£150K–£260K', equityNote: 'LTIP', bonusNote: '30%+' },
+    },
+    sg: {
+      junior: { minUsd: 36_000, medianUsd: 50_000, maxUsd:  64_000, p90Usd:  58_000, localFormatted: 'S$48K–S$85K',   equityNote: 'Options at startups', bonusNote: '5–10%' },
+      mid:    { minUsd: 56_000, medianUsd: 75_000, maxUsd:  98_000, p90Usd:  90_000, localFormatted: 'S$75K–S$130K',  equityNote: 'RSUs at MNCs', bonusNote: '10–15%' },
+      senior: { minUsd: 83_000, medianUsd:108_000, maxUsd: 139_000, p90Usd: 128_000, localFormatted: 'S$110K–S$185K', equityNote: 'RSUs', bonusNote: '15–20%' },
+      staff:  { minUsd:113_000, medianUsd:150_000, maxUsd: 188_000, p90Usd: 174_000, localFormatted: 'S$150K–S$250K', equityNote: 'Significant grants', bonusNote: '20–25%' },
+      exec:   { minUsd:150_000, medianUsd:208_000, maxUsd: 270_000, p90Usd: 248_000, localFormatted: 'S$200K–S$360K', equityNote: 'LTIP', bonusNote: '25–35%' },
+    },
+    default: { junior: { minUsd: 7_200, medianUsd: 12_000, maxUsd: 18_000, p90Usd: 15_600, localFormatted: 'Market rate varies', equityNote: 'ESOPs at startups', bonusNote: '8–12%' }, mid: { minUsd: 14_400, medianUsd: 24_000, maxUsd: 36_000, p90Usd: 30_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–15%' }, senior: { minUsd: 24_000, medianUsd: 40_000, maxUsd: 60_000, p90Usd: 52_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '15–20%' }, staff: { minUsd: 42_000, medianUsd: 72_000, maxUsd: 96_000, p90Usd: 84_000, localFormatted: 'Market rate varies', equityNote: 'Significant ESOPs', bonusNote: '20–25%' }, exec: { minUsd: 72_000, medianUsd: 108_000, maxUsd: 144_000, p90Usd: 126_000, localFormatted: 'Market rate varies', equityNote: 'Large grants', bonusNote: '25–35%' } },
+  },
+
+  // ── Product Management ───────────────────────────────────────────────────────
+  pm: {
+    in: {
+      junior: { minUsd:  9_600, medianUsd: 14_400, maxUsd:  21_600, p90Usd:  19_200, localFormatted: '₹8–18L',    equityNote: 'ESOPs at tech startups', bonusNote: '8–12%' },
+      mid:    { minUsd: 18_000, medianUsd: 28_800, maxUsd:  42_000, p90Usd:  36_000, localFormatted: '₹15–35L',   equityNote: 'ESOPs', bonusNote: '12–18%' },
+      senior: { minUsd: 30_000, medianUsd: 50_000, maxUsd:  72_000, p90Usd:  62_400, localFormatted: '₹25–60L',   equityNote: 'ESOPs + refreshers', bonusNote: '15–20%' },
+      staff:  { minUsd: 48_000, medianUsd: 80_000, maxUsd: 108_000, p90Usd:  96_000, localFormatted: '₹40–90L',   equityNote: 'Significant ESOPs', bonusNote: '20–25%' },
+      exec:   { minUsd: 84_000, medianUsd:130_000, maxUsd: 180_000, p90Usd: 156_000, localFormatted: '₹70–150L',  equityNote: 'Large ESOP grants', bonusNote: '25–40%' },
+    },
+    us: {
+      junior: { minUsd:100_000, medianUsd:130_000, maxUsd: 160_000, p90Usd: 150_000, localFormatted: '$100K–$160K', equityNote: 'RSUs at tech', bonusNote: '10–15%' },
+      mid:    { minUsd:150_000, medianUsd:190_000, maxUsd: 240_000, p90Usd: 225_000, localFormatted: '$150K–$240K', equityNote: 'RSUs', bonusNote: '15–20%' },
+      senior: { minUsd:210_000, medianUsd:275_000, maxUsd: 350_000, p90Usd: 320_000, localFormatted: '$210K–$350K', equityNote: 'Significant RSUs', bonusNote: '20–25%' },
+      staff:  { minUsd:280_000, medianUsd:380_000, maxUsd: 480_000, p90Usd: 450_000, localFormatted: '$280K–$480K', equityNote: 'Large RSU grants', bonusNote: '20–30%' },
+      exec:   { minUsd:400_000, medianUsd:580_000, maxUsd: 800_000, p90Usd: 730_000, localFormatted: '$400K–$800K', equityNote: 'Large grants + LTIP', bonusNote: '30–50%' },
+    },
+    uk: {
+      junior: { minUsd: 56_000, medianUsd: 72_000, maxUsd: 100_000, p90Usd:  92_000, localFormatted: '£45K–£80K',   equityNote: 'EMI at startups', bonusNote: '8–12%' },
+      mid:    { minUsd: 88_000, medianUsd:112_000, maxUsd: 150_000, p90Usd: 138_000, localFormatted: '£70K–£120K',  equityNote: 'EMI/RSUs', bonusNote: '12–18%' },
+      senior: { minUsd:125_000, medianUsd:160_000, maxUsd: 213_000, p90Usd: 194_000, localFormatted: '£100K–£170K', equityNote: 'RSUs', bonusNote: '15–20%' },
+      staff:  { minUsd:175_000, medianUsd:220_000, maxUsd: 300_000, p90Usd: 275_000, localFormatted: '£140K–£240K', equityNote: 'RSUs + LTIP', bonusNote: '20–30%' },
+      exec:   { minUsd:250_000, medianUsd:330_000, maxUsd: 475_000, p90Usd: 425_000, localFormatted: '£200K–£380K', equityNote: 'LTIP', bonusNote: '30%+' },
+    },
+    sg: {
+      junior: { minUsd: 45_000, medianUsd: 56_000, maxUsd:  75_000, p90Usd:  70_000, localFormatted: 'S$60K–S$100K',  equityNote: 'Options at startups', bonusNote: '8–12%' },
+      mid:    { minUsd: 68_000, medianUsd: 88_000, maxUsd: 113_000, p90Usd: 104_000, localFormatted: 'S$90K–S$150K',  equityNote: 'RSUs at MNCs', bonusNote: '12–18%' },
+      senior: { minUsd: 98_000, medianUsd:130_000, maxUsd: 165_000, p90Usd: 152_000, localFormatted: 'S$130K–S$220K', equityNote: 'RSUs', bonusNote: '15–20%' },
+      staff:  { minUsd:135_000, medianUsd:180_000, maxUsd: 225_000, p90Usd: 208_000, localFormatted: 'S$180K–S$300K', equityNote: 'Significant grants', bonusNote: '20–25%' },
+      exec:   { minUsd:188_000, medianUsd:255_000, maxUsd: 330_000, p90Usd: 304_000, localFormatted: 'S$250K–S$440K', equityNote: 'LTIP', bonusNote: '25–40%' },
+    },
+    default: { junior: { minUsd: 9_600, medianUsd: 14_400, maxUsd: 21_600, p90Usd: 19_200, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '8–12%' }, mid: { minUsd: 18_000, medianUsd: 28_800, maxUsd: 42_000, p90Usd: 36_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '12–18%' }, senior: { minUsd: 30_000, medianUsd: 50_000, maxUsd: 72_000, p90Usd: 62_400, localFormatted: 'Market rate varies', equityNote: 'ESOPs + refreshers', bonusNote: '15–20%' }, staff: { minUsd: 48_000, medianUsd: 80_000, maxUsd: 108_000, p90Usd: 96_000, localFormatted: 'Market rate varies', equityNote: 'Significant ESOPs', bonusNote: '20–25%' }, exec: { minUsd: 84_000, medianUsd: 130_000, maxUsd: 180_000, p90Usd: 156_000, localFormatted: 'Market rate varies', equityNote: 'Large grants', bonusNote: '25–40%' } },
+  },
+
+  // ── Marketing ────────────────────────────────────────────────────────────────
+  mkt: {
+    in: {
+      junior: { minUsd:  4_800, medianUsd:  7_200, maxUsd:  12_000, p90Usd:  10_200, localFormatted: '₹4–10L',    equityNote: 'ESOPs at D2C startups', bonusNote: '8–12%' },
+      mid:    { minUsd:  9_600, medianUsd: 16_000, maxUsd:  24_000, p90Usd:  21_000, localFormatted: '₹8–20L',    equityNote: 'ESOPs at growth-stage', bonusNote: '10–15%' },
+      senior: { minUsd: 16_800, medianUsd: 28_000, maxUsd:  42_000, p90Usd:  36_000, localFormatted: '₹14–35L',   equityNote: 'ESOPs + refreshers', bonusNote: '12–18%' },
+      staff:  { minUsd: 30_000, medianUsd: 50_000, maxUsd:  72_000, p90Usd:  62_400, localFormatted: '₹25–60L',   equityNote: 'Significant ESOPs', bonusNote: '15–20%' },
+      exec:   { minUsd: 60_000, medianUsd: 96_000, maxUsd: 144_000, p90Usd: 126_000, localFormatted: '₹50–120L',  equityNote: 'Large ESOP grants', bonusNote: '20–30%' },
+    },
+    us: {
+      junior: { minUsd: 55_000, medianUsd: 68_000, maxUsd:  85_000, p90Usd:  80_000, localFormatted: '$55K–$85K',   equityNote: 'RSUs at tech', bonusNote: '5–10%' },
+      mid:    { minUsd: 85_000, medianUsd:108_000, maxUsd: 135_000, p90Usd: 124_000, localFormatted: '$85K–$135K',  equityNote: 'RSUs at growth', bonusNote: '10–15%' },
+      senior: { minUsd:130_000, medianUsd:165_000, maxUsd: 200_000, p90Usd: 188_000, localFormatted: '$130K–$200K', equityNote: 'RSUs', bonusNote: '15–20%' },
+      staff:  { minUsd:185_000, medianUsd:240_000, maxUsd: 300_000, p90Usd: 275_000, localFormatted: '$185K–$300K', equityNote: 'Significant RSUs', bonusNote: '20–30%' },
+      exec:   { minUsd:280_000, medianUsd:430_000, maxUsd: 600_000, p90Usd: 550_000, localFormatted: '$280K–$600K', equityNote: 'LTIP at public co', bonusNote: '30–50%' },
+    },
+    uk: {
+      junior: { minUsd: 35_000, medianUsd: 44_000, maxUsd:  56_000, p90Usd:  52_000, localFormatted: '£28K–£45K',   equityNote: 'EMI at startups', bonusNote: '5–10%' },
+      mid:    { minUsd: 50_000, medianUsd: 66_000, maxUsd:  88_000, p90Usd:  80_000, localFormatted: '£40K–£70K',   equityNote: 'EMI/RSUs', bonusNote: '10–15%' },
+      senior: { minUsd: 75_000, medianUsd:100_000, maxUsd: 131_000, p90Usd: 119_000, localFormatted: '£60K–£105K',  equityNote: 'RSUs', bonusNote: '12–18%' },
+      staff:  { minUsd:113_000, medianUsd:150_000, maxUsd: 194_000, p90Usd: 175_000, localFormatted: '£90K–£155K',  equityNote: 'RSUs + LTIP', bonusNote: '15–25%' },
+      exec:   { minUsd:175_000, medianUsd:250_000, maxUsd: 350_000, p90Usd: 313_000, localFormatted: '£140K–£280K', equityNote: 'LTIP', bonusNote: '25–40%' },
+    },
+    sg: {
+      junior: { minUsd: 27_000, medianUsd: 34_000, maxUsd:  45_000, p90Usd:  42_000, localFormatted: 'S$36K–S$60K',   equityNote: 'Options at startups', bonusNote: '5–8%' },
+      mid:    { minUsd: 41_000, medianUsd: 54_000, maxUsd:  71_000, p90Usd:  66_000, localFormatted: 'S$55K–S$95K',   equityNote: 'RSUs at MNCs', bonusNote: '8–12%' },
+      senior: { minUsd: 60_000, medianUsd: 80_000, maxUsd: 105_000, p90Usd:  96_000, localFormatted: 'S$80K–S$140K',  equityNote: 'RSUs', bonusNote: '12–18%' },
+      staff:  { minUsd: 90_000, medianUsd:116_000, maxUsd: 150_000, p90Usd: 138_000, localFormatted: 'S$120K–S$200K', equityNote: 'Significant grants', bonusNote: '15–20%' },
+      exec:   { minUsd:135_000, medianUsd:180_000, maxUsd: 240_000, p90Usd: 220_000, localFormatted: 'S$180K–S$320K', equityNote: 'LTIP', bonusNote: '20–35%' },
+    },
+    default: { junior: { minUsd: 4_800, medianUsd: 7_200, maxUsd: 12_000, p90Usd: 10_200, localFormatted: 'Market rate varies', equityNote: 'ESOPs at D2C startups', bonusNote: '8–12%' }, mid: { minUsd: 9_600, medianUsd: 16_000, maxUsd: 24_000, p90Usd: 21_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–15%' }, senior: { minUsd: 16_800, medianUsd: 28_000, maxUsd: 42_000, p90Usd: 36_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '12–18%' }, staff: { minUsd: 30_000, medianUsd: 50_000, maxUsd: 72_000, p90Usd: 62_400, localFormatted: 'Market rate varies', equityNote: 'Significant ESOPs', bonusNote: '15–20%' }, exec: { minUsd: 60_000, medianUsd: 96_000, maxUsd: 144_000, p90Usd: 126_000, localFormatted: 'Market rate varies', equityNote: 'Large grants', bonusNote: '20–30%' } },
+  },
+
+  // ── Consulting ───────────────────────────────────────────────────────────────
+  cons: {
+    in: {
+      junior: { minUsd:  9_600, medianUsd: 14_400, maxUsd:  21_600, p90Usd:  19_200, localFormatted: '₹8–18L',    equityNote: 'None at Big4; ESOPs at boutiques', bonusNote: '10–15%' },
+      mid:    { minUsd: 18_000, medianUsd: 28_800, maxUsd:  42_000, p90Usd:  36_000, localFormatted: '₹15–35L',   equityNote: 'Performance shares at MBB', bonusNote: '15–20%' },
+      senior: { minUsd: 30_000, medianUsd: 48_000, maxUsd:  66_000, p90Usd:  57_600, localFormatted: '₹25–55L',   equityNote: 'Partner-track profit share', bonusNote: '20–30%' },
+      staff:  { minUsd: 48_000, medianUsd: 72_000, maxUsd:  96_000, p90Usd:  85_000, localFormatted: '₹40–80L',   equityNote: 'Partner profit share', bonusNote: '25–40%' },
+      exec:   { minUsd: 96_000, medianUsd:160_000, maxUsd: 240_000, p90Usd: 210_000, localFormatted: '₹80–200L',  equityNote: 'Equity partner share', bonusNote: '40–80%' },
+    },
+    us: {
+      junior: { minUsd: 80_000, medianUsd: 98_000, maxUsd: 120_000, p90Usd: 112_000, localFormatted: '$80K–$120K',  equityNote: 'None', bonusNote: '10–15%' },
+      mid:    { minUsd:130_000, medianUsd:165_000, maxUsd: 200_000, p90Usd: 190_000, localFormatted: '$130K–$200K', equityNote: 'MBB carry', bonusNote: '15–25%' },
+      senior: { minUsd:200_000, medianUsd:280_000, maxUsd: 350_000, p90Usd: 325_000, localFormatted: '$200K–$350K', equityNote: 'Profit sharing', bonusNote: '25–40%' },
+      staff:  { minUsd:320_000, medianUsd:430_000, maxUsd: 550_000, p90Usd: 510_000, localFormatted: '$320K–$550K', equityNote: 'Partner carry', bonusNote: '40–60%' },
+      exec:   { minUsd:500_000, medianUsd:900_000, maxUsd: 2_000_000, p90Usd: 1_500_000, localFormatted: '$500K–$2M+', equityNote: 'Equity partner share', bonusNote: '50–100%+' },
+    },
+    uk: {
+      junior: { minUsd: 56_000, medianUsd: 70_000, maxUsd:  88_000, p90Usd:  82_000, localFormatted: '£45K–£70K',   equityNote: 'None', bonusNote: '10–15%' },
+      mid:    { minUsd: 88_000, medianUsd:115_000, maxUsd: 150_000, p90Usd: 138_000, localFormatted: '£70K–£120K',  equityNote: 'MBB carry', bonusNote: '15–25%' },
+      senior: { minUsd:150_000, medianUsd:200_000, maxUsd: 275_000, p90Usd: 250_000, localFormatted: '£120K–£220K', equityNote: 'Profit sharing', bonusNote: '25–40%' },
+      staff:  { minUsd:250_000, medianUsd:340_000, maxUsd: 475_000, p90Usd: 425_000, localFormatted: '£200K–£380K', equityNote: 'Partner carry', bonusNote: '40–60%' },
+      exec:   { minUsd:438_000, medianUsd:650_000, maxUsd: 1_130_000, p90Usd: 950_000, localFormatted: '£350K–£900K', equityNote: 'Equity partner share', bonusNote: '50–100%+' },
+    },
+    sg: {
+      junior: { minUsd: 45_000, medianUsd: 60_000, maxUsd:  75_000, p90Usd:  70_000, localFormatted: 'S$60K–S$100K',  equityNote: 'None', bonusNote: '10–15%' },
+      mid:    { minUsd: 71_000, medianUsd: 94_000, maxUsd: 120_000, p90Usd: 111_000, localFormatted: 'S$95K–S$160K',  equityNote: 'Performance shares', bonusNote: '15–25%' },
+      senior: { minUsd:113_000, medianUsd:153_000, maxUsd: 195_000, p90Usd: 180_000, localFormatted: 'S$150K–S$260K', equityNote: 'Profit sharing', bonusNote: '20–35%' },
+      staff:  { minUsd:180_000, medianUsd:247_000, maxUsd: 315_000, p90Usd: 292_000, localFormatted: 'S$240K–S$420K', equityNote: 'Partner carry', bonusNote: '30–50%' },
+      exec:   { minUsd:300_000, medianUsd:450_000, maxUsd: 675_000, p90Usd: 600_000, localFormatted: 'S$400K–S$900K', equityNote: 'Equity partner share', bonusNote: '50–100%' },
+    },
+    default: { junior: { minUsd: 9_600, medianUsd: 14_400, maxUsd: 21_600, p90Usd: 19_200, localFormatted: 'Market rate varies', equityNote: 'None at Big4', bonusNote: '10–15%' }, mid: { minUsd: 18_000, medianUsd: 28_800, maxUsd: 42_000, p90Usd: 36_000, localFormatted: 'Market rate varies', equityNote: 'Performance shares', bonusNote: '15–20%' }, senior: { minUsd: 30_000, medianUsd: 48_000, maxUsd: 66_000, p90Usd: 57_600, localFormatted: 'Market rate varies', equityNote: 'Partner-track', bonusNote: '20–30%' }, staff: { minUsd: 48_000, medianUsd: 72_000, maxUsd: 96_000, p90Usd: 85_000, localFormatted: 'Market rate varies', equityNote: 'Partner share', bonusNote: '25–40%' }, exec: { minUsd: 96_000, medianUsd: 160_000, maxUsd: 240_000, p90Usd: 210_000, localFormatted: 'Market rate varies', equityNote: 'Equity share', bonusNote: '40–80%' } },
+  },
+
+  // ── Legal ─────────────────────────────────────────────────────────────────────
+  legal: {
+    in: {
+      junior: { minUsd:  6_000, medianUsd:  9_600, maxUsd:  14_400, p90Usd:  12_600, localFormatted: '₹5–12L',    equityNote: 'None at law firms', bonusNote: '5–10%' },
+      mid:    { minUsd: 12_000, medianUsd: 20_000, maxUsd:  30_000, p90Usd:  26_400, localFormatted: '₹10–25L',   equityNote: 'In-house ESOPs', bonusNote: '8–12%' },
+      senior: { minUsd: 21_600, medianUsd: 36_000, maxUsd:  54_000, p90Usd:  46_800, localFormatted: '₹18–45L',   equityNote: 'Partner-track profit share', bonusNote: '10–20%' },
+      staff:  { minUsd: 42_000, medianUsd: 68_000, maxUsd:  96_000, p90Usd:  84_000, localFormatted: '₹35–80L',   equityNote: 'Equity partner share', bonusNote: '20–40%' },
+      exec:   { minUsd: 72_000, medianUsd:120_000, maxUsd: 180_000, p90Usd: 156_000, localFormatted: '₹60–150L',  equityNote: 'GC in-house ESOPs + LTI', bonusNote: '20–35%' },
+    },
+    us: {
+      junior: { minUsd:130_000, medianUsd:165_000, maxUsd: 200_000, p90Usd: 190_000, localFormatted: '$130K–$200K', equityNote: 'None (BigLaw)', bonusNote: 'Class-year bonus ~$20K–$100K' },
+      mid:    { minUsd:200_000, medianUsd:260_000, maxUsd: 320_000, p90Usd: 300_000, localFormatted: '$200K–$320K', equityNote: 'In-house RSUs', bonusNote: 'Lockstep + discretionary' },
+      senior: { minUsd:350_000, medianUsd:480_000, maxUsd: 700_000, p90Usd: 630_000, localFormatted: '$350K–$700K', equityNote: 'Partner origination + carry', bonusNote: 'Origination-based' },
+      staff:  { minUsd:500_000, medianUsd:800_000, maxUsd: 1_500_000, p90Usd: 1_200_000, localFormatted: '$500K–$1.5M', equityNote: 'Equity partner', bonusNote: 'Profit pool' },
+      exec:   { minUsd:350_000, medianUsd:580_000, maxUsd: 900_000, p90Usd: 800_000, localFormatted: '$350K–$900K', equityNote: 'GC RSUs + LTI', bonusNote: '20–40%' },
+    },
+    uk: {
+      junior: { minUsd: 75_000, medianUsd: 90_000, maxUsd: 113_000, p90Usd: 106_000, localFormatted: '£60K–£90K',   equityNote: 'None at firms', bonusNote: '5–10%' },
+      mid:    { minUsd:113_000, medianUsd:140_000, maxUsd: 188_000, p90Usd: 172_000, localFormatted: '£90K–£150K',  equityNote: 'In-house RSUs', bonusNote: '10–20%' },
+      senior: { minUsd:188_000, medianUsd:240_000, maxUsd: 350_000, p90Usd: 313_000, localFormatted: '£150K–£280K', equityNote: 'Partner profit share', bonusNote: '20–40%' },
+      staff:  { minUsd:313_000, medianUsd:420_000, maxUsd: 625_000, p90Usd: 563_000, localFormatted: '£250K–£500K', equityNote: 'Equity partner', bonusNote: 'Profit pool' },
+      exec:   { minUsd:438_000, medianUsd:630_000, maxUsd: 1_130_000, p90Usd: 950_000, localFormatted: '£350K–£900K', equityNote: 'GC LTIP', bonusNote: '20–40%' },
+    },
+    sg: {
+      junior: { minUsd: 60_000, medianUsd: 76_000, maxUsd:  98_000, p90Usd:  90_000, localFormatted: 'S$80K–S$130K',  equityNote: 'None at firms', bonusNote: '5–10%' },
+      mid:    { minUsd: 90_000, medianUsd:114_000, maxUsd: 150_000, p90Usd: 138_000, localFormatted: 'S$120K–S$200K', equityNote: 'In-house options', bonusNote: '10–15%' },
+      senior: { minUsd:150_000, medianUsd:190_000, maxUsd: 255_000, p90Usd: 232_000, localFormatted: 'S$200K–S$340K', equityNote: 'Partner profit share', bonusNote: '15–30%' },
+      staff:  { minUsd:225_000, medianUsd:300_000, maxUsd: 405_000, p90Usd: 368_000, localFormatted: 'S$300K–S$540K', equityNote: 'Equity partner', bonusNote: '25–40%' },
+      exec:   { minUsd:338_000, medianUsd:450_000, maxUsd: 675_000, p90Usd: 600_000, localFormatted: 'S$450K–S$900K', equityNote: 'GC LTIP', bonusNote: '20–35%' },
+    },
+    default: { junior: { minUsd: 6_000, medianUsd: 9_600, maxUsd: 14_400, p90Usd: 12_600, localFormatted: 'Market rate varies', equityNote: 'None at firms', bonusNote: '5–10%' }, mid: { minUsd: 12_000, medianUsd: 20_000, maxUsd: 30_000, p90Usd: 26_400, localFormatted: 'Market rate varies', equityNote: 'In-house ESOPs', bonusNote: '8–12%' }, senior: { minUsd: 21_600, medianUsd: 36_000, maxUsd: 54_000, p90Usd: 46_800, localFormatted: 'Market rate varies', equityNote: 'Partner-track', bonusNote: '10–20%' }, staff: { minUsd: 42_000, medianUsd: 68_000, maxUsd: 96_000, p90Usd: 84_000, localFormatted: 'Market rate varies', equityNote: 'Equity partner', bonusNote: '20–40%' }, exec: { minUsd: 72_000, medianUsd: 120_000, maxUsd: 180_000, p90Usd: 156_000, localFormatted: 'Market rate varies', equityNote: 'GC LTI', bonusNote: '20–35%' } },
+  },
 };
 
 // Default fallback for unmapped role × region combos
