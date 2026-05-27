@@ -6610,3 +6610,314 @@ number-flow,
 }
 
 /* ── End of Premium Audit UI System (v45.0) ──────────────────────────────── */
+
+/* ============================================================================
+   v46.0 — GLOBE ROTATION + DASHBOARD V5 DESIGN SYSTEM
+   ============================================================================ */
+
+/* ── Globe panorama scrolling rotation ───────────────────────────────────── */
+@keyframes globe-panorama-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-280px); }
+}
+.globe-panorama {
+  animation: globe-panorama-scroll 32s linear infinite;
+  will-change: transform;
+}
+/* Cloud layer scrolls at a different speed for parallax */
+.globe-clouds {
+  animation: globe-panorama-scroll 56s linear infinite;
+  will-change: transform;
+}
+
+/* ── Orbit ring definitions (4 rings at varied inclinations) ─────────────── */
+.earth-orbit-1 {
+  border-color: rgba(0,212,224,0.34) !important;
+  border-width: 1.2px !important;
+  animation: orbit-ring-1 12s linear infinite !important;
+}
+.earth-orbit-2 {
+  border-color: rgba(99,102,241,0.26) !important;
+  border-width: 1px !important;
+  animation: orbit-ring-2 19s linear infinite reverse !important;
+}
+.earth-orbit-3 {
+  border-color: rgba(0,212,224,0.16) !important;
+  border-width: 0.8px !important;
+  animation: orbit-ring-3 28s linear infinite !important;
+}
+.earth-orbit-4 {
+  border-color: rgba(16,185,129,0.20) !important;
+  border-width: 1px !important;
+  animation: orbit-ring-4 40s linear infinite reverse !important;
+  inset: 4% !important;
+}
+
+/* Satellite dots on orbit rings */
+.earth-orbit-satellite {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  top: -2.5px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.earth-orbit-sat-1 {
+  background: rgba(0,212,224,0.95);
+  box-shadow: 0 0 8px rgba(0,212,224,0.9), 0 0 16px rgba(0,212,224,0.4);
+}
+.earth-orbit-sat-2 {
+  background: rgba(139,92,246,0.95);
+  box-shadow: 0 0 8px rgba(139,92,246,0.9);
+}
+.earth-orbit-sat-4 {
+  background: rgba(16,185,129,0.95);
+  box-shadow: 0 0 8px rgba(16,185,129,0.9);
+}
+
+@keyframes orbit-ring-4 {
+  from { transform: rotateX(72deg) rotateY(18deg) rotateZ(0deg); }
+  to   { transform: rotateX(72deg) rotateY(18deg) rotateZ(360deg); }
+}
+
+/* ── V5 Dashboard: Driver bar cards (horizontal fill indicator) ─────────── */
+.driver-bar-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 15px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  position: relative;
+  overflow: hidden;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.driver-bar-card:hover {
+  background: rgba(255,255,255,0.05);
+}
+.driver-bar-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3.5px;
+  border-radius: 2px 0 0 2px;
+}
+.driver-bar-card[data-tone="red"]::before    { background: linear-gradient(180deg,#ef4444,#dc2626); }
+.driver-bar-card[data-tone="orange"]::before { background: linear-gradient(180deg,#f97316,#ea580c); }
+.driver-bar-card[data-tone="amber"]::before  { background: linear-gradient(180deg,#f59e0b,#d97706); }
+.driver-bar-card[data-tone="emerald"]::before{ background: linear-gradient(180deg,#10b981,#059669); }
+.driver-bar-card[data-tone="cyan"]::before   { background: linear-gradient(180deg,#00d4e0,#0891b2); }
+
+.driver-bar-fill {
+  position: absolute;
+  left: 3.5px; top: 0; bottom: 0;
+  pointer-events: none;
+  opacity: 0.075;
+  border-radius: 0 8px 8px 0;
+  transition: width 0.9s cubic-bezier(0.22,1,0.36,1);
+}
+.driver-bar-card[data-tone="red"]    .driver-bar-fill { background: #ef4444; }
+.driver-bar-card[data-tone="orange"] .driver-bar-fill { background: #f97316; }
+.driver-bar-card[data-tone="amber"]  .driver-bar-fill { background: #f59e0b; }
+.driver-bar-card[data-tone="emerald"].driver-bar-fill { background: #10b981; }
+
+/* ── V5 Dashboard: Intelligence signal sections (collapsible groups) ─────── */
+.intel-section {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.09);
+}
+.intel-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  user-select: none;
+}
+.intel-section-header:hover {
+  background: rgba(255,255,255,0.065);
+}
+.intel-section-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(255,255,255,0.016);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.intel-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,0.78);
+}
+.intel-section-subtitle {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.36);
+  margin-top: 1px;
+}
+.intel-section-badge {
+  margin-left: auto;
+  font-size: 0.60rem;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.intel-section-badge.live  { background:rgba(16,185,129,0.14); color:#10b981; border:1px solid rgba(16,185,129,0.25); }
+.intel-section-badge.warn  { background:rgba(245,158,11,0.12);  color:#f59e0b; border:1px solid rgba(245,158,11,0.25); }
+.intel-section-badge.alert { background:rgba(220,38,38,0.12);   color:#ef4444; border:1px solid rgba(220,38,38,0.25);  }
+.intel-section-badge.info  { background:rgba(0,212,224,0.10);   color:#00d4e0; border:1px solid rgba(0,212,224,0.22); }
+.intel-section-badge.new   { background:rgba(139,92,246,0.12);  color:#a78bfa; border:1px solid rgba(139,92,246,0.25); }
+
+/* ── V5 Dashboard: Action timeline cards ─────────────────────────────────── */
+.action-timeline-card {
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.action-timeline-card:hover {
+  border-color: rgba(255,255,255,0.13);
+}
+.action-timeline-stripe {
+  width: 4px;
+  flex-shrink: 0;
+}
+.action-timeline-body {
+  flex: 1;
+  padding: 11px 14px;
+}
+.action-timeline-card.critical .action-timeline-stripe { background: linear-gradient(180deg,#ef4444,#b91c1c); }
+.action-timeline-card.high     .action-timeline-stripe { background: linear-gradient(180deg,#f97316,#c2410c); }
+.action-timeline-card.medium   .action-timeline-stripe { background: linear-gradient(180deg,#f59e0b,#b45309); }
+.action-timeline-card.low      .action-timeline-stripe { background: linear-gradient(180deg,#10b981,#047857); }
+.action-timeline-card.critical .action-timeline-body   { background: rgba(239,68,68,0.04); }
+.action-timeline-card.high     .action-timeline-body   { background: rgba(249,115,22,0.04); }
+.action-timeline-card.medium   .action-timeline-body   { background: rgba(245,158,11,0.03); }
+.action-timeline-card.low      .action-timeline-body   { background: rgba(16,185,129,0.03); }
+
+/* ── V5 Dashboard: Score hero mesh gradient overlay ─────────────────────── */
+.score-hero-glow-ring {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(24px);
+  opacity: 0.35;
+  transition: background 0.6s ease;
+}
+
+/* ── V5 Dashboard: Survival horizon strip ────────────────────────────────── */
+.survival-horizon-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.survival-horizon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  gap: 3px;
+}
+.survival-horizon-pct {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.survival-horizon-label {
+  font-size: 0.60rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── V5 Dashboard: Competitive position bar ─────────────────────────────── */
+.comp-dim-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.comp-dim-row:last-child { border-bottom: none; }
+.comp-dim-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.70);
+  width: 82px;
+  flex-shrink: 0;
+}
+.comp-dim-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.comp-dim-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.9s cubic-bezier(0.22,1,0.36,1);
+}
+.comp-dim-pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── V5 Dashboard: Tab bar enhancements ─────────────────────────────────── */
+.audit-tab-btn {
+  position: relative;
+}
+.audit-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--cyan, #00d4e0);
+  box-shadow: 0 0 8px rgba(0,212,224,0.60);
+}
+
+/* ── Intelligence brief enhanced container ───────────────────────────────── */
+.intel-brief-hero {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0,212,224,0.18);
+  background: rgba(0,212,224,0.04);
+}
+.intel-brief-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,224,0.35), transparent);
+}
+
+/* ── End of v46.0 additions ──────────────────────────────────────────────── */

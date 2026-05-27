@@ -283,15 +283,15 @@ interface ActionItem {
   step?: string; evidenceStats?: string; sequencePhase?: string;
 }
 
+const scoreToTone = (s: number) => s >= 70 ? 'red' : s >= 55 ? 'orange' : s >= 35 ? 'amber' : 'emerald';
+
 const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
   if (drivers.length === 0) return null;
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-      className="rounded-2xl p-3"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      <div className="flex items-center gap-1.5 mb-2.5">
+      <div className="flex items-center gap-1.5 mb-2 px-1">
         <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
         <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
           WHY YOUR SCORE IS WHERE IT IS
@@ -300,15 +300,14 @@ const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
         <ProvenanceLabel kind="modeled" tooltip="Dimension scores are computed by HumanProof's scoring formula." size="xs" />
       </div>
       <div className="space-y-1.5">
-        {drivers.slice(0, 3).map(d => (
-          <div key={d.key} className="flex items-start gap-2.5">
-            <div className="flex-shrink-0 px-1.5 py-0.5 rounded-md min-w-[36px] text-center"
-              style={{ background: riskColor(d.score) + '22', border: `1px solid ${riskColor(d.score)}38` }}>
-              <span className="text-[11px] font-black" style={{ color: riskColor(d.score) }}>{d.score}</span>
-            </div>
+        {drivers.slice(0, 5).map(d => (
+          <div key={d.key} className="driver-bar-card" data-tone={scoreToTone(d.score)}>
+            <div className="driver-bar-fill" style={{ width: `${Math.min(100, d.score)}%` }} />
+            <span className="text-[12px] font-black min-w-[28px] text-center flex-shrink-0"
+              style={{ color: riskColor(d.score) }}>{d.score}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.88)' }}>{d.label}</p>
-              <p className="text-[10px] leading-snug line-clamp-2" style={{ color: 'rgba(255,255,255,0.50)' }}>{d.why}</p>
+              <p className="text-[11px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.90)' }}>{d.label}</p>
+              <p className="text-[10px] leading-snug line-clamp-2" style={{ color: 'rgba(255,255,255,0.48)' }}>{d.why}</p>
             </div>
           </div>
         ))}
@@ -317,15 +316,16 @@ const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
   );
 };
 
+const priorityClass = (p: string) =>
+  p === 'Critical' ? 'critical' : p === 'High' ? 'high' : p === 'Medium' ? 'medium' : 'low';
+
 const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> = ({ actions, total }) => {
   if (actions.length === 0) return null;
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}
-      className="rounded-2xl p-3"
-      style={{ background: 'rgba(0,212,224,0.04)', border: '1px solid rgba(0,212,224,0.18)' }}
     >
-      <div className="flex items-center gap-1.5 mb-2.5">
+      <div className="flex items-center gap-1.5 mb-2 px-1">
         <Zap className="w-3.5 h-3.5" style={{ color: 'var(--cyan,#00d4e0)' }} />
         <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(0,212,224,0.90)' }}>
           DO THIS WEEK
@@ -339,19 +339,13 @@ const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> 
       </div>
       <div className="space-y-1.5">
         {actions.slice(0, 3).map((a, i) => (
-          <div key={`${a.priority}-${i}`} className="flex items-start gap-2.5">
-            <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{
-                background: a.priority === 'Critical' ? '#dc262622' : a.priority === 'High' ? '#f9731622' : '#06b6d422',
-                border: `1px solid ${a.priority === 'Critical' ? '#dc262648' : a.priority === 'High' ? '#f9731648' : '#06b6d448'}`,
-              }}>
-              <span className="text-[10px] font-black"
-                style={{ color: a.priority === 'Critical' ? '#dc2626' : a.priority === 'High' ? '#f97316' : '#06b6d4' }}>
-                {i + 1}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.90)' }}>{a.title}</p>
+          <div key={`${a.priority}-${i}`} className={`action-timeline-card ${priorityClass(a.priority)}`}>
+            <div className="action-timeline-stripe" />
+            <div className="action-timeline-body">
+              <p className="text-[11px] font-bold leading-tight mb-0.5" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                <span className="mr-1.5 text-[10px] font-black" style={{ color: 'rgba(255,255,255,0.30)' }}>{i + 1}.</span>
+                {a.title}
+              </p>
               <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 {a.sequencePhase
                   ? ({ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string,string>)[a.sequencePhase] ?? a.timeline

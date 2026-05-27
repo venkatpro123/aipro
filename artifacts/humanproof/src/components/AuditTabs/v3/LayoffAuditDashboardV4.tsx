@@ -13,7 +13,7 @@
 
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Zap, Radio, User, HelpCircle } from 'lucide-react';
+import { TrendingUp, Zap, Brain, User, HelpCircle } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
@@ -98,9 +98,9 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'explore',
-    label: 'Explore',
+    label: 'Intelligence',
     shortLabel: 'Intel',
-    Icon: Radio,
+    Icon: Brain,
     getBadge: (r) => {
       const live = r.signalQuality?.liveSignals ?? 0;
       return live > 0 ? { text: `${live} live`, color: '#10b981' } : null;

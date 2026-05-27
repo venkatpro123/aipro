@@ -23,7 +23,7 @@ import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
-  BookOpen, Activity, DollarSign, AlertCircle, Timer,
+  BookOpen, Activity, DollarSign, AlertCircle, Timer, CalendarDays, Target,
 } from 'lucide-react';
 import type { VisaRiskResult } from '../../../services/visaRiskEngine';
 import {
@@ -41,6 +41,8 @@ import AdaptiveBlock from '../common/AdaptiveBlock';
 import TierBadge from '../common/TierBadge';
 import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligencePanel';
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
+import MonthlyActionPlan from '../common/MonthlyActionPlan';
+import JobTargetPanel from '../common/JobTargetPanel';
 
 // Lazy-load the heavy T3 components — each has 30+ imports including context
 // hooks. If either fails to load, only its collapsed section is affected; the
@@ -483,6 +485,34 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
       {/* T2: Action Priority Matrix */}
       {recommendations.length > 0 && (
         <ActionMatrix items={recommendations} emergencyMode={isEmergency} phaseLabels={gracePhaseLabels} />
+      )}
+
+      {/* T2: Monthly Action Plan — precision 30/60/90-day roadmap */}
+      {r.monthlyActionPlan && (
+        <AdaptiveBlock
+          title="Monthly action roadmap"
+          subtitle="30 / 60 / 90-day precision plan with weekly milestones"
+          icon={CalendarDays}
+          tier={2}
+          accentColor="#00d4e0"
+          defaultOpen={true}
+        >
+          <MonthlyActionPlan plan={r.monthlyActionPlan} />
+        </AdaptiveBlock>
+      )}
+
+      {/* T2: Job targeting intelligence — precision targets + salary intel */}
+      {r.jobTargeting && (
+        <AdaptiveBlock
+          title="Job targeting intelligence"
+          subtitle="Best-fit companies, role variants, and compensation benchmarks"
+          icon={Target}
+          tier={2}
+          accentColor="#10b981"
+          defaultOpen={false}
+        >
+          <JobTargetPanel targeting={r.jobTargeting} />
+        </AdaptiveBlock>
       )}
 
       {/* T2: Financial runway — only when urgent */}

@@ -14,7 +14,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain, Activity, Compass, AlertOctagon, BarChart2,
-  TrendingUp, Map, Users, GitBranch,
+  TrendingUp, Map, Users, GitBranch, ShieldCheck, Award, Layers,
 } from 'lucide-react';
 import { PatternMatchCard } from '../../PatternMatchCard';
 import { computeScoreSufficiency } from '../../../lib/scoreGate';
@@ -29,6 +29,9 @@ import PeerContagionPanel from '../common/PeerContagionPanel';
 import MacroRiskPanel from '../common/MacroRiskPanel';
 import PredictionHorizonPanel from '../common/PredictionHorizonPanel';
 import ExecutiveDeparturePatternPanel from '../common/ExecutiveDeparturePatternPanel';
+import PrecisionSurvivalPanel from '../common/PrecisionSurvivalPanel';
+import CompetitivePositionPanel from '../common/CompetitivePositionPanel';
+import SkillFusionPanel from '../common/SkillFusionPanel';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -268,6 +271,10 @@ export const ExploreTab: React.FC<TabProps> = ({ result, companyData, auditStage
   const indiaEnrichment = r.indiaRiskEnrichment;
   const geoOptions = r.geographicOptionality;
 
+  const precisionSurvival  = r.precisionSurvival;
+  const competitivePosition = r.competitivePosition;
+  const skillFusion         = r.skillFusion;
+
   const confPct = result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100);
   const freshnessierTier: string = result.unifiedFreshness?.tier ?? '';
   const companyNameForBrief: string = (companyData as any)?.name ?? '';
@@ -307,6 +314,20 @@ export const ExploreTab: React.FC<TabProps> = ({ result, companyData, auditStage
           companyName={companyNameForBrief}
         />
       </div>
+
+      {/* ── T2: Precision survival horizon ─────────────────────────────────── */}
+      {precisionSurvival && (
+        <AdaptiveBlock
+          title="Precision survival model"
+          subtitle="Bayesian survival probability across 30 / 90 / 180-day horizons"
+          icon={ShieldCheck}
+          tier={2}
+          accentColor="#10b981"
+          defaultOpen={true}
+        >
+          <PrecisionSurvivalPanel survival={precisionSurvival} />
+        </AdaptiveBlock>
+      )}
 
       {/* ── T2: Pattern match — only when ≥ 70% overlap ────────────────────── */}
       {result.resolvedPattern && (result.patternMatchOverlapScore ?? 0) >= 0.70 && (
@@ -350,6 +371,20 @@ export const ExploreTab: React.FC<TabProps> = ({ result, companyData, auditStage
         ciHigh={scoreSufficiency.ciHigh}
       />
 
+      {/* ── T2: Competitive position intelligence ───────────────────────────── */}
+      {competitivePosition && (
+        <AdaptiveBlock
+          title="Competitive position"
+          subtitle="Your market standing vs. peers — skill gaps, salary delta, demand index"
+          icon={Award}
+          tier={2}
+          accentColor="#a78bfa"
+          defaultOpen={false}
+        >
+          <CompetitivePositionPanel position={competitivePosition} />
+        </AdaptiveBlock>
+      )}
+
       {/* ── T2: Risk dimensions (collapsed by default in Explore — detailed in My Risk) */}
       <AdaptiveBlock
         title="Risk dimensions breakdown"
@@ -361,6 +396,20 @@ export const ExploreTab: React.FC<TabProps> = ({ result, companyData, auditStage
       >
         <RiskBreakdownTab result={result} companyData={companyData} />
       </AdaptiveBlock>
+
+      {/* ── T3: Skill fusion opportunities ──────────────────────────────────── */}
+      {skillFusion && (
+        <AdaptiveBlock
+          title="Skill fusion opportunities"
+          subtitle="Cross-discipline skill combinations that compound market value"
+          icon={Layers}
+          tier={3}
+          accentColor="#f59e0b"
+          defaultOpen={false}
+        >
+          <SkillFusionPanel fusion={skillFusion} />
+        </AdaptiveBlock>
+      )}
 
       {/* ── T3: Peer & macro signals ─────────────────────────────────────────── */}
       <AdaptiveBlock
