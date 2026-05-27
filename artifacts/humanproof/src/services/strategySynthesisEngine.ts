@@ -59,7 +59,15 @@ export interface StrategicPlan {
 }
 
 export interface StrategySynthesisResult {
-  overallStrategy: 'PROTECT_AND_WAIT' | 'ACCELERATE_EXIT' | 'EMERGENCY_EXIT' | 'STRENGTHEN_POSITION' | 'OPPORTUNISTIC_MOVE';
+  overallStrategy:
+    | 'PROTECT_AND_WAIT'
+    | 'ACCELERATE_EXIT'
+    | 'EMERGENCY_EXIT'
+    | 'STRENGTHEN_POSITION'
+    | 'OPPORTUNISTIC_MOVE'
+    | 'VISA_WINDOW_EXIT'           // v48.0: visa holder — compressed grace period
+    | 'EQUITY_HARVEST_THEN_EXIT'   // v48.0: hold for vest, then deliberate exit
+    | 'GEOGRAPHIC_ARBITRAGE';      // v48.0: high local risk, strong demand in target region
   strategyRationale: string;
   urgencyLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   phases: StrategicPlan[];
@@ -68,7 +76,7 @@ export interface StrategySynthesisResult {
   singleBiggestOpportunity: string;       // the ONE thing to capitalize on
   estimatedSafetyWindowDays: number;      // how many days before situation deteriorates
   competitivePositionStatement: string;   // "You are in the X% of users who..."
-  readonly calibrationStatus: 'synthesis_v13';
+  readonly calibrationStatus: 'synthesis_v48';
 }
 
 export interface StrategySynthesisInputs {
@@ -92,6 +100,28 @@ export interface StrategySynthesisInputs {
   resilienceScore?: number;
   jobMarketLiquidityScore?: number;
   exitTimingOptimalMonth?: string;
+
+  // ── v48.0 personalization signals ──────────────────────────────────────────
+  /** Days of post-layoff visa grace period (nil = no visa constraint) */
+  visaGracePeriodDays?: number | null;
+  /** Days until next equity vest cliff */
+  daysToNextVest?: number | null;
+  /** USD value of upcoming vest — informs EQUITY_HARVEST_THEN_EXIT threshold */
+  nextVestValueUsd?: number | null;
+  /** Dependents flag — amplifies urgency in financial planning advice */
+  hasDependents?: boolean;
+  /** Role family prefix from careerInsuranceEngine (sw/hc/legal/mkt/etc.) */
+  roleFamily?: string;
+  /** Sub-department for targeted action personalisation */
+  subDepartment?: string;
+  /** Seniority tier for appropriate action framing */
+  seniority?: 'junior' | 'mid' | 'senior' | 'staff' | 'exec';
+  /** Skill portfolio score (0–100) — below 40 triggers upskill strategy */
+  skillPortfolioScore?: number;
+  /** Target region for geographic arbitrage detection */
+  targetRegion?: string;
+  /** Current ISO-3166-1 alpha-2 region code */
+  region?: string;
 }
 
 // ── Overall strategy determination ────────────────────────────────────────────
@@ -102,7 +132,31 @@ function determineOverallStrategy(inputs: StrategySynthesisInputs): OverallStrat
   const { currentScore, collapseStage, financialRunwayMonths, scoreVelocityPtsPerMonth } = inputs;
   const peerWave = inputs.peerContagion?.waveIntensity;
 
+  // Emergency first — no other strategy overrides this
   if (currentScore >= 80 || collapseStage === 3) return 'EMERGENCY_EXIT';
+
+  // v48.0: Visa window — compressed grace period forces proactive search regardless of score
+  if (
+    inputs.visaGracePeriodDays != null &&
+    inputs.visaGracePeriodDays <= 60 &&
+    currentScore >= 40
+  ) return 'VISA_WINDOW_EXIT';
+
+  // v48.0: Equity harvest — significant vest within 90 days and score not yet critical → hold strategy
+  if (
+    inputs.daysToNextVest != null && inputs.daysToNextVest <= 90 &&
+    (inputs.nextVestValueUsd ?? 0) >= 10_000 &&
+    currentScore < 75
+  ) return 'EQUITY_HARVEST_THEN_EXIT';
+
+  // v48.0: Geographic arbitrage — strong demand in target market + high local risk
+  if (
+    inputs.targetRegion != null &&
+    currentScore >= 55 &&
+    (inputs.jobMarketLiquidityScore ?? 0) >= 65 &&
+    inputs.targetRegion !== (inputs.region ?? inputs.targetRegion)
+  ) return 'GEOGRAPHIC_ARBITRAGE';
+
   if (currentScore >= 65 && (peerWave === 'ACTIVE' || peerWave === 'PEAK')) return 'ACCELERATE_EXIT';
   if (currentScore >= 60 && (scoreVelocityPtsPerMonth ?? 0) > 2) return 'ACCELERATE_EXIT';
   if (currentScore >= 50 && financialRunwayMonths < 4) return 'ACCELERATE_EXIT';
@@ -122,6 +176,9 @@ function buildStrategyRationale(strategy: OverallStrategy, inputs: StrategySynth
     PROTECT_AND_WAIT: `Score ${currentScore} is elevated but manageable. Your ${financialRunwayMonths}+ months of runway provides strategic flexibility. Strengthen your position internally while monitoring signals for deterioration — do not panic-exit, but do not ignore the signals.`,
     STRENGTHEN_POSITION: `Current risk is moderate (${currentScore}). Use this window to address identified gaps — skills, network, financial buffer — before conditions worsen. Proactive strengthening now prevents a reactive scramble later.`,
     OPPORTUNISTIC_MOVE: `Low risk + strong resilience creates an opportunity window. The current market has pockets of demand in your domain. A deliberate, selective move now could lock in a significantly better position before market conditions tighten.`,
+    VISA_WINDOW_EXIT: `Your ${inputs.visaGracePeriodDays}-day post-layoff visa grace period compresses your effective job search window to ~${Math.max(1, Math.round((inputs.visaGracePeriodDays ?? 60) / 7) - 2)} weeks — shorter than a typical job search. Every week of delay erodes your window. Begin active applications at visa-sponsor-friendly employers immediately while you hold current employment, before any announcement.`,
+    EQUITY_HARVEST_THEN_EXIT: `An upcoming equity vest (~$${(inputs.nextVestValueUsd ?? 0).toLocaleString()} in ~${inputs.daysToNextVest} days) creates a deliberate hold-then-exit window. Your risk score (${currentScore}) is below the emergency threshold, giving you time to harvest this equity and negotiate a start date at your next employer that preserves it. Secure an offer now, negotiate start date to fall after vest.`,
+    GEOGRAPHIC_ARBITRAGE: `Score ${currentScore} in your current ${inputs.industry} market combined with strong demand in ${inputs.targetRegion ?? 'your target market'} creates a geographic arbitrage opportunity. Moving your search to a region with lower talent supply and active hiring in your domain could yield 20–40% higher total compensation with meaningfully lower layoff risk.`,
   };
 
   return rationales[strategy];
@@ -133,11 +190,159 @@ function estimateSafetyWindowDays(inputs: StrategySynthesisInputs): number {
   const { currentScore, collapseStage, scoreVelocityPtsPerMonth } = inputs;
   const peerWave = inputs.peerContagion?.waveIntensity ?? 'NONE';
 
+  // Visa constraint — your effective window is the grace period, not the risk trajectory
+  if (inputs.visaGracePeriodDays != null && inputs.visaGracePeriodDays <= 60) {
+    return inputs.visaGracePeriodDays; // compressed by legal deadline
+  }
+
   if (collapseStage === 3 || currentScore >= 85) return 30;
   if (currentScore >= 75 || (peerWave === 'ACTIVE' && currentScore >= 60)) return 60;
   if (currentScore >= 65 || (scoreVelocityPtsPerMonth ?? 0) > 3) return 90;
   if (currentScore >= 50) return 180;
   return 365;
+}
+
+// ── Role-family-specific immediate actions (v48.0) ────────────────────────────
+
+function buildRoleFamilySpecificActions(inputs: StrategySynthesisInputs): StrategyAction[] {
+  const family = inputs.roleFamily ?? 'default';
+  const actions: StrategyAction[] = [];
+
+  if (family === 'hc') {
+    actions.push({
+      id: 'rf_hc_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Activate Clinical Recruiter Network (not job boards)',
+      description: 'Healthcare positions are filled 70% through clinical staffing firms and peer referrals, not job postings. Contact 2–3 clinical recruitment firms (AMN Healthcare, CHG Healthcare, Medscape Physicians) this week and register your credentials.',
+      rationale: 'Clinical talent is in systemic shortage in most markets. Being in active recruiter databases immediately opens roles not posted publicly.',
+      roiScore: 88,
+      timeHorizon: 'Days 1–3',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 55,
+    });
+    actions.push({
+      id: 'rf_hc_2',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Verify License Portability & Telehealth Authorization',
+      description: 'Confirm that your clinical license is in good standing and check multi-state compact enrollment (IMLC for physicians, eNLC for nurses). Enroll in 1–2 additional state compacts this week — this expands your effective job market 4–8×.',
+      rationale: 'Compact license holders access 37+ state markets vs. 1. Telehealth platforms require active compact enrollment — this is a 5-minute step with massive market access impact.',
+      roiScore: 82,
+      timeHorizon: 'This week',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: false,
+    });
+  }
+
+  if (family === 'legal') {
+    actions.push({
+      id: 'rf_legal_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Notify Your Bar Association Network (Discreetly)',
+      description: 'Join your state/regional bar association\'s LinkedIn group and career resources. Legal hiring is 85% referral-driven. Contact 3 partners or in-house GCs you know personally — not to ask for a job, but to maintain visibility.',
+      rationale: 'Law firm and in-house legal roles are almost never posted publicly in senior tiers. Your bar network IS your job market.',
+      roiScore: 86,
+      timeHorizon: 'Days 1–4',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 55,
+    });
+    actions.push({
+      id: 'rf_legal_2',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Update Martindale-Hubbell & Avvo Profiles',
+      description: 'Legal hiring decisions reference Martindale-Hubbell peer ratings and Avvo scores. Update your profile with recent matters (sanitized), bar admissions, and published work. This takes 90 minutes and multiplies inbound.',
+      rationale: 'General counsels and managing partners regularly check legal directories before reaching out. A stale profile = invisible to inbound.',
+      roiScore: 72,
+      timeHorizon: 'Days 2–4',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: false,
+    });
+  }
+
+  if (family === 'mkt') {
+    actions.push({
+      id: 'rf_mkt_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Build or Update Your Marketing Portfolio with Quantified Campaign Results',
+      description: 'Create a 1-page portfolio showing 3 campaigns with: channel, budget, CAC, ROAS, or pipeline generated. CMOs hire based on numbers, not descriptions. This takes 3 hours and doubles your interview conversion.',
+      rationale: 'Marketing candidates who demonstrate quantified ROI have 2.5× higher callback rates. This is the most under-utilized differentiator in marketing applications.',
+      roiScore: 84,
+      timeHorizon: 'Days 2–5',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 55,
+    });
+  }
+
+  if (family === 'fin') {
+    actions.push({
+      id: 'rf_fin_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Register on Vetted Finance Recruiting Platforms (Selby Jennings / Options Group)',
+      description: 'Finance roles above $150K are almost exclusively placed by specialist headhunters. Register with Selby Jennings, Options Group, or Michael Baker International this week. Send your most recent tombstones or model samples.',
+      rationale: 'Finance recruiting is 90% headhunter-driven above VP level. Being in their databases is prerequisite to accessing the market.',
+      roiScore: 87,
+      timeHorizon: 'Days 1–3',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 55,
+    });
+  }
+
+  if (family === 'ops') {
+    actions.push({
+      id: 'rf_ops_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Document Your Process Improvement Metrics (Cost Savings, Efficiency Gains)',
+      description: 'Operations roles are won with numbers: "Reduced COGS by 12% through vendor re-negotiation." Document 3 specific operational improvements with dollar or percentage impact before updating your resume and LinkedIn.',
+      rationale: 'Operations hiring managers respond to cost/efficiency outcomes. Generic ops resumes have the lowest callback rate — quantified impact resumes have the highest conversion in this function.',
+      roiScore: 80,
+      timeHorizon: 'Days 2–4',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: false,
+    });
+  }
+
+  if (family === 'ind') {
+    actions.push({
+      id: 'rf_ind_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Register with Trade-Specific Staffing Firms & Union Halls',
+      description: 'Industrial and trades roles fill through specialized channels: Tradesmen International, Aerotek, staffing union halls, and trade association job boards (IEEE, SME, ASME). Register with 2–3 this week.',
+      rationale: 'General job boards have <15% of skilled trade postings. Specialty staffing firms place 60%+ of industrial and trades roles.',
+      roiScore: 82,
+      timeHorizon: 'Days 1–3',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 55,
+    });
+  }
+
+  if (family === 'bpo') {
+    actions.push({
+      id: 'rf_bpo_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Transition Resume: Position Yourself as an Automation Lead, Not a Support Agent',
+      description: 'Reframe your experience: "Managed 150 tickets/day" → "Identified top 5 ticket categories and implemented Zendesk macros reducing resolution time by 35%." This single reframe moves you from at-risk to valuable in hiring decisions.',
+      rationale: 'BPO companies are actively retaining agents who can identify automation opportunities. The same person — reframed as a process improver — has 3× the job security of an agent-only profile.',
+      roiScore: 78,
+      timeHorizon: 'Days 2–4',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 55,
+    });
+  }
+
+  if (family === 'cons') {
+    actions.push({
+      id: 'rf_cons_1',
+      phase: 'PHASE_1_IMMEDIATE',
+      title: 'Activate Alumni Network (Former Firm, Business School)',
+      description: 'Consulting hires almost exclusively through alumni networks. Contact your former firm\'s alumni group and business school career office. Be explicit: "I am open to new opportunities and exploring the market." This is expected and respected in consulting culture.',
+      rationale: 'Management consulting hiring is 75% alumni-referral. No other function has a denser or more responsive referral network. One message to the right person = 3 interviews.',
+      roiScore: 90,
+      timeHorizon: 'Days 1–2',
+      sourceLayer: 'Role-Family Intelligence (Layer 48)',
+      isUrgent: inputs.currentScore >= 50,
+    });
+  }
+
+  return actions;
 }
 
 // ── Phase builders ─────────────────────────────────────────────────────────────
@@ -259,11 +464,15 @@ function buildImmediatePhase(inputs: StrategySynthesisInputs, strategy: OverallS
     });
   }
 
+  // Inject role-family-specific actions (v48.0)
+  const roleFamilyActions = buildRoleFamilySpecificActions(inputs);
+  const allImmediateActions = [...roleFamilyActions, ...actions];
+
   return {
     phase: 'PHASE_1_IMMEDIATE',
     phaseLabel: 'Immediate (0–7 Days)',
     timeframe: 'This week',
-    actions: actions.slice(0, 5),
+    actions: allImmediateActions.sort((a, b) => b.roiScore - a.roiScore).slice(0, 6),
     phaseObjective: 'Build your market-readiness infrastructure before you need it',
     successCriteria: [
       'LinkedIn profile updated with quantified achievements',
@@ -414,8 +623,28 @@ function buildCompetitivePositionStatement(inputs: StrategySynthesisInputs): str
     currentScore < 35 ? 'bottom 25%' : 'middle 50%';
 
   const direction = currentScore >= 65 ? 'highest-risk' : currentScore < 35 ? 'lowest-risk' : 'middle-risk';
+  const networkTier = inputs.networkLeverage?.networkTier ?? 'FUNCTIONAL';
 
-  return `Based on ${inputs.companyName} + ${inputs.industry} + ${inputs.experience} years experience, your risk profile places you in the ${percentile} of ${direction} profiles analyzed. ${inputs.hasAiSkills ? 'Your AI skills provide meaningful differentiation in the current market.' : 'Adding AI skills would move you to a stronger competitive position.'} ${(inputs.networkLeverage?.networkTier ?? 'FUNCTIONAL') === 'POWERFUL' ? 'Your strong network is your primary job search advantage.' : 'Network activation is your highest-leverage immediate action.'}`;
+  const baseStatement = `Based on ${inputs.companyName} + ${inputs.industry} + ${inputs.experience} years experience, your risk profile places you in the ${percentile} of ${direction} profiles analyzed.`;
+  const aiStatement = inputs.hasAiSkills
+    ? 'Your AI skills provide meaningful differentiation in the current market.'
+    : 'Adding AI skills would move you to a stronger competitive position.';
+  const networkStatement = (networkTier === 'POWERFUL' || networkTier === 'SOLID')
+    ? 'Your network is your primary job search advantage — prioritise warm outreach.'
+    : 'Network activation is your highest-leverage immediate action.';
+
+  // v48.0: personalisation addendums
+  const visaStatement = inputs.visaGracePeriodDays != null && inputs.visaGracePeriodDays <= 90
+    ? ` Visa constraint (${inputs.visaGracePeriodDays}d grace) is your binding constraint — speed is more important than optimisation.`
+    : '';
+  const equityStatement = inputs.daysToNextVest != null && inputs.daysToNextVest <= 90 && (inputs.nextVestValueUsd ?? 0) >= 10_000
+    ? ` Upcoming vest (~$${(inputs.nextVestValueUsd ?? 0).toLocaleString()}) creates a strategic hold window — use it deliberately.`
+    : '';
+  const dependentsStatement = inputs.hasDependents
+    ? ' With dependents, financial runway is your highest-priority protection action.'
+    : '';
+
+  return `${baseStatement} ${aiStatement} ${networkStatement}${visaStatement}${equityStatement}${dependentsStatement}`;
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
@@ -425,8 +654,11 @@ export function computeStrategySynthesis(inputs: StrategySynthesisInputs): Strat
   const strategyRationale = buildStrategyRationale(strategy, inputs);
   const safetyWindowDays = estimateSafetyWindowDays(inputs);
 
+  // v48.0: visa urgency escalates to CRITICAL when grace ≤ 30d
   const urgencyLevel: StrategySynthesisResult['urgencyLevel'] =
     inputs.currentScore >= 80 || inputs.collapseStage === 3 ? 'CRITICAL' :
+    strategy === 'VISA_WINDOW_EXIT' && (inputs.visaGracePeriodDays ?? 999) <= 30 ? 'CRITICAL' :
+    strategy === 'VISA_WINDOW_EXIT' ? 'HIGH' :
     inputs.currentScore >= 65 || inputs.collapseStage === 2 ? 'HIGH' :
     inputs.currentScore >= 50 ? 'MODERATE' : 'LOW';
 
@@ -440,17 +672,29 @@ export function computeStrategySynthesis(inputs: StrategySynthesisInputs): Strat
   const allActions = phases.flatMap(p => p.actions);
   const topAction = allActions.sort((a, b) => b.roiScore - a.roiScore)[0];
 
-  const singleBiggestRisk = inputs.peerContagion && inputs.peerContagion.waveIntensity !== 'NONE'
-    ? `Active sector wave (${inputs.peerContagion.waveIntensity}) could force a reactive job search with 30–50% more competition if you wait for an announcement`
-    : inputs.currentScore >= 70
-      ? `Not starting job search while employed — every month past score 70 reduces negotiating leverage by ~10%`
-      : `Skill obsolescence — without AI skills in ${inputs.industry}, L3 displacement risk will continue rising`;
+  const singleBiggestRisk =
+    strategy === 'VISA_WINDOW_EXIT'
+      ? `Exhausting your ${inputs.visaGracePeriodDays}-day grace period without a new sponsoring employer — this creates a forced departure with no income bridge`
+      : strategy === 'EQUITY_HARVEST_THEN_EXIT'
+        ? `Staying past the optimal exit window after vest due to inertia — the next vest cycle may be 6–12 months away in a deteriorating situation`
+        : inputs.peerContagion && inputs.peerContagion.waveIntensity !== 'NONE'
+          ? `Active sector wave (${inputs.peerContagion.waveIntensity}) could force a reactive job search with 30–50% more competition if you wait for an announcement`
+          : inputs.currentScore >= 70
+            ? `Not starting job search while employed — every month past score 70 reduces negotiating leverage by ~10%`
+            : `Skill obsolescence — without AI skills in ${inputs.industry}, L3 displacement risk will continue rising`;
 
-  const singleBiggestOpportunity = inputs.hasAiSkills
-    ? 'AI skill differentiation in a market where <15% of candidates demonstrate practical AI capability in your domain'
-    : (inputs.networkLeverage?.networkTier ?? 'FUNCTIONAL') === 'POWERFUL' || (inputs.networkLeverage?.networkTier ?? 'FUNCTIONAL') === 'SOLID'
-      ? 'Warm network access — most candidates are cold-applying; you have referral access that converts 5× better'
-      : 'First-mover advantage — starting preparation now, before any announcement, gives exponential returns vs. post-layoff search';
+  const singleBiggestOpportunity =
+    strategy === 'VISA_WINDOW_EXIT'
+      ? 'Current employment status — visa sponsorship is dramatically easier to negotiate from employed status vs. grace period'
+      : strategy === 'EQUITY_HARVEST_THEN_EXIT'
+        ? `Equity harvest window (${inputs.daysToNextVest} days) + deliberate negotiation of start date = maximised total comp in next role`
+        : strategy === 'GEOGRAPHIC_ARBITRAGE'
+          ? `${inputs.targetRegion ?? 'Alternative market'} demand gap — your skills are in shorter supply there, commanding premium compensation`
+          : inputs.hasAiSkills
+            ? 'AI skill differentiation in a market where <15% of candidates demonstrate practical AI capability in your domain'
+            : (inputs.networkLeverage?.networkTier ?? 'FUNCTIONAL') === 'POWERFUL' || (inputs.networkLeverage?.networkTier ?? 'FUNCTIONAL') === 'SOLID'
+              ? 'Warm network access — most candidates are cold-applying; you have referral access that converts 5× better'
+              : 'First-mover advantage — starting preparation now, before any announcement, gives exponential returns vs. post-layoff search';
 
   return {
     overallStrategy: strategy,
@@ -462,6 +706,6 @@ export function computeStrategySynthesis(inputs: StrategySynthesisInputs): Strat
     singleBiggestOpportunity,
     estimatedSafetyWindowDays: safetyWindowDays,
     competitivePositionStatement: buildCompetitivePositionStatement(inputs),
-    calibrationStatus: 'synthesis_v13',
+    calibrationStatus: 'synthesis_v48',
   };
 }
