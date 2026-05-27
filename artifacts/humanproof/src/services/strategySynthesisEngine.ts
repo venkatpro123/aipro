@@ -30,6 +30,7 @@ import type { NetworkLeverageResult } from './networkLeverageEngine';
 import type { MacroEconomicRiskResult } from './macroEconomicRiskEngine';
 import type { PeerContagionResult } from './peerContagionEngine';
 import type { EmergencyResponseResult } from './emergencyResponseProtocol';
+import { type PsychologicalNegotiationTactic, computeNegotiationPsychology } from './offerEvaluationEngine';
 
 export type StrategyPhase =
   | 'PHASE_0_EMERGENCY'    // Score ≥ 80 or collapse stage 3: 48–72h
@@ -76,7 +77,11 @@ export interface StrategySynthesisResult {
   singleBiggestOpportunity: string;       // the ONE thing to capitalize on
   estimatedSafetyWindowDays: number;      // how many days before situation deteriorates
   competitivePositionStatement: string;   // "You are in the X% of users who..."
-  readonly calibrationStatus: 'synthesis_v48';
+  /** v50.0: 2–4 evidence-based negotiation tactics ranked by leverage situation */
+  psychologicalNegotiationTactics: PsychologicalNegotiationTactic[];
+  /** v50.0: Promotion timing advice — null if exit strategy makes it irrelevant */
+  promotionTimingNote: string | null;
+  readonly calibrationStatus: 'synthesis_v50';
 }
 
 export interface StrategySynthesisInputs {
@@ -647,6 +652,79 @@ function buildCompetitivePositionStatement(inputs: StrategySynthesisInputs): str
   return `${baseStatement} ${aiStatement} ${networkStatement}${visaStatement}${equityStatement}${dependentsStatement}`;
 }
 
+// ── Negotiation leverage derivation (v50.0) ──────────────────────────────────
+
+function deriveNegotiationLeverage(
+  inputs: StrategySynthesisInputs,
+  strategy: OverallStrategy,
+): 'strong' | 'moderate' | 'weak' {
+  const { currentScore, resilienceScore, financialRunwayMonths } = inputs;
+
+  // Exit strategies with high risk = weak leverage (company holds the cards)
+  if (strategy === 'EMERGENCY_EXIT' || currentScore >= 75) return 'weak';
+
+  // Employed, low-risk, high resilience = negotiate from strength
+  if (
+    currentScore < 40 &&
+    (resilienceScore ?? 0) >= 65 &&
+    financialRunwayMonths >= 6
+  ) return 'strong';
+
+  // Equity harvest or geographic arbitrage = moderate to strong
+  if (
+    strategy === 'EQUITY_HARVEST_THEN_EXIT' ||
+    strategy === 'GEOGRAPHIC_ARBITRAGE' ||
+    strategy === 'OPPORTUNISTIC_MOVE'
+  ) return 'strong';
+
+  if (currentScore < 55 && financialRunwayMonths >= 4) return 'moderate';
+  return 'weak';
+}
+
+// ── Promotion timing note (v50.0) ────────────────────────────────────────────
+
+function buildPromotionTimingNote(
+  inputs: StrategySynthesisInputs,
+  strategy: OverallStrategy,
+): string | null {
+  const { currentScore, scoreVelocityPtsPerMonth, performanceTier, seniority } = inputs;
+
+  // Exit-driven strategies make internal promotion advice irrelevant
+  if (
+    strategy === 'EMERGENCY_EXIT' ||
+    strategy === 'ACCELERATE_EXIT' ||
+    strategy === 'VISA_WINDOW_EXIT'
+  ) return null;
+
+  // Seniority ceiling — exec cannot be promoted further internally
+  if (seniority === 'exec') return null;
+
+  // Improving trajectory + employed + top performer = use the window
+  if (
+    currentScore < 45 &&
+    performanceTier === 'top' &&
+    (scoreVelocityPtsPerMonth ?? 0) <= 0
+  ) {
+    return `Your risk score is low (${currentScore}) and your performance tier is top — this is an optimal window to request promotion or title upgrade before the market or company dynamics shift. Frame it around recent impact, not tenure. Do this before initiating any external search.`;
+  }
+
+  // Employed + moderate score + stable velocity = consider timing
+  if (
+    currentScore < 55 &&
+    (scoreVelocityPtsPerMonth ?? 0) < 1 &&
+    performanceTier !== 'below'
+  ) {
+    return `Score is moderate but stable (${currentScore}). If you intend to stay, request a formal performance review or compensation discussion within the next 30 days — before the risk trajectory rises further. Companies are more receptive to retention conversations before a restructuring cycle begins.`;
+  }
+
+  // Score accelerating upward = don't negotiate, prepare exit
+  if ((scoreVelocityPtsPerMonth ?? 0) > 2 && currentScore >= 55) {
+    return `Risk trajectory is rising (${(scoreVelocityPtsPerMonth ?? 0).toFixed(1)} pts/month). Requesting a promotion in a deteriorating environment may accelerate attention on your position. Focus on external market positioning instead.`;
+  }
+
+  return null;
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function computeStrategySynthesis(inputs: StrategySynthesisInputs): StrategySynthesisResult {
@@ -696,6 +774,11 @@ export function computeStrategySynthesis(inputs: StrategySynthesisInputs): Strat
               ? 'Warm network access — most candidates are cold-applying; you have referral access that converts 5× better'
               : 'First-mover advantage — starting preparation now, before any announcement, gives exponential returns vs. post-layoff search';
 
+  // v50.0: derive negotiation psychology and promotion timing
+  const leverageRating = deriveNegotiationLeverage(inputs, strategy);
+  const negotiationPsychology = computeNegotiationPsychology(leverageRating, false);
+  const promotionTimingNote = buildPromotionTimingNote(inputs, strategy);
+
   return {
     overallStrategy: strategy,
     strategyRationale,
@@ -706,6 +789,8 @@ export function computeStrategySynthesis(inputs: StrategySynthesisInputs): Strat
     singleBiggestOpportunity,
     estimatedSafetyWindowDays: safetyWindowDays,
     competitivePositionStatement: buildCompetitivePositionStatement(inputs),
-    calibrationStatus: 'synthesis_v48',
+    psychologicalNegotiationTactics: negotiationPsychology.recommendedTactics,
+    promotionTimingNote,
+    calibrationStatus: 'synthesis_v50',
   };
 }
