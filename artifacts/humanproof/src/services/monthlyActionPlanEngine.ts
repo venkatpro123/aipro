@@ -339,17 +339,28 @@ function injectRoleFamilyAction(inputs: MonthlyActionPlanInputs, weekNumber: num
   };
 }
 
+/** All 12 role families: specific AI-adjacent pivot target — replaces the old generic ternary chain. */
+const AI_PIVOT_TARGETS: Record<string, string> = {
+  sw:     'ML Infrastructure Engineering or Platform/DevOps Engineering',
+  ds:     'ML Engineering or Causal Inference / Experimentation Analytics Leadership',
+  pm:     'AI Product Management or Platform / API Product Management',
+  fin:    'FinTech Strategy Lead or PE/VC Operational Finance Partner',
+  hc:     'HealthTech Clinical Operations Lead or AI Diagnostics Clinical Liaison',
+  legal:  'AI & Data Privacy Law Specialist or Legal Operations / LegalTech Lead',
+  mkt:    'AI-Augmented Performance Marketing or Revenue Operations Lead',
+  ops:    'Digital Operations Lead or Supply Chain Analytics Manager',
+  cons:   'AI Strategy Consulting or Digital Transformation Advisory Leadership',
+  ind:    'Industrial Automation / Robotics Engineering or EV/Battery Systems Engineering',
+  bpo:    'RPA / Process Automation Analyst or Analytics-Led CX Quality Lead',
+  design: 'AI-Augmented Product Design Lead or Design Systems & DesignOps Leadership',
+};
+
 function injectAiPivotAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
   // Only inject if AI disruption risk is high (>0.55) and goal is not already 'exit_fast'
   const risk = inputs.aiDisruptionRisk ?? 0;
   if (risk < 0.55 || inputs.careerTransitionGoal === 'exit_fast') return null;
 
-  const adjacentRoles = (inputs.rolePrefix === 'sw' || inputs.rolePrefix === 'ds')
-    ? 'ML Infrastructure or Platform Engineering'
-    : inputs.rolePrefix === 'fin' ? 'FinTech Strategy or FP&A Business Partner'
-    : inputs.rolePrefix === 'mkt' ? 'AI Product Marketing or Revenue Operations'
-    : inputs.rolePrefix === 'bpo' ? 'RPA/Automation Lead or Analytics-Led CX'
-    : 'an AI-augmented version of your current role';
+  const adjacentRoles = AI_PIVOT_TARGETS[inputs.rolePrefix] ?? 'an AI-augmented specialisation of your current role';
 
   return {
     weekNumber,
@@ -1679,6 +1690,150 @@ const ROLE_GAP_OVERRIDES: Partial<Record<string, Partial<Record<'short' | 'mediu
       expectedOutcome: 'Professional activity during gap documented; credential enrollment visible on profile; 2 finance recruiter conversations reactivated.',
     },
   },
+  pm: {
+    short: {
+      action: 'Product management gap reframe: community thought leadership + side product as active evidence',
+      subActions: [
+        'Post one PM insight, product teardown, or methodology reflection on LinkedIn — PM hiring managers actively monitor LinkedIn and a published post during your gap demonstrates ongoing professional engagement',
+        'Add "Product Consulting / Independent Product Research" to your LinkedIn experience section for the gap period — describe 1–2 product problems you were researching or advising on (even informally)',
+        'Build or document one micro product, feature mockup, or user research finding during the gap — even a Notion doc of a product analysis is a portfolio artefact that demonstrates continued product thinking',
+        'Join Lenny\'s Slack, Mind the Product, and Product Manager HQ communities and post 2 thoughtful responses to product discussions — community activity creates timestamps that establish professional engagement during the gap',
+      ],
+      expectedOutcome: 'LinkedIn post with engagement during gap period; product consulting experience entry added; community activity timestamps visible.',
+    },
+    medium: {
+      action: 'Product management gap rehabilitation: advisory engagement + open product contribution + accelerated community presence',
+      subActions: [
+        'Take on one informal product advisory or fractional PM role — even unpaid, even for a friend\'s startup — and document it as "Product Advisor, [Company/Project]" on LinkedIn with 2 specific contributions',
+        'Contribute to one open-source product (product documentation, user research, feature specifications) — ProjectBoard, Common Voice, or any product-led OSS project creates tangible portfolio work during the gap',
+        'Write and publish one PM case study on Medium or your personal site: a product problem you found, your framework for thinking about it, and a proposed solution. PM thought leadership is a category of portfolio evidence.',
+        'Enrol in one PM certification (Product School, Reforge, or Google PM Certificate) — "Currently completing [program]" on LinkedIn closes the gap with a credential in progress',
+      ],
+      expectedOutcome: 'Advisory engagement documented; published PM content visible; certification in progress on profile.',
+    },
+  },
+  mkt: {
+    short: {
+      action: 'Marketing gap reframe: content creation + freelance campaign as active professional evidence',
+      subActions: [
+        'Create and post 2 pieces of marketing content (LinkedIn analysis, campaign teardown, or channel strategy note) — marketing hiring managers search for candidates who produce marketing content, and posts create timestamps during the gap',
+        'Add "Freelance Marketing Consultant / Independent Digital Marketing" to your LinkedIn for the gap period — describe 1 specific project or campaign you ran (even personally or for a nonprofit)',
+        'Launch a newsletter, social account, or personal brand content series during the gap — building an audience (even small) is concrete evidence of marketing execution capability that directly counters the gap question',
+        'Offer pro-bono social media or email marketing support to 1 NGO, startup, or local business — this creates current client work, a reference, and portfolio campaign metrics from a real campaign',
+      ],
+      expectedOutcome: 'Marketing content published with timestamps during gap; freelance/consulting entry on LinkedIn; at least one campaign metric from gap period documented.',
+    },
+    medium: {
+      action: 'Marketing gap rehabilitation: measurable freelance campaign + personal brand build + certification sprint',
+      subActions: [
+        'Run one paid campaign with your own money ($20–50 on Meta Ads or Google Ads) for a personal project, affiliate offer, or charity — you will have real ROAS, CTR, and CPA data from the gap period, which is stronger than any explanation',
+        'Build your LinkedIn follower count by 200+ through daily posting for 6 weeks — 200 new followers demonstrates growth marketing execution capability that no credential matches',
+        'Complete one data-driven marketing certification: Google Analytics 4, HubSpot Marketing Hub, or Meta Blueprint — "Completed during gap" + the certification badge is a strong gap bridge for performance marketing roles',
+        'Get 1–2 freelance marketing clients on Upwork or PeoplePerHour — even small engagements create invoiced client work during the gap that converts the gap into independent professional activity',
+      ],
+      expectedOutcome: 'Paid campaign with real metrics completed; LinkedIn following grown by 200+; certification completed; 1–2 client invoices from gap period.',
+    },
+  },
+  ops: {
+    short: {
+      action: 'Operations gap reframe: process consulting activity + professional certification evidence',
+      subActions: [
+        'Document 3 specific process improvement projects from your previous role as case studies: problem → approach → metric result. Publish as LinkedIn articles — this demonstrates continued analytical engagement during the gap.',
+        'Enrol in PMP, Six Sigma Green Belt, or APICS CSCP if not already held — "Currently enrolled in [certification]" on LinkedIn provides a concrete explanation for a career gap that hiring managers respect',
+        'Add "Independent Operations Consulting / Process Advisory" to your LinkedIn for the gap period — describe 1 specific process or operations problem you advised on (even informally for a family business or friend\'s company)',
+        'Contact 2–3 APICS, PMI, or OpEx Network members you know for a conversation — operations hiring is network-driven and reactivating professional relationships during the gap creates warm channels for re-entry',
+      ],
+      expectedOutcome: 'Process improvement case studies published; PMP/Six Sigma enrollment active; consulting entry on LinkedIn; 2 professional conversations reactivated.',
+    },
+    medium: {
+      action: 'Operations gap rehabilitation: fractional engagement + supply chain analytics upskilling + industry community',
+      subActions: [
+        'Register on Business Talent Group (BTG), Catalant, or Expert360 for fractional operations advisory engagements — these platforms list short-term operations projects that provide income and gap coverage simultaneously',
+        'Complete a supply chain analytics course: Coursera Supply Chain Analytics Specialization, SCMDOJO, or MIT SCM online modules — supply chain analytics is the fastest-growing operations specialty and the certification bridges the gap',
+        'Write and publish one operations process improvement case study (2-3 paragraphs, real numbers) — this is portfolio evidence that operations hiring managers can verify as professional currency during the gap',
+        'Engage in CSCMP (Council of Supply Chain Management Professionals) or APICS community discussions — industry community participation creates timestamps that demonstrate engagement during the employment gap',
+      ],
+      expectedOutcome: 'Fractional engagement on BTG/Catalant; analytics certification in progress; case study published; industry community activity visible.',
+    },
+  },
+  cons: {
+    short: {
+      action: 'Consulting gap reframe: advisory activity + thought leadership as professional currency',
+      subActions: [
+        'Take one informal advisory engagement immediately — a friend\'s startup, a nonprofit strategy question, an entrepreneur in your network — and document it as "Strategy Advisor, [Organisation]" on LinkedIn. Consulting gaps are judged by whether you stayed intellectually active.',
+        'Write and publish one LinkedIn article or Substack piece on a business or strategy insight relevant to your practice area — consulting thought leadership converts the gap from "unemployed" to "active practitioner"',
+        'Reconnect with 3 consulting alumni from your firm\'s network and have explicit conversations about what they are working on — consulting alumni networking is both gap coverage AND the fastest re-entry channel',
+        'Register on Business Talent Group (BTG) and Expert360 — fractional consulting engagements are immediately available and provide income + gap coverage. These platforms specifically recruit from MBB/Big4 alumni.',
+      ],
+      expectedOutcome: 'Advisory engagement documented on LinkedIn; thought leadership piece published; BTG/Expert360 profile live; 3 alumni conversations started.',
+    },
+    medium: {
+      action: 'Consulting gap rehabilitation: structured fractional engagement + sector thought leadership + formal advisory credential',
+      subActions: [
+        'Secure 1–2 paid fractional consulting engagements via BTG, Catalant, or Expert360 — these contracts run 4–12 weeks and directly convert a consulting gap into "Independent Strategy Consulting, [dates]" on your CV',
+        'Write 3 pieces of sector-specific thought leadership (strategy articles, market analyses, competitive frameworks) and publish on LinkedIn or a personal Substack — consulting firms and corporate strategy teams search for candidates who produce public intellectual work',
+        'Apply for one non-executive director (NED) or advisory board role at a startup or SME — even unpaid, an advisory board role creates a current professional engagement that hiring managers consider equivalent to employment',
+        'Complete an executive education module at ISB, IIM, or INSEAD (even a 1-week programme) — "ISB Executive Education, [topic], [month/year]" during the gap creates a credible professional development narrative',
+      ],
+      expectedOutcome: 'Paid fractional consulting engagement live; 3 thought leadership pieces published; advisory board role secured; executive education completed.',
+    },
+  },
+  bpo: {
+    short: {
+      action: 'BPO/CX gap reframe: RPA certification + analytics reframe as current engagement',
+      subActions: [
+        'Complete UiPath Foundation or Automation Anywhere Essentials certification during the gap — this converts a BPO employment gap into "completing RPA certification" which is immediately more compelling to GCC and analytics-led CX recruiters',
+        'Add "Process Automation Research / Analytics Upskilling" to your LinkedIn experience for the gap period — describe 2 specific automations or analytics frameworks you were studying',
+        'Post one process improvement or RPA case study on LinkedIn: a problem you observed in a BPO context, the automation approach you researched, and the estimated business impact. This creates timestamps of professional engagement.',
+        'Join NASSCOM BPO/ITO community on LinkedIn and engage in 2–3 discussions about CX automation or GCC trends — community participation creates visible activity during the employment gap',
+      ],
+      expectedOutcome: 'RPA certification completed during gap; LinkedIn updated with automation focus; professional community activity timestamps visible.',
+    },
+    medium: {
+      action: 'BPO gap rehabilitation: full RPA certification + analytics portfolio + GCC community engagement',
+      subActions: [
+        'Complete the full UiPath Developer Certification (not just Foundation) during the gap — the Developer certification is the GCC filter for process automation roles and the 3-month gap is the perfect time to close this',
+        'Build one RPA process automation demonstration: a Selenium script, a UiPath workflow, or an Excel VBA automation that solves a real BPO process problem. Document it on GitHub as a portfolio project.',
+        'Take on a freelance process documentation or BPO operations consulting engagement via Upwork — even a $200 project creates current client work that bridges the gap and provides portfolio evidence',
+        'Enrol in a data analytics certification (Google Data Analytics or Power BI Microsoft Certified) — BPO professionals with analytics certifications are the fastest-transitioning segment into GCC and analytics-led CX roles',
+      ],
+      expectedOutcome: 'UiPath Developer Certification completed; RPA automation portfolio on GitHub; freelance engagement documented; analytics certification enrolled.',
+    },
+  },
+  design: {
+    short: {
+      action: 'Design gap reframe: portfolio refresh + community mentorship activity + design content',
+      subActions: [
+        'Refresh 2 existing portfolio case studies to add business outcome metrics — portfolio improvements during a gap are a credible professional activity that design hiring managers value. "Spent gap improving portfolio" is a legitimate answer.',
+        'Register on ADPList for design mentoring — offer 2–3 free mentoring sessions per week during the gap. ADPList creates visible mentor timestamps that establish professional engagement and community contribution.',
+        'Add "UX Consulting / Design Research" to your LinkedIn for the gap period — describe 1–2 design problems you were studying or advising on (even for personal or nonprofit projects)',
+        'Post one design process exploration, UX analysis, or product teardown on LinkedIn or Dribbble during the gap — design hiring managers search for candidates with current community presence, and posts create timestamps',
+      ],
+      expectedOutcome: 'Portfolio case studies updated with outcome metrics; ADPList mentor profile active; design content posted with timestamps during gap.',
+    },
+    medium: {
+      action: 'Design gap rehabilitation: portfolio build sprint + open source contribution + design community leadership',
+      subActions: [
+        'Build one complete new case study from scratch during the gap — pick a real product you use, conduct 5 user interviews, identify a UX problem, design a solution, and document the process. This is a portfolio artefact, not just gap coverage.',
+        'Contribute to an open-source design project: Penpot, OpenUI, or a nonprofit digital service — open-source contribution creates GitHub timestamps and demonstrates community engagement during the employment gap',
+        'Apply to volunteer your design skills to one NGO or public sector project: Design Justice Network, Designer for Non-Profits, or your local government\'s digital team — pro-bono design work creates credible professional references',
+        'Post a weekly design insight or case study on LinkedIn for 6 weeks — 6 posts with timestamps directly contradicts any narrative of professional disengagement during the gap',
+      ],
+      expectedOutcome: 'New case study completed and published; open-source contribution made; pro-bono design project documented; 6 LinkedIn posts with consistent timestamps.',
+    },
+  },
+  ind: {
+    short: {
+      action: 'Industrial engineering gap reframe: technical certification + CPD documentation + EV/automation reframe',
+      subActions: [
+        'Obtain or renew one technical certification during the gap: ISO 9001:2015 Internal Auditor, NEBOSH General Certificate, Six Sigma Green Belt, or Siemens TIA Portal (PLC) — industrial roles filter on certifications and a new credential converts a gap into upskilling',
+        'Document your technical activity during the gap as "Technical Research / Independent Engineering Consulting" on LinkedIn — describe 1–2 industrial problems you studied or processes you analysed',
+        'Contact CIEL HR Manufacturing and Talentiser to register during your gap — specialist industrial recruiters are the fastest re-entry channel and early registration ensures you are in their pipeline when roles open',
+        'Study EV/battery systems or industrial automation during the gap: IIESM Battery Technology course, Coursera IoT for Industrial Applications, or ABB Robotics online training. This reframes the gap as strategic upskilling into the fastest-growing industrial sector.',
+      ],
+      expectedOutcome: 'Technical certification obtained or enrolled; specialist recruiter registered; LinkedIn updated with technical research entry.',
+    },
+  },
 };
 
 function injectGapRecoveryAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
@@ -1788,6 +1943,647 @@ function injectMonth3RoleFamilyAction(inputs: MonthlyActionPlanInputs, weekNumbe
 
 // ─── v51.0 enriched plan computation ─────────────────────────────────────────
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// v52.0 — Deep Role Personalisation: Career Goal Matrix + Region×Role Actions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CareerGoalRoleOverride {
+  action: string;
+  subActions: string[];
+  expectedOutcome: string;
+}
+
+/**
+ * CAREER_GOAL_BY_ROLE: 12 role families × 3 career goals = 36 role-specific strategy overrides.
+ * Each entry replaces the generic CAREER_TRANSITION_GOAL_ACTIONS for that role/goal combination
+ * with deeply personalised guidance calibrated to that role family's market realities.
+ */
+const CAREER_GOAL_BY_ROLE: Partial<Record<string, Partial<Record<CareerGoalKey, CareerGoalRoleOverride>>>> = {
+  sw: {
+    stay_and_strengthen: {
+      action: 'Engineering position hardening: system ownership + platform contribution + internal technical influence',
+      subActions: [
+        'Own the design and delivery of one major system or component end-to-end — document architecture decisions in an internal design doc shared with your team lead and skip-level. System owners are the last engineers cut.',
+        'Identify the ONE technical area where your team has the highest risk (reliability, security, observability) and lead a 30-day focused improvement initiative. Convert yourself from resource to problem-solver in leadership\'s eyes.',
+        'Request inclusion in cross-functional technical reviews (architecture, incident post-mortems, roadmap planning) — visibility in decision rooms protects against headcount reductions more than individual contribution rates.',
+        'Build one internal tool or automation that saves your team ≥2 hours/week — concrete, measurable productivity impact creates a specific answer to "what would we lose if this person left?"',
+      ],
+      expectedOutcome: 'Documented system ownership with architecture notes; technical leadership visibility in 2+ cross-functional forums; measurable team productivity contribution on record.',
+    },
+    strategic_pivot: {
+      action: 'Engineering pivot thesis: ML engineering vs platform vs solutions vs EngM — choose and pursue one',
+      subActions: [
+        'Score yourself honestly against 4 pivot paths: (1) ML Engineering (data + model deployment), (2) Platform/Infra (tooling + developer experience), (3) Solutions Engineering (customer-facing + sales-aligned), (4) Engineering Management (people leadership). Commit to one.',
+        'For your chosen pivot: find 3 people on LinkedIn who made the identical transition from your current role. Message them with a specific question. Ask: what credentials or skills actually moved the needle?',
+        'Identify the single skill gap between your current stack and your pivot target — budget 4 focused weeks to close it with one deployable project, not a course. Deployment experience beats certificates every time.',
+        'Update your LinkedIn headline and summary to use the language of your target role today — recruiters find you by searching for your target role\'s keywords, not your current role\'s job title.',
+      ],
+      expectedOutcome: 'Pivot direction committed and validated by 3 practitioner conversations; skill gap project started; LinkedIn repositioned.',
+    },
+    exit_fast: {
+      action: 'Engineering fast exit: referral activation + 48h profile sprint + 8 applications in week 1',
+      subActions: [
+        'Message 5 engineering contacts at companies you want to work at TODAY — ask for a direct referral to their recruiter. Do not wait to "perfect your profile" first. A warm referral triples interview probability.',
+        'In 48 hours: pin 2–3 best GitHub repos with clean READMEs, update LinkedIn headline with stack + scale + impact metric, set "Open to Work" to recruiters-only visibility.',
+        'Register with 2 engineering-specialist staffing firms: Harnham, Robert Half Technology, or Randstad Engineering — they hold active mandates never posted on LinkedIn or Naukri.',
+        'Target 5 companies where you have a warm connection AND 3 where you admire the engineering culture — apply to all 8 this week using parallel applications, not sequential. Do not optimise; act.',
+      ],
+      expectedOutcome: '5 referral conversations initiated; profile fully updated within 48h; 8 applications active by end of week 1.',
+    },
+  },
+  ds: {
+    stay_and_strengthen: {
+      action: 'Data science position hardening: revenue attribution + causal capability + stakeholder influence',
+      subActions: [
+        'Quantify the exact business impact of your top 2 models or analyses — revenue generated, cost saved, churn reduced, conversion lifted. Get this number validated by your manager and include it in your next performance review.',
+        'Expand into causal inference or experimentation: propose and lead one A/B test or causal analysis this quarter. Causal inference is the single highest-protection DS specialisation — AI routinely fails at it.',
+        'Present one technical finding to a non-technical executive audience (business review, all-hands, board update) — DS professionals who influence non-technical decision-making are 3× harder to replace than those who produce dashboards.',
+        'Document your feature engineering, model selection, and evaluation methodology in a shareable internal write-up — intellectual property contribution makes your work visible and replaces "analyst who ran models" with "architect of analytics capability".',
+      ],
+      expectedOutcome: 'Business impact of top models quantified and on record; causal analysis project running; executive stakeholder presentation delivered.',
+    },
+    strategic_pivot: {
+      action: 'DS pivot thesis: ML engineering vs analytics leadership vs domain specialist — validate and act',
+      subActions: [
+        'Diagnose your natural gravity: are you drawn to pipeline building (→ ML Engineering), insight communication (→ Analytics Leadership), or domain depth (→ Industry DS Specialist)? Pick ONE and pursue it deliberately.',
+        'For ML Engineering pivot: deploy one model end-to-end to a live REST endpoint using FastAPI + Docker + cloud hosting — the gap between DS and MLE is almost entirely about deployment. One project closes it.',
+        'For Analytics Leadership pivot: identify 2 business decisions currently made without data at your company and propose an analytics framework for each — this demonstrates strategic business impact that transcends the "data person" positioning.',
+        'For Domain Specialist pivot: identify the one industry where your DS skills + domain knowledge creates an unfair advantage (HealthTech DS, FinTech risk, climate/ESG data) and apply directly to 3 companies in that vertical this week.',
+      ],
+      expectedOutcome: 'Pivot direction locked and validated; one concrete gap-closing project in progress; 3 pivot-target roles researched.',
+    },
+    exit_fast: {
+      action: 'DS fast exit: portfolio visibility + specialist recruiter + targeted pitch in 7 days',
+      subActions: [
+        'TODAY: pin your best Kaggle notebook or GitHub project and rewrite the README to lead with the business question, not the technique — "Predicted 3-month churn with 87% precision, enabling $2.4M retention campaign" unlocks calls.',
+        'Register with DS-specialist recruiters: Harnham, Analytics Hiring, Analytix Labs — they have exclusive DS mandates at FinTechs and product analytics teams that never appear on public job boards.',
+        'Message 3 DS managers at target companies with a specific pitch: "I built [X model] that drove [Y outcome] — I noticed you are building [specific team] and my [Z experience] seems directly relevant. Would 15 minutes be worthwhile?"',
+        'Apply to 5 FinTech or HealthTech companies this week — these sectors have the highest DS hiring velocity in 2026 and the lowest credentialing barriers for strong candidates. Do not wait for perfect role fits.',
+      ],
+      expectedOutcome: 'Portfolio visible and business-outcome-framed; specialist recruiter pipeline active; 8 outreach and applications sent in week 1.',
+    },
+  },
+  pm: {
+    stay_and_strengthen: {
+      action: 'Product management hardening: revenue ownership + cross-functional leadership + executive visibility',
+      subActions: [
+        'Request ownership of a revenue-generating product line or feature with P&L or revenue attribution — PMs with direct revenue ownership are 4× harder to cut than those who "manage the roadmap without a number to own".',
+        'Lead one cross-functional initiative spanning engineering + design + data + GTM end-to-end — PM leadership across functions is the highest-protection capability because it cannot be outsourced or automated.',
+        'Document the business outcome of your 3 most recent shipped features with quantified metrics: MAU change, ARR delta, NPS shift, adoption rate — performance data is your insurance policy when headcount reviews happen.',
+        'Build one relationship with a C-suite or VP outside your direct reporting chain — PMs with executive sponsorship survive reorganisations that eliminate PMs who are only known to their direct manager.',
+      ],
+      expectedOutcome: 'Revenue attribution documented and visible to leadership; cross-functional initiative on record; executive sponsor relationship established.',
+    },
+    strategic_pivot: {
+      action: 'PM pivot thesis: AI PM vs platform PM vs growth PM vs product leadership — choose and act',
+      subActions: [
+        'Assess your real PM specialisation: AI PM (highest 2026 demand), Platform/API PM (technical depth), Growth PM (data + experimentation), Product Leadership (team management). Pick the one that fits your strengths and the market.',
+        'For AI PM pivot: complete Reforge AI for Product Managers or a PMLesson AI PM course. The credential signals intent; the vocabulary and mental models are what actually get you hired.',
+        'For Growth PM pivot: run one growth experiment in your current role end-to-end (A/B test, onboarding funnel, activation improvement) and document it as a mini case study — this is the core Growth PM portfolio artefact.',
+        'Update your CV to use the language of your target PM specialisation — "Drove 40% MAU growth through activation funnel redesign" for Growth PM; "Built internal developer platform serving 200 engineering teams" for Platform PM.',
+      ],
+      expectedOutcome: 'PM pivot direction chosen and validated; one relevant credential or project delivered; CV repositioned for target specialisation.',
+    },
+    exit_fast: {
+      action: 'PM fast exit: outcome-led profile rewrite + community activation + referral network in 7 days',
+      subActions: [
+        'Rewrite your LinkedIn summary in 48 hours: lead with your single biggest product outcome metric, then your domain, then your experience. "PM who grew B2B SaaS ARR $2M→$8M" outperforms "Experienced product leader" every time.',
+        'Post 2 PM insights on LinkedIn this week — a product teardown, market observation, or methodology take. PM hiring managers actively monitor LinkedIn for candidates who think publicly about product problems.',
+        'Message 5 PM friends at target companies for direct referrals — 70% of senior PM roles are filled before they are posted publicly. Your network is your primary hiring channel, not job boards.',
+        'Register on Pallet PM community, Mind the Product jobs board, and Lenny\'s Slack #jobs channel — these surfaces list PM roles that never appear on standard job boards and hiring managers actively recruit there.',
+      ],
+      expectedOutcome: 'LinkedIn repositioned with outcome metrics; PM community presence active; 5 referral conversations started; 8 applications submitted in week 1.',
+    },
+  },
+  fin: {
+    stay_and_strengthen: {
+      action: 'Finance position hardening: business partner positioning + strategic ownership + credential progression',
+      subActions: [
+        'Request to lead one strategic finance initiative — M&A screen, capital allocation review, or pricing model. Finance professionals who touch strategic decisions are protected; those who produce recurring reports are not.',
+        'Build a direct relationship with the CFO or a business unit head outside your reporting chain — finance professionals with executive-level business partner relationships are the last cut in restructurings.',
+        'Quantify your personal finance contribution explicitly: "My analysis of X led to Y decision that saved/generated $Z." If you cannot articulate your economic contribution, neither can your manager when defending your headcount.',
+        'Progress one advanced credential this quarter: if CFA not complete, advance the next level. If CFA complete, consider CAIA, CPA, or MBA finance elective. Active credential progression signals career investment to leadership.',
+      ],
+      expectedOutcome: 'Strategic finance contribution with $ impact documented; executive business partner relationship established; credential progression visible.',
+    },
+    strategic_pivot: {
+      action: 'Finance pivot thesis: FinTech vs PE/VC vs FP&A leadership vs CFO track — pick one and move',
+      subActions: [
+        'Map your genuine interest against 4 paths: (1) FinTech (product/analytics comfort), (2) PE/VC (transaction appetite + risk tolerance), (3) FP&A Business Partner (strategic communication), (4) CFO track (general management drive). Only one will energise you.',
+        'For FinTech pivot: apply directly to FinTech companies for finance strategy, treasury, or financial partnerships roles — your traditional finance background is rare and valued at FinTechs that cannot hire finance expertise.',
+        'For PE/VC pivot: compile a deal log (3–5 transactions you were involved in, even indirectly) — this 1-page document is the currency of PE/VC recruiting. Without it, you will not get past the first screen.',
+        'For FP&A pivot: request a 3-month business unit rotation within your current company — even 3 months embedded in a growth unit repositions your profile from "finance team" to "strategic finance business partner".',
+      ],
+      expectedOutcome: 'Finance pivot direction validated; deal log or strategic case document prepared; 3 target conversations completed.',
+    },
+    exit_fast: {
+      action: 'Finance fast exit: credential visibility + specialist recruiter activation + 8 applications in week 1',
+      subActions: [
+        'Update LinkedIn in 24 hours: CFA/CA/CPA designation must appear in your name field AND summary. Finance screening is credential-first — without visible credentials your profile is screened out before a human reads it.',
+        'Register with specialist finance recruiters TODAY: Michael Page Finance, Heidrick & Struggles, Robert Half Finance — they hold mandates for roles never on LinkedIn or Naukri, especially CFO-1 and VP Finance levels.',
+        'Message 3 CFOs or finance heads in your target sector with a specific angle: "I noticed [company] is [expanding/restructuring/raising] — I have direct experience with [specific situation] from [recent company]."',
+        'Post a finance insight or deal commentary on LinkedIn — active finance content positions you as a market participant, not a job seeker, and generates recruiter inbound at a 3× higher rate than a passive profile.',
+      ],
+      expectedOutcome: 'Credentials visible on profile; specialist recruiter pipeline active; 8 targeted applications and outreach sent in week 1.',
+    },
+  },
+  hc: {
+    stay_and_strengthen: {
+      action: 'Clinical position hardening: institutional committee leadership + QI project + specialty credential currency',
+      subActions: [
+        'Join one hospital committee (quality improvement, clinical governance, patient safety, infection control) — clinical professionals on institutional committees are protected in restructurings and have priority access to leadership roles.',
+        'Lead one clinical quality improvement initiative with documented patient outcome metrics: reduce medication errors, improve patient flow, implement an evidence-based protocol. A QI project with numbers is the clinical equivalent of a product outcome.',
+        'Complete one specialty certification or CME credit requirement this quarter and ensure your credentials file with HR is current — clinical currency is legally validated through certificates, not just tenure.',
+        'Build a direct relationship with one senior clinician or department head who knows your work specifically — in clinical careers, a named senior sponsor is the most reliable protection against involuntary career interruptions.',
+      ],
+      expectedOutcome: 'Hospital committee membership active; QI project with measurable patient outcomes started; specialty credentials current and on file.',
+    },
+    strategic_pivot: {
+      action: 'Clinical pivot thesis: HealthTech vs pharma/medical affairs vs clinical leadership vs public health',
+      subActions: [
+        'Evaluate your natural clinical pivot: (1) HealthTech (tech comfort + clinical expertise), (2) Pharma/Medical Affairs (research aptitude + regulatory tolerance), (3) Clinical Leadership (management inclination + team motivation), (4) Public Health (systems thinking + policy interest).',
+        'For HealthTech pivot: apply to Niramai, Qure.ai, mFine, Doceree, Eka Care, Portea for clinical advisory or medical director roles — these companies hire clinicians year-round and your credential is their primary filter.',
+        'For Medical Affairs pivot: reach out directly to clinical study managers at Cipla, Sun Pharma, Novartis India, Sanofi — pharma companies recruit clinicians for medical science liaison and medical affairs roles continuously.',
+        'Enrol in one digital health or health management programme to signal intentionality: Stanford Digital Health, ISB Healthcare Management, or IIM Executive Health Leadership. Certificate-in-progress addresses the "are you serious about the pivot?" question.',
+      ],
+      expectedOutcome: 'Clinical pivot direction chosen and validated; 3 HealthTech or medical affairs applications submitted; upskilling course enrolled.',
+    },
+    exit_fast: {
+      action: 'Clinical fast exit: specialty boards + locum income protection + HealthTech direct applications',
+      subActions: [
+        'Register on specialty clinical job boards TODAY: Practo Jobs, Doximity (US), NHS Jobs (UK), SMA Career (SG) — clinical roles are listed here first and most never appear on LinkedIn.',
+        'Contact specialist clinical recruiters immediately: MedStaff India, Spectrum Talent Healthcare, Medical Recruitment (UK), Doctors.net.uk — clinical recruiters move faster than any other recruitment channel and hold roles before public posting.',
+        'Apply to 3 HealthTech companies this week for medical director, clinical advisor, or chief medical officer roles — your active clinical credential is their primary hiring criterion and they seek practicing clinicians.',
+        'Register for locum work for income security while searching: Locumm, iCliniq, Portea Medical, Zoylo (India) / Locums Nest (UK) — locum income maintains financial runway while you find the right permanent role.',
+      ],
+      expectedOutcome: 'Specialty board profiles complete; 2 specialist clinical recruiter conversations active; locum registration live for income bridge.',
+    },
+  },
+  legal: {
+    stay_and_strengthen: {
+      action: 'Legal position hardening: matter ownership + client relationship + practice specialisation depth',
+      subActions: [
+        'Request to lead one significant matter or transaction end-to-end as first-chair — legal professionals with first-chair experience on complex matters are protected; those who remain perpetual second-chair are not.',
+        'Build a direct client relationship not mediated through a partner — even one client who asks for you by name changes your leverage entirely. This is the single most powerful career protection in private practice.',
+        'Publish one thought leadership piece on your practice area: LinkedIn article, bar association journal note, or legal blog post — partner-track lawyers who publish are 3× more likely to develop a client practice within 5 years.',
+        'Enrol in one advanced legal certification or specialisation: if corporate, add securities or M&A specialisation. If litigation, ADR or international arbitration. Specialty credentials signal commitment and differentiate your profile.',
+      ],
+      expectedOutcome: 'First-chair matter documented; direct client relationship initiated; specialty thought leadership published.',
+    },
+    strategic_pivot: {
+      action: 'Legal pivot thesis: in-house vs LegalTech vs international arbitration vs policy',
+      subActions: [
+        'Map your genuine pivot interest: (1) In-house counsel (business context + efficiency focus), (2) LegalTech (legal + product/tech interest), (3) International arbitration (English law + international mobility), (4) Policy/regulation (regulatory + NGO/government interest).',
+        'For in-house pivot: register with Michael Page Legal, Mancer Consulting Legal, ABC Legal — 70% of in-house roles are filled through these three specialist recruiters. Direct applications alone are insufficient.',
+        'For LegalTech pivot: apply to SpotDraft, Leegality, Lawrato, ContractPodAi, Icertis for legal advisory or legal operations roles — your legal credential is their primary hiring requirement and they actively seek practising lawyers.',
+        'Prepare your "why leaving private practice" narrative before any interview: in-house and LegalTech hiring managers expect this question and want a specific, confident answer about the transition rationale.',
+      ],
+      expectedOutcome: 'Legal pivot direction validated; specialist recruiter registered; "exit narrative" practiced and ready.',
+    },
+    exit_fast: {
+      action: 'Legal fast exit: specialist recruiter activation + matter portfolio + in-house company direct',
+      subActions: [
+        'Register with specialist legal recruiters TODAY: Michael Page Legal, Heidrick & Struggles Legal, Mancer Consulting, Totum Partners (UK), BCG Attorney Search (US) — these firms fill roles never posted publicly.',
+        'Add a "Key Matters" or "Notable Transactions" section to your LinkedIn and CV immediately — in-house legal teams evaluate candidates on matter experience, not job titles. Your 3 most complex matters are your primary sales asset.',
+        'Target FinTech, HealthTech, and NBFC companies for legal counsel roles — these sectors have the highest in-house legal hiring velocity in India 2026. Apply to 5 this week.',
+        'Message 3 General Counsels in your target sector directly on LinkedIn — in-house legal hiring is heavily word-of-mouth and a direct message to a GC bypasses HR screening entirely.',
+      ],
+      expectedOutcome: 'Specialist recruiter pipeline active; LinkedIn matter portfolio visible; 3 GC outreach conversations started; 8 applications submitted.',
+    },
+  },
+  mkt: {
+    stay_and_strengthen: {
+      action: 'Marketing position hardening: revenue attribution + channel ownership + AI-tool productivity proof',
+      subActions: [
+        'Build a direct revenue attribution model for your marketing activities — connect campaigns to pipeline or revenue using UTM tracking, attribution modelling, or first/last-touch analysis. Marketing with revenue attribution is 3× harder to eliminate.',
+        'Own one performance marketing channel end-to-end with documented metrics: CAC, ROAS, conversion rate, LTV — marketers who own measurable channels are protected; generalists who "support multiple channels" are not.',
+        'Demonstrate AI-augmented productivity: master one AI tool (Jasper for content, Midjourney for creative, Perplexity for research) and present the output and time savings to your CMO. This positions you as the future of the marketing team.',
+        'Present one marketing ROI analysis to your CFO or CMO — marketing professionals who speak the language of finance and revenue are the most layoff-resistant members of the function.',
+      ],
+      expectedOutcome: 'Revenue attribution model built; channel ownership with metrics documented; AI tool productivity gain presented to leadership.',
+    },
+    strategic_pivot: {
+      action: 'Marketing pivot thesis: performance marketing vs RevOps vs product marketing vs growth',
+      subActions: [
+        'Evaluate your real marketing strength: Performance Marketing (data + analytics), Revenue Operations (CRM + funnel), Product Marketing (GTM + positioning), Growth Marketing (experimentation + product sense). Choose one pivot direction.',
+        'For Performance Marketing pivot: build a case study showing actual campaign metrics (CTR, CPA, ROAS, LTV:CAC) — if you lack this data, run one small paid campaign personally ($30–50 on Meta/Google) to generate real numbers.',
+        'For RevOps pivot: get HubSpot Operations Hub certification and apply directly to SaaS companies — RevOps is the fastest-growing marketing-adjacent role and most SaaS companies are actively hiring.',
+        'For Product Marketing pivot: write one complete product positioning document or competitive battlecard for your current product — this is the core PMM deliverable and demonstrating it directly answers "can you do this job?"',
+      ],
+      expectedOutcome: 'Marketing pivot direction chosen; case study or credential completed; 5 pivot-target applications submitted.',
+    },
+    exit_fast: {
+      action: 'Marketing fast exit: metrics portfolio + community content + specialist recruiter in 7 days',
+      subActions: [
+        'Build a 1-page "Campaign Results" document with your 3 best campaigns: channel, objective, budget, result (ROAS, CTR, leads generated, revenue influenced). Attach to every application. Marketing without numbers is invisible to hiring managers.',
+        'Post one data-driven marketing insight on LinkedIn this week — "Our LinkedIn ad CTR increased 40% when we changed X" — marketing hiring managers proactively search for candidates who publish marketing thinking publicly.',
+        'Register with marketing-specialist recruiters: Major Players, Oxygen Marketing Recruitment, Harnham Data & Marketing — they have exclusive performance marketing and growth roles not on standard boards.',
+        'Apply directly to FinTech, B2B SaaS, and D2C brands — these sectors have the highest marketing hiring velocity in 2026 and the strongest compensation for data-driven marketers.',
+      ],
+      expectedOutcome: 'Campaign metrics document ready; LinkedIn content published; specialist recruiter active; 8 applications submitted in week 1.',
+    },
+  },
+  ops: {
+    stay_and_strengthen: {
+      action: 'Operations position hardening: process impact ownership + cross-functional leadership + certification signal',
+      subActions: [
+        'Identify the highest-cost or highest-error-rate process in your domain and lead a structured 60-day improvement initiative — ops professionals who document cost savings in $ or error-rate % are the last eliminated in restructurings.',
+        'Request ownership of a cross-functional initiative (supply chain + manufacturing + finance, or logistics + customer service + ops) — ops leaders who bridge functions are protected; single-function ops are fungible.',
+        'Enrol in PMP or Six Sigma Green Belt if not already held — these credentials are explicit filters for senior ops roles and active certification enrollment signals systems-thinking commitment to leadership.',
+        'Build a real-time operations dashboard that gives your leadership team visibility into your KPI suite — ops professionals who create executive visibility are valued beyond the process they manage personally.',
+      ],
+      expectedOutcome: 'Process improvement with documented financial impact; cross-functional initiative led; PMP/Six Sigma enrollment visible on profile.',
+    },
+    strategic_pivot: {
+      action: 'Operations pivot thesis: supply chain analytics vs digital ops vs consulting vs BizOps/strategy',
+      subActions: [
+        'Map your natural ops pivot: (1) Supply Chain Analytics (data fluency + digital tools), (2) Digital Operations/RPA (tech curiosity + process expertise), (3) Operations Consulting (communication + problem-structuring), (4) BizOps/Strategy (CEO-facing mindset + holistic thinking).',
+        'For Supply Chain Analytics pivot: build one supply chain optimisation analysis using Tableau, Power BI, or Python — this closes the gap between ops generalist and analytics specialist with one concrete project.',
+        'For Digital Operations pivot: complete UiPath, Automation Anywhere, or Microsoft Power Automate certification — this single credential repositions you as an ops professional who builds the future, not just maintains the present.',
+        'For BizOps pivot: apply directly to Series B/C startups for "Head of BizOps" or "Chief of Staff" roles — your operations track record maps to these roles and they actively prefer candidates with execution experience over MBA credentials.',
+      ],
+      expectedOutcome: 'Ops pivot direction validated; one analytics or automation credential started; 5 pivot-target applications submitted.',
+    },
+    exit_fast: {
+      action: 'Operations fast exit: impact metrics CV rewrite + specialist recruiter + direct COO outreach in 7 days',
+      subActions: [
+        'Rewrite your CV in 48 hours to lead with 3 specific process impact metrics: "Reduced supply chain cost 18% by redesigning vendor selection", "Improved order fulfilment rate 87%→96%". Metrics unlock interviews; responsibilities do not.',
+        'Register with ops-specialist recruiters TODAY: Robert Half Operations, Manpower Group, Korn Ferry Operations — they hold mandates never on public job boards, especially VP Operations and COO-minus-1 levels.',
+        'Apply directly to high-growth Series B/C startups for VP Operations or Head of Operations roles — these companies move fast, value execution track records over pedigree, and have immediate hiring needs.',
+        'Message 5 COOs or Operations Directors in your target sector with a specific metric: "I reduced [X] by [Y]% at [company] — I noticed [their company] is scaling [ops area] and thought my experience was directly relevant."',
+      ],
+      expectedOutcome: 'CV rewritten with impact metrics; specialist recruiter pipeline active; 8 targeted applications and outreach messages sent in week 1.',
+    },
+  },
+  cons: {
+    stay_and_strengthen: {
+      action: 'Consulting position hardening: client ownership + thought leadership capital + sector specialisation',
+      subActions: [
+        'Develop a direct client relationship on your current engagement — a client sponsor who asks for you by name is the most powerful protection in consulting. Even informal sponsor relationships matter significantly.',
+        'Publish one internal knowledge article, practice insight, or industry brief — consultants who build firm intellectual capital are valued beyond their billable hours and are prioritised for scarce-capacity assignments.',
+        'Obtain explicit promotion criteria from your partner sponsor — consulting careers without clear promotion timelines are structurally vulnerable. Define the criteria, the timeline, and the sponsors required.',
+        'Develop a documented sector specialisation in one growth area (AI strategy, digital transformation, ESG, regulatory compliance) — specialisation converts a generalist consulting profile into a premium, differentiated one that commands 20–40% higher exit multiples.',
+      ],
+      expectedOutcome: 'Client relationship with named sponsor documented; thought leadership piece published; promotion timeline agreed with partner sponsor.',
+    },
+    strategic_pivot: {
+      action: 'Consulting exit thesis: corporate strategy vs PE portfolio vs startup leadership vs industry specialist',
+      subActions: [
+        'Rank your 3 strongest sector exposures from engagements and cross-reference with genuine interest and market growth trajectory — AI/tech, healthcare, financial services, industrial. The intersection is your pivot sweet spot.',
+        'For corporate strategy pivot: apply to "Director of Strategy" or "Head of Corporate Development" roles at companies in your target sector — consulting pedigree is the #1 filter for these roles and your profile will rank top-10%.',
+        'For PE portfolio pivot: contact PE firms you have encountered or researched for operating partner, portfolio COO, or VP Strategy roles — your consulting toolkit maps directly to portfolio company operational needs.',
+        'Prepare your "exit from consulting" narrative before any interview: "I want to own the implementation, not just the recommendation" is the cleanest version. Practice until it is completely natural and confident.',
+      ],
+      expectedOutcome: 'Industry pivot direction ranked and validated; "exit narrative" polished and practiced; 5 corporate strategy applications submitted.',
+    },
+    exit_fast: {
+      action: 'Consulting fast exit: alumni activation + BTG/Expert360 + direct strategy applications in 7 days',
+      subActions: [
+        'Message 10 consulting alumni from your class year on LinkedIn TODAY — frame it as "exploring a transition." Consulting alumni networks are the most reliable source of corporate strategy, BizOps, and PE portfolio roles.',
+        'Register on Business Talent Group (BTG), Expert360, Catalant — these platforms provide fractional consulting engagements that bridge income and create current client work while you search for full-time roles.',
+        'Apply directly to "Director of Strategy," "Head of Business Development," or "Chief of Staff" roles at companies in your sector coverage — your consulting CV auto-places you in the top 10% of applicants.',
+        'Message 3 strategy or corporate development leads at target companies with a sector insight: "I worked on [similar problem] for [analogous company] and noticed [specific insight about their business]." This is the consulting way to open doors.',
+      ],
+      expectedOutcome: '10 alumni conversations started; BTG/Expert360 profiles live; 8 strategy applications submitted in week 1.',
+    },
+  },
+  ind: {
+    stay_and_strengthen: {
+      action: 'Industrial engineering hardening: PLI scheme expertise + EV/automation credential + safety ownership',
+      subActions: [
+        'Identify one PLI scheme initiative in your manufacturing sector (electronics, auto components, specialty chemicals) and become the internal subject matter expert — PLI-knowledgeable engineers are actively protected and promoted.',
+        'Complete one EV/battery systems or industrial automation certification: IIESM Battery Technology, Siemens TIA Portal (PLC/SCADA), or ABB Robotics — these credentials open the highest-growth industrial hiring segment in India through 2030.',
+        'Lead one HSE improvement initiative with documented safety metric results: incident rate reduction, near-miss reporting improvement, ISO 45001 implementation — safety-critical roles are regulatory requirements, not headcount choices.',
+        'Build a personal "engineering portfolio" document: list every technical specification, process parameter, equipment certification, and technical standard you are qualified on — industrial hiring is credential-and-specification-driven.',
+      ],
+      expectedOutcome: 'PLI expertise established internally; EV/automation certification enrolled; HSE initiative with documented outcomes on record.',
+    },
+    strategic_pivot: {
+      action: 'Industrial pivot thesis: EV/battery systems vs industrial automation vs ESG engineering vs technical sales',
+      subActions: [
+        'Rank 4 industrial pivot paths by your technical background and market demand: (1) EV/Battery (fastest growth, structural shortage), (2) Industrial Automation/Robotics (highest AI-resistance), (3) Sustainability/ESG Engineering (regulatory-driven demand), (4) Technical Sales/Application Engineering (commercial + technical blend).',
+        'For EV pivot: apply to Tata Motors EV, Ola Electric, Ather Energy, Exicom, Log9 Materials, Greenpanel — your industrial background is their primary hiring criterion and the EV sector has a structural engineer shortage through 2030.',
+        'For Industrial Automation pivot: complete Siemens TIA Portal or Fanuc Robotics certification — then target Bosch, Schneider Electric, Rockwell Automation, and ABB for automation engineer roles.',
+        'For Technical Sales pivot: apply for applications engineer or technical sales engineer roles at industrial equipment OEMs — industrial engineers are the strongest technical sales profile and compensation is 20–40% higher than manufacturing roles.',
+      ],
+      expectedOutcome: 'Industrial pivot direction chosen; certification enrolled; 5 pivot-target applications submitted.',
+    },
+    exit_fast: {
+      action: 'Industrial fast exit: specialist recruiter + PLI company direct + certifications fully detailed in 7 days',
+      subActions: [
+        'Register with specialist industrial recruiters TODAY: CIEL HR Manufacturing, Talentiser, Randstad Engineering India, ABC Consultants Engineering — industrial roles are predominantly filled through specialist recruiters, not job boards.',
+        'Apply directly to PLI beneficiary companies in your sector: Tata Electronics / Foxconn (electronics), Ola Electric / Tata Motors (automotive), Sun Pharma / Laurus Labs (pharma) — these companies are expanding aggressively through 2026.',
+        'Register on manufacturing job boards: iimjobs.com Engineering filter, Naukri Core Engineering, Manufacturing Today India, FICCI Manufacturing Jobs — industrial roles concentrated here that never appear on general LinkedIn.',
+        'List every technical certification with complete detail: "Six Sigma Green Belt — ASQ Certified, March 2023", "ISO 9001:2015 Internal Auditor — Bureau Veritas, Jan 2024" — industrial screening filters on certification specifics.',
+      ],
+      expectedOutcome: 'Specialist recruiter pipeline active; 5 PLI company applications submitted; certifications listed with full specificity on profile.',
+    },
+  },
+  bpo: {
+    stay_and_strengthen: {
+      action: 'BPO/CX position hardening: analytics reframe + RPA capability + GCC-grade positioning',
+      subActions: [
+        'Complete one RPA certification (UiPath Foundation or Automation Anywhere Essentials) and add it to LinkedIn TODAY — this single credential converts your BPO profile into an automation profile commanding 40% higher compensation.',
+        'Build and present an analytics dashboard showing your CX metrics (CSAT, FCR, AHT, escalation rate, cost-per-contact) to senior management — this converts you from process executor to analytics owner.',
+        'Apply to GCC roles now: JPMorgan Chase GCC, Citi GCC, Wells Fargo GCC, Barclays GCC, Accenture GCC — GCC compensation is 35–50% above standard BPO and the hiring criteria aligns directly with your operations background.',
+        'Document specific process improvements you have implemented with quantified metrics — these numbers are your primary differentiator for GCC transitions and for advancement within the analytics-led CX segment.',
+      ],
+      expectedOutcome: 'RPA certification on profile; analytics dashboard built and presented; GCC application submitted this week.',
+    },
+    strategic_pivot: {
+      action: 'BPO escape thesis: RPA analyst vs healthcare revenue cycle vs FinTech ops vs CX analytics',
+      subActions: [
+        'Evaluate 4 BPO escape paths by your strengths: (1) RPA/Process Automation Analyst (highest salary jump, 40%), (2) Healthcare Revenue Cycle Management (regulated, AI-resistant), (3) FinTech Operations/KYC (compliance + tech growth), (4) CX Analytics/Quality Management (data-adjacent).',
+        'For RPA pivot: commit to the full UiPath Developer Certification — the Developer tier (not Foundation) is the GCC filter for automation roles. Budget 12 weeks and pursue it as your primary career investment.',
+        'For Healthcare Revenue Cycle pivot: apply to Omega Healthcare, GeBBS Healthcare, Elevance Health GCC, Cotiviti — these companies actively recruit from BPO backgrounds for medical billing and clinical revenue cycle roles.',
+        'For FinTech Operations pivot: apply to Razorpay, PayU, CRED, BillDesk, Slice for operations analyst and CX strategy roles — FinTechs value BPO operational depth and pay 50–80% above traditional BPO.',
+      ],
+      expectedOutcome: 'BPO escape path committed; RPA or healthcare revenue cycle certification enrolled; 5 pivot-target applications submitted.',
+    },
+    exit_fast: {
+      action: 'BPO fast exit: RPA certification sprint + LinkedIn analytics reframe + GCC applications in 7 days',
+      subActions: [
+        'Complete UiPath Foundation or AA Essentials certification THIS WEEK — it takes 10–15 hours and immediately changes the recruiter conversations you can access. Do not apply to GCC roles without it.',
+        'Rewrite LinkedIn in 48 hours: replace "handled customer queries" with "managed 200+ daily interactions while implementing quality frameworks reducing escalation rate 15%". Analytics language unlocks GCC recruiter calls.',
+        'Apply directly to GCCs and FinTechs this week: JPMorgan Chase GCC, Citi GCC, Barclays GCC, Razorpay, PhonePe for operations analyst, process excellence, or CX quality management roles.',
+        'Register with BPO-to-GCC specialist recruiters: Quess Corp, TeamLease, Mafoi/Randstad BPO — they have direct relationships with GCC hiring managers and can fast-track qualified operations candidates.',
+      ],
+      expectedOutcome: 'RPA certification active; LinkedIn repositioned with analytics language; 8 GCC and FinTech applications submitted in week 1.',
+    },
+  },
+  design: {
+    stay_and_strengthen: {
+      action: 'Design position hardening: business outcome documentation + design systems ownership + AI tool fluency',
+      subActions: [
+        'Quantify the business impact of your 2 most significant design contributions: "Redesigned onboarding → reduced drop-off 35%", "New design system → reduced feature delivery time 40%". Design with revenue attribution is protected; design without metrics is discretionary.',
+        'Request ownership of the design system or one cross-product design standard — designers who own systems that multiple teams depend on are indispensable; designers who work on individual features are interchangeable.',
+        'Master one AI design tool and demonstrate it publicly: Figma AI, Adobe Firefly, or Midjourney for concept generation. Post one AI-augmented design exploration on Dribbble or LinkedIn. Position yourself as an amplifier of AI, not a competitor.',
+        'Present one design decision and its business rationale to a cross-functional audience — designers who communicate business value in non-design language are leadership-track. One presentation changes how leadership sees your role.',
+      ],
+      expectedOutcome: 'Business outcome metrics added to portfolio and visible to leadership; design system ownership claimed; AI tool proficiency publicly demonstrated.',
+    },
+    strategic_pivot: {
+      action: 'Design pivot thesis: DesignOps vs UX research vs design leadership vs AI design direction',
+      subActions: [
+        'Map your design pivot: (1) DesignOps (systems + process + tooling + scale), (2) UX Research (qualitative methods + user empathy), (3) Design Leadership (team management + strategic vision), (4) AI Design Direction (GenAI direction + quality curation).',
+        'For DesignOps pivot: document your current design process workflow and propose a concrete DesignOps improvement to your manager — DesignOps roles are net-new and the hiring profile is "experienced designer who loves improving the process of design".',
+        'For UX Research pivot: run one complete qualitative user study (5 moderated sessions, synthesised into a research report) — this is the core UXR deliverable and doing it once directly demonstrates the capability.',
+        'For AI Design pivot: build a portfolio case study of AI-augmented design: "Generated 40 concepts with Midjourney, selected and refined top 3, A/B tested with real users, 2× engagement lift" — this framing is exactly what product-led AI companies want.',
+      ],
+      expectedOutcome: 'Design pivot direction chosen; one pivot-specific portfolio piece completed; 5 target roles applied to.',
+    },
+    exit_fast: {
+      action: 'Design fast exit: portfolio outcome rewrite + community activation + specialist recruiter in 7 days',
+      subActions: [
+        'Rewrite 2 case studies in 48 hours: every case study must end with "Result: [metric]" before a hiring manager will move forward. "Problem → Research → Decision → [metric] Result" is the only structure that works at senior levels.',
+        'Post one design insight, process case, or UX analysis on Dribbble, Behance, or LinkedIn this week — design hiring managers actively source from these platforms and you need a public presence before they find you.',
+        'Register with design-specialist recruiters: Aquent, 24 Seven Design, Creative Circle — these agencies place 30% of senior design roles and hold mandates never posted on general boards.',
+        'Apply to FinTech, HealthTech, and B2B SaaS for senior UX or product design roles — these sectors have the highest design hiring velocity in 2026 and the lowest credential barriers for experienced designers with strong portfolios.',
+      ],
+      expectedOutcome: 'Portfolio case studies rewritten with outcome metrics; community presence active; specialist recruiter engaged; 8 applications submitted in week 1.',
+    },
+  },
+};
+
+// ── Region × Role specific job search actions ─────────────────────────────────
+// Covers the highest-impact role×region combinations where generic region advice
+// significantly under-serves the specific hiring realities of that market.
+
+interface RegionRoleAction {
+  action: string;
+  subActions: string[];
+}
+
+const REGION_ROLE_ACTIONS_V52: Partial<Record<string, Partial<Record<string, RegionRoleAction>>>> = {
+  hc: {
+    in: {
+      action: 'India clinical job search: specialty boards + HealthTech direct + specialist clinical recruiter',
+      subActions: [
+        'Register on Practo Jobs, BMC Recruitment, HealthcareJobs.in, and iimjobs.com (healthcare filter) — clinical vacancies are primarily listed here, not on LinkedIn',
+        'Apply directly to HealthTech companies: Niramai, mFine, Qure.ai, Doceree, Eka Care, Portea for clinical advisory, medical director, or clinical operations roles — these companies hire clinicians year-round',
+        'Contact MedStaff India and Spectrum Talent Healthcare for specialist clinical recruiter engagement — clinical recruiters fill 60% of hospital and HealthTech clinical vacancies through direct placement',
+        'Verify NMC/State Medical Council registration is active and all credentials (MBBS/MD/DM/DNB) are documented with exact year, institution, and registration number — clinical hiring is credential-first',
+      ],
+    },
+    us: {
+      action: 'US clinical job search: specialty job boards + hospital system direct + ECFMG/USMLE verification',
+      subActions: [
+        'Register on JAMA CareerCenter, NEJM Career Center, Doximity Careers, and PracticeLink — these boards list the highest-quality clinical positions in the US and are the primary recruiter search surface',
+        'Apply directly to HCA Healthcare, Kaiser Permanente, Mayo Clinic, Cleveland Clinic, and Ascension system careers pages — these systems hire hundreds of physicians monthly across specialties',
+        'Verify USMLE steps are current and ECFMG certification is active if you trained outside the US — most US hospital credentialing requires these before extending an offer, and the process takes 4–8 weeks',
+        'Register on Teladoc, Included Health, Hims & Hers, and Doceree for telehealth and HealthTech roles — these platforms hire MDs and specialists for positions that do not require US state licensure immediately',
+      ],
+    },
+    uk: {
+      action: 'UK clinical job search: NHS Jobs primary + GMC verification + agency registration',
+      subActions: [
+        'Register on NHS Jobs (jobs.nhs.uk) — this is the primary and authoritative source for all NHS clinical vacancies; hospital recruiters post here first before any other platform',
+        'Join the BMA (British Medical Association) job board and career services — BMA membership includes access to roles and salary benchmarks not available to non-members',
+        'Verify your GMC registration is active and your Licence to Practise is current — without this you cannot be legally employed by any NHS Trust or private hospital group in the UK',
+        'Register with Locums Nest, Doctemps, Medacs Healthcare, ID Medical — locum platforms provide immediate income and clinical currency while searching for permanent roles',
+      ],
+    },
+    sg: {
+      action: 'Singapore clinical job search: SMA + MOH registered institutions + private hospital group direct',
+      subActions: [
+        'Register with SMA (Singapore Medical Association) Career and Job Placement Service — SMA members access curated clinical vacancies across Singapore public and private hospital networks',
+        'Apply directly to NUHS, SingHealth, Parkway Pantai, and Raffles Medical Group — these four systems cover 90% of Singapore hospital employment and post vacancies on their own careers pages before recruiters',
+        'Verify SMC (Singapore Medical Council) registration requirements — Singapore requires full or provisional registration before clinical employment and the process takes 6–12 weeks for international medical graduates',
+        'Check MyCareersFuture for HealthTech roles at Abbott, Novartis, Philips Healthcare, Becton Dickinson — multinational MedTech companies in Singapore hire clinicians for medical affairs and clinical specialist roles',
+      ],
+    },
+  },
+  legal: {
+    in: {
+      action: 'India legal job search: LegallyIndia + specialist recruiters + in-house FinTech direct',
+      subActions: [
+        'Post on LegallyIndia.com and check the job board weekly — this is the primary platform for associate and senior associate roles at Indian and international law firms with India offices',
+        'Register with Michael Page Legal India, Mancer Consulting Legal Practice, and ABC Legal — 70% of in-house legal roles are filled through these three specialist firms, not through LinkedIn applications',
+        'Target FinTech companies directly for "Legal Counsel" or "Associate General Counsel" roles: Razorpay, PhonePe, Zepto, CRED, Groww, Slice, Paytm — FinTechs are the fastest-growing in-house legal hiring segment in India',
+        'Check iimjobs.com with Legal & Compliance filter — GCC and large corporate in-house legal vacancies are heavily concentrated here and frequently not posted on LinkedIn',
+      ],
+    },
+    us: {
+      action: 'US legal job search: Vault Law + NALP + state bar job boards + lateral recruiter strategy',
+      subActions: [
+        'Register on Vault Law, NALP Career Center, and your state bar association job board — these three sources cover 80% of active US legal positions and are the primary search surfaces for legal recruiters',
+        'Register with legal placement specialists BCG Attorney Search, Major Lindsey & Africa, and Lateral Link — these firms have mandates from AmLaw 100 firms and Fortune 500 in-house legal teams before public posting',
+        'Check tech company careers pages (Google, Microsoft, Salesforce, Apple) for "Associate General Counsel" or "Senior Counsel" positions — tech in-house legal teams are the fastest-growing and best-compensated in-house segment',
+        'Prepare a "Deal Sheet" or "Matters Summary" document (1 page, 3–5 representative transactions or litigations with your specific role) — this is the standard attachment for US lateral legal applications',
+      ],
+    },
+    uk: {
+      action: 'UK legal job search: Law Society + specialist recruiters + SRA practising certificate verification',
+      subActions: [
+        'Register on the Law Society of England and Wales job board and Legal Week magazine jobs section — primary sources for solicitor roles at UK law firms and in-house positions',
+        'Contact specialist legal recruitment consultants: Totum Partners, Edwards Gibson, or Laurence Simons — UK legal recruitment is heavily intermediated and direct applications alone are insufficient for most senior roles',
+        'Verify your SRA (Solicitors Regulation Authority) Practising Certificate is current before applying — UK legal employment requires a valid practising certificate and renewal takes 4–6 weeks if lapsed',
+        'Target US law firms with London offices (Latham & Watkins, Kirkland & Ellis, Weil Gotshal, Ropes & Gray) — they pay above UK market rates and actively recruit UK-qualified solicitors for associate and counsel positions',
+      ],
+    },
+    sg: {
+      action: 'Singapore legal job search: Law Society + SAL + GCC regional counsel roles',
+      subActions: [
+        'Register with the Law Society of Singapore Job Referral Service and check Singapore Law Watch job board weekly — these cover most active Singapore law firm and in-house vacancies',
+        'Verify Singapore Bar admission and SAL (Singapore Academy of Law) membership status — required for private practice; check if foreign qualification recognition pathway applies to your situation',
+        'Target MNC "Regional Legal Counsel APAC" roles — Singapore is the regional legal HQ for many multinationals and these regional roles have 3–5× the scope and 30–50% higher compensation than domestic roles',
+        'Apply to Singapore FinTechs and technology companies: Sea Group, Grab, Shopee, Nium, Airwallex — Singapore FinTechs hire in-house legal counsel continuously at a rate that outpaces available local legal talent',
+      ],
+    },
+  },
+  cons: {
+    in: {
+      action: 'India consulting exit: iimjobs premium + BTG/Expert360 + alumni portals + PE portfolio targeting',
+      subActions: [
+        'Register on Business Talent Group (BTG), Catalant, and Expert360 immediately — fractional strategy engagements are available now and provide income + credible current work while you search for full-time roles',
+        'Check iimjobs.com Premium with Corporate Strategy and Business Development filter — India corporate strategy roles for consulting exits are concentrated here and rarely appear on LinkedIn',
+        'Message 10 consulting alumni through your firm\'s alumni portal (McKinsey Alumni Network, BCG Alumni, Deloitte Alumni) — consulting alumni are the most reliable source of corporate strategy, BizOps, and PE portfolio leads',
+        'Target PE-backed portfolio companies for VP Strategy, Head of BizOps, or Chief of Staff roles — PE funds actively seek MBB/Big4 alumni for portfolio operations and your pedigree is the primary filter',
+      ],
+    },
+  },
+  bpo: {
+    in: {
+      action: 'India BPO/CX advanced job search: GCC direct + FinTech operations + NASSCOM job fair + analytics reframe',
+      subActions: [
+        'Apply directly to GCC analytics and operations roles: Barclays GCC, JPMorgan Chase GCC, Wells Fargo GCC, Accenture GCC, Genpact Digital — GCC compensation is 35–50% higher than standard BPO and the hiring profile matches your background',
+        'Register for NASSCOM BPO + IT Forum and People Matters GCC Summit — GCC hiring managers attend these events and interviews happen on the floor',
+        'Apply to healthcare revenue cycle companies: Omega Healthcare, GeBBS Healthcare, Nib Health, Cotiviti — these companies actively recruit from BPO backgrounds for medical billing and revenue cycle management',
+        'Target FinTech operations roles: Razorpay, PhonePe, Paytm, CRED, Slice for CX operations lead, process excellence, or analytics quality roles — FinTechs pay 50–80% above traditional BPO for the same operations experience',
+      ],
+    },
+  },
+  ind: {
+    in: {
+      action: 'India industrial/manufacturing job search: specialist recruiters + PLI company direct + EV sector',
+      subActions: [
+        'Register with CIEL HR Manufacturing, Talentiser, Randstad Engineering India, and ABC Consultants Engineering TODAY — industrial roles are predominantly filled through specialist recruiters, not LinkedIn or Naukri job boards',
+        'Apply directly to PLI beneficiary companies in your manufacturing sector: Tata Electronics / Foxconn (electronics), Ola Electric / Tata Motors EV (automotive), Sun Pharma / Laurus Labs (pharma), Reliance New Energy (energy)',
+        'Check ManufacturingToday India, Naukri Core Engineering filter, iimjobs Engineering filter, and FICCI Manufacturing Jobs — dedicated industrial platforms list roles that never appear on general job boards',
+        'Target EV and clean energy companies for immediate upside: Ather Energy, Ampere EV, Exicom, Log9 Materials, ReNew Power — structural talent shortages in EV mean qualified industrial engineers are fast-tracked',
+      ],
+    },
+  },
+  mkt: {
+    in: {
+      action: 'India marketing job search: B2B SaaS + D2C brands + FinTech direct + performance marketing boards',
+      subActions: [
+        'Apply directly to B2B SaaS companies for performance or growth marketing roles: Freshworks, Zoho, Chargebee, Leadsquared, CleverTap — highest marketing hiring velocity in India 2026 with top-quartile salaries',
+        'Target D2C brands for brand or growth roles: Mamaearth, boAt, Plum, Sugar Cosmetics, Bewakoof — D2C brands are the fastest-growing employer of mid-senior marketing talent and reward data-driven marketers aggressively',
+        'Check iimjobs.com Marketing filter and LinkedIn Jobs with India + Marketing + Senior filter — mid-to-senior India marketing roles are concentrated on these two platforms',
+        'Register with marketing-specialist recruiters: Oxygen Marketing Recruitment, Michael Page Marketing, ABC Consultants Marketing for performance marketing and brand strategy mandates not on public boards',
+      ],
+    },
+  },
+  sw: {
+    in: {
+      action: 'India engineering job search: Naukri stack-specific + VC-backed startup direct + recruiter network',
+      subActions: [
+        'Register on Naukri.com with precise tech stack keywords (e.g. "Python FastAPI Kubernetes" not "Software Engineer") and set your salary expectation — Naukri is the primary hiring channel for Indian product companies outside MAANG',
+        'Apply directly to Series B/C VC-backed product startups: CRED, Groww, Razorpay, Zepto, Slice, Meesho — aggressive engineering hiring plans, faster processes than large companies, and competitive compensation',
+        'Join Wellfound/AngelList India and set role preferences to "senior engineer" and "lead engineer" — early-stage and growth startups list their engineering roles exclusively here before they reach other platforms',
+        'Register with engineering-specialist recruiters: Harnham India, Randstad Technologies, Spectrum Talent Technology — they hold exclusive roles at product companies that are never posted on public job boards',
+      ],
+    },
+    us: {
+      action: 'US engineering job search: Levels.fyi Jobs + referral activation + Blind/Simplify bulk apply',
+      subActions: [
+        'Use Levels.fyi Jobs section — companies listed there are actively hiring at the compensation bands you are targeting, and applications from Levels have higher response rates at senior levels',
+        'Apply via Simplify.jobs — bulk-apply to 20–30 engineering roles in one session without filling repetitive forms. Momentum in applications is more important than perfecting each one.',
+        'Post on Blind "Looking for referrals" in the Engineering channel — tech company employees actively provide referrals there and a referral moves you from 8% to 30%+ interview probability at FAANG-tier',
+        'Message every person you know at FAANG and top-tier tech companies for a direct referral TODAY — one referral at Google/Meta/Amazon/Microsoft is worth 20 cold applications. Prioritise relationships first.',
+      ],
+    },
+  },
+  ds: {
+    in: {
+      action: 'India data science job search: specialist recruiters + FinTech/HealthTech direct + analytics community',
+      subActions: [
+        'Register with Harnham India and Analytics Hiring immediately — these two specialist analytics recruiters hold exclusive DS mandates at FinTechs, HealthTechs, and product analytics teams not posted publicly',
+        'Apply directly to FinTechs: Razorpay, CRED, Groww, PhonePe, Slice — highest DS hiring velocity in India 2026, pay 30–50% above market for strong candidates with business-framed portfolios',
+        'Check DataHack by Analytics Vidhya, Naukri Data Science filter, and iimjobs Analytics filter — dedicated analytics job surfaces that surface DS roles not on general job boards',
+        'Post one India-market data insight on Kaggle (using SEBI data, IRDAI, or public economic datasets) — signals local domain knowledge that Indian hiring managers specifically value for DS roles',
+      ],
+    },
+  },
+  pm: {
+    in: {
+      action: 'India PM job search: Pallet + iimjobs + Lenny\'s Slack + consumer tech product companies direct',
+      subActions: [
+        'Register on Pallet PM (India feed), iimjobs.com Product Management filter, and ProductHunt Jobs — highest-quality India PM roles are concentrated here and rarely on LinkedIn or Naukri',
+        'Join Lenny\'s Newsletter Slack workspace #india-pm-jobs channel — India-specific PM positions are shared here by startup founders before hitting job boards',
+        'Apply directly to Zomato, Swiggy, Meesho, CRED, Razorpay, Zepto for product roles — these consumer tech companies hire PMs year-round and value execution track records over MBA credentials',
+        'Post one product teardown or PM insight on LinkedIn per week for 4 weeks — India PM hiring is community-driven and hiring managers at consumer tech companies actively monitor LinkedIn for PM talent',
+      ],
+    },
+  },
+};
+
+// ── v52.0 Injection Functions ─────────────────────────────────────────────────
+
+/** v52.0 career goal injection — role-specific override via CAREER_GOAL_BY_ROLE, falls back to v51 generic. */
+function injectCareerGoalActionV52(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  const goal = (inputs.careerTransitionGoal ?? 'stay_and_strengthen') as CareerGoalKey;
+  const roleOverride = CAREER_GOAL_BY_ROLE[inputs.rolePrefix]?.[goal];
+
+  if (roleOverride) {
+    return {
+      weekNumber,
+      deadline: `Week ${weekNumber} — career goal strategy (${goal.replace(/_/g, ' ')})`,
+      action: roleOverride.action,
+      subActions: roleOverride.subActions,
+      whyNow: `Your stated career goal is "${goal.replace(/_/g, ' ')}". This guidance is calibrated to the specific market realities of your role family — not generic career advice that applies to everyone.`,
+      evidence: `Role-specific career strategies outperform generic guidance by 2.4× in job search success rates (LinkedIn Career Insights 2025). Generic advice fails because it ignores where your role's roles are actually filled.`,
+      expectedOutcome: roleOverride.expectedOutcome,
+      timeInvestment: goal === 'exit_fast' ? '3–4 hours (urgent priority)' : '2–3 hours',
+      category: 'career_positioning',
+      priority: goal === 'exit_fast' ? 'critical' : 'high',
+      isBlocking: false,
+      unlocks: [],
+      effortLevel: goal === 'exit_fast' ? 'high_effort' : 'moderate',
+      roiRating: goal === 'exit_fast' ? 10 : 8,
+    };
+  }
+
+  // Fall back to v51 generic career goal action
+  return injectCareerGoalAction(inputs, weekNumber);
+}
+
+/** v52.0 region action injection — role×region override via REGION_ROLE_ACTIONS_V52, falls back to v51. */
+function injectRegionActionV52(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
+  const regionKey = inputs.region === 'india' ? 'in'
+    : inputs.region === 'us' ? 'us'
+    : inputs.region === 'uk' ? 'uk'
+    : inputs.region === 'sg' ? 'sg'
+    : null;
+
+  if (regionKey) {
+    const roleRegionOverride = REGION_ROLE_ACTIONS_V52[inputs.rolePrefix]?.[regionKey];
+
+    if (roleRegionOverride) {
+      return {
+        weekNumber,
+        deadline: `Week ${weekNumber} — role-specific job search (${(inputs.region ?? 'local market').toUpperCase()})`,
+        action: roleRegionOverride.action,
+        subActions: roleRegionOverride.subActions,
+        whyNow: `Generic job search advice ignores the specific platforms, recruiters, and companies where ${(inputs.rolePrefix ?? 'your role').toUpperCase()} roles are actually filled in ${(inputs.region ?? 'your region').toUpperCase()}. This is the shortest path to relevant interviews.`,
+        evidence: `Role-specific regional job search strategies reduce time-to-first-interview by 35–50% vs generic job board applications (LinkedIn Talent Solutions 2025). Most roles in your field are filled through channels most candidates never use.`,
+        expectedOutcome: 'Active on all correct platforms for your role/region; specialist recruiter registered; 5+ applications sent to highest-probability companies.',
+        timeInvestment: '2–3 hours',
+        category: 'job_search',
+        priority: 'high',
+        isBlocking: false,
+        unlocks: [],
+        effortLevel: 'moderate',
+        roiRating: 9,
+      };
+    }
+  }
+
+  // Fall back to v51 generic region action
+  return injectRegionActionV51(inputs, weekNumber);
+}
+
 /**
  * computeMonthlyActionPlanV51
  *
@@ -1820,6 +2616,59 @@ export function computeMonthlyActionPlanV51(inputs: MonthlyActionPlanInputs): Mo
       extraActions.push(injectMonth2RoleFamilyAction(inputs, 5));
 
       const regionAction = injectRegionActionV51(inputs, 6);
+      if (regionAction) extraActions.push({ ...regionAction, weekNumber: 6 });
+    }
+
+    if (monthPlan.month === 3) {
+      extraActions.push(injectMonth3RoleFamilyAction(inputs, 9));
+    }
+
+    if (extraActions.length === 0) return monthPlan;
+
+    return {
+      ...monthPlan,
+      weeklyActions: [...monthPlan.weeklyActions, ...extraActions]
+        .sort((a, b) => a.weekNumber - b.weekNumber),
+    };
+  });
+
+  return {
+    ...base,
+    months: enrichedMonths,
+  };
+}
+
+/**
+ * computeMonthlyActionPlanV52
+ *
+ * Full v52.0 deep personalisation layer over computeMonthlyActionPlan:
+ * - Role-specific career goal strategy (CAREER_GOAL_BY_ROLE: 12 roles × 3 goals)
+ * - Role × region specific job search guidance (REGION_ROLE_ACTIONS_V52: 11 role×region combos)
+ * - Role-specific AI pivot targets via AI_PIVOT_TARGETS (all 12 roles)
+ * - Expanded employment gap recovery (ROLE_GAP_OVERRIDES: 12 roles)
+ * - All v51.0 augmentations preserved (month 2/3 role-family actions)
+ */
+export function computeMonthlyActionPlanV52(inputs: MonthlyActionPlanInputs): MonthlyActionPlanResult {
+  const base = computeMonthlyActionPlan(inputs);
+
+  const enrichedMonths = base.months.map(monthPlan => {
+    const extraActions: WeeklyAction[] = [];
+
+    if (monthPlan.month === 1) {
+      const goalAction = injectCareerGoalActionV52(inputs, 1);
+      if (goalAction) extraActions.push(goalAction);
+
+      const gapAction = injectGapRecoveryAction(inputs, 1);
+      if (gapAction) extraActions.push(gapAction);
+
+      const regionAction = injectRegionActionV52(inputs, 2);
+      if (regionAction) extraActions.push(regionAction);
+    }
+
+    if (monthPlan.month === 2) {
+      extraActions.push(injectMonth2RoleFamilyAction(inputs, 5));
+
+      const regionAction = injectRegionActionV52(inputs, 6);
       if (regionAction) extraActions.push({ ...regionAction, weekNumber: 6 });
     }
 

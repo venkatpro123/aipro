@@ -512,6 +512,38 @@ export function computeCareerTransition(input: TransitionIntelligenceInput): Car
 // ─── Convenience export for pipeline ─────────────────────────────────────────
 export { getRoleFamilyForKey };
 
+// ─── Role prefix → RoleFamily bridge ─────────────────────────────────────────
+// Maps the 12-character role prefix tokens used across engine files to the
+// RoleFamily enum used in rolePortabilityMatrix. Enables cross-engine lookups.
+
+export const ROLE_PREFIX_TO_FAMILY_MAP: Record<string, RoleFamily> = {
+  sw:     'tech',
+  ds:     'data_science',
+  pm:     'product',
+  fin:    'finance',
+  hc:     'healthcare_clinical',
+  legal:  'legal',
+  mkt:    'marketing',
+  ops:    'consulting',          // ops maps to consulting family as closest portability cluster
+  cons:   'consulting',
+  ind:    'manufacturing',
+  bpo:    'customer_success',    // bpo maps to customer_success family as closest portability cluster
+  design: 'design',
+};
+
+/**
+ * Resolves a role prefix (e.g. "sw", "ds", "pm") to the RoleFamily enum used
+ * in the portability matrix and regional demand data.
+ * Falls back to getRoleFamilyForKey (exact role key lookup) before returning null.
+ */
+export function getRoleFamilyFromPrefix(rolePrefix: string | null | undefined): RoleFamily | null {
+  if (!rolePrefix) return null;
+  const direct = ROLE_PREFIX_TO_FAMILY_MAP[rolePrefix];
+  if (direct) return direct;
+  // Fall back to the full role key lookup (for non-prefix keys like 'software_engineer')
+  return getRoleFamilyForKey(rolePrefix) ?? null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // v51.0 — Income Bridge Strategy + Regional Demand Intelligence
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1091,6 +1123,243 @@ const REGIONAL_DEMAND_DATA: Partial<Record<RoleFamily, Partial<Record<string, Re
       salaryPremiumVsMedian: 60,
       keyInsight: 'NHS has persistent clinical shortages. Private sector pays 40–80% above NHS rates. IMGs actively recruited.',
       topJobBoards: ['NHS Jobs', 'BMJ Careers', 'MedJobsUK', 'Healthjobs UK', 'The Lancet Careers'],
+    },
+  },
+
+  // ── v52.0 additions: product, marketing, legal, manufacturing, design ─────────
+
+  product: {
+    in: {
+      region: 'India',
+      demandScore: 82,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 5,
+      topHiringCities: ['Bengaluru', 'Gurugram', 'Mumbai', 'Hyderabad', 'Pune'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 20,
+      keyInsight: 'India PM demand is concentrated in consumer tech, FinTech, and B2B SaaS. Bengaluru and NCR have 80% of senior PM openings. Outcome-led portfolios outperform MBA credentials.',
+      topJobBoards: ['LinkedIn', 'iimjobs', 'Pallet PM', 'Naukri Premium', 'AngelList Talent'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 85,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 9,
+      topHiringCities: ['San Francisco', 'Seattle', 'New York', 'Austin', 'Los Angeles'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 100,
+      keyInsight: 'US PM market is competitive but well-compensated. FAANG PMs earn $250–450K TC. Network and referral are the primary hiring channel for senior PM roles — 70% filled before public posting.',
+      topJobBoards: ['LinkedIn', 'Pallet', 'Lenny\'s Slack Jobs', 'ProductHunt Jobs', 'Indeed'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 70,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 8,
+      topHiringCities: ['London', 'Manchester', 'Bristol', 'Edinburgh', 'Remote'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 40,
+      keyInsight: 'UK PM market is London-concentrated but remote is increasingly accepted. FinTech and SaaS are highest-demand sectors. Strong outcome portfolio beats MBA for most UK product roles.',
+      topJobBoards: ['LinkedIn', 'ProductHunt Jobs', 'Reed', 'Mind the Product Jobs', 'Otta'],
+    },
+    sg: {
+      region: 'Singapore',
+      demandScore: 72,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 6,
+      topHiringCities: ['Singapore (citywide)'],
+      remoteAvailability: 'medium',
+      salaryPremiumVsMedian: 65,
+      keyInsight: 'Singapore PM demand is driven by regional tech headquarters (Grab, Sea, Shopee). Regional PM roles cover APAC and pay a significant premium over domestic-scope roles.',
+      topJobBoards: ['LinkedIn', 'MyCareersFuture', 'JobsDB', 'Glassdoor SG', 'NodeFlair'],
+    },
+  },
+
+  marketing: {
+    in: {
+      region: 'India',
+      demandScore: 78,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 5,
+      topHiringCities: ['Bengaluru', 'Mumbai', 'Gurugram', 'Hyderabad', 'Pune'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 10,
+      keyInsight: 'India performance marketing demand is surging in D2C, FinTech, and B2B SaaS. Marketers with quantified campaign metrics (ROAS, CAC, CTR) receive 60% more recruiter contacts. Data-driven profile is essential.',
+      topJobBoards: ['LinkedIn', 'iimjobs', 'Naukri', 'Indeed', 'Marketing-specific Slack communities'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 80,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['New York', 'San Francisco', 'Chicago', 'Austin', 'Remote'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 75,
+      keyInsight: 'US marketing salaries are highest in performance marketing, product marketing, and growth. RevOps is the fastest-growing adjacent role. Quantified portfolio is the primary screening filter.',
+      topJobBoards: ['LinkedIn', 'Indeed', 'Glassdoor', 'HubSpot Jobs', 'Marketing Hire'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 68,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['London', 'Manchester', 'Bristol', 'Birmingham', 'Remote'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 30,
+      keyInsight: 'UK marketing market is London-led. Digital and performance marketing are highest-demand. Agency-to-brand transitions are common and valued.',
+      topJobBoards: ['LinkedIn', 'Reed', 'TotalJobs', 'Marketing Week Jobs', 'Major Players'],
+    },
+    sg: {
+      region: 'Singapore',
+      demandScore: 70,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['Singapore (citywide)'],
+      remoteAvailability: 'medium',
+      salaryPremiumVsMedian: 50,
+      keyInsight: 'Singapore is the APAC marketing hub for many multinationals. Regional marketing roles (APAC) are common and pay significantly above domestic roles.',
+      topJobBoards: ['LinkedIn', 'MyCareersFuture', 'JobsDB', 'Glassdoor SG', 'Indeed SG'],
+    },
+  },
+
+  legal: {
+    in: {
+      region: 'India',
+      demandScore: 72,
+      hiringVelocity: 'slow',
+      avgTimeToOfferWeeks: 10,
+      topHiringCities: ['Mumbai', 'Delhi NCR', 'Bengaluru', 'Hyderabad', 'Chennai'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: -20,
+      keyInsight: 'In-house legal demand in FinTech and tech is growing fastest. 70% of in-house roles are filled through specialist recruiters (Michael Page Legal, Mancer, ABC Legal) — direct applications rarely work at senior levels.',
+      topJobBoards: ['LegallyIndia', 'iimjobs Legal filter', 'LinkedIn', 'Naukri Legal', 'Michael Page Legal India'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 78,
+      hiringVelocity: 'slow',
+      avgTimeToOfferWeeks: 14,
+      topHiringCities: ['New York', 'Washington DC', 'Chicago', 'San Francisco', 'Boston'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 120,
+      keyInsight: 'US BigLaw entry compensation is $215K+. In-house roles at tech companies pay $250–550K TC at senior levels. The US is the highest-paying legal market globally. Lateral hiring is extremely network-driven.',
+      topJobBoards: ['Vault Law', 'NALP Career Center', 'BCG Attorney Search', 'LinkedIn', 'State bar job boards'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 70,
+      hiringVelocity: 'slow',
+      avgTimeToOfferWeeks: 12,
+      topHiringCities: ['London', 'Manchester', 'Edinburgh', 'Bristol', 'Birmingham'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 55,
+      keyInsight: 'UK magic circle firms pay the highest salaries. US law firms in London increasingly pay US-equivalent rates. In-house tech legal is fastest-growing segment.',
+      topJobBoards: ['Law Society Jobs', 'Legal Week Jobs', 'Totum Partners', 'Edwards Gibson', 'LinkedIn'],
+    },
+    sg: {
+      region: 'Singapore',
+      demandScore: 68,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 10,
+      topHiringCities: ['Singapore (citywide)'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 70,
+      keyInsight: 'Singapore is the APAC legal hub. Regional General Counsel roles based in Singapore are the most coveted legal positions. FinTech in-house legal demand is growing fastest.',
+      topJobBoards: ['Law Society of Singapore Jobs', 'Singapore Law Watch', 'LinkedIn', 'MyCareersFuture', 'Glassdoor SG'],
+    },
+  },
+
+  manufacturing: {
+    in: {
+      region: 'India',
+      demandScore: 76,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 6,
+      topHiringCities: ['Pune', 'Chennai', 'Gurugram', 'Bengaluru', 'Ahmedabad'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: -25,
+      keyInsight: 'India manufacturing is in a structural boom: PLI schemes have committed ₹2L Cr+ to electronics, auto, pharma, and specialty chemicals. EV and clean energy creating 200K+ new engineering jobs through 2026. Specialist recruiters fill 60% of roles.',
+      topJobBoards: ['Naukri Core Engineering', 'iimjobs Engineering', 'ManufacturingToday India', 'LinkedIn', 'CIEL HR Manufacturing'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 72,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 8,
+      topHiringCities: ['Detroit', 'Houston', 'Chicago', 'Dallas', 'Raleigh-Durham'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 40,
+      keyInsight: 'US reshoring and IRA/CHIPS Act manufacturing investment is creating structural demand for industrial engineers. EV and semiconductor manufacturing are the fastest-growing segments.',
+      topJobBoards: ['LinkedIn', 'Indeed', 'EngineerJobs', 'SME Career Center', 'Glassdoor'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 65,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 8,
+      topHiringCities: ['Birmingham', 'Manchester', 'Bristol', 'Coventry', 'Derby'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 20,
+      keyInsight: 'UK manufacturing is concentrated in automotive, aerospace, and pharma. Midlands and North England are primary industrial employment hubs. Advanced manufacturing pays a premium over traditional.',
+      topJobBoards: ['LinkedIn', 'Reed Engineering', 'CW Jobs', 'Randstad Engineering UK', 'The Engineer Jobs'],
+    },
+    sg: {
+      region: 'Singapore',
+      demandScore: 70,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['Singapore (citywide — Jurong Industrial, Tuas, Seletar)'],
+      remoteAvailability: 'low',
+      salaryPremiumVsMedian: 55,
+      keyInsight: 'Singapore advanced manufacturing (semiconductors, aerospace MRO, precision engineering) is hiring strongly. JTC industrial estates have 50K+ manufacturing jobs. EP sponsorship available for senior technical roles.',
+      topJobBoards: ['MyCareersFuture', 'LinkedIn', 'JobsDB', 'Glassdoor SG', 'Randstad SG'],
+    },
+  },
+
+  design: {
+    in: {
+      region: 'India',
+      demandScore: 74,
+      hiringVelocity: 'fast',
+      avgTimeToOfferWeeks: 5,
+      topHiringCities: ['Bengaluru', 'Mumbai', 'Gurugram', 'Hyderabad', 'Pune'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 5,
+      keyInsight: 'India design demand is concentrated in product companies (Zomato, Swiggy, Razorpay, CRED) and FinTechs. Senior UX researchers and AI-augmented designers receive the highest compensation premium. Portfolio quality drives 80% of hiring decisions.',
+      topJobBoards: ['LinkedIn', 'Dribbble', 'Behance Jobs', 'iimjobs Design', 'AngelList Talent'],
+    },
+    us: {
+      region: 'United States',
+      demandScore: 78,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 8,
+      topHiringCities: ['San Francisco', 'New York', 'Seattle', 'Austin', 'Remote'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 85,
+      keyInsight: 'US design market rewards DesignOps and UX Research specialists most. FAANG design compensation reaches $200–400K TC at senior/staff level. AI-augmented design directors are the fastest-growing premium segment.',
+      topJobBoards: ['LinkedIn', 'Dribbble', 'AIGA Design Jobs', 'Glassdoor', 'Aquent'],
+    },
+    uk: {
+      region: 'United Kingdom',
+      demandScore: 68,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['London', 'Manchester', 'Bristol', 'Edinburgh', 'Remote'],
+      remoteAvailability: 'high',
+      salaryPremiumVsMedian: 30,
+      keyInsight: 'UK design market is London-concentrated with strong remote acceptance. FinTech design is the highest-paying segment. Senior UX researchers are in genuine short supply.',
+      topJobBoards: ['LinkedIn', 'Dribbble', 'Creative Bloq Jobs', 'Aquent UK', 'Creative Circle UK'],
+    },
+    sg: {
+      region: 'Singapore',
+      demandScore: 68,
+      hiringVelocity: 'moderate',
+      avgTimeToOfferWeeks: 7,
+      topHiringCities: ['Singapore (citywide)'],
+      remoteAvailability: 'medium',
+      salaryPremiumVsMedian: 55,
+      keyInsight: 'Singapore design demand is led by regional tech companies (Grab, Sea, Shopee). Regional UX roles covering APAC are the most senior and best-compensated. AI-augmented design is increasingly required.',
+      topJobBoards: ['LinkedIn', 'MyCareersFuture', 'JobsDB', 'Glassdoor SG', 'Aquent SG'],
     },
   },
 };

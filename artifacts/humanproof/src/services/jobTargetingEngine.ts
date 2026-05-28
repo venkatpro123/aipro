@@ -1050,6 +1050,138 @@ const SALARY_BENCHMARKS: Record<string, Record<RegionKey, Record<SeniorityKey, S
     },
     default: { junior: { minUsd: 6_000, medianUsd: 9_600, maxUsd: 14_400, p90Usd: 12_600, localFormatted: 'Market rate varies', equityNote: 'None at firms', bonusNote: '5–10%' }, mid: { minUsd: 12_000, medianUsd: 20_000, maxUsd: 30_000, p90Usd: 26_400, localFormatted: 'Market rate varies', equityNote: 'In-house ESOPs', bonusNote: '8–12%' }, senior: { minUsd: 21_600, medianUsd: 36_000, maxUsd: 54_000, p90Usd: 46_800, localFormatted: 'Market rate varies', equityNote: 'Partner-track', bonusNote: '10–20%' }, staff: { minUsd: 42_000, medianUsd: 68_000, maxUsd: 96_000, p90Usd: 84_000, localFormatted: 'Market rate varies', equityNote: 'Equity partner', bonusNote: '20–40%' }, exec: { minUsd: 72_000, medianUsd: 120_000, maxUsd: 180_000, p90Usd: 156_000, localFormatted: 'Market rate varies', equityNote: 'GC LTI', bonusNote: '20–35%' } },
   },
+
+  // ── Operations / Business Operations / COO Track ─────────────────────────────
+  ops: {
+    in: {
+      junior: { minUsd:  3_600, medianUsd:  6_000, maxUsd:  9_600, p90Usd:  8_400, localFormatted: '₹3–8L',    equityNote: 'ESOPs at growth-stage startups', bonusNote: '8–15%' },
+      mid:    { minUsd:  9_600, medianUsd: 16_000, maxUsd: 24_000, p90Usd: 21_000, localFormatted: '₹8–20L',   equityNote: 'ESOPs at mid-to-large cos', bonusNote: '10–18%' },
+      senior: { minUsd: 21_600, medianUsd: 36_000, maxUsd: 60_000, p90Usd: 52_000, localFormatted: '₹18–50L',  equityNote: 'ESOPs + refreshers', bonusNote: '12–22%' },
+      staff:  { minUsd: 48_000, medianUsd: 80_000, maxUsd:120_000, p90Usd:105_000, localFormatted: '₹40–100L', equityNote: 'ESOPs + LTI at large cos', bonusNote: '20–30%' },
+      exec:   { minUsd: 84_000, medianUsd:140_000, maxUsd:240_000, p90Usd:210_000, localFormatted: '₹70–200L', equityNote: 'LTI grants + ESOPs', bonusNote: '25–40%' },
+    },
+    us: {
+      junior: { minUsd: 55_000, medianUsd: 72_000, maxUsd: 90_000, p90Usd:  84_000, localFormatted: '$55K–$90K',   equityNote: 'None typically', bonusNote: '5–10%' },
+      mid:    { minUsd: 80_000, medianUsd:105_000, maxUsd:135_000, p90Usd: 124_000, localFormatted: '$80K–$135K',  equityNote: 'RSUs at tech/growth', bonusNote: '10–15%' },
+      senior: { minUsd:120_000, medianUsd:160_000, maxUsd:210_000, p90Usd: 192_000, localFormatted: '$120K–$210K', equityNote: 'RSUs at tech companies', bonusNote: '12–20%' },
+      staff:  { minUsd:180_000, medianUsd:245_000, maxUsd:340_000, p90Usd: 310_000, localFormatted: '$180K–$340K', equityNote: 'Significant RSUs', bonusNote: '20–30%' },
+      exec:   { minUsd:280_000, medianUsd:400_000, maxUsd:600_000, p90Usd: 540_000, localFormatted: '$280K–$600K', equityNote: 'LTI + RSU grants', bonusNote: '30–50%' },
+    },
+    uk: {
+      junior: { minUsd: 35_560, medianUsd: 47_000, maxUsd: 63_500, p90Usd:  58_000, localFormatted: '£28K–£50K',   equityNote: 'None typically', bonusNote: '5–10%' },
+      mid:    { minUsd: 57_150, medianUsd: 75_000, maxUsd:101_600, p90Usd:  94_000, localFormatted: '£45K–£80K',   equityNote: 'EMI at startups', bonusNote: '10–15%' },
+      senior: { minUsd: 88_900, medianUsd:118_000, maxUsd:177_800, p90Usd: 164_000, localFormatted: '£70K–£140K',  equityNote: 'EMI/RSUs', bonusNote: '12–18%' },
+      staff:  { minUsd:146_050, medianUsd:195_000, maxUsd:304_800, p90Usd: 278_000, localFormatted: '£115K–£240K', equityNote: 'RSUs + LTIP', bonusNote: '20–30%' },
+      exec:   { minUsd:234_950, medianUsd:310_000, maxUsd:508_000, p90Usd: 457_000, localFormatted: '£185K–£400K', equityNote: 'LTIP + RSUs', bonusNote: '30–45%' },
+    },
+    sg: {
+      junior: { minUsd: 37_500, medianUsd: 50_000, maxUsd: 63_750, p90Usd:  59_000, localFormatted: 'S$50K–S$85K',   equityNote: 'Options at startups', bonusNote: '5–10%' },
+      mid:    { minUsd: 56_250, medianUsd: 76_000, maxUsd: 97_500, p90Usd:  90_000, localFormatted: 'S$75K–S$130K',  equityNote: 'RSUs at MNCs', bonusNote: '10–15%' },
+      senior: { minUsd: 86_250, medianUsd:114_000, maxUsd:146_250, p90Usd: 135_000, localFormatted: 'S$115K–S$195K', equityNote: 'RSUs', bonusNote: '12–20%' },
+      staff:  { minUsd:131_250, medianUsd:172_000, maxUsd:232_500, p90Usd: 213_000, localFormatted: 'S$175K–S$310K', equityNote: 'RSUs + grants', bonusNote: '20–30%' },
+      exec:   { minUsd:202_500, medianUsd:270_000, maxUsd:360_000, p90Usd: 330_000, localFormatted: 'S$270K–S$480K', equityNote: 'LTIP', bonusNote: '30%+' },
+    },
+    default: { junior: { minUsd: 4_800, medianUsd: 8_400, maxUsd: 13_200, p90Usd: 11_400, localFormatted: 'Market rate varies', equityNote: 'ESOPs if startup', bonusNote: '8–15%' }, mid: { minUsd: 9_600, medianUsd: 16_800, maxUsd: 26_400, p90Usd: 22_800, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–18%' }, senior: { minUsd: 21_600, medianUsd: 36_000, maxUsd: 60_000, p90Usd: 52_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs + refreshers', bonusNote: '12–22%' }, staff: { minUsd: 42_000, medianUsd: 72_000, maxUsd: 108_000, p90Usd: 94_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs + LTI', bonusNote: '20–30%' }, exec: { minUsd: 72_000, medianUsd: 120_000, maxUsd: 192_000, p90Usd: 168_000, localFormatted: 'Market rate varies', equityNote: 'LTI grants', bonusNote: '25–40%' } },
+  },
+
+  // ── Industrial / Manufacturing Engineering ───────────────────────────────────
+  ind: {
+    in: {
+      junior: { minUsd:  3_600, medianUsd:  5_400, maxUsd:  8_400, p90Usd:  7_200, localFormatted: '₹3–7L',    equityNote: 'None at most industrial cos', bonusNote: '8–12%' },
+      mid:    { minUsd:  8_400, medianUsd: 14_400, maxUsd: 21_600, p90Usd: 18_600, localFormatted: '₹7–18L',   equityNote: 'ESOPs at PLI/EV startups', bonusNote: '10–15%' },
+      senior: { minUsd: 18_000, medianUsd: 30_000, maxUsd: 48_000, p90Usd: 41_000, localFormatted: '₹15–40L',  equityNote: 'ESOPs at large manufacturing cos', bonusNote: '12–18%' },
+      staff:  { minUsd: 42_000, medianUsd: 65_000, maxUsd: 96_000, p90Usd: 84_000, localFormatted: '₹35–80L',  equityNote: 'LTI + ESOPs at top cos', bonusNote: '18–28%' },
+      exec:   { minUsd: 72_000, medianUsd:120_000, maxUsd:180_000, p90Usd:156_000, localFormatted: '₹60–150L', equityNote: 'LTI + ESOPs at conglomerates', bonusNote: '25–40%' },
+    },
+    us: {
+      junior: { minUsd: 55_000, medianUsd: 70_000, maxUsd: 88_000, p90Usd:  82_000, localFormatted: '$55K–$88K',   equityNote: 'None typically', bonusNote: '5–8%' },
+      mid:    { minUsd: 75_000, medianUsd: 98_000, maxUsd:128_000, p90Usd: 118_000, localFormatted: '$75K–$128K',  equityNote: 'RSUs at defense/aerospace', bonusNote: '8–12%' },
+      senior: { minUsd:110_000, medianUsd:148_000, maxUsd:190_000, p90Usd: 175_000, localFormatted: '$110K–$190K', equityNote: 'RSUs at tech manufacturing', bonusNote: '10–15%' },
+      staff:  { minUsd:160_000, medianUsd:215_000, maxUsd:285_000, p90Usd: 262_000, localFormatted: '$160K–$285K', equityNote: 'RSUs + LTIP', bonusNote: '15–22%' },
+      exec:   { minUsd:250_000, medianUsd:340_000, maxUsd:480_000, p90Usd: 435_000, localFormatted: '$250K–$480K', equityNote: 'LTI + RSU grants', bonusNote: '25–40%' },
+    },
+    uk: {
+      junior: { minUsd: 33_020, medianUsd: 42_000, maxUsd: 57_150, p90Usd:  52_000, localFormatted: '£26K–£45K',   equityNote: 'None typically', bonusNote: '5–8%' },
+      mid:    { minUsd: 50_800, medianUsd: 66_000, maxUsd: 88_900, p90Usd:  81_000, localFormatted: '£40K–£70K',   equityNote: 'LTIP at large cos', bonusNote: '8–12%' },
+      senior: { minUsd: 82_550, medianUsd:108_000, maxUsd:139_700, p90Usd: 128_000, localFormatted: '£65K–£110K',  equityNote: 'LTIP + shares', bonusNote: '10–15%' },
+      staff:  { minUsd:127_000, medianUsd:168_000, maxUsd:234_950, p90Usd: 213_000, localFormatted: '£100K–£185K', equityNote: 'RSUs + LTIP', bonusNote: '15–22%' },
+      exec:   { minUsd:203_200, medianUsd:267_000, maxUsd:381_000, p90Usd: 342_000, localFormatted: '£160K–£300K', equityNote: 'LTIP', bonusNote: '25–35%' },
+    },
+    sg: {
+      junior: { minUsd: 26_250, medianUsd: 35_000, maxUsd: 48_750, p90Usd:  44_000, localFormatted: 'S$35K–S$65K',   equityNote: 'None typically', bonusNote: '5–8%' },
+      mid:    { minUsd: 45_000, medianUsd: 60_000, maxUsd: 82_500, p90Usd:  75_000, localFormatted: 'S$60K–S$110K',  equityNote: 'Shares at MNCs', bonusNote: '8–12%' },
+      senior: { minUsd: 71_250, medianUsd: 95_000, maxUsd:131_250, p90Usd: 120_000, localFormatted: 'S$95K–S$175K',  equityNote: 'RSUs at MNCs', bonusNote: '10–15%' },
+      staff:  { minUsd:108_750, medianUsd:143_000, maxUsd:206_250, p90Usd: 187_000, localFormatted: 'S$145K–S$275K', equityNote: 'RSUs + LTIP', bonusNote: '15–20%' },
+      exec:   { minUsd:168_750, medianUsd:225_000, maxUsd:337_500, p90Usd: 300_000, localFormatted: 'S$225K–S$450K', equityNote: 'LTIP', bonusNote: '25–35%' },
+    },
+    default: { junior: { minUsd: 3_600, medianUsd: 6_000, maxUsd: 9_600, p90Usd: 8_400, localFormatted: 'Market rate varies', equityNote: 'None at most industrial cos', bonusNote: '8–12%' }, mid: { minUsd: 8_400, medianUsd: 14_400, maxUsd: 21_600, p90Usd: 18_600, localFormatted: 'Market rate varies', equityNote: 'ESOPs if startup', bonusNote: '10–15%' }, senior: { minUsd: 18_000, medianUsd: 30_000, maxUsd: 48_000, p90Usd: 41_000, localFormatted: 'Market rate varies', equityNote: 'ESOPs at large cos', bonusNote: '12–18%' }, staff: { minUsd: 42_000, medianUsd: 65_000, maxUsd: 96_000, p90Usd: 84_000, localFormatted: 'Market rate varies', equityNote: 'LTI', bonusNote: '18–28%' }, exec: { minUsd: 72_000, medianUsd: 120_000, maxUsd: 180_000, p90Usd: 156_000, localFormatted: 'Market rate varies', equityNote: 'LTI', bonusNote: '25–40%' } },
+  },
+
+  // ── BPO / CX / Contact Centre / GCC ──────────────────────────────────────────
+  bpo: {
+    in: {
+      junior: { minUsd:  3_012, medianUsd:  4_819, maxUsd:  7_229, p90Usd:  6_325, localFormatted: '₹2.5–6L',  equityNote: 'None at BPO firms', bonusNote: '5–10%' },
+      mid:    { minUsd:  7_229, medianUsd: 12_048, maxUsd: 16_867, p90Usd: 14_699, localFormatted: '₹6–14L',   equityNote: 'ESOPs at analytics-led BPOs', bonusNote: '8–12%' },
+      senior: { minUsd: 14_458, medianUsd: 24_096, maxUsd: 33_735, p90Usd: 28_916, localFormatted: '₹12–28L',  equityNote: 'ESOPs at GCC/analytics BPOs', bonusNote: '10–15%' },
+      staff:  { minUsd: 30_120, medianUsd: 48_193, maxUsd: 72_289, p90Usd: 63_253, localFormatted: '₹25–60L',  equityNote: 'ESOPs + LTI at GCCs', bonusNote: '15–22%' },
+      exec:   { minUsd: 54_217, medianUsd: 90_361, maxUsd:144_578, p90Usd:126_506, localFormatted: '₹45–120L', equityNote: 'LTI + ESOPs at large BPOs', bonusNote: '20–35%' },
+    },
+    us: {
+      junior: { minUsd: 35_000, medianUsd: 46_000, maxUsd: 58_000, p90Usd:  54_000, localFormatted: '$35K–$58K',   equityNote: 'None typically', bonusNote: '3–5%' },
+      mid:    { minUsd: 55_000, medianUsd: 72_000, maxUsd: 92_000, p90Usd:  85_000, localFormatted: '$55K–$92K',   equityNote: 'RSUs at tech-adjacent CX', bonusNote: '5–10%' },
+      senior: { minUsd: 80_000, medianUsd:105_000, maxUsd:135_000, p90Usd: 124_000, localFormatted: '$80K–$135K',  equityNote: 'RSUs at tech/CX platforms', bonusNote: '8–12%' },
+      staff:  { minUsd:120_000, medianUsd:163_000, maxUsd:210_000, p90Usd: 192_000, localFormatted: '$120K–$210K', equityNote: 'RSUs + LTIP', bonusNote: '12–18%' },
+      exec:   { minUsd:180_000, medianUsd:248_000, maxUsd:350_000, p90Usd: 315_000, localFormatted: '$180K–$350K', equityNote: 'LTIP + RSU grants', bonusNote: '20–30%' },
+    },
+    uk: {
+      junior: { minUsd: 25_400, medianUsd: 32_000, maxUsd: 44_450, p90Usd:  40_000, localFormatted: '£20K–£35K',   equityNote: 'None', bonusNote: '3–5%' },
+      mid:    { minUsd: 40_640, medianUsd: 52_000, maxUsd: 69_850, p90Usd:  63_000, localFormatted: '£32K–£55K',   equityNote: 'EMI at startups', bonusNote: '5–8%' },
+      senior: { minUsd: 63_500, medianUsd: 82_000, maxUsd:101_600, p90Usd:  94_000, localFormatted: '£50K–£80K',   equityNote: 'EMI/RSUs', bonusNote: '8–12%' },
+      staff:  { minUsd: 95_250, medianUsd:124_000, maxUsd:165_100, p90Usd: 150_000, localFormatted: '£75K–£130K',  equityNote: 'RSUs + LTIP', bonusNote: '12–18%' },
+      exec:   { minUsd:139_700, medianUsd:184_000, maxUsd:279_400, p90Usd: 247_000, localFormatted: '£110K–£220K', equityNote: 'LTIP', bonusNote: '20–30%' },
+    },
+    sg: {
+      junior: { minUsd: 21_000, medianUsd: 28_500, maxUsd: 36_000, p90Usd:  33_000, localFormatted: 'S$28K–S$48K',   equityNote: 'None', bonusNote: '3–5%' },
+      mid:    { minUsd: 33_750, medianUsd: 45_000, maxUsd: 58_500, p90Usd:  54_000, localFormatted: 'S$45K–S$78K',   equityNote: 'Options at CX platforms', bonusNote: '5–8%' },
+      senior: { minUsd: 52_500, medianUsd: 70_000, maxUsd: 86_250, p90Usd:  79_000, localFormatted: 'S$70K–S$115K',  equityNote: 'RSUs at MNCs', bonusNote: '8–12%' },
+      staff:  { minUsd: 82_500, medianUsd:109_000, maxUsd:138_750, p90Usd: 127_000, localFormatted: 'S$110K–S$185K', equityNote: 'RSUs + grants', bonusNote: '12–18%' },
+      exec:   { minUsd:120_000, medianUsd:161_000, maxUsd:225_000, p90Usd: 202_000, localFormatted: 'S$160K–S$300K', equityNote: 'LTIP', bonusNote: '20–30%' },
+    },
+    default: { junior: { minUsd: 3_012, medianUsd: 4_819, maxUsd: 7_229, p90Usd: 6_325, localFormatted: 'Market rate varies', equityNote: 'None at BPO firms', bonusNote: '5–10%' }, mid: { minUsd: 7_229, medianUsd: 12_048, maxUsd: 16_867, p90Usd: 14_699, localFormatted: 'Market rate varies', equityNote: 'ESOPs at analytics BPOs', bonusNote: '8–12%' }, senior: { minUsd: 14_458, medianUsd: 24_096, maxUsd: 33_735, p90Usd: 28_916, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–15%' }, staff: { minUsd: 30_120, medianUsd: 48_193, maxUsd: 72_289, p90Usd: 63_253, localFormatted: 'Market rate varies', equityNote: 'LTI', bonusNote: '15–22%' }, exec: { minUsd: 54_217, medianUsd: 90_361, maxUsd: 144_578, p90Usd: 126_506, localFormatted: 'Market rate varies', equityNote: 'LTI', bonusNote: '20–35%' } },
+  },
+
+  // ── UX / Product / Visual Design ─────────────────────────────────────────────
+  design: {
+    in: {
+      junior: { minUsd:  4_819, medianUsd:  8_434, maxUsd: 12_048, p90Usd: 10_602, localFormatted: '₹4–10L',    equityNote: 'ESOPs at product startups', bonusNote: '8–12%' },
+      mid:    { minUsd: 12_048, medianUsd: 20_482, maxUsd: 30_120, p90Usd: 26_145, localFormatted: '₹10–25L',   equityNote: 'ESOPs at product cos', bonusNote: '10–15%' },
+      senior: { minUsd: 26_506, medianUsd: 42_169, maxUsd: 66_265, p90Usd: 57_831, localFormatted: '₹22–55L',   equityNote: 'ESOPs + refreshers at top product cos', bonusNote: '12–18%' },
+      staff:  { minUsd: 54_217, medianUsd: 84_337, maxUsd:120_482, p90Usd:105_422, localFormatted: '₹45–100L',  equityNote: 'Significant ESOPs + LTI', bonusNote: '18–25%' },
+      exec:   { minUsd: 96_386, medianUsd:144_578, maxUsd:216_867, p90Usd:187_952, localFormatted: '₹80–180L',  equityNote: 'Large LTI grants', bonusNote: '22–35%' },
+    },
+    us: {
+      junior: { minUsd: 70_000, medianUsd: 90_000, maxUsd:112_000, p90Usd: 104_000, localFormatted: '$70K–$112K',  equityNote: 'RSUs at tech', bonusNote: '5–10%' },
+      mid:    { minUsd:100_000, medianUsd:128_000, maxUsd:162_000, p90Usd: 150_000, localFormatted: '$100K–$162K', equityNote: 'RSUs at tech/product cos', bonusNote: '8–12%' },
+      senior: { minUsd:145_000, medianUsd:188_000, maxUsd:242_000, p90Usd: 224_000, localFormatted: '$145K–$242K', equityNote: 'RSUs + refreshers at top tech', bonusNote: '10–15%' },
+      staff:  { minUsd:210_000, medianUsd:280_000, maxUsd:380_000, p90Usd: 350_000, localFormatted: '$210K–$380K', equityNote: 'Significant RSUs', bonusNote: '15–22%' },
+      exec:   { minUsd:310_000, medianUsd:420_000, maxUsd:600_000, p90Usd: 550_000, localFormatted: '$310K–$600K', equityNote: 'LTIP + RSU grants', bonusNote: '25–40%' },
+    },
+    uk: {
+      junior: { minUsd: 38_100, medianUsd: 50_800, maxUsd: 69_850, p90Usd:  63_500, localFormatted: '£30K–£55K',   equityNote: 'EMI at startups', bonusNote: '5–8%' },
+      mid:    { minUsd: 63_500, medianUsd: 82_550, maxUsd:107_950, p90Usd:  98_600, localFormatted: '£50K–£85K',   equityNote: 'EMI/RSUs', bonusNote: '8–12%' },
+      senior: { minUsd:101_600, medianUsd:133_350, maxUsd:177_800, p90Usd: 164_100, localFormatted: '£80K–£140K',  equityNote: 'RSUs', bonusNote: '10–15%' },
+      staff:  { minUsd:165_100, medianUsd:215_900, maxUsd:292_100, p90Usd: 265_700, localFormatted: '£130K–£230K', equityNote: 'RSUs + LTIP', bonusNote: '15–22%' },
+      exec:   { minUsd:241_300, medianUsd:317_500, maxUsd:482_600, p90Usd: 431_800, localFormatted: '£190K–£380K', equityNote: 'LTIP', bonusNote: '25–35%' },
+    },
+    sg: {
+      junior: { minUsd: 33_750, medianUsd: 45_000, maxUsd: 56_250, p90Usd:  52_500, localFormatted: 'S$45K–S$75K',   equityNote: 'Options at product startups', bonusNote: '5–8%' },
+      mid:    { minUsd: 52_500, medianUsd: 70_000, maxUsd: 86_250, p90Usd:  80_000, localFormatted: 'S$70K–S$115K',  equityNote: 'RSUs at product cos', bonusNote: '8–12%' },
+      senior: { minUsd: 82_500, medianUsd:109_000, maxUsd:138_750, p90Usd: 128_000, localFormatted: 'S$110K–S$185K', equityNote: 'RSUs + refreshers', bonusNote: '10–15%' },
+      staff:  { minUsd:123_750, medianUsd:165_000, maxUsd:210_000, p90Usd: 195_000, localFormatted: 'S$165K–S$280K', equityNote: 'Significant RSUs', bonusNote: '15–20%' },
+      exec:   { minUsd:180_000, medianUsd:247_500, maxUsd:322_500, p90Usd: 300_000, localFormatted: 'S$240K–S$430K', equityNote: 'LTIP', bonusNote: '25–35%' },
+    },
+    default: { junior: { minUsd: 4_819, medianUsd: 8_434, maxUsd: 12_048, p90Usd: 10_602, localFormatted: 'Market rate varies', equityNote: 'ESOPs at product startups', bonusNote: '8–12%' }, mid: { minUsd: 12_048, medianUsd: 20_482, maxUsd: 30_120, p90Usd: 26_145, localFormatted: 'Market rate varies', equityNote: 'ESOPs', bonusNote: '10–15%' }, senior: { minUsd: 26_506, medianUsd: 42_169, maxUsd: 66_265, p90Usd: 57_831, localFormatted: 'Market rate varies', equityNote: 'ESOPs + refreshers', bonusNote: '12–18%' }, staff: { minUsd: 54_217, medianUsd: 84_337, maxUsd: 120_482, p90Usd: 105_422, localFormatted: 'Market rate varies', equityNote: 'Significant ESOPs + LTI', bonusNote: '18–25%' }, exec: { minUsd: 96_386, medianUsd: 144_578, maxUsd: 216_867, p90Usd: 187_952, localFormatted: 'Market rate varies', equityNote: 'Large LTI grants', bonusNote: '22–35%' } },
+  },
 };
 
 // Default fallback for unmapped role × region combos
@@ -1124,6 +1256,38 @@ const SENIORITY_PROB_MODIFIER: Record<SeniorityKey, number> = {
   exec:   0.55,
 };
 
+/** Role-specific primary hiring enabler — the single most impactful action for this role family. */
+const ROLE_HIRING_ENABLER: Record<string, string> = {
+  sw:     'GitHub profile with active contributions significantly increases engineering recruiter response rates — ensure pinned repos showcase production-quality work',
+  ds:     'Public portfolio (Kaggle/GitHub) with business-framed projects increases DS recruiter contacts by 5× — frame every project around the business question answered, not the technique used',
+  pm:     'Product portfolio with outcome metrics (not task lists) produces 4× more interview invites — "Grew MAU 40%" beats "Managed roadmap" every time',
+  fin:    'CFA/CA designation + a prepared deal log increase finance recruiter callbacks by 3× — have a 1-page deal sheet ready to share immediately on request',
+  hc:     'Clinical specialists on HealthTech + specialty clinical job boards receive 3× more relevant contacts vs LinkedIn-only — register on Practo Jobs, Doximity, and specialty boards',
+  legal:  '70% of in-house legal roles are filled through specialist recruiters — register with Michael Page Legal, Mancer, and ABC Legal before applying direct',
+  mkt:    'Campaign metrics portfolio (CTR/ROAS/CAC data) on LinkedIn increases marketing recruiter contacts by 60% — quantify every campaign you have ever run',
+  ops:    'Documented process improvement metrics (cost%, throughput%, error rate%) increase ops callback rate by 2.5× — put 3 specific impact numbers on your CV before applying',
+  cons:   'Alumni network + clear "exit from consulting" narrative accelerates industry offers by 6 weeks — prepare a 30-second answer to "why are you leaving consulting?"',
+  ind:    '60% of industrial roles are filled through specialist recruiters — register with CIEL HR Manufacturing, Talentiser, and Randstad Engineering before applying direct',
+  bpo:    'Reframe as "analytics-led CX" with RPA certification — unlocks 40% higher-paying roles vs standard BPO profile; add UiPath or Automation Anywhere cert to LinkedIn immediately',
+  design: 'Outcome-focused portfolio case studies (problem → decision → metric) produce 4× more design interview invites — rewrite your case studies to lead with the business outcome',
+};
+
+/** Role-specific primary hiring barrier — the screening trap most likely to derail this role family. */
+const ROLE_HIRING_BARRIER: Record<string, string> = {
+  sw:     'Generic tech stack descriptions without version numbers and scale context are filtered by ATS at senior companies — replace "Python developer" with "Python 3.11, FastAPI, 10M req/day"',
+  ds:     'Notebook-only profile without deployment experience screens out at 65% of senior DS roles — add at least one end-to-end deployed model to your portfolio',
+  pm:     'Role-list PM resumes without product outcomes ("Managed social media" → "Grew followers 40%, increased CTR 2×") are screened out before human review',
+  fin:    'Finance roles without credentials (CFA/CA/CPA/MBA) face 3× higher rejection at screen for senior roles — if pursuing CFA, list "CFA Level X Candidate" on your profile now',
+  hc:     'Clinical vacancies are mostly off general job boards — 60% require specialty board registration and clinical recruiter engagement; LinkedIn alone will not find them',
+  legal:  'Legal roles without documented specialty (practice area + key deals or matters) are ignored by in-house legal teams — add a "Key Matters" section to your CV',
+  mkt:    'Marketers without quantified metrics ("managed social media" with no numbers) are screened out of performance marketing roles — add data to every bullet point',
+  ops:    'Operations CVs listing responsibilities (not outcomes) have 60% lower callback rates — replace every "responsible for" with a metric-backed result',
+  cons:   'Consulting profiles without clear exit narrative are default-skeptical from industry hiring managers — prepare your "I want to apply consulting skills inside a company" story',
+  ind:    'Industrial roles require certification specifics (belt level, code number, standard version) — list every certification with its exact level and issuing body',
+  bpo:    'Volume BPO profile without analytics upskilling or automation certification is increasingly screened out as AI automates scripted work — address this gap immediately',
+  design: 'Design portfolios without measurable business outcomes are screened at senior roles — every case study needs a "Result: [metric]" line before the recruiter moves on',
+};
+
 export function estimateHiringProbability(
   rolePrefix: string,
   companyType: string,
@@ -1151,10 +1315,13 @@ export function estimateHiringProbability(
     companyType === 'large' ? 8 :
     companyType === 'mid' ? 6 : 4;
 
-  const keyEnablers: string[] = [];
-  const keyBarriers: string[] = [];
+  // Role-specific primary guidance always surfaces first
+  const roleEnabler = ROLE_HIRING_ENABLER[rolePrefix] ?? 'Warm referral from current employee (+25% probability)';
+  const roleBarrier = ROLE_HIRING_BARRIER[rolePrefix] ?? null;
 
-  if (prob < 0.50) keyEnablers.push('Warm referral from current employee (+25% probability)');
+  const keyEnablers: string[] = [roleEnabler];
+  const keyBarriers: string[] = roleBarrier ? [roleBarrier] : [];
+
   if (seniority === 'staff' || seniority === 'exec') {
     keyEnablers.push('Executive recruiter introduction (bypasses ATS entirely)');
     keyBarriers.push('Senior roles have <10 headcount per year — timing is critical');
