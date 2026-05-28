@@ -1,8 +1,7 @@
 // GlobeAuditLoader.tsx — Full-screen cinematic globe intelligence-scan loader
-// Replaces EarthAnalysisLoader with d3-geo real borders + full HUD design.
-// CDN-loads: d3-array@3.2.4, d3-geo@3.1.1, topojson-client@3.1.0
+// Uses d3-geo (npm) for real country borders + full HUD overlay design.
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -13,23 +12,23 @@ interface Props {
   limitedDataReason?: string;
 }
 
-// ── Data constants ─────────────────────────────────────────────────────────────
+// ── Data ──────────────────────────────────────────────────────────────────────
 
 const HUBS: { n: string; ll: [number, number] }[] = [
   { n: 'New York',      ll: [-74.0,  40.7] },
   { n: 'San Francisco', ll: [-122.4, 37.7] },
   { n: 'Sao Paulo',     ll: [-46.6, -23.5] },
-  { n: 'London',        ll: [ -0.1,  51.5] },
-  { n: 'Berlin',        ll: [ 13.4,  52.5] },
-  { n: 'Lagos',         ll: [  3.4,   6.5] },
-  { n: 'Cairo',         ll: [ 31.2,  30.0] },
-  { n: 'Dubai',         ll: [ 55.3,  25.3] },
-  { n: 'Mumbai',        ll: [ 72.9,  19.1] },
-  { n: 'Singapore',     ll: [103.8,   1.3] },
-  { n: 'Tokyo',         ll: [139.7,  35.7] },
-  { n: 'Sydney',        ll: [151.2, -33.9] },
-  { n: 'Moscow',        ll: [ 37.6,  55.8] },
-  { n: 'Seoul',         ll: [127.0,  37.6] },
+  { n: 'London',        ll: [  -0.1, 51.5] },
+  { n: 'Berlin',        ll: [  13.4, 52.5] },
+  { n: 'Lagos',         ll: [   3.4,  6.5] },
+  { n: 'Cairo',         ll: [  31.2, 30.0] },
+  { n: 'Dubai',         ll: [  55.3, 25.3] },
+  { n: 'Mumbai',        ll: [  72.9, 19.1] },
+  { n: 'Singapore',     ll: [ 103.8,  1.3] },
+  { n: 'Tokyo',         ll: [ 139.7, 35.7] },
+  { n: 'Sydney',        ll: [ 151.2,-33.9] },
+  { n: 'Moscow',        ll: [  37.6, 55.8] },
+  { n: 'Seoul',         ll: [ 127.0, 37.6] },
 ];
 
 const SECTORS = [
@@ -84,24 +83,18 @@ const SIGNAL_TYPES = [
 
 const PHASES = ['Ingest', 'Detect', 'Model', 'Forecast'];
 
-function stageToInitialPhase(stage: number): number {
-  if (stage <= 1) return 1;
-  if (stage <= 4) return 2;
-  return 3;
-}
+function stageToInitialPhase(s: number) { return s <= 1 ? 1 : s <= 4 ? 2 : 3; }
 
-function buildTickerItems(): { region: string; name: string; value: number; tone: string }[] {
-  const out = [];
-  for (let i = 0; i < 24; i++) {
+function buildTickerItems() {
+  return Array.from({ length: 24 }, (_, i) => {
     const region = TICKER_REGIONS[Math.floor(Math.random() * TICKER_REGIONS.length)];
     const s = TICKER_SIGNALS[i % TICKER_SIGNALS.length];
     const value = Math.max(34, Math.min(97, s.base + Math.round((Math.random() - 0.5) * 18)));
-    out.push({ region, name: s.name, value, tone: s.tone });
-  }
-  return out;
+    return { region, name: s.name, value, tone: s.tone };
+  });
 }
 
-// ── Injected CSS ──────────────────────────────────────────────────────────────
+// ── CSS (scoped to .gal-root) ─────────────────────────────────────────────────
 
 const GLOBE_CSS = `
 .gal-root{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#0a1b34 0%,#061224 40%,#03060d 100%);overflow:hidden;font-family:"Inter",-apple-system,system-ui,sans-serif;color:#e9f3ff;letter-spacing:.01em;z-index:9999}
@@ -212,10 +205,7 @@ const GLOBE_CSS = `
 .gal-meta span+span::before{content:"·";color:rgba(111,216,255,.18);margin-right:14px}
 .gal-hud{position:absolute;z-index:3;color:rgba(111,216,255,.18);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .gal-hud .tick{width:18px;height:1px;background:currentColor}
-.gal-hud.tl{top:24px;left:24px}
-.gal-hud.tr{top:24px;right:24px}
-.gal-hud.bl{bottom:24px;left:24px}
-.gal-hud.br{bottom:24px;right:24px}
+.gal-hud.tl{top:24px;left:24px}.gal-hud.tr{top:24px;right:24px}.gal-hud.bl{bottom:24px;left:24px}.gal-hud.br{bottom:24px;right:24px}
 .gal-hud .v{color:rgba(233,243,255,.62)}
 @keyframes galDot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.65}}
 @media(max-width:720px){
@@ -234,7 +224,7 @@ const GLOBE_CSS = `
 @media(max-width:420px){.gal-gauges{display:none}}
 `;
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export const GlobeAuditLoader: React.FC<Props> = ({
   stage,
@@ -242,30 +232,30 @@ export const GlobeAuditLoader: React.FC<Props> = ({
   limitedDataMode,
   limitedDataReason,
 }) => {
-  const globeCanvasRef   = useRef<HTMLCanvasElement>(null);
-  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
-  const starsCanvasRef   = useRef<HTMLCanvasElement>(null);
-  const specCanvasRef    = useRef<HTMLCanvasElement>(null);
-  const leadersSvgRef    = useRef<SVGSVGElement>(null);
-  const telemetryRef     = useRef<HTMLDivElement>(null);
+  const globeRef   = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const starsRef   = useRef<HTMLCanvasElement>(null);
+  const specRef    = useRef<HTMLCanvasElement>(null);
+  const leadersRef = useRef<SVGSVGElement>(null);
+  const telRef     = useRef<HTMLDivElement>(null);
 
-  const [statusText, setStatusText]     = useState(STATUS_MESSAGES[0]);
-  const [companies,  setCompanies]      = useState(0);
-  const [signals,    setSignals]        = useState(0);
-  const [regions,    setRegions]        = useState(0);
-  const [clock,      setClock]          = useState('00:00:00 UTC');
-  const [sectorVals, setSectorVals]     = useState(() => SECTORS.map(() => 0));
+  const [statusText, setStatusText] = useState(STATUS_MESSAGES[0]);
+  const [companies,  setCompanies]  = useState(0);
+  const [signals,    setSignals]    = useState(0);
+  const [regions,    setRegions]    = useState(0);
+  const [clock,      setClock]      = useState('00:00:00 UTC');
+  const [sectorVals, setSectorVals] = useState(() => SECTORS.map(() => 0));
   const [g1, setG1] = useState(0);
   const [g2, setG2] = useState(0);
   const [g3, setG3] = useState(0);
-  const [activePhase, setActivePhase]   = useState(() => stageToInitialPhase(stage));
-  const [tickerItems]                   = useState(() => buildTickerItems());
+  const [activePhase, setActivePhase] = useState(() => stageToInitialPhase(stage));
+  const [tickerItems]                 = useState(buildTickerItems);
 
   const labelText = companyName
     ? `Analyzing ${companyName}`
     : 'Layoff Audit · Prediction Engine';
 
-  // ── Inject CSS once ───────────────────────────────────────────────────────
+  // ── CSS injection ───────────────────────────────────────────────────────────
   useEffect(() => {
     const id = 'gal-css';
     if (!document.getElementById(id)) {
@@ -274,20 +264,16 @@ export const GlobeAuditLoader: React.FC<Props> = ({
       el.textContent = GLOBE_CSS;
       document.head.appendChild(el);
     }
-    return () => { document.getElementById('gal-css')?.remove(); };
+    return () => document.getElementById('gal-css')?.remove();
   }, []);
 
-  // ── Status message cycling ─────────────────────────────────────────────────
+  // ── UI intervals ────────────────────────────────────────────────────────────
   useEffect(() => {
     let mi = 0;
-    const iv = setInterval(() => {
-      mi = (mi + 1) % STATUS_MESSAGES.length;
-      setStatusText(STATUS_MESSAGES[mi]);
-    }, 2200);
+    const iv = setInterval(() => { mi = (mi + 1) % STATUS_MESSAGES.length; setStatusText(STATUS_MESSAGES[mi]); }, 2200);
     return () => clearInterval(iv);
   }, []);
 
-  // ── Animated counters ──────────────────────────────────────────────────────
   useEffect(() => {
     let co = 0, si = 0, re = 0;
     const iv = setInterval(() => {
@@ -295,18 +281,14 @@ export const GlobeAuditLoader: React.FC<Props> = ({
       si = Math.min(2840000, si + Math.round(34000 + Math.random() * 28000));
       if (Math.random() < 0.06) re = Math.min(7, re + 1);
       setCompanies(co); setSignals(si); setRegions(re);
-      if (co >= 14237 && si >= 2840000 && re >= 7) {
-        setTimeout(() => { co = 0; si = 0; re = 0; }, 1800);
-      }
+      if (co >= 14237 && si >= 2840000 && re >= 7) setTimeout(() => { co = 0; si = 0; re = 0; }, 1800);
     }, 120);
     return () => clearInterval(iv);
   }, []);
 
-  // ── Clock ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const tick = () => {
-      const d = new Date();
-      const p = (n: number) => String(n).padStart(2, '0');
+      const d = new Date(), p = (n: number) => String(n).padStart(2, '0');
       setClock(`${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`);
     };
     tick();
@@ -314,148 +296,119 @@ export const GlobeAuditLoader: React.FC<Props> = ({
     return () => clearInterval(iv);
   }, []);
 
-  // ── Sector bars ────────────────────────────────────────────────────────────
   useEffect(() => {
-    const vals = SECTORS.map(s => 0);
     const iv = setInterval(() => {
       setSectorVals(prev => prev.map((v, i) => {
         const s = SECTORS[i];
         const target = Math.min(0.99, Math.max(0.05,
-          s.base + Math.sin(Date.now() / (3200 + s.base * 1000)) * 0.06
-               + (Math.random() - 0.5) * 0.02));
+          s.base + Math.sin(Date.now() / (3200 + s.base * 1000)) * 0.06 + (Math.random() - 0.5) * 0.02));
         return v + (target - v) * 0.08;
       }));
     }, 220);
     return () => clearInterval(iv);
   }, []);
 
-  // ── Gauge ticks ────────────────────────────────────────────────────────────
   useEffect(() => {
     let _g1 = 0, _g2 = 0, _g3 = 0;
     const iv = setInterval(() => {
       const t = Date.now() / 1000;
-      const t1 = 0.94 + Math.sin(t * 0.6) * 0.02;
-      const t2 = 0.62 + Math.sin(t * 0.4 + 1.2) * 0.08;
-      const t3 = 0.86 + Math.sin(t * 0.8 + 2.4) * 0.05;
-      _g1 += (t1 - _g1) * 0.05;
-      _g2 += (t2 - _g2) * 0.05;
-      _g3 += (t3 - _g3) * 0.05;
+      _g1 += (0.94 + Math.sin(t * 0.6) * 0.02   - _g1) * 0.05;
+      _g2 += (0.62 + Math.sin(t * 0.4 + 1.2) * 0.08 - _g2) * 0.05;
+      _g3 += (0.86 + Math.sin(t * 0.8 + 2.4) * 0.05 - _g3) * 0.05;
       setG1(_g1); setG2(_g2); setG3(_g3);
     }, 60);
     return () => clearInterval(iv);
   }, []);
 
-  // ── Phase progression ──────────────────────────────────────────────────────
   useEffect(() => {
-    const iv = setInterval(() => {
-      setActivePhase(p => {
-        const next = p + 1;
-        return next >= PHASES.length ? 1 : next;
-      });
-    }, 5500);
+    const iv = setInterval(() => setActivePhase(p => p + 1 >= PHASES.length ? 1 : p + 1), 5500);
     return () => clearInterval(iv);
   }, []);
 
-  // ── Canvas / globe animation (CDN-loaded d3) ───────────────────────────────
+  // ── Globe canvas animation ──────────────────────────────────────────────────
   useEffect(() => {
     let destroyed = false;
-    const rafIds: number[] = [];
-    const intervals: ReturnType<typeof setInterval>[] = [];
-
-    function loadScript(src: string): Promise<void> {
-      return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[data-gal="${src}"]`)) { resolve(); return; }
-        const s = document.createElement('script');
-        s.setAttribute('data-gal', src);
-        s.src = src;
-        s.onload = () => resolve();
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
+    let animRaf = 0;
 
     async function init() {
-      try {
-        await Promise.all([
-          loadScript('https://unpkg.com/d3-array@3.2.4/dist/d3-array.min.js'),
-          loadScript('https://unpkg.com/d3-geo@3.1.1/dist/d3-geo.min.js'),
-          loadScript('https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js'),
-        ]);
-      } catch { /* CDN failed — globe still renders without land */ }
+      // ── dynamic import d3/topojson (separate code chunk) ──────────────────
+      const [
+        { geoOrthographic, geoPath, geoGraticule10, geoInterpolate },
+        { feature: topoFeature },
+      ] = await Promise.all([
+        import('d3-geo'),
+        import('topojson-client'),
+      ]);
 
       if (destroyed) return;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const d3: any        = (window as any).d3;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const topojson: any  = (window as any).topojson;
+      // Wait one frame so canvas elements have been laid out and sized
+      await new Promise<void>(r => requestAnimationFrame(() => r()));
+      if (destroyed) return;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-      // ─── Stars ──────────────────────────────────────────────────────────
-      const starsCanvas = starsCanvasRef.current;
-      const sCtx = starsCanvas?.getContext('2d');
-      let starsW = 0, starsH = 0;
-      type Star = { x:number;y:number;r:number;a:number;tw:number;sp:number;hue:string;hero:boolean };
-      type Mote = { x:number;y:number;r:number;vy:number;vx:number;a:number;phase:number };
+      // ── Stars ──────────────────────────────────────────────────────────────
+      const sCvs = starsRef.current;
+      const sCtx = sCvs?.getContext('2d');
+      let sW = 0, sH = 0;
+
+      type Star    = { x:number;y:number;r:number;a:number;tw:number;sp:number;hue:string;hero:boolean };
+      type Mote    = { x:number;y:number;r:number;vy:number;vx:number;a:number;phase:number };
       type Shooter = { x:number;y:number;vx:number;vy:number;bornAt:number;maxLife:number;tail:number };
-      let stars: Star[] = [], motes: Mote[] = [], shooters: Shooter[] = [], nextShooterAt = 0;
+
+      let stars: Star[] = [], motes: Mote[] = [], shooters: Shooter[] = [], nextShoot = 0;
       const HUES = ['rgba(190,220,255,','rgba(170,200,255,','rgba(220,235,255,','rgba(180,160,255,','rgba(160,230,220,'];
 
       function sizeStars() {
-        if (!starsCanvas || !sCtx) return;
-        starsW = window.innerWidth; starsH = window.innerHeight;
-        starsCanvas.width = starsW * dpr; starsCanvas.height = starsH * dpr;
-        starsCanvas.style.width = starsW + 'px'; starsCanvas.style.height = starsH + 'px';
+        if (!sCvs || !sCtx) return;
+        sW = window.innerWidth; sH = window.innerHeight;
+        sCvs.width = sW * dpr; sCvs.height = sH * dpr;
+        sCvs.style.width = sW + 'px'; sCvs.style.height = sH + 'px';
         sCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        const cnt = Math.min(360, Math.round((starsW * starsH) / 7500));
-        stars = Array.from({ length: cnt }, () => {
+        const n = Math.min(360, Math.round((sW * sH) / 7500));
+        stars = Array.from({ length: n }, () => {
           const hero = Math.random() < 0.06;
-          return { x: Math.random()*starsW, y: Math.random()*starsH, r: hero?(1.4+Math.random()*1.4):(Math.random()*1.1+0.2), a: hero?(0.7+Math.random()*0.3):(Math.random()*0.55+0.15), tw: Math.random()*Math.PI*2, sp: 0.4+Math.random()*1.2, hue: HUES[Math.floor(Math.random()*HUES.length)], hero };
+          return { x: Math.random()*sW, y: Math.random()*sH, r: hero ? (1.4+Math.random()*1.4) : (Math.random()*1.1+0.2), a: hero ? (0.7+Math.random()*0.3) : (Math.random()*0.55+0.15), tw: Math.random()*Math.PI*2, sp: 0.4+Math.random()*1.2, hue: HUES[Math.floor(Math.random()*HUES.length)], hero };
         });
-        const mc = Math.min(60, Math.round((starsW*starsH)/36000));
-        motes = Array.from({ length: mc }, () => ({ x: Math.random()*starsW, y: Math.random()*starsH, r: Math.random()*0.9+0.3, vy: 0.08+Math.random()*0.16, vx: (Math.random()-0.5)*0.05, a: Math.random()*0.4+0.15, phase: Math.random()*Math.PI*2 }));
+        const mc = Math.min(60, Math.round((sW*sH)/36000));
+        motes = Array.from({ length: mc }, () => ({ x:Math.random()*sW, y:Math.random()*sH, r:Math.random()*0.9+0.3, vy:0.08+Math.random()*0.16, vx:(Math.random()-0.5)*0.05, a:Math.random()*0.4+0.15, phase:Math.random()*Math.PI*2 }));
       }
-
-      const onResize = () => { sizeStars(); fitGlobe(); };
-      window.addEventListener('resize', onResize);
-      sizeStars();
 
       function drawStars(t: number) {
         if (!sCtx) return;
-        sCtx.clearRect(0, 0, starsW, starsH);
+        sCtx.clearRect(0, 0, sW, sH);
         for (const m of motes) {
           m.y -= m.vy; m.x += m.vx + Math.sin(t*0.0006+m.phase)*0.08;
-          if (m.y < -4) { m.y = starsH+4; m.x = Math.random()*starsW; }
-          if (m.x < -4) m.x = starsW+4; if (m.x > starsW+4) m.x = -4;
+          if (m.y < -4) { m.y = sH+4; m.x = Math.random()*sW; }
+          if (m.x < -4) m.x = sW+4; if (m.x > sW+4) m.x = -4;
           const fl = 0.5+0.5*Math.sin(t*0.002+m.phase);
-          sCtx.beginPath(); sCtx.arc(m.x, m.y, m.r, 0, Math.PI*2);
+          sCtx.beginPath(); sCtx.arc(m.x,m.y,m.r,0,Math.PI*2);
           sCtx.fillStyle = `rgba(140,210,255,${(m.a*fl).toFixed(3)})`; sCtx.fill();
         }
         for (const s of stars) {
-          const tw = 0.55+0.45*Math.sin(t*0.0012*s.sp+s.tw);
-          const al = (s.a*tw).toFixed(3);
+          const tw = 0.55+0.45*Math.sin(t*0.0012*s.sp+s.tw), al = (s.a*tw).toFixed(3);
           if (s.hero) {
             const g = sCtx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);
-            g.addColorStop(0, s.hue+al+')'); g.addColorStop(1, s.hue+'0)');
+            g.addColorStop(0,s.hue+al+')'); g.addColorStop(1,s.hue+'0)');
             sCtx.fillStyle = g; sCtx.beginPath(); sCtx.arc(s.x,s.y,s.r*4,0,Math.PI*2); sCtx.fill();
           }
-          sCtx.beginPath(); sCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
-          sCtx.fillStyle = s.hue+al+')'; sCtx.fill();
+          sCtx.beginPath(); sCtx.arc(s.x,s.y,s.r,0,Math.PI*2); sCtx.fillStyle = s.hue+al+')'; sCtx.fill();
         }
-        if (t >= nextShooterAt) {
-          const fromLeft = Math.random()<0.5, y0=Math.random()*starsH*0.55, x0=fromLeft?-40:starsW+40;
-          const angle = fromLeft?(Math.PI/6)+Math.random()*(Math.PI/8):Math.PI-(Math.PI/6)-Math.random()*(Math.PI/8);
-          const speed = 0.9+Math.random()*0.7;
-          shooters.push({ x:x0,y:y0,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,bornAt:t,maxLife:900+Math.random()*500,tail:110+Math.random()*60 });
-          nextShooterAt = t+2400+Math.random()*4200;
+        if (t >= nextShoot) {
+          const fl2 = Math.random()<0.5, y0=Math.random()*sH*0.55, x0=fl2?-40:sW+40;
+          const ang = fl2 ? (Math.PI/6)+Math.random()*(Math.PI/8) : Math.PI-(Math.PI/6)-Math.random()*(Math.PI/8);
+          const spd = 0.9+Math.random()*0.7;
+          shooters.push({ x:x0,y:y0,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,bornAt:t,maxLife:900+Math.random()*500,tail:110+Math.random()*60 });
+          nextShoot = t+2400+Math.random()*4200;
         }
         for (let i=shooters.length-1;i>=0;i--) {
           const sh=shooters[i], age=t-sh.bornAt;
           if (age>sh.maxLife){shooters.splice(i,1);continue;}
           sh.x+=sh.vx*16; sh.y+=sh.vy*16;
-          if (sh.x<-100||sh.x>starsW+100||sh.y>starsH+100){shooters.splice(i,1);continue;}
-          const tx=sh.x-sh.vx*sh.tail, ty=sh.y-sh.vy*sh.tail;
-          const gr=sCtx.createLinearGradient(tx,ty,sh.x,sh.y), lf=1-age/sh.maxLife;
+          if (sh.x<-100||sh.x>sW+100||sh.y>sH+100){shooters.splice(i,1);continue;}
+          const tx=sh.x-sh.vx*sh.tail, ty=sh.y-sh.vy*sh.tail, lf=1-age/sh.maxLife;
+          const gr=sCtx.createLinearGradient(tx,ty,sh.x,sh.y);
           gr.addColorStop(0,'rgba(180,230,255,0)'); gr.addColorStop(0.6,`rgba(180,230,255,${(0.35*lf).toFixed(3)})`); gr.addColorStop(1,`rgba(255,255,255,${(0.95*lf).toFixed(3)})`);
           sCtx.strokeStyle=gr; sCtx.lineWidth=1.4; sCtx.lineCap='round';
           sCtx.beginPath(); sCtx.moveTo(tx,ty); sCtx.lineTo(sh.x,sh.y); sCtx.stroke();
@@ -464,191 +417,234 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         }
       }
 
-      // ─── Globe ──────────────────────────────────────────────────────────
-      const gCvs = globeCanvasRef.current;
-      const oCvs = overlayCanvasRef.current;
+      // ── Globe canvas ───────────────────────────────────────────────────────
+      const gCvs = globeRef.current;
+      const oCvs = overlayRef.current;
       const gctx = gCvs?.getContext('2d');
       const octx = oCvs?.getContext('2d');
       if (!gCvs || !oCvs || !gctx || !octx) return;
 
-      let size=0, R=0, cx=0, cy=0;
+      let sz = 0, R = 0, cx = 0, cy = 0;
 
-      const proj = d3?.geoOrthographic?.()?.clipAngle(90);
-      const gpath = d3?.geoPath?.(proj, gctx);
-      const opath = d3?.geoPath?.(proj, octx);
-      const graticule = d3?.geoGraticule10?.();
-      const sphere = { type:'Sphere' };
+      // Build d3 projection + path renderers
+      const proj  = geoOrthographic().clipAngle(90);
+      const gpath = geoPath(proj, gctx);
+      const opath = geoPath(proj, octx);
+      const grat  = geoGraticule10();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sphere = { type: 'Sphere' } as any; // d3-geo Sphere — not a standard GeoJSON type
 
       const COL = {
         ocean0:'#0b2a4a', ocean1:'#1e4d7e', land0:'#1a8a5a', land1:'#0e4a32',
         coast:'rgba(180,230,255,.55)', grat:'rgba(120,200,255,.10)',
         rim:'rgba(150,220,255,.85)', pulse:'rgba(111,216,255,1)',
-        arc:'rgba(180,235,255,.95)', arcVi:'rgba(170,145,255,.95)', arcTeal:'rgba(120,240,210,.95)'
+        arc:'rgba(180,235,255,.95)', arcVi:'rgba(170,145,255,.95)', arcTeal:'rgba(120,240,210,.95)',
       };
 
       let oceanGrad: CanvasGradient, landGrad: CanvasGradient, shadeGrad: CanvasGradient;
 
-      function fitGlobe() {
-        if (!gCvs || !oCvs || !gctx || !octx) return;
-        const rect = gCvs.getBoundingClientRect();
-        size = Math.min(rect.width, rect.height) || 300;
-        gCvs.width = size*dpr; gCvs.height = size*dpr;
-        oCvs.width = size*dpr; oCvs.height = size*dpr;
-        oCvs.style.width = oCvs.style.height = size+'px';
-        gctx.setTransform(dpr,0,0,dpr,0,0);
-        octx.setTransform(dpr,0,0,dpr,0,0);
-        cx=size/2; cy=size/2; R=size*0.48;
-        if (proj) proj.scale(R).translate([cx,cy]);
+      function rebuildGradients() {
         oceanGrad = gctx.createRadialGradient(cx-R*.4,cy-R*.4,R*.1,cx,cy,R);
         oceanGrad.addColorStop(0,COL.ocean1); oceanGrad.addColorStop(1,COL.ocean0);
         landGrad = gctx.createRadialGradient(cx-R*.4,cy-R*.4,R*.1,cx,cy,R);
         landGrad.addColorStop(0,COL.land0); landGrad.addColorStop(1,COL.land1);
         shadeGrad = gctx.createRadialGradient(cx-R*.35,cy-R*.35,R*.2,cx+R*.15,cy+R*.15,R*1.1);
-        shadeGrad.addColorStop(0,'rgba(0,5,15,0)'); shadeGrad.addColorStop(0.55,'rgba(0,5,15,0)'); shadeGrad.addColorStop(1,'rgba(0,5,15,.55)');
-        // sync overlay SVG leaders viewBox
-        if (leadersSvgRef.current) leadersSvgRef.current.setAttribute('viewBox',`0 0 ${size} ${size}`);
+        shadeGrad.addColorStop(0,'rgba(0,5,15,0)'); shadeGrad.addColorStop(.55,'rgba(0,5,15,0)'); shadeGrad.addColorStop(1,'rgba(0,5,15,.55)');
       }
 
-      // Load world atlas
-      let countries: unknown = null;
+      function fitGlobe() {
+        const rect = gCvs.getBoundingClientRect();
+        sz = Math.max(Math.min(rect.width, rect.height), 40);   // never 0
+        gCvs.width  = sz * dpr; gCvs.height = sz * dpr;
+        oCvs.width  = sz * dpr; oCvs.height = sz * dpr;
+        oCvs.style.width  = sz + 'px'; oCvs.style.height = sz + 'px';
+        gctx.setTransform(dpr,0,0,dpr,0,0);
+        octx.setTransform(dpr,0,0,dpr,0,0);
+        cx = sz/2; cy = sz/2; R = sz * 0.48;
+        proj.scale(R).translate([cx, cy]);
+        rebuildGradients();
+        if (leadersRef.current) leadersRef.current.setAttribute('viewBox', `0 0 ${sz} ${sz}`);
+      }
+
+      // Load world atlas (real country borders)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let countries: any = null;
       try {
-        const res = await fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json');
+        const res  = await fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json');
         const topo = await res.json();
-        if (topojson) countries = topojson.feature(topo, topo.objects.countries);
-      } catch { /* no land data — draws ocean + graticule only */ }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        countries = topoFeature(topo as any, (topo as any).objects.countries);
+      } catch { /* draw without land on CDN failure */ }
 
       if (destroyed) return;
+
+      // Final fitGlobe after fetch — DOM is definitely painted now
+      sizeStars();
       fitGlobe();
 
       function drawGlobe() {
-        if (!gctx || !proj || !gpath) return;
-        gctx.clearRect(0,0,size,size);
-        gctx.beginPath(); gpath(sphere); gctx.fillStyle=oceanGrad; gctx.fill();
-        if (graticule) { gctx.beginPath(); gpath(graticule); gctx.strokeStyle=COL.grat; gctx.lineWidth=0.8; gctx.stroke(); }
+        gctx.clearRect(0, 0, sz, sz);
+
+        // ── Ocean sphere ───────────────────────────────────────────────────
+        gctx.beginPath();
+        gpath(sphere);
+        gctx.fillStyle = oceanGrad;
+        gctx.fill();
+
+        // ── Graticule ──────────────────────────────────────────────────────
+        gctx.beginPath();
+        gpath(grat);
+        gctx.strokeStyle = COL.grat;
+        gctx.lineWidth   = 0.8;
+        gctx.stroke();
+
+        // ── Land ───────────────────────────────────────────────────────────
         if (countries) {
-          gctx.beginPath(); gpath(countries); gctx.fillStyle=landGrad; gctx.fill();
-          gctx.strokeStyle=COL.coast; gctx.lineWidth=0.6; gctx.lineJoin='round'; gctx.stroke();
+          gctx.beginPath();
+          gpath(countries);
+          gctx.fillStyle   = landGrad;
+          gctx.fill();
+          gctx.strokeStyle = COL.coast;
+          gctx.lineWidth   = 0.6;
+          gctx.lineJoin    = 'round';
+          gctx.stroke();
         }
-        gctx.save(); gctx.beginPath(); gpath(sphere); gctx.clip();
-        gctx.fillStyle=shadeGrad; gctx.fillRect(0,0,size,size);
-        const sx=cx-R*.42, sy=cy-R*.42;
-        const sp=gctx.createRadialGradient(sx,sy,0,sx,sy,R*.55);
-        sp.addColorStop(0,'rgba(220,240,255,.45)'); sp.addColorStop(0.4,'rgba(180,220,255,.10)'); sp.addColorStop(1,'rgba(180,220,255,0)');
-        gctx.fillStyle=sp; gctx.fillRect(0,0,size,size); gctx.restore();
-        gctx.beginPath(); gpath(sphere); gctx.strokeStyle=COL.rim; gctx.lineWidth=1.2; gctx.stroke();
+
+        // ── Terminator shading + specular ──────────────────────────────────
+        gctx.save();
+        gctx.beginPath(); gpath(sphere); gctx.clip();
+        gctx.fillStyle = shadeGrad;
+        gctx.fillRect(0, 0, sz, sz);
+        const sx = cx - R*.42, sy = cy - R*.42;
+        const sp = gctx.createRadialGradient(sx,sy,0,sx,sy,R*.55);
+        sp.addColorStop(0,'rgba(220,240,255,.45)'); sp.addColorStop(.4,'rgba(180,220,255,.10)'); sp.addColorStop(1,'rgba(180,220,255,0)');
+        gctx.fillStyle = sp; gctx.fillRect(0, 0, sz, sz);
+        gctx.restore();
+
+        // ── Atmosphere rim ─────────────────────────────────────────────────
+        gctx.beginPath(); gpath(sphere);
+        gctx.strokeStyle = COL.rim; gctx.lineWidth = 1.2; gctx.stroke();
       }
 
-      // Visibility check
-      function isVisible(ll: [number,number]): boolean {
-        if (!proj) return true;
-        const c = proj.rotate();
-        const lr = c[0]*Math.PI/180, pr = -c[1]*Math.PI/180;
-        const lon = ll[0]*Math.PI/180+lr, lat = ll[1]*Math.PI/180;
-        return Math.cos(lat)*Math.cos(lon)*Math.cos(pr)+Math.sin(lat)*Math.sin(pr) > 0;
+      function isVisible(ll: [number, number]): boolean {
+        const [la, ph] = proj.rotate();
+        const lr = la * Math.PI/180, pr = -ph * Math.PI/180;
+        const lon = ll[0]*Math.PI/180 + lr, lat = ll[1]*Math.PI/180;
+        return Math.cos(lat)*Math.cos(lon)*Math.cos(pr) + Math.sin(lat)*Math.sin(pr) > 0;
       }
 
-      type Arc = { from:{n:string;ll:[number,number]};to:{n:string;ll:[number,number]};start:number;duration:number;color:string;landed?:boolean;landAt?:number };
+      // ── Data arcs ──────────────────────────────────────────────────────────
+      type Arc = {
+        from: typeof HUBS[number]; to: typeof HUBS[number];
+        start: number; duration: number; color: string;
+        landed?: boolean; landAt?: number;
+      };
       const arcs: Arc[] = [];
-      const ARC_PALETTE = [COL.arc, COL.arcVi, COL.arcTeal];
-      let nextArcAt = performance.now()+200;
+      const ARC_PAL = [COL.arc, COL.arcVi, COL.arcTeal];
+      let nextArcAt = performance.now() + 200;
 
       function spawnArc(now: number) {
         const a = HUBS[Math.floor(Math.random()*HUBS.length)];
-        let b = HUBS[Math.floor(Math.random()*HUBS.length)];
-        if (a===b) b = HUBS[(HUBS.indexOf(a)+1)%HUBS.length];
-        arcs.push({ from:a, to:b, start:now, duration:2400+Math.random()*1800, color:ARC_PALETTE[Math.floor(Math.random()*3)] });
+        let   b = HUBS[Math.floor(Math.random()*HUBS.length)];
+        if (a === b) b = HUBS[(HUBS.indexOf(a)+1)%HUBS.length];
+        arcs.push({ from:a, to:b, start:now, duration:2400+Math.random()*1800, color:ARC_PAL[Math.floor(Math.random()*3)] });
       }
 
-      let reticleHub: typeof HUBS[number]|null = null, reticleLockedAt = 0;
+      // ── Reticle ────────────────────────────────────────────────────────────
+      let reticleHub: typeof HUBS[number] | null = null;
+      let reticleAt = 0;
 
       function drawOverlay(now: number) {
-        if (!octx || !proj || !opath) return;
-        octx.clearRect(0,0,size,size);
+        octx.clearRect(0, 0, sz, sz);
 
-        // Radar sweep
-        const sweepAngle = ((now-startTs)/4000)*Math.PI*2;
-        octx.save(); octx.beginPath(); opath(sphere); octx.clip();
+        // radar sweep — clip to sphere, then conic gradient or fallback wedge
+        const sweepA = ((now - startTs) / 4000) * Math.PI * 2;
+        octx.save();
+        octx.beginPath(); opath(sphere); octx.clip();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const conic = (octx as any).createConicGradient;
-        if (conic) {
+        if (typeof (octx as any).createConicGradient === 'function') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const sg = (octx as any).createConicGradient(sweepAngle,cx,cy);
-          sg.addColorStop(0.0,'rgba(111,216,255,.28)'); sg.addColorStop(0.06,'rgba(111,216,255,.10)'); sg.addColorStop(0.18,'rgba(111,216,255,0)'); sg.addColorStop(1.0,'rgba(111,216,255,0)');
-          octx.fillStyle=sg; octx.fillRect(0,0,size,size);
+          const sg = (octx as any).createConicGradient(sweepA, cx, cy);
+          sg.addColorStop(0.00,'rgba(111,216,255,.28)');
+          sg.addColorStop(0.06,'rgba(111,216,255,.10)');
+          sg.addColorStop(0.18,'rgba(111,216,255,0)');
+          sg.addColorStop(1.00,'rgba(111,216,255,0)');
+          octx.fillStyle = sg; octx.fillRect(0, 0, sz, sz);
         } else {
-          octx.save(); octx.translate(cx,cy); octx.rotate(sweepAngle);
+          octx.save(); octx.translate(cx,cy); octx.rotate(sweepA);
           octx.beginPath(); octx.moveTo(0,0); octx.arc(0,0,R,0,Math.PI*.25); octx.closePath();
           octx.fillStyle='rgba(111,216,255,.18)'; octx.fill(); octx.restore();
         }
         octx.restore();
 
-        // Arcs
-        const interp = d3?.geoInterpolate;
-        if (interp) {
-          for (let i=arcs.length-1;i>=0;i--) {
-            const a=arcs[i], t=(now-a.start)/a.duration;
-            if (t>=1.15){arcs.splice(i,1);continue;}
-            const ip = interp(a.from.ll,a.to.ll);
-            const headT=Math.min(1,t), tailLen=0.34, tailT=Math.max(0,headT-tailLen);
-            const subSteps=22;
-            for (let k=0;k<subSteps;k++) {
-              const f0=tailT+(headT-tailT)*(k/subSteps), f1=tailT+(headT-tailT)*((k+1)/subSteps);
-              if (f1<=0||f0>=1) continue;
-              const mid=ip((f0+f1)/2);
-              if (!isVisible(mid)) continue;
-              const alpha=(k/subSteps)**1.6;
-              octx.beginPath();
-              opath({type:'LineString',coordinates:[ip(Math.max(0,f0)),ip(Math.min(1,f1))]});
-              octx.strokeStyle=a.color.replace(/[\d.]+\)$/g,(alpha*0.95).toFixed(3)+')');
-              octx.lineWidth=1.1+alpha*1.4; octx.lineCap='round'; octx.stroke();
+        // data arcs
+        for (let i = arcs.length-1; i >= 0; i--) {
+          const a = arcs[i];
+          const t = (now - a.start) / a.duration;
+          if (t >= 1.15) { arcs.splice(i,1); continue; }
+          const ip    = geoInterpolate(a.from.ll, a.to.ll);
+          const headT = Math.min(1, t), tailT = Math.max(0, headT - 0.34);
+          for (let k = 0; k < 22; k++) {
+            const f0 = tailT + (headT-tailT)*(k/22), f1 = tailT + (headT-tailT)*((k+1)/22);
+            if (f1 <= 0 || f0 >= 1) continue;
+            const mid = ip((f0+f1)/2) as [number,number];
+            if (!isVisible(mid)) continue;
+            const alpha = (k/22)**1.6;
+            octx.beginPath();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            opath({ type:'LineString', coordinates:[ip(Math.max(0,f0)),ip(Math.min(1,f1))] } as any);
+            octx.strokeStyle = a.color.replace(/[\d.]+\)$/g, (alpha*0.95).toFixed(3)+')');
+            octx.lineWidth = 1.1 + alpha*1.4; octx.lineCap = 'round'; octx.stroke();
+          }
+          // arc head glow
+          if (headT < 1 && isVisible(ip(headT) as [number,number])) {
+            const p = proj(ip(headT)); if (p) {
+              const gr = octx.createRadialGradient(p[0],p[1],0,p[0],p[1],9);
+              gr.addColorStop(0, a.color); gr.addColorStop(1,'rgba(111,216,255,0)');
+              octx.beginPath(); octx.arc(p[0],p[1],9,0,Math.PI*2); octx.fillStyle=gr; octx.fill();
             }
-            if (headT<1 && isVisible(ip(headT))) {
-              const p=proj(ip(headT)); if (p) {
-                const gr=octx.createRadialGradient(p[0],p[1],0,p[0],p[1],9);
-                gr.addColorStop(0,a.color); gr.addColorStop(1,'rgba(111,216,255,0)');
-                octx.beginPath(); octx.arc(p[0],p[1],9,0,Math.PI*2); octx.fillStyle=gr; octx.fill();
-              }
-            }
-            if (t>0.99&&!a.landed){a.landed=true;a.landAt=now;}
-            if (a.landed&&a.landAt) {
-              const lt=(now-a.landAt)/900;
-              if (lt<1&&isVisible(a.to.ll)) {
-                const p=proj(a.to.ll); if (p) {
-                  octx.beginPath(); octx.arc(p[0],p[1],4+lt*22,0,Math.PI*2);
-                  octx.strokeStyle=`rgba(111,216,255,${(1-lt).toFixed(3)})`; octx.lineWidth=1.2; octx.stroke();
-                }
+          }
+          // landing pulse
+          if (t > 0.99 && !a.landed) { a.landed=true; a.landAt=now; }
+          if (a.landed && a.landAt) {
+            const lt = (now-a.landAt)/900;
+            if (lt < 1 && isVisible(a.to.ll)) {
+              const p = proj(a.to.ll); if (p) {
+                octx.beginPath(); octx.arc(p[0],p[1],4+lt*22,0,Math.PI*2);
+                octx.strokeStyle=`rgba(111,216,255,${(1-lt).toFixed(3)})`; octx.lineWidth=1.2; octx.stroke();
               }
             }
           }
         }
 
-        // Hub beacons
-        for (let i=0;i<HUBS.length;i++) {
-          const h=HUBS[i]; if(!isVisible(h.ll)) continue;
-          const p=proj(h.ll); if(!p) continue;
-          const phase=(now/1800+i*0.37)%1;
+        // hub pulse beacons
+        for (let i = 0; i < HUBS.length; i++) {
+          const h = HUBS[i]; if (!isVisible(h.ll)) continue;
+          const p = proj(h.ll); if (!p) continue;
+          const phase = (now/1800 + i*0.37) % 1;
           octx.beginPath(); octx.arc(p[0],p[1],2+phase*14,0,Math.PI*2);
-          octx.strokeStyle=`rgba(111,216,255,${((1-phase)*0.55).toFixed(3)})`; octx.lineWidth=0.9; octx.stroke();
+          octx.strokeStyle=`rgba(111,216,255,${((1-phase)*.55).toFixed(3)})`; octx.lineWidth=0.9; octx.stroke();
           octx.beginPath(); octx.arc(p[0],p[1],1.6,0,Math.PI*2);
           octx.fillStyle=COL.pulse; octx.shadowColor=COL.pulse; octx.shadowBlur=6; octx.fill(); octx.shadowBlur=0;
         }
 
-        // Reticle
-        if (!reticleHub || now-reticleLockedAt>1400) {
-          const v=HUBS.filter(h=>isVisible(h.ll));
-          if (v.length) { reticleHub=v[Math.floor(Math.random()*v.length)]; reticleLockedAt=now; }
+        // reticle crosshair — locks onto a visible hub
+        if (!reticleHub || now-reticleAt > 1400) {
+          const vis = HUBS.filter(h => isVisible(h.ll));
+          if (vis.length) { reticleHub = vis[Math.floor(Math.random()*vis.length)]; reticleAt = now; }
         }
-        if (reticleHub&&isVisible(reticleHub.ll)) {
-          const p=proj(reticleHub.ll); if (p) {
-            const t2=(now-reticleLockedAt)/1400;
-            const s2=t2<0.25?(1-t2/0.25)*8+12:12;
-            const al2=t2<0.85?0.9:(1-(t2-0.85)/0.15)*0.9;
+        if (reticleHub && isVisible(reticleHub.ll)) {
+          const p = proj(reticleHub.ll); if (p) {
+            const t2 = (now-reticleAt)/1400;
+            const hs = t2 < 0.25 ? (1-t2/0.25)*8+12 : 12;
+            const al2 = t2 < 0.85 ? 0.9 : (1-(t2-0.85)/0.15)*0.9;
+            const leg = hs*0.45;
             octx.save(); octx.translate(p[0],p[1]);
             octx.strokeStyle=`rgba(255,235,130,${al2.toFixed(3)})`; octx.lineWidth=1.1;
-            const half=s2, leg=s2*0.45;
             ([[-1,-1],[1,-1],[1,1],[-1,1]] as [number,number][]).forEach(([dx,dy]) => {
               octx.beginPath();
-              octx.moveTo(dx*half,dy*half-dy*leg); octx.lineTo(dx*half,dy*half); octx.lineTo(dx*half-dx*leg,dy*half); octx.stroke();
+              octx.moveTo(dx*hs, dy*hs-dy*leg); octx.lineTo(dx*hs, dy*hs); octx.lineTo(dx*hs-dx*leg, dy*hs);
+              octx.stroke();
             });
             octx.beginPath(); octx.moveTo(-3,0); octx.lineTo(3,0); octx.moveTo(0,-3); octx.lineTo(0,3); octx.stroke();
             octx.restore();
@@ -656,20 +652,20 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         }
       }
 
-      // ─── Spectrum ─────────────────────────────────────────────────────────
-      const spCvs = specCanvasRef.current;
+      // ── Spectrum ────────────────────────────────────────────────────────────
+      const spCvs = specRef.current;
       const spCtx = spCvs?.getContext('2d');
-      let spW=0, spH=0;
-      type SpecBar = { target:number;cur:number;phase:number;speed:number };
+      let spW = 0, spH = 0;
+      type SpecBar = { target:number; cur:number; phase:number; speed:number };
       let specBars: SpecBar[] = [];
 
       function sizeSpec() {
         if (!spCvs||!spCtx) return;
-        const r=spCvs.getBoundingClientRect();
-        spW=r.width||156; spH=r.height||36;
-        spCvs.width=spW*dpr; spCvs.height=spH*dpr;
+        const r = spCvs.getBoundingClientRect();
+        spW = Math.max(r.width, 10); spH = Math.max(r.height, 10);
+        spCvs.width = spW*dpr; spCvs.height = spH*dpr;
         spCtx.setTransform(dpr,0,0,dpr,0,0);
-        specBars=Array.from({length:28},()=>({target:0.2+Math.random()*0.6,cur:0.2+Math.random()*0.6,phase:Math.random()*Math.PI*2,speed:0.0008+Math.random()*0.0014}));
+        specBars = Array.from({length:28},()=>({target:0.2+Math.random()*0.6,cur:0.2+Math.random()*0.6,phase:Math.random()*Math.PI*2,speed:0.0008+Math.random()*0.0014}));
       }
       sizeSpec();
 
@@ -684,55 +680,54 @@ export const GlobeAuditLoader: React.FC<Props> = ({
           const v=b.cur*(0.65+0.35*Math.sin(t*b.speed+b.phase));
           const h2=Math.max(2,v*spH), x=i*(bw+gap), y=spH-h2;
           const gr=spCtx.createLinearGradient(0,y,0,spH);
-          gr.addColorStop(0,'rgba(111,216,255,.95)'); gr.addColorStop(0.5,'rgba(155,123,255,.6)'); gr.addColorStop(1,'rgba(79,224,192,.25)');
+          gr.addColorStop(0,'rgba(111,216,255,.95)'); gr.addColorStop(.5,'rgba(155,123,255,.6)'); gr.addColorStop(1,'rgba(79,224,192,.25)');
           spCtx.fillStyle=gr; spCtx.fillRect(x,y,bw,h2);
         }
       }
 
-      // ─── Telemetry cards ──────────────────────────────────────────────────
-      const telEl  = telemetryRef.current;
-      const svgEl  = leadersSvgRef.current;
+      // ── Telemetry cards ─────────────────────────────────────────────────────
+      const telEl = telRef.current;
+      const svgEl = leadersRef.current;
       const SVG_NS = 'http://www.w3.org/2000/svg';
-      type TCard = { hub:typeof HUBS[number];angle:number;dist:number;card:HTMLDivElement;line:SVGLineElement;dot:SVGCircleElement;bornAt:number;maxLife:number;fading:boolean };
+      type TCard = { hub:typeof HUBS[number]; angle:number; dist:number; card:HTMLDivElement; line:SVGLineElement; dot:SVGCircleElement; bornAt:number; maxLife:number; fading:boolean };
       const tcards: TCard[] = [];
-      let nextTcardAt = performance.now()+800;
+      let nextTcard = performance.now() + 800;
 
       function spawnTcard(now: number) {
-        if (!telEl||!svgEl||!proj) return;
-        const tracked=new Set(tcards.map(c=>c.hub.n));
-        const cands=HUBS.filter(h=>isVisible(h.ll)&&!tracked.has(h.n));
+        if (!telEl||!svgEl) return;
+        const tracked = new Set(tcards.map(c => c.hub.n));
+        const cands   = HUBS.filter(h => isVisible(h.ll) && !tracked.has(h.n));
         if (!cands.length) return;
-        const hub=cands[Math.floor(Math.random()*cands.length)];
-        const angle=(-Math.PI/3)+Math.random()*(Math.PI*1.3);
-        const dist=70+Math.random()*30;
-        const sig=SIGNAL_TYPES[Math.floor(Math.random()*SIGNAL_TYPES.length)];
-        const val=Math.max(30,Math.min(98,sig.base+Math.round((Math.random()-0.5)*18)));
-        const tier=val>=80?'HIGH':val>=60?'ELEV':'MOD';
-        const tierCls=val>=80?'risk-high':val>=60?'risk-warn':'risk-ok';
-        const card=document.createElement('div');
-        card.className='gal-tcard';
-        card.innerHTML=`<div class="trow1"><span class="tblip"></span>Signal ${sig.code} · LIVE</div><div class="tcoord">${sig.name}</div><div class="tmeter"><i style="width:${val}%"></i></div><div class="tmeta"><span>${val}%</span><span class="${tierCls}">${tier}</span></div>`;
+        const hub  = cands[Math.floor(Math.random()*cands.length)];
+        const angle = (-Math.PI/3) + Math.random()*(Math.PI*1.3);
+        const dist  = 70 + Math.random()*30;
+        const sig   = SIGNAL_TYPES[Math.floor(Math.random()*SIGNAL_TYPES.length)];
+        const val   = Math.max(30, Math.min(98, sig.base + Math.round((Math.random()-0.5)*18)));
+        const tier  = val>=80?'HIGH':val>=60?'ELEV':'MOD';
+        const tierCls = val>=80?'risk-high':val>=60?'risk-warn':'risk-ok';
+        const card  = document.createElement('div');
+        card.className = 'gal-tcard';
+        card.innerHTML = `<div class="trow1"><span class="tblip"></span>Signal ${sig.code} · LIVE</div><div class="tcoord">${sig.name}</div><div class="tmeter"><i style="width:${val}%"></i></div><div class="tmeta"><span>${val}%</span><span class="${tierCls}">${tier}</span></div>`;
         telEl.appendChild(card);
-        const line=document.createElementNS(SVG_NS,'line');
+        const line = document.createElementNS(SVG_NS,'line');
         line.setAttribute('stroke','rgba(111,216,255,.7)'); line.setAttribute('stroke-width','0.8'); line.setAttribute('stroke-dasharray','2 2');
         svgEl.appendChild(line);
-        const dot=document.createElementNS(SVG_NS,'circle');
+        const dot = document.createElementNS(SVG_NS,'circle');
         dot.setAttribute('r','2'); dot.setAttribute('fill','rgba(111,216,255,1)');
         svgEl.appendChild(dot);
-        tcards.push({hub,angle,dist,card,line,dot,bornAt:now,maxLife:3400+Math.random()*1200,fading:false});
+        tcards.push({ hub,angle,dist,card,line,dot,bornAt:now,maxLife:3400+Math.random()*1200,fading:false });
       }
 
       function updateTcards(now: number) {
-        if (now>=nextTcardAt&&tcards.filter(c=>!c.fading).length<3) {
-          spawnTcard(now); nextTcardAt=now+1400+Math.random()*1200;
+        if (now >= nextTcard && tcards.filter(c=>!c.fading).length < 3) {
+          spawnTcard(now); nextTcard = now+1400+Math.random()*1200;
         }
         for (let i=tcards.length-1;i>=0;i--) {
           const c=tcards[i];
-          const visible=isVisible(c.hub.ll), age=now-c.bornAt;
-          if (!visible||age>c.maxLife) {
+          if (!isVisible(c.hub.ll)||now-c.bornAt>c.maxLife) {
             if (!c.fading) {
               c.fading=true; c.card.classList.add('fading');
-              setTimeout(()=>{ c.card.remove(); c.line.remove(); c.dot.remove(); const idx=tcards.indexOf(c); if(idx>=0)tcards.splice(idx,1); },480);
+              setTimeout(()=>{ c.card.remove(); c.line.remove(); c.dot.remove(); const idx=tcards.indexOf(c); if(idx>=0)tcards.splice(idx,1); }, 480);
             }
             continue;
           }
@@ -745,49 +740,56 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         }
       }
 
-      // ─── Main loop ────────────────────────────────────────────────────────
-      let lambda=0, lastTs=performance.now();
-      const startTs=lastTs;
+      // ── Resize handler ──────────────────────────────────────────────────────
+      const onResize = () => { sizeStars(); fitGlobe(); sizeSpec(); };
+      window.addEventListener('resize', onResize);
+
+      // ── Main loop ───────────────────────────────────────────────────────────
+      let lambda = 0, lastTs = performance.now();
+      const startTs = lastTs;
 
       function frame(now: number) {
         if (destroyed) return;
-        const dt=now-lastTs; lastTs=now;
-        lambda=(lambda+dt*0.006)%360;
-        if (proj) proj.rotate([lambda,-18,0]);
-        drawStars(now); drawGlobe(); drawOverlay(now); drawSpectrum(now); updateTcards(now);
-        if (now>=nextArcAt&&arcs.length<9) { spawnArc(now); nextArcAt=now+350+Math.random()*650; }
-        const raf=requestAnimationFrame(frame); rafIds.push(raf);
+        const dt = now - lastTs; lastTs = now;
+        lambda = (lambda + dt * 0.006) % 360;
+        proj.rotate([lambda, -18, 0]);
+        drawStars(now);
+        drawGlobe();
+        drawOverlay(now);
+        drawSpectrum(now);
+        updateTcards(now);
+        if (now >= nextArcAt && arcs.length < 9) { spawnArc(now); nextArcAt = now+350+Math.random()*650; }
+        animRaf = requestAnimationFrame(frame);
       }
-      const initRaf=requestAnimationFrame(frame); rafIds.push(initRaf);
+      animRaf = requestAnimationFrame(frame);
 
-      return () => { window.removeEventListener('resize',onResize); };
+      // store cleanup for resize
+      return () => window.removeEventListener('resize', onResize);
     }
 
-    init();
-    return () => {
-      destroyed=true;
-      rafIds.forEach(id=>cancelAnimationFrame(id));
-      intervals.forEach(id=>clearInterval(id));
-      // remove injected CDN scripts on full unmount
-      document.querySelectorAll('script[data-gal]').forEach(s=>s.remove());
-      // clean up any remaining tcard DOM nodes
-      telemetryRef.current?.querySelectorAll('.gal-tcard').forEach(n=>n.remove());
-    };
-  }, []); // runs once
+    let cleanupFn: (() => void) | undefined;
+    init().then(fn => { cleanupFn = fn; }).catch(console.warn);
 
-  // ── Derived gauge values ──────────────────────────────────────────────────
-  const CIRC = 2 * Math.PI * 26; // 163.36
+    return () => {
+      destroyed = true;
+      if (animRaf) cancelAnimationFrame(animRaf);
+      cleanupFn?.();
+      telRef.current?.querySelectorAll('.gal-tcard').forEach(n => n.remove());
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Gauge ring offsets ──────────────────────────────────────────────────────
+  const CIRC = 2 * Math.PI * 26;
   const g1off = (CIRC * (1 - g1)).toFixed(2);
   const g2off = (CIRC * (1 - g2)).toFixed(2);
   const g3off = (CIRC * (1 - g3)).toFixed(2);
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="gal-root" role="status" aria-label="Analyzing company data">
-      {/* Background layers */}
-      <canvas className="gal-stars" ref={starsCanvasRef} aria-hidden="true" />
-      <div className="gal-aurora" aria-hidden="true" />
-      <div className="gal-nebula" aria-hidden="true" />
+      <canvas className="gal-stars" ref={starsRef} aria-hidden="true" />
+      <div className="gal-aurora"   aria-hidden="true" />
+      <div className="gal-nebula"   aria-hidden="true" />
       <div className="gal-gridmesh" aria-hidden="true" />
 
       {/* Top engine bar */}
@@ -797,14 +799,11 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         <span className="gal-engine">Layoff Audit<span className="sub"> Prediction Engine · v4.2</span></span>
         <span className="gal-divider" />
         <div className="gal-phases">
-          {PHASES.map((ph, i) => {
-            const cls = i < activePhase ? 'done' : i === activePhase ? 'active' : '';
-            return (
-              <div key={ph} className={`gal-phase ${cls}`}>
-                <span className="pdot" />{ph}
-              </div>
-            );
-          })}
+          {PHASES.map((ph, i) => (
+            <div key={ph} className={`gal-phase${i < activePhase ? ' done' : i === activePhase ? ' active' : ''}`}>
+              <span className="pdot" />{ph}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -830,86 +829,49 @@ export const GlobeAuditLoader: React.FC<Props> = ({
           <span>Company Signals</span>
           <span className="gal-live"><span className="pulse" />Live</span>
         </div>
-        {SECTORS.map((s, i) => (
-          <div key={s.id} className={`gal-srow${s.warn ? ' warn' : ''}`}>
-            <span className="si">{s.id}</span>
-            <span className="sn">{s.name}</span>
-            <span className="sv">{Math.round((sectorVals[i] ?? 0) * 100)}%</span>
-            <span className="sbar"><i style={{ width: `${Math.round((sectorVals[i] ?? 0) * 100)}%` }} /></span>
-          </div>
-        ))}
+        {SECTORS.map((s, i) => {
+          const pct = Math.round((sectorVals[i] ?? 0) * 100);
+          return (
+            <div key={s.id} className={`gal-srow${s.warn ? ' warn' : ''}`}>
+              <span className="si">{s.id}</span>
+              <span className="sn">{s.name}</span>
+              <span className="sv">{pct}%</span>
+              <span className="sbar"><i style={{ width: `${pct}%` }} /></span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Right gauge cluster */}
       <div className="gal-gauges" aria-hidden="true">
-        {/* Gauge 1: Prediction Confidence */}
-        <div className="gal-gauge">
-          <div className="gal-ring">
-            <svg viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(111,216,255,.12)" strokeWidth="4"/>
-              <circle cx="32" cy="32" r="26" fill="none" stroke="url(#galG1)" strokeWidth="4" strokeLinecap="round"
-                strokeDasharray="163.36" strokeDashoffset={g1off} style={{ transition: 'stroke-dashoffset .6s ease' }}/>
-              <defs>
-                <linearGradient id="galG1" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#6fd8ff"/>
-                  <stop offset="100%" stopColor="#7af7c0"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="gal-gval">{Math.round(g1 * 100)}%</div>
+        {[
+          { id:'galG1', off:g1off, val:`${Math.round(g1*100)}%`, label:'Index 01', name:'Prediction Confidence', sub:'Bayesian · 12.4k features', c1:'#6fd8ff', c2:'#7af7c0' },
+          { id:'galG2', off:g2off, val:(g2*10).toFixed(1),       label:'Index 02', name:'Layoff Risk Index',      sub:'7-day rolling · normalized', c1:'#ffb547', c2:'#ff6680' },
+          { id:'galG3', off:g3off, val:`${Math.round(g3*100)}%`, label:'Index 03', name:'Forecast Signal',        sub:'SNR · multi-source fusion',  c1:'#9b7bff', c2:'#6fd8ff' },
+        ].map(g => (
+          <div className="gal-gauge" key={g.id}>
+            <div className="gal-ring">
+              <svg viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(111,216,255,.12)" strokeWidth="4"/>
+                <circle cx="32" cy="32" r="26" fill="none" stroke={`url(#${g.id})`} strokeWidth="4"
+                  strokeLinecap="round" strokeDasharray="163.36"
+                  strokeDashoffset={g.off} style={{ transition:'stroke-dashoffset .6s ease' }}/>
+                <defs>
+                  <linearGradient id={g.id} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%"   stopColor={g.c1}/>
+                    <stop offset="100%" stopColor={g.c2}/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="gal-gval">{g.val}</div>
+            </div>
+            <div>
+              <div className="gal-glabel">{g.label}</div>
+              <div className="gal-gname">{g.name}</div>
+              <div className="gal-gsub">{g.sub}</div>
+            </div>
           </div>
-          <div>
-            <div className="gal-glabel">Index 01</div>
-            <div className="gal-gname">Prediction Confidence</div>
-            <div className="gal-gsub">Bayesian · 12.4k features</div>
-          </div>
-        </div>
-
-        {/* Gauge 2: Layoff Risk Index */}
-        <div className="gal-gauge">
-          <div className="gal-ring">
-            <svg viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(111,216,255,.12)" strokeWidth="4"/>
-              <circle cx="32" cy="32" r="26" fill="none" stroke="url(#galG2)" strokeWidth="4" strokeLinecap="round"
-                strokeDasharray="163.36" strokeDashoffset={g2off} style={{ transition: 'stroke-dashoffset .6s ease' }}/>
-              <defs>
-                <linearGradient id="galG2" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#ffb547"/>
-                  <stop offset="100%" stopColor="#ff6680"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="gal-gval">{(g2 * 10).toFixed(1)}</div>
-          </div>
-          <div>
-            <div className="gal-glabel">Index 02</div>
-            <div className="gal-gname">Layoff Risk Index</div>
-            <div className="gal-gsub">7-day rolling · normalized</div>
-          </div>
-        </div>
-
-        {/* Gauge 3: Forecast Signal */}
-        <div className="gal-gauge">
-          <div className="gal-ring">
-            <svg viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(111,216,255,.12)" strokeWidth="4"/>
-              <circle cx="32" cy="32" r="26" fill="none" stroke="url(#galG3)" strokeWidth="4" strokeLinecap="round"
-                strokeDasharray="163.36" strokeDashoffset={g3off} style={{ transition: 'stroke-dashoffset .6s ease' }}/>
-              <defs>
-                <linearGradient id="galG3" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#9b7bff"/>
-                  <stop offset="100%" stopColor="#6fd8ff"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="gal-gval">{Math.round(g3 * 100)}%</div>
-          </div>
-          <div>
-            <div className="gal-glabel">Index 03</div>
-            <div className="gal-gname">Forecast Signal</div>
-            <div className="gal-gsub">SNR · multi-source fusion</div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Corner HUD */}
@@ -922,7 +884,7 @@ export const GlobeAuditLoader: React.FC<Props> = ({
       <div className="gal-composition">
         <div className="gal-halo" aria-hidden="true" />
 
-        {/* Orbital rings */}
+        {/* Orbital rings SVG */}
         <div className="gal-orbits" aria-hidden="true">
           <svg viewBox="-100 -100 200 200">
             <defs>
@@ -957,8 +919,10 @@ export const GlobeAuditLoader: React.FC<Props> = ({
           </svg>
         </div>
 
-        <canvas className="gal-globe-canvas"   ref={globeCanvasRef}   aria-hidden="true" />
-        <canvas className="gal-overlay-canvas" ref={overlayCanvasRef} aria-hidden="true" />
+        {/* Earth globe canvas */}
+        <canvas className="gal-globe-canvas"   ref={globeRef}   aria-hidden="true" />
+        {/* Radar / arcs / hubs / reticle overlay */}
+        <canvas className="gal-overlay-canvas" ref={overlayRef} aria-hidden="true" />
 
         {/* Scan ring */}
         <svg className="gal-scan-ring" viewBox="-100 -100 200 200" aria-hidden="true">
@@ -972,37 +936,36 @@ export const GlobeAuditLoader: React.FC<Props> = ({
           </defs>
           <circle cx="0" cy="0" r="61" fill="none" stroke="rgba(111,216,255,.10)" strokeWidth="0.5" strokeDasharray="0.4 2"/>
           <g className="gal-scan-ring-spin">
-            <circle cx="0" cy="0" r="61" fill="none" stroke="url(#galScanGrad)" strokeWidth="0.9" strokeLinecap="round"
-              filter="url(#galScanGlow)" pathLength="100" strokeDasharray="22 100" strokeDashoffset="0"/>
+            <circle cx="0" cy="0" r="61" fill="none" stroke="url(#galScanGrad)" strokeWidth="0.9"
+              strokeLinecap="round" filter="url(#galScanGlow)" pathLength="100" strokeDasharray="22 100" strokeDashoffset="0"/>
             <circle cx="0" cy="-61" r="1.5" fill="#7af7c0" filter="url(#galScanGlow)"/>
           </g>
         </svg>
 
-        {/* Telemetry leader lines + cards */}
-        <svg className="gal-leaders" ref={leadersSvgRef} viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true" />
-        <div className="gal-telemetry" ref={telemetryRef} aria-hidden="true" />
+        {/* Telemetry leader lines + floating cards */}
+        <svg className="gal-leaders" ref={leadersRef}
+          viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true" />
+        <div className="gal-telemetry" ref={telRef} aria-hidden="true" />
       </div>
 
       {/* Spectrum analyzer */}
       <div className="gal-spectrum" aria-hidden="true">
         <span className="gal-spectrum-label">Signal Stream</span>
-        <canvas ref={specCanvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+        <canvas ref={specRef} style={{ width:'100%', height:'100%', display:'block' }} />
       </div>
 
-      {/* Vignette + scanlines */}
+      {/* Vignette + scanlines overlay */}
       <div className="gal-vignette"  aria-hidden="true" />
       <div className="gal-scanlines" aria-hidden="true" />
 
-      {/* Status panel */}
+      {/* Glass status panel */}
       <div className="gal-panel">
         <div className="gal-panel-row">
           <span className="gal-dot" aria-hidden="true" />
           <span className="gal-label">{labelText}</span>
         </div>
         <div className="gal-status-text" aria-live="polite">
-          {limitedDataMode
-            ? (limitedDataReason ?? 'Running with limited data…')
-            : statusText}
+          {limitedDataMode ? (limitedDataReason ?? 'Running with limited data…') : statusText}
         </div>
         <div className="gal-bar" aria-hidden="true" />
         <div className="gal-meta" aria-hidden="true">
