@@ -27,6 +27,7 @@ import BLSMacroPanel from "./common/BLSMacroPanel";
 import SECEnhancedPanel from "./common/SECEnhancedPanel";
 import GlassdoorVelocityPanel from "./common/GlassdoorVelocityPanel";
 import ExecutiveDeparturePatternPanel from "./common/ExecutiveDeparturePatternPanel";
+import { ParentRiskCard } from "./common/ParentRiskCard";
 
 // ── Industry benchmark baselines ─────────────────────────────────────────────
 const INDUSTRY_BENCHMARKS: Record<string, {
@@ -1503,42 +1504,17 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
           <FinancialHealthDossier companyName={result.companyName ?? ""} companyData={companyData} />
         </div>
 
-        {/* Layoff History + Industry Benchmarks */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <SectionHeader
-              title="Layoff History"
-              description="Documented workforce reductions in the past 24 months with severity, scale, and pattern analysis."
-            />
-            <LayoffTimeline events={layoffEvents} companyName={result.companyName ?? ""} />
-          </div>
-          <div>
-            <SectionHeader
-              title="Industry Benchmarks"
-              description="How this company compares to its sector peers on efficiency, AI adoption, and workforce stability."
-            />
-            <IndustryBenchmarkCard industryName={companyData.industry ?? result.industryKey} benchmarks={benchmarkData} />
-          </div>
+        {/* Layoff History — primary, full width */}
+        <div className="mb-6">
+          <SectionHeader
+            title="Layoff History"
+            description="Documented workforce reductions in the past 24 months with severity, scale, and pattern analysis."
+          />
+          <LayoffTimeline events={layoffEvents} companyName={result.companyName ?? ""} />
         </div>
 
-        {/* Department News & Live Signals */}
-        <CollapsibleSection title="Department News & Live Signals">
-          <div className="space-y-6">
-            <DepartmentNewsPanel
-              news={departmentNews}
-              department={result.workTypeKey}
-              companyName={result.companyName ?? companyData.name}
-            />
-            <SectionHeader
-              title="Live Signal Feed"
-              description="Real-time and heuristic signals derived from financial data, job board activity, AI investment levels, and layoff patterns."
-            />
-            <LiveSignalFeed signals={liveSignals} />
-          </div>
-        </CollapsibleSection>
-
         {/* Company Collapse Prediction */}
-        <div className="mt-6">
+        <div className="mb-6">
           <SectionHeader
             title="Company Collapse Prediction"
             description="AI-driven early warning system — detects Stage 1–3 distress signals with 6–18 month lead time using 15+ financial and behavioral markers."
@@ -1553,50 +1529,96 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
             mostRecentLayoffDate={companyData.layoffsLast24Months?.[0]?.date ?? null}
             filingDelinquent={false}
             precisionData={result.collapsePredictor ?? undefined}
+            stealthSignal={(result as any)._stealthSignal ?? undefined}
           />
         </div>
 
-        {/* v14.0: M&A Risk Signal — only shown when an M&A event is detected */}
-        {(result as any).maRisk && (result as any).maRisk.maEventType !== 'NONE' && (
-          <div className="mt-6">
-            <SectionHeader
-              title="M&A Risk Intelligence"
-              description="Merger, acquisition, and PE ownership signals that drive headcount restructuring — covering 40% of major layoffs in 2023–2025."
-            />
-            <MASignalPanel maRisk={(result as any).maRisk} />
+        {/* ParentRiskCard — conditional on parentPropagation (subsidiary detection) */}
+        {(result as any).parentPropagation && (result as any).parentPropagation.propagationRisk?.level !== 'negligible' && (
+          <div className="mb-6">
+            <ParentRiskCard parentPropagation={(result as any).parentPropagation} />
           </div>
         )}
 
-        {/* v14.0: Leadership Transition Risk — shown when score >= 30 */}
-        {(result as any).leadershipTransitionRisk && (result as any).leadershipTransitionRisk.leadershipRiskScore >= 30 && (
-          <div className="mt-6">
-            <SectionHeader
-              title="Leadership Stability Intelligence"
-              description="CEO tenure, CFO departure, and senior leader clustering signals — the strongest company-level early warning system for restructuring."
-            />
-            <LeadershipTransitionPanel leadershipRisk={(result as any).leadershipTransitionRisk} />
-          </div>
-        )}
+        {/* ── Advanced Signals — collapsed by default ─────────────────────────
+            8+ deeper intelligence panels. Users who want to investigate
+            further can expand. Not shown by default to reduce scroll fatigue. */}
+        <CollapsibleSection
+          title="Advanced Signals"
+          description="Leadership, headcount velocity, M&A, regulatory filings, and market signals (8 panels)"
+          defaultOpen={false}
+        >
+          <div className="space-y-6">
 
-        {/* v14.0: Headcount Velocity — shown when risk score >= 25 */}
-        {(result as any).headcountVelocity && (result as any).headcountVelocity.headcountRiskScore >= 25 && (
-          <div className="mt-6">
-            <SectionHeader
-              title="Headcount Velocity Intelligence"
-              description="Contractor ratio trends, job posting velocity, and net headcount momentum — 30–90 day leading indicators of layoffs."
-            />
-            <HeadcountVelocityPanel headcount={(result as any).headcountVelocity} />
-          </div>
-        )}
+            {/* Industry Benchmarks */}
+            <div>
+              <SectionHeader
+                title="Industry Benchmarks"
+                description="How this company compares to its sector peers on efficiency, AI adoption, and workforce stability."
+              />
+              <IndustryBenchmarkCard industryName={companyData.industry ?? result.industryKey} benchmarks={benchmarkData} />
+            </div>
 
-        {/* v16.0: Ground-truth regulatory and market signals */}
-        <div className="mt-6 space-y-3">
-          <WARNSignalPanel warnSignal={(result as any).warnSignal} />
-          <BLSMacroPanel blsMacroSignal={(result as any).blsMacroSignal} />
-          <SECEnhancedPanel secEnhancedSignals={(result as any).secEnhancedSignals} />
-          <GlassdoorVelocityPanel glassdoorVelocity={(result as any).glassdoorVelocity} />
-          <ExecutiveDeparturePatternPanel executiveDeparturePattern={(result as any).executiveDeparturePattern} />
-        </div>
+            {/* Department News */}
+            <DepartmentNewsPanel
+              news={departmentNews}
+              department={result.workTypeKey}
+              companyName={result.companyName ?? companyData.name}
+            />
+
+            {/* Live Signal Feed */}
+            <div>
+              <SectionHeader
+                title="Live Signal Feed"
+                description="Real-time and heuristic signals derived from financial data, job board activity, AI investment levels, and layoff patterns."
+              />
+              <LiveSignalFeed signals={liveSignals} />
+            </div>
+
+            {/* M&A Risk Signal — only shown when an M&A event is detected */}
+            {(result as any).maRisk && (result as any).maRisk.maEventType !== 'NONE' && (
+              <div>
+                <SectionHeader
+                  title="M&A Risk Intelligence"
+                  description="Merger, acquisition, and PE ownership signals that drive headcount restructuring — covering 40% of major layoffs in 2023–2025."
+                />
+                <MASignalPanel maRisk={(result as any).maRisk} />
+              </div>
+            )}
+
+            {/* Leadership Transition Risk — shown when score >= 30 */}
+            {(result as any).leadershipTransitionRisk && (result as any).leadershipTransitionRisk.leadershipRiskScore >= 30 && (
+              <div>
+                <SectionHeader
+                  title="Leadership Stability Intelligence"
+                  description="CEO tenure, CFO departure, and senior leader clustering signals — the strongest company-level early warning system for restructuring."
+                />
+                <LeadershipTransitionPanel leadershipRisk={(result as any).leadershipTransitionRisk} />
+              </div>
+            )}
+
+            {/* Headcount Velocity — shown when risk score >= 25 */}
+            {(result as any).headcountVelocity && (result as any).headcountVelocity.headcountRiskScore >= 25 && (
+              <div>
+                <SectionHeader
+                  title="Headcount Velocity Intelligence"
+                  description="Contractor ratio trends, job posting velocity, and net headcount momentum — 30–90 day leading indicators of layoffs."
+                />
+                <HeadcountVelocityPanel headcount={(result as any).headcountVelocity} />
+              </div>
+            )}
+
+            {/* Ground-truth regulatory and market signals */}
+            <div className="space-y-3">
+              <WARNSignalPanel warnSignal={(result as any).warnSignal} />
+              <BLSMacroPanel blsMacroSignal={(result as any).blsMacroSignal} />
+              <SECEnhancedPanel secEnhancedSignals={(result as any).secEnhancedSignals} />
+              <GlassdoorVelocityPanel glassdoorVelocity={(result as any).glassdoorVelocity} />
+              <ExecutiveDeparturePatternPanel executiveDeparturePattern={(result as any).executiveDeparturePattern} />
+            </div>
+
+          </div>
+        </CollapsibleSection>
       </motion.div>
     </section>
   );

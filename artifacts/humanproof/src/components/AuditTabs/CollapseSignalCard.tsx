@@ -41,6 +41,17 @@ interface CollapseSignalCardProps {
     stageHorizonDays: number;
     stageGateStatus: 'gate_clears' | 'insufficient_cases' | 'precision_below_gate';
   };
+  /**
+   * v audit UX — Stealth layoff signal from _stealthSignal on HybridResult.
+   * Shown as a dedicated alert row when stealthSignal.flagged === true.
+   */
+  stealthSignal?: {
+    flagged: boolean;
+    severity: string;
+    pctChange6mo: number | null;
+    rationale: string;
+    confidence: number;
+  };
 }
 
 const STAGE_CONFIG = {
@@ -60,6 +71,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
   filingDelinquent = false,
   userDepartment,
   precisionData,
+  stealthSignal,
 }) => {
   const [report, setReport] = useState<CollapseReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -208,6 +220,31 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
         <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
           {report.recommendation}
         </p>
+
+        {/* Stealth Layoff Pattern alert — surfaces _stealthSignal when flagged */}
+        {stealthSignal?.flagged && (
+          <div
+            className="mt-3 flex items-start gap-2 p-3 rounded-lg"
+            style={{
+              background: 'rgba(220,38,38,0.07)',
+              border: '1px solid rgba(220,38,38,0.25)',
+            }}
+          >
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#ef4444' }} />
+            <div style={{ flex: 1 }}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: '#ef4444' }}>
+                Stealth Layoff Pattern
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+                {stealthSignal.pctChange6mo != null
+                  ? `Headcount delta ${stealthSignal.pctChange6mo.toFixed(1)}% over 6 months without public announcement`
+                  : 'Silent headcount contraction detected without public announcement'
+                }
+                {stealthSignal.rationale ? ` — ${stealthSignal.rationale}` : ''}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* GAP-A04: empirical precision disclosure */}
         {report.stage && precisionData && (

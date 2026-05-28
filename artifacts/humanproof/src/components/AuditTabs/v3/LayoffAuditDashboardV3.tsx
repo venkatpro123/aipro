@@ -126,7 +126,7 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'actions',
-    label: 'Action Plan',
+    label: 'Act Now',
     shortLabel: 'Act',
     Icon: Zap,
     getBadge: (r) => {
@@ -136,7 +136,7 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'intel',
-    label: 'Intelligence',
+    label: 'Deep Intel',
     shortLabel: 'Intel',
     Icon: Radio,
     getBadge: (r) => {

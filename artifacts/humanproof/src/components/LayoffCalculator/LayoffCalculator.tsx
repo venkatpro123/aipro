@@ -1924,11 +1924,12 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             2: 'Reconciling live market signals…',
           };
           const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, auditStage: STAGE_LABELS[ensembleStage] };
-          return <LayoffAuditDashboardV4 {...commonProps} />;
-          // V3 and V1 kept below as rollback path — do not delete
-          // return isTabsV3Enabled()
-          //   ? <LayoffAuditDashboardV3 {...commonProps} />
-          //   : <LayoffAuditDashboard {...commonProps} />;
+          // v audit UX: switched to 5-tab dashboard (Summary/Company/Protection/Act Now/Deep Intel)
+          // per product intelligence audit — richer information architecture than 3-tab V4.
+          // V4 (3-tab) and V1 kept below as rollback paths — do not delete.
+          return <LayoffAuditDashboardV3 {...commonProps} />;
+          // return <LayoffAuditDashboardV4 {...commonProps} />;
+          // return <LayoffAuditDashboard {...commonProps} />;
         })()}
 
       {showShareCard && state.scoreResult && (

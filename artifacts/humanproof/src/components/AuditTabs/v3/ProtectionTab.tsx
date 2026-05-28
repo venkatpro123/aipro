@@ -34,6 +34,8 @@ import CareerConfidencePanel from '../common/CareerConfidencePanel';
 import { CareerPortfolioPanel } from '../common/CareerPortfolioPanel';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
+import { SafePivotRolesCard } from '../common/SafePivotRolesCard';
+import { D4CredibilityPanel } from '../common/D4CredibilityPanel';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -53,6 +55,8 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const visaRisk                                = r.visaRisk;
   const userRunway                              = r.userFinancialRunway;
   const roleMarketDemand                        = r.roleMarketDemand;
+
+  const roleAdjacency                          = r.roleAdjacency;
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
   const hasMobility    = Boolean(careerContingency || careerConfidence);
@@ -159,6 +163,26 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   return (
     <div className="flex flex-col gap-3">
       {sectionOrder.map(id => sections[id])}
+
+      {/* Safe Pivot Roles — computed by roleAdjacencyEngine, previously invisible */}
+      {roleAdjacency && (roleAdjacency.adjacentRoles?.length ?? 0) > 0 && (
+        <SafePivotRolesCard
+          roleAdjacency={roleAdjacency}
+          currentScore={result.total}
+          currentRoleLabel={String(r.workTypeKey ?? '')}
+        />
+      )}
+
+      {/* D4 Performance Credibility — adjustment disclosure when tier was corrected */}
+      {(r.reportedPerformanceTier || r.d4ContradictingSignals?.length > 0) && (
+        <D4CredibilityPanel
+          reportedPerformanceTier={String(r.reportedPerformanceTier ?? r.d4ReportedPerformanceTier ?? 'unknown')}
+          effectivePerformanceTier={String(r.d4EffectivePerformanceTier ?? r.d4ReportedPerformanceTier ?? 'unknown')}
+          performanceCredibilityScore={r.performanceCredibilityScore}
+          contradictingSignals={r.d4ContradictingSignals ?? []}
+          regionThresholdLabel={r.performanceCredibilityThresholdLabel}
+        />
+      )}
 
       <div className="text-center pt-2 pb-1">
         <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>

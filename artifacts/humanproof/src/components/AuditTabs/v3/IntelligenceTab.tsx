@@ -39,6 +39,7 @@ import MacroRiskPanel from '../common/MacroRiskPanel';
 import { EventSearchPanel, isEventSearchAvailable } from '../../audit/EventSearchPanel';
 import CompanyPulseCard from '../common/CompanyPulseCard';
 import AdaptiveBlock from '../common/AdaptiveBlock';
+import { ParentRiskCard } from '../common/ParentRiskCard';
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
@@ -75,6 +76,13 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
         <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
       </motion.div>
+
+      {/* Parent company risk — only when subsidiary relationship detected */}
+      {r.parentPropagation && r.parentPropagation.propagationRisk?.level !== 'negligible' && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
+          <ParentRiskCard parentPropagation={r.parentPropagation} />
+        </motion.div>
+      )}
 
       {/* ── T2: Ground Truth Signals ──────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>

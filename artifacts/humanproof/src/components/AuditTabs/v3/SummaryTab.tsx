@@ -21,7 +21,7 @@
 // All blocks carry an explicit Tier badge so users (and future maintainers)
 // understand the disclosure hierarchy.
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
@@ -31,7 +31,7 @@ import {
 import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
-import { FirstAuditWelcome } from '../common/FirstAuditWelcome';
+import { FirstAuditWelcomeModal } from '../common/FirstAuditWelcomeModal';
 import { CompanyPulseCard } from '../common/CompanyPulseCard';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import TierBadge from '../common/TierBadge';
@@ -39,6 +39,9 @@ import ProvenanceLabel from '../common/ProvenanceLabel';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
 import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
+import { ScoreTrendStrip } from '../common/ScoreTrendStrip';
+import { InactionCostCard } from '../common/InactionCostCard';
+import { VerdictReassurance } from '../common/VerdictReassurance';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -484,6 +487,9 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const r     = result as any;
   const score = result.total;
 
+  // Modal state for first-audit welcome overlay
+  const [welcomeModalOpen, setWelcomeModalOpen] = useState(true);
+
   const adaptation = useDashboardAdaptation(result, companyData);
 
   const brief                                              = r.intelligenceBrief;
@@ -583,12 +589,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── First-audit welcome — only shown once per device ───────────────── */}
+      {/* ── First-audit welcome — modal overlay (score always visible behind) ─ */}
       {adaptation.showFirstAuditWelcome && (
-        <FirstAuditWelcome
+        <FirstAuditWelcomeModal
+          open={welcomeModalOpen}
+          onClose={() => setWelcomeModalOpen(false)}
           liveSignalCount={liveCount}
           criticalActionCount={criticalActionCount}
-          // v39.0 F3: confidence + profile completeness drive the step labels
           confidencePercent={result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100)}
           profileFieldsFilled={(() => {
             const uf = (result as any).userFactors ?? {};
@@ -658,6 +665,10 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
             {verdictLine(score, urgency)}
           </p>
         )}
+        {/* VerdictReassurance — emotional anchoring below the verdict */}
+        {scoreSufficiency.sufficient && (
+          <VerdictReassurance score={score} urgency={urgency} />
+        )}
         {/* Score velocity — suppressed when base score is a range (delta from a range is undefined) */}
         {scoreSufficiency.sufficient && r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
           <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: velocityColor }}>
@@ -668,6 +679,14 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         )}
       </motion.div>
+
+      {/* ── Score Trend Strip — 30-day trajectory (orphaned field, now surfaced) ── */}
+      {scoreSufficiency.sufficient && r.scoreTrajectory && (
+        <ScoreTrendStrip
+          scoreTrajectory={r.scoreTrajectory}
+          currentScore={score}
+        />
+      )}
 
       {/* ── Profile-incomplete disclosure ─────────────────────────────────── */}
       {/* When fewer than 3 personal-context fields are filled, the score
@@ -857,6 +876,15 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           the v35.0 transparency contract. */}
       {(result as any).personalRiskModifier?.rawModifier != null && (
         <PersonalRiskModifierPanel modifier={(result as any).personalRiskModifier} />
+      )}
+
+      {/* ── InactionCostCard — "The cost of waiting" — final section ─────── */}
+      {/* sixMonthInactionConsequence is on HybridResult directly (not on intelligenceBrief).
+          Shows a dark amber card so users leave the Summary tab knowing the stakes. */}
+      {(result.sixMonthInactionConsequence || r.sixMonthInactionConsequence) && (
+        <InactionCostCard
+          consequence={String(result.sixMonthInactionConsequence ?? r.sixMonthInactionConsequence ?? '')}
+        />
       )}
 
       {/* Reading hint */}

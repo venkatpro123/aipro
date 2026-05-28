@@ -1,0 +1,199 @@
+// SafePivotRolesCard.tsx — v audit UX
+//
+// Shows the top 3 adjacent roles with risk score deltas from roleAdjacency.
+// Answers the critical career question: "Where can I move to reduce my risk?"
+//
+// Data source: result.roleAdjacency (RoleAdjacencyResult from roleAdjacencyEngine.ts)
+// Previously computed but never surfaced in any UI. Added to Protection tab.
+//
+// Design:
+//   - 3 cards, one per adjacent role (1-hop paths first, best 2-hop if <3 adjacent)
+//   - Each card shows: role title, score delta, time to pivot, adjacency strength
+//   - Colour coded: strong adjacency = emerald, moderate = cyan, weak = amber
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowRight, TrendingDown, Clock, Star } from 'lucide-react';
+
+interface AdjacencyNode {
+  targetRoleKey: string;
+  targetRoleLabel: string;
+  estimatedScoreAtTarget: number;
+  scoreReduction: number;
+  skillBridgeRequired: string[];
+  timeToQualifiedWeeks: number;
+  marketDemandScore: number;
+  adjacencyStrength: 'strong' | 'moderate' | 'weak';
+  riskReductionPerWeek: number;
+}
+
+interface TwoHopPath {
+  bridgeRoleLabel: string;
+  destinationRoleLabel: string;
+  totalTimeWeeks: number;
+  scoreAtDestination: number;
+  scoreReduction: number;
+  riskReductionPerWeek: number;
+}
+
+export interface SafePivotRolesCardProps {
+  roleAdjacency: {
+    resolvedOracleKey: string;
+    adjacentRoles: AdjacencyNode[];
+    twoHopPaths: TwoHopPath[];
+    recommendedFocusPath: string;
+  };
+  currentScore: number;
+  currentRoleLabel?: string;
+}
+
+const STRENGTH_CONFIG = {
+  strong:   { color: '#10b981', label: 'Strong match', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.22)' },
+  moderate: { color: '#22d3ee', label: 'Moderate match', bg: 'rgba(34,211,238,0.07)', border: 'rgba(34,211,238,0.20)' },
+  weak:     { color: '#f59e0b', label: 'Stretch pivot', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)' },
+};
+
+const fmtWeeks = (w: number) =>
+  w <= 4  ? `~${w} wks`
+  : w <= 16 ? `~${Math.round(w / 4)} mo`
+  : `~${Math.round(w / 4)} mo`;
+
+export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
+  roleAdjacency,
+  currentScore,
+  currentRoleLabel,
+}) => {
+  if (!roleAdjacency) return null;
+
+  // Take top 3 adjacent roles sorted by riskReductionPerWeek (best ROI first)
+  const topRoles = [...(roleAdjacency.adjacentRoles ?? [])]
+    .sort((a, b) => b.riskReductionPerWeek - a.riskReductionPerWeek)
+    .slice(0, 3);
+
+  if (topRoles.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      style={{
+        borderRadius: 16,
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: '14px 16px',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <TrendingDown size={13} style={{ color: '#10b981', flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+            Safe Pivot Roles
+          </p>
+          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', marginTop: 1 }}>
+            Roles where you can significantly lower your risk
+          </p>
+        </div>
+      </div>
+
+      {/* Role cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {topRoles.map((role, i) => {
+          const cfg = STRENGTH_CONFIG[role.adjacencyStrength] ?? STRENGTH_CONFIG.moderate;
+          const delta = role.scoreReduction;
+          const targetScore = role.estimatedScoreAtTarget;
+
+          return (
+            <div
+              key={role.targetRoleKey}
+              style={{
+                borderRadius: 12,
+                background: cfg.bg,
+                border: `1px solid ${cfg.border}`,
+                padding: '10px 12px',
+              }}
+            >
+              {/* Title row */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {i === 0 && (
+                      <span title="Best ROI pivot" style={{ display: 'inline-flex', flexShrink: 0 }}><Star size={10} style={{ color: '#fbbf24' }} /></span>
+                    )}
+                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1.3 }}>
+                      {role.targetRoleLabel}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.62rem', color: cfg.color, fontWeight: 600, letterSpacing: '0.06em' }}>
+                    {cfg.label}
+                  </span>
+                </div>
+
+                {/* Score delta chip */}
+                <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-mono)' }}>
+                      {currentScore}
+                    </span>
+                    <ArrowRight size={10} style={{ color: 'rgba(255,255,255,0.30)' }} />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                      {targetScore}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.62rem', color: '#10b981', fontWeight: 700 }}>
+                    −{delta} risk pts
+                  </span>
+                </div>
+              </div>
+
+              {/* Metadata row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Clock size={10} style={{ color: 'rgba(255,255,255,0.35)' }} />
+                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.50)' }}>
+                    {fmtWeeks(role.timeToQualifiedWeeks)} to pivot
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>
+                  {role.riskReductionPerWeek.toFixed(1)} pts/week ROI
+                </span>
+              </div>
+
+              {/* Skill bridge (top 2 skills needed) */}
+              {role.skillBridgeRequired?.length > 0 && (
+                <div style={{ marginTop: 6, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {role.skillBridgeRequired.slice(0, 3).map(skill => (
+                    <span
+                      key={skill}
+                      style={{
+                        fontSize: '0.6rem',
+                        fontWeight: 600,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'rgba(255,255,255,0.50)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      +{skill}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Recommended path narrative */}
+      {roleAdjacency.recommendedFocusPath && (
+        <p style={{ marginTop: 10, fontSize: '0.72rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5, fontStyle: 'italic' }}>
+          {roleAdjacency.recommendedFocusPath}
+        </p>
+      )}
+    </motion.div>
+  );
+};
+
+export default SafePivotRolesCard;

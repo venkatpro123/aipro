@@ -155,8 +155,13 @@ const MOBILE_PRIMARY = [
   { to: "/leaderboard", label: "Risk Oracle",  Icon: TrendingUp      },
 ];
 
-// Empty — no overflow items; "More" button is suppressed when this is empty.
-const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [];
+// Secondary nav items — appear in the "More" slide-up sheet.
+// Adding these surfaces pages that were previously only reachable via direct URL on mobile.
+const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [
+  { to: "/safe-careers",  label: "Safe Careers",  Icon: ShieldCheck    },
+  { to: "/learning-hub",  label: "Learning Hub",  Icon: GraduationCap  },
+  { to: "/settings",      label: "Settings",      Icon: Settings       },
+];
 
 function useIsActive() {
   const location = useLocation();

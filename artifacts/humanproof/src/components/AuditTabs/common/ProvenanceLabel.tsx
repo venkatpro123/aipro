@@ -153,6 +153,10 @@ const ProvenanceLabel: React.FC<Props> = ({
         }}
       />
       {cfg.label}
+      {/* "?" cue — makes the tooltip discoverable (users see ? and know to hover) */}
+      <span style={{ fontSize: '0.6em', opacity: 0.55, fontWeight: 400, letterSpacing: 0, fontFamily: 'system-ui' }} aria-hidden="true">
+        ?
+      </span>
     </span>
   );
 };
