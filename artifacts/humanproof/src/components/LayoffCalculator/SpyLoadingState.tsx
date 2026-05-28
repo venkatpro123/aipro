@@ -1,8 +1,8 @@
-// SpyLoadingState.tsx — Phase 11: Cinematic Earth AI analysis loader.
-// Delegates to EarthAnalysisLoader. Props preserved for backwards-compatibility.
+// SpyLoadingState.tsx — Globe intelligence-scan loader.
+// Delegates to GlobeAuditLoader. Props preserved for backwards-compatibility.
 
 import React from 'react';
-import { EarthAnalysisLoader } from './EarthAnalysisLoader';
+import { GlobeAuditLoader } from './GlobeAuditLoader';
 import { mapEnsembleStage } from './AuditLoader';
 
 interface Props {
@@ -20,7 +20,7 @@ export const SpyLoadingState: React.FC<Props> = ({
   limitedDataMode,
   limitedDataReason,
 }) => (
-  <EarthAnalysisLoader
+  <GlobeAuditLoader
     stage={mapEnsembleStage(stage)}
     companyName={companyName}
     limitedDataMode={limitedDataMode}
