@@ -38,6 +38,7 @@
 import type { PeerContagionResult } from './peerContagionEngine';
 import type { HiringSignalResult } from './hiringSignalAnalyzer';
 import type { CareerResilienceResult } from './careerResilienceEngine';
+import type { BehavioralPersonalizationResult } from './behavioralPersonalizationEngine';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,16 @@ export interface JobTarget {
 
   // Targeting source
   targetingRationale: TargetingRationale;
+
+  // ── v51.0 behavioral personalization fields (populated when behavioral input available) ──
+  /** 0–100: how well company's salary band aligns with user's compensation positioning */
+  compensationFitScore?: number;
+  /** Human-readable: "~1 in 4 applications results in an offer" */
+  hiringProbabilityEstimate?: string;
+  /** Specific strategy to handle employment gap when approaching this company */
+  employmentGapApproach?: string | null;
+  /** Region-specific opportunity density: "High — 12+ open roles in Bangalore" */
+  opportunityDensity?: string;
 }
 
 export type TargetingRationale =
@@ -107,10 +118,14 @@ export interface JobTargetingInputs {
   careerResilience: CareerResilienceResult | null;
   compositeScore: number;
   visaStatus: string | null;
+  /** v51.0: optional behavioral personalization signals — enriches match scoring */
+  behavioral?: BehavioralPersonalizationResult | null;
 }
 
 export interface JobTargetingResult {
   targets: JobTarget[];        // top 5–8 specific companies
+  /** Alias for `targets` — used by precision9090PlanEngine and UI panels */
+  primaryTargets: JobTarget[];
   totalTargetedCompanies: number;  // total companies matching criteria
   marketSummary: string;       // 2-sentence market assessment
   strategyRecommendation: string;  // what approach to take overall
@@ -118,6 +133,10 @@ export interface JobTargetingResult {
   avoidList: string[];         // companies to avoid (in contagion wave, hiring freeze)
   industryMomentum: 'accelerating' | 'stable' | 'decelerating';
   estimatedSearchDuration: string;  // "4–6 weeks to first offer"
+  /** v51.0: overall market compensation fit assessment */
+  compensationMarketFit?: 'above_market_targets' | 'at_market_targets' | 'below_market_targets' | 'mixed';
+  /** v51.0: employment gap impact on the overall search */
+  gapImpactOnSearch?: 'none' | 'minor' | 'moderate' | 'significant';
 }
 
 // ── Role-to-sector affinity map ──────────────────────────────────────────────
@@ -472,8 +491,23 @@ export function computeJobTargeting(inputs: JobTargetingInputs): JobTargetingRes
   const { marketSummary, strategyRecommendation, searchUrgency, industryMomentum, estimatedSearchDuration } =
     buildMarketAssessment(inputs, targets);
 
+  // ── v51.0: behavioral enrichment pass ────────────────────────────────────
+  const behavioral = inputs.behavioral ?? null;
+  const enrichedTargets = behavioral
+    ? targets.map(t => enrichTargetWithBehavioral(t, inputs, behavioral))
+    : targets;
+
+  const compensationMarketFit = behavioral
+    ? resolveCompensationMarketFit(behavioral.compensationIntelligence.position)
+    : undefined;
+
+  const gapImpactOnSearch = behavioral
+    ? (behavioral.employmentGap.gapSeverity as JobTargetingResult['gapImpactOnSearch'])
+    : undefined;
+
   return {
-    targets,
+    targets: enrichedTargets,
+    primaryTargets: enrichedTargets,
     totalTargetedCompanies: rawTargets.length,
     marketSummary,
     strategyRecommendation,
@@ -481,6 +515,8 @@ export function computeJobTargeting(inputs: JobTargetingInputs): JobTargetingRes
     avoidList,
     industryMomentum,
     estimatedSearchDuration,
+    compensationMarketFit,
+    gapImpactOnSearch,
   };
 }
 
@@ -632,6 +668,158 @@ function scoreTarget(
     matchReasons: matchReasons.slice(0, 3),
     cautions: cautions.slice(0, 2),
   };
+}
+
+// ── v51.0 Behavioral enrichment helpers ──────────────────────────────────────
+
+/**
+ * Enriches a JobTarget with behavioral personalization signals:
+ * compensationFitScore, hiringProbabilityEstimate, employmentGapApproach,
+ * opportunityDensity. All computations are additive — no existing fields altered.
+ */
+function enrichTargetWithBehavioral(
+  target: JobTarget,
+  inputs: JobTargetingInputs,
+  behavioral: BehavioralPersonalizationResult,
+): JobTarget {
+  return {
+    ...target,
+    compensationFitScore: computeCompensationFitScore(target, inputs, behavioral),
+    hiringProbabilityEstimate: computeHiringProbabilityEstimate(target, behavioral),
+    employmentGapApproach: computeEmploymentGapApproach(target, behavioral),
+    opportunityDensity: computeOpportunityDensity(target, inputs),
+  }
+}
+
+/** 0–100: alignment between company's salary band and user's compensation positioning. */
+function computeCompensationFitScore(
+  target: JobTarget,
+  inputs: JobTargetingInputs,
+  behavioral: BehavioralPersonalizationResult,
+): number {
+  let score = 60  // baseline
+
+  const compPos = behavioral.compensationIntelligence.position
+  const hiringUrgency = target.hiringUrgency
+
+  // Users significantly under market benefit from high-urgency targets
+  // (urgently hiring companies offer premiums to close fast)
+  if (compPos === 'significantly_under' || compPos === 'under_market') {
+    if (hiringUrgency === 'urgent') score += 25
+    else if (hiringUrgency === 'active') score += 15
+  }
+  // Users at/above market need companies that offer above-median comp
+  if (compPos === 'at_market' || compPos === 'above_market' || compPos === 'significantly_above') {
+    const affinityData = ROLE_SECTOR_AFFINITY[inputs.workTypeKey]
+      ?? ROLE_SECTOR_AFFINITY[inputs.rolePrefix]
+      ?? ROLE_SECTOR_AFFINITY['default']
+    const sectorEntry = affinityData.hotSectors.find(
+      s => target.industry.toLowerCase().includes(s.sector.toLowerCase().split('/')[0])
+    )
+    if (sectorEntry && sectorEntry.salaryPremiumPct >= 20) score += 20
+    else if (sectorEntry && sectorEntry.salaryPremiumPct >= 10) score += 10
+  }
+  // Enterprise stage companies offer predictable comp (RSUs, vesting)
+  if (target.companyStage === 'enterprise' && compPos !== 'significantly_above') score += 8
+  // Growth-stage companies offer upside equity — relevant when under market
+  if (target.companyStage === 'growth' && (compPos === 'significantly_under' || compPos === 'under_market')) score += 12
+
+  // Interview readiness affects effective hiring probability at this company
+  const readinessScore = behavioral.interviewReadiness.score
+  if (readinessScore >= 75) score += 5
+  else if (readinessScore < 40) score -= 10
+
+  return Math.min(99, Math.max(20, score))
+}
+
+/** Text estimate of expected offer rate for this specific company × user profile. */
+function computeHiringProbabilityEstimate(
+  target: JobTarget,
+  behavioral: BehavioralPersonalizationResult,
+): string {
+  const matchScore = target.matchScore
+  const readiness = behavioral.interviewReadiness.score
+  const compPos = behavioral.competitivePositioning.percentileEstimate
+  const hasGap = behavioral.employmentGap.hasGap && behavioral.employmentGap.gapSeverity !== 'none'
+  const channel = target.recommendedChannel
+
+  // Base probability from match score
+  let baseOdds = matchScore >= 85 ? 35 : matchScore >= 70 ? 22 : matchScore >= 55 ? 14 : 8
+
+  // Interview readiness adjustment
+  if (readiness >= 75) baseOdds = Math.round(baseOdds * 1.3)
+  else if (readiness < 50) baseOdds = Math.round(baseOdds * 0.7)
+
+  // Channel multiplier (referral dramatically improves odds)
+  if (channel === 'employee_referral') baseOdds = Math.round(baseOdds * 1.8)
+  else if (channel === 'direct_apply') baseOdds = Math.round(baseOdds * 0.9)
+
+  // Gap penalty
+  if (hasGap && behavioral.employmentGap.gapSeverity === 'significant') {
+    baseOdds = Math.round(baseOdds * 0.75)
+  }
+
+  // Competitive percentile adjustment
+  if (compPos >= 70) baseOdds = Math.round(baseOdds * 1.2)
+  else if (compPos < 30) baseOdds = Math.round(baseOdds * 0.8)
+
+  baseOdds = Math.min(55, Math.max(3, baseOdds))
+
+  if (baseOdds >= 35) return `~1 in 3 applications results in an offer (${baseOdds}% — strong match)`
+  if (baseOdds >= 20) return `~1 in 5 applications results in an offer (${baseOdds}% — good match)`
+  if (baseOdds >= 10) return `~1 in 8 applications results in an offer (${baseOdds}% — moderate match)`
+  return `~1 in 12 applications results in an offer (${baseOdds}% — competitive; improve readiness score first)`
+}
+
+/** Strategy for handling employment gap specific to this company's type / culture. */
+function computeEmploymentGapApproach(
+  target: JobTarget,
+  behavioral: BehavioralPersonalizationResult,
+): string | null {
+  if (!behavioral.employmentGap.hasGap || behavioral.employmentGap.gapSeverity === 'none') return null
+
+  const severity = behavioral.employmentGap.gapSeverity
+  const stage = target.companyStage
+  const months = behavioral.employmentGap.mostRecentGapMonths
+
+  if (stage === 'startup' || stage === 'growth') {
+    if (severity === 'significant') {
+      return `Startups care less about gaps — emphasise what you BUILT or LEARNED during the ${months} months. Open by saying you were evaluating startup opportunities and doing freelance/consulting work.`
+    }
+    return `Growth-stage companies are gap-tolerant. Briefly acknowledge and pivot immediately to your strongest recent achievement.`
+  }
+
+  if (stage === 'enterprise') {
+    if (severity === 'significant') {
+      return `Enterprise hiring teams are gap-sensitive. Prepare a 1-sentence explanation ("I took time for [family/health/upskilling]") and immediately redirect to a recent portfolio achievement or certification.`
+    }
+    return `For enterprise applications, frame the gap proactively in your cover letter with 1 line: "During [period], I [specific activity]." Keep it brief and non-apologetic.`
+  }
+
+  return behavioral.employmentGap.narrativeFrame
+}
+
+/** Qualitative density of relevant openings in user's region at this company. */
+function computeOpportunityDensity(target: JobTarget, inputs: JobTargetingInputs): string {
+  const openings = target.estimatedOpenings
+  const regionLocations = getRegionLocations(inputs.region)
+  const inRegion = target.location.some(l => regionLocations.includes(l)) || target.remotePolicy === 'full_remote'
+
+  if (!inRegion) return 'Low — company not in your region; remote application required'
+  if (openings == null) return 'Unknown — check company careers page directly'
+  if (openings >= 30) return `High — ${openings}+ open roles across your function`
+  if (openings >= 10) return `Moderate — ${openings} open roles; healthy pipeline`
+  if (openings >= 3) return `Low-moderate — ${openings} roles; selective but viable`
+  return `Very selective — ${openings} known openings; referral strongly recommended`
+}
+
+function resolveCompensationMarketFit(
+  position: BehavioralPersonalizationResult['compensationIntelligence']['position'],
+): JobTargetingResult['compensationMarketFit'] {
+  if (position === 'significantly_under' || position === 'under_market') return 'below_market_targets'
+  if (position === 'at_market') return 'at_market_targets'
+  if (position === 'above_market' || position === 'significantly_above') return 'above_market_targets'
+  return 'mixed'
 }
 
 /**

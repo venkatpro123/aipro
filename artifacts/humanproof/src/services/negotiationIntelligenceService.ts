@@ -956,3 +956,706 @@ function buildRisksAndRedLines(
 
   return { risks, redLines };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// v51.0 — Advanced Negotiation Intelligence Layer
+// ═══════════════════════════════════════════════════════════════════════════════
+// Five new intelligence modules beyond current-employer leverage:
+//   1. Counter-offer analysis (new offer received — how to respond)
+//   2. Layoff survival communication (what to say when cuts are happening)
+//   3. Multi-offer comparison (structured framework for competing offers)
+//   4. Resignation planning (when and how to resign given constraints)
+//   5. Compensation playbook (real numbers by role + seniority + region)
+
+import type { BehavioralPersonalizationResult } from './behavioralPersonalizationEngine';
+
+// ── 1. Counter-Offer Analysis ─────────────────────────────────────────────────
+
+export interface CounterOfferAnalysisInputs {
+  /** The offer as received (formatted: "₹45L base + 10% bonus") */
+  offeredPackage: string
+  /** User's target comp range */
+  targetRange: string
+  /** % difference: negative = offer below target, positive = above */
+  gapPercent: number
+  companyName: string
+  roleTitle: string
+  /** Are there competing offers? */
+  hasCompetingOffer: boolean
+  competingOfferDetails?: string | null
+  /** From BehavioralPersonalizationResult */
+  runwayMonths: number
+  leverageScore: number   // from computeNegotiationIntelligence
+  seniorityBracket: 'junior' | 'mid' | 'senior' | 'principal'
+  visaConstrained: boolean
+  hasDependents: boolean
+}
+
+export interface CounterOfferAnalysisResult {
+  recommendation: 'counter_immediately' | 'negotiate_holistically' | 'accept_with_conditions' | 'accept' | 'decline'
+  recommendationRationale: string
+  /** The specific counter number or range to state */
+  counterNumber: string
+  /** What to say — full counter email */
+  counterEmailScript: string
+  /** Non-salary items to negotiate as package components */
+  packageItems: Array<{
+    item: string
+    rationale: string
+    askAmount: string
+  }>
+  /** What "good enough" looks like — when to stop negotiating */
+  acceptanceFloor: string
+  /** Deadline management strategy */
+  deadlineStrategy: string
+  /** If competing offer exists — how to use it */
+  competingOfferStrategy: string | null
+  /** Risk of pushing too hard */
+  pushbackRisk: 'low' | 'medium' | 'high'
+  pushbackRiskExplanation: string
+}
+
+export function computeCounterOfferAnalysis(
+  inputs: CounterOfferAnalysisInputs,
+): CounterOfferAnalysisResult {
+  const { gapPercent, leverageScore, runwayMonths, visaConstrained, hasDependents, seniorityBracket, hasCompetingOffer, companyName, roleTitle } = inputs
+
+  // Determine recommendation
+  let recommendation: CounterOfferAnalysisResult['recommendation']
+  let pushbackRisk: CounterOfferAnalysisResult['pushbackRisk']
+
+  if (gapPercent <= -20 && leverageScore >= 60) {
+    recommendation = 'counter_immediately'
+    pushbackRisk = 'low'
+  } else if (gapPercent <= -10 && leverageScore >= 40) {
+    recommendation = 'negotiate_holistically'
+    pushbackRisk = 'low'
+  } else if (gapPercent <= -5) {
+    recommendation = runwayMonths <= 3 ? 'accept_with_conditions' : 'negotiate_holistically'
+    pushbackRisk = 'medium'
+  } else if (gapPercent > 0) {
+    recommendation = 'accept'
+    pushbackRisk = 'low'
+  } else {
+    recommendation = 'accept_with_conditions'
+    pushbackRisk = 'low'
+  }
+
+  // Financial urgency override
+  if (runwayMonths <= 2) recommendation = 'accept_with_conditions'
+
+  const absGap = Math.abs(gapPercent)
+  const counterNumber = gapPercent < 0
+    ? `Ask for your target range: ${inputs.targetRange} — this is ${absGap.toFixed(0)}% above the current offer but within market range for this role`
+    : `Offer is at/above your target. No counter required on base.`
+
+  const packageItems: CounterOfferAnalysisResult['packageItems'] = []
+
+  // Always negotiate joining bonus if base gap > 10%
+  if (gapPercent < -10) {
+    packageItems.push({
+      item: 'Joining / signing bonus',
+      rationale: 'Bridges the gap without changing comp bands that affect future raises',
+      askAmount: `${Math.abs(gapPercent * 0.5).toFixed(0)}% of annual base (one-time)`
+    })
+  }
+
+  // Visa-constrained: avoid asking for conditions that delay start date
+  if (!visaConstrained) {
+    packageItems.push({
+      item: 'Remote flexibility',
+      rationale: '2 remote days/week is standard at most companies and significantly improves work-life quality',
+      askAmount: '2 days WFH per week (or "flexibility as needed")'
+    })
+  }
+
+  if (seniorityBracket === 'senior' || seniorityBracket === 'principal') {
+    packageItems.push({
+      item: 'Accelerated performance review',
+      rationale: 'Ask for a 6-month rather than 12-month first review — signals confidence in your ability to add value fast',
+      askAmount: '6-month performance review with comp reassessment'
+    })
+    packageItems.push({
+      item: 'Additional equity / RSU grant',
+      rationale: 'Equity bridges the gap long-term without increasing the annual cash burn for the employer',
+      askAmount: 'Additional RSU grant equivalent to 1 year of the base gap'
+    })
+  }
+
+  const urgencyFlag = runwayMonths <= 4
+    ? 'Note: given your financial runway, do not let negotiation delay your start date by more than 5 business days.'
+    : ''
+
+  const counterEmailScript = buildCounterOfferEmail(inputs, recommendation, counterNumber, packageItems, urgencyFlag)
+
+  const competingOfferStrategy = hasCompetingOffer
+    ? `You have leverage. State: "I'm excited about ${companyName} specifically, and I have another offer at [amount] with a [date] deadline. I want to give you the opportunity to match before I decide." Do this in a phone call, not email.`
+    : null
+
+  const deadlineStrategy = runwayMonths <= 3
+    ? 'Request 3 business days maximum. Accept within that window regardless — do not let negotiation collapse a strong offer.'
+    : 'Request 5 business days to "review the full package carefully." This is standard and will not be refused.'
+
+  const acceptanceFloor = `If ${companyName} reaches ${inputs.targetRange} or within 8% of it, plus at least 1 of the package items, accept immediately.`
+
+  const pushbackRiskExplanation = pushbackRisk === 'low'
+    ? 'Low pushback risk: at your experience level and leverage, a professional counter is universally expected. No well-run company rescinds an offer for a polite, reasonable counter.'
+    : pushbackRisk === 'medium'
+      ? 'Medium pushback risk: the offer is not far below market, so a large counter may signal misalignment. Keep your counter to a single number and one package item.'
+      : 'High pushback risk: multiple factors suggest the company has limited flexibility. Counter once, professionally, and accept the best response.'
+
+  return {
+    recommendation,
+    recommendationRationale: buildCounterRecommendationRationale(inputs, recommendation),
+    counterNumber,
+    counterEmailScript,
+    packageItems,
+    acceptanceFloor,
+    deadlineStrategy,
+    competingOfferStrategy,
+    pushbackRisk,
+    pushbackRiskExplanation,
+  }
+}
+
+function buildCounterOfferEmail(
+  inputs: CounterOfferAnalysisInputs,
+  recommendation: CounterOfferAnalysisResult['recommendation'],
+  counterNumber: string,
+  packageItems: CounterOfferAnalysisResult['packageItems'],
+  urgencyFlag: string,
+): string {
+  if (recommendation === 'accept') {
+    return `Subject: Offer Acceptance — ${inputs.roleTitle} at ${inputs.companyName}\n\nDear [Hiring Manager Name],\n\nThank you for extending the offer for the ${inputs.roleTitle} role. I'm pleased to formally accept the offer as presented.\n\nI'm excited to join ${inputs.companyName} and contribute to [specific team goal]. Please share the next steps and any documentation required.\n\nLooking forward to starting.\n\nBest,\n[Your Name]`
+  }
+
+  const packageLine = packageItems.length > 0
+    ? `\n\nIn addition to the base compensation, I'd like to explore whether there is flexibility on: ${packageItems.map(p => `(a) ${p.item} — ${p.askAmount}`).join('; ')}.`
+    : ''
+
+  return `Subject: Re: ${inputs.roleTitle} Offer — Follow-up on Compensation\n\nDear [Hiring Manager Name],\n\nThank you for the offer to join ${inputs.companyName} as ${inputs.roleTitle} — I'm genuinely excited about the opportunity and the team.\n\nI've reviewed the offer carefully. Based on my research into the market for this role, seniority, and region, I was expecting a range of ${inputs.targetRange}. The current offer of ${inputs.offeredPackage} represents a ${Math.abs(inputs.gapPercent).toFixed(0)}% gap from my target.${packageLine}\n\nI'm confident in the value I'll bring to ${inputs.companyName} and I'd like to find a way to make this work. Would you be open to a brief call this week to discuss?\n\n${urgencyFlag ? urgencyFlag + '\n\n' : ''}Thank you again — I'm committed to finding a resolution and excited about the role.\n\nBest,\n[Your Name]`
+}
+
+function buildCounterRecommendationRationale(
+  inputs: CounterOfferAnalysisInputs,
+  rec: CounterOfferAnalysisResult['recommendation'],
+): string {
+  if (rec === 'counter_immediately') {
+    return `The offer is ${Math.abs(inputs.gapPercent).toFixed(0)}% below your target and your leverage score is strong. Counter immediately and professionally — you have negotiating room.`
+  }
+  if (rec === 'negotiate_holistically') {
+    return `The base gap is meaningful but not extreme. Negotiate the full package (base + equity + signing + flexibility) rather than a large base jump. You're more likely to succeed on total package than a large single-item ask.`
+  }
+  if (rec === 'accept_with_conditions') {
+    return `Your financial runway (${inputs.runwayMonths} months) limits your negotiating power. Accept the offer with 1–2 small, low-risk asks (remote days, accelerated review). Do not push on base.`
+  }
+  if (rec === 'accept') {
+    return `The offer meets or exceeds your target. Accept promptly — delays signal hesitation and may create friction before you start.`
+  }
+  return `Declining is warranted if the total package — after negotiation — cannot come within 15% of your target AND this company is the only offer.`
+}
+
+// ── 2. Layoff Survival Communication ─────────────────────────────────────────
+
+export interface LayoffSurvivalCommunicationInputs {
+  situation: 'rumours_only' | 'pip_issued' | 'layoff_announced' | 'in_rif_window' | 'post_termination'
+  compositeScore: number
+  seniorityBracket: 'junior' | 'mid' | 'senior' | 'principal'
+  tenureYears: number
+  visaConstrained: boolean
+  runwayMonths: number
+  hasPeerBeenLaidOff: boolean
+  hasPackageInfo: boolean
+}
+
+export interface LayoffSurvivalCommunicationResult {
+  situationSummary: string
+  immediateActions: string[]
+  whatToSayToManager: string
+  whatNOTToSay: string[]
+  documentationChecklist: string[]
+  severanceNegotiationScript: string | null
+  referenceProtectionScript: string
+  legalConsiderationNote: string
+}
+
+export function computeLayoffSurvivalCommunication(
+  inputs: LayoffSurvivalCommunicationInputs,
+): LayoffSurvivalCommunicationResult {
+  const { situation, compositeScore, seniorityBracket, tenureYears, visaConstrained, runwayMonths } = inputs
+
+  const immediateActions: string[] = []
+  let whatToSayToManager = ''
+  let severanceNegotiationScript: string | null = null
+
+  if (situation === 'rumours_only') {
+    immediateActions.push('Do NOT ask HR or your manager directly — it signals you are tracking exits and may make you a more convenient cut')
+    immediateActions.push('Start your parallel job search TODAY — do not wait for confirmation')
+    immediateActions.push('Back up all personal files, contacts, and work samples to personal devices (only items you are legally permitted to retain)')
+    immediateActions.push('Ensure your work is well-documented and your manager knows your current projects\' status — visibility protects you')
+    whatToSayToManager = 'Nothing about the rumours. Instead, schedule a 1:1 and say: "I wanted to give you a project update and make sure my priorities align with what the team needs most right now." Demonstrate value, not anxiety.'
+  }
+
+  if (situation === 'pip_issued') {
+    immediateActions.push('Request the PIP in writing if not already provided — verbal PIPs have limited legal standing')
+    immediateActions.push('Review the PIP criteria carefully — every target must be specific and measurable; vague PIPs are challengeable')
+    immediateActions.push('Begin job search immediately — PIP completion rates at companies reducing headcount are very low regardless of performance')
+    immediateActions.push('Document all communications with your manager and HR from this point forward — date-stamped emails, not verbal conversations')
+    whatToSayToManager = '"Thank you for being direct. I want to understand the specific metrics that will demonstrate improvement. Can we review each criterion together and agree on how success will be measured?" This is professional and creates a paper trail.'
+    severanceNegotiationScript = `"I'd like to discuss an alternative arrangement. Given my ${tenureYears} years of service, would ${companyName_placeholder} consider a mutual separation with a severance package rather than proceeding through the PIP process? This saves both parties significant time and maintains a positive relationship."`
+  }
+
+  if (situation === 'layoff_announced') {
+    immediateActions.push('Get the layoff notice in writing BEFORE signing anything')
+    immediateActions.push('Do NOT sign a separation agreement on the day it is presented — you have time to review')
+    immediateActions.push(`Severance is negotiable — especially at ${seniorityBracket === 'senior' || seniorityBracket === 'principal' ? 'your seniority level' : 'any level'}`)
+    if (visaConstrained) {
+      immediateActions.push('Contact an immigration attorney TODAY — your visa status and grace period starts from termination date, not when you find out')
+    }
+    whatToSayToManager = '"Thank you for telling me directly. I\'d appreciate a few days to review the separation agreement carefully before responding. Can we schedule a follow-up call on [specific date]?" This is professional and buys you time.'
+    severanceNegotiationScript = buildSeveranceScript(inputs)
+  }
+
+  if (situation === 'in_rif_window') {
+    immediateActions.push('Act normally — do not tip off that you are in active search; it may accelerate your inclusion in the next round')
+    immediateActions.push('Increase your value-demonstration: complete a visible piece of work before the next leadership review')
+    immediateActions.push('Strengthen relationships with the decision-makers — the people deciding cuts value people they know and trust')
+    whatToSayToManager = '"I wanted to check in on how the team is navigating the current changes. Is there anything I can take off your plate or prioritise differently to be most useful right now?"'
+  }
+
+  if (situation === 'post_termination') {
+    immediateActions.push('File for unemployment benefits on Day 1 — do not wait; the claim period starts from termination date')
+    immediateActions.push('Understand your health insurance continuation rights (COBRA in US; NHS in UK) and timelines')
+    immediateActions.push('Review your separation agreement for non-compete and non-solicitation clauses — most are unenforceable for individual contributors')
+    if (visaConstrained) {
+      immediateActions.push(`You are now in your ${inputs.visaConstrained ? '60-day' : 'grace'} period — contact an immigration attorney today`)
+    }
+    whatToSayToManager = 'Send a brief email: "Thank you for the opportunity to work together. I\'ve valued the experience and the team. I\'ll complete all transition steps professionally. Please keep me in mind for references." Keep it brief, professional, and non-emotional.'
+  }
+
+  const referenceProtectionScript = `When asking for references:\n"Hi [Manager Name], I'm beginning my next search. You've seen my work closely and I'd love to list you as a reference. Would you be comfortable providing a strong reference for [specific skills/achievements]?"\n\nAlways ask explicitly and early — never assume references are positive. If a manager hesitates, they are telling you something. Do not list them.`
+
+  const documentationChecklist = [
+    'Save your performance reviews (last 3 years) to a personal device',
+    'Save your employment contract and any written promises made (bonus, equity, promotion)',
+    'Save the separation agreement with the exact date you received it',
+    'Record the names of HR representative and manager present at the termination meeting',
+    'Note your last working day and any paid notice period provisions',
+    tenureYears >= 3 ? 'Calculate your accrued but unused PTO — it should be paid out in most jurisdictions' : 'Verify PTO payout policy',
+    'Save equity/stock vesting schedule — unvested equity vesting accelerates in some separation agreements',
+  ]
+
+  const legalConsiderationNote = runwayMonths <= 3
+    ? `Legal review is strongly recommended given your short runway. A 30-minute consultation with an employment attorney (most offer free first consultations) can identify whether your severance is negotiable and flag any issues in the separation agreement.`
+    : `If you were laid off with a non-standard separation agreement or after a PIP, a 30-minute consultation with an employment attorney is worth the cost. Many agreements have unenforceable clauses candidates unknowingly sign away rights to.`
+
+  return {
+    situationSummary: buildSituationSummary(situation, compositeScore, runwayMonths),
+    immediateActions,
+    whatToSayToManager,
+    whatNOTToSay: buildWhatNotToSay(situation, visaConstrained),
+    documentationChecklist,
+    severanceNegotiationScript,
+    referenceProtectionScript,
+    legalConsiderationNote,
+  }
+}
+
+const companyName_placeholder = '[company name]'
+
+function buildSeveranceScript(inputs: LayoffSurvivalCommunicationInputs): string {
+  const { tenureYears, seniorityBracket, runwayMonths } = inputs
+  const base = tenureYears >= 5
+    ? `Given my ${tenureYears} years of service and the institutional knowledge I hold, I'd like to discuss whether the standard severance package can be enhanced. Specifically, I'd like to ask for [X additional weeks], continuation of health benefits through [date], and a reference letter confirming my departure was due to company restructuring, not performance.`
+    : `I'd appreciate a conversation about the separation terms. While I understand the company's constraints, I'd like to ask about extending the severance by [2–4 weeks] and confirming my departure as "company restructuring" in any reference inquiries.`
+
+  const urgency = runwayMonths <= 2
+    ? ` Additionally, given my financial situation, I'd like to negotiate an accelerated payout of the severance rather than payment over the notice period.`
+    : ''
+
+  return `"${base}${urgency}"\n\nDelivery: Request this conversation in a written email first, then follow up by phone. HR negotiates severance regularly — your ask will not surprise them and most companies have discretionary budget for this.`
+}
+
+function buildSituationSummary(situation: LayoffSurvivalCommunicationInputs['situation'], score: number, runway: number): string {
+  if (situation === 'post_termination') {
+    return `You have been terminated. Runway: ${runway} months. Immediate priority: unemployment filing, visa timeline (if applicable), and reference protection. Your score of ${score} accurately predicted this — the intelligence signals were correct.`
+  }
+  if (situation === 'layoff_announced') {
+    return `A layoff has been announced. Risk score: ${score}. Do not sign anything today. Severance negotiation and reference protection are your two most important immediate actions.`
+  }
+  return `Risk score of ${score} indicates ${score >= 65 ? 'high' : score >= 45 ? 'elevated' : 'moderate'} exposure. Runway: ${runway} months. Start parallel search now — waiting for confirmation reduces your options.`
+}
+
+function buildWhatNotToSay(
+  situation: LayoffSurvivalCommunicationInputs['situation'],
+  visaConstrained: boolean,
+): string[] {
+  const list = [
+    'Do not say "I know I\'m on the list" — never confirm you have intelligence about your own status',
+    'Do not say "I have another offer" unless you are prepared to act on it immediately',
+    'Do not express anger or resentment — it ends reference relationships permanently',
+    'Do not share your financial situation or desperation — it weakens every negotiation position',
+  ]
+  if (situation === 'pip_issued') {
+    list.push('Do not say "I don\'t agree with this PIP" on the spot — respond in writing after careful review')
+    list.push('Do not sign the PIP acknowledgement during the meeting — ask for 24 hours to review')
+  }
+  if (visaConstrained) {
+    list.push('Do not say "I need this job for my visa" — it removes all negotiating leverage immediately')
+  }
+  return list
+}
+
+// ── 3. Multi-Offer Comparison ─────────────────────────────────────────────────
+
+export interface OfferForComparison {
+  companyName: string
+  roleTitle: string
+  baseSalary: number           // in user's local currency
+  bonus: number                // annual target, same currency
+  equityAnnualValue: number    // estimated annual RSU/option value, same currency
+  signingBonus: number
+  ptoDays: number
+  remoteDaysPerWeek: number
+  companyStage: 'startup' | 'growth' | 'mature' | 'enterprise'
+  offerDeadline: string        // "2026-06-05"
+  growthPotential: 1 | 2 | 3 | 4 | 5
+  jobSatisfactionFit: 1 | 2 | 3 | 4 | 5
+  managerQuality: 1 | 2 | 3 | 4 | 5
+  companyStability: 1 | 2 | 3 | 4 | 5
+}
+
+export interface MultiOfferComparisonResult {
+  winnerCompanyName: string
+  winnerRationale: string
+  offerScores: Array<{
+    companyName: string
+    totalScore: number
+    totalCompensation: number
+    rank: number
+    strengths: string[]
+    weaknesses: string[]
+    redFlags: string[]
+  }>
+  decisionMatrix: Array<{
+    dimension: string
+    weight: number
+    scores: Record<string, number>  // companyName → score
+  }>
+  negotiationOpportunity: string
+  /** What good enough looks like across all offers */
+  acceptanceThreshold: string
+}
+
+export function computeMultiOfferComparison(
+  offers: OfferForComparison[],
+  userPriority: 'stability' | 'growth' | 'compensation' | 'balance',
+): MultiOfferComparisonResult {
+  if (offers.length === 0) {
+    return { winnerCompanyName: '', winnerRationale: 'No offers to compare.', offerScores: [], decisionMatrix: [], negotiationOpportunity: '', acceptanceThreshold: '' }
+  }
+
+  // Weights depend on user priority
+  const WEIGHT_SETS: Record<typeof userPriority, Record<string, number>> = {
+    stability:     { comp: 2, equity: 1, growth: 2, satisfaction: 2, manager: 2, stability: 4, remote: 1 },
+    growth:        { comp: 2, equity: 3, growth: 4, satisfaction: 2, manager: 2, stability: 1, remote: 1 },
+    compensation:  { comp: 4, equity: 3, growth: 2, satisfaction: 1, manager: 1, stability: 2, remote: 1 },
+    balance:       { comp: 2, equity: 2, growth: 2, satisfaction: 3, manager: 2, stability: 2, remote: 2 },
+  }
+  const weights = WEIGHT_SETS[userPriority]
+
+  const offerScores = offers.map(offer => {
+    const totalComp = offer.baseSalary + offer.bonus + offer.equityAnnualValue + (offer.signingBonus / 4)
+    // Normalize each dimension 1–5 relative to all offers
+    const compScore = normalizeAmong(totalComp, offers.map(o => o.baseSalary + o.bonus + o.equityAnnualValue))
+    const equityScore = normalizeAmong(offer.equityAnnualValue, offers.map(o => o.equityAnnualValue))
+    const growthScore = offer.growthPotential
+    const satisfactionScore = offer.jobSatisfactionFit
+    const managerScore = offer.managerQuality
+    const stabilityScore = offer.companyStability
+    const remoteScore = Math.min(5, offer.remoteDaysPerWeek + 1)
+
+    const totalScore =
+      compScore * weights.comp +
+      equityScore * weights.equity +
+      growthScore * weights.growth +
+      satisfactionScore * weights.satisfaction +
+      managerScore * weights.manager +
+      stabilityScore * weights.stability +
+      remoteScore * weights.remote
+
+    const strengths: string[] = []
+    const weaknesses: string[] = []
+    const redFlags: string[] = []
+
+    if (compScore >= 4) strengths.push('Top-quartile total compensation')
+    if (offer.growthPotential >= 4) strengths.push('High growth potential')
+    if (offer.managerQuality >= 4) strengths.push('Strong manager quality')
+    if (offer.companyStability >= 4) strengths.push('High company stability')
+    if (offer.remoteDaysPerWeek >= 3) strengths.push(`${offer.remoteDaysPerWeek}d/week remote`)
+
+    if (compScore <= 2) weaknesses.push('Below-median total compensation')
+    if (offer.growthPotential <= 2) weaknesses.push('Limited growth visibility')
+    if (offer.managerQuality <= 2) weaknesses.push('Manager quality concerns flagged')
+
+    if (offer.companyStage === 'startup' && offer.equityAnnualValue === 0) redFlags.push('Startup offering no meaningful equity is a significant red flag')
+    if (offer.companyStability <= 1) redFlags.push('Company stability score is very low — verify financial health before accepting')
+
+    return { companyName: offer.companyName, totalScore, totalCompensation: totalComp, strengths, weaknesses, redFlags, rank: 0 }
+  }).sort((a, b) => b.totalScore - a.totalScore).map((o, i) => ({ ...o, rank: i + 1 }))
+
+  const winner = offerScores[0]
+
+  // Negotiation opportunity: if #1 and #2 are within 8% of each other, use #2 as leverage against #1
+  const runnerUp = offerScores[1]
+  const negotiationOpportunity = runnerUp
+    ? `${winner.companyName} leads by ${((winner.totalScore - runnerUp.totalScore) / runnerUp.totalScore * 100).toFixed(0)}%. If the gap is < 15%, inform ${winner.companyName} that you have a competing offer from ${runnerUp.companyName} to see if they can improve their package before you decide.`
+    : 'Only one offer — negotiate from current benchmarks rather than a competing offer.'
+
+  const decisionMatrix = [
+    { dimension: 'Total Compensation', weight: weights.comp, scores: Object.fromEntries(offers.map(o => [o.companyName, normalizeAmong(o.baseSalary + o.bonus + o.equityAnnualValue, offers.map(x => x.baseSalary + x.bonus + x.equityAnnualValue))])) },
+    { dimension: 'Growth Potential', weight: weights.growth, scores: Object.fromEntries(offers.map(o => [o.companyName, o.growthPotential])) },
+    { dimension: 'Job Satisfaction Fit', weight: weights.satisfaction, scores: Object.fromEntries(offers.map(o => [o.companyName, o.jobSatisfactionFit])) },
+    { dimension: 'Manager Quality', weight: weights.manager, scores: Object.fromEntries(offers.map(o => [o.companyName, o.managerQuality])) },
+    { dimension: 'Company Stability', weight: weights.stability, scores: Object.fromEntries(offers.map(o => [o.companyName, o.companyStability])) },
+  ]
+
+  return {
+    winnerCompanyName: winner.companyName,
+    winnerRationale: `${winner.companyName} ranks #1 on a weighted ${userPriority} priority matrix. ${winner.strengths.slice(0, 2).join(' and ')} are the key differentiators.`,
+    offerScores,
+    decisionMatrix,
+    negotiationOpportunity,
+    acceptanceThreshold: `Accept if ${winner.companyName} maintains or improves their current offer. If they reduce any component, compare total score against #2 (${runnerUp?.companyName ?? 'next best'}) again.`,
+  }
+}
+
+function normalizeAmong(value: number, allValues: number[]): number {
+  const min = Math.min(...allValues)
+  const max = Math.max(...allValues)
+  if (max === min) return 3
+  return 1 + ((value - min) / (max - min)) * 4
+}
+
+// ── 4. Risk-Aware Resignation Planning ───────────────────────────────────────
+
+export interface ResignationPlanInputs {
+  runwayMonths: number
+  visaConstrained: boolean
+  visaGracePeriodDays: number
+  unvestedEquityMonths: number  // how many months until next vesting cliff
+  noticePeriodMonths: number
+  currentRiskScore: number
+  hasDependents: boolean
+  newCompanyStartDate: string   // ISO date
+  offerLetterReceived: boolean  // MUST be true before any resignation advice
+}
+
+export interface ResignationPlanResult {
+  readyToResign: boolean
+  notReadyReason: string | null
+  optimalResignationDate: string
+  resignationEmailScript: string
+  counterOfferResponseScript: string
+  noticePeriodStrategy: string
+  equityProtectionNote: string
+  visaTransitionNote: string | null
+  referenceStrategy: string
+}
+
+export function computeResignationPlan(
+  inputs: ResignationPlanInputs,
+): ResignationPlanResult {
+  const {
+    offerLetterReceived,
+    unvestedEquityMonths,
+    visaConstrained,
+    visaGracePeriodDays,
+    noticePeriodMonths,
+    currentRiskScore,
+    hasDependents,
+    newCompanyStartDate,
+  } = inputs
+
+  if (!offerLetterReceived) {
+    return {
+      readyToResign: false,
+      notReadyReason: 'You do not yet have a written offer letter. NEVER resign based on a verbal offer — 3% of verbal offers are rescinded before paperwork is issued. Wait for the letter.',
+      optimalResignationDate: '',
+      resignationEmailScript: '',
+      counterOfferResponseScript: '',
+      noticePeriodStrategy: '',
+      equityProtectionNote: '',
+      visaTransitionNote: null,
+      referenceStrategy: '',
+    }
+  }
+
+  // Check equity cliff — if vesting in < 4 weeks, delay resignation by up to 4 weeks
+  const equityProtectionNote = unvestedEquityMonths <= 1
+    ? `⚠️ You have a vesting cliff within 1 month. Delay your resignation by ${unvestedEquityMonths * 30} days if possible to capture the next vest. Contact your new company to delay the start date by 2–3 weeks.`
+    : `Your next equity vest is in ${unvestedEquityMonths} months — resignation now does not cost you a cliff.`
+
+  const visaTransitionNote = visaConstrained
+    ? `Your visa grace period is ${visaGracePeriodDays} days after employment ends. Ensure your new company has confirmed your visa transfer/sponsorship IN WRITING before you resign. Do not rely on verbal assurances.`
+    : null
+
+  const optimalResignationDate = `Resign immediately after receiving the offer letter. Your last day = today + ${noticePeriodMonths} months (as per your contract).`
+
+  const resignationEmailScript = buildResignationEmail(noticePeriodMonths)
+
+  const counterOfferResponseScript = `When your manager makes a counter-offer (they likely will): "I appreciate the offer and I'm genuinely grateful for everything I've learned here. This is a decision I've made carefully and I'm committed to it. I want to ensure the smoothest possible transition for the team." Do NOT negotiate on the counter. 80% of people who accept counter-offers leave within 12 months — the underlying reasons for leaving don't change with a pay raise.`
+
+  const noticePeriodStrategy = currentRiskScore >= 65
+    ? `Your risk score is ${currentRiskScore} — the company may already be considering your position. Give full notice professionally, but do not share sensitive information about your new role. The company may opt to release you early (with or without pay depending on your contract) — this is fine.`
+    : `Serve your full notice period professionally. Use it to: document your work, transfer knowledge to your replacement, and strengthen the relationships that will become your references.`
+
+  const referenceStrategy = `In your last 2 weeks: ask your manager and 2 senior colleagues directly for a LinkedIn recommendation. Frame it as: "As I transition, I'd love a recommendation reflecting [specific project or skill]. It would mean a lot coming from you." Getting this done before you leave is vastly easier than asking after departure.`
+
+  return {
+    readyToResign: true,
+    notReadyReason: null,
+    optimalResignationDate,
+    resignationEmailScript,
+    counterOfferResponseScript,
+    noticePeriodStrategy,
+    equityProtectionNote,
+    visaTransitionNote,
+    referenceStrategy,
+  }
+}
+
+function buildResignationEmail(noticePeriodMonths: number): string {
+  const lastDayNote = noticePeriodMonths === 1
+    ? 'My last working day will be [date — exactly 1 month from today].'
+    : `My last working day will be [date — ${noticePeriodMonths} months from today].`
+
+  return `Subject: Resignation — [Your Full Name]\n\nDear [Manager First Name],\n\nI am writing to formally notify you of my resignation from my position at [Company Name].\n\n${lastDayNote}\n\nI want to express my sincere gratitude for the opportunities I've had here. I've grown significantly in my role and valued the experience of working with you and the team.\n\nI am fully committed to ensuring a smooth transition. Please let me know how I can best support the handover process during my notice period.\n\nThank you again for everything.\n\nBest regards,\n[Your Name]`
+}
+
+// ── 5. Compensation Playbook ──────────────────────────────────────────────────
+
+export interface CompensationPlaybookInputs {
+  rolePrefix: string
+  seniorityBracket: 'junior' | 'mid' | 'senior' | 'principal'
+  region: 'india' | 'us' | 'uk' | 'sg' | 'default'
+  currentAnnualSalaryUsd: number
+  targetCompanyStage: 'startup' | 'growth' | 'mature' | 'enterprise'
+}
+
+export interface CompensationPlaybook {
+  marketPosition: 'significantly_under' | 'under' | 'at' | 'above' | 'significantly_above'
+  marketMidpointUsd: number
+  marketRangeFormatted: string
+  percentileEstimate: number   // where user sits in market distribution
+  /** Exact numbers to quote in each negotiation scenario */
+  negotiationScripts: {
+    whatAmIWorth: string       // When asked "what are you worth?"
+    whatAmILooking: string     // When asked "what are you looking for?"
+    currentCTCResponse: string // When asked current CTC
+    counterToLowball: string   // When first offer is 20%+ below target
+  }
+  equityExpectations: string
+  bonusExpectations: string
+  benchmarkSources: string[]
+}
+
+// Reuse SALARY_BENCHMARKS structure via cross-reference to jobTargetingEngine
+// (inline data here for independence from jobTargetingEngine import cycle)
+const COMP_PLAYBOOK_DATA: Record<string, Record<string, Record<string, { minUsd: number; medianUsd: number; maxUsd: number }>>> = {
+  sw: {
+    india: { junior: { minUsd: 9600, medianUsd: 14500, maxUsd: 22000 }, mid: { minUsd: 18000, medianUsd: 28000, maxUsd: 48000 }, senior: { minUsd: 36000, medianUsd: 54000, maxUsd: 84000 }, principal: { minUsd: 60000, medianUsd: 90000, maxUsd: 144000 } },
+    us:    { junior: { minUsd: 90000, medianUsd: 115000, maxUsd: 150000 }, mid: { minUsd: 140000, medianUsd: 175000, maxUsd: 230000 }, senior: { minUsd: 180000, medianUsd: 240000, maxUsd: 360000 }, principal: { minUsd: 250000, medianUsd: 340000, maxUsd: 520000 } },
+    uk:    { junior: { minUsd: 48000, medianUsd: 62000, maxUsd: 85000 }, mid: { minUsd: 72000, medianUsd: 96000, maxUsd: 135000 }, senior: { minUsd: 100000, medianUsd: 135000, maxUsd: 190000 }, principal: { minUsd: 140000, medianUsd: 185000, maxUsd: 260000 } },
+    sg:    { junior: { minUsd: 42000, medianUsd: 54000, maxUsd: 75000 }, mid: { minUsd: 66000, medianUsd: 90000, maxUsd: 125000 }, senior: { minUsd: 96000, medianUsd: 130000, maxUsd: 180000 }, principal: { minUsd: 130000, medianUsd: 175000, maxUsd: 240000 } },
+    default: { junior: { minUsd: 9600, medianUsd: 14500, maxUsd: 22000 }, mid: { minUsd: 18000, medianUsd: 28000, maxUsd: 48000 }, senior: { minUsd: 36000, medianUsd: 54000, maxUsd: 84000 }, principal: { minUsd: 60000, medianUsd: 90000, maxUsd: 144000 } },
+  },
+  fin: {
+    india: { junior: { minUsd: 7200, medianUsd: 12000, maxUsd: 20000 }, mid: { minUsd: 14400, medianUsd: 24000, maxUsd: 42000 }, senior: { minUsd: 28000, medianUsd: 48000, maxUsd: 84000 }, principal: { minUsd: 60000, medianUsd: 96000, maxUsd: 168000 } },
+    us:    { junior: { minUsd: 75000, medianUsd: 95000, maxUsd: 130000 }, mid: { minUsd: 110000, medianUsd: 150000, maxUsd: 220000 }, senior: { minUsd: 160000, medianUsd: 230000, maxUsd: 380000 }, principal: { minUsd: 230000, medianUsd: 350000, maxUsd: 600000 } },
+    uk:    { junior: { minUsd: 44000, medianUsd: 58000, maxUsd: 82000 }, mid: { minUsd: 64000, medianUsd: 90000, maxUsd: 140000 }, senior: { minUsd: 96000, medianUsd: 145000, maxUsd: 240000 }, principal: { minUsd: 140000, medianUsd: 210000, maxUsd: 400000 } },
+    sg:    { junior: { minUsd: 38000, medianUsd: 52000, maxUsd: 75000 }, mid: { minUsd: 58000, medianUsd: 84000, maxUsd: 130000 }, senior: { minUsd: 90000, medianUsd: 130000, maxUsd: 200000 }, principal: { minUsd: 130000, medianUsd: 190000, maxUsd: 320000 } },
+    default: { junior: { minUsd: 7200, medianUsd: 12000, maxUsd: 20000 }, mid: { minUsd: 14400, medianUsd: 24000, maxUsd: 42000 }, senior: { minUsd: 28000, medianUsd: 48000, maxUsd: 84000 }, principal: { minUsd: 60000, medianUsd: 96000, maxUsd: 168000 } },
+  },
+  pm: {
+    india: { junior: { minUsd: 9600, medianUsd: 14400, maxUsd: 21600 }, mid: { minUsd: 18000, medianUsd: 28800, maxUsd: 42000 }, senior: { minUsd: 30000, medianUsd: 50000, maxUsd: 72000 }, principal: { minUsd: 48000, medianUsd: 80000, maxUsd: 108000 } },
+    us:    { junior: { minUsd: 100000, medianUsd: 130000, maxUsd: 160000 }, mid: { minUsd: 150000, medianUsd: 190000, maxUsd: 240000 }, senior: { minUsd: 210000, medianUsd: 275000, maxUsd: 350000 }, principal: { minUsd: 280000, medianUsd: 380000, maxUsd: 480000 } },
+    uk:    { junior: { minUsd: 56000, medianUsd: 72000, maxUsd: 100000 }, mid: { minUsd: 88000, medianUsd: 112000, maxUsd: 150000 }, senior: { minUsd: 125000, medianUsd: 160000, maxUsd: 213000 }, principal: { minUsd: 175000, medianUsd: 220000, maxUsd: 300000 } },
+    sg:    { junior: { minUsd: 45000, medianUsd: 56000, maxUsd: 75000 }, mid: { minUsd: 68000, medianUsd: 88000, maxUsd: 113000 }, senior: { minUsd: 98000, medianUsd: 130000, maxUsd: 165000 }, principal: { minUsd: 135000, medianUsd: 180000, maxUsd: 225000 } },
+    default: { junior: { minUsd: 9600, medianUsd: 14400, maxUsd: 21600 }, mid: { minUsd: 18000, medianUsd: 28800, maxUsd: 42000 }, senior: { minUsd: 30000, medianUsd: 50000, maxUsd: 72000 }, principal: { minUsd: 48000, medianUsd: 80000, maxUsd: 108000 } },
+  },
+  default: {
+    default: { junior: { minUsd: 8000, medianUsd: 14000, maxUsd: 22000 }, mid: { minUsd: 16000, medianUsd: 26000, maxUsd: 44000 }, senior: { minUsd: 28000, medianUsd: 46000, maxUsd: 78000 }, principal: { minUsd: 50000, medianUsd: 80000, maxUsd: 130000 } },
+  },
+}
+
+function formatPlaybookComp(usd: number, region: string): string {
+  if (region === 'india') {
+    const lakhs = Math.round(usd * 83.5 / 100000)
+    return `₹${lakhs}L`
+  }
+  if (region === 'us') return `$${Math.round(usd / 1000)}K`
+  if (region === 'uk') return `£${Math.round(usd * 0.79 / 1000)}K`
+  if (region === 'sg') return `S$${Math.round(usd * 1.35 / 1000)}K`
+  return `$${Math.round(usd / 1000)}K`
+}
+
+export function computeCompensationPlaybook(inputs: CompensationPlaybookInputs): CompensationPlaybook {
+  const { rolePrefix, seniorityBracket, region, currentAnnualSalaryUsd, targetCompanyStage } = inputs
+
+  const roleData = COMP_PLAYBOOK_DATA[rolePrefix] ?? COMP_PLAYBOOK_DATA['default']
+  const regionData = roleData[region] ?? roleData['default'] ?? COMP_PLAYBOOK_DATA['default']['default']
+  const benchmark = regionData[seniorityBracket] ?? regionData['senior']
+
+  const { minUsd, medianUsd, maxUsd } = benchmark
+
+  const deltaPercent = ((currentAnnualSalaryUsd - medianUsd) / medianUsd) * 100
+
+  let marketPosition: CompensationPlaybook['marketPosition']
+  if (deltaPercent < -20) marketPosition = 'significantly_under'
+  else if (deltaPercent < -8) marketPosition = 'under'
+  else if (deltaPercent <= 8) marketPosition = 'at'
+  else if (deltaPercent <= 25) marketPosition = 'above'
+  else marketPosition = 'significantly_above'
+
+  const percentileEstimate = Math.max(5, Math.min(95, Math.round(50 + (deltaPercent * 1.5))))
+
+  // Target range = median + 10–20% (position above market midpoint)
+  const targetMin = formatPlaybookComp(medianUsd * 1.05, region)
+  const targetMax = formatPlaybookComp(Math.min(maxUsd, medianUsd * 1.25), region)
+  const marketRangeFormatted = `${formatPlaybookComp(minUsd, region)} – ${formatPlaybookComp(maxUsd, region)}`
+
+  // Stage-specific premium
+  const stagePremium = targetCompanyStage === 'startup' ? '+ meaningful equity (ESOPs/options)'
+    : targetCompanyStage === 'growth' ? '+ ESOPs or RSUs at pre-IPO valuation'
+    : targetCompanyStage === 'enterprise' ? '+ RSUs (predictable liquidity)'
+    : ''
+
+  const negotiationScripts = {
+    whatAmIWorth: `"Based on my ${seniorityBracket} experience in ${rolePrefix.toUpperCase()} and market data for ${region} (Levels.fyi, LinkedIn Salary Insights, Glassdoor Q1 2026), the market range for this role is ${marketRangeFormatted}. I'm targeting ${targetMin}–${targetMax} ${stagePremium}."`,
+    whatAmILooking: `"I'm targeting ${targetMin}–${targetMax} in base, ${stagePremium}. I'm flexible on the structure — total package is what matters to me."`,
+    currentCTCResponse: `"I'd prefer to share my target range rather than anchoring to a past number — the role and company context matter more. I'm targeting ${targetMin}–${targetMax}. Does that align with your band?"`,
+    counterToLowball: `"Thank you for the offer. I've reviewed it carefully and I was expecting ${targetMin}–${targetMax} based on market data and the scope of this role. The current offer is ${Math.abs(deltaPercent).toFixed(0)}% below that range. Can we explore how to close the gap — whether through base, signing bonus, or equity?"`,
+  }
+
+  const equityExpectations = targetCompanyStage === 'startup'
+    ? 'Expect 0.1–0.5% equity for senior, 0.5–2% for principal. Verify: (a) preferred vs. common shares, (b) 409A valuation, (c) vesting cliff and schedule.'
+    : targetCompanyStage === 'growth'
+      ? 'RSUs or pre-IPO options: ask for the annual grant value in USD equivalent. At a Series D+ company, expect $20K–$100K/yr at senior level.'
+      : 'Public company RSUs: ask for the number of shares and current share price to calculate annual value. Expect 4-year vesting with 1-year cliff.'
+
+  const bonusExpectations = rolePrefix === 'fin' || rolePrefix === 'cons'
+    ? 'Finance/consulting roles: 20–100% variable is standard. Verify: target vs. maximum, discretionary vs. formulaic, bonus clawback provisions.'
+    : 'For most tech roles: 10–20% annual target bonus. Verify: individual vs. company target, when it pays out, and whether it pro-rates in year 1.'
+
+  return {
+    marketPosition,
+    marketMidpointUsd: medianUsd,
+    marketRangeFormatted,
+    percentileEstimate,
+    negotiationScripts,
+    equityExpectations,
+    bonusExpectations,
+    benchmarkSources: ['Levels.fyi Q1 2026', 'LinkedIn Salary Insights', 'Glassdoor Salary Intelligence', 'Naukri Salary Insights (India)', 'HumanProof Calibration Dataset'],
+  }
+}

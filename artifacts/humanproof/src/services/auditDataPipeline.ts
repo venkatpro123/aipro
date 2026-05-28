@@ -144,6 +144,9 @@ import { computeJobTargeting } from "./jobTargetingEngine";
 import { computeMonthlyActionPlan } from "./monthlyActionPlanEngine";
 import { computeSkillFusion } from "./skillFusionEngine";
 import { computeCompetitivePosition } from "./competitivePositionEngine";
+// v50.0: behavioural personalization + 30/60/90 precision plan
+import { computeBehavioralPersonalization } from "./behavioralPersonalizationEngine";
+import { computePrecision9090Plan } from "./precision9090PlanEngine";
 import { setAuditCalibrationBundle, setAuditL1Thresholds } from "./empiricalCalibration";
 // DEBT-5 — structured logging.
 import { createLogger } from "../shared/logger";
@@ -3627,6 +3630,77 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     (hybridResult as any).competitivePosition = competitivePosition;
   } catch (e) {
     noteEngineFailure('competitivePosition', e);
+  }
+
+  // 60. Behavioral Personalization Engine — 7-dimension career behavioural analysis
+  //     Feeds action plan personalisation, negotiation scripts, and 30/60/90 plan.
+  try {
+    const uf60 = inputs.userFactors as any;
+    const behavioralPersonalization = computeBehavioralPersonalization({
+      tenureYears:                   uf60?.tenureYears ?? 3,
+      totalExperienceYears:          uf60?.yearsOfExperience ?? 5,
+      seniorityBracket:              uf60?.seniority ?? 'mid',
+      workTypeKey:                   resolvedRole.canonicalKey ?? 'software_engineer',
+      rolePrefix:                    (resolvedRole.canonicalKey ?? 'software_engineer').split('_')[0],
+      industry:                      hybridResult.industryKey ?? '',
+      region:                        (hybridResult.countryKey ?? 'IN').toLowerCase(),
+      currentMonthlySalaryLocal:     uf60?.currentMonthlySalaryLocal ?? null,
+      localCurrencyCode:             uf60?.localCurrencyCode ?? null,
+      annualSalaryUsd:               uf60?.currentSalaryUSD ?? null,
+      employmentGapMonths:           uf60?.employmentGapMonths ?? null,
+      yearsAtCurrentTitle:           uf60?.yearsAtCurrentTitle ?? null,
+      numberOfJobsLast5Years:        uf60?.numberOfJobsLast5Years ?? null,
+      numberOfPromotionsLast5Years:  uf60?.numberOfPromotionsLast5Years ?? null,
+      currentCompanyType:            uf60?.companyType ?? null,
+      targetCompanyType:             uf60?.targetCompanyType ?? null,
+      resumeLastUpdatedMonths:       uf60?.resumeLastUpdatedMonths ?? null,
+      hasPortfolio:                  uf60?.hasPublicPortfolio ?? null,
+      hasRecentInterviewPractice:    uf60?.hasRecentInterviewPractice ?? null,
+      linkedinCompletionPct:         uf60?.linkedinConnectionCount != null ? Math.min(100, 40 + (uf60.linkedinConnectionCount > 200 ? 30 : 0)) : null,
+      compositeScore:                hybridResult.total,
+      careerGoal:                    uf60?.careerGoal ?? null,
+      aiDisruptionRisk:              (hybridResult as any).aiExposureIndex ?? null,
+      skillPortfolioScore:           (hybridResult as any).skillFusion?.overallPortfolioScore ?? null,
+      performanceTier:               hybridResult.performanceTier ?? 'unknown',
+      visaStatus:                    uf60?.visaStatus ?? null,
+      hasDependents:                 uf60?.hasDependents ?? null,
+      runwayMonths:                  (hybridResult as any).financialRunway?.runwayMonths ?? null,
+    });
+    (hybridResult as any).behavioralPersonalization = behavioralPersonalization;
+  } catch (e) {
+    noteEngineFailure('behavioralPersonalization', e);
+  }
+
+  // 61. Precision 30/60/90 Plan Engine — AI-prioritised 13-week execution plan
+  //     Week-by-week milestones, daily focus priorities, D30/D60/D90 gates.
+  try {
+    const uf61 = inputs.userFactors as any;
+    const _behavioral61    = (hybridResult as any).behavioralPersonalization ?? null;
+    const _monthlyPlan61   = (hybridResult as any).monthlyActionPlan ?? null;
+    const _jobTargeting61  = (hybridResult as any).jobTargeting ?? null;
+    if (_behavioral61 && _monthlyPlan61 && _jobTargeting61) {
+      const precision9090Plan = computePrecision9090Plan({
+        compositeScore:       hybridResult.total,
+        seniorityBracket:     uf61?.seniority ?? 'mid',
+        rolePrefix:           (resolvedRole.canonicalKey ?? 'software_engineer').split('_')[0],
+        workTypeKey:          resolvedRole.canonicalKey ?? 'software_engineer',
+        region:               (hybridResult.countryKey ?? 'IN').toLowerCase(),
+        metro:                uf61?.city ?? null,
+        tenureYears:          uf61?.tenureYears ?? 3,
+        totalExperienceYears: uf61?.yearsOfExperience ?? 5,
+        industry:             hybridResult.industryKey ?? '',
+        behavioral:           _behavioral61,
+        monthlyPlan:          _monthlyPlan61,
+        jobTargeting:         _jobTargeting61,
+        financialRunway:      (hybridResult as any).financialRunway ?? null,
+        visaRisk:             (hybridResult as any).visaRisk ?? null,
+        careerGoal:           uf61?.careerGoal ?? null,
+        targetCompanyType:    uf61?.targetCompanyType ?? null,
+      });
+      (hybridResult as any).precision9090Plan = precision9090Plan;
+    }
+  } catch (e) {
+    noteEngineFailure('precision9090Plan', e);
   }
 
   _timer.mark('intelligence_upgrade_end');

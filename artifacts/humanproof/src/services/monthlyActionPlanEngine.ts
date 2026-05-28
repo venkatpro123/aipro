@@ -2690,3 +2690,7 @@ export function computeMonthlyActionPlanV52(inputs: MonthlyActionPlanInputs): Mo
     months: enrichedMonths,
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// v53.0 — 12 New Personalization Signals
+// ═══════════════════════════════════════════════════════════════════════════════

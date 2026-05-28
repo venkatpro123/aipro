@@ -78,6 +78,9 @@ import type { JobTargetingResult } from "../services/jobTargetingEngine";
 import type { MonthlyActionPlanResult } from "../services/monthlyActionPlanEngine";
 import type { SkillFusionResult } from "../services/skillFusionEngine";
 import type { CompetitivePositionResult } from "../services/competitivePositionEngine";
+// v50.0 personalization engines
+import type { BehavioralPersonalizationResult } from "../services/behavioralPersonalizationEngine";
+import type { Precision9090PlanResult } from "../services/precision9090PlanEngine";
 
 // ============================================================================
 // Sub-Interfaces
@@ -1216,6 +1219,23 @@ export interface HybridResult {
    * competitive edges, and a unique positioning statement for the job search.
    */
   competitivePosition?: CompetitivePositionResult;
+
+  /**
+   * v50.0 — Career behavioural analysis.
+   * 7-dimension personalisation engine: employment gaps, career trajectory,
+   * compensation market position, interview readiness, competitive peer ranking,
+   * company transition dynamics, and risk tolerance calibration.
+   * Feeds into precision9090Plan, monthlyActionPlan, and negotiation scripts.
+   */
+  behavioralPersonalization?: BehavioralPersonalizationResult;
+
+  /**
+   * v50.0 — AI-prioritised 13-week execution plan (30/60/90-day).
+   * Week-by-week milestones, daily focus priorities (3 per day), D30/D60/D90
+   * checkpoint gates with numeric thresholds, emergency fallback pathways, and
+   * all actions ranked by (impact × urgency) ÷ effort AI priority score.
+   */
+  precision9090Plan?: Precision9090PlanResult;
 }
 
 // ============================================================================

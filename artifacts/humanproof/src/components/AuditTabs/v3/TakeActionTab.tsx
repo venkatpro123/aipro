@@ -43,6 +43,8 @@ import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligenceP
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 import MonthlyActionPlan from '../common/MonthlyActionPlan';
 import JobTargetPanel from '../common/JobTargetPanel';
+import Precision9090Panel from '../common/Precision9090Panel';
+import BehavioralInsightPanel from '../common/BehavioralInsightPanel';
 
 // Lazy-load the heavy T3 components — each has 30+ imports including context
 // hooks. If either fails to load, only its collapsed section is affected; the
@@ -501,6 +503,20 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
         </AdaptiveBlock>
       )}
 
+      {/* T2: Precision 30/60/90 plan — AI-ranked 13-week execution with D30/D60/D90 gates */}
+      {r.precision9090Plan && (
+        <AdaptiveBlock
+          title="30/60/90-day execution plan"
+          subtitle="Week-by-week milestones, daily focus priorities, and checkpoint gates"
+          icon={CalendarDays}
+          tier={2}
+          accentColor="#60a5fa"
+          defaultOpen={false}
+        >
+          <Precision9090Panel plan={r.precision9090Plan} />
+        </AdaptiveBlock>
+      )}
+
       {/* T2: Job targeting intelligence — precision targets + salary intel */}
       {r.jobTargeting && (
         <AdaptiveBlock
@@ -512,6 +528,20 @@ export const TakeActionTab: React.FC<TabProps> = (props) => {
           defaultOpen={false}
         >
           <JobTargetPanel targeting={r.jobTargeting} />
+        </AdaptiveBlock>
+      )}
+
+      {/* T2: Career behavioral analysis — 7-dimension personalisation engine */}
+      {r.behavioralPersonalization && (
+        <AdaptiveBlock
+          title="Career behavioural analysis"
+          subtitle="Employment gaps, trajectory, compensation positioning, interview readiness"
+          icon={Activity}
+          tier={2}
+          accentColor="#a78bfa"
+          defaultOpen={false}
+        >
+          <BehavioralInsightPanel behavioral={r.behavioralPersonalization} />
         </AdaptiveBlock>
       )}
 
