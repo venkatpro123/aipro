@@ -97,10 +97,10 @@ function buildTickerItems() {
 // ── CSS (scoped to .gal-root) ─────────────────────────────────────────────────
 
 const GLOBE_CSS = `
-/* ── root: full-screen fixed container ──────────────────── */
+/* ── root: fixed, full-viewport, NO SCROLL ───────────────── */
 .gal-root{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#0a1b34 0%,#061224 40%,#03060d 100%);font-family:"Inter",-apple-system,system-ui,sans-serif;color:#e9f3ff;letter-spacing:.01em;z-index:9999}
 
-/* ── background layers ──────────────────────────────────── */
+/* ── background layers (all absolutely-positioned, no layout impact) ── */
 .gal-stars{position:absolute;inset:0;width:100%;height:100%;z-index:0}
 .gal-aurora{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 40% at 22% 25%,rgba(111,216,255,.16),transparent 60%),radial-gradient(50% 35% at 78% 78%,rgba(155,123,255,.14),transparent 60%),radial-gradient(40% 30% at 50% 110%,rgba(79,224,192,.10),transparent 60%);animation:galAurora 18s ease-in-out infinite alternate;mix-blend-mode:screen}
 @keyframes galAurora{from{transform:translate3d(0,0,0) scale(1);opacity:.85}to{transform:translate3d(-2%,1%,0) scale(1.05);opacity:1}}
@@ -111,23 +111,25 @@ const GLOBE_CSS = `
 .gal-vignette{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(2,6,14,.55) 100%)}
 .gal-scanlines{position:absolute;inset:0;z-index:5;pointer-events:none;background-image:repeating-linear-gradient(to bottom,rgba(111,216,255,.025) 0px,rgba(111,216,255,.025) 1px,transparent 1px,transparent 3px);mix-blend-mode:overlay;opacity:.5}
 
-/* ── fixed top header area (topbar + ticker) ────────────── */
-.gal-topbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:14px;padding:8px 14px;border-radius:999px;background:rgba(8,18,36,.6);backdrop-filter:blur(16px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 80ms both}
+/* ── header: topbar + ticker (absolute, do not affect layout flow) ── */
+.gal-topbar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:12px;padding:7px 14px;border-radius:999px;background:rgba(8,18,36,.6);backdrop-filter:blur(16px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 80ms both}
 @keyframes galUIC{from{opacity:0;transform:translate(-50%,8px) scale(.985)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
 .gal-topbar .sheen{position:absolute;top:0;bottom:0;left:0;width:60%;transform:translateX(-100%) skewX(-22deg);background:linear-gradient(90deg,transparent,rgba(111,216,255,.1) 40%,rgba(255,255,255,.18) 50%,rgba(111,216,255,.1) 60%,transparent);animation:galSheen 9s ease-in-out infinite;pointer-events:none;z-index:0}
 @keyframes galSheen{0%,30%{transform:translateX(-120%) skewX(-22deg)}55%,100%{transform:translateX(220%) skewX(-22deg)}}
-.gal-crest{width:22px;height:22px;border-radius:50%;flex-shrink:0;overflow:hidden;position:relative;background:radial-gradient(circle at 35% 30%,#b9eaff 0%,#6fd8ff 35%,#1a5a8a 70%,#062136 100%);box-shadow:0 0 14px rgba(111,216,255,.6),inset 0 0 6px rgba(255,255,255,.5)}
+.gal-crest{width:20px;height:20px;border-radius:50%;flex-shrink:0;overflow:hidden;position:relative;background:radial-gradient(circle at 35% 30%,#b9eaff 0%,#6fd8ff 35%,#1a5a8a 70%,#062136 100%);box-shadow:0 0 14px rgba(111,216,255,.6),inset 0 0 6px rgba(255,255,255,.5)}
 .gal-crest-sheen{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0deg,rgba(255,255,255,.45) 30deg,transparent 90deg);animation:galSpin 4s linear infinite}
 .gal-engine{color:#e9f3ff;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:600}
 .gal-engine .sub{color:rgba(111,216,255,.55);font-weight:400;margin-left:6px}
-.gal-divider{width:1px;height:18px;background:rgba(111,216,255,.22)}
-.gal-phases{display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(233,243,255,.32)}
-.gal-phase{display:flex;align-items:center;gap:6px;transition:color .4s ease}
-.gal-phase .pdot{width:6px;height:6px;border-radius:50%;background:rgba(111,216,255,.2);transition:background .4s ease,box-shadow .4s ease}
-.gal-phase+.gal-phase::before{content:"";width:18px;height:1px;background:rgba(111,216,255,.25);margin-right:4px}
+.gal-divider{width:1px;height:16px;background:rgba(111,216,255,.22)}
+.gal-phases{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(233,243,255,.32)}
+.gal-phase{display:flex;align-items:center;gap:5px;transition:color .4s ease}
+.gal-phase .pdot{width:5px;height:5px;border-radius:50%;background:rgba(111,216,255,.2);transition:background .4s ease,box-shadow .4s ease}
+.gal-phase+.gal-phase::before{content:"";width:14px;height:1px;background:rgba(111,216,255,.25);margin-right:3px}
 .gal-phase.active{color:#e9f3ff}.gal-phase.active .pdot{background:#6fd8ff;box-shadow:0 0 10px #6fd8ff}
 .gal-phase.done{color:rgba(233,243,255,.62)}.gal-phase.done .pdot{background:#4fe0c0}
-.gal-ticker{position:absolute;top:66px;left:50%;transform:translateX(-50%);z-index:6;width:min(560px,calc(100vw - 24px));height:26px;overflow:hidden;border-radius:999px;background:rgba(8,18,36,.55);backdrop-filter:blur(12px) saturate(140%);border:1px solid rgba(111,216,255,.14);box-shadow:0 6px 24px rgba(0,0,0,.40);mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 160ms both}
+/* topbar height ≈ 34px → bottom at 44px */
+.gal-ticker{position:absolute;top:54px;left:50%;transform:translateX(-50%);z-index:6;width:min(560px,calc(100vw - 24px));height:24px;overflow:hidden;border-radius:999px;background:rgba(8,18,36,.55);backdrop-filter:blur(12px) saturate(140%);border:1px solid rgba(111,216,255,.14);box-shadow:0 6px 24px rgba(0,0,0,.40);mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 160ms both}
+/* ticker bottom at 54+24=78px → body starts at 86px */
 .gal-ticker .tlead{position:absolute;left:0;top:0;bottom:0;z-index:2;padding:0 12px;display:flex;align-items:center;background:linear-gradient(90deg,rgba(8,18,36,.95) 65%,transparent);font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#ffb547;gap:6px}
 .gal-ticker .tldot{width:5px;height:5px;border-radius:50%;background:#ffb547;box-shadow:0 0 8px #ffb547;animation:galDot 1.2s ease-in-out infinite}
 .gal-ticker .ttrack{position:absolute;top:0;bottom:0;display:flex;align-items:center;gap:36px;font-family:"JetBrains Mono",monospace;font-size:10px;color:rgba(233,243,255,.62);white-space:nowrap;animation:galTick 60s linear infinite;padding-left:100%}
@@ -136,14 +138,22 @@ const GLOBE_CSS = `
 .gal-ticker .tsig-sig.alert{color:#ff6680;font-weight:600}.gal-ticker .tsig-sig.warn{color:#ffb547;font-weight:600}.gal-ticker .tsig-sig.neutral{color:#6fd8ff;font-weight:600}
 .gal-ticker .tsep{color:rgba(111,216,255,.25)}
 
-/* ── 3-column body layout ─────────────────────────────── */
-.gal-body{position:absolute;inset:0;top:100px;bottom:0;display:flex;flex-direction:row;align-items:stretch;padding:8px 12px 8px;gap:10px;z-index:2}
-.gal-left-col{flex:0 0 234px;display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
-.gal-center-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden}
-.gal-right-col{flex:0 0 210px;display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+/* ── 3-column body — THE ONLY LAYOUT REGION ──────────────── */
+/* Fills everything below the header; overflow:hidden is MANDATORY */
+.gal-body{position:absolute;left:0;right:0;top:86px;bottom:0;overflow:hidden;display:flex;flex-direction:row;align-items:stretch;padding:6px 10px 8px;gap:8px;z-index:2}
 
-/* ── globe composition: fills center-col, aspect-ratio 1:1 */
-.gal-composition{position:relative;z-index:2;flex-shrink:0;width:min(100%,700px);max-height:calc(100vh - 200px);aspect-ratio:1;display:grid;place-items:center;animation:galFade 700ms cubic-bezier(.2,.8,.2,1) both}
+/* ── columns: all must have min-height:0 min-width:0 overflow:hidden ── */
+.gal-left-col{flex:0 0 218px;display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0;overflow:hidden}
+/* center: flex:1 takes remaining width; justify:center keeps globe+panel visually centred */
+.gal-center-col{flex:1 1 0;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden}
+.gal-right-col{flex:0 0 196px;display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;overflow:hidden}
+
+/* ── globe composition: ALWAYS square, never overflows ───── */
+/*   --gal-avh = available vertical space for the composition           */
+/*   width: min(center-col width, --gal-avh, 700px)                    */
+/*   aspect-ratio:1 then makes height = width → always square ✓        */
+/*   Desktop budget: body-top(86)+v-pad(14)+gap(8)+panel(70) = 178px  */
+.gal-composition{flex-shrink:0;position:relative;z-index:2;--gal-avh:calc(100vh - 178px);width:min(100%, var(--gal-avh), 700px);aspect-ratio:1;align-self:center;display:grid;place-items:center;overflow:hidden;animation:galFade 700ms cubic-bezier(.2,.8,.2,1) both}
 @keyframes galFade{from{opacity:0}to{opacity:1}}
 .gal-halo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(111,216,255,.20) 0%,rgba(111,216,255,.08) 28%,rgba(111,216,255,0) 55%);filter:blur(6px);animation:galHalo 6s ease-in-out infinite;pointer-events:none}
 @keyframes galHalo{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
@@ -173,14 +183,14 @@ const GLOBE_CSS = `
 .gal-tcard .risk-high{color:#ff6680;font-weight:600}.gal-tcard .risk-warn{color:#ffb547;font-weight:600}.gal-tcard .risk-ok{color:#6fd8ff;font-weight:600}
 
 /* ── sector rail (left column) ──────────────────────────── */
-.gal-sector-rail{flex:1 1 0;min-height:0;overflow:hidden;padding:12px 14px 14px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 220ms both;position:relative}
+.gal-sector-rail{flex:1 1 0;min-height:0;overflow:hidden;padding:10px 12px 12px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 220ms both;position:relative}
 @keyframes galUI{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .gal-sector-rail::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,transparent 22%,transparent 78%,rgba(111,216,255,.04) 100%)}
 .gal-sector-rail>*{position:relative;z-index:1}
-.gal-rhead{display:flex;justify-content:space-between;align-items:center;color:rgba(111,216,255,.55);font-size:9px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:10px}
+.gal-rhead{display:flex;justify-content:space-between;align-items:center;color:rgba(111,216,255,.55);font-size:9px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:8px}
 .gal-live{display:flex;align-items:center;gap:5px;color:#7af7c0}
 .gal-live .pulse{width:5px;height:5px;border-radius:50%;background:#7af7c0;box-shadow:0 0 8px #7af7c0;animation:galDot 1.4s ease-in-out infinite}
-.gal-srow{display:grid;grid-template-columns:14px 1fr 38px;gap:8px;align-items:center;padding:5px 0;font-size:10px;color:rgba(233,243,255,.62)}
+.gal-srow{display:grid;grid-template-columns:14px 1fr 36px;gap:6px;align-items:center;padding:4px 0;font-size:10px;color:rgba(233,243,255,.62)}
 .gal-srow .si{color:rgba(111,216,255,.18);font-size:8.5px;font-variant-numeric:tabular-nums}
 .gal-srow .sn{color:#e9f3ff;letter-spacing:.04em}
 .gal-srow .sbar{grid-column:1/-1;height:2px;background:rgba(111,216,255,.1);border-radius:99px;overflow:hidden;position:relative}
@@ -189,81 +199,90 @@ const GLOBE_CSS = `
 .gal-srow .sv{text-align:right;color:#6fd8ff;font-variant-numeric:tabular-nums;font-size:10px}.gal-srow.warn .sv{color:#ffb547}
 
 /* ── spectrum (bottom of left column) ───────────────────── */
-.gal-spectrum{flex:0 0 60px;overflow:hidden;padding:8px 12px 6px;border-radius:10px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 6px 24px rgba(0,0,0,.35);isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 320ms both;position:relative}
-.gal-spectrum-label{position:absolute;top:-6px;left:12px;background:rgba(8,18,36,.9);padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.18em;color:rgba(111,216,255,.55);text-transform:uppercase}
+.gal-spectrum{flex:0 0 54px;overflow:hidden;padding:6px 10px 5px;border-radius:10px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 6px 24px rgba(0,0,0,.35);isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 320ms both;position:relative}
+.gal-spectrum-label{position:absolute;top:-5px;left:10px;background:rgba(8,18,36,.9);padding:0 5px;font-family:"JetBrains Mono",monospace;font-size:8px;letter-spacing:.18em;color:rgba(111,216,255,.55);text-transform:uppercase}
 
-/* ── gauges (right column) ──────────────────────────────── */
-.gal-gauges{display:flex;flex-direction:column;gap:8px;width:100%;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 260ms both}
-.gal-gauge{padding:10px 12px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;position:relative;isolation:isolate}
+/* ── gauges (right column) — must flex-shrink so they never overflow ── */
+.gal-gauges{flex:1 1 0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:6px;width:100%;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 260ms both}
+/* each gauge gets an equal share of right-col height */
+.gal-gauge{flex:1 1 0;min-height:0;overflow:hidden;padding:8px 10px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 6px 24px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:center;position:relative;isolation:isolate}
 .gal-gauge::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,transparent 22%,transparent 78%,rgba(111,216,255,.04) 100%)}
 .gal-gauge>*{position:relative;z-index:1}
-.gal-ring{position:relative;width:52px;height:52px}
+.gal-ring{position:relative;width:48px;height:48px;flex-shrink:0}
 .gal-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
-.gal-gval{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:#e9f3ff;font-weight:600;letter-spacing:.02em}
-.gal-glabel{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(111,216,255,.55);margin-bottom:4px}
-.gal-gname{font-size:12px;color:#e9f3ff;font-weight:500;margin-bottom:4px}
-.gal-gsub{font-size:9px;color:rgba(233,243,255,.32);letter-spacing:.06em}
+.gal-gval{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;color:#e9f3ff;font-weight:600;letter-spacing:.02em}
+.gal-glabel{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(111,216,255,.55);margin-bottom:3px}
+.gal-gname{font-size:11px;color:#e9f3ff;font-weight:500;margin-bottom:3px;line-height:1.2}
+.gal-gsub{font-size:8.5px;color:rgba(233,243,255,.32);letter-spacing:.04em;line-height:1.3}
 
-/* ── status panel (bottom of center column) ─────────────── */
-.gal-panel{flex-shrink:0;width:100%;max-width:480px;padding:14px 20px 12px;border-radius:16px;background:linear-gradient(180deg,rgba(10,22,42,.62),rgba(10,22,42,.55)),radial-gradient(120% 60% at 0% 0%,rgba(111,216,255,.10),transparent 60%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 10px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 360ms both}
-.gal-panel-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px}
-.gal-dot{width:8px;height:8px;border-radius:50%;background:#6fd8ff;box-shadow:0 0 12px #6fd8ff,0 0 24px rgba(111,216,255,.5);animation:galDot 1.6s ease-in-out infinite;flex:0 0 auto}
-.gal-label{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:rgba(111,216,255,.55);font-weight:600}
-.gal-status-text{font-size:13px;color:#e9f3ff;font-weight:500;min-height:18px;text-align:center;transition:opacity .35s ease}
-.gal-bar{position:relative;height:3px;border-radius:99px;background:rgba(111,216,255,.10);overflow:hidden;margin-top:8px}
+/* ── status panel (bottom of center column, fixed height) ── */
+.gal-panel{flex-shrink:0;width:100%;max-width:480px;padding:10px 18px 9px;border-radius:14px;background:linear-gradient(180deg,rgba(10,22,42,.62),rgba(10,22,42,.55)),radial-gradient(120% 60% at 0% 0%,rgba(111,216,255,.10),transparent 60%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);isolation:isolate;overflow:hidden;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 360ms both}
+.gal-panel-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:7px}
+.gal-dot{width:7px;height:7px;border-radius:50%;background:#6fd8ff;box-shadow:0 0 12px #6fd8ff,0 0 24px rgba(111,216,255,.5);animation:galDot 1.6s ease-in-out infinite;flex:0 0 auto}
+.gal-label{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:rgba(111,216,255,.55);font-weight:600}
+.gal-status-text{font-size:12px;color:#e9f3ff;font-weight:500;min-height:16px;text-align:center;transition:opacity .35s ease;line-height:1.3}
+.gal-bar{position:relative;height:2px;border-radius:99px;background:rgba(111,216,255,.10);overflow:hidden;margin-top:7px}
 .gal-bar::after{content:"";position:absolute;inset:0;width:35%;border-radius:99px;background:linear-gradient(90deg,transparent,#6fd8ff,transparent);animation:galBar 2.4s ease-in-out infinite}
 @keyframes galBar{0%{transform:translateX(-100%)}100%{transform:translateX(285%)}}
-.gal-meta{display:flex;justify-content:center;align-items:center;gap:12px;font-size:10px;color:rgba(233,243,255,.32);margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:.06em;flex-wrap:wrap}
-.gal-meta span+span::before{content:"·";color:rgba(111,216,255,.18);margin-right:12px}
+.gal-meta{display:flex;justify-content:center;align-items:center;gap:10px;font-size:9px;color:rgba(233,243,255,.32);margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:.05em;flex-wrap:wrap}
+.gal-meta span+span::before{content:"·";color:rgba(111,216,255,.18);margin-right:10px}
 
-/* ── corner HUDs (absolute within gal-root) ─────────────── */
-.gal-hud{position:absolute;z-index:3;color:rgba(111,216,255,.18);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
-.gal-hud .tick{width:18px;height:1px;background:currentColor}
-.gal-hud.tl{top:12px;left:12px}.gal-hud.tr{top:12px;right:12px}.gal-hud.bl{bottom:12px;left:12px}.gal-hud.br{bottom:12px;right:12px}
+/* ── corner HUDs (absolute, decorative) ─────────────────── */
+.gal-hud{position:absolute;z-index:3;color:rgba(111,216,255,.18);font-family:"JetBrains Mono",monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.gal-hud .tick{width:16px;height:1px;background:currentColor}
+.gal-hud.tl{top:10px;left:10px}.gal-hud.tr{top:10px;right:10px}.gal-hud.bl{bottom:8px;left:10px}.gal-hud.br{bottom:8px;right:10px}
 .gal-hud .v{color:rgba(233,243,255,.62)}
 @keyframes galDot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.65}}
 
-/* ── RESPONSIVE BREAKPOINTS ─────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — everything stays in ONE frame, zero scroll
+   ══════════════════════════════════════════════════════════ */
 
-/* 1100px: hide left signal rail — center + right remain */
+/* 1100px: hide left signal rail, center+right fill */
 @media(max-width:1100px){
   .gal-left-col{display:none}
-  .gal-composition{max-height:calc(100vh - 190px)}
 }
 
-/* 820px: stack body as column, gauges become top row */
+/* 820px: vertical stack — gauges row on top, globe+panel below */
+/* Budget: body-top(86)+v-pad(10)+gauges-row(62)+gap(4)+gap(4)+panel(60) = 226px */
 @media(max-width:820px){
-  .gal-body{flex-direction:column;padding:6px 8px 6px;gap:6px}
+  .gal-body{flex-direction:column;padding:4px 8px 6px;gap:4px}
   .gal-left-col{display:none}
-  .gal-right-col{order:-1;flex:0 0 auto;flex-direction:row;width:100%;justify-content:center;gap:6px}
-  .gal-gauges{flex-direction:row;width:auto;gap:6px}
-  .gal-gauge{flex:1;min-width:0;max-width:200px;grid-template-columns:40px 1fr;gap:8px;padding:8px 10px}
-  .gal-ring{width:40px;height:40px}.gal-gval{font-size:11px}
+  /* gauges: fixed-height horizontal row at top */
+  .gal-right-col{order:-1;flex:0 0 62px;flex-direction:row;width:100%;overflow:hidden;gap:6px}
+  .gal-gauges{flex:1 1 0;flex-direction:row;height:100%;min-height:0;min-width:0;width:100%;gap:6px}
+  .gal-gauge{flex:1 1 0;min-width:0;max-width:240px;height:100%;grid-template-columns:36px 1fr;gap:6px;padding:6px 8px;align-items:center}
+  .gal-ring{width:36px;height:36px}
+  .gal-gval{font-size:10px}
   .gal-glabel,.gal-gsub{display:none}
-  .gal-center-col{justify-content:flex-start}
-  .gal-composition{max-height:calc(100vh - 240px);width:min(100%,580px)}
-  .gal-panel{padding:10px 14px 10px;border-radius:12px}
+  .gal-center-col{flex:1 1 0;min-height:0}
+  /* composition: recalculate --gal-avh for stacked layout */
+  .gal-composition{--gal-avh:calc(100vh - 226px)}
   .gal-hud{display:none}
 }
 
-/* 560px: hide gauges, thin ticker, simplify topbar */
+/* 560px: drop gauges row, compact header; body top moves up to 78px */
+/* Budget: body-top(78)+v-pad(8)+gap(4)+panel(55) = 145px */
 @media(max-width:560px){
-  .gal-body{top:88px;padding:4px 6px 4px}
   .gal-right-col{display:none}
-  .gal-topbar{top:8px;padding:6px 10px;gap:8px}
+  .gal-topbar{top:8px;padding:5px 10px;gap:8px}
   .gal-engine .sub,.gal-divider,.gal-phases{display:none}
-  .gal-ticker{top:52px;height:22px;width:calc(100vw - 16px)}
-  .gal-composition{max-height:calc(100vh - 200px)}
-  .gal-panel{border-radius:10px;padding:10px 12px 8px}
-  .gal-meta{font-size:9px;gap:8px}
+  .gal-ticker{top:48px;height:22px;width:calc(100vw - 16px)}
+  .gal-body{top:78px;padding:4px 6px 4px}
+  .gal-composition{--gal-avh:calc(100vh - 145px)}
+  .gal-panel{border-radius:10px;padding:8px 12px 7px}
+  .gal-status-text{font-size:11px}
+  .gal-meta{font-size:8.5px;gap:6px}
 }
 
-/* 400px: minimal — globe + panel only */
+/* 400px: minimum — strip meta, tightest possible padding */
+/* Budget: body-top(78)+v-pad(6)+gap(4)+panel(46) = 134px */
 @media(max-width:400px){
-  .gal-body{padding:2px 4px 2px}
-  .gal-composition{max-height:calc(100vh - 180px)}
-  .gal-status-text{font-size:11px}
+  .gal-body{padding:2px 4px 4px}
+  .gal-composition{--gal-avh:calc(100vh - 134px)}
+  .gal-panel{padding:6px 10px 5px}
   .gal-meta{display:none}
+  .gal-status-text{font-size:10px}
 }
 `;
 
