@@ -88,6 +88,10 @@ export interface NegotiationIntelligenceInputs {
     hasEquityVesting?: boolean | null;
     equityVestMonths?: number | null;
   } | null;
+  /** GAP-G3: company size drives power asymmetry in negotiation */
+  companySize?: 'startup' | 'mid' | 'large' | 'mega' | null;
+  /** Current headcount for startup power calibration */
+  employeeCount?: number | null;
 }
 
 export type NegotiationLeverageRating = 'STRONG' | 'MODERATE' | 'WEAK' | 'NONE';
@@ -169,6 +173,8 @@ function computeLeverageScore(
   tenureYears: number,
   performanceTier: string,
   currentScore: number,
+  userProfile?: NegotiationIntelligenceInputs['userProfile'],
+  companySize?: NegotiationIntelligenceInputs['companySize'],
 ): number {
   let score = 50; // base
 
@@ -197,6 +203,35 @@ function computeLeverageScore(
   if (currentScore >= 70) score -= 20;
   else if (currentScore >= 55) score -= 10;
   else if (currentScore <= 30) score += 8; // low risk = valued employee
+
+  // GAP-G1: Visa-constrained users have structurally lower leverage
+  // H1B/L1/tied-employer = -18pts: losing this job = losing status = desperate negotiator
+  // OPT = -10pts: shorter window but more portability
+  // Any tied visa without PR = -8pts minimum
+  const visa = userProfile?.visaStatus ?? null
+  if (visa === 'h1b' || visa === 'l1') {
+    score -= 18;
+  } else if (visa === 'opt') {
+    score -= 10;
+  } else if (visa && visa !== 'citizen' && visa !== 'permanent_resident' && visa !== 'na') {
+    score -= 8;
+  }
+
+  // GAP-G2: Dependents reduce walk-away leverage (real-world income pressure)
+  // Single income household with dependents = cannot credibly threaten to leave
+  const hasDependents = userProfile?.hasDependents ?? false
+  const isDualIncome = userProfile?.dualIncomeHousehold ?? false
+  if (hasDependents && !isDualIncome) {
+    score -= 10; // sole earner + dependents = cannot bluff
+  } else if (hasDependents && isDualIncome) {
+    score -= 4;  // dependents but partner earns = some cushion
+  }
+
+  // GAP-G3: Company-size asymmetry
+  // Startup (<100 employees): founder holds final say — more room to negotiate non-cash
+  // Mega corp: HR has a band; negotiation is band-within-band, not blank slate
+  if (companySize === 'startup') score += 8;  // founders negotiate; higher equity upside
+  else if (companySize === 'mega') score -= 5; // band-locked; HR policy limits room
 
   return Math.max(0, Math.min(100, score));
 }
@@ -234,7 +269,11 @@ export function computeNegotiationIntelligence(
     };
   }
 
-  const leverageScore = computeLeverageScore(marketTightness, runwayTier, tenureYears, performanceTier, currentScore);
+  const leverageScore = computeLeverageScore(
+    marketTightness, runwayTier, tenureYears, performanceTier, currentScore,
+    inputs.userProfile ?? null,
+    inputs.companySize ?? null,
+  );
 
   let leverageRating: NegotiationLeverageRating;
   if (leverageScore >= 65) leverageRating = 'STRONG';
@@ -243,7 +282,11 @@ export function computeNegotiationIntelligence(
   else leverageRating = 'NONE';
 
   const batnaStrength = buildBatnaStrength(marketTightness, (competitiveIntelligence as any).estimatedWeeksToOffer ?? 8);
-  const { tactic, specificAsk } = buildTacticAndAsk(leverageRating, marketTightness, runwayTier, performanceTier, industry, tenureYears);
+  const { tactic, specificAsk } = buildTacticAndAsk(
+    leverageRating, marketTightness, runwayTier, performanceTier, industry, tenureYears,
+    inputs.userProfile ?? null,
+    inputs.companySize ?? null,
+  );
   const timingWindow = buildTimingWindow(runwayTier, leverageRating, performanceTier);
   // GAP J: pass workTypeKey for role-specific scripts
   // v39.0 B3: thread userProfile into script building for visa/family/equity modulation
@@ -275,7 +318,11 @@ export function computeNegotiationIntelligence(
     inputs.companyName ?? 'your company',
   );
 
-  const { risks, redLines } = buildRisksAndRedLines(leverageRating, currentScore, runwayTier, inputs.userProfile ?? null);
+  const { risks, redLines } = buildRisksAndRedLines(
+    leverageRating, currentScore, runwayTier,
+    inputs.userProfile ?? null,
+    inputs.companySize ?? null,
+  );
 
   return {
     leverageRating,
@@ -309,7 +356,33 @@ function buildTacticAndAsk(
   performanceTier: string,
   industry: string,
   tenureYears: number,
+  userProfile?: NegotiationIntelligenceInputs['userProfile'],
+  companySize?: NegotiationIntelligenceInputs['companySize'],
 ): { tactic: string; specificAsk: string } {
+  const isVisaConstrained = userProfile?.visaStatus === 'h1b'
+    || userProfile?.visaStatus === 'l1'
+    || userProfile?.visaStatus === 'opt'
+  const isSoleEarner = (userProfile?.hasDependents ?? false) && !(userProfile?.dualIncomeHousehold ?? false)
+  const isStartup = companySize === 'startup'
+  const isMegaCorp = companySize === 'mega' || companySize === 'large'
+
+  // GAP-G1: Visa-constrained users must use collaborative, low-threat framing
+  // because an adversarial ask risks losing the job + legal status simultaneously
+  if (isVisaConstrained && leverageRating !== 'STRONG') {
+    return {
+      tactic: 'Stability-anchored ask (visa-calibrated)',
+      specificAsk: 'Frame as alignment, never as threat. Script: "I want to make sure my comp reflects my contribution level — I\'ve gathered market data and would appreciate 30 minutes to share it." Avoid any "I\'m exploring other options" framing without a written, sponsor-confirmed offer in hand.',
+    }
+  }
+
+  // GAP-G3: Startup tactical guidance differs fundamentally from megacorp
+  if (isStartup && leverageRating !== 'NONE') {
+    return {
+      tactic: 'Equity-first startup negotiation',
+      specificAsk: 'At an early-stage company, equity upside outweighs salary optimisation. Ask: (1) current valuation cap / 409A; (2) your % diluted and undiluted; (3) option exercise window on exit. Secondary: sign-on bonus to offset risk of illiquid equity. Cash salary is last — founders expect engineers to be equity-motivated.',
+    }
+  }
+
   if (leverageRating === 'STRONG') {
     if (tightness === 'EXTREMELY_TIGHT' || tightness === 'TIGHT') {
       return {
@@ -330,6 +403,12 @@ function buildTacticAndAsk(
   }
 
   if (leverageRating === 'MODERATE') {
+    if (isMegaCorp) {
+      return {
+        tactic: 'Band-ceiling ask (mega-corp calibrated)',
+        specificAsk: 'HR has a salary band — you cannot go above it with comp alone. Ask for: (1) position within band (move from P50 to P75); (2) performance bonus target increase; (3) scope expansion that justifies next-level reclassification. Do not ask for base salary above band ceiling — escalate to band upgrade instead.',
+      }
+    }
     if (runwayTier === 'strong' || runwayTier === 'comfortable') {
       return {
         tactic: 'Scope expansion ask',
@@ -343,6 +422,12 @@ function buildTacticAndAsk(
   }
 
   // WEAK leverage
+  if (isSoleEarner) {
+    return {
+      tactic: 'Evidence-first, no-threat positioning',
+      specificAsk: 'With dependents and limited leverage, an aggressive ask risks the job. Request a career development conversation, not a negotiation. Ask: "What does the path to [next level] look like from here?" Use that to surface a timeline to comp improvement without current risk.',
+    }
+  }
   return {
     tactic: 'Relationship-first positioning',
     specificAsk: 'Do NOT initiate formal negotiation. Instead: request 1-on-1 to understand career path clarity. Use that conversation to gauge safety before any ask.',
@@ -920,6 +1005,7 @@ function buildRisksAndRedLines(
   currentScore: number,
   runwayTier: RunwayTier,
   userProfile?: NegotiationIntelligenceInputs['userProfile'],
+  companySize?: NegotiationIntelligenceInputs['companySize'],
 ): { risks: string[]; redLines: string[] } {
   const risks: string[] = [];
   const redLines: string[] = [];
@@ -943,6 +1029,17 @@ function buildRisksAndRedLines(
   }
   if (userProfile?.hasDependents && !userProfile?.dualIncomeHousehold && currentScore >= 55) {
     risks.push('Family-anchored risk: single-income household means the cost of a misjudged ask is amplified. Negotiate for stability or scope, not raw comp percentage.');
+  }
+
+  // GAP-G3: Company-size specific risks and red lines
+  if (companySize === 'startup') {
+    risks.push('Startup risk: founder negotiation is personal — phrasing matters more than logic. Never frame as "the market pays X" (founders see that as disloyalty); frame as "I want to be fully focused on growth, so can we align on this?"');
+    redLines.push('Do not negotiate equity % upward — negotiate strike price, exercise window, and acceleration clause instead');
+    redLines.push('Do not accept vesting without a written cliff + acceleration-on-acquisition clause in the offer letter');
+  } else if (companySize === 'mega' || companySize === 'large') {
+    risks.push('Mega-corp risk: HR holds the band ceiling; your manager cannot approve above it unilaterally. A comp ask that exceeds the band will stall for months with no resolution.');
+    redLines.push('Do not negotiate without knowing your current compensation band position (P25/P50/P75) — ask HR directly before the negotiation');
+    redLines.push('Do not accept "we will revisit in the next cycle" without a written commitment and timeline');
   }
 
   redLines.push('Do not mention competing offers unless they are real, written, and time-constrained');

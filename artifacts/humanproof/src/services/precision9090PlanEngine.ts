@@ -370,11 +370,27 @@ function buildPhase1(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
   )
 
   // ── Week 2: Targeted outreach + CV alignment ──────────────────────────────────
-  const topTargetNames = topTargets.map(t => t.companyName).join(', ') || 'your top 3 target companies'
+  const topTargetNames = topTargets.length > 0
+    ? topTargets.map(t => t.companyName).join(', ')
+    : '5 companies you will identify this week using the targeting criteria below'
+
+  // Dynamic target list size: larger pool for crisis/gap profiles; smaller for niche/principal
+  // hasGap already declared above (line ~283)
+  const targetListSize = urgency === 'crisis' ? 25
+    : hasGap ? 20
+    : inputs.seniorityBracket === 'principal' ? 12
+    : 15
+
+  // Dynamic weekly application count: gap profiles need higher volume to compensate callback rate
+  const weeklyAppCount = hasGap ? 8
+    : inputs.seniorityBracket === 'principal' ? 3
+    : urgency === 'crisis' ? 8
+    : 5
+
   const w2Actions: PrecisionAction[] = [
     makeAction(
       'p1_w2_a1',
-      'Build a target company shortlist (15 companies, not 50)',
+      `Build a target company shortlist (${targetListSize} companies, not 50)`,
       [
         `Your AI-curated target list starts with: ${topTargetNames}`,
         `Add 5 companies from your warmest network contacts' employers — referral > cold apply (3× offer rate)`,
@@ -383,7 +399,7 @@ function buildPhase1(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
         `Create a tracking spreadsheet: Company | Role | Match Score | Approach | Status | Next Action Date`,
       ],
       'phase_1_foundation', 2, 5, 4, 3, '3 hours',
-      'A 15-company shortlist with approach strategy per company — this replaces spray-and-pray.',
+      `A ${targetListSize}-company shortlist with approach strategy per company — this replaces spray-and-pray.`,
       'Candidates with a structured company shortlist receive 67% more interview invitations than those applying to 50+ jobs (Indeed Hiring Insights, 2025). Quality > quantity.',
       'direct_outreach', true,
       ['p1_w3_a1', 'p1_w3_a2'],
@@ -464,9 +480,9 @@ function buildPhase1(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
   const w3Actions: PrecisionAction[] = [
     makeAction(
       'p1_w3_a1',
-      `Submit 5 targeted applications (quality over quantity) to your shortlist`,
+      `Submit ${weeklyAppCount} targeted applications (quality over quantity) to your shortlist`,
       [
-        `Apply to your top 5 companies from the shortlist — these have ≥ 70 match score`,
+        `Apply to your top ${weeklyAppCount} companies from the shortlist — these have ≥ 70 match score`,
         `For each: tailor your top 3 CV bullets to match the job description exactly`,
         `Cover letter rule: 3 paragraphs max. Para 1: Why this company specifically. Para 2: Your strongest relevant achievement. Para 3: One sentence close`,
         `Use employee referral where you have a connection — do NOT cold-apply if referral is available`,
@@ -529,19 +545,36 @@ function buildPhase1(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
   )
 
   // ── Week 4: First response management + preparation deepening ─────────────────
+  // Role-specific STAR story counts: principal needs depth (8-10); junior needs only 3-4
+  const starStoryCount = inputs.seniorityBracket === 'principal' ? 8
+    : inputs.seniorityBracket === 'senior' ? 6
+    : inputs.seniorityBracket === 'junior' ? 3
+    : 5
+
+  // Role-specific STAR story archetypes
+  const roleStarArchetypes: Record<string, string[]> = {
+    pm:   ['Shipped ambiguous feature that hit adoption target', 'Killed a feature despite stakeholder resistance', 'Built product with 0 budget/headcount', 'Made the right call with bad data', 'Recovered a product from poor retention'],
+    fin:  ['Caught a discrepancy that saved money', 'Built a model that changed a business decision', 'Persuaded a stakeholder with data', 'Worked under quarter-close pressure', 'Navigated a regulatory/compliance challenge'],
+    hc:   ['Handled a complex clinical case under time pressure', 'Resolved a patient/care coordination challenge', 'Implemented a quality improvement protocol', 'Navigated an ethical dilemma', 'Communicated with a high-stress patient/family'],
+    legal:['Identified risk that others missed', 'Negotiated an unfavorable clause out of a contract', 'Researched a novel legal area fast', 'Managed conflicting stakeholder interests', 'Simplified complex legal language for a non-legal audience'],
+    default: ['Delivered under pressure', 'Led or influenced without authority', 'Fixed something broken', 'Learned and applied quickly', 'Disagreed and committed'],
+  }
+  const starTypes = roleStarArchetypes[inputs.rolePrefix] ?? roleStarArchetypes['default']
+  const starTypesDisplay = starTypes.slice(0, starStoryCount).map((t, i) => `[${i+1}] ${t}`).join(', ')
+
   const w4Actions: PrecisionAction[] = [
     makeAction(
       'p1_w4_a1',
-      'Prepare your 5 STAR behavioural stories before first recruiter screens',
+      `Prepare your ${starStoryCount} STAR behavioural stories before first recruiter screens`,
       [
         'Structure: Situation (20%) → Task (10%) → Action (50%) → Result (20%)',
-        'Cover these 5 story types: [1] Delivered under pressure, [2] Led/influenced without authority, [3] Fixed something broken, [4] Learned and applied quickly, [5] Disagreed and committed',
+        `Cover these ${starStoryCount} story types: ${starTypesDisplay}`,
         'Each story must have a NUMBER in the Result section (%, $, users, days, etc.)',
         'Target: each story told in 90 seconds or less — time yourself',
         'Write down 2 company-specific angles for your top 3 target companies',
       ],
-      'phase_1_foundation', 4, 5, 4, 3, '3–4 hours',
-      '5 prepared stories with numbers. You can answer any behavioural question in < 90 seconds.',
+      'phase_1_foundation', 4, 5, 4, 3, `${Math.round(starStoryCount * 0.5 + 1)}–${Math.round(starStoryCount * 0.6 + 2)} hours`,
+      `${starStoryCount} prepared stories with numbers. You can answer any behavioural question in < 90 seconds.`,
       'The STAR method with quantified results increases interview pass-rate by 51% compared to unstructured storytelling. Hiring managers score "specificity" as the #1 differentiator in final-round decisions (Korn Ferry Talent Research, 2025).',
       'interview_preparation', true,
       ['p2_w5_a1'],
@@ -603,15 +636,15 @@ function buildPhase1(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
   const w4 = buildWeek(
     4, 'phase_1_foundation',
     'Week 4: First Screens + Pipeline Management',
-    '5 STAR stories prepared with numbers; all recruiter screens booked; transition narrative scripted',
+    `${starStoryCount} STAR stories prepared with numbers; all recruiter screens booked; transition narrative scripted`,
     [
-      makeDailyFocus(1, 'Prepare and rehearse your 5 STAR behavioural stories (time each to < 90s)', '3-hour deep work session', 'All 5 stories written with a number in each Result section'),
+      makeDailyFocus(1, `Prepare and rehearse your ${starStoryCount} STAR behavioural stories (time each to < 90s)`, '3-hour deep work session', `All ${starStoryCount} stories written with a number in each Result section`),
       makeDailyFocus(2, 'Check pipeline: reply to all pending recruiter messages; update tracking spreadsheet', '30-min daily', 'No unread recruiter messages > 24 hours old'),
       makeDailyFocus(3, 'Research your company-type transition narrative + rehearse out loud', '45 minutes', 'Can explain transition in < 60 seconds with 0 hesitation'),
     ],
     w4Actions,
-    '5 STAR stories prepared. All recruiter messages replied to within 24h. Transition narrative scripted. Spreadsheet tracking all 5+ applications.',
-    'Reduce to 3 STAR stories if time-constrained. Do NOT defer recruiter reply speed — velocity matters more than prep at this stage.'
+    `${starStoryCount} STAR stories prepared. All recruiter messages replied to within 24h. Transition narrative scripted. Spreadsheet tracking all ${weeklyAppCount}+ applications.`,
+    `Reduce to ${Math.max(3, starStoryCount - 2)} STAR stories if time-constrained. Do NOT defer recruiter reply speed — velocity matters more than prep at this stage.`
   )
 
   return [w1, w2, w3, w4]
@@ -623,7 +656,12 @@ function buildPhase2(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
   const b = inputs.behavioral
   const compReset = tags.includes('comp_reset')
   const compRange = b.compensationIntelligence.targetCompRange
-  const peerPos = b.competitivePositioning
+  // Guard: peerPos may be null if behavioral engine didn't complete
+  const peerPos = b?.competitivePositioning ?? null
+  const peerWeakness = peerPos?.weaknessesVsPeers?.[0] ?? 'skill gap identified in your audit'
+  const peerThreat = peerPos?.competitiveThreat ?? 'candidates with stronger portfolios or more recent experience'
+  const peerWinRate = peerPos?.winRateEstimate ?? 'competitive — address the gaps below'
+  const peerDiff = peerPos?.differentiatorStatement ?? 'your depth of experience in your domain'
   const runway = getRunwayMonths(inputs)
 
   // ── Week 5: Interview execution ───────────────────────────────────────────────
@@ -664,13 +702,13 @@ function buildPhase2(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
     ),
     makeAction(
       'p2_w5_a3',
-      `Address your top competitive gap vs. peers: ${peerPos.weaknessesVsPeers[0] ?? 'skill gap identified in audit'}`,
+      `Address your top competitive gap vs. peers: ${peerWeakness}`,
       [
-        `Your competitive analysis: "${peerPos.competitiveThreat}" — this is who you're competing against`,
-        `Your win rate estimate: "${peerPos.winRateEstimate}"`,
-        `The gap to address: ${peerPos.weaknessesVsPeers[0] ?? 'see skills gap from Week 1 audit'}`,
+        `Your competitive analysis: "${peerThreat}" — this is who you're competing against`,
+        `Your win rate estimate: "${peerWinRate}"`,
+        `The gap to address: ${peerWeakness}`,
         `Fastest fix: Find 1 course, certification, or side project that directly addresses this gap — start this week`,
-        `Your differentiator statement for interviews: "${peerPos.differentiatorStatement}"`,
+        `Your differentiator statement for interviews: "${peerDiff}"`,
         `Practise using your differentiator statement naturally in the first 2 minutes of each interview`,
       ],
       'phase_2_engagement', 5, 4, 3, 2, '2 hours + ongoing',
@@ -689,7 +727,7 @@ function buildPhase2(inputs: Precision9090PlanInputs, urgency: UrgencyMode, tags
     [
       makeDailyFocus(1, 'Complete interview screens (use structured 60-second opener for every call)', '30 min prep per call', 'Thank-you note sent within 2h of each screen'),
       makeDailyFocus(2, 'Submit 5 new applications to expand to 15 total in your pipeline', '2-hour session', '15 application rows in tracking spreadsheet'),
-      makeDailyFocus(3, `Start addressing competitive gap: "${peerPos.weaknessesVsPeers[0] ?? 'see audit'}" (enrol or begin)`, '45 minutes', 'Gap-closing action started and visible on LinkedIn'),
+      makeDailyFocus(3, `Start addressing competitive gap: "${peerWeakness}" (enrol or begin)`, '45 minutes', 'Gap-closing action started and visible on LinkedIn'),
     ],
     w5Actions,
     '15 active applications. 3+ first screens completed. Competitive gap action started.',

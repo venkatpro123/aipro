@@ -52,6 +52,9 @@ export type CompanyTypeDynamic =
   | 'startup_to_startup'         // Speed/ownership framing natural
   | 'consulting_to_industry'     // "Ownership" narrative required
   | 'industry_to_consulting'     // Client management framing required
+  | 'govt_to_private'            // Speed/results culture shock
+  | 'ngo_to_private'             // Impact-to-revenue pivot narrative
+  | 'academia_to_industry'       // Research-to-delivery translation
   | 'unknown_transition'
 
 export type InterviewReadinessLevel =
@@ -257,7 +260,72 @@ const COMP_BENCHMARKS_USD: Record<string, Record<string, CompBenchmark>> = {
     sw:     { junior: 48000, mid: 78000, senior: 115000, principal: 175000 },
     ml_engineer: { junior: 58000, mid: 95000, senior: 145000, principal: 220000 },
     fin:    { junior: 50000, mid: 85000, senior: 130000, principal: 210000 },
+    cons:   { junior: 55000, mid: 90000, senior: 140000, principal: 220000 },
     default: { junior: 42000, mid: 70000, senior: 105000, principal: 165000 },
+  },
+  australia: {
+    sw:          { junior: 70000,  mid: 115000, senior: 165000, principal: 245000 },
+    sw_backend:  { junior: 68000,  mid: 110000, senior: 158000, principal: 235000 },
+    ml_engineer: { junior: 85000,  mid: 140000, senior: 200000, principal: 300000 },
+    ds:          { junior: 65000,  mid: 105000, senior: 155000, principal: 230000 },
+    pm:          { junior: 65000,  mid: 108000, senior: 158000, principal: 240000 },
+    fin:         { junior: 60000,  mid: 98000,  senior: 148000, principal: 225000 },
+    hc:          { junior: 55000,  mid: 88000,  senior: 130000, principal: 200000 },
+    cons:        { junior: 72000,  mid: 120000, senior: 178000, principal: 280000 },
+    legal:       { junior: 68000,  mid: 115000, senior: 168000, principal: 270000 },
+    default:     { junior: 58000,  mid: 95000,  senior: 140000, principal: 210000 },
+  },
+  canada: {
+    sw:          { junior: 65000,  mid: 105000, senior: 155000, principal: 230000 },
+    sw_backend:  { junior: 62000,  mid: 100000, senior: 148000, principal: 220000 },
+    ml_engineer: { junior: 80000,  mid: 130000, senior: 195000, principal: 290000 },
+    ds:          { junior: 60000,  mid: 98000,  senior: 148000, principal: 220000 },
+    pm:          { junior: 60000,  mid: 100000, senior: 148000, principal: 225000 },
+    fin:         { junior: 55000,  mid: 92000,  senior: 140000, principal: 215000 },
+    cons:        { junior: 68000,  mid: 112000, senior: 168000, principal: 260000 },
+    default:     { junior: 52000,  mid: 88000,  senior: 130000, principal: 198000 },
+  },
+  germany: {
+    sw:          { junior: 55000,  mid: 82000,  senior: 118000, principal: 175000 },
+    sw_backend:  { junior: 52000,  mid: 78000,  senior: 112000, principal: 168000 },
+    ml_engineer: { junior: 65000,  mid: 100000, senior: 148000, principal: 220000 },
+    ds:          { junior: 52000,  mid: 80000,  senior: 118000, principal: 178000 },
+    pm:          { junior: 50000,  mid: 78000,  senior: 115000, principal: 172000 },
+    fin:         { junior: 52000,  mid: 82000,  senior: 122000, principal: 188000 },
+    cons:        { junior: 60000,  mid: 95000,  senior: 140000, principal: 218000 },
+    default:     { junior: 45000,  mid: 72000,  senior: 108000, principal: 162000 },
+  },
+  uae: {
+    sw:          { junior: 50000,  mid: 90000,  senior: 145000, principal: 225000 },
+    sw_backend:  { junior: 48000,  mid: 85000,  senior: 138000, principal: 215000 },
+    ml_engineer: { junior: 60000,  mid: 108000, senior: 168000, principal: 260000 },
+    fin:         { junior: 55000,  mid: 100000, senior: 158000, principal: 255000 },
+    cons:        { junior: 65000,  mid: 115000, senior: 178000, principal: 285000 },
+    legal:       { junior: 58000,  mid: 105000, senior: 165000, principal: 265000 },
+    default:     { junior: 42000,  mid: 78000,  senior: 122000, principal: 192000 },
+  },
+  japan: {
+    sw:          { junior: 40000,  mid: 68000,  senior: 105000, principal: 165000 },
+    ml_engineer: { junior: 50000,  mid: 88000,  senior: 138000, principal: 215000 },
+    fin:         { junior: 42000,  mid: 72000,  senior: 112000, principal: 180000 },
+    default:     { junior: 35000,  mid: 60000,  senior: 92000,  principal: 145000 },
+  },
+  netherlands: {
+    sw:          { junior: 52000,  mid: 82000,  senior: 118000, principal: 178000 },
+    ml_engineer: { junior: 62000,  mid: 100000, senior: 148000, principal: 228000 },
+    fin:         { junior: 50000,  mid: 80000,  senior: 122000, principal: 192000 },
+    default:     { junior: 44000,  mid: 72000,  senior: 108000, principal: 165000 },
+  },
+  france: {
+    sw:          { junior: 42000,  mid: 65000,  senior: 95000,  principal: 145000 },
+    ml_engineer: { junior: 50000,  mid: 80000,  senior: 120000, principal: 185000 },
+    default:     { junior: 36000,  mid: 58000,  senior: 88000,  principal: 135000 },
+  },
+  philippines: {
+    sw:          { junior: 8000,   mid: 14000,  senior: 24000,  principal: 42000  },
+    bpo:         { junior: 5000,   mid: 9000,   senior: 15000,  principal: 26000  },
+    ds:          { junior: 9000,   mid: 16000,  senior: 28000,  principal: 50000  },
+    default:     { junior: 6000,   mid: 11000,  senior: 19000,  principal: 34000  },
   },
   default: {
     default: { junior: 20000, mid: 38000, senior: 65000, principal: 110000 },
@@ -267,13 +335,16 @@ const COMP_BENCHMARKS_USD: Record<string, Record<string, CompBenchmark>> = {
 // ── PPP-adjusted currency labels ───────────────────────────────────────────────
 // Approximate annual equivalent in local currency for display
 const CURRENCY_LABEL_MAP: Record<string, { symbol: string; usdFactor: number; unit: string }> = {
-  INR: { symbol: '₹', usdFactor: 83.5, unit: 'L/yr' },    // divide by 100000 to get lakhs
-  USD: { symbol: '$', usdFactor: 1.0,  unit: 'K/yr' },    // divide by 1000 to get K
-  GBP: { symbol: '£', usdFactor: 0.79, unit: 'K/yr' },
-  SGD: { symbol: 'S$', usdFactor: 1.35, unit: 'K/yr' },
-  AUD: { symbol: 'A$', usdFactor: 1.52, unit: 'K/yr' },
-  EUR: { symbol: '€', usdFactor: 0.92, unit: 'K/yr' },
-  CAD: { symbol: 'CA$', usdFactor: 1.36, unit: 'K/yr' },
+  INR: { symbol: '₹',   usdFactor: 83.5,  unit: 'L/yr'  },
+  USD: { symbol: '$',   usdFactor: 1.0,   unit: 'K/yr'  },
+  GBP: { symbol: '£',   usdFactor: 0.79,  unit: 'K/yr'  },
+  SGD: { symbol: 'S$',  usdFactor: 1.35,  unit: 'K/yr'  },
+  AUD: { symbol: 'A$',  usdFactor: 1.52,  unit: 'K/yr'  },
+  EUR: { symbol: '€',   usdFactor: 0.92,  unit: 'K/yr'  },
+  CAD: { symbol: 'CA$', usdFactor: 1.36,  unit: 'K/yr'  },
+  AED: { symbol: 'AED', usdFactor: 3.67,  unit: 'K/yr'  },
+  JPY: { symbol: '¥',   usdFactor: 150.0, unit: 'M/yr'  },
+  PHP: { symbol: '₱',   usdFactor: 56.0,  unit: 'K/yr'  },
 }
 
 function formatCompAsLocal(usdAnnual: number, currencyCode: string): string {
@@ -306,7 +377,52 @@ function normaliseRegion(region: string): string {
   if (r === 'us' || r === 'usa' || r === 'united states') return 'us'
   if (r === 'uk' || r === 'gb' || r === 'united kingdom') return 'uk'
   if (r === 'sg' || r === 'singapore') return 'singapore'
+  if (r === 'au' || r === 'australia') return 'australia'
+  if (r === 'ca' || r === 'canada') return 'canada'
+  if (r === 'de' || r === 'germany') return 'germany'
+  if (r === 'ae' || r === 'uae' || r === 'dubai') return 'uae'
+  if (r === 'jp' || r === 'japan') return 'japan'
+  if (r === 'ph' || r === 'philippines') return 'philippines'
+  if (r === 'nl' || r === 'netherlands') return 'netherlands'
+  if (r === 'fr' || r === 'france') return 'france'
   return 'default'
+}
+
+// Metro-level salary variance within India (Bangalore/Pune premium; Hyderabad slight premium; Mumbai finance premium)
+const INDIA_METRO_MULTIPLIERS: Record<string, number> = {
+  bangalore:  1.18,
+  bengaluru:  1.18,
+  pune:       1.08,
+  mumbai:     1.12,
+  hyderabad:  1.05,
+  delhi:      1.05,
+  chennai:    1.02,
+  gurgaon:    1.08,
+  noida:      1.05,
+  kolkata:    0.95,
+}
+
+// US metro variance (SF/NYC premium)
+const US_METRO_MULTIPLIERS: Record<string, number> = {
+  'san francisco': 1.35,
+  sf:             1.35,
+  'new york':     1.30,
+  nyc:            1.30,
+  seattle:        1.18,
+  austin:         1.05,
+  boston:         1.12,
+  chicago:        1.05,
+  'los angeles':  1.15,
+  la:             1.15,
+}
+
+function getMetroSalaryMultiplier(metro: string | null | undefined, region: string): number {
+  if (!metro) return 1.0
+  const m = metro.toLowerCase()
+  const r = normaliseRegion(region)
+  if (r === 'india') return INDIA_METRO_MULTIPLIERS[m] ?? 1.0
+  if (r === 'us') return US_METRO_MULTIPLIERS[m] ?? 1.0
+  return 1.0
 }
 
 function getSeniorityUsd(benchmark: CompBenchmark, seniority: BehavioralPersonalizationInputs['seniorityBracket']): number {
@@ -322,7 +438,7 @@ function getSeniorityUsd(benchmark: CompBenchmark, seniority: BehavioralPersonal
 
 function analyseEmploymentGap(inputs: BehavioralPersonalizationInputs): EmploymentGapAnalysis {
   const totalGapMonths = inputs.employmentGapMonths ?? 0
-  const mostRecentGapMonths = Math.min(totalGapMonths, 12) // cap at 12 for display
+  const mostRecentGapMonths = totalGapMonths // preserve full gap length; never cap for display accuracy
 
   if (totalGapMonths === 0) {
     return {
@@ -506,7 +622,38 @@ function analyseCompensation(inputs: BehavioralPersonalizationInputs): Compensat
     }
   }
 
-  const midpointUsd = getSeniorityUsd(benchmark, inputs.seniorityBracket)
+  let midpointUsd = getSeniorityUsd(benchmark, inputs.seniorityBracket)
+  if (!midpointUsd || midpointUsd === 0) {
+    // Guard: unmapped seniority or corrupt benchmark — return unknown state rather than NaN
+    return {
+      position: 'unknown',
+      marketMidpoint: 'Not available for this seniority level',
+      estimatedCurrentBand: 'Unknown',
+      deltaPercent: 0,
+      searchImplication: 'Salary data unavailable for your specific role/region/seniority. Use Naukri Salary Insights, Glassdoor, or Levels.fyi to validate before negotiating.',
+      negotiationImplication: 'Without a market reference, anchor on your target number and let the employer respond.',
+      targetCompRange: 'Set based on personal research from Naukri/Glassdoor/Levels.fyi',
+      salaryJumpPotential: 'Research required before estimating',
+    }
+  }
+
+  // Skill premium: high-demand skills command 12–18% above role midpoint
+  if (inputs.skillPortfolioScore && inputs.skillPortfolioScore >= 75) {
+    midpointUsd = Math.round(midpointUsd * 1.14)
+  } else if (inputs.skillPortfolioScore && inputs.skillPortfolioScore >= 85) {
+    midpointUsd = Math.round(midpointUsd * 1.20)
+  }
+
+  // Visa comp ceiling: H1B and similar tied-to-employer visas face 12–18% ceiling vs. citizens
+  const visaStatus = inputs.visaStatus ?? ''
+  const timedToEmployerVisa = ['h1b', 'l1', 'uk_skilled_worker', 'australia_482_tss', 'singapore_ep', 'singapore_s_pass', 'canada_lmia_permit'].includes(visaStatus)
+  const visaCompMultiplier = timedToEmployerVisa ? 0.87 : 1.0
+
+  // India metro variance: Bangalore/Pune 15–20% above national midpoint; Hyderabad 5% above; Mumbai finance +25%
+  const metroMultiplier = getMetroSalaryMultiplier((inputs as any).metro, inputs.region)
+
+  midpointUsd = Math.round(midpointUsd * visaCompMultiplier * metroMultiplier)
+
   const currencyInfo = CURRENCY_LABEL_MAP[currencyCode?.toUpperCase()] ?? CURRENCY_LABEL_MAP['USD']
   const midpointLocal = midpointUsd * currencyInfo.usdFactor
   const midpointLabel = formatCompAsLocal(midpointUsd, currencyCode)
@@ -603,10 +750,25 @@ function assessInterviewReadiness(inputs: BehavioralPersonalizationInputs): Inte
     gaps.push({ area: 'linkedin', severity: 'moderate', specificAction: 'Add quantified achievements to your most recent 2 roles and update your headline to reflect the role you want, not the title you have.', timeEstimate: '45 minutes' })
   }
 
-  const needsPortfolio = ['sw', 'sw_backend', 'ml_engineer', 'ds', 'design', 'pm', 'mkt'].includes(inputs.rolePrefix)
+  // Roles where a public portfolio/case-study is a hard filter, not optional
+  const needsPortfolio = [
+    'sw', 'sw_backend', 'ml_engineer', 'ds', 'design', 'pm', 'mkt',
+    'data_engineer', 'sec_analyst', 'devops', 'sre', 'ml', 'ai_engineer',
+  ].includes(inputs.rolePrefix)
+  // Role-specific portfolio action text
+  const portfolioAction: Record<string, string> = {
+    data_engineer: 'Build a public data pipeline project on GitHub (end-to-end: ingestion → transformation → serving). Even a small Airflow + dbt + BigQuery demo shows the hiring-critical skills.',
+    sec_analyst: 'Publish a security write-up on Medium or your blog — a CTF solution, vulnerability analysis, or penetration testing summary. Security hiring managers screen GitHub and published research before interviews.',
+    default: `For ${inputs.rolePrefix.toUpperCase()} roles, a portfolio is a filter — not a bonus. Create one public project or case study that demonstrates your strongest skill area.`,
+  }
   if (needsPortfolio && !inputs.hasPortfolio) {
     score -= 18
-    gaps.push({ area: 'portfolio', severity: 'critical', specificAction: `For ${inputs.rolePrefix.toUpperCase()} roles, a portfolio is a filter — not a bonus. Create one public project or case study that demonstrates your strongest skill area this week.`, timeEstimate: '3–5 hours' })
+    gaps.push({
+      area: 'portfolio',
+      severity: 'critical',
+      specificAction: portfolioAction[inputs.rolePrefix] ?? portfolioAction['default'],
+      timeEstimate: '3–5 hours',
+    })
   }
 
   if (!inputs.hasRecentInterviewPractice) {
@@ -737,9 +899,17 @@ function assessCompetitivePositioning(inputs: BehavioralPersonalizationInputs): 
 function buildCompanyTransitionStrategy(inputs: BehavioralPersonalizationInputs): CompanyTransitionStrategy {
   const from = inputs.currentCompanyType ?? 'large'
   const to = inputs.targetCompanyType ?? 'any'
+  const industry = (inputs.industry ?? '').toLowerCase()
 
   let dynamic: CompanyTypeDynamic
-  if (from === 'mega' || from === 'large') {
+  // Domain-specific transitions take priority over size-based
+  if (industry.includes('academia') || industry.includes('university') || industry.includes('research')) {
+    dynamic = 'academia_to_industry'
+  } else if (industry.includes('government') || industry.includes('public sector') || industry.includes('ministry')) {
+    dynamic = 'govt_to_private'
+  } else if (industry.includes('ngo') || industry.includes('non-profit') || industry.includes('nonprofit')) {
+    dynamic = 'ngo_to_private'
+  } else if (from === 'mega' || from === 'large') {
     if (to === 'startup' || to === 'mid') dynamic = 'enterprise_to_startup'
     else dynamic = 'enterprise_to_enterprise'
   } else if (from === 'startup') {
@@ -837,6 +1007,51 @@ function buildCompanyTransitionStrategy(inputs: BehavioralPersonalizationInputs)
       ],
       cultureRiskWarning: 'Industry to consulting is a significant lifestyle shift. Travel, billing cycles, and client management dynamics are genuinely different. Shadow someone in the role first if possible.',
       targetCompanyScreenFilter: 'Target boutique or specialist consultancies in your domain rather than generalist firms — your operational depth is most valued where domain knowledge is scarce.',
+    },
+    govt_to_private: {
+      narrativeRequired: '"After [N years] in [government/public sector], I have strong [policy/technical/operational] depth. I am now seeking a private-sector environment where I can apply that expertise at higher speed with direct commercial impact. [Company] sits at the intersection of [my domain] and real revenue outcomes."',
+      potentialObjections: [
+        '"Government pace is very different from private sector — can you adapt to speed?"',
+        '"How do you handle ambiguity without a defined hierarchy and process?"',
+        '"Your compensation expectations may not align with private sector budgets."',
+      ],
+      objectionResponses: [
+        '"I have led [specific initiative] that required operating at speed within a constrained environment. Government pace is slower in some areas, but the accountability and stakeholder complexity I managed was real."',
+        '"I have navigated regulatory and political ambiguity in [specific area] — that prepared me for the kind of fast-moving ambiguity private companies deal with."',
+        '"I have done thorough market research and understand the comp landscape. I am prioritising the opportunity and growth trajectory over short-term base."',
+      ],
+      cultureRiskWarning: 'Government to private is one of the most underestimated culture transitions. Decision velocity, risk appetite, and accountability structures are genuinely different. Prepare for a period of adjustment.',
+      targetCompanyScreenFilter: 'Target companies with a government-adjacent product (GovTech, Defence Tech, Health IT, Infrastructure) where your sector knowledge is a competitive differentiator, not a liability.',
+    },
+    ngo_to_private: {
+      narrativeRequired: '"In [N years] at [NGO/non-profit], I built [specific outcome]. I am now seeking a role where I can combine that mission orientation with the resources and scale that private-sector organisations can bring. I am not leaving impact — I am looking for bigger tools to create it."',
+      potentialObjections: [
+        '"Non-profit experience does not translate to commercial targets — how will you adapt?"',
+        '"Are you comfortable with profit-driven decision making?"',
+        '"Your compensation expectations may be lower than we can offer."',
+      ],
+      objectionResponses: [
+        '"I managed a [$X] budget and hit [specific measurable outcomes] — those are commercial skills. The sector is different, not the discipline."',
+        '"I am drawn to companies with a genuine positive impact in their model. I am not anti-profit — I believe profitability and impact are compatible and I have seen it work."',
+        '"I have researched the market carefully and I am excited about what this role represents. I am not compromising on compensation range."',
+      ],
+      cultureRiskWarning: 'NGO to private can create a value dissonance if the company culture is purely extraction-focused. Research the company culture carefully — target B-Corp or mission-driven private companies first.',
+      targetCompanyScreenFilter: 'Target social enterprises, B-Corps, impact-first VC-backed companies, or corporates with serious ESG commitments. Avoid purely financial companies where impact is marketing language only.',
+    },
+    academia_to_industry: {
+      narrativeRequired: '"After [N years] in research/academia, I have built deep expertise in [area]. I am seeking a role in industry where I can apply that expertise to real-world problems with measurable impact and faster feedback loops. [Company] is working on [specific problem] that directly aligns with my research depth."',
+      potentialObjections: [
+        '"Academic research and industry delivery are very different — do you understand the pace difference?"',
+        '"Research skills are theoretical — can you ship production-ready work?"',
+        '"Your publication experience may not translate to product outcomes."',
+      ],
+      objectionResponses: [
+        '"I have worked on [applied research project or internship] that required production-level delivery under real constraints. I am not naive about the gap — I have actively bridged it."',
+        '"I have [open-source contribution / industry collaboration / production code in GitHub] that demonstrates I can move from theory to working system. I can show you specific examples."',
+        '"Academic publications are the closest analog to documentation-driven, reproducible, peer-reviewed work. Those habits are very applicable to engineering and research roles in industry."',
+      ],
+      cultureRiskWarning: 'Academia to industry is a genuine speed and culture shock. Quarterly planning cycles, product-driven research constraints, and non-peer-review feedback are all real adjustments. Expect a 3–6 month adaptation period.',
+      targetCompanyScreenFilter: 'Target R&D labs at tech companies (Google Research, Microsoft Research, Meta AI, DeepMind), research-heavy startups, or applied AI/ML product companies where research depth is the hiring differentiator.',
     },
     unknown_transition: {
       narrativeRequired: 'Define your target company type first — the narrative should be tailored to the specific transition you are making.',

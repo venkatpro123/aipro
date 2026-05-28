@@ -494,7 +494,25 @@ export function computeJobTargeting(inputs: JobTargetingInputs): JobTargetingRes
   // ── v51.0: behavioral enrichment pass ────────────────────────────────────
   const behavioral = inputs.behavioral ?? null;
   const enrichedTargets = behavioral
-    ? targets.map(t => enrichTargetWithBehavioral(t, inputs, behavioral))
+    ? targets
+        .map(t => enrichTargetWithBehavioral(t, inputs, behavioral))
+        // BUG-F1 fix: compensationFitScore now influences matchScore (±8 pts max)
+        // High comp fit (≥80) = +6; low comp fit (≤30) = -8 penalty with caution note
+        .map(t => {
+          const cfs = t.compensationFitScore
+          if (cfs == null) return t
+          const delta = cfs >= 80 ? 6 : cfs >= 60 ? 2 : cfs <= 30 ? -8 : -3
+          const updatedScore = Math.min(99, Math.max(20, t.matchScore + delta))
+          const updatedStrength: JobTarget['matchStrength'] = updatedScore >= 85 ? 'excellent' : updatedScore >= 70 ? 'strong' : updatedScore >= 55 ? 'good' : 'moderate'
+          const updatedCautions = cfs <= 30
+            ? [...(t.cautions ?? []), 'Compensation mismatch likely — verify budget fits your range before applying'].slice(0, 3)
+            : t.cautions
+          const updatedReasons = cfs >= 80
+            ? [...(t.matchReasons ?? []), 'Strong compensation fit with your target range'].slice(0, 4)
+            : t.matchReasons
+          return { ...t, matchScore: updatedScore, matchStrength: updatedStrength, cautions: updatedCautions, matchReasons: updatedReasons }
+        })
+        .sort((a, b) => b.matchScore - a.matchScore)
     : targets;
 
   const compensationMarketFit = behavioral
@@ -648,11 +666,45 @@ function scoreTarget(
   if (locationMatch) { score += 4; }
   if (target.remotePolicy === 'full_remote') { score += 4; matchReasons.push('Full-remote policy removes geographic friction'); }
 
-  // ── 10. Visa constraint penalty ──────────────────────────────────────────
-  if (inputs.visaStatus && inputs.visaStatus !== 'citizen' && inputs.visaStatus !== 'permanent_resident') {
-    if (!target.hiringFromCompanies.length) {
-      score -= 5;
-      cautions.push('Verify visa sponsorship before applying — not all companies sponsor');
+  // ── 10. Visa sponsor scoring (GAP-F2) ────────────────────────────────────
+  // Visa-constrained users must only target confirmed sponsors. Known sponsors get
+  // a significant boost; unknown sponsors get a meaningful penalty and a caution.
+  const KNOWN_VISA_SPONSORS = new Set([
+    // FAANG / megacap
+    'google', 'meta', 'amazon', 'apple', 'microsoft', 'netflix', 'salesforce', 'oracle',
+    'ibm', 'intel', 'qualcomm', 'nvidia', 'amd',
+    // India GCCs (all sponsor for H1B/L1 by design)
+    'jpmorgan', 'jp morgan', 'goldman sachs', 'morgan stanley', 'wells fargo', 'citi', 'hsbc',
+    'barclays', 'deutsche bank', 'ubs', 'bofa', 'bank of america', 'american express', 'amex',
+    'deloitte', 'pwc', 'kpmg', 'ey', 'ernst & young', 'accenture', 'capgemini', 'cognizant',
+    'infosys', 'tcs', 'wipro', 'hcl', 'tech mahindra', 'l&t infotech', 'ltimindtree',
+    // Top US tech employers with consistent H1B sponsorship record
+    'stripe', 'twilio', 'databricks', 'snowflake', 'palantir', 'uber', 'lyft', 'airbnb',
+    'doordash', 'coinbase', 'robinhood', 'block', 'square', 'shopify', 'atlassian',
+    'workday', 'servicenow', 'zendesk', 'okta', 'crowdstrike', 'cloudflare', 'datadog',
+    'linkedin', 'twitter', 'x', 'snap', 'pinterest', 'paypal', 'ebay', 'booking', 'expedia',
+    // UK / EU / SG sponsors (for respective visa types)
+    'standard chartered', 'lloyds', 'natwest', 'rbs', 'bt', 'bt group', 'bbc', 'sky',
+    'siemens', 'sap', 'bmw', 'volkswagen', 'bosch', 'daimler', 'mercedes',
+    'dbs', 'ocbc', 'uob', 'grab', 'sea limited', 'shopee', 'garena',
+    // India tech
+    'razorpay', 'zepto', 'swiggy', 'zomato', 'nykaa', 'meesho', 'groww', 'phonepe', 'cred',
+    'freshworks', 'zoho', 'mphasis', 'hexaware', 'persistent', 'coforge',
+  ])
+  const compLower = target.companyName.toLowerCase()
+  const isKnownSponsor = [...KNOWN_VISA_SPONSORS].some(s => compLower.includes(s))
+  const needsSponsorship = inputs.visaStatus
+    && inputs.visaStatus !== 'citizen'
+    && inputs.visaStatus !== 'permanent_resident'
+    && inputs.visaStatus !== 'na'
+
+  if (needsSponsorship) {
+    if (isKnownSponsor) {
+      score += 12;
+      matchReasons.push('Confirmed visa sponsor — reduces job-search risk');
+    } else {
+      score -= 10;
+      cautions.push('Visa sponsorship not confirmed for this company — verify before investing time in the process');
     }
   }
 
@@ -754,9 +806,21 @@ function computeHiringProbabilityEstimate(
   if (channel === 'employee_referral') baseOdds = Math.round(baseOdds * 1.8)
   else if (channel === 'direct_apply') baseOdds = Math.round(baseOdds * 0.9)
 
-  // Gap penalty
-  if (hasGap && behavioral.employmentGap.gapSeverity === 'significant') {
-    baseOdds = Math.round(baseOdds * 0.75)
+  // GAP-F1: Gap penalty calibrated by severity + duration
+  // 'minor' (<3mo): negligible, no penalty
+  // 'moderate' (3-6mo): -20% if company culture is conservative (enterprise/startup)
+  // 'significant' (>6mo): -30% base, -40% for enterprise, -25% for growth-stage
+  const gapSeverity = behavioral.employmentGap.gapSeverity
+  const gapMonths = behavioral.employmentGap.mostRecentGapMonths
+  const companyIsConservative = target.companyStage === 'enterprise' || target.companyStage === 'mature'
+  if (gapSeverity === 'moderate') {
+    baseOdds = Math.round(baseOdds * (companyIsConservative ? 0.78 : 0.88))
+  } else if (gapSeverity === 'significant') {
+    if (gapMonths >= 18) {
+      baseOdds = Math.round(baseOdds * (companyIsConservative ? 0.55 : 0.65))
+    } else {
+      baseOdds = Math.round(baseOdds * (companyIsConservative ? 0.65 : 0.78))
+    }
   }
 
   // Competitive percentile adjustment
@@ -765,10 +829,13 @@ function computeHiringProbabilityEstimate(
 
   baseOdds = Math.min(55, Math.max(3, baseOdds))
 
-  if (baseOdds >= 35) return `~1 in 3 applications results in an offer (${baseOdds}% — strong match)`
-  if (baseOdds >= 20) return `~1 in 5 applications results in an offer (${baseOdds}% — good match)`
-  if (baseOdds >= 10) return `~1 in 8 applications results in an offer (${baseOdds}% — moderate match)`
-  return `~1 in 12 applications results in an offer (${baseOdds}% — competitive; improve readiness score first)`
+  const suffix = gapSeverity === 'significant' ? ` — gap narrative critical for ${target.companyName}` :
+    gapSeverity === 'moderate' ? ' — brief gap explanation recommended' : ''
+
+  if (baseOdds >= 35) return `~1 in 3 applications results in an offer (${baseOdds}% — strong match${suffix})`
+  if (baseOdds >= 20) return `~1 in 5 applications results in an offer (${baseOdds}% — good match${suffix})`
+  if (baseOdds >= 10) return `~1 in 8 applications results in an offer (${baseOdds}% — moderate match${suffix})`
+  return `~1 in 12 applications results in an offer (${baseOdds}% — competitive${suffix}; improve readiness score first)`
 }
 
 /** Strategy for handling employment gap specific to this company's type / culture. */

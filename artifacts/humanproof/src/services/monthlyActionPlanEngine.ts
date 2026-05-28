@@ -356,9 +356,11 @@ const AI_PIVOT_TARGETS: Record<string, string> = {
 };
 
 function injectAiPivotAction(inputs: MonthlyActionPlanInputs, weekNumber: number): WeeklyAction | null {
-  // Only inject if AI disruption risk is high (>0.55) and goal is not already 'exit_fast'
+  // Only inject if AI disruption risk is high (>0.55)
+  // exit_fast goal means the user already knows they need to exit — DO still inject the AI pivot
+  // research action because knowing WHERE to pivot is different from knowing you need to exit.
   const risk = inputs.aiDisruptionRisk ?? 0;
-  if (risk < 0.55 || inputs.careerTransitionGoal === 'exit_fast') return null;
+  if (risk < 0.55) return null;
 
   const adjacentRoles = AI_PIVOT_TARGETS[inputs.rolePrefix] ?? 'an AI-augmented specialisation of your current role';
 
@@ -937,35 +939,163 @@ function buildStandardMode(inputs: MonthlyActionPlanInputs): MonthPlan[] {
 }
 
 function buildMonitoringMode(inputs: MonthlyActionPlanInputs): MonthPlan[] {
+  const topTarget = inputs.jobTargeting.targets[0];
+  const targetLabel = topTarget?.displayName ?? 'a top-tier company in your sector';
+
   return [
     {
       month: 1,
       monthLabel: 'Month 1: Proactive Career Maintenance',
       theme: 'Build durable career assets while your position is strong',
-      milestoneGoal: 'Market benchmarked; one career capital investment underway',
-      goNoGoGate: 'Monitor for score change; if > 45 → escalate to standard mode',
-      estimatedOutcomes: ['Market rate benchmarked', 'One strategic skill investment initiated'],
+      milestoneGoal: 'Market rate benchmarked to within 10%; LinkedIn profile score ≥75%; 1 new professional relationship started',
+      goNoGoGate: 'PASS: market rate data collected + profile updated. | ESCALATE: if audit score rises above 40 next month → switch to standard mode.',
+      estimatedOutcomes: ['Market rate validated (data collected from ≥3 sources)', 'LinkedIn profile updated and recruiter-ready', 'One skill investment identified with a start date'],
       totalTimeInvestment: '1–2 hours/week',
       weeklyActions: [
         {
           weekNumber: 1,
-          deadline: 'Month 1',
-          action: 'Annual career health audit: where do you stand vs. the market?',
+          deadline: 'Month 1, Week 1',
+          action: 'Annual career health audit (2 hours — do this now, not when you need a job)',
           subActions: [
-            'Research your market rate (20 min) — verify you\'re compensated fairly at current employer',
-            'Review your LinkedIn: does it reflect your current accomplishments? (Update if last edited > 6 months ago)',
-            'Identify ONE area where peer professionals are differentiating (new technology, certification, specialization)',
+            'Pull your market rate from 3 sources: Glassdoor, LinkedIn Salary, and AmbitionBox/Levels.fyi. Screenshot all 3.',
+            'Review LinkedIn: update headline, summary, and top 2 roles with quantified achievements (metrics, scope, impact)',
+            'Identify 1 skill area where top-quartile professionals in your role are differentiating — this is your Q2 investment target',
+            `Research ${targetLabel}: could you get a role there in 6 months? What\'s the gap?`,
           ],
-          whyNow: 'Career health audits done from a position of strength produce better decisions than those done under duress.',
-          evidence: 'Professionals who do annual market research are 30% more likely to proactively change roles on their terms vs. reactively.',
-          expectedOutcome: 'Clear picture of career health and one investment to make proactively.',
-          timeInvestment: '2 hours total in Month 1',
+          whyNow: 'Career decisions made from a position of strength produce better outcomes. This audit is prevention, not crisis management.',
+          evidence: 'Professionals who do annual market research are 30% more likely to change roles on their terms vs. reactively (LinkedIn, 2025).',
+          expectedOutcome: 'Market rate data collected. Profile updated. One investment target identified.',
+          timeInvestment: '2 hours in Week 1',
           category: 'career_positioning',
           priority: 'medium',
           isBlocking: false,
           unlocks: [],
           effortLevel: 'quick_win',
+          roiRating: 7,
+        },
+        {
+          weekNumber: 2,
+          deadline: 'Month 1, Week 2',
+          action: 'Build 1 new strategic professional relationship (passive networking)',
+          subActions: [
+            'Reach out to 2 peers at companies you\'d want to work at — not to ask for a job; to learn what they\'re working on',
+            'Attend 1 community event (Meetup, Slack community, Twitter/X space) in your domain this month',
+            'Write or comment on 1 professional post on LinkedIn — visibility is career insurance',
+          ],
+          whyNow: 'Network strength is the single biggest predictor of job search outcome. 70% of hires come from referrals or warm connections.',
+          evidence: 'Professionals with 500+ relevant LinkedIn connections find jobs 2.3x faster when they need one (LinkedIn, 2025).',
+          expectedOutcome: '2 new professional conversations started. 1 new connection request with context.',
+          timeInvestment: '1.5 hours in Week 2',
+          category: 'network_activation',
+          priority: 'low',
+          isBlocking: false,
+          unlocks: [],
+          effortLevel: 'quick_win',
           roiRating: 6,
+        },
+      ],
+    },
+    {
+      month: 2,
+      monthLabel: 'Month 2: Strategic Skill Investment',
+      theme: 'Close the one skill gap that increases your market value most',
+      milestoneGoal: 'Enrolled in 1 certification or project; 1 internal or external win documented with numbers this month',
+      goNoGoGate: 'PASS: certification enrolled + 1 win documented. | If score increases to 40–55 → escalate to standard mode immediately.',
+      estimatedOutcomes: ['Top certification enrolled and "in progress" on LinkedIn', '1 quantified career win documented', '3+ new professional contacts added to network'],
+      totalTimeInvestment: '2–3 hours/week',
+      weeklyActions: [
+        {
+          weekNumber: 5,
+          deadline: 'Month 2, Week 1',
+          action: 'Enrol in the certification that most targets your identified skill gap',
+          subActions: [
+            'Revisit the skill gap you identified in Month 1. Scan 10 job postings at your target company — what cert/skill appears most?',
+            'Choose a cert: cloud (AWS/GCP/Azure), AI/ML, PMP, CFA, CompTIA — pick the one present in 60%+ of postings',
+            'Enrol today. Add "in progress" to LinkedIn the same day.',
+            '1 hour/day for 21 days = most professional certs completed.',
+          ],
+          whyNow: 'Skill gaps widen during periods of low urgency. Closing them from strength costs less than closing them in panic.',
+          evidence: 'Candidates with in-demand certs receive 2.1x more recruiter outreach and clear ATS filters at a 40% higher rate.',
+          expectedOutcome: 'Certification enrolled. LinkedIn updated. 21-day study commitment scheduled.',
+          timeInvestment: '1 hour/day for 21 days',
+          category: 'skill_building',
+          priority: 'medium',
+          isBlocking: false,
+          unlocks: [],
+          effortLevel: 'moderate',
+          roiRating: 8,
+        },
+        {
+          weekNumber: 6,
+          deadline: 'Month 2, Week 2',
+          action: 'Document your biggest win this month with specific numbers',
+          subActions: [
+            'Write a 2-sentence STAR achievement: "I [action] that [result with numbers] in [timeframe]."',
+            'Add this to your "brag document" — a private record of achievements for future interviews and reviews',
+            'Send a brief update to 3 professional contacts you haven\'t spoken to in 3+ months — share what you\'re learning',
+          ],
+          whyNow: 'Interview material and negotiation leverage are built during the good times, not during the search.',
+          evidence: 'Candidates who enter job searches with ≥5 pre-written STAR stories take 2–3 weeks less to reach the offer stage.',
+          expectedOutcome: '1 STAR achievement documented. Brag document started. 3 network touchpoints made.',
+          timeInvestment: '2 hours in Week 2',
+          category: 'career_positioning',
+          priority: 'medium',
+          isBlocking: false,
+          unlocks: [],
+          effortLevel: 'quick_win',
+          roiRating: 7,
+        },
+      ],
+    },
+    {
+      month: 3,
+      monthLabel: 'Month 3: Optionality & Passive Market Testing',
+      theme: 'Test market demand without committing — build clarity and optionality',
+      milestoneGoal: '1 recruiter conversation had (not to apply — to hear market intel); certification progress at ≥50%; 1 internal visibility action taken',
+      goNoGoGate: 'PASS: recruiter conversation completed + internal action taken. | ESCALATE: any negative trigger (reorg, new leadership, budget cuts) → move to standard mode.',
+      estimatedOutcomes: ['Market demand signal received (recruiter intel)', 'Internal visibility strengthened', 'Clear signal on whether to stay or begin active search in Q2'],
+      totalTimeInvestment: '2–3 hours/week',
+      weeklyActions: [
+        {
+          weekNumber: 9,
+          deadline: 'Month 3, Week 1',
+          action: 'Have 1 passive market conversation with a recruiter (listening, not applying)',
+          subActions: [
+            'Open LinkedIn to recruiter messages — respond to 1 message even if the role isn\'t right. Ask: "What are you seeing in the market for [your role] at my level?"',
+            'This is market research, not job hunting. 20 minutes of recruiter intel is worth 3 weeks of job board browsing.',
+            'Ask: "What is the comp range you\'re seeing for this level in [city]?" — this validates your benchmarks.',
+            'Do not apply for this role unless it\'s genuinely compelling. The goal is intelligence gathering.',
+          ],
+          whyNow: 'Passive market intelligence updates your comp floor, surface available options before you need them, and keeps your network warm.',
+          evidence: 'Professionals who maintain passive recruiter contact every quarter know their market value 35% more accurately than those who only look when desperate.',
+          expectedOutcome: 'Market intelligence gathered. Comp benchmark validated. Recruiter relationship established for future.',
+          timeInvestment: '30 minutes',
+          category: 'network_activation',
+          priority: 'low',
+          isBlocking: false,
+          unlocks: [],
+          effortLevel: 'quick_win',
+          roiRating: 7,
+        },
+        {
+          weekNumber: 10,
+          deadline: 'Month 3, Week 2',
+          action: 'Take 1 internal visibility action at your current employer',
+          subActions: [
+            'Present a brief update, report, or insight to a cross-functional stakeholder — visibility above your immediate team is career protection',
+            'Volunteer for 1 project that extends your scope or connects you to a different department',
+            'Ask your manager: "What does success look like for me in the next 6 months?" — this surfaces their perception and any risk signals early.',
+          ],
+          whyNow: 'Internal visibility reduces layoff risk and surfaces internal mobility opportunities before external search is needed.',
+          evidence: 'Employees with cross-functional visibility are 45% less likely to be included in targeted layoffs vs. those unknown outside their team.',
+          expectedOutcome: 'Cross-functional relationship initiated. Manager\'s expectations clarified. Internal mobility options surveyed.',
+          timeInvestment: '2 hours across Month 3',
+          category: 'risk_monitoring',
+          priority: 'medium',
+          isBlocking: false,
+          unlocks: [],
+          effortLevel: 'moderate',
+          roiRating: 7,
         },
       ],
     },
@@ -1007,14 +1137,30 @@ export function computeMonthlyActionPlan(inputs: MonthlyActionPlanInputs): Month
     ? `Your risk is moderate. This plan focuses on proactive positioning: benchmarking your market value, closing skill gaps, and building relationships before you need them.`
     : `Your risk is currently low. This plan invests in career capital and market awareness — so you're positioned well if conditions change.`;
 
-  const estimatedJobSearchDuration = urgencyMode === 'crisis' ? '4–8 weeks to first offer'
-    : urgencyMode === 'elevated' ? '6–10 weeks to first offer'
-    : urgencyMode === 'standard' ? '8–14 weeks if you decide to move'
-    : 'Not actively searching — monitoring mode';
+  // HARDCODED-H1 fix: duration now factors in financial runway + visa constraint
+  const runway = getRunwayMonths(inputs)
+  const isVisaConstrained = (inputs.visaRisk?.visaType ?? 'citizen') !== 'citizen'
+    && (inputs.visaRisk?.visaType ?? 'citizen') !== 'permanent_resident'
+  const visaGraceDays = inputs.visaRisk?.gracePeriodDays ?? 180
+  const visaGraceWeeks = Math.floor(visaGraceDays / 7)
 
-  const planExpiry = urgencyMode === 'crisis' ? 'Re-audit in 30 days'
+  const estimatedJobSearchDuration = urgencyMode === 'crisis'
+    ? isVisaConstrained
+      ? `${Math.min(visaGraceWeeks - 2, 6)}–${Math.min(visaGraceWeeks, 8)} week target (visa window: ${visaGraceDays}-day grace)`
+      : runway <= 3
+        ? '3–5 weeks to first offer (runway-constrained: prioritise speed over fit)'
+        : '4–8 weeks to first offer'
+    : urgencyMode === 'elevated'
+    ? runway <= 4 ? '5–8 weeks (elevated urgency with compressed runway)' : '6–10 weeks to first offer'
+    : urgencyMode === 'standard' ? '8–14 weeks if you decide to move'
+    : 'Not actively searching — monitoring mode (re-check in 90 days)';
+
+  // HARDCODED-H2 fix: planExpiry factors in urgency + runway
+  const planExpiry = urgencyMode === 'crisis'
+    ? runway <= 2 ? 'Re-audit in 14 days — runway is critical' : 'Re-audit in 30 days'
     : urgencyMode === 'elevated' ? 'Re-audit in 45 days'
-    : 'Re-audit in 90 days';
+    : urgencyMode === 'standard' ? 'Re-audit in 60 days'
+    : 'Re-audit in 90 days (or when score increases above 40)';
 
   return {
     planTitle,
