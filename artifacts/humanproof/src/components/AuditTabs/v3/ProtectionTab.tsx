@@ -36,6 +36,7 @@ import AdaptiveBlock from '../common/AdaptiveBlock';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { SafePivotRolesCard } from '../common/SafePivotRolesCard';
 import { D4CredibilityPanel } from '../common/D4CredibilityPanel';
+import { ScoreSensitivityStrip } from '../common/ScoreSensitivityStrip';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -57,6 +58,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const roleMarketDemand                        = r.roleMarketDemand;
 
   const roleAdjacency                          = r.roleAdjacency;
+  const scoreSensitivity                       = r.scoreSensitivity;
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
   const hasMobility    = Boolean(careerContingency || careerConfidence);
@@ -182,6 +184,11 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           contradictingSignals={r.d4ContradictingSignals ?? []}
           regionThresholdLabel={r.performanceCredibilityThresholdLabel}
         />
+      )}
+
+      {/* Mini what-if strip — top 2 levers that move the score most */}
+      {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
+        <ScoreSensitivityStrip scoreSensitivity={scoreSensitivity} />
       )}
 
       <div className="text-center pt-2 pb-1">

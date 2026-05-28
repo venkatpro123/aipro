@@ -18,6 +18,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Search, ShieldAlert, TrendingUp } from 'lucide-react';
 
+/** Inline action callout rendered below a signal panel. Answers "what do I do with this?" */
+const ActionHook: React.FC<{ text: string }> = ({ text }) => (
+  <div
+    className="mt-2 flex items-start gap-1.5 rounded-lg px-3 py-2"
+    style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)' }}
+  >
+    <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#22d3ee' }}>↳</span>
+    <p className="text-[10px] leading-snug italic" style={{ color: 'rgba(34,211,238,0.80)' }}>{text}</p>
+  </div>
+);
+
 /** GAP H: Small freshness/source indicator shown beside heuristic signal blocks. */
 const HeuristicBadge: React.FC = () => (
   <span
@@ -97,9 +108,26 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           badgeColor={warnActiveCount > 0 ? '#dc2626' : '#f97316'}
           empty={!hasGroundTruth}
         >
-          {warnSignal    && <WARNSignalPanel warnSignal={warnSignal} />}
-          {secHasContent && <SECEnhancedPanel secEnhancedSignals={secEnhanced} />}
-          {blsMacro      && <BLSMacroPanel blsMacroSignal={blsMacro} />}
+          {warnSignal && (
+            <>
+              <WARNSignalPanel warnSignal={warnSignal} />
+              {warnSignal.hasActiveWARN && (
+                <ActionHook text="Update your resume and activate your network now. Active WARN filings precede layoffs by 60–90 days — the window to move proactively is open." />
+              )}
+            </>
+          )}
+          {secHasContent && (
+            <>
+              <SECEnhancedPanel secEnhancedSignals={secEnhanced} />
+              <ActionHook text="FCF trends in SEC filings are a leading indicator of headcount decisions. Monitor the next earnings call date and watch for guidance downgrades." />
+            </>
+          )}
+          {blsMacro && (
+            <>
+              <BLSMacroPanel blsMacroSignal={blsMacro} />
+              <ActionHook text="Declining JOLTS quits mean fewer external opportunities. Prioritize retention negotiation and internal visibility over job search for the next 30–60 days." />
+            </>
+          )}
         </AdaptiveBlock>
       </motion.div>
 
@@ -115,7 +143,12 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           empty={!hasMarket}
         >
           {roleMarket    && <RoleMarketDemandPanel roleMarketDemand={roleMarket} />}
-          {peerContagion && <PeerContagionPanel contagion={peerContagion} />}
+          {peerContagion && (
+            <>
+              <PeerContagionPanel contagion={peerContagion} />
+              <ActionHook text="Sector peers showing distress signals means external hiring will slow industrywide. Prioritize building your pipeline now — before the market tightens further." />
+            </>
+          )}
           {macroRisk     && <MacroRiskPanel macro={macroRisk} />}
         </AdaptiveBlock>
       </motion.div>

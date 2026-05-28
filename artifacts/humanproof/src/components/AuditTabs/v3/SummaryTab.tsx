@@ -177,7 +177,7 @@ const ScoreRangeHero: React.FC<{
       >
         <AlertOctagon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
         <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: '#fbbf24' }}>
-          Score Range — Not a Point Estimate
+          Risk Level Range — Not a Point Estimate
         </span>
       </div>
 
@@ -794,13 +794,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           <StatChip
             label="Confidence"
             value={`${confPct}%`}
-            sub={confPct >= 70 ? 'high' : confPct >= 45 ? 'moderate' : 'low'}
-            color={confPct >= 70 ? '#10b981' : confPct >= 45 ? '#f59e0b' : '#f97316'}
+            sub={confPct >= 65 ? 'high quality data' : confPct >= 40 ? 'typical' : 'below average'}
+            color={confPct >= 65 ? '#10b981' : confPct >= 40 ? '#f59e0b' : '#f97316'}
             icon={Shield}
           />
         ) : (
           <StatChip
-            label="Score Range"
+            label="Risk Level Range"
             value={`${scoreSufficiency.ciLow}–${scoreSufficiency.ciHigh}`}
             sub="point est. unreliable"
             color="#fbbf24"

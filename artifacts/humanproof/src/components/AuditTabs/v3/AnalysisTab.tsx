@@ -16,7 +16,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Brain, Zap, BarChart2, Activity, BookOpen, Compass, AlertOctagon,
+  Brain, Zap, BarChart2, Activity, BookOpen, Compass, AlertOctagon, TrendingDown,
 } from 'lucide-react';
 import { PatternMatchCard } from '../../PatternMatchCard';
 import { computeScoreSufficiency } from '../../../lib/scoreGate';
@@ -28,6 +28,7 @@ import type { PreparednessResult } from '../../../services/preparednessScoreEngi
 import { RiskBreakdownTab } from '../RiskBreakdownTab';
 import { TransparencyTab } from '../TransparencyTab';
 import AdaptiveBlock from '../common/AdaptiveBlock';
+import { ScoreSensitivityPanel } from '../common/ScoreSensitivityPanel';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -474,6 +475,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   const r = result as any;
 
   const horizon: PredictionHorizonResult | undefined   = r.predictionHorizon;
+  const scoreSensitivity = r.scoreSensitivity;
   const scenario: ScenarioPlanResult | undefined       = r.scenarioPlan;
   const preparedness: PreparednessResult | undefined   = r.preparednessScore;
   const brief: IntelligenceBriefResult | null | undefined = r.intelligenceBrief;
@@ -541,6 +543,20 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         ciLow={scoreSufficiency.ciLow}
         ciHigh={scoreSufficiency.ciHigh}
       />
+
+      {/* ── T2: Score sensitivity — what moves your score the most? ────────── */}
+      {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
+        <AdaptiveBlock
+          title="Score levers — what moves your risk the most?"
+          subtitle="Ranked actions by score impact — fastest path to a safer position"
+          icon={TrendingDown}
+          tier={2}
+          accentColor="#22d3ee"
+          defaultOpen={result.total >= 55}
+        >
+          <ScoreSensitivityPanel scoreSensitivity={scoreSensitivity} />
+        </AdaptiveBlock>
+      )}
 
       {/* ── T2: Risk dimensions breakdown — open by default; this is the tab's job */}
       <AdaptiveBlock
