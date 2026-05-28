@@ -26,7 +26,8 @@
 //   • Sticky pill tabs below sticky header
 //   • Per-tab badge updates live based on signal state
 
-import React, { Suspense, lazy, useState, useRef, useEffect, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useDrag } from '@use-gesture/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
@@ -451,6 +452,24 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  // ── Mobile swipe gesture (left → next tab, right → prev tab) ─────────────
+  // Only triggers on horizontal swipes that clearly outweigh vertical movement.
+  // Threshold: 60px horizontal with at least 2:1 horizontal:vertical ratio.
+  const TABS_ORDER: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
+  const swipeBind = useDrag(({ last, movement: [mx, my], cancel }) => {
+    // Cancel if vertical movement dominates — let the user scroll
+    if (Math.abs(my) > Math.abs(mx)) { cancel(); return; }
+    if (!last) return;
+    const threshold = 60;
+    if (mx < -threshold) {
+      const idx = TABS_ORDER.indexOf(activeTab);
+      if (idx < TABS_ORDER.length - 1) handleTabChange(TABS_ORDER[idx + 1]);
+    } else if (mx > threshold) {
+      const idx = TABS_ORDER.indexOf(activeTab);
+      if (idx > 0) handleTabChange(TABS_ORDER[idx - 1]);
+    }
+  }, { axis: 'lock', pointer: { touch: true } });
+
   const tabProps = useMemo(() => ({
     result, companyData,
     onRetake: props.onRetake,
@@ -491,6 +510,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         {/* v40.0 FIX-7: removed mode="wait" — was forcing exit-then-enter
             sequentially (~360ms blocking transition per tab switch). Parallel
             exit/enter feels snappier and avoids perceived lag on rapid clicks. */}
+        {/* Swipe wrapper: gesture handler on a plain div to avoid onDrag type
+            conflict between @use-gesture/react and framer-motion. */}
+        <div {...swipeBind()} style={{ touchAction: 'pan-y' }}>
         <AnimatePresence>
           <motion.div
             key={activeTab}
@@ -546,6 +568,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             )}
           </motion.div>
         </AnimatePresence>
+        </div>{/* /swipe wrapper */}
 
         <MobileBottomNav
           active={activeTab}
