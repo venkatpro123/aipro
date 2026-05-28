@@ -97,7 +97,10 @@ function buildTickerItems() {
 // ── CSS (scoped to .gal-root) ─────────────────────────────────────────────────
 
 const GLOBE_CSS = `
-.gal-root{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#0a1b34 0%,#061224 40%,#03060d 100%);overflow:hidden;font-family:"Inter",-apple-system,system-ui,sans-serif;color:#e9f3ff;letter-spacing:.01em;z-index:9999}
+/* ── root: full-screen fixed container ──────────────────── */
+.gal-root{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#0a1b34 0%,#061224 40%,#03060d 100%);font-family:"Inter",-apple-system,system-ui,sans-serif;color:#e9f3ff;letter-spacing:.01em;z-index:9999}
+
+/* ── background layers ──────────────────────────────────── */
 .gal-stars{position:absolute;inset:0;width:100%;height:100%;z-index:0}
 .gal-aurora{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 40% at 22% 25%,rgba(111,216,255,.16),transparent 60%),radial-gradient(50% 35% at 78% 78%,rgba(155,123,255,.14),transparent 60%),radial-gradient(40% 30% at 50% 110%,rgba(79,224,192,.10),transparent 60%);animation:galAurora 18s ease-in-out infinite alternate;mix-blend-mode:screen}
 @keyframes galAurora{from{transform:translate3d(0,0,0) scale(1);opacity:.85}to{transform:translate3d(-2%,1%,0) scale(1.05);opacity:1}}
@@ -105,40 +108,11 @@ const GLOBE_CSS = `
 @keyframes galNebula{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-3%,2%,0) scale(1.06)}100%{transform:translate3d(2%,-2%,0) scale(1.02)}}
 .gal-gridmesh{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(to right,rgba(111,216,255,.05) 1px,transparent 1px),linear-gradient(to bottom,rgba(111,216,255,.05) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse at 50% 50%,transparent 18%,rgba(0,0,0,.7) 45%,rgba(0,0,0,.9) 65%,transparent 92%);-webkit-mask-image:radial-gradient(ellipse at 50% 50%,transparent 18%,rgba(0,0,0,.7) 45%,rgba(0,0,0,.9) 65%,transparent 92%);animation:galGrid 9s ease-in-out infinite}
 @keyframes galGrid{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.015)}}
-.gal-vignette{position:absolute;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(2,6,14,.55) 100%)}
-.gal-scanlines{position:absolute;inset:0;z-index:4;pointer-events:none;background-image:repeating-linear-gradient(to bottom,rgba(111,216,255,.025) 0px,rgba(111,216,255,.025) 1px,transparent 1px,transparent 3px);mix-blend-mode:overlay;opacity:.5}
-.gal-composition{position:relative;z-index:2;width:min(86vmin,760px);height:min(86vmin,760px);display:grid;place-items:center;animation:galFade 700ms cubic-bezier(.2,.8,.2,1) both}
-@keyframes galFade{from{opacity:0}to{opacity:1}}
-.gal-halo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(111,216,255,.20) 0%,rgba(111,216,255,.08) 28%,rgba(111,216,255,0) 55%);filter:blur(6px);animation:galHalo 6s ease-in-out infinite;pointer-events:none}
-@keyframes galHalo{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
-.gal-globe-canvas{position:absolute;width:58%;height:58%;border-radius:50%;box-shadow:0 0 22px 0 rgba(111,216,255,.55),0 0 60px 6px rgba(111,216,255,.32),0 0 140px 22px rgba(111,216,255,.14),0 0 260px 50px rgba(155,123,255,.08),inset 0 0 26px 2px rgba(111,216,255,.20)}
-.gal-overlay-canvas{position:absolute;width:58%;height:58%;pointer-events:none}
-.gal-orbits{position:absolute;inset:0;pointer-events:none;overflow:visible}
-.gal-orbits svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.gal-orbit{transform-origin:50% 50%;transform-box:fill-box}
-.gal-o1{animation:galSpin 22s linear infinite}
-.gal-o2{animation:galSpin 32s linear infinite reverse}
-.gal-o3{animation:galSpin 48s linear infinite}
-.gal-o4{animation:galSpin 14s linear infinite reverse}
-@keyframes galSpin{to{transform:rotate(360deg)}}
-.gal-scan-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.gal-scan-ring-spin{transform-origin:50% 50%;transform-box:fill-box;animation:galSpin 7.5s linear infinite}
-.gal-leaders{position:absolute;width:58%;height:58%;pointer-events:none;overflow:visible;z-index:2}
-.gal-telemetry{position:absolute;width:58%;height:58%;pointer-events:none;z-index:2;overflow:visible}
-.gal-tcard{position:absolute;transform:translate(-50%,-50%);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9.5px;line-height:1.35;color:rgba(220,240,255,.92);background:rgba(8,18,36,.72);backdrop-filter:blur(8px) saturate(140%);border:1px solid rgba(111,216,255,.38);border-radius:4px;padding:6px 9px 7px;min-width:92px;letter-spacing:.06em;box-shadow:0 4px 18px rgba(0,0,0,.45);animation:galTIn .35s ease-out}
-.gal-tcard.fading{animation:galTOut .45s ease-in forwards}
-@keyframes galTIn{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
-@keyframes galTOut{from{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
-.gal-tcard .trow1{display:flex;align-items:center;gap:6px;font-weight:600;color:#6fd8ff;text-transform:uppercase;margin-bottom:3px}
-.gal-tcard .tblip{width:5px;height:5px;border-radius:50%;background:#6fd8ff;box-shadow:0 0 6px #6fd8ff;animation:galDot 1.3s ease-in-out infinite}
-.gal-tcard .tcoord{color:rgba(233,243,255,.62);margin-bottom:4px}
-.gal-tcard .tmeter{width:100%;height:2px;border-radius:99px;background:rgba(111,216,255,.15);overflow:hidden;position:relative}
-.gal-tcard .tmeter>i{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#6fd8ff,#9b7bff);box-shadow:0 0 8px #6fd8ff}
-.gal-tcard .tmeta{display:flex;justify-content:space-between;margin-top:4px;font-size:8.5px;color:rgba(111,216,255,.7)}
-.gal-tcard .risk-high{color:#ff6680;font-weight:600}
-.gal-tcard .risk-warn{color:#ffb547;font-weight:600}
-.gal-tcard .risk-ok{color:#6fd8ff;font-weight:600}
-.gal-topbar{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:14px;padding:8px 14px;border-radius:999px;background:rgba(8,18,36,.6);backdrop-filter:blur(16px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;max-width:calc(100vw - 40px);overflow:hidden;isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 80ms both}
+.gal-vignette{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(2,6,14,.55) 100%)}
+.gal-scanlines{position:absolute;inset:0;z-index:5;pointer-events:none;background-image:repeating-linear-gradient(to bottom,rgba(111,216,255,.025) 0px,rgba(111,216,255,.025) 1px,transparent 1px,transparent 3px);mix-blend-mode:overlay;opacity:.5}
+
+/* ── fixed top header area (topbar + ticker) ────────────── */
+.gal-topbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:14px;padding:8px 14px;border-radius:999px;background:rgba(8,18,36,.6);backdrop-filter:blur(16px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 80ms both}
 @keyframes galUIC{from{opacity:0;transform:translate(-50%,8px) scale(.985)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
 .gal-topbar .sheen{position:absolute;top:0;bottom:0;left:0;width:60%;transform:translateX(-100%) skewX(-22deg);background:linear-gradient(90deg,transparent,rgba(111,216,255,.1) 40%,rgba(255,255,255,.18) 50%,rgba(111,216,255,.1) 60%,transparent);animation:galSheen 9s ease-in-out infinite;pointer-events:none;z-index:0}
 @keyframes galSheen{0%,30%{transform:translateX(-120%) skewX(-22deg)}55%,100%{transform:translateX(220%) skewX(-22deg)}}
@@ -151,21 +125,55 @@ const GLOBE_CSS = `
 .gal-phase{display:flex;align-items:center;gap:6px;transition:color .4s ease}
 .gal-phase .pdot{width:6px;height:6px;border-radius:50%;background:rgba(111,216,255,.2);transition:background .4s ease,box-shadow .4s ease}
 .gal-phase+.gal-phase::before{content:"";width:18px;height:1px;background:rgba(111,216,255,.25);margin-right:4px}
-.gal-phase.active{color:#e9f3ff}
-.gal-phase.active .pdot{background:#6fd8ff;box-shadow:0 0 10px #6fd8ff}
-.gal-phase.done{color:rgba(233,243,255,.62)}
-.gal-phase.done .pdot{background:#4fe0c0}
-.gal-ticker{position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:3;width:min(560px,70vw);height:28px;overflow:hidden;border-radius:999px;background:rgba(8,18,36,.55);backdrop-filter:blur(12px) saturate(140%);border:1px solid rgba(111,216,255,.14);box-shadow:0 6px 24px rgba(0,0,0,.40);mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 160ms both}
+.gal-phase.active{color:#e9f3ff}.gal-phase.active .pdot{background:#6fd8ff;box-shadow:0 0 10px #6fd8ff}
+.gal-phase.done{color:rgba(233,243,255,.62)}.gal-phase.done .pdot{background:#4fe0c0}
+.gal-ticker{position:absolute;top:66px;left:50%;transform:translateX(-50%);z-index:6;width:min(560px,calc(100vw - 24px));height:26px;overflow:hidden;border-radius:999px;background:rgba(8,18,36,.55);backdrop-filter:blur(12px) saturate(140%);border:1px solid rgba(111,216,255,.14);box-shadow:0 6px 24px rgba(0,0,0,.40);mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 160ms both}
 .gal-ticker .tlead{position:absolute;left:0;top:0;bottom:0;z-index:2;padding:0 12px;display:flex;align-items:center;background:linear-gradient(90deg,rgba(8,18,36,.95) 65%,transparent);font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#ffb547;gap:6px}
 .gal-ticker .tldot{width:5px;height:5px;border-radius:50%;background:#ffb547;box-shadow:0 0 8px #ffb547;animation:galDot 1.2s ease-in-out infinite}
-.gal-ticker .ttrack{position:absolute;top:0;bottom:0;display:flex;align-items:center;gap:36px;font-family:"JetBrains Mono",monospace;font-size:10.5px;color:rgba(233,243,255,.62);white-space:nowrap;animation:galTick 60s linear infinite;padding-left:100%}
+.gal-ticker .ttrack{position:absolute;top:0;bottom:0;display:flex;align-items:center;gap:36px;font-family:"JetBrains Mono",monospace;font-size:10px;color:rgba(233,243,255,.62);white-space:nowrap;animation:galTick 60s linear infinite;padding-left:100%}
 @keyframes galTick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .gal-ticker .tsig{display:inline-flex;align-items:center;gap:8px}
-.gal-ticker .tsig-sig.alert{color:#ff6680;font-weight:600}
-.gal-ticker .tsig-sig.warn{color:#ffb547;font-weight:600}
-.gal-ticker .tsig-sig.neutral{color:#6fd8ff;font-weight:600}
+.gal-ticker .tsig-sig.alert{color:#ff6680;font-weight:600}.gal-ticker .tsig-sig.warn{color:#ffb547;font-weight:600}.gal-ticker .tsig-sig.neutral{color:#6fd8ff;font-weight:600}
 .gal-ticker .tsep{color:rgba(111,216,255,.25)}
-.gal-sector-rail{position:absolute;top:118px;left:24px;z-index:3;width:220px;max-height:calc(100vh - 260px);overflow:hidden;padding:12px 14px 14px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 220ms both}
+
+/* ── 3-column body layout ─────────────────────────────── */
+.gal-body{position:absolute;inset:0;top:100px;bottom:0;display:flex;flex-direction:row;align-items:stretch;padding:8px 12px 8px;gap:10px;z-index:2}
+.gal-left-col{flex:0 0 234px;display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.gal-center-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden}
+.gal-right-col{flex:0 0 210px;display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+
+/* ── globe composition: fills center-col, aspect-ratio 1:1 */
+.gal-composition{position:relative;z-index:2;flex-shrink:0;width:min(100%,700px);max-height:calc(100vh - 200px);aspect-ratio:1;display:grid;place-items:center;animation:galFade 700ms cubic-bezier(.2,.8,.2,1) both}
+@keyframes galFade{from{opacity:0}to{opacity:1}}
+.gal-halo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(111,216,255,.20) 0%,rgba(111,216,255,.08) 28%,rgba(111,216,255,0) 55%);filter:blur(6px);animation:galHalo 6s ease-in-out infinite;pointer-events:none}
+@keyframes galHalo{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+.gal-globe-canvas{position:absolute;width:58%;height:58%;border-radius:50%;box-shadow:0 0 22px 0 rgba(111,216,255,.55),0 0 60px 6px rgba(111,216,255,.32),0 0 140px 22px rgba(111,216,255,.14),0 0 260px 50px rgba(155,123,255,.08),inset 0 0 26px 2px rgba(111,216,255,.20)}
+.gal-overlay-canvas{position:absolute;width:58%;height:58%;pointer-events:none}
+.gal-orbits{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.gal-orbits svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gal-orbit{transform-origin:50% 50%;transform-box:fill-box}
+.gal-o1{animation:galSpin 22s linear infinite}.gal-o2{animation:galSpin 32s linear infinite reverse}.gal-o3{animation:galSpin 48s linear infinite}.gal-o4{animation:galSpin 14s linear infinite reverse}
+@keyframes galSpin{to{transform:rotate(360deg)}}
+.gal-scan-ring{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.gal-scan-ring-spin{transform-origin:50% 50%;transform-box:fill-box;animation:galSpin 7.5s linear infinite}
+.gal-leaders{position:absolute;width:58%;height:58%;pointer-events:none;overflow:visible;z-index:2}
+.gal-telemetry{position:absolute;width:58%;height:58%;pointer-events:none;z-index:2;overflow:visible}
+
+/* ── telemetry float cards ──────────────────────────────── */
+.gal-tcard{position:absolute;transform:translate(-50%,-50%);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9.5px;line-height:1.35;color:rgba(220,240,255,.92);background:rgba(8,18,36,.72);backdrop-filter:blur(8px) saturate(140%);border:1px solid rgba(111,216,255,.38);border-radius:4px;padding:6px 9px 7px;min-width:92px;letter-spacing:.06em;box-shadow:0 4px 18px rgba(0,0,0,.45);animation:galTIn .35s ease-out}
+.gal-tcard.fading{animation:galTOut .45s ease-in forwards}
+@keyframes galTIn{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes galTOut{from{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+.gal-tcard .trow1{display:flex;align-items:center;gap:6px;font-weight:600;color:#6fd8ff;text-transform:uppercase;margin-bottom:3px}
+.gal-tcard .tblip{width:5px;height:5px;border-radius:50%;background:#6fd8ff;box-shadow:0 0 6px #6fd8ff;animation:galDot 1.3s ease-in-out infinite}
+.gal-tcard .tcoord{color:rgba(233,243,255,.62);margin-bottom:4px}
+.gal-tcard .tmeter{width:100%;height:2px;border-radius:99px;background:rgba(111,216,255,.15);overflow:hidden;position:relative}
+.gal-tcard .tmeter>i{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#6fd8ff,#9b7bff);box-shadow:0 0 8px #6fd8ff}
+.gal-tcard .tmeta{display:flex;justify-content:space-between;margin-top:4px;font-size:8.5px;color:rgba(111,216,255,.7)}
+.gal-tcard .risk-high{color:#ff6680;font-weight:600}.gal-tcard .risk-warn{color:#ffb547;font-weight:600}.gal-tcard .risk-ok{color:#6fd8ff;font-weight:600}
+
+/* ── sector rail (left column) ──────────────────────────── */
+.gal-sector-rail{flex:1 1 0;min-height:0;overflow:hidden;padding:12px 14px 14px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 220ms both;position:relative}
 @keyframes galUI{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .gal-sector-rail::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,transparent 22%,transparent 78%,rgba(111,216,255,.04) 100%)}
 .gal-sector-rail>*{position:relative;z-index:1}
@@ -177,11 +185,15 @@ const GLOBE_CSS = `
 .gal-srow .sn{color:#e9f3ff;letter-spacing:.04em}
 .gal-srow .sbar{grid-column:1/-1;height:2px;background:rgba(111,216,255,.1);border-radius:99px;overflow:hidden;position:relative}
 .gal-srow .sbar>i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#6fd8ff,#9b7bff);box-shadow:0 0 8px #6fd8ff;transition:width .6s cubic-bezier(.4,0,.2,1)}
-.gal-srow.warn .sn{color:#ffb547}
-.gal-srow.warn .sbar>i{background:linear-gradient(90deg,#ffb547,#ff6680);box-shadow:0 0 8px #ffb547}
-.gal-srow .sv{text-align:right;color:#6fd8ff;font-variant-numeric:tabular-nums;font-size:10px}
-.gal-srow.warn .sv{color:#ffb547}
-.gal-gauges{position:absolute;top:118px;right:24px;z-index:3;width:200px;max-height:calc(100vh - 260px);overflow:hidden;display:flex;flex-direction:column;gap:8px;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 260ms both}
+.gal-srow.warn .sn{color:#ffb547}.gal-srow.warn .sbar>i{background:linear-gradient(90deg,#ffb547,#ff6680);box-shadow:0 0 8px #ffb547}
+.gal-srow .sv{text-align:right;color:#6fd8ff;font-variant-numeric:tabular-nums;font-size:10px}.gal-srow.warn .sv{color:#ffb547}
+
+/* ── spectrum (bottom of left column) ───────────────────── */
+.gal-spectrum{flex:0 0 60px;overflow:hidden;padding:8px 12px 6px;border-radius:10px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 6px 24px rgba(0,0,0,.35);isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 320ms both;position:relative}
+.gal-spectrum-label{position:absolute;top:-6px;left:12px;background:rgba(8,18,36,.9);padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.18em;color:rgba(111,216,255,.55);text-transform:uppercase}
+
+/* ── gauges (right column) ──────────────────────────────── */
+.gal-gauges{display:flex;flex-direction:column;gap:8px;width:100%;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 260ms both}
 .gal-gauge{padding:10px 12px;border-radius:12px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",monospace;display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;position:relative;isolation:isolate}
 .gal-gauge::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,transparent 22%,transparent 78%,rgba(111,216,255,.04) 100%)}
 .gal-gauge>*{position:relative;z-index:1}
@@ -191,37 +203,68 @@ const GLOBE_CSS = `
 .gal-glabel{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(111,216,255,.55);margin-bottom:4px}
 .gal-gname{font-size:12px;color:#e9f3ff;font-weight:500;margin-bottom:4px}
 .gal-gsub{font-size:9px;color:rgba(233,243,255,.32);letter-spacing:.06em}
-.gal-spectrum{position:absolute;bottom:24px;left:24px;z-index:3;width:180px;height:56px;padding:10px 12px;border-radius:10px;background:rgba(8,18,36,.55);backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(111,216,255,.16);box-shadow:0 6px 24px rgba(0,0,0,.35);isolation:isolate;animation:galUI 700ms cubic-bezier(.2,.8,.2,1) 320ms both}
-.gal-spectrum-label{position:absolute;top:-6px;left:12px;background:rgba(8,18,36,.9);padding:0 6px;font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.18em;color:rgba(111,216,255,.55);text-transform:uppercase}
-.gal-panel{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:3;min-width:min(420px,86vw);padding:18px 22px 16px;border-radius:18px;background:linear-gradient(180deg,rgba(10,22,42,.62),rgba(10,22,42,.55)),radial-gradient(120% 60% at 0% 0%,rgba(111,216,255,.10),transparent 60%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 10px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 360ms both}
-.gal-panel-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
+
+/* ── status panel (bottom of center column) ─────────────── */
+.gal-panel{flex-shrink:0;width:100%;max-width:480px;padding:14px 20px 12px;border-radius:16px;background:linear-gradient(180deg,rgba(10,22,42,.62),rgba(10,22,42,.55)),radial-gradient(120% 60% at 0% 0%,rgba(111,216,255,.10),transparent 60%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 10px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 360ms both}
+.gal-panel-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px}
 .gal-dot{width:8px;height:8px;border-radius:50%;background:#6fd8ff;box-shadow:0 0 12px #6fd8ff,0 0 24px rgba(111,216,255,.5);animation:galDot 1.6s ease-in-out infinite;flex:0 0 auto}
 .gal-label{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:rgba(111,216,255,.55);font-weight:600}
-.gal-status-text{font-size:14px;color:#e9f3ff;font-weight:500;min-height:20px;text-align:center;transition:opacity .35s ease}
+.gal-status-text{font-size:13px;color:#e9f3ff;font-weight:500;min-height:18px;text-align:center;transition:opacity .35s ease}
 .gal-bar{position:relative;height:3px;border-radius:99px;background:rgba(111,216,255,.10);overflow:hidden;margin-top:8px}
 .gal-bar::after{content:"";position:absolute;inset:0;width:35%;border-radius:99px;background:linear-gradient(90deg,transparent,#6fd8ff,transparent);animation:galBar 2.4s ease-in-out infinite}
 @keyframes galBar{0%{transform:translateX(-100%)}100%{transform:translateX(285%)}}
-.gal-meta{display:flex;justify-content:center;align-items:center;gap:14px;font-size:11px;color:rgba(233,243,255,.32);margin-top:10px;font-variant-numeric:tabular-nums;letter-spacing:.06em;flex-wrap:wrap}
-.gal-meta span+span::before{content:"·";color:rgba(111,216,255,.18);margin-right:14px}
+.gal-meta{display:flex;justify-content:center;align-items:center;gap:12px;font-size:10px;color:rgba(233,243,255,.32);margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:.06em;flex-wrap:wrap}
+.gal-meta span+span::before{content:"·";color:rgba(111,216,255,.18);margin-right:12px}
+
+/* ── corner HUDs (absolute within gal-root) ─────────────── */
 .gal-hud{position:absolute;z-index:3;color:rgba(111,216,255,.18);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .gal-hud .tick{width:18px;height:1px;background:currentColor}
-.gal-hud.tl{top:24px;left:24px}.gal-hud.tr{top:24px;right:24px}.gal-hud.bl{bottom:24px;left:24px}.gal-hud.br{bottom:24px;right:24px}
+.gal-hud.tl{top:12px;left:12px}.gal-hud.tr{top:12px;right:12px}.gal-hud.bl{bottom:12px;left:12px}.gal-hud.br{bottom:12px;right:12px}
 .gal-hud .v{color:rgba(233,243,255,.62)}
 @keyframes galDot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.65}}
-@media(max-width:720px){
-  .gal-sector-rail,.gal-spectrum{display:none}
-  .gal-hud{display:none}
-  .gal-gauges{top:96px;right:10px;left:10px;width:auto;flex-direction:row;gap:6px}
-  .gal-gauge{flex:1;min-width:0;grid-template-columns:40px 1fr;gap:8px;padding:8px 10px}
-  .gal-ring{width:40px;height:40px}
-  .gal-gval{font-size:11px}
-  .gal-glabel,.gal-gsub{display:none}
-  .gal-composition{width:min(86vmin,90vw);height:min(86vmin,90vw)}
-  .gal-panel{min-width:0;width:calc(100vw - 20px);padding:13px 16px;bottom:14px;border-radius:14px}
-  .gal-ticker{top:64px;width:calc(100vw - 20px);height:22px}
-  .gal-engine .sub,.gal-divider,.gal-phases{display:none}
+
+/* ── RESPONSIVE BREAKPOINTS ─────────────────────────────── */
+
+/* 1100px: hide left signal rail — center + right remain */
+@media(max-width:1100px){
+  .gal-left-col{display:none}
+  .gal-composition{max-height:calc(100vh - 190px)}
 }
-@media(max-width:420px){.gal-gauges{display:none}}
+
+/* 820px: stack body as column, gauges become top row */
+@media(max-width:820px){
+  .gal-body{flex-direction:column;padding:6px 8px 6px;gap:6px}
+  .gal-left-col{display:none}
+  .gal-right-col{order:-1;flex:0 0 auto;flex-direction:row;width:100%;justify-content:center;gap:6px}
+  .gal-gauges{flex-direction:row;width:auto;gap:6px}
+  .gal-gauge{flex:1;min-width:0;max-width:200px;grid-template-columns:40px 1fr;gap:8px;padding:8px 10px}
+  .gal-ring{width:40px;height:40px}.gal-gval{font-size:11px}
+  .gal-glabel,.gal-gsub{display:none}
+  .gal-center-col{justify-content:flex-start}
+  .gal-composition{max-height:calc(100vh - 240px);width:min(100%,580px)}
+  .gal-panel{padding:10px 14px 10px;border-radius:12px}
+  .gal-hud{display:none}
+}
+
+/* 560px: hide gauges, thin ticker, simplify topbar */
+@media(max-width:560px){
+  .gal-body{top:88px;padding:4px 6px 4px}
+  .gal-right-col{display:none}
+  .gal-topbar{top:8px;padding:6px 10px;gap:8px}
+  .gal-engine .sub,.gal-divider,.gal-phases{display:none}
+  .gal-ticker{top:52px;height:22px;width:calc(100vw - 16px)}
+  .gal-composition{max-height:calc(100vh - 200px)}
+  .gal-panel{border-radius:10px;padding:10px 12px 8px}
+  .gal-meta{font-size:9px;gap:8px}
+}
+
+/* 400px: minimal — globe + panel only */
+@media(max-width:400px){
+  .gal-body{padding:2px 4px 2px}
+  .gal-composition{max-height:calc(100vh - 180px)}
+  .gal-status-text{font-size:11px}
+  .gal-meta{display:none}
+}
 `;
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -435,9 +478,11 @@ export const GlobeAuditLoader: React.FC<Props> = ({
       const sphere = { type: 'Sphere' } as any; // d3-geo Sphere — not a standard GeoJSON type
 
       const COL = {
-        ocean0:'#0b2a4a', ocean1:'#1e4d7e', land0:'#1a8a5a', land1:'#0e4a32',
-        coast:'rgba(180,230,255,.55)', grat:'rgba(120,200,255,.10)',
-        rim:'rgba(150,220,255,.85)', pulse:'rgba(111,216,255,1)',
+        ocean0:'#0b2e52', ocean1:'#1a5585',
+        land0:'#3dbe72',  land1:'#1e7040',  // vivid green — high contrast on dark ocean
+        coast:'rgba(100,255,160,.92)',        // bright emerald coast line
+        grat:'rgba(120,200,255,.15)',
+        rim:'rgba(150,220,255,.88)', pulse:'rgba(111,216,255,1)',
         arc:'rgba(180,235,255,.95)', arcVi:'rgba(170,145,255,.95)', arcTeal:'rgba(120,240,210,.95)',
       };
 
@@ -466,15 +511,19 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         if (leadersRef.current) leadersRef.current.setAttribute('viewBox', `0 0 ${sz} ${sz}`);
       }
 
-      // Load world atlas (real country borders)
+      // Load world atlas — served locally from /public so no CDN dependency
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let countries: any = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let landMass: any  = null;
       try {
-        const res  = await fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json');
+        const res  = await fetch('/countries-110m.json');
         const topo = await res.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         countries = topoFeature(topo as any, (topo as any).objects.countries);
-      } catch { /* draw without land on CDN failure */ }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        landMass  = topoFeature(topo as any, (topo as any).objects.land);   // merged land fill
+      } catch { /* draw ocean-only on failure — graceful degradation */ }
 
       if (destroyed) return;
 
@@ -498,14 +547,19 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         gctx.lineWidth   = 0.8;
         gctx.stroke();
 
-        // ── Land ───────────────────────────────────────────────────────────
+        // ── Land fill (merged land shape — smoother fill) ──────────────────
+        if (landMass) {
+          gctx.beginPath();
+          gpath(landMass);
+          gctx.fillStyle = landGrad;
+          gctx.fill();
+        }
+        // ── Country borders (individual country outlines) ──────────────────
         if (countries) {
           gctx.beginPath();
           gpath(countries);
-          gctx.fillStyle   = landGrad;
-          gctx.fill();
           gctx.strokeStyle = COL.coast;
-          gctx.lineWidth   = 0.6;
+          gctx.lineWidth   = 1.2;
           gctx.lineJoin    = 'round';
           gctx.stroke();
         }
@@ -787,12 +841,15 @@ export const GlobeAuditLoader: React.FC<Props> = ({
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="gal-root" role="status" aria-label="Analyzing company data">
+      {/* ── Background layers ── */}
       <canvas className="gal-stars" ref={starsRef} aria-hidden="true" />
       <div className="gal-aurora"   aria-hidden="true" />
       <div className="gal-nebula"   aria-hidden="true" />
       <div className="gal-gridmesh" aria-hidden="true" />
+      <div className="gal-vignette"  aria-hidden="true" />
+      <div className="gal-scanlines" aria-hidden="true" />
 
-      {/* Top engine bar */}
+      {/* ── Top engine bar (absolute, centred) ── */}
       <div className="gal-topbar" aria-hidden="true">
         <span className="sheen" />
         <span className="gal-crest"><span className="gal-crest-sheen" /></span>
@@ -823,65 +880,43 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Left sector rail */}
-      <div className="gal-sector-rail" aria-hidden="true">
-        <div className="gal-rhead">
-          <span>Company Signals</span>
-          <span className="gal-live"><span className="pulse" />Live</span>
-        </div>
-        {SECTORS.map((s, i) => {
-          const pct = Math.round((sectorVals[i] ?? 0) * 100);
-          return (
-            <div key={s.id} className={`gal-srow${s.warn ? ' warn' : ''}`}>
-              <span className="si">{s.id}</span>
-              <span className="sn">{s.name}</span>
-              <span className="sv">{pct}%</span>
-              <span className="sbar"><i style={{ width: `${pct}%` }} /></span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Right gauge cluster */}
-      <div className="gal-gauges" aria-hidden="true">
-        {[
-          { id:'galG1', off:g1off, val:`${Math.round(g1*100)}%`, label:'Index 01', name:'Prediction Confidence', sub:'Bayesian · 12.4k features', c1:'#6fd8ff', c2:'#7af7c0' },
-          { id:'galG2', off:g2off, val:(g2*10).toFixed(1),       label:'Index 02', name:'Layoff Risk Index',      sub:'7-day rolling · normalized', c1:'#ffb547', c2:'#ff6680' },
-          { id:'galG3', off:g3off, val:`${Math.round(g3*100)}%`, label:'Index 03', name:'Forecast Signal',        sub:'SNR · multi-source fusion',  c1:'#9b7bff', c2:'#6fd8ff' },
-        ].map(g => (
-          <div className="gal-gauge" key={g.id}>
-            <div className="gal-ring">
-              <svg viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(111,216,255,.12)" strokeWidth="4"/>
-                <circle cx="32" cy="32" r="26" fill="none" stroke={`url(#${g.id})`} strokeWidth="4"
-                  strokeLinecap="round" strokeDasharray="163.36"
-                  strokeDashoffset={g.off} style={{ transition:'stroke-dashoffset .6s ease' }}/>
-                <defs>
-                  <linearGradient id={g.id} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%"   stopColor={g.c1}/>
-                    <stop offset="100%" stopColor={g.c2}/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="gal-gval">{g.val}</div>
-            </div>
-            <div>
-              <div className="gal-glabel">{g.label}</div>
-              <div className="gal-gname">{g.name}</div>
-              <div className="gal-gsub">{g.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Corner HUD */}
+      {/* ── Corner HUDs (absolute within gal-root) ── */}
       <div className="gal-hud tl" aria-hidden="true"><span className="tick"/><span>LAYOFF AUDIT · NODE ATL-07</span></div>
       <div className="gal-hud tr" aria-hidden="true"><span>PREDICTION · TIER-3</span><span className="tick"/></div>
       <div className="gal-hud bl" aria-hidden="true"><span className="tick"/><span>LIVE FORECAST · GLOBAL</span></div>
       <div className="gal-hud br" aria-hidden="true"><span className="v">{clock}</span><span className="tick"/></div>
 
-      {/* Globe composition */}
-      <div className="gal-composition">
+      {/* ── 3-column body ── */}
+      <div className="gal-body">
+
+        {/* LEFT COLUMN — signal rail + spectrum */}
+        <div className="gal-left-col" aria-hidden="true">
+          <div className="gal-sector-rail">
+            <div className="gal-rhead">
+              <span>Company Signals</span>
+              <span className="gal-live"><span className="pulse" />Live</span>
+            </div>
+            {SECTORS.map((s, i) => {
+              const pct = Math.round((sectorVals[i] ?? 0) * 100);
+              return (
+                <div key={s.id} className={`gal-srow${s.warn ? ' warn' : ''}`}>
+                  <span className="si">{s.id}</span>
+                  <span className="sn">{s.name}</span>
+                  <span className="sv">{pct}%</span>
+                  <span className="sbar"><i style={{ width: `${pct}%` }} /></span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="gal-spectrum">
+            <span className="gal-spectrum-label">Signal Stream</span>
+            <canvas ref={specRef} style={{ width:'100%', height:'100%', display:'block' }} />
+          </div>
+        </div>
+
+        {/* CENTER COLUMN — globe composition + status panel */}
+        <div className="gal-center-col">
+          <div className="gal-composition">
         <div className="gal-halo" aria-hidden="true" />
 
         {/* Orbital rings SVG */}
@@ -946,34 +981,61 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         <svg className="gal-leaders" ref={leadersRef}
           viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true" />
         <div className="gal-telemetry" ref={telRef} aria-hidden="true" />
-      </div>
+          </div>{/* end gal-composition */}
 
-      {/* Spectrum analyzer */}
-      <div className="gal-spectrum" aria-hidden="true">
-        <span className="gal-spectrum-label">Signal Stream</span>
-        <canvas ref={specRef} style={{ width:'100%', height:'100%', display:'block' }} />
-      </div>
+          {/* Status panel — directly below globe */}
+          <div className="gal-panel">
+            <div className="gal-panel-row">
+              <span className="gal-dot" aria-hidden="true" />
+              <span className="gal-label">{labelText}</span>
+            </div>
+            <div className="gal-status-text" aria-live="polite">
+              {limitedDataMode ? (limitedDataReason ?? 'Running with limited data…') : statusText}
+            </div>
+            <div className="gal-bar" aria-hidden="true" />
+            <div className="gal-meta" aria-hidden="true">
+              <span>{companies.toLocaleString()} companies</span>
+              <span>{(signals / 1e6).toFixed(2)}M signals</span>
+              <span>{regions} / 7 regions</span>
+            </div>
+          </div>
+        </div>{/* end gal-center-col */}
 
-      {/* Vignette + scanlines overlay */}
-      <div className="gal-vignette"  aria-hidden="true" />
-      <div className="gal-scanlines" aria-hidden="true" />
+        {/* RIGHT COLUMN — gauge cluster */}
+        <div className="gal-right-col" aria-hidden="true">
+          <div className="gal-gauges">
+            {[
+              { id:'galG1', off:g1off, val:`${Math.round(g1*100)}%`, label:'Index 01', name:'Prediction Confidence', sub:'Bayesian · 12.4k features', c1:'#6fd8ff', c2:'#7af7c0' },
+              { id:'galG2', off:g2off, val:(g2*10).toFixed(1),       label:'Index 02', name:'Layoff Risk Index',      sub:'7-day rolling · normalized', c1:'#ffb547', c2:'#ff6680' },
+              { id:'galG3', off:g3off, val:`${Math.round(g3*100)}%`, label:'Index 03', name:'Forecast Signal',        sub:'SNR · multi-source fusion',  c1:'#9b7bff', c2:'#6fd8ff' },
+            ].map(g => (
+              <div className="gal-gauge" key={g.id}>
+                <div className="gal-ring">
+                  <svg viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(111,216,255,.12)" strokeWidth="4"/>
+                    <circle cx="32" cy="32" r="26" fill="none" stroke={`url(#${g.id})`} strokeWidth="4"
+                      strokeLinecap="round" strokeDasharray="163.36"
+                      strokeDashoffset={g.off} style={{ transition:'stroke-dashoffset .6s ease' }}/>
+                    <defs>
+                      <linearGradient id={g.id} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%"   stopColor={g.c1}/>
+                        <stop offset="100%" stopColor={g.c2}/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="gal-gval">{g.val}</div>
+                </div>
+                <div>
+                  <div className="gal-glabel">{g.label}</div>
+                  <div className="gal-gname">{g.name}</div>
+                  <div className="gal-gsub">{g.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>{/* end gal-right-col */}
 
-      {/* Glass status panel */}
-      <div className="gal-panel">
-        <div className="gal-panel-row">
-          <span className="gal-dot" aria-hidden="true" />
-          <span className="gal-label">{labelText}</span>
-        </div>
-        <div className="gal-status-text" aria-live="polite">
-          {limitedDataMode ? (limitedDataReason ?? 'Running with limited data…') : statusText}
-        </div>
-        <div className="gal-bar" aria-hidden="true" />
-        <div className="gal-meta" aria-hidden="true">
-          <span>{companies.toLocaleString()} companies</span>
-          <span>{(signals / 1e6).toFixed(2)}M signals</span>
-          <span>{regions} / 7 regions</span>
-        </div>
-      </div>
+      </div>{/* end gal-body */}
     </div>
   );
 };
