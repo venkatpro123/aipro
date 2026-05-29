@@ -36,6 +36,7 @@ import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
 import { TabErrorBoundary } from '../common/TabErrorBoundary';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import EmergencyModeBanner from '../common/EmergencyModeBanner';
+import { AICommentary } from '../common/AICommentary';
 import { riskColor, riskLabel } from '../../../lib/riskTokens';
 import { track } from '../../../services/analyticsService';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
@@ -575,6 +576,11 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           onChange={handleTabChange}
           result={result}
         />
+
+        {/* ── Wave 7.3: AI Commentary — per-tab floating guidance bubble ──── */}
+        {/* Fixed bottom-center overlay, appears 2s after tab load, 1× per session. */}
+        <AICommentary activeTab={activeTab} result={result} />
+
       </div>
     </GlobalErrorBoundary>
   );
