@@ -19,6 +19,7 @@ import {
   Check, Lock, ChevronDown, ChevronUp, Zap, Calendar, BarChart3, Clock,
 } from 'lucide-react';
 import type { ActionPlanItem } from '../../../types/hybridResult';
+import { recordStreakActivity } from '../../../services/streakService';
 
 interface Props {
   actions: ActionPlanItem[];
@@ -308,6 +309,8 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
       } else {
         next.add(id);
         onActionComplete?.(id, next.size);
+        // Wave 4.4: record weekly streak activity whenever an action is completed
+        try { recordStreakActivity(); } catch { /* non-fatal */ }
       }
       saveCompletions(next);
       return next;

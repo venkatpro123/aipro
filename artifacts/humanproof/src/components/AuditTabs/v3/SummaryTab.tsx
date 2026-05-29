@@ -44,6 +44,7 @@ import { InactionCostCard } from '../common/InactionCostCard';
 import { VerdictReassurance } from '../common/VerdictReassurance';
 import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
+import { getStreakInfo } from '../../../services/streakService';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -571,6 +572,9 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const pScore = preparedness?.overallScore ?? 0;
   const pColor = preparedness ? readinessColor(preparedness.readinessLabel ?? '') : '#f59e0b';
 
+  // Wave 4.4: streak data (safe — reads localStorage, never throws)
+  const streakInfo = useMemo(() => { try { return getStreakInfo(); } catch { return null; } }, []);
+
   // v40.0: calibration limitation check for underrepresented segments
   const calibrationLimitation = isCalibrationLimitedForCompany(
     result.industryKey ?? companyData?.industry ?? null,
@@ -744,6 +748,43 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           scoreTrajectory={r.scoreTrajectory}
           currentScore={score}
         />
+      )}
+
+      {/* Wave 4.4: Streak chip — shown when currentStreak ≥ 2 (meaningful momentum).
+           Appears below ScoreTrendStrip as a compact momentum signal.
+           Fire emoji is safe (text — not an image) and matches cross-platform. */}
+      {streakInfo && streakInfo.currentStreak >= 2 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.20 }}
+          className="rounded-xl px-4 py-2.5 flex items-center gap-2.5"
+          style={{
+            background: 'rgba(16,185,129,0.06)',
+            border: '1px solid rgba(16,185,129,0.18)',
+          }}
+        >
+          <span className="text-[16px] leading-none flex-shrink-0" role="img" aria-label="streak">🔥</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold" style={{ color: '#10b981' }}>
+              {streakInfo.currentStreak}-week streak
+            </p>
+            <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {streakInfo.currentStreak >= 4
+                ? 'Exceptional consistency — you\'re building real momentum.'
+                : 'Consistent action builds lasting career resilience.'}
+              {streakInfo.isAtRisk && (
+                <span style={{ color: '#f59e0b' }}> · Complete an action this week to keep it going.</span>
+              )}
+            </p>
+          </div>
+          <span
+            className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded"
+            style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.22)' }}
+          >
+            {streakInfo.currentStreak}w
+          </span>
+        </motion.div>
       )}
 
       {/* ── Wave 5.1: Time-to-Safety Strip — path to MODERATE risk (≤35) ─────
