@@ -1991,6 +1991,10 @@ select.input option {
   border-radius: var(--radius-full);
   overflow-x: auto;
   flex-wrap: nowrap;
+  /* Honour the scroll-container contract: never grow past the parent (so the
+     strip scrolls horizontally instead of pushing the page wider on mobile). */
+  max-width: 100%;
+  min-width: 0;
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;

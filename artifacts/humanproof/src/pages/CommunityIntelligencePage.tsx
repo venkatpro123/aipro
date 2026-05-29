@@ -485,7 +485,7 @@ export default function CommunityIntelligencePage() {
         </div>
 
         {/* Summary stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 16, marginBottom: 32 }}>
           {[
             {
               label: isAnyLive ? 'Platform Audits (Opt-in)' : 'Total Audits (Research Est.)',
@@ -496,12 +496,12 @@ export default function CommunityIntelligencePage() {
             { label: '% Scoring High or Critical', value: `${avgHighCritical}%`, color: 'var(--red)', Icon: AlertTriangle },
             { label: 'Roles Tracked', value: totalTracked, color: 'var(--emerald)', Icon: Shield },
           ].map(stat => (
-            <div key={stat.label} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px' }}>
+            <div key={stat.label} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <stat.Icon size={16} style={{ color: stat.color }} />
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{stat.label}</div>
               </div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: stat.color, fontFamily: 'var(--font-mono)' }}>{stat.value}</div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: stat.color, fontFamily: 'var(--font-mono)', overflowWrap: 'anywhere' }}>{stat.value}</div>
             </div>
           ))}
         </div>
