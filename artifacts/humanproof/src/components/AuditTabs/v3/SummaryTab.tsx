@@ -31,7 +31,7 @@ import {
 import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
-import { FirstAuditWelcomeModal } from '../common/FirstAuditWelcomeModal';
+import { FirstAuditTour } from '../common/FirstAuditTour';
 import { CompanyPulseCard } from '../common/CompanyPulseCard';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import TierBadge from '../common/TierBadge';
@@ -649,22 +649,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── First-audit welcome — modal overlay (score always visible behind) ─ */}
+      {/* ── Wave 3.5: First-audit tour — non-blocking bottom tooltip (score always visible) ─ */}
       {adaptation.showFirstAuditWelcome && (
-        <FirstAuditWelcomeModal
+        <FirstAuditTour
+          result={result}
           open={welcomeModalOpen}
           onClose={() => setWelcomeModalOpen(false)}
-          liveSignalCount={liveCount}
-          criticalActionCount={criticalActionCount}
-          confidencePercent={result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100)}
-          profileFieldsFilled={(() => {
-            const uf = (result as any).userFactors ?? {};
-            const fields = ['visaStatus', 'savingsMonthsRunway', 'hasDependents', 'dualIncomeHousehold',
-              'priorLayoffSurvived', 'hasEquityVesting', 'equityVestMonths', 'metroArea',
-              'tenureYears', 'careerYears', 'performanceTier', 'monthlySalaryUsd',
-              'industryYears', 'priorJobChanges', 'selfRatedSkills'];
-            return fields.filter(f => uf[f] != null && uf[f] !== '' && uf[f] !== 'unknown').length;
-          })()}
         />
       )}
 
