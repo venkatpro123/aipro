@@ -97,22 +97,34 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const hasMarket      = Boolean(roleMarketDemand);
   const hasPersonal    = Boolean(careerVelocity || visaRisk || userRunway);
 
-  // v34: adaptive ordering — what gets surfaced first depends on the mode.
-  // The hero (preparedness) is always first because it's the personal anchor.
-  // After it, we sort the four supporting groups based on user need.
+  // v34 + Wave-fix: adaptive ordering — what gets surfaced first depends on the mode.
+  // Previously all three cases (emergency / low-readiness / default) produced nearly
+  // identical orderings. Now each mode has a meaningfully different first-visible-block.
+  //
+  // Emergency (score ≥ 75):
+  //   'market' surfaces first — escape paths + reemployment estimate are the
+  //   most time-critical information when a user is at high risk.
+  //   'mobility' second — internal transfer is faster than external job search.
+  //
+  // Low readiness (preparedness < 45):
+  //   'skills' surfaces first and auto-opens — closing skill gaps is the
+  //   highest-leverage action for users who are underprepared.
+  //
+  // Default (stable / elevated / monitoring):
+  //   'preparedness' hero stays first; other sections in standard order.
   const sectionOrder: SectionId[] = useMemo(() => {
     const prepScore = preparedness?.overallScore ?? 50;
 
     if (adaptation.mode === 'emergency') {
-      // Critical risk: escape paths matter most, then mobility, then skills
-      return ['preparedness', 'market', 'mobility', 'skills', 'personal'];
+      // Critical risk: market liquidity + mobility before skills (escape matters most)
+      return ['market', 'mobility', 'preparedness', 'skills', 'personal'];
     }
     if (prepScore < 45) {
-      // Low readiness: close skill gaps first
+      // Low readiness: skill gaps first — closing them has highest leverage
       return ['preparedness', 'skills', 'mobility', 'market', 'personal'];
     }
-    // Default (stable / monitoring / elevated)
-    return ['preparedness', 'skills', 'mobility', 'market', 'personal'];
+    // Elevated / stable / monitoring — balanced view, preparedness anchor first
+    return ['preparedness', 'mobility', 'skills', 'market', 'personal'];
   }, [adaptation.mode, preparedness]);
 
   const sections: Record<SectionId, React.ReactNode> = {
@@ -130,7 +142,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         icon={GraduationCap}
         tier={2}
         accentColor="#10b981"
-        defaultOpen={hasSkills && adaptation.mode !== 'stable'}
+        defaultOpen={hasSkills && (adaptation.mode !== 'stable' || (preparedness?.overallScore ?? 50) < 45)}
         empty={!hasSkills}
       >
         {skillGap        && <SkillGapIntelligencePanel skillGapIntelligence={skillGap} />}
@@ -144,9 +156,9 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         title="Internal mobility & resilience"
         subtitle="Pivot options inside your company + overall career resilience"
         icon={Compass}
-        tier={2}
+        tier={adaptation.mode === 'emergency' ? 1 : 2}
         accentColor="#14b8a6"
-        defaultOpen={hasMobility && adaptation.mode === 'emergency'}
+        defaultOpen={hasMobility && (adaptation.mode === 'emergency' || adaptation.mode === 'elevated')}
         empty={!hasMobility}
       >
         {careerConfidence  && <CareerConfidencePanel confidence={careerConfidence} />}
@@ -157,12 +169,12 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
     market: (
       <AdaptiveBlock
         key="market"
-        title="Job market liquidity"
-        subtitle="How quickly someone with your role/skills is being hired right now"
+        title="Job market liquidity & escape paths"
+        subtitle="Reemployment timeline + safe pivot roles + role market demand"
         icon={ArrowUpRight}
         tier={adaptation.mode === 'emergency' ? 1 : 3}
         accentColor="#06b6d4"
-        defaultOpen={hasMarket && adaptation.mode === 'emergency'}
+        defaultOpen={adaptation.mode === 'emergency'}
         empty={!hasMarket && !jobMarketLiquidity}
       >
         {/* Wave 2.3: Job Market Liquidity Card — surfaces reemployment weeks estimate */}

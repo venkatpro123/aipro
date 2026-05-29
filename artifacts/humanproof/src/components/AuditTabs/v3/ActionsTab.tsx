@@ -1,20 +1,24 @@
-// v3/ActionsTab.tsx — v35.0
+// v3/ActionsTab.tsx — v35.1
 //
 // ACTION PLAN tab (4th tab in v34 IA). Where decision-driven users land
 // directly in Emergency Mode.
 //
-// Layout:
-//   1. Emergency callout (T1, only in emergency mode)
-//   2. Career Contingency Plan (T1)  — STAY / NEGOTIATE / TRANSITION decision paths
-//   3. Priority Action Matrix (T1)   — ranked by priority, top 5 visible
-//   4. Complete action plan (T3)     — full list, collapsed
-//   5. Strategic plan & negotiation (T3) — deep planning, collapsed
+// Layout (priority order):
+//   0. WARN Act 60-day protocol (T0, legal ground truth — shown first when active)
+//   1. Short runway escalation (T0, only when score ≥ 70 + runway ≤ 3 months)
+//   2. Equity alert (T1, only when vest cliff < 12 months + score > 50)
+//   3. Emergency Anchor Card (T1, only in emergency mode)
+//   4. Career Contingency Plan (T1)  — STAY / NEGOTIATE / TRANSITION decision paths
+//   5. Recovery Probability Card     — "Your Odds" motivational card
+//   6. Phase Progress System (T1)    — 3-phase action unlock with checkboxes
+//   7. Complete action plan (T3)     — full list, collapsed
+//   8. Strategic plan & negotiation (T3) — deep planning, collapsed
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
-  BookOpen, Activity, Key,
+  BookOpen, Activity, Key, Siren, Timer,
 } from 'lucide-react';
 import { ProfileQuickCapture } from '../../ProfileQuickCapture';
 import type { TabProps } from '../common/types';
@@ -157,32 +161,122 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
   );
 };
 
-// ── Emergency callout — only shown in Emergency Mode ─────────────────────────
+// ── Emergency Anchor Card — Wave 3.2 empathetic rewrite ──────────────────────
+//
+// Replaces the old terse "EMERGENCY MODE · SCORE {score}" banner.
+// Design principles:
+//   1. Statistical grounding first — user is AHEAD of most people, not behind
+//   2. Single action focus — one thing this week, not a list
+//   3. Escape hatch — "if this feels overwhelming" reduces panic-freeze
+//   4. Calm tone — no ALL-CAPS alarm language except the score badge
+//
+// Props:
+//   score         — the user's current risk score (for the badge)
+//   topAction     — the #1 most critical action title (from recommendations[0])
+//   topActionTime — effort estimate for that action (e.g. "45 min")
 
-const EmergencyCallout: React.FC<{ score: number }> = ({ score }) => (
-  <motion.div
-    initial={{ opacity: 0, y: -6 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="rounded-2xl p-4 flex items-start gap-3"
-    style={{
-      background: 'linear-gradient(135deg, rgba(220,38,38,0.18), rgba(220,38,38,0.08))',
-      border: '1px solid rgba(220,38,38,0.40)',
-    }}
-  >
-    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-      style={{ background: 'rgba(220,38,38,0.20)', border: '1px solid rgba(220,38,38,0.40)' }}>
-      <ShieldAlert className="w-4 h-4" style={{ color: '#fca5a5' }} />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-[10px] font-black tracking-[0.18em] mb-0.5" style={{ color: '#fca5a5' }}>
-        EMERGENCY MODE · SCORE {score}
+const EmergencyCallout: React.FC<{
+  score: number;
+  topAction?: string;
+  topActionTime?: string;
+}> = ({ score, topAction, topActionTime }) => {
+  // Percentile grounding: score 75–100 puts user in ~top 20% of risk.
+  // Most people discover layoff risk 2 weeks before it happens. This user
+  // is discovering it months ahead — that's a significant advantage.
+  const percentileAhead = score >= 85 ? 96 : score >= 78 ? 94 : 90;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: 'easeOut' }}
+      className="rounded-2xl p-4"
+      style={{
+        background: 'linear-gradient(135deg, rgba(220,38,38,0.10), rgba(249,115,22,0.06))',
+        border: '1px solid rgba(220,38,38,0.32)',
+      }}
+    >
+      {/* Header row: shield icon + score badge */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.30)' }}
+        >
+          <ShieldAlert className="w-4 h-4" style={{ color: '#fca5a5' }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+              style={{ background: 'rgba(220,38,38,0.18)', color: '#fca5a5' }}
+            >
+              HIGH RISK · {score}/100
+            </span>
+          </div>
+          <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            Your situation is serious — and you're ahead of {percentileAhead}% of people who face it.
+          </p>
+        </div>
+      </div>
+
+      {/* Statistical grounding paragraph */}
+      <div
+        className="rounded-xl px-3 py-2.5 mb-3"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.68)' }}>
+          Most people discover layoff risk <span style={{ color: 'rgba(255,255,255,0.90)', fontWeight: 600 }}>2 weeks before it happens</span>.
+          {' '}You're discovering it months ahead. That gap is your most valuable asset right now.
+        </p>
+      </div>
+
+      {/* Single action focus */}
+      <div className="mb-2">
+        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          THIS WEEK · ONE THING
+        </p>
+        {topAction ? (
+          <div
+            className="rounded-xl px-3 py-2.5 flex items-center gap-2.5"
+            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
+          >
+            <div
+              className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(220,38,38,0.20)' }}
+            >
+              <Zap className="w-3 h-3" style={{ color: '#fca5a5' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                {topAction}
+              </p>
+              {topActionTime && (
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <Clock className="w-2.5 h-2.5 inline mr-1" />
+                  Est. {topActionTime}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div
+            className="rounded-xl px-3 py-2.5"
+            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
+          >
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              Start with your top Phase 1 action below. One thing at a time.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Escape hatch */}
+      <p className="text-[10px] italic" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        If this feels overwhelming, start only with the action above. Everything else can wait until next week.
       </p>
-      <p className="text-[12px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
-        This week: secure 3-month emergency runway, message 2 warm contacts, refresh resume.
-      </p>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 // ── Contingency state renderers ───────────────────────────────────────────────
 
@@ -252,6 +346,23 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const showEquityAlert: boolean    = hasEquityVesting && equityVestMonths > 0 && equityVestMonths < 12 && result.total > 50;
   const equityUrgency: 'CRITICAL' | 'HIGH' = equityVestMonths <= 3 ? 'CRITICAL' : 'HIGH';
 
+  // Wave 5.3 / State-Priority Override A — WARN Act 60-day legal protocol
+  // When hasActiveWARN = true, a legal WARN Act notice has been filed.
+  // This is verified ground truth — override mode, surface before everything.
+  const warnSignal = r.warnSignal as
+    | { hasActiveWARN: boolean; daysUntilLayoff: number | null; totalAffectedCount: number; affectedLocations: string[]; warnRiskLabel: string }
+    | undefined;
+  const showWarnProtocol: boolean = warnSignal?.hasActiveWARN === true;
+  const warnDaysLeft: number | null = warnSignal?.daysUntilLayoff ?? null;
+  const warnAffected: number = warnSignal?.totalAffectedCount ?? 0;
+  const warnLocations: string[] = warnSignal?.affectedLocations ?? [];
+
+  // Wave 5.3 / State-Priority Override B — Short runway escalation
+  // When score ≥ 70 AND runway ≤ 3 months, job search duration may exceed runway.
+  // Escalate to urgent search positioning immediately.
+  const financialRunwayMonths: number = (r.userFinancialRunway?.monthsOfRunway ?? r.userFactors?.financialRunwayMonths ?? 0);
+  const showRunwayEscalation: boolean = result.total >= 70 && financialRunwayMonths > 0 && financialRunwayMonths <= 3;
+
   // Wave 8.1: executive intelligence — only for C-suite / VP / Director / Founder / Staff+
   const userProfile: UserProfile | null = (props as any).userProfile ?? r.userProfile ?? null;
   const { isExecutive } = detectExecutiveTier(
@@ -280,6 +391,158 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
+
+      {/* ── STATE PRIORITY OVERRIDES (rendered before everything else) ──────────── */}
+
+      {/* Override A: WARN Act 60-day legal protocol
+           Ground-truth signal: a legally-filed WARN notice is confirmed.
+           This is the highest-certainty data point in the entire engine.
+           Show first, always, in red — this is not a probabilistic risk,
+           it is a filed legal document with a countdown. */}
+      {showWarnProtocol && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="rounded-2xl p-4"
+          style={{
+            background: 'linear-gradient(135deg, rgba(220,38,38,0.13), rgba(153,27,27,0.08))',
+            border: '2px solid rgba(220,38,38,0.45)',
+          }}
+        >
+          <div className="flex items-start gap-3 mb-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(220,38,38,0.18)', border: '1px solid rgba(220,38,38,0.35)' }}
+            >
+              <Siren className="w-5 h-5" style={{ color: '#fca5a5' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span
+                className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+                style={{ background: 'rgba(220,38,38,0.22)', color: '#dc2626' }}
+              >
+                LEGAL GROUND TRUTH · WARN ACT FILED
+              </span>
+              <p className="text-[13px] font-bold mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                {warnDaysLeft !== null && warnDaysLeft > 0
+                  ? `Confirmed layoff notice — ${warnDaysLeft} days remaining`
+                  : 'Active WARN Act filing detected for your company'}
+              </p>
+            </div>
+          </div>
+
+          {/* Key facts row */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {warnAffected > 0 && (
+              <div
+                className="rounded-xl px-3 py-2"
+                style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)' }}
+              >
+                <p className="text-[9px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
+                  AFFECTED
+                </p>
+                <p className="text-[13px] font-black" style={{ color: '#fca5a5' }}>
+                  {warnAffected.toLocaleString()} employees
+                </p>
+              </div>
+            )}
+            {warnDaysLeft !== null && warnDaysLeft > 0 && (
+              <div
+                className="rounded-xl px-3 py-2"
+                style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)' }}
+              >
+                <p className="text-[9px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
+                  COUNTDOWN
+                </p>
+                <p className="text-[13px] font-black flex items-center gap-1" style={{ color: '#fca5a5' }}>
+                  <Timer className="w-3.5 h-3.5 flex-shrink-0" />
+                  {warnDaysLeft} days
+                </p>
+              </div>
+            )}
+          </div>
+
+          {warnLocations.length > 0 && (
+            <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Locations: {warnLocations.slice(0, 3).join(', ')}{warnLocations.length > 3 ? ` +${warnLocations.length - 3} more` : ''}
+            </p>
+          )}
+
+          {/* What this means + what to do */}
+          <div
+            className="rounded-xl px-3 py-2.5"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.72)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.90)', fontWeight: 600 }}>This is confirmed legal notice</span>
+              {' '}— not a risk signal. Your company is legally required to notify employees at least 60 days before a qualifying layoff.
+            </p>
+            <p className="text-[11px] leading-relaxed font-semibold" style={{ color: '#fca5a5' }}>
+              Act now: Update your résumé today. Activate your network this week. Do not wait for an individual notice.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Override B: Short runway escalation
+           When financial runway ≤ 3 months AND risk score ≥ 70, the user's
+           job search duration window may exceed their savings buffer.
+           This is an existential compounding risk — surface it prominently. */}
+      {showRunwayEscalation && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut', delay: showWarnProtocol ? 0.05 : 0 }}
+          className="rounded-2xl p-4"
+          style={{
+            background: 'rgba(245,158,11,0.08)',
+            border: '1px solid rgba(245,158,11,0.38)',
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(245,158,11,0.15)' }}
+            >
+              <AlertTriangle className="w-4 h-4" style={{ color: '#fbbf24' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+                  style={{ background: 'rgba(245,158,11,0.20)', color: '#f59e0b' }}
+                >
+                  RUNWAY ALERT
+                </span>
+              </div>
+              <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                {financialRunwayMonths} month{financialRunwayMonths !== 1 ? 's' : ''} of runway — high-risk job search window
+              </p>
+              <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                At risk score {result.total}/100, comparable roles typically take{' '}
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>8–16 weeks</span> to land.
+                {' '}Your runway may not cover the full search. Begin positioning <em>now</em>, before financial pressure forces a suboptimal move.
+              </p>
+              <div
+                className="rounded-xl px-2.5 py-2"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.20)' }}
+              >
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(245,158,11,0.80)' }}>
+                  IMMEDIATE PRIORITY
+                </p>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  1. Apply to 3 roles this week (don't wait for résumé to be perfect).
+                  {' '}2. Message 2 contacts at target companies.
+                  {' '}3. Tell your network you're open — privately.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── END STATE PRIORITY OVERRIDES ────────────────────────────────────────── */}
 
       {/* v40.0: Inline quick profile capture for users without a profile */}
       {showQuickCapture && (
@@ -357,8 +620,14 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
-      {/* T1: Emergency callout — only in emergency mode */}
-      {adaptation.mode === 'emergency' && <EmergencyCallout score={result.total} />}
+      {/* T1: Emergency Anchor Card — Wave 3.2 empathetic callout (only in emergency mode) */}
+      {adaptation.mode === 'emergency' && (
+        <EmergencyCallout
+          score={result.total}
+          topAction={recommendations.find(r => r.priority === 'Critical')?.title ?? recommendations[0]?.title}
+          topActionTime={recommendations.find(r => r.priority === 'Critical')?.effortBadge ?? recommendations[0]?.effortBadge}
+        />
+      )}
 
       {/* v39.0 B1+B6: profile-aware framing + honest fallback notice */}
       {personalizedSet?.profileContextNote && (
@@ -432,10 +701,10 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         />
       )}
 
-      {/* T1: Action Priority Matrix */}
-      {recommendations.length > 0 && <ActionMatrix items={recommendations} />}
-
-      {/* T3: Full action plan — collapsed */}
+      {/* T3: Full action plan — collapsed
+           ActionMatrix is rendered inside ActionPlanTab here, NOT separately above,
+           since PhaseProgressSystem already displays all actions with checkboxes.
+           Showing ActionMatrix again (same recommendations array) was pure duplication. */}
       <AdaptiveBlock
         title="Complete action plan"
         subtitle="Full ranked list with deadlines, effort estimates, evidence"

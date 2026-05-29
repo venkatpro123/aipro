@@ -532,14 +532,29 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
       )}
 
       {/* ── T2: Intelligence Brief — full text lives here only ─────────────── */}
-      <IntelligenceBriefBlock
-        brief={brief}
-        urgency={urgencyLevel}
-        auditStage={auditStage}
-        confidence={confPct}
-        freshnessierTier={freshnessierTier}
-        companyName={companyNameForBrief}
-      />
+      {/* Wrapped in AdaptiveBlock so it can be collapsed (was previously always-visible).
+          defaultOpen for score ≥ 35 (most users) — collapsed only in stable/low mode. */}
+      <AdaptiveBlock
+        title="AI intelligence brief"
+        subtitle="Full AI-generated analysis of your company, role, and situation"
+        icon={Brain}
+        tier={2}
+        accentColor={
+          urgencyLevel === 'CRITICAL' ? '#dc2626'
+          : urgencyLevel === 'HIGH' ? '#f97316'
+          : '#22d3ee'
+        }
+        defaultOpen={result.total >= 35}
+      >
+        <IntelligenceBriefBlock
+          brief={brief}
+          urgency={urgencyLevel}
+          auditStage={auditStage}
+          confidence={confPct}
+          freshnessierTier={freshnessierTier}
+          companyName={companyNameForBrief}
+        />
+      </AdaptiveBlock>
 
       {/* ── T2: Historical precedent match ───────────────────────────────────
            Only shown when a verified pattern in HISTORICAL_PATTERNS matches at
@@ -572,14 +587,23 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         </motion.div>
       )}
 
-      {/* ── T2: Dual Gauge — Risk vs Readiness ─────────────────────────────── */}
-      <DualGaugePanel
-        riskScore={result.total}
-        preparedness={preparedness}
-        scoreSufficient={scoreSufficiency.sufficient}
-        ciLow={scoreSufficiency.ciLow}
-        ciHigh={scoreSufficiency.ciHigh}
-      />
+      {/* ── T2: Dual Gauge — Risk vs Readiness (now collapsible) ──────────── */}
+      <AdaptiveBlock
+        title="Risk vs. readiness"
+        subtitle="Side-by-side comparison of your layoff risk score and career preparedness"
+        icon={BarChart2}
+        tier={2}
+        accentColor="#22d3ee"
+        defaultOpen={result.total >= 55}
+      >
+        <DualGaugePanel
+          riskScore={result.total}
+          preparedness={preparedness}
+          scoreSufficient={scoreSufficiency.sufficient}
+          ciLow={scoreSufficiency.ciLow}
+          ciHigh={scoreSufficiency.ciHigh}
+        />
+      </AdaptiveBlock>
 
       {/* ── T2: Score sensitivity — what moves your score the most? ────────── */}
       {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (

@@ -48,6 +48,82 @@ import { getStreakInfo } from '../../../services/streakService';
 import { MissingDataCard } from '../common/MissingDataCard';
 import { computeCanonicalConfidence } from '../../../services/canonicalConfidence';
 
+// ── Top-Lever Bridge ───────────────────────────────────────────────────────────
+// Placed between TopDriversStrip and ImmediateActionsStrip.
+// Answers: "What ONE action most directly reduces my #1 risk driver?"
+// Design: compact 2-row card — lever action + score delta — NO duplication of
+// ImmediateActionsStrip (which ranks by priority, not by score sensitivity).
+//
+// Only renders when:
+//   • scoreSensitivity has at least 1 lever with scoreDropIfImproved ≥ 4
+//   • score > 35 (meaningful improvement space exists)
+
+interface LeverBridgeProps {
+  scoreSensitivity: any;
+  currentScore: number;
+}
+
+const TopLeverBridge: React.FC<LeverBridgeProps> = ({ scoreSensitivity, currentScore }) => {
+  const levers: any[] = scoreSensitivity?.levers ?? [];
+  const topLever = levers.find((l: any) => (l.scoreDropIfImproved ?? 0) >= 4);
+  if (!topLever) return null;
+
+  const projected = Math.max(0, Math.round(currentScore - topLever.scoreDropIfImproved));
+  const feasibilityLabel: Record<string, string> = {
+    immediate: 'This week',
+    short_term: '2–4 weeks',
+    medium_term: '1–3 months',
+  };
+  const timeLabel = feasibilityLabel[topLever.feasibility] ?? topLever.actionTimeframe ?? 'Near-term';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12 }}
+      className="rounded-xl px-3.5 py-2.5 flex items-start gap-3"
+      style={{
+        background: 'linear-gradient(135deg, rgba(34,211,238,0.05), rgba(16,185,129,0.04))',
+        border: '1px solid rgba(34,211,238,0.18)',
+      }}
+    >
+      {/* Arrow icon */}
+      <div
+        className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+        style={{ background: 'rgba(34,211,238,0.10)' }}
+      >
+        <Zap className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+          <span className="text-[9px] font-black tracking-wider" style={{ color: 'rgba(34,211,238,0.65)' }}>
+            TOP SCORE LEVER
+          </span>
+          <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            {timeLabel}
+          </span>
+        </div>
+        <p className="text-[11px] font-semibold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.82)' }}>
+          {topLever.fastestAction?.length > 100 ? topLever.fastestAction.slice(0, 100) + '…' : topLever.fastestAction}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>Score impact:</span>
+          <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>{currentScore}</span>
+          <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.50)' }}>→</span>
+          <span className="text-[11px] font-black" style={{ color: '#22d3ee' }}>{projected}</span>
+          <span
+            className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+            style={{ background: 'rgba(34,211,238,0.10)', color: '#22d3ee' }}
+          >
+            −{topLever.scoreDropIfImproved} pts
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
 
@@ -113,6 +189,19 @@ const ScoreRingHero: React.FC<{
           role="img"
           aria-label={`Risk score ${score} out of 100 — ${label}`}
         >
+          {/* Wave 6.3 gradient arc: green(low) → amber(mid) → red(high) based on score.
+               Uses SVG linearGradient on the arc stroke. The gradient always spans the
+               full ring; the dasharray controls how much is visible. The "start" colour
+               is always green (safe zone) so the gradient reads as progress-from-safe,
+               and the "end" colour matches the current risk severity color. */}
+          <defs>
+            <linearGradient id="scoreArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor="#10b981" stopOpacity="0.90" />
+              <stop offset="50%"  stopColor="#f59e0b" stopOpacity="0.95" />
+              <stop offset="100%" stopColor={color}   stopOpacity="1.00" />
+            </linearGradient>
+          </defs>
+
           {/* Track ring */}
           <circle
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
@@ -130,14 +219,17 @@ const ScoreRingHero: React.FC<{
               strokeDashoffset={ciShadowOffset}
             />
           )}
-          {/* Main score arc */}
+          {/* Main score arc — gradient stroke from green (safe) → amber → risk colour */}
           <motion.circle
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
-            fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
+            fill="none"
+            stroke="url(#scoreArcGrad)"
+            strokeWidth={10} strokeLinecap="round"
             strokeDasharray={RING_CIRC}
             initial={{ strokeDashoffset: RING_CIRC }}
             animate={{ strokeDashoffset: RING_CIRC - (score / 100) * RING_CIRC }}
             transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            style={{ filter: `drop-shadow(0 0 5px ${color}55)` }}
           />
         </svg>
         {/* .score-hero-number: position relative z-index 1 — sits above SVG */}
@@ -1059,18 +1151,31 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         </div>
       )}
 
+      {/* ── Driver→Action bridge: top lever that most reduces score ───────── */}
+      {/* Placed between TopDriversStrip and ImmediateActionsStrip so the user
+          sees WHY (drivers) → WHAT MOVES THE NEEDLE (lever) → WHAT TO DO (actions).
+          Only renders when score > 35 and a meaningful lever exists (≥4 pts impact). */}
+      {score > 35 && scoreSensitivity && (
+        <TopLeverBridge scoreSensitivity={scoreSensitivity} currentScore={score} />
+      )}
+
       {/* ── Tier-1: Immediate actions ──────────────────────────────────────── */}
       <ImmediateActionsStrip actions={topActions} total={recommendations.length} />
 
       {/* ── Tier-2: Company pulse — single compressed verdict ──────────────── */}
       {/* This replaces the previous standalone Workforce + Financial cards.
-          Same data, one block — drilldown still available inside. */}
+          Same data, one block — drilldown still available inside.
+          Auto-opens when a WARN Act filing is active (confirmed legal signal). */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18 }}
       >
-        <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
+        <CompanyPulseCard
+          result={result}
+          companyData={companyData}
+          defaultOpen={!!(result as any).warnSignal?.hasActiveWARN || adaptation.mode === 'emergency'}
+        />
       </motion.div>
 
       {/* v39.0 A5: render the panel whenever the modifier object is present;

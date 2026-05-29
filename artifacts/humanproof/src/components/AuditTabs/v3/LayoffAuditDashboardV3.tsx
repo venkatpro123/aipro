@@ -57,6 +57,8 @@ import {
   type ReEngagementTrigger,
 } from '../../../services/reEngagementService';
 import { ActionCelebrationToast } from '../../ActionCelebration/ActionCelebrationToast';
+import { RiskUpdateBanner } from '../../RiskUpdateBanner';
+import { onNewLayoffEvent } from '../../../data/layoffNewsCache';
 
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
@@ -358,6 +360,22 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     catch { return null; }
   });
   const [reEngagementDismissed, setReEngagementDismissed] = useState(false);
+  // Wave 1.4: Risk update banner — fires when breakingNewsBroker injects a new event
+  // for the user's current company. Shows a dismissible top banner with a re-analyze CTA.
+  const [riskUpdateBanner, setRiskUpdateBanner] = useState<{ headline: string; company: string } | null>(null);
+  const [isRiskReanalyzing, setIsRiskReanalyzing] = useState(false);
+  useEffect(() => {
+    const currentCompany = (companyData?.name ?? result.companyName ?? '').toLowerCase();
+    if (!currentCompany) return;
+    const unsub = onNewLayoffEvent((evt) => {
+      // Only surface the banner if the event is for the user's current company
+      const evtCompany = (evt.companyName ?? '').toLowerCase();
+      if (!evtCompany || !currentCompany.includes(evtCompany.slice(0, 6))) return;
+      setRiskUpdateBanner({ headline: evt.headline ?? 'New signal detected', company: companyData?.name ?? evt.companyName });
+    });
+    return unsub;
+  }, [companyData?.name, result.companyName]);
+
   useEffect(() => {
     const load = () => fetchUserProfile().then(p => { if (p) setUserProfile(p); }).catch(() => {});
     load();
@@ -553,6 +571,27 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             result={result}
           />
         </div>
+
+        {/* ── Wave 1.4: Risk update banner — fires when breaking news injects a new event ── */}
+        {riskUpdateBanner && (
+          <div className="px-4 pt-3 sm:px-0">
+            <RiskUpdateBanner
+              companyName={riskUpdateBanner.company}
+              headline={riskUpdateBanner.headline}
+              isReanalyzing={isRiskReanalyzing}
+              onReanalyze={() => {
+                setIsRiskReanalyzing(true);
+                // Trigger re-analysis, then clear banner when done
+                setTimeout(() => {
+                  props.onRecalculate?.();
+                  setIsRiskReanalyzing(false);
+                  setRiskUpdateBanner(null);
+                }, 300);
+              }}
+              onDismiss={() => setRiskUpdateBanner(null)}
+            />
+          </div>
+        )}
 
         {/* ── Wave 7.1: Intelligence update banner — new signals since last audit ── */}
         {intelligenceUpdate && !bannerDismissed && (
