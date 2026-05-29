@@ -46,6 +46,7 @@ import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
 import { MissingDataCard } from '../common/MissingDataCard';
+import { computeCanonicalConfidence } from '../../../services/canonicalConfidence';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -556,7 +557,10 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const brief                                              = r.intelligenceBrief;
   const preparedness: PreparednessResult | undefined       = r.preparednessScore;
   const urgency  = brief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
-  const confPct  = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
+  // Wave 1.2: Canonical confidence — single source of truth for all confidence UI
+  // Replaces scattered reads of confidencePercent / bayesianCI / freshnessUnifier
+  const canonicalConf = useMemo(() => computeCanonicalConfidence(result), [result]);
+  const confPct  = canonicalConf.score;
   const calibrationMode: string = (r.modelCalibration as any)?.calibrationMode ?? '';
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
@@ -915,8 +919,8 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           <StatChip
             label="Confidence"
             value={`${confPct}%`}
-            sub={confPct >= 65 ? 'high quality data' : confPct >= 40 ? 'typical' : 'below average'}
-            color={confPct >= 65 ? '#10b981' : confPct >= 40 ? '#f59e0b' : '#f97316'}
+            sub={canonicalConf.userFacing.label.toLowerCase()}
+            color={canonicalConf.userFacing.color}
             icon={Shield}
           />
         ) : (
