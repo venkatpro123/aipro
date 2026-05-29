@@ -40,6 +40,7 @@ import { ScoreSensitivityStrip } from '../common/ScoreSensitivityStrip';
 import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePanel';
 import { JobMarketLiquidityCard } from '../common/JobMarketLiquidityCard';
 import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
+import { CohortBenchmarkCard } from '../common/CohortBenchmarkCard';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -66,6 +67,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const jobMarketLiquidity                     = r.jobMarketLiquidity;
   const techStackObsolescence                  = r.techStackObsolescence;
   const internalMobility                       = r.internalMobility;
+  const competitivePosition                    = r.competitivePosition;
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
   const hasMobility    = Boolean(careerContingency || careerConfidence);
@@ -195,6 +197,11 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           contradictingSignals={r.d4ContradictingSignals ?? []}
           regionThresholdLabel={r.performanceCredibilityThresholdLabel}
         />
+      )}
+
+      {/* Wave 6.5: Cohort Benchmark — where user stands vs. peers */}
+      {competitivePosition && (competitivePosition.overallPercentile != null) && (
+        <CohortBenchmarkCard competitivePosition={competitivePosition} />
       )}
 
       {/* Wave 2.1: Behavioral Intelligence — trajectory, gap, interview readiness, comp gap */}

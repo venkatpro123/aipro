@@ -26,6 +26,7 @@ import StrategyTab from '../StrategyTab';
 import { ActionPlanTab } from '../ActionPlanTab';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
+import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -309,6 +310,22 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             ? <ContingencyFailed />
             : <ContingencyUnavailable />
       }
+
+      {/* Wave 4.1: Phase Progress System — 3-phase unlock with localStorage persistence */}
+      {recommendations.length > 0 && (
+        <PhaseProgressSystem
+          actions={recommendations}
+          companyName={companyData?.name}
+          onActionComplete={(actionId, completedCount) => {
+            // Micro-toast celebration for action completion
+            if (completedCount % 3 === 0) {
+              window.dispatchEvent(new CustomEvent('hp.action.milestone', {
+                detail: { count: completedCount }
+              }));
+            }
+          }}
+        />
+      )}
 
       {/* T1: Action Priority Matrix */}
       {recommendations.length > 0 && <ActionMatrix items={recommendations} />}
