@@ -451,14 +451,17 @@ const StatChip: React.FC<StatChipProps> = ({ label, value, sub, color = 'rgba(0,
 
 // ── Verdict line ──────────────────────────────────────────────────────────────
 
+// v35.1: Verdict line phrasing — more specific, less clinical.
+// The VerdictReassurance below the ring provides emotional grounding;
+// this line provides the precise situational read (7 words max).
 const verdictLine = (score: number, urgency: string): string => {
   if (urgency === 'CRITICAL' || score >= 75)
-    return 'Immediate action required — layoff risk is elevated.';
+    return 'High risk — months of lead time. Use it.';
   if (urgency === 'HIGH' || score >= 55)
-    return 'Elevated risk signals detected. Begin positioning now.';
+    return 'Elevated risk. 30-day action window is open.';
   if (score >= 35)
-    return 'Moderate signals present. Monitor and maintain readiness.';
-  return 'Low risk detected. Good time to build and grow.';
+    return 'Moderate signals. Build buffer while conditions are stable.';
+  return 'Low risk. Time to build career capital and leverage.';
 };
 
 // ── Tier-1 strips ────────────────────────────────────────────────────────────
