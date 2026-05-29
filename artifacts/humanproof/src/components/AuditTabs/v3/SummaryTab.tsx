@@ -45,6 +45,7 @@ import { VerdictReassurance } from '../common/VerdictReassurance';
 import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
+import { MissingDataCard } from '../common/MissingDataCard';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -845,6 +846,15 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         lowDataWarning={lowDataWarning}
         conflictCount={conflictCount}
         hardFailures={hardFailures}
+      />
+
+      {/* Wave 10.3: Missing Data Card — "What we don't know yet"
+           Only renders when ≥2 meaningful gaps exist. Default collapsed.
+           Helps users calibrate trust and understand how to sharpen their score. */}
+      <MissingDataCard
+        result={result}
+        companyData={companyData as any}
+        personalFieldsFilled={personalFieldsFilled}
       />
 
       {/* v40.0: Heuristic / stale freshness disclosure — surfaces when the
