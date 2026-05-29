@@ -131,7 +131,12 @@ export interface ProfileSignalSummary {
 }
 
 export interface UserProfileLike {
-  visaStatus?: 'citizen' | 'permanent_resident' | 'h1b' | 'l1' | 'opt' | 'other' | 'na' | null;
+  // Widened to `string` so the full UserProfile.VisaStatus union (expanded by the
+  // global-visa work for uk_skilled_worker / eu_blue_card / singapore_* / etc.) is
+  // structurally assignable. deriveProfileSignals matches against a broad string
+  // Set (WORK_VISA_STATUSES), so a narrow literal union here is both stale and
+  // unnecessary — unmatched values correctly fall through to 'none'.
+  visaStatus?: string | null;
   savingsMonthsRunway?: number | null;
   hasDependents?: boolean | null;
   dualIncomeHousehold?: boolean | null;

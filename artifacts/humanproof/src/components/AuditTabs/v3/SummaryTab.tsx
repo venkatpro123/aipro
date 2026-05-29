@@ -34,6 +34,7 @@ import type { PreparednessResult } from '../../../services/preparednessScoreEngi
 import { FirstAuditTour } from '../common/FirstAuditTour';
 import { CompanyPulseCard } from '../common/CompanyPulseCard';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
+import ReasoningSpineCard from '../common/ReasoningSpineCard';
 import TierBadge from '../common/TierBadge';
 import ProvenanceLabel from '../common/ProvenanceLabel';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
@@ -808,6 +809,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
         </motion.div>
       )}
+
+      {/* ── P1: Reasoning spine — the "one continuously thinking AI" voice.
+          Renders the orchestrator feed (spine + primary move + reasoning trace)
+          above the score so the user reads the AI's conclusion before the number.
+          Guarded: only when the orchestrator produced a feed. */}
+      {adaptation.feed && <ReasoningSpineCard feed={adaptation.feed} />}
 
       {/* ── Tier-1: Score Hero ─────────────────────────────────────────────── */}
       {/* v39.0 F6: key={score} forces re-mount when the score changes, so the

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { getEffectiveCommunityShare } from "../../services/gdprService";
 import { useLayoff } from "../../context/LayoffContext";
 import { LayoffInputForm } from "./LayoffInputForm";
@@ -26,9 +26,13 @@ import { WhatIfSkillSimulator } from "./WhatIfSkillSimulator";
 import { KeyRiskDriversPanel } from "./KeyRiskDriversPanel";
 import { LayoffAuditDashboard } from "./LayoffAuditDashboard";
 import { LayoffAuditDashboardV3, isTabsV3Enabled } from "../AuditTabs/v3/LayoffAuditDashboardV3";
-// LayoffAuditDashboardV4 import removed — Wave 1.1 dead code cleanup.
-// V4 was a 3-tab experimental layout that was never shipped. The V3 dashboard
-// (LayoffAuditDashboardV3) is the active path.
+// P1: V4 (3-tab orchestrator-led shell) is now flag-gated via uiFlags.getDashboardVariant().
+// Lazy-loaded so the V4 chunk only downloads when the flag resolves 'v4' — V3 stays the
+// default and its bundle is unchanged when the flag is off.
+const LayoffAuditDashboardV4 = lazy(() =>
+  import("../AuditTabs/v4/LayoffAuditDashboardV4").then((m) => ({ default: m.LayoffAuditDashboardV4 })),
+);
+import { getDashboardVariant } from "../../config/uiFlags";
 import { mapToHybridResult } from "../../utils/hybridResultMapper";
 import { resolveCompanyData } from "../../data/companyIntelligenceBridge";
 import { markCompanyRecentlyAudited } from "../audit/RealtimeSignalToast";
@@ -2025,11 +2029,18 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             2: 'Reconciling live market signals…',
           };
           const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, auditStage: STAGE_LABELS[ensembleStage] };
-          // v audit UX: switched to 5-tab dashboard (Summary/Company/Protection/Act Now/Deep Intel)
-          // per product intelligence audit — richer information architecture than 3-tab V4.
-          // V4 (3-tab) and V1 kept below as rollback paths — do not delete.
+          // P1: flag-gated coexistence. Default 'v3' (6-tab, current production). When
+          // uiFlags resolves 'v4' (env VITE_DASHBOARD_V4=1 or localStorage 'hp.ui.dashboard'),
+          // render the orchestrator-led 3-tab shell. V3 path is byte-identical when flag off.
+          // V1 (LayoffAuditDashboard) kept below as a rollback path — do not delete.
+          if (getDashboardVariant() === "v4") {
+            return (
+              <Suspense fallback={<LayoffAuditDashboardV3 {...commonProps} />}>
+                <LayoffAuditDashboardV4 {...commonProps} />
+              </Suspense>
+            );
+          }
           return <LayoffAuditDashboardV3 {...commonProps} />;
-          // return <LayoffAuditDashboardV4 {...commonProps} />;
           // return <LayoffAuditDashboard {...commonProps} />;
         })()}
 

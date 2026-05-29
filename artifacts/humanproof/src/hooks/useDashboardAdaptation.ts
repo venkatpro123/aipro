@@ -15,6 +15,8 @@ import type { CompanyData } from '../data/companyDatabase';
 import type { UserProfile } from '../services/userProfileService';
 import { markFirstAuditCompleted } from '../services/userProfileService';
 import { compressAllSignals, type CompressedIntel } from '../services/signalCompressionService';
+import { deriveProfileSignals } from '../services/actionPersonalizationEngine';
+import { orchestrateFromIntel, type OrchestratedFeed } from '../services/orchestration/signalOrchestrator';
 
 export type DashboardMode =
   | 'emergency'      // score ≥ 75 OR active WARN — surface action plan first
@@ -67,6 +69,13 @@ export interface AdaptationProfile {
    * (legacy fallback) so adding new panels doesn't break the layout.
    */
   summaryPanelOrder: SummaryPanelKey[];
+  /**
+   * P0 transformation — the orchestrated editorial feed (ranked + capped signals,
+   * primary move, narrative spine + reasoning trace). Optional + non-breaking:
+   * existing consumers that don't read it compile unchanged. Built from the same
+   * `intel`/profile the hook already derives, so no extra compression pass.
+   */
+  feed?: OrchestratedFeed;
 }
 
 const FIRST_AUDIT_KEY = 'hp.v34.firstAuditSeen';
@@ -118,6 +127,8 @@ export function useDashboardAdaptationV4(
     const defaultTab = pickDefaultTabV4(mode);
     const confPct = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
     const seenBefore = readFirstAuditSeen(profile);
+    const profileSignals = deriveProfileSignals(profile, result.total);
+    const feed = orchestrateFromIntel(result, intel, profileSignals);
 
     return {
       mode,
@@ -127,6 +138,7 @@ export function useDashboardAdaptationV4(
       showLowConfidenceCallout: confPct < 50,
       intel,
       summaryPanelOrder: pickSummaryPanelOrder(mode),
+      feed,
     };
   }, [result, companyData, profile]);
 }
@@ -210,6 +222,8 @@ export function useDashboardAdaptation(
     const defaultTab = pickDefaultTab(mode);
     const confPct = result.confidencePercent ?? Math.round((Number(result.confidence ?? 0.5)) * 100);
     const seenBefore = readFirstAuditSeen(profile);
+    const profileSignals = deriveProfileSignals(profile, result.total);
+    const feed = orchestrateFromIntel(result, intel, profileSignals);
 
     return {
       mode,
@@ -219,6 +233,7 @@ export function useDashboardAdaptation(
       showLowConfidenceCallout: confPct < 50,
       intel,
       summaryPanelOrder: pickSummaryPanelOrder(mode),
+      feed,
     };
   }, [result, companyData, profile]);
 }

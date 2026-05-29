@@ -1,0 +1,444 @@
+// signalOrchestrator.ts — P0 of the platform transformation ("the editorial layer")
+//
+// PURPOSE
+// HumanProof produces ~140 engine outputs and ~120 HybridResult fields. The UI
+// renders ~50 panels of roughly equal visual weight — a newsroom where the user
+// needs an editor. signalCompressionService already deduplicates raw engine
+// outputs into 4 grouped verdicts (workforce / financial / market / career) plus
+// a tier-sorted `ordered` array. What it does NOT do — and what this module adds —
+// is the *editorial* layer that sits one level above:
+//
+//   1. Profile-relevance RE-RANKING   — a visa clock makes career-readiness the
+//      binding constraint; short runway elevates company distress + market demand.
+//   2. Global CAP                      — surface the top-N, demote the rest.
+//   3. PRIMARY MOVE extraction         — collapse recommendations[] into ONE next
+//      action, feasibility-gated by the user's situation.
+//   4. NARRATIVE                       — a one-line spine + a structured, fully
+//      deterministic ReasoningTrace (LLM phrasing is a later phase; the structure
+//      is built here so the spine reads like "one continuously thinking AI").
+//
+// This module is PURE (no I/O, no Date.now, no random) so the feed is fully
+// reproducible for the same inputs. It treats CompressedIntel / CompressedSignal
+// as read-only and never sorts them in place.
+//
+// Non-breaking: it does not modify compressAllSignals or its output. It is wired
+// into useDashboardAdaptation as an OPTIONAL `feed` field (see that hook).
+
+import type { HybridResult, ActionPlanItem } from '../../types/hybridResult';
+import type { CompanyData } from '../../data/companyDatabase';
+import { compressAllSignals } from '../signalCompressionService';
+import type { CompressedSignal, CompressedIntel } from '../signalCompressionService';
+import { deriveProfileSignals } from '../actionPersonalizationEngine';
+import type { ProfileSignalSummary, UserProfileLike } from '../actionPersonalizationEngine';
+
+// ── Public types ────────────────────────────────────────────────────────────
+
+export interface RankedSignal {
+  signal: CompressedSignal;
+  /** 0–100 ordering key for the primary surface. */
+  relevanceScore: number;
+  /** Signed points contributed by profile relevance (already folded into score). */
+  profileAdjustment: number;
+  /** Human-readable reasons for the adjustment, e.g. "visa-critical → career +18". */
+  adjustmentReasons: string[];
+}
+
+export interface ReasoningTrace {
+  /** What the AI sees (top signal). */
+  observation: string;
+  /** What it implies. */
+  inference: string;
+  /** Why it matters to THIS user (profile-aware). */
+  relevance: string;
+  /** The one-clause posture. */
+  conclusion: string;
+  /** The single next action. */
+  move: string;
+  /** Plain-language confidence statement. */
+  confidence: string;
+}
+
+export interface PrimaryMove {
+  action: ActionPlanItem;
+  rationale: string;
+  /** False when the move is the best available but blocked by the user's situation. */
+  feasibleForProfile: boolean;
+}
+
+export interface OrchestratedFeed {
+  /** Top-N ranked signals, relevanceScore DESC. */
+  primary: RankedSignal[];
+  /** Remaining informative signals, same sort. */
+  overflow: RankedSignal[];
+  /** The single most important next action, or null when none exist. */
+  primaryMove: PrimaryMove | null;
+  /** One-line editorial summary — the "narrative spine". */
+  spine: string;
+  /** Structured reasoning trace for the "thinking AI" surface. */
+  trace: ReasoningTrace;
+  /** Pass-through of the underlying compressed intel (reuse downstream). */
+  intel: CompressedIntel;
+  /** Profile signals used for ranking + feasibility (neutral defaults if no profile). */
+  profileSignals: ProfileSignalSummary;
+  meta: {
+    cap: number;
+    signalCount: number;
+    usedProfile: boolean;
+  };
+}
+
+export interface OrchestrateConfig {
+  /** Number of signals on the primary surface. Default 3. */
+  cap?: number;
+}
+
+const DEFAULT_CAP = 3;
+
+// ── Numeric helpers ───────────────────────────────────────────────────────────
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, n));
+}
+
+/**
+ * Result-level confidence as a 0–100 percent. Prefers the numeric
+ * `confidencePercent`; falls back to the categorical `confidence` enum.
+ * There is no per-signal confidence, so all signals share this factor.
+ */
+function resolveConfidencePercent(result: HybridResult): number {
+  const pct = (result as { confidencePercent?: unknown }).confidencePercent;
+  if (typeof pct === 'number' && Number.isFinite(pct)) return clamp(pct, 0, 100);
+  const cat = (result as { confidence?: unknown }).confidence;
+  if (cat === 'High') return 85;
+  if (cat === 'Medium') return 60;
+  if (cat === 'Low') return 40;
+  if (typeof cat === 'number' && Number.isFinite(cat)) {
+    // Some pipeline paths store confidence as a 0–1 float.
+    return cat <= 1 ? clamp(cat * 100, 0, 100) : clamp(cat, 0, 100);
+  }
+  return 55; // neutral default
+}
+
+// ── Relevance scoring ───────────────────────────────────────────────────────
+
+const SOURCE_MULT: Record<CompressedSignal['sourceKind'], number> = {
+  live: 1.0,
+  db: 0.95,
+  heuristic: 0.88,
+};
+
+interface ProfileBoost {
+  when: (p: ProfileSignalSummary) => boolean;
+  group: CompressedSignal['group'] | 'any';
+  delta: number;
+  label: string;
+}
+
+// Boosts are additive within a signal's group, then clamped to ±25. Because a
+// Tier-1 signal already carries base ≥ 50, the clamp guarantees a Tier-1 critical
+// can never be demoted off the primary surface by profile re-ranking.
+const PROFILE_BOOSTS: ProfileBoost[] = [
+  { when: p => p.visaUrgency === 'critical', group: 'career',  delta: +18, label: 'visa-critical → career' },
+  { when: p => p.visaUrgency === 'elevated', group: 'career',  delta: +10, label: 'visa-elevated → career' },
+  { when: p => p.runwayTier === 'critical',  group: 'company', delta: +12, label: 'runway-critical → company' },
+  { when: p => p.runwayTier === 'critical',  group: 'market',  delta: +8,  label: 'runway-critical → market' },
+  { when: p => p.runwayTier === 'comfortable', group: 'company', delta: -6, label: 'runway-comfortable → company' },
+  { when: p => p.familyAnchor,               group: 'company', delta: +6,  label: 'family-anchor → company' },
+  { when: p => p.dualIncomeCushion,          group: 'any',     delta: -5,  label: 'dual-income cushion → all' },
+  { when: p => p.resilientRepeat,            group: 'career',  delta: -5,  label: 'resilient-repeat → career' },
+  { when: p => p.seniorMobilityConstraint,   group: 'market',  delta: +6,  label: 'senior-mobility → market' },
+  { when: p => p.equityVestImminent,         group: 'company', delta: +5,  label: 'equity-vest → company' },
+];
+
+function computeProfileAdjustment(
+  signal: CompressedSignal,
+  profile: ProfileSignalSummary,
+): { adjustment: number; reasons: string[] } {
+  let sum = 0;
+  const reasons: string[] = [];
+  for (const boost of PROFILE_BOOSTS) {
+    if (!boost.when(profile)) continue;
+    if (boost.group !== 'any' && boost.group !== signal.group) continue;
+    sum += boost.delta;
+    reasons.push(`${boost.label} ${boost.delta >= 0 ? '+' : ''}${boost.delta}`);
+  }
+  return { adjustment: clamp(sum, -25, 25), reasons };
+}
+
+function scoreSignal(
+  signal: CompressedSignal,
+  profile: ProfileSignalSummary,
+  confFactor: number,
+): RankedSignal {
+  // A signal with no attempt + no severity carries no information — force to 0
+  // so it lands in overflow regardless of profile.
+  const informative = !(signal.verdict === 'unknown' && signal.severity === 0);
+
+  const tierBase = (6 - signal.tier) * 10;            // tier1=50 … tier5=10
+  const sevComp = clamp(signal.severity, 0, 100) * 0.5; // 0..50
+  const base = tierBase + sevComp;                     // 0..100
+  const sourceMult = SOURCE_MULT[signal.sourceKind] ?? 0.88;
+  const confAdj = base * sourceMult * confFactor;
+
+  const { adjustment, reasons } = computeProfileAdjustment(signal, profile);
+  const raw = informative ? confAdj + adjustment : 0;
+
+  return {
+    signal,
+    relevanceScore: clamp(Math.round(raw), 0, 100),
+    profileAdjustment: informative ? adjustment : 0,
+    adjustmentReasons: informative ? reasons : [],
+  };
+}
+
+function compareRanked(a: RankedSignal, b: RankedSignal): number {
+  if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
+  // Tie-break: lower tier first, then higher severity.
+  if (a.signal.tier !== b.signal.tier) return a.signal.tier - b.signal.tier;
+  return b.signal.severity - a.signal.severity;
+}
+
+function rankSignals(
+  intel: CompressedIntel,
+  profile: ProfileSignalSummary,
+  confFactor: number,
+): RankedSignal[] {
+  // Copy before sorting — never mutate the shared intel.ordered array.
+  const ranked = intel.ordered.map(s => scoreSignal(s, profile, confFactor));
+  return ranked.sort(compareRanked);
+}
+
+function isAlwaysVisibleTier1(rs: RankedSignal): boolean {
+  // Tier 1 is mission-critical and "always visible" per the CompressionTier
+  // contract — but only when it carries actual information (a 0-score unknown
+  // signal should never be force-surfaced).
+  return rs.signal.tier === 1 && rs.relevanceScore > 0;
+}
+
+/**
+ * Split the ranked list into the capped primary surface + overflow, guaranteeing
+ * that informative Tier-1 signals stay on the primary surface — UP TO `cap`. (When
+ * the number of informative Tier-1 signals exceeds `cap`, only `cap` of them fit;
+ * the rest necessarily remain in overflow. This is unavoidable and correct.)
+ *
+ * Profile re-ranking can legitimately push a Tier-1 below several severity-heavy
+ * lower-tier signals (severity dominates the score, by design). The cap cut must
+ * not then drop a mission-critical signal off-screen, so any Tier-1 that lands in
+ * overflow is promoted by bumping the lowest-scored NON-Tier-1 signal out of
+ * primary. Primary is then re-sorted so ordering stays relevance-driven.
+ *
+ * Invariant: `primary ∪ overflow` is always an exact permutation of the input
+ * (no signal is lost or duplicated), and `primary.length === min(cap, input.length)`.
+ */
+function splitPrimaryOverflow(
+  ranked: RankedSignal[],
+  cap: number,
+): { primary: RankedSignal[]; overflow: RankedSignal[] } {
+  const primary = ranked.slice(0, cap);
+  const overflow = ranked.slice(cap);
+
+  for (let i = 0; i < overflow.length; i++) {
+    if (!isAlwaysVisibleTier1(overflow[i])) continue;
+    // Find the lowest-scored non-Tier-1 in primary to bump (primary is score-sorted
+    // DESC, so scan from the tail).
+    let bumpIdx = -1;
+    for (let j = primary.length - 1; j >= 0; j--) {
+      if (primary[j].signal.tier !== 1) { bumpIdx = j; break; }
+    }
+    if (bumpIdx === -1) break; // primary is already all Tier-1 — nothing to bump
+    const bumped = primary[bumpIdx];
+    primary[bumpIdx] = overflow[i];
+    overflow[i] = bumped;
+  }
+
+  primary.sort(compareRanked);
+  overflow.sort(compareRanked);
+  return { primary, overflow };
+}
+
+// ── Primary-move extraction ───────────────────────────────────────────────────
+
+const PRIORITY_WEIGHT: Record<ActionPlanItem['priority'], number> = {
+  Critical: 300,
+  High: 200,
+  Medium: 100,
+  Low: 0,
+};
+
+const VISA_RE = /sponsor|visa|h-?1b|opt|green ?card|permanent residen/i;
+// Word-boundaried where ambiguous: bare "course" previously matched innocuous
+// phrases like "crash course correction", wrongly deferring a fast move for
+// runway-critical users. Require an explicit learning context instead.
+const LONG_BET_RE = /reskill|upskill|certification|certificate|\bdegree\b|bootcamp|master'?s|coursework|online course|night school/i;
+
+function isLongBet(rec: ActionPlanItem): boolean {
+  if (typeof rec.learningWeeks?.w8 === 'number' && rec.learningWeeks.w8 > 8) return true;
+  if (rec.sequencePhase === 'quarter1') return true;
+  const text = `${rec.title ?? ''} ${rec.description ?? ''}`;
+  return LONG_BET_RE.test(text);
+}
+
+function moveScore(rec: ActionPlanItem, profile: ProfileSignalSummary): number {
+  let s = (PRIORITY_WEIGHT[rec.priority] ?? 0) + (rec.riskReductionPct ?? 0);
+  if (profile.visaUrgency !== 'none') {
+    const text = `${rec.title ?? ''} ${rec.description ?? ''}`;
+    if (VISA_RE.test(text)) s += 50;
+  }
+  return s;
+}
+
+export function pickPrimaryMove(
+  recommendations: ActionPlanItem[] | undefined,
+  profile: ProfileSignalSummary,
+): PrimaryMove | null {
+  const recs = (recommendations ?? []).filter(r => r && typeof r.title === 'string');
+  if (recs.length === 0) return null;
+
+  const runwayCritical = profile.runwayTier === 'critical';
+
+  // Rank by score DESC. Stable enough for determinism since inputs are ordered.
+  const ranked = [...recs].sort((a, b) => moveScore(b, profile) - moveScore(a, profile));
+
+  if (runwayCritical) {
+    // Feasibility gate: with critical runway, the user can't afford a long bet.
+    // Prefer the highest-scoring NON-long-bet move.
+    const fast = ranked.find(r => !isLongBet(r));
+    if (fast) {
+      return {
+        action: fast,
+        rationale: 'Prioritised a fast-payoff move — your runway is critical, so slow reskilling bets are deferred.',
+        feasibleForProfile: true,
+      };
+    }
+    // Everything is a long bet — keep the top one but flag infeasibility honestly.
+    return {
+      action: ranked[0],
+      rationale: 'No fast-payoff action available — every recommended move needs runway you may not have. Treat this as the direction, not this week’s task.',
+      feasibleForProfile: false,
+    };
+  }
+
+  const top = ranked[0];
+  const visaTilt = profile.visaUrgency !== 'none' && VISA_RE.test(`${top.title} ${top.description ?? ''}`);
+  return {
+    action: top,
+    rationale: visaTilt
+      ? 'Highest-impact move, prioritised because your work authorisation adds a timing clock on any job change.'
+      : 'Highest-impact move by risk reduction and urgency.',
+    feasibleForProfile: true,
+  };
+}
+
+// ── Narrative (deterministic) ─────────────────────────────────────────────────
+
+const VERDICT_INFERENCE: Record<CompressedSignal['verdict'], string> = {
+  critical:           'signals point to near-term cuts',
+  distressed:         'company stability is clearly softening',
+  softening:          'early-warning indicators are turning',
+  stable:             'conditions look steady for now',
+  healthy:            'fundamentals look strong',
+  'stable-confirmed': 'we checked the distress signals and none fired',
+  'data-unavailable': 'we could not confirm live data this run',
+  unknown:            'we have no signal on this yet',
+};
+
+function dominantRelevance(profile: ProfileSignalSummary): string {
+  if (profile.visaUrgency === 'critical') return 'Your work authorisation puts a hard clock on any move — timing is the binding constraint.';
+  if (profile.runwayTier === 'critical')  return 'With limited runway you can’t wait out a downturn — speed matters more than optionality.';
+  if (profile.familyAnchor)               return 'As the household anchor, stability of income is weighted heavily here.';
+  if (profile.visaUrgency === 'elevated') return 'Your visa status adds a timing consideration to any transition.';
+  return 'This reflects your general market posture.';
+}
+
+function buildTrace(
+  topSignal: CompressedSignal | undefined,
+  primaryMove: PrimaryMove | null,
+  confPct: number,
+  intel: CompressedIntel,
+  profile: ProfileSignalSummary,
+): ReasoningTrace {
+  const leadChip = topSignal?.chips?.[0];
+  const observation = topSignal
+    ? `${topSignal.headline}: ${topSignal.verdict}${leadChip ? ` (${leadChip.label} ${leadChip.value})` : ''}`
+    : 'No distress signals surfaced.';
+
+  const inference = topSignal
+    ? VERDICT_INFERENCE[topSignal.verdict] ?? 'the picture is mixed'
+    : 'nothing urgent is showing in the data';
+
+  const relevance = dominantRelevance(profile);
+
+  const topSeverity = topSignal?.severity ?? 0;
+  const conclusion = intel.hasTier1Critical
+    ? 'Act now.'
+    : topSeverity >= 35
+      ? 'Prepare actively.'
+      : 'Monitor calmly.';
+
+  const move = primaryMove?.action.title ?? 'Keep your materials current and your network warm.';
+
+  const sourceKind = intel.ordered[0]?.sourceKind ?? 'heuristic';
+  const confidence = `Confidence: ${Math.round(confPct)}% (${sourceKind})`;
+
+  return { observation, inference, relevance, conclusion, move, confidence };
+}
+
+function renderSpine(trace: ReasoningTrace): string {
+  return `${trace.observation} — ${trace.inference}. ${trace.conclusion} Next: ${trace.move}`;
+}
+
+// ── Public entry points ───────────────────────────────────────────────────────
+
+/**
+ * Build an OrchestratedFeed from an already-compressed intel object. Use this
+ * from React hooks that already called compressAllSignals, to avoid a second
+ * compression pass over the same inputs.
+ */
+export function orchestrateFromIntel(
+  result: HybridResult,
+  intel: CompressedIntel,
+  profileSignals: ProfileSignalSummary,
+  config?: OrchestrateConfig,
+): OrchestratedFeed {
+  const cap = Math.max(1, config?.cap ?? DEFAULT_CAP);
+  const confPct = resolveConfidencePercent(result);
+  const confFactor = clamp(confPct / 100, 0.4, 1);
+
+  const ranked = rankSignals(intel, profileSignals, confFactor);
+  const { primary, overflow } = splitPrimaryOverflow(ranked, cap);
+
+  const primaryMove = pickPrimaryMove(result.recommendations, profileSignals);
+  const trace = buildTrace(primary[0]?.signal, primaryMove, confPct, intel, profileSignals);
+  const spine = renderSpine(trace);
+
+  return {
+    primary,
+    overflow,
+    primaryMove,
+    spine,
+    trace,
+    intel,
+    profileSignals,
+    meta: {
+      cap,
+      signalCount: ranked.length,
+      usedProfile: profileSignals.flags.length > 0,
+    },
+  };
+}
+
+/**
+ * Full orchestration entry point. Compresses signals, derives profile signals,
+ * and produces the editorial feed. Pure over (result, companyData, profile).
+ */
+export function orchestrate(
+  result: HybridResult,
+  companyData?: CompanyData,
+  profile?: UserProfileLike | null,
+  config?: OrchestrateConfig,
+): OrchestratedFeed {
+  const intel = compressAllSignals(result, companyData);
+  const profileSignals = deriveProfileSignals(profile, result.total);
+  const feed = orchestrateFromIntel(result, intel, profileSignals, config);
+  return { ...feed, meta: { ...feed.meta, usedProfile: profile != null } };
+}
