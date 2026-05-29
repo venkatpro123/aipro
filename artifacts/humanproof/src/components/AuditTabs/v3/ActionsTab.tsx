@@ -14,7 +14,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
-  BookOpen, Activity,
+  BookOpen, Activity, Key,
 } from 'lucide-react';
 import { ProfileQuickCapture } from '../../ProfileQuickCapture';
 import type { TabProps } from '../common/types';
@@ -239,6 +239,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
   const survivalProbability: SurvivalProbabilityResult | undefined = r.survivalProbability;
+
+  // Wave 8.3: equity awareness — show alert when vest cliff is near + risk elevated
+  const hasEquityVesting: boolean   = r.userFactors?.hasEquityVesting === true || r.userFactors?.equityVestMonths != null;
+  const equityVestMonths: number    = r.userFactors?.equityVestMonths ?? 0;
+  const showEquityAlert: boolean    = hasEquityVesting && equityVestMonths > 0 && equityVestMonths < 12 && result.total > 50;
+  const equityUrgency: 'CRITICAL' | 'HIGH' = equityVestMonths <= 3 ? 'CRITICAL' : 'HIGH';
   const adaptation = useDashboardAdaptation(result, companyData);
   // v39.0 B6: surface honest "generic guidance" notice when the user's role
   // isn't in our 412-specialised database. Also surface the profile context
@@ -264,6 +270,66 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           // stays stale until the user manually re-runs the audit.
           window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
         }} />
+      )}
+
+      {/* Wave 8.3: Equity Alert — highest-priority card when vest cliff is near + score elevated.
+           Placed before everything else (including emergency callout) so users with equity at risk
+           see it immediately. equityVestMonths < 12 AND score > 50. */}
+      {showEquityAlert && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.20 }}
+          className="rounded-2xl p-4"
+          style={{
+            background: equityUrgency === 'CRITICAL' ? 'rgba(220,38,38,0.07)' : 'rgba(249,115,22,0.07)',
+            border: `1px solid ${equityUrgency === 'CRITICAL' ? 'rgba(220,38,38,0.28)' : 'rgba(249,115,22,0.28)'}`,
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: equityUrgency === 'CRITICAL' ? 'rgba(220,38,38,0.15)' : 'rgba(249,115,22,0.15)' }}
+            >
+              <Key className="w-4 h-4" style={{ color: equityUrgency === 'CRITICAL' ? '#dc2626' : '#f97316' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="text-[9px] font-black px-2 py-0.5 rounded"
+                  style={{
+                    background: equityUrgency === 'CRITICAL' ? 'rgba(220,38,38,0.20)' : 'rgba(249,115,22,0.18)',
+                    color: equityUrgency === 'CRITICAL' ? '#dc2626' : '#f97316',
+                  }}
+                >
+                  {equityUrgency} · EQUITY ALERT
+                </span>
+              </div>
+              <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                You have {equityVestMonths} month{equityVestMonths !== 1 ? 's' : ''} of unvested equity
+              </p>
+              <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                With a risk score of {result.total}/100, your unvested equity is your strongest negotiation lever.{' '}
+                {equityVestMonths <= 3
+                  ? 'Request accelerated vesting or a retention bonus immediately — restructuring announcements remove this leverage.'
+                  : 'Open a conversation about retention now — before any restructuring discussion happens.'}
+              </p>
+              <div
+                className="rounded-xl px-3 py-2"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                  NEGOTIATION SCRIPT
+                </p>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  "I wanted to discuss my unvested position given the current environment. I'm committed to staying,
+                  but I'd like to explore either accelerated vesting or a retention bonus to align our goals for the
+                  next {equityVestMonths} months."
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* T1: Emergency callout — only in emergency mode */}

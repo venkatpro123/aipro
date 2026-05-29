@@ -1,232 +1,275 @@
-// SignalCorrelationInsight.tsx — Wave 7.4 Signal Contradiction Disclosure
+// SignalCorrelationInsight.tsx — Wave 7.4
 //
-// PROBLEM: signalContradictionEngine detects when signals conflict (e.g. hiring is
-// active but financials are distressed) and adjusts score uncertainty. But users
-// never see this reasoning — the score appears as a single authoritative number
-// when in fact competing signals are pulling it in different directions.
+// Renders the ContradictionReport from signalContradictionEngine.ts,
+// showing each conflicting signal pair, how the AI resolved it, and
+// the resulting uncertainty range.
 //
-// SOLUTION: Render each detected contradiction as a "signal tension" card showing
-// what's conflicting, why, and how the AI resolved it. This builds trust and helps
-// users understand uncertainty rather than treating the score as infallible.
+// Why this matters: Users see "score 67" but never understand that
+// two competing signals are creating ±8 pts of genuine uncertainty.
+// This component makes that ambiguity visible and trustworthy.
 //
-// DATA SOURCE: result.signalContradictions (ContradictionReport from
-// signalContradictionEngine.ts — already computed in the pipeline).
+// Placed in AnalysisTab inside an AdaptiveBlock — only renders when
+// contradictions exist AND overallTrustLevel !== 'HIGH'.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertTriangle,
+  Scale,
+  TrendingUp,
+  TrendingDown,
+  Zap,
+} from 'lucide-react';
 
-// ── Types (mirrors signalContradictionEngine exports) ─────────────────────────
-
-type ContradictionSeverity = 'low' | 'medium' | 'high' | 'critical';
-type TrustResolution =
-  | 'trust_positive_signal'
-  | 'trust_negative_signal'
-  | 'weight_both_equally'
-  | 'defer_to_temporal'
-  | 'user_input_required';
+// ── Types (mirrors signalContradictionEngine.ts) ──────────────────────────────
 
 interface ContradictionRecord {
   type: string;
-  severity: ContradictionSeverity;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   explanation: string;
   positiveSignal: string;
   negativeSignal: string;
-  resolution: TrustResolution;
-  userGuidance: string;
-  scoreUncertaintyRange: number;
+  resolution: 'positive_wins' | 'negative_wins' | 'averaged' | 'flagged';
+  userGuidance?: string;
+  scoreUncertaintyRange?: number;
 }
 
-interface ContradictionReport {
+export interface ContradictionReport {
   contradictions: ContradictionRecord[];
   totalContradictions: number;
-  highestSeverity: ContradictionSeverity | null;
-  hasMaterialUncertainty: boolean;
   netUncertaintyPoints: number;
-  trustSummary: string;
   overallTrustLevel: 'HIGH' | 'MEDIUM' | 'LOW' | 'VERY_LOW';
+  hasMaterialUncertainty: boolean;
+  trustSummary: string;
 }
 
 interface Props {
   report: ContradictionReport;
 }
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const SEVERITY_CONFIG: Record<ContradictionSeverity, { color: string; label: string; bg: string; border: string }> = {
-  low:      { color: '#94a3b8', label: 'Low',      bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.15)' },
-  medium:   { color: '#f59e0b', label: 'Moderate', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.22)' },
-  high:     { color: '#f97316', label: 'High',     bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.25)' },
-  critical: { color: '#dc2626', label: 'Critical', bg: 'rgba(220,38,38,0.08)', border: 'rgba(220,38,38,0.28)' },
-};
+function severityColor(severity: ContradictionRecord['severity']): string {
+  switch (severity) {
+    case 'critical': return '#ef4444';
+    case 'high':     return '#f97316';
+    case 'medium':   return '#f59e0b';
+    case 'low':      return '#22d3ee';
+    default:         return '#6b7280';
+  }
+}
 
-const RESOLUTION_CONFIG: Record<TrustResolution, { label: string; color: string }> = {
-  trust_positive_signal: { label: '→ Positive signal trusted',   color: '#10b981' },
-  trust_negative_signal: { label: '→ Negative signal trusted',   color: '#f97316' },
-  weight_both_equally:   { label: '→ Both signals weighted',     color: '#f59e0b' },
-  defer_to_temporal:     { label: '→ Monitor — time-dependent', color: '#22d3ee' },
-  user_input_required:   { label: '→ Needs your clarification', color: '#a78bfa' },
-};
+function trustLevelColor(level: ContradictionReport['overallTrustLevel']): string {
+  switch (level) {
+    case 'HIGH':     return '#10b981';
+    case 'MEDIUM':   return '#f59e0b';
+    case 'LOW':      return '#f97316';
+    case 'VERY_LOW': return '#ef4444';
+    default:         return '#6b7280';
+  }
+}
 
-const TRUST_LEVEL_CONFIG = {
-  HIGH:     { color: '#10b981', label: 'Signals agree',           border: 'rgba(16,185,129,0.25)' },
-  MEDIUM:   { color: '#f59e0b', label: 'Minor tensions detected', border: 'rgba(245,158,11,0.25)' },
-  LOW:      { color: '#f97316', label: 'Significant tensions',    border: 'rgba(249,115,22,0.28)' },
-  VERY_LOW: { color: '#dc2626', label: 'Conflicting signals',     border: 'rgba(220,38,38,0.30)' },
-};
+function resolutionLabel(resolution: ContradictionRecord['resolution']): string {
+  switch (resolution) {
+    case 'positive_wins': return 'Positive prevailed';
+    case 'negative_wins': return 'Risk prevailed';
+    case 'averaged':      return 'Signals averaged';
+    case 'flagged':       return 'Flagged — unresolved';
+    default:              return resolution;
+  }
+}
 
-// ── Contradiction Card ────────────────────────────────────────────────────────
+function ResolutionIcon({ resolution }: { resolution: ContradictionRecord['resolution'] }) {
+  const cls = 'w-3 h-3 flex-shrink-0';
+  switch (resolution) {
+    case 'positive_wins': return <CheckCircle className={cls} style={{ color: '#10b981' }} />;
+    case 'negative_wins': return <AlertTriangle className={cls} style={{ color: '#f97316' }} />;
+    case 'averaged':      return <Scale className={cls} style={{ color: '#f59e0b' }} />;
+    case 'flagged':       return <Zap className={cls} style={{ color: '#ef4444' }} />;
+    default:              return <Scale className={cls} style={{ color: '#6b7280' }} />;
+  }
+}
 
-const ContradictionCard: React.FC<{ c: ContradictionRecord; index: number }> = ({ c, index }) => {
-  const [open, setOpen] = useState(index === 0 && c.severity !== 'low');
-  const sev = SEVERITY_CONFIG[c.severity] ?? SEVERITY_CONFIG.medium;
-  const res = RESOLUTION_CONFIG[c.resolution] ?? RESOLUTION_CONFIG.weight_both_equally;
+function resolutionBg(resolution: ContradictionRecord['resolution']): string {
+  switch (resolution) {
+    case 'positive_wins': return 'rgba(16,185,129,0.08)';
+    case 'negative_wins': return 'rgba(249,115,22,0.08)';
+    case 'averaged':      return 'rgba(245,158,11,0.08)';
+    case 'flagged':       return 'rgba(239,68,68,0.08)';
+    default:              return 'rgba(107,114,128,0.08)';
+  }
+}
 
-  // Human-readable type label
-  const typeLabel = c.type.replace(/_/g, ' ').replace(/\bvs\b/gi, 'vs.').toLowerCase()
-    .replace(/^\w/, ch => ch.toUpperCase());
+function resolutionBorder(resolution: ContradictionRecord['resolution']): string {
+  switch (resolution) {
+    case 'positive_wins': return 'rgba(16,185,129,0.22)';
+    case 'negative_wins': return 'rgba(249,115,22,0.22)';
+    case 'averaged':      return 'rgba(245,158,11,0.22)';
+    case 'flagged':       return 'rgba(239,68,68,0.22)';
+    default:              return 'rgba(107,114,128,0.22)';
+  }
+}
+
+// ── ContradictionRow ──────────────────────────────────────────────────────────
+
+const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }> = ({
+  record,
+  index,
+}) => {
+  const color = severityColor(record.severity);
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, delay: index * 0.06 }}
       className="rounded-xl overflow-hidden"
-      style={{ border: `1px solid ${sev.border}` }}
+      style={{
+        background: 'rgba(255,255,255,0.025)',
+        border: `1px solid ${color}20`,
+      }}
     >
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
-        style={{ background: sev.bg }}
-      >
-        {/* Severity dot */}
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3.5 pt-3 pb-2">
         <div
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ background: sev.color, boxShadow: `0 0 5px ${sev.color}80` }}
+          className="flex-shrink-0 w-1.5 h-1.5 rounded-full"
+          style={{ background: color }}
         />
+        <p className="text-[10px] font-semibold leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          {record.explanation}
+        </p>
+        {record.scoreUncertaintyRange != null && record.scoreUncertaintyRange > 0 && (
+          <span
+            className="flex-shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded"
+            style={{ background: `${color}12`, color }}
+          >
+            ±{record.scoreUncertaintyRange} pts
+          </span>
+        )}
+      </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
-            {typeLabel}
-          </p>
-          {!open && (
-            <p className="text-[9px] truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              {c.positiveSignal} vs. {c.negativeSignal}
-            </p>
-          )}
-        </div>
-
-        {/* Uncertainty range + chevron */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {c.scoreUncertaintyRange > 0 && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
-              style={{ background: `${sev.color}15`, color: sev.color, border: `1px solid ${sev.color}25` }}>
-              ±{c.scoreUncertaintyRange} pts
+      {/* Signal pair */}
+      <div className="grid grid-cols-2 gap-1.5 px-3.5 pb-2.5">
+        {/* Positive signal */}
+        <div
+          className="rounded-lg px-2.5 py-2"
+          style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)' }}
+        >
+          <div className="flex items-center gap-1 mb-1">
+            <TrendingUp className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#10b981' }} />
+            <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: '#10b981' }}>
+              Positive signal
             </span>
-          )}
-          {open
-            ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.30)' }} />
-            : <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.30)' }} />
-          }
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-3 pb-3 pt-2" style={{ background: `${sev.bg.replace('0.07', '0.03')}` }}>
-          {/* Signal pair */}
-          <div className="grid grid-cols-2 gap-2 mb-2.5">
-            <div className="rounded-lg px-2 py-1.5"
-              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)' }}>
-              <p className="text-[8px] font-bold mb-0.5" style={{ color: 'rgba(16,185,129,0.55)' }}>POSITIVE SIGNAL</p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.65)' }}>{c.positiveSignal}</p>
-            </div>
-            <div className="rounded-lg px-2 py-1.5"
-              style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)' }}>
-              <p className="text-[8px] font-bold mb-0.5" style={{ color: 'rgba(220,38,38,0.55)' }}>NEGATIVE SIGNAL</p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.65)' }}>{c.negativeSignal}</p>
-            </div>
           </div>
-
-          {/* Explanation */}
-          <p className="text-[10px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
-            {c.explanation}
+          <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {record.positiveSignal}
           </p>
-
-          {/* Resolution + guidance */}
-          <div className="flex items-start gap-1.5 rounded-lg px-2.5 py-2"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <span className="text-[10px] font-black flex-shrink-0 mt-0.5" style={{ color: res.color }}>⚡</span>
-            <div>
-              <p className="text-[9px] font-bold mb-0.5" style={{ color: res.color }}>{res.label}</p>
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>{c.userGuidance}</p>
-            </div>
-          </div>
         </div>
-      )}
-    </div>
+
+        {/* Negative signal */}
+        <div
+          className="rounded-lg px-2.5 py-2"
+          style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.14)' }}
+        >
+          <div className="flex items-center gap-1 mb-1">
+            <TrendingDown className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#f97316' }} />
+            <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: '#f97316' }}>
+              Risk signal
+            </span>
+          </div>
+          <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {record.negativeSignal}
+          </p>
+        </div>
+      </div>
+
+      {/* Resolution badge + user guidance */}
+      <div className="flex items-start gap-2 px-3.5 pb-2.5">
+        <div
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg flex-shrink-0"
+          style={{
+            background: resolutionBg(record.resolution),
+            border: `1px solid ${resolutionBorder(record.resolution)}`,
+          }}
+        >
+          <ResolutionIcon resolution={record.resolution} />
+          <span className="text-[8px] font-bold whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            {resolutionLabel(record.resolution)}
+          </span>
+        </div>
+
+        {record.userGuidance && (
+          <p className="flex-1 text-[8px] italic leading-snug pt-1" style={{ color: 'rgba(255,255,255,0.36)' }}>
+            {record.userGuidance}
+          </p>
+        )}
+      </div>
+    </motion.div>
   );
 };
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export const SignalCorrelationInsight: React.FC<Props> = ({ report }) => {
-  const { contradictions, trustSummary, overallTrustLevel, netUncertaintyPoints, hasMaterialUncertainty } = report;
+  if (!report || (report.contradictions?.length ?? 0) === 0) return null;
 
-  // Only render when there are actual contradictions
-  if (!contradictions || contradictions.length === 0) return null;
-
-  // Don't show for "HIGH" trust level (no contradictions worth surfacing)
-  if (overallTrustLevel === 'HIGH') return null;
-
-  const trustCfg = TRUST_LEVEL_CONFIG[overallTrustLevel] ?? TRUST_LEVEL_CONFIG.MEDIUM;
-
-  // Sort by severity: critical → high → medium → low
-  const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
-  const sorted = [...contradictions].sort((a, b) =>
-    (SEVERITY_ORDER[a.severity] ?? 4) - (SEVERITY_ORDER[b.severity] ?? 4)
-  );
+  const trustColor = trustLevelColor(report.overallTrustLevel);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-2"
-    >
-      {/* Header summary */}
-      <div className="flex items-center gap-2 mb-1">
-        <Zap className="w-3.5 h-3.5" style={{ color: trustCfg.color + 'aa' }} />
-        <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          SIGNAL TENSIONS DETECTED
-        </p>
-        {hasMaterialUncertainty && netUncertaintyPoints > 0 && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded ml-auto"
-            style={{ background: `${trustCfg.color}15`, color: trustCfg.color, border: `1px solid ${trustCfg.border}` }}>
-            ±{netUncertaintyPoints} pts uncertainty
-          </span>
-        )}
-      </div>
-
-      {/* Trust summary pill */}
+    <div className="space-y-3">
+      {/* Summary header */}
       <div
-        className="flex items-center gap-2 rounded-xl px-3 py-2"
-        style={{ background: `${trustCfg.color}0c`, border: `1px solid ${trustCfg.border}` }}
+        className="rounded-xl px-3.5 py-3"
+        style={{
+          background: `${trustColor}06`,
+          border: `1px solid ${trustColor}20`,
+        }}
       >
-        <div className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ background: trustCfg.color, boxShadow: `0 0 6px ${trustCfg.color}60` }} />
-        <p className="text-[10px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
-          {trustSummary}
-        </p>
-        <span className="text-[8px] font-black flex-shrink-0 px-1.5 py-0.5 rounded"
-          style={{ background: `${trustCfg.color}18`, color: trustCfg.color }}>
-          {trustCfg.label}
-        </span>
+        <div className="flex items-start gap-2.5">
+          <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: trustColor }} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <p className="text-[10px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                {report.totalContradictions} signal tension{report.totalContradictions !== 1 ? 's' : ''} detected
+              </p>
+              <span
+                className="text-[8px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: `${trustColor}14`, color: trustColor }}
+              >
+                {report.overallTrustLevel.replace('_', ' ')} TRUST
+              </span>
+              {report.netUncertaintyPoints > 0 && (
+                <span
+                  className="text-[8px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(245,158,11,0.10)', color: '#f59e0b' }}
+                >
+                  ±{report.netUncertaintyPoints} pts total uncertainty
+                </span>
+              )}
+            </div>
+            <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.42)' }}>
+              {report.trustSummary}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Individual contradictions */}
-      <div className="space-y-1.5">
-        {sorted.map((c, i) => (
-          <ContradictionCard key={c.type + i} c={c} index={i} />
+      {/* Individual contradiction rows */}
+      <div className="space-y-2.5">
+        {report.contradictions.map((record, idx) => (
+          <ContradictionRow key={`${record.type}-${idx}`} record={record} index={idx} />
         ))}
       </div>
-    </motion.div>
+
+      {/* Footer note */}
+      <p className="text-[8px] leading-relaxed px-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>
+        Signal tensions are resolved using a reliability hierarchy: SEC filings &gt; live hiring data &gt;
+        news sentiment &gt; aggregated surveys. When two signals of equal weight conflict, the AI averages
+        them and widens the confidence interval. Flagged tensions are shown at full uncertainty until
+        additional data resolves the conflict.
+      </p>
+    </div>
   );
 };
 
