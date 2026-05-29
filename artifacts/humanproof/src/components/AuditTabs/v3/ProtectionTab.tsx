@@ -43,6 +43,12 @@ import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
 import { CohortBenchmarkCard } from '../common/CohortBenchmarkCard';
 import { CareerInsuranceStatus } from '../common/CareerInsuranceStatus';
 import { CareerTwinCard } from '../../CareerTwinCard';
+import { FreelancerRiskPanel } from '../common/FreelancerRiskPanel';
+import {
+  runFreelancerIntelligence,
+  detectFreelancerType,
+} from '../../../services/freelancerIntelligenceEngine';
+import type { UserProfile } from '../../../services/userProfileService';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -72,6 +78,19 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const competitivePosition                    = r.competitivePosition;
 
   const careerResilience                        = r.careerResilience;
+
+  // Wave 8.4: freelancer intelligence — derived from job title, no DB migration needed
+  const userProfile: UserProfile | null = (props as any).userProfile ?? r.userProfile ?? null;
+  const { isFreelancer } = detectFreelancerType(
+    userProfile?.jobTitle ?? r.userFactors?.jobTitle,
+    userProfile?.tenureYears,
+  );
+  const freelancerIntelligence = useMemo(() => {
+    if (!isFreelancer) return null;
+    try { return runFreelancerIntelligence(userProfile, result.total); }
+    catch { return null; }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFreelancer, result.total, userProfile?.jobTitle]);
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
   const hasMobility    = Boolean(careerContingency || careerConfidence);
@@ -293,6 +312,13 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
       {/* Mini what-if strip — top 2 levers that move the score most */}
       {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
         <ScoreSensitivityStrip scoreSensitivity={scoreSensitivity} />
+      )}
+
+      {/* Wave 8.4: Freelancer / Contractor Intelligence — only renders when
+           isFreelancer is detected from job title. Shows client concentration,
+           pipeline diversification, financial buffer gaps, and priority actions. */}
+      {freelancerIntelligence && freelancerIntelligence.isFreelancer && (
+        <FreelancerRiskPanel intelligence={freelancerIntelligence} />
       )}
 
       {/* Wave 4.2: Career Insurance Status — persistent 5-pillar tracking card
