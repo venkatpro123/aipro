@@ -26,7 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
   TrendingUp, TrendingDown, Minus,
-  Zap, Shield, Clock, Signal, AlertTriangle, Info, User, AlertOctagon,
+  Zap, Shield, Clock, Signal, AlertTriangle, Info, AlertOctagon,
 } from 'lucide-react';
 import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
@@ -47,6 +47,9 @@ import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
 import { MissingDataCard } from '../common/MissingDataCard';
+import { ConfidenceDisclosure } from '../common/ConfidenceDisclosure';
+import { ProgressNarrativeCard } from '../common/ProgressNarrativeCard';
+import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
 import { computeCanonicalConfidence } from '../../../services/canonicalConfidence';
 
 // ── Top-Lever Bridge ───────────────────────────────────────────────────────────
@@ -62,12 +65,26 @@ import { computeCanonicalConfidence } from '../../../services/canonicalConfidenc
 interface LeverBridgeProps {
   scoreSensitivity: any;
   currentScore: number;
+  /** Normalised primary-move title — when the top lever IS the hero move, skip it (no triple-surfacing). */
+  primaryMoveTitle?: string;
 }
 
-const TopLeverBridge: React.FC<LeverBridgeProps> = ({ scoreSensitivity, currentScore }) => {
+const normalizeLeverText = (s: string | undefined): string =>
+  (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+const TopLeverBridge: React.FC<LeverBridgeProps> = ({ scoreSensitivity, currentScore, primaryMoveTitle }) => {
   const levers: any[] = scoreSensitivity?.levers ?? [];
   const topLever = levers.find((l: any) => (l.scoreDropIfImproved ?? 0) >= 4);
   if (!topLever) return null;
+  // One-move reconciliation: if this lever's action is the same as the hero move
+  // already shown above, suppress it — the hero card covers the "what to do";
+  // this strip exists only to quantify score leverage, not to re-issue the task.
+  if (primaryMoveTitle) {
+    const leverText = normalizeLeverText(topLever.fastestAction);
+    if (leverText && (leverText === primaryMoveTitle || leverText.includes(primaryMoveTitle) || primaryMoveTitle.includes(leverText.slice(0, 24)))) {
+      return null;
+    }
+  }
 
   const projected = Math.max(0, Math.round(currentScore - topLever.scoreDropIfImproved));
   const feasibilityLabel: Record<string, string> = {
@@ -486,6 +503,12 @@ interface ActionItem {
 const toneForScore = (s: number) =>
   s >= 65 ? 'red' : s >= 45 ? 'amber' : s >= 25 ? 'orange' : 'emerald';
 
+// Normalises an action title for identity matching between the orchestrator's
+// primaryMove and the recommendation-derived ImmediateActions list, so the same
+// move is never shown twice (hero card + "do this week" strip).
+const normalizeMoveTitle = (s: string | undefined): string =>
+  (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
 const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
   if (drivers.length === 0) return null;
   return (
@@ -544,8 +567,16 @@ const phaseLabel = (a: ActionItem): string => {
   return a.timeline;
 };
 
-const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> = ({ actions, total }) => {
+// `supporting` = true when the orchestrator already surfaced a single primary
+// move above (in the ReasoningSpineCard). In that case this strip is reframed
+// from a competing "Do This Week" into the follow-on moves that BACK the one
+// hero action — delivering the "one continuously thinking AI" promise instead
+// of three rankers each shouting a different #1.
+const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number; supporting?: boolean }> = ({ actions, total, supporting }) => {
   if (actions.length === 0) return null;
+  // When supporting the hero move, the remaining-count math must account for the
+  // one move already promoted out of this list.
+  const remaining = supporting ? Math.max(0, total - 1 - actions.length) : Math.max(0, total - actions.length);
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -555,17 +586,22 @@ const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> 
       <div className="audit-section-head">
         <div className="audit-section-title">
           <Zap size={12} style={{ color: 'var(--cyan)' }} />
-          Do This Week
+          {supporting ? 'Then, This Week' : 'Do This Week'}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <TierBadge tier={1} />
-          {total > 3 && (
+          {remaining > 0 && (
             <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
-              +{total - 3} more in Action Plan
+              +{remaining} more in Action Plan
             </span>
           )}
         </div>
       </div>
+      {supporting && (
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.4, marginTop: 'calc(-1 * var(--space-1))', marginBottom: 'var(--space-2)' }}>
+          These back the move above — do them after, not instead.
+        </p>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
         {actions.slice(0, 3).map((a, i) => (
           <div key={`${a.priority}-${i}`} className={`action-card ${phaseClass(a.priority)}`}>
@@ -587,55 +623,6 @@ const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number }> 
         ))}
       </div>
     </motion.div>
-  );
-};
-
-// ── Conflict / low-data alert ────────────────────────────────────────────────
-
-const TrustCallout: React.FC<{
-  lowDataWarning?: { code: string; missingCount: number; capAt: number };
-  conflictCount: number;
-  hardFailures: string[];
-}> = ({ lowDataWarning, conflictCount, hardFailures }) => {
-  const alerts: Array<{ icon: React.ElementType; text: string; color: string }> = [];
-
-  if (lowDataWarning) {
-    alerts.push({
-      icon: Info,
-      text: `${lowDataWarning.missingCount} critical signals missing — score is indicative (${Math.round(lowDataWarning.capAt * 100)}% confidence cap)`,
-      color: '#f59e0b',
-    });
-  }
-  if (conflictCount > 0) {
-    alerts.push({
-      icon: AlertTriangle,
-      text: `${conflictCount} signal conflict${conflictCount > 1 ? 's' : ''} detected — score widened by ±${conflictCount * 2}pts`,
-      color: '#f97316',
-    });
-  }
-  if (hardFailures.length > 0) {
-    alerts.push({
-      icon: AlertTriangle,
-      text: `${hardFailures.length} live source failure${hardFailures.length > 1 ? 's' : ''} — some signals are estimates`,
-      color: '#dc2626',
-    });
-  }
-
-  if (alerts.length === 0) return null;
-
-  const alertTone = (color: string) =>
-    color === '#dc2626' ? 'red' : color === '#f97316' ? 'orange' : 'amber';
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-      {alerts.map((a, i) => (
-        <div key={i} className="signal-card" data-tone={alertTone(a.color)}
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
-          <a.icon size={14} style={{ color: a.color, flexShrink: 0, marginTop: 1 }} />
-          <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: 'var(--text-2)' }}>{a.text}</p>
-        </div>
-      ))}
-    </div>
   );
 };
 
@@ -755,6 +742,21 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
     })), [recommendations]);
 
   const criticalActionCount = recommendations.filter(rc => rc.priority === 'Critical').length;
+
+  // ── One-move reconciliation ───────────────────────────────────────────────
+  // The ReasoningSpineCard already presents feed.primaryMove as the single hero
+  // action. To keep the dashboard reading as ONE AI (not three competing
+  // rankers), strip that exact move out of the "this week" list and reframe the
+  // remainder as supporting moves. Falls back to the full list when no primary
+  // move exists (e.g. low-signal stable users).
+  const primaryMoveTitle = normalizeMoveTitle(adaptation.feed?.primaryMove?.action?.title);
+  const hasPrimaryMove = primaryMoveTitle.length > 0;
+  const supportingActions: ActionItem[] = useMemo(
+    () => (hasPrimaryMove
+      ? topActions.filter(a => normalizeMoveTitle(a.title) !== primaryMoveTitle)
+      : topActions),
+    [topActions, hasPrimaryMove, primaryMoveTitle],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -950,41 +952,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
-      {/* Wave 4.4: Streak chip — shown when currentStreak ≥ 2 (meaningful momentum).
-           Appears below ScoreTrendStrip as a compact momentum signal.
-           Fire emoji is safe (text — not an image) and matches cross-platform. */}
-      {streakInfo && streakInfo.currentStreak >= 2 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.20 }}
-          className="rounded-xl px-4 py-2.5 flex items-center gap-2.5"
-          style={{
-            background: 'rgba(16,185,129,0.06)',
-            border: '1px solid rgba(16,185,129,0.18)',
-          }}
-        >
-          <span className="text-[16px] leading-none flex-shrink-0" role="img" aria-label="streak">🔥</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold" style={{ color: '#10b981' }}>
-              {streakInfo.currentStreak}-week streak
-            </p>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              {streakInfo.currentStreak >= 4
-                ? 'Exceptional consistency — you\'re building real momentum.'
-                : 'Consistent action builds lasting career resilience.'}
-              {streakInfo.isAtRisk && (
-                <span style={{ color: '#f59e0b' }}> · Complete an action this week to keep it going.</span>
-              )}
-            </p>
-          </div>
-          <span
-            className="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded"
-            style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.22)' }}
-          >
-            {streakInfo.currentStreak}w
-          </span>
-        </motion.div>
+      {/* ── Recovery loop — the "since last visit" emotional continuity beat ──
+           Fuses score movement (scoreDelta) + action momentum (streakInfo) into
+           one warm narrative. Returning-user only — renders nothing on a first
+           audit. Replaces the former standalone streak chip + clinical velocity
+           framing with a single human beat (the retention engine). */}
+      {scoreSufficiency.sufficient && (
+        <ProgressNarrativeCard scoreDelta={r.scoreDelta} streakInfo={streakInfo} />
       )}
 
       {/* ── Wave 5.1: Time-to-Safety Strip — path to MODERATE risk (≤35) ─────
@@ -999,52 +973,32 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
-      {/* ── Profile-incomplete disclosure ─────────────────────────────────── */}
-      {/* When fewer than 3 personal-context fields are filled, the score
-          reflects company + market signals only. Personal amplifiers (visa
-          status, financial runway, family obligation) have NOT been applied.
-          This is not a deficiency in the data — it is an honest gap in
-          personalization. Surface it explicitly so the user doesn't treat a
-          generic score as their actual personal risk. */}
-      {profileIsEmpty && (
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          className="signal-card"
-          data-tone="amber"
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)', cursor: 'pointer' }}
-          onClick={() => {
-            try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } })); } catch { /* SSR */ }
-          }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'profile' } })); } catch { /* SSR */ }
-            }
-          }}
-          aria-label="Your personal risk factors are not yet included. Click to add your profile."
-        >
-          <User size={14} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <p style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--amber)', marginBottom: 'var(--space-1)' }}>
-              Score reflects company &amp; market risk only
-            </p>
-            <p style={{ fontSize: '0.775rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
-              Visa status, financial runway, and family situation not yet included.
-              Personal factors can shift your score by ±8–25 pts.{' '}
-              <span style={{ color: 'var(--amber)', fontWeight: 600 }}>Add your profile →</span>
-            </p>
-          </div>
-        </motion.div>
-      )}
+      {/* ── Fold capture into the reveal ───────────────────────────────────── */}
+      {/* When fewer than 3 personal-context fields are filled, the score is
+          company + market risk only — personal amplifiers (visa, runway, family)
+          have NOT been applied. Rather than render this as a passive caveat that
+          sends the user away, we reframe it as an opportunity acted on in place:
+          a 3-question inline capture that, on completion, recomputes the audit so
+          the score visibly moves. The honesty is unchanged (same factors, same
+          ±8–25 pt framing) — only the posture is. */}
+      {profileIsEmpty && <SharpenScorePrompt />}
 
-      {/* ── Trust callout — only when something is off ─────────────────────── */}
-      <TrustCallout
+      {/* ── Progressive honesty — one block, not a caveat stack ─────────────── */}
+      {/* Aggregates the former TrustCallout + freshness + calibration cards into
+          a single collapsible that LEADS with a confident one-liner and tucks
+          the honest details one tap away. Opens by default only when something
+          material is off (hard source failure / heuristic-only baseline). */}
+      <ConfidenceDisclosure
+        confPct={confPct}
+        confidenceLabel={canonicalConf.userFacing.label}
+        confidenceColor={canonicalConf.userFacing.color}
+        primarySource={canonicalConf.primarySource}
+        calibrationMode={calibrationMode}
         lowDataWarning={lowDataWarning}
         conflictCount={conflictCount}
         hardFailures={hardFailures}
+        freshnessTier={result.unifiedFreshness?.tier}
+        calibrationLimitationReason={calibrationLimitation.limited ? calibrationLimitation.reason : null}
       />
 
       {/* Wave 10.3: Missing Data Card — "What we don't know yet"
@@ -1055,51 +1009,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         companyData={companyData as any}
         personalFieldsFilled={personalFieldsFilled}
       />
-
-      {/* v40.0: Heuristic / stale freshness disclosure — surfaces when the
-          pipeline fell back to historical baselines without live data. */}
-      {(() => {
-        const tier = result.unifiedFreshness?.tier;
-        if (tier === 'heuristic') {
-          return (
-            <div className="signal-card" data-tone="amber"
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
-            >
-              <AlertTriangle size={13} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-2)', lineHeight: 1.5 }}>
-                <span style={{ fontWeight: 700, color: 'var(--amber)' }}>Heuristic baseline — </span>
-                no live data retrieved. Analysis draws from historical sector averages.
-              </p>
-            </div>
-          );
-        }
-        if (tier === 'stale') {
-          return (
-            <div className="signal-card" data-tone="slate"
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
-            >
-              <Clock size={13} style={{ color: 'var(--text-3)', flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
-                <span style={{ fontWeight: 700 }}>Partial live data — </span>
-                some signals are cached. Score uses available data supplemented by cached baselines.
-              </p>
-            </div>
-          );
-        }
-        return null;
-      })()}
-
-      {calibrationLimitation.limited && calibrationLimitation.reason && (
-        <div className="signal-card" data-tone="amber"
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
-        >
-          <Info size={13} style={{ color: 'var(--amber)', flexShrink: 0, marginTop: 1 }} />
-          <p style={{ fontSize: '0.775rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
-            <span style={{ fontWeight: 700, color: 'var(--amber)' }}>Calibration note: </span>
-            {calibrationLimitation.reason}
-          </p>
-        </div>
-      )}
 
       {/* ── Tier-1: Quick stats ────────────────────────────────────────────── */}
       <motion.div
@@ -1181,11 +1090,14 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           sees WHY (drivers) → WHAT MOVES THE NEEDLE (lever) → WHAT TO DO (actions).
           Only renders when score > 35 and a meaningful lever exists (≥4 pts impact). */}
       {score > 35 && scoreSensitivity && (
-        <TopLeverBridge scoreSensitivity={scoreSensitivity} currentScore={score} />
+        <TopLeverBridge scoreSensitivity={scoreSensitivity} currentScore={score} primaryMoveTitle={primaryMoveTitle} />
       )}
 
       {/* ── Tier-1: Immediate actions ──────────────────────────────────────── */}
-      <ImmediateActionsStrip actions={topActions} total={recommendations.length} />
+      {/* One-move reconciliation: when the spine surfaced a primary move, this
+          strip shows the SUPPORTING follow-on moves (the hero is deduped out)
+          and is reframed accordingly. */}
+      <ImmediateActionsStrip actions={supportingActions} total={recommendations.length} supporting={hasPrimaryMove} />
 
       {/* ── Tier-2: Company pulse — single compressed verdict ──────────────── */}
       {/* This replaces the previous standalone Workforce + Financial cards.
@@ -1226,13 +1138,56 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
-      {/* ── InactionCostCard — "The cost of waiting" — final section ─────── */}
+      {/* ── InactionCostCard — "The cost of waiting" ───────────────────────── */}
       {/* sixMonthInactionConsequence is on HybridResult directly (not on intelligenceBrief).
-          Shows a dark amber card so users leave the Summary tab knowing the stakes. */}
+          The stakes (loss-aversion) are stated HERE — but deliberately NOT last.
+          An anxious user must not exit the screen on fear. The momentum close below
+          re-grounds them on the single confident next step (agency, not dread). */}
       {(result.sixMonthInactionConsequence || r.sixMonthInactionConsequence) && (
         <InactionCostCard
           consequence={String(result.sixMonthInactionConsequence ?? r.sixMonthInactionConsequence ?? '')}
         />
+      )}
+
+      {/* ── Momentum close — the LAST thing the user reads ─────────────────── */}
+      {/* Emotional arc: the screen ends on agency. Restates the ONE move (same
+          source of truth as the spine hero) so the takeaway is "just this next
+          step", not the cost-of-waiting card above it. */}
+      {adaptation.feed?.primaryMove && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="rounded-2xl px-4 py-3.5 flex items-start gap-3"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.07), rgba(34,211,238,0.04))',
+            border: '1px solid rgba(16,185,129,0.20)',
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+            style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}
+          >
+            <Zap className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-black tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(16,185,129,0.75)' }}>
+              You don't have to do everything — just this
+            </p>
+            <p className="text-[13px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
+              {adaptation.feed.primaryMove.action.title}
+            </p>
+            <button
+              onClick={() => {
+                try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
+              }}
+              className="mt-2 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
+              style={{ background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.30)' }}
+            >
+              Start in Action Plan →
+            </button>
+          </div>
+        </motion.div>
       )}
 
       {/* Reading hint */}

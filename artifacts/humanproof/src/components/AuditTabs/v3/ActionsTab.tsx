@@ -25,6 +25,8 @@ import type { TabProps } from '../common/types';
 import type { CareerContingencyPlan } from '../../../services/careerContingencyPlanEngine';
 import type { ActionPlanItem } from '../../../types/hybridResult';
 import CareerContingencyPanel from '../common/CareerContingencyPanel';
+import { StrategySpineCard } from '../common/StrategySpineCard';
+import type { StrategySynthesisResult } from '../../../services/strategySynthesisEngine';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import StrategyTab from '../StrategyTab';
 import { ActionPlanTab } from '../ActionPlanTab';
@@ -335,6 +337,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
     try { localStorage.setItem(QC_KEY, JSON.stringify({ ts: Date.now() })); } catch { /* swallow */ }
     setQuickCaptureCompleted(true);
   };
+  const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
@@ -543,6 +546,14 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
       )}
 
       {/* ── END STATE PRIORITY OVERRIDES ────────────────────────────────────────── */}
+
+      {/* Strategy spine — the action-side analogue of the risk spine. One editor
+          voice that states the posture, the single first move, and unifies
+          time-to-safety + biggest risk + biggest opportunity into one beat, so
+          the panels below read as supporting detail, not competing verdicts.
+          Rendered after the legal/equity overrides (which are higher-certainty
+          ground truth) but before the rest of the plan. */}
+      <StrategySpineCard strategy={strategySynthesis} />
 
       {/* v40.0: Inline quick profile capture for users without a profile */}
       {showQuickCapture && (
