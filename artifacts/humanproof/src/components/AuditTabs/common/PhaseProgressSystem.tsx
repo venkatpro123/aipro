@@ -103,12 +103,21 @@ const CheckItem: React.FC<{
         opacity: phaseUnlocked ? 1 : 0.4,
       }}
     >
-      {/* Checkbox */}
+      {/* Checkbox — min 44×44px touch target (Wave 9.3) */}
       <button
         onClick={phaseUnlocked ? onToggle : undefined}
         disabled={!phaseUnlocked}
-        className="flex-shrink-0 mt-0.5 transition-all"
-        style={{ cursor: phaseUnlocked ? 'pointer' : 'not-allowed' }}
+        className="flex-shrink-0 flex items-center justify-center transition-all"
+        style={{
+          cursor: phaseUnlocked ? 'pointer' : 'not-allowed',
+          minWidth: 44,
+          minHeight: 44,
+          marginTop: -10,   // compensate for the extra height so it doesn't shift layout
+          marginBottom: -10,
+          marginLeft: -10,
+          paddingLeft: 10,
+          paddingRight: 4,
+        }}
         aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
       >
         <div

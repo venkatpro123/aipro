@@ -59,7 +59,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
         onClick={toggle}
         disabled={empty}
         aria-expanded={open}
-        className="w-full px-4 py-3.5 flex items-center gap-3 text-left"
+        className="w-full px-4 py-3.5 flex items-center gap-3 text-left min-h-[52px] sm:min-h-0"
         style={{ cursor: empty ? 'default' : 'pointer' }}
       >
         {/* Accent rail */}
