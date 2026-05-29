@@ -31,6 +31,7 @@ import AdaptiveBlock from '../common/AdaptiveBlock';
 import { ScoreSensitivityPanel } from '../common/ScoreSensitivityPanel';
 import { AIReasoningPanel, buildDimensionsFromResult } from '../common/AIReasoningPanel';
 import { ScenarioExplorer } from '../common/ScenarioExplorer';
+import { SignalCorrelationInsight } from '../common/SignalCorrelationInsight';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -490,6 +491,25 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
                 : []
             }
           />
+        </AdaptiveBlock>
+      )}
+
+      {/* ── T2: Signal Tensions — contradiction disclosure ──────────────────
+           Shown when signalContradictions has ≥1 non-LOW contradiction.
+           Helps users understand why the score is uncertain and which
+           signal to trust when positive and negative signals conflict. ── */}
+      {r.signalContradictions && (r.signalContradictions.contradictions?.length ?? 0) > 0 && r.signalContradictions.overallTrustLevel !== 'HIGH' && (
+        <AdaptiveBlock
+          title="Signal tensions"
+          subtitle="Competing signals detected — how the AI resolved them"
+          icon={Zap}
+          tier={2}
+          accentColor="#f59e0b"
+          defaultOpen={r.signalContradictions.overallTrustLevel === 'VERY_LOW' || r.signalContradictions.overallTrustLevel === 'LOW'}
+          badge={r.signalContradictions.hasMaterialUncertainty ? `±${r.signalContradictions.netUncertaintyPoints} pts` : undefined}
+          badgeColor={r.signalContradictions.overallTrustLevel === 'VERY_LOW' ? '#dc2626' : '#f97316'}
+        >
+          <SignalCorrelationInsight report={r.signalContradictions} />
         </AdaptiveBlock>
       )}
 
