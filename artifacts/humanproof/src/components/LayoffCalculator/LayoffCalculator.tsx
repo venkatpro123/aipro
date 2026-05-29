@@ -78,6 +78,10 @@ import { consumeToken } from "../../infrastructure/rateLimiter";
 import { toast } from "sonner";
 import { startBackgroundRefresh } from "../../services/liveRefreshService";
 import { resolveRoleInput } from "../../services/roleResolution";
+// Wave 3.1 + 3.3 — Emotional OS reveal + celebration components
+import { AuditRevealScreen } from "../AuditReveal/AuditRevealScreen";
+import { ScoreImprovementCelebration } from "../AuditReveal/ScoreImprovementCelebration";
+import { WhatChangedCard } from "../AuditReveal/WhatChangedCard";
 import { LiveSignalStatusBanner } from "../audit/LiveSignalStatusBanner";
 import { HybridResult } from "../../types/hybridResult";
 import { useHumanProof } from "../../context/HumanProofContext";
@@ -226,6 +230,22 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   // ── [INTEL] Local CareerIntelligence for OracleInsightsPanel ─────────────
   const [careerIntelligence, setCareerIntelligence] =
     useState<CareerIntelligence | null>(null);
+
+  // ── Wave 3.1: Audit reveal state ──────────────────────────────────────────
+  // revealActive = true when a fresh audit completes and the reveal screen
+  // should be shown before the dashboard. Immediately false on skip/complete.
+  const [revealActive, setRevealActive] = useState(false);
+  // Wave 3.3: Score improvement celebration
+  const [celebrationState, setCelebrationState] = useState<{
+    previousScore: number;
+    currentScore: number;
+  } | null>(null);
+  // Wave 6.6: What changed card state
+  const [whatChangedState, setWhatChangedState] = useState<{
+    previousScore: number;
+    currentScore: number;
+    daysSinceLastAudit: number;
+  } | null>(null);
 
   // ── BUG FIX: Double-submit guard ─────────────────────────────────────────
   const isSubmitting = useRef(false);
@@ -710,6 +730,43 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
     };
 
     dispatch({ type: "SET_SCORE_RESULT", payload: mergedResult });
+
+    // ── Wave 3.1 + 3.3: Reveal and celebration logic ─────────────────────
+    {
+      const newScore = mergedResult.total ?? 0;
+      // Check for previous score in sessionStorage (before this audit)
+      let prevScore: number | null = null;
+      let prevTs: number | null = null;
+      try {
+        const raw = sessionStorage.getItem("hp_last_score_session");
+        if (raw) {
+          const prev = JSON.parse(raw);
+          if (prev?.result?.total != null && prev?.ts != null) {
+            prevScore = prev.result.total;
+            prevTs = prev.ts;
+          }
+        }
+      } catch { /* ignore */ }
+
+      const isFirstAudit = prevScore === null;
+      const daysSince = prevTs ? Math.round((Date.now() - prevTs) / 86400000) : 0;
+
+      if (isFirstAudit) {
+        // First audit: show reveal screen (skip if revealSeen already set in this session)
+        const alreadySeen = sessionStorage.getItem("hp_reveal_seen");
+        if (!alreadySeen) {
+          setRevealActive(true);
+          sessionStorage.setItem("hp_reveal_seen", "1");
+        }
+      } else if (prevScore != null) {
+        // Re-audit: show what changed card
+        setWhatChangedState({ previousScore: prevScore, currentScore: newScore, daysSinceLastAudit: daysSince });
+        // Celebrate meaningful improvement (≥ 3 pts better)
+        if (prevScore - newScore >= 3) {
+          setCelebrationState({ previousScore: prevScore, currentScore: newScore });
+        }
+      }
+    }
 
     if (companyData.name && !companyData.source?.includes("Fallback") && !companyData.source?.includes("Unknown")) {
       detectCollapseStage({
@@ -1900,6 +1957,44 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             />
           </div>
         )}
+
+      {/* Wave 3.1: Audit Reveal Screen — shown once per fresh audit */}
+      {revealActive && state.scoreResult && (
+        <AuditRevealScreen
+          score={(state.scoreResult as any).total ?? 0}
+          tier={(state.scoreResult as any).tier ?? { label: 'Unknown', color: '#94a3b8' }}
+          companyName={state.companyName ?? 'Your Company'}
+          liveSignalCount={(state.scoreResult as any).signalQuality?.liveSignals ?? 0}
+          confidencePercent={(state.scoreResult as any).confidencePercent ?? 0}
+          firstActionTitle={(state.scoreResult as any).immediateActions?.[0]?.title
+            ?? (state.scoreResult as any).topActions?.[0]?.title
+            ?? (state.scoreResult as any).actions?.[0]?.title}
+          firstActionEffort={(state.scoreResult as any).immediateActions?.[0]?.effort
+            ?? (state.scoreResult as any).topActions?.[0]?.timeEstimate}
+          onRevealComplete={() => setRevealActive(false)}
+        />
+      )}
+
+      {/* Wave 6.6: What Changed Card — shown on re-audits */}
+      {whatChangedState && !state.isCalculating && state.hasCompletedAssessment && (
+        <div className="max-w-4xl mx-auto px-4 mb-3">
+          <WhatChangedCard
+            previousScore={whatChangedState.previousScore}
+            currentScore={whatChangedState.currentScore}
+            daysSinceLastAudit={whatChangedState.daysSinceLastAudit}
+            onDismiss={() => setWhatChangedState(null)}
+          />
+        </div>
+      )}
+
+      {/* Wave 3.3: Score Improvement Celebration */}
+      {celebrationState && !state.isCalculating && (
+        <ScoreImprovementCelebration
+          previousScore={celebrationState.previousScore}
+          currentScore={celebrationState.currentScore}
+          onDismiss={() => setCelebrationState(null)}
+        />
+      )}
 
       {state.hasCompletedAssessment &&
         state.scoreResult &&

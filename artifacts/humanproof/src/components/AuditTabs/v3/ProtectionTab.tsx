@@ -37,6 +37,9 @@ import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { SafePivotRolesCard } from '../common/SafePivotRolesCard';
 import { D4CredibilityPanel } from '../common/D4CredibilityPanel';
 import { ScoreSensitivityStrip } from '../common/ScoreSensitivityStrip';
+import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePanel';
+import { JobMarketLiquidityCard } from '../common/JobMarketLiquidityCard';
+import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -59,6 +62,10 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
 
   const roleAdjacency                          = r.roleAdjacency;
   const scoreSensitivity                       = r.scoreSensitivity;
+  const behavioralPersonalization              = r.behavioralPersonalization;
+  const jobMarketLiquidity                     = r.jobMarketLiquidity;
+  const techStackObsolescence                  = r.techStackObsolescence;
+  const internalMobility                       = r.internalMobility;
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
   const hasMobility    = Boolean(careerContingency || careerConfidence);
@@ -131,8 +138,12 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         tier={adaptation.mode === 'emergency' ? 1 : 3}
         accentColor="#06b6d4"
         defaultOpen={hasMarket && adaptation.mode === 'emergency'}
-        empty={!hasMarket}
+        empty={!hasMarket && !jobMarketLiquidity}
       >
+        {/* Wave 2.3: Job Market Liquidity Card — surfaces reemployment weeks estimate */}
+        {jobMarketLiquidity && (
+          <JobMarketLiquidityCard jobMarketLiquidity={jobMarketLiquidity} />
+        )}
         {roleMarketDemand && <RoleMarketDemandPanel roleMarketDemand={roleMarketDemand} />}
         <CareerPortfolioPanel result={result} />
       </AdaptiveBlock>
@@ -184,6 +195,66 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           contradictingSignals={r.d4ContradictingSignals ?? []}
           regionThresholdLabel={r.performanceCredibilityThresholdLabel}
         />
+      )}
+
+      {/* Wave 2.1: Behavioral Intelligence — trajectory, gap, interview readiness, comp gap */}
+      {behavioralPersonalization && (
+        <AdaptiveBlock
+          title="Your career intelligence"
+          subtitle="Trajectory diagnosis, gap scripts, interview readiness, compensation position"
+          icon={User2}
+          tier={2}
+          accentColor="#a78bfa"
+          defaultOpen={
+            behavioralPersonalization.employmentGap?.hasGap ||
+            (behavioralPersonalization.interviewReadiness?.score ?? 100) < 60 ||
+            (behavioralPersonalization.careerTrajectory?.trajectory === 'plateauing') ||
+            (behavioralPersonalization.compensationIntelligence?.deltaPercent ?? 0) < -15
+          }
+        >
+          <BehavioralIntelligencePanel data={behavioralPersonalization} />
+        </AdaptiveBlock>
+      )}
+
+      {/* Wave 2.2: Tech Stack Obsolescence — surfaces risky technologies */}
+      {techStackObsolescence && (
+        (techStackObsolescence.riskyTechnologies?.length ?? 0) > 0 ||
+        (techStackObsolescence.overallObsolescenceScore ?? 0) > 30
+      ) && (
+        <TechObsolescencePanel techStackObsolescence={techStackObsolescence} />
+      )}
+
+      {/* Wave 2.4: Internal Mobility — viability inline card */}
+      {internalMobility && (internalMobility.viabilityScore ?? 0) > 30 && (
+        <div
+          className="rounded-xl px-4 py-3"
+          style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.20)' }}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-[9px] font-bold tracking-widest" style={{ color: 'rgba(20,184,166,0.60)' }}>
+              INTERNAL MOBILITY
+            </p>
+            <span className="text-[14px] font-black" style={{ color: '#14b8a6' }}>
+              {internalMobility.viabilityScore}/100
+            </span>
+          </div>
+          <p className="text-[11px] leading-relaxed mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            {internalMobility.viabilityScore >= 65
+              ? 'Strong internal mobility viability — your org size and growth division make this your best near-term defensive move.'
+              : 'Moderate internal mobility potential. Worth exploring before external search escalation.'}
+          </p>
+          {internalMobility.viabilityScore >= 60 && (
+            <div
+              className="flex items-start gap-1.5 rounded-lg px-2.5 py-1.5"
+              style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.18)' }}
+            >
+              <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#14b8a6' }}>↳</span>
+              <p className="text-[10px] italic" style={{ color: 'rgba(20,184,166,0.75)' }}>
+                Request a 1:1 with your skip-level to signal ambition. Highest-ROI action this quarter.
+              </p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Mini what-if strip — top 2 levers that move the score most */}
