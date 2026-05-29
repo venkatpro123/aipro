@@ -41,6 +41,12 @@ import { riskColor, riskLabel } from '../../../lib/riskTokens';
 import { track } from '../../../services/analyticsService';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 import { supabase as _supabase } from '../../../utils/supabase';
+import { IntelligenceUpdateBanner } from '../../IntelligenceUpdateBanner';
+import {
+  checkForIntelligenceUpdates,
+  markAuditComplete,
+  type IntelligenceUpdateResult,
+} from '../../../services/continuousIntelligenceService';
 
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
@@ -330,6 +336,11 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   // v40.0 FIX-10: force a re-render when localStorage changes from another tab
   // so the first-audit welcome correctly hides if dismissed in another tab.
   const [, forceRerender] = useState(0);
+  // Wave 7.1: continuous intelligence update banner state
+  const [intelligenceUpdate, setIntelligenceUpdate] = useState<IntelligenceUpdateResult | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => {
+    try { return !!sessionStorage.getItem('hp.iu.dismissed'); } catch { return false; }
+  });
   useEffect(() => {
     const load = () => fetchUserProfile().then(p => { if (p) setUserProfile(p); }).catch(() => {});
     load();
@@ -383,6 +394,32 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     window.addEventListener('hp.quickCapture.completed', handler);
     return () => window.removeEventListener('hp.quickCapture.completed', handler);
   }, [props.onRecalculate]);
+
+  // Wave 7.1: mark audit complete whenever result changes (new audit)
+  useEffect(() => {
+    if (result?.companyName) {
+      markAuditComplete(result.companyName);
+    }
+  }, [result]);
+
+  // Wave 7.1: check for intelligence updates since last audit
+  // Runs once on mount, after a 1.5s delay so the score reveal finishes first.
+  // Skipped if the user already dismissed the banner this session.
+  useEffect(() => {
+    if (bannerDismissed || !result?.companyName) return;
+    const timer = setTimeout(async () => {
+      try {
+        const update = await checkForIntelligenceUpdates(
+          result.companyName ?? companyData?.name ?? '',
+          result.total,
+        );
+        if (update.shouldPromptReaudit) {
+          setIntelligenceUpdate(update);
+        }
+      } catch { /* non-critical — silently swallow */ }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // v39.0 F4 — listen for cross-tab navigation events so child panels (e.g.
   // SummaryTab's "View all signal weights" link) can request a tab switch
@@ -496,6 +533,19 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             result={result}
           />
         </div>
+
+        {/* ── Wave 7.1: Intelligence update banner — new signals since last audit ── */}
+        {intelligenceUpdate && !bannerDismissed && (
+          <IntelligenceUpdateBanner
+            update={intelligenceUpdate}
+            companyName={companyData?.name ?? result.companyName ?? 'your company'}
+            onRecalculate={props.onRecalculate}
+            onDismiss={() => {
+              setBannerDismissed(true);
+              try { sessionStorage.setItem('hp.iu.dismissed', '1'); } catch { /* swallow */ }
+            }}
+          />
+        )}
 
         {/* ── Emergency banner — pinned above tab content ──────────────────── */}
         {adaptation.showEmergencyBanner && (
