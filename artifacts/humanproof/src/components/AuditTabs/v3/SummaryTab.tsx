@@ -96,10 +96,10 @@ const TopLeverBridge: React.FC<LeverBridgeProps> = ({ scoreSensitivity, currentS
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className="text-[9px] font-black tracking-wider" style={{ color: 'rgba(34,211,238,0.65)' }}>
+          <span className="text-[10px] font-black tracking-wider" style={{ color: 'rgba(34,211,238,0.65)' }}>
             TOP SCORE LEVER
           </span>
-          <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.30)' }}>
             {timeLabel}
           </span>
         </div>
@@ -112,7 +112,7 @@ const TopLeverBridge: React.FC<LeverBridgeProps> = ({ scoreSensitivity, currentS
           <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.50)' }}>→</span>
           <span className="text-[11px] font-black" style={{ color: '#22d3ee' }}>{projected}</span>
           <span
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
             style={{ background: 'rgba(34,211,238,0.10)', color: '#22d3ee' }}
           >
             −{topLever.scoreDropIfImproved} pts
@@ -341,14 +341,14 @@ const ScoreRangeHero: React.FC<{
           <span className="score-range-bound" style={{ color: 'rgba(255,255,255,0.55)' }}>
             {ciLow}
           </span>
-          <p className="text-[9px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>LOW</p>
+          <p className="text-[10px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>LOW</p>
         </div>
         <span className="pb-5 font-black text-xl" style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
         <div className="text-center">
           <span className="score-range-bound" style={{ color: worstColor }}>
             {ciHigh}
           </span>
-          <p className="text-[9px] font-mono mt-0.5" style={{ color: worstColor + 'aa' }}>HIGH</p>
+          <p className="text-[10px] font-mono mt-0.5" style={{ color: worstColor + 'aa' }}>HIGH</p>
         </div>
       </div>
 
@@ -383,8 +383,8 @@ const ScoreRangeHero: React.FC<{
 
       {/* Axis label */}
       <div className="score-range-labels flex justify-between mb-3">
-        <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>0</span>
-        <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>100</span>
+        <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>0</span>
+        <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>100</span>
       </div>
 
       {/* Primary message — exact spec text */}
@@ -407,7 +407,7 @@ const ScoreRangeHero: React.FC<{
       {/* Provenance */}
       <div className="mt-2 flex items-center gap-1.5">
         <span
-          className="text-[9px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-wide"
+          className="text-[10px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-wide"
           style={{
             background: 'rgba(251,191,36,0.10)',
             color: '#fbbf24',
@@ -439,13 +439,13 @@ const StatChip: React.FC<StatChipProps> = ({ label, value, sub, color = 'rgba(0,
   >
     <div className="flex items-center gap-1 mb-0.5">
       <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />
-      <span className="text-[9px] font-bold tracking-wider uppercase truncate"
+      <span className="text-[10px] font-bold tracking-wider uppercase truncate"
         style={{ color: 'rgba(255,255,255,0.35)' }}>
         {label}
       </span>
     </div>
     <span className="text-[15px] font-black leading-none" style={{ color }}>{value}</span>
-    {sub && <span className="text-[9px] truncate" style={{ color: 'rgba(255,255,255,0.30)' }}>{sub}</span>}
+    {sub && <span className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.30)' }}>{sub}</span>}
   </div>
 );
 
@@ -819,7 +819,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         key={`score-hero-${score}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl p-5 flex flex-col items-center text-center relative overflow-hidden"
+        className="rounded-2xl p-3 sm:p-5 flex flex-col items-center text-center relative overflow-hidden"
         style={{ background: riskGradient(score), border: `1px solid ${riskColor(score)}30` }}
       >
         {/* tier badge floating in corner */}
@@ -855,7 +855,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           <div className="mt-2 w-full">
             <button
               onClick={toggleScoreExplain}
-              className="mx-auto flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] px-2.5 py-1 rounded-full transition-all hover:opacity-80"
+              className="mx-auto flex items-center gap-1 text-[10px] font-bold tracking-[0.12em] px-2.5 py-1 rounded-full transition-all hover:opacity-80"
               style={{
                 background: scoreExplainOpen ? 'rgba(34,211,238,0.10)' : 'rgba(255,255,255,0.05)',
                 border: `1px solid ${scoreExplainOpen ? 'rgba(34,211,238,0.28)' : 'rgba(255,255,255,0.10)'}`,
@@ -878,14 +878,14 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
                     className="mt-2 rounded-xl px-3 py-2.5 text-left"
                     style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
                   >
-                    <p className="text-[8px] font-black tracking-[0.14em] mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                    <p className="text-[10px] font-black tracking-[0.14em] mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
                       HOW WE REACHED YOUR SCORE
                     </p>
                     <div className="space-y-2">
                       {topDrivers.slice(0, 3).map((d, i) => (
                         <div key={d.key} className="flex items-start gap-2">
                           <span
-                            className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
+                            className="text-[10px] font-black w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
                             style={{
                               background: 'rgba(255,255,255,0.06)',
                               color: riskColor(d.score),
@@ -897,24 +897,24 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.70)' }}>{d.label}</span>
                               <span
-                                className="text-[9px] font-black px-1.5 py-0.5 rounded"
+                                className="text-[10px] font-black px-1.5 py-0.5 rounded"
                                 style={{ background: riskColor(d.score) + '18', color: riskColor(d.score) }}
                               >
                                 {d.score}/100
                               </span>
                             </div>
-                            <p className="text-[9px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                            <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.42)' }}>
                               {d.why}
                             </p>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-2 pt-2 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                    <div className="mt-2 pt-2 flex items-center justify-between flex-wrap gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
                         Confidence: {confPct}% · {canonicalConf.primarySource}
                       </span>
-                      <span className="text-[8px] font-bold" style={{ color: canonicalConf.userFacing.color }}>
+                      <span className="text-[10px] font-bold" style={{ color: canonicalConf.userFacing.color }}>
                         {canonicalConf.userFacing.label}
                       </span>
                     </div>
@@ -962,7 +962,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
             <p className="text-[11px] font-bold" style={{ color: '#10b981' }}>
               {streakInfo.currentStreak}-week streak
             </p>
-            <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
               {streakInfo.currentStreak >= 4
                 ? 'Exceptional consistency — you\'re building real momentum.'
                 : 'Consistent action builds lasting career resilience.'}

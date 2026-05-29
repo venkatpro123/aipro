@@ -129,7 +129,7 @@ const PillarRow: React.FC<{
 
       {/* Status badge */}
       <span
-        className="text-[8px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+        className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
         style={{
           background: `${cfg.color}15`,
           color: cfg.color,
@@ -191,7 +191,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
         {/* Overall score row */}
         <div className="flex items-end gap-3 mb-2">
           <div>
-            <p className="text-[30px] font-black leading-none" style={{ color: grade.color }}>
+            <p className="text-2xl sm:text-[30px] font-black leading-none" style={{ color: grade.color }}>
               {compositeScore}
             </p>
             <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</p>

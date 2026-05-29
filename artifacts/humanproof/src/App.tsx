@@ -692,11 +692,21 @@ function AppFooter() {
   );
 }
 
+// Routes where the global mobile bottom nav should be hidden because the
+// feature has its own dedicated tab bar (LayoffAuditDashboardV3, etc.)
+const FEATURE_ROUTES = ['/terminal', '/leaderboard'];
+
 // ─── Main App Content ─────────────────────────────────────────────────────────
 function AppContent() {
   const { user } = useAuth();
+  const location  = useLocation();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
+
+  // Hide global nav on feature pages so we don't stack two bottom bars
+  const isFeaturePage = FEATURE_ROUTES.some(
+    r => location.pathname === r || location.pathname.startsWith(r + '/')
+  );
 
   useEffect(() => { applyWhiteLabelCssVars(getWhiteLabelConfig()); }, []);
 
@@ -798,8 +808,11 @@ function AppContent() {
       <PWAInstallPrompt />
       <AppFooter />
 
-      {/* Mobile bottom nav — hidden on ≥769px via CSS */}
-      <MobileBottomNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
+      {/* Global mobile bottom nav — hidden on ≥769px via CSS, and also
+          hidden on feature pages that have their own dedicated tab bar */}
+      {!isFeaturePage && (
+        <MobileBottomNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
+      )}
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <SonnerToaster position="bottom-right" richColors closeButton />

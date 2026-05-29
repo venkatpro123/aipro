@@ -218,7 +218,7 @@ const StickyCompanyHeader: React.FC<{
             style={{ background: color + '22', border: `1px solid ${color}40` }}
           >
             <span className="text-[12px] font-black" style={{ color }}>{score}</span>
-            <span className="text-[9px] font-bold tracking-wide" style={{ color: color + 'cc' }}>
+            <span className="text-[10px] font-bold tracking-wide" style={{ color: color + 'cc' }}>
               {riskLabel(score)}
             </span>
           </div>
@@ -267,7 +267,7 @@ const DesktopTabBar: React.FC<{
           <span className="text-[12px] font-semibold">{label}</span>
           {badge && (
             <span
-              className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
+              className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
               style={{ background: badge.color + '22', color: badge.color }}
             >
               {badge.text}
@@ -289,7 +289,7 @@ const MobileBottomNav: React.FC<{
   <div
     role="tablist"
     aria-label="Dashboard sections"
-    className="sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center"
+    className="sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-center"
     style={{
       background: 'rgba(9,12,20,0.96)',
       backdropFilter: 'blur(20px)',
@@ -323,7 +323,7 @@ const MobileBottomNav: React.FC<{
             <Icon className="w-5 h-5" />
             {badge && (
               <span
-                className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center text-[9px] font-black"
+                className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center text-[10px] font-black"
                 style={{ background: badge.color, color: '#fff', lineHeight: 1 }}
               >
                 {badge.text.replace(' critical', '').replace(' live', '')}
@@ -620,7 +620,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 <p className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>
                   {reEngagementTrigger.headline}
                 </p>
-                <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
                   {reEngagementTrigger.subtext}
                 </p>
               </div>
@@ -631,7 +631,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                     clearReEngagementState();
                     props.onRecalculate?.();
                   }}
-                  className="flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-lg transition-all hover:scale-[1.03]"
+                  className="flex-shrink-0 text-[10px] font-bold px-2 py-1 rounded-lg transition-all hover:scale-[1.03]"
                   style={{ background: 'rgba(34,211,238,0.14)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.28)' }}
                 >
                   {reEngagementTrigger.ctaLabel}

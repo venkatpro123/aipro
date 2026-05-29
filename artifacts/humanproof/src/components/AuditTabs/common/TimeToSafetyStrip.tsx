@@ -161,9 +161,9 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-black" style={{ color: currentColor }}>{currentScore}</span>
-          <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→</span>
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→</span>
           <span className="text-[10px] font-black" style={{ color: safeColor }}>{SAFE_THRESHOLD}</span>
-          <span className="text-[9px] ml-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <span className="text-[10px] ml-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
             ~{totalWeeks}wk
           </span>
         </div>
@@ -199,23 +199,23 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 {/* Content */}
                 <div className="flex-1 pb-2 min-w-0">
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
                       Wk {m.week}
                     </span>
                     <span className="text-[11px] font-black" style={{ color: m.isSafetyReached ? safeColor : scoreColor(m.scoreAfter) }}>
                       {m.scoreAfter}
                     </span>
-                    <span className="text-[9px]" style={{ color: '#10b981aa' }}>
+                    <span className="text-[10px]" style={{ color: '#10b981aa' }}>
                       −{m.drop.toFixed(1)} pts
                     </span>
                     {m.isSafetyReached && (
-                      <span className="flex items-center gap-0.5 text-[8px] font-black px-1.5 py-0.5 rounded"
+                      <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded"
                         style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}>
                         <CheckCircle2 className="w-2.5 h-2.5" />MODERATE
                       </span>
                     )}
                   </div>
-                  <p className="text-[9px] leading-tight" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                  <p className="text-[10px] leading-tight" style={{ color: 'rgba(255,255,255,0.42)' }}>
                     {truncate(m.action, 52)}
                   </p>
                 </div>
@@ -232,14 +232,14 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 </div>
                 <div className="flex-1 pb-2 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>Wk {totalWeeks}*</span>
+                    <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>Wk {totalWeeks}*</span>
                     <span className="text-[11px] font-black" style={{ color: '#10b981' }}>{SAFE_THRESHOLD}</span>
-                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded"
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded"
                       style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
                       PROJECTED
                     </span>
                   </div>
-                  <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
                     *Extrapolated from action pace
                   </p>
                 </div>
@@ -265,7 +265,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
 
       {/* Footer note */}
       <div className="px-4 pb-3">
-        <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
           Based on your top score levers. Assumes one major action completed per 4-week cycle.
         </p>
       </div>

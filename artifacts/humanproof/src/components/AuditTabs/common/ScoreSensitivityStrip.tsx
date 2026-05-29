@@ -83,7 +83,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
                     <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>{current}</span>
                     <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
                     <span className="text-[11px] font-black" style={{ color: '#22d3ee' }}>{projected}</span>
-                    <span className="text-[9px]" style={{ color: 'rgba(34,211,238,0.60)' }}>
+                    <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.60)' }}>
                       −{lever.scoreDropIfImproved}
                     </span>
                   </div>
@@ -92,7 +92,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
                 <p className="text-[10px] leading-snug mb-0.5" style={{ color: 'rgba(255,255,255,0.48)' }}>
                   {lever.fastestAction.length > 90 ? lever.fastestAction.slice(0, 90) + '…' : lever.fastestAction}
                 </p>
-                <span className="text-[9px] font-semibold" style={{ color: fColor }}>
+                <span className="text-[10px] font-semibold" style={{ color: fColor }}>
                   {lever.actionTimeframe}
                 </span>
               </div>

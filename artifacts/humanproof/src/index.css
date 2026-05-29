@@ -6090,6 +6090,7 @@ number-flow,
   justify-content: center;
   padding: 16px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .profile-modal-card {
@@ -6263,6 +6264,7 @@ number-flow,
 
 .profile-btn-back {
   padding: 10px 16px;
+  min-height: 44px;
   border-radius: 8px;
   background: transparent;
   color: rgba(255,255,255,0.70);
@@ -6274,6 +6276,7 @@ number-flow,
 
 .profile-btn-skip {
   padding: 10px 14px;
+  min-height: 44px;
   border-radius: 8px;
   background: transparent;
   color: rgba(255,255,255,0.35);
@@ -6284,6 +6287,7 @@ number-flow,
 
 .profile-btn-primary {
   padding: 10px 22px;
+  min-height: 44px;
   border-radius: 8px;
   background: var(--cyan, #00d4e0);
   color: #000;
@@ -6918,6 +6922,70 @@ number-flow,
   top: 0; left: 0; right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(0,212,224,0.35), transparent);
+}
+
+/* ============================================================================
+   MOBILE UX POLISH v34.0 — T4 / T5 ADDITIONS
+   Agent network grid collapse + iOS scroll + compact breakpoints
+   ============================================================================ */
+
+/* T4: iOS Safari smooth scroll + safe area */
+@media (max-width: 768px) {
+  .tab-content-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .dashboard-container {
+    padding-bottom: calc(var(--nav-bottom-h, 64px) + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+}
+
+/* T5: Agent network grid — responsive at 480px */
+@media (max-width: 480px) {
+  .agent-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .agent-category-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .agent-node-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .agent-category-cell {
+    padding: 6px 8px !important;
+  }
+  .dual-gauge-container {
+    gap: 16px !important;
+  }
+  .recovery-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .warn-steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .transparency-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* T5: Extra-compact breakpoint — iPhone SE (≤390px) */
+@media (max-width: 390px) {
+  .score-hero-card {
+    padding: 12px !important;
+  }
+  .stat-chip-row {
+    gap: 6px !important;
+  }
+  .phase-block-header {
+    padding: 10px 12px !important;
+  }
+  .agent-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .agent-node-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 /* ── End of v46.0 additions ──────────────────────────────────────────────── */

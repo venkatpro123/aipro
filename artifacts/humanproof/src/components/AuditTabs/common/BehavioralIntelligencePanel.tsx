@@ -174,7 +174,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
         </div>
         <div className="text-right">
           <p className="text-[22px] font-black" style={{ color }}>{score}</p>
-          <p className="text-[8px]" style={{ color: 'rgba(255,255,255,0.30)' }}>/100</p>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>/100</p>
         </div>
       </div>
 
@@ -218,7 +218,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
               {data.gapAreas.map((gap, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className={`text-[8px] px-1 py-0.5 rounded capitalize ${
+                    <span className={`text-[10px] px-1 py-0.5 rounded capitalize ${
                       gap.severity === 'critical' ? 'bg-red-500/15 text-red-400' :
                       gap.severity === 'moderate' ? 'bg-amber-500/15 text-amber-400' :
                       'bg-slate-500/15 text-slate-400'
@@ -273,13 +273,13 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
       <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.68)' }}>
         {data.searchImplication}
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="text-[8px] mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>MARKET MIDPOINT</p>
+          <p className="text-[10px] mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>MARKET MIDPOINT</p>
           <p className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>{data.marketMidpoint}</p>
         </div>
         <div className="rounded-lg p-2" style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
-          <p className="text-[8px] mb-0.5" style={{ color: `${color}70` }}>SEARCH TARGET</p>
+          <p className="text-[10px] mb-0.5" style={{ color: `${color}70` }}>SEARCH TARGET</p>
           <p className="text-[12px] font-bold" style={{ color }}>{data.targetCompRange}</p>
         </div>
       </div>

@@ -98,7 +98,9 @@ function buildTickerItems() {
 
 const GLOBE_CSS = `
 /* ── root: fixed, full-viewport, NO SCROLL ───────────────── */
-.gal-root{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#0a1b34 0%,#061224 40%,#03060d 100%);font-family:"Inter",-apple-system,system-ui,sans-serif;color:#e9f3ff;letter-spacing:.01em;z-index:9999}
+/* Use dvh on modern browsers (avoids iOS Safari bottom-bar expansion bug);
+   fall back to 100vh on browsers that don't support dvh yet */
+.gal-root{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,#0a1b34 0%,#061224 40%,#03060d 100%);font-family:"Inter",-apple-system,system-ui,sans-serif;color:#e9f3ff;letter-spacing:.01em;z-index:9999;height:100vh;height:100dvh}
 
 /* ── background layers (all absolutely-positioned, no layout impact) ── */
 .gal-stars{position:absolute;inset:0;width:100%;height:100%;z-index:0}
@@ -140,7 +142,8 @@ const GLOBE_CSS = `
 
 /* ── 3-column body — THE ONLY LAYOUT REGION ──────────────── */
 /* Fills everything below the header; overflow:hidden is MANDATORY */
-.gal-body{position:absolute;left:0;right:0;top:86px;bottom:0;overflow:hidden;display:flex;flex-direction:row;align-items:stretch;padding:6px 10px 8px;gap:8px;z-index:2}
+/* padding-bottom uses safe-area-inset-bottom so content clears iOS home indicator */
+.gal-body{position:absolute;left:0;right:0;top:86px;bottom:0;overflow:hidden;display:flex;flex-direction:row;align-items:stretch;padding:6px 10px calc(8px + env(safe-area-inset-bottom,0px));gap:8px;z-index:2}
 
 /* ── columns: all must have min-height:0 min-width:0 overflow:hidden ── */
 .gal-left-col{flex:0 0 218px;display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0;overflow:hidden}
@@ -153,7 +156,7 @@ const GLOBE_CSS = `
 /*   width: min(center-col width, --gal-avh, 700px)                    */
 /*   aspect-ratio:1 then makes height = width → always square ✓        */
 /*   Desktop budget: body-top(86)+v-pad(14)+gap(8)+panel(70) = 178px  */
-.gal-composition{flex-shrink:0;position:relative;z-index:2;--gal-avh:calc(100vh - 178px);width:min(100%, var(--gal-avh), 700px);aspect-ratio:1;align-self:center;display:grid;place-items:center;overflow:hidden;animation:galFade 700ms cubic-bezier(.2,.8,.2,1) both}
+.gal-composition{flex-shrink:0;position:relative;z-index:2;--gal-avh:calc(100vh - 178px);--gal-avh:calc(100dvh - 178px);width:min(100%, var(--gal-avh), 700px);aspect-ratio:1;align-self:center;display:grid;place-items:center;overflow:hidden;animation:galFade 700ms cubic-bezier(.2,.8,.2,1) both}
 @keyframes galFade{from{opacity:0}to{opacity:1}}
 .gal-halo{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(111,216,255,.20) 0%,rgba(111,216,255,.08) 28%,rgba(111,216,255,0) 55%);filter:blur(6px);animation:galHalo 6s ease-in-out infinite;pointer-events:none}
 @keyframes galHalo{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
@@ -257,7 +260,7 @@ const GLOBE_CSS = `
   .gal-glabel,.gal-gsub{display:none}
   .gal-center-col{flex:1 1 0;min-height:0}
   /* composition: recalculate --gal-avh for stacked layout */
-  .gal-composition{--gal-avh:calc(100vh - 226px)}
+  .gal-composition{--gal-avh:calc(100vh - 226px);--gal-avh:calc(100dvh - 226px)}
   .gal-hud{display:none}
 }
 
@@ -268,8 +271,8 @@ const GLOBE_CSS = `
   .gal-topbar{top:8px;padding:5px 10px;gap:8px}
   .gal-engine .sub,.gal-divider,.gal-phases{display:none}
   .gal-ticker{top:48px;height:22px;width:calc(100vw - 16px)}
-  .gal-body{top:78px;padding:4px 6px 4px}
-  .gal-composition{--gal-avh:calc(100vh - 145px)}
+  .gal-body{top:78px;padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px))}
+  .gal-composition{--gal-avh:calc(100vh - 145px);--gal-avh:calc(100dvh - 145px)}
   .gal-panel{border-radius:10px;padding:8px 12px 7px}
   .gal-status-text{font-size:11px}
   .gal-meta{font-size:8.5px;gap:6px}
@@ -278,8 +281,8 @@ const GLOBE_CSS = `
 /* 400px: minimum — strip meta, tightest possible padding */
 /* Budget: body-top(78)+v-pad(6)+gap(4)+panel(46) = 134px */
 @media(max-width:400px){
-  .gal-body{padding:2px 4px 4px}
-  .gal-composition{--gal-avh:calc(100vh - 134px)}
+  .gal-body{padding:2px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+  .gal-composition{--gal-avh:calc(100vh - 134px);--gal-avh:calc(100dvh - 134px)}
   .gal-panel{padding:6px 10px 5px}
   .gal-meta{display:none}
   .gal-status-text{font-size:10px}

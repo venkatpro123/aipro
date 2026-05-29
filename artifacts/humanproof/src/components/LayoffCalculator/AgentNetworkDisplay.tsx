@@ -189,6 +189,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
 
       {/* Stats Row */}
       <div
+        className="agent-stats-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -276,6 +277,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
       {/* Category Breakdown */}
       {categoryBreakdown && (
         <div
+          className="agent-category-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
@@ -286,6 +288,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
           {Object.entries(categoryBreakdown).map(([cat, val]) => (
             <div
               key={cat}
+              className="agent-category-cell"
               style={{
                 background: `${getCategoryColor(cat)}10`,
                 border: `1px solid ${getCategoryColor(cat)}30`,
@@ -318,6 +321,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
       {/* Agent Display */}
       {viewMode === "grid" ? (
         <div
+          className="agent-node-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(5, 1fr)",

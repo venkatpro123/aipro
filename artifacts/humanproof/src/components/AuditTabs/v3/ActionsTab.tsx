@@ -432,8 +432,8 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             </div>
           </div>
 
-          {/* Key facts row */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          {/* Key facts row — stacks to 1-col on mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
             {warnAffected > 0 && (
               <div
                 className="rounded-xl px-3 py-2"

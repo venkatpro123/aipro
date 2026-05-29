@@ -40,9 +40,17 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
   const ringColor = score >= 75 ? '#dc2626' : score >= 50 ? '#f97316' : score >= 35 ? '#f59e0b' : '#10b981';
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+    // clamp: 100px on tiny phones, 28vw on medium, 140px max
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: 'clamp(100px, 28vw, 140px)', height: 'clamp(100px, 28vw, 140px)' }}
+    >
       {/* Background ring */}
-      <svg width="140" height="140" style={{ position: 'absolute', top: 0, left: 0 }}>
+      <svg
+        width="100%" height="100%"
+        viewBox="0 0 140 140"
+        style={{ position: 'absolute', top: 0, left: 0 }}
+      >
         <circle
           cx="70" cy="70" r={radius}
           fill="none"
@@ -72,10 +80,10 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
             to={score}
             duration={1000}
             className="font-black"
-            style={{ fontSize: 38, color: 'rgba(255,255,255,0.95)', lineHeight: 1 }}
+            style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'rgba(255,255,255,0.95)', lineHeight: 1 }}
           />
         ) : (
-          <span style={{ fontSize: 38, color: 'rgba(255,255,255,0.0)', fontWeight: 900 }}>—</span>
+          <span style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'rgba(255,255,255,0.0)', fontWeight: 900 }}>—</span>
         )}
         <p className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.40)', marginTop: 2 }}>
           RISK SCORE
@@ -155,7 +163,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
               <p className="text-lg font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {companyName}
               </p>
-              <div className="flex items-center gap-5">
+              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
                 {[
                   { icon: Zap, label: `${liveSignalCount || '47'}`, sub: 'live signals' },
                   { icon: Shield, label: `${confidencePercent || '74'}%`, sub: 'confidence' },

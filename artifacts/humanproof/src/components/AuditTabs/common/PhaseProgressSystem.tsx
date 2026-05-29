@@ -143,23 +143,23 @@ const CheckItem: React.FC<{
           {action.title}
         </p>
         {!isCompleted && action.description && (
-          <p className="text-[9px] mt-0.5 line-clamp-2" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] mt-0.5 line-clamp-2" style={{ color: 'rgba(255,255,255,0.38)' }}>
             {action.description}
           </p>
         )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
             style={{ background: `${priorityColor}15`, color: priorityColor }}>
             {action.priority}
           </span>
           {(action as any).effortBadge && (
-            <span className="text-[8px]" style={{ color: 'rgba(34,211,238,0.55)' }}>
+            <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.55)' }}>
               <Clock className="w-2.5 h-2.5 inline mr-0.5" />
               {(action as any).effortBadge}
             </span>
           )}
           {action.riskReductionPct > 0 && (
-            <span className="text-[8px]" style={{ color: 'rgba(16,185,129,0.55)' }}>
+            <span className="text-[10px]" style={{ color: 'rgba(16,185,129,0.55)' }}>
               −{action.riskReductionPct}% risk
             </span>
           )}
@@ -228,7 +228,7 @@ const PhaseBlock: React.FC<{
             <span className="text-[10px] font-black" style={{ color: cfg.accent }}>
               PHASE {phase} UNLOCKED!
             </span>
-            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
               {cfg.desc} — {total} new action{total !== 1 ? 's' : ''} available
             </span>
           </motion.div>
@@ -256,12 +256,12 @@ const PhaseBlock: React.FC<{
         {/* Phase info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[9px] font-black tracking-[0.15em]"
+            <span className="text-[10px] font-black tracking-[0.15em]"
               style={{ color: unlocked ? cfg.accent : 'rgba(255,255,255,0.25)' }}>
               PHASE {phase}: {cfg.label}
             </span>
             {isComplete && (
-              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                 style={{ background: 'rgba(16,185,129,0.18)', color: '#10b981' }}>
                 ✓ DONE
               </span>
@@ -407,7 +407,7 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
             ACTION PROGRESS
           </p>
           {companyName && (
-            <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
               {companyName} · {totalCompleted} completed
             </p>
           )}

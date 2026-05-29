@@ -302,8 +302,8 @@ interface AuditEvent {
 const AuditTrail: React.FC<{ events: AuditEvent[] }> = ({ events }) => {
   return (
     <div className="audit-trail glass-panel overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto -mx-0">
+        <table className="w-full min-w-[480px]">
           <thead>
             <tr className="bg-white/5 border-b border-white/10">
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Event Marker</th>
@@ -407,7 +407,7 @@ const SourceProvenanceTable: React.FC<{
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[480px]">
           <thead>
             <tr className="border-b border-white/10">
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Origin Entity</th>
@@ -810,7 +810,7 @@ const EffectiveWeightsPanel: React.FC<{
         </div>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full text-[11px]">
+        <table className="w-full min-w-[480px] text-[11px]">
           <thead>
             <tr className="bg-white/5 border-b border-white/10">
               <th className="text-left py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Layer</th>

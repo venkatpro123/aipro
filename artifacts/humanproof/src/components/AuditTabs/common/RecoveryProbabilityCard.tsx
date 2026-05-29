@@ -88,24 +88,24 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
         </span>
       </div>
 
-      {/* 2-column odds comparison */}
-      <div className="grid grid-cols-2 gap-3 px-4 py-3">
+      {/* 2-column odds comparison — stacks to 1-col on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4 py-3">
         {/* Without action */}
         <div
           className="rounded-xl px-3 py-2.5 text-center"
           style={{ background: `${color}09`, border: `1px solid ${color}22` }}
         >
-          <p className="text-[8px] font-bold mb-1" style={{ color: `${color}77` }}>
+          <p className="text-[10px] font-bold mb-1" style={{ color: `${color}77` }}>
             WITHOUT ACTION
           </p>
           <p className="text-[26px] font-black leading-none mb-0.5" style={{ color }}>
             {fmtPct(withoutAction)}
           </p>
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
             forced exit risk
           </p>
           {survival.framedAs1InX && (
-            <p className="text-[8px] mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
               {survival.framedAs1InX}
             </p>
           )}
@@ -116,18 +116,18 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           className="rounded-xl px-3 py-2.5 text-center relative"
           style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}
         >
-          <p className="text-[8px] font-bold mb-1" style={{ color: 'rgba(16,185,129,0.60)' }}>
+          <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(16,185,129,0.60)' }}>
             WITH PHASE 1
           </p>
           <p className="text-[26px] font-black leading-none mb-0.5" style={{ color: '#10b981' }}>
             {fmtPct(withPhase1)}
           </p>
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
             forced exit risk
           </p>
           {/* Reduction badge */}
           <div
-            className="absolute -top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-black"
+            className="absolute -top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-black"
             style={{ background: 'rgba(16,185,129,0.20)', color: '#10b981', border: '1px solid rgba(16,185,129,0.35)' }}
           >
             −{reductionPct}%
@@ -145,7 +145,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           <p className="text-[10px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
             Taking the {criticalActionCount > 0 ? `${criticalActionCount} critical action${criticalActionCount !== 1 ? 's' : ''}` : 'Phase 1 actions'} below cuts your risk by {reductionPct}%
           </p>
-          <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
             From {fmtPct(withoutAction)} → {fmtPct(withPhase1)} forced exit probability
           </p>
         </div>
@@ -155,7 +155,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
       {survival.peerLayoffRate && (
         <div className="flex items-center gap-1.5 px-4 pb-3">
           <Users className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }} />
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
             {survival.peerLayoffRate}
           </p>
         </div>

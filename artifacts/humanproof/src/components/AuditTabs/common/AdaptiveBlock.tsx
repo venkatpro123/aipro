@@ -59,7 +59,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
         onClick={toggle}
         disabled={empty}
         aria-expanded={open}
-        className="w-full px-4 py-3.5 flex items-center gap-3 text-left min-h-[52px] sm:min-h-0"
+        className="w-full px-3 py-3 sm:px-4 sm:py-3.5 flex items-center gap-2 sm:gap-3 text-left min-h-[48px]"
         style={{ cursor: empty ? 'default' : 'pointer' }}
       >
         {/* Accent rail */}
@@ -94,7 +94,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
         </div>
         {badge && !empty && (
           <span
-            className="text-[9px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
+            className="text-[10px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
             style={{
               background: (badgeColor ?? accentColor) + '22',
               color: badgeColor ?? accentColor,
