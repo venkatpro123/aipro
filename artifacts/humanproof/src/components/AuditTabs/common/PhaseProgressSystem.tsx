@@ -14,7 +14,7 @@
 //
 // Integration: placed at the top of ActionsTab, above the existing ActionMatrix.
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check, Lock, ChevronDown, ChevronUp, Zap, Calendar, BarChart3, Clock,
@@ -89,11 +89,12 @@ const CheckItem: React.FC<{
         opacity: phaseUnlocked ? 1 : 0.4,
       }}
     >
-      {/* Checkbox — min 44×44px touch target (Wave 9.3) */}
+      {/* Checkbox — min 44×44px touch target (Wave 9.3)
+           Spring-bounce animation on check: scale 0 → 1.2 → 1.0 over 0.28s */}
       <button
         onClick={phaseUnlocked ? onToggle : undefined}
         disabled={!phaseUnlocked}
-        className="flex-shrink-0 flex items-center justify-center transition-all"
+        className="flex-shrink-0 flex items-center justify-center"
         style={{
           cursor: phaseUnlocked ? 'pointer' : 'not-allowed',
           minWidth: 44,
@@ -106,15 +107,28 @@ const CheckItem: React.FC<{
         }}
         aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
       >
-        <div
-          className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
-          style={{
+        <motion.div
+          className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+          animate={{
             borderColor: isCompleted ? '#10b981' : `${priorityColor}50`,
-            background: isCompleted ? '#10b981' : 'transparent',
+            background:  isCompleted ? '#10b981' : 'transparent',
+            scale: isCompleted ? [1, 1.22, 1.0] : 1,
           }}
+          transition={{ duration: 0.28, ease: [0.34, 1.56, 0.64, 1] }}
         >
-          {isCompleted && <Check className="w-3 h-3" style={{ color: '#fff' }} />}
-        </div>
+          <AnimatePresence>
+            {isCompleted && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ duration: 0.18, ease: [0.34, 1.56, 0.64, 1] }}
+              >
+                <Check className="w-3 h-3" style={{ color: '#fff' }} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </button>
 
       {/* Content */}
@@ -171,8 +185,15 @@ const PhaseBlock: React.FC<{
   defaultOpen: boolean;
   onToggle: (id: string) => void;
   completedCount: number;
-}> = ({ phase, actions, completedIds, unlocked, defaultOpen, onToggle, completedCount }) => {
+  /** When true, plays a brief "Phase N Unlocked!" flash animation on mount */
+  justUnlocked?: boolean;
+}> = ({ phase, actions, completedIds, unlocked, defaultOpen, onToggle, completedCount, justUnlocked }) => {
   const [open, setOpen] = useState(defaultOpen);
+  // Auto-open when this is the just-unlocked phase so the user sees their new actions
+  useEffect(() => {
+    if (justUnlocked && unlocked) setOpen(true);
+  }, [justUnlocked, unlocked]);
+
   const cfg = PHASE_CONFIG[phase];
   const Icon = cfg.icon;
   const total = actions.length;
@@ -189,6 +210,30 @@ const PhaseBlock: React.FC<{
         filter: unlocked ? 'none' : 'saturate(0)',
       }}
     >
+      {/* Phase unlock celebration flash — appears for 1.8s when a phase first unlocks */}
+      <AnimatePresence>
+        {justUnlocked && unlocked && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="flex items-center gap-2 px-4 py-2"
+            style={{
+              background: `linear-gradient(90deg, ${cfg.accent}18, ${cfg.accent}08)`,
+              borderBottom: `1px solid ${cfg.accent}25`,
+            }}
+          >
+            <span className="text-[11px]" role="img" aria-label="unlocked">🔓</span>
+            <span className="text-[10px] font-black" style={{ color: cfg.accent }}>
+              PHASE {phase} UNLOCKED!
+            </span>
+            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              {cfg.desc} — {total} new action{total !== 1 ? 's' : ''} available
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Phase header */}
       <button
         onClick={() => unlocked && setOpen(o => !o)}
@@ -304,6 +349,32 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
   const phase2Unlocked = p1Completed >= Math.max(1, Math.ceil(phase1.length * 0.5));
   const phase3Unlocked = p2Completed >= Math.max(1, Math.ceil(phase2.length * 0.5));
 
+  // Phase unlock celebration: track whether each phase just transitioned to unlocked
+  // within this session. useRef gives us previous values without re-rendering.
+  const prevP2Unlocked = useRef(phase2Unlocked);
+  const prevP3Unlocked = useRef(phase3Unlocked);
+  const [phase2JustUnlocked, setPhase2JustUnlocked] = useState(false);
+  const [phase3JustUnlocked, setPhase3JustUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (!prevP2Unlocked.current && phase2Unlocked) {
+      setPhase2JustUnlocked(true);
+      // Clear the flash after 4s so it doesn't persist forever
+      const t = setTimeout(() => setPhase2JustUnlocked(false), 4000);
+      return () => clearTimeout(t);
+    }
+    prevP2Unlocked.current = phase2Unlocked;
+  }, [phase2Unlocked]);
+
+  useEffect(() => {
+    if (!prevP3Unlocked.current && phase3Unlocked) {
+      setPhase3JustUnlocked(true);
+      const t = setTimeout(() => setPhase3JustUnlocked(false), 4000);
+      return () => clearTimeout(t);
+    }
+    prevP3Unlocked.current = phase3Unlocked;
+  }, [phase3Unlocked]);
+
   const totalCompleted = p1Completed + p2Completed + p3Completed;
 
   const handleToggle = useCallback((id: string) => {
@@ -374,6 +445,7 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
           defaultOpen={phase2Unlocked && p1Completed >= phase1.length}
           onToggle={handleToggle}
           completedCount={p2Completed}
+          justUnlocked={phase2JustUnlocked}
         />
       )}
 
@@ -387,6 +459,7 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
           defaultOpen={false}
           onToggle={handleToggle}
           completedCount={p3Completed}
+          justUnlocked={phase3JustUnlocked}
         />
       )}
     </div>

@@ -764,29 +764,44 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
-      {/* v39.0 F2 — Emergency callout PRECEDES the score hero in emergency
-          mode. Previously the user saw a number and had to interpret risk
-          themselves; now the alert framing comes first so the score is read
-          in the right emotional context. */}
+      {/* v39.0 F2 + v35.1 empathetic rewrite — Emergency guide card PRECEDES score hero.
+          Framing matters: user sees "you're ahead" narrative before the score number,
+          so the number is read as data, not as alarm.
+          Includes direct CTA to Action Plan tab (highest-ROI tab in emergency mode). */}
       {adaptation.mode === 'emergency' && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="signal-card"
-          data-tone="red"
-          style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}
+          className="rounded-2xl px-4 py-3"
+          style={{
+            background: (result as any).warnSignal?.hasActiveWARN
+              ? 'linear-gradient(135deg, rgba(220,38,38,0.10), rgba(153,27,27,0.06))'
+              : 'rgba(220,38,38,0.07)',
+            border: '1px solid rgba(220,38,38,0.28)',
+          }}
         >
-          <div className="audit-step-dot active" style={{ width: 8, height: 8, marginTop: 4, flexShrink: 0 }} />
-          <div>
-            <div style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--red)', marginBottom: 'var(--space-1)', fontWeight: 800 }}>
-              Emergency Mode · Action Plan Tab Primary
+          <div className="flex items-start gap-3">
+            <div className="audit-step-dot active" style={{ width: 8, height: 8, marginTop: 5, flexShrink: 0 }} />
+            <div className="flex-1 min-w-0">
+              <div style={{ fontSize: '0.58rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--red)', marginBottom: 4, fontWeight: 800 }}>
+                {(result as any).warnSignal?.hasActiveWARN ? 'LEGAL NOTICE DETECTED' : 'HIGH RISK · AHEAD OF 90%+ WHO FACE THIS'}
+              </div>
+              <p style={{ fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--text-2)', marginBottom: 8 }}>
+                {(result as any).warnSignal?.hasActiveWARN
+                  ? 'A WARN Act filing is confirmed — a legal 60-day advance notice for your company. Your Action Plan has been updated with time-sensitive steps.'
+                  : 'You\'re discovering this risk months early. Most people find out 2 weeks before layoffs. That gap is your advantage — use it.'}
+              </p>
+              <button
+                onClick={() => {
+                  try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
+                }}
+                className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
+                style={{ background: 'rgba(220,38,38,0.20)', color: '#fca5a5', border: '1px solid rgba(220,38,38,0.35)' }}
+              >
+                Open Action Plan →
+              </button>
             </div>
-            <p style={{ fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--text-2)' }}>
-              {(result as any).warnSignal?.hasActiveWARN
-                ? 'A WARN Act filing has been detected — this is a legally-confirmed layoff signal. Open the Action Plan tab immediately.'
-                : `Risk score ${score} sits in the critical band. The Action Plan tab has been promoted; review immediate-7-day actions first, score-context second.`}
-            </p>
           </div>
         </motion.div>
       )}
