@@ -59,29 +59,74 @@ const RING_SIZE = 172; // internal SVG coordinate system (CSS handles display si
 const RING_R    = (RING_SIZE - 14) / 2;
 const RING_CIRC = 2 * Math.PI * RING_R;
 
+// Wave 6.3: Trend direction arrow rendered at 6-o'clock position inside the ring.
+const TREND_ARROW: Record<string, { sym: string; color: string }> = {
+  accelerating_risk: { sym: '↑', color: '#dc2626' },
+  deteriorating:     { sym: '↑', color: '#f97316' },
+  stable:            { sym: '→', color: 'rgba(255,255,255,0.40)' },
+  improving:         { sym: '↓', color: '#10b981' },
+};
+
 const ScoreRingHero: React.FC<{
   score: number;
   confidence: number;
   calibrationMode?: string;
-}> = ({ score, confidence, calibrationMode }) => {
+  // Wave 6.3 upgrades:
+  ciLow?: number;          // CI lower bound — renders translucent shadow arc
+  ciHigh?: number;         // CI upper bound
+  trendDirection?: string; // 'accelerating_risk' | 'deteriorating' | 'stable' | 'improving'
+}> = ({ score, confidence, calibrationMode, ciLow, ciHigh, trendDirection }) => {
   const color = riskColor(score);
   const label = riskLabel(score);
+  const trend = trendDirection ? TREND_ARROW[trendDirection] : undefined;
+
+  // CI shadow arc: render the confidence interval as a faint amber band
+  // behind the main arc. Clamps to [0, 100] so it never exceeds the ring.
+  const hasCIShadow = ciLow != null && ciHigh != null && (ciHigh - ciLow) < 80;
+  const ciShadowOffset  = hasCIShadow ? RING_CIRC - ((ciHigh! / 100) * RING_CIRC) : RING_CIRC;
+  const ciShadowLength  = hasCIShadow ? ((ciHigh! - ciLow!) / 100) * RING_CIRC    : 0;
 
   return (
     <div className="flex flex-col items-center">
       {/* .score-hero-ring uses CSS clamp for responsive sizing */}
       <div className="score-hero-ring">
-        <div className="absolute inset-0 rounded-full" style={{ boxShadow: `0 0 44px ${color}28` }} />
+        {/* Pulsing ambient glow — animates once on mount then settles */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          initial={{ boxShadow: `0 0 28px ${color}00` }}
+          animate={{
+            boxShadow: [
+              `0 0 28px ${color}00`,
+              `0 0 52px ${color}42`,
+              `0 0 38px ${color}28`,
+            ],
+          }}
+          transition={{ duration: 1.2, ease: 'easeOut', times: [0, 0.5, 1] }}
+        />
         <svg
           viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
           className="-rotate-90"
           role="img"
           aria-label={`Risk score ${score} out of 100 — ${label}`}
         >
+          {/* Track ring */}
           <circle
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
             fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={10}
           />
+          {/* Wave 6.3: CI confidence shadow arc — renders the uncertainty band */}
+          {hasCIShadow && (
+            <circle
+              cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+              fill="none"
+              stroke="rgba(245,158,11,0.18)"
+              strokeWidth={14}
+              strokeLinecap="round"
+              strokeDasharray={`${ciShadowLength} ${RING_CIRC - ciShadowLength}`}
+              strokeDashoffset={ciShadowOffset}
+            />
+          )}
+          {/* Main score arc */}
           <motion.circle
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
             fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
@@ -105,6 +150,18 @@ const ScoreRingHero: React.FC<{
           <span style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
             /100
           </span>
+          {/* Wave 6.3: Trend arrow at 6-o'clock — direction of risk change */}
+          {trend && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              style={{ fontSize: '0.75rem', fontWeight: 900, color: trend.color, lineHeight: 1, marginTop: 1 }}
+              aria-label={`Risk is ${trendDirection?.replace('_', ' ')}`}
+            >
+              {trend.sym}
+            </motion.span>
+          )}
         </div>
       </div>
 
@@ -658,7 +715,14 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
         {/* Gate: if CI range > 50 or confidence < 20%, show range instead of point score */}
         {scoreSufficiency.sufficient
-          ? <ScoreRingHero score={score} confidence={confPct} calibrationMode={calibrationMode} />
+          ? <ScoreRingHero
+              score={score}
+              confidence={confPct}
+              calibrationMode={calibrationMode}
+              ciLow={scoreSufficiency.ciLow}
+              ciHigh={scoreSufficiency.ciHigh}
+              trendDirection={r.scoreTrajectory?.trajectoryDirection}
+            />
           : <ScoreRangeHero gate={scoreSufficiency} />
         }
         {/* Verdict line — suppressed when range is shown (it would imply a tier) */}
