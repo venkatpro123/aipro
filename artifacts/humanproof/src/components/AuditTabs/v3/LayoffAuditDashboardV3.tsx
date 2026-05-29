@@ -111,7 +111,7 @@ const TAB_CONFIG: TabConfig[] = [
   {
     value: 'summary',
     label: 'Summary',
-    shortLabel: 'Brief',
+    shortLabel: 'Summary',
     Icon: TrendingUp,
     getBadge: (r) => {
       const c = riskColor(r.total);
@@ -121,13 +121,13 @@ const TAB_CONFIG: TabConfig[] = [
   {
     value: 'company',
     label: 'Company',
-    shortLabel: 'Co.',
+    shortLabel: 'Company',
     Icon: Building2,
     getBadge: (r: any) => {
       const warnActive = r.warnSignal?.hasActiveWARN === true;
       if (warnActive) return { text: 'WARN', color: '#dc2626' };
       const rounds = r.companyData?.layoffRounds ?? 0;
-      if (rounds >= 2) return { text: `${rounds}× layoffs`, color: '#f97316' };
+      if (rounds >= 2) return { text: `${rounds}×`, color: '#f97316' };
       const hiringFreeze = r.hiringSignal?.trend === 'frozen' || r.companyData?._hiringPostingTrend === 'frozen';
       if (hiringFreeze) return { text: 'frozen', color: '#f97316' };
       return null;
@@ -136,7 +136,7 @@ const TAB_CONFIG: TabConfig[] = [
   {
     value: 'protection',
     label: 'Protection',
-    shortLabel: 'You',
+    shortLabel: 'Protect',
     Icon: Shield,
     getBadge: (r: any) => {
       const p = r.preparednessScore?.overallScore;
@@ -148,11 +148,11 @@ const TAB_CONFIG: TabConfig[] = [
   {
     value: 'actions',
     label: 'Act Now',
-    shortLabel: 'Act',
+    shortLabel: 'Actions',
     Icon: Zap,
     getBadge: (r) => {
       const critical = (r.recommendations ?? []).filter(rec => rec.priority === 'Critical').length;
-      return critical > 0 ? { text: `${critical} critical`, color: '#dc2626' } : null;
+      return critical > 0 ? { text: `${critical}!`, color: '#dc2626' } : null;
     },
   },
   {
@@ -162,18 +162,18 @@ const TAB_CONFIG: TabConfig[] = [
     Icon: Radio,
     getBadge: (r) => {
       const live = r.signalQuality?.liveSignals ?? 0;
-      return live > 0 ? { text: `${live} live`, color: '#10b981' } : null;
+      return live > 0 ? { text: `${live}`, color: '#10b981' } : null;
     },
   },
   // v39.0 A6: Transparency / methodology — answers "how was this calculated?"
   {
     value: 'transparency',
     label: 'Methodology',
-    shortLabel: 'How?',
+    shortLabel: 'Method',
     Icon: Info,
     getBadge: (r: any) => {
       const conf = r.confidencePercent ?? 0;
-      if (conf < 60) return { text: 'low conf', color: '#f97316' };
+      if (conf < 60) return { text: 'low', color: '#f97316' };
       return null;
     },
   },
@@ -280,62 +280,118 @@ const DesktopTabBar: React.FC<{
 );
 
 // ── Mobile bottom navigation ──────────────────────────────────────────────────
+// Injected as a <style> tag so we can suppress the global app bottom-nav
+// (mobile-bottom-nav class) whenever this feature dashboard is mounted —
+// belt-and-suspenders on top of the JS-level conditional in App.tsx.
+const FEATURE_NAV_CSS = `
+@media (max-width: 768px) {
+  body.hp-feature-page .mobile-bottom-nav { display: none !important; }
+}
+`;
 
 const MobileBottomNav: React.FC<{
   active: TabValue;
   onChange: (v: TabValue) => void;
   result: HybridResult;
-}> = ({ active, onChange, result }) => (
-  <div
-    role="tablist"
-    aria-label="Dashboard sections"
-    className="sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-center"
-    style={{
-      background: 'rgba(9,12,20,0.96)',
-      backdropFilter: 'blur(20px)',
-      borderTop: '1px solid rgba(255,255,255,0.10)',
-      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    }}
-  >
-    {TAB_CONFIG.map(({ value, label, shortLabel, Icon, getBadge }) => {
-      const isActive = value === active;
-      const badge    = getBadge?.(result);
-      const color    = isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.45)';
-      return (
-        <button
-          key={value}
-          role="tab"
-          aria-selected={isActive}
-          aria-label={`${label} tab${badge ? `: ${badge.text}` : ''}`}
-          onClick={() => onChange(value)}
-          className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 relative transition-colors"
-          style={{ color }}
-        >
-          {isActive && (
-            <motion.div
-              layoutId="mobile-nav-active"
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
-              style={{ background: 'var(--cyan,#00d4e0)' }}
-              transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-            />
-          )}
-          <div className="relative">
-            <Icon className="w-5 h-5" />
-            {badge && (
-              <span
-                className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center text-[10px] font-black"
-                style={{ background: badge.color, color: '#fff', lineHeight: 1 }}
-              >
-                {badge.text.replace(' critical', '').replace(' live', '')}
-              </span>
+}> = ({ active, onChange, result }) => {
+  // Inject body class + CSS whenever this dashboard is mounted
+  React.useEffect(() => {
+    const styleEl = document.createElement('style');
+    styleEl.textContent = FEATURE_NAV_CSS;
+    document.head.appendChild(styleEl);
+    document.body.classList.add('hp-feature-page');
+    return () => {
+      styleEl.remove();
+      document.body.classList.remove('hp-feature-page');
+    };
+  }, []);
+
+  return (
+    <div
+      role="tablist"
+      aria-label="Dashboard sections"
+      className="sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch"
+      style={{
+        background: 'rgba(7,10,18,0.97)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
+        minHeight: 58,
+      }}
+    >
+      {TAB_CONFIG.map(({ value, label, shortLabel, Icon, getBadge }) => {
+        const isActive = value === active;
+        const badge    = getBadge?.(result);
+        return (
+          <button
+            key={value}
+            role="tab"
+            aria-selected={isActive}
+            aria-label={`${label} tab${badge ? `: ${badge.text}` : ''}`}
+            onClick={() => onChange(value)}
+            className="flex-1 flex flex-col items-center justify-center relative"
+            style={{
+              color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.42)',
+              minHeight: 58,
+              padding: '8px 2px 6px',
+              transition: 'color 0.18s ease',
+            }}
+          >
+            {/* Animated pill background for active tab */}
+            {isActive && (
+              <motion.div
+                layoutId="mobile-tab-pill"
+                className="absolute inset-x-1 rounded-xl"
+                style={{
+                  top: 4, bottom: 4,
+                  background: 'rgba(0,212,224,0.10)',
+                  border: '1px solid rgba(0,212,224,0.22)',
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 38 }}
+              />
             )}
-          </div>
-          <span className="text-[10px] font-semibold">{shortLabel}</span>
-        </button>
-      );
-    })}
-  </div>
-);
+
+            {/* Icon with notification badge */}
+            <div className="relative z-10 mb-0.5">
+              <motion.div
+                animate={isActive ? { scale: 1.12, y: -1 } : { scale: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+              >
+                <Icon
+                  style={{ width: isActive ? 22 : 20, height: isActive ? 22 : 20 }}
+                  strokeWidth={isActive ? 2.2 : 1.6}
+                />
+              </motion.div>
+              {badge && (
+                <span
+                  className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black"
+                  style={{
+                    background: badge.color,
+                    color: '#fff',
+                    fontSize: 9,
+                    lineHeight: 1,
+                    boxShadow: `0 0 6px ${badge.color}88`,
+                  }}
+                >
+                  {badge.text}
+                </span>
+              )}
+            </div>
+
+            {/* Label */}
+            <span
+              className="relative z-10 font-semibold leading-none"
+              style={{ fontSize: 9.5, letterSpacing: isActive ? '0.02em' : '0' }}
+            >
+              {shortLabel}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 

@@ -264,26 +264,30 @@ const GLOBE_CSS = `
   .gal-hud{display:none}
 }
 
-/* 560px: drop gauges row, compact header; body top moves up to 78px */
-/* Budget: body-top(78)+v-pad(8)+gap(4)+panel(55) = 145px */
+/* 560px: drop gauges row, compact header; body top moves up to 78px    */
+/* Budget: body-top(78)+v-pad(8)+center-gap(4)+panel(55) = 145px        */
+/* center-col gap forced to 4px so it matches the --gal-avh budget;     */
+/* justify-content:center keeps globe+panel vertically centred in column */
 @media(max-width:560px){
   .gal-right-col{display:none}
   .gal-topbar{top:8px;padding:5px 10px;gap:8px}
   .gal-engine .sub,.gal-divider,.gal-phases{display:none}
   .gal-ticker{top:48px;height:22px;width:calc(100vw - 16px)}
   .gal-body{top:78px;padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px))}
+  .gal-center-col{gap:4px;justify-content:center}
   .gal-composition{--gal-avh:calc(100vh - 145px);--gal-avh:calc(100dvh - 145px)}
-  .gal-panel{border-radius:10px;padding:8px 12px 7px}
+  .gal-panel{border-radius:10px;padding:8px 12px 7px;width:100%;max-width:100%;box-sizing:border-box}
   .gal-status-text{font-size:11px}
   .gal-meta{font-size:8.5px;gap:6px}
 }
 
-/* 400px: minimum — strip meta, tightest possible padding */
-/* Budget: body-top(78)+v-pad(6)+gap(4)+panel(46) = 134px */
+/* 400px: minimum — strip meta, tightest possible padding               */
+/* Budget: body-top(78)+v-pad(6)+center-gap(4)+panel(46) = 134px        */
 @media(max-width:400px){
   .gal-body{padding:2px 4px calc(4px + env(safe-area-inset-bottom,0px))}
+  .gal-center-col{gap:4px;justify-content:center}
   .gal-composition{--gal-avh:calc(100vh - 134px);--gal-avh:calc(100dvh - 134px)}
-  .gal-panel{padding:6px 10px 5px}
+  .gal-panel{padding:6px 10px 5px;width:100%;max-width:100%}
   .gal-meta{display:none}
   .gal-status-text{font-size:10px}
 }
