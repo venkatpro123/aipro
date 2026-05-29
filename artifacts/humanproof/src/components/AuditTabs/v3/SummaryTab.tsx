@@ -43,6 +43,7 @@ import { ScoreTrendStrip } from '../common/ScoreTrendStrip';
 import { InactionCostCard } from '../common/InactionCostCard';
 import { VerdictReassurance } from '../common/VerdictReassurance';
 import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
+import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -945,6 +946,21 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           the v35.0 transparency contract. */}
       {(result as any).personalRiskModifier?.rawModifier != null && (
         <PersonalRiskModifierPanel modifier={(result as any).personalRiskModifier} />
+      )}
+
+      {/* Wave 7.2: Opportunity Intelligence — proactive upside signals
+           Only surfaces when score < 75 (non-emergency) and ≥1 signal found.
+           Derived from roleAdjacency, jobMarketLiquidity, competitivePosition —
+           no additional pipeline cost. */}
+      {score < 75 && (
+        <OpportunityIntelligenceCard
+          roleAdjacency={r.roleAdjacency}
+          jobMarketLiquidity={r.jobMarketLiquidity}
+          competitivePosition={r.competitivePosition}
+          currentScore={score}
+          preparednessScore={preparedness?.overallScore}
+          currentRoleLabel={String(result.workTypeKey ?? '').replace(/_/g, ' ')}
+        />
       )}
 
       {/* ── InactionCostCard — "The cost of waiting" — final section ─────── */}
