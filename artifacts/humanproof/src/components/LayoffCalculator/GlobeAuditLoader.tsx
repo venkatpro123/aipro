@@ -2,6 +2,7 @@
 // Uses d3-geo (npm) for real country borders + full HUD overlay design.
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -116,6 +117,11 @@ const GLOBE_CSS = `
 /* ── header: topbar + ticker (absolute, do not affect layout flow) ── */
 .gal-topbar{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:12px;padding:7px 14px;border-radius:999px;background:rgba(8,18,36,.6);backdrop-filter:blur(16px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 30px rgba(0,0,0,.45);font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;isolation:isolate;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 80ms both}
 @keyframes galUIC{from{opacity:0;transform:translate(-50%,8px) scale(.985)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+/* Like galUIC but WITHOUT the translateX(-50%) — for elements that are NOT
+   centered via left:50% (e.g. full-width flex children). Using galUIC on those
+   leaves a residual translateX(-50%) (animation-fill-mode:both) that shoves
+   them half their width off the left edge. */
+@keyframes galUICnoX{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .gal-topbar .sheen{position:absolute;top:0;bottom:0;left:0;width:60%;transform:translateX(-100%) skewX(-22deg);background:linear-gradient(90deg,transparent,rgba(111,216,255,.1) 40%,rgba(255,255,255,.18) 50%,rgba(111,216,255,.1) 60%,transparent);animation:galSheen 9s ease-in-out infinite;pointer-events:none;z-index:0}
 @keyframes galSheen{0%,30%{transform:translateX(-120%) skewX(-22deg)}55%,100%{transform:translateX(220%) skewX(-22deg)}}
 .gal-crest{width:20px;height:20px;border-radius:50%;flex-shrink:0;overflow:hidden;position:relative;background:radial-gradient(circle at 35% 30%,#b9eaff 0%,#6fd8ff 35%,#1a5a8a 70%,#062136 100%);box-shadow:0 0 14px rgba(111,216,255,.6),inset 0 0 6px rgba(255,255,255,.5)}
@@ -219,7 +225,7 @@ const GLOBE_CSS = `
 .gal-gsub{font-size:8.5px;color:rgba(233,243,255,.32);letter-spacing:.04em;line-height:1.3}
 
 /* ── status panel (bottom of center column, fixed height) ── */
-.gal-panel{flex-shrink:0;width:100%;max-width:480px;padding:10px 18px 9px;border-radius:14px;background:linear-gradient(180deg,rgba(10,22,42,.62),rgba(10,22,42,.55)),radial-gradient(120% 60% at 0% 0%,rgba(111,216,255,.10),transparent 60%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);isolation:isolate;overflow:hidden;animation:galUIC 700ms cubic-bezier(.2,.8,.2,1) 360ms both}
+.gal-panel{flex-shrink:0;width:100%;max-width:480px;padding:10px 18px 9px;border-radius:14px;background:linear-gradient(180deg,rgba(10,22,42,.62),rgba(10,22,42,.55)),radial-gradient(120% 60% at 0% 0%,rgba(111,216,255,.10),transparent 60%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(111,216,255,.18);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);isolation:isolate;overflow:hidden;animation:galUICnoX 700ms cubic-bezier(.2,.8,.2,1) 360ms both}
 .gal-panel-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:7px}
 .gal-dot{width:7px;height:7px;border-radius:50%;background:#6fd8ff;box-shadow:0 0 12px #6fd8ff,0 0 24px rgba(111,216,255,.5);animation:galDot 1.6s ease-in-out infinite;flex:0 0 auto}
 .gal-label{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:rgba(111,216,255,.55);font-weight:600}
@@ -865,7 +871,12 @@ export const GlobeAuditLoader: React.FC<Props> = ({
   const g3off = (CIRC * (1 - g3)).toFixed(2);
 
   // ── Render ──────────────────────────────────────────────────────────────────
-  return (
+  // Portal to document.body: `.gal-root` is `position:fixed; inset:0` and must
+  // fill the true viewport. Rendered inline it lives inside `.page-wrap`, which
+  // has a `transform` (pageEnter animation) that establishes a containing block —
+  // so `fixed` would anchor to `.page-wrap` and the full-screen loader would be
+  // offset/clipped whenever the page is scrolled. The portal escapes that.
+  return createPortal(
     <div className="gal-root" role="status" aria-label="Analyzing company data">
       {/* ── Background layers ── */}
       <canvas className="gal-stars" ref={starsRef} aria-hidden="true" />
@@ -1062,7 +1073,8 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         </div>{/* end gal-right-col */}
 
       </div>{/* end gal-body */}
-    </div>
+    </div>,
+    document.body,
   );
 };
 

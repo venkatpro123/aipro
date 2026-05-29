@@ -27,6 +27,7 @@
 //   • Per-tab badge updates live based on signal state
 
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useDrag } from '@use-gesture/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
@@ -306,7 +307,12 @@ const MobileBottomNav: React.FC<{
     };
   }, []);
 
-  return (
+  // Render through a portal to document.body so the bar pins to the real
+  // viewport bottom. Without this it lives inside `.page-wrap`, which has a
+  // `transform` (pageEnter animation) that establishes a containing block —
+  // turning `position:fixed` into "fixed relative to .page-wrap" and dropping
+  // the bar ~49px below the fold (only a sliver visible).
+  return createPortal(
     <div
       role="tablist"
       aria-label="Dashboard sections"
@@ -363,20 +369,36 @@ const MobileBottomNav: React.FC<{
                   strokeWidth={isActive ? 2.2 : 1.6}
                 />
               </motion.div>
-              {badge && (
-                <span
-                  className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black"
-                  style={{
-                    background: badge.color,
-                    color: '#fff',
-                    fontSize: 9,
-                    lineHeight: 1,
-                    boxShadow: `0 0 6px ${badge.color}88`,
-                  }}
-                >
-                  {badge.text}
-                </span>
-              )}
+              {badge && (() => {
+                // Tab buttons are only ~63px wide on mobile, so a wide word badge
+                // (e.g. "MODERATE") overflows past the leftmost/rightmost tab edge.
+                // For anything longer than 3 chars, collapse to a colored dot —
+                // the severity is already encoded by the badge color. Short
+                // badges (numbers, "2×", "low", "WARN") render as text.
+                const isLong = badge.text.length > 3;
+                return isLong ? (
+                  <span
+                    className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+                    style={{
+                      background: badge.color,
+                      boxShadow: `0 0 6px ${badge.color}aa`,
+                    }}
+                  />
+                ) : (
+                  <span
+                    className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black whitespace-nowrap"
+                    style={{
+                      background: badge.color,
+                      color: '#fff',
+                      fontSize: 9,
+                      lineHeight: 1,
+                      boxShadow: `0 0 6px ${badge.color}88`,
+                    }}
+                  >
+                    {badge.text}
+                  </span>
+                );
+              })()}
             </div>
 
             {/* Label */}
@@ -389,7 +411,8 @@ const MobileBottomNav: React.FC<{
           </button>
         );
       })}
-    </div>
+    </div>,
+    document.body,
   );
 };
 
