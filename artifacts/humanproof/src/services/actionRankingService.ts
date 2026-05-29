@@ -83,6 +83,44 @@ function tenureMultiplier(years: number | null | undefined): number {
   return 0.95;
 }
 
+// Wave 8.2: Seniority-differentiated action category weights.
+// Junior → resume + skills first; principal → network + negotiate first.
+// Category is inferred from the action title via keyword matching.
+type ActionCategory = 'resume' | 'skills' | 'network' | 'negotiate' | 'other';
+
+const SENIORITY_ACTION_WEIGHTS: Record<string, Record<ActionCategory, number>> = {
+  junior:      { resume: 2.0, skills: 1.8, network: 1.2, negotiate: 0.5, other: 1.0 },
+  mid:         { resume: 1.5, skills: 1.5, network: 1.5, negotiate: 1.0, other: 1.0 },
+  senior:      { resume: 1.0, skills: 1.2, network: 2.0, negotiate: 1.5, other: 1.0 },
+  staff_plus:  { resume: 0.7, skills: 0.8, network: 2.5, negotiate: 2.0, other: 1.0 },
+  principal:   { resume: 0.5, skills: 0.5, network: 3.0, negotiate: 2.5, other: 1.0 },
+};
+
+function classifyActionCategory(action: Partial<ActionPlanItem>): ActionCategory {
+  const t = ((action.title ?? '') + ' ' + (action.description ?? '')).toLowerCase();
+  if (/resume|linkedin|portfolio|cv\b|profile updat/.test(t)) return 'resume';
+  if (/certif|course|learn|skill|train|bootcamp|aws|gcp|azure|cloud|ai\b|ml\b/.test(t)) return 'skills';
+  if (/network|connect|outreach|recruiter|referral|coffee chat|1:1|reach out/.test(t)) return 'network';
+  if (/negotiat|equity|retention|retain|bonus|comp|salary|raise|offer/.test(t)) return 'negotiate';
+  return 'other';
+}
+
+function deriveSeniorityTier(tenureYears: number | null | undefined): string {
+  if (tenureYears == null) return 'mid';
+  if (tenureYears <= 2)  return 'junior';
+  if (tenureYears <= 5)  return 'mid';
+  if (tenureYears <= 10) return 'senior';
+  if (tenureYears <= 15) return 'staff_plus';
+  return 'principal';
+}
+
+function seniorityMultiplier(action: Partial<ActionPlanItem>, tenureYears: number | null | undefined): number {
+  const tier = deriveSeniorityTier(tenureYears);
+  const weights = SENIORITY_ACTION_WEIGHTS[tier] ?? SENIORITY_ACTION_WEIGHTS.mid;
+  const category = classifyActionCategory(action);
+  return weights[category];
+}
+
 // Convert ActionPlanItem.learningWeeks into an effort-hours estimate. Falls
 // back to the DEFAULT_EFFORT_WEEKS proxy when the action does not carry a
 // learning-weeks block. The chosen track is the median 8h/week schedule.
@@ -145,15 +183,18 @@ export function rankActions(
       const impact = action.riskReductionPct ?? 5;
       const effort = effortHours(action);
       const priorityMult = action.priority ? PRIORITY_BASE[action.priority] : 1.0;
-      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult;
+      // Wave 8.2: seniority-differentiated category weight (per-action)
+      const seniorityMult = seniorityMultiplier(action, profile?.tenureYears ?? null);
+      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult;
 
       // Score = priority-weighted impact density × profile multiplier
       const rankScore = (impact * priorityMult * profileMult) / Math.max(1, effort);
 
       const contextParts: string[] = [];
-      if (depMult !== 1.0)    contextParts.push(`deps=${depMult.toFixed(2)}`);
-      if (runwayMult !== 1.0) contextParts.push(`runway=${runwayMult.toFixed(2)}`);
-      if (confMult !== 1.0)   contextParts.push(`conf=${confMult.toFixed(2)}`);
+      if (depMult !== 1.0)       contextParts.push(`deps=${depMult.toFixed(2)}`);
+      if (runwayMult !== 1.0)    contextParts.push(`runway=${runwayMult.toFixed(2)}`);
+      if (confMult !== 1.0)      contextParts.push(`conf=${confMult.toFixed(2)}`);
+      if (seniorityMult !== 1.0) contextParts.push(`seniority=${seniorityMult.toFixed(2)}`);
 
       const rationale =
         `priority=${(priorityMult).toFixed(2)} · ` +

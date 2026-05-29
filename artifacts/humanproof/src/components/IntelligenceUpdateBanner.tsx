@@ -89,8 +89,22 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
               <p className="text-[11px] font-bold leading-snug mb-0.5" style={{ color: 'rgba(255,255,255,0.88)' }}>
                 {update.signalCount > 0
                   ? `${update.signalCount} new signal${update.signalCount !== 1 ? 's' : ''} detected for ${companyName}`
-                  : `${update.daysSince} days since your last audit`}
+                  : update.daysSince >= 90
+                    ? `Your audit is ${update.daysSince} days old`
+                    : update.daysSince >= 30
+                      ? `30-day check-in for ${companyName}`
+                      : `${update.daysSince} days since your last audit`}
               </p>
+              {/* Day-based re-engagement copy (Wave 4.3) */}
+              {update.signalCount === 0 && !update.topHeadline && (
+                <p className="text-[10px] mb-1 leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  {update.daysSince >= 90
+                    ? 'Refreshing now would sharpen your confidence score by ~25% and catch any market shifts.'
+                    : update.daysSince >= 30
+                      ? 'Market conditions may have shifted. Re-analyze to see if your score changed.'
+                      : 'Live signals for this company may have changed since your last analysis.'}
+                </p>
+              )}
               {/* Headline snippet (breaking news) */}
               {update.topHeadline && (
                 <p className="text-[10px] mb-1 leading-snug line-clamp-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
@@ -114,7 +128,14 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
                   }}
                 >
                   <RefreshCw className={`w-3 h-3 ${recalculating ? 'animate-spin' : ''}`} />
-                  {recalculating ? 'Updating…' : 'Update my score — 45 sec'}
+                  {recalculating
+                    ? 'Updating…'
+                    : update.signalCount > 0
+                      ? 'Update my score — 45 sec'
+                      : update.daysSince >= 30
+                        ? 'Re-analyze — 45 sec'
+                        : 'Update my score — 45 sec'
+                  }
                 </button>
                 <button
                   onClick={handleDismiss}
