@@ -26,7 +26,9 @@ import { WhatIfSkillSimulator } from "./WhatIfSkillSimulator";
 import { KeyRiskDriversPanel } from "./KeyRiskDriversPanel";
 import { LayoffAuditDashboard } from "./LayoffAuditDashboard";
 import { LayoffAuditDashboardV3, isTabsV3Enabled } from "../AuditTabs/v3/LayoffAuditDashboardV3";
-import { LayoffAuditDashboardV4 } from "../AuditTabs/v3/LayoffAuditDashboardV4";
+// LayoffAuditDashboardV4 import removed — Wave 1.1 dead code cleanup.
+// V4 was a 3-tab experimental layout that was never shipped. The V3 dashboard
+// (LayoffAuditDashboardV3) is the active path.
 import { mapToHybridResult } from "../../utils/hybridResultMapper";
 import { resolveCompanyData } from "../../data/companyIntelligenceBridge";
 import { markCompanyRecentlyAudited } from "../audit/RealtimeSignalToast";
