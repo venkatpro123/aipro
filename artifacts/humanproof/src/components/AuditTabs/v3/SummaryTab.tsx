@@ -21,8 +21,8 @@
 // All blocks carry an explicit Tier badge so users (and future maintainers)
 // understand the disclosure hierarchy.
 
-import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
   TrendingUp, TrendingDown, Minus,
@@ -577,6 +577,10 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const pScore = preparedness?.overallScore ?? 0;
   const pColor = preparedness ? readinessColor(preparedness.readinessLabel ?? '') : '#f59e0b';
 
+  // Wave 10.1: Score explanation tooltip state — tap the ring area to reveal
+  const [scoreExplainOpen, setScoreExplainOpen] = useState(false);
+  const toggleScoreExplain = useCallback(() => setScoreExplainOpen(o => !o), []);
+
   // Wave 4.4: streak data (safe — reads localStorage, never throws)
   const streakInfo = useMemo(() => { try { return getStreakInfo(); } catch { return null; } }, []);
 
@@ -735,6 +739,80 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         {/* VerdictReassurance — emotional anchoring below the verdict */}
         {scoreSufficiency.sufficient && (
           <VerdictReassurance score={score} urgency={urgency} />
+        )}
+        {/* Wave 10.1: Score explanation — tap "Why?" to expand dimension breakdown */}
+        {scoreSufficiency.sufficient && topDrivers.length > 0 && (
+          <div className="mt-2 w-full">
+            <button
+              onClick={toggleScoreExplain}
+              className="mx-auto flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] px-2.5 py-1 rounded-full transition-all hover:opacity-80"
+              style={{
+                background: scoreExplainOpen ? 'rgba(34,211,238,0.10)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${scoreExplainOpen ? 'rgba(34,211,238,0.28)' : 'rgba(255,255,255,0.10)'}`,
+                color: scoreExplainOpen ? '#22d3ee' : 'rgba(255,255,255,0.40)',
+              }}
+              aria-expanded={scoreExplainOpen}
+            >
+              {scoreExplainOpen ? '▲ HIDE REASONING' : '? WHY THIS SCORE'}
+            </button>
+            <AnimatePresence initial={false}>
+              {scoreExplainOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22 }}
+                  className="overflow-hidden"
+                >
+                  <div
+                    className="mt-2 rounded-xl px-3 py-2.5 text-left"
+                    style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  >
+                    <p className="text-[8px] font-black tracking-[0.14em] mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      HOW WE REACHED YOUR SCORE
+                    </p>
+                    <div className="space-y-2">
+                      {topDrivers.slice(0, 3).map((d, i) => (
+                        <div key={d.key} className="flex items-start gap-2">
+                          <span
+                            className="text-[9px] font-black w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
+                            style={{
+                              background: 'rgba(255,255,255,0.06)',
+                              color: riskColor(d.score),
+                            }}
+                          >
+                            {i + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.70)' }}>{d.label}</span>
+                              <span
+                                className="text-[9px] font-black px-1.5 py-0.5 rounded"
+                                style={{ background: riskColor(d.score) + '18', color: riskColor(d.score) }}
+                              >
+                                {d.score}/100
+                              </span>
+                            </div>
+                            <p className="text-[9px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                              {d.why}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 pt-2 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                        Confidence: {confPct}% · {canonicalConf.primarySource}
+                      </span>
+                      <span className="text-[8px] font-bold" style={{ color: canonicalConf.userFacing.color }}>
+                        {canonicalConf.userFacing.label}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
         {/* Score velocity — suppressed when base score is a range (delta from a range is undefined) */}
         {scoreSufficiency.sufficient && r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
