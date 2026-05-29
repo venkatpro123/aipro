@@ -32,6 +32,7 @@ import { ScoreSensitivityPanel } from '../common/ScoreSensitivityPanel';
 import { AIReasoningPanel, buildDimensionsFromResult } from '../common/AIReasoningPanel';
 import { ScenarioExplorer } from '../common/ScenarioExplorer';
 import { SignalCorrelationInsight } from '../common/SignalCorrelationInsight';
+import { DisplacementTrajectoryPanel } from '../../LayoffCalculator/DisplacementTrajectoryPanel';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,17 @@ function readinessColor(label: string): string {
     UNDERPREPARED: '#f97316',
     NOT_READY: '#dc2626',
   }[label] ?? '#f59e0b';
+}
+
+// Wave 2.6 — Maps career years (numeric) to the experience band string that
+// DisplacementTrajectoryEngine's EXPERIENCE_MODIFIER table expects.
+function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
+  if (years == null) return '5-10';
+  if (years <= 2)  return '0-2';
+  if (years <= 5)  return '2-5';
+  if (years <= 10) return '5-10';
+  if (years <= 15) return '10-15';
+  return '15+';
 }
 
 // ── Intelligence Brief (compact, no duplication of Summary) ─────────────────
@@ -457,6 +469,12 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   // AI reasoning dimensions — built from breakdown layers L1/L2/L3
   const aiReasoningDimensions = useMemo(() => buildDimensionsFromResult(result), [result]);
 
+  // Wave 2.6 — Displacement trajectory props derived from result
+  const displacementRoleKey: string  = result.workTypeKey ?? 'sw_backend';
+  const displacementRoleTitle: string = (displacementRoleKey).replace(/_/g, ' ');
+  const displacementExperience = experienceBand((r.userFactors?.careerYears as number | undefined) ?? (r.careerYears as number | undefined));
+  const displacementCareerIntel = r.careerIntelligence ?? null;
+
   // Score sufficiency gate — passed to DualGaugePanel so the risk gauge
   // shows the CI range instead of a point estimate when insufficient.
   const scoreSufficiency = useMemo(
@@ -628,6 +646,29 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           />
         </AdaptiveBlock>
       )}
+
+      {/* ── T3: Wave 2.6 — 6-Year AI Displacement Forecast ────────────────
+           Uses DisplacementTrajectoryEngine (zero API cost — pure computation
+           from roleKey growth profiles + current score). Shows bear/base/bull
+           trajectories, crossover year warning, and top recommendation.
+           Always renders — every user has a roleKey; oracleResult optional. */}
+      <AdaptiveBlock
+        title="6-year AI displacement forecast"
+        subtitle="How AI adoption will likely affect your role over the next 6 years"
+        icon={AlertOctagon}
+        tier={3}
+        accentColor="#f97316"
+        defaultOpen={false}
+      >
+        <DisplacementTrajectoryPanel
+          currentScore={result.total}
+          oracleResult={null}
+          roleTitle={displacementRoleTitle}
+          roleKey={displacementRoleKey}
+          experience={displacementExperience}
+          careerIntelligence={displacementCareerIntel}
+        />
+      </AdaptiveBlock>
 
       {/* ── T4: Methodology & Transparency ────────────────────────────────── */}
       <AdaptiveBlock
