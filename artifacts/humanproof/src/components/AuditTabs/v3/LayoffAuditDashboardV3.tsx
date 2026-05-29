@@ -51,6 +51,11 @@ import {
   markAuditComplete,
   type IntelligenceUpdateResult,
 } from '../../../services/continuousIntelligenceService';
+import {
+  evaluateReEngagementTrigger,
+  clearReEngagementState,
+  type ReEngagementTrigger,
+} from '../../../services/reEngagementService';
 
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
@@ -346,6 +351,12 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => {
     try { return !!sessionStorage.getItem('hp.iu.dismissed'); } catch { return false; }
   });
+  // Wave 4.3: re-engagement trigger (day-7 / day-30 / day-90 nudges)
+  const [reEngagementTrigger, setReEngagementTrigger] = useState<ReEngagementTrigger | null>(() => {
+    try { return evaluateReEngagementTrigger(result.companyName, result.total); }
+    catch { return null; }
+  });
+  const [reEngagementDismissed, setReEngagementDismissed] = useState(false);
   useEffect(() => {
     const load = () => fetchUserProfile().then(p => { if (p) setUserProfile(p); }).catch(() => {});
     load();
@@ -401,9 +412,12 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   }, [props.onRecalculate]);
 
   // Wave 7.1: mark audit complete whenever result changes (new audit)
+  // Wave 4.3: also clears the re-engagement cooldown so the next check is fresh
   useEffect(() => {
     if (result?.companyName) {
       markAuditComplete(result.companyName);
+      clearReEngagementState();      // Fresh audit → no immediate re-engagement nudge
+      setReEngagementDismissed(true); // Hide any currently-showing nudge
     }
   }, [result]);
 
@@ -550,6 +564,49 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               try { sessionStorage.setItem('hp.iu.dismissed', '1'); } catch { /* swallow */ }
             }}
           />
+        )}
+
+        {/* ── Wave 4.3: Re-engagement nudge (day-7/30/90) ─────────────────── */}
+        {reEngagementTrigger && !reEngagementDismissed && !intelligenceUpdate?.shouldPromptReaudit && (
+          <div className="px-4 pt-3 sm:px-0">
+            <div
+              className="rounded-xl flex items-start gap-3 px-3 py-2.5"
+              style={{
+                background: 'rgba(34,211,238,0.06)',
+                border: '1px solid rgba(34,211,238,0.18)',
+              }}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>
+                  {reEngagementTrigger.headline}
+                </p>
+                <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                  {reEngagementTrigger.subtext}
+                </p>
+              </div>
+              {props.onRecalculate && (
+                <button
+                  onClick={() => {
+                    setReEngagementDismissed(true);
+                    clearReEngagementState();
+                    props.onRecalculate?.();
+                  }}
+                  className="flex-shrink-0 text-[9px] font-bold px-2 py-1 rounded-lg transition-all hover:scale-[1.03]"
+                  style={{ background: 'rgba(34,211,238,0.14)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.28)' }}
+                >
+                  {reEngagementTrigger.ctaLabel}
+                </button>
+              )}
+              <button
+                onClick={() => setReEngagementDismissed(true)}
+                className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity text-[10px] px-1"
+                style={{ color: 'rgba(255,255,255,0.70)' }}
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ── Emergency banner — pinned above tab content ──────────────────── */}
