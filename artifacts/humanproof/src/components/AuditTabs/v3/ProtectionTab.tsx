@@ -41,6 +41,7 @@ import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePan
 import { JobMarketLiquidityCard } from '../common/JobMarketLiquidityCard';
 import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
 import { CohortBenchmarkCard } from '../common/CohortBenchmarkCard';
+import { CareerInsuranceStatus } from '../common/CareerInsuranceStatus';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -68,6 +69,8 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const techStackObsolescence                  = r.techStackObsolescence;
   const internalMobility                       = r.internalMobility;
   const competitivePosition                    = r.competitivePosition;
+
+  const careerResilience                        = r.careerResilience;
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
   const hasMobility    = Boolean(careerContingency || careerConfidence);
@@ -267,6 +270,13 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
       {/* Mini what-if strip — top 2 levers that move the score most */}
       {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
         <ScoreSensitivityStrip scoreSensitivity={scoreSensitivity} />
+      )}
+
+      {/* Wave 4.2: Career Insurance Status — persistent 5-pillar tracking card
+           Only renders when careerResilience pillars are available.
+           Placed last so it serves as the "overall protection score" anchor. */}
+      {careerResilience && (careerResilience.pillars?.length ?? 0) > 0 && (
+        <CareerInsuranceStatus resilience={careerResilience} />
       )}
 
       <div className="text-center pt-2 pb-1">
