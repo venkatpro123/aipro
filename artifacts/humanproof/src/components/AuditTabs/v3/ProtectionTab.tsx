@@ -18,7 +18,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Shield, GraduationCap, Compass, ArrowUpRight, User2,
+  Shield, GraduationCap, Compass, ArrowUpRight, User2, Users,
 } from 'lucide-react';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
@@ -42,6 +42,7 @@ import { JobMarketLiquidityCard } from '../common/JobMarketLiquidityCard';
 import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
 import { CohortBenchmarkCard } from '../common/CohortBenchmarkCard';
 import { CareerInsuranceStatus } from '../common/CareerInsuranceStatus';
+import { CareerTwinCard } from '../../CareerTwinCard';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -225,6 +226,28 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           <BehavioralIntelligencePanel data={behavioralPersonalization} />
         </AdaptiveBlock>
       )}
+
+      {/* Wave 2.5: Career Twin Network — people who navigated your situation
+           Uses findCareerTwins() directly (no HybridResult field needed) with
+           workTypeKey + tenureYears + total score + countryKey.
+           T3 collapsible — collapsed by default since it's social-proof context,
+           not primary decision data. */}
+      <AdaptiveBlock
+        title="People who navigated your situation"
+        subtitle="Historical precedents matched to your role, score, and experience level"
+        icon={Users}
+        tier={3}
+        accentColor="#22d3ee"
+        defaultOpen={false}
+      >
+        <CareerTwinCard
+          userRole={result.workTypeKey ?? 'sw_backend'}
+          userExperience={r.tenureYears ?? r.userFactors?.tenureYears ?? 5}
+          userRiskScore={result.total}
+          userCountry={r.countryKey ?? 'global'}
+          topN={3}
+        />
+      </AdaptiveBlock>
 
       {/* Wave 2.2: Tech Stack Obsolescence — surfaces risky technologies */}
       {techStackObsolescence && (

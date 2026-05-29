@@ -27,6 +27,8 @@ import { ActionPlanTab } from '../ActionPlanTab';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
+import { RecoveryProbabilityCard } from '../common/RecoveryProbabilityCard';
+import type { SurvivalProbabilityResult } from '../../../services/layoffSurvivalPredictor';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -236,6 +238,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
+  const survivalProbability: SurvivalProbabilityResult | undefined = r.survivalProbability;
   const adaptation = useDashboardAdaptation(result, companyData);
   // v39.0 B6: surface honest "generic guidance" notice when the user's role
   // isn't in our 412-specialised database. Also surface the profile context
@@ -299,6 +302,17 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             and score, but role-specific certifications, salary bands, and outreach targets may differ.
           </div>
         </div>
+      )}
+
+      {/* Wave 5.2: Recovery Probability Card — "Your Odds" motivational card
+           Shows 12-month forced-exit probability without vs. with Phase 1 actions.
+           Uses survivalProbability already computed by layoffSurvivalPredictor.
+           criticalActionCount drives the copy ("3 critical actions" vs "Phase 1 actions"). */}
+      {survivalProbability && (
+        <RecoveryProbabilityCard
+          survival={survivalProbability}
+          criticalActionCount={recommendations.filter(rc => rc.priority === 'Critical').length}
+        />
       )}
 
       {/* T1: Career Contingency Plan — status-aware rendering */}
