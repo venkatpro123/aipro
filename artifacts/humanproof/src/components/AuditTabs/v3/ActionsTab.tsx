@@ -29,6 +29,12 @@ import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
 import { RecoveryProbabilityCard } from '../common/RecoveryProbabilityCard';
 import type { SurvivalProbabilityResult } from '../../../services/layoffSurvivalPredictor';
+import { ExecutiveIntelligencePanel } from '../common/ExecutiveIntelligencePanel';
+import {
+  runExecutiveIntelligence,
+  detectExecutiveTier,
+} from '../../../services/executiveIntelligenceEngine';
+import type { UserProfile } from '../../../services/userProfileService';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -245,6 +251,20 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const equityVestMonths: number    = r.userFactors?.equityVestMonths ?? 0;
   const showEquityAlert: boolean    = hasEquityVesting && equityVestMonths > 0 && equityVestMonths < 12 && result.total > 50;
   const equityUrgency: 'CRITICAL' | 'HIGH' = equityVestMonths <= 3 ? 'CRITICAL' : 'HIGH';
+
+  // Wave 8.1: executive intelligence — only for C-suite / VP / Director / Founder / Staff+
+  const userProfile: UserProfile | null = (props as any).userProfile ?? r.userProfile ?? null;
+  const { isExecutive } = detectExecutiveTier(
+    userProfile?.jobTitle ?? r.userFactors?.jobTitle,
+    userProfile?.salaryBand ?? r.userFactors?.salaryBand,
+  );
+  const executiveIntelligence = useMemo(() => {
+    if (!isExecutive) return null;
+    try {
+      return runExecutiveIntelligence(userProfile, result.total);
+    } catch { return null; }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExecutive, result.total, userProfile?.jobTitle, userProfile?.salaryBand]);
   const adaptation = useDashboardAdaptation(result, companyData);
   // v39.0 B6: surface honest "generic guidance" notice when the user's role
   // isn't in our 412-specialised database. Also surface the profile context
@@ -270,6 +290,11 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           // stays stale until the user manually re-runs the audit.
           window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
         }} />
+      )}
+
+      {/* Wave 8.1: Executive Intelligence Panel — only for C-suite / VP / Director / Founder / Staff+ */}
+      {executiveIntelligence && executiveIntelligence.isExecutive && (
+        <ExecutiveIntelligencePanel intelligence={executiveIntelligence} />
       )}
 
       {/* Wave 8.3: Equity Alert — highest-priority card when vest cliff is near + score elevated.
