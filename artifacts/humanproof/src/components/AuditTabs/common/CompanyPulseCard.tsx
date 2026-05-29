@@ -15,6 +15,7 @@
 // safe?" question that drives 80% of user intent.
 
 import React, { useState } from 'react';
+import { useStaggeredReveal } from '../../../hooks/useStaggeredReveal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, ChevronDown, Users, LineChart, AlertTriangle, Clock } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
@@ -115,23 +116,35 @@ const SubVerdictChip: React.FC<{
   </div>
 );
 
-const ChipRow: React.FC<{ signal: CompressedSignal }> = ({ signal }) =>
-  signal.chips.length === 0 ? null : (
+// Wave 6.2: stagger chip arrival so signals feel "live" rather than a static dump.
+// Respects prefers-reduced-motion by passing delayMs=0 when motion is reduced.
+const ChipRow: React.FC<{ signal: CompressedSignal }> = ({ signal }) => {
+  const prefersReduced = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const visibleChips = useStaggeredReveal(signal.chips, prefersReduced ? 0 : 75);
+  if (signal.chips.length === 0) return null;
+  return (
     <div className="flex flex-wrap gap-1.5 mt-2">
-      {signal.chips.map((c, i) => {
+      {visibleChips.map((c, i) => {
         const tone = chipToneColor(c.tone);
         return (
           <span
             key={`${c.label}-${i}`}
             className="signal-chip text-[10px] px-2 py-0.5 rounded-md font-semibold"
             data-tone={hexToTone(tone)}
+            style={{ opacity: 1, animation: prefersReduced ? undefined : 'fadeIn 0.18s ease-out' }}
           >
             {c.label}: {c.value}
           </span>
         );
       })}
+      {/* Inline keyframe — avoids external CSS file */}
+      {!prefersReduced && (
+        <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }`}</style>
+      )}
     </div>
   );
+};
 
 export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);

@@ -46,6 +46,7 @@ import { LayoffScenarioPanel } from "./LayoffScenarioPanel";
 import { RecommendationPanel } from "./RecommendationPanel";
 import { MissionBriefing, recommendationsToMissions } from "./MissionBriefing";
 import { SpyLoadingState } from "./SpyLoadingState";
+import { useAdaptivePerformance } from "../../hooks/useAdaptivePerformance";
 import { supabase } from "../../utils/supabase";
 // WS11 + WS14 — every edge invocation carries the per-audit request_id
 // via x-request-id. runAudit mints a fresh id at the entry point so
@@ -196,6 +197,8 @@ function resolveUserMarketRegion(
 export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile, profileVersion } = useHumanProof();
+  // Wave 9.4: detect slow connections / low-end devices to reduce animation cost
+  const perf = useAdaptivePerformance();
   // v39.0 A4 — track the profileVersion observed at the time of the latest
   // audit. When the live `profileVersion` exceeds this, the profile has
   // changed since the last audit and we should refresh.
@@ -1814,6 +1817,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           agentCount={30}
           limitedDataMode={(state.companyData as any)?._limitedDataMode ?? false}
           limitedDataReason={(state.companyData as any)?._limitedDataReason ?? undefined}
+          skipAnimation={perf.isLowPerformance}
         />
       )}
 
