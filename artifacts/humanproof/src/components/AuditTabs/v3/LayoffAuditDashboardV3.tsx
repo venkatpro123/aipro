@@ -42,6 +42,10 @@ import { track } from '../../../services/analyticsService';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 import { supabase as _supabase } from '../../../utils/supabase';
 import { IntelligenceUpdateBanner } from '../../IntelligenceUpdateBanner';
+// Wave 6.1: Layout-matched skeleton screens replace generic spinner fallbacks
+import { SummaryTabSkeleton } from '../../Skeletons/SummaryTabSkeleton';
+import { CompanyTabSkeleton } from '../../Skeletons/CompanyTabSkeleton';
+import { CardSkeleton } from '../../Skeletons/CardSkeleton';
 import {
   checkForIntelligenceUpdates,
   markAuditComplete,
@@ -75,12 +79,13 @@ type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'tr
 
 // ── Tab loader ────────────────────────────────────────────────────────────────
 
-const TabLoader: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16">
-    <div className="w-8 h-8 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan,#00d4e0)] animate-spin mb-4" />
-    <p className="text-[10px] tracking-[0.3em] font-mono" style={{ color: 'rgba(0,212,224,0.5)' }}>
-      LOADING…
-    </p>
+// Wave 6.1: Generic skeleton fallback for tabs without a dedicated skeleton.
+// Uses stacked CardSkeleton rows with shimmer — matches the dark glass aesthetic.
+const GenericTabSkeleton: React.FC = () => (
+  <div className="flex flex-col gap-3 py-1">
+    {[0, 1, 2, 3].map(i => (
+      <CardSkeleton key={i} height={i === 0 ? 80 : 56} rounded="16px" />
+    ))}
   </div>
 );
 
@@ -576,35 +581,35 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           >
             {activeTab === 'summary' && (
               <TabErrorBoundary tabLabel="Summary">
-                <Suspense fallback={<TabLoader />}>
+                <Suspense fallback={<SummaryTabSkeleton />}>
                   <SummaryTab {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>
             )}
             {activeTab === 'company' && (
               <TabErrorBoundary tabLabel="Company">
-                <Suspense fallback={<TabLoader />}>
+                <Suspense fallback={<CompanyTabSkeleton />}>
                   <IntelligenceTab {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>
             )}
             {activeTab === 'protection' && (
               <TabErrorBoundary tabLabel="Protection">
-                <Suspense fallback={<TabLoader />}>
+                <Suspense fallback={<GenericTabSkeleton />}>
                   <ProtectionTab {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>
             )}
             {activeTab === 'actions' && (
               <TabErrorBoundary tabLabel="Action Plan">
-                <Suspense fallback={<TabLoader />}>
+                <Suspense fallback={<GenericTabSkeleton />}>
                   <ActionsTab {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>
             )}
             {activeTab === 'intel' && (
               <TabErrorBoundary tabLabel="Intelligence">
-                <Suspense fallback={<TabLoader />}>
+                <Suspense fallback={<GenericTabSkeleton />}>
                   <AnalysisTab {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>
@@ -612,7 +617,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
             {activeTab === 'transparency' && (
               <TabErrorBoundary tabLabel="Methodology">
-                <Suspense fallback={<TabLoader />}>
+                <Suspense fallback={<GenericTabSkeleton />}>
                   <TransparencyTab {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>

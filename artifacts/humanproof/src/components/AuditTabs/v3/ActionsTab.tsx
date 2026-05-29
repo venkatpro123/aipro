@@ -421,6 +421,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         <PhaseProgressSystem
           actions={recommendations}
           companyName={companyData?.name}
+          currentScore={result.total}
           onActionComplete={(actionId, completedCount) => {
             // Micro-toast celebration for action completion
             if (completedCount % 3 === 0) {

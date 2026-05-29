@@ -8,49 +8,35 @@
 //   - Phase 2 (this month): unlocks when Phase 1 complete
 //   - Phase 3 (this quarter): unlocks when Phase 2 complete
 //
-// State persists in localStorage across tabs and sessions.
-// Completion triggers a toast celebration.
+// Wave 1.3 upgrade: State syncs to Supabase for cross-device persistence.
+// localStorage remains the optimistic layer for instant response.
+// On mount: syncCompletionsFromServer() merges DB state into local.
 //
 // Integration: placed at the top of ActionsTab, above the existing ActionMatrix.
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check, Lock, ChevronDown, ChevronUp, Zap, Calendar, BarChart3, Clock,
 } from 'lucide-react';
 import type { ActionPlanItem } from '../../../types/hybridResult';
 import { recordStreakActivity } from '../../../services/streakService';
+import {
+  loadCompletionsLocal,
+  markActionComplete,
+  unmarkActionComplete,
+  syncCompletionsFromServer,
+} from '../../../services/actionCompletionService';
 
 interface Props {
   actions: ActionPlanItem[];
   companyName?: string;
   onActionComplete?: (actionId: string, completedCount: number) => void;
+  /** Current audit score — passed through to actionCompletionService for telemetry */
+  currentScore?: number;
 }
 
 type Phase = 1 | 2 | 3;
-
-// localStorage key for action completion state
-const STORAGE_KEY = 'hp.action.completions';
-const STORAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-function loadCompletions(): Set<string> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return new Set();
-    const { ids, ts } = JSON.parse(raw);
-    if (Date.now() - ts > STORAGE_TTL_MS) {
-      localStorage.removeItem(STORAGE_KEY);
-      return new Set();
-    }
-    return new Set(ids as string[]);
-  } catch { return new Set(); }
-}
-
-function saveCompletions(ids: Set<string>) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ids: Array.from(ids), ts: Date.now() }));
-  } catch { /* quota */ }
-}
 
 // Split actions into phases based on sequencePhase or priority
 function phaseActions(actions: ActionPlanItem[]): [ActionPlanItem[], ActionPlanItem[], ActionPlanItem[]] {
@@ -296,9 +282,19 @@ const PhaseBlock: React.FC<{
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
-export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onActionComplete }) => {
-  const [completedIds, setCompletedIds] = useState<Set<string>>(loadCompletions);
+export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onActionComplete, currentScore }) => {
+  // Wave 1.3: Start from localStorage (instant), then merge server state on mount
+  const [completedIds, setCompletedIds] = useState<Set<string>>(loadCompletionsLocal);
   const [phase1, phase2, phase3] = phaseActions(actions);
+
+  // Wave 1.3: Sync from Supabase once on mount — merges any completions from other devices
+  useEffect(() => {
+    syncCompletionsFromServer().then(state => {
+      if (state.source === 'synced') {
+        setCompletedIds(new Set(state.completedIds));
+      }
+    }).catch(() => { /* non-fatal — localStorage state remains */ });
+  }, []);
 
   const p1Completed = phase1.filter(a => completedIds.has(a.id)).length;
   const p2Completed = phase2.filter(a => completedIds.has(a.id)).length;
@@ -315,16 +311,19 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
+        // Wave 1.3: background Supabase delete
+        unmarkActionComplete(id).catch(() => {});
       } else {
         next.add(id);
         onActionComplete?.(id, next.size);
         // Wave 4.4: record weekly streak activity whenever an action is completed
         try { recordStreakActivity(); } catch { /* non-fatal */ }
+        // Wave 1.3: background Supabase upsert with optional score telemetry
+        markActionComplete(id, { scoreAtCompletion: currentScore }).catch(() => {});
       }
-      saveCompletions(next);
       return next;
     });
-  }, [onActionComplete]);
+  }, [onActionComplete, currentScore]);
 
   if (actions.length === 0) return null;
 
