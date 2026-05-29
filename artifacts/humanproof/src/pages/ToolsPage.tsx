@@ -291,7 +291,8 @@ export default function ToolsPage() {
           </div>
         )}
 
-        {/* ── Tab Strip ─────────────────────────────────────────────────── */}
+        {/* ── Tab Strip (desktop) ───────────────────────────────────────── */}
+        {/* Hidden on mobile via CSS; replaced by compact pill row below. */}
         <div className="dashboard-tabs-strip">
           {TABS.map((tab) => (
             <button
@@ -304,6 +305,43 @@ export default function ToolsPage() {
               <span className="tab-label-text">{tab.label}</span>
             </button>
           ))}
+        </div>
+
+        {/* ── Mobile-only compact tool switcher ────────────────────────── */}
+        {/* Shown only on mobile (sm:hidden equivalent via inline style).  */}
+        {/* Replaces the full dashboard-tabs-strip which is hidden at ≤768px. */}
+        <div
+          className="sm:hidden"
+          style={{ display: 'flex', gap: 8, marginBottom: 16 }}
+        >
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => switchTab(tab.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '7px 14px',
+                  borderRadius: 999,
+                  border: `1px solid ${isActive ? 'rgba(0,212,224,0.35)' : 'rgba(255,255,255,0.10)'}`,
+                  background: isActive ? 'rgba(0,212,224,0.10)' : 'rgba(255,255,255,0.04)',
+                  color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.45)',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease',
+                  minHeight: 36,
+                }}
+              >
+                <span style={{ fontSize: '0.85rem' }}>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* ── Tab Content ───────────────────────────────────────────────── */}

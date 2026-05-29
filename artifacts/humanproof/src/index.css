@@ -1237,6 +1237,15 @@ html {
   to   { transform: none; opacity: 1; }
 }
 
+/* CSS-level kill: hide global app bottom nav when inside a feature page
+   (LayoffAuditDashboardV3 adds this class to <body> on mount via useEffect).
+   Belt-and-suspenders on top of the JS conditional in App.tsx. */
+@media (max-width: 768px) {
+  body.hp-feature-page .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
 /* Lift Sonner toaster above mobile bottom nav */
 @media (max-width: 768px) {
   [data-sonner-toaster][data-x-position="right"][data-y-position="bottom"],
@@ -2232,25 +2241,18 @@ select.input option {
 .dashboard-tabs-strip::-webkit-scrollbar { display: none; }
 
 @media (max-width: 768px) {
+  /* On mobile the feature-level tab bar (LayoffAuditDashboardV3) is the sole
+     navigation within a tool. The ToolsPage strip duplicates "Layoff Audit /
+     Risk Oracle" labels that already appear in the global bottom nav, creating
+     the "two navigation bars" problem. Hide it completely on mobile; desktop
+     (≥769px) still uses it as expected. */
   .dashboard-tabs-strip {
-    top: calc(var(--nav-h) + 12px);
-    margin-left: 0;
-    margin-right: 0;
-    border-radius: var(--radius-full);
-    padding: 5px;
-    gap: 4px;
+    display: none !important;
   }
-  /* Scroll fade hint — right edge gradient */
-  .dashboard-tabs-strip::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 32px;
-    background: linear-gradient(to right, transparent, rgba(10,13,20,0.85));
-    border-radius: 0 var(--radius-full) var(--radius-full) 0;
-    pointer-events: none;
+  /* Also hide the ToolsPage dashboard header on mobile — it wastes ~120px of
+     vertical space and the copy is redundant on small screens. */
+  .dashboard-header-row {
+    display: none !important;
   }
 }
 
