@@ -54,6 +54,8 @@ import {
 } from "../../services/d8ValidationService";
 // v17.0
 import HistoricalAccuracyPanel from "./common/HistoricalAccuracyPanel";
+// Wave 10.2
+import { AccuracyCredibilityPanel } from "./common/AccuracyCredibilityPanel";
 // live-data-first
 import { DataFreshnessPanel } from "../audit/DataFreshnessPanel";
 import { LiveDataCoveragePanel } from "../audit/LiveDataCoveragePanel";
@@ -3568,6 +3570,17 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             />
           </div>
         )}
+
+        {/* Wave 10.2: AccuracyCredibilityPanel — "Prove It" trust architecture
+             User-facing credibility statement with notable examples + calibration mode.
+             Placed BEFORE the technical HistoricalAccuracyPanel as the entry point. */}
+        <div className="mt-6">
+          <AccuracyCredibilityPanel
+            currentScore={result.total}
+            liveCalibration={liveCalibStatus}
+            modelCalibration={(result as any).modelCalibration}
+          />
+        </div>
 
         {/* v17.0: Historical Accuracy — community prediction accuracy by score tier */}
         {(result as any).modelCalibration && (
