@@ -29,6 +29,8 @@ import { RiskBreakdownTab } from '../RiskBreakdownTab';
 import { TransparencyTab } from '../TransparencyTab';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { ScoreSensitivityPanel } from '../common/ScoreSensitivityPanel';
+import { AIReasoningPanel, buildDimensionsFromResult } from '../common/AIReasoningPanel';
+import { ScenarioExplorer } from '../common/ScenarioExplorer';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -396,39 +398,6 @@ const HorizonContent: React.FC<{ horizon: PredictionHorizonResult }> = ({ horizo
   </div>
 );
 
-// ── Scenario fan ──────────────────────────────────────────────────────────────
-
-const ScenarioContent: React.FC<{ scenario: ScenarioPlanResult }> = ({ scenario }) => {
-  const cases = [
-    { label: 'Bear', score: scenario.worstCase.score, prob: scenario.worstCase.probability, color: '#dc2626' },
-    { label: 'Base', score: scenario.baseCase.score,  prob: scenario.baseCase.probability,  color: '#f59e0b' },
-    { label: 'Bull', score: scenario.bestCase.score,  prob: scenario.bestCase.probability,  color: '#10b981' },
-  ];
-  return (
-    <div>
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {cases.map(({ label, score, prob, color }) => (
-          <div key={label} className="rounded-xl p-2.5 text-center"
-            style={{ background: color + '12', border: `1px solid ${color}28` }}>
-            <p className="text-[9px] font-bold tracking-wider mb-1" style={{ color: color + 'cc' }}>{label.toUpperCase()}</p>
-            <p className="text-xl font-black mb-0.5" style={{ color }}>{score}</p>
-            <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.40)' }}>{Math.round(prob * 100)}% likely</p>
-          </div>
-        ))}
-      </div>
-      <div className="rounded-xl p-2.5"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-[10px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.50)' }}>
-          KEY UNCERTAINTY
-        </p>
-        <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
-          {scenario.dominantUncertainty}
-        </p>
-      </div>
-    </div>
-  );
-};
-
 // ── Quorum progress bar — shown inside brief skeleton during 45s wait ────────
 
 const QuorumProgressBar: React.FC<{ stageLabel?: string }> = ({ stageLabel }) => {
@@ -484,6 +453,9 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   const freshnessierTier: string = result.unifiedFreshness?.tier ?? '';
   const companyNameForBrief: string = (companyData as any)?.name ?? '';
 
+  // AI reasoning dimensions — built from breakdown layers L1/L2/L3
+  const aiReasoningDimensions = useMemo(() => buildDimensionsFromResult(result), [result]);
+
   // Score sufficiency gate — passed to DualGaugePanel so the risk gauge
   // shows the CI range instead of a point estimate when insufficient.
   const scoreSufficiency = useMemo(
@@ -493,6 +465,33 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
 
   return (
     <div className="flex flex-col gap-3">
+
+      {/* ── T2: AI Reasoning — chain of thought for the score ───────────────
+           Shown when at least one breakdown dimension (L1/L2/L3) has data.
+           Always appears FIRST so users understand why before reading the prose. */}
+      {aiReasoningDimensions.length > 0 && (
+        <AdaptiveBlock
+          title="How we reached your score"
+          subtitle="The top risk factors and reasoning chains that drive your result"
+          icon={Brain}
+          tier={2}
+          accentColor="#22d3ee"
+          defaultOpen={result.total >= 55}
+        >
+          <AIReasoningPanel
+            dimensions={aiReasoningDimensions}
+            finalScore={result.total}
+            confidencePercent={confPct}
+            primaryDataSources={
+              r._liveDataCoverage?.overallSource === 'live'
+                ? ['Yahoo Finance', 'Google News', 'Bing RSS']
+                : r._liveDataCoverage?.overallSource === 'mixed'
+                ? ['Google News', 'Bing RSS']
+                : []
+            }
+          />
+        </AdaptiveBlock>
+      )}
 
       {/* ── T2: Intelligence Brief — full text lives here only ─────────────── */}
       <IntelligenceBriefBlock
@@ -586,17 +585,27 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         </AdaptiveBlock>
       )}
 
-      {/* ── T3: Scenario Fan ───────────────────────────────────────────────── */}
+      {/* ── T3: Scenario Fan (interactive) ─────────────────────────────────
+           ScenarioExplorer normalises both the old worstCase/baseCase/bestCase
+           format and the newer bearCase/baseCase/bullCase format. Switching
+           tabs updates the action list for that scenario live. */}
       {scenario && (
         <AdaptiveBlock
           title="6-month scenarios"
-          subtitle="Bear / base / bull outcomes with key uncertainties"
+          subtitle="Bear / base / bull outcomes — tap a scenario to see its recommended actions"
           icon={Activity}
           tier={3}
           accentColor="#f59e0b"
           defaultOpen={false}
         >
-          <ScenarioContent scenario={scenario} />
+          <ScenarioExplorer
+            scenario={{
+              bear: (scenario as any).worstCase ?? (scenario as any).bear,
+              base: (scenario as any).baseCase  ?? (scenario as any).base,
+              bull: (scenario as any).bestCase  ?? (scenario as any).bull,
+            }}
+            currentScore={result.total}
+          />
         </AdaptiveBlock>
       )}
 
