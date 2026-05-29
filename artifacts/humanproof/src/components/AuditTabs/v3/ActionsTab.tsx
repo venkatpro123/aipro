@@ -423,12 +423,11 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           companyName={companyData?.name}
           currentScore={result.total}
           onActionComplete={(actionId, completedCount) => {
-            // Micro-toast celebration for action completion
-            if (completedCount % 3 === 0) {
-              window.dispatchEvent(new CustomEvent('hp.action.milestone', {
-                detail: { count: completedCount }
-              }));
-            }
+            // Wave 3.4: Fire celebration event on every completion
+            // The toast component decides which celebration to show based on count
+            window.dispatchEvent(new CustomEvent('hp.action.milestone', {
+              detail: { count: completedCount, actionId }
+            }));
           }}
         />
       )}
