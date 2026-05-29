@@ -42,6 +42,7 @@ import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
 import { ScoreTrendStrip } from '../common/ScoreTrendStrip';
 import { InactionCostCard } from '../common/InactionCostCard';
 import { VerdictReassurance } from '../common/VerdictReassurance';
+import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -499,6 +500,8 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const calibrationMode: string = (r.modelCalibration as any)?.calibrationMode ?? '';
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
+  const scoreSensitivity = r.scoreSensitivity;
+  const financialRunwayMonths: number | undefined = result.financialRunwayMonths ?? r.userFinancialRunway?.runwayMonths;
   const conflictCount = result.signalQuality?.conflictingSignals?.length ?? 0;
   const hardFailures  = [...(result.signalQuality?.hardFailures ?? [])];
   const lowDataWarning = result.signalQuality?.lowDataWarning as any;
@@ -685,6 +688,18 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         <ScoreTrendStrip
           scoreTrajectory={r.scoreTrajectory}
           currentScore={score}
+        />
+      )}
+
+      {/* ── Wave 5.1: Time-to-Safety Strip — path to MODERATE risk (≤35) ─────
+           Only renders when score > 35 and scoreSensitivity levers are available.
+           Replaces the static "your risk is elevated" message with a concrete
+           week-by-week projection of when the user can reach the safe zone. ── */}
+      {scoreSufficiency.sufficient && score > 35 && scoreSensitivity && (
+        <TimeToSafetyStrip
+          currentScore={score}
+          scoreSensitivity={scoreSensitivity}
+          financialRunwayMonths={financialRunwayMonths}
         />
       )}
 
