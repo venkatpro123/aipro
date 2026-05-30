@@ -437,18 +437,19 @@ export const calculateD3 = (workType: string): number => {
  * Returns 0–100 (100 = high risk, i.e., no experience protection)
  */
 export const calculateD4 = (workType: string, exp: string = "5-10"): number => {
-  // BUG-B4/DA1 FIX: Keys aligned with deriveExperience() output format.
-  // deriveExperience() returns: '0-2', '2-5', '5-10', '10-15', '15+'
-  // Previously used '10-20' and '20+' — those keys NEVER matched, giving all
-  // 10+ year professionals a generic fallback of 50.
+  // CRITICAL FIX: the Risk Oracle UI emits '10-20'/'20+' while the Layoff Audit
+  // path (deriveExperience) emits '10-15'/'15+'. Normalize so BOTH resolve —
+  // previously the two senior brackets fell through to the generic 50, wiping
+  // out the experience shield for exactly the cohort it should protect most.
+  const e = normalizeExperience(exp);
   const expScores: Record<string, number> = {
     "0-2":   75,  // entry = high risk
     "2-5":   62,  // early = elevated
     "5-10":  45,  // mid = moderate
-    "10-15": 28,  // senior = strongly protected (was previously unreachable!)
+    "10-15": 28,  // senior = strongly protected
     "15+":   18,  // principal = near-immune from tenure alone
   };
-  const base = expScores[exp] ?? 50;
+  const base = expScores[e] ?? 50;
 
   // Roles where experience matters MORE get an extra shield (surgeons, architects)
   const complexityProxy = ROLE_COMPLEXITY_MAP[workType] ?? 0.50;
@@ -456,6 +457,19 @@ export const calculateD4 = (workType: string, exp: string = "5-10"): number => {
 
   return Math.max(5, Math.round(base - shieldBonus));
 };
+
+/**
+ * Normalize experience keys to the canonical engine set ('0-2','2-5','5-10',
+ * '10-15','15+'). The Risk Oracle dropdown uses '10-20'/'20+'; the Layoff Audit
+ * path uses '10-15'/'15+'. Both must map to the same protection tier.
+ */
+export function normalizeExperience(exp: string | undefined | null): string {
+  switch (exp) {
+    case '10-20': return '10-15';
+    case '20+':   return '15+';
+    default:      return exp ?? '5-10';
+  }
+}
 
 /**
  * D5 — Country Exposure
@@ -490,8 +504,9 @@ export const calculateD6 = (workType: string, experience: string = "5-10"): numb
   const networkDensity = INDUSTRY_NETWORK_DENSITY[ind] ?? INDUSTRY_NETWORK_DENSITY[workType] ?? 0.55;
   // High density (0.75 = BPO) → high D6 score (low moat, high risk)
   const baseScore = Math.min(100, Math.max(5, Math.round(networkDensity * 100)));
-  // Apply experience network bonus: senior professionals have accumulated deeper moats
-  const expBonus = D6_EXP_BONUS[experience] ?? 0;
+  // Apply experience network bonus: senior professionals have accumulated deeper moats.
+  // Normalize so '10-20'/'20+' (UI) and '10-15'/'15+' (Layoff) both apply the moat.
+  const expBonus = D6_EXP_BONUS[normalizeExperience(experience)] ?? 0;
   return Math.min(100, Math.max(5, baseScore + expBonus));
 };
 

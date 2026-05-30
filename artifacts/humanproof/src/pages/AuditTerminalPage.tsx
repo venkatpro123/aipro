@@ -5,13 +5,17 @@
 
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { INDUSTRIES, WORK_TYPES, COUNTRIES } from '../data/catalogData';
+// Import verdict/timeline/urgency from riskFormula (not riskEngine): its bands
+// (<25/<50/<70 — "AI-Resistant/Resilient/Exposed/Critical Risk") match getScoreColor
+// and the per-dimension reasoning. riskEngine's legacy copies used different
+// thresholds (>=80/60/40) and produced verdict copy that contradicted the ring colour.
 import {
   calculateScore,
   getScoreColor,
   getVerdict,
   getTimeline,
   getUrgency,
-} from '../data/riskEngine';
+} from '../data/riskFormula';
 import type { ScoreResult } from '../data/riskFormula';
 import NeuralSphereLoader from '../components/RiskOracle/NeuralSphereLoader';
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
@@ -193,8 +197,9 @@ const AuditTerminalPage: React.FC = () => {
     const STAGES = 9; // components 0..8
 
     if (prefersReduced) {
+      // Reduced motion → show the final stage and reveal on the next tick (no wait).
       setLoaderStage(STAGES - 1);
-      loaderTimerRef.current = window.setTimeout(revealPending, 900);
+      loaderTimerRef.current = window.setTimeout(revealPending, 0);
       return;
     }
 
@@ -224,11 +229,15 @@ const AuditTerminalPage: React.FC = () => {
     const score = cached ?? calculateScore(workTypeKey, industryKey, experience, countryKey);
     if (!cached) setCachedRisk(cacheParams, score);
 
-    const d = getScoreDelta(workTypeKey, score.total, experience, countryKey);
     const breakdown = Object.fromEntries(
       (score.dimensions ?? []).map(dim => [dim.key, dim.score / 100])
     );
+    // Record FIRST so the new run becomes history[0]; getScoreDelta compares the
+    // current score against history[1] (the genuine previous assessment). Calling
+    // it before recordScore made it skip the real previous run and require 3 audits
+    // before any delta appeared.
     recordScore({ roleKey: workTypeKey, industryKey, countryKey, experience, score: score.total, timestamp: Date.now(), isGrounded: !cached, breakdown });
+    const d = getScoreDelta(workTypeKey, score.total, experience, countryKey);
 
     pendingRef.current = { score, delta: d };
     startLoaderSequence();
