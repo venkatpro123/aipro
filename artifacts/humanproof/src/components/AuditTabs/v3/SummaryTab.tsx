@@ -54,6 +54,7 @@ import { computeCanonicalConfidence } from '../../../services/canonicalConfidenc
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { classifySummaryReveal, type SummaryBlockKey } from './summaryReveal';
 import { explainDriver } from './driverEvidence';
+import { isActionableRecommendation } from '../../../services/orchestration/signalOrchestrator';
 import Tilt3D from '../../ui/Tilt3D';
 import { ScoreSignalOrbit, type SignalNode } from '../../ScoreSignalOrbit';
 import { ScoreCountUp } from '../../AuditReveal/ScoreCountUp';
@@ -869,7 +870,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const recommendations: any[] = useMemo(
-    () => (Array.isArray(result.recommendations) ? result.recommendations : []),
+    () => (Array.isArray(result.recommendations) ? result.recommendations.filter(isActionableRecommendation) : []),
     [result],
   );
 
@@ -917,7 +918,15 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const personalModifierPresent = personalRawModifier != null;
   const personalModifierMaterial = personalModifierPresent
     && Math.abs(Number(personalRawModifier) || 0) >= 0.5;
-  const hasInactionConsequence = !!(result.sixMonthInactionConsequence || r.sixMonthInactionConsequence);
+  // The inaction-consequence string is engine-generated and sometimes embeds a
+  // pre-personalization score (e.g. "At score 37/100…") that contradicts the
+  // final score. Suppress it when the embedded score disagrees with the displayed
+  // score by > 8 pts, so we never show a stale, lower-severity message on a
+  // higher-risk audit.
+  const inactionConsequenceRaw = String(result.sixMonthInactionConsequence ?? r.sixMonthInactionConsequence ?? '');
+  const _inactionScoreMatch = inactionConsequenceRaw.match(/score\s+(\d{1,3})\s*\/\s*100/i);
+  const _inactionStale = _inactionScoreMatch ? Math.abs(Number(_inactionScoreMatch[1]) - score) > 8 : false;
+  const hasInactionConsequence = inactionConsequenceRaw.length > 0 && !_inactionStale;
   const timeToSafetyEligible = !!(scoreSufficiency.sufficient && score > 35 && scoreSensitivity);
   const reveal = useMemo(
     () => classifySummaryReveal(adaptation.feed, {
@@ -971,7 +980,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
     ? (
       <InactionCostCard
         key="inaction"
-        consequence={String(result.sixMonthInactionConsequence ?? r.sixMonthInactionConsequence ?? '')}
+        consequence={inactionConsequenceRaw}
       />
     )
     : null;
@@ -1044,7 +1053,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
             <div className="audit-step-dot active" style={{ width: 8, height: 8, marginTop: 5, flexShrink: 0 }} />
             <div className="flex-1 min-w-0">
               <div style={{ fontSize: '0.58rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--red)', marginBottom: 4, fontWeight: 800 }}>
-                {(result as any).warnSignal?.hasActiveWARN ? 'LEGAL NOTICE DETECTED' : 'HIGH RISK · AHEAD OF 90%+ WHO FACE THIS'}
+                {(result as any).warnSignal?.hasActiveWARN ? 'LEGAL NOTICE DETECTED' : `${riskLabel(score)} RISK · AHEAD OF 90%+ WHO FACE THIS`}
               </div>
               <p style={{ fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--text-2)', marginBottom: 8 }}>
                 {(result as any).warnSignal?.hasActiveWARN

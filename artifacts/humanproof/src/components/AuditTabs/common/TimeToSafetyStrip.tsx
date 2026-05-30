@@ -136,8 +136,12 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
 
   const { milestones, totalWeeks, reachSafety } = buildMilestones(currentScore, levers);
 
-  // Runway warning: if financial runway (in months) expires before estimated safety
-  const runwayWeeks = financialRunwayMonths != null ? financialRunwayMonths * 4.33 : null;
+  // Runway warning: if financial runway (in months) expires before estimated safety.
+  // Treat 0/missing as UNKNOWN (the user didn't provide it) — never show a
+  // "0mo runway may expire" false alarm.
+  const runwayWeeks = (financialRunwayMonths != null && financialRunwayMonths > 0)
+    ? financialRunwayMonths * 4.33
+    : null;
   const runwayAlert = runwayWeeks != null && runwayWeeks < totalWeeks;
 
   const currentColor = scoreColor(currentScore);

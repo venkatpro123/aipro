@@ -16,6 +16,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { riskLabel } from '../../../lib/riskTokens';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
   BookOpen, Activity, Key, Siren, Timer,
@@ -212,11 +213,13 @@ const EmergencyCallout: React.FC<{
               className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
               style={{ background: 'rgba(220,38,38,0.18)', color: '#fca5a5' }}
             >
-              HIGH RISK · {score}/100
+              {riskLabel(score)} RISK · {score}/100
             </span>
           </div>
           <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
-            Your situation is serious — and you're ahead of {percentileAhead}% of people who face it.
+            {score >= 55
+              ? `Your situation is serious — and you're ahead of ${percentileAhead}% of people who face it.`
+              : `A critical company signal warrants acting now — and you're ahead of ${percentileAhead}% who catch it this early.`}
           </p>
         </div>
       </div>

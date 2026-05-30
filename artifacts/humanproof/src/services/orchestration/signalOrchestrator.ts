@@ -291,11 +291,25 @@ function moveScore(rec: ActionPlanItem, profile: ProfileSignalSummary): number {
   return s;
 }
 
+// Some recommendations are SYSTEM/META transparency notices (e.g. an API-injected
+// "System Override Applied · The engine detected exceptional patterns: Signal
+// conflict…"). They carry priority 'Critical' but are NOT user actions — they
+// belong in the Transparency tab. They must never become the "one move" or an
+// action card, so we filter them out everywhere actions are derived.
+const META_REC_RE = /system override|override applied|engine detected|signal conflict|exceptional pattern|discrepanc|kill[- ]?switch/i;
+export function isActionableRecommendation(r: ActionPlanItem | null | undefined): boolean {
+  if (!r || typeof r.title !== 'string') return false;
+  const id = String((r as any).id ?? '').toLowerCase();
+  if (id.startsWith('system') || id.includes('override') || id.includes('notice') || id.includes('meta')) return false;
+  if (META_REC_RE.test(`${r.title} ${r.description ?? ''}`)) return false;
+  return true;
+}
+
 export function pickPrimaryMove(
   recommendations: ActionPlanItem[] | undefined,
   profile: ProfileSignalSummary,
 ): PrimaryMove | null {
-  const recs = (recommendations ?? []).filter(r => r && typeof r.title === 'string');
+  const recs = (recommendations ?? []).filter(isActionableRecommendation);
   if (recs.length === 0) return null;
 
   const runwayCritical = profile.runwayTier === 'critical';

@@ -24,10 +24,13 @@ interface Props {
 
 type Step = 0 | 1 | 2 | 'done';
 
+// Globally framed — work-authorization risk applies in every market (US H-1B/OPT,
+// UK Skilled Worker, EU Blue Card, Gulf permits…), not just the US. A domestic
+// employee (e.g. an Indian working in India) answers "citizen / local".
 const VISA_OPTIONS: { label: string; value: VisaStatus; description: string }[] = [
-  { label: 'Citizen / PR / Green Card', value: 'citizen', description: 'No work authorization risk' },
-  { label: 'Work visa (H-1B / L-1 / OPT)', value: 'h1b', description: 'Job change affects authorization timeline' },
-  { label: 'Not applicable', value: 'na', description: 'Outside US or not relevant' },
+  { label: 'Citizen / permanent resident / local', value: 'citizen', description: 'No work-authorization risk' },
+  { label: 'On an employer-sponsored work visa', value: 'h1b', description: 'e.g. H-1B, L-1, UK Skilled Worker, EU Blue Card — a job change affects your authorization timeline' },
+  { label: 'Not applicable / not sure', value: 'na', description: '' },
 ];
 
 const RUNWAY_OPTIONS = [0, 3, 6, 9, 12] as const;
@@ -134,7 +137,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
             transition={{ duration: 0.18 }}
           >
             <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
-              What is your work authorization status?
+              Does your job depend on an employer-sponsored work visa?
             </p>
             <div className="flex flex-col gap-1.5">
               {VISA_OPTIONS.map(opt => (
