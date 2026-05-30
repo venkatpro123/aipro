@@ -29,6 +29,7 @@ import type { CompanyData } from '../../data/companyDatabase';
 import { compressAllSignals } from '../signalCompressionService';
 import type { CompressedSignal, CompressedIntel } from '../signalCompressionService';
 import { deriveProfileSignals } from '../actionPersonalizationEngine';
+import { actionHeadline } from './actionHeadline';
 import type { ProfileSignalSummary, UserProfileLike } from '../actionPersonalizationEngine';
 
 // ── Public types ────────────────────────────────────────────────────────────
@@ -63,6 +64,9 @@ export interface PrimaryMove {
   rationale: string;
   /** False when the move is the best available but blocked by the user's situation. */
   feasibleForProfile: boolean;
+  /** Verb-first action headline (derived from the action's description), so the
+   *  "one move" reads as something to DO, not a diagnosis title. */
+  moveLabel: string;
 }
 
 export interface OrchestratedFeed {
@@ -308,6 +312,7 @@ export function pickPrimaryMove(
         action: fast,
         rationale: 'Prioritised a fast-payoff move — your runway is critical, so slow reskilling bets are deferred.',
         feasibleForProfile: true,
+        moveLabel: actionHeadline(fast),
       };
     }
     // Everything is a long bet — keep the top one but flag infeasibility honestly.
@@ -315,6 +320,7 @@ export function pickPrimaryMove(
       action: ranked[0],
       rationale: 'No fast-payoff action available — every recommended move needs runway you may not have. Treat this as the direction, not this week’s task.',
       feasibleForProfile: false,
+      moveLabel: actionHeadline(ranked[0]),
     };
   }
 
@@ -326,6 +332,7 @@ export function pickPrimaryMove(
       ? 'Highest-impact move, prioritised because your work authorisation adds a timing clock on any job change.'
       : 'Highest-impact move by risk reduction and urgency.',
     feasibleForProfile: true,
+    moveLabel: actionHeadline(top),
   };
 }
 
@@ -375,7 +382,7 @@ function buildTrace(
       ? 'Prepare actively.'
       : 'Monitor calmly.';
 
-  const move = primaryMove?.action.title ?? 'Keep your materials current and your network warm.';
+  const move = primaryMove?.moveLabel ?? 'Keep your materials current and your network warm.';
 
   const sourceKind = intel.ordered[0]?.sourceKind ?? 'heuristic';
   const confidence = `Confidence: ${Math.round(confPct)}% (${sourceKind})`;

@@ -16,6 +16,8 @@ import type { HistoricalPattern } from '../data/historicalPatterns';
 interface PatternMatchCardProps {
   pattern: HistoricalPattern;
   overlapScore?: number;  // 0-1, optional — shown as a confidence meter
+  /** The user's region — used to frame offshoring patterns for the right audience. */
+  userRegion?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -33,8 +35,22 @@ const REGION_FLAG: Record<string, string> = {
   Global: '🌐',
 };
 
-export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({ pattern, overlapScore }) => {
+export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({ pattern, overlapScore, userRegion }) => {
   const [expanded, setExpanded] = useState(false);
+
+  // Audience reframe — some patterns (e.g. US→India GCC offshoring) carry an
+  // opportunity framing for one region that reads as irrelevant or misleading to
+  // a user elsewhere. Reframe the takeaway for the actual reader so a US user
+  // sees the threat side, not "opportunity for India-based professionals."
+  const offshorePattern = pattern.category === 'india_it_automation'
+    && /offshore|gcc|pivot|global capabilit/i.test(`${pattern.patternName} ${pattern.summary}`);
+  const regionStr = (userRegion ?? '').toLowerCase();
+  const userInIndia = regionStr.includes('india') || regionStr === 'in';
+  const audienceReframe = offshorePattern
+    ? (userInIndia
+        ? 'You sit on the receiving side of this shift — India GCC headcount is growing. Position for in-demand GCC openings while the build-out continues.'
+        : `${userRegion ? `As a ${userRegion}-based professional, you` : 'If you are based outside India, you'} sit on the exposed side of this shift — these are the roles being relocated offshore. Treat the documented cases as your early-warning timeline and start a parallel search now.`)
+    : null;
   const pctMatch = overlapScore != null ? Math.round(overlapScore * 100) : null;
   const matchColor = pctMatch != null
     ? pctMatch >= 75 ? 'var(--emerald)'
@@ -192,6 +208,24 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({ pattern, ove
       >
         {expanded ? '↑ Show less' : '↓ See response strategy + role impact'}
       </button>
+
+      {/* Audience reframe — interprets the pattern for THIS reader's region */}
+      {audienceReframe && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: '8px 10px',
+            borderRadius: 8,
+            background: userInIndia ? 'rgba(16,185,129,0.07)' : 'rgba(249,115,22,0.07)',
+            border: `1px solid ${userInIndia ? 'rgba(16,185,129,0.22)' : 'rgba(249,115,22,0.22)'}`,
+          }}
+        >
+          <div style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: userInIndia ? 'var(--emerald)' : 'var(--orange)', marginBottom: 3 }}>
+            What this means for you
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{audienceReframe}</div>
+        </div>
+      )}
 
       {/* Evidence note — always visible */}
       <div style={{ marginTop: 8, fontSize: '0.6rem', color: 'var(--text-3)', borderTop: '1px solid var(--border)', paddingTop: 6, lineHeight: 1.4 }}>

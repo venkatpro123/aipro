@@ -42,6 +42,7 @@ function mkFeed(overrides: Partial<OrchestratedFeed> = {}): OrchestratedFeed {
       action: mkAction(),
       rationale: 'Highest risk-reduction per hour given your timeline.',
       feasibleForProfile: true,
+      moveLabel: 'Refresh your resume and reach 3 recruiters',
     } as PrimaryMove,
     spine: 'Workforce signals are softening — prepare actively. Next: refresh your resume.',
     trace: {
@@ -79,6 +80,7 @@ describe('ReasoningSpineCard', () => {
         action: mkAction({ title: 'Complete a 12-week certification' }),
         rationale: 'Long-term skill bet.',
         feasibleForProfile: false,
+        moveLabel: 'Complete a 12-week certification',
       },
     });
     const html = renderToStaticMarkup(React.createElement(ReasoningSpineCard, { feed }));

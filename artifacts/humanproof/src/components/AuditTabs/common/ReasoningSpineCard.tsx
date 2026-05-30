@@ -101,7 +101,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
             />
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.9)' }}>
-                {primaryMove.action.title}
+                {primaryMove.moveLabel ?? primaryMove.action.title}
               </p>
               {primaryMove.rationale && (
                 <p className="text-[10.5px] leading-snug mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>

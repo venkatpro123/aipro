@@ -75,7 +75,9 @@ const IntelligenceBriefBlock: React.FC<{
   confidence?: number;
   freshnessierTier?: string;
   companyName?: string;
-}> = ({ brief, urgency, auditStage, confidence, freshnessierTier, companyName }) => {
+  /** Deterministic first-paint summary shown while the LLM brief is still being written. */
+  interimSummary?: string;
+}> = ({ brief, urgency, auditStage, confidence, freshnessierTier, companyName, interimSummary }) => {
   const [expanded, setExpanded] = useState(false);
 
   const uc = {
@@ -113,20 +115,45 @@ const IntelligenceBriefBlock: React.FC<{
   if (!brief) {
     return (
       <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="flex items-center gap-2 mb-2">
-          <Brain className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.6)' }} />
-          <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            INTELLIGENCE BRIEF
-          </span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Brain className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.6)' }} />
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              INTELLIGENCE BRIEF
+            </span>
+          </div>
+          {interimSummary && (
+            <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: '#22d3ee', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
+              SIGNAL SUMMARY
+            </span>
+          )}
         </div>
-        <div className="space-y-2">
-          {[70, 85, 60].map((w, i) => (
-            <div key={i} className="h-3 rounded-full animate-pulse" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.06)' }} />
-          ))}
-        </div>
-        <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          AI analysis generating…
-        </p>
+        {interimSummary ? (
+          // Deterministic first paint — the user gets a real, signal-grounded read
+          // immediately, instead of staring at a skeleton that may never resolve.
+          <>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.82)' }}>
+              {interimSummary}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-3 h-3 rounded-full border-2 border-[rgba(0,212,224,0.15)] border-t-[#22d3ee] animate-spin" />
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                Refining into a full AI brief from live data…
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {[70, 85, 60].map((w, i) => (
+                <div key={i} className="h-3 rounded-full animate-pulse" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.06)' }} />
+              ))}
+            </div>
+            <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              AI analysis generating…
+            </p>
+          </>
+        )}
         <QuorumProgressBar stageLabel={auditStage} />
       </div>
     );
@@ -466,6 +493,31 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   const freshnessierTier: string = result.unifiedFreshness?.tier ?? '';
   const companyNameForBrief: string = (companyData as any)?.name ?? '';
 
+  // Deterministic first-paint summary — shown immediately while the LLM brief is
+  // still being written, so a late-night user always gets a real, signal-grounded
+  // read instead of a skeleton that may not resolve before they leave. Built only
+  // from data already on the result; replaced automatically when the brief lands.
+  const interimBriefSummary = useMemo(() => {
+    if (brief || freshnessierTier === 'heuristic') return undefined; // real brief (or honest no-data state) wins
+    const score = Math.round(result.total ?? 0);
+    const tierLabel = ((result.tier?.label as string | undefined) ?? (score >= 60 ? 'High' : score >= 40 ? 'Moderate' : 'Low'))
+      .replace(/\s*risk\s*$/i, ''); // avoid "moderate risk layoff risk"
+    const co = companyNameForBrief || 'This company';
+    const dims = (Array.isArray(result.dimensions) ? [...result.dimensions] : [])
+      .filter((d: any) => typeof d.score === 'number')
+      .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0));
+    const top2 = dims.slice(0, 2).map((d: any) => String(d.label)).filter(Boolean);
+    const cd = companyData as any;
+    const facts: string[] = [];
+    const lr = Number(cd?.layoffRounds ?? (Array.isArray(r.layoffRounds) ? r.layoffRounds.length : r.layoffRounds) ?? 0) || 0;
+    if (lr >= 1) facts.push(`${lr} recent layoff round${lr > 1 ? 's' : ''}`);
+    if (typeof cd?.stock90DayChange === 'number') facts.push(`stock ${cd.stock90DayChange >= 0 ? '+' : ''}${cd.stock90DayChange}% over 90 days`);
+    if (typeof cd?.revenueGrowthYoY === 'number') facts.push(`revenue ${cd.revenueGrowthYoY >= 0 ? '+' : ''}${cd.revenueGrowthYoY}% YoY`);
+    const driverClause = top2.length ? ` The biggest factors are ${top2.join(' and ')}.` : '';
+    const factClause = facts.length ? ` Live signals: ${facts.join(', ')}.` : '';
+    return `${co} currently reads as ${tierLabel.toLowerCase()} layoff risk (${score}/100).${driverClause}${factClause}`;
+  }, [brief, freshnessierTier, result, companyData, companyNameForBrief, r]);
+
   // AI reasoning dimensions — built from breakdown layers L1/L2/L3
   const aiReasoningDimensions = useMemo(() => buildDimensionsFromResult(result), [result]);
 
@@ -553,6 +605,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           confidence={confPct}
           freshnessierTier={freshnessierTier}
           companyName={companyNameForBrief}
+          interimSummary={interimBriefSummary}
         />
       </AdaptiveBlock>
 
@@ -583,6 +636,12 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           <PatternMatchCard
             pattern={result.resolvedPattern}
             overlapScore={result.patternMatchOverlapScore ?? undefined}
+            userRegion={
+              (r.userFactors?.region as string | undefined)
+              ?? (r.userFactors?.citizenshipRegion as string | undefined)
+              ?? ((companyData as any)?.region as string | undefined)
+              ?? undefined
+            }
           />
         </motion.div>
       )}

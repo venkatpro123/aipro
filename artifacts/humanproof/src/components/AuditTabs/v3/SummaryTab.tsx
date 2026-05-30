@@ -1403,7 +1403,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
               You don't have to do everything — just this
             </p>
             <p className="text-[13px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
-              {adaptation.feed.primaryMove.action.title}
+              {adaptation.feed.primaryMove.moveLabel ?? adaptation.feed.primaryMove.action.title}
             </p>
             <button
               onClick={() => {
