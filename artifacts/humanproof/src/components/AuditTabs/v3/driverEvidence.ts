@@ -95,8 +95,8 @@ export function explainDriver(dim: DriverLike, result: any, companyData?: any): 
     return `${sev} from the company's financial position.`;
   }
 
-  // ── Role displacement / AI automation ────────────────────────────────────
-  if (theme(/role|displacement|automation|\bai\b|skill|tech stack|obsolesc/)) {
+  // ── Role displacement / AI automation / task automatability ─────────────
+  if (theme(/role|displacement|automation|\bai\b|skill|tech stack|obsolesc|automatab|automatiz/)) {
     if (typeof aiExposure === 'number') {
       return `${sev} — about ${asPct(aiExposure)}% of your role's core tasks are exposed to AI automation as tooling matures.`;
     }

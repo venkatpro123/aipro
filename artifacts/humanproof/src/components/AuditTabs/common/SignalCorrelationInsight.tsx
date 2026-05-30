@@ -71,23 +71,36 @@ function trustLevelColor(level: ContradictionReport['overallTrustLevel']): strin
 }
 
 function resolutionLabel(resolution: ContradictionRecord['resolution']): string {
-  switch (resolution) {
-    case 'positive_wins': return 'Positive prevailed';
-    case 'negative_wins': return 'Risk prevailed';
-    case 'averaged':      return 'Signals averaged';
-    case 'flagged':       return 'Flagged — unresolved';
-    default:              return resolution;
+  // Cast to string: the runtime produces both v1 ContradictionRecord values AND
+  // v2 TrustResolution values; both are handled here so nothing leaks as a raw code.
+  const r = resolution as string;
+  switch (r) {
+    case 'positive_wins':         return 'Positive prevailed';
+    case 'negative_wins':         return 'Risk prevailed';
+    case 'averaged':              return 'Signals averaged';
+    case 'flagged':               return 'Flagged — unresolved';
+    case 'trust_positive_signal': return 'Positive signal trusted';
+    case 'trust_negative_signal': return 'Risk signal trusted';
+    case 'weight_both_equally':   return 'Both signals weighted';
+    case 'defer_to_temporal':     return 'Monitoring — time-sensitive';
+    case 'user_input_required':   return 'Clarification needed';
+    default:                      return 'Resolved';
   }
 }
 
 function ResolutionIcon({ resolution }: { resolution: ContradictionRecord['resolution'] }) {
   const cls = 'w-3 h-3 flex-shrink-0';
-  switch (resolution) {
-    case 'positive_wins': return <CheckCircle className={cls} style={{ color: '#10b981' }} />;
-    case 'negative_wins': return <AlertTriangle className={cls} style={{ color: '#f97316' }} />;
-    case 'averaged':      return <Scale className={cls} style={{ color: '#f59e0b' }} />;
-    case 'flagged':       return <Zap className={cls} style={{ color: '#ef4444' }} />;
-    default:              return <Scale className={cls} style={{ color: '#6b7280' }} />;
+  const r = resolution as string;
+  switch (r) {
+    case 'positive_wins':
+    case 'trust_positive_signal':  return <CheckCircle className={cls} style={{ color: '#10b981' }} />;
+    case 'negative_wins':
+    case 'trust_negative_signal':  return <AlertTriangle className={cls} style={{ color: '#f97316' }} />;
+    case 'averaged':
+    case 'weight_both_equally':    return <Scale className={cls} style={{ color: '#f59e0b' }} />;
+    case 'flagged':
+    case 'defer_to_temporal':      return <Zap className={cls} style={{ color: '#f59e0b' }} />;
+    default:                       return <Scale className={cls} style={{ color: '#6b7280' }} />;
   }
 }
 

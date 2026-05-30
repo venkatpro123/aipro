@@ -972,7 +972,15 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         competitivePosition={r.competitivePosition}
         currentScore={score}
         preparednessScore={preparedness?.overallScore}
-        currentRoleLabel={String(result.workTypeKey ?? '').replace(/_/g, ' ')}
+        currentRoleLabel={
+          // Prefer the user's original role title (humanised); only fall back to
+          // the internal oracle key if nothing else is available, and prettify it
+          // so users never see raw snake_case ("sw_software_engineer").
+          r.roleTitle ??
+          r.userProfile?.roleTitle ??
+          r.userProfile?.currentRole ??
+          (String(result.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || undefined)
+        }
       />
     )
     : null;

@@ -104,9 +104,12 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
             forced exit risk
           </p>
-          {survival.framedAs1InX && (
+          {/* Compute the 1-in-X from the DISPLAYED probability (inactionProbability12m)
+              not from the pre-computed framedAs1InX (which is based on probability12m,
+              a different field). This prevents showing "1 in 5" next to a 13% figure. */}
+          {withoutAction > 0.01 && (
             <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              {survival.framedAs1InX}
+              {`Approximately 1 in ${Math.round(1 / withoutAction)}`}
             </p>
           )}
         </div>

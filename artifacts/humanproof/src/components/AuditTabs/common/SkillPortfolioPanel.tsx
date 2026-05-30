@@ -117,12 +117,18 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
             RETOOL PRIORITY
           </div>
           <div className="space-y-1">
-            {portfolio.retoolPriority.slice(0, 3).map((skill, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-[10px] font-bold w-4" style={{ color: 'rgba(255,255,255,0.30)' }}>{i + 1}.</span>
-                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>{skill}</span>
-              </div>
-            ))}
+            {portfolio.retoolPriority.slice(0, 3).map((skill, i) => {
+              const ALWAYS_UPPER = /^(llm|ai|ml|api|aws|gcp|sql|etl|erp|crm|ux|ui|iot|saas|paas|iaas|rpa|qa|devops)$/i;
+              const displaySkill = ALWAYS_UPPER.test(skill.trim())
+                ? skill.trim().toUpperCase()
+                : skill.replace(/\b\w/g, (c: string) => c.toUpperCase());
+              return (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold w-4" style={{ color: 'rgba(255,255,255,0.30)' }}>{i + 1}.</span>
+                  <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>{displaySkill}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

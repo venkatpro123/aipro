@@ -158,48 +158,19 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
           Static peer graph · Curated layoff cache · Not real-time peer monitoring
         </p>
       </div>
-      {/* MED-6: multiplier calibration disclosure */}
-      {contagion.multipliersCalibrationStatus === 'developer_estimate' && (
-        <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
-          background: 'rgba(245,158,11,0.05)',
-          border: '1px solid rgba(245,158,11,0.15)',
-        }}>
-          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(245,158,11,0.55)' }} />
-          <p className="text-[9px]" style={{ color: 'rgba(245,158,11,0.65)' }}>
-            Sector weights are developer estimates — pending co-occurrence calibration. {contagion.multipliersCalibrationNote.split('.')[0]}.
-          </p>
-        </div>
-      )}
-      {/* GAP-A02: decay constant calibration disclosure */}
-      {contagion.decayCalibrationStatus === 'regression_derived' ? (
-        <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
-          background: 'rgba(16,185,129,0.05)',
-          border: '1px solid rgba(16,185,129,0.20)',
-        }}>
-          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(16,185,129,0.55)' }} />
-          <p className="text-[9px]" style={{ color: 'rgba(16,185,129,0.75)' }}>
-            Recency decay: {Math.round(contagion.decayHalfLifeDays)}-day half-life ·{' '}
-            <span className="font-black">EMPIRICAL</span>
-            {contagion.decayEvidenceCount > 0 && ` · ${contagion.decayEvidenceCount} co-occurrence pairs`}
-            {contagion.decayLastValidatedAt && ` · validated ${contagion.decayLastValidatedAt.slice(0, 10)}`}
-          </p>
-        </div>
-      ) : (
-        <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
-          background: 'rgba(245,158,11,0.05)',
-          border: '1px solid rgba(245,158,11,0.15)',
-        }}>
-          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(245,158,11,0.55)' }} />
-          <p className="text-[9px]" style={{ color: 'rgba(245,158,11,0.65)' }}>
-            Recency decay: {Math.round(contagion.decayHalfLifeDays)}-day half-life ·{' '}
-            <span className="font-black">ESTIMATED</span>
-            {' '}— developer choice from 2022–2024 wave timing analysis, not regression-fitted.
-            {contagion.decayEvidenceCount === 0
-              ? ' Requires ≥50 confirmed co-occurrence pairs to calibrate.'
-              : ` ${contagion.decayEvidenceCount} pairs collected (≥50 required).`}
-          </p>
-        </div>
-      )}
+      {/* Confidence disclosure — user-appropriate framing of model maturity.
+          The full technical calibration detail lives in the Methodology tab. */}
+      <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.07)',
+      }}>
+        <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(148,163,184,0.45)' }} />
+        <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          {contagion.multipliersCalibrationStatus === 'developer_estimate'
+            ? 'Sector-peer weighting is estimated — real-world data accumulation is in progress. Treat contagion scores as directional, not precise.'
+            : `Sector-peer weighting is empirically calibrated from ${contagion.decayEvidenceCount > 0 ? `${contagion.decayEvidenceCount} documented events` : 'layoff pattern data'}. Full details in Methodology.`}
+        </p>
+      </div>
     </div>
   );
 };

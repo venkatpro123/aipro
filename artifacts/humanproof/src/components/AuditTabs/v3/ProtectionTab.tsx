@@ -219,7 +219,10 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         <SafePivotRolesCard
           roleAdjacency={roleAdjacency}
           currentScore={result.total}
-          currentRoleLabel={String(r.workTypeKey ?? '')}
+          currentRoleLabel={
+            r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ??
+            (String(r.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || undefined)
+          }
         />
       )}
 

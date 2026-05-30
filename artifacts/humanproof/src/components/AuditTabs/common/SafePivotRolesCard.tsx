@@ -65,8 +65,10 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
 }) => {
   if (!roleAdjacency) return null;
 
-  // Take top 3 adjacent roles sorted by riskReductionPerWeek (best ROI first)
+  // Take top 3 adjacent roles sorted by riskReductionPerWeek (best ROI first).
+  // Suppress roles with negligible ROI so we never show "saves you 0 pts/week".
   const topRoles = [...(roleAdjacency.adjacentRoles ?? [])]
+    .filter(r => (r.riskReductionPerWeek ?? 0) > 0.1)
     .sort((a, b) => b.riskReductionPerWeek - a.riskReductionPerWeek)
     .slice(0, 3);
 
