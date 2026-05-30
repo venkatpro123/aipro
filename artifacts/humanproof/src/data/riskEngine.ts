@@ -15,29 +15,11 @@ export {
 } from "./riskFormula";
 import { calculateScore } from "./riskFormula";
 
-/**
- * Legacy compatibility functions for v1.0 UI remnants
- */
-export const getVerdict = (score: number): string => {
-  if (score >= 80) return "Critical risk";
-  if (score >= 60) return "High risk";
-  if (score >= 40) return "Moderate risk";
-  return "Low risk";
-};
-
-export const getTimeline = (score: number): string => {
-  if (score >= 80) return "6-12 months";
-  if (score >= 60) return "1-2 years";
-  if (score >= 40) return "2-5 years";
-  return "5+ years";
-};
-
-export const getUrgency = (score: number): string => {
-  if (score >= 80) return "Immediate Action";
-  if (score >= 60) return "High Urgency";
-  if (score >= 40) return "Moderate Urgency";
-  return "Planned Transition";
-};
+// getVerdict / getTimeline / getUrgency re-exported from riskFormula so that
+// ALL consumers use the same <25/<50/<70 bands — previously these legacy stubs
+// used INVERTED >=80/60/40 thresholds that made score 45 print "Moderate risk"
+// instead of "Resilient", contradicting the score ring colour.
+export { getVerdict, getTimeline, getUrgency } from "./riskFormula";
 
 export { calculateScore as default, calculateScore as calculateScoreDefault };
 

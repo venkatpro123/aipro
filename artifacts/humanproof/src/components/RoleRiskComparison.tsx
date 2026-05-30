@@ -3,11 +3,16 @@ import { motion, AnimatePresence, useSpring, useTransform, animate } from 'frame
 import { GitCompare, TrendingDown, TrendingUp, Info, Briefcase, Zap, FastForward } from 'lucide-react';
 import { PremiumSelect } from './ui/PremiumSelect';
 import { INDUSTRIES, WORK_TYPES } from '../data/catalogData';
-import { calculateScore, getScoreColor } from '../data/riskEngine';
+// Import from riskFormula (not riskEngine) so verdict/color bands are consistent
+// with the main result screen — riskEngine's legacy stubs had inverted thresholds.
+import { calculateScore, getScoreColor } from '../data/riskFormula';
 
 interface RoleRiskComparisonProps {
   currentRoleKey: string;
   currentScore: number;
+  /** Pass the user's selections so comparison scores use the same parameters. */
+  experience?: string;
+  country?: string;
 }
 
 const AnimatedNumber = ({ value, color }: { value: number; color: string }) => {
@@ -24,12 +29,18 @@ const AnimatedNumber = ({ value, color }: { value: number; color: string }) => {
   return <span style={{ color }}>{displayValue}</span>;
 };
 
-export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({ currentRoleKey, currentScore }) => {
+export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({
+  currentRoleKey, currentScore, experience = '5-10', country = 'usa',
+}) => {
   const [targetIndustry, setTargetIndustry] = useState('');
   const [targetRole, setTargetRole] = useState('');
 
   const targetRoles = targetIndustry ? (WORK_TYPES[targetIndustry as keyof typeof WORK_TYPES] ?? []) : [];
-  const targetResult = (targetIndustry && targetRole) ? calculateScore(targetRole, targetIndustry) : null;
+  // Use the SAME experience + country as the user's current audit so the
+  // comparison is apples-to-apples, not biased by different defaults.
+  const targetResult = (targetIndustry && targetRole)
+    ? calculateScore(targetRole, targetIndustry, experience, country)
+    : null;
   const targetScore = targetResult?.total || 0;
 
   const diff = targetScore - currentScore;

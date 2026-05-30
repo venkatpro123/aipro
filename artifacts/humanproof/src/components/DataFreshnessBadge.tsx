@@ -49,7 +49,7 @@ export function DataFreshnessBadge({ roleKey, fallbackScore, expanded = false }:
   if (!roleKey || loading) {
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
-        fontSize: '0.72rem', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
+        fontSize: '0.75rem', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
         <Database size={10} />
         static data
       </span>
@@ -135,7 +135,7 @@ export function DataFreshnessBadge({ roleKey, fallbackScore, expanded = false }:
         {sources.map(s => (
           <span key={s} style={{
             background: `${color}15`, color,
-            fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px',
+            fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px',
             borderRadius: 20, letterSpacing: '0.04em',
           }}>
             {s}

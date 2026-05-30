@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Scale, ArrowRight, Target, Zap } from 'lucide-react';
-import { calculateScore, getScoreColor } from '../data/riskEngine';
+import { calculateScore, getScoreColor } from '../data/riskFormula';
 import { WORK_TYPES, INDUSTRIES } from '../data/catalogData';
 
 export const ScoreComparison: React.FC = () => {

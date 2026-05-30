@@ -5,10 +5,8 @@
 
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { INDUSTRIES, WORK_TYPES, COUNTRIES } from '../data/catalogData';
-// Import verdict/timeline/urgency from riskFormula (not riskEngine): its bands
-// (<25/<50/<70 — "AI-Resistant/Resilient/Exposed/Critical Risk") match getScoreColor
-// and the per-dimension reasoning. riskEngine's legacy copies used different
-// thresholds (>=80/60/40) and produced verdict copy that contradicted the ring colour.
+// All helpers from riskFormula — unified <25/<50/<70 bands, consistent with the
+// ring colour and per-dimension reasoning. riskEngine re-exports these now too.
 import {
   calculateScore,
   getScoreColor,
@@ -16,6 +14,7 @@ import {
   getTimeline,
   getUrgency,
 } from '../data/riskFormula';
+// normalizeExperience used internally in riskFormula; not needed at the page level.
 import type { ScoreResult } from '../data/riskFormula';
 import NeuralSphereLoader from '../components/RiskOracle/NeuralSphereLoader';
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
@@ -35,6 +34,7 @@ import {
   Users, ShieldCheck, BarChart, PenTool, Stethoscope, Gavel,
   GraduationCap, Factory, ShoppingBag, Zap, Clock, Star, Shield,
   Search, Share2, Check, SlidersHorizontal, ChevronDown, ChevronUp,
+  RefreshCw,
 } from 'lucide-react';
 import { calculateScore as calculateScoreFn } from '../data/riskFormula';
 
@@ -125,10 +125,12 @@ const AuditTerminalPage: React.FC = () => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      // Tear down any in-flight cinematic loader so timers/scroll-lock don't leak.
-      if (loaderIntervalRef.current) window.clearInterval(loaderIntervalRef.current);
-      if (loaderTimerRef.current) window.clearTimeout(loaderTimerRef.current);
+      // Tear down ALL in-flight timers and scroll-lock so the 7-second loader
+      // sequence doesn't keep firing setState after the user navigated away.
+      if (loaderIntervalRef.current) { window.clearInterval(loaderIntervalRef.current); loaderIntervalRef.current = null; }
+      if (loaderTimerRef.current)    { window.clearTimeout(loaderTimerRef.current);   loaderTimerRef.current = null; }
       loaderCleanupRef.current?.();
+      loaderCleanupRef.current = null;
     };
   }, []);
 
@@ -262,6 +264,21 @@ const AuditTerminalPage: React.FC = () => {
     }
     setWorkTypeKey('');
   };
+
+  // ── New-analysis reset ────────────────────────────────────────────────────
+  const handleReset = useCallback(() => {
+    setResult(null);
+    setDelta(null);
+    setLoaderActive(false);
+    setLoaderStage(0);
+    setShowWhatIf(false);
+    setShareCopied(false);
+    if (loaderIntervalRef.current) { window.clearInterval(loaderIntervalRef.current); loaderIntervalRef.current = null; }
+    if (loaderTimerRef.current)    { window.clearTimeout(loaderTimerRef.current);   loaderTimerRef.current = null; }
+    loaderCleanupRef.current?.();
+    loaderCleanupRef.current = null;
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
+  }, []);
 
   const scoreColor       = result ? getScoreColor(result.total) : 'var(--cyan)';
   const intel            = workTypeKey ? getCareerIntelligence(workTypeKey) : null;
@@ -486,9 +503,13 @@ const AuditTerminalPage: React.FC = () => {
             }}>
               <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at 20% 50%, ${scoreColor}08, transparent 60%)` }} />
 
-              {/* Score ring */}
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <svg width="120" height="120" viewBox="0 0 120 120">
+              {/* Score ring — responsive size via clamp */}
+              <div
+                role="img"
+                aria-label={`Risk score: ${result.total} out of 100 — ${getVerdict(result.total)}`}
+                style={{ position: 'relative', flexShrink: 0, width: 'clamp(90px,22vw,120px)', height: 'clamp(90px,22vw,120px)' }}
+              >
+                <svg width="100%" height="100%" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
                   <circle
                     cx="60" cy="60" r="52" fill="none" stroke={scoreColor} strokeWidth="8"
@@ -499,7 +520,7 @@ const AuditTerminalPage: React.FC = () => {
                   />
                 </svg>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '2rem', fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{result.total}</span>
+                  <span style={{ fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{result.total}</span>
                   <span style={{ fontSize: '0.55rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginTop: '2px' }}>RISK SCORE</span>
                 </div>
               </div>
@@ -569,9 +590,26 @@ const AuditTerminalPage: React.FC = () => {
                 </div>
               )}
 
+              {/* ── New Analysis / Reset ── */}
+              <button
+                onClick={handleReset}
+                aria-label="Start a new Risk Oracle analysis"
+                title="Clear results and run a new analysis"
+                style={{
+                  alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)',
+                  background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)',
+                  fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
+                }}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />NEW
+              </button>
+
               {/* ── Share button — ENHANCEMENT #2 ── */}
               <button
                 onClick={handleShare}
+                aria-label="Copy result summary and permalink to clipboard"
                 title="Copy result summary + permalink"
                 style={{
                   alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
@@ -595,6 +633,8 @@ const AuditTerminalPage: React.FC = () => {
             }}>
               <button
                 onClick={() => setShowWhatIf(v => !v)}
+                aria-expanded={showWhatIf}
+                aria-controls="what-if-panel"
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '14px 20px', background: 'rgba(255,255,255,0.02)',
@@ -614,45 +654,42 @@ const AuditTerminalPage: React.FC = () => {
               </button>
 
               {showWhatIf && (
-                <div style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                <div id="what-if-panel" style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end' }}>
-                    {/* Experience slider */}
+                    {/* Experience pill buttons */}
                     <div style={{ flex: '1 1 200px' }}>
                       <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>EXPERIENCE</div>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <div role="radiogroup" aria-label="What-if experience level" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {EXPERIENCE_LEVELS.map((lvl) => (
-                          <button key={lvl.key} onClick={() => setWiExperience(lvl.key)} style={{
-                            padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer',
-                            fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700,
-                            background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)',
-                            color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)',
-                            outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none',
-                            transition: 'all 0.15s',
-                          }}>
+                          <button
+                            key={lvl.key}
+                            role="radio"
+                            aria-checked={wiExperience === lvl.key}
+                            onClick={() => setWiExperience(lvl.key)}
+                            style={{
+                              padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer',
+                              fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                              background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)',
+                              color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)',
+                              outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none',
+                              transition: 'all 0.15s',
+                            }}
+                          >
                             {lvl.key}
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    {/* Country selector */}
+                    {/* Country — PremiumSelect for UI consistency */}
                     <div style={{ flex: '1 1 200px' }}>
-                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>COUNTRY</div>
-                      <select
+                      <label className="label-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: '8px' }}>COUNTRY</label>
+                      <PremiumSelect
+                        options={countryOptions}
                         value={wiCountry}
-                        onChange={(e) => setWiCountry(e.target.value)}
-                        style={{
-                          width: '100%', padding: '8px 12px', borderRadius: '8px',
-                          background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)',
-                          color: 'var(--text)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                        }}
-                      >
-                        {COUNTRIES.map((c) => (
-                          <option key={c.key} value={c.key} style={{ background: '#0f1117' }}>
-                            {c.flag} {c.label}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setWiCountry}
+                        placeholder="Select country"
+                      />
                     </div>
 
                     {/* Live result chip */}
@@ -711,10 +748,13 @@ const AuditTerminalPage: React.FC = () => {
             </div>
 
             {/* Tab switcher */}
-            <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            <div role="tablist" aria-label="Risk Oracle result sections" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  aria-controls={`tabpanel-${tab.key}`}
                   onClick={() => setActiveTab(tab.key)}
                   style={{
                     padding: '10px 16px', minHeight: '44px', borderRadius: '6px', border: 'none',
@@ -797,20 +837,43 @@ const AuditTerminalPage: React.FC = () => {
               {activeTab === 'matrix' && (
                 intel
                   ? <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={workTypeKey} />
-                  : <div style={{ textAlign: 'center', padding: '64px', opacity: 0.5 }}>
-                      <Cpu size={48} style={{ marginBottom: '16px' }} />
-                      <p className="label-xs">No deep skill intelligence available for this role.</p>
+                  : (
+                    <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
+                      <Cpu size={40} style={{ marginBottom: '12px', color: scoreColor }} />
+                      <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
+                        Heuristic estimate — no seeded skill data for this role
+                      </p>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 380, margin: '0 auto 16px' }}>
+                        Deep skill intelligence is available for 412 common roles. This role's D1–D6 scores were
+                        computed from industry patterns. Try the <strong>Dimension Analysis</strong> tab for
+                        the full breakdown, or explore a neighbouring role in the comparison below.
+                      </p>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                        Data quality: {result.dataQuality === 'DQ_FULL' ? 'Full' : result.dataQuality === 'DQ_PARTIAL' ? 'Partial' : 'Estimated'}
+                        {' · '}Confidence: {result.confidence}
+                      </div>
                     </div>
+                  )
               )}
 
               {/* ROADMAP */}
               {activeTab === 'roadmap' && (
                 intel
                   ? <StrategicRoadmap intel={intel} experience={experience} scoreColor={scoreColor} score={result.total} />
-                  : <div style={{ textAlign: 'center', padding: '64px', opacity: 0.5 }}>
-                      <ShieldCheck size={48} style={{ marginBottom: '16px' }} />
-                      <p className="label-xs">Strategic Roadmap unavailable for this role.</p>
+                  : (
+                    <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
+                      <ShieldCheck size={40} style={{ marginBottom: '12px', color: scoreColor }} />
+                      <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
+                        Heuristic roadmap — using dimension-driven action plan
+                      </p>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 380, margin: '0 auto 12px' }}>
+                        The seeded roadmap (with specific certifications, timelines, and salary outcomes) is
+                        available for 412 roles. Your role uses the modular block engine — check the
+                        <strong> Oracle Synthesis</strong> section on the Analysis tab for your personalised
+                        action steps.
+                      </p>
                     </div>
+                  )
               )}
 
               {/* FORECAST */}
@@ -819,7 +882,7 @@ const AuditTerminalPage: React.FC = () => {
                   <h3 className="label-xs" style={{ marginBottom: '24px', color: 'var(--text-3)' }}>TEMPORAL DISPLACEMENT TRAJECTORY</h3>
                   {result.riskTrend && result.riskTrend.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginBottom: '32px' }}>
-                      {result.riskTrend.map((t: any, i: number) => {
+                      {result.riskTrend.map((t: { year?: string; score?: number; riskScore?: number; label?: string }, i: number) => {
                         const val: number = t.score ?? t.riskScore ?? 0;
                         const c = getScoreColor(val);
                         return (
@@ -851,7 +914,13 @@ const AuditTerminalPage: React.FC = () => {
             {/* Bottom widgets */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '16px' }}>
               <div style={{ flex: '2 1 320px' }}>
-                <RoleRiskComparison currentRoleKey={workTypeKey} currentScore={result.total} />
+                {/* Pass experience + country so comparison scores use the same parameters */}
+                <RoleRiskComparison
+                  currentRoleKey={workTypeKey}
+                  currentScore={result.total}
+                  experience={experience}
+                  country={countryKey}
+                />
               </div>
               <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <PortfolioShield />

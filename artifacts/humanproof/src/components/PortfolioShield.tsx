@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Shield, ShieldAlert, ShieldCheck, HelpCircle, Briefcase, Building2, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WORK_TYPES, INDUSTRIES } from '../data/catalogData';
-import { calculateScore } from '../data/riskEngine';
+import { calculateScore } from '../data/riskFormula';
 import { PremiumSelect } from './ui/PremiumSelect';
 
 export const PortfolioShield: React.FC<{ score?: number }> = ({ score: externalScore }) => {

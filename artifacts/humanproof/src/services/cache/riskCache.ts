@@ -15,14 +15,11 @@ export const getCachedRisk = (params: { roleKey: string; industry: string; count
     const raw = localStorage.getItem(key);
     if (raw) {
       const { data, timestamp } = JSON.parse(raw);
-      if (Date.now() - timestamp < TTL_MS) {
-        console.log('[RiskCache] Hit:', key);
-        return data;
-      }
+      if (Date.now() - timestamp < TTL_MS) return data;
       localStorage.removeItem(key); // Cleanup expired
     }
-  } catch (e) {
-    console.warn('[RiskCache] Get failed:', e);
+  } catch {
+    // Silently ignore: localStorage may be unavailable (private browsing, quota exceeded).
   }
   return null;
 };
@@ -30,13 +27,8 @@ export const getCachedRisk = (params: { roleKey: string; industry: string; count
 export const setCachedRisk = (params: { roleKey: string; industry: string; country: string; experience: string }, data: any): void => {
   const key = `hp_risk_${CACHE_VERSION}_${params.industry}_${params.roleKey}_${params.experience}_${params.country}`;
   try {
-    const payload = {
-      data,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(key, JSON.stringify(payload));
-    console.log('[RiskCache] Saved:', key);
-  } catch (e) {
-    console.warn('[RiskCache] Set failed:', e);
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch {
+    // Silently ignore: localStorage quota may be exceeded.
   }
 };
