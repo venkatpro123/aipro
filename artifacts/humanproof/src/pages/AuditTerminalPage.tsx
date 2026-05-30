@@ -3,7 +3,7 @@
 // Completely separate from the Layoff Audit (swarm pipeline).
 // Uses calculateScore() from riskFormula — client-side, no external calls.
 
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { INDUSTRIES, WORK_TYPES, COUNTRIES } from '../data/catalogData';
 // Import verdict/timeline/urgency from riskFormula (not riskEngine): its bands
 // (<25/<50/<70 — "AI-Resistant/Resilient/Exposed/Critical Risk") match getScoreColor
@@ -34,8 +34,9 @@ import {
   Briefcase, Cpu, Database, Globe, Layout, Lock, Smartphone,
   Users, ShieldCheck, BarChart, PenTool, Stethoscope, Gavel,
   GraduationCap, Factory, ShoppingBag, Zap, Clock, Star, Shield,
-  Search,
+  Search, Share2, Check, SlidersHorizontal, ChevronDown, ChevronUp,
 } from 'lucide-react';
+import { calculateScore as calculateScoreFn } from '../data/riskFormula';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -268,6 +269,79 @@ const AuditTerminalPage: React.FC = () => {
   const catColor         = currentIndustry ? (CAT_COLORS[currentIndustry.cat] ?? 'var(--cyan)') : 'var(--cyan)';
   const synthesis        = result?.inaction_scenario ?? null;
 
+  // ── Share button state ────────────────────────────────────────────────────
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleShare = useCallback(() => {
+    if (!result) return;
+    const roleLabel    = workTypeOptions.find((o) => o.key === workTypeKey)?.label ?? workTypeKey;
+    const industryLabel = industryOptions.find((o) => o.key === industryKey)?.label ?? industryKey;
+    const countryLabel  = COUNTRIES.find((c) => c.key === countryKey)?.label ?? countryKey;
+    const expLabel      = EXPERIENCE_LEVELS.find((e) => e.key === experience)?.label ?? experience;
+
+    // Build a permalink hash so anyone who opens the URL sees the same inputs.
+    const hash = new URLSearchParams({ r: workTypeKey, i: industryKey, e: experience, c: countryKey }).toString();
+    const url  = `${window.location.origin}${window.location.pathname}#${hash}`;
+
+    const text = [
+      `🤖 Risk Oracle Result`,
+      `Role: ${roleLabel} · ${industryLabel}`,
+      `Experience: ${expLabel} · Country: ${countryLabel}`,
+      `Score: ${result.total}/100 — ${getVerdict(result.total)}`,
+      `Exposure Horizon: ${getTimeline(result.total)}`,
+      `Action Urgency: ${getUrgency(result.total)}`,
+      `\n${url}`,
+    ].join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2200);
+    }).catch(() => {
+      // fallback: open a pre-filled mailto
+      window.open(`mailto:?subject=My AI Risk Oracle Score&body=${encodeURIComponent(text)}`);
+    });
+  }, [result, workTypeKey, industryKey, experience, countryKey, workTypeOptions, industryOptions]);
+
+  // ── What-if slider state ──────────────────────────────────────────────────
+  const [showWhatIf, setShowWhatIf] = useState(false);
+  const [wiExperience, setWiExperience] = useState(experience);
+  const [wiCountry,    setWiCountry]    = useState(countryKey);
+
+  // Sync sliders when main selects change so they start from current values.
+  useEffect(() => { setWiExperience(experience); }, [experience]);
+  useEffect(() => { setWiCountry(countryKey); },     [countryKey]);
+
+  // Live what-if score — recalculated instantly whenever sliders move.
+  const whatIfResult = useMemo(() => {
+    if (!result || !workTypeKey || !industryKey) return null;
+    if (wiExperience === experience && wiCountry === countryKey) return null; // same as main — nothing to show
+    return calculateScoreFn(workTypeKey, industryKey, wiExperience, wiCountry);
+  }, [result, workTypeKey, industryKey, wiExperience, wiCountry, experience, countryKey]);
+
+  const wiDelta = whatIfResult ? whatIfResult.total - result!.total : 0;
+  const wiColor = wiDelta < 0 ? 'var(--emerald)' : wiDelta > 0 ? 'var(--red)' : 'var(--text-3)';
+
+  // ── On mount: restore inputs from URL hash permalink ─────────────────────
+  useEffect(() => {
+    try {
+      const hash = window.location.hash.slice(1);
+      if (!hash) return;
+      const p = new URLSearchParams(hash);
+      if (p.get('r') && p.get('i')) {
+        const ri = p.get('i')!;
+        const rr = p.get('r')!;
+        const re = p.get('e') ?? '5-10';
+        const rc = p.get('c') ?? 'usa';
+        setIndustryKey(ri);
+        setWorkTypeKey(rr);
+        setExperience(re);
+        setCountryKey(rc);
+        // Clear the hash so bookmarks don't replay the loader every time.
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   const TABS: { key: TabKey; label: string }[] = [
     { key: 'analysis', label: 'Dimension Analysis' },
     { key: 'matrix',   label: 'Skill Matrix' },
@@ -430,19 +504,47 @@ const AuditTerminalPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Verdict */}
+              {/* Verdict + confidence + delta */}
               <div style={{ flex: 1, minWidth: '200px' }}>
+                {/* Verdict chip */}
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   padding: '6px 14px', borderRadius: '6px',
                   background: `${scoreColor}15`, border: `1px solid ${scoreColor}33`,
-                  marginBottom: '12px',
+                  marginBottom: '10px',
                 }}>
                   <Shield className="w-4 h-4" style={{ color: scoreColor }} />
                   <span style={{ fontSize: '0.8rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
                     {getVerdict(result.total).toUpperCase()}
                   </span>
                 </div>
+
+                {/* ── Confidence badge — ENHANCEMENT #1 ── */}
+                {(() => {
+                  const conf   = result.confidence;
+                  const dq     = result.dataQuality;
+                  const pct    = result.content_confidence ?? (conf === 'HIGH' ? 88 : conf === 'MODERATE' ? 68 : 48);
+                  const cColor = conf === 'HIGH' ? 'var(--emerald)' : conf === 'MODERATE' ? 'var(--amber)' : 'var(--red)';
+                  const cLabel = conf === 'HIGH' ? 'High Confidence' : conf === 'MODERATE' ? 'Moderate Confidence' : 'Low Confidence';
+                  const cDesc  = dq === 'DQ_FULL' ? 'Deep role intelligence · seeded data' : dq === 'DQ_PARTIAL' ? 'Mixed signals · industry heuristics' : 'Estimated · limited role data';
+                  return (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '6px 10px', borderRadius: '6px', marginBottom: '12px',
+                      background: `${cColor}10`, border: `1px solid ${cColor}28`,
+                    }}>
+                      {/* Mini confidence bar */}
+                      <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', flexShrink: 0 }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: cColor, borderRadius: 2, transition: 'width 0.6s ease', boxShadow: `0 0 5px ${cColor}88` }} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: cColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{cLabel}</span>
+                        <span style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginLeft: 6 }}>{cDesc}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '4px' }}>Exposure Horizon</div>
@@ -464,6 +566,146 @@ const AuditTerminalPage: React.FC = () => {
                 <div style={{ padding: '10px 18px', borderRadius: '8px', background: `${catColor}12`, border: `1px solid ${catColor}33`, textAlign: 'center', flexShrink: 0 }}>
                   <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>SECTOR</div>
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: catColor }}>{currentIndustry.cat}</div>
+                </div>
+              )}
+
+              {/* ── Share button — ENHANCEMENT #2 ── */}
+              <button
+                onClick={handleShare}
+                title="Copy result summary + permalink"
+                style={{
+                  alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)',
+                  background: shareCopied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
+                  color: shareCopied ? 'var(--emerald)' : 'var(--text-2)',
+                  fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
+                }}
+              >
+                {shareCopied
+                  ? <><Check className="w-3.5 h-3.5" />COPIED</>
+                  : <><Share2 className="w-3.5 h-3.5" />SHARE</>}
+              </button>
+            </div>
+
+            {/* ── What-if sensitivity panel — ENHANCEMENT #3 ── */}
+            <div style={{
+              border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+              marginBottom: '16px', overflow: 'hidden',
+            }}>
+              <button
+                onClick={() => setShowWhatIf(v => !v)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '14px 20px', background: 'rgba(255,255,255,0.02)',
+                  border: 'none', cursor: 'pointer', color: 'var(--text-2)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <SlidersHorizontal size={14} style={{ color: 'var(--cyan)' }} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', color: 'var(--cyan)' }}>
+                    WHAT-IF SENSITIVITY
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                    — explore how experience or country changes your risk
+                  </span>
+                </div>
+                {showWhatIf ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              {showWhatIf && (
+                <div style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end' }}>
+                    {/* Experience slider */}
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>EXPERIENCE</div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {EXPERIENCE_LEVELS.map((lvl) => (
+                          <button key={lvl.key} onClick={() => setWiExperience(lvl.key)} style={{
+                            padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer',
+                            fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                            background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)',
+                            color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)',
+                            outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none',
+                            transition: 'all 0.15s',
+                          }}>
+                            {lvl.key}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Country selector */}
+                    <div style={{ flex: '1 1 200px' }}>
+                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>COUNTRY</div>
+                      <select
+                        value={wiCountry}
+                        onChange={(e) => setWiCountry(e.target.value)}
+                        style={{
+                          width: '100%', padding: '8px 12px', borderRadius: '8px',
+                          background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)',
+                          color: 'var(--text)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                        }}
+                      >
+                        {COUNTRIES.map((c) => (
+                          <option key={c.key} value={c.key} style={{ background: '#0f1117' }}>
+                            {c.flag} {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Live result chip */}
+                    <div style={{ flex: '0 0 auto', textAlign: 'center', minWidth: '120px' }}>
+                      {whatIfResult ? (
+                        <div style={{
+                          padding: '12px 20px', borderRadius: '10px',
+                          background: `${getScoreColor(whatIfResult.total)}12`,
+                          border: `1px solid ${getScoreColor(whatIfResult.total)}30`,
+                        }}>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>WHAT-IF SCORE</div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: getScoreColor(whatIfResult.total), lineHeight: 1 }}>
+                            {whatIfResult.total}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: wiColor, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+                            {wiDelta > 0 ? `▲ +${wiDelta}` : wiDelta < 0 ? `▼ ${wiDelta}` : '— no change'}
+                          </div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '2px' }}>
+                            {getVerdict(whatIfResult.total)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ padding: '12px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-3)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                          Adjust sliders<br />to compare
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Per-dimension what-if bars */}
+                  {whatIfResult && (
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '12px' }}>DIMENSION IMPACT</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {whatIfResult.dimensions.map((wd) => {
+                          const orig = result!.dimensions.find((d) => d.key === wd.key);
+                          const diff = wd.score - (orig?.score ?? wd.score);
+                          if (Math.abs(diff) < 1) return null;
+                          const dc = getScoreColor(wd.score);
+                          return (
+                            <div key={wd.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem' }}>
+                              <span style={{ width: 24, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 700 }}>{wd.key}</span>
+                              <span style={{ flex: 1, color: 'var(--text-2)' }}>{DIM_INFO[wd.key]?.label ?? wd.label}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', color: dc, fontWeight: 700, minWidth: 28, textAlign: 'right' }}>{wd.score}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', color: diff < 0 ? 'var(--emerald)' : 'var(--red)', fontWeight: 700, minWidth: 36, textAlign: 'right', fontSize: '0.7rem' }}>
+                                {diff > 0 ? `+${diff}` : diff}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
