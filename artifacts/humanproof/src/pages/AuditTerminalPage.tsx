@@ -13,6 +13,7 @@ import {
   getUrgency,
 } from '../data/riskEngine';
 import type { ScoreResult } from '../data/riskFormula';
+import OracleGlobeLoader from '../components/LayoffCalculator/OracleGlobeLoader';
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
 import { recordScore, getScoreDelta, type ScoreDelta } from '../services/scoreDeltaService';
 import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect';
@@ -103,6 +104,14 @@ const AuditTerminalPage: React.FC = () => {
   const resultRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
 
+  // ── Cinematic global-intelligence loader (plays before the score reveal) ──────
+  const [loaderActive, setLoaderActive] = useState(false);
+  const [loaderStage, setLoaderStage]   = useState(0);
+  const pendingRef        = useRef<{ score: ScoreResult; delta: ScoreDelta | null } | null>(null);
+  const loaderIntervalRef = useRef<number | null>(null);
+  const loaderTimerRef    = useRef<number | null>(null);
+  const loaderCleanupRef  = useRef<(() => void) | null>(null);
+
   // v40.0 FIX-5: clear isCalculating on unmount so a user who navigates away
   // mid-calculation and returns later doesn't find the button permanently disabled.
   // Also tracks mount state so async handlers don't try to setState after unmount
@@ -111,6 +120,10 @@ const AuditTerminalPage: React.FC = () => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      // Tear down any in-flight cinematic loader so timers/scroll-lock don't leak.
+      if (loaderIntervalRef.current) window.clearInterval(loaderIntervalRef.current);
+      if (loaderTimerRef.current) window.clearTimeout(loaderTimerRef.current);
+      loaderCleanupRef.current?.();
     };
   }, []);
 
@@ -144,46 +157,81 @@ const AuditTerminalPage: React.FC = () => {
 
   // ── Calculate ─────────────────────────────────────────────────────────────
 
+  // Commit the stashed score once the cinematic loader finishes.
+  const revealPending = () => {
+    if (loaderIntervalRef.current) { window.clearInterval(loaderIntervalRef.current); loaderIntervalRef.current = null; }
+    if (loaderTimerRef.current) { window.clearTimeout(loaderTimerRef.current); loaderTimerRef.current = null; }
+    loaderCleanupRef.current?.();
+    loaderCleanupRef.current = null;
+    if (!isMountedRef.current) return;
+    const p = pendingRef.current;
+    pendingRef.current = null;
+    setLoaderActive(false);
+    if (p) {
+      setResult(p.score);
+      setDelta(p.delta);
+    }
+    setActiveTab('analysis');
+    setIsCalculating(false);
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+  };
+
+  // Drive the ~7s, 9-stage cinematic build-up, then reveal. Honors reduced motion.
+  const startLoaderSequence = () => {
+    const prefersReduced = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Lock background scroll while the full-screen loader is up.
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    loaderCleanupRef.current = () => { document.body.style.overflow = prevOverflow; };
+
+    setLoaderStage(0);
+    setLoaderActive(true);
+
+    const STAGES = 9; // components 0..8
+
+    if (prefersReduced) {
+      setLoaderStage(STAGES - 1);
+      loaderTimerRef.current = window.setTimeout(revealPending, 900);
+      return;
+    }
+
+    const STEP = 760; // ms per processing component → ~6.1s + ~0.9s finalize ≈ 7s
+    let s = 0;
+    loaderIntervalRef.current = window.setInterval(() => {
+      s += 1;
+      if (s >= STAGES - 1) {
+        if (loaderIntervalRef.current) { window.clearInterval(loaderIntervalRef.current); loaderIntervalRef.current = null; }
+        setLoaderStage(STAGES - 1);
+        loaderTimerRef.current = window.setTimeout(revealPending, 900); // final "synthesizing" beat
+      } else {
+        setLoaderStage(s);
+      }
+    }, STEP);
+  };
+
   const handleCalculate = async () => {
-    if (!workTypeKey || !industryKey) return;
+    if (!workTypeKey || !industryKey || loaderActive) return;
     setIsCalculating(true);
 
     const cacheParams = { roleKey: workTypeKey, industry: industryKey, country: countryKey, experience };
     const cached = getCachedRisk(cacheParams);
-    if (cached) {
-      setResult(cached);
-      const d = getScoreDelta(workTypeKey, cached.total, experience, countryKey);
-      setDelta(d);
-      // Build breakdown from Oracle dimensions (D1-D6, normalized 0-1)
-      const cachedBreakdown = Object.fromEntries(
-        (cached.dimensions ?? []).map(dim => [dim.key, dim.score / 100])
-      );
-      recordScore({ roleKey: workTypeKey, industryKey, countryKey, experience, score: cached.total, timestamp: Date.now(), isGrounded: false, breakdown: cachedBreakdown });
-      setActiveTab('analysis');
-      setIsCalculating(false);
-      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-      return;
-    }
 
-    await new Promise((r) => setTimeout(r, 600)); // UX delay
-
-    // v40.0 FIX-5: abort all setState calls if user navigated away during the delay
-    if (!isMountedRef.current) return;
-
-    const score = calculateScore(workTypeKey, industryKey, experience, countryKey);
-    setCachedRisk(cacheParams, score);
-    setResult(score);
+    // calculateScore() is synchronous & instant; cache hit or fresh, compute now
+    // then play the cinematic loader and reveal on completion.
+    const score = cached ?? calculateScore(workTypeKey, industryKey, experience, countryKey);
+    if (!cached) setCachedRisk(cacheParams, score);
 
     const d = getScoreDelta(workTypeKey, score.total, experience, countryKey);
-    setDelta(d);
-    const freshBreakdown = Object.fromEntries(
+    const breakdown = Object.fromEntries(
       (score.dimensions ?? []).map(dim => [dim.key, dim.score / 100])
     );
-    recordScore({ roleKey: workTypeKey, industryKey, countryKey, experience, score: score.total, timestamp: Date.now(), isGrounded: true, breakdown: freshBreakdown });
+    recordScore({ roleKey: workTypeKey, industryKey, countryKey, experience, score: score.total, timestamp: Date.now(), isGrounded: !cached, breakdown });
 
-    setActiveTab('analysis');
-    setIsCalculating(false);
-    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+    pendingRef.current = { score, delta: d };
+    startLoaderSequence();
   };
 
   // Handle industry change: clear work type since options change.
@@ -220,6 +268,14 @@ const AuditTerminalPage: React.FC = () => {
 
   return (
     <div className="page-wrap" style={{ fontFamily: 'var(--font-sans)' }}>
+      {loaderActive && (
+        <OracleGlobeLoader
+          stage={loaderStage}
+          roleLabel={workTypeOptions.find((o) => o.key === workTypeKey)?.label}
+          industryLabel={industryOptions.find((o) => o.key === industryKey)?.label}
+          countryLabel={COUNTRIES.find((c) => c.key === countryKey)?.label}
+        />
+      )}
       <div className="container" style={{ maxWidth: 1100 }}>
 
       {/* ── Input Form ─────────────────────────────────────────────────────── */}
