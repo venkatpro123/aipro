@@ -1,15 +1,17 @@
 // NeuralSphereLoader.tsx — Risk Oracle cinematic "Neural Displacement Engine"
 // ─────────────────────────────────────────────────────────────────────────────
-// A deliberately DIFFERENT experience from the Layoff Audit globe
-// (GlobeAuditLoader / OracleGlobeLoader). Where that one is a flat cyan
-// radar-scan HUD, this is a holographic VIOLET/MAGENTA "neural prediction brain":
+// A distinct, professional experience for the Risk Oracle:
 //
-//   • A true 3D rotating WIREFRAME sphere (lat/long great-circle mesh) rendered
-//     on canvas with depth-cued line alpha + a sweeping scan band.
-//   • The nine Risk-Oracle processing engines ORBIT the sphere as glowing nodes;
-//     as each activates it fires an animated NEURAL PULSE toward the core.
-//   • Separate themed components: <PhasePipeline>, <NeuralSphereCanvas>,
-//     <EngineStack>, <SynthesisConsole> — own `nse-` CSS namespace + `nse-css` id.
+//   • A REAL rotating 3D Earth (d3-geo orthographic projection) with natural
+//     ocean/land colours, true country borders (/countries-110m.json), a
+//     graticule, day/night terminator shading and a specular sun-glint.
+//   • Wrapped in a VIOLET/MAGENTA holographic HUD: the nine Risk-Oracle
+//     processing engines ORBIT the planet as glowing nodes, each firing an
+//     animated NEURAL PULSE toward the core as it activates.
+//   • Advanced docks: <RegionTicker> (top feed), <DimensionTelemetry> (right,
+//     live D1–D6 meters + confidence dial), <CoreRing> (segmented progress),
+//     <EngineStack> (left), <SynthesisConsole> (bottom). Own `nse-` CSS
+//     namespace + `nse-css` id, so it cannot collide with the Layoff globe.
 //
 // Props mirror the old loader so AuditTerminalPage's stage driver is unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -314,7 +316,11 @@ const EngineStack: React.FC<{ stage: number }> = ({ stage }) => (
   </div>
 );
 
-// ── Neural sphere canvas (true 3D wireframe + orbiting engine nodes) ────────────
+// ── Realistic 3D Earth canvas (d3-geo orthographic) + orbiting engine nodes ─────
+// Renders a real rotating Earth — natural ocean/land colours, true country
+// borders (from /countries-110m.json), graticule, day/night terminator shading
+// and a specular sun-glint — then keeps the violet HUD identity by orbiting the
+// nine engine nodes around it with neural pulses firing toward the planet core.
 
 const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -330,136 +336,131 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
     const reduce = typeof window !== 'undefined'
       && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-    let w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const resize = () => {
+    let destroyed = false;
+    let raf = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    let w = 0, h = 0, cx = 0, cy = 0, R = 0;
+
+    // d3 bits resolved after dynamic import
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    let proj: any = null;
+    let gpath: any = null;
+    let grat: any = null;
+    let countries: any = null;
+    let landMass: any = null;
+    const sphere: any = { type: 'Sphere' };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    // natural earth palette + violet atmosphere to keep theme cohesion
+    const COL = {
+      ocean0: '#0a2742', ocean1: '#15466e',
+      land0:  '#5bbf6a', land1:  '#2f7a44',   // green; mixed with tan via second fill
+      tan:    'rgba(150,140,80,.30)',
+      coast:  'rgba(190,255,205,.55)',
+      border: 'rgba(20,40,30,.45)',
+      grat:   'rgba(150,200,255,.12)',
+      rim:    'rgba(192,132,252,.85)',         // violet atmosphere rim (theme)
+    };
+    let oceanGrad: CanvasGradient | null = null;
+    let landGrad: CanvasGradient | null = null;
+
+    const rebuildGradients = () => {
+      oceanGrad = ctx.createRadialGradient(cx - R * .4, cy - R * .4, R * .1, cx, cy, R);
+      oceanGrad.addColorStop(0, COL.ocean1); oceanGrad.addColorStop(1, COL.ocean0);
+      landGrad = ctx.createRadialGradient(cx - R * .4, cy - R * .4, R * .1, cx, cy, R);
+      landGrad.addColorStop(0, COL.land0); landGrad.addColorStop(1, COL.land1);
+    };
+
+    const fit = () => {
       const r = canvas.getBoundingClientRect();
       w = r.width; h = r.height;
       canvas.width = Math.max(1, Math.round(w * dpr));
       canvas.height = Math.max(1, Math.round(h * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx = w / 2; cy = h / 2;
+      R = Math.max(48, Math.min(w, h) * 0.17); // compact, refined globe
+      if (proj) { proj.scale(R).translate([cx, cy]); rebuildGradients(); }
     };
-    resize();
-    window.addEventListener('resize', resize);
+    fit();
+    window.addEventListener('resize', fit);
 
-    // Surface particles (stable random lat/lon)
-    const PARTS = Array.from({ length: 130 }, () => ({
-      lat: (Math.random() - 0.5) * Math.PI,
-      lon: Math.random() * Math.PI * 2,
-      r: 0.6 + Math.random() * 1.6,
-    }));
-
-    const TILT = 0.42; // x-axis tilt (radians)
     let t = 0;
-    let raf = 0;
 
-    // rotate(Y) then rotate(X by TILT); returns screen + depth z (z>0 = front)
-    const project = (lat: number, lon: number, R: number, cx: number, cy: number, ry: number) => {
-      const X = Math.cos(lat) * Math.cos(lon);
-      const Y = Math.sin(lat);
-      const Z = Math.cos(lat) * Math.sin(lon);
-      const x1 = X * Math.cos(ry) + Z * Math.sin(ry);
-      const z1 = -X * Math.sin(ry) + Z * Math.cos(ry);
-      const y2 = Y * Math.cos(TILT) - z1 * Math.sin(TILT);
-      const z2 = Y * Math.sin(TILT) + z1 * Math.cos(TILT);
-      return { x: cx + x1 * R, y: cy + y2 * R, z: z2 };
+    const drawEarth = () => {
+      if (!proj || !gpath) {
+        // pre-load fallback: plain ocean sphere so there's never an empty frame
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.fillStyle = COL.ocean0; ctx.fill();
+        return;
+      }
+      // Ocean sphere
+      ctx.beginPath(); gpath(sphere); ctx.fillStyle = oceanGrad!; ctx.fill();
+      // Graticule
+      ctx.beginPath(); gpath(grat); ctx.strokeStyle = COL.grat; ctx.lineWidth = 0.6; ctx.stroke();
+      // Land fill (merged land — natural green)
+      if (landMass) {
+        ctx.beginPath(); gpath(landMass); ctx.fillStyle = landGrad!; ctx.fill();
+        // tan overlay for terrain variation
+        ctx.beginPath(); gpath(landMass); ctx.fillStyle = COL.tan; ctx.fill();
+      }
+      // Country borders
+      if (countries) {
+        ctx.beginPath(); gpath(countries);
+        ctx.strokeStyle = COL.border; ctx.lineWidth = 0.9; ctx.lineJoin = 'round'; ctx.stroke();
+        ctx.beginPath(); gpath(countries);
+        ctx.strokeStyle = COL.coast; ctx.lineWidth = 0.5; ctx.stroke();
+      }
+      // Day/night terminator shade + specular sun-glint (clipped to sphere)
+      ctx.save();
+      ctx.beginPath(); gpath(sphere); ctx.clip();
+      const shade = ctx.createRadialGradient(cx - R * .35, cy - R * .35, R * .2, cx + R * .18, cy + R * .18, R * 1.1);
+      shade.addColorStop(0, 'rgba(0,5,15,0)'); shade.addColorStop(.55, 'rgba(0,5,15,0)'); shade.addColorStop(1, 'rgba(0,5,15,.6)');
+      ctx.fillStyle = shade; ctx.fillRect(0, 0, w, h);
+      const sx = cx - R * .42, sy = cy - R * .42;
+      const sp = ctx.createRadialGradient(sx, sy, 0, sx, sy, R * .55);
+      sp.addColorStop(0, 'rgba(220,240,255,.4)'); sp.addColorStop(.4, 'rgba(180,220,255,.1)'); sp.addColorStop(1, 'rgba(180,220,255,0)');
+      ctx.fillStyle = sp; ctx.fillRect(0, 0, w, h);
+      ctx.restore();
     };
 
     const draw = () => {
+      if (destroyed) return;
       t += reduce ? 0 : 0.016;
-      const cx = w / 2, cy = h / 2;
-      const R = Math.max(46, Math.min(w, h) * 0.165); // smaller, more refined sphere
-      const ry = t * 0.34;
       const st = stageRef.current;
       const prog = Math.min(1, (st + 1) / ENGINES.length);
 
       ctx.clearRect(0, 0, w, h);
 
-      // ── core glow ──
-      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.15);
-      core.addColorStop(0, `rgba(245,208,254,${0.22 + prog * 0.20})`);
-      core.addColorStop(0.35, 'rgba(168,85,247,0.14)');
-      core.addColorStop(1, 'rgba(124,58,237,0)');
-      ctx.fillStyle = core;
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2); ctx.fill();
+      // outer atmosphere glow (violet, behind globe)
+      const glow = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.5);
+      glow.addColorStop(0, `rgba(168,85,247,${0.18 + prog * 0.12})`);
+      glow.addColorStop(1, 'rgba(124,58,237,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.5, 0, Math.PI * 2); ctx.fill();
 
-      // ── meridians ──
-      const SEG = 46;
-      for (let m = 0; m < 12; m++) {
-        const lon0 = (m / 12) * Math.PI * 2;
-        let prev: { x: number; y: number; z: number } | null = null;
-        for (let s = 0; s <= SEG; s++) {
-          const lat = -Math.PI / 2 + (s / SEG) * Math.PI;
-          const p = project(lat, lon0, R, cx, cy, ry);
-          if (prev) {
-            const za = (prev.z + p.z) / 2;
-            const a = 0.10 + Math.max(0, za) * 0.34;
-            ctx.strokeStyle = `rgba(168,85,247,${a.toFixed(3)})`;
-            ctx.lineWidth = za > 0 ? 0.9 : 0.5;
-            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-          }
-          prev = p;
-        }
-      }
-      // ── parallels ──
-      for (let pl = -2; pl <= 2; pl++) {
-        const lat0 = (pl / 3) * (Math.PI / 2);
-        let prev: { x: number; y: number; z: number } | null = null;
-        for (let s = 0; s <= SEG; s++) {
-          const lon = (s / SEG) * Math.PI * 2;
-          const p = project(lat0, lon, R, cx, cy, ry);
-          if (prev) {
-            const za = (prev.z + p.z) / 2;
-            const a = 0.08 + Math.max(0, za) * 0.30;
-            ctx.strokeStyle = `rgba(129,140,248,${a.toFixed(3)})`;
-            ctx.lineWidth = za > 0 ? 0.8 : 0.45;
-            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-          }
-          prev = p;
-        }
-      }
+      // spin the globe
+      if (proj && !reduce) proj.rotate([t * 14, -12]);
 
-      // ── sweeping scan band (a bright moving parallel) ──
-      const scanLat = Math.sin(t * 0.7) * (Math.PI / 2) * 0.92;
-      let sprev: { x: number; y: number; z: number } | null = null;
-      for (let s = 0; s <= SEG; s++) {
-        const lon = (s / SEG) * Math.PI * 2;
-        const p = project(scanLat, lon, R, cx, cy, ry);
-        if (sprev) {
-          const za = (sprev.z + p.z) / 2;
-          if (za > -0.1) {
-            ctx.strokeStyle = `rgba(245,208,254,${(0.25 + Math.max(0, za) * 0.6).toFixed(3)})`;
-            ctx.lineWidth = 1.6;
-            ctx.shadowBlur = 8; ctx.shadowColor = '#e879f9';
-            ctx.beginPath(); ctx.moveTo(sprev.x, sprev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
-            ctx.shadowBlur = 0;
-          }
-        }
-        sprev = p;
-      }
+      drawEarth();
 
-      // ── surface particles ──
-      for (const pt of PARTS) {
-        const p = project(pt.lat, pt.lon + t * 0.34, R, cx, cy, ry);
-        if (p.z <= 0) continue; // front hemisphere only
-        const a = 0.25 + p.z * 0.7;
-        ctx.fillStyle = `rgba(245,208,254,${a.toFixed(3)})`;
-        ctx.shadowBlur = 6; ctx.shadowColor = '#e879f9';
-        ctx.beginPath(); ctx.arc(p.x, p.y, pt.r * (0.6 + p.z * 0.6), 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
-      }
+      // violet atmosphere rim
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.strokeStyle = COL.rim; ctx.lineWidth = 1.4; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.04, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(232,121,249,${0.14 + prog * 0.12})`; ctx.lineWidth = 2.4; ctx.stroke();
 
-      // ── orbiting engine nodes + neural pulse links ──
-      const orbitRx = R * 2.05, orbitRy = R * 0.82;
+      // ── orbiting engine nodes + neural pulse links (theme identity) ──
+      const orbitRx = R * 2.0, orbitRy = R * 0.8;
       const N = ENGINES.length;
       const nodes = ENGINES.map((e, i) => {
         const ang = (i / N) * Math.PI * 2 + t * 0.22;
         const nx = cx + Math.cos(ang) * orbitRx;
         const ny = cy + Math.sin(ang) * orbitRy;
-        const depth = Math.sin(ang); // -1 behind .. +1 front
+        const depth = Math.sin(ang);
         return { e, i, nx, ny, depth, ang };
-      }).sort((a, b) => a.depth - b.depth); // back first
+      }).sort((a, b) => a.depth - b.depth);
 
-      // faint orbit ellipse
       ctx.strokeStyle = 'rgba(129,140,248,0.16)';
       ctx.lineWidth = 0.8;
       ctx.beginPath(); ctx.ellipse(cx, cy, orbitRx, orbitRy, 0, 0, Math.PI * 2); ctx.stroke();
@@ -467,11 +468,10 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
       for (const node of nodes) {
         const active = node.i <= st;
         const isCurrent = node.i === st;
-        const dz = (node.depth + 1) / 2; // 0..1
+        const dz = (node.depth + 1) / 2;
         const baseR = 2.2 + dz * 2.2;
         const col = node.e.warn ? '255,184,107' : '232,121,249';
 
-        // neural link to core for activated engines
         if (active) {
           const linkA = isCurrent ? 0.6 : 0.22;
           const grad = ctx.createLinearGradient(node.nx, node.ny, cx, cy);
@@ -481,7 +481,6 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
           ctx.lineWidth = isCurrent ? 1.5 : 0.8;
           ctx.beginPath(); ctx.moveTo(node.nx, node.ny); ctx.lineTo(cx, cy); ctx.stroke();
 
-          // traveling pulse dot (node → core)
           const pp = ((t * (isCurrent ? 0.9 : 0.4)) + node.i * 0.37) % 1;
           const px = node.nx + (cx - node.nx) * pp;
           const py = node.ny + (cy - node.ny) * pp;
@@ -491,7 +490,6 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
           ctx.shadowBlur = 0;
         }
 
-        // node glow
         const pulse = isCurrent ? 1 + Math.sin(t * 4) * 0.28 : 1;
         const r = baseR * pulse;
         ctx.shadowBlur = active ? 14 : 4;
@@ -505,16 +503,36 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
         ctx.shadowBlur = 0;
       }
 
-      // ── outer atmosphere rim ──
-      ctx.strokeStyle = `rgba(192,132,252,${0.12 + prog * 0.12})`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.05, 0, Math.PI * 2); ctx.stroke();
-
       raf = requestAnimationFrame(draw);
     };
 
+    // start a fallback loop immediately; upgrade to real earth once d3 loads
     raf = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
+
+    (async () => {
+      try {
+        const [
+          { geoOrthographic, geoPath, geoGraticule10 },
+          { feature: topoFeature },
+        ] = await Promise.all([import('d3-geo'), import('topojson-client')]);
+        if (destroyed) return;
+        proj = geoOrthographic().clipAngle(90).scale(R).translate([cx, cy]);
+        gpath = geoPath(proj, ctx);
+        grat = geoGraticule10();
+        rebuildGradients();
+        const res = await fetch('/countries-110m.json');
+        const topo = await res.json();
+        if (destroyed) return;
+        countries = topoFeature(topo, topo.objects.countries);
+        landMass = topoFeature(topo, topo.objects.land);
+      } catch { /* graceful: keep ocean-only sphere */ }
+    })();
+
+    return () => {
+      destroyed = true;
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', fit);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="nse-canvas" aria-hidden="true" />;
