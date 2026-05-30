@@ -55,7 +55,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
       </div>
 
       {/* CEO approval metrics row */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         {glassdoorVelocity.ceoApprovalCurrent !== null && (
           <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
             <div className="text-sm font-black" style={{
@@ -65,7 +65,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
             }}>
               {glassdoorVelocity.ceoApprovalCurrent}%
             </div>
-            <div className="text-[9px] opacity-45 mt-0.5">Current CEO Approval</div>
+            <div className="text-[10px] opacity-45 mt-0.5">Current CEO Approval</div>
           </div>
         )}
         {glassdoorVelocity.ceoApprovalVelocity !== null && (
@@ -82,7 +82,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
                 {velocitySign}{glassdoorVelocity.ceoApprovalVelocity.toFixed(1)}
               </span>
             </div>
-            <div className="text-[9px] opacity-45 mt-0.5">pp/month velocity</div>
+            <div className="text-[10px] opacity-45 mt-0.5">pp/month velocity</div>
           </div>
         )}
       </div>

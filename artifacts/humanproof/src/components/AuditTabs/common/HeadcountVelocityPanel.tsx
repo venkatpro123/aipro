@@ -59,13 +59,13 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           <div className="text-[11px] font-bold" style={{ color: TREND_COLOR[headcount.headcountTrend] }}>
             {headcount.headcountTrend.replace('_', ' ')}
           </div>
-          <div className="text-[9px] opacity-40 mt-0.5">Headcount</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Headcount</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-[11px] font-bold" style={{ color: POSTING_COLOR[headcount.postingVelocity] }}>
             {headcount.postingVelocity}
           </div>
-          <div className="text-[9px] opacity-40 mt-0.5">Postings</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Postings</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-[11px] font-bold" style={{
@@ -74,7 +74,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           }}>
             {headcount.contractorRatioRisk}
           </div>
-          <div className="text-[9px] opacity-40 mt-0.5">Contractor Risk</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Contractor Risk</div>
         </div>
       </div>
 

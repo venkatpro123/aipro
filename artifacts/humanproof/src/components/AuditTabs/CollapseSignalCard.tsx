@@ -157,7 +157,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                 {/* Promoted badge — shown when cross-stage rule promoted the stage */}
                 {!suppressStageLabel && report.isPromoted && report.stage && (
                   <span
-                    className="text-[9px] font-black px-1.5 py-0.5 rounded tracking-widest"
+                    className="text-[10px] font-black px-1.5 py-0.5 rounded tracking-widest"
                     style={{ background: `${badgeColor}22`, color: badgeColor }}
                     title="Stage promoted from cross-stage evidence — single higher-stage signal confirmed by multiple lower-stage signals"
                   >
@@ -167,7 +167,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                 {/* Show suppressed badge when precision gate blocks stage label */}
                 {suppressStageLabel && report.stage && (
                   <span
-                    className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                     style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }}
                   >
                     PRECISION: {precisionData?.stagePrecisionLabel ?? 'UNKNOWN'}
@@ -298,7 +298,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                     <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                       <div style={{ width: `${dept.freezeScore}%`, height: '100%', background: barColor, borderRadius: 'inherit' }} />
                     </div>
-                    <span className="text-[9px] font-mono font-bold" style={{ color: barColor, width: 32, textAlign: 'right' }}>
+                    <span className="text-[10px] font-mono font-bold" style={{ color: barColor, width: 32, textAlign: 'right' }}>
                       {dept.freezeScore}%
                     </span>
                   </div>

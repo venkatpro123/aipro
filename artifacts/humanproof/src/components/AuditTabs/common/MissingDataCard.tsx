@@ -172,7 +172,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
       >
         <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: `${headerColor}70` }} />
         <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.38)' }}>
             CONFIDENCE: {result?.confidencePercent ?? '?'}% —{' '}
             <span style={{ color: headerColor }}>
               {items.length} data gap{items.length !== 1 ? 's' : ''} affecting this score
@@ -205,7 +205,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
               className="px-3.5 pb-3 pt-0"
               style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
             >
-              <p className="text-[9px] py-2 mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <p className="text-[10px] py-2 mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
                 What we don't know yet — and how it affects your score:
               </p>
               <div className="space-y-2">
@@ -219,23 +219,23 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[9px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>
                             {item.label}
                           </span>
                           <span
-                            className="text-[8px] font-bold px-1.5 py-0.5 rounded"
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                             style={{ background: `${color}12`, color }}
                           >
                             {item.impact}
                           </span>
                         </div>
-                        <p className="text-[8px] mt-0.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                        <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
                           {item.reason}
                         </p>
                         {item.userAction && (
                           <button
                             onClick={() => handleActionClick(item)}
-                            className="text-[8px] font-bold mt-0.5 transition-opacity hover:opacity-80"
+                            className="text-[10px] font-bold mt-0.5 transition-opacity hover:opacity-80"
                             style={{ color: '#22d3ee' }}
                           >
                             → {item.userAction}

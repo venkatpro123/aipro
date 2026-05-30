@@ -34,7 +34,7 @@ export const TierBadge: React.FC<TierBadgeProps> = ({ tier, label }) => {
     <span
       title={meta.tip}
       aria-label={`Tier ${tier}: ${meta.tip}`}
-      className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black tracking-wider flex-shrink-0 select-none cursor-help"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wider flex-shrink-0 select-none cursor-help"
       style={{
         background: meta.color + '18',
         color: meta.color,

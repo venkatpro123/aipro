@@ -65,14 +65,14 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       </p>
 
       {/* Key metrics grid */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div className="text-sm font-black" style={{ color: urgency.color }}>
             {warnSignal.daysUntilLayoff !== null && warnSignal.daysUntilLayoff > 0
               ? `${warnSignal.daysUntilLayoff}d`
               : 'Imminent'}
           </div>
-          <div className="text-[9px] opacity-50 mt-0.5">Until planned layoff</div>
+          <div className="text-[10px] opacity-50 mt-0.5">Until planned layoff</div>
         </div>
         <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div className="text-sm font-black" style={{ color: 'rgba(255,255,255,0.9)' }}>
@@ -80,7 +80,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
               ? warnSignal.totalAffectedCount.toLocaleString()
               : 'N/A'}
           </div>
-          <div className="text-[9px] opacity-50 mt-0.5">Workers affected</div>
+          <div className="text-[10px] opacity-50 mt-0.5">Workers affected</div>
         </div>
       </div>
 

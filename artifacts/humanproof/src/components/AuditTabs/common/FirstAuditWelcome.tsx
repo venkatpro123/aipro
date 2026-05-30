@@ -127,7 +127,7 @@ export const FirstAuditWelcome: React.FC<Props> = ({
               >
                 <div className="flex items-center gap-1.5 mb-1">
                   <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
-                  <span className="text-[9px] font-black tracking-wider" style={{ color }}>
+                  <span className="text-[10px] font-black tracking-wider" style={{ color }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                 </div>

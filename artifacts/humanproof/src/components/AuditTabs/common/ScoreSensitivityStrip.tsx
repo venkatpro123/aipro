@@ -68,7 +68,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
             <div key={lever.dimension} className="flex items-start gap-3">
               {/* Rank pill */}
               <span
-                className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black"
+                className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black"
                 style={{ background: i === 0 ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.07)', color: i === 0 ? '#22d3ee' : 'rgba(255,255,255,0.40)' }}
               >
                 {i + 1}

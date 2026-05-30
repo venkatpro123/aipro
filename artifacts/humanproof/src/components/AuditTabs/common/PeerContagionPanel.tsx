@@ -165,7 +165,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
         border: '1px solid rgba(255,255,255,0.07)',
       }}>
         <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(148,163,184,0.45)' }} />
-        <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
           {contagion.multipliersCalibrationStatus === 'developer_estimate'
             ? 'Sector-peer weighting is estimated — real-world data accumulation is in progress. Treat contagion scores as directional, not precise.'
             : `Sector-peer weighting is empirically calibrated from ${contagion.decayEvidenceCount > 0 ? `${contagion.decayEvidenceCount} documented events` : 'layoff pattern data'}. Full details in Methodology.`}

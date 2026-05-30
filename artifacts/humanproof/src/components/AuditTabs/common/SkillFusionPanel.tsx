@@ -26,7 +26,7 @@ function ScarcityBadge({ level }: { level: SkillCombo['candidateScarcity'] }) {
   };
   const c = config[level] ?? config.competitive;
   return (
-    <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-full uppercase"
+    <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-full uppercase"
       style={{ color: c.color, background: c.bg }}>
       {c.label}
     </span>
@@ -104,7 +104,7 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
         <div className="flex items-start justify-between gap-2 mb-2.5">
           <div className="flex-1 min-w-0">
             {isHighlighted && highlightLabel && (
-              <div className="text-[9px] font-bold tracking-widest mb-1 uppercase" style={{ color: premiumColor }}>
+              <div className="text-[10px] font-bold tracking-widest mb-1 uppercase" style={{ color: premiumColor }}>
                 {highlightLabel}
               </div>
             )}
@@ -120,7 +120,7 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
           </div>
           <div className="flex-shrink-0 text-center px-2 py-1.5 rounded-lg" style={{ background: `${premiumColor}15` }}>
             <div className="text-base font-bold" style={{ color: premiumColor }}>+{premiumPct}%</div>
-            <div className="text-[9px] text-white/35 whitespace-nowrap">premium</div>
+            <div className="text-[10px] text-white/35 whitespace-nowrap">premium</div>
           </div>
         </div>
 

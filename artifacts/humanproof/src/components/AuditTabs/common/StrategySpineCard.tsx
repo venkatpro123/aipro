@@ -98,7 +98,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
               Your strategy
             </p>
             <span
-              className="text-[9px] font-black tracking-wide px-1.5 py-0.5 rounded"
+              className="text-[10px] font-black tracking-wide px-1.5 py-0.5 rounded"
               style={{ background: `${accent}1c`, color: accent }}
             >
               {URGENCY_COPY[strategy.urgencyLevel]}
@@ -118,7 +118,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
         <div className="mx-4 mb-3 rounded-xl px-3.5 py-3" style={{ background: `${accent}14`, border: `1px solid ${accent}2a` }}>
           <div className="flex items-center gap-2 mb-1">
             <Zap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: accent }} />
-            <p className="text-[9px] font-black tracking-[0.14em] uppercase" style={{ color: accent }}>
+            <p className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: accent }}>
               Start here · {priority.timeHorizon}
             </p>
           </div>
@@ -168,7 +168,7 @@ const Row: React.FC<{ icon: React.ElementType; color: string; label: string; tex
       <Icon className="w-3 h-3" style={{ color }} />
     </div>
     <p className="text-[11.5px] leading-snug flex-1 min-w-0" style={{ color: 'rgba(255,255,255,0.68)' }}>
-      <span className="font-black tracking-wide uppercase text-[9px] mr-1.5" style={{ color }}>
+      <span className="font-black tracking-wide uppercase text-[10px] mr-1.5" style={{ color }}>
         {label}
       </span>
       {text}

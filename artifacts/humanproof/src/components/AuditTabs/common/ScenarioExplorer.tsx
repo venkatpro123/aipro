@@ -125,7 +125,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
               }}
             >
               <Icon className="w-3.5 h-3.5" style={{ color: isActive ? cfg.accent : 'rgba(255,255,255,0.35)' }} />
-              <p className="text-[9px] font-black" style={{ color: isActive ? cfg.accent : 'rgba(255,255,255,0.40)' }}>
+              <p className="text-[10px] font-black" style={{ color: isActive ? cfg.accent : 'rgba(255,255,255,0.40)' }}>
                 {cfg.tag}
               </p>
               <p className="text-[11px] font-black" style={{ color: isActive ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)' }}>
@@ -154,12 +154,12 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <ActiveIcon className="w-4 h-4" style={{ color: activeCfg.accent }} />
-                  <span className="text-[9px] font-black tracking-widest" style={{ color: activeCfg.accent }}>
+                  <span className="text-[10px] font-black tracking-widest" style={{ color: activeCfg.accent }}>
                     {activeCfg.tag}
                   </span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Score in 6 months</p>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Score in 6 months</p>
                   <p className="text-[18px] font-black" style={{ color: scoreColor(activeScenario.scoreIn6Months) }}>
                     {activeScenario.scoreIn6Months}
                   </p>
@@ -190,7 +190,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                   className="rounded-lg px-2.5 py-2 mb-2"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  <p className="text-[9px] font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>KEY ASSUMPTION</p>
+                  <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>KEY ASSUMPTION</p>
                   <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.60)' }}>{activeScenario.keyAssumption}</p>
                 </div>
               )}
@@ -206,7 +206,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
             {/* Recommended actions for this scenario */}
             {(activeScenario.actions?.length ?? 0) > 0 && (
               <div>
-                <p className="text-[9px] font-bold tracking-widest mb-2 px-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                <p className="text-[10px] font-bold tracking-widest mb-2 px-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
                   RECOMMENDED ACTIONS FOR THIS SCENARIO
                 </p>
                 <div className="space-y-1.5">
@@ -225,10 +225,10 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {action.effort && (
-                            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>{action.effort}</span>
+                            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.32)' }}>{action.effort}</span>
                           )}
                           {(action.riskReductionPct ?? 0) > 0 && (
-                            <span className="text-[9px]" style={{ color: 'rgba(16,185,129,0.60)' }}>
+                            <span className="text-[10px]" style={{ color: 'rgba(16,185,129,0.60)' }}>
                               −{action.riskReductionPct}% risk
                             </span>
                           )}

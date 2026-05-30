@@ -134,7 +134,7 @@ function DimensionBar({ dim }: { dim: CompetitiveDimension }) {
           {dim.percentile}th
         </span>
         <span
-          className="text-[9px] px-1 py-0.5 rounded-full hidden sm:block"
+          className="text-[10px] px-1 py-0.5 rounded-full hidden sm:block"
           style={{ color: status.color, background: `${status.color}12` }}
         >
           {status.label}
@@ -186,7 +186,7 @@ function GapActionCard({ gap, index }: { gap: GapCloseAction; index: number }) {
           <p className="text-sm text-white/80 leading-snug">{gap.action}</p>
           <div className="flex-shrink-0 text-right">
             <div className="text-sm font-bold" style={{ color: pctColor }}>+{gap.percentileImpact}pts</div>
-            <div className="text-[9px] text-white/30">{gap.effortWeeks}w</div>
+            <div className="text-[10px] text-white/30">{gap.effortWeeks}w</div>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-1 flex-wrap">

@@ -104,7 +104,7 @@ const SubVerdictChip: React.FC<{
   >
     <div className="flex items-center gap-1.5 mb-1">
       <Icon className="w-3 h-3 flex-shrink-0" style={{ color: signal.tone }} />
-      <span className="text-[9px] font-bold tracking-wider uppercase truncate" style={{ color: 'rgba(255,255,255,0.40)' }}>
+      <span className="text-[10px] font-bold tracking-wider uppercase truncate" style={{ color: 'rgba(255,255,255,0.40)' }}>
         {signal.headline}
       </span>
     </div>

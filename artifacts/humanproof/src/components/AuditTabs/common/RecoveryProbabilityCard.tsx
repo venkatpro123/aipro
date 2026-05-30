@@ -81,7 +81,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           YOUR ODDS — NEXT 12 MONTHS
         </p>
         <span
-          className="text-[9px] font-black px-2 py-0.5 rounded flex-shrink-0"
+          className="text-[10px] font-black px-2 py-0.5 rounded flex-shrink-0"
           style={{ background: `${color}15`, color, border: `1px solid ${color}28` }}
         >
           {survival.riskTier}

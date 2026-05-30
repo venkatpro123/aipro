@@ -511,7 +511,7 @@ const CalibrationFreshnessPanel: React.FC<{
             Model Calibration Status
           </span>
           <span
-            className="ml-auto text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
+            className="ml-auto text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
             style={{
               background: isOverdue
                 ? 'rgba(239,68,68,0.15)'
@@ -526,7 +526,7 @@ const CalibrationFreshnessPanel: React.FC<{
           </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-x divide-white/8">
           {[
             {
               label: 'Calibration date',
@@ -562,7 +562,7 @@ const CalibrationFreshnessPanel: React.FC<{
             },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="px-4 py-3">
-              <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
+              <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
                 {label}
               </div>
               <div className="text-sm font-black tracking-tight" style={{ color }}>
@@ -617,15 +617,15 @@ const CalibrationFreshnessPanel: React.FC<{
             <div className="px-4 py-3 bg-white/[0.015]">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400/80">
+                <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400/80">
                   Formula Accuracy
                 </span>
                 {holdoutValidation.isLiveComputed ? (
-                  <span className="ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">
+                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-cyan-500/15 text-cyan-400 border border-cyan-500/25">
                     Live · {holdoutValidation.holdoutN} events
                   </span>
                 ) : (
-                  <span className="ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-500/15 text-slate-400 border border-slate-500/20">
+                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-500/15 text-slate-400 border border-slate-500/20">
                     Bootstrap fallback
                   </span>
                 )}
@@ -834,7 +834,7 @@ const EffectiveWeightsPanel: React.FC<{
                       <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">{layer}</span>
                       <span className="font-medium">{name}</span>
                       {isL1Estimated && (
-                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                        <span className="text-[10px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
                           ESTIMATED
                         </span>
@@ -894,19 +894,19 @@ const EffectiveWeightsPanel: React.FC<{
                       <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">D8</span>
                       <span className="font-medium">{d8Label}</span>
                       {d8WeightRedistributed && (
-                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                        <span className="text-[10px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
                           →D1/D2/D3
                         </span>
                       )}
                       {!d8IsActive && !d8WeightRedistributed && (
-                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                        <span className="text-[10px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
                           LOCKED
                         </span>
                       )}
                       {d8IsActive && (
-                        <span className="text-[9px] px-1 py-0.5 rounded font-bold"
+                        <span className="text-[10px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
                           {d8FlagActive ? 'LOGISTIC' : 'HEURISTIC'}
                         </span>
@@ -1212,7 +1212,7 @@ const DimensionCalibrationPanel: React.FC = () => {
 
       {/* Per-dimension table */}
       <div className="rounded-xl border border-white/8 overflow-hidden">
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-[9px] font-mono uppercase tracking-widest text-muted-foreground bg-white/[0.02] px-4 py-2 border-b border-white/8">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground bg-white/[0.02] px-4 py-2 border-b border-white/8">
           <span className="pr-4">Dimension</span>
           <span>Signal Quality</span>
           <span className="px-3">Weight</span>
@@ -1224,7 +1224,7 @@ const DimensionCalibrationPanel: React.FC = () => {
             <div key={dim.dimension} className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-0 px-4 py-3 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
               <div className="pr-4 min-w-[160px]">
                 <p className="text-xs font-bold text-foreground/90">{dim.dimension.replace(/_/g, ' ')}</p>
-                <p className="text-[9px] text-muted-foreground mt-0.5">
+                <p className="text-[10px] text-muted-foreground mt-0.5">
                   {qualityIcon(dim.signalQualityLabel)} {dim.signalQualityLabel} · {dim.patternsSampled} patterns
                 </p>
               </div>
@@ -1235,18 +1235,18 @@ const DimensionCalibrationPanel: React.FC = () => {
                     style={{ width: `${Math.round(dim.patternAgreementScore * 100)}%` }}
                   />
                 </div>
-                <p className="text-[9px] text-muted-foreground mt-1 leading-relaxed line-clamp-2">
+                <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed line-clamp-2">
                   {dim.recommendation.slice(0, 90)}…
                 </p>
               </div>
               <div className="px-3 text-center">
                 <span className="text-xs font-mono font-black">{(dim.weight * 100) | 0}%</span>
                 {dim.calibrationStatus !== 'regression_derived' && dim.calibrationStatus !== 'pseudo_validated' && (
-                  <div className="text-[8px] text-amber-500/70 leading-tight mt-0.5">(estimate)</div>
+                  <div className="text-[10px] text-amber-500/70 leading-tight mt-0.5">(estimate)</div>
                 )}
               </div>
               <div>
-                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${c.bg} ${c.text} ${c.border}`}>
+                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${c.bg} ${c.text} ${c.border}`}>
                   {c.badge}
                 </span>
               </div>
@@ -1291,22 +1291,22 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: colors.text }}>
           {p.parentName} → {p.officeFunctionLabel}
         </span>
-        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
           style={{ background: colors.badge, color: colors.text, border: `1px solid ${colors.border}` }}>
           {p.propagationRisk.level} propagation risk
         </span>
         {p.functionRefinedFromRole && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
             style={{ background: 'rgba(99,179,237,0.10)', color: '#93c5fd', border: '1px solid rgba(99,179,237,0.20)' }}>
             function inferred from role
           </span>
         )}
-        <span className="ml-auto text-[9px] text-white/30 uppercase tracking-widest">ESTIMATED</span>
+        <span className="ml-auto text-[10px] text-white/30 uppercase tracking-widest">ESTIMATED</span>
       </div>
 
       <div className="p-4 space-y-3">
         {/* Key metrics row */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <div className="data-label mb-1">Propagation Factor</div>
             <div className="text-sm font-black" style={{ color: colors.text }}>
@@ -1333,10 +1333,10 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
         </p>
 
         {/* Protection vs vulnerability */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {p.protectionFactors.length > 0 && (
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-wide text-emerald-400/70 mb-1">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-400/70 mb-1">
                 Protection factors
               </div>
               <ul className="space-y-0.5">
@@ -1351,7 +1351,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
           )}
           {p.vulnerabilityFactors.length > 0 && (
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-wide text-red-400/70 mb-1">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-red-400/70 mb-1">
                 Vulnerability factors
               </div>
               <ul className="space-y-0.5">
@@ -1371,7 +1371,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
           <div className="flex items-center gap-2 p-2 rounded-lg"
             style={{ background: 'rgba(99,179,237,0.06)', border: '1px solid rgba(99,179,237,0.15)' }}>
             <Shield className="w-3 h-3 text-blue-400 flex-shrink-0" />
-            <span className="text-[9px] text-blue-200/70">
+            <span className="text-[10px] text-blue-200/70">
               After parent-triggered announcement: <span className="font-bold text-blue-300">
                 {Math.round(p.legalProtectionDays.min / 7)}–{Math.round(p.legalProtectionDays.max / 7)} weeks
               </span> legal protection window before last day (ESTIMATED from local employment law).
@@ -1383,13 +1383,13 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
         {/* Priority actions */}
         {p.priorityActions.length > 0 && (
           <div className="border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <div className="text-[9px] font-bold uppercase tracking-wide text-white/40 mb-1.5">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-white/40 mb-1.5">
               Use the {lagStr} window to
             </div>
             <ul className="space-y-1">
               {p.priorityActions.slice(0, 3).map((a, i) => (
                 <li key={i} className="flex items-start gap-1.5">
-                  <span className="text-[8px] font-bold text-white/30 flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="text-[10px] font-bold text-white/30 flex-shrink-0 mt-0.5">{i + 1}.</span>
                   <span className="text-[8.5px] text-white/60 leading-tight">{a}</span>
                 </li>
               ))}
@@ -1439,29 +1439,29 @@ const IndiaIntelligencePanel: React.FC<{
         <div className="glass-panel p-4">
           <div className="label-xs text-muted-foreground uppercase tracking-widest mb-3">Sector Pulse</div>
           <p className="text-sm font-bold mb-1">{enrichment.sectorBenchmark.sector}</p>
-          <div className="grid grid-cols-2 gap-2 mt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
             <div>
-              <p className="text-[9px] text-muted-foreground uppercase">Naukri Index</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Naukri Index</p>
               <p className={`text-lg font-black ${enrichment.sectorPulse.naukriIndexRelative < 0.85 ? 'text-red-400' : 'text-emerald-400'}`}>
                 {Math.round(enrichment.sectorPulse.naukriIndexRelative * 100)}%
               </p>
-              <p className="text-[9px] text-muted-foreground">of 6mo baseline</p>
+              <p className="text-[10px] text-muted-foreground">of 6mo baseline</p>
             </div>
             <div>
-              <p className="text-[9px] text-muted-foreground uppercase">NASSCOM Intent</p>
+              <p className="text-[10px] text-muted-foreground uppercase">NASSCOM Intent</p>
               <p className={`text-lg font-black ${enrichment.sectorPulse.nasscomHiringIntent < 45 ? 'text-red-400' : 'text-emerald-400'}`}>
                 {enrichment.sectorPulse.nasscomHiringIntent}%
               </p>
-              <p className="text-[9px] text-muted-foreground">net-positive hiring</p>
+              <p className="text-[10px] text-muted-foreground">net-positive hiring</p>
             </div>
             <div>
-              <p className="text-[9px] text-muted-foreground uppercase">EPFO Growth</p>
+              <p className="text-[10px] text-muted-foreground uppercase">EPFO Growth</p>
               <p className={`text-sm font-bold ${enrichment.sectorPulse.epfoGrowthRate < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                 {enrichment.sectorPulse.epfoGrowthRate > 0 ? '+' : ''}{enrichment.sectorPulse.epfoGrowthRate}% YoY
               </p>
             </div>
             <div>
-              <p className="text-[9px] text-muted-foreground uppercase">Trend</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Trend</p>
               <p className={`text-sm font-bold capitalize ${pulseColor}`}>
                 {enrichment.sectorPulse.pulseTrend}
               </p>
@@ -1478,21 +1478,21 @@ const IndiaIntelligencePanel: React.FC<{
             <>
               <p className="text-sm font-bold mb-1 capitalize">{enrichment.gccArchetype.replace(/_/g, ' ')}</p>
               <p className="text-xs text-muted-foreground leading-relaxed mb-3">{enrichment.gccRiskProfile.rationale.slice(0, 150)}…</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <p className="text-[9px] text-muted-foreground uppercase">Risk multiplier</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Risk multiplier</p>
                   <p className={`text-lg font-black ${enrichment.gccRiskProfile.riskMultiplier > 1.5 ? 'text-red-400' : 'text-amber-400'}`}>
                     ×{enrichment.gccRiskProfile.riskMultiplier.toFixed(1)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[9px] text-muted-foreground uppercase">Contagion lag</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Contagion lag</p>
                   <p className="text-lg font-black">{enrichment.gccRiskProfile.layoffContagionLag}mo</p>
                 </div>
               </div>
               {enrichment.gccRiskProfile.protectionFactors.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-[9px] text-muted-foreground uppercase mb-1">Protected roles</p>
+                  <p className="text-[10px] text-muted-foreground uppercase mb-1">Protected roles</p>
                   {enrichment.gccRiskProfile.protectionFactors.slice(0, 2).map((f, i) => (
                     <p key={i} className="text-[10px] text-emerald-400 leading-relaxed">✓ {f}</p>
                   ))}
@@ -1525,7 +1525,7 @@ const IndiaIntelligencePanel: React.FC<{
               <p className={`text-2xl font-black mb-1 ${enrichment.contagionRisk.riskAmplifier > 1.2 ? 'text-amber-400' : 'text-foreground'}`}>
                 ×{enrichment.contagionRisk.riskAmplifier.toFixed(2)}
               </p>
-              <p className="text-[9px] text-muted-foreground uppercase mb-1">Risk amplifier · {enrichment.contagionRisk.expectedLagMonths}mo lag</p>
+              <p className="text-[10px] text-muted-foreground uppercase mb-1">Risk amplifier · {enrichment.contagionRisk.expectedLagMonths}mo lag</p>
               <p className="text-xs text-muted-foreground leading-relaxed">{enrichment.contagionRisk.explanation.slice(0, 130)}…</p>
             </>
           )}
@@ -1800,7 +1800,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
                 <div className="text-[10px] opacity-50 mt-0.5">{pct}% interval</div>
                 {iv.empiricalCoverage != null && (
                   <div
-                    className="text-[9px] mt-0.5 font-medium"
+                    className="text-[10px] mt-0.5 font-medium"
                     style={{ color: Math.abs(iv.empiricalCoverage - iv.nominalCoverage) < 0.05 ? '#34d399' : '#fbbf24' }}
                   >
                     empirical {Math.round(iv.empiricalCoverage * 100)}%
@@ -2108,7 +2108,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       <h4 className="font-semibold text-violet-300 text-sm">
                         Filing Regime Signal Quality
                       </h4>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
                         style={{ background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.25)' }}>
                         ESTIMATED
                       </span>
@@ -2119,7 +2119,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     <p className="text-xs text-violet-200/60 leading-relaxed mb-2">
                       {regime.penaltyRationale}
                     </p>
-                    <div className="grid grid-cols-3 gap-2 text-[10px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
                       <div>
                         <div className="text-violet-400/60 mb-0.5">Filing frequency</div>
                         <div className="font-medium text-violet-200/80 capitalize">
@@ -2140,7 +2140,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       </div>
                     </div>
                     {regime.layoffNoticeNote && (
-                      <p className="text-[9px] text-violet-200/45 mt-1.5 leading-tight">
+                      <p className="text-[10px] text-violet-200/45 mt-1.5 leading-tight">
                         {regime.layoffNoticeNote}
                       </p>
                     )}
@@ -2177,7 +2177,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       <h4 className="font-semibold text-rose-300 text-sm">
                         Scraper Timeout — DB Quality Floor Applied
                       </h4>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
                         style={{ background: 'rgba(244,63,94,0.15)', color: '#fda4af', border: '1px solid rgba(244,63,94,0.25)' }}>
                         Tier {tier}
                       </span>
@@ -2198,7 +2198,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       </div>
                       <span className="text-rose-400/50 text-xs">floor (not evidence score)</span>
                     </div>
-                    <p className="text-[9px] text-rose-200/40 mt-2 leading-tight">
+                    <p className="text-[10px] text-rose-200/40 mt-2 leading-tight">
                       {TIER_LABELS[tier] ?? `Tier ${tier}`}.
                       Re-running the audit when live sources are reachable will replace this floor with an evidence-based score.
                     </p>
@@ -2239,7 +2239,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       <h4 className="font-semibold text-orange-300 text-sm">
                         Structural Confidence Ceiling Applied
                       </h4>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
                         style={{ background: 'rgba(251,146,60,0.15)', color: '#fdba74', border: '1px solid rgba(251,146,60,0.25)' }}>
                         {regimeDisplay}
                       </span>
@@ -2272,7 +2272,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                         </>
                       )}
                     </div>
-                    <p className="text-[9px] text-orange-200/45 mt-2 leading-tight">
+                    <p className="text-[10px] text-orange-200/45 mt-2 leading-tight">
                       This ceiling reflects a jurisdiction-imposed information gap, not a data quality problem.
                       A company in this regime with 71% evidence confidence shows identically to one with 42%
                       evidence confidence — this disclosure separates the two cases.
@@ -2354,14 +2354,14 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                               Score Floor Active
                             </h4>
                             <span
-                              className="text-[9px] font-black px-2 py-0.5 rounded"
+                              className="text-[10px] font-black px-2 py-0.5 rounded"
                               style={{ background: 'rgba(239,68,68,0.18)', color: '#f87171', border: '1px solid rgba(239,68,68,0.35)' }}
                             >
                               FLOOR-ADJUSTED · NOT FORMULA-DERIVED
                             </span>
                             {floorVal != null && (
                               <span
-                                className="text-[9px] font-mono font-bold px-2 py-0.5 rounded"
+                                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded"
                                 style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.25)' }}
                               >
                                 min {floorVal}
@@ -2371,13 +2371,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                             {isStealth && (
                               <>
                                 <span
-                                  className="text-[9px] font-bold px-2 py-0.5 rounded"
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded"
                                   style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.30)' }}
                                 >
                                   ESTIMATED
                                 </span>
                                 <span
-                                  className="text-[9px] font-bold px-2 py-0.5 rounded"
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded"
                                   style={{
                                     background: stealthPrecision.gateStatus === 'gate_clears'
                                       ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
@@ -2401,12 +2401,12 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                               {/* Numbered detection signals */}
                               {(stealthSig.subSignals ?? []).length > 0 && (
                                 <div className="rounded-lg p-3 space-y-2" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)' }}>
-                                  <div className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">
+                                  <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">
                                     Detection signals ({(stealthSig.subSignals ?? []).length})
                                   </div>
                                   {(stealthSig.subSignals as StealthSubSignal[]).map((sig, idx) => (
                                     <div key={idx} className="flex gap-2 items-start">
-                                      <span className="text-[9px] font-black text-rose-400 shrink-0 mt-0.5 w-3">
+                                      <span className="text-[10px] font-black text-rose-400 shrink-0 mt-0.5 w-3">
                                         {idx + 1}.
                                       </span>
                                       <div className="flex-1 min-w-0">
@@ -2414,16 +2414,16 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                                           {sig.label}
                                         </span>
                                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
-                                          <span className="text-[9px] text-rose-300/80">
+                                          <span className="text-[10px] text-rose-300/80">
                                             Observed: <span className="font-black">{sig.observedValue}</span>
                                           </span>
-                                          <span className="text-[9px] opacity-55">
+                                          <span className="text-[10px] opacity-55">
                                             Threshold: {sig.threshold}
                                           </span>
-                                          <span className="text-[9px] opacity-45">
+                                          <span className="text-[10px] opacity-45">
                                             Window: {sig.windowPeriod}
                                           </span>
-                                          <span className="text-[9px] opacity-40">
+                                          <span className="text-[10px] opacity-40">
                                             Source: {sig.dataSource}
                                             {sig.dataSource !== 'linkedin' && ' (not LinkedIn)'}
                                           </span>
@@ -2434,7 +2434,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                                   {/* Headcount from→to when available */}
                                   {stealthSig.priorEmployeeCount != null && stealthSig.recentEmployeeCount != null && (
                                     <div className="mt-1.5 pt-1.5 border-t border-rose-500/15 flex items-center gap-1.5">
-                                      <span className="text-[9px] opacity-50 uppercase tracking-wider">Headcount:</span>
+                                      <span className="text-[10px] opacity-50 uppercase tracking-wider">Headcount:</span>
                                       <span className="text-[10px] font-mono font-semibold text-rose-200/80">
                                         {stealthSig.priorEmployeeCount.toLocaleString()}
                                         {' → '}
@@ -2447,33 +2447,33 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
 
                               {/* ESTIMATED heuristic note + live precision */}
                               <div className="rounded-lg p-2.5 space-y-1" style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.18)' }}>
-                                <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(200,200,255,0.65)' }}>
+                                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(200,200,255,0.65)' }}>
                                   <span className="font-black text-indigo-300">ESTIMATED</span> — stealth layoff detection is a
                                   pattern-matching heuristic, not a confirmed event. It detects headcount
                                   contraction without an announcement; it cannot distinguish mass layoffs,
                                   contractor re-classification, or voluntary attrition acceleration.
                                 </p>
                                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 pt-0.5">
-                                  <span className="text-[9px]" style={{ color: 'rgba(200,200,255,0.55)' }}>
+                                  <span className="text-[10px]" style={{ color: 'rgba(200,200,255,0.55)' }}>
                                     Detection precision:{' '}
                                     <span className={`font-black ${stealthPrecision.gateStatus === 'gate_clears' ? 'text-emerald-400' : 'text-amber-400'}`}>
                                       {stealthPrecision.precisionLabel}
                                     </span>
                                   </span>
-                                  <span className="text-[9px]" style={{ color: 'rgba(200,200,255,0.55)' }}>
+                                  <span className="text-[10px]" style={{ color: 'rgba(200,200,255,0.55)' }}>
                                     False positive rate:{' '}
                                     <span className={`font-black ${stealthPrecision.gateStatus === 'gate_clears' ? 'text-emerald-400' : 'text-amber-400'}`}>
                                       {stealthPrecision.fprLabel}
                                     </span>
                                   </span>
                                   {stealthPrecision.overallN > 0 && (
-                                    <span className="text-[9px] opacity-40">
+                                    <span className="text-[10px] opacity-40">
                                       n={stealthPrecision.overallN} confirmed outcomes
                                     </span>
                                   )}
                                 </div>
                                 {stealthPrecision.gateStatus === 'insufficient_cases' && (
-                                  <p className="text-[9px] opacity-40 leading-relaxed">
+                                  <p className="text-[10px] opacity-40 leading-relaxed">
                                     Precision gate not yet cleared — requires ≥20 confirmed outcomes with outcome_reported.
                                     Floor applies conservatively until gate clears (precision ≥ 60%).
                                   </p>
@@ -2531,7 +2531,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                         {precisionKnown ? stageLabels[stage] : 'Early warning signals present'}
                       </h4>
                       <span
-                        className="text-[9px] font-black px-2 py-0.5 rounded"
+                        className="text-[10px] font-black px-2 py-0.5 rounded"
                         style={{
                           background: precisionKnown ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
                           color: precisionKnown ? '#34d399' : '#fbbf24',
@@ -2542,7 +2542,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       </span>
                       {stage === 3 && (
                         <span
-                          className="text-[9px] font-black px-2 py-0.5 rounded"
+                          className="text-[10px] font-black px-2 py-0.5 rounded"
                           style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
                         >
                           EMERGENCY PROTOCOL ACTIVE
@@ -2582,22 +2582,22 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
 
                     {/* Signal confidence vs empirical precision — distinguish the two */}
                     {sigConf != null && (
-                      <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                         <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Signal Quality</div>
+                          <div className="text-[10px] opacity-50 mb-0.5 uppercase tracking-wider">Signal Quality</div>
                           <div className="text-xs font-black" style={{ color: c.text }}>
                             {Math.round(sigConf * 100)}%
                           </div>
-                          <div className="text-[8px] opacity-40 mt-0.5 leading-tight">
+                          <div className="text-[10px] opacity-40 mt-0.5 leading-tight">
                             severity-weighted · internal
                           </div>
                         </div>
                         <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          <div className="text-[9px] opacity-50 mb-0.5 uppercase tracking-wider">Empirical Precision</div>
+                          <div className="text-[10px] opacity-50 mb-0.5 uppercase tracking-wider">Empirical Precision</div>
                           <div className={`text-xs font-black ${precisionKnown ? 'text-emerald-400' : 'text-amber-400'}`}>
                             {precLabel}
                           </div>
-                          <div className="text-[8px] opacity-40 mt-0.5 leading-tight">
+                          <div className="text-[10px] opacity-40 mt-0.5 leading-tight">
                             {nEvents > 0 ? `n=${nEvents} outcomes` : '0 confirmed cases'}
                           </div>
                         </div>
@@ -2609,7 +2609,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       <div className="flex items-start gap-1.5 mb-2 p-2 rounded-lg"
                         style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
                         <AlertTriangle className="w-3 h-3 text-rose-400/60 flex-shrink-0 mt-0.5" />
-                        <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
                           <span className="font-bold text-amber-400/80">UNVERIFIED: </span>
                           Stage 3 cites "Historical median time to layoff announcement: 4–8 weeks" — no citation, not derived from outcome data. Treat as an estimate until validated.
                         </p>
@@ -2617,7 +2617,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     )}
 
                     {/* Precision gate explanation */}
-                    <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                    <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
                       Signal Quality ({sigConf != null ? `${Math.round(sigConf * 100)}%` : '—'}) is a severity-weighted ratio of active signals — it is NOT the fraction of Stage {stage} predictions that confirmed as layoffs. Empirical precision gate: ≥20 outcomes AND precision ≥60% required before the stage label is shown. Until then: "Early warning signals present".
                     </p>
                   </div>
@@ -2915,7 +2915,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       <h4 className="font-semibold text-violet-300 text-sm">
                         Hyperscaler AI Efficiency Proxy Applied
                       </h4>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
                         style={{ background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.25)' }}>
                         ESTIMATED
                       </span>
@@ -3284,7 +3284,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       </summary>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {uncalibratedKeys.map(k => (
-                          <span key={k} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                          <span key={k} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
                             {k}
                           </span>
                         ))}
@@ -3366,7 +3366,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   >
                     ×{srAdj.multiplier.toFixed(2)} ({isLower ? '−' : '+'}{Math.abs(deltaPct)}%)
                   </span>
-                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground opacity-50 font-medium">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground opacity-50 font-medium">
                     {srAdj.labeledAs}
                   </span>
                 </div>
@@ -3488,7 +3488,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
               decays to 50% predictive weight in 3 days. Revenue figures decay in 90 days.
               Decayed weights are renormalised so the formula budget stays at 100%.
             </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:grid-cols-4">
               {(
                 [
                   { label: 'Stock 90d change', key: 'stock',         halfLife: '7d',  color: result.signalDecayWeights.stock         >= 0.7 ? 'text-emerald-400' : result.signalDecayWeights.stock         >= 0.4 ? 'text-amber-400' : 'text-red-400' },
@@ -3603,7 +3603,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   TIER {(result as any).bayesianCI.dataQualityTier} · σ={((result as any).bayesianCI.sigma).toFixed(1)}pts
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
                   <div className="text-sm font-bold" style={{ color: '#60a5fa' }}>
                     {(result as any).bayesianCI.ci80_low}–{(result as any).bayesianCI.ci80_high}
@@ -3712,7 +3712,7 @@ const ActionCoveragePanel: React.FC = () => {
           Action Intelligence Coverage
         </span>
         <span
-          className="ml-auto text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
+          className="ml-auto text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
           style={{
             background: `${statusColor}18`,
             border: `1px solid ${statusColor}35`,
@@ -3747,7 +3747,7 @@ const ActionCoveragePanel: React.FC = () => {
                 style={{ width: `${r.coveragePct}%`, background: statusColor }}
               />
             </div>
-            <div className="flex justify-between text-[9px] text-muted-foreground mt-1 font-mono">
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-1 font-mono">
               <span>0%</span>
               <span className="text-amber-400">80% threshold</span>
               <span>100%</span>
@@ -3756,16 +3756,16 @@ const ActionCoveragePanel: React.FC = () => {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
           {[
             { label: 'Total roles',         value: r.totalRoles.toString(),            sub: 'in corpus' },
             { label: 'Roles with specific', value: r.specificRoles.toString(),          sub: `${r.coveredPrefixes.length} prefixes covered` },
             { label: 'Generic fallback',    value: r.genericRoles.toString(),           sub: `${100 - r.coveragePct}% of corpus` },
           ].map(s => (
             <div key={s.label} className="bg-white/[0.03] rounded-lg p-3">
-              <div className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">{s.label}</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">{s.label}</div>
               <div className="font-black font-mono text-lg text-text-1">{s.value}</div>
-              <div className="text-[9px] text-muted-foreground mt-0.5">{s.sub}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>
             </div>
           ))}
         </div>
@@ -3801,14 +3801,14 @@ const ActionCoveragePanel: React.FC = () => {
 
         {/* Covered prefixes */}
         <div className="mb-3">
-          <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mb-1.5">
+          <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1.5">
             Covered prefixes ({r.coveredPrefixes.length})
           </div>
           <div className="flex flex-wrap gap-1.5">
             {r.coveredPrefixes.map(p => (
               <span
                 key={p}
-                className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
               >
                 {p}_*
               </span>
@@ -3819,7 +3819,7 @@ const ActionCoveragePanel: React.FC = () => {
         {/* Top uncovered prefixes — what to add to improve coverage */}
         {gaps.length > 0 && (
           <div>
-            <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider mb-1.5">
+            <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1.5">
               Top uncovered prefixes by role count (highest coverage gain if added)
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -3830,7 +3830,7 @@ const ActionCoveragePanel: React.FC = () => {
                 return (
                   <span
                     key={g.prefix}
-                    className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20"
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20"
                     title={`Adding ${g.prefix}_* would raise coverage to ~${gain}%`}
                   >
                     {g.prefix}_* ({g.roleCount} roles · +{gain - r.coveragePct}pts)
@@ -3838,7 +3838,7 @@ const ActionCoveragePanel: React.FC = () => {
                 );
               })}
             </div>
-            <div className="text-[9px] text-muted-foreground mt-2 opacity-60">
+            <div className="text-[10px] text-muted-foreground mt-2 opacity-60">
               Adding specific SeniorityActions pools for these prefix groups in
               seniorityActionEngine.ts would raise overall coverage.
             </div>

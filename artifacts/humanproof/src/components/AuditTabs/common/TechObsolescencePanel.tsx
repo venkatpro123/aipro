@@ -72,7 +72,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
             <Cpu className="w-3.5 h-3.5" style={{ color: cfg.color }} />
           </div>
           <div>
-            <p className="text-[9px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
               TECH STACK HEALTH
             </p>
             <span className="text-[10px] font-black" style={{ color: cfg.color }}>{cfg.label}</span>
@@ -83,7 +83,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
             <p className="text-[18px] font-black" style={{ color: cfg.color }}>
               {overallObsolescenceScore}
             </p>
-            <p className="text-[8px]" style={{ color: 'rgba(255,255,255,0.25)' }}>obsolescence risk</p>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>obsolescence risk</p>
           </div>
         )}
       </div>
@@ -106,12 +106,12 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
       {hasRiskyTech && (
         <>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[9px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.30)' }}>
               {riskyTechnologies.length} AT-RISK TECH{riskyTechnologies.length > 1 ? 'S' : ''}
             </p>
             <button
               onClick={() => setExpanded(e => !e)}
-              className="flex items-center gap-1 text-[9px]"
+              className="flex items-center gap-1 text-[10px]"
               style={{ color: 'rgba(255,255,255,0.30)' }}
             >
               {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -133,7 +133,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>{tech.name}</p>
                     {tech.replacementTech && (
-                      <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                         → {tech.replacementTech}
                         {tech.learningCurveWeeks && ` (${tech.learningCurveWeeks}wk to modernize)`}
                       </p>
@@ -145,7 +145,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
                     {tc.icon} {tc.label}
                   </span>
                   {tech.yearsToObsolescence != null && (
-                    <p className="text-[8px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
                       ~{tech.yearsToObsolescence}yr window
                     </p>
                   )}

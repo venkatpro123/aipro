@@ -88,7 +88,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
       </div>
 
       {/* Restructuring probability + lead time */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div
             className="text-sm font-black"
@@ -96,7 +96,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
           >
             {restructuringPct}%
           </div>
-          <div className="text-[9px] opacity-45 mt-0.5">Restructuring probability</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Restructuring probability</div>
         </div>
         {executiveDeparturePattern.leadTimeEstimateDays !== null && (
           <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
@@ -106,7 +106,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
                 {executiveDeparturePattern.leadTimeEstimateDays}d
               </span>
             </div>
-            <div className="text-[9px] opacity-45 mt-0.5">Est. until announcement</div>
+            <div className="text-[10px] opacity-45 mt-0.5">Est. until announcement</div>
           </div>
         )}
       </div>

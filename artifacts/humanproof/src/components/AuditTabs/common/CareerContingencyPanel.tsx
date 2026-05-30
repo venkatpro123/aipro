@@ -111,7 +111,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
           {isEstimated ? (
             <span
               title="Feasibility is model-estimated — not validated against outcome data. Displayed as a range to reflect uncertainty."
-              className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+              className="text-[10px] font-bold px-1 py-0.5 rounded cursor-help"
               style={{ background: 'rgba(245,158,11,0.15)', color: 'rgba(245,158,11,0.75)', border: '1px solid rgba(245,158,11,0.25)' }}
             >
               estimated
@@ -119,7 +119,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
           ) : feasibilitySource === 'market_successRate' ? (
             <span
               title={feasibilitySourceNote ?? 'Sourced from career path market research (12-month transition success rate).'}
-              className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+              className="text-[10px] font-bold px-1 py-0.5 rounded cursor-help"
               style={{ background: 'rgba(16,185,129,0.15)', color: 'rgba(16,185,129,0.85)', border: '1px solid rgba(16,185,129,0.30)' }}
             >
               market data ✓
@@ -127,7 +127,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
           ) : feasibilitySource === 'portability_matrix' ? (
             <span
               title={feasibilitySourceNote ?? 'Sourced from role portability matrix (empirical transition data).'}
-              className="text-[8px] font-bold px-1 py-0.5 rounded cursor-help"
+              className="text-[10px] font-bold px-1 py-0.5 rounded cursor-help"
               style={{ background: 'rgba(59,130,246,0.15)', color: 'rgba(96,165,250,0.85)', border: '1px solid rgba(59,130,246,0.30)' }}
             >
               portability matrix ✓
@@ -148,7 +148,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
       </div>
       {/* Source note for non-estimated paths */}
       {!isEstimated && feasibilitySourceNote && (
-        <p className="text-[9px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        <p className="text-[10px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
           {feasibilitySourceNote}
         </p>
       )}
@@ -297,7 +297,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                 </span>
                 {isRecommended && (
                   <span
-                    className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full"
+                    className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full"
                     style={{ background: accentColor + '25', color: accentColor, border: `1px solid ${accentColor}50` }}
                   >
                     {/* v39.0 B5: confidence-aware "best fit" label */}
@@ -355,7 +355,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                 <span
-                  className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded"
+                  className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded"
                   style={{ background: 'rgba(220,38,38,0.15)', color: '#f87171', border: '1px solid rgba(220,38,38,0.30)' }}
                 >
                   NOT RECOMMENDED FOR YOUR FINANCIAL PROFILE

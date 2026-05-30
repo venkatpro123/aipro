@@ -298,7 +298,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.20)' }}
         >
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[9px] font-bold tracking-widest" style={{ color: 'rgba(20,184,166,0.60)' }}>
+            <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(20,184,166,0.60)' }}>
               INTERNAL MOBILITY
             </p>
             <span className="text-[14px] font-black" style={{ color: '#14b8a6' }}>

@@ -103,7 +103,7 @@ const PersonalizedTimelinePanel: React.FC<Props> = ({ personalizedTimeline }) =>
           Personalized Action Timeline
         </span>
         <span
-          className="ml-auto text-[9px] font-black px-2 py-0.5 rounded"
+          className="ml-auto text-[10px] font-black px-2 py-0.5 rounded"
           style={{ background: `${urgency.color}20`, color: urgency.color, border: `1px solid ${urgency.color}40`, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
         >
           {urgency.label}

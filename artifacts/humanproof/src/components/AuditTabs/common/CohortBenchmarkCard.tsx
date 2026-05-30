@@ -87,11 +87,11 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
             <Users className="w-3.5 h-3.5" style={{ color: cfg.color }} />
           </div>
           <div>
-            <p className="text-[9px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
               YOUR POSITION VS PEERS
             </p>
             {cohortLabel && (
-              <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
                 {cohortLabel}{cohortSize ? ` · ${cohortSize.toLocaleString()} profiles` : ''}
               </p>
             )}
@@ -101,7 +101,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           <p className="text-[22px] font-black" style={{ color: cfg.color }}>
             {overallPercentile}<span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.40)' }}>th</span>
           </p>
-          <p className="text-[8px]" style={{ color: 'rgba(255,255,255,0.28)' }}>percentile</p>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>percentile</p>
         </div>
       </div>
 
@@ -117,17 +117,17 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           style={{ left: '50%', background: 'rgba(255,255,255,0.20)' }}
         />
       </div>
-      <p className="text-[9px] mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <p className="text-[10px] mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
         {percentileInterpretation(overallPercentile)}
       </p>
 
       {/* Top edge / top gap */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         {topEdge && (
           <div className="rounded-lg p-2" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.20)' }}>
             <div className="flex items-center gap-1 mb-1">
               <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />
-              <p className="text-[8px] font-bold" style={{ color: 'rgba(16,185,129,0.70)' }}>YOU LEAD</p>
+              <p className="text-[10px] font-bold" style={{ color: 'rgba(16,185,129,0.70)' }}>YOU LEAD</p>
             </div>
             <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.68)' }}>{topEdge}</p>
           </div>
@@ -136,7 +136,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           <div className="rounded-lg p-2" style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.20)' }}>
             <div className="flex items-center gap-1 mb-1">
               <TrendingDown className="w-3 h-3" style={{ color: '#f97316' }} />
-              <p className="text-[8px] font-bold" style={{ color: 'rgba(249,115,22,0.70)' }}>YOU LAG</p>
+              <p className="text-[10px] font-bold" style={{ color: 'rgba(249,115,22,0.70)' }}>YOU LAG</p>
             </div>
             <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.68)' }}>{topGap}</p>
           </div>
@@ -155,7 +155,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
               {topGapAction}
             </p>
             {topGapImpact && (
-              <p className="text-[9px] mt-0.5" style={{ color: 'rgba(34,211,238,0.45)' }}>
+              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(34,211,238,0.45)' }}>
                 Impact: {topGapImpact}
               </p>
             )}
@@ -168,7 +168,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
         <>
           <button
             onClick={() => setExpanded(e => !e)}
-            className="flex items-center gap-1 text-[9px] font-semibold"
+            className="flex items-center gap-1 text-[10px] font-semibold"
             style={{ color: 'rgba(255,255,255,0.30)' }}
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -183,14 +183,14 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
                     {step.action}
                   </p>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded capitalize ${
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded capitalize ${
                       step.effort === 'low' ? 'bg-green-500/15 text-green-400' :
                       step.effort === 'medium' ? 'bg-amber-500/15 text-amber-400' :
                       'bg-red-500/15 text-red-400'
                     }`}>
                       {step.effort}
                     </span>
-                    <span className="text-[9px] font-bold" style={{ color: '#22d3ee' }}>
+                    <span className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>
                       +{step.percentileGain}%ile
                     </span>
                   </div>

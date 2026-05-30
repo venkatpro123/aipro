@@ -105,7 +105,7 @@ const HorizonColumn: React.FC<{
           </div>
         </div>
         <div
-          className="text-[9px] font-black px-1.5 py-0.5 rounded"
+          className="text-[10px] font-black px-1.5 py-0.5 rounded"
           style={{ background: `${conf.color}15`, color: conf.color, border: `1px solid ${conf.color}30`, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
         >
           {conf.text}
@@ -164,7 +164,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           · signal weights adapt per horizon
         </span>
         {groundTruthOverride && (
-          <span className="ml-auto text-[9px] font-black px-2 py-0.5 rounded animate-pulse" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded animate-pulse" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
             WARN ACT ACTIVE
           </span>
         )}

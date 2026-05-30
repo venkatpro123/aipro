@@ -172,7 +172,7 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
           {opportunities.length === 1 ? 'OPPORTUNITY DETECTED' : `${opportunities.length} OPPORTUNITIES DETECTED`}
         </p>
         <span
-          className="text-[9px] font-black px-2 py-0.5 rounded"
+          className="text-[10px] font-black px-2 py-0.5 rounded"
           style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}
         >
           ACT NOW

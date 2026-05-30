@@ -162,7 +162,7 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-medium">
                       ≈ {gratuity.effectiveBufferMonths.toFixed(1)} months runway
                     </span>
-                    <span className="text-[9px] uppercase tracking-wide text-emerald-400/60 font-medium">
+                    <span className="text-[10px] uppercase tracking-wide text-emerald-400/60 font-medium">
                       MEASURED
                     </span>
                   </div>

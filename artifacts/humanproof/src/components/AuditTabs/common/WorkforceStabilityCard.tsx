@@ -78,7 +78,7 @@ const MiniChip: React.FC<{ label: string; value: string; tone: string }> = ({ la
     className="flex flex-col items-start px-2.5 py-1.5 rounded-lg flex-shrink-0"
     style={{ background: tone + '15', border: `1px solid ${tone}30` }}
   >
-    <span className="text-[9px] font-semibold tracking-wider uppercase"
+    <span className="text-[10px] font-semibold tracking-wider uppercase"
       style={{ color: tone + 'cc' }}>{label}</span>
     <span className="text-[11px] font-bold leading-tight"
       style={{ color: 'rgba(255,255,255,0.85)' }}>{value}</span>
@@ -255,7 +255,7 @@ const DrillCell: React.FC<{ title: string; tone: string; children: React.ReactNo
     className="rounded-xl px-3 py-2.5"
     style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${tone}25` }}
   >
-    <p className="text-[9px] font-semibold tracking-wider uppercase mb-1"
+    <p className="text-[10px] font-semibold tracking-wider uppercase mb-1"
       style={{ color: tone + 'cc' }}>{title}</p>
     {children}
   </div>

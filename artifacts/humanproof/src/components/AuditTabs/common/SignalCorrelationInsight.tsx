@@ -154,7 +154,7 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
         </p>
         {record.scoreUncertaintyRange != null && record.scoreUncertaintyRange > 0 && (
           <span
-            className="flex-shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded"
+            className="flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded"
             style={{ background: `${color}12`, color }}
           >
             ±{record.scoreUncertaintyRange} pts
@@ -163,7 +163,7 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
       </div>
 
       {/* Signal pair */}
-      <div className="grid grid-cols-2 gap-1.5 px-3.5 pb-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 px-3.5 pb-2.5">
         {/* Positive signal */}
         <div
           className="rounded-lg px-2.5 py-2"
@@ -171,11 +171,11 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
         >
           <div className="flex items-center gap-1 mb-1">
             <TrendingUp className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#10b981' }} />
-            <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: '#10b981' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#10b981' }}>
               Positive signal
             </span>
           </div>
-          <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
             {record.positiveSignal}
           </p>
         </div>
@@ -187,11 +187,11 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
         >
           <div className="flex items-center gap-1 mb-1">
             <TrendingDown className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#f97316' }} />
-            <span className="text-[8px] font-bold uppercase tracking-wide" style={{ color: '#f97316' }}>
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#f97316' }}>
               Risk signal
             </span>
           </div>
-          <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
             {record.negativeSignal}
           </p>
         </div>
@@ -207,13 +207,13 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
           }}
         >
           <ResolutionIcon resolution={record.resolution} />
-          <span className="text-[8px] font-bold whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.60)' }}>
+          <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.60)' }}>
             {resolutionLabel(record.resolution)}
           </span>
         </div>
 
         {record.userGuidance && (
-          <p className="flex-1 text-[8px] italic leading-snug pt-1" style={{ color: 'rgba(255,255,255,0.36)' }}>
+          <p className="flex-1 text-[10px] italic leading-snug pt-1" style={{ color: 'rgba(255,255,255,0.36)' }}>
             {record.userGuidance}
           </p>
         )}
@@ -247,21 +247,21 @@ export const SignalCorrelationInsight: React.FC<Props> = ({ report }) => {
                 {report.totalContradictions} signal tension{report.totalContradictions !== 1 ? 's' : ''} detected
               </p>
               <span
-                className="text-[8px] font-bold px-2 py-0.5 rounded-full"
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                 style={{ background: `${trustColor}14`, color: trustColor }}
               >
                 {report.overallTrustLevel.replace('_', ' ')} TRUST
               </span>
               {report.netUncertaintyPoints > 0 && (
                 <span
-                  className="text-[8px] font-bold px-2 py-0.5 rounded-full"
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                   style={{ background: 'rgba(245,158,11,0.10)', color: '#f59e0b' }}
                 >
                   ±{report.netUncertaintyPoints} pts total uncertainty
                 </span>
               )}
             </div>
-            <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.42)' }}>
+            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.42)' }}>
               {report.trustSummary}
             </p>
           </div>
@@ -276,7 +276,7 @@ export const SignalCorrelationInsight: React.FC<Props> = ({ report }) => {
       </div>
 
       {/* Footer note */}
-      <p className="text-[8px] leading-relaxed px-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>
+      <p className="text-[10px] leading-relaxed px-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>
         Signal tensions are resolved using a reliability hierarchy: SEC filings &gt; live hiring data &gt;
         news sentiment &gt; aggregated surveys. When two signals of equal weight conflict, the AI averages
         them and widens the confidence interval. Flagged tensions are shown at full uncertainty until

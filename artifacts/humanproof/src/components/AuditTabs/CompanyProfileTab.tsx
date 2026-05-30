@@ -817,7 +817,7 @@ const IndustryBenchmarkCard: React.FC<{
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-[9px] text-muted-foreground mt-1 font-mono">
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1 font-mono">
                   <span>Worse</span><span>Better</span>
                 </div>
               </div>
@@ -875,7 +875,7 @@ const DepartmentNewsPanel: React.FC<{ news: NewsItem[]; department: string; comp
                 <div className="text-sm font-semibold leading-tight">{item.title}</div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {item.tag && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase"
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-black uppercase"
                       style={{ background: `${getSentimentColor(item.sentiment)}22`, color: getSentimentColor(item.sentiment) }}>
                       {item.tag}
                     </span>
@@ -947,7 +947,7 @@ const LiveSignalFeed: React.FC<{ signals: SignalEvent[] }> = ({ signals }) => {
     <div className="glass-panel p-5">
       <h4 className="text-sm font-bold mb-4 flex items-center gap-2">
         <Activity className="w-4 h-4 text-muted-foreground" />Live Signal Feed
-        <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/20">
+        <span className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/20">
           {signals.length} SIGNALS
         </span>
       </h4>
@@ -974,7 +974,7 @@ const LiveSignalFeed: React.FC<{ signals: SignalEvent[] }> = ({ signals }) => {
               </div>
             </div>
             <span
-              className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 uppercase"
+              className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 uppercase"
               style={{ background: `${getImpactColor(sig.impact)}15`, color: getImpactColor(sig.impact) }}
             >
               {sig.impact}

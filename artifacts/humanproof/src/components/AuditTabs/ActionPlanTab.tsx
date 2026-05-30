@@ -1229,7 +1229,7 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: Fina
       <div className="flex items-center gap-2 mb-4">
         <BookOpen className="w-4 h-4 text-cyan-400" />
         <h4 className="font-bold text-sm">Recommended Learning</h4>
-        <span className="ml-auto text-[9px] font-black bg-cyan-500/15 text-cyan-400 border border-cyan-500/20 px-1.5 py-0.5 rounded">
+        <span className="ml-auto text-[10px] font-black bg-cyan-500/15 text-cyan-400 border border-cyan-500/20 px-1.5 py-0.5 rounded">
           {conservativeFiltered ? 'FREE / ≤₹3K' : 'CURATED'}
         </span>
       </div>
@@ -1262,7 +1262,7 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: Fina
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {c.free && (
-                <span className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-black">
+                <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-black">
                   FREE
                 </span>
               )}
@@ -1531,7 +1531,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                         Specific 30-day survival plan · cited actions · week-by-week timeline
                       </p>
                     </div>
-                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border uppercase tracking-wider ${
                       insurancePlan.urgencyTier === 'critical' ? 'bg-red-500/15 text-red-400 border-red-500/25' :
                       insurancePlan.urgencyTier === 'elevated' ? 'bg-amber-500/15 text-amber-400 border-amber-500/25' :
                       'bg-blue-500/15 text-blue-400 border-blue-500/25'
@@ -1579,7 +1579,11 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
           <div className="flex-1">
             <SectionHeader
               title="Personalized Action Plan"
-              description={`${sortedItems.length} actions tailored to ${result.workTypeKey.replace(/_/g, " ")} at risk score ${result.total}/100. Set your available hours to see only what's realistic for your schedule.`}
+              description={`${sortedItems.length} actions tailored to ${
+                (result as any).roleTitle ??
+                (result as any).userProfile?.roleTitle ??
+                result.workTypeKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+              } at risk score ${result.total}/100. Set your available hours to see only what's realistic for your schedule.`}
             />
             {/* v8.0: Role personalization badge — shows which role group was resolved */}
             {(() => {
@@ -1600,7 +1604,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
               const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2, undefined, uf2.localCurrencyCode ?? undefined);
               return (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>
+                  <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>
                   <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                     {roleGroupLabel}
                   </span>
@@ -1614,7 +1618,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                     'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                   }`}>{riskLevel} risk</span>
                   {region === 'IN' && personalizedSet.indiaSpecificContext && (
-                    <span className="text-[9px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded">
                       🇮🇳 India-specific
                     </span>
                   )}
@@ -1902,7 +1906,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                     <div className="text-xs font-semibold">{tool.name}</div>
                     <div className="text-[10px] text-muted-foreground">{tool.desc}</div>
                   </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/20 font-black flex-shrink-0">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/20 font-black flex-shrink-0">
                     {tool.tag}
                   </span>
                 </a>

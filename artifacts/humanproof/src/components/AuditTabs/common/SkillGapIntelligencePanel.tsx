@@ -34,7 +34,7 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
     >
       {/* Urgency badge */}
       <span
-        className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
+        className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
         style={{ background: urg.bg, color: urg.color, border: `1px solid ${urg.color}30`, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
       >
         {item.urgency}
@@ -106,7 +106,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
           Skill Gap Intelligence
         </span>
         <span
-          className="ml-auto text-[9px] font-black px-2 py-0.5 rounded"
+          className="ml-auto text-[10px] font-black px-2 py-0.5 rounded"
           style={{ background: `${readinessColor}15`, color: readinessColor, border: `1px solid ${readinessColor}30`, fontFamily: 'var(--font-mono)' }}
         >
           {readinessLabel}

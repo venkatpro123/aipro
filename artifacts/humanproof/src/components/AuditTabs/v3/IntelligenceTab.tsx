@@ -33,7 +33,7 @@ const ActionHook: React.FC<{ text: string }> = ({ text }) => (
 const HeuristicBadge: React.FC = () => (
   <span
     title="Estimated baseline — calibrated from May 2026 data, not a live API feed"
-    className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+    className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
     style={{ background: 'rgba(148,163,184,0.12)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.22)' }}
   >
     <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: '#94a3b8' }} />

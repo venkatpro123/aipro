@@ -59,7 +59,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
   if (!demandLive) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] text-muted-foreground/60 font-mono"
+        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 font-mono"
         title="Demand data: research estimate (not sourced from live job boards)"
       >
         📊 Research est.
@@ -73,7 +73,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
   if (scrapeStatus === 'no_key') {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] text-muted-foreground/60 font-mono"
+        className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 font-mono"
         title="No Serper API key configured — refresh-market-intelligence EF runs in dry-run mode. Data is a research estimate."
       >
         📊 Research est.
@@ -86,7 +86,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
     const lastGood = lastGoodLabel(lastSuccessfulScrapeAt);
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20"
+        className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20"
         title={`Source blocked by anti-bot protection — job board is refusing automated queries. ${lastGood}. Counts shown are from the last successful refresh.`}
       >
         🔴 Source blocked · {lastSuccessfulScrapeAt ? `last ok: ${formatDate(lastSuccessfulScrapeAt)}` : 'no prior data'}
@@ -99,7 +99,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
     const lastGood = lastGoodLabel(lastSuccessfulScrapeAt);
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400/90 border border-orange-500/20"
+        className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400/90 border border-orange-500/20"
         title={`Rate limited during last weekly refresh — refresh will retry next Monday. ${lastGood}. Counts shown are from the last successful refresh.`}
       >
         🟠 Rate limited · {ageInDays}d old
@@ -131,7 +131,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
   if (status === 'live' && scrapeStatus && scrapeStatus !== 'success') {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20"
+        className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20"
         title={`Last refresh attempt failed (${scrapeStatus}). Data from ${formatDate(dataAsOf)}. ${lastGoodLabel(lastSuccessfulScrapeAt)}.`}
       >
         🟡 Refresh issue · {ageInDays}d old{countSuffix}
@@ -143,7 +143,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
     // ── 🟢 Live — ageInDays ≤ 7 AND scrapeStatus = 'success' (or null/legacy) ─
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
+        className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
         title={`Serper/Naukri via weekly scrape. Data from ${formatDate(dataAsOf)}.${liveJobCount != null ? ` ${liveJobCount.toLocaleString()} active postings.` : ''}${demandLive.delta90d != null ? ` 90d delta: ${demandLive.delta90d > 0 ? '+' : ''}${demandLive.delta90d} roles.` : ''}`}
       >
         🟢 Live {trendArrow} · {ageInDays}d ago{countSuffix}{deltaBadge && <>{' '}{deltaBadge}</>}
@@ -156,7 +156,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
     // THE LIVE BADGE DISAPPEARS HERE — day 8 is the first day this amber label appears.
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20"
+        className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/80 border border-amber-500/20"
         title={`${ageInDays} days since last refresh (>${SKILL_DEMAND_LIVE_MAX_DAYS}d). Data from ${formatDate(dataAsOf)}. Awaiting next Monday 06:00 UTC refresh.`}
       >
         📅 {ageInDays}d old · scheduled refresh{countSuffix}
@@ -167,7 +167,7 @@ export const SkillFreshnessLabel: React.FC<Props> = ({ demandLive, showCount = t
   // ── 🔴 Very stale — ageInDays > 90 ──────────────────────────────────────
   return (
     <span
-      className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 text-red-400/80 border border-red-500/20"
+      className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 text-red-400/80 border border-red-500/20"
       title={`Data older than ${SKILL_DEMAND_STALE_MAX_DAYS} days (${ageInDays}d). Demand figures may not reflect current market. Verify on Naukri/LinkedIn directly.`}
     >
       ⚠ Stale · {ageInDays}d

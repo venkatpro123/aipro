@@ -98,7 +98,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
             {email.clausesInjected.map(clause => (
               <span
                 key={clause}
-                className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${CLAUSE_COLORS[clause]}`}
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${CLAUSE_COLORS[clause]}`}
               >
                 {NEGOTIATION_CLAUSE_LABELS[clause]}
               </span>
@@ -122,7 +122,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
             <div className="px-3 pb-3">
               {/* Subject line */}
               <div className="flex items-center gap-2 mb-1.5 pt-1">
-                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">Subject:</span>
+                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Subject:</span>
                 <span className="text-[11px] text-gray-200 font-medium">{email.subject}</span>
               </div>
 
@@ -136,7 +136,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
 
               {/* Footer: placeholder guide + copy button */}
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[9px] text-muted-foreground opacity-60 leading-relaxed">
+                <p className="text-[10px] text-muted-foreground opacity-60 leading-relaxed">
                   Substitute: <span className="font-mono text-amber-400/70">[First name]</span>,{' '}
                   <span className="font-mono text-amber-400/70">[Your name]</span>
                   {email.body.includes('[target comp]') && (
@@ -207,7 +207,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
       </div>
 
       {/* BATNA + timing */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="p-2 rounded-lg bg-white/3 border border-white/5">
           <div className="text-[10px] text-gray-500 mb-0.5">Outside Option (BATNA)</div>
           <div className="text-[11px] text-gray-300">{negotiation.batnaStrength}</div>
@@ -225,7 +225,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
             <span className="text-[11px] font-semibold text-gray-300">
               Ready-to-send email scripts
             </span>
-            <span className="text-[9px] text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground">
               — personalised, copy-paste ready
             </span>
           </div>

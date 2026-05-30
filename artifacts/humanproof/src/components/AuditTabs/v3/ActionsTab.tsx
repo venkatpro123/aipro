@@ -75,7 +75,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
           <TierBadge tier={1} />
         </div>
         {criticalCount > 0 && (
-          <span className="text-[9px] font-black px-2 py-0.5 rounded-full"
+          <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(220,38,38,0.20)', color: '#dc2626' }}>
             {criticalCount} CRITICAL
           </span>
@@ -102,7 +102,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                     <p className="text-[12px] font-semibold leading-tight" style={{ color: 'rgba(255,255,255,0.88)' }}>
                       {item.title}
                     </p>
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
                       style={{ background: config.color + '20', color: config.color }}>
                       {item.priority}
                     </span>
@@ -113,7 +113,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                   <div className="flex items-center flex-wrap gap-2 mt-1.5">
                     {/* Sequence phase label */}
                     {item.sequencePhase && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                         style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
                         {{ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' }[item.sequencePhase]}
                       </span>
@@ -126,7 +126,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                     )}
                     {/* Effort badge */}
                     {item.effortBadge && (
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
                         style={{ background: 'rgba(0,212,224,0.10)', color: 'rgba(0,212,224,0.65)', border: '1px solid rgba(0,212,224,0.20)' }}>
                         {item.effortBadge}
                       </span>
@@ -210,7 +210,7 @@ const EmergencyCallout: React.FC<{
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span
-              className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+              className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
               style={{ background: 'rgba(220,38,38,0.18)', color: '#fca5a5' }}
             >
               {riskLabel(score)} RISK · {score}/100
@@ -425,7 +425,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             </div>
             <div className="flex-1 min-w-0">
               <span
-                className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+                className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
                 style={{ background: 'rgba(220,38,38,0.22)', color: '#dc2626' }}
               >
                 LEGAL GROUND TRUTH · WARN ACT FILED
@@ -445,7 +445,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 className="rounded-xl px-3 py-2"
                 style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)' }}
               >
-                <p className="text-[9px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
+                <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
                   AFFECTED
                 </p>
                 <p className="text-[13px] font-black" style={{ color: '#fca5a5' }}>
@@ -458,7 +458,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 className="rounded-xl px-3 py-2"
                 style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)' }}
               >
-                <p className="text-[9px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
+                <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
                   COUNTDOWN
                 </p>
                 <p className="text-[13px] font-black flex items-center gap-1" style={{ color: '#fca5a5' }}>
@@ -516,7 +516,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span
-                  className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+                  className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
                   style={{ background: 'rgba(245,158,11,0.20)', color: '#f59e0b' }}
                 >
                   RUNWAY ALERT
@@ -598,7 +598,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span
-                  className="text-[9px] font-black px-2 py-0.5 rounded"
+                  className="text-[10px] font-black px-2 py-0.5 rounded"
                   style={{
                     background: equityUrgency === 'CRITICAL' ? 'rgba(220,38,38,0.20)' : 'rgba(249,115,22,0.18)',
                     color: equityUrgency === 'CRITICAL' ? '#dc2626' : '#f97316',

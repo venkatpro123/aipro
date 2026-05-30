@@ -94,7 +94,7 @@ const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => 
         AI Intelligence Brief
       </span>
       <span
-        className="px-2 py-0.5 rounded text-[9px] font-black"
+        className="px-2 py-0.5 rounded text-[10px] font-black"
         style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.28)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}
       >
         NO LIVE DATA
@@ -147,7 +147,7 @@ const LowConfidenceBrief: React.FC<{
           AI Intelligence Brief
         </span>
         <span
-          className="px-2 py-0.5 rounded text-[9px] font-black"
+          className="px-2 py-0.5 rounded text-[10px] font-black"
           style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
         >
           LOW CONFIDENCE
@@ -241,7 +241,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
 
         {/* Urgency badge */}
         <span
-          className="px-2 py-0.5 rounded text-[9px] font-black"
+          className="px-2 py-0.5 rounded text-[10px] font-black"
           style={{ background: `${urgency.color}22`, color: urgency.color, border: `1px solid ${urgency.color}40`, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}
         >
           {urgency.label}

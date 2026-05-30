@@ -140,7 +140,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
                 {/* Step rail + index */}
                 <div className="flex flex-col items-center flex-shrink-0">
                   <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
                     style={{ background: `${ACCENT}22`, color: ACCENT, border: `1px solid ${ACCENT}40` }}
                   >
                     {i + 1}
@@ -151,7 +151,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
                 </div>
                 <div className="flex-1 min-w-0 pb-0.5">
                   <p
-                    className="text-[9px] font-black uppercase tracking-wider"
+                    className="text-[10px] font-black uppercase tracking-wider"
                     style={{ color: ACCENT, letterSpacing: '0.1em' }}
                   >
                     {step.label}

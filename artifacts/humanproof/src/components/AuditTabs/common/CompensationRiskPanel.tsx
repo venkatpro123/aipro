@@ -77,11 +77,11 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
           ))}
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Normal</span>
-          <span className="text-[9px] font-semibold" style={{ color: colors.text }}>
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Normal</span>
+          <span className="text-[10px] font-semibold" style={{ color: colors.text }}>
             {STAGE_SHORT[compensation.cascadeStage]}
           </span>
-          <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Pre-Layoff</span>
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Pre-Layoff</span>
         </div>
       </div>
 

@@ -55,7 +55,7 @@ const SectionTitle: React.FC<{ icon: React.ElementType; label: string; color?: s
 }) => (
   <div className="flex items-center gap-1.5 mb-2">
     <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />
-    <p className="text-[8px] font-black tracking-[0.14em] uppercase" style={{ color }}>
+    <p className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color }}>
       {label}
     </p>
   </div>
@@ -87,7 +87,7 @@ const ActionRow: React.FC<{
           {action.title}
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.28)' }}>{action.timeEstimate}</span>
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>{action.timeEstimate}</span>
           {open
             ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.30)' }} />
             : <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.30)' }} />
@@ -96,7 +96,7 @@ const ActionRow: React.FC<{
       </button>
       {open && (
         <div className="px-3 pb-2.5 pt-0.5">
-          <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.48)' }}>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.48)' }}>
             {action.rationale}
           </p>
         </div>
@@ -189,12 +189,12 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <Key className="w-3 h-3" style={{ color: intelligence.equityUrgency === 'critical' ? '#ef4444' : '#f97316' }} />
-                    <p className="text-[9px] font-black tracking-wide"
+                    <p className="text-[10px] font-black tracking-wide"
                       style={{ color: intelligence.equityUrgency === 'critical' ? '#ef4444' : '#f97316' }}>
                       EQUITY VEST ALERT — {intelligence.equityUrgency.toUpperCase()}
                     </p>
                   </div>
-                  <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     {intelligence.equityUrgency === 'critical'
                       ? 'Unvested equity vests within 3 months. Any restructuring announcement before then forfeits it. Negotiate accelerated vest or retention bonus immediately.'
                       : 'Equity vest approaching within 12 months at elevated company risk. Proactive retention negotiation now secures this income before leverage shifts.'}
@@ -203,7 +203,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
               )}
 
               {/* 2-col grid: Severance + NC Risk */}
-              <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                 {/* Severance */}
                 <div
                   className="rounded-xl p-3"
@@ -213,10 +213,10 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                   <p className="text-[18px] font-black" style={{ color: '#22d3ee' }}>
                     {sv.estimatedUsdRange}
                   </p>
-                  <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                     {sv.minWeeks}–{sv.maxWeeks} weeks base salary
                   </p>
-                  <p className="text-[8px] mt-1.5 italic leading-snug" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  <p className="text-[10px] mt-1.5 italic leading-snug" style={{ color: 'rgba(255,255,255,0.28)' }}>
                     First offer is rarely final at this level — negotiate.
                   </p>
                 </div>
@@ -230,7 +230,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                   <p className="text-[18px] font-black" style={{ color: ncRiskColor(nc.riskScore) }}>
                     {nc.riskScore}/100
                   </p>
-                  <p className="text-[9px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.40)' }}>
                     {nc.riskScore >= 60 ? 'High — attorney review recommended' : nc.riskScore >= 40 ? 'Moderate — review terms carefully' : 'Low — limited enforcement jurisdiction'}
                   </p>
                 </div>
@@ -248,13 +248,13 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                       {intelligence.boardPressureScore}/100
                     </span>
                   </div>
-                  <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
                     {intelligence.boardPressureNarrative}
                   </p>
                   {intelligence.successorThreatNarrative && (
                     <div className="flex items-start gap-1.5 mt-2">
                       <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-                      <p className="text-[8px] italic leading-snug" style={{ color: '#f59e0b80' }}>
+                      <p className="text-[10px] italic leading-snug" style={{ color: '#f59e0b80' }}>
                         {intelligence.successorThreatNarrative}
                       </p>
                     </div>
@@ -270,7 +270,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                     {sv.negotiationLevers.slice(0, 4).map((lever, i) => (
                       <div key={i} className="flex items-start gap-2">
                         <CheckCircle className="w-2.5 h-2.5 flex-shrink-0 mt-0.5" style={{ color: 'rgba(34,211,238,0.50)' }} />
-                        <p className="text-[9px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                        <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
                           {lever}
                         </p>
                       </div>
@@ -296,14 +296,14 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                 className="rounded-xl px-3.5 py-2.5"
                 style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
               >
-                <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
                   <span className="font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>Non-compete: </span>
                   {nc.assessment}
                 </p>
               </div>
 
               {/* Disclaimer */}
-              <p className="text-[8px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.18)' }}>
+              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.18)' }}>
                 Executive intelligence is based on your self-reported title, tenure, and compensation band.
                 Severance ranges reflect market norms for your tier, not legal advice. Consult an employment
                 attorney before making any decisions based on these estimates.

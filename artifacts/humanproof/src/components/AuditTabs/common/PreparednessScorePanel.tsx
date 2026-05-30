@@ -90,7 +90,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({ score, color, size = 100 }) => {
         >
           {score}
         </motion.span>
-        <span className="text-[9px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
+        <span className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
           /100
         </span>
       </div>
@@ -135,7 +135,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                     industry priors rather than personalized live data. */}
                 {pillar.isHeuristic && (
                   <span
-                    className="ml-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded"
+                    className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded"
                     style={{
                       background: 'rgba(245,158,11,0.15)',
                       color: '#f59e0b',
@@ -203,7 +203,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
               {/* Signals */}
               {pillar.signals.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                     SIGNALS
                   </p>
                   {pillar.signals.map((s, i) => (
@@ -217,7 +217,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
               {/* Quick wins */}
               {pillar.quickWins.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-bold tracking-widest mb-1.5" style={{ color: statusColor + 'cc' }}>
+                  <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: statusColor + 'cc' }}>
                     QUICK WINS
                   </p>
                   {pillar.quickWins.map((w, i) => (
@@ -238,7 +238,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                   className="rounded-lg px-2.5 py-2"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  <p className="text-[9px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
                     BENCHMARK
                   </p>
                   <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
@@ -252,7 +252,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                     </span>
                   </p>
                   {pillar.benchmark.formulaNote && (
-                    <p className="text-[9px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    <p className="text-[10px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
                       Formula: {pillar.benchmark.formulaNote}
                     </p>
                   )}

@@ -181,7 +181,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
             </p>
           </div>
           {effectiveProtectionMonths != null && effectiveProtectionMonths > 0 && (
-            <span className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
               style={{ background: 'rgba(34,211,238,0.10)', color: 'rgba(34,211,238,0.70)', border: '1px solid rgba(34,211,238,0.20)' }}>
               ~{effectiveProtectionMonths}mo protection
             </span>
@@ -194,12 +194,12 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
             <p className="text-2xl sm:text-[30px] font-black leading-none" style={{ color: grade.color }}>
               {compositeScore}
             </p>
-            <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</p>
           </div>
           <div className="flex-1 mb-1">
             <div className="flex items-center justify-between mb-1">
               <p className="text-[11px] font-black" style={{ color: grade.color }}>{grade.label}</p>
-              <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
                 Target: {targetPct}%
               </p>
             </div>
@@ -217,7 +217,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
                 style={{ background: `linear-gradient(90deg, ${grade.color}88, ${grade.color})` }}
               />
             </div>
-            <p className="text-[9px] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{grade.sub}</p>
+            <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{grade.sub}</p>
           </div>
         </div>
 
@@ -267,7 +267,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           className="mx-3 mb-3 rounded-xl px-3 py-2.5"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <p className="text-[9px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
             WEAKEST PILLAR — CLOSE THIS FIRST
           </p>
           <div className="flex items-start gap-2">

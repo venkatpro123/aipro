@@ -197,7 +197,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>
                   {step + 1} of {STEPS.length}
                 </span>
                 <button
@@ -263,7 +263,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
           {/* Swipe hint on step 1 only */}
           {step === 0 && (
             <p
-              className="text-center text-[8px] mt-1.5"
+              className="text-center text-[10px] mt-1.5"
               style={{ color: 'rgba(255,255,255,0.18)' }}
             >
               Tap Next to walk through the dashboard

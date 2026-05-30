@@ -584,10 +584,10 @@ const ScoreConfidenceInterval: React.FC<{
             style={{ left: `${low}%`, width: `${range}%`, backgroundColor: `${color}33`, originX: 0 }}
           />
           <div className="absolute h-6 w-[1px]" style={{ left: `${low}%`, top: "-10px", backgroundColor: "var(--border-2)" }}>
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 font-mono text-[9px] text-muted-foreground">{low}%</div>
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 font-mono text-[10px] text-muted-foreground">{low}%</div>
           </div>
           <div className="absolute h-6 w-[1px]" style={{ left: `${high}%`, top: "-10px", backgroundColor: "var(--border-2)" }}>
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2 font-mono text-[9px] text-muted-foreground">{high}%</div>
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 font-mono text-[10px] text-muted-foreground">{high}%</div>
           </div>
           <motion.div
             className="absolute h-8 w-1 flex flex-col items-center"
@@ -648,7 +648,7 @@ const RiskTrendSection: React.FC<{ result: TabProps["result"] }> = ({ result }) 
                 className="w-full rounded-t-sm"
                 style={{ background: `${color}44`, border: `1px solid ${color}66`, maxHeight: "48px", minHeight: "4px" }}
               />
-              <div className="text-[9px] text-muted-foreground font-mono">{t.year}</div>
+              <div className="text-[10px] text-muted-foreground font-mono">{t.year}</div>
             </div>
           );
         })}
@@ -751,7 +751,7 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
               })}
             </div>
             {(result as any).segmentCalibration.calibrationStatus === 'developer_estimate' && (
-              <span className="text-[9px] text-amber-400/70 ml-auto">ESTIMATED</span>
+              <span className="text-[10px] text-amber-400/70 ml-auto">ESTIMATED</span>
             )}
           </div>
         )}

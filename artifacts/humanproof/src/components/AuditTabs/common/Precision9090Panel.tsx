@@ -95,7 +95,7 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
         <div className="flex-shrink-0 w-9 h-9 rounded-lg flex flex-col items-center justify-center"
           style={{ background: `${pc}15` }}>
           <span className="text-[11px] font-bold leading-none" style={{ color: pc }}>{action.aiPriorityScore}</span>
-          <span className="text-[8px] text-white/30 leading-none mt-0.5">AI</span>
+          <span className="text-[10px] text-white/30 leading-none mt-0.5">AI</span>
         </div>
 
         <div className="flex-1 min-w-0">
@@ -299,17 +299,17 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
               </div>
 
               {/* Outcome grid */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.12)' }}>
-                  <div className="text-[9px] text-green-400/60 uppercase tracking-wide mb-1">If passed</div>
+                  <div className="text-[10px] text-green-400/60 uppercase tracking-wide mb-1">If passed</div>
                   <p className="text-[11px] text-white/65 leading-snug">{checkpoint.ifPassed}</p>
                 </div>
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.12)' }}>
-                  <div className="text-[9px] text-amber-400/60 uppercase tracking-wide mb-1">Near miss</div>
+                  <div className="text-[10px] text-amber-400/60 uppercase tracking-wide mb-1">Near miss</div>
                   <p className="text-[11px] text-white/65 leading-snug">{checkpoint.ifNearMiss}</p>
                 </div>
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.12)' }}>
-                  <div className="text-[9px] text-red-400/60 uppercase tracking-wide mb-1">If failed</div>
+                  <div className="text-[10px] text-red-400/60 uppercase tracking-wide mb-1">If failed</div>
                   <p className="text-[11px] text-white/65 leading-snug">{checkpoint.ifFailed}</p>
                 </div>
               </div>

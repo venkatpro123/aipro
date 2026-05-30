@@ -99,7 +99,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
 
           <div className="flex-1 min-w-0">
             {/* Label */}
-            <p className="text-[9px] font-black tracking-[0.16em] mb-0.5" style={{ color: accentText, opacity: 0.7 }}>
+            <p className="text-[10px] font-black tracking-[0.16em] mb-0.5" style={{ color: accentText, opacity: 0.7 }}>
               RISK ALERT
             </p>
             {/* Main headline — empathy-first */}
@@ -133,14 +133,14 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
             <Flame className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(34,211,238,0.65)' }}>
+            <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(34,211,238,0.65)' }}>
               THIS WEEK — ONE THING
             </p>
             <p className="text-[11px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
               {topAction ? topAction.title : "Activate your professional network"}
             </p>
             {topAction?.effort && (
-              <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 Est. {topAction.effort}
               </p>
             )}
@@ -155,7 +155,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
         </div>
 
         {/* ── Escape hatch for overwhelm ─── */}
-        <p className="mt-2 text-center text-[9px] italic" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        <p className="mt-2 text-center text-[10px] italic" style={{ color: 'rgba(255,255,255,0.28)' }}>
           "If this feels overwhelming, start only with the one action above."
         </p>
       </div>

@@ -42,7 +42,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
         </div>
         <div className="flex items-center gap-1.5">
           {maRisk.peOwnershipRisk && (
-            <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded-full"
+            <span className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded-full"
               style={{ background: 'rgba(220,38,38,0.20)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.35)' }}>
               PE-OWNED
             </span>
@@ -70,7 +70,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       )}
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-sm font-bold" style={{ color: restructuringPct >= 60 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
             {restructuringPct}%

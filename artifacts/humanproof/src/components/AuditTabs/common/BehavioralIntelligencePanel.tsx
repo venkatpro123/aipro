@@ -85,7 +85,7 @@ const TrajectorySection: React.FC<{ data: BehavioralPersonalizationResult['caree
         className="rounded-lg px-3 py-2"
         style={{ background: `${cfg.color}08`, border: `1px solid ${cfg.color}20` }}
       >
-        <p className="text-[9px] font-bold mb-0.5" style={{ color: `${cfg.color}80` }}>URGENT ACTION</p>
+        <p className="text-[10px] font-bold mb-0.5" style={{ color: `${cfg.color}80` }}>URGENT ACTION</p>
         <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.75)' }}>{data.urgentAction}</p>
       </div>
     </div>
@@ -113,7 +113,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
             <span className="text-[10px] font-bold" style={{ color }}>
               {data.mostRecentGapMonths}mo gap detected
             </span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full capitalize"
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize"
               style={{ background: `${color}12`, color, border: `1px solid ${color}25` }}>
               {data.gapSeverity} impact
             </span>
@@ -136,7 +136,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
           className="rounded-lg px-3 py-2 mb-2"
           style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)' }}
         >
-          <p className="text-[9px] font-bold mb-1" style={{ color: 'rgba(34,211,238,0.60)' }}>
+          <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(34,211,238,0.60)' }}>
             <Mic2 className="w-3 h-3 inline mr-1" />YOUR 30-SECOND RESPONSE
           </p>
           <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.72)' }}>
@@ -144,7 +144,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
           </p>
         </div>
       )}
-      <p className="text-[9px] italic" style={{ color: 'rgba(255,255,255,0.30)' }}>
+      <p className="text-[10px] italic" style={{ color: 'rgba(255,255,255,0.30)' }}>
         {data.timeToNeutralise}
       </p>
     </div>
@@ -190,7 +190,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
       {/* Quick wins */}
       {data.quickWins.length > 0 && (
         <div className="mb-2">
-          <p className="text-[9px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
             QUICK WINS (&lt;1 HR EACH)
           </p>
           {data.quickWins.map((w, i) => (
@@ -207,7 +207,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
         <>
           <button
             onClick={() => setExpanded(e => !e)}
-            className="flex items-center gap-1 text-[9px] font-semibold"
+            className="flex items-center gap-1 text-[10px] font-semibold"
             style={{ color: 'rgba(255,255,255,0.30)' }}
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -229,7 +229,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
                       {gap.specificAction}
                     </span>
                   </div>
-                  <span className="text-[9px] flex-shrink-0 ml-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  <span className="text-[10px] flex-shrink-0 ml-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
                     {gap.timeEstimate}
                   </span>
                 </div>
@@ -328,7 +328,7 @@ export const BehavioralIntelligencePanel: React.FC<Props> = ({ data }) => {
           className="rounded-xl px-3 py-2.5 mt-1"
           style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.22)' }}
         >
-          <p className="text-[9px] font-bold tracking-widest mb-1" style={{ color: '#a78bfa80' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#a78bfa80' }}>
             <BookOpen className="w-3 h-3 inline mr-1" />YOUR TOP BLOCKER
           </p>
           <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>

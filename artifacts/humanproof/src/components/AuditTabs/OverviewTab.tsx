@@ -359,7 +359,7 @@ const TimelineCard: React.FC<{
   const scoreColor = getScoreColor(score);
   return (
     <div className="glass-panel" style={{ padding: 'var(--space-5) var(--space-6)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-2)' }}>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
           <div className="label-xs text-muted-foreground mb-2">
             {phaseUrgency.hasAdjustment ? 'Adjusted Timeline' : 'Exposure Horizon'}
@@ -378,7 +378,7 @@ const TimelineCard: React.FC<{
                 </span>
               </div>
               <div className="mt-1.5">
-                <span className="inline-flex items-center text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25">
+                <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25">
                   Stage {collapseStage} compressed
                 </span>
               </div>
@@ -549,7 +549,7 @@ const QuickActionsRow: React.FC<{
             className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
             <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: uColor[a.urgency] }} />
             <span className="text-xs text-muted-foreground leading-relaxed flex-1">{a.text}</span>
-            <span className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+            <span className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
               style={{ background: `${uColor[a.urgency]}15`, color: uColor[a.urgency], border: `1px solid ${uColor[a.urgency]}25` }}>
               {uLabel[a.urgency]}
             </span>
@@ -618,7 +618,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
         <span className="data-label" style={{ color: 'var(--text-2)', letterSpacing: '0.16em' }}>
           ANALYST INTELLIGENCE BRIEF
         </span>
-        <span className="ml-auto text-[9px] font-mono opacity-35 uppercase tracking-widest">precision · v9</span>
+        <span className="ml-auto text-[10px] font-mono opacity-35 uppercase tracking-widest">precision · v9</span>
       </div>
 
       {/* 3-column insight cards — single column on mobile */}
@@ -758,18 +758,18 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
           12-Month Risk Calendar
         </span>
         {isAmplified && (
-          <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded font-bold"
+          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold"
             style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.30)' }}>
             ×{temporal.currentAmplifier.toFixed(2)} NOW
           </span>
         )}
         {isDampened && (
-          <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded font-bold"
+          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold"
             style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}>
             ×{temporal.currentAmplifier.toFixed(2)} SAFE
           </span>
         )}
-        <span className="ml-auto text-[9px] font-mono opacity-35 uppercase tracking-widest">hover for detail</span>
+        <span className="ml-auto text-[10px] font-mono opacity-35 uppercase tracking-widest">hover for detail</span>
       </div>
 
       <div className="p-4 space-y-3">
@@ -882,7 +882,7 @@ const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ bu
             <div className="absolute inset-y-0 rounded-full"
               style={{ left: `${usBarWidth}%`, width: '2px', background: 'rgba(255,255,255,0.35)' }} />
           </div>
-          <div className="flex justify-between text-[8px] text-white/30 font-mono">
+          <div className="flex justify-between text-[10px] text-white/30 font-mono">
             <span>0%</span>
             <span>+{pct}% timeline multiplier ×{buffer.timelineMultiplier.toFixed(2)}</span>
           </div>
@@ -938,7 +938,7 @@ const LegalTimelineCard: React.FC<{ legal: LegalTimelineResult }> = ({ legal }) 
         </div>
 
         {/* Regime badge */}
-        <div className="text-[9px] text-blue-300/60 font-mono leading-tight">
+        <div className="text-[10px] text-blue-300/60 font-mono leading-tight">
           {legal.regime}
         </div>
 
@@ -949,7 +949,7 @@ const LegalTimelineCard: React.FC<{ legal: LegalTimelineResult }> = ({ legal }) 
             const compMaxWeeks = Math.round(comp.daysMax / 7);
             const barWidth = Math.min(100, (comp.daysMax / maxDays) * 100);
             return (
-              <div key={i} className="text-[9px]">
+              <div key={i} className="text-[10px]">
                 <div className="flex items-center justify-between mb-0.5">
                   <span className="text-blue-200/70 truncate max-w-[75%]">{comp.label}</span>
                   <span className="text-blue-300/80 font-mono flex-shrink-0 ml-1">
@@ -972,11 +972,11 @@ const LegalTimelineCard: React.FC<{ legal: LegalTimelineResult }> = ({ legal }) 
         {/* Extension vs US baseline */}
         {hasExtension && (
           <div className="flex items-center gap-1.5 pt-0.5">
-            <div className="text-[9px] text-emerald-400/80 font-medium">
+            <div className="text-[10px] text-emerald-400/80 font-medium">
               +{Math.round(legal.extensionVsUSBaselineDays.min / 7)}–
               {Math.round(legal.extensionVsUSBaselineDays.max / 7)} weeks
             </div>
-            <div className="text-[9px] text-blue-300/50">vs US at-will baseline</div>
+            <div className="text-[10px] text-blue-300/50">vs US at-will baseline</div>
           </div>
         )}
 
@@ -1001,7 +1001,7 @@ const LegalTimelineCard: React.FC<{ legal: LegalTimelineResult }> = ({ legal }) 
         {/* Worker actions */}
         {legal.workerActions.length > 0 && (
           <div className="pt-1 border-t border-blue-500/10">
-            <div className="text-[9px] text-blue-300/60 font-bold uppercase tracking-wide mb-1">
+            <div className="text-[10px] text-blue-300/60 font-bold uppercase tracking-wide mb-1">
               Use this window to
             </div>
             <ul className="space-y-0.5">
@@ -1050,21 +1050,21 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color }}>
           Job Market Liquidity
         </span>
-        <span className="ml-auto text-[9px] font-mono opacity-40 uppercase tracking-wider">if laid off today</span>
+        <span className="ml-auto text-[10px] font-mono opacity-40 uppercase tracking-wider">if laid off today</span>
       </div>
 
       <div className="p-4">
         {/* Hero metric row */}
         <div className="flex items-end gap-4 mb-3">
           <div>
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">Re-employment Score</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Re-employment Score</div>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-black tabular-nums" style={{ color }}>{liq.score}</span>
               <span className="text-xs font-mono text-muted-foreground opacity-50">/100</span>
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-xs font-bold" style={{ color }}>{liq.tier}</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded font-mono"
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-mono"
                 style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
                 {liq.tier === 'Fast' ? '< 2 mo' : liq.tier === 'Moderate' ? '2–5 mo' : liq.tier === 'Slow' ? '5–9 mo' : '9+ mo'}
               </span>
@@ -1072,7 +1072,7 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
           </div>
 
           <div className="flex-1 pb-1">
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">Median Time-to-Offer</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Median Time-to-Offer</div>
             <div className="text-xl font-black" style={{ color }}>
               {liq.monthsToReemploy < 1
                 ? `~${Math.round(liq.monthsToReemploy * 4)} weeks`
@@ -1087,7 +1087,7 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
           </div>
 
           <div className="pb-1">
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">Salary Preservation</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Salary Preservation</div>
             <div className="text-xl font-black" style={{ color: liq.salaryPreservation >= 75 ? 'var(--emerald)' : 'var(--amber)' }}>
               {liq.salaryPreservation}%
             </div>
@@ -1096,9 +1096,9 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
         </div>
 
         {/* Key barriers and accelerators */}
-        <div className="grid grid-cols-2 gap-3 mt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-red-400/70 mb-1.5">Top Barriers</div>
+            <div className="text-[10px] uppercase tracking-wider text-red-400/70 mb-1.5">Top Barriers</div>
             <div className="space-y-1">
               {liq.keyBarriers.slice(0, 2).map((b, i) => (
                 <div key={i} className="text-[10px] text-muted-foreground leading-snug flex gap-1.5 items-start">
@@ -1109,7 +1109,7 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
             </div>
           </div>
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-emerald-400/70 mb-1.5">Top Accelerators</div>
+            <div className="text-[10px] uppercase tracking-wider text-emerald-400/70 mb-1.5">Top Accelerators</div>
             <div className="space-y-1">
               {liq.keyAccelerators.slice(0, 2).map((a, i) => (
                 <div key={i} className="text-[10px] text-muted-foreground leading-snug flex gap-1.5 items-start">
@@ -1122,7 +1122,7 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
         </div>
 
         {liq.confidenceNote && (
-          <div className="mt-2.5 pt-2.5 border-t border-white/[0.06] text-[9px] font-mono text-muted-foreground opacity-40 leading-relaxed">
+          <div className="mt-2.5 pt-2.5 border-t border-white/[0.06] text-[10px] font-mono text-muted-foreground opacity-40 leading-relaxed">
             {liq.confidenceNote}
           </div>
         )}
@@ -1154,11 +1154,11 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: scoreColor }}>
           Escape Path Optimizer
         </span>
-        <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${scoreColor}15`, color: scoreColor, border: `1px solid ${scoreColor}25` }}>
           {result.total} → ~{report.bestCaseScore}
         </span>
-        <span className="ml-auto text-[9px] font-mono opacity-40 uppercase tracking-wider">
+        <span className="ml-auto text-[10px] font-mono opacity-40 uppercase tracking-wider">
           top {report.paths.length} moves
         </span>
       </div>
@@ -1197,13 +1197,13 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
                   <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                     <span className="text-xs font-bold text-foreground leading-tight">{path.title}</span>
                     {isBest && (
-                      <span className="text-[8px] px-1 py-0.5 rounded font-black uppercase"
+                      <span className="text-[10px] px-1 py-0.5 rounded font-black uppercase"
                         style={{ background: `${scoreColor}15`, color: scoreColor, border: `1px solid ${scoreColor}25` }}>
                         Highest Impact
                       </span>
                     )}
                     {isQuick && !isBest && (
-                      <span className="text-[8px] px-1 py-0.5 rounded font-black uppercase"
+                      <span className="text-[10px] px-1 py-0.5 rounded font-black uppercase"
                         style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.25)' }}>
                         Quickest Win
                       </span>
@@ -1214,7 +1214,7 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
                       −{path.estimatedScoreDrop} pts
                     </span>
                     <span className="text-[10px] text-muted-foreground">{path.timeToImpact}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                       style={{ background: `${effortColor}12`, color: effortColor, border: `1px solid ${effortColor}22` }}>
                       {path.effort} effort
                     </span>
@@ -1235,19 +1235,19 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
 
                     {/* Step-by-step actions */}
                     <div>
-                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Steps</div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Action Steps</div>
                       <div className="space-y-2">
                         {path.steps.map((step, si) => (
                           <div key={si} className="flex gap-2.5 items-start">
-                            <span className="text-[9px] font-black font-mono flex-shrink-0 mt-0.5 w-4 text-center rounded"
+                            <span className="text-[10px] font-black font-mono flex-shrink-0 mt-0.5 w-4 text-center rounded"
                               style={{ color: scoreColor, background: `${scoreColor}15` }}>
                               {si + 1}
                             </span>
                             <div className="flex-1 min-w-0">
                               <p className="text-[11px] text-muted-foreground leading-relaxed">{step.action}</p>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[9px] font-mono text-muted-foreground opacity-50">{step.timeframe}</span>
-                                <span className="text-[9px] font-bold"
+                                <span className="text-[10px] font-mono text-muted-foreground opacity-50">{step.timeframe}</span>
+                                <span className="text-[10px] font-bold"
                                   style={{ color: effortColors[step.effort] ?? 'var(--text-3)' }}>
                                   {step.effort}
                                 </span>
@@ -1294,7 +1294,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: scoreColor }}>
           Score Leverage Analysis
         </span>
-        <span className="ml-auto text-[9px] font-mono opacity-40 uppercase tracking-wider">
+        <span className="ml-auto text-[10px] font-mono opacity-40 uppercase tracking-wider">
           if 25pt improvement
         </span>
       </div>
@@ -1312,7 +1312,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
               <div key={lever.dimension} className="rounded-lg border border-white/[0.06] p-2.5 bg-white/[0.01]">
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-black font-mono px-1 py-0.5 rounded"
+                    <span className="text-[10px] font-black font-mono px-1 py-0.5 rounded"
                       style={{ background: `${scoreColor}15`, color: scoreColor, border: `1px solid ${scoreColor}25` }}>
                       {lever.dimension}
                     </span>
@@ -1322,7 +1322,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
                     <span className="text-[10px] font-mono font-bold" style={{ color: 'var(--emerald)' }}>
                       −{lever.scoreDropIfImproved}pts
                     </span>
-                    <span className="text-[8px] px-1 py-0.5 rounded" style={{ color: feasibilityColor, background: `${feasibilityColor}12`, border: `1px solid ${feasibilityColor}22` }}>
+                    <span className="text-[10px] px-1 py-0.5 rounded" style={{ color: feasibilityColor, background: `${feasibilityColor}12`, border: `1px solid ${feasibilityColor}22` }}>
                       {lever.actionTimeframe}
                     </span>
                   </div>
@@ -1337,7 +1337,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
           })}
         </div>
         {/* Best scenario projections */}
-        <div className="mt-3 pt-3 border-t border-white/[0.05] grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="mt-3 pt-3 border-t border-white/[0.05] grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-3 gap-2">
           {[
             { label: '1 lever', score: sensitivity.bestSingleLeverScore },
             { label: '2 levers', score: sensitivity.bestTwoLeverScore },
@@ -1345,7 +1345,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
           ].map(item => (
             <div key={item.label} className="text-center rounded-lg bg-white/[0.02] border border-white/[0.05] p-2">
               <div className="text-xs font-bold" style={{ color: getScoreColor(item.score) }}>{item.score}</div>
-              <div className="text-[9px] text-muted-foreground mt-0.5">{item.label}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{item.label}</div>
             </div>
           ))}
         </div>
@@ -1377,7 +1377,7 @@ const DepartmentRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: riskColor }}>
           Department Exposure
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${riskColor}15`, color: riskColor, border: `1px solid ${riskColor}25` }}>
           {deptRisk.riskLabel}
         </span>
@@ -1391,7 +1391,7 @@ const DepartmentRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
         <p className="text-[10px] text-muted-foreground leading-relaxed opacity-70">{deptRisk.historicalCutRate}</p>
         {deptRisk.exposureFactors.length > 0 && (
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-red-400/70 mb-1">Exposure Factors</div>
+            <div className="text-[10px] uppercase tracking-wider text-red-400/70 mb-1">Exposure Factors</div>
             {deptRisk.exposureFactors.slice(0, 2).map((f: string, i: number) => (
               <div key={i} className="text-[10px] text-muted-foreground flex gap-1.5 items-start mb-0.5">
                 <span className="text-red-400 mt-0.5">▲</span><span>{f}</span>
@@ -1401,7 +1401,7 @@ const DepartmentRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
         )}
         {deptRisk.protectionFactors.length > 0 && (
           <div>
-            <div className="text-[9px] uppercase tracking-wider text-emerald-400/70 mb-1">Protection Factors</div>
+            <div className="text-[10px] uppercase tracking-wider text-emerald-400/70 mb-1">Protection Factors</div>
             {deptRisk.protectionFactors.slice(0, 2).map((f: string, i: number) => (
               <div key={i} className="text-[10px] text-muted-foreground flex gap-1.5 items-start mb-0.5">
                 <span className="text-emerald-400 mt-0.5">▼</span><span>{f}</span>
@@ -1442,11 +1442,11 @@ const SurvivalProbabilityPanel: React.FC<{ result: HybridResult }> = ({ result }
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color }}>
           Layoff Probability Model
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
           {sp.riskTier}
         </span>
-        <span className="ml-auto text-[9px] font-mono opacity-40">grounded · 4,200+ events</span>
+        <span className="ml-auto text-[10px] font-mono opacity-40">grounded · 4,200+ events</span>
       </div>
 
       {/* Probability bars */}
@@ -1459,7 +1459,7 @@ const SurvivalProbabilityPanel: React.FC<{ result: HybridResult }> = ({ result }
           ].map((item, i) => (
             <div key={i} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5 text-center">
               <div className="text-xl font-black tracking-tight" style={{ color }}>{item.value}%</div>
-              <div className="text-[9px] text-muted-foreground mt-0.5">{item.label} probability</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{item.label} probability</div>
               {/* Mini progress bar */}
               <div className="mt-2 h-1 rounded-full bg-white/[0.08] overflow-hidden">
                 <motion.div
@@ -1525,17 +1525,17 @@ const SignalContradictionPanel: React.FC<{ result: HybridResult }> = ({ result }
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color }}>
           Signal Contradictions
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
           {report.totalContradictions} detected
         </span>
         {report.hasMaterialUncertainty && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold"
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
             style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }}>
             ±{report.netUncertaintyPoints}pt uncertainty
           </span>
         )}
-        <span className="ml-auto text-[9px] font-mono opacity-40">trust: {report.overallTrustLevel}</span>
+        <span className="ml-auto text-[10px] font-mono opacity-40">trust: {report.overallTrustLevel}</span>
       </div>
 
       <div className="px-4 pt-3 pb-2">
@@ -1557,19 +1557,19 @@ const SignalContradictionPanel: React.FC<{ result: HybridResult }> = ({ result }
               return (
                 <div key={i} className="rounded-lg border border-white/[0.07] p-3 bg-white/[0.02]">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
                       style={{ background: `${sc}15`, color: sc, border: `1px solid ${sc}25` }}>
                       {c.severity}
                     </span>
                     <span className="text-[10px] font-semibold text-foreground">{c.type.replace(/_/g, ' ')}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground leading-relaxed mb-2 line-clamp-3">{c.explanation}</p>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div className="text-[9px]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                    <div className="text-[10px]">
                       <span className="text-emerald-400 font-bold">+ </span>
                       <span className="text-muted-foreground">{c.positiveSignal}</span>
                     </div>
-                    <div className="text-[9px]">
+                    <div className="text-[10px]">
                       <span className="text-red-400 font-bold">− </span>
                       <span className="text-muted-foreground">{c.negativeSignal}</span>
                     </div>
@@ -1609,16 +1609,16 @@ const HiringSignalPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color }}>
           Hiring Signal Analysis
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
           {hs.riskPattern.replace(/_/g, ' ')}
         </span>
         {hs.estimatedAnnouncementDays && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-bold">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-bold">
             ~{hs.estimatedAnnouncementDays}d to announcement
           </span>
         )}
-        <span className="ml-auto text-[9px] font-mono opacity-40 capitalize">{hs.overallTrend}</span>
+        <span className="ml-auto text-[10px] font-mono opacity-40 capitalize">{hs.overallTrend}</span>
       </div>
 
       <div className="px-4 pt-3 pb-3">
@@ -1680,11 +1680,11 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color }}>
           Career Resilience Score
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
           {resilience.compositeScore}/100 — {resilience.classification}
         </span>
-        <span className="ml-auto text-[9px] font-mono opacity-40">{resilience.effectiveProtectionMonths}mo protection</span>
+        <span className="ml-auto text-[10px] font-mono opacity-40">{resilience.effectiveProtectionMonths}mo protection</span>
       </div>
 
       <div className="px-4 pt-3 pb-2">
@@ -1698,7 +1698,7 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
             const pc = statusColors[p.status] ?? '#94a3b8';
             return (
               <div key={i} className="flex items-center gap-3">
-                <span className="text-[9px] w-28 flex-shrink-0 text-muted-foreground truncate">{p.name}</span>
+                <span className="text-[10px] w-28 flex-shrink-0 text-muted-foreground truncate">{p.name}</span>
                 <div className="flex-1 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
@@ -1717,14 +1717,14 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
         </div>
 
         {/* Key insight row */}
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2">
-            <div className="text-[9px] text-red-400/70 uppercase tracking-wider mb-1">Weakest Pillar</div>
+            <div className="text-[10px] text-red-400/70 uppercase tracking-wider mb-1">Weakest Pillar</div>
             <div className="text-[10px] font-bold text-foreground">{resilience.criticalWeakness.name}</div>
             <div className="text-[10px] text-muted-foreground leading-snug line-clamp-2">{resilience.criticalWeakness.topAction}</div>
           </div>
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2">
-            <div className="text-[9px] text-emerald-400/70 uppercase tracking-wider mb-1">Strongest Pillar</div>
+            <div className="text-[10px] text-emerald-400/70 uppercase tracking-wider mb-1">Strongest Pillar</div>
             <div className="text-[10px] font-bold text-foreground">{resilience.keyStrength.name}</div>
             <div className="text-[10px] text-muted-foreground leading-snug line-clamp-2">{resilience.keyStrength.insight}</div>
           </div>
@@ -1741,7 +1741,7 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
 
         {expanded && (
           <div className="mt-3 space-y-1.5">
-            <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-2">Top 3 Resilience Actions</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Top 3 Resilience Actions</div>
             {resilience.resilienceImprovementPlan.map((action: string, i: number) => (
               <div key={i} className="flex gap-2 items-start text-[10px] text-muted-foreground leading-snug p-2 rounded-lg bg-white/[0.02] border border-white/[0.05]">
                 <span className="flex-shrink-0 font-black" style={{ color }}>{i + 1}</span>
@@ -1778,16 +1778,16 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: optimalColor }}>
           Exit Timing Optimizer
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: 'rgba(0,212,224,0.12)', color: optimalColor, border: '1px solid rgba(0,212,224,0.22)' }}>
           Optimal: {et.optimalDepartureWindow.months[0]}
         </span>
         {et.isGoldenHandcuffZone && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-500/12 text-amber-400 border border-amber-500/22">
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-500/12 text-amber-400 border border-amber-500/22">
             Golden handcuff
           </span>
         )}
-        <span className="ml-auto text-[9px] font-mono opacity-40">
+        <span className="ml-auto text-[10px] font-mono opacity-40">
           {et.monthsUntilOptimalWindow === 0 ? 'now optimal' : `${et.monthsUntilOptimalWindow}mo away`}
         </span>
       </div>
@@ -1797,7 +1797,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
 
         {/* 12-month mini calendar heatmap */}
         <div className="mb-3">
-          <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-2">12-Month Exit Calendar</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">12-Month Exit Calendar</div>
           <div className="flex gap-1 flex-wrap">
             {et.calendar.map((m: any, i: number) => {
               const cellColor = m.isOptimalWindow ? optimalColor
@@ -1815,7 +1815,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
                     border: `1px solid ${cellColor}${m.isOptimalWindow ? '50' : '25'}`,
                     color: cellColor,
                   }}
-                  className="rounded text-[8px] font-bold px-1.5 py-1 cursor-default"
+                  className="rounded text-[10px] font-bold px-1.5 py-1 cursor-default"
                 >
                   {shortMonth}
                 </div>
@@ -1830,19 +1830,19 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
             <div className="text-xs font-bold" style={{ color: optimalColor }}>
               {et.optimalDepartureWindow.compositeScore}/100
             </div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Optimal window score</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Optimal window score</div>
           </div>
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
             <div className="text-xs font-bold text-amber-400">
               {et.unvestedIfImmediateExit > 0 ? `$${(et.unvestedIfImmediateExit / 1000).toFixed(0)}K` : 'N/A'}
             </div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Unvested if exit now</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Unvested if exit now</div>
           </div>
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
             <div className="text-xs font-bold" style={{ color: '#10b981' }}>
               {et.unvestedAtOptimalExit > 0 ? `$${(et.unvestedAtOptimalExit / 1000).toFixed(0)}K` : 'N/A'}
             </div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Unvested at optimal exit</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Unvested at optimal exit</div>
           </div>
         </div>
 
@@ -1857,7 +1857,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
 
         {expanded && (
           <div className="mt-3 p-3 rounded-lg border border-white/[0.07] bg-white/[0.02]">
-            <div className="text-[9px] uppercase tracking-wider text-muted-foreground mb-2">Staying Risk Penalty</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Staying Risk Penalty</div>
             <p className="text-[10px] text-muted-foreground leading-relaxed">{et.stayingRiskPenalty}</p>
             {et.worstDepartureMonths.length > 0 && (
               <div className="mt-2 text-[10px]">
@@ -1901,11 +1901,11 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
         <span className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color }}>
           Financial Runway Strategy
         </span>
-        <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold"
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold"
           style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>
           {runway.tierLabel}
         </span>
-        <span className="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded"
+        <span className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded"
           style={{ background: `${riskColor}12`, color: riskColor, border: `1px solid ${riskColor}22` }}>
           Combined risk: {runway.runwayRiskScore}/100
         </span>
@@ -1914,7 +1914,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
       {/* Core insight */}
       <div className="px-4 pt-3 pb-2">
         {isDefaultRunway && (
-          <p className="text-[9px] font-mono text-muted-foreground opacity-50 mb-2 leading-relaxed">
+          <p className="text-[10px] font-mono text-muted-foreground opacity-50 mb-2 leading-relaxed">
             Runway not provided — using 6-month industry default. Analysis adjusts when you specify your actual savings buffer.
           </p>
         )}
@@ -1927,7 +1927,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
           >
             <div className="flex items-center gap-1.5 mb-1.5">
               <span
-                className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded"
+                className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded"
                 style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}
               >
                 MODELED
@@ -1941,15 +1941,15 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
             </p>
             {runway.savedRunwayMonths != null && (
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)' }}>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)' }}>
                   Savings: {runway.savedRunwayMonths}mo
                 </span>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>+</span>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>+</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
                   Gratuity: {runway.gratuityMonths.toFixed(1)}mo
                 </span>
-                <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>=</span>
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: `${color}15`, color }}>
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>=</span>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: `${color}15`, color }}>
                   Effective: {runway.runwayMonths.toFixed(1)}mo
                 </span>
               </div>
@@ -1961,17 +1961,17 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
             <div className="text-xs font-bold" style={{ color }}>{runway.safeSearchMonths}mo</div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Safe search window</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Safe search window</div>
           </div>
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
             <div className="text-xs font-bold capitalize" style={{ color: runway.salaryNegotiationLeverage === 'high' ? 'var(--emerald)' : runway.salaryNegotiationLeverage === 'medium' ? 'var(--amber)' : 'var(--red)' }}>
               {runway.salaryNegotiationLeverage}
             </div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Negotiating leverage</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Negotiating leverage</div>
           </div>
           <div className="rounded-lg bg-white/[0.02] border border-white/[0.05] p-2 text-center">
-            <div className="text-[9px] font-bold leading-tight" style={{ color }}>{runway.strategyLabel}</div>
-            <div className="text-[9px] text-muted-foreground mt-0.5">Recommended strategy</div>
+            <div className="text-[10px] font-bold leading-tight" style={{ color }}>{runway.strategyLabel}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Recommended strategy</div>
           </div>
         </div>
         <p className="text-[10px] text-muted-foreground leading-relaxed opacity-80 mb-2">{runway.strategyRationale}</p>
@@ -1998,17 +1998,17 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
               : 'var(--text-3)';
             return (
               <div key={step.step} className="flex gap-2.5 items-start rounded-lg border border-white/[0.06] p-2.5 bg-white/[0.01]">
-                <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black mt-0.5"
+                <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black mt-0.5"
                   style={{ background: `${color}20`, color, border: `1px solid ${color}30` }}>
                   {step.step}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                    <span className="text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded"
+                    <span className="text-[10px] font-bold uppercase tracking-wide px-1 py-0.5 rounded"
                       style={{ background: `${priorityColor}12`, color: priorityColor, border: `1px solid ${priorityColor}22` }}>
                       {step.priority.replace('_', ' ')}
                     </span>
-                    <span className="text-[9px] text-muted-foreground opacity-60">{step.timeframe}</span>
+                    <span className="text-[10px] text-muted-foreground opacity-60">{step.timeframe}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">{step.action}</p>
                 </div>
@@ -2018,7 +2018,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
           {/* Feasibility note for infeasible paths */}
           {runway.pathConstraints?.filter((c: any) => !c.isFeasible).length > 0 && (
             <div className="mt-2 p-2.5 rounded-lg border border-red-500/20 bg-red-500/5">
-              <div className="text-[9px] uppercase tracking-wider text-red-400/70 mb-1">Runway Constraints</div>
+              <div className="text-[10px] uppercase tracking-wider text-red-400/70 mb-1">Runway Constraints</div>
               {runway.pathConstraints.filter((c: any) => !c.isFeasible).map((c: any, i: number) => (
                 <p key={i} className="text-[10px] text-muted-foreground leading-relaxed mb-0.5">
                   <span className="text-red-400 font-bold">{c.pathType.replace(/_/g, ' ')}:</span> {c.reason}
@@ -2590,7 +2590,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             ].map(item => (
               <div key={item.label} className="text-center">
                 <div className={`text-xs font-bold ${item.color}`}>{item.value}</div>
-                <div className="text-[9px] text-muted-foreground mt-0.5">{item.label}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{item.label}</div>
               </div>
             ))}
           </div>
@@ -2603,7 +2603,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           {/* Provenance footnote — shown when data is still research estimates.
               Disappears automatically once real platform data replaces the estimates. */}
           {peerPercentile.isResearchEstimate && (
-            <p className="text-[9px] text-muted-foreground opacity-40 mt-2 leading-relaxed">
+            <p className="text-[10px] text-muted-foreground opacity-40 mt-2 leading-relaxed">
               Distribution based on industry research estimates, not platform audit data.
               Updates to real benchmarks when ≥100 opted-in audits accumulate per role.
             </p>
@@ -2654,15 +2654,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   </p>
                   <ol className="space-y-1 list-none pl-0 mb-2">
                     <li className="flex gap-2">
-                      <span className="font-mono text-[9px] font-bold shrink-0 mt-0.5" style={{ color: scoreColor }}>①</span>
+                      <span className="font-mono text-[10px] font-bold shrink-0 mt-0.5" style={{ color: scoreColor }}>①</span>
                       <span>Probability of displacement at this risk score</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="font-mono text-[9px] font-bold shrink-0 mt-0.5" style={{ color: scoreColor }}>②</span>
+                      <span className="font-mono text-[10px] font-bold shrink-0 mt-0.5" style={{ color: scoreColor }}>②</span>
                       <span>× expected income decline during the transition period</span>
                     </li>
                     <li className="flex gap-2">
-                      <span className="font-mono text-[9px] font-bold shrink-0 mt-0.5" style={{ color: scoreColor }}>③</span>
+                      <span className="font-mono text-[10px] font-bold shrink-0 mt-0.5" style={{ color: scoreColor }}>③</span>
                       <span>× average re-employment timeline for this role category</span>
                     </li>
                   </ol>

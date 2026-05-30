@@ -96,7 +96,7 @@ const IntelligenceBriefBlock: React.FC<{
           <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(148,163,184,0.45)' }}>
             INTELLIGENCE BRIEF
           </span>
-          <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.25)', fontFamily: 'var(--font-mono)' }}>
+          <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.25)', fontFamily: 'var(--font-mono)' }}>
             NO LIVE DATA
           </span>
         </div>
@@ -123,7 +123,7 @@ const IntelligenceBriefBlock: React.FC<{
             </span>
           </div>
           {interimSummary && (
-            <span className="text-[9px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: '#22d3ee', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: '#22d3ee', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
               SIGNAL SUMMARY
             </span>
           )}
@@ -181,7 +181,7 @@ const IntelligenceBriefBlock: React.FC<{
           </span>
         </div>
         <span
-          className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full"
+          className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full"
           style={{ background: uc.color + '22', color: uc.color, border: `1px solid ${uc.color}40` }}
         >
           {urgency}
@@ -224,7 +224,7 @@ const IntelligenceBriefBlock: React.FC<{
         >
           <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: uc.color }} />
           <div>
-            <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: uc.color }}>
+            <p className="text-[10px] font-bold tracking-wider mb-0.5" style={{ color: uc.color }}>
               TOP ACTION THIS WEEK
             </p>
             <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.80)' }}>
@@ -271,11 +271,11 @@ const MiniGauge: React.FC<{
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xl font-black" style={{ color }}>{score}</span>
-          <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</span>
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</span>
         </div>
       </div>
       <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
-      <p className="text-[9px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
+      <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
     </div>
   );
 };
@@ -322,7 +322,7 @@ const MiniGaugeRange: React.FC<{
       {/* Show bounds, not a point */}
       <div className="flex items-center gap-0.5">
         <span className="text-[11px] font-black" style={{ color: 'rgba(255,255,255,0.55)' }}>{ciLow}</span>
-        <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>–</span>
+        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>–</span>
         <span className="text-[11px] font-black" style={{ color: worstColor }}>{ciHigh}</span>
       </div>
       <div
@@ -330,10 +330,10 @@ const MiniGaugeRange: React.FC<{
         style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)' }}
       >
         <AlertOctagon className="w-2.5 h-2.5" style={{ color: '#fbbf24' }} />
-        <span className="text-[8px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
+        <span className="text-[10px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
       </div>
       <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
-      <p className="text-[9px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
+      <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
     </div>
   );
 };
@@ -414,11 +414,11 @@ const HorizonBar: React.FC<{
             className="h-5 rounded-lg flex items-center pl-2"
             style={{ background: color + (isActive ? 'dd' : '88') }}
           >
-            <span className="text-[9px] font-black" style={{ color: 'white' }}>{score}</span>
+            <span className="text-[10px] font-black" style={{ color: 'white' }}>{score}</span>
           </motion.div>
         </div>
       </div>
-      <span className="text-[9px] w-12 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }}>
+      <span className="text-[10px] w-12 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }}>
         {Math.round(confidence * 100)}% CI
       </span>
     </div>
@@ -471,7 +471,7 @@ const QuorumProgressBar: React.FC<{ stageLabel?: string }> = ({ stageLabel }) =>
           transition={{ duration: 0.25, ease: 'linear' }}
         />
       </div>
-      <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
         {pct}% · Intelligence pipeline running
       </p>
     </div>
@@ -618,7 +618,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
           <div className="flex items-center gap-2 mb-2">
             <span
-              className="text-[9px] font-black tracking-widest px-2 py-0.5 rounded"
+              className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
               style={{
                 background: 'rgba(245,158,11,0.10)',
                 color: '#f59e0b',

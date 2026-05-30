@@ -75,7 +75,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity }) 
           <Waves className="w-3.5 h-3.5" style={{ color: cfg.color }} />
         </div>
         <div>
-          <p className="text-[9px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
             JOB MARKET LIQUIDITY
           </p>
           <div className="flex items-center gap-1.5">
@@ -86,7 +86,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity }) 
               {cfg.label}
             </span>
             {liquidityScore != null && (
-              <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
                 · {liquidityScore}/100
               </span>
             )}
@@ -101,13 +101,13 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity }) 
           style={{ background: `${cfg.color}08`, border: `1px solid ${cfg.color}20` }}
         >
           <div>
-            <p className="text-[9px] font-bold mb-0.5" style={{ color: `${cfg.color}70` }}>
+            <p className="text-[10px] font-bold mb-0.5" style={{ color: `${cfg.color}70` }}>
               TIME TO COMPARABLE ROLE
             </p>
             <p className="text-[16px] font-black" style={{ color: 'rgba(255,255,255,0.88)' }}>
               {weeksDisplay}
             </p>
-            <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
               est. if actively searching
             </p>
           </div>
@@ -117,19 +117,19 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity }) 
       {/* Supporting data chips */}
       <div className="flex flex-wrap gap-1.5 mb-2">
         {activePostings != null && (
-          <span className="text-[9px] px-2 py-0.5 rounded-full"
+          <span className="text-[10px] px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.10)' }}>
             {activePostings.toLocaleString()} active postings
           </span>
         )}
         {demandRatio != null && (
-          <span className="text-[9px] px-2 py-0.5 rounded-full"
+          <span className="text-[10px] px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.10)' }}>
             {demandRatio.toFixed(1)}× demand ratio
           </span>
         )}
         {roleInRegionTrend && (
-          <span className="text-[9px] px-2 py-0.5 rounded-full"
+          <span className="text-[10px] px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(255,255,255,0.05)', color: trendColor, border: '1px solid rgba(255,255,255,0.10)' }}>
             {trendIcon} demand {roleInRegionTrend}
           </span>

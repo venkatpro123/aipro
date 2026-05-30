@@ -160,7 +160,7 @@ function CompetitiveSection({ cp }: { cp: BehavioralPersonalizationResult['compe
 
       <p className="text-xs text-white/60 leading-snug italic">&ldquo;{cp.differentiatorStatement}&rdquo;</p>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <div className="text-[10px] text-green-400/70 uppercase tracking-wide mb-1">Strengths vs peers</div>
           <ul className="space-y-0.5">

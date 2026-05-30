@@ -62,7 +62,7 @@ const VisaUrgencyChip: React.FC<{
         <span className="text-[13px] font-black" style={{ color: '#f97316' }}>
           +{pct}%
         </span>
-        <p className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
           urgency
         </p>
       </div>
@@ -187,7 +187,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
             </div>
           )}
 
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Calibration: developer estimate — pending regression on outcome data
           </p>
         </div>

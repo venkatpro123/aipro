@@ -70,7 +70,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
       >
         {/* Rank badge */}
         <span
-          className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
+          className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
           style={{
             background: isFirst ? 'rgba(34,211,238,0.18)' : 'rgba(255,255,255,0.07)',
             color: isFirst ? '#22d3ee' : 'rgba(255,255,255,0.35)',
@@ -85,13 +85,13 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
             <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.82)' }}>
               {dim.label}
             </p>
-            <span className="text-[8px] font-bold px-1 py-0.5 rounded"
+            <span className="text-[10px] font-bold px-1 py-0.5 rounded"
               style={{ background: `${evCfg.color}12`, color: evCfg.color, border: `1px solid ${evCfg.color}25` }}>
               {evCfg.label}
             </span>
           </div>
           {!open && dim.dataPoint && (
-            <p className="text-[9px] truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <p className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
               {dim.dataPoint}
             </p>
           )}
@@ -101,7 +101,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="text-right">
             <span className="text-[14px] font-black" style={{ color }}>{dim.score}</span>
-            <p className="text-[8px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
               {Math.round(dim.weight * 100)}% wt
             </p>
           </div>
@@ -182,11 +182,11 @@ export const AIReasoningPanel: React.FC<Props> = ({
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
       >
         <div>
-          <p className="text-[9px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
             COMBINED RISK
           </p>
           {primaryDataSources.length > 0 && (
-            <p className="text-[9px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
               <Info className="w-2.5 h-2.5" />
               {primaryDataSources.join(' + ')}
             </p>
@@ -194,7 +194,7 @@ export const AIReasoningPanel: React.FC<Props> = ({
         </div>
         <div className="text-right">
           <p className="text-[22px] font-black" style={{ color: scoreColor(finalScore) }}>{finalScore}</p>
-          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
             {confidencePercent}% confidence
           </p>
         </div>

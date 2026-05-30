@@ -74,7 +74,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
           </span>
         </div>
         <span
-          className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
           style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)' }}
         >
           {financialSignals.dataSourceQuality.replace('_', ' ')}
@@ -125,7 +125,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Cash Flow</span>
             <span
-              className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
               style={financialSignals.isCashFlowPositive
                 ? { background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }
                 : { background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }
@@ -138,13 +138,13 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
       </div>
 
       {/* Earnings Surprise + Analyst row */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         {earningsConf && (
           <div className="rounded-lg p-2 text-center" style={{ background: earningsConf.bg }}>
             <div className="text-[10px] font-bold" style={{ color: earningsConf.color }}>
               {earningsConf.label}
             </div>
-            <div className="text-[9px] opacity-50 mt-0.5">Earnings Surprise</div>
+            <div className="text-[10px] opacity-50 mt-0.5">Earnings Surprise</div>
           </div>
         )}
         {analystConf && (
@@ -152,7 +152,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
             <div className="text-[10px] font-bold" style={{ color: analystConf.color }}>
               {analystConf.label}
             </div>
-            <div className="text-[9px] opacity-50 mt-0.5">Analyst Consensus</div>
+            <div className="text-[10px] opacity-50 mt-0.5">Analyst Consensus</div>
           </div>
         )}
       </div>

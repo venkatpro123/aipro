@@ -340,13 +340,25 @@ export const calculateD1 = (workType: string, _industry: string, country: string
   const roleAiRisk = roleData.aiRisk;
 
   // Direct complexity map for higher precision; falls back to inferred role risk
-  const complexityProxy = ROLE_COMPLEXITY_MAP[workType] ?? roleAiRisk;
+  const hasExplicitMap = workType in ROLE_COMPLEXITY_MAP;
+  const complexityProxy = hasExplicitMap ? ROLE_COMPLEXITY_MAP[workType] : roleAiRisk;
 
   // Blend of two role-level signals:
-  //   complexityProxy (60%) — explicit task-complexity rating
-  //   roleAiRisk      (40%) — fuzzy-matched exposure data
-  // Both ∈ [0,1] → d1Raw ∈ [0, 100]
-  const d1Raw = (complexityProxy * 60) + (roleAiRisk * 40);
+  //   complexityProxy — explicit task-complexity rating (primary)
+  //   roleAiRisk      — fuzzy-matched exposure data (secondary)
+  //
+  // Blend ratio: when we have an EXPLICIT map entry AND the role is clearly
+  // high-complexity (>=0.75 = heavily automatable) we trust the map far more:
+  //   80/20 for explicit high-complexity (BPO data-entry, SEO content, etc.)
+  //   70/30 for explicit moderate roles (0.50–0.74)
+  //   60/40 for inferred / low-complexity roles (default / protective roles)
+  // This ensures the 408-entry ROLE_COMPLEXITY_MAP (our best data) dominates
+  // over the fuzzy inference which can drag D1 down for very automatable roles.
+  const blendA = hasExplicitMap && complexityProxy >= 0.75 ? 80
+               : hasExplicitMap && complexityProxy >= 0.50 ? 70
+               : 60;
+  const blendB = 100 - blendA;
+  const d1Raw = (complexityProxy * blendA) + (roleAiRisk * blendB);
   const baseScore = Math.min(100, Math.max(0, Math.round(d1Raw)));
 
   // Country AI adoption amplifier (range ≈ 0.84 – 1.10):
@@ -520,17 +532,19 @@ function getDynamicWeights(workType: string, industry: string): DimensionWeights
   const ind = industry ?? '';
   const wt = workType ?? '';
 
-  // Healthcare / Mental Health — experience and human amplification dominate
+  // Healthcare / Mental Health — human amplification (D3) dominates; D4 reduced
+  // because even entry-level clinical work is inherently human and can't be delegated.
   if (ind.startsWith('health') || ind === 'mental_health' || ind === 'nursing') {
-    return { d1: 0.18, d2: 0.12, d3: 0.30, d4: 0.22, d5: 0.08, d6: 0.10 };
+    return { d1: 0.15, d2: 0.10, d3: 0.38, d4: 0.16, d5: 0.08, d6: 0.13 };
   }
-  // BPO / Admin — task automatability and AI tool maturity dominate
+  // BPO / Admin — task automatability + AI tool maturity are the only signals
+  // that matter; experience shield is weak (experience doesn't protect BPO roles).
   if (ind === 'bpo' || ind === 'admin') {
-    return { d1: 0.35, d2: 0.28, d3: 0.12, d4: 0.12, d5: 0.08, d6: 0.05 };
+    return { d1: 0.40, d2: 0.30, d3: 0.11, d4: 0.10, d5: 0.06, d6: 0.03 };
   }
-  // Creative — human amplification and social capital matter most
+  // Creative / Content — D1 boosted (AI disruption is real) while D3 still matters.
   if (['content', 'media', 'design', 'animation', 'music', 'photography'].includes(ind)) {
-    return { d1: 0.25, d2: 0.20, d3: 0.28, d4: 0.12, d5: 0.07, d6: 0.08 };
+    return { d1: 0.30, d2: 0.22, d3: 0.25, d4: 0.12, d5: 0.07, d6: 0.04 };
   }
   // Legal / Consulting — experience shield + social capital dominate
   if (['legal', 'consulting'].includes(ind)) {
@@ -727,7 +741,21 @@ export function calculateScore(
 ): ScoreResult {
   const d1 = calculateD1(workType, industry, country); // ← country-adjusted D1
   // BUG-03 FIX: Pass industry to D2 so it uses aiAdoptionRate (independent of D3)
-  const d2 = calculateD2(workType, industry);
+  const d2raw = calculateD2(workType, industry);
+
+  // ── Senior-tech D2 seniority discount ───────────────────────────────────────
+  // Very senior professionals (10-15 / 15+ yrs) in roles with extremely HIGH
+  // human amplification (complexityProxy ≤ 0.20 — surgeons, architects, therapists)
+  // operate ABOVE the automation layer their industry faces. A software architect
+  // doesn't do what GitHub Copilot replaces; a surgeon doesn't do what radiology AI
+  // replaces. D2 (AI Tool Maturity) for their SECTOR is real, but its IMPACT on
+  // them is structurally discounted — they set the direction, they don't do the tasks.
+  // Discount factor: 0.65× — preserves ~35% residual (AI does touch strategy layers).
+  const cp = ROLE_COMPLEXITY_MAP[workType] ?? 0.50;
+  const normExp = normalizeExperience(experience);
+  const seniorDiscount = cp <= 0.20 && (normExp === '10-15' || normExp === '15+') ? 0.65 : 1.0;
+  const d2 = Math.round(d2raw * seniorDiscount);
+
   const d3 = calculateD3(workType);
   const d4 = calculateD4(workType, experience);
   const d5 = calculateD5(country);

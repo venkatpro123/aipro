@@ -75,13 +75,13 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
           <div className="text-[10px] font-bold" style={{ color: plateau.text }}>
             {velocity.plateauRisk}
           </div>
-          <div className="text-[9px] opacity-40 mt-0.5">Plateau Risk</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Plateau Risk</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-sm font-bold" style={{ color: velocity.internalVisibilityScore >= 60 ? '#10b981' : 'rgba(255,255,255,0.9)' }}>
             {velocity.internalVisibilityScore}
           </div>
-          <div className="text-[9px] opacity-40 mt-0.5">Visibility</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Visibility</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-[10px] font-bold" style={{
@@ -93,7 +93,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
               : velocity.replaceabilityEstimate === 'COMMODITY' ? 'Commodity'
               : '?'}
           </div>
-          <div className="text-[9px] opacity-40 mt-0.5">Market Position</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Market Position</div>
         </div>
       </div>
 
@@ -108,7 +108,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
       <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>ROLE TENURE</span>
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
             style={{
               background: velocity.currentRoleTenureRisk === 'OPTIMAL' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
               color: velocity.currentRoleTenureRisk === 'OPTIMAL' ? '#10b981' : '#f59e0b',

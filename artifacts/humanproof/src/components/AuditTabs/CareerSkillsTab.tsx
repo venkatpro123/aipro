@@ -144,7 +144,7 @@ const CompanySkillDemandBanner: React.FC<CompanySkillDemandBannerProps> = ({
           <p className="text-[13px] font-black" style={{ color: signalColor }}>
             {companyDemand.currentOpenings.toLocaleString()}
           </p>
-          <p className="text-[9px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <p className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
             openings
           </p>
         </div>
@@ -168,7 +168,7 @@ const CompanySkillBadge: React.FC<CompanySkillBadgeProps> = ({ companyDemand }) 
   if (delta === null) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+        className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded"
         style={{ background: 'rgba(0,212,224,0.10)', color: 'rgba(0,212,224,0.70)', border: '1px solid rgba(0,212,224,0.25)' }}
         title={`${companyDemand.companyName} hiring data available — trend comparison pending next refresh`}
       >
@@ -183,7 +183,7 @@ const CompanySkillBadge: React.FC<CompanySkillBadgeProps> = ({ companyDemand }) 
   if (contracting) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+        className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded"
         style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316', border: '1px solid rgba(249,115,22,0.30)' }}
         title={`${companyDemand.companyName}: demand contracted ${Math.abs(delta).toFixed(0)}% vs prior period. Data: ${companyDemand.ageInDays}d ago.`}
       >
@@ -195,7 +195,7 @@ const CompanySkillBadge: React.FC<CompanySkillBadgeProps> = ({ companyDemand }) 
   if (growing) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+        className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded"
         style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.28)' }}
         title={`${companyDemand.companyName}: demand up ${delta.toFixed(0)}% vs prior period. Data: ${companyDemand.ageInDays}d ago.`}
       >
@@ -206,7 +206,7 @@ const CompanySkillBadge: React.FC<CompanySkillBadgeProps> = ({ companyDemand }) 
 
   return (
     <span
-      className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded"
+      className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded"
       style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.40)', border: '1px solid rgba(255,255,255,0.12)' }}
       title={`${companyDemand.companyName}: demand stable (${delta > 0 ? '+' : ''}${delta.toFixed(0)}%). Data: ${companyDemand.ageInDays}d ago.`}
     >
@@ -266,7 +266,7 @@ const SkillRiskGauge: React.FC<SkillRiskGaugeProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full mt-6 pt-4 border-t border-white/5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 w-full mt-6 pt-4 border-t border-white/5">
         <div className="flex flex-col items-center gap-1">
           <span className="text-xl font-black tracking-tight text-[var(--emerald)]">{safeCriticalSkills}</span>
           <span className="label-xs text-muted-foreground opacity-60">IMMUNE</span>
@@ -330,13 +330,13 @@ const AtRiskSkillsPanel: React.FC<{
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-sm font-bold">{s.skill}</span>
                   {isObsolete && (
-                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest"
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest"
                       style={{ background: `${color}22`, color }}>
                       OBSOLETING
                     </span>
                   )}
                   {s.aiTool && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/10">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground border border-white/10">
                       <Cpu className="w-2.5 h-2.5 inline mr-0.5" />{s.aiTool}
                     </span>
                   )}
@@ -360,7 +360,7 @@ const AtRiskSkillsPanel: React.FC<{
               </div>
               <div className="flex-shrink-0 text-right">
                 <div className="text-xl font-black" style={{ color }}>{risk}</div>
-                <div className="text-[9px] text-muted-foreground font-mono">RISK</div>
+                <div className="text-[10px] text-muted-foreground font-mono">RISK</div>
                 <div className="mt-1 w-12 h-1 bg-white/5 rounded-full overflow-hidden">
                   <div style={{ width: `${risk}%`, background: color }} className="h-full rounded-full" />
                 </div>
@@ -427,7 +427,7 @@ const HumanDurableSkillsPanel: React.FC<{
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className="text-sm font-bold">{s.skill}</span>
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                   HUMAN-DURABLE
                 </span>
                 {s.companyDemand
@@ -994,13 +994,13 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-sm font-bold">{path.role}</span>
-                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                      <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                         -{path.riskReduction}% RISK
                       </span>
-                      <span className="text-[9px] font-bold text-muted-foreground">{path.salaryDelta}</span>
+                      <span className="text-[10px] font-bold text-muted-foreground">{path.salaryDelta}</span>
                       {market && (
                         <span
-                          className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                          className={`text-[10px] font-mono px-1 py-0.5 rounded ${
                             marketStale     ? 'text-amber-400/70 bg-amber-500/10' :
                             marketFreshWarn ? 'text-amber-300/60 bg-amber-500/8'  :
                                               'text-cyan-400/80 bg-cyan-500/10'
@@ -1013,7 +1013,7 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                       )}
                       {/* Income gap badge — shown on all path cards when conservative */}
                       {fpIsConservative && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/12 text-amber-400 border border-amber-500/25">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/12 text-amber-400 border border-amber-500/25">
                           {path.months_to_first_income != null
                             ? `${path.months_to_first_income}mo to first pay`
                             : 'income gap unknown'}
@@ -1041,7 +1041,7 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                     )}
                     {/* Income dip disclosure — shown when conservative + income data is present */}
                     {fpIsConservative && path.income_dip_months != null && path.income_dip_months > 0 && (
-                      <p className="text-[9px] text-amber-400/70 mt-1">
+                      <p className="text-[10px] text-amber-400/70 mt-1">
                         Income reduced for ~{path.income_dip_months} months during transition
                       </p>
                     )}
@@ -1192,7 +1192,7 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                             <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: c }}>
                               Phase {phase.phase} — {phase.timeRange}
                             </span>
-                            <span className="text-[9px] text-muted-foreground font-mono">
+                            <span className="text-[10px] text-muted-foreground font-mono">
                               {phase.fromArchetypes.join(' + ')}
                             </span>
                           </div>

@@ -560,7 +560,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             </div>
           </div>
           <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>{network.networkHeadline}</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div className="text-center">
               <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.estimatedWarmContacts}</div>
               <div className="text-[10px] opacity-40">warm contacts</div>
