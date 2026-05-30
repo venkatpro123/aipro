@@ -78,7 +78,8 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
   const warnActiveCount = warnSignal?.hasActiveWARN ? 1 : 0;
   const groundTruthBadge = hasGroundTruth
     ? (warnActiveCount > 0 ? 'WARN ACTIVE' : 'REGULATORY')
-    : undefined;
+    : 'NO RED FLAGS';
+  const groundTruthColor = warnActiveCount > 0 ? '#dc2626' : hasGroundTruth ? '#f97316' : '#10b981';
 
   return (
     <div className="flex flex-col gap-3">
@@ -102,12 +103,28 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           subtitle="Legally filed or regulatory-sourced — highest confidence"
           icon={ShieldAlert}
           tier={2}
-          accentColor={warnActiveCount > 0 ? '#dc2626' : '#f97316'}
+          accentColor={groundTruthColor}
           defaultOpen={hasGroundTruth}
           badge={groundTruthBadge}
-          badgeColor={warnActiveCount > 0 ? '#dc2626' : '#f97316'}
-          empty={!hasGroundTruth}
+          badgeColor={groundTruthColor}
+          empty={false}
         >
+          {/* Honest, useful empty state — the ABSENCE of regulatory filings is
+              itself a mildly reassuring signal, not a dead end ("No data"). */}
+          {!hasGroundTruth && (
+            <div
+              className="rounded-lg p-3"
+              style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}
+            >
+              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+                No active WARN Act filing or SEC material-event disclosure for{' '}
+                {companyData?.name ?? 'this company'} this quarter — the absence of regulatory
+                red flags is itself a mildly reassuring signal. Ground-truth sources are our
+                highest-confidence layer; we re-check them continuously and will surface any new
+                filing the moment it appears.
+              </p>
+            </div>
+          )}
           {warnSignal && (
             <>
               <WARNSignalPanel warnSignal={warnSignal} />

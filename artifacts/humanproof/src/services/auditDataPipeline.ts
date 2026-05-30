@@ -3489,6 +3489,34 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       hybridResult.total = personalRiskModifier.adjustedScore;
     }
     (hybridResult as any).personalRiskModifier = personalRiskModifier;
+
+    // CONSISTENCY FIX: strategySynthesis was computed earlier with the
+    // pre-personalization total; the modifier just shifted the final score.
+    // Recompute so the strategy prose (which embeds the score) matches what the
+    // Summary displays — eliminates the cross-tab "43 vs 45" inconsistency.
+    // NOTE: inputs mirror the earlier computeStrategySynthesis call — keep in sync.
+    if (Math.abs(personalRiskModifier.rawModifier) >= 1 && (hybridResult as any).strategySynthesis) {
+      const ufS = inputs.userFactors as any;
+      (hybridResult as any).strategySynthesis = computeStrategySynthesis({
+        currentScore: hybridResult.total,
+        collapseStage: (hybridResult as any).collapseStage ?? null,
+        tenureYears: inputs.userFactors.tenureYears ?? 3,
+        financialRunwayMonths: inputs.financialRunwayMonths ?? 0,
+        performanceTier: inputs.userFactors.performanceTier ?? 'average',
+        industry: companyData.industry ?? 'technology',
+        experience: hybridResult.experience ?? '5-10',
+        hasAiSkills: ufS.hasAiSkills ?? false,
+        companyName: companyData.name,
+        careerConfidence: (hybridResult as any).careerConfidence,
+        networkLeverage: (hybridResult as any).networkLeverage,
+        macroRisk: (hybridResult as any).macroEconomicRisk,
+        peerContagion: (hybridResult as any).peerContagion,
+        emergencyProtocol: (hybridResult as any).emergencyResponse,
+        scoreVelocityPtsPerMonth: (hybridResult as any).scoreTrajectory?.velocityPtsPerMonth,
+        resilienceScore: (hybridResult as any).careerResilience?.compositeScore,
+        jobMarketLiquidityScore: (hybridResult as any).jobMarketLiquidity?.reemploymentScore,
+      });
+    }
   } catch (e) {
     noteEngineFailure('personalRiskModifier', e);
   }

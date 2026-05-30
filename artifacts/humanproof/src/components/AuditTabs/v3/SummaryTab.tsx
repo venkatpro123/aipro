@@ -26,7 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
   TrendingUp, TrendingDown, Minus,
-  Zap, Shield, Clock, Signal, AlertTriangle, Info, AlertOctagon,
+  Zap, Shield, Clock, Signal, AlertTriangle, Info, AlertOctagon, Cpu,
 } from 'lucide-react';
 import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
@@ -53,6 +53,7 @@ import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
 import { computeCanonicalConfidence } from '../../../services/canonicalConfidence';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { classifySummaryReveal, type SummaryBlockKey } from './summaryReveal';
+import { explainDriver } from './driverEvidence';
 import Tilt3D from '../../ui/Tilt3D';
 import { ScoreSignalOrbit, type SignalNode } from '../../ScoreSignalOrbit';
 import { ScoreCountUp } from '../../AuditReveal/ScoreCountUp';
@@ -615,8 +616,18 @@ const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.07, duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span className="driver-card-rank">#{i + 1}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="driver-card-rank">#{i + 1}</span>
+                {/* Polarity tag — clarifies that the number is a RISK contribution
+                    (high = raises risk, low = holds it down), so labels like
+                    "Experience Protection" aren't read with the wrong polarity. */}
+                {d.score >= 50 ? (
+                  <span style={{ fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.05em', color: '#f97316' }}>↑ RAISES RISK</span>
+                ) : d.score < 35 ? (
+                  <span style={{ fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.05em', color: '#10b981' }}>↓ HOLDS IT DOWN</span>
+                ) : null}
+              </div>
               <span className="driver-card-score" style={{ color: riskColor(d.score) }}>
                 {d.score}
               </span>
@@ -832,9 +843,30 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         key:   String(d.key ?? d.label ?? 'driver'),
         label: String(d.label ?? d.key ?? 'Risk dimension'),
         score: Math.round(d.score ?? 0),
-        why:   String(d.reason ?? d.rationale ?? d.evidenceSummary ?? d.summary ?? 'Multiple contributing signals'),
+        // Prefer any upstream-authored reason; otherwise build a concrete,
+        // data-backed explanation (never the old generic placeholder).
+        why:   String(
+          d.reason ?? d.rationale ?? d.evidenceSummary ?? d.summary ??
+          explainDriver(d, result, companyData),
+        ),
       }));
-  }, [result]);
+  }, [result, companyData]);
+
+  // AI-exposure callout — surfaces the Role Displacement (L3) dimension as a
+  // first-class signal even when it isn't in the top-3 drivers. For knowledge
+  // roles this is the most anxiety-relevant fact, and it was previously only
+  // visible inside the loader. Sourced entirely from existing result data.
+  const aiExposure = useMemo(() => {
+    const dims: any[] = Array.isArray(result.dimensions) ? result.dimensions : [];
+    const dim = dims.find(d => d.key === 'L3' || /displacement|automation/i.test(String(d.label ?? '')));
+    if (!dim || typeof dim.score !== 'number') return null;
+    const score = Math.round(dim.score);
+    const idx = r.roleDisplacement?.aiExposureIndex ?? r.techStackObsolescence?.aiExposureIndex ?? r.aiExposureIndex;
+    const pct = typeof idx === 'number' ? (idx <= 1 ? Math.round(idx * 100) : Math.round(idx)) : null;
+    const level = score >= 60 ? 'High' : score >= 40 ? 'Elevated' : score >= 25 ? 'Moderate' : 'Low';
+    const color = score >= 60 ? '#ef4444' : score >= 40 ? '#f97316' : score >= 25 ? '#f59e0b' : '#10b981';
+    return { score, pct, level, color };
+  }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const recommendations: any[] = useMemo(
     () => (Array.isArray(result.recommendations) ? result.recommendations : []),
@@ -1270,6 +1302,30 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           icon={Clock}
         />
       </motion.div>
+
+      {/* ── AI exposure callout — first-class for knowledge roles ───────────── */}
+      {aiExposure && aiExposure.score >= 25 && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-start gap-2.5 rounded-xl px-3 py-2.5"
+          style={{ background: `${aiExposure.color}12`, border: `1px solid ${aiExposure.color}30` }}
+        >
+          <Cpu className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: aiExposure.color }} />
+          <div className="min-w-0">
+            <p className="text-[11px] font-black tracking-wide" style={{ color: aiExposure.color }}>
+              AI EXPOSURE · {aiExposure.level.toUpperCase()}
+            </p>
+            <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              {aiExposure.pct != null
+                ? `About ${aiExposure.pct}% of your role's core tasks are exposed to AI automation. `
+                : `Your role faces ${aiExposure.level.toLowerCase()} automation risk (Role Displacement ${aiExposure.score}/100). `}
+              Building AI-augmented skills is the highest-leverage hedge.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <TopDriversStrip drivers={topDrivers} />
