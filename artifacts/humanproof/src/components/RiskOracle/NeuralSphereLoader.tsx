@@ -1,13 +1,13 @@
-// NeuralSphereLoader.tsx — Risk Oracle cinematic "Neural Displacement Engine"
+﻿// NeuralSphereLoader.tsx — Risk Oracle cinematic "Neural Displacement Engine"
 // ─────────────────────────────────────────────────────────────────────────────
 // A distinct, professional experience for the Risk Oracle:
 //
 //   • A REAL rotating 3D Earth (d3-geo orthographic projection) with natural
 //     ocean/land colours, true country borders (/countries-110m.json), a
 //     graticule, day/night terminator shading and a specular sun-glint.
-//   • Wrapped in a VIOLET/MAGENTA holographic HUD: the nine Risk-Oracle
-//     processing engines ORBIT the planet as glowing nodes, each firing an
-//     animated NEURAL PULSE toward the core as it activates.
+//   • Wrapped in a clean CYAN/TEAL holographic HUD: a subtle atmosphere glow +
+//     rim around the planet (no orbiting nodes / arcs) — the surrounding docks
+//     carry the "processing" story instead, for a calmer, more professional feel.
 //   • Advanced docks: <RegionTicker> (top feed), <DimensionTelemetry> (right,
 //     live D1–D6 meters + confidence dial), <CoreRing> (segmented progress),
 //     <EngineStack> (left), <SynthesisConsole> (bottom). Own `nse-` CSS
@@ -92,26 +92,26 @@ function buildStatus(role?: string, industry?: string, country?: string): string
   ];
 }
 
-// ── Scoped CSS (violet / magenta / indigo holographic theme) ───────────────────
+// ── Scoped CSS (cyan / teal holographic theme) ─────────────────────────────────
 
 const NSE_CSS = `
 .nse-root{position:fixed;inset:0;z-index:9999;overflow:hidden;height:100vh;height:100dvh;
-  background:radial-gradient(ellipse at 50% 38%,#1c0b35 0%,#120824 42%,#070313 78%,#040109 100%);
-  color:#ece7ff;font-family:"Inter",-apple-system,system-ui,sans-serif;letter-spacing:.01em;
+  background:radial-gradient(ellipse at 50% 38%,#06222b 0%,#04161d 42%,#020d12 78%,#010608 100%);
+  color:#e0fbff;font-family:"Inter",-apple-system,system-ui,sans-serif;letter-spacing:.01em;
   display:flex;flex-direction:column;align-items:center;
-  --nse-vio:#a855f7;--nse-vio2:#c084fc;--nse-mag:#e879f9;--nse-mag2:#f5d0fe;--nse-ind:#818cf8;
-  --nse-amber:#ffb86b;--nse-mut:rgba(236,231,255,.5)}
+  --nse-cyan:#22d3ee;--nse-teal:#2dd4bf;--nse-spring:#5eead4;--nse-ice:#a5f3fc;--nse-sky:#38bdf8;
+  --nse-amber:#ffb86b;--nse-mut:rgba(224,251,255,.5)}
 
 /* background layers */
 .nse-bg-aurora{position:absolute;inset:0;z-index:0;pointer-events:none;mix-blend-mode:screen;
-  background:radial-gradient(50% 38% at 24% 22%,rgba(168,85,247,.26),transparent 60%),
-             radial-gradient(46% 34% at 80% 76%,rgba(232,121,249,.22),transparent 60%),
-             radial-gradient(40% 30% at 60% 108%,rgba(129,140,248,.18),transparent 60%);
+  background:radial-gradient(50% 38% at 24% 22%,rgba(34,211,238,.26),transparent 60%),
+             radial-gradient(46% 34% at 80% 76%,rgba(94,234,212,.22),transparent 60%),
+             radial-gradient(40% 30% at 60% 108%,rgba(56,189,248,.18),transparent 60%);
   animation:nseAurora 16s ease-in-out infinite alternate}
 @keyframes nseAurora{from{transform:translate3d(0,0,0) scale(1);opacity:.85}to{transform:translate3d(-2%,1.5%,0) scale(1.06);opacity:1}}
 .nse-bg-grid{position:absolute;inset:0;z-index:0;pointer-events:none;
-  background-image:linear-gradient(to right,rgba(168,85,247,.06) 1px,transparent 1px),
-                   linear-gradient(to bottom,rgba(168,85,247,.06) 1px,transparent 1px);
+  background-image:linear-gradient(to right,rgba(34,211,238,.06) 1px,transparent 1px),
+                   linear-gradient(to bottom,rgba(34,211,238,.06) 1px,transparent 1px);
   background-size:54px 54px;
   mask-image:radial-gradient(ellipse at 50% 46%,transparent 14%,rgba(0,0,0,.7) 46%,rgba(0,0,0,.92) 68%,transparent 92%);
   -webkit-mask-image:radial-gradient(ellipse at 50% 46%,transparent 14%,rgba(0,0,0,.7) 46%,rgba(0,0,0,.92) 68%,transparent 92%);
@@ -120,67 +120,67 @@ const NSE_CSS = `
 .nse-vignette{position:absolute;inset:0;z-index:6;pointer-events:none;
   background:radial-gradient(ellipse at 50% 46%,transparent 38%,rgba(4,1,9,.62) 100%)}
 .nse-scan{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.5;mix-blend-mode:overlay;
-  background-image:repeating-linear-gradient(to bottom,rgba(192,132,252,.03) 0,rgba(192,132,252,.03) 1px,transparent 1px,transparent 3px)}
+  background-image:repeating-linear-gradient(to bottom,rgba(45,212,191,.03) 0,rgba(45,212,191,.03) 1px,transparent 1px,transparent 3px)}
 
 /* header */
 .nse-header{position:relative;z-index:7;display:flex;align-items:center;gap:14px;margin-top:18px;
-  padding:8px 16px;border-radius:999px;background:rgba(28,11,53,.55);backdrop-filter:blur(16px) saturate(150%);
-  border:1px solid rgba(192,132,252,.24);box-shadow:0 8px 34px rgba(120,40,200,.30);
+  padding:8px 16px;border-radius:999px;background:rgba(8,30,38,.55);backdrop-filter:blur(16px) saturate(150%);
+  border:1px solid rgba(45,212,191,.24);box-shadow:0 8px 34px rgba(20,120,140,.30);
   font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;
   animation:nseRise .7s cubic-bezier(.2,.8,.2,1) both}
 @keyframes nseRise{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 .nse-mark{position:relative;width:18px;height:18px;border-radius:50%;flex:0 0 auto;
-  background:radial-gradient(circle at 35% 30%,#fbe8ff,#e879f9 38%,#7c3aed 72%,#2a0a52 100%);
-  box-shadow:0 0 14px rgba(232,121,249,.7),inset 0 0 6px rgba(255,255,255,.5)}
-.nse-mark-core{position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(232,121,249,.4);animation:nsePing 2.4s ease-out infinite}
+  background:radial-gradient(circle at 35% 30%,#ecfeff,#5eead4 38%,#0e7490 72%,#042f36 100%);
+  box-shadow:0 0 14px rgba(94,234,212,.7),inset 0 0 6px rgba(255,255,255,.5)}
+.nse-mark-core{position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(94,234,212,.4);animation:nsePing 2.4s ease-out infinite}
 @keyframes nsePing{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.7);opacity:0}}
-.nse-title{font-size:11px;letter-spacing:.24em;text-transform:uppercase;font-weight:700;color:#f3e8ff}
-.nse-title em{font-style:normal;font-weight:400;color:rgba(192,132,252,.7);margin-left:8px;letter-spacing:.16em}
-.nse-divider{width:1px;height:16px;background:rgba(192,132,252,.28)}
-.nse-phases{display:flex;align-items:center;gap:9px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(236,231,255,.32)}
+.nse-title{font-size:11px;letter-spacing:.24em;text-transform:uppercase;font-weight:700;color:#ecfeff}
+.nse-title em{font-style:normal;font-weight:400;color:rgba(45,212,191,.7);margin-left:8px;letter-spacing:.16em}
+.nse-divider{width:1px;height:16px;background:rgba(45,212,191,.28)}
+.nse-phases{display:flex;align-items:center;gap:9px;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(224,251,255,.32)}
 .nse-phase{display:flex;align-items:center;gap:5px;transition:color .4s ease}
-.nse-phase .pd{width:5px;height:5px;border-radius:50%;background:rgba(192,132,252,.22);transition:.4s}
-.nse-phase+.nse-phase::before{content:"";width:13px;height:1px;background:rgba(192,132,252,.25);margin-right:3px}
-.nse-phase.on{color:#f3e8ff}.nse-phase.on .pd{background:#e879f9;box-shadow:0 0 10px #e879f9}
-.nse-phase.done{color:rgba(236,231,255,.6)}.nse-phase.done .pd{background:#818cf8}
+.nse-phase .pd{width:5px;height:5px;border-radius:50%;background:rgba(45,212,191,.22);transition:.4s}
+.nse-phase+.nse-phase::before{content:"";width:13px;height:1px;background:rgba(45,212,191,.25);margin-right:3px}
+.nse-phase.on{color:#ecfeff}.nse-phase.on .pd{background:#5eead4;box-shadow:0 0 10px #5eead4}
+.nse-phase.done{color:rgba(224,251,255,.6)}.nse-phase.done .pd{background:#38bdf8}
 
 /* center stage */
 .nse-stage{position:relative;z-index:2;flex:1 1 0;width:100%;min-height:0;display:grid;place-items:center}
 .nse-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .nse-core{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  pointer-events:none;text-shadow:0 0 18px rgba(168,85,247,.7)}
+  pointer-events:none;text-shadow:0 0 18px rgba(34,211,238,.7)}
 .nse-core-pct{font-family:"JetBrains Mono",monospace;font-size:34px;font-weight:800;line-height:1;
-  background:linear-gradient(180deg,#f5d0fe,#c084fc 60%,#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 12px rgba(192,132,252,.55))}
-.nse-core-sub{margin-top:6px;font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.34em;text-transform:uppercase;color:rgba(192,132,252,.7)}
+  background:linear-gradient(180deg,#a5f3fc,#2dd4bf 60%,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 12px rgba(45,212,191,.55))}
+.nse-core-sub{margin-top:6px;font-family:"JetBrains Mono",monospace;font-size:8.5px;letter-spacing:.34em;text-transform:uppercase;color:rgba(45,212,191,.7)}
 
 /* engine stack (docked left) */
 .nse-stack{position:absolute;left:18px;top:50%;transform:translateY(-50%);z-index:7;width:248px;max-width:36vw;
-  padding:14px 14px 12px;border-radius:16px;background:rgba(24,10,46,.55);backdrop-filter:blur(18px) saturate(150%);
-  border:1px solid rgba(192,132,252,.2);box-shadow:0 10px 40px rgba(90,30,160,.35);
+  padding:14px 14px 12px;border-radius:16px;background:rgba(7,26,33,.55);backdrop-filter:blur(18px) saturate(150%);
+  border:1px solid rgba(45,212,191,.2);box-shadow:0 10px 40px rgba(15,110,130,.35);
   font-family:"JetBrains Mono",monospace;animation:nseRise .7s cubic-bezier(.2,.8,.2,1) .15s both}
 .nse-stack-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;
-  font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(192,132,252,.6)}
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(45,212,191,.6)}
 .nse-live{display:flex;align-items:center;gap:5px;color:#86efac}
 .nse-live i{width:5px;height:5px;border-radius:50%;background:#86efac;box-shadow:0 0 8px #86efac;animation:nseBlink 1.4s ease-in-out infinite}
 @keyframes nseBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
 .nse-erow{display:grid;grid-template-columns:16px 1fr auto;gap:7px;align-items:center;padding:5px 0;
   opacity:.4;transition:opacity .45s ease}
 .nse-erow.on,.nse-erow.done{opacity:1}
-.nse-erow .ei{font-size:8px;color:rgba(192,132,252,.35);font-variant-numeric:tabular-nums}
-.nse-erow.on .ei{color:#e879f9}
-.nse-erow .en{font-size:10px;color:#ece7ff;line-height:1.15}
+.nse-erow .ei{font-size:8px;color:rgba(45,212,191,.35);font-variant-numeric:tabular-nums}
+.nse-erow.on .ei{color:#5eead4}
+.nse-erow .en{font-size:10px;color:#e0fbff;line-height:1.15}
 .nse-erow.warn.on .en{color:#ffb86b}
 .nse-erow .es{width:13px;height:13px;display:grid;place-items:center;border-radius:50%;flex:0 0 auto;
-  border:1px solid rgba(192,132,252,.25)}
-.nse-erow.done .es{background:#7c3aed;border-color:#a855f7;box-shadow:0 0 8px rgba(168,85,247,.6)}
+  border:1px solid rgba(45,212,191,.25)}
+.nse-erow.done .es{background:#0e7490;border-color:#22d3ee;box-shadow:0 0 8px rgba(34,211,238,.6)}
 .nse-erow.done .es::after{content:"";width:4px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-0.5px,-1px)}
-.nse-erow.on .es{border-color:#e879f9;box-shadow:0 0 9px rgba(232,121,249,.7)}
-.nse-erow.on .es i{width:5px;height:5px;border-radius:50%;background:#e879f9;animation:nseBlink 1s ease-in-out infinite}
-.nse-erow .ebar{grid-column:1/-1;height:2px;border-radius:99px;background:rgba(192,132,252,.12);overflow:hidden;position:relative}
+.nse-erow.on .es{border-color:#5eead4;box-shadow:0 0 9px rgba(94,234,212,.7)}
+.nse-erow.on .es i{width:5px;height:5px;border-radius:50%;background:#5eead4;animation:nseBlink 1s ease-in-out infinite}
+.nse-erow .ebar{grid-column:1/-1;height:2px;border-radius:99px;background:rgba(45,212,191,.12);overflow:hidden;position:relative}
 .nse-erow .ebar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;width:8%;
-  background:linear-gradient(90deg,#a855f7,#e879f9);box-shadow:0 0 8px #c084fc;transition:width .6s cubic-bezier(.4,0,.2,1)}
-.nse-erow.warn .ebar>i{background:linear-gradient(90deg,#ffb86b,#f472b6)}
+  background:linear-gradient(90deg,#22d3ee,#5eead4);box-shadow:0 0 8px #2dd4bf;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.nse-erow.warn .ebar>i{background:linear-gradient(90deg,#ffb86b,#fb7185)}
 .nse-erow.done .ebar>i{width:100%}
 .nse-erow.on .ebar>i{width:64%;animation:nsePulseBar 1.4s ease-in-out infinite}
 @keyframes nsePulseBar{0%,100%{opacity:.75}50%{opacity:1}}
@@ -188,29 +188,29 @@ const NSE_CSS = `
 /* synthesis console (bottom-center) */
 .nse-console{position:relative;z-index:7;width:min(560px,calc(100vw - 28px));margin-bottom:20px;
   padding:14px 22px 13px;border-radius:18px;text-align:center;
-  background:linear-gradient(180deg,rgba(30,12,56,.66),rgba(22,9,42,.58)),radial-gradient(120% 70% at 0% 0%,rgba(192,132,252,.12),transparent 60%);
-  backdrop-filter:blur(20px) saturate(150%);border:1px solid rgba(192,132,252,.22);
-  box-shadow:0 12px 44px rgba(80,24,150,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  background:linear-gradient(180deg,rgba(9,32,40,.66),rgba(6,24,30,.58)),radial-gradient(120% 70% at 0% 0%,rgba(45,212,191,.12),transparent 60%);
+  backdrop-filter:blur(20px) saturate(150%);border:1px solid rgba(45,212,191,.22);
+  box-shadow:0 12px 44px rgba(12,100,120,.4),inset 0 1px 0 rgba(255,255,255,.06);
   animation:nseRise .7s cubic-bezier(.2,.8,.2,1) .25s both}
-.nse-con-eng{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:rgba(192,132,252,.6);margin-bottom:7px;
+.nse-con-eng{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:rgba(45,212,191,.6);margin-bottom:7px;
   display:flex;align-items:center;justify-content:center;gap:8px}
-.nse-con-eng .tag{color:#e879f9}
-.nse-con-name{font-size:15px;font-weight:700;color:#f8f3ff;letter-spacing:.01em;min-height:20px}
-.nse-con-status{font-size:11.5px;color:rgba(236,231,255,.66);margin-top:4px;min-height:16px;transition:opacity .3s ease}
-.nse-con-bar{position:relative;height:3px;border-radius:99px;background:rgba(192,132,252,.12);overflow:hidden;margin-top:10px}
-.nse-con-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#818cf8,#a855f7,#e879f9);box-shadow:0 0 10px rgba(192,132,252,.7);transition:width .7s cubic-bezier(.4,0,.2,1)}
-.nse-con-bar::after{content:"";position:absolute;inset:0;width:30%;border-radius:99px;background:linear-gradient(90deg,transparent,rgba(245,208,254,.7),transparent);animation:nseShimmer 2s ease-in-out infinite}
+.nse-con-eng .tag{color:#5eead4}
+.nse-con-name{font-size:15px;font-weight:700;color:#f0fdff;letter-spacing:.01em;min-height:20px}
+.nse-con-status{font-size:11.5px;color:rgba(224,251,255,.66);margin-top:4px;min-height:16px;transition:opacity .3s ease}
+.nse-con-bar{position:relative;height:3px;border-radius:99px;background:rgba(45,212,191,.12);overflow:hidden;margin-top:10px}
+.nse-con-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#38bdf8,#22d3ee,#5eead4);box-shadow:0 0 10px rgba(45,212,191,.7);transition:width .7s cubic-bezier(.4,0,.2,1)}
+.nse-con-bar::after{content:"";position:absolute;inset:0;width:30%;border-radius:99px;background:linear-gradient(90deg,transparent,rgba(165,243,252,.7),transparent);animation:nseShimmer 2s ease-in-out infinite}
 @keyframes nseShimmer{0%{transform:translateX(-120%)}100%{transform:translateX(360%)}}
 .nse-con-meta{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:9px;
-  font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(236,231,255,.34);font-variant-numeric:tabular-nums;letter-spacing:.05em}
-.nse-con-meta b{color:rgba(192,132,252,.85);font-weight:600}
+  font-family:"JetBrains Mono",monospace;font-size:9px;color:rgba(224,251,255,.34);font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.nse-con-meta b{color:rgba(45,212,191,.85);font-weight:600}
 
 /* corner HUDs */
-.nse-hud{position:absolute;z-index:5;color:rgba(192,132,252,.22);font-family:"JetBrains Mono",monospace;
+.nse-hud{position:absolute;z-index:5;color:rgba(45,212,191,.22);font-family:"JetBrains Mono",monospace;
   font-size:9px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .nse-hud .tk{width:14px;height:1px;background:currentColor}
 .nse-hud.tl{top:14px;left:14px}.nse-hud.tr{top:14px;right:14px}.nse-hud.bl{bottom:12px;left:14px}.nse-hud.br{bottom:12px;right:14px}
-.nse-hud .v{color:rgba(236,231,255,.6)}
+.nse-hud .v{color:rgba(224,251,255,.6)}
 
 /* responsive */
 @media(max-width:880px){
@@ -224,43 +224,43 @@ const NSE_CSS = `
 }
 /* ── region signal ticker (top, under header) ── */
 .nse-ticker{position:relative;z-index:7;margin-top:10px;width:min(560px,calc(100vw - 28px));height:22px;overflow:hidden;border-radius:999px;
-  background:rgba(24,10,46,.5);backdrop-filter:blur(12px) saturate(150%);border:1px solid rgba(192,132,252,.16);
-  box-shadow:0 6px 24px rgba(80,24,150,.28);
+  background:rgba(7,26,33,.5);backdrop-filter:blur(12px) saturate(150%);border:1px solid rgba(45,212,191,.16);
+  box-shadow:0 6px 24px rgba(12,100,120,.28);
   mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);
   -webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);
   animation:nseRise .7s cubic-bezier(.2,.8,.2,1) .2s both}
 .nse-ticker .tk-lead{position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;gap:6px;padding:0 12px;
-  background:linear-gradient(90deg,rgba(24,10,46,.96) 60%,transparent);font-family:"JetBrains Mono",monospace;
-  font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:#e879f9}
-.nse-ticker .tk-lead i{width:5px;height:5px;border-radius:50%;background:#e879f9;box-shadow:0 0 8px #e879f9;animation:nseBlink 1.3s ease-in-out infinite}
+  background:linear-gradient(90deg,rgba(7,26,33,.96) 60%,transparent);font-family:"JetBrains Mono",monospace;
+  font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:#5eead4}
+.nse-ticker .tk-lead i{width:5px;height:5px;border-radius:50%;background:#5eead4;box-shadow:0 0 8px #5eead4;animation:nseBlink 1.3s ease-in-out infinite}
 .nse-ticker .tk-track{position:absolute;top:0;bottom:0;display:flex;align-items:center;gap:30px;white-space:nowrap;
-  font-family:"JetBrains Mono",monospace;font-size:9.5px;color:rgba(236,231,255,.62);padding-left:100%;animation:nseTick 42s linear infinite}
+  font-family:"JetBrains Mono",monospace;font-size:9.5px;color:rgba(224,251,255,.62);padding-left:100%;animation:nseTick 42s linear infinite}
 @keyframes nseTick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .nse-ticker .tk-sig{display:inline-flex;align-items:center;gap:7px}
-.nse-ticker .tk-reg{color:rgba(192,132,252,.85)}
+.nse-ticker .tk-reg{color:rgba(45,212,191,.85)}
 .nse-ticker .tk-v.hi{color:#ff8a8a;font-weight:600}.nse-ticker .tk-v.md{color:#ffb86b;font-weight:600}.nse-ticker .tk-v.lo{color:#86efac;font-weight:600}
-.nse-ticker .tk-sep{color:rgba(192,132,252,.25)}
+.nse-ticker .tk-sep{color:rgba(45,212,191,.25)}
 
 /* ── dimension telemetry dock (right) ── */
 .nse-tele{position:absolute;right:18px;top:50%;transform:translateY(-50%);z-index:7;width:208px;max-width:32vw;
-  padding:14px 14px 13px;border-radius:16px;background:rgba(24,10,46,.55);backdrop-filter:blur(18px) saturate(150%);
-  border:1px solid rgba(129,140,248,.22);box-shadow:0 10px 40px rgba(60,40,170,.32);
+  padding:14px 14px 13px;border-radius:16px;background:rgba(7,26,33,.55);backdrop-filter:blur(18px) saturate(150%);
+  border:1px solid rgba(56,189,248,.22);box-shadow:0 10px 40px rgba(15,110,140,.32);
   font-family:"JetBrains Mono",monospace;animation:nseRise .7s cubic-bezier(.2,.8,.2,1) .2s both}
 .nse-tele-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;
-  font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(129,140,248,.7)}
-.nse-tele-head .dot{width:5px;height:5px;border-radius:50%;background:#818cf8;box-shadow:0 0 8px #818cf8;animation:nseBlink 1.5s ease-in-out infinite}
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(56,189,248,.7)}
+.nse-tele-head .dot{width:5px;height:5px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;animation:nseBlink 1.5s ease-in-out infinite}
 .nse-drow{display:grid;grid-template-columns:24px 1fr 30px;gap:7px;align-items:center;padding:4px 0;font-size:9.5px}
-.nse-drow .dk{color:#818cf8;font-variant-numeric:tabular-nums;font-size:8.5px}
-.nse-drow .dn{color:rgba(236,231,255,.78);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nse-drow .dv{text-align:right;color:#c4b5fd;font-variant-numeric:tabular-nums}
-.nse-drow .dbar{grid-column:1/-1;height:2px;border-radius:99px;background:rgba(129,140,248,.12);overflow:hidden;position:relative}
-.nse-drow .dbar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#818cf8,#c084fc);box-shadow:0 0 7px #a78bfa;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.nse-tele-foot{margin-top:11px;padding-top:10px;border-top:1px solid rgba(129,140,248,.16);display:flex;align-items:center;gap:11px}
+.nse-drow .dk{color:#38bdf8;font-variant-numeric:tabular-nums;font-size:8.5px}
+.nse-drow .dn{color:rgba(224,251,255,.78);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nse-drow .dv{text-align:right;color:#a5f3fc;font-variant-numeric:tabular-nums}
+.nse-drow .dbar{grid-column:1/-1;height:2px;border-radius:99px;background:rgba(56,189,248,.12);overflow:hidden;position:relative}
+.nse-drow .dbar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#38bdf8,#2dd4bf);box-shadow:0 0 7px #2dd4bf;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.nse-tele-foot{margin-top:11px;padding-top:10px;border-top:1px solid rgba(56,189,248,.16);display:flex;align-items:center;gap:11px}
 .nse-dial{position:relative;width:46px;height:46px;flex:0 0 auto}
 .nse-dial svg{width:100%;height:100%;transform:rotate(-90deg)}
-.nse-dial-v{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700;color:#f3e8ff}
-.nse-dial-meta .l{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(129,140,248,.7);margin-bottom:3px}
-.nse-dial-meta .n{font-size:11px;color:#ece7ff;line-height:1.25}
+.nse-dial-v{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700;color:#ecfeff}
+.nse-dial-meta .l{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(56,189,248,.7);margin-bottom:3px}
+.nse-dial-meta .n{font-size:11px;color:#e0fbff;line-height:1.25}
 
 /* ── concentric dimension ring around the core readout ── */
 .nse-core-ring{position:absolute;inset:-34px;pointer-events:none}
@@ -319,7 +319,7 @@ const EngineStack: React.FC<{ stage: number }> = ({ stage }) => (
 // ── Realistic 3D Earth canvas (d3-geo orthographic) + orbiting engine nodes ─────
 // Renders a real rotating Earth — natural ocean/land colours, true country
 // borders (from /countries-110m.json), graticule, day/night terminator shading
-// and a specular sun-glint — then keeps the violet HUD identity by orbiting the
+// and a specular sun-glint — wrapped in a clean cyan/teal HUD (the surrounding
 // nine engine nodes around it with neural pulses firing toward the planet core.
 
 const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
@@ -352,7 +352,7 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
     const sphere: any = { type: 'Sphere' };
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
-    // natural earth palette + violet atmosphere to keep theme cohesion
+    // natural earth palette + cyan/teal atmosphere to keep theme cohesion
     const COL = {
       ocean0: '#0a2742', ocean1: '#15466e',
       land0:  '#5bbf6a', land1:  '#2f7a44',   // green; mixed with tan via second fill
@@ -360,7 +360,7 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
       coast:  'rgba(190,255,205,.55)',
       border: 'rgba(20,40,30,.45)',
       grat:   'rgba(150,200,255,.12)',
-      rim:    'rgba(192,132,252,.85)',         // violet atmosphere rim (theme)
+      rim:    'rgba(45,212,191,.85)',         // teal atmosphere rim (theme)
     };
     let oceanGrad: CanvasGradient | null = null;
     let landGrad: CanvasGradient | null = null;
@@ -432,10 +432,10 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
 
       ctx.clearRect(0, 0, w, h);
 
-      // outer atmosphere glow (violet, behind globe)
+      // outer atmosphere glow (cyan, behind globe)
       const glow = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.5);
-      glow.addColorStop(0, `rgba(168,85,247,${0.18 + prog * 0.12})`);
-      glow.addColorStop(1, 'rgba(124,58,237,0)');
+      glow.addColorStop(0, `rgba(34,211,238,${0.18 + prog * 0.12})`);
+      glow.addColorStop(1, 'rgba(14,116,144,0)');
       ctx.fillStyle = glow;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.5, 0, Math.PI * 2); ctx.fill();
 
@@ -444,64 +444,11 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
 
       drawEarth();
 
-      // violet atmosphere rim
+      // teal atmosphere rim
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.strokeStyle = COL.rim; ctx.lineWidth = 1.4; ctx.stroke();
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.04, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(232,121,249,${0.14 + prog * 0.12})`; ctx.lineWidth = 2.4; ctx.stroke();
-
-      // ── orbiting engine nodes + neural pulse links (theme identity) ──
-      const orbitRx = R * 2.0, orbitRy = R * 0.8;
-      const N = ENGINES.length;
-      const nodes = ENGINES.map((e, i) => {
-        const ang = (i / N) * Math.PI * 2 + t * 0.22;
-        const nx = cx + Math.cos(ang) * orbitRx;
-        const ny = cy + Math.sin(ang) * orbitRy;
-        const depth = Math.sin(ang);
-        return { e, i, nx, ny, depth, ang };
-      }).sort((a, b) => a.depth - b.depth);
-
-      ctx.strokeStyle = 'rgba(129,140,248,0.16)';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath(); ctx.ellipse(cx, cy, orbitRx, orbitRy, 0, 0, Math.PI * 2); ctx.stroke();
-
-      for (const node of nodes) {
-        const active = node.i <= st;
-        const isCurrent = node.i === st;
-        const dz = (node.depth + 1) / 2;
-        const baseR = 2.2 + dz * 2.2;
-        const col = node.e.warn ? '255,184,107' : '232,121,249';
-
-        if (active) {
-          const linkA = isCurrent ? 0.6 : 0.22;
-          const grad = ctx.createLinearGradient(node.nx, node.ny, cx, cy);
-          grad.addColorStop(0, `rgba(${col},${linkA})`);
-          grad.addColorStop(1, 'rgba(192,132,252,0.05)');
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = isCurrent ? 1.5 : 0.8;
-          ctx.beginPath(); ctx.moveTo(node.nx, node.ny); ctx.lineTo(cx, cy); ctx.stroke();
-
-          const pp = ((t * (isCurrent ? 0.9 : 0.4)) + node.i * 0.37) % 1;
-          const px = node.nx + (cx - node.nx) * pp;
-          const py = node.ny + (cy - node.ny) * pp;
-          ctx.fillStyle = `rgba(245,208,254,${(1 - pp) * (isCurrent ? 1 : 0.6)})`;
-          ctx.shadowBlur = 10; ctx.shadowColor = `rgba(${col},1)`;
-          ctx.beginPath(); ctx.arc(px, py, isCurrent ? 2.6 : 1.6, 0, Math.PI * 2); ctx.fill();
-          ctx.shadowBlur = 0;
-        }
-
-        const pulse = isCurrent ? 1 + Math.sin(t * 4) * 0.28 : 1;
-        const r = baseR * pulse;
-        ctx.shadowBlur = active ? 14 : 4;
-        ctx.shadowColor = `rgba(${col},${active ? 1 : 0.4})`;
-        ctx.fillStyle = active ? `rgba(${col},${0.65 + dz * 0.35})` : `rgba(${col},${0.18 + dz * 0.18})`;
-        ctx.beginPath(); ctx.arc(node.nx, node.ny, r, 0, Math.PI * 2); ctx.fill();
-        if (active) {
-          ctx.fillStyle = `rgba(255,255,255,${0.7 * pulse})`;
-          ctx.beginPath(); ctx.arc(node.nx, node.ny, r * 0.4, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.shadowBlur = 0;
-      }
+      ctx.strokeStyle = `rgba(94,234,212,${0.14 + prog * 0.12})`; ctx.lineWidth = 2.4; ctx.stroke();
 
       raf = requestAnimationFrame(draw);
     };
@@ -625,13 +572,13 @@ const DimensionTelemetry: React.FC<{ stage: number; confidence: number }> = ({ s
       <div className="nse-tele-foot">
         <div className="nse-dial">
           <svg viewBox="0 0 46 46">
-            <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(129,140,248,.14)" strokeWidth="3.5" />
+            <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(56,189,248,.14)" strokeWidth="3.5" />
             <circle cx="23" cy="23" r="19" fill="none" stroke="url(#nseDialG)" strokeWidth="3.5"
               strokeLinecap="round" strokeDasharray={C.toFixed(2)} strokeDashoffset={off}
               style={{ transition: 'stroke-dashoffset .6s ease' }} />
             <defs>
               <linearGradient id="nseDialG" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#818cf8" /><stop offset="100%" stopColor="#e879f9" />
+                <stop offset="0%" stopColor="#38bdf8" /><stop offset="100%" stopColor="#5eead4" />
               </linearGradient>
             </defs>
           </svg>
@@ -665,9 +612,9 @@ const CoreRing: React.FC<{ stage: number }> = ({ stage }) => (
         return (
           <path key={i} className="seg"
             d={`M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
-            fill="none" stroke={on ? '#e879f9' : 'rgba(192,132,252,.18)'} strokeWidth={on ? 2.4 : 1.4}
+            fill="none" stroke={on ? '#5eead4' : 'rgba(45,212,191,.18)'} strokeWidth={on ? 2.4 : 1.4}
             strokeLinecap="round" strokeOpacity={on ? 0.95 : 0.5}
-            style={{ filter: on ? 'drop-shadow(0 0 4px rgba(232,121,249,.7))' : 'none' }} />
+            style={{ filter: on ? 'drop-shadow(0 0 4px rgba(94,234,212,.7))' : 'none' }} />
         );
       })}
     </svg>
@@ -734,7 +681,7 @@ export const NeuralSphereLoader: React.FC<Props> = ({ stage, roleLabel, industry
 
       <header className="nse-header">
         <span className="nse-mark"><span className="nse-mark-core" /></span>
-        <span className="nse-title">Risk Oracle <em>Neural Displacement Engine</em></span>
+        <span className="nse-title">Risk Oracle <em>Displacement Intelligence Engine</em></span>
         <span className="nse-divider" />
         <PhasePipeline active={phase} />
       </header>
