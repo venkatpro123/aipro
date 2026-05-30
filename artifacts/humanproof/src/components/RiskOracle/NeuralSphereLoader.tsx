@@ -40,6 +40,32 @@ const ENGINES = [
   { id: '09', name: 'Confidence Validation Systems',    d: 'CONF',  warn: false },
 ];
 
+// The six scored dimensions tracked in the right telemetry dock.
+const DIMS = [
+  { k: 'D1', n: 'Task Automatability', base: 0.82 },
+  { k: 'D2', n: 'AI Tool Maturity',    base: 0.78 },
+  { k: 'D3', n: 'Human Amplification', base: 0.46 },
+  { k: 'D4', n: 'Experience Shield',   base: 0.52 },
+  { k: 'D5', n: 'Country Exposure',    base: 0.69 },
+  { k: 'D6', n: 'Social Capital Moat', base: 0.41 },
+];
+
+const TICKER_REGIONS = [
+  'NORTH AMERICA', 'WESTERN EUROPE', 'SOUTH ASIA', 'EAST ASIA',
+  'SOUTHEAST ASIA', 'MIDDLE EAST', 'LATAM', 'OCEANIA', 'AFRICA', 'NORDICS',
+];
+const TICKER_SIGNALS = ['Automation', 'AI Adoption', 'Hiring', 'Layoffs', 'Re-skilling', 'Wage Drift'];
+
+function buildTicker() {
+  return Array.from({ length: 16 }, (_, i) => {
+    const reg = TICKER_REGIONS[i % TICKER_REGIONS.length];
+    const sig = TICKER_SIGNALS[(i * 3) % TICKER_SIGNALS.length];
+    const v = 28 + Math.round(Math.random() * 66);
+    const tone = v >= 70 ? 'hi' : v >= 50 ? 'md' : 'lo';
+    return { reg, sig, v, tone };
+  });
+}
+
 const PHASES = ['Ingest', 'Assess', 'Model', 'Forecast'];
 
 function stageToPhase(s: number) {
@@ -194,8 +220,63 @@ const NSE_CSS = `
   .nse-core-pct{font-size:28px}
   .nse-console{padding:12px 16px}
 }
+/* ── region signal ticker (top, under header) ── */
+.nse-ticker{position:relative;z-index:7;margin-top:10px;width:min(560px,calc(100vw - 28px));height:22px;overflow:hidden;border-radius:999px;
+  background:rgba(24,10,46,.5);backdrop-filter:blur(12px) saturate(150%);border:1px solid rgba(192,132,252,.16);
+  box-shadow:0 6px 24px rgba(80,24,150,.28);
+  mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);
+  animation:nseRise .7s cubic-bezier(.2,.8,.2,1) .2s both}
+.nse-ticker .tk-lead{position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;gap:6px;padding:0 12px;
+  background:linear-gradient(90deg,rgba(24,10,46,.96) 60%,transparent);font-family:"JetBrains Mono",monospace;
+  font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:#e879f9}
+.nse-ticker .tk-lead i{width:5px;height:5px;border-radius:50%;background:#e879f9;box-shadow:0 0 8px #e879f9;animation:nseBlink 1.3s ease-in-out infinite}
+.nse-ticker .tk-track{position:absolute;top:0;bottom:0;display:flex;align-items:center;gap:30px;white-space:nowrap;
+  font-family:"JetBrains Mono",monospace;font-size:9.5px;color:rgba(236,231,255,.62);padding-left:100%;animation:nseTick 42s linear infinite}
+@keyframes nseTick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.nse-ticker .tk-sig{display:inline-flex;align-items:center;gap:7px}
+.nse-ticker .tk-reg{color:rgba(192,132,252,.85)}
+.nse-ticker .tk-v.hi{color:#ff8a8a;font-weight:600}.nse-ticker .tk-v.md{color:#ffb86b;font-weight:600}.nse-ticker .tk-v.lo{color:#86efac;font-weight:600}
+.nse-ticker .tk-sep{color:rgba(192,132,252,.25)}
+
+/* ── dimension telemetry dock (right) ── */
+.nse-tele{position:absolute;right:18px;top:50%;transform:translateY(-50%);z-index:7;width:208px;max-width:32vw;
+  padding:14px 14px 13px;border-radius:16px;background:rgba(24,10,46,.55);backdrop-filter:blur(18px) saturate(150%);
+  border:1px solid rgba(129,140,248,.22);box-shadow:0 10px 40px rgba(60,40,170,.32);
+  font-family:"JetBrains Mono",monospace;animation:nseRise .7s cubic-bezier(.2,.8,.2,1) .2s both}
+.nse-tele-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(129,140,248,.7)}
+.nse-tele-head .dot{width:5px;height:5px;border-radius:50%;background:#818cf8;box-shadow:0 0 8px #818cf8;animation:nseBlink 1.5s ease-in-out infinite}
+.nse-drow{display:grid;grid-template-columns:24px 1fr 30px;gap:7px;align-items:center;padding:4px 0;font-size:9.5px}
+.nse-drow .dk{color:#818cf8;font-variant-numeric:tabular-nums;font-size:8.5px}
+.nse-drow .dn{color:rgba(236,231,255,.78);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nse-drow .dv{text-align:right;color:#c4b5fd;font-variant-numeric:tabular-nums}
+.nse-drow .dbar{grid-column:1/-1;height:2px;border-radius:99px;background:rgba(129,140,248,.12);overflow:hidden;position:relative}
+.nse-drow .dbar>i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#818cf8,#c084fc);box-shadow:0 0 7px #a78bfa;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.nse-tele-foot{margin-top:11px;padding-top:10px;border-top:1px solid rgba(129,140,248,.16);display:flex;align-items:center;gap:11px}
+.nse-dial{position:relative;width:46px;height:46px;flex:0 0 auto}
+.nse-dial svg{width:100%;height:100%;transform:rotate(-90deg)}
+.nse-dial-v{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700;color:#f3e8ff}
+.nse-dial-meta .l{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(129,140,248,.7);margin-bottom:3px}
+.nse-dial-meta .n{font-size:11px;color:#ece7ff;line-height:1.25}
+
+/* ── concentric dimension ring around the core readout ── */
+.nse-core-ring{position:absolute;inset:-34px;pointer-events:none}
+.nse-core-ring svg{width:100%;height:100%;overflow:visible}
+.nse-core-ring .seg{transition:stroke-opacity .5s ease}
+
+@media(max-width:1180px){ .nse-tele{display:none} }
+@media(max-width:880px){
+  .nse-stack{display:none}
+}
+@media(max-width:560px){
+  .nse-hud.tl,.nse-hud.tr{display:none}
+  .nse-header .nse-divider,.nse-phases{display:none}
+  .nse-ticker{height:20px}
+}
 @media(prefers-reduced-motion:reduce){
-  .nse-bg-aurora,.nse-bg-grid,.nse-mark-core,.nse-con-bar::after{animation:none}
+  .nse-bg-aurora,.nse-bg-grid,.nse-mark-core,.nse-con-bar::after,
+  .nse-ticker .tk-track,.nse-tele-head .dot,.nse-live i{animation:none}
 }
 `;
 
@@ -286,7 +367,7 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
     const draw = () => {
       t += reduce ? 0 : 0.016;
       const cx = w / 2, cy = h / 2;
-      const R = Math.max(70, Math.min(w, h) * 0.27);
+      const R = Math.max(46, Math.min(w, h) * 0.165); // smaller, more refined sphere
       const ry = t * 0.34;
       const st = stageRef.current;
       const prog = Math.min(1, (st + 1) / ENGINES.length);
@@ -368,7 +449,7 @@ const NeuralSphereCanvas: React.FC<{ stage: number }> = ({ stage }) => {
       }
 
       // ── orbiting engine nodes + neural pulse links ──
-      const orbitRx = R * 1.62, orbitRy = R * 0.62;
+      const orbitRx = R * 2.05, orbitRy = R * 0.82;
       const N = ENGINES.length;
       const nodes = ENGINES.map((e, i) => {
         const ang = (i / N) * Math.PI * 2 + t * 0.22;
@@ -465,6 +546,116 @@ const SynthesisConsole: React.FC<{
   </div>
 );
 
+// ── Region signal ticker (top) ────────────────────────────────────────────────
+
+const RegionTicker: React.FC = () => {
+  const items = useState(buildTicker)[0];
+  const loop = [...items, ...items];
+  return (
+    <div className="nse-ticker" aria-hidden="true">
+      <div className="tk-lead"><i />Global Feed</div>
+      <div className="tk-track">
+        {loop.map((s, i) => (
+          <React.Fragment key={i}>
+            <span className="tk-sig">
+              <span className="tk-reg">{s.reg}</span>
+              <span>{s.sig}</span>
+              <span className={`tk-v ${s.tone}`}>{s.v}%</span>
+            </span>
+            {i < loop.length - 1 && <span className="tk-sep">◆</span>}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── Dimension telemetry dock (right) + confidence dial ─────────────────────────
+
+const DimensionTelemetry: React.FC<{ stage: number; confidence: number }> = ({ stage, confidence }) => {
+  // Each dimension "comes online" as the corresponding engine stage is reached.
+  const [vals, setVals] = useState(() => DIMS.map(() => 0));
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setVals(prev => prev.map((v, i) => {
+        // DIMS map to engine stages 1..6 (engine 0 is CORE synthesis).
+        const online = stage >= i + 1;
+        const target = online ? Math.min(0.99, DIMS[i].base + Math.sin(Date.now() / 1400 + i) * 0.05) : 0.05;
+        return v + (target - v) * 0.12;
+      }));
+    }, 160);
+    return () => clearInterval(iv);
+  }, [stage]);
+
+  const C = 2 * Math.PI * 19;
+  const off = (C * (1 - confidence / 100)).toFixed(2);
+
+  return (
+    <div className="nse-tele" aria-hidden="true">
+      <div className="nse-tele-head"><span>Dimension Signals</span><span className="dot" /></div>
+      {DIMS.map((d, i) => {
+        const pct = Math.round(vals[i] * 100);
+        return (
+          <div className="nse-drow" key={d.k}>
+            <span className="dk">{d.k}</span>
+            <span className="dn">{d.n}</span>
+            <span className="dv">{pct}%</span>
+            <span className="dbar"><i style={{ width: `${pct}%` }} /></span>
+          </div>
+        );
+      })}
+      <div className="nse-tele-foot">
+        <div className="nse-dial">
+          <svg viewBox="0 0 46 46">
+            <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(129,140,248,.14)" strokeWidth="3.5" />
+            <circle cx="23" cy="23" r="19" fill="none" stroke="url(#nseDialG)" strokeWidth="3.5"
+              strokeLinecap="round" strokeDasharray={C.toFixed(2)} strokeDashoffset={off}
+              style={{ transition: 'stroke-dashoffset .6s ease' }} />
+            <defs>
+              <linearGradient id="nseDialG" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#818cf8" /><stop offset="100%" stopColor="#e879f9" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="nse-dial-v">{confidence}%</div>
+        </div>
+        <div className="nse-dial-meta">
+          <div className="l">Model</div>
+          <div className="n">Confidence<br />Validation</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Concentric dimension ring around the core % readout ────────────────────────
+
+const CoreRing: React.FC<{ stage: number }> = ({ stage }) => (
+  <div className="nse-core-ring" aria-hidden="true">
+    <svg viewBox="0 0 100 100">
+      {Array.from({ length: ENGINES.length }).map((_, i) => {
+        const total = ENGINES.length;
+        const gap = 4; // deg gap between segments
+        const seg = 360 / total;
+        const a0 = i * seg - 90 + gap / 2;
+        const a1 = (i + 1) * seg - 90 - gap / 2;
+        const r = 46;
+        const rad = (d: number) => (d * Math.PI) / 180;
+        const x0 = 50 + r * Math.cos(rad(a0)), y0 = 50 + r * Math.sin(rad(a0));
+        const x1 = 50 + r * Math.cos(rad(a1)), y1 = 50 + r * Math.sin(rad(a1));
+        const on = i <= stage;
+        return (
+          <path key={i} className="seg"
+            d={`M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
+            fill="none" stroke={on ? '#e879f9' : 'rgba(192,132,252,.18)'} strokeWidth={on ? 2.4 : 1.4}
+            strokeLinecap="round" strokeOpacity={on ? 0.95 : 0.5}
+            style={{ filter: on ? 'drop-shadow(0 0 4px rgba(232,121,249,.7))' : 'none' }} />
+        );
+      })}
+    </svg>
+  </div>
+);
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export const NeuralSphereLoader: React.FC<Props> = ({ stage, roleLabel, industryLabel, countryLabel }) => {
@@ -479,6 +670,8 @@ export const NeuralSphereLoader: React.FC<Props> = ({ stage, roleLabel, industry
   const status  = messages[Math.min(clamped, messages.length - 1)];
   const pct     = Math.min(100, Math.round(((clamped + 1) / ENGINES.length) * 100));
   const phase   = stageToPhase(clamped);
+  // Model confidence ramps as engines complete (40% → ~96%).
+  const confidence = Math.min(96, 40 + Math.round((clamped / (ENGINES.length - 1)) * 56));
 
   // CSS injection
   useEffect(() => {
@@ -528,15 +721,19 @@ export const NeuralSphereLoader: React.FC<Props> = ({ stage, roleLabel, industry
         <PhasePipeline active={phase} />
       </header>
 
+      <RegionTicker />
+
       <div className="nse-stage">
         <NeuralSphereCanvas stage={clamped} />
         <div className="nse-core" aria-hidden="true">
+          <CoreRing stage={clamped} />
           <span className="nse-core-pct">{pct}%</span>
           <span className="nse-core-sub">Synthesizing</span>
         </div>
       </div>
 
       <EngineStack stage={clamped} />
+      <DimensionTelemetry stage={clamped} confidence={confidence} />
 
       <SynthesisConsole
         engine={engine}
