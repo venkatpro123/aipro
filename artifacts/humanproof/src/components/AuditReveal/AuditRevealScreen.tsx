@@ -13,7 +13,7 @@
 // so it runs again on new audits but not on same-session re-renders.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Zap, Shield, TrendingDown } from 'lucide-react';
 import { ScoreCountUp } from './ScoreCountUp';
 
@@ -35,6 +35,7 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const dash = visible ? (score / 100) * circumference : 0;
+  const reduce = useReducedMotion();
 
   // Color based on score
   const ringColor = score >= 75 ? '#dc2626' : score >= 50 ? '#f97316' : score >= 35 ? '#f59e0b' : '#10b981';
@@ -45,6 +46,18 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
       className="relative flex items-center justify-center"
       style={{ width: 'clamp(100px, 28vw, 140px)', height: 'clamp(100px, 28vw, 140px)' }}
     >
+      {/* Convergence halo — the assembly's signals collapsing into the score.
+          One element, one shot; honors the loader→score continuity. */}
+      {visible && !reduce && (
+        <motion.div
+          aria-hidden
+          className="absolute rounded-full"
+          style={{ inset: '-18%', border: `1px solid ${ringColor}`, pointerEvents: 'none' }}
+          initial={{ opacity: 0.55, scale: 1.6 }}
+          animate={{ opacity: 0, scale: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        />
+      )}
       {/* Background ring */}
       <svg
         width="100%" height="100%"

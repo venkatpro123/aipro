@@ -3,7 +3,7 @@
 // All styling via CSS utility classes from index.css Phase 1E.
 
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 interface Props {
   /** -1=spinner only, 0-5=pipeline stage index */
@@ -14,12 +14,12 @@ interface Props {
 }
 
 const STAGES = [
-  { icon: '⚡', text: 'Resolving company identity…',       sub: 'Entity resolution · exchange lookup · alias matching',   state: 'scanning'    },
-  { icon: '📡', text: 'Fetching live financial signals…',  sub: 'Yahoo Finance · SEC filings · Finnhub API',              state: 'scanning'    },
-  { icon: '🔍', text: 'Scanning job market activity…',     sub: 'Adzuna · LinkedIn · Naukri · hiring velocity signals',   state: 'scanning'    },
-  { icon: '📋', text: 'Checking regulatory filings…',      sub: 'WARN Act · SEC EDGAR · public financial disclosures',    state: 'processing'  },
-  { icon: '🧠', text: 'Running 54-layer intelligence…',    sub: 'Comparing 200+ peer companies · role displacement model', state: 'processing' },
-  { icon: '✓',  text: 'Finalizing confidence model…',      sub: 'Bayesian calibration · confidence intervals',            state: 'done'        },
+  { icon: '⚡', short: 'Company',    text: 'Resolving company identity…',       sub: 'Entity resolution · exchange lookup · alias matching',   state: 'scanning'    },
+  { icon: '📡', short: 'Market',     text: 'Fetching live financial signals…',  sub: 'Yahoo Finance · SEC filings · Finnhub API',              state: 'scanning'    },
+  { icon: '🔍', short: 'Peers',      text: 'Scanning job market activity…',     sub: 'Adzuna · LinkedIn · Naukri · hiring velocity signals',   state: 'scanning'    },
+  { icon: '📋', short: 'Role',       text: 'Checking regulatory filings…',      sub: 'WARN Act · SEC EDGAR · public financial disclosures',    state: 'processing'  },
+  { icon: '🧠', short: 'Synthesis',  text: 'Running 54-layer intelligence…',    sub: 'Comparing 200+ peer companies · role displacement model', state: 'processing' },
+  { icon: '✓',  short: 'Prediction', text: 'Finalizing confidence model…',      sub: 'Bayesian calibration · confidence intervals',            state: 'done'        },
 ] as const;
 
 const FACTOIDS = [
@@ -41,6 +41,7 @@ export const mapEnsembleStage = (s: number): number => {
 
 export const AuditLoader: React.FC<Props> = ({ stage, companyName, limitedDataMode, limitedDataReason }) => {
   const [factoidIdx, setFactoidIdx] = useState(0);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const iv = setInterval(() => setFactoidIdx(i => (i + 1) % FACTOIDS.length), 2400);
@@ -94,16 +95,34 @@ export const AuditLoader: React.FC<Props> = ({ stage, companyName, limitedDataMo
         </motion.p>
       </AnimatePresence>
 
-      {/* 6-dot progress track */}
-      <div className="audit-loader-stages">
-        {STAGES.map((s, i) => (
+      {/* Global Intelligence Assembly — the pipeline constructing the result.
+          Fill advances per stage; signal particles flow toward the prediction
+          and collapse on the final stage (the loader→score hand-off). */}
+      <div className={`intel-assembly${clamped >= STAGES.length - 1 ? ' converging' : ''}`}>
+        <div className="intel-assembly-track">
           <div
-            key={i}
-            className={`audit-stage-dot${i === clamped ? ' active' : i < clamped ? ' done' : ''}`}
-          >
-            <span className="audit-stage-label">{s.icon}</span>
-          </div>
-        ))}
+            className="intel-assembly-fill"
+            style={{ width: `${(clamped / (STAGES.length - 1)) * 100}%` }}
+          />
+          {!reduce && [0, 1, 2].map(p => (
+            <span
+              key={p}
+              className="intel-particle"
+              style={{ animationDelay: `${p * 0.7}s` }}
+            />
+          ))}
+        </div>
+        <div className="intel-assembly-nodes">
+          {STAGES.map((s, i) => (
+            <div
+              key={i}
+              className={`intel-assembly-node${i === clamped ? ' active' : i < clamped ? ' done' : ''}`}
+            >
+              <span className="intel-assembly-node-dot" />
+              <span className="intel-assembly-node-label">{s.short}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Rotating factoid */}

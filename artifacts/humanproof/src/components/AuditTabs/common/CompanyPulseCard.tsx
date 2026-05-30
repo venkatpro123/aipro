@@ -28,6 +28,7 @@ import {
   type VerdictLabel,
 } from '../../../services/signalCompressionService';
 import TierBadge from './TierBadge';
+import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
 // v39.0 C5: industry baseline freshness label
 import { getIndustryRiskStalenessLabel } from '../../../data/industryRiskData';
 
@@ -148,6 +149,7 @@ const ChipRow: React.FC<{ signal: CompressedSignal }> = ({ signal }) => {
 
 export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
+  const scanning = useIntelligencePulse();
   const workforce = React.useMemo(() => compressWorkforceSignal(result, companyData), [result, companyData]);
   const financial = React.useMemo(() => compressFinancialSignal(result, companyData), [result, companyData]);
   const headline  = pickHeadline(workforce, financial);
@@ -199,7 +201,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
       style={{
         background: 'rgba(255,255,255,0.03)',
         border: `1px solid ${open ? tone + '35' : 'rgba(255,255,255,0.08)'}`,

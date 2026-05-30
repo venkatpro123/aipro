@@ -29,6 +29,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Compass, Zap, ShieldAlert, Sparkles, CalendarClock, Trophy } from 'lucide-react';
 import type { StrategySynthesisResult } from '../../../services/strategySynthesisEngine';
+import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
 
 interface Props {
   strategy?: StrategySynthesisResult | null;
@@ -65,6 +66,7 @@ function safetyWindowPhrase(days: number): string {
 }
 
 export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
+  const scanning = useIntelligencePulse(!!strategy);
   if (!strategy) return null;
 
   const posture = POSTURE_COPY[strategy.overallStrategy] ?? POSTURE_COPY.STRENGTHEN_POSITION;
@@ -76,7 +78,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-2xl overflow-hidden"
+      className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
       style={{
         background: `linear-gradient(135deg, ${accent}10, rgba(255,255,255,0.02))`,
         border: `1px solid ${accent}30`,

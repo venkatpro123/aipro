@@ -250,6 +250,24 @@
   --container-lg:  1280px;
   --container-xl:  1440px;
   --container-2xl: 1680px;
+
+  /* ── Unified light physics + depth (perceived-intelligence layers) ──────
+     ONE global light source. Every 3D surface (score instrument, hero cards,
+     loader) derives its highlight/shadow/glow vectors from these so the UI
+     reads as a single machine, not independent components. */
+  --light-angle:        145deg;                 /* global light direction      */
+  --depth-perspective:  900px;                  /* shared 3D perspective       */
+  --tilt-max:           4deg;                   /* hero-card max pointer tilt   */
+  --tilt-max-ring:      7deg;                   /* score-instrument max tilt    */
+  --depth-z-1:          6px;                    /* near plane                   */
+  --depth-z-2:          14px;
+  --depth-z-3:          26px;
+  --specular:           rgba(255,255,255,0.10); /* fixed-light sheen            */
+  --specular-strong:    rgba(255,255,255,0.20);
+  --sheen-light: linear-gradient(var(--light-angle),
+                   var(--specular) 0%, transparent 38%);
+  --shadow-depth: 0 18px 50px -24px rgba(0,0,0,0.78),
+                  0 1px 0 0 rgba(255,255,255,0.06) inset;
 }
 
 @layer base {
@@ -264,6 +282,166 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
+}
+
+/* ── Perceived-intelligence material + motion (Layers 1–2) ──────────────────
+   Restraint-first: ONE fixed-light specular sheen + ONE analytical scan-line
+   keyframe, applied only to the score instrument and the 3 hero cards. Each
+   effect explains the light source or implies active reasoning — never decor. */
+
+.depth-scene {
+  perspective: var(--depth-perspective);
+  transform-style: preserve-3d;
+}
+
+/* Hero-card material: machined glass under the single global light source. */
+.material-card {
+  position: relative;
+  transform-style: preserve-3d;
+  box-shadow: var(--shadow-depth);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+  will-change: transform;
+}
+.material-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen-light);
+  opacity: 0.55;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  z-index: 2;
+}
+
+/* Intelligence pulse — a single analytical scan-line, one card at a time,
+   ~12–18s apart. Reads as "the AI is still reasoning over this signal." */
+.intel-scan { position: relative; overflow: hidden; }
+.intel-scan::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 40%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    color-mix(in oklab, var(--cyan) 20%, transparent) 50%,
+    transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transform: translateY(-120%);
+}
+.intel-scan.is-scanning::after {
+  animation: intel-scan-sweep 1.6s var(--ease-in-out) 1;
+}
+@keyframes intel-scan-sweep {
+  0%   { opacity: 0;    transform: translateY(-120%); }
+  14%  { opacity: 0.8; }
+  86%  { opacity: 0.8; }
+  100% { opacity: 0;    transform: translateY(300%); }
+}
+
+/* Signal orbit (Layer 1) — one slow rotation; active dots pulse in place.
+   Reads as "live systems are still feeding the score." */
+.signal-orbit { animation: orbit-spin 60s linear infinite; will-change: transform; }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+.signal-node-dot.is-active { animation: signal-node-pulse 2.8s var(--ease-in-out) infinite; }
+@keyframes signal-node-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.6; }
+  50%      { transform: scale(1.45); opacity: 1; }
+}
+
+/* Global Intelligence Assembly (Layer 3) — replaces the flat 6-dot track.
+   A pipeline whose fill advances per stage while signal particles flow toward
+   the result, then collapse on the final "Prediction engine" stage. Reads as
+   "I witnessed the analysis being constructed." */
+.intel-assembly {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.intel-assembly-track {
+  position: relative;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.08);
+}
+.intel-assembly-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--cyan-dim), var(--cyan));
+  box-shadow: 0 0 10px rgba(0,212,224,0.5);
+  transition: width 0.6s var(--ease-out);
+}
+.intel-particle {
+  position: absolute;
+  top: 50%;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  transform: translateY(-50%);
+  animation: intel-particle-flow 2.2s var(--ease-in-out) infinite;
+}
+@keyframes intel-particle-flow {
+  0%   { left: 0%;   opacity: 0; }
+  12%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+.intel-assembly.converging .intel-particle { animation-duration: 0.9s; }
+.intel-assembly-nodes { display: flex; justify-content: space-between; }
+.intel-assembly-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+.intel-assembly-node-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
+  transition: background var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out);
+}
+.intel-assembly-node.done .intel-assembly-node-dot {
+  background: var(--emerald);
+  border-color: var(--emerald);
+  box-shadow: 0 0 8px rgba(16,185,129,0.5);
+}
+.intel-assembly-node.active .intel-assembly-node-dot {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0,212,224,0.7);
+  animation: pulse-live 1.2s ease-in-out infinite;
+}
+.intel-assembly-node-label {
+  font-size: 0.5rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.intel-assembly-node.active .intel-assembly-node-label { color: var(--cyan); }
+.intel-assembly-node.done .intel-assembly-node-label { color: var(--text-2); }
+
+/* Honor reduced-motion: no tilt transforms, no sweep, no orbit, no flowing
+   particles; the assembly degrades to a static stepped track. Full legibility. */
+@media (prefers-reduced-motion: reduce) {
+  .material-card { transform: none !important; }
+  .intel-scan.is-scanning::after { animation: none; }
+  .signal-orbit { animation: none; }
+  .signal-node-dot.is-active { animation: none; opacity: 0.9; }
+  .intel-particle { display: none; }
+  .intel-assembly-fill { transition: none; }
+  .intel-assembly-node.active .intel-assembly-node-dot { animation: none; }
 }
 
 @layer utilities {
