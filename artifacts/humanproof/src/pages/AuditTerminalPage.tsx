@@ -13,7 +13,7 @@ import {
   getUrgency,
 } from '../data/riskEngine';
 import type { ScoreResult } from '../data/riskFormula';
-import OracleGlobeLoader from '../components/LayoffCalculator/OracleGlobeLoader';
+import NeuralSphereLoader from '../components/RiskOracle/NeuralSphereLoader';
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
 import { recordScore, getScoreDelta, type ScoreDelta } from '../services/scoreDeltaService';
 import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect';
@@ -269,7 +269,7 @@ const AuditTerminalPage: React.FC = () => {
   return (
     <div className="page-wrap" style={{ fontFamily: 'var(--font-sans)' }}>
       {loaderActive && (
-        <OracleGlobeLoader
+        <NeuralSphereLoader
           stage={loaderStage}
           roleLabel={workTypeOptions.find((o) => o.key === workTypeKey)?.label}
           industryLabel={industryOptions.find((o) => o.key === industryKey)?.label}
