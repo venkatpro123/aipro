@@ -82,6 +82,29 @@ export default defineConfig(({ command }) => {
           // everything else stays in one vendor chunk to avoid the circular
           // vendor <-> vendor-react initialization order crash
           // (React.forwardRef undefined on Radix/router init).
+          // Heavy data files — split into separate chunks so they're cached
+          // independently and not re-downloaded when unrelated code changes.
+          // These are only loaded when the swarm pipeline actually runs.
+          if (id.includes('/data/automationTimelineData')) return 'data-automation';
+          if (id.includes('/data/historicalPatterns')) return 'data-historical';
+          if (id.includes('/data/rolePortabilityMatrix')) return 'data-portability';
+          if (id.includes('/data/employmentProtectionLaw')) return 'data-employment';
+          if (id.includes('/data/companyPeers')) return 'data-peers';
+          if (id.includes('/data/euCityMarketIntelligence') ||
+              id.includes('/data/usCityMarketIntelligence') ||
+              id.includes('/data/techClusterMetros')) return 'data-geo';
+          if (id.includes('/data/crossIndustryTransitionMap')) return 'data-transitions';
+          if (id.includes('/data/parentSubsidiaryRegistry')) return 'data-subsidiaries';
+          if (id.includes('/data/riskFormula')) return 'data-risk-formula';
+          if (id.includes('/data/roleIndustryRiskMatrix') ||
+              id.includes('/data/roleExposureData') ||
+              id.includes('/data/roleRegionalDemand')) return 'data-role-risk';
+          if (id.includes('/data/skillsData')) return 'data-skills';
+          if (id.includes('/data/marketIntelligence')) return 'data-market';
+          if (id.includes('/data/layoffNewsCache')) return 'data-news-cache';
+          if (id.includes('/data/companyIntelligenceDB') ||
+              id.includes('/data/companyDatabase')) return 'data-company';
+
           if (id.includes('node_modules')) {
             if (id.includes('framer-motion')) return 'vendor-motion';
             // Gesture + intersection libs are small but only needed on interactive pages
