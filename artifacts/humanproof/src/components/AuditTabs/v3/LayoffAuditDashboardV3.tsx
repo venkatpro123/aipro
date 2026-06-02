@@ -795,18 +795,15 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           </div>
         )}
 
-        {/* ── Emergency banner — pinned above tab content ──────────────────── */}
-        {adaptation.showEmergencyBanner && (
+        {/* ── Emergency banner — only shown in Beast Mode.
+            In Guidance Mode, GuidanceView renders its own emergency layout
+            (red banner + dominant action). Showing both would double-stack
+            two separate red emergency panels for the same situation. */}
+        {adaptation.showEmergencyBanner && viewMode === 'beast' && (
           <div className="px-4 pt-3 sm:px-0">
             <EmergencyModeBanner
               result={result}
               onJumpToActions={() => {
-                // In Guidance Mode the actions tab doesn't exist — switch to
-                // Beast Mode first, then land on actions.
-                if (viewMode === 'guidance') {
-                  toggleViewMode();
-                  setUserChangedTab(true);
-                }
                 handleTabChange('actions');
               }}
             />

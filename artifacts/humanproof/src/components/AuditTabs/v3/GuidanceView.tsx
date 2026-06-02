@@ -124,18 +124,27 @@ interface ActionRow {
   priority: string;
 }
 
-function getThisWeekActions(result: HybridResult): ActionRow[] {
+function getThisWeekActions(result: HybridResult, excludeTitle?: string): ActionRow[] {
   const recs = (result.recommendations ?? []) as any[];
   return [...recs]
     .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99))
-    .slice(0, 5)
+    // Exclude the primary move shown in Section 3 to avoid duplicate
+    .filter(r => !excludeTitle || (r.title ?? '').trim() !== excludeTitle.trim())
+    .slice(0, 4)
     .map(r => ({
       title: r.title ?? '',
-      description: r.description ?? '',  // ActionPlanItem.description is the canonical field
+      // Truncate long descriptions to 2 sentences max for Guidance Mode readability
+      description: truncateToSentences(r.description ?? '', 2),
       riskReductionPct: typeof r.riskReductionPct === 'number' ? r.riskReductionPct : undefined,
       effortBadge: r.effortBadge ?? undefined,
       priority: r.priority ?? 'Medium',
     }));
+}
+
+function truncateToSentences(text: string, maxSentences: number): string {
+  if (!text) return '';
+  const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
+  return sentences.slice(0, maxSentences).join(' ').trim();
 }
 
 interface TopAction {
@@ -232,10 +241,11 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
   const ciHigh = result.confidenceInterval?.high ?? undefined;
   const trendDirection = (result as any).scoreTrajectory?.trendDirection ?? undefined;
 
-  const verdictSentence = useMemo(() => getVerdictSentence(result, adaptation.feed?.spine), [result, adaptation.feed?.spine]);
-  const topDrivers      = useMemo(() => getTopDrivers(result), [result]);
-  const thisWeekActions = useMemo(() => getThisWeekActions(result), [result]);
-  const topAction       = useMemo(() => getTopAction(result), [result]);
+  const verdictSentence   = useMemo(() => getVerdictSentence(result, adaptation.feed?.spine), [result, adaptation.feed?.spine]);
+  const topDrivers        = useMemo(() => getTopDrivers(result), [result]);
+  const topAction         = useMemo(() => getTopAction(result), [result]);
+  // Pass topAction title so Section 4 doesn't duplicate Section 3's primary move
+  const thisWeekActions   = useMemo(() => getThisWeekActions(result, topAction?.title), [result, topAction?.title]);
   const confidenceSummary = useMemo(() => getConfidenceSummary(result), [result]);
 
   const FRESHNESS_LABEL: Record<string, string> = {
@@ -371,31 +381,32 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       {/* Section 1 — Current Situation */}
       <Section delay={0}>
         <SectionLabel text="Current Situation" />
-        {/* Score ring at 60% scale.
-            CSS transform does NOT shrink the layout box — the ring's full
-            148–192px height stays in the DOM even though it visually shrinks.
-            Fix: clip the layout box to the actual scaled visual size by setting
-            an explicit height (60% of the ring's max 192px ≈ 115px) and
-            overflow:hidden so the scaled content doesn't bleed outside. */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          <div style={{
-            height: '115px',
-            width: '115px',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', flexShrink: 0 }}>
-              <ScoreRingHero
-                score={score}
-                confidence={confidence}
-                ciLow={ciLow}
-                ciHigh={ciHigh}
-                trendDirection={trendDirection}
-              />
-            </div>
+        {/* Score ring: rendered at 75% scale.
+            transform: scale() does not shrink the layout box, so we use a
+            negative bottom margin to collapse the dead vertical space.
+            75% of clamp(148px,22vw,192px) ≈ 111–144px → margin-bottom compensates
+            for the remaining ~37–48px of unused space left by the transform. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ transform: 'scale(0.75)', transformOrigin: 'top center', marginBottom: '-38px' }}>
+            <ScoreRingHero
+              score={score}
+              confidence={confidence}
+              ciLow={ciLow}
+              ciHigh={ciHigh}
+              trendDirection={trendDirection}
+            />
           </div>
+          {/* Risk level label — plain-English colour-coded level below the ring */}
+          <p style={{
+            fontSize: '13px',
+            fontWeight: 700,
+            color: accentColor,
+            letterSpacing: '0.04em',
+            margin: '0 0 10px',
+            textAlign: 'center',
+          }}>
+            {riskLabel(score)}
+          </p>
         </div>
         {/* Verdict sentence */}
         <p style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.82)', margin: 0 }}>
@@ -490,7 +501,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       {/* Section 4 — This Week Action Plan */}
       {thisWeekActions.length > 0 && (
         <Section delay={0.24}>
-          <SectionLabel text="This Week Action Plan" />
+          <SectionLabel text="Also do this week" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {thisWeekActions.map((action, i) => {
               const pColor = PRIORITY_COLOR[action.priority] ?? '#22d3ee';
@@ -593,9 +604,9 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'center', width: '100%', display: 'block' }}
       >
         <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)' }}>
-          Explore full intelligence analysis{' '}
+          Want the full picture?{' '}
         </span>
-        <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>→</span>
+        <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>See full analysis →</span>
       </motion.button>
 
     </div>
