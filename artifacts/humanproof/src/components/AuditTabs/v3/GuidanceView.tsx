@@ -451,12 +451,12 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       )}
 
       {/* Section 3 — What To Do Next (one primary move) */}
+      {/* This is a display card, not a button — the user reads their move here.
+          The Beast Mode link is only at the bottom depth invite. */}
       {topAction && (
         <Section delay={0.16}>
           <SectionLabel text="What To Do Next" />
-          <button
-            type="button"
-            onClick={onSwitchToBeast}
+          <div
             style={{
               width: '100%',
               background: accentColor + '14',
@@ -464,8 +464,6 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               borderLeft: `3px solid ${accentColor}`,
               borderRadius: '12px',
               padding: '18px 20px',
-              textAlign: 'left',
-              cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -492,9 +490,15 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               }}>
                 {URGENCY_LABEL[topAction.urgencyLevel] ?? 'High urgency'}
               </span>
-              <span style={{ fontSize: '12px', color: accentColor, fontWeight: 600 }}>→ Start now</span>
+              <button
+                type="button"
+                onClick={onSwitchToBeast}
+                style={{ fontSize: '11px', color: accentColor, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Full plan →
+              </button>
             </div>
-          </button>
+          </div>
         </Section>
       )}
 

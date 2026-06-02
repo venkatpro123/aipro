@@ -29,7 +29,7 @@ interface Props {
   /** Overall audit confidence 0–100. Used to decide whether brief is reliable. */
   confidence?: number;
   /** Freshness tier from freshnessUnifier. 'heuristic' blocks the brief entirely. */
-  freshnessierTier?: 'live' | 'mixed' | 'stale' | 'heuristic' | string;
+  freshnessTier?: 'live' | 'mixed' | 'stale' | 'heuristic' | string;
   /** Company name — surfaces in the "what we need" message. */
   companyName?: string;
 }
@@ -190,7 +190,7 @@ const LowConfidenceBrief: React.FC<{
 const IntelligenceBriefPanel: React.FC<Props> = ({
   intelligenceBrief,
   confidence,
-  freshnessierTier,
+  freshnessTier,
   companyName,
 }) => {
   if (intelligenceBrief === undefined) return <LoadingSkeleton />;
@@ -198,7 +198,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
   // Gate 1 (hard): no live data retrieved — block the brief entirely.
   // A heuristic-tier audit means every signal is from sector averages; the
   // LLM would generate plausible-sounding but company-unspecific prose.
-  if (freshnessierTier === 'heuristic') {
+  if (freshnessTier === 'heuristic') {
     return <HeuristicBlock companyName={companyName} />;
   }
 

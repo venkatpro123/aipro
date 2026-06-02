@@ -545,7 +545,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
   if (!synthesis) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-12 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Strategy synthesis not available for this audit.</p>
       </div>
     );
@@ -563,7 +563,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
       <IntelligenceBriefPanel
         intelligenceBrief={(result as any).intelligenceBrief}
         confidence={result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100)}
-        freshnessierTier={result.unifiedFreshness?.tier}
+        freshnessTier={result.unifiedFreshness?.tier}
         companyName={(companyData as any)?.name}
       />
 

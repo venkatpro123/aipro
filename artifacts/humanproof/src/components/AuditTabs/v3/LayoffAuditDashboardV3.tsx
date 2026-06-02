@@ -907,7 +907,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
 
         {/* ── Wave 7.3: AI Commentary — per-tab floating guidance bubble ──── */}
         {/* Fixed bottom-center overlay, appears 2s after tab load, 1× per session. */}
-        <AICommentary activeTab={activeTab} result={result} />
+        {/* Only shown in Beast Mode — activeTab is not meaningful in Guidance Mode */}
+        {viewMode === 'beast' && <AICommentary activeTab={activeTab} result={result} />}
 
         {/* ── Wave 3.4: Action completion celebration toast ─────────────── */}
         {/* Fixed bottom-right, appears when 'hp.action.milestone' fires.   */}
