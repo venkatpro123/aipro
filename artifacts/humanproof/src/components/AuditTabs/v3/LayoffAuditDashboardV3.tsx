@@ -489,8 +489,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const adaptation = useDashboardAdaptation(result, companyData, userProfile);
 
   // ── Dual experience mode ──────────────────────────────────────────────────
-  // 'guidance'     → compressed expert-advisor view (default for new users)
-  // 'intelligence' → full 6-tab analysis experience
+  // 'guidance' → compressed 5-section advisor view (default for new users)
+  // 'beast'    → full 6-tab intelligence command center for power users
   const { viewMode, toggleViewMode } = useViewMode();
   const isEmergency = result.total >= 80 || (result as any).warnSignal?.hasActiveWARN === true;
 
@@ -675,8 +675,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             }
           />
 
-          {/* Tab bar — only shown in Intelligence Mode */}
-          {viewMode === 'intelligence' && (
+          {/* Tab bar — only shown in Beast Mode */}
+          {viewMode === 'beast' && (
             <DesktopTabBar
               active={activeTab}
               onChange={handleTabChange}
@@ -768,8 +768,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             <EmergencyModeBanner
               result={result}
               onJumpToActions={() => {
-                // In Guidance Mode the actions tab doesn't exist yet — switch to
-                // Intelligence Mode first, then land on actions.
+                // In Guidance Mode the actions tab doesn't exist — switch to
+                // Beast Mode first, then land on actions.
                 if (viewMode === 'guidance') {
                   toggleViewMode();
                   setUserChangedTab(true);
@@ -780,9 +780,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           </div>
         )}
 
-        {/* ── Content area — switches between Guidance Mode and Intelligence Mode ── */}
+        {/* ── Content area — switches between Guidance Mode and Beast Mode ── */}
         {viewMode === 'guidance' ? (
-          /* ── Guidance Mode: compressed expert-advisor experience ─────────── */
+          /* ── Guidance Mode: 5-section decision-oriented advisor experience ── */
           <div className="px-4 pt-4 sm:px-0 sm:pt-0" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
             <TabErrorBoundary tabLabel="Guidance">
               <Suspense fallback={<SummaryTabSkeleton />}>
@@ -790,9 +790,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                   result={result}
                   companyData={companyData}
                   emergencyMode={isEmergency}
-                  onSwitchToIntelligence={() => {
-                    toggleViewMode();          // switch to intelligence
-                    setActiveTab('actions');   // land on actions tab — decision-driven
+                  onSwitchToBeast={() => {
+                    toggleViewMode();         // switch to Beast Mode
+                    setActiveTab('summary'); // land on summary tab — full picture first
                     setUserChangedTab(true);
                   }}
                 />
@@ -800,7 +800,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             </TabErrorBoundary>
           </div>
         ) : (
-          /* ── Intelligence Mode: full 6-tab system — unchanged ─────────────── */
+          /* ── Beast Mode: full 6-tab intelligence command center — unchanged ── */
           <>
             {/* Tab content */}
             {/* v40.0 FIX-7: removed mode="wait" — was forcing exit-then-enter
@@ -866,7 +866,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             </AnimatePresence>
             </div>{/* /swipe wrapper */}
 
-            {/* Mobile bottom nav — only in Intelligence Mode (Guidance Mode has no tabs) */}
+            {/* Mobile bottom nav — only in Beast Mode (Guidance Mode has no tabs) */}
             <MobileBottomNav
               active={activeTab}
               onChange={handleTabChange}

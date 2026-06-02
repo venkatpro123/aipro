@@ -1,18 +1,17 @@
-// GuidanceView.tsx — Guidance Mode: the "expert advisor" experience.
+// GuidanceView.tsx — Guidance Mode: 5-section decision-oriented advisor.
 //
-// Design principle: this is a NARRATIVE, not a dashboard.
-// Intelligence Mode is cards and panels. Guidance Mode is one voice.
+// Design principle: answer three questions immediately, clearly, and completely.
+//   1. What is happening?     → Section 1 (score + verdict)
+//   2. Why is it happening?   → Section 2 (top 3 risk drivers with evidence)
+//   3. What should I do next? → Section 3 (one primary move) + Section 4 (this week)
+//   + How confident?          → Section 5 (confidence & trust badges)
 //
-// Four zones, no cards, no section headers:
-//   Zone 1 — Score Signal     (ring + label + one italic reassurance line)
-//   Zone 2 — Advisor Brief    (3 flowing prose paragraphs: WHAT / WHY / DO)
-//   Zone 3 — The One Action   (single full-width action button)
-//   Zone 4 — Depth Invite     (one subtle link to Intelligence Mode)
-//
-// Emergency layout strips further: red banner + one paragraph + one action.
-//
-// The user should feel like they just received a clear message from a trusted
-// advisor — not like they are reading a condensed version of a report.
+// Rules:
+//   • No cards. No panel headers. No expandable blocks. No analytics clutter.
+//   • Section labels are subtle (10px, all-caps, rgba(255,255,255,0.35)).
+//   • Each section separated by a thin divider line.
+//   • Emergency layout: Section 1 → red banner; Section 4 hidden; Section 3 dominant.
+//   • Beast Mode invite at the bottom — one subtle line, not a button.
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
@@ -21,91 +20,32 @@ import type { CompanyData } from '../../../data/companyDatabase';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { riskColor, riskLabel } from '../../../lib/riskTokens';
 import { ScoreRingHero } from './SummaryTab';
-import { VerdictReassurance } from '../common/VerdictReassurance';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface GuidanceViewProps {
   result: HybridResult;
   companyData: CompanyData;
-  /** Called when the user wants to see the full analysis. */
-  onSwitchToIntelligence: () => void;
   emergencyMode: boolean;
+  /** Called when the user taps "Explore full intelligence →" */
+  onSwitchToBeast: () => void;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Priority ordering ─────────────────────────────────────────────────────────
 
-function getParagraph1(result: HybridResult, feedSpine?: string): string {
-  const brief = (result as any).intelligenceBrief;
-  if (brief?.paragraphs?.[0]) return brief.paragraphs[0] as string;
-  if (feedSpine) return feedSpine;
-  // Minimal deterministic fallback when no brief and no feed spine yet
-  const company = result.companyName ?? 'Your company';
-  const score = result.total;
-  return `${company} is showing risk signals that have placed your displacement probability at ${score}/100. ` +
-    `The analysis has processed ${score >= 65 ? 'multiple elevated' : 'several'} risk dimensions to reach this assessment.`;
-}
+const PRIORITY_ORDER: Record<string, number> = {
+  Critical: 0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
+};
 
-function getParagraph2(result: HybridResult): string {
-  const synthesis = (result as any).strategySynthesis;
-  const rationale: string = synthesis?.strategyRationale ?? '';
-  const biggestRisk: string = synthesis?.singleBiggestRisk ?? '';
-  const keyRiskDriver: string | undefined = (result as any).intelligenceBrief?.keyRiskDriver;
-
-  // Lead with the key risk driver as a bold-intent inline string
-  // (rendered via dangerouslySetInnerHTML-free JSX in the component below)
-  // We return a structured object instead of a plain string for paragraph 2
-  // so the component can bold the driver without HTML injection.
-  // Convention: driver is stored as __driver__ prefix
-  const driver = keyRiskDriver ? `__driver__${keyRiskDriver}` : '';
-  const body = rationale
-    ? (biggestRisk ? `${rationale}, because ${biggestRisk.toLowerCase()}.` : rationale)
-    : (biggestRisk ? `The primary risk is: ${biggestRisk}` : '');
-  return driver ? `${driver}\n${body}` : body;
-}
-
-function getParagraph3(result: HybridResult): string {
-  const brief = (result as any).intelligenceBrief;
-  const synthesis = (result as any).strategySynthesis;
-
-  // Prefer the market-grounded topActionThisWeek from the brief — it cites real numbers
-  if (brief?.marketGrounded && brief?.topActionThisWeek) {
-    return brief.topActionThisWeek as string;
-  }
-  // Fall back to the strategy engine's topPriorityAction
-  const action = synthesis?.topPriorityAction;
-  if (action?.title) {
-    const rationale: string = action.rationale ?? '';
-    return rationale ? `${action.title}. ${rationale}` : action.title as string;
-  }
-  return '';
-}
-
-interface TopAction {
-  title: string;
-  timeHorizon: string;
-  urgencyLevel: string;
-}
-
-function getTopAction(result: HybridResult): TopAction | null {
-  const synthesis = (result as any).strategySynthesis;
-  const action = synthesis?.topPriorityAction;
-  if (!action?.title) {
-    // Fall back to first Critical recommendation
-    const rec = (result.recommendations ?? []).find(r => r.priority === 'Critical') ?? result.recommendations?.[0];
-    if (!rec) return null;
-    return {
-      title: rec.title,
-      timeHorizon: rec.deadline ?? '',
-      urgencyLevel: synthesis?.urgencyLevel ?? 'HIGH',
-    };
-  }
-  return {
-    title: action.title as string,
-    timeHorizon: (action.timeHorizon as string) ?? '',
-    urgencyLevel: (synthesis?.urgencyLevel as string) ?? 'HIGH',
-  };
-}
+const PRIORITY_COLOR: Record<string, string> = {
+  Critical: '#dc2626',
+  High:     '#f97316',
+  Medium:   '#f59e0b',
+  Low:      '#22d3ee',
+};
 
 const URGENCY_LABEL: Record<string, string> = {
   CRITICAL: 'Critical urgency',
@@ -114,46 +54,153 @@ const URGENCY_LABEL: Record<string, string> = {
   LOW:      'Low urgency',
 };
 
-// ── Paragraph 2 renderer — supports bold driver prefix ────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const Paragraph2: React.FC<{ text: string; color: string }> = ({ text, color }) => {
-  if (!text) return null;
-  if (text.startsWith('__driver__')) {
-    const nl = text.indexOf('\n');
-    const driver = text.slice('__driver__'.length, nl > 0 ? nl : undefined);
-    const body = nl > 0 ? text.slice(nl + 1) : '';
-    return (
-      <p
-        style={{
-          fontSize: '14px',
-          lineHeight: 1.75,
-          color: 'rgba(255,255,255,0.80)',
-          margin: 0,
-        }}
-      >
-        {driver && (
-          <strong style={{ color: 'rgba(255,255,255,0.95)', fontWeight: 700 }}>
-            {driver}{body ? ' ' : ''}
-          </strong>
-        )}
-        {body}
-      </p>
-    );
+function getVerdictSentence(result: HybridResult, feedSpine?: string): string {
+  const brief = (result as any).intelligenceBrief;
+  if (brief?.paragraphs?.[0]) return brief.paragraphs[0] as string;
+  if (feedSpine) return feedSpine;
+  const company = result.companyName ?? 'Your company';
+  const score = result.total;
+  const level = score >= 75 ? 'critical' : score >= 55 ? 'elevated' : score >= 35 ? 'moderate' : 'low';
+  return `${company} is showing ${level} risk signals. Your displacement probability sits at ${score}/100 based on ${score >= 65 ? 'multiple elevated' : 'several'} risk dimensions.`;
+}
+
+interface DriverRow {
+  label: string;
+  score: number;
+  evidence: string;
+}
+
+function getTopDrivers(result: HybridResult): DriverRow[] {
+  const dims = result.dimensions ?? [];
+  // Filter to elevated dimensions that raise risk, sort descending
+  const elevated = dims
+    .filter((d: any) => d.score > 40 && d.polarity !== 'protects')
+    .sort((a: any, b: any) => b.score - a.score)
+    .slice(0, 3);
+
+  if (elevated.length > 0) {
+    return elevated.map((d: any) => ({
+      label: d.label ?? d.key ?? 'Risk factor',
+      score: Math.min(100, Math.max(0, Math.round(d.score))),
+      evidence: (d.evidence?.[0] ?? d.source ?? d.description ?? '') as string,
+    }));
   }
-  return (
-    <p style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.80)', margin: 0 }}>
-      {text}
-    </p>
-  );
-};
+
+  // Fallback: parse singleBiggestRisk as a single row
+  const synthesis = (result as any).strategySynthesis;
+  const risk: string = synthesis?.singleBiggestRisk ?? '';
+  if (risk) {
+    return [{ label: 'Primary risk factor', score: result.total, evidence: risk }];
+  }
+  return [];
+}
+
+interface ActionRow {
+  title: string;
+  description: string;
+  riskReductionPct?: number;
+  effortBadge?: string;
+  priority: string;
+}
+
+function getThisWeekActions(result: HybridResult): ActionRow[] {
+  const recs = (result.recommendations ?? []) as any[];
+  return [...recs]
+    .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99))
+    .slice(0, 5)
+    .map(r => ({
+      title: r.title ?? '',
+      description: r.description ?? r.rationale ?? '',
+      riskReductionPct: typeof r.riskReductionPct === 'number' ? r.riskReductionPct : undefined,
+      effortBadge: r.effortBadge ?? r.effort ?? undefined,
+      priority: r.priority ?? 'Medium',
+    }));
+}
+
+interface TopAction {
+  title: string;
+  timeHorizon: string;
+  urgencyLevel: string;
+  rationale: string;
+}
+
+function getTopAction(result: HybridResult): TopAction | null {
+  const synthesis = (result as any).strategySynthesis;
+  const action = synthesis?.topPriorityAction;
+  if (action?.title) {
+    return {
+      title: action.title as string,
+      timeHorizon: (action.timeHorizon as string) ?? '',
+      urgencyLevel: (synthesis?.urgencyLevel as string) ?? 'HIGH',
+      rationale: (action.rationale as string) ?? '',
+    };
+  }
+  const fallback = (result.recommendations ?? []).find((r: any) => r.priority === 'Critical') ?? result.recommendations?.[0];
+  if (!fallback) return null;
+  return {
+    title: (fallback as any).title ?? '',
+    timeHorizon: (fallback as any).deadline ?? '',
+    urgencyLevel: synthesis?.urgencyLevel ?? 'HIGH',
+    rationale: (fallback as any).description ?? '',
+  };
+}
+
+interface ConfidenceSummary {
+  confidencePercent: number;
+  liveSignals: number;
+  freshnessTier: string;
+  lowDataWarning: boolean;
+}
+
+function getConfidenceSummary(result: HybridResult): ConfidenceSummary {
+  return {
+    confidencePercent: result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100),
+    liveSignals: result.signalQuality?.liveSignals ?? 0,
+    freshnessTier: (result as any).unifiedFreshness?.tier ?? 'heuristic',
+    lowDataWarning: !!(result.signalQuality?.lowDataWarning),
+  };
+}
+
+// ── Section label helper ──────────────────────────────────────────────────────
+
+const SectionLabel: React.FC<{ text: string }> = ({ text }) => (
+  <p style={{
+    fontSize: '10px',
+    fontWeight: 700,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.30)',
+    margin: '0 0 12px',
+  }}>
+    {text}
+  </p>
+);
+
+// ── Section wrapper ───────────────────────────────────────────────────────────
+
+const Section: React.FC<{ delay: number; last?: boolean; children: React.ReactNode }> = ({ delay, last, children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 4 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.32, delay }}
+    style={{
+      paddingBottom: last ? 0 : '20px',
+      borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+    }}
+  >
+    {children}
+  </motion.div>
+);
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const GuidanceView: React.FC<GuidanceViewProps> = ({
   result,
   companyData,
-  onSwitchToIntelligence,
   emergencyMode,
+  onSwitchToBeast,
 }) => {
   const adaptation = useDashboardAdaptation(result, companyData);
   const score = result.total;
@@ -162,238 +209,358 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
   const urgency = ((result as any).strategySynthesis?.urgencyLevel as string | undefined) ?? 'HIGH';
   const synthesis = (result as any).strategySynthesis;
 
-  // CI for the score ring
   const ciLow  = result.confidenceInterval?.low  ?? undefined;
   const ciHigh = result.confidenceInterval?.high ?? undefined;
   const trendDirection = (result as any).scoreTrajectory?.trendDirection ?? undefined;
 
-  // Compose the three advisor paragraphs
-  const para1 = useMemo(() => getParagraph1(result, adaptation.feed?.spine), [result, adaptation.feed?.spine]);
-  const para2 = useMemo(() => getParagraph2(result), [result]);
-  const para3 = useMemo(() => getParagraph3(result), [result]);
-  const topAction = useMemo(() => getTopAction(result), [result]);
+  const verdictSentence = useMemo(() => getVerdictSentence(result, adaptation.feed?.spine), [result, adaptation.feed?.spine]);
+  const topDrivers      = useMemo(() => getTopDrivers(result), [result]);
+  const thisWeekActions = useMemo(() => getThisWeekActions(result), [result]);
+  const topAction       = useMemo(() => getTopAction(result), [result]);
+  const confidenceSummary = useMemo(() => getConfidenceSummary(result), [result]);
+
+  const FRESHNESS_LABEL: Record<string, string> = {
+    live: 'Live data',
+    mixed: 'Mixed data',
+    stale: 'Stale data',
+    heuristic: 'Estimated',
+  };
 
   // ── Emergency layout ──────────────────────────────────────────────────────
   if (emergencyMode) {
-    const emergencyHeadline = urgency === 'CRITICAL'
-      ? 'This is critical.'
-      : 'This needs your attention now.';
-    const emergencySubline = synthesis?.singleBiggestRisk as string | undefined;
-
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', padding: '8px 0 32px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 0 32px' }}>
 
-        {/* Zone 1 — Emergency signal banner (no ring; urgency replaces precision) */}
-        <motion.div
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.28 }}
-          style={{
-            background: 'rgba(220,38,38,0.10)',
-            border: '2px solid rgba(220,38,38,0.45)',
-            borderRadius: '14px',
-            padding: '20px 20px',
-          }}
-        >
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#ef4444', margin: 0, lineHeight: 1.3 }}>
-            {emergencyHeadline}
-          </p>
-          {emergencySubline && (
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.82)', margin: '8px 0 0', lineHeight: 1.6 }}>
-              {emergencySubline}
-            </p>
-          )}
-        </motion.div>
-
-        {/* Zone 2 — Emergency brief: just the situation paragraph */}
-        {para1 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, delay: 0.08 }}
-            style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.80)', margin: 0 }}
+        {/* Section 1 — Emergency signal banner */}
+        <Section delay={0}>
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              background: 'rgba(220,38,38,0.10)',
+              border: '2px solid rgba(220,38,38,0.45)',
+              borderRadius: '14px',
+              padding: '20px',
+            }}
           >
-            {para1}
-          </motion.p>
+            <p style={{ fontSize: '18px', fontWeight: 800, color: '#ef4444', margin: 0, lineHeight: 1.3 }}>
+              {urgency === 'CRITICAL' ? 'This is critical.' : 'This needs your attention now.'}
+            </p>
+            {synthesis?.singleBiggestRisk && (
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.82)', margin: '8px 0 0', lineHeight: 1.6 }}>
+                {synthesis.singleBiggestRisk}
+              </p>
+            )}
+          </motion.div>
+        </Section>
+
+        {/* Section 2 — Top drivers (still relevant in emergency) */}
+        {topDrivers.length > 0 && (
+          <Section delay={0.06}>
+            <SectionLabel text="Why This Is Happening" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {topDrivers.map((driver, i) => (
+                <div key={i}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{driver.label}</p>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#dc2626' }}>{driver.score}/100</span>
+                  </div>
+                  <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${driver.score}%`, background: riskColor(driver.score), borderRadius: '2px', transition: 'width 0.8s ease' }} />
+                  </div>
+                  {driver.evidence && (
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: '4px 0 0', lineHeight: 1.5 }}>{driver.evidence}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Section>
         )}
 
-        {/* Zone 3 — The one action */}
+        {/* Section 3 — Dominant single action */}
         {topAction && (
-          <motion.button
+          <Section delay={0.12}>
+            <SectionLabel text="What To Do Next" />
+            <button
+              type="button"
+              onClick={onSwitchToBeast}
+              style={{
+                width: '100%',
+                background: 'rgba(220,38,38,0.15)',
+                border: '1px solid rgba(220,38,38,0.38)',
+                borderLeft: '3px solid #dc2626',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#dc2626', margin: 0 }}>
+                YOUR MOVE{topAction.timeHorizon ? ` — ${topAction.timeHorizon}` : ''}
+              </p>
+              <p style={{ fontSize: '16px', fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: 1.3 }}>
+                {topAction.title}
+              </p>
+              {topAction.rationale && (
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', margin: 0, lineHeight: 1.5 }}>{topAction.rationale}</p>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#dc262699', padding: '2px 8px', background: 'rgba(220,38,38,0.12)', borderRadius: '20px' }}>
+                  {URGENCY_LABEL[topAction.urgencyLevel] ?? 'Critical urgency'}
+                </span>
+                <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 700 }}>Open emergency plan →</span>
+              </div>
+            </button>
+          </Section>
+        )}
+
+        {/* Section 5 — Confidence (trust anchor, always shown) */}
+        <Section delay={0.18} last>
+          <SectionLabel text="Confidence & Trust" />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="rgba(255,255,255,0.55)" />
+            <ConfidenceBadge text={`${confidenceSummary.liveSignals} live signals`} color="rgba(255,255,255,0.55)" />
+            <ConfidenceBadge text={FRESHNESS_LABEL[confidenceSummary.freshnessTier] ?? 'Estimated'} color={confidenceSummary.freshnessTier === 'live' ? '#10b981' : confidenceSummary.freshnessTier === 'stale' ? '#f97316' : 'rgba(255,255,255,0.55)'} />
+            {confidenceSummary.lowDataWarning && (
+              <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />
+            )}
+          </div>
+        </Section>
+
+        {/* Depth invite */}
+        <button
+          type="button"
+          onClick={onSwitchToBeast}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'center', width: '100%', display: 'block' }}
+        >
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Open full emergency plan </span>
+          <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>→</span>
+        </button>
+
+      </div>
+    );
+  }
+
+  // ── Standard Guidance layout — 5 sections ────────────────────────────────
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 0 32px' }}>
+
+      {/* Section 1 — Current Situation */}
+      <Section delay={0}>
+        <SectionLabel text="Current Situation" />
+        {/* Score ring at 60% scale — present but not dominant */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', lineHeight: 0 }}>
+            <ScoreRingHero
+              score={score}
+              confidence={confidence}
+              ciLow={ciLow}
+              ciHigh={ciHigh}
+              trendDirection={trendDirection}
+            />
+          </div>
+        </div>
+        {/* Verdict sentence */}
+        <p style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.82)', margin: 0 }}>
+          {verdictSentence}
+        </p>
+      </Section>
+
+      {/* Section 2 — Why This Is Happening */}
+      {topDrivers.length > 0 && (
+        <Section delay={0.08}>
+          <SectionLabel text="Why This Is Happening" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {topDrivers.map((driver, i) => (
+              <div key={i}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{driver.label}</p>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: riskColor(driver.score),
+                    padding: '1px 7px',
+                    background: riskColor(driver.score) + '18',
+                    borderRadius: '10px',
+                  }}>{driver.score}/100</span>
+                </div>
+                {/* Score bar */}
+                <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden', marginBottom: driver.evidence ? '6px' : '0' }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${driver.score}%` }}
+                    transition={{ duration: 0.9, delay: 0.1 + i * 0.08, ease: 'easeOut' }}
+                    style={{ height: '100%', background: riskColor(driver.score), borderRadius: '2px' }}
+                  />
+                </div>
+                {driver.evidence && (
+                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.55 }}>{driver.evidence}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Section 3 — What To Do Next (one primary move) */}
+      {topAction && (
+        <Section delay={0.16}>
+          <SectionLabel text="What To Do Next" />
+          <button
             type="button"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.14 }}
-            onClick={onSwitchToIntelligence}
+            onClick={onSwitchToBeast}
             style={{
               width: '100%',
-              background: 'rgba(220,38,38,0.15)',
-              border: '1px solid rgba(220,38,38,0.38)',
-              borderLeft: '3px solid #dc2626',
+              background: accentColor + '14',
+              border: `1px solid ${accentColor}38`,
+              borderLeft: `3px solid ${accentColor}`,
               borderRadius: '12px',
               padding: '18px 20px',
               textAlign: 'left',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '8px',
             }}
           >
-            <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#dc2626', margin: 0 }}>
+            <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: accentColor, margin: 0 }}>
               YOUR MOVE{topAction.timeHorizon ? ` — ${topAction.timeHorizon}` : ''}
             </p>
             <p style={{ fontSize: '15px', fontWeight: 700, color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: 1.4 }}>
               {topAction.title}
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#dc262699', padding: '2px 8px', background: 'rgba(220,38,38,0.12)', borderRadius: '20px' }}>
-                {URGENCY_LABEL[topAction.urgencyLevel] ?? 'Critical urgency'}
+            {topAction.rationale && (
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.5 }}>{topAction.rationale}</p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: accentColor + '99',
+                padding: '2px 8px',
+                background: accentColor + '12',
+                borderRadius: '20px',
+                border: `1px solid ${accentColor}22`,
+              }}>
+                {URGENCY_LABEL[topAction.urgencyLevel] ?? 'High urgency'}
               </span>
-              <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>→ Open action plan</span>
+              <span style={{ fontSize: '12px', color: accentColor, fontWeight: 600 }}>→ Start now</span>
             </div>
-          </motion.button>
-        )}
-
-        {/* Zone 4 — Depth invite */}
-        <motion.button
-          type="button"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.25, delay: 0.22 }}
-          onClick={onSwitchToIntelligence}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', textAlign: 'center', display: 'block', width: '100%' }}
-        >
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
-            See the complete analysis, all signals, and your full action plan{' '}
-          </span>
-          <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>→</span>
-        </motion.button>
-
-      </div>
-    );
-  }
-
-  // ── Standard Guidance layout ───────────────────────────────────────────────
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', padding: '8px 0 32px' }}>
-
-      {/* Zone 1 — Score signal */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
-      >
-        {/* Score ring — scaled to 70% via CSS transform so it feels focused, not dominant */}
-        <div style={{ transform: 'scale(0.7)', transformOrigin: 'center center', lineHeight: 0 }}>
-          <ScoreRingHero
-            score={score}
-            confidence={confidence}
-            ciLow={ciLow}
-            ciHigh={ciHigh}
-            trendDirection={trendDirection}
-          />
-        </div>
-
-        {/* Verdict reassurance — one italic line */}
-        <VerdictReassurance score={score} urgency={urgency} />
-      </motion.div>
-
-      {/* Zone 2 — Advisor brief: three paragraphs of plain prose */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-        {/* Paragraph 1 — WHAT IS HAPPENING */}
-        {para1 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.06 }}
-            style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.80)', margin: 0 }}
-          >
-            {para1}
-          </motion.p>
-        )}
-
-        {/* Paragraph 2 — WHY IT MATTERS (with optional bold driver prefix) */}
-        {para2 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.13 }}
-          >
-            <Paragraph2 text={para2} color={accentColor} />
-          </motion.div>
-        )}
-
-        {/* Paragraph 3 — WHAT TO DO (brighter + slightly larger, most important) */}
-        {para3 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.20 }}
-            style={{ fontSize: '15px', lineHeight: 1.75, color: 'rgba(255,255,255,0.92)', margin: 0, fontWeight: 450 }}
-          >
-            {para3}
-          </motion.p>
-        )}
-      </div>
-
-      {/* Zone 3 — The one action button */}
-      {topAction && (
-        <motion.button
-          type="button"
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.25 }}
-          onClick={onSwitchToIntelligence}
-          style={{
-            width: '100%',
-            background: `${accentColor}14`,
-            border: `1px solid ${accentColor}38`,
-            borderLeft: `3px solid ${accentColor}`,
-            borderRadius: '12px',
-            padding: '18px 20px',
-            textAlign: 'left',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-          }}
-        >
-          <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase', color: accentColor, margin: 0 }}>
-            YOUR MOVE{topAction.timeHorizon ? ` — ${topAction.timeHorizon}` : ''}
-          </p>
-          <p style={{ fontSize: '15px', fontWeight: 700, color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: 1.4 }}>
-            {topAction.title}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              color: accentColor + '99',
-              padding: '2px 8px',
-              background: accentColor + '12',
-              borderRadius: '20px',
-              border: `1px solid ${accentColor}22`,
-            }}>
-              {URGENCY_LABEL[topAction.urgencyLevel] ?? 'High urgency'}
-            </span>
-            <span style={{ fontSize: '12px', color: accentColor, fontWeight: 600 }}>→ Start now</span>
-          </div>
-        </motion.button>
+          </button>
+        </Section>
       )}
 
-      {/* Zone 4 — Depth invite: one subtle line */}
+      {/* Section 4 — This Week Action Plan */}
+      {thisWeekActions.length > 0 && (
+        <Section delay={0.24}>
+          <SectionLabel text="This Week Action Plan" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {thisWeekActions.map((action, i) => {
+              const pColor = PRIORITY_COLOR[action.priority] ?? '#22d3ee';
+              return (
+                <div
+                  key={i}
+                  style={{
+                    borderLeft: `3px solid ${pColor}60`,
+                    paddingLeft: '12px',
+                    paddingTop: '4px',
+                    paddingBottom: '4px',
+                  }}
+                >
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                    {action.title}
+                  </p>
+                  {action.description && (
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)', margin: '0 0 6px', lineHeight: 1.5 }}>
+                      {action.description}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {typeof action.riskReductionPct === 'number' && action.riskReductionPct > 0 && (
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        color: '#10b981',
+                        padding: '1px 6px',
+                        background: 'rgba(16,185,129,0.12)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(16,185,129,0.25)',
+                      }}>
+                        -{action.riskReductionPct}% risk
+                      </span>
+                    )}
+                    {action.effortBadge && (
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: 'rgba(255,255,255,0.45)',
+                        padding: '1px 6px',
+                        background: 'rgba(255,255,255,0.06)',
+                        borderRadius: '10px',
+                      }}>
+                        {action.effortBadge}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      color: pColor + 'aa',
+                      padding: '1px 6px',
+                      background: pColor + '12',
+                      borderRadius: '10px',
+                    }}>
+                      {action.priority}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Section>
+      )}
+
+      {/* Section 5 — Confidence & Trust */}
+      <Section delay={0.32} last>
+        <SectionLabel text="Confidence & Trust" />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <ConfidenceBadge
+            text={`${confidenceSummary.confidencePercent}% confident`}
+            color="rgba(255,255,255,0.55)"
+          />
+          <ConfidenceBadge
+            text={`${confidenceSummary.liveSignals} live signal${confidenceSummary.liveSignals !== 1 ? 's' : ''}`}
+            color={confidenceSummary.liveSignals > 0 ? '#10b981' : 'rgba(255,255,255,0.40)'}
+          />
+          <ConfidenceBadge
+            text={FRESHNESS_LABEL[confidenceSummary.freshnessTier] ?? 'Estimated'}
+            color={
+              confidenceSummary.freshnessTier === 'live'   ? '#10b981' :
+              confidenceSummary.freshnessTier === 'mixed'  ? '#22d3ee' :
+              confidenceSummary.freshnessTier === 'stale'  ? '#f97316' :
+                                                             'rgba(255,255,255,0.40)'
+            }
+          />
+          {confidenceSummary.lowDataWarning && (
+            <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />
+          )}
+        </div>
+      </Section>
+
+      {/* Depth invite — one subtle line, not a button */}
       <motion.button
         type="button"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.25, delay: 0.32 }}
-        onClick={onSwitchToIntelligence}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', textAlign: 'center', display: 'block', width: '100%' }}
+        transition={{ duration: 0.25, delay: 0.40 }}
+        onClick={onSwitchToBeast}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'center', width: '100%', display: 'block' }}
       >
-        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
-          See the complete analysis, all signals, and your full action plan{' '}
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)' }}>
+          Explore full intelligence analysis{' '}
         </span>
         <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>→</span>
       </motion.button>
@@ -401,5 +568,22 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
     </div>
   );
 };
+
+// ── Confidence badge ───────────────────────────────────────────────────────────
+
+const ConfidenceBadge: React.FC<{ text: string; color: string }> = ({ text, color }) => (
+  <span style={{
+    fontSize: '11px',
+    fontWeight: 600,
+    color,
+    padding: '3px 10px',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.10)',
+    borderRadius: '20px',
+    whiteSpace: 'nowrap',
+  }}>
+    {text}
+  </span>
+);
 
 export default GuidanceView;

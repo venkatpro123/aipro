@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Eye, LayoutGrid } from 'lucide-react';
+import { Eye, Zap } from 'lucide-react';
 import type { ViewMode } from '../../../hooks/useViewMode';
 
 interface ViewModeToggleProps {
@@ -28,8 +28,8 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
   emergencyMode = false,
 }) => {
   const segments: { value: ViewMode; label: string; Icon: React.ElementType }[] = [
-    { value: 'guidance',     label: 'Guided',   Icon: Eye },
-    { value: 'intelligence', label: 'Advanced', Icon: LayoutGrid },
+    { value: 'guidance', label: 'Guided',     Icon: Eye },
+    { value: 'beast',    label: 'Beast Mode', Icon: Zap },
   ];
 
   return (
