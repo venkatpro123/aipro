@@ -657,25 +657,48 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     <GlobalErrorBoundary>
       <div className="flex flex-col" ref={scrollRef}>
 
-        {/* ── Sticky company header + tab bar ──────────────────────────────── */}
-        {/* ViewModeToggle lives inside StickyCompanyHeader's rightSlot —
-            inline with the score chip, saving a full sticky row vs a separate
-            toggle bar. The separate wrapper div has been removed. */}
-        <div className="sticky top-0 z-40">
-          <StickyCompanyHeader
-            companyName={companyData?.name ?? result.companyName ?? 'Company'}
-            score={result.total}
-            visible={showStickyHeader}
-            rightSlot={
+        {/* ── Permanent top bar — always visible, always at the top ─────────── */}
+        {/* The ViewModeToggle MUST be visible immediately on page load.
+            StickyCompanyHeader only appears after scroll, so we need a separate
+            always-on top bar that shows the toggle at all times. */}
+        <div
+          className="sticky top-0 z-40"
+          style={{
+            background: 'rgba(9,12,20,0.95)',
+            backdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+          }}
+        >
+          {/* Row 1: permanent top bar — company name + score + mode toggle */}
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <p
+              className="text-[13px] font-semibold truncate"
+              style={{ color: 'rgba(255,255,255,0.85)' }}
+              title={companyData?.name ?? result.companyName ?? 'Company'}
+            >
+              {companyData?.name ?? result.companyName ?? 'Company'}
+            </p>
+            <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+              {/* Score chip */}
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                style={{ background: riskColor(result.total) + '22', border: `1px solid ${riskColor(result.total)}40` }}
+              >
+                <span className="text-[12px] font-black" style={{ color: riskColor(result.total) }}>{result.total}</span>
+                <span className="text-[10px] font-bold tracking-wide" style={{ color: riskColor(result.total) + 'cc' }}>
+                  {riskLabel(result.total)}
+                </span>
+              </div>
+              {/* Mode toggle — always visible */}
               <ViewModeToggle
                 viewMode={viewMode}
                 onToggle={toggleViewMode}
                 emergencyMode={isEmergency}
               />
-            }
-          />
+            </div>
+          </div>
 
-          {/* Tab bar — only shown in Beast Mode */}
+          {/* Row 2: tab bar — only in Beast Mode */}
           {viewMode === 'beast' && (
             <DesktopTabBar
               active={activeTab}
@@ -683,6 +706,16 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               result={result}
             />
           )}
+        </div>
+
+        {/* ── Scroll-triggered sticky header (hidden — replaced by permanent top bar above) */}
+        {/* Kept for future reference; set visible={false} so it never renders. */}
+        <div className="hidden">
+          <StickyCompanyHeader
+            companyName={companyData?.name ?? result.companyName ?? 'Company'}
+            score={result.total}
+            visible={false}
+          />
         </div>
 
         {/* ── Wave 1.4: Risk update banner — fires when breaking news injects a new event ── */}
