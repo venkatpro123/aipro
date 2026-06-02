@@ -66,6 +66,24 @@ function getVerdictSentence(result: HybridResult, feedSpine?: string): string {
   return `${company} is showing ${level} risk signals. Your displacement probability sits at ${score}/100 based on ${score >= 65 ? 'multiple elevated' : 'several'} risk dimensions.`;
 }
 
+// UIDimension has: key (L1–L5, D1–D7), label, score (0–100).
+// There is NO polarity, evidence, or source field on UIDimension.
+// Evidence text is derived from a key-based map below.
+const DIMENSION_EVIDENCE: Record<string, string> = {
+  L1: 'Financial signals: stock performance, revenue trend, P/E ratio',
+  L2: 'Layoff history: recent rounds, headcount contraction, hiring freeze',
+  L3: 'Role displacement: AI automation exposure for your specific role',
+  L4: 'Industry headwinds: sector-wide layoff wave, funding contraction',
+  L5: 'Regional market: local job demand and macro labor conditions',
+  D1: 'Company size & sector amplifier: adjusts base risk for your context',
+  D2: 'Tenure & experience: years in role and company adjust risk exposure',
+  D3: 'Department risk: function-level exposure within the company',
+  D4: 'Performance credibility: self-reported vs signal-validated standing',
+  D5: 'Geographic risk: country/city-level economic and labor signals',
+  D6: 'Market demand: external job postings and recruiter activity for your role',
+  D7: 'Cost-of-living adjustment: compensation vulnerability to location',
+};
+
 interface DriverRow {
   label: string;
   score: number;
@@ -73,22 +91,23 @@ interface DriverRow {
 }
 
 function getTopDrivers(result: HybridResult): DriverRow[] {
-  const dims = result.dimensions ?? [];
-  // Filter to elevated dimensions that raise risk, sort descending
-  const elevated = dims
-    .filter((d: any) => d.score > 40 && d.polarity !== 'protects')
-    .sort((a: any, b: any) => b.score - a.score)
+  const dims = (result.dimensions ?? []) as Array<{ key: string; label: string; score: number }>;
+  // Sort all dimensions by score descending, take top 3 elevated ones (score > 35)
+  const elevated = [...dims]
+    .filter(d => typeof d.score === 'number' && d.score > 35)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
   if (elevated.length > 0) {
-    return elevated.map((d: any) => ({
+    return elevated.map(d => ({
       label: d.label ?? d.key ?? 'Risk factor',
       score: Math.min(100, Math.max(0, Math.round(d.score))),
-      evidence: (d.evidence?.[0] ?? d.source ?? d.description ?? '') as string,
+      // UIDimension has no evidence field — derive from key map
+      evidence: DIMENSION_EVIDENCE[d.key] ?? '',
     }));
   }
 
-  // Fallback: parse singleBiggestRisk as a single row
+  // Fallback: use singleBiggestRisk from strategy synthesis as a single row
   const synthesis = (result as any).strategySynthesis;
   const risk: string = synthesis?.singleBiggestRisk ?? '';
   if (risk) {
@@ -112,9 +131,9 @@ function getThisWeekActions(result: HybridResult): ActionRow[] {
     .slice(0, 5)
     .map(r => ({
       title: r.title ?? '',
-      description: r.description ?? r.rationale ?? '',
+      description: r.description ?? '',  // ActionPlanItem.description is the canonical field
       riskReductionPct: typeof r.riskReductionPct === 'number' ? r.riskReductionPct : undefined,
-      effortBadge: r.effortBadge ?? r.effort ?? undefined,
+      effortBadge: r.effortBadge ?? undefined,
       priority: r.priority ?? 'Medium',
     }));
 }
@@ -352,16 +371,30 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       {/* Section 1 — Current Situation */}
       <Section delay={0}>
         <SectionLabel text="Current Situation" />
-        {/* Score ring at 60% scale — present but not dominant */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', lineHeight: 0 }}>
-            <ScoreRingHero
-              score={score}
-              confidence={confidence}
-              ciLow={ciLow}
-              ciHigh={ciHigh}
-              trendDirection={trendDirection}
-            />
+        {/* Score ring at 60% scale.
+            CSS transform does NOT shrink the layout box — the ring's full
+            148–192px height stays in the DOM even though it visually shrinks.
+            Fix: clip the layout box to the actual scaled visual size by setting
+            an explicit height (60% of the ring's max 192px ≈ 115px) and
+            overflow:hidden so the scaled content doesn't bleed outside. */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+          <div style={{
+            height: '115px',
+            width: '115px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <div style={{ transform: 'scale(0.6)', transformOrigin: 'center center', flexShrink: 0 }}>
+              <ScoreRingHero
+                score={score}
+                confidence={confidence}
+                ciLow={ciLow}
+                ciHigh={ciHigh}
+                trendDirection={trendDirection}
+              />
+            </div>
           </div>
         </div>
         {/* Verdict sentence */}
