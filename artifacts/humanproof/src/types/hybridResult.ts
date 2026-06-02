@@ -415,6 +415,8 @@ export interface HybridResult {
    * Always accompanies resolvedPattern — null iff resolvedPattern is null.
    */
   patternMatchOverlapScore?: number | null;
+  /** Role alignment for the matched pattern: +1 affected, -1 protected, 0 neutral, null no match. */
+  patternMatchRoleFit?: number | null;
 
   // ── Narrative intelligence ────────────────────────────────────────────────
   primaryRiskDriver?: string | null;

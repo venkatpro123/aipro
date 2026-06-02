@@ -3,13 +3,14 @@
 // Supports 12 ISO 4217 currencies. MENA users get gratuity fields.
 // Data stored in localStorage ONLY — never transmitted.
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Users, Wallet, ChevronDown, ChevronUp, Lock, CheckCircle,
 } from "lucide-react";
 import {
   saveFinancialContext,
+  loadFinancialContext,
   deriveFinancialProfile,
   normaliseCityKey,
   type FinancialContext,
@@ -59,6 +60,11 @@ interface Props {
   riskScore: number;
   /** ISO 4217 currency code. Used as initial selection; user can override. */
   currency?: string;
+  /** Visa score-amplifier from the audit (result.visaRisk.scoreAmplifier).
+   *  Passed through to deriveFinancialProfile so the inline-derived profile
+   *  matches the one the parent computes — without it, an H1B holder saw a
+   *  different (under-urgent) strategy here than in the action plan. */
+  visaAmplifier?: number;
   onProfileDerived?: (profile: FinancialProfile) => void;
 }
 
@@ -71,29 +77,39 @@ const APPETITE_CONFIG = {
 export const FinancialContextInput: React.FC<Props> = ({
   riskScore,
   currency = "USD",
+  visaAmplifier,
   onProfileDerived,
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [profile, setProfile] = useState<FinancialProfile | null>(null);
+  // Prefill from any previously-saved context so reopening the form does not
+  // present a blank slate (the user may have entered this here, in the Financial
+  // Impact Calculator, or in a prior session). Read once at mount.
+  const stored = useMemo(() => loadFinancialContext(), []);
 
-  // User can change currency within the form — override the prop default
-  const [selectedCurrency, setSelectedCurrency] = useState<string>(
-    CURRENCY_OPTIONS.find(o => o.code === currency) ? currency : 'USD'
+  const [expanded, setExpanded] = useState(false);
+  const [saved, setSaved] = useState<boolean>(!!stored);
+  const [profile, setProfile] = useState<FinancialProfile | null>(
+    stored ? deriveFinancialProfile(stored, riskScore, visaAmplifier) : null,
   );
 
-  const [expenses, setExpenses] = useState("");
-  const [dependents, setDependents] = useState("0");
-  const [runwayMonths, setRunwayMonths] = useState("");
-  const [income, setIncome] = useState("");
-  const [city, setCity] = useState("");
+  // User can change currency within the form — saved value wins, then prop.
+  const initialCurrency =
+    (stored?.currency && CURRENCY_OPTIONS.find(o => o.code === stored.currency)) ? stored!.currency
+    : CURRENCY_OPTIONS.find(o => o.code === currency) ? currency
+    : 'USD';
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(initialCurrency);
+
+  const [expenses, setExpenses] = useState(stored?.monthlyExpenses != null ? String(stored.monthlyExpenses) : "");
+  const [dependents, setDependents] = useState(stored?.dependents != null ? String(Math.min(4, stored.dependents)) : "0");
+  const [runwayMonths, setRunwayMonths] = useState(stored?.emergencyFundMonths != null ? String(stored.emergencyFundMonths) : "");
+  const [income, setIncome] = useState(stored?.currentAnnualIncome != null ? String(stored.currentAnnualIncome) : "");
+  const [city, setCity] = useState(stored?.city ?? "");
 
   // MENA gratuity fields — only shown when selectedCurrency is a MENA currency
   const isMena = MENA_CURRENCY_CODES.has(selectedCurrency);
   const [countryCode, setCountryCode] = useState<string>(
-    MENA_CURRENCY_TO_COUNTRY[currency] ?? ''
+    stored?.countryCode ?? MENA_CURRENCY_TO_COUNTRY[initialCurrency] ?? ''
   );
-  const [tenureYears, setTenureYears] = useState("");
+  const [tenureYears, setTenureYears] = useState(stored?.tenureYears != null ? String(stored.tenureYears) : "");
 
   // Auto-update countryCode when MENA currency changes
   const handleCurrencyChange = (code: string) => {
@@ -118,7 +134,7 @@ export const FinancialContextInput: React.FC<Props> = ({
       tenureYears: isMena && tenureYears ? parseFloat(tenureYears) : undefined,
     };
     saveFinancialContext(ctx);
-    const derived = deriveFinancialProfile(ctx, riskScore);
+    const derived = deriveFinancialProfile(ctx, riskScore, visaAmplifier);
     setProfile(derived);
     setSaved(true);
     onProfileDerived?.(derived);

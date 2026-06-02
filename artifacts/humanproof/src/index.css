@@ -2923,6 +2923,11 @@ select option:hover {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+/* Hides a subtree completely — used to run headless logic (e.g. LiveScraperGate
+   promise resolution) without rendering any UI on screen. */
+.hidden-gate {
+  display: none;
+}
 .learn-path-btn:hover {
   background: var(--cyan-dim) !important;
   transform: translateY(-1px);

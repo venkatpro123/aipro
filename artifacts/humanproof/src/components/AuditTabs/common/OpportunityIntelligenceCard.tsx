@@ -93,7 +93,7 @@ function deriveOpportunities(props: Props): Opportunity[] {
       body: `Comparable roles are filling in ${months < 2 ? 'under' : 'around'} ${months < 1.5 ? '6' : Math.round(months * 4)} weeks. Recruiters are active. Now is a high-leverage window for positioning.`,
       accentColor: '#22d3ee',
       cta: 'See market signals',
-      ctaTab: 'protection',
+      ctaTab: 'company',  // Company tab (IntelligenceTab) hosts RoleMarketDemand/PeerContagion/Macro panels
     });
   }
 

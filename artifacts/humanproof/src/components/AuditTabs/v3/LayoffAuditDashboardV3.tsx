@@ -61,6 +61,12 @@ import { ActionCelebrationToast } from '../../ActionCelebration/ActionCelebratio
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
 import { onNewLayoffEvent } from '../../../data/layoffNewsCache';
 
+// ── View mode imports (Guidance / Intelligence toggle) ───────────────────────
+import { useViewMode } from '../../../hooks/useViewMode';
+import { ViewModeToggle } from './ViewModeToggle';
+// GuidanceView is lazy-loaded so it never bloats the Intelligence Mode bundle.
+const GuidanceView = lazy(() => import('./GuidanceView').then(m => ({ default: m.GuidanceView ?? m.default })));
+
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
 // scenario / contingency engines and animation surface.
@@ -186,7 +192,9 @@ const StickyCompanyHeader: React.FC<{
   companyName: string;
   score: number;
   visible: boolean;
-}> = ({ companyName, score, visible }) => {
+  /** Optional right-side slot — used to host the ViewModeToggle inline. */
+  rightSlot?: React.ReactNode;
+}> = ({ companyName, score, visible, rightSlot }) => {
   const color = riskColor(score);
   return (
     <AnimatePresence>
@@ -214,14 +222,19 @@ const StickyCompanyHeader: React.FC<{
           >
             {companyName}
           </p>
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full ml-3 flex-shrink-0"
-            style={{ background: color + '22', border: `1px solid ${color}40` }}
-          >
-            <span className="text-[12px] font-black" style={{ color }}>{score}</span>
-            <span className="text-[10px] font-bold tracking-wide" style={{ color: color + 'cc' }}>
-              {riskLabel(score)}
-            </span>
+          <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{ background: color + '22', border: `1px solid ${color}40` }}
+            >
+              <span className="text-[12px] font-black" style={{ color }}>{score}</span>
+              <span className="text-[10px] font-bold tracking-wide" style={{ color: color + 'cc' }}>
+                {riskLabel(score)}
+              </span>
+            </div>
+            {/* ViewModeToggle injected here so it sits inline with the score chip,
+                saving a full header row vs. a separate toggle bar below. */}
+            {rightSlot}
           </div>
         </motion.div>
       )}
@@ -474,6 +487,13 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     };
   }, []);
   const adaptation = useDashboardAdaptation(result, companyData, userProfile);
+
+  // ── Dual experience mode ──────────────────────────────────────────────────
+  // 'guidance'     → compressed expert-advisor view (default for new users)
+  // 'intelligence' → full 6-tab analysis experience
+  const { viewMode, toggleViewMode } = useViewMode();
+  const isEmergency = result.total >= 80 || (result as any).warnSignal?.hasActiveWARN === true;
+
   const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -638,17 +658,31 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       <div className="flex flex-col" ref={scrollRef}>
 
         {/* ── Sticky company header + tab bar ──────────────────────────────── */}
+        {/* ViewModeToggle lives inside StickyCompanyHeader's rightSlot —
+            inline with the score chip, saving a full sticky row vs a separate
+            toggle bar. The separate wrapper div has been removed. */}
         <div className="sticky top-0 z-40">
           <StickyCompanyHeader
             companyName={companyData?.name ?? result.companyName ?? 'Company'}
             score={result.total}
             visible={showStickyHeader}
+            rightSlot={
+              <ViewModeToggle
+                viewMode={viewMode}
+                onToggle={toggleViewMode}
+                emergencyMode={isEmergency}
+              />
+            }
           />
-          <DesktopTabBar
-            active={activeTab}
-            onChange={handleTabChange}
-            result={result}
-          />
+
+          {/* Tab bar — only shown in Intelligence Mode */}
+          {viewMode === 'intelligence' && (
+            <DesktopTabBar
+              active={activeTab}
+              onChange={handleTabChange}
+              result={result}
+            />
+          )}
         </div>
 
         {/* ── Wave 1.4: Risk update banner — fires when breaking news injects a new event ── */}
@@ -733,80 +767,113 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           <div className="px-4 pt-3 sm:px-0">
             <EmergencyModeBanner
               result={result}
-              onJumpToActions={() => handleTabChange('actions')}
+              onJumpToActions={() => {
+                // In Guidance Mode the actions tab doesn't exist yet — switch to
+                // Intelligence Mode first, then land on actions.
+                if (viewMode === 'guidance') {
+                  toggleViewMode();
+                  setUserChangedTab(true);
+                }
+                handleTabChange('actions');
+              }}
             />
           </div>
         )}
 
-        {/* ── Tab content ──────────────────────────────────────────────────── */}
-        {/* v40.0 FIX-7: removed mode="wait" — was forcing exit-then-enter
-            sequentially (~360ms blocking transition per tab switch). Parallel
-            exit/enter feels snappier and avoids perceived lag on rapid clicks. */}
-        {/* Swipe wrapper: gesture handler on a plain div to avoid onDrag type
-            conflict between @use-gesture/react and framer-motion. */}
-        <div {...swipeBind()} style={{ touchAction: 'pan-y' }}>
-        <AnimatePresence>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
-            className="px-4 pt-4 sm:px-0 sm:pt-0"
-            style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
-          >
-            {activeTab === 'summary' && (
-              <TabErrorBoundary tabLabel="Summary">
-                <Suspense fallback={<SummaryTabSkeleton />}>
-                  <SummaryTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {activeTab === 'company' && (
-              <TabErrorBoundary tabLabel="Company">
-                <Suspense fallback={<CompanyTabSkeleton />}>
-                  <IntelligenceTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {activeTab === 'protection' && (
-              <TabErrorBoundary tabLabel="Protection">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <ProtectionTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {activeTab === 'actions' && (
-              <TabErrorBoundary tabLabel="Action Plan">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <ActionsTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {activeTab === 'intel' && (
-              <TabErrorBoundary tabLabel="Intelligence">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <AnalysisTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
-            {activeTab === 'transparency' && (
-              <TabErrorBoundary tabLabel="Methodology">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <TransparencyTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-          </motion.div>
-        </AnimatePresence>
-        </div>{/* /swipe wrapper */}
+        {/* ── Content area — switches between Guidance Mode and Intelligence Mode ── */}
+        {viewMode === 'guidance' ? (
+          /* ── Guidance Mode: compressed expert-advisor experience ─────────── */
+          <div className="px-4 pt-4 sm:px-0 sm:pt-0" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+            <TabErrorBoundary tabLabel="Guidance">
+              <Suspense fallback={<SummaryTabSkeleton />}>
+                <GuidanceView
+                  result={result}
+                  companyData={companyData}
+                  emergencyMode={isEmergency}
+                  onSwitchToIntelligence={() => {
+                    toggleViewMode();          // switch to intelligence
+                    setActiveTab('actions');   // land on actions tab — decision-driven
+                    setUserChangedTab(true);
+                  }}
+                />
+              </Suspense>
+            </TabErrorBoundary>
+          </div>
+        ) : (
+          /* ── Intelligence Mode: full 6-tab system — unchanged ─────────────── */
+          <>
+            {/* Tab content */}
+            {/* v40.0 FIX-7: removed mode="wait" — was forcing exit-then-enter
+                sequentially (~360ms blocking transition per tab switch). Parallel
+                exit/enter feels snappier and avoids perceived lag on rapid clicks. */}
+            {/* Swipe wrapper: gesture handler on a plain div to avoid onDrag type
+                conflict between @use-gesture/react and framer-motion. */}
+            <div {...swipeBind()} style={{ touchAction: 'pan-y' }}>
+            <AnimatePresence>
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+                className="px-4 pt-4 sm:px-0 sm:pt-0"
+                style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
+              >
+                {activeTab === 'summary' && (
+                  <TabErrorBoundary tabLabel="Summary">
+                    <Suspense fallback={<SummaryTabSkeleton />}>
+                      <SummaryTab {...tabProps} />
+                    </Suspense>
+                  </TabErrorBoundary>
+                )}
+                {activeTab === 'company' && (
+                  <TabErrorBoundary tabLabel="Company">
+                    <Suspense fallback={<CompanyTabSkeleton />}>
+                      <IntelligenceTab {...tabProps} />
+                    </Suspense>
+                  </TabErrorBoundary>
+                )}
+                {activeTab === 'protection' && (
+                  <TabErrorBoundary tabLabel="Protection">
+                    <Suspense fallback={<GenericTabSkeleton />}>
+                      <ProtectionTab {...tabProps} />
+                    </Suspense>
+                  </TabErrorBoundary>
+                )}
+                {activeTab === 'actions' && (
+                  <TabErrorBoundary tabLabel="Action Plan">
+                    <Suspense fallback={<GenericTabSkeleton />}>
+                      <ActionsTab {...tabProps} />
+                    </Suspense>
+                  </TabErrorBoundary>
+                )}
+                {activeTab === 'intel' && (
+                  <TabErrorBoundary tabLabel="Intelligence">
+                    <Suspense fallback={<GenericTabSkeleton />}>
+                      <AnalysisTab {...tabProps} />
+                    </Suspense>
+                  </TabErrorBoundary>
+                )}
+                {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
+                {activeTab === 'transparency' && (
+                  <TabErrorBoundary tabLabel="Methodology">
+                    <Suspense fallback={<GenericTabSkeleton />}>
+                      <TransparencyTab {...tabProps} />
+                    </Suspense>
+                  </TabErrorBoundary>
+                )}
+              </motion.div>
+            </AnimatePresence>
+            </div>{/* /swipe wrapper */}
 
-        <MobileBottomNav
-          active={activeTab}
-          onChange={handleTabChange}
-          result={result}
-        />
+            {/* Mobile bottom nav — only in Intelligence Mode (Guidance Mode has no tabs) */}
+            <MobileBottomNav
+              active={activeTab}
+              onChange={handleTabChange}
+              result={result}
+            />
+          </>
+        )}
 
         {/* ── Wave 7.3: AI Commentary — per-tab floating guidance bubble ──── */}
         {/* Fixed bottom-center overlay, appears 2s after tab load, 1× per session. */}

@@ -41,15 +41,24 @@ function fmtPct(p: number): string {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalActionCount = 0 }) => {
+  // "Without action" = the inaction-drifted probability (risk creeps up over 6mo
+  //  without mitigation). The engine guarantees this is ≥ the current probability.
   const withoutAction  = survival.inactionProbability12m;
+  // "With Phase 1" = the user's CURRENT probability reduced by Phase-1 mitigation.
+  //  Branching from probability12m (not the drifted-up inaction figure) keeps the
+  //  two columns telling a coherent story: do nothing → risk rises; act → risk falls.
   const withPhase1     = Math.max(0.02, survival.probability12m * (1 - PHASE1_REDUCTION));
-  const delta          = withoutAction - withPhase1;
+  const delta          = Math.max(0, withoutAction - withPhase1);
   const reductionPct   = withoutAction > 0
     ? Math.round((delta / withoutAction) * 100)
     : 0;
 
   // Survival framing: inverse of layoff probability
   const survivalPct    = Math.round((1 - withoutAction) * 100);
+
+  // Personalization signals from the survival model
+  const dominantFactor = (survival as any).dominantRiskFactor as string | undefined;
+  const percentile     = (survival as any).workforceRiskPercentile as number | undefined;
 
   // Risk tier color
   const tierColor: Record<string, string> = {
@@ -138,7 +147,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
         </div>
       </div>
 
-      {/* Impact statement */}
+      {/* Impact statement — personalised with the dominant risk driver */}
       <div
         className="flex items-start gap-2 mx-4 mb-3 px-3 py-2 rounded-xl"
         style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}
@@ -149,10 +158,25 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
             Taking the {criticalActionCount > 0 ? `${criticalActionCount} critical action${criticalActionCount !== 1 ? 's' : ''}` : 'Phase 1 actions'} below cuts your risk by {reductionPct}%
           </p>
           <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            From {fmtPct(withoutAction)} → {fmtPct(withPhase1)} forced exit probability
+            {fmtPct(withoutAction)} if risk keeps drifting up → {fmtPct(withPhase1)} with Phase 1 mitigation
           </p>
+          {dominantFactor && (
+            <p className="text-[10px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.42)' }}>
+              Your biggest driver right now: <span style={{ color: 'rgba(16,185,129,0.85)', fontWeight: 600 }}>{dominantFactor}</span>. The Phase 1 actions are sequenced to address it first.
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Workforce percentile — personalised standing */}
+      {percentile != null && percentile > 0 && (
+        <div className="flex items-center gap-1.5 px-4 pb-2">
+          <Target className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }} />
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            More at-risk than {percentile}% of the workforce — but acting early is the lever that moves you down the curve.
+          </p>
+        </div>
+      )}
 
       {/* Peer comparison footer */}
       {survival.peerLayoffRate && (

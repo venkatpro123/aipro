@@ -347,15 +347,33 @@ const DualGaugePanel: React.FC<{
 }> = ({ riskScore, preparedness, ciLow = 0, ciHigh = 100, scoreSufficient = true }) => {
   const rColor = scoreColor(riskScore);
   const pColor = preparedness ? readinessColor(preparedness.readinessLabel) : '#f59e0b';
-  const pScore = preparedness?.overallScore ?? 0;
+  // Use null instead of 0 when preparedness hasn't been computed — showing 0/100
+  // was misleading because it implied the user is unprepared when the engine
+  // simply didn't run yet.
+  const pScore = preparedness?.overallScore ?? null;
+  const pScoreDisplay = pScore ?? 0;
 
-  const combo = riskScore >= 65 && pScore < 50
-    ? { label: 'Critical Gap', color: '#dc2626', desc: 'High risk + low readiness — immediate action required' }
-    : riskScore >= 65 && pScore >= 50
-    ? { label: 'Manageable', color: '#f97316', desc: 'High risk but you have preparation assets to draw on' }
-    : riskScore < 45 && pScore >= 65
-    ? { label: 'Well Positioned', color: '#10b981', desc: 'Low risk + high readiness — build and grow' }
-    : { label: 'Monitor', color: '#f59e0b', desc: 'Moderate risk — keep readiness high as a precaution' };
+  // Expanded combo verdict table — the original only had 4 buckets; risk 45–64
+  // with any readiness level fell into the generic "Monitor" catch-all, which
+  // was the same verdict for everyone in the moderate band regardless of how
+  // prepared they were. Now 6 distinct verdicts cover the full grid.
+  const combo = (() => {
+    if (riskScore >= 75 && (pScore ?? 0) < 40)
+      return { label: 'Critical Gap',    color: '#dc2626', desc: 'High risk + very low readiness — immediate action this week required' };
+    if (riskScore >= 65 && (pScore ?? 0) < 50)
+      return { label: 'High Risk / Low Readiness', color: '#dc2626', desc: 'Elevated risk but limited preparation buffer — prioritise readiness actions now' };
+    if (riskScore >= 65 && (pScore ?? 0) >= 50)
+      return { label: 'High Risk / Prepared', color: '#f97316', desc: 'Significant risk but your preparation assets give you options — activate them' };
+    if (riskScore >= 45 && (pScore ?? 0) < 45)
+      return { label: 'Needs Attention', color: '#f59e0b', desc: 'Moderate risk and low readiness — close the readiness gap before risk escalates' };
+    if (riskScore >= 45 && (pScore ?? 0) >= 65)
+      return { label: 'Risk Offset',     color: '#22d3ee', desc: 'Moderate risk but high readiness offsets it — maintain your preparation edge' };
+    if (riskScore < 45 && (pScore ?? 0) >= 65)
+      return { label: 'Well Positioned', color: '#10b981', desc: 'Low risk + high readiness — leverage this window to grow' };
+    if (riskScore < 35)
+      return { label: 'Low Risk',        color: '#10b981', desc: 'Risk is low — continue monitoring and building career capital' };
+    return { label: 'Monitor',           color: '#f59e0b', desc: 'Moderate risk — keep readiness high as a precaution' };
+  })();
 
   return (
     <motion.div
@@ -376,7 +394,21 @@ const DualGaugePanel: React.FC<{
         <div className="pb-10 flex flex-col items-center">
           <span className="text-lg font-black" style={{ color: combo.color }}>VS</span>
         </div>
-        <MiniGauge score={pScore} color={pColor} label="Preparedness" sublabel="readiness index" />
+        {/* Show 0 gauge only when preparedness was actually computed (pScore != null).
+            If null, show a placeholder so "0/100 Readiness" doesn't appear when the
+            engine simply didn't run. */}
+        {pScore !== null
+          ? <MiniGauge score={pScoreDisplay} color={pColor} label="Preparedness" sublabel="readiness index" />
+          : (
+            <div className="flex flex-col items-center gap-1" style={{ width: 80 }}>
+              <div className="w-20 h-20 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
+                <span className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>not<br/>assessed</span>
+              </div>
+              <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>Preparedness</p>
+              <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>complete profile</p>
+            </div>
+          )
+        }
       </div>
       <div
         className="flex items-center gap-2 rounded-xl p-2.5"
@@ -642,6 +674,12 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
               ?? ((companyData as any)?.region as string | undefined)
               ?? undefined
             }
+            roleFit={(result as any).patternMatchRoleFit ?? undefined}
+            userRoleTitle={
+              (r.userFactors?.roleTitle as string | undefined)
+              ?? result.workTypeKey?.replace(/_/g, ' ')
+              ?? undefined
+            }
           />
         </motion.div>
       )}
@@ -674,7 +712,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           accentColor="#22d3ee"
           defaultOpen={result.total >= 55}
         >
-          <ScoreSensitivityPanel scoreSensitivity={scoreSensitivity} />
+          <ScoreSensitivityPanel scoreSensitivity={scoreSensitivity} liveScore={result.total} />
         </AdaptiveBlock>
       )}
 
@@ -719,12 +757,11 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           accentColor="#f59e0b"
           defaultOpen={false}
         >
+          {/* Pass the raw scenario object so ScenarioExplorer can access
+              planningHorizonMonths + dominantUncertainty. Previous remapping
+              here stripped those meta fields before they reached the component. */}
           <ScenarioExplorer
-            scenario={{
-              bear: (scenario as any).worstCase ?? (scenario as any).bear,
-              base: (scenario as any).baseCase  ?? (scenario as any).base,
-              bull: (scenario as any).bestCase  ?? (scenario as any).bull,
-            }}
+            scenario={scenario as any}
             currentScore={result.total}
           />
         </AdaptiveBlock>

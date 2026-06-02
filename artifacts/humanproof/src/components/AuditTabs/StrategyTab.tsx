@@ -4,17 +4,22 @@
 // Layout: urgency banner → v14.0 signal alerts → phase plan → network leverage → confidence pillars → offer eval modal
 
 import React, { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, Zap, Shield, Clock, ArrowRight, CheckCircle2,
   Circle, AlertTriangle, TrendingUp, Users, Brain, DollarSign,
   ChevronDown, ChevronRight, Building2, Globe, Briefcase, Star,
+  Scale, Copy, Check, MessageSquare,
 } from "lucide-react";
+import type { PsychologicalNegotiationTactic } from "@/services/offerEvaluationEngine";
 import type { HybridResult } from "@/types/hybridResult";
 import type { CompanyData } from "@/data/companyDatabase";
 import type { StrategyAction, StrategicPlan } from "@/services/strategySynthesisEngine";
 import type { OfferEvaluationInputs } from "@/services/offerEvaluationEngine";
 import { evaluateJobOffer } from "@/services/offerEvaluationEngine";
+import { loadFinancialContext } from "@/services/financialContextService";
+import { CURRENCY_META } from "@/services/currencyService";
 // v17.0
 import IntelligenceBriefPanel from "./common/IntelligenceBriefPanel";
 
@@ -208,6 +213,13 @@ const OfferModal: React.FC<{
   const [hasRecentLayoffs, setHasRecentLayoffs] = useState(false);
   const [offerResult, setOfferResult] = useState<ReturnType<typeof evaluateJobOffer> | null>(null);
 
+  // Currency symbol from the user's saved context so the salary field shows the
+  // right prefix (₹/$/€/…) instead of a bare number labelled "in your currency".
+  const currSymbol = useMemo(() => {
+    const code = loadFinancialContext()?.currency ?? 'USD';
+    return CURRENCY_META[code]?.symbol ?? '$';
+  }, []);
+
   const evaluate = () => {
     if (!offerSalary || !offerCompany) return;
     const result = evaluateJobOffer({
@@ -229,7 +241,14 @@ const OfferModal: React.FC<{
     NEGOTIATE_HARD: '#f97316', DECLINE: '#ef4444', INVESTIGATE_MORE: '#00d4e0',
   };
 
-  return (
+  // Render through a portal to document.body. The modal lives inside the
+  // collapsible "Strategic plan & negotiation" AdaptiveBlock, whose content is
+  // wrapped in an overflow-hidden + Framer-Motion (transformed) container.
+  // A position:fixed child of a transformed ancestor is positioned relative to
+  // that ancestor and clipped by its overflow:hidden — so the modal rendered
+  // into the collapsed box and showed a blank screen. Portalling to body escapes
+  // both the transform and the clip so it overlays the viewport correctly.
+  const overlay = (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -268,9 +287,25 @@ const OfferModal: React.FC<{
             </div>
             <div>
               <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offered Base Salary (annual)</label>
-              <input value={offerSalary} onChange={e => setOfferSalary(e.target.value)}
-                placeholder="e.g. 1500000 (in your currency)"
-                type="number"
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{currSymbol}</span>
+                <input value={offerSalary} onChange={e => setOfferSalary(e.target.value)}
+                  placeholder="e.g. 1500000"
+                  type="number"
+                  className="w-full pl-8 pr-3 py-2 rounded-lg text-sm"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
+              </div>
+              {currentSalary > 0 && (
+                <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  Compared against your current {currSymbol}{currentSalary.toLocaleString()} from your saved profile.
+                </p>
+              )}
+            </div>
+            {/* Offer industry — collected by the engine but had no input field before. */}
+            <div>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offer Industry (optional)</label>
+              <input value={offerIndustry} onChange={e => setOfferIndustry(e.target.value)}
+                placeholder="e.g. fintech, healthcare, SaaS"
                 className="w-full px-3 py-2 rounded-lg text-sm"
                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
             </div>
@@ -333,13 +368,33 @@ const OfferModal: React.FC<{
             {offerResult.negotiationPoints.length > 0 && (
               <div className="rounded-xl p-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: '#f59e0b' }}>Negotiation Points</p>
-                {offerResult.negotiationPoints.slice(0, 2).map((pt, i) => (
-                  <p key={i} className="text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                    <span className="font-medium" style={{ color: '#f59e0b' }}>{pt.priority.replace(/_/g, ' ')}: </span>
-                    {pt.lever}
-                  </p>
+                {offerResult.negotiationPoints.map((pt, i) => (
+                  <div key={i} className="mb-2">
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      <span className="font-medium" style={{ color: '#f59e0b' }}>{pt.priority.replace(/_/g, ' ')}: </span>
+                      {pt.lever}
+                    </p>
+                    {pt.script && (
+                      <p className="text-[11px] mt-1 leading-snug pl-2" style={{ color: 'rgba(255,255,255,0.45)', borderLeft: '2px solid rgba(245,158,11,0.3)' }}>
+                        “{pt.script}”
+                      </p>
+                    )}
+                    {pt.expectedImprovement && (
+                      <p className="text-[10px] mt-0.5" style={{ color: '#10b981' }}>
+                        Expected: {pt.expectedImprovement}
+                      </p>
+                    )}
+                  </div>
                 ))}
               </div>
+            )}
+            {/* Key strengths / concerns summary, if the engine surfaced them */}
+            {offerResult.keyInsight && (
+              <p className="text-[11px] text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {offerResult.recommendation === 'CANNOT_ACCEPT'
+                  ? 'This offer has a hard eligibility block — review the dimensions above before proceeding.'
+                  : 'Scores are directional — validate comp and stability claims before deciding.'}
+              </p>
             )}
 
             <button onClick={() => setOfferResult(null)} className="w-full py-2 rounded-lg text-xs"
@@ -351,6 +406,111 @@ const OfferModal: React.FC<{
       </motion.div>
     </motion.div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(overlay, document.body)
+    : overlay;
+};
+
+// ── Negotiation tactics section ───────────────────────────────────────────────
+// Surfaces synthesis.psychologicalNegotiationTactics — the "& negotiation" half
+// of the "Strategic plan & negotiation" block, which was previously computed by
+// the engine but never rendered anywhere. Each tactic ships a copy-pasteable
+// script grounded in a named psychology principle.
+const TacticCard: React.FC<{ tactic: PsychologicalNegotiationTactic; index: number }> = ({ tactic, index }) => {
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(index === 0);
+
+  const copyScript = async () => {
+    try {
+      await navigator.clipboard.writeText(tactic.script);
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = tactic.script;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-2 px-3.5 py-2.5 text-left">
+        <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
+        <span className="text-xs font-semibold flex-1 min-w-0" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          {tactic.tacticName}
+        </span>
+        {open ? <ChevronDown className="w-3.5 h-3.5 opacity-40" /> : <ChevronRight className="w-3.5 h-3.5 opacity-40" />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-3.5 pb-3.5">
+              <p className="text-[11px] mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <span className="font-semibold" style={{ color: '#a78bfa' }}>When: </span>{tactic.whenToUse}
+              </p>
+              <div className="rounded-lg p-3 mb-2" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.78)' }}>
+                  {tactic.script}
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] leading-snug flex-1 min-w-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>Why it works: </span>{tactic.psychologyBasis}
+                </p>
+                <button
+                  onClick={copyScript}
+                  className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded flex-shrink-0"
+                  style={{
+                    background: copied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
+                    color: copied ? '#34d399' : 'rgba(255,255,255,0.45)',
+                    border: `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`,
+                  }}
+                >
+                  {copied ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
+                </button>
+              </div>
+              {tactic.caution && (
+                <p className="text-[10px] mt-2 leading-snug" style={{ color: '#f59e0b' }}>
+                  ⚠ {tactic.caution}
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const NegotiationTacticsSection: React.FC<{ tactics: PsychologicalNegotiationTactic[] }> = ({ tactics }) => {
+  if (!tactics || tactics.length === 0) return null;
+  return (
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(167,139,250,0.04)', border: '1px solid rgba(167,139,250,0.18)' }}>
+      <div className="flex items-center gap-2 mb-1">
+        <Scale className="w-4 h-4" style={{ color: '#a78bfa' }} />
+        <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Negotiation Tactics</span>
+        <span className="text-[10px] px-2 py-0.5 rounded-full ml-auto" style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}>
+          {tactics.length} ready
+        </span>
+      </div>
+      <p className="text-[11px] mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        Evidence-based scripts for retention, severance, or counter-offer conversations — ranked for your leverage.
+      </p>
+      <div className="space-y-2">
+        {tactics.map((t, i) => <TacticCard key={i} tactic={t} index={i} />)}
+      </div>
+    </div>
+  );
 };
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -358,13 +518,27 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
   const synthesis = (result as any).strategySynthesis;
   const confidence = (result as any).careerConfidence;
   const network = (result as any).networkLeverage;
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [showOfferModal, setShowOfferModal] = useState(false);
+
+  // Persist phase-action completion across remounts (the AdaptiveBlock unmounts
+  // StrategyTab when collapsed, which previously wiped progress). Keyed by
+  // company + role so different audits keep separate checklists.
+  const completionKey = useMemo(
+    () => `hp_strategy_done::${(companyData as any)?.name ?? 'co'}::${result.workTypeKey ?? 'role'}`,
+    [companyData, result.workTypeKey],
+  );
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(completionKey);
+      return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+    } catch { return new Set(); }
+  });
 
   const toggleAction = (id: string) => {
     setCompletedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
+      try { localStorage.setItem(completionKey, JSON.stringify([...next])); } catch { /* quota */ }
       return next;
     });
   };
@@ -415,6 +589,17 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
               {synthesis.strategyRationale}
             </p>
+            {/* Promotion timing — computed by the engine but never shown before.
+                Null when an exit strategy makes promotion timing irrelevant. */}
+            {synthesis.promotionTimingNote && (
+              <div className="flex items-start gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <TrendingUp className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: strategyColors.text }} />
+                <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <span className="font-semibold" style={{ color: strategyColors.text }}>Promotion timing: </span>
+                  {synthesis.promotionTimingNote}
+                </p>
+              </div>
+            )}
           </div>
           <div className="text-center flex-shrink-0">
             <div className="text-3xl font-black" style={{ color: urgencyColor }}>
@@ -484,13 +669,34 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           <div className="flex items-center gap-2 mb-2">
             <Star className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
             <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>TOP PRIORITY NOW</span>
+            {typeof synthesis.topPriorityAction?.roiScore === 'number' && (
+              <span className="text-[9px] font-mono ml-auto px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0' }}>
+                ROI {synthesis.topPriorityAction.roiScore}
+              </span>
+            )}
           </div>
           <p className="text-sm font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
             {synthesis.topPriorityAction?.title}
           </p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {synthesis.topPriorityAction?.timeHorizon}
-          </p>
+          {/* Surface the rationale (WHY this is the priority) — previously dropped. */}
+          {synthesis.topPriorityAction?.rationale && (
+            <p className="text-xs mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              {synthesis.topPriorityAction.rationale}
+            </p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              {synthesis.topPriorityAction?.timeHorizon}
+            </span>
+            {synthesis.topPriorityAction?.sourceLayer && (
+              <>
+                <span className="text-[10px] opacity-30">·</span>
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {synthesis.topPriorityAction.sourceLayer}
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl p-4" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
@@ -524,6 +730,9 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         </div>
         <ArrowRight className="w-4 h-4 opacity-40" />
       </motion.button>
+
+      {/* Negotiation tactics — the "& negotiation" content, previously unrendered */}
+      <NegotiationTacticsSection tactics={synthesis.psychologicalNegotiationTactics ?? []} />
 
       {/* Strategic phases */}
       <div>
@@ -560,7 +769,10 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             </div>
           </div>
           <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>{network.networkHeadline}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+
+          {/* Headline metrics — now includes time-to-first-referral + diversity,
+              both computed by the engine but previously never surfaced. */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="text-center">
               <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.estimatedWarmContacts}</div>
               <div className="text-[10px] opacity-40">warm contacts</div>
@@ -569,16 +781,85 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.referralAccessScore}</div>
               <div className="text-[10px] opacity-40">referral score</div>
             </div>
-            <div className="text-center">
-              <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                {network.applicationChannelSplit.warmReferral}%
+            {network.networkDiversityScore != null && (
+              <div className="text-center">
+                <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.networkDiversityScore}</div>
+                <div className="text-[10px] opacity-40">diversity</div>
               </div>
-              <div className="text-[10px] opacity-40">via referrals</div>
-            </div>
+            )}
+            {network.timeToFirstReferral && (
+              <div className="text-center">
+                <div className="text-sm font-bold" style={{ color: '#10b981' }}>{network.timeToFirstReferral}</div>
+                <div className="text-[10px] opacity-40">to 1st referral</div>
+              </div>
+            )}
           </div>
+
+          {/* Recommended application channel split — was showing only 1 of 3
+              numbers (the warm-referral %), which misrepresented the metric.
+              Now renders the full recommended split as a stacked bar. */}
+          {network.applicationChannelSplit && (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                RECOMMENDED APPLICATION MIX
+              </p>
+              <div className="flex h-2 rounded-full overflow-hidden mb-1.5">
+                <div style={{ width: `${network.applicationChannelSplit.warmReferral}%`, background: '#10b981' }} />
+                <div style={{ width: `${network.applicationChannelSplit.recruiterOutreach}%`, background: '#00d4e0' }} />
+                <div style={{ width: `${network.applicationChannelSplit.directApply}%`, background: 'rgba(255,255,255,0.25)' }} />
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                <span className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: '#10b981' }} />
+                  {network.applicationChannelSplit.warmReferral}% warm referral
+                </span>
+                <span className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: '#00d4e0' }} />
+                  {network.applicationChannelSplit.recruiterOutreach}% recruiter
+                </span>
+                <span className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.4)' }} />
+                  {network.applicationChannelSplit.directApply}% direct apply
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Top referral opportunities — specific, computed, never rendered before. */}
+          {Array.isArray(network.topReferralOpportunities) && network.topReferralOpportunities.length > 0 && (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>TOP REFERRAL OPPORTUNITIES</p>
+              <div className="space-y-2">
+                {network.topReferralOpportunities.slice(0, 3).map((opp: any, i: number) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
+                      style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                      {Math.round((opp.referralProbability ?? 0) * 100)}%
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>{opp.targetCompanyType}</p>
+                      <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.5)' }}>{opp.actionToActivate}</p>
+                      {opp.timeToReferral && (
+                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>~{opp.timeToReferral}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>ACTIVATION PLAN</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{network.activationPlan[0]}</p>
+            {/* Show the full sequenced activation plan, not just step 1. */}
+            <div className="space-y-1.5">
+              {(network.activationPlan ?? []).slice(0, 3).map((step: string, i: number) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-[10px] font-black flex-shrink-0 mt-0.5" style={{ color: '#00d4e0' }}>{i + 1}.</span>
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{step}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -591,12 +872,27 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               <Brain className="w-4 h-4" style={{ color: '#a78bfa' }} />
               <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Readiness Profile</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
-              background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)',
-            }}>
-              {confidence.confidenceTier.replace(/_/g, ' ')}
-            </span>
+            <div className="flex items-center gap-2">
+              {typeof confidence.compositeScore === 'number' && (
+                <span className="text-sm font-black" style={{ color: '#a78bfa' }}>{confidence.compositeScore}<span className="text-[10px] opacity-50">/100</span></span>
+              )}
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
+                background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)',
+              }}>
+                {confidence.confidenceTier.replace(/_/g, ' ')}
+              </span>
+            </div>
           </div>
+          {/* Readiness headline + estimated time-to-ready — both computed but
+              never shown. They answer "how ready am I and how long to fix it?" */}
+          {confidence.readinessHeadline && (
+            <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{confidence.readinessHeadline}</p>
+          )}
+          {typeof confidence.estimatedReadyInDays === 'number' && confidence.estimatedReadyInDays > 0 && (
+            <p className="text-[11px] mb-3" style={{ color: 'rgba(167,139,250,0.85)' }}>
+              ~{confidence.estimatedReadyInDays} days of focused effort to reach job-ready.
+            </p>
+          )}
           <div className="space-y-2">
             {confidence.pillars.map((pillar: any) => (
               <div key={pillar.id} className="flex items-center gap-3">
@@ -612,10 +908,20 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               </div>
             ))}
           </div>
-          {confidence.criticalGap && (
-            <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+          {/* Key strength to leverage — paired with the critical gap so the
+              profile shows both the asset and the weakness, not just the weakness. */}
+          {confidence.keyStrength && (
+            <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                <span className="font-semibold" style={{ color: '#ef4444' }}>Critical gap: </span>
+                <span className="font-semibold" style={{ color: '#10b981' }}>Key strength ({confidence.keyStrength.name}): </span>
+                lead with this — it is your strongest readiness pillar.
+              </p>
+            </div>
+          )}
+          {confidence.criticalGap && (
+            <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <span className="font-semibold" style={{ color: '#ef4444' }}>Critical gap ({confidence.criticalGap.name}): </span>
                 {confidence.criticalGap.topAction}
               </p>
             </div>
@@ -623,23 +929,36 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         </div>
       )}
 
-      {/* Competitive position + risks */}
+      {/* Competitive position + risk/opportunity — the 2-col grid previously had
+          an empty second column (only BIGGEST RISK rendered), which read as a
+          layout bug. Now pairs the biggest risk with the biggest opportunity. */}
       <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>YOUR POSITION</p>
         <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.competitivePositionStatement}</p>
-        <div className="mt-3 pt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div>
-            <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: 'rgba(239,68,68,0.8)' }}>BIGGEST RISK</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{synthesis.singleBiggestRisk}</p>
+        <div className="mt-3 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="rounded-lg p-2.5" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+            <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'rgba(239,68,68,0.85)' }}>
+              <AlertTriangle className="w-3 h-3" /> BIGGEST RISK
+            </p>
+            <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.singleBiggestRisk}</p>
+          </div>
+          <div className="rounded-lg p-2.5" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
+            <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#10b981' }}>
+              <TrendingUp className="w-3 h-3" /> BIGGEST OPPORTUNITY
+            </p>
+            <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.singleBiggestOpportunity}</p>
           </div>
         </div>
       </div>
 
-      {/* Offer modal */}
+      {/* Offer modal — currentSalary sourced from the user's saved financial
+          context so the comp-delta dimension compares against their REAL salary,
+          not a fabricated 85%-of-offer placeholder. */}
       <AnimatePresence>
         {showOfferModal && (
           <OfferModal
             currentScore={result.total}
+            currentSalary={loadFinancialContext()?.currentAnnualIncome ?? undefined}
             onClose={() => setShowOfferModal(false)}
           />
         )}

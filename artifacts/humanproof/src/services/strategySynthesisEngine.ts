@@ -350,6 +350,168 @@ function buildRoleFamilySpecificActions(inputs: StrategySynthesisInputs): Strate
   return actions;
 }
 
+// ── Role-family-specific SHORT-TERM actions (1–3 months) ──────────────────────
+// The generic short-term phase (warm referrals / applications / portfolio) was
+// identical for every user. These libraries make the 1–3 month plan reflect the
+// hiring mechanics of the user's actual profession — different channels, proof
+// artifacts, and credentials per family. Blended into buildShortTermPhase().
+
+interface MicroAction {
+  title: string;
+  description: string;
+  rationale: string;
+  roiScore: number;
+  timeHorizon: string;
+  sourceLayer: string;
+}
+
+const SHORT_TERM_BY_FAMILY: Record<string, MicroAction[]> = {
+  sw: [
+    { title: 'Ship one public AI-assisted project and write the build-up', description: 'Build a small but complete project using an AI coding workflow (Cursor/Copilot), deploy it, and write a short post on what the AI did vs. what you decided. Pin it to your GitHub and LinkedIn.', rationale: 'Engineers with a visible AI-integrated project convert interviews 2× better — it proves judgment, not just coding.', roiScore: 84, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Software' },
+    { title: 'Pass one system-design / DSA refresher loop', description: 'Run 8–10 mock interviews (Pramp, interviewing.io) targeting the level you want. Track which rounds you fail and drill those specifically.', rationale: 'Engineering loops are won on the 2–3 rounds you are weakest at; targeted mock data fixes that faster than general study.', roiScore: 78, timeHorizon: 'Weeks 2–8', sourceLayer: 'Role Intelligence · Software' },
+  ],
+  ds: [
+    { title: 'Publish one end-to-end analysis with a business recommendation', description: 'Take a public dataset (or sanitized work problem), build the analysis in a notebook + dashboard, and end with a clear "so the business should do X" slide. Share it.', rationale: 'Data candidates who show decision impact (not just charts) get senior-track callbacks; the recommendation layer is the differentiator.', roiScore: 82, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Data' },
+    { title: 'Add one LLM/AI-analytics capability to your toolkit', description: 'Learn one AI-for-analytics workflow (text-to-SQL, an LLM eval, or an AI-assisted notebook) and apply it to a real question. Document the time saved.', rationale: 'AI-augmented analysts are being retained while pure-reporting analysts are cut; this is the clearest retention signal in data roles.', roiScore: 80, timeHorizon: 'Weeks 3–8', sourceLayer: 'Role Intelligence · Data' },
+  ],
+  hr: [
+    { title: 'Build one people-analytics artifact (attrition or hiring funnel)', description: 'Use a public or sanitized dataset to build an attrition or funnel dashboard with a recommendation. Demonstrates the shift from admin HR to strategic, data-driven HR.', rationale: 'Data-literate HR professionals are retained while transactional HR is automated; the analytics artifact is the proof.', roiScore: 80, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · HR' },
+    { title: 'Earn one AI-in-HR or people-analytics credential', description: 'Complete a focused certificate (people analytics, AI-augmented recruiting) with an applied deliverable.', rationale: 'AI-native HR practitioners close roles faster and are insulated from ATS-automation waves.', roiScore: 74, timeHorizon: 'Weeks 3–8', sourceLayer: 'Role Intelligence · HR' },
+  ],
+  pm: [
+    { title: 'Write one public product teardown or PRD case study', description: 'Pick a product you know, write a crisp teardown (problem → insight → what you would build → metric), and publish it. This is your interview portfolio.', rationale: 'PM hiring is judgment-based; a published artifact of your thinking out-converts a resume bullet 3×.', roiScore: 82, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Product' },
+    { title: 'Quantify one shipped outcome with a hard metric', description: 'Rewrite your strongest project as "drove [metric] by [number] via [decision]." Get the number even if approximate — PMs are hired on outcomes.', rationale: 'PMs with quantified outcomes have materially higher callback rates than feature-list resumes.', roiScore: 76, timeHorizon: 'Weeks 1–3', sourceLayer: 'Role Intelligence · Product' },
+  ],
+  design: [
+    { title: 'Add 2 process-led case studies to your portfolio', description: 'For two projects, show the research, the problem framing, and why-this-not-that — not just final screens. Include one AI-assisted production example.', rationale: 'Design hiring has shifted to judgment and research as production craft commoditizes; process case studies are what gets shortlisted.', roiScore: 84, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Design' },
+    { title: 'Run a portfolio review with 2 senior designers', description: 'Get two critique sessions from designers a level above you and revise. Book via ADPList (free) if you lack the network.', rationale: 'External critique catches the 2–3 portfolio weaknesses that silently kill applications.', roiScore: 72, timeHorizon: 'Weeks 2–5', sourceLayer: 'Role Intelligence · Design' },
+  ],
+  fin: [
+    { title: 'Register with 2 specialist finance recruiters', description: 'Finance roles above mid-level are headhunter-driven. Register with specialist firms in your niche and send a model sample or deal sheet (sanitized).', rationale: 'Being in specialist headhunter databases is a prerequisite to accessing senior finance roles that are never posted.', roiScore: 85, timeHorizon: 'Weeks 1–3', sourceLayer: 'Role Intelligence · Finance' },
+    { title: 'Automate one recurring model and document the time saved', description: 'Replace one spreadsheet workflow with Python/AI and write up the hours saved. This is both a retention signal and an interview story.', rationale: 'Self-automating FP&A professionals are being retained while manual-reporting peers are cut.', roiScore: 79, timeHorizon: 'Weeks 2–7', sourceLayer: 'Role Intelligence · Finance' },
+  ],
+  sales: [
+    { title: 'Build a one-page "ramp + numbers" brag sheet', description: 'Document quota attainment, ramp time, largest deals, and logos closed. This is what hiring sales leaders screen on.', rationale: 'Sales hiring is numbers-first; a quantified attainment sheet beats any narrative resume.', roiScore: 82, timeHorizon: 'Weeks 1–3', sourceLayer: 'Role Intelligence · Sales' },
+    { title: 'Reactivate 10 champions from past accounts', description: 'Message 10 former buyers/champions to reconnect. They are your fastest path to warm referrals and references in a sales search.', rationale: 'Sellers are hired through their relationship capital; champions move companies and pull you in.', roiScore: 80, timeHorizon: 'Weeks 2–5', sourceLayer: 'Role Intelligence · Sales' },
+  ],
+  hc: [
+    { title: 'Enroll in 1–2 additional state license compacts', description: 'Expand multi-state compact enrollment (IMLC/eNLC). Each compact multiplies your addressable market and unlocks telehealth roles.', rationale: 'Compact holders access 37+ state markets vs. 1 — the single highest-leverage market-access move in clinical careers.', roiScore: 86, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Healthcare' },
+    { title: 'Register with 2 clinical staffing firms', description: 'Most clinical roles fill via staffing firms and peer referrals, not postings. Register with 2 and keep credentials current.', rationale: 'Clinical talent is in systemic shortage; being in staffing databases surfaces unposted roles.', roiScore: 80, timeHorizon: 'Weeks 1–4', sourceLayer: 'Role Intelligence · Healthcare' },
+  ],
+  legal: [
+    { title: 'Refresh Martindale/Avvo/LinkedIn legal profiles', description: 'Update directory profiles with recent matters (sanitized), admissions, and publications. GCs and managing partners reference these before reaching out.', rationale: 'Legal hiring is referral- and directory-driven; a stale profile is invisible to inbound.', roiScore: 78, timeHorizon: 'Weeks 1–4', sourceLayer: 'Role Intelligence · Legal' },
+    { title: 'Reconnect with 3 partners or in-house GCs', description: 'Maintain visibility with your bar network — not asking for a job, just staying present. Senior legal roles are rarely posted.', rationale: 'Your bar network IS your job market in law; warm visibility precedes opportunity.', roiScore: 84, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Legal' },
+  ],
+  mkt: [
+    { title: 'Build a 1-page ROI portfolio (CAC/ROAS/pipeline)', description: 'Show 3 campaigns with channel, budget, and quantified outcome. CMOs hire on numbers, not descriptions.', rationale: 'Marketers who demonstrate quantified ROI have ~2.5× higher callback rates.', roiScore: 84, timeHorizon: 'Weeks 1–4', sourceLayer: 'Role Intelligence · Marketing' },
+    { title: 'Ship one AI-augmented content/campaign workflow', description: 'Stand up a generative-AI workflow for content or campaign ops and measure the lift. Make it an interview story.', rationale: 'AI-fluent marketers are retained as production commoditizes; this is the durable signal.', roiScore: 78, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Marketing' },
+  ],
+  ops: [
+    { title: 'Document 3 process improvements with $ or % impact', description: 'Quantify operational wins ("cut COGS 12% via vendor renegotiation"). This is what ops hiring managers screen on.', rationale: 'Quantified-impact ops resumes convert highest; generic ops resumes have the lowest callback rate.', roiScore: 80, timeHorizon: 'Weeks 1–4', sourceLayer: 'Role Intelligence · Operations' },
+    { title: 'Ship one AI/no-code automation of a real workflow', description: 'Automate a recurring ops process (Make/Zapier/Airtable AI) and document hours saved. Proof you operate the system, not just run it.', rationale: 'Ops pros who own automation are reclassified from coordinators to operators — the protected tier.', roiScore: 78, timeHorizon: 'Weeks 2–7', sourceLayer: 'Role Intelligence · Operations' },
+  ],
+  cons: [
+    { title: 'Activate your firm alumni network explicitly', description: 'Message your former firm\'s alumni group and B-school career office: "I am open and exploring." This is expected and respected in consulting.', rationale: 'Consulting hiring is ~75% alumni-referral — the densest, most responsive network of any function.', roiScore: 88, timeHorizon: 'Weeks 1–3', sourceLayer: 'Role Intelligence · Consulting' },
+    { title: 'Package one engagement into a public case study', description: 'Turn a sanitized engagement into a problem→approach→impact one-pager. Demonstrates structured thinking to hiring partners.', rationale: 'Consultants are hired on structured-thinking evidence; a clean case study is portable proof.', roiScore: 76, timeHorizon: 'Weeks 2–6', sourceLayer: 'Role Intelligence · Consulting' },
+  ],
+  bpo: [
+    { title: 'Reframe your work around process improvement', description: 'Rewrite your experience from volume ("150 tickets/day") to improvement ("built macros cutting resolution time 35%").', rationale: 'BPO firms retain agents who identify automation; the reframe moves you from at-risk to valuable.', roiScore: 78, timeHorizon: 'Weeks 1–4', sourceLayer: 'Role Intelligence · BPO' },
+    { title: 'Earn one analytics or automation micro-credential', description: 'Complete a short certificate (Zendesk, RPA basics, or analytics) and apply it to your current queue. Proof you move up the value chain.', rationale: 'Up-skilled support staff survive automation waves; pure-agent profiles are first to be cut.', roiScore: 72, timeHorizon: 'Weeks 2–8', sourceLayer: 'Role Intelligence · BPO' },
+  ],
+  ind: [
+    { title: 'Register with 2 specialist trade staffing firms', description: 'Industrial/trades roles fill via specialty staffing (Aerotek, Tradesmen International) and trade associations, not general boards.', rationale: 'General job boards carry <15% of skilled-trade postings; specialty firms place 60%+.', roiScore: 82, timeHorizon: 'Weeks 1–3', sourceLayer: 'Role Intelligence · Industrial' },
+    { title: 'Add one in-demand certification or ticket', description: 'Earn or renew a certification that expands the roles you qualify for (safety, equipment, or a digital/automation ticket).', rationale: 'Certifications directly gate access to higher-paid industrial roles and signal currency.', roiScore: 74, timeHorizon: 'Weeks 2–10', sourceLayer: 'Role Intelligence · Industrial' },
+  ],
+};
+
+function buildRoleFamilyShortTermActions(inputs: StrategySynthesisInputs): StrategyAction[] {
+  const family = inputs.roleFamily ?? 'default';
+  const lib = SHORT_TERM_BY_FAMILY[family];
+  if (!lib) return [];
+  return lib.map((a) => ({
+    id: stableSynthId('rfst', `${family}-${a.title}`),
+    phase: 'PHASE_2_SHORT_TERM' as const,
+    title: a.title,
+    description: a.description,
+    rationale: a.rationale,
+    roiScore: a.roiScore,
+    timeHorizon: a.timeHorizon,
+    sourceLayer: a.sourceLayer,
+    isUrgent: false,
+  })).slice(0, 2);
+}
+
+// ── Role-family-specific LONG-TERM actions (3–12 months) ──────────────────────
+const LONG_TERM_BY_FAMILY: Record<string, MicroAction[]> = {
+  sw: [
+    { title: 'Establish a public specialty (one domain, deeply)', description: 'Pick one area (AI systems, platform, reliability) and publish 2–3 substantial pieces over the next 6 months — talks, deep posts, or OSS. Become known for one thing.', rationale: 'Specialists with a visible body of work are recruited; generalists compete on volume. Depth compounds.', roiScore: 86, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Software' },
+  ],
+  ds: [
+    { title: 'Move up the stack toward decision ownership', description: 'Take ownership of one metric or model that drives a real decision, end to end. Target analytics-engineering or DS roles where you own outcomes, not reports.', rationale: 'Decision-owning data roles are structurally safer than reporting roles as AI absorbs dashboards.', roiScore: 84, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Data' },
+  ],
+  hr: [
+    { title: 'Move from administrative HR into strategic/people-analytics HR', description: 'Position for a role that owns workforce strategy or analytics rather than transactional HR ops. Build the case via your analytics artifact and one AI-HR credential.', rationale: 'Strategic, data-driven HR is durable; transactional HR is the most automatable slice of the function.', roiScore: 82, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · HR' },
+  ],
+  pm: [
+    { title: 'Target a 0→1 or AI-product mandate', description: 'Position for a role owning a new product surface or an AI capability. Build the narrative now via your teardowns and shipped outcomes.', rationale: 'PMs who own ambiguity and AI products are the protected tier; execution-only PM headcount is most exposed.', roiScore: 84, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Product' },
+  ],
+  design: [
+    { title: 'Build authority in research + systems, not just craft', description: 'Develop and publish a point of view on design systems or research rigor in the AI era. This is where design value is migrating.', rationale: 'As production commoditizes, design value moves to research/strategy; visible authority there protects you.', roiScore: 82, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Design' },
+  ],
+  fin: [
+    { title: 'Position for an FP&A-strategy or analytics-finance pivot', description: 'Move from reporting toward forecasting/strategy. Build the AI-finance skill and the relationships to land the higher-leverage seat.', rationale: 'Strategy/forecasting finance roles are safer than transactional finance as automation expands.', roiScore: 84, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Finance' },
+  ],
+  sales: [
+    { title: 'Move up-market into complex, multi-stakeholder deals', description: 'Build a track record on consultative enterprise deals. The transactional, single-decision-maker sale is where AI compresses headcount.', rationale: 'Enterprise sellers compound in value; transactional roles are most exposed to self-serve + AI.', roiScore: 84, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Sales' },
+  ],
+  hc: [
+    { title: 'Build expertise in AI-augmented clinical workflows', description: 'Develop and document protocols for integrating AI tools (scribing, triage, decision support) into care. This is durable, oversight-tier work.', rationale: 'Clinicians who direct and validate AI are safer than those whose tasks AI absorbs.', roiScore: 82, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Healthcare' },
+  ],
+  legal: [
+    { title: 'Specialize in an uncrowded, AI-adjacent niche', description: 'Build a niche such as AI governance/compliance (EU AI Act, US AI regulation). A focused 40-hour credential opens an underserved market.', rationale: 'Regulatory demand for AI-literate lawyers is rising fast; an early niche is durable differentiation.', roiScore: 84, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Legal' },
+  ],
+  mkt: [
+    { title: 'Own a measurable growth charter and AI ops', description: 'Position for a role owning a growth number plus the marketing AI stack. Build the case via your ROI portfolio.', rationale: 'Marketers who own numbers + AI ops are retained; content-only roles are most exposed.', roiScore: 82, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Marketing' },
+  ],
+  ops: [
+    { title: 'Lead one AI-augmented process transformation', description: 'Own a function re-architected around AI and quantify the outcome. Publish a short case study. This is operator-tier, not coordinator-tier.', rationale: 'Operators who own automation transformations are the durable layer as coordination work is absorbed.', roiScore: 84, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Operations' },
+  ],
+  cons: [
+    { title: 'Build a visible practice area at the AI + industry edge', description: 'Develop and publish a focused POV at the intersection of AI and your sector. Consulting rewards visible structured expertise.', rationale: 'A named practice area generates inbound and protects against generalist commoditization.', roiScore: 82, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Consulting' },
+  ],
+  bpo: [
+    { title: 'Transition toward QA, training, or automation ownership', description: 'Use your micro-credentials to move into a role that designs/oversees the work rather than performs it (QA lead, trainer, automation analyst).', rationale: 'Oversight and automation-design roles survive the automation wave that hits front-line volume work.', roiScore: 80, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · BPO' },
+  ],
+  ind: [
+    { title: 'Add a digital/automation skill to a skilled trade', description: 'Layer a digital capability (PLC/automation basics, connected-worker tooling) onto your trade. This is the most protected industrial profile.', rationale: 'Trades + digital are among the safest profiles; the combination is scarce and rising in demand.', roiScore: 82, timeHorizon: 'Months 3–9', sourceLayer: 'Role Intelligence · Industrial' },
+  ],
+};
+
+function buildRoleFamilyLongTermActions(inputs: StrategySynthesisInputs): StrategyAction[] {
+  const family = inputs.roleFamily ?? 'default';
+  const lib = LONG_TERM_BY_FAMILY[family];
+  if (!lib) return [];
+  return lib.map((a) => ({
+    id: stableSynthId('rflt', `${family}-${a.title}`),
+    phase: 'PHASE_3_LONG_TERM' as const,
+    title: a.title,
+    description: a.description,
+    rationale: a.rationale,
+    roiScore: a.roiScore,
+    timeHorizon: a.timeHorizon,
+    sourceLayer: a.sourceLayer,
+    isUrgent: false,
+  }));
+}
+
+// Stable djb2 id so phase-action completion persists across re-audits.
+function stableSynthId(prefix: string, seed: string): string {
+  let hash = 5381;
+  const s = (seed ?? '').toLowerCase().trim();
+  for (let i = 0; i < s.length; i++) hash = ((hash << 5) + hash + s.charCodeAt(i)) >>> 0;
+  return `${prefix}_${hash.toString(36)}`;
+}
+
 // ── Phase builders ─────────────────────────────────────────────────────────────
 
 function buildEmergencyPhase(inputs: StrategySynthesisInputs): StrategicPlan | null {
@@ -535,31 +697,64 @@ function buildShortTermPhase(inputs: StrategySynthesisInputs, strategy: OverallS
     });
   }
 
+  // Skill-portfolio-aware action: only push the generic "build a portfolio
+  // artifact" when the user doesn't already have role-family-specific short-term
+  // actions covering it, and tune the framing to their skill-portfolio score.
+  const weakPortfolio = (inputs.skillPortfolioScore ?? 100) < 50;
   actions.push({
     id: 'syn_s4',
     phase: 'PHASE_2_SHORT_TERM',
-    title: 'Build one visible portfolio artifact demonstrating your key skill',
-    description: 'Publish one tangible artifact: a GitHub project, case study, data analysis, or technical writeup. This should demonstrate your highest-value skill in a way a recruiter can share with a hiring manager.',
+    title: weakPortfolio
+      ? 'Close your biggest skill gap with one shippable deliverable'
+      : 'Build one visible portfolio artifact demonstrating your key skill',
+    description: weakPortfolio
+      ? 'Your skill-portfolio score is below the safe band. Pick the single most market-relevant gap and close it with a concrete, shippable deliverable in the next month — a project, certification-with-project, or published analysis.'
+      : 'Publish one tangible artifact: a GitHub project, case study, data analysis, or technical writeup. This should demonstrate your highest-value skill in a way a recruiter can share with a hiring manager.',
     rationale: 'Portfolio evidence converts 2× better than skill claims in interviews. Creating it now while employed is 3× less stressful than post-layoff.',
-    roiScore: 72,
+    roiScore: weakPortfolio ? 80 : 72,
     timeHorizon: 'Weeks 3–6',
     sourceLayer: 'Skill Confidence (Layer 24)',
     isUrgent: false,
   });
 
+  // v51.0: blend role-family-specific short-term actions so the 1–3 month plan
+  // reflects the user's actual profession (hiring channels, proof artifacts,
+  // credentials), not the same generic list for everyone.
+  const familyActions = buildRoleFamilyShortTermActions(inputs);
+  const merged = [...familyActions, ...actions]
+    .sort((a, b) => b.roiScore - a.roiScore)
+    .slice(0, 6);
+
+  const portfolioCriterion = SHORT_TERM_BY_FAMILY[inputs.roleFamily ?? 'default']
+    ? `${roleFamilyLabel(inputs.roleFamily)} proof artifact published (role-specific)`
+    : 'Portfolio artifact published and shared';
+
   return {
     phase: 'PHASE_2_SHORT_TERM',
     phaseLabel: 'Short-Term (1–3 Months)',
     timeframe: 'Next 30–90 days',
-    actions,
-    phaseObjective: 'Build market-facing presence and generate interview pipeline',
+    actions: merged,
+    phaseObjective: inputs.roleFamily && SHORT_TERM_BY_FAMILY[inputs.roleFamily]
+      ? `Build ${roleFamilyLabel(inputs.roleFamily)}-specific market presence and generate an interview pipeline`
+      : 'Build market-facing presence and generate interview pipeline',
     successCriteria: [
       '3+ warm referrals generated',
       '2+ interviews booked (exploratory or active)',
-      'Portfolio artifact published and shared',
+      portfolioCriterion,
       `Financial runway at ${Math.max(6, inputs.financialRunwayMonths + 2)} months`,
     ],
   };
+}
+
+// Human label for a role family — used in phase objectives and success criteria.
+function roleFamilyLabel(family?: string): string {
+  const LABELS: Record<string, string> = {
+    sw: 'software engineering', ds: 'data & analytics', pm: 'product',
+    design: 'design', fin: 'finance', sales: 'sales', hc: 'healthcare',
+    legal: 'legal', mkt: 'marketing', ops: 'operations', cons: 'consulting',
+    bpo: 'support/BPO', ind: 'industrial/trades', hr: 'people / HR',
+  };
+  return LABELS[family ?? ''] ?? 'your role';
 }
 
 function buildLongTermPhase(inputs: StrategySynthesisInputs): StrategicPlan {
@@ -568,7 +763,7 @@ function buildLongTermPhase(inputs: StrategySynthesisInputs): StrategicPlan {
       id: 'syn_l1',
       phase: 'PHASE_3_LONG_TERM',
       title: 'Target a role at a company with lower layoff risk profile',
-      description: 'Identify companies scoring <40 on layoff risk in your sector. Prioritize: profitable growth-stage companies, diversified revenue, low recent layoff history. Use this engine to evaluate target companies before applying.',
+      description: `Identify companies scoring <40 on layoff risk${inputs.industry ? ` in ${inputs.industry}` : ' in your sector'}. Prioritize: profitable growth-stage companies, diversified revenue, low recent layoff history. Audit each target in this engine before applying — and benchmark them against ${inputs.companyName || 'your current employer'} so you only move to a materially safer profile.`,
       rationale: 'The single largest risk reduction move is changing employers to a more stable company. Median score reduction: 20–30 points.',
       roiScore: 90,
       timeHorizon: 'Months 3–6',
@@ -603,16 +798,57 @@ function buildLongTermPhase(inputs: StrategySynthesisInputs): StrategicPlan {
     },
   ];
 
+  // Geographic arbitrage — only when the user has a target region different from
+  // their current one (avoids a generic "consider relocating" for everyone).
+  if (inputs.targetRegion && inputs.region && inputs.targetRegion !== inputs.region) {
+    actions.push({
+      id: stableSynthId('rflt', `geo-${inputs.region}-${inputs.targetRegion}`),
+      phase: 'PHASE_3_LONG_TERM',
+      title: `Build a relocation/remote bridge to ${inputs.targetRegion}`,
+      description: `Demand for your role is materially stronger in ${inputs.targetRegion} than ${inputs.region}. Over the next two quarters, build the bridge: target remote-eligible employers there, align your CV to that market's expectations, and verify any work-authorization requirements early.`,
+      rationale: 'Geographic arbitrage is one of the largest single levers on both demand and compensation when local conditions are weak.',
+      roiScore: 80,
+      timeHorizon: 'Months 3–9',
+      sourceLayer: 'Geographic Optionality',
+      isUrgent: false,
+    });
+  }
+
+  // Visa-aware long-term: PR/long-term-status track when on a work visa.
+  if (inputs.visaGracePeriodDays != null) {
+    actions.push({
+      id: stableSynthId('rflt', 'visa-stability'),
+      phase: 'PHASE_3_LONG_TERM',
+      title: 'Reduce visa fragility — start a longer-term status track',
+      description: 'Your work authorization is tied to your employer, which compresses every decision. Begin the longest-horizon path available to you (PR/green-card track, a longer-validity visa class, or an employer known for sponsorship stability) so future moves are not forced by grace-period deadlines.',
+      rationale: 'Visa-dependent professionals make worse career decisions under deadline pressure; reducing status fragility is the single biggest structural de-risk.',
+      roiScore: 85,
+      timeHorizon: 'Months 3–12',
+      sourceLayer: 'Visa Risk (Layer 33)',
+      isUrgent: false,
+    });
+  }
+
+  // Blend role-family-specific long-term actions (profession-specific moats).
+  const familyLong = buildRoleFamilyLongTermActions(inputs);
+  const merged = [...familyLong, ...actions]
+    .sort((a, b) => b.roiScore - a.roiScore)
+    .slice(0, 5);
+
   return {
     phase: 'PHASE_3_LONG_TERM',
     phaseLabel: 'Long-Term (3–12 Months)',
     timeframe: '3–12 months horizon',
-    actions,
-    phaseObjective: 'Systematically reduce all structural risk factors and build lasting career resilience',
+    actions: merged,
+    phaseObjective: inputs.roleFamily && LONG_TERM_BY_FAMILY[inputs.roleFamily]
+      ? `Build a lasting ${roleFamilyLabel(inputs.roleFamily)} moat and reduce every structural risk factor`
+      : 'Systematically reduce all structural risk factors and build lasting career resilience',
     successCriteria: [
       'New role at lower-risk company secured (if risk-driven exit) OR position materially strengthened',
       '12-month emergency fund established',
-      'AI specialization demonstrated with portfolio evidence',
+      LONG_TERM_BY_FAMILY[inputs.roleFamily ?? '']
+        ? `${roleFamilyLabel(inputs.roleFamily)} specialty / moat established with public evidence`
+        : 'AI specialization demonstrated with portfolio evidence',
       'Active professional network of 50+ warm contacts across 10+ companies',
     ],
   };

@@ -3431,6 +3431,8 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             <PatternMatchCard
               pattern={result.resolvedPattern}
               overlapScore={result.patternMatchOverlapScore ?? undefined}
+              roleFit={(result as any).patternMatchRoleFit ?? undefined}
+              userRoleTitle={result.workTypeKey?.replace(/_/g, ' ') ?? undefined}
             />
           </div>
         )}

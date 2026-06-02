@@ -18,6 +18,7 @@ import { ActionDependencyGraph, assignPhase } from "../../components/ActionDepen
 import { getCareerIntelligence } from "@/data/intelligence";
 import { getCitiesForRole, formatSalaryPremium, getCityCompanyIntersection, deriveTargetRolePrefix, joinWithAnd } from "@/data/cityOpportunities";
 import { getActionLearningTime, getSkillLearningWeeks, getSkillLearningWeeksForRole } from "@/data/skillLearningHours";
+import { getProductivityToolsForRole, familyDisplayLabel, type ProductivityTool } from "@/data/roleProductivityTools";
 import { TimeAvailableTrack, TRACKS } from "../../components/TimeAvailableTrack";
 import type { TrackType } from "../../components/TimeAvailableTrack";
 import { FinancialContextInput } from "../../components/FinancialContextInput";
@@ -80,35 +81,34 @@ import CompensationRiskPanel from "./common/CompensationRiskPanel";
 // Produces specific, non-generic action items based on role, score, and company context.
 // ---------------------------------------------------------------------------
 
-const ROLE_SPECIFIC_ACTIONS: Record<string, Partial<ActionPlanItem>[]> = {
-  // Software / Tech
-  sw: [
-    { title: "Ship an AI-Assisted Project to Production", description: "Build and deploy a feature using GitHub Copilot, Cursor, or similar AI coding assistant. Document the productivity gain. This is now the baseline expectation for senior engineers.", layerFocus: "L3 · Role Displacement", riskReductionPct: 18 },
-    { title: "Build a Personal AI Evaluation Framework", description: "Create a documented process for reviewing, testing, and quality-checking AI-generated code. Engineers who can validate AI outputs command 30–50% salary premiums.", layerFocus: "L3 · Role Displacement", riskReductionPct: 22 },
-  ],
-  fin: [
-    { title: "Automate One Financial Model with Python/AI", description: "Replace a spreadsheet-based workflow with Python (pandas + OpenAI API). Document the time savings. FP&A teams that self-automate are retaining headcount while others shrink.", layerFocus: "L3 · Role Displacement", riskReductionPct: 20 },
-    { title: "Earn an AI + Finance Certification", description: "Complete Wharton's 'AI for Finance' or CFI's 'Financial Modeling & AI' course. Credentials signal proactive adaptation and differentiate you in the next round cut.", layerFocus: "L3 · Role Displacement", riskReductionPct: 15 },
-  ],
-  hr: [
-    { title: "Build a People Analytics Dashboard", description: "Use public tools (Tableau Public, Google Looker Studio) to build a retention or attrition prediction model from freely available workforce data. Demonstrates transition from admin to strategic HR.", layerFocus: "L3 · Role Displacement", riskReductionPct: 25 },
-    { title: "Get Certified in AI-Augmented Recruiting", description: "Complete LinkedIn's 'AI in HR' or SHRM's AI upskilling program. AI-native recruiters close roles 40% faster and are insulated from ATS automation waves.", layerFocus: "L3 · Role Displacement", riskReductionPct: 18 },
-  ],
-  leg: [
-    { title: "Master Contract AI Tools (Harvey, Lexis+)", description: "Get proficient in AI legal research and contract review tools. Legal professionals who can validate and supervise AI legal outputs will handle 3–5x more matters.", layerFocus: "L3 · Role Displacement", riskReductionPct: 22 },
-    { title: "Specialize in AI Governance or Compliance Law", description: "EU AI Act and US AI regulation is creating urgent demand for lawyers who understand AI systems. A 40-hour certification in AI governance opens an uncrowded niche.", layerFocus: "L3 · Role Displacement", riskReductionPct: 28 },
-  ],
-  hc: [
-    { title: "Get Certified in Clinical AI Tools", description: "Complete training on AI-assisted diagnostics platforms (Aidoc, Viz.ai, Tempus). Clinicians who work alongside AI systems are more productive and less vulnerable to scope reduction.", layerFocus: "L3 · Role Displacement", riskReductionPct: 15 },
-    { title: "Build Expertise in AI-Human Care Protocols", description: "Develop and document protocols for integrating AI triage or diagnostic outputs into patient care workflows. Care coordination expertise is structurally irreplaceable.", layerFocus: "L3 · Role Displacement", riskReductionPct: 12 },
-  ],
-  cnt: [
-    { title: "Build an AI-Augmented Content Portfolio", description: "Create a 5-piece portfolio demonstrating AI + human collaboration: use Claude/GPT for draft, add expert editorial layer, track audience metrics. This is the new baseline for content roles.", layerFocus: "L3 · Role Displacement", riskReductionPct: 20 },
-    { title: "Specialize in AI Content Auditing", description: "Develop expertise in detecting, reviewing, and improving AI-generated content. Brands need human curators — not just human creators — and are willing to pay premiums.", layerFocus: "L3 · Role Displacement", riskReductionPct: 25 },
-  ],
-};
+// NOTE: The former hardcoded ROLE_SPECIFIC_ACTIONS table (6 families × 2 generic
+// actions) was removed in this pass. It was dead code — every call site had
+// already migrated to getAdaptiveRoleActions() (seniority-calibrated, all role
+// families) and getPersonalizedActions() (47-role engine with region + profile
+// variants). Keeping the stale table around was the main "static template"
+// smell in this file even though nothing rendered it.
 
 const getPrefix = (roleKey: string) => roleKey.split('_')[0];
+
+/**
+ * Stable content-hash action ID (djb2). MUST stay byte-for-byte identical to
+ * `stableActionId` in auditDataPipeline.ts — the pipeline merges personalized
+ * actions into hybridResult.recommendations with `pa_<hash>` IDs, and the
+ * Action Progress surface persists completion against those IDs. If this builder
+ * emitted index-based IDs (`personalized_0`…) instead, the same action would
+ * carry a different ID here than in the pipeline, so a checkmark set on one
+ * surface would never appear on the other, and any re-order/re-audit would
+ * silently shift completion state onto the wrong row. Hashing the title keys
+ * completion to the action's identity, not its position.
+ */
+function stableActionId(prefix: string, title: string): string {
+  let hash = 5381;
+  const s = (title ?? '').toLowerCase().trim();
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) + hash + s.charCodeAt(i)) >>> 0; // djb2
+  }
+  return `${prefix}_${hash.toString(36)}`;
+}
 
 /** Adjust deadline string by urgency multiplier (e.g. "30 days" × 1.3 → "23 days") */
 function adjustDeadline(deadline: string, multiplier: number): string {
@@ -250,8 +250,11 @@ export function buildDynamicActions(
     metroArea:          uf.metroArea ?? null,
   };
   const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined);
-  const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a, i) => ({
-    id: `personalized_${i}`,
+  const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a) => ({
+    // Match the pipeline's `pa_<hash>` scheme so completion state set here
+    // and in Action Progress refer to the same row. (was `personalized_${i}`,
+    // an index-based ID that broke persistence on every re-order/re-audit.)
+    id: (a as any).id ?? stableActionId('pa', a.title ?? 'Action'),
     title: a.title ?? 'Action',
     description: a.description ?? '',
     priority: (a.priority as ActionPlanItem['priority']) ?? (score >= 65 ? 'Critical' : 'High'),
@@ -420,7 +423,12 @@ export function buildDynamicActions(
   const { actions: seniorityRoleActions } = getAdaptiveRoleActions(prefix, seniorityBracket);
   for (const action of seniorityRoleActions.slice(0, 2)) {
     actions.push({
-      id: `role-${prefix}-${seniorityBracket}-${actions.length}`,
+      // Content-hash ID (was `role-${prefix}-${bracket}-${actions.length}`, which
+      // depended on array length at insertion time — completion state shifted
+      // whenever an upstream action was added/removed). Hashing title+bracket
+      // keeps the ID stable across re-audits while still distinguishing the same
+      // role action calibrated for a different seniority bracket.
+      id: stableActionId('role', `${action.title ?? ''}|${prefix}|${seniorityBracket}`),
       priority: score >= 65 ? "High" : "Medium",
       deadline: score >= 75 ? "45 days" : "90 days",
       riskReductionPct: 15,
@@ -826,6 +834,78 @@ export const COURSE_RESOURCES: Record<string, { title: string; provider: string;
     { title: "Prompt Engineering for Writers", provider: "DeepLearning.AI", url: "https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/", free: true, costINR: 0 },
     { title: "Brand Story in the AI Era", provider: "Domestika", url: "https://www.domestika.org/", free: false, costINR: 1800 },
   ],
+  // ── Data / Analytics ───────────────────────────────────────────────────────
+  data: [
+    { title: "LLMs for Data Analysis", provider: "DeepLearning.AI", url: "https://www.deeplearning.ai/short-courses/", free: true, costINR: 0 },
+    { title: "Advanced SQL for Analytics", provider: "Mode / Coursera", url: "https://mode.com/sql-tutorial/", free: true, costINR: 0 },
+    { title: "Analytics Engineering with dbt", provider: "dbt Labs", url: "https://learn.getdbt.com/", free: true, costINR: 0 },
+  ],
+  // ── ML / AI Engineering ────────────────────────────────────────────────────
+  ml: [
+    { title: "LLM Apps: Building & Evaluating", provider: "DeepLearning.AI", url: "https://www.deeplearning.ai/short-courses/", free: true, costINR: 0 },
+    { title: "Hugging Face NLP Course", provider: "Hugging Face", url: "https://huggingface.co/learn/nlp-course", free: true, costINR: 0 },
+    { title: "Full Stack LLM Bootcamp", provider: "The Full Stack", url: "https://fullstackdeeplearning.com/llm-bootcamp/", free: true, costINR: 0 },
+  ],
+  // ── Product / Program Management ───────────────────────────────────────────
+  pm: [
+    { title: "AI for Product Managers", provider: "Coursera / Duke", url: "https://www.coursera.org/learn/ai-product-management-duke", free: false, costINR: 4500 },
+    { title: "Continuous Discovery Habits", provider: "Product Talk", url: "https://www.producttalk.org/", free: true, costINR: 0 },
+    { title: "Building AI Products", provider: "Reforge", url: "https://www.reforge.com/", free: false, costINR: 12000 },
+  ],
+  // ── Design / UX ────────────────────────────────────────────────────────────
+  design: [
+    { title: "AI for UX Designers", provider: "IxDF", url: "https://www.interaction-design.org/", free: false, costINR: 3500 },
+    { title: "Figma AI & Generative Design", provider: "Figma Learn", url: "https://www.figma.com/resource-library/", free: true, costINR: 0 },
+    { title: "Design Systems at Scale", provider: "DesignSystems.com", url: "https://www.designsystems.com/", free: true, costINR: 0 },
+  ],
+  // ── Sales / Account Management ─────────────────────────────────────────────
+  sales: [
+    { title: "AI for Sales Productivity", provider: "HubSpot Academy", url: "https://academy.hubspot.com/", free: true, costINR: 0 },
+    { title: "Modern Outbound with AI Tools", provider: "Clay University", url: "https://www.clay.com/university", free: true, costINR: 0 },
+    { title: "Consultative Enterprise Selling", provider: "LinkedIn Learning", url: "https://www.linkedin.com/learning/", free: false, costINR: 2500 },
+  ],
+  // ── Operations / BizOps ────────────────────────────────────────────────────
+  ops: [
+    { title: "No-Code Automation (Make)", provider: "Make Academy", url: "https://www.make.com/en/academy", free: true, costINR: 0 },
+    { title: "Operations Analytics", provider: "Coursera / Wharton", url: "https://www.coursera.org/learn/wharton-operations", free: false, costINR: 4500 },
+    { title: "Process Automation with AI", provider: "Zapier Learn", url: "https://zapier.com/learn/", free: true, costINR: 0 },
+  ],
+  // ── Marketing ──────────────────────────────────────────────────────────────
+  mkt: [
+    { title: "AI-Powered Performance Marketing", provider: "Google Skillshop", url: "https://skillshop.withgoogle.com/", free: true, costINR: 0 },
+    { title: "Generative AI for Marketers", provider: "HubSpot Academy", url: "https://academy.hubspot.com/", free: true, costINR: 0 },
+    { title: "Marketing Analytics", provider: "Meta Blueprint", url: "https://www.facebook.com/business/learn", free: true, costINR: 0 },
+  ],
+  // ── Customer Support / Success ─────────────────────────────────────────────
+  cs: [
+    { title: "AI in Customer Service", provider: "Zendesk", url: "https://training.zendesk.com/", free: true, costINR: 0 },
+    { title: "Customer Success Foundations", provider: "LinkedIn Learning", url: "https://www.linkedin.com/learning/", free: false, costINR: 2500 },
+    { title: "Conversation Design for Bots", provider: "Coursera", url: "https://www.coursera.org/", free: false, costINR: 3000 },
+  ],
+  // ── Consulting / Strategy ──────────────────────────────────────────────────
+  cons: [
+    { title: "Generative AI for Consultants", provider: "BCG / Coursera", url: "https://www.coursera.org/", free: false, costINR: 4500 },
+    { title: "Storytelling with Data", provider: "storytellingwithdata", url: "https://www.storytellingwithdata.com/", free: true, costINR: 0 },
+    { title: "AI Strategy & Transformation", provider: "MIT Sloan (edX)", url: "https://www.edx.org/", free: false, costINR: 9000 },
+  ],
+  // ── Education / Training ───────────────────────────────────────────────────
+  edu: [
+    { title: "AI for Educators", provider: "Code.org / Common Sense", url: "https://www.commonsense.org/education/", free: true, costINR: 0 },
+    { title: "Teaching with AI Tools", provider: "MagicSchool AI", url: "https://www.magicschool.ai/", free: true, costINR: 0 },
+    { title: "Learning Design Foundations", provider: "Coursera", url: "https://www.coursera.org/", free: false, costINR: 3000 },
+  ],
+  // ── Industrial / Skilled Trades ────────────────────────────────────────────
+  ind: [
+    { title: "Industry 4.0 & Smart Manufacturing", provider: "Coursera", url: "https://www.coursera.org/", free: false, costINR: 4000 },
+    { title: "AI in Operations & Maintenance", provider: "edX", url: "https://www.edx.org/", free: false, costINR: 5000 },
+    { title: "Frontline Digital Skills", provider: "Google Career Certificates", url: "https://grow.google/certificates/", free: true, costINR: 0 },
+  ],
+  // ── QA / Testing ───────────────────────────────────────────────────────────
+  qa: [
+    { title: "AI-Augmented Test Automation", provider: "Test Automation U", url: "https://testautomationu.applitools.com/", free: true, costINR: 0 },
+    { title: "Playwright End-to-End Testing", provider: "Playwright", url: "https://playwright.dev/docs/intro", free: true, costINR: 0 },
+    { title: "Quality Engineering in the AI Era", provider: "Ministry of Testing", url: "https://www.ministryoftesting.com/", free: false, costINR: 2500 },
+  ],
   default: [
     { title: "AI for Everyone (Non-Technical)", provider: "Coursera / DeepLearning.AI", url: "https://www.coursera.org/learn/ai-for-everyone", free: false, costINR: 4500 },
     { title: "AI Upskilling Fundamentals", provider: "Google", url: "https://grow.google/intl/en_us/guide-to-ai-upskilling/", free: true, costINR: 0 },
@@ -1214,15 +1294,61 @@ export function filterCoursesForProfile(
 // Course Resource Card
 // ---------------------------------------------------------------------------
 
-const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: FinancialProfile | null }> = ({ rolePrefix, financialProfile }) => {
-  const allCourses = COURSE_RESOURCES[rolePrefix] ?? COURSE_RESOURCES.default;
+// A course entry with an optional "why" — populated when the course is matched
+// to one of the user's specific at-risk skills (skill-derived personalisation).
+type RankedCourse = CourseEntry & { reason?: string };
 
-  const courses = useMemo(
-    () => filterCoursesForProfile(allCourses, financialProfile?.riskAppetite),
-    [allCourses, financialProfile?.riskAppetite],
-  );
+/**
+ * Build a skill-targeted "search this skill" learning entry for each of the
+ * user's top at-risk skills. Two people in the same role with different skill
+ * gaps get different entries here — this is what makes the section per-user,
+ * not just per-role. Uses a vendor-neutral course-search deep link so the
+ * suggestion is always live and specific to THEIR skill, not a static title.
+ */
+function buildSkillTargetedCourses(roleKey: string): RankedCourse[] {
+  const intel = getCareerIntelligence(roleKey);
+  const atRisk = intel?.skills?.at_risk ?? [];
+  return atRisk
+    .slice(0, 2)
+    .map((s): RankedCourse => {
+      const q = encodeURIComponent(`${s.skill} AI automation`);
+      return {
+        title: `Stay ahead on "${s.skill}" (risk ${s.riskScore}/100)`,
+        provider: s.aiTool ? `Move to the oversight layer — AI doing this: ${s.aiTool}` : 'Reposition above the automatable layer',
+        url: `https://www.coursera.org/search?query=${q}`,
+        free: true,
+        costINR: 0,
+        reason: 'Targeted to your highest-risk skill',
+      };
+    });
+}
 
-  const conservativeFiltered = financialProfile?.riskAppetite === 'conservative' && courses.length < allCourses.length;
+const CourseResourceCard: React.FC<{ rolePrefix: string; roleKey: string; financialProfile?: FinancialProfile | null }> = ({ rolePrefix, roleKey, financialProfile }) => {
+  const conservative = financialProfile?.riskAppetite === 'conservative';
+
+  // Personalised composition (most-specific first):
+  //   1. skill-targeted entries from the user's own at-risk skills
+  //   2. role-family curated courses (now covering 20+ families, not 6)
+  // De-duplicated by title, then conservative-filtered to free/≤₹3K when needed.
+  const { courses, baseCount, conservativeFiltered } = useMemo(() => {
+    const skillCourses = buildSkillTargetedCourses(roleKey);
+    const roleCourses: RankedCourse[] = (COURSE_RESOURCES[rolePrefix] ?? COURSE_RESOURCES.default).map(c => ({ ...c }));
+    const merged: RankedCourse[] = [...skillCourses, ...roleCourses];
+    // de-dup by title
+    const seen = new Set<string>();
+    const unique = merged.filter(c => {
+      const k = c.title.toLowerCase().trim();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    const filtered = conservative ? unique.filter(c => c.free || c.costINR <= 3000) : unique;
+    return {
+      courses: filtered,
+      baseCount: unique.length,
+      conservativeFiltered: conservative && filtered.length < unique.length,
+    };
+  }, [rolePrefix, roleKey, conservative]);
 
   return (
     <div className="glass-panel p-5 rounded-xl">
@@ -1254,11 +1380,14 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: Fina
             className="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 hover:border-[var(--border-cyan)] transition-all group"
           >
             <div className="p-1.5 rounded-lg bg-white/5 flex-shrink-0">
-              <Star className="w-3.5 h-3.5 text-amber-400" />
+              <Star className={`w-3.5 h-3.5 ${c.reason ? 'text-cyan-400' : 'text-amber-400'}`} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold leading-tight group-hover:text-[var(--cyan)] transition-colors">{c.title}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{c.provider}</div>
+              {c.reason && (
+                <div className="text-[10px] text-cyan-400/80 mt-1 font-semibold">{c.reason}</div>
+              )}
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {c.free && (
@@ -1271,6 +1400,86 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; financialProfile?: Fina
           </a>
         ))}
       </div>
+      {baseCount > 0 && (
+        <p className="text-[9px] text-muted-foreground mt-3">
+          Tailored to your role and your highest-risk skills. Costs are approximate; check provider for current pricing.
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Productivity Tools Card — role-specific AI tools (replaces the old single
+// hardcoded list of 4 tools shown to every user regardless of profession).
+// ---------------------------------------------------------------------------
+
+const ProductivityToolsCard: React.FC<{ roleKey: string }> = ({ roleKey }) => {
+  // Derive extra tools from the user's OWN at-risk skills: when the
+  // intelligence corpus names the AI tool already doing one of their skills,
+  // surface it directly so they learn the exact thing displacing them. This is
+  // the most personalised entry — two users in the same role with different
+  // skill gaps see different leading tools.
+  const skillDerived: ProductivityTool[] = useMemo(() => {
+    const intel = getCareerIntelligence(roleKey);
+    const atRisk = intel?.skills?.at_risk ?? [];
+    const out: ProductivityTool[] = [];
+    for (const s of atRisk) {
+      if (s.aiTool && out.length < 2) {
+        // aiTool may be a comma-separated list — take the first named product.
+        const first = s.aiTool.split(/[,/]/)[0].trim();
+        if (first) {
+          out.push({
+            name: first,
+            desc: `Now automating "${s.skill}" — learn to direct and audit it`,
+            url: `https://www.google.com/search?q=${encodeURIComponent(first)}`,
+            tag: 'YOUR RISK',
+          });
+        }
+      }
+    }
+    return out;
+  }, [roleKey]);
+
+  const { family, roleSpecific, tools } = useMemo(
+    () => getProductivityToolsForRole(roleKey, 5, skillDerived),
+    [roleKey, skillDerived],
+  );
+
+  return (
+    <div className="glass-panel p-5 rounded-xl">
+      <div className="flex items-center gap-2 mb-4">
+        <Cpu className="w-4 h-4 text-violet-400" />
+        <h4 className="font-bold text-sm">AI Productivity Tools</h4>
+        <span className="ml-auto text-[10px] font-black bg-violet-500/15 text-violet-400 border border-violet-500/20 px-1.5 py-0.5 rounded">
+          {roleSpecific ? familyDisplayLabel(family).toUpperCase() : 'GENERAL'}
+        </span>
+      </div>
+      <div className="space-y-2">
+        {tools.map((tool, i) => (
+          <a key={i} href={tool.url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-3 p-2.5 bg-white/5 rounded-lg hover:bg-white/10 transition-colors group"
+          >
+            <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-[var(--cyan)] transition-colors flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold">{tool.name}</div>
+              <div className="text-[10px] text-muted-foreground">{tool.desc}</div>
+            </div>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-black flex-shrink-0 border ${
+              tool.tag === 'YOUR RISK'
+                ? 'bg-red-500/15 text-red-400 border-red-500/20'
+                : 'bg-violet-500/15 text-violet-400 border-violet-500/20'
+            }`}>
+              {tool.tag}
+            </span>
+          </a>
+        ))}
+      </div>
+      <p className="text-[9px] text-muted-foreground mt-3">
+        {roleSpecific
+          ? `Selected for ${familyDisplayLabel(family)} roles — the tools actively reshaping your profession.`
+          : 'General-purpose tools — add your role for profession-specific picks.'}
+      </p>
     </div>
   );
 };
@@ -1285,7 +1494,13 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   const rolePrefix = getPrefix(result.workTypeKey);
 
   // Priority 4: Load financial context from localStorage (set by FinancialContextInput)
-  const financialCtx = useMemo(() => loadFinancialContext(), []);
+  // financialCtxVersion bumps when the user saves their context inline (via the
+  // "Personalise Your Strategy" form below). Without this, financialCtx was read
+  // ONCE at mount with an empty-deps useMemo, so saving the form changed nothing
+  // on the page — no re-derived profile, no re-urgency'd deadlines, no updated
+  // Financial Impact Calculator. The bump forces every downstream memo to recompute.
+  const [financialCtxVersion, setFinancialCtxVersion] = useState(0);
+  const financialCtx = useMemo(() => loadFinancialContext(), [financialCtxVersion]);
   // Pass the visa amplifier so urgencyMultiplier = financialUrgency × visaAmplifier.
   // An H1B holder at score 68 with 3 months runway gets 1.3 × 1.35 = 1.755×.
   // Their "6 months" action plan becomes ~3.4 months — correct, because they
@@ -1882,37 +2097,11 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
 
         {/* Resources Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-          {/* Recommended Courses */}
-          <CourseResourceCard rolePrefix={rolePrefix} financialProfile={financialProfile} />
+          {/* Recommended Courses — role-family + at-risk-skill targeted */}
+          <CourseResourceCard rolePrefix={rolePrefix} roleKey={result.workTypeKey} financialProfile={financialProfile} />
 
-          {/* AI Adaptation Tools */}
-          <div className="glass-panel p-5 rounded-xl">
-            <div className="flex items-center gap-2 mb-4">
-              <Cpu className="w-4 h-4 text-violet-400" />
-              <h4 className="font-bold text-sm">AI Productivity Tools</h4>
-            </div>
-            <div className="space-y-2">
-              {[
-                { name: "Claude (Anthropic)", desc: "Best for analysis, writing, complex reasoning", url: "https://claude.ai", tag: "RECOMMENDED" },
-                { name: "GitHub Copilot", desc: "AI pair programming, code review, documentation", url: "https://github.com/features/copilot", tag: "CODING" },
-                { name: "Perplexity Pro", desc: "Real-time research with citations", url: "https://www.perplexity.ai", tag: "RESEARCH" },
-                { name: "Notion AI", desc: "Docs, task management, knowledge base", url: "https://www.notion.so/product/ai", tag: "PRODUCTIVITY" },
-              ].map((tool, i) => (
-                <a key={i} href={tool.url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 bg-white/5 rounded-lg hover:bg-white/10 transition-colors group"
-                >
-                  <ArrowRight className="w-3 h-3 text-muted-foreground group-hover:text-[var(--cyan)] transition-colors" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold">{tool.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{tool.desc}</div>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/20 font-black flex-shrink-0">
-                    {tool.tag}
-                  </span>
-                </a>
-              ))}
-            </div>
-          </div>
+          {/* AI Adaptation Tools — role-specific, no longer a single hardcoded list */}
+          <ProductivityToolsCard roleKey={result.workTypeKey} />
         </div>
 
         {/* Priority 8: Phased Action Dependency Map */}
@@ -1937,7 +2126,12 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
             title="Personalise Your Strategy"
             description="Two optional assessments that significantly improve the accuracy of your action plan. Stored locally only — never transmitted."
           />
-          <FinancialContextInput riskScore={result.total} currency={financialCtx?.currency ?? 'USD'} />
+          <FinancialContextInput
+            riskScore={result.total}
+            currency={financialCtx?.currency ?? 'USD'}
+            visaAmplifier={visaAmplifier}
+            onProfileDerived={() => setFinancialCtxVersion(v => v + 1)}
+          />
           <CareerCapitalAssessment currentRiskScore={result.total} />
         </div>
 

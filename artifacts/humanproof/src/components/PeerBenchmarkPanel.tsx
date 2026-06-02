@@ -47,6 +47,30 @@ type RoleBenchmark = {
 };
 
 const ROLE_BENCHMARKS: Record<string, RoleBenchmark> = {
+  // ── Software Engineering ────────────────────────────────────────────────────
+  // Covers sw_software_engineer, sw_backend, sw_frontend, sw_fullstack, etc.
+  sw_software: {
+    label: 'Software Engineers',
+    companyTier: 'large tech companies',
+    sampleSize: 3241,
+    distribution: [32, 42, 54, 66, 78],
+    topActions: [
+      'Shipped AI-integrated features in existing codebase',
+      'Built public portfolio of AI-assisted work (GitHub)',
+      'Took on cross-team technical leadership roles',
+    ],
+  },
+  sw_software_engineer: {
+    label: 'Software Engineers',
+    companyTier: 'large tech companies',
+    sampleSize: 3241,
+    distribution: [32, 42, 54, 66, 78],
+    topActions: [
+      'Shipped AI-integrated features in existing codebase',
+      'Built public portfolio of AI-assisted work (GitHub)',
+      'Took on cross-team technical leadership roles',
+    ],
+  },
   // ── QA / Testing ────────────────────────────────────────────────────────────
   sw_testing: {
     label: 'QA Engineers',
@@ -179,11 +203,17 @@ const DEFAULT_BENCHMARK: RoleBenchmark = {
 };
 
 function getRoleBenchmark(roleKey: string): RoleBenchmark {
-  // Try direct match, then prefix match
+  // Try exact match first.
   if (ROLE_BENCHMARKS[roleKey]) return ROLE_BENCHMARKS[roleKey];
-  const prefix = roleKey.split('_')[0];
-  const prefixMatch = Object.keys(ROLE_BENCHMARKS).find(k => k.startsWith(prefix + '_'));
-  if (prefixMatch) return ROLE_BENCHMARKS[prefixMatch];
+  // Try 2-segment prefix (e.g. sw_software from sw_software_engineer).
+  // Using only the first segment is too greedy — "sw" matches "sw_testing" (QA
+  // Engineers) even for Software Engineers, creating a wildly wrong benchmark.
+  const parts = roleKey.split('_');
+  if (parts.length >= 2) {
+    const twoSeg = `${parts[0]}_${parts[1]}`;
+    if (ROLE_BENCHMARKS[twoSeg]) return ROLE_BENCHMARKS[twoSeg];
+  }
+  // Only fall back to a generic when no close match exists.
   return DEFAULT_BENCHMARK;
 }
 
@@ -208,11 +238,59 @@ function getScoreColor(score: number): string {
   return 'var(--red)';
 }
 
+/**
+ * Experience adjusts standing within the peer cohort. The benchmark distribution
+ * is role-wide; two people with the same score but very different tenure are not
+ * equally protected. Seniority is a mild protective signal against displacement
+ * (institutional knowledge, relationships, harder to backfill), so we nudge the
+ * displayed percentile DOWN (less at-risk) for senior bands and UP for juniors.
+ * The shift is intentionally small (±6 pts max) so it refines rather than
+ * overrides the score-driven percentile.
+ * Returns a delta to ADD to the computed percentile (negative = better protected).
+ */
+function experiencePercentileShift(experience: string): number {
+  const e = (experience ?? '').toLowerCase();
+  if (/0-2|<\s*1|intern|entry|junior/.test(e)) return +6;   // earlier-career → more exposed
+  if (/2-5|3-5/.test(e)) return +2;
+  if (/5-10|6-10/.test(e)) return 0;                         // reference band
+  if (/10-15|10-20/.test(e)) return -3;
+  if (/15|20|25|principal|staff|director|vp|head|chief/.test(e)) return -6; // senior → better protected
+  return 0;
+}
+
+/** A short industry qualifier appended to the cohort label, when known. */
+function industryQualifier(industryKey: string): string {
+  const k = (industryKey ?? '').toLowerCase();
+  if (!k || k === 'default' || k === 'unknown') return '';
+  const MAP: Array<[RegExp, string]> = [
+    [/tech|software|saas|it_/, 'in tech'],
+    [/financ|bank|fintech|insur/, 'in financial services'],
+    [/health|pharma|biotech|medical/, 'in healthcare'],
+    [/retail|ecommerce|commerce/, 'in retail/e-commerce'],
+    [/manufactur|industrial|auto/, 'in manufacturing'],
+    [/media|content|entertain/, 'in media'],
+    [/consult|services|bpo|ites/, 'in services'],
+    [/gov|public|edu|academ/, 'in public sector'],
+    [/energy|utilit|oil|climate/, 'in energy'],
+    [/telecom/, 'in telecom'],
+  ];
+  for (const [re, label] of MAP) if (re.test(k)) return label;
+  return '';
+}
+
 export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, score, experience }) => {
   const bench = useMemo(() => getRoleBenchmark(roleKey), [roleKey]);
   const [p10, p25, median, p75, p90] = bench.distribution;
 
-  const percentile = useMemo(() => computePercentile(score, bench.distribution), [score, bench.distribution]);
+  // Score-driven percentile, then a small experience-aware adjustment so tenure
+  // refines standing (was: experience prop accepted but never used).
+  const basePercentile = useMemo(() => computePercentile(score, bench.distribution), [score, bench.distribution]);
+  const percentile = useMemo(
+    () => Math.min(99, Math.max(1, basePercentile + experiencePercentileShift(experience))),
+    [basePercentile, experience],
+  );
+  const expShift = useMemo(() => experiencePercentileShift(experience), [experience]);
+  const indQualifier = useMemo(() => industryQualifier(industryKey), [industryKey]);
   const scoreColor = getScoreColor(score);
 
   // Determine user's percentile label
@@ -247,7 +325,7 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
         <div className="flex-1">
           <h3 className="text-sm font-black tracking-tight">Peer Benchmark</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {bench.label} at {bench.companyTier} · n≈{bench.sampleSize.toLocaleString()} (research estimate)
+            {bench.label}{indQualifier ? ` ${indQualifier}` : ''} at {bench.companyTier} · n≈{bench.sampleSize.toLocaleString()} (research estimate)
           </p>
         </div>
       </div>
@@ -268,6 +346,13 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
               ? `above the modelled ${median} median.`
               : `below the modelled ${median} median.`}
           </p>
+          {expShift !== 0 && (
+            <p className="text-[10px] text-muted-foreground mt-1.5 opacity-75">
+              {expShift < 0
+                ? `Adjusted ${Math.abs(expShift)} pts safer for your seniority — tenure is a mild protective signal in this cohort.`
+                : `Adjusted ${expShift} pts higher for earlier-career stage — less institutional protection than senior peers.`}
+            </p>
+          )}
         </div>
 
         {/* Distribution bar */}

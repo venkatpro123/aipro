@@ -211,9 +211,11 @@ export function computeInternalMobility(inputs: InternalMobilityInputs): Interna
     ((departmentRisk as any)?.D9Score ?? 0.5) * 20 + 5
   );
 
-  // BUG-FIX: Simplified from confusing `0.003 * 100` to direct `0.3`.
-  // Both are mathematically identical, but the direct form is clearer.
-  const survivalRateBoost = Math.round(viabilityScore * 0.3) / 100; // 0.0–0.30
+  // survivalRateBoost: a 0–30 percentage-point uplift on survival probability.
+  // viabilityScore=100 → +30pp, viabilityScore=50 → +15pp, viabilityScore=0 → 0pp.
+  // Previous formula (/ 100) produced a fraction (0.21) not a percentage (21) —
+  // confusing consumers who displayed it as a raw number.
+  const survivalRateBoost = Math.round(viabilityScore * 0.30); // 0–30 (percentage points)
 
   const strategy = buildStrategy(internalTransferViability, isGoldenWindow, targetDepartments, tenureYears);
 

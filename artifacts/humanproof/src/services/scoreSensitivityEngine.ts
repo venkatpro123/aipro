@@ -75,40 +75,131 @@ export interface ScoreSensitivityResult {
 
 // ─── Dimension configuration ───────────────────────────────────────────────────
 
+/** Per-user context that personalises the lever action text. All fields optional
+ *  so the engine degrades gracefully to the generic template when context is absent. */
+export interface SensitivityContext {
+  /** Human-readable role for action phrasing, e.g. "Backend Engineer", "Registered Nurse". */
+  roleLabel?: string;
+  /** Oracle role prefix family ('sw' | 'ds' | 'hc' | 'legal' | 'fin' | ...) for role-specific phrasing. */
+  rolePrefix?: string;
+  /** Current company name — referenced in company-switch levers (L1/L2/D7). */
+  companyName?: string;
+  /** Company industry / sector — referenced in L4 and AI-exposure framing. */
+  industry?: string;
+  /** ISO region code (US/IN/UK/...) — adjusts reemployment / job-search timeframe phrasing. */
+  region?: string;
+  /** Visa status — when employer-dependent, a company switch carries authorization risk. */
+  visaStatus?: string | null;
+}
+
 interface DimensionConfig {
   label: string;
   weight: number;
-  fastestAction: (currentScore: number) => string;
-  actionTimeframe: (currentScore: number) => string;
+  /** Action generator now also receives per-user context for personalised phrasing. */
+  fastestAction: (currentScore: number, ctx: SensitivityContext) => string;
+  actionTimeframe: (currentScore: number, ctx: SensitivityContext) => string;
   feasibility: (currentScore: number) => SensitivityLever['feasibility'];
   confidence: 'High' | 'Medium' | 'Low';
+}
+
+// ── Role-specific AI-oversight phrasing ──────────────────────────────────────
+// L3 (role displacement) and D8 (AI efficiency) actions reference a concrete,
+// role-appropriate AI workflow rather than the generic "AI oversight workflow".
+const ROLE_AI_WORKFLOW: Record<string, string> = {
+  sw:     'an AI code-review or test-generation workflow (e.g. Copilot-assisted PR validation)',
+  ds:     'an LLM-evaluation or model-monitoring workflow you own end-to-end',
+  pm:     'an AI-feature spec + success-metric framework for one shipped product surface',
+  fin:    'an AI-assisted forecasting or variance-analysis workflow with documented accuracy gains',
+  hr:     'an AI-assisted people-analytics or screening-audit workflow',
+  mkt:    'an AI-native campaign workflow (generation + attribution) with measured ROI',
+  legal:  'an AI contract-review or legal-research validation workflow (Harvey/CoCounsel oversight)',
+  hc:     'an ambient-AI clinical-documentation review workflow you supervise',
+  ops:    'an RPA / process-automation workflow you designed and monitor',
+  design: 'an AI-assisted design-system or generative-asset workflow with quality gates',
+  bpo:    'an AI quality-assurance / escalation-routing workflow you configured',
+  sales:  'an AI revenue-intelligence workflow (call analysis + pipeline scoring)',
+  cons:   'an AI-augmented analysis workflow you lead on a client engagement',
+  default:'an AI oversight workflow where you validate AI output rather than be replaced by it',
+};
+
+// Map varied oracle key first-segments onto the canonical ROLE_AI_WORKFLOW families.
+// e.g. 'data'/'ml'/'ai' → 'ds'; 'financial'/'finance' → 'fin'; 'nurse'/'physician' → 'hc'.
+const PREFIX_FAMILY_ALIAS: Record<string, string> = {
+  sw: 'sw', software: 'sw', backend: 'sw', frontend: 'sw', fullstack: 'sw',
+  devops: 'sw', sre: 'sw', mobile: 'sw', qa: 'sw', security: 'sw', platform: 'sw',
+  ds: 'ds', data: 'ds', ml: 'ds', ai: 'ds', analytics: 'ds', analyst: 'ds',
+  pm: 'pm', product: 'pm',
+  fin: 'fin', finance: 'fin', financial: 'fin', accounting: 'fin', accountant: 'fin',
+  hr: 'hr', recruiter: 'hr', talent: 'hr', people: 'hr',
+  mkt: 'mkt', marketing: 'mkt', growth: 'mkt', content: 'mkt', seo: 'mkt',
+  legal: 'legal', counsel: 'legal', attorney: 'legal', paralegal: 'legal', compliance: 'legal',
+  hc: 'hc', health: 'hc', nurse: 'hc', physician: 'hc', clinical: 'hc', medical: 'hc', pharmacist: 'hc',
+  ops: 'ops', operations: 'ops', supply: 'ops', logistics: 'ops', procurement: 'ops',
+  design: 'design', ux: 'design', ui: 'design', creative: 'design',
+  bpo: 'bpo', support: 'bpo', cx: 'bpo',
+  sales: 'sales', account: 'sales', sdr: 'sales', bdr: 'sales', revenue: 'sales',
+  cons: 'cons', consultant: 'cons', consulting: 'cons', strategy: 'cons',
+};
+
+function roleAiWorkflow(ctx: SensitivityContext): string {
+  const raw = (ctx.rolePrefix ?? '').toLowerCase();
+  const family = PREFIX_FAMILY_ALIAS[raw] ?? 'default';
+  return ROLE_AI_WORKFLOW[family] ?? ROLE_AI_WORKFLOW.default;
+}
+
+/** Company-switch phrasing that names the user's company and flags visa risk when relevant. */
+function companySwitchSuffix(ctx: SensitivityContext): string {
+  const visaDependent = !!ctx.visaStatus &&
+    !/^(citizen|permanent_resident|pr|na|n\/a|none)$/i.test(ctx.visaStatus);
+  return visaDependent
+    ? ' Note: an employer change affects your work-authorisation timeline — prioritise sponsor-friendly targets.'
+    : '';
+}
+
+/** Region-aware job-search timeframe. */
+function jobSearchTimeframe(ctx: SensitivityContext): string {
+  const r = (ctx.region ?? '').toUpperCase();
+  if (r === 'IN' || r === 'INDIA') return '45–75 days (job search)';
+  if (r === 'US' || r === 'USA')   return '60–90 days (job search)';
+  if (r === 'UK' || r === 'GB')    return '70–100 days (job search)';
+  return '60–90 days (job search)';
 }
 
 const DIMENSION_CONFIG: Record<string, DimensionConfig> = {
   L1: {
     label: 'Company Financial Health',
     weight: 0.16,
-    fastestAction: (s) => s >= 70
-      ? 'Switch to a company with >15% revenue growth and no documented layoff history in 24 months.'
-      : 'Monitor company earnings closely; a positive guidance beat reduces L1 by 8–12 pts within days.',
-    actionTimeframe: (s) => s >= 70 ? '60–90 days (job search)' : '2–4 weeks (market wait)',
+    fastestAction: (s, ctx) => {
+      const co = ctx.companyName ?? 'your current company';
+      return s >= 70
+        ? `Move off ${co} to a company with >15% revenue growth and no documented layoff history in 24 months.${companySwitchSuffix(ctx)}`
+        : `Monitor ${co}'s earnings closely — a positive guidance beat reduces L1 by 8–12 pts within days; a miss is your cue to start an external search.`;
+    },
+    actionTimeframe: (s, ctx) => s >= 70 ? jobSearchTimeframe(ctx) : '2–4 weeks (market wait)',
     feasibility: (s) => s >= 70 ? 'medium_term' : 'short_term',
     confidence: 'High',
   },
   L2: {
     label: 'Layoff History',
     weight: 0.06,
-    fastestAction: () => 'Switch to a company with zero layoff rounds in 24 months — this drops L2 to ~8/100 immediately upon joining.',
-    actionTimeframe: () => '60–90 days (job search)',
+    fastestAction: (_s, ctx) => {
+      const co = ctx.companyName ?? 'your company';
+      return `${co} has documented layoff history. Switching to a company with zero layoff rounds in 24 months drops L2 to ~8/100 immediately on joining.${companySwitchSuffix(ctx)}`;
+    },
+    actionTimeframe: (_s, ctx) => jobSearchTimeframe(ctx),
     feasibility: () => 'medium_term',
     confidence: 'High',
   },
   L3: {
     label: 'Role Displacement Risk',
     weight: 0.18,
-    fastestAction: (s) => s >= 70
-      ? 'Complete one role-specific AI certification and build one documented AI oversight workflow — this repositions your role from "automatable" to "AI-oversight".'
-      : 'Demonstrate one AI-augmented deliverable in your current work this week — publicly visible evidence shifts the signal.',
+    fastestAction: (s, ctx) => {
+      const role = ctx.roleLabel ?? 'your role';
+      const wf = roleAiWorkflow(ctx);
+      return s >= 70
+        ? `Build and document ${wf} for your ${role} work — this repositions you from "automatable" to "AI-oversight" and is the single biggest lever on your displacement risk.`
+        : `Ship one AI-augmented deliverable in your ${role} work this week using ${wf} — publicly visible evidence shifts the signal fast.`;
+    },
     actionTimeframe: (s) => s >= 70 ? '30 days' : '1 week',
     feasibility: (s) => s >= 70 ? 'short_term' : 'immediate',
     confidence: 'Medium',
@@ -116,22 +207,24 @@ const DIMENSION_CONFIG: Record<string, DimensionConfig> = {
   L4: {
     label: 'Industry / Sector Headwinds',
     // L4 maps to D5_countryContext = 0.00 in COMPOSITE_FORMULA_WEIGHTS.
-    // Country context enters the formula via D1 country multiplier (L3 channel, w=0.18)
-    // and PPP thresholds in L1 (w=0.16), not through this standalone dimension.
-    // Weight = 0.00 means scoreDropIfImproved = 0 for direct L4 improvement — correct.
-    // getEffectiveFormulaWeights() returns 0 for L4; this fallback matches.
     weight: 0.00,
-    fastestAction: () => 'Country context enters your score via role AI deployment rates (D1) and PPP-adjusted company health (L1), not as a standalone lever. Target a role in a growth sector to improve D1 and L3 simultaneously.',
-    actionTimeframe: () => '60–90 days (job search)',
+    fastestAction: (_s, ctx) => {
+      const sector = ctx.industry ?? 'your sector';
+      return `${sector} headwinds enter your score via role AI-deployment rates (D1) and PPP-adjusted company health (L1), not as a standalone lever. Targeting a role in a growth-stage sector improves D1 and L3 together.`;
+    },
+    actionTimeframe: (_s, ctx) => jobSearchTimeframe(ctx),
     feasibility: () => 'medium_term',
     confidence: 'High',
   },
   L5: {
     label: 'Experience & Resilience Protection',
     weight: 0.18,
-    fastestAction: (s) => s >= 65
-      ? 'Document one achievement with concrete numbers (revenue impact, users affected, efficiency %) and add to LinkedIn and resume today — this shifts the "generic" signal immediately.'
-      : 'Request a formal 1-on-1 with your manager this week to understand your performance tier relative to team — proactive visibility reduces L5 risk.',
+    fastestAction: (s, ctx) => {
+      const role = ctx.roleLabel ?? 'your role';
+      return s >= 65
+        ? `Document one ${role} achievement with concrete numbers (revenue impact, users affected, efficiency %) and add it to LinkedIn + resume today — this shifts the "generic" signal immediately.`
+        : `Request a formal 1-on-1 with your manager this week to understand your performance tier relative to the team — proactive visibility is the fastest L5 lever for a ${role}.`;
+    },
     actionTimeframe: () => 'Today / 1 week',
     feasibility: () => 'immediate',
     confidence: 'Medium',
@@ -139,7 +232,10 @@ const DIMENSION_CONFIG: Record<string, DimensionConfig> = {
   D6: {
     label: 'Network & Relationship Moat',
     weight: 0.05,
-    fastestAction: () => 'Schedule 2 cross-functional relationship-building conversations this week — D6 improvement requires sustained 30-day effort but starts today.',
+    fastestAction: (_s, ctx) => {
+      const co = ctx.companyName ?? 'your company';
+      return `Schedule 2 cross-functional relationship-building conversations at ${co} this week — D6 improvement needs sustained 30-day effort but the first two conversations start today.`;
+    },
     actionTimeframe: () => '30–60 days',
     feasibility: () => 'short_term',
     confidence: 'Low',
@@ -147,15 +243,22 @@ const DIMENSION_CONFIG: Record<string, DimensionConfig> = {
   D7: {
     label: 'Unified Company Health',
     weight: 0.06,
-    fastestAction: () => 'Switch to a company with a healthier composite profile — D7 captures the combined financial + market + AI investment signal that only a company change resolves.',
-    actionTimeframe: () => '60–90 days',
+    fastestAction: (_s, ctx) => {
+      const co = ctx.companyName ?? 'your current employer';
+      return `Move off ${co} to a company with a healthier composite profile — D7 captures the combined financial + market + AI-investment signal that only a company change resolves.${companySwitchSuffix(ctx)}`;
+    },
+    actionTimeframe: (_s, ctx) => jobSearchTimeframe(ctx),
     feasibility: () => 'medium_term',
     confidence: 'High',
   },
   D8: {
     label: 'AI Efficiency Restructuring Risk',
     weight: 0.05,
-    fastestAction: () => 'Build and document one AI oversight workflow in your current role — frame yourself as "the person who validates AI output" rather than "the person AI replaces." This directly addresses D8.',
+    fastestAction: (_s, ctx) => {
+      const wf = roleAiWorkflow(ctx);
+      const role = ctx.roleLabel ?? 'your role';
+      return `Build and document ${wf} in your ${role} work — frame yourself as the person who validates AI output, not the person AI replaces. This directly addresses D8.`;
+    },
     actionTimeframe: () => '2 weeks',
     feasibility: () => 'short_term',
     confidence: 'Medium',
@@ -192,10 +295,13 @@ const SYNERGY_MATRIX: Array<{ pair: [string, string]; bonus: number; rationale: 
 export interface SensitivityInputs {
   currentScore: number;
   breakdown: ScoreBreakdown & { D6?: number; D7?: number; D8?: number };
+  /** Optional per-user context for personalised lever action text. */
+  context?: SensitivityContext;
 }
 
 export function computeScoreSensitivity(inputs: SensitivityInputs): ScoreSensitivityResult {
   const { currentScore, breakdown } = inputs;
+  const ctx: SensitivityContext = inputs.context ?? {};
 
   const dimEntries: Array<{ key: string; rawScore: number }> = [
     { key: 'L1', rawScore: breakdown.L1 ?? 0 },
@@ -253,8 +359,8 @@ export function computeScoreSensitivity(inputs: SensitivityInputs): ScoreSensiti
         improvementTarget,
         scoreDropIfImproved,
         percentOfTotalRisk,
-        fastestAction: cfg.fastestAction(displayScore),
-        actionTimeframe: cfg.actionTimeframe(displayScore),
+        fastestAction: cfg.fastestAction(displayScore, ctx),
+        actionTimeframe: cfg.actionTimeframe(displayScore, ctx),
         feasibility: cfg.feasibility(displayScore),
         confidenceInEstimate: cfg.confidence,
       } satisfies SensitivityLever;

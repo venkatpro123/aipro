@@ -347,37 +347,48 @@ export function predictLayoffSurvival(
     temporalAmplifier = 1.0, hasLayoffHistory = false,
   } = inputs;
 
+  // Full multiplier chain applied to a given score. Extracted so the inaction
+  // (drifted-up) probability is computed on the SAME basis as the current
+  // probability — previously inactionProbability12m used only band×industry,
+  // which made it inconsistent with (and sometimes LOWER than) probability12m,
+  // producing the "same / false odds in both scenarios" bug in the UI.
+  const computeProbabilityForScore = (score: number): number => {
+    const b = SCORE_BANDS.find((sb) => score >= sb.min && score <= sb.max)
+      ?? SCORE_BANDS[SCORE_BANDS.length - 1];
+    let p = b.baseRate12m;
+
+    // Industry (marginal effect beyond L4's sector risk contribution)
+    p *= getIndustryMultiplier(industry);
+
+    // Archetype — scenario-specific hazard beyond industry/region statistics
+    if (inputs.scoringArchetype) {
+      const archetypeMod = ARCHETYPE_PROBABILITY_MODIFIER[inputs.scoringArchetype] ?? 1.0;
+      p = Math.min(0.92, p * archetypeMod);
+    }
+
+    // Regional — employment law, market structure, volatility norms
+    p = Math.min(0.92, p * getRegionalMultiplier(region));
+
+    // Temporal amplifier from calendar model
+    if (temporalAmplifier > 1.05) {
+      p = Math.min(0.92, p * (1 + (temporalAmplifier - 1) * 0.5));
+    }
+
+    // Collapse-stage amplifier
+    p = applyCollapseStageModifier(p, collapseStage ?? null);
+
+    // Recent layoff history at company — 40% uplift
+    if (hasLayoffHistory) {
+      p = Math.min(0.92, p * 1.4);
+    }
+
+    return Math.min(0.92, Math.max(0.01, p));
+  };
+
   const band = SCORE_BANDS.find((b) => currentScore >= b.min && currentScore <= b.max)
     ?? SCORE_BANDS[SCORE_BANDS.length - 1];
 
-  let probability12m = band.baseRate12m;
-
-  // Apply industry multiplier (marginal effect beyond L4's sector risk contribution)
-  probability12m *= getIndustryMultiplier(industry);
-
-  // Apply archetype modifier — scenario-specific hazard beyond industry/region statistics
-  if (inputs.scoringArchetype) {
-    const archetypeMod = ARCHETYPE_PROBABILITY_MODIFIER[inputs.scoringArchetype] ?? 1.0;
-    probability12m = Math.min(0.92, probability12m * archetypeMod);
-  }
-
-  // Apply regional multiplier — employment law, market structure, volatility norms
-  probability12m = Math.min(0.92, probability12m * getRegionalMultiplier(region));
-
-  // Temporal amplifier from calendar model
-  if (temporalAmplifier > 1.05) {
-    probability12m = Math.min(0.92, probability12m * (1 + (temporalAmplifier - 1) * 0.5));
-  }
-
-  // Collapse stage amplifier
-  probability12m = applyCollapseStageModifier(probability12m, collapseStage ?? null);
-
-  // Recent layoff history at company — 40% uplift
-  if (hasLayoffHistory) {
-    probability12m = Math.min(0.92, probability12m * 1.4);
-  }
-
-  probability12m = Math.min(0.92, Math.max(0.01, probability12m));
+  const probability12m = computeProbabilityForScore(currentScore);
 
   // Derive shorter timeframes using exponential survival model: P(t) = 1 - exp(-λ × t/12)
   // This replaces the arbitrary 0.60 / 0.095 constants with a mathematically grounded
@@ -388,10 +399,14 @@ export function predictLayoffSurvival(
 
   const { low, high } = computeConfidenceInterval(probability12m, currentScore);
 
-  // Inaction probability — assume score rises 5 pts in 6 months without action
+  // Inaction probability — without mitigation, risk drifts up ~5 pts over 6 months.
+  // Computed via the SAME full multiplier chain so it is directly comparable to
+  // probability12m, and guaranteed ≥ probability12m (inaction never lowers risk).
   const inactionScore = Math.min(99, currentScore + 5);
-  const inactionBand = SCORE_BANDS.find((b) => inactionScore >= b.min && inactionScore <= b.max) ?? band;
-  const inactionProbability12m = Math.min(0.92, inactionBand.baseRate12m * getIndustryMultiplier(industry));
+  const inactionProbability12m = Math.max(
+    probability12m,
+    computeProbabilityForScore(inactionScore),
+  );
 
   const dominantFactor = buildDominantRiskFactor(inputs.breakdown);
   const percentile = computeWorkforceRiskPercentile(currentScore);

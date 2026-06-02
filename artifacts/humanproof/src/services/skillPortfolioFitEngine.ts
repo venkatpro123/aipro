@@ -293,14 +293,41 @@ const MARKET_INSIGHTS: Record<SkillDemandTrend, string> = {
 };
 
 // ─── High-value missing skills by role type ───────────────────────────────────
+// Keyed by oracle-key prefix (first segment). More specific sub-keys override the prefix.
 const MISSING_SKILLS_BY_ROLE: Record<string, string[]> = {
-  sw:    ['llm', 'agent framework', 'vector database', 'platform engineering'],
-  ml:    ['mlops', 'rag', 'fine-tuning', 'ai safety', 'observability'],
-  data:  ['dbt', 'python', 'data engineering', 'mlops'],
-  fin:   ['python finance', 'sql', 'financial modeling', 'risk modeling'],
-  bpo:   ['python', 'rpa', 'process automation', 'sql'],
-  sec:   ['cloud security', 'zero trust', 'ai governance', 'soc'],
-  _default: ['python', 'llm', 'cloud computing', 'data analysis'],
+  // Software Engineering
+  sw:              ['llm', 'agent framework', 'vector database', 'platform engineering'],
+  sw_backend:      ['system design', 'kubernetes', 'platform engineering', 'llm'],
+  sw_frontend:     ['typescript', 'react', 'accessibility design', 'llm'],
+  sw_devops:       ['kubernetes', 'platform engineering', 'observability', 'terraform'],
+  sw_mobile:       ['react', 'typescript', 'accessibility design', 'llm'],
+  sw_qa:           ['process automation', 'python', 'agent framework', 'observability'],
+  sw_security:     ['cloud security', 'zero trust', 'ai governance', 'soc'],
+  // ML / AI
+  ml:              ['mlops', 'rag', 'fine-tuning', 'ai safety', 'observability'],
+  ml_engineer:     ['mlops', 'rag', 'fine-tuning', 'vector database', 'ai safety'],
+  // Data
+  data:            ['dbt', 'python', 'data engineering', 'mlops'],
+  ds:              ['mlops', 'llm', 'python', 'machine learning'],
+  // Finance
+  fin:             ['python finance', 'quantitative finance', 'risk management', 'data engineering'],
+  fin_account:     ['python finance', 'sql', 'financial modeling', 'fp&a'],
+  fin_fp_analyst:  ['python finance', 'sql', 'risk management', 'quantitative finance'],
+  fin_quant:       ['machine learning', 'python', 'rag', 'mlops'],
+  // BPO / Ops
+  bpo:             ['python', 'process automation', 'sql', 'data engineering'],
+  // Security
+  sec:             ['cloud security', 'zero trust', 'ai governance', 'soc'],
+  // HR
+  hr:              ['people analytics', 'workday hris', 'python', 'organizational design'],
+  // Marketing
+  mkt:             ['ai-generated content', 'python', 'product marketing', 'go-to-market'],
+  // Legal
+  leg:             ['data privacy law', 'gdpr compliance', 'regulatory affairs', 'aml/kyc'],
+  // Healthcare
+  hc:              ['health informatics', 'medical imaging ai', 'bioinformatics', 'fda regulatory'],
+  // Default fallback
+  _default:        ['python', 'llm', 'agent framework', 'data engineering'],
 };
 
 function normalizeSkillKey(raw: string): string {
@@ -328,8 +355,12 @@ function enrichSkillSignal(rawKey: string): SkillSignal | null {
 }
 
 function getRolePrefix(workTypeKey: string): string {
-  const prefix = workTypeKey.split('_')[0];
-  return ['sw', 'ml', 'data', 'ds', 'fin', 'bpo', 'sec'].includes(prefix) ? prefix : '_default';
+  const key = workTypeKey.toLowerCase().trim();
+  // Try longest matching key first (sw_backend beats sw)
+  const candidates = Object.keys(MISSING_SKILLS_BY_ROLE)
+    .filter(k => k !== '_default' && key.startsWith(k))
+    .sort((a, b) => b.length - a.length); // longest match first
+  return candidates[0] ?? '_default';
 }
 
 // ─── Main Export ─────────────────────────────────────────────────────────────

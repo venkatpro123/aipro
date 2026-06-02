@@ -26,11 +26,15 @@ const WEIGHT_LABELS: Record<string, string> = {
   L1: 'Financial', L2: 'Layoff Hist', L3: 'Displacement', L4: 'Sector', L5: 'Protection',
 };
 
+// Matches AnalysisTab.scoreColor exactly — both live in the same Intel tab;
+// different thresholds (80 vs 75) caused the same score to render different
+// colors on PredictionHorizonPanel vs DualGaugePanel, creating visible
+// inconsistency. Unified to 75/55/35 breakpoints.
 function scoreColor(score: number): string {
-  if (score >= 80) return '#ef4444';
-  if (score >= 65) return '#f97316';
-  if (score >= 50) return '#f59e0b';
-  if (score >= 35) return '#00d4e0';
+  if (score >= 75) return '#dc2626';
+  if (score >= 55) return '#f97316';
+  if (score >= 35) return '#f59e0b';
+  if (score >= 20) return '#00d4e0';
   return '#10b981';
 }
 
@@ -171,6 +175,38 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
       </div>
 
       <div className="p-4">
+        {/* Trajectory row — anchors the 3 horizon scores to the current score
+            so users can see direction of travel. currentScore was accepted as a
+            prop but previously unused — showing 3 horizon scores without the
+            starting point made it impossible to judge whether risk was rising or
+            falling at a glance. */}
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto">
+          {/* Current */}
+          <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>Now</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: scoreColor(currentScore) }}>{currentScore}</span>
+          </div>
+          {[
+            { key: '30d',  h: horizon30d },
+            { key: '90d',  h: horizon90d },
+            { key: '180d', h: horizon180d },
+          ].map(({ key, h }) => {
+            const prev = key === '30d' ? currentScore : key === '90d' ? horizon30d.score : horizon90d.score;
+            const diff = h.score - prev;
+            const arrow = diff > 2 ? '↑' : diff < -2 ? '↓' : '→';
+            const arrowColor = diff > 2 ? '#ef4444' : diff < -2 ? '#10b981' : 'rgba(255,255,255,0.3)';
+            return (
+              <React.Fragment key={key}>
+                <span style={{ color: arrowColor, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{arrow}</span>
+                <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{key}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: scoreColor(h.score) }}>{h.score}</span>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+
         {/* Weight legend */}
         <div className="flex flex-wrap gap-3 mb-4">
           {WEIGHT_KEYS.map(key => (

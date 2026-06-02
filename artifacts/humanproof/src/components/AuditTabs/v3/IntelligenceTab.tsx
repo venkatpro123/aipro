@@ -44,9 +44,7 @@ import type { TabProps } from '../common/types';
 import WARNSignalPanel from '../common/WARNSignalPanel';
 import SECEnhancedPanel from '../common/SECEnhancedPanel';
 import BLSMacroPanel from '../common/BLSMacroPanel';
-import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
-import PeerContagionPanel from '../common/PeerContagionPanel';
-import MacroRiskPanel from '../common/MacroRiskPanel';
+import { PersonalizedMarketEnvironment } from '../common/PersonalizedMarketEnvironment';
 import { EventSearchPanel, isEventSearchAvailable } from '../../audit/EventSearchPanel';
 import CompanyPulseCard from '../common/CompanyPulseCard';
 import AdaptiveBlock from '../common/AdaptiveBlock';
@@ -66,14 +64,36 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
   const macroRisk      = r.macroEconomicRisk;
 
   // Guard against empty objects from failed pipeline steps — {} is truthy but has no data.
+  //
+  // secHasContent: the SECEnhancedRiskResult always exists (computeSECEnhancedRisk
+  // never returns null), so we must inspect the real fields.  When dataSourceQuality
+  // is 'not_available' there are no actual signals to show — skip the panel.
+  // When it is 'estimated' or 'live_sec' AND at least one numeric signal resolved,
+  // show it.  Also accept it when riskAdjustment != 0 (signal affected the score).
   const secHasContent = Boolean(
     secEnhanced &&
     typeof secEnhanced === 'object' &&
-    Object.keys(secEnhanced).length > 0 &&
-    ((secEnhanced as any).warnSignals?.length || (secEnhanced as any).layoffHistory?.length || (secEnhanced as any).fcfSignal),
+    secEnhanced.financialSignals?.dataSourceQuality !== 'not_available' &&
+    (
+      secEnhanced.financialSignals?.freeCashFlowMargin   != null ||
+      secEnhanced.financialSignals?.earningsSurpriseCategory != null ||
+      secEnhanced.financialSignals?.analystConsensusRating   != null ||
+      secEnhanced.financialSignals?.priceTargetChangePct     != null ||
+      secEnhanced.financialSignals?.isCashFlowPositive       != null ||
+      secEnhanced.riskAdjustment !== 0
+    ),
   );
-  const hasGroundTruth = Boolean(warnSignal?.hasActiveWARN || secHasContent || blsMacro);
-  const hasMarket       = Boolean(roleMarket || peerContagion || macroRisk);
+
+  // BLS macro counts as ground truth only when it's live (not a heuristic baseline).
+  // A heuristic baseline is populated for every company and would always expand the
+  // section — gate it to 'live' so the "Ground truth signals" label remains honest.
+  const blsMacroIsLive = Boolean(blsMacro && !(blsMacro as any).isHeuristic);
+
+  // WARN is the primary ground-truth signal. SEC enhanced (when live) and live BLS
+  // are secondary regulatory/macro signals worth showing alongside it.
+  const hasGroundTruth = Boolean(warnSignal?.hasActiveWARN || secHasContent || blsMacroIsLive);
+  // Market section: role demand, peer contagion, macro risk, and heuristic BLS baseline.
+  const hasMarket       = Boolean(roleMarket || peerContagion || macroRisk || (blsMacro && !blsMacroIsLive));
 
   const warnActiveCount = warnSignal?.hasActiveWARN ? 1 : 0;
   const groundTruthBadge = hasGroundTruth
@@ -125,12 +145,10 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
               </p>
             </div>
           )}
-          {warnSignal && (
+          {warnSignal?.hasActiveWARN && (
             <>
               <WARNSignalPanel warnSignal={warnSignal} />
-              {warnSignal.hasActiveWARN && (
-                <ActionHook text="Update your resume and activate your network now. Active WARN filings precede layoffs by 60–90 days — the window to move proactively is open." />
-              )}
+              <ActionHook text="Update your resume and activate your network now. Active WARN filings precede layoffs by 60–90 days — the window to move proactively is open." />
             </>
           )}
           {secHasContent && (
@@ -139,7 +157,7 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
               <ActionHook text="FCF trends in SEC filings are a leading indicator of headcount decisions. Monitor the next earnings call date and watch for guidance downgrades." />
             </>
           )}
-          {blsMacro && (
+          {blsMacroIsLive && (
             <>
               <BLSMacroPanel blsMacroSignal={blsMacro} />
               <ActionHook text="Declining JOLTS quits mean fewer external opportunities. Prioritize retention negotiation and internal visibility over job search for the next 30–60 days." />
@@ -148,27 +166,40 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
         </AdaptiveBlock>
       </motion.div>
 
-      {/* ── T3: Market Environment ─────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <AdaptiveBlock
-          title="Market environment"
-          subtitle={<span className="flex items-center gap-1.5">Role demand, peer contagion, macro risk <HeuristicBadge /></span>}
-          icon={TrendingUp}
-          tier={3}
-          accentColor="#f59e0b"
-          defaultOpen={false}
-          empty={!hasMarket}
-        >
-          {roleMarket    && <RoleMarketDemandPanel roleMarketDemand={roleMarket} />}
-          {peerContagion && (
-            <>
-              <PeerContagionPanel contagion={peerContagion} />
-              <ActionHook text="Sector peers showing distress signals means external hiring will slow industrywide. Prioritize building your pipeline now — before the market tightens further." />
-            </>
-          )}
-          {macroRisk     && <MacroRiskPanel macro={macroRisk} />}
-        </AdaptiveBlock>
-      </motion.div>
+      {/* ── T3: Personalized Market Environment ───────────────────────────── */}
+      {/* Replaces the three generic panels (RoleMarketDemand, PeerContagion,
+          MacroRisk) with a single context-aware component that personalises every
+          insight to the user's role, company, location, skills, and risk score.
+          Internally manages its own collapsible sections so AdaptiveBlock is not
+          needed here. Hidden entirely when no market data is available. */}
+      {hasMarket && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            {/* Section header */}
+            <div className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
+                <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                  Market Environment
+                </span>
+                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
+                  T3
+                </span>
+              </div>
+              <HeuristicBadge />
+            </div>
+            {/* Personalized content */}
+            <div className="p-3">
+              <PersonalizedMarketEnvironment result={result} companyData={companyData} />
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── T3: Cross-source event search ──────────────────────────────────── */}
       {/* Hidden when Meilisearch isn't provisioned. The panel itself renders a

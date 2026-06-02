@@ -654,7 +654,7 @@ const SALARY_PERCENTILES_BY_ROLE: Record<string, { p25: number; p50: number; p75
 
 // ── Core engine ───────────────────────────────────────────────────────────────
 
-function getRolePrefix(workTypeKey: string): string {
+export function getRolePrefix(workTypeKey: string): string {
   const key = (workTypeKey ?? '').toLowerCase();
   // Software / Engineering / DevOps / Platform
   if (/^sw[_]|software|^developer|devops|platform_infra|backend|frontend|mobile_eng|qa_test|security_eng/.test(key)) return 'sw';

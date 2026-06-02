@@ -1,15 +1,22 @@
-// ScenarioExplorer.tsx — Wave 5.4 Interactive Scenario Switching
+// ScenarioExplorer.tsx — v8.0
 //
-// PROBLEM: scenarioPlan (L50) computes bear/base/bull 6-month scenarios
-// with full action queues. UI renders a static narrative. Zero interactivity.
-// Users can't explore "what if things get worse?" or "what's my upside?"
+// CRITICAL BUG FIX: The component previously expected { bearCase, baseCase, bullCase }
+// but the engine (scenarioPlanService.ts Layer 50) produces { worstCase, baseCase, bestCase }.
+// Field name mismatch → scenarios were blank / showing hardcoded fallbacks for every user.
 //
-// SOLUTION: Interactive 3-tab explorer where switching scenarios updates
-// both the description AND the recommended action list beneath it.
+// Additional mismatches fixed:
+//   - Engine: ScenarioOutcome.score + ScenarioOutcome.recommendedActions: string[]
+//   - UI expected: scoreIn6Months + actions: { title, effort, riskReductionPct }[]
+//   - planningHorizonMonths and dominantUncertainty were computed but never surfaced.
+//
+// The normalizer now handles ALL formats:
+//   1. Engine native: { worstCase, baseCase, bestCase } with score + recommendedActions
+//   2. Old enriched: { bearCase, baseCase, bullCase } with scoreIn6Months + actions
+//   3. Legacy flat: { bear, base, bull } with flat scalar fields
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, AlertTriangle } from 'lucide-react';
 
 interface ScenarioAction {
   title: string;
@@ -19,7 +26,7 @@ interface ScenarioAction {
 
 interface Scenario {
   label: 'Bear' | 'Base' | 'Bull';
-  probability: number;         // 0–1
+  probability: number;
   scoreIn6Months: number;
   keyAssumption: string;
   narrative?: string;
@@ -27,14 +34,21 @@ interface Scenario {
 }
 
 interface ScenarioPlanResult {
-  bearCase?: Scenario;
-  baseCase?: Scenario;
-  bullCase?: Scenario;
-  // Legacy format — flat properties
-  bear?: { score?: number; probability?: number; narrative?: string; keyAssumption?: string };
-  base?: { score?: number; probability?: number; narrative?: string; keyAssumption?: string };
-  bull?: { score?: number; probability?: number; narrative?: string; keyAssumption?: string };
-  actions?: ScenarioAction[];
+  // Engine-native fields (scenarioPlanService produces these)
+  worstCase?: { score?: number; probability?: number; triggerConditions?: string[]; recommendedActions?: string[]; keyAssumption?: string };
+  baseCase?:  { score?: number; probability?: number; triggerConditions?: string[]; recommendedActions?: string[]; keyAssumption?: string; narrative?: string; actions?: ScenarioAction[] };
+  bestCase?:  { score?: number; probability?: number; triggerConditions?: string[]; recommendedActions?: string[]; keyAssumption?: string };
+  // Enriched UI fields (old path — still supported for backward-compat)
+  bearCase?:  { score?: number; scoreIn6Months?: number; probability?: number; narrative?: string; keyAssumption?: string; actions?: ScenarioAction[] };
+  bullCase?:  { score?: number; scoreIn6Months?: number; probability?: number; narrative?: string; keyAssumption?: string; actions?: ScenarioAction[] };
+  // Legacy flat format
+  bear?: { score?: number; probability?: number; narrative?: string; keyAssumption?: string; assumption?: string };
+  base?: { score?: number; probability?: number; narrative?: string; keyAssumption?: string; assumption?: string; actions?: ScenarioAction[] };
+  bull?: { score?: number; probability?: number; narrative?: string; keyAssumption?: string; assumption?: string };
+  // Meta fields — were computed but never shown
+  planningHorizonMonths?: number;
+  dominantUncertainty?: string;
+  scenarioSpread?: number;
 }
 
 interface Props {
@@ -44,40 +58,55 @@ interface Props {
 
 type ScenarioKey = 'bear' | 'base' | 'bull';
 
-function normalizeScenario(raw: any, label: 'Bear' | 'Base' | 'Bull'): Scenario | null {
+// Convert any raw scenario object (engine-native, enriched, or legacy) into a
+// normalised Scenario for display.
+function normalizeScenario(
+  raw: any,
+  label: 'Bear' | 'Base' | 'Bull',
+  defaultProbability: number,
+): Scenario | null {
   if (!raw) return null;
-  return {
-    label,
-    probability: raw.probability ?? (label === 'Base' ? 0.52 : label === 'Bear' ? 0.23 : 0.25),
-    scoreIn6Months: raw.score ?? raw.scoreIn6Months ?? 50,
-    keyAssumption: raw.keyAssumption ?? raw.assumption ?? '',
-    narrative: raw.narrative ?? raw.description ?? '',
-    actions: raw.actions ?? [],
-  };
+
+  // scoreIn6Months: prefer named scoreIn6Months, then score (engine-native), then fallback
+  const scoreIn6Months: number =
+    raw.scoreIn6Months ??
+    raw.score ??
+    (label === 'Bear' ? 65 : label === 'Bull' ? 30 : 50);
+
+  // Probability
+  const probability = raw.probability ?? defaultProbability;
+
+  // Key assumption
+  const keyAssumption =
+    raw.keyAssumption ??
+    raw.assumption ??
+    (raw.triggerConditions?.[0] ?? '');
+
+  // Narrative: use explicit narrative, or build from triggerConditions
+  const narrative =
+    raw.narrative ??
+    raw.description ??
+    (Array.isArray(raw.triggerConditions) && raw.triggerConditions.length > 0
+      ? `Key triggers: ${raw.triggerConditions.slice(0, 2).join('; ')}.`
+      : '');
+
+  // Actions: support both structured { title, effort, riskReductionPct } and plain string[]
+  let actions: ScenarioAction[] = [];
+  if (Array.isArray(raw.actions) && raw.actions.length > 0) {
+    actions = raw.actions.map((a: any) =>
+      typeof a === 'string' ? { title: a } : a,
+    );
+  } else if (Array.isArray(raw.recommendedActions) && raw.recommendedActions.length > 0) {
+    actions = raw.recommendedActions.map((s: string) => ({ title: s }));
+  }
+
+  return { label, probability, scoreIn6Months, keyAssumption, narrative, actions };
 }
 
 const SCENARIO_CONFIG = {
-  bear: {
-    icon: TrendingDown,
-    accent: '#dc2626',
-    bg: 'rgba(220,38,38,0.08)',
-    border: 'rgba(220,38,38,0.28)',
-    tag: 'BEAR CASE',
-  },
-  base: {
-    icon: Minus,
-    accent: '#f59e0b',
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.28)',
-    tag: 'BASE CASE',
-  },
-  bull: {
-    icon: TrendingUp,
-    accent: '#10b981',
-    bg: 'rgba(16,185,129,0.06)',
-    border: 'rgba(16,185,129,0.22)',
-    tag: 'BULL CASE',
-  },
+  bear: { icon: TrendingDown, accent: '#dc2626', bg: 'rgba(220,38,38,0.08)', border: 'rgba(220,38,38,0.28)', tag: 'BEAR CASE' },
+  base: { icon: Minus,        accent: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.28)', tag: 'BASE CASE' },
+  bull: { icon: TrendingUp,   accent: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.22)', tag: 'BULL CASE' },
 };
 
 function scoreColor(score: number): string {
@@ -87,14 +116,21 @@ function scoreColor(score: number): string {
   return '#10b981';
 }
 
+function scoreDeltaLabel(current: number, projected: number): string {
+  const diff = projected - current;
+  if (Math.abs(diff) <= 2) return '≈ unchanged';
+  return diff > 0 ? `+${diff} pts (worsening)` : `${diff} pts (improving)`;
+}
+
 export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) => {
   const [active, setActive] = useState<ScenarioKey>('base');
 
-  // Normalize both formats
+  // Normalise from ALL three possible formats.
+  // Engine-native: worstCase/baseCase/bestCase map to bear/base/bull.
   const scenarios: Record<ScenarioKey, Scenario | null> = {
-    bear: normalizeScenario(scenario.bearCase ?? scenario.bear, 'Bear'),
-    base: normalizeScenario(scenario.baseCase ?? scenario.base, 'Base'),
-    bull: normalizeScenario(scenario.bullCase ?? scenario.bull, 'Bull'),
+    bear: normalizeScenario(scenario.bearCase ?? scenario.worstCase ?? scenario.bear, 'Bear', 0.25),
+    base: normalizeScenario(scenario.baseCase ?? scenario.base, 'Base', 0.52),
+    bull: normalizeScenario(scenario.bullCase ?? scenario.bestCase ?? scenario.bull, 'Bull', 0.23),
   };
 
   const available = (Object.keys(scenarios) as ScenarioKey[]).filter(k => scenarios[k] !== null);
@@ -104,9 +140,36 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
   const activeCfg = SCENARIO_CONFIG[active];
   const ActiveIcon = activeCfg.icon;
 
+  // Ensure probabilities sum to ~100% — engine may not normalise across the three
+  const totalProb = available.reduce((s, k) => s + (scenarios[k]?.probability ?? 0), 0);
+  const normalisedProb = (key: ScenarioKey) => {
+    const raw = scenarios[key]?.probability ?? 0;
+    return totalProb > 0 ? Math.round((raw / totalProb) * 100) : Math.round(raw * 100);
+  };
+
   return (
     <div className="space-y-3">
-      {/* Scenario tabs */}
+      {/* Meta: planning horizon + dominant uncertainty — previously never shown */}
+      {(scenario.planningHorizonMonths || scenario.dominantUncertainty) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {scenario.planningHorizonMonths && (
+            <span
+              className="text-[10px] font-mono px-2 py-0.5 rounded"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.10)' }}
+            >
+              {scenario.planningHorizonMonths}-month horizon
+            </span>
+          )}
+          {scenario.dominantUncertainty && (
+            <p className="text-[10px] flex-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.30)' }}>Key variable: </span>
+              {scenario.dominantUncertainty}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Scenario tabs — probabilities now normalised so they sum correctly */}
       <div className="flex gap-2 overflow-x-auto">
         {available.map(key => {
           const s = scenarios[key]!;
@@ -116,6 +179,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
           return (
             <button
               key={key}
+              type="button"
               onClick={() => setActive(key)}
               className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all"
               style={{
@@ -129,7 +193,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                 {cfg.tag}
               </p>
               <p className="text-[11px] font-black" style={{ color: isActive ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)' }}>
-                {Math.round(s.probability * 100)}%
+                {normalisedProb(key)}%
               </p>
             </button>
           );
@@ -146,11 +210,11 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.20 }}
           >
-            {/* Scenario header */}
             <div
               className="rounded-xl px-4 py-3 mb-2"
               style={{ background: activeCfg.bg, border: `1px solid ${activeCfg.border}` }}
             >
+              {/* Header row */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <ActiveIcon className="w-4 h-4" style={{ color: activeCfg.accent }} />
@@ -159,23 +223,24 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                   </span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Score in 6 months</p>
+                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    Score in {scenario.planningHorizonMonths ?? 6} months
+                  </p>
                   <p className="text-[18px] font-black" style={{ color: scoreColor(activeScenario.scoreIn6Months) }}>
                     {activeScenario.scoreIn6Months}
                   </p>
                 </div>
               </div>
 
-              {/* Score trajectory */}
+              {/* Score trajectory with delta label */}
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.40)' }}>{currentScore}</span>
                 <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
                   <div
-                    className="h-full rounded-full"
+                    className="h-full rounded-full transition-all"
                     style={{
-                      width: `${(activeScenario.scoreIn6Months / 100) * 100}%`,
+                      width: `${activeScenario.scoreIn6Months}%`,
                       background: scoreColor(activeScenario.scoreIn6Months),
-                      transition: 'width 0.5s ease',
                     }}
                   />
                 </div>
@@ -183,6 +248,9 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                   {activeScenario.scoreIn6Months}
                 </span>
               </div>
+              <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {scoreDeltaLabel(currentScore, activeScenario.scoreIn6Months)}
+              </p>
 
               {/* Key assumption */}
               {activeScenario.keyAssumption && (
@@ -203,14 +271,14 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
               )}
             </div>
 
-            {/* Recommended actions for this scenario */}
+            {/* Actions for this scenario */}
             {(activeScenario.actions?.length ?? 0) > 0 && (
               <div>
                 <p className="text-[10px] font-bold tracking-widest mb-2 px-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                  RECOMMENDED ACTIONS FOR THIS SCENARIO
+                  RECOMMENDED ACTIONS — {activeCfg.tag}
                 </p>
                 <div className="space-y-1.5">
-                  {activeScenario.actions!.slice(0, 4).map((action, i) => (
+                  {activeScenario.actions!.slice(0, 5).map((action, i) => (
                     <div
                       key={i}
                       className="flex items-start gap-2.5 rounded-lg px-3 py-2"
@@ -223,7 +291,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                         <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
                           {action.title}
                         </p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           {action.effort && (
                             <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.32)' }}>{action.effort}</span>
                           )}
@@ -237,6 +305,19 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* No actions fallback */}
+            {(activeScenario.actions?.length ?? 0) === 0 && (
+              <div
+                className="flex items-center gap-2 rounded-lg px-3 py-2"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
+                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  Scenario-specific actions unavailable — see the action plan for recommended next steps.
+                </p>
               </div>
             )}
           </motion.div>

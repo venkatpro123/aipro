@@ -14,6 +14,12 @@ import type { ScoreSensitivityResult, SensitivityLever } from '../../../services
 
 interface Props {
   scoreSensitivity: ScoreSensitivityResult;
+  /**
+   * The live risk score from result.total. Overrides scoreSensitivity.currentScore
+   * (which was stamped at pipeline time and may differ from the displayed score
+   * after a re-audit without a full recalculation of the sensitivity engine).
+   */
+  liveScore?: number;
 }
 
 const FEASIBILITY_CONFIG: Record<string, { label: string; color: string }> = {
@@ -29,7 +35,7 @@ const CONFIDENCE_COLOR: Record<string, string> = {
   Low:    '#f97316',
 };
 
-function fmt(s: number) { return Math.max(0, Math.round(s)); }
+function fmt(s: number) { return Math.min(100, Math.max(0, Math.round(s))); }
 
 const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: number }> = ({
   lever, currentScore, rank,
@@ -117,12 +123,16 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
   );
 };
 
-export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity }) => {
+export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveScore }) => {
   const {
-    levers, currentScore,
+    levers,
     bestSingleLeverScore, bestTwoLeverScore, bestThreeLeverScore,
     topSynergyCombos, keySensitivityInsight,
   } = scoreSensitivity;
+
+  // Use the live score from result.total when provided — scoreSensitivity.currentScore
+  // is stamped at pipeline time and can diverge from the displayed score in edge cases.
+  const currentScore = liveScore ?? scoreSensitivity.currentScore;
 
   const activeLevers = levers.filter(l => l.scoreDropIfImproved > 0);
   if (activeLevers.length === 0) return null;
@@ -136,14 +146,16 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity }) => 
         </p>
       )}
 
-      {/* Projection row */}
+      {/* Projection row — recomputed from liveScore + engine deltas so the
+          "current → projected" display stays consistent when liveScore differs
+          from the pipeline-stamped scoreSensitivity.currentScore. */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {[
-          { label: 'Top lever',     score: fmt(bestSingleLeverScore), desc: '1 action' },
-          { label: 'Top 2 levers',  score: fmt(bestTwoLeverScore),    desc: '2 actions' },
-          { label: 'Top 3 levers',  score: fmt(bestThreeLeverScore),  desc: '3 actions' },
-        ].map(({ label, score, desc }) => {
-          const drop = fmt(currentScore) - score;
+          { label: 'Top lever',    drop: fmt(scoreSensitivity.currentScore) - fmt(bestSingleLeverScore), desc: '1 action' },
+          { label: 'Top 2 levers', drop: fmt(scoreSensitivity.currentScore) - fmt(bestTwoLeverScore),    desc: '2 actions' },
+          { label: 'Top 3 levers', drop: fmt(scoreSensitivity.currentScore) - fmt(bestThreeLeverScore),  desc: '3 actions' },
+        ].map(({ label, drop, desc }) => {
+          const score = fmt(currentScore - drop);
           return (
             <div
               key={label}

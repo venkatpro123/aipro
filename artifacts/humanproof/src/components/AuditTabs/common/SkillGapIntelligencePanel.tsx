@@ -75,12 +75,31 @@ const EmptyPrompt: React.FC = () => (
   >
     <Brain className="w-8 h-8 mb-3" style={{ color: 'rgba(255,255,255,0.2)' }} />
     <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
-      Complete your skills profile to see personalized gap analysis
+      Add your skills to unlock personalized gap analysis
     </h3>
-    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.55, maxWidth: '320px' }}>
-      Add your current skills and target skills in the Profile section. The engine will cross-reference them against
-      live market demand data and surface your highest-ROI upskilling priorities.
+    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.55, maxWidth: '320px', marginBottom: '16px' }}>
+      Enter your current skills and target skills in your profile. The engine cross-references them against
+      2026-Q1 market demand data and surfaces your highest-ROI upskilling priorities ranked by demand score.
     </p>
+    <button
+      onClick={() => {
+        try {
+          window.dispatchEvent(new CustomEvent('hp.profile.open', { detail: { step: 'skills' } }));
+        } catch { /* SSR */ }
+      }}
+      style={{
+        background: 'rgba(0,212,224,0.12)',
+        border: '1px solid rgba(0,212,224,0.30)',
+        borderRadius: '10px',
+        color: '#00d4e0',
+        fontSize: '11px',
+        fontWeight: 700,
+        padding: '8px 20px',
+        cursor: 'pointer',
+      }}
+    >
+      Add skills to profile →
+    </button>
   </div>
 );
 

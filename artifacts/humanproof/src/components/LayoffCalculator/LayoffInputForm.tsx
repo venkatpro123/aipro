@@ -398,110 +398,131 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     return Math.min(99, Math.max(1, base));
   }, [selectedOracleEntry, performanceTier, tenureYears, uniquenessDepth, hasRecentPromotion, hasKeyRelationships]);
 
-  // ── Company search with debounce ──────────────────────────────────────────
+  // ── Company search — instant local results, background Supabase augmentation ──
+  //
+  // Strategy: show results in two phases so the user never stares at a blank
+  // dropdown waiting for a network round-trip.
+  //
+  //   Phase 1 (0ms): compute local bridge + suggestion matches synchronously
+  //                  and render them immediately.
+  //   Phase 2 (network): fire a Supabase query in the background; when it
+  //                      resolves, merge its results (deduped) into the list.
+  //
+  // The AbortController cancels the in-flight Supabase call whenever the query
+  // changes, so stale responses from a superseded keystroke never clobber fresh
+  // ones.
   useEffect(() => {
-    const controller = new AbortController();
-    const tid = setTimeout(async () => {
-      if (!companySearch || companySearch.length < 2 || selectedCompany) {
-        setSearchResults([]);
-        return;
-      }
-      const trimmed = companySearch.trim();
-      if (trimmed.length === 0 || trimmed.length > 100) {
-        setSearchResults([]);
-        return;
-      }
+    if (!companySearch || companySearch.length < 2 || selectedCompany) {
+      setSearchResults([]);
+      return;
+    }
+    const trimmed = companySearch.trim();
+    if (trimmed.length === 0 || trimmed.length > 100) {
+      setSearchResults([]);
+      return;
+    }
 
-      let merged: any[] = [];
+    // ── Phase 1: local sources (synchronous, zero latency) ───────────────────
+    const q = trimmed.toLowerCase();
 
-      // 1. Supabase company_intelligence (2000 companies)
-      try {
-        const supabaseResults = await searchSupabaseCompanies(companySearch, 10);
-        const rootWord = (companySearch ?? '').split(' ')[0].toLowerCase();
-        const sameRootCount = supabaseResults.filter(r =>
-          r.name != null && r.name.toLowerCase().startsWith(rootWord)
-        ).length;
-        if (sameRootCount >= 3) {
-          setDisambiguationCandidates(supabaseResults.slice(0, 5).map(r => ({
-            name: r.name, industry: r.industry, region: 'GLOBAL', riskScore: r.riskScore,
-          })));
-          setShowDisambiguation(true);
-        } else {
-          setShowDisambiguation(false);
-          setDisambiguationCandidates([]);
-        }
-        supabaseResults
-          .filter(r => r.name != null && r.name.length > 0)
-          .slice(0, 8)
-          .forEach(r => {
-            merged.push({
-              name: r.name, industry: r.industry, isPublic: false, region: "GLOBAL",
-              employeeCount: 0, layoffsLast24Months: [], layoffRounds: 0,
-              lastLayoffPercent: null, revenuePerEmployee: 150000,
-              aiInvestmentSignal: "medium", source: "Supabase Intelligence",
-              lastUpdated: new Date().toISOString(), riskScore: r.riskScore,
-              isExternal: false, fromSupabase: true,
-            } as any);
-          });
-      } catch (_) { /* Supabase unavailable */ }
-
-      // 2. Local code-side bridge (50 companies)
-      const local = searchAllCompanies(companySearch).map((c) => {
+    // Local bridge results — resolve full data once per entry, deduped by name.
+    // resolveCompanyData can return null for unknown keys — skip those entries
+    // rather than spreading null (which silently produces {isExternal,fromSupabase}
+    // with no name and crashes downstream .toLowerCase() calls).
+    const localEntries = searchAllCompanies(trimmed);
+    const localMerged: any[] = localEntries
+      .map(c => {
         const fullData = resolveCompanyData(c.key);
+        if (!fullData || !fullData.name) return null;
         return { ...(fullData as any), isExternal: false, fromSupabase: false };
-      });
-      local.forEach(loc => {
-        if (loc.name && !merged.find(m => m.name != null && m.name.toLowerCase() === loc.name.toLowerCase())) {
-          merged.push(loc);
+      })
+      .filter(Boolean);
+    const seenNames = new Set(localMerged.map((m: any) => (m.name ?? '').toLowerCase()));
+
+    // Local fallback suggestions.
+    LOCAL_COMPANY_SUGGESTIONS
+      .filter(n => n.toLowerCase().includes(q))
+      .slice(0, 5)
+      .forEach(name => {
+        if (!seenNames.has(name.toLowerCase())) {
+          seenNames.add(name.toLowerCase());
+          localMerged.push({
+            name, isPublic: false, industry: "Company",
+            region: "GLOBAL", employeeCount: 0,
+            layoffsLast24Months: [], layoffRounds: 0,
+            lastLayoffPercent: null, revenuePerEmployee: 150000,
+            aiInvestmentSignal: "medium", source: "Suggestions",
+            lastUpdated: new Date().toISOString(), isExternal: true,
+          } as any);
         }
       });
 
-      // 3. Local fallback suggestions (replaces CSP-blocked Clearbit)
-      if (merged.length < 3) {
-        const q = companySearch.toLowerCase();
-        LOCAL_COMPANY_SUGGESTIONS
-          .filter(n => n.toLowerCase().includes(q))
-          .slice(0, Math.max(0, 5 - merged.length))
-          .forEach(name => {
-            if (!merged.find(m => m.name != null && m.name.toLowerCase() === name.toLowerCase())) {
-              merged.push({
-                name, isPublic: false, industry: "Company",
-                region: "GLOBAL", employeeCount: 0,
-                layoffsLast24Months: [], layoffRounds: 0,
-                lastLayoffPercent: null, revenuePerEmployee: 150000,
-                aiInvestmentSignal: "medium", source: "Suggestions",
-                lastUpdated: new Date().toISOString(), isExternal: true,
-              } as any);
-            }
-          });
+    // Render local results immediately — no waiting.
+    setSearchResults(localMerged.slice(0, 10));
+
+    // ── Phase 2: Supabase augmentation (async, non-blocking) ─────────────────
+    const controller = new AbortController();
+
+    searchSupabaseCompanies(trimmed, 10, controller.signal).then(supabaseResults => {
+      if (controller.signal.aborted) return;
+
+      // Disambiguation check.
+      const rootWord = trimmed.split(' ')[0].toLowerCase();
+      const sameRootCount = supabaseResults.filter(r =>
+        r.name != null && r.name.toLowerCase().startsWith(rootWord),
+      ).length;
+      if (sameRootCount >= 3) {
+        setDisambiguationCandidates(supabaseResults.slice(0, 5).map(r => ({
+          name: r.name, industry: r.industry, region: 'GLOBAL', riskScore: r.riskScore,
+        })));
+        setShowDisambiguation(true);
+      } else {
+        setShowDisambiguation(false);
+        setDisambiguationCandidates([]);
       }
 
-      if (!controller.signal.aborted) {
-        setSearchResults(merged.slice(0, 10));
-      }
-    }, 300);
-    return () => { clearTimeout(tid); controller.abort(); };
+      // Merge Supabase rows (front of list — they have riskScore) with local
+      // results that weren't already covered.
+      const sbMapped: any[] = supabaseResults
+        .filter(r => r.name != null && r.name.length > 0)
+        .slice(0, 8)
+        .map(r => ({
+          name: r.name, industry: r.industry, isPublic: false, region: "GLOBAL",
+          employeeCount: 0, layoffsLast24Months: [], layoffRounds: 0,
+          lastLayoffPercent: null, revenuePerEmployee: 150000,
+          aiInvestmentSignal: "medium", source: "Supabase Intelligence",
+          lastUpdated: new Date().toISOString(), riskScore: r.riskScore,
+          isExternal: false, fromSupabase: true,
+        } as any));
+
+      // Dedup: keep existing local result if Supabase returns the same name.
+      const sbNames = new Set(sbMapped.map((r: any) => (r.name ?? '').toLowerCase()));
+      const remainingLocal = localMerged.filter(
+        (m: any) => !sbNames.has((m.name ?? '').toLowerCase()),
+      );
+
+      setSearchResults([...sbMapped, ...remainingLocal].slice(0, 10));
+    }).catch(() => { /* AbortError or network failure — local results already visible */ });
+
+    return () => controller.abort();
   }, [companySearch, selectedCompany]);
 
-  // ── Oracle role search with debounce ──────────────────────────────────────
+  // ── Oracle role search — instant, in-memory, no debounce needed ─────────────
   useEffect(() => {
-    const tid = setTimeout(() => {
-      if (roleTitle.length >= 2) {
-        const results = searchOracleRoles(roleTitle, 8);
-        setRoleSuggestions(results);
-        setShowRoleSuggestions(results.length > 0);
-        setFocusedSuggestionIndex(-1);
-        if (selectedOracleEntry && roleTitle && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
-          setSelectedOracleEntry(null);
-          setOracleSelectionCleared(true);
-        }
-      } else {
-        setShowRoleSuggestions(false);
-        setRoleSuggestions([]);
-        setFocusedSuggestionIndex(-1);
+    if (roleTitle.length >= 2) {
+      const results = searchOracleRoles(roleTitle, 8);
+      setRoleSuggestions(results);
+      setShowRoleSuggestions(results.length > 0);
+      setFocusedSuggestionIndex(-1);
+      if (selectedOracleEntry && roleTitle && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
+        setSelectedOracleEntry(null);
+        setOracleSelectionCleared(true);
       }
-    }, 180);
-    return () => clearTimeout(tid);
+    } else {
+      setShowRoleSuggestions(false);
+      setRoleSuggestions([]);
+      setFocusedSuggestionIndex(-1);
+    }
   }, [roleTitle]);
 
   const selectRole = (entry: OracleRoleEntry) => {
@@ -921,13 +942,15 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   <select id="tenure-select" value={tenureYears} onChange={(e) => setTenureYears(Number(e.target.value))} className="input">
                     <option value={0.3}>&lt; 6 months</option>
                     <option value={1.5}>1–2 years</option>
-                    <option value={5}>5+ years</option>
+                    <option value={3.5}>3–5 years</option>
+                    <option value={7}>5+ years</option>
                   </select>
                 </div>
                 <div className="audit-field-group" style={{ marginBottom: 0 }}>
                   <label htmlFor="career-select">Total Experience</label>
                   <select id="career-select" value={careerYears} onChange={(e) => setCareerYears(Number(e.target.value))} className="input">
-                    <option value={2}>&lt; 2 years</option>
+                    <option value={1}>0–2 years</option>
+                    <option value={3.5}>2–5 years</option>
                     <option value={7}>5–10 years</option>
                     <option value={15}>15+ years</option>
                   </select>

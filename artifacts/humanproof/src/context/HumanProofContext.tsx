@@ -231,6 +231,37 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
         // of an extra audit (with cache hits) is small and the cost of
         // showing a stale dashboard after a profile change is large.
         setProfileVersion(v => v + 1);
+      } else {
+        // BUGFIX: upsertUserProfile returns null for unauthenticated users
+        // (no Supabase session). Previously this silently dropped the patch —
+        // the ProfileQuickCapture "3 quick questions" form would collect
+        // visa/runway/dependents and then go nowhere, so the action plan was
+        // never personalized. We now apply the patch OPTIMISTICALLY to the
+        // in-memory profile and still bump profileVersion, so the data flows
+        // into the audit pipeline for the session (LayoffCalculator merges
+        // userProfile fields into userFactors and the profileVersion bump
+        // triggers a re-audit). Persistence resumes once the user signs in.
+        const session = await import('../utils/supabase')
+          .then(({ supabase }) => supabase.auth.getSession())
+          .then(({ data }) => data.session)
+          .catch(() => null);
+        if (!session) {
+          // Strip the non-profile 'confirm' flag before merging.
+          const { confirm: _confirm, ...profilePatch } = patch as Record<string, unknown>;
+          setUserProfile(prev => ({
+            // Minimal valid UserProfile shape for an anonymous session.
+            userId: prev?.userId ?? 'anonymous',
+            salaryBand: null,
+            visaStatus: null,
+            metro: null,
+            tenureYears: null,
+            lastConfirmedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ...(prev ?? {}),
+            ...(profilePatch as Partial<UserProfile>),
+          } as UserProfile));
+          setProfileVersion(v => v + 1);
+        }
       }
       return updated;
     },

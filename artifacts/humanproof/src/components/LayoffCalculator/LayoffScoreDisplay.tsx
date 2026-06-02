@@ -956,8 +956,10 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
   const ensembleData = isEnsemble(result) ? result : null;
 
   const relevantNews = React.useMemo(() => {
+    if (!companyName) return undefined;
+    const needle = companyName.toLowerCase();
     return layoffNewsCache.find(
-      (n) => n.companyName.toLowerCase() === companyName.toLowerCase(),
+      (n) => (n.companyName ?? '').toLowerCase() === needle,
     );
   }, [companyName]);
 

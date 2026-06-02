@@ -32,6 +32,8 @@ interface CareerResilienceResult {
   resilienceImprovementPlan?: string[];
   effectiveProtectionMonths?: number;
   resilienceHeadline?: string;
+  riskResilienceInterpretation?: string;
+  familyObligationModifier?: number;
 }
 
 interface Props {
@@ -77,67 +79,109 @@ function insuranceGrade(score: number): { label: string; color: string; sub: str
 
 // ── Pillar Row ────────────────────────────────────────────────────────────────
 
+import { AnimatePresence } from 'framer-motion';
+
 const PillarRow: React.FC<{
   pillar: ResiliencePillar;
   isCritical: boolean;
   isTop: boolean;
 }> = ({ pillar, isCritical, isTop }) => {
+  const [open, setOpen] = useState(false);
   const cfg = STATUS_CONFIG[pillar.status] ?? STATUS_CONFIG.ADEQUATE;
   const icon = pillarIcon(pillar.name);
+  const hasDetail = !!(pillar.insight || pillar.improvementAction || (pillar as any).topAction);
 
   return (
     <div
-      className="flex items-center gap-3 py-2 px-3 rounded-xl"
+      className="rounded-xl overflow-hidden"
       style={{
-        background: isCritical ? `${cfg.color}0c` : 'transparent',
-        border: isCritical ? `1px solid ${cfg.color}25` : '1px solid transparent',
+        background: isCritical ? `${cfg.color}0a` : 'transparent',
+        border: isCritical ? `1px solid ${cfg.color}22` : '1px solid transparent',
+        marginBottom: 2,
       }}
     >
-      {/* Icon */}
-      <span className="text-base flex-shrink-0 w-6 text-center">{icon}</span>
-
-      {/* Name + progress */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <span
-            className="text-[11px] font-semibold truncate"
-            style={{ color: isCritical ? cfg.color : 'rgba(255,255,255,0.80)' }}
-          >
-            {pillar.name}
-          </span>
-          <span
-            className="text-[10px] font-black ml-2 flex-shrink-0"
-            style={{ color: cfg.color }}
-          >
-            {pillar.score}
-          </span>
-        </div>
-        {/* Progress bar */}
-        <div
-          className="h-1.5 rounded-full overflow-hidden"
-          style={{ background: 'rgba(255,255,255,0.07)' }}
-        >
-          <motion.div
-            className="h-full rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${pillar.score}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
-            style={{ background: cfg.color + (isCritical ? 'dd' : '88') }}
-          />
-        </div>
-      </div>
-
-      {/* Status badge */}
-      <span
-        className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
-        style={{
-          background: `${cfg.color}15`,
-          color: cfg.color,
-          border: `1px solid ${cfg.color}28`,
-        }}
+      {/* Header row — always visible */}
+      <button
+        className="w-full flex items-center gap-3 py-2 px-3 text-left"
+        onClick={() => hasDetail && setOpen(o => !o)}
+        style={{ cursor: hasDetail ? 'pointer' : 'default' }}
       >
-        {cfg.label}
-      </span>
+        <span className="text-base flex-shrink-0 w-6 text-center">{icon}</span>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <span
+              className="text-[11px] font-semibold truncate"
+              style={{ color: isCritical ? cfg.color : isTop ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.78)' }}
+            >
+              {pillar.name}
+              {isTop && (
+                <span className="ml-1.5 text-[9px] font-bold px-1 py-0.5 rounded"
+                  style={{ background: 'rgba(16,185,129,0.14)', color: '#10b981' }}>
+                  STRENGTH
+                </span>
+              )}
+            </span>
+            <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+              <span className="text-[10px] font-black" style={{ color: cfg.color }}>
+                {pillar.score}
+              </span>
+              {hasDetail && (
+                open
+                  ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />
+                  : <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />
+              )}
+            </div>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            <motion.div
+              className="h-full rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${pillar.score}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+              style={{ background: cfg.color + (isCritical ? 'dd' : '88') }}
+            />
+          </div>
+        </div>
+
+        <span
+          className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
+          style={{ background: `${cfg.color}15`, color: cfg.color, border: `1px solid ${cfg.color}28` }}
+        >
+          {cfg.label}
+        </span>
+      </button>
+
+      {/* Expanded detail — insight + top action */}
+      <AnimatePresence initial={false}>
+        {open && hasDetail && (
+          <motion.div
+            key="detail"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            style={{ overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="px-3 py-2.5 space-y-2">
+              {(pillar.insight) && (
+                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                  {pillar.insight}
+                </p>
+              )}
+              {((pillar as any).topAction || pillar.improvementAction) && (
+                <div className="flex items-start gap-1.5 rounded-lg px-2 py-1.5"
+                  style={{ background: `${cfg.color}09`, border: `1px solid ${cfg.color}20` }}>
+                  <ArrowRight className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: cfg.color, opacity: 0.75 }} />
+                  <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.68)' }}>
+                    {(pillar as any).topAction ?? pillar.improvementAction}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -147,7 +191,15 @@ const PillarRow: React.FC<{
 export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const { compositeScore, pillars, criticalWeakness, effectiveProtectionMonths, resilienceImprovementPlan } = resilience;
+  const {
+    compositeScore,
+    pillars,
+    criticalWeakness,
+    effectiveProtectionMonths,
+    resilienceImprovementPlan,
+    riskResilienceInterpretation,
+    familyObligationModifier,
+  } = resilience;
   const grade = insuranceGrade(compositeScore);
   const isFullyInsured = compositeScore >= 85;
 
@@ -264,7 +316,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
       {/* ── Improvement plan ───────────────────────────────────────────────── */}
       {!isFullyInsured && criticalWeakness && (
         <div
-          className="mx-3 mb-3 rounded-xl px-3 py-2.5"
+          className="mx-3 mb-2 rounded-xl px-3 py-2.5"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
           <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
@@ -286,6 +338,35 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Risk × Resilience interpretation — engine-generated, not a template ── */}
+      {riskResilienceInterpretation && (
+        <div
+          className="mx-3 mb-3 rounded-xl px-3 py-2.5"
+          style={{ background: 'rgba(34,211,238,0.04)', border: '1px solid rgba(34,211,238,0.14)' }}
+        >
+          <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(34,211,238,0.50)' }}>
+            RISK + RESILIENCE READ
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            {riskResilienceInterpretation}
+          </p>
+        </div>
+      )}
+
+      {/* ── Sole-earner family obligation disclosure ────────────────────────── */}
+      {familyObligationModifier != null && familyObligationModifier < 1 && (
+        <div
+          className="mx-3 mb-3 rounded-xl px-3 py-2"
+          style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.18)' }}
+        >
+          <p className="text-[10px] leading-snug" style={{ color: 'rgba(249,115,22,0.80)' }}>
+            Score adjusted ×{familyObligationModifier} (sole earner with dependents) — your composite
+            resilience understates the real constraint because dependent household costs continue
+            during a job search with no second income to offset them.
+          </p>
         </div>
       )}
     </motion.div>

@@ -162,13 +162,33 @@ export function computeSkillGapIntelligence(input: SkillGapInput): SkillGapIntel
   gaps.sort((a, b) => b.data.demandScore - a.data.demandScore);
 
   // Build upskill priority list
-  const upskillPriority: UpskillPriorityItem[] = gaps.map(({ skill, data }) => ({
-    skill,
-    urgency: deriveUrgency(data.demandScore),
-    marketDemandScore: data.demandScore,
-    estimatedWeeksToLearn: data.weeksToLearn,
-    rationale: `${skill} has demand score ${data.demandScore}/100 in 2026-Q1; ${data.category} skills are in active hiring.`,
-  }));
+  const roleLabel = input.workTypeKey
+    ? input.workTypeKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : 'your target role';
+  const expLabel = input.experience === '0-2' ? 'entry-level' :
+    input.experience === '2-5' ? 'early-career' :
+    input.experience === '5-10' ? 'mid-level' :
+    input.experience === '10-15' ? 'senior' : 'principal-level';
+
+  const upskillPriority: UpskillPriorityItem[] = gaps.map(({ skill, data }) => {
+    const trendNote = data.demandScore >= 85
+      ? 'one of the highest-demand skills in the 2026 market'
+      : data.demandScore >= 75
+      ? 'in strong demand across hiring pipelines'
+      : 'in moderate demand for this skill category';
+    const timeContext = data.weeksToLearn <= 6
+      ? `Quick to acquire (${data.weeksToLearn}w) — high return on time investment.`
+      : data.weeksToLearn <= 12
+      ? `${data.weeksToLearn}-week learning path — achievable alongside current role.`
+      : `${data.weeksToLearn}w deep-skill investment — signals long-term commitment.`;
+    return {
+      skill,
+      urgency: deriveUrgency(data.demandScore),
+      marketDemandScore: data.demandScore,
+      estimatedWeeksToLearn: data.weeksToLearn,
+      rationale: `${skill} is ${trendNote} for ${expLabel} ${roleLabel} roles (demand: ${data.demandScore}/100, 2026-Q1). ${timeContext}`,
+    };
+  });
 
   const criticalGaps = upskillPriority
     .filter(g => g.urgency === 'critical')

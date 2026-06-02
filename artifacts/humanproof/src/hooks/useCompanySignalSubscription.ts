@@ -148,8 +148,8 @@ export function useCompanySignalSubscription(
     // saturates Supabase realtime fan-out at scale.
     //
     // Legacy path (flag off): per-component supabase.channel() as before.
-    const companyLower = companyName.toLowerCase();
-    const dbLower      = dbCompanyName.toLowerCase();
+    const companyLower = (companyName ?? '').toLowerCase();
+    const dbLower      = (dbCompanyName ?? '').toLowerCase();
     const fanoutFlag = evaluateFlagSync('ws6_realtime_fanout');
     const handleBreakingNewsRow = (row: BreakingNewsEvent | (BreakingNewsEvent & { source_url?: string })) => {
       const rowName = (row.company_name ?? '').toLowerCase();

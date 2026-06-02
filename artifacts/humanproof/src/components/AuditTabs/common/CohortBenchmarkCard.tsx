@@ -33,6 +33,10 @@ interface CompetitivePositionResult {
   topGapAction?: string;
   topGapImpact?: string;
   differentiatorStatement?: string;
+  strengthsVsPeers?: string[];
+  weaknessesVsPeers?: string[];
+  winRateEstimate?: string;
+  competitiveThreat?: string;
   closeGapRoadmap?: Array<{ action: string; percentileGain: number; effort: 'low' | 'medium' | 'high' }>;
 }
 
@@ -67,6 +71,11 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
     topGap,
     topGapAction,
     topGapImpact,
+    differentiatorStatement,
+    strengthsVsPeers = [],
+    weaknessesVsPeers = [],
+    winRateEstimate,
+    competitiveThreat,
     closeGapRoadmap = [],
   } = competitivePosition;
 
@@ -160,6 +169,49 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
               </p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Differentiator statement — was computed but never shown */}
+      {differentiatorStatement && (
+        <div
+          className="rounded-lg px-2.5 py-2 mb-2"
+          style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.20)' }}
+        >
+          <p className="text-[10px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(167,139,250,0.60)' }}>
+            YOUR DIFFERENTIATOR
+          </p>
+          <p className="text-[11px] italic leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+            "{differentiatorStatement}"
+          </p>
+        </div>
+      )}
+
+      {/* Win rate + competitive threat */}
+      {(winRateEstimate || competitiveThreat) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+          {winRateEstimate && (
+            <div className="rounded-lg px-2.5 py-2"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                WIN RATE
+              </p>
+              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                {winRateEstimate}
+              </p>
+            </div>
+          )}
+          {competitiveThreat && (
+            <div className="rounded-lg px-2.5 py-2"
+              style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.15)' }}>
+              <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(249,115,22,0.55)' }}>
+                MAIN COMPETITOR
+              </p>
+              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.58)' }}>
+                {competitiveThreat}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

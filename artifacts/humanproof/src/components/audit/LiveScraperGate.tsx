@@ -12,8 +12,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { pollScrapeProgress } from '../../services/scraperTrigger';
 
-const MAX_WAIT_MS   = 45_000;  // v32 ceiling — matches awaitLiveQuorum default
-const SKIP_AFTER_MS = 30_000;  // when the "Continue with current evidence" valve appears
+const MAX_WAIT_MS   = 12_000;  // reduced: globe already shows, no need to hold 45s
+const SKIP_AFTER_MS =  6_000;  // escape valve appears quickly if scraper is slow
 const POLL_MS       =  1_500;  // tighter cadence so per-stage transitions feel live
 
 interface Source {

@@ -226,6 +226,10 @@ export interface CareerVelocityInput {
   hasPublicSpeaking?: boolean;            // internal or external conference speaking
   hasDirectReports?: number;              // # of direct reports (0 = IC)
   industryInflationRate?: number;         // for real wage growth calc (default 3.5%)
+  /** Industry key for benchmark lookup (e.g. 'tech', 'finance', 'healthcare') */
+  industryKey?: string;
+  /** Role family key for benchmark lookup (e.g. 'sw_backend', 'fp_a', 'nursing') */
+  roleFamily?: string;
 }
 
 // ─── Industry × Role Promotion Benchmark Database (v47.0) ──────────────────────
@@ -357,6 +361,16 @@ export function computeCareerVelocity(
 
     const seniorityLevel = inferSeniority(experience, roleTitle);
     const promotion = assessPromotionVelocity(yearsSinceLastPromotion);
+
+    // Replace generic time-only promotion note with industry+role benchmarked note
+    // when industryKey + roleFamily are provided. This changes a note like
+    // "3.0 years without promotion — plateau signal" into "Slightly below median
+    // for Software Engineers in tech companies (median 2.5yr) — within normal range"
+    // for a backend engineer, vs "Top-quartile velocity for Legal in BigLaw (your
+    // 3yr vs 7yr median)" for a BigLaw associate where 3 years is fast.
+    const benchmarkedPromotionNote = (input.industryKey && input.roleFamily && yearsSinceLastPromotion != null)
+      ? contextualisedPromotionNote(yearsSinceLastPromotion, input.industryKey, input.roleFamily)
+      : promotion.note;
     const tenure = assessCurrentRoleTenure(monthsInCurrentRole);
 
     // Compensation growth vs. inflation
@@ -450,7 +464,7 @@ export function computeCareerVelocity(
       },
       promotionVelocityScore: promotion.score,
       yearsSinceLastPromotion,
-      promotionNote: promotion.note,
+      promotionNote: benchmarkedPromotionNote,
       compensationGrowthSignal,
       compensationGrowthNote,
       currentRoleTenureRisk: tenure.risk,

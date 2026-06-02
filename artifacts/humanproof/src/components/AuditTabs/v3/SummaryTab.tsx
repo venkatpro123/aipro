@@ -60,6 +60,17 @@ import { ScoreSignalOrbit, type SignalNode } from '../../ScoreSignalOrbit';
 import { ScoreCountUp } from '../../AuditReveal/ScoreCountUp';
 import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
 import { detectScoreDrift } from '../../../services/scoreStorageService';
+import { DisplacementTrajectoryPanel } from '../../LayoffCalculator/DisplacementTrajectoryPanel';
+
+// ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
+function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
+  if (years == null) return '5-10';
+  if (years < 2)  return '0-2';
+  if (years < 5)  return '2-5';
+  if (years < 10) return '5-10';
+  if (years < 15) return '10-15';
+  return '15+';
+}
 
 // ── Top-Lever Bridge ───────────────────────────────────────────────────────────
 // Placed between TopDriversStrip and ImmediateActionsStrip.
@@ -1435,6 +1446,36 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         </motion.div>
       )}
 
+      {/* ── 6-Year AI Displacement Forecast — final collapsed section ───────── */}
+      {(() => {
+        const roleKey   = result.workTypeKey ?? r.oracleKey ?? 'generic';
+        const roleTitle = (r.roleTitle ?? roleKey).replace(/_/g, ' ');
+        const expBand   = experienceBand(
+          (r.userFactors?.careerYears as number | undefined) ??
+          (r.careerYears as number | undefined),
+        );
+        const careerIntel = r.careerIntelligence ?? null;
+        return (
+          <AdaptiveBlock
+            title="6-Year AI Displacement Forecast"
+            subtitle={`${roleTitle} — year-by-year risk projection · 3 scenarios`}
+            icon={AlertOctagon}
+            tier={3}
+            accentColor="#f97316"
+            defaultOpen={false}
+          >
+            <DisplacementTrajectoryPanel
+              currentScore={result.total}
+              oracleResult={null}
+              roleTitle={roleTitle}
+              roleKey={roleKey}
+              experience={expBand}
+              careerIntelligence={careerIntel}
+            />
+          </AdaptiveBlock>
+        );
+      })()}
+
       {/* Reading hint */}
       <div className="text-center pt-1 pb-2">
         <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
@@ -1446,3 +1487,9 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 };
 
 export default SummaryTab;
+
+// Named export so GuidanceView (and any future surface) can reuse the score
+// ring without duplicating its dependencies. All underlying constants (RING_SIZE,
+// RING_R, RING_CIRC, TREND_ARROW) are file-scoped — the export is safe because
+// they are already in module scope.
+export { ScoreRingHero };

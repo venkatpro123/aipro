@@ -839,6 +839,242 @@ const QA_ACTIONS: SeniorityActions = {
   ],
 };
 
+// ── Sales / Account Management / Business Development ─────────────────────────
+//
+// Categorical split (leverage, not vocabulary):
+//   junior    → IMPLEMENT: run the AI-assisted outreach/qualification motion themselves
+//   mid       → OWN: the team's AI sales-tooling pilot and playbook
+//   senior    → ESTABLISH: revenue-org AI governance (data hygiene, forecasting, comp)
+//   principal → INSTITUTIONALIZE: go-to-market AI strategy for the company / board
+//
+// Why sales needs its own pool: SDR/BDR prospecting and first-line qualification
+// are among the most heavily AI-automated white-collar motions (autonomous
+// outreach, AI SDRs, deal-scoring). Generic "ship an AI work sample" advice
+// misses that the survivable core of a sales role is relationship capital and
+// complex-deal judgment, not activity volume.
+const SALES_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Build and Ship One Full AI-Assisted Prospecting Cycle, Measured",
+      description: "Pick one AI sales tool your org allows (Clay, Apollo, Gong, or even ChatGPT) and run a complete cycle: AI-built target list → AI-personalised first touch → your human follow-up → booked meeting. Track reply rate vs. your manual baseline. AI SDR tooling is automating volume-based prospecting fastest of any sales activity — the junior reps who survive are the ones who can show they DRIVE the tool and convert what it surfaces, not the ones competing with it on raw activity. One documented cycle with a measured lift is your retention signal.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "30 days",
+    },
+    {
+      title: "Build One Reference-Quality Customer Relationship This Quarter",
+      description: "Identify one account where you can become the trusted human — learn their business, bring them an insight they didn't ask for, earn a reference or case study. Autonomous outreach scales touches infinitely; it cannot build trust. A junior rep with one nameable champion who will take their call is categorically harder to replace than one with a high dial count. This is the part of the job AI structurally cannot do.",
+      layerFocus: "L5 · Personal Protection",
+      riskReductionPct: 16,
+      deadline: "This quarter",
+    },
+  ],
+  mid: [
+    {
+      title: "Own Your Team's AI Sales-Tooling Pilot and Write the Playbook",
+      description: "Volunteer to evaluate and roll out one AI tool for your team (conversation intelligence, deal-scoring, or AI-assisted outreach). Define the criteria, run the pilot, write the playbook for how reps should use it. Mid-level closers who own the revenue tech stack are reclassified from 'quota carrier' to 'team multiplier' — the role that survives when the org cuts the bottom third of a bloated SDR layer.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "60 days",
+    },
+    {
+      title: "Take Ownership of a Complex, Multi-Stakeholder Deal Motion",
+      description: "Move up-market: own one deal with 3+ stakeholders, a real procurement process, and a custom solution. Document the motion. The transactional, single-decision-maker sale is where AI quoting and self-serve eat headcount; the consultative enterprise motion is where human sellers compound in value. Mid reps who prove they can run complexity get promoted into the protected tier.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "This quarter",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish Your Revenue Org's AI Forecasting and Data-Hygiene Standard",
+      description: "AI forecasting and deal-scoring are only as good as CRM data discipline. Define the standard: what gets logged, how AI-generated forecasts are reviewed, where human override is mandatory. Present to your VP of Sales / CRO. Senior sellers and managers who own how the revenue org uses AI responsibly are the last cut and the first competitive offer — you become infrastructure, not quota.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 28,
+      deadline: "45 days",
+    },
+    {
+      title: "Publish Your Enterprise Sales Methodology for the AI Era",
+      description: "Document one major win where you combined AI tooling with human judgment to close complexity. Publish on LinkedIn or in a sales community. Senior sellers with a visible, named methodology receive inbound for Sales Director / Head of Revenue roles — publishing converts tribal selling skill into market-visible authority that survives any single employer's restructuring.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+  ],
+  principal: [
+    {
+      title: "Define the Company's Go-To-Market AI Strategy for the C-Suite",
+      description: "At VP/CRO level your differentiation is institutional: where AI compresses the funnel, where it erodes margin, what the right human-to-AI seller ratio is, and what the headcount implications are over 24 months. Write the brief and present it to the CEO and board. Revenue leaders who define GTM AI strategy proactively are seen as architects of the next operating model; those who don't are executing someone else's.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 38,
+      deadline: "60 days",
+    },
+    {
+      title: "Build Industry Authority at the Revenue + AI Intersection",
+      description: "Keynote a SaaStr / Pavilion / RevOps event or publish a perspective on how AI reshapes enterprise selling. Principal revenue leaders visible here are recruited as CRO, GTM advisor, and board member at sales-tech companies — mandates that pay well above a single comp plan and survive any one company's downturn. The first-mover window on this positioning closes in 18–24 months.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 32,
+      deadline: "90 days",
+    },
+  ],
+};
+
+// ── Operations / Program / Business Operations ────────────────────────────────
+//
+// Categorical split:
+//   junior    → IMPLEMENT: automate one repeatable process end-to-end
+//   mid       → OWN: a cross-functional workflow's AI redesign + the SOP
+//   senior    → ESTABLISH: operational AI governance and the process-quality bar
+//   principal → INSTITUTIONALIZE: the operating-model redesign for the org
+//
+// Ops/coordination work (status-chasing, reporting, scheduling, reconciliation)
+// is squarely in the automation path. The durable core is judgment under
+// ambiguity, cross-functional trust, and owning outcomes — not running the process.
+const OPS_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Automate One Repetitive Operational Process End-to-End",
+      description: "Pick the most repetitive thing you do weekly — a report, a reconciliation, a status roll-up — and automate it with the tools you have (Zapier/Make, Google Apps Script, Excel + an LLM, or a Notion/Airtable automation). Document the hours saved. Coordination and reporting work is automating fast; the analyst who AUTOMATES their own busywork and reinvests the time in judgment is reclassified as an improver, not an overhead line. One shipped automation with a measured time-saving is your proof.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "30 days",
+    },
+    {
+      title: "Own One Cross-Functional Coordination Outcome (Not Just the Updates)",
+      description: "Volunteer to own the outcome of one small cross-team effort — not chasing status, but being accountable for it landing. Document how you unblocked it. The status-chasing layer of ops is exactly what AI project assistants absorb; the human who is trusted to OWN ambiguity across teams is the part that survives. Build one nameable instance of that trust.",
+      layerFocus: "L5 · Personal Protection",
+      riskReductionPct: 15,
+      deadline: "This quarter",
+    },
+  ],
+  mid: [
+    {
+      title: "Own One Cross-Functional Workflow's AI Redesign and the SOP",
+      description: "Take one workflow you touch — onboarding, vendor intake, incident response — and redesign it with AI in the loop. Define what AI does, what a human must verify, and the new SOP. Mid-level ops pros who own AI-augmented process design are reclassified from coordinators to operators of the system, the tier that survives when the manual coordination layer is cut.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "60 days",
+    },
+    {
+      title: "Build the Metrics Layer That Proves Your Function's Value",
+      description: "Stand up a dashboard that ties your operational work to a business outcome (cost, cycle time, quality). Ops functions get cut when their value is invisible. The mid-level operator who can show, in numbers, what their process improvements deliver is making a promotion case and a retention case at once.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 18,
+      deadline: "This quarter",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish Operational AI Governance and the Process-Quality Bar",
+      description: "Define, for your department, which processes can be AI-automated, what the quality-review and exception-handling rules are, and who owns failures. Present to your director/VP. Senior ops leaders who own how the org automates responsibly become the durable layer — the automation removes the work below them, not them.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 28,
+      deadline: "45 days",
+    },
+    {
+      title: "Lead One End-to-End Operating-Process Transformation and Publish It",
+      description: "Own one transformation — a function re-platformed or re-architected around AI — quantify the outcome, and publish a case study. Senior operators with a documented transformation receive inbound for Head of Ops / COO-track roles; the visible track record outlives any single employer's restructuring.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+  ],
+  principal: [
+    {
+      title: "Define the Company's AI Operating-Model Redesign for the C-Suite",
+      description: "At VP Ops / COO level, the question is structural: which functions shrink as AI absorbs coordination, which grow, and what the org chart looks like in 24 months. Write the operating-model brief and present it to the CEO/board. Principals who author the redesign own the new model; those who don't are restructured by it.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 38,
+      deadline: "60 days",
+    },
+    {
+      title: "Build Authority at the Operations + AI Intersection",
+      description: "Keynote an operations / RevOps / supply-chain forum or publish on AI-era operating models. Principal ops leaders visible here are recruited as COO, transformation advisor, and operating partner at PE/VC firms — mandates that compound well beyond one salary and survive any single company's downturn.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 32,
+      deadline: "90 days",
+    },
+  ],
+};
+
+// ── Design / UX / Product Design ──────────────────────────────────────────────
+//
+// Categorical split:
+//   junior    → IMPLEMENT: ship AI-accelerated production work + a documented critique eye
+//   mid       → OWN: the team's AI design-tooling workflow and quality bar
+//   senior    → ESTABLISH: design-system + AI governance, research rigor at org level
+//   principal → INSTITUTIONALIZE: design's strategic seat as AI commoditizes production
+//
+// Generative tools are commoditizing visual/production craft (mockups, variations,
+// copy, even flows). The durable core of design is problem framing, research,
+// taste/judgment, and systems thinking — what to build and why, not pixel pushing.
+const DESIGN_ACTIONS: SeniorityActions = {
+  junior: [
+    {
+      title: "Ship One Project Where AI Did the Production and You Did the Judgment",
+      description: "Use Figma AI, Midjourney, or v0 to generate the production-grade output, then do the part AI can't: the critique, the rationale, the accessibility and edge-case pass, the why-this-not-that. Publish the case study showing your decision-making, not just the pixels. Generative tools are commoditizing production craft fastest; the junior designer who demonstrates JUDGMENT over AI output is reclassified as a designer, not a pixel-pusher competing with a model.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "30 days",
+    },
+    {
+      title: "Build a Visible Research-and-Rationale Habit",
+      description: "For one feature, document the user problem, the research that shaped it, and why your design solves it. Publish it. AI generates options endlessly but cannot decide which problem is worth solving — that framing is the protected core. A junior designer with a visible research-and-rationale trail is categorically safer than one with a folder of pretty mockups.",
+      layerFocus: "L5 · Personal Protection",
+      riskReductionPct: 16,
+      deadline: "This quarter",
+    },
+  ],
+  mid: [
+    {
+      title: "Own Your Team's AI Design Workflow and Quality Bar",
+      description: "Define how your team uses generative tools: where AI accelerates, what a human must review, what the quality and brand bar is. Run the rollout. Mid designers who own the AI-augmented workflow become the multiplier the team is built around — the role that survives when production-only headcount is trimmed.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 24,
+      deadline: "60 days",
+    },
+    {
+      title: "Lead One Zero-to-One Problem-Framing Effort",
+      description: "Own the front of one project — the discovery, the framing, the 'what should we even build' — not just the execution. Document it. The discovery-and-strategy half of design is where humans compound; the execution half is where AI competes. Mid designers who prove they can frame, not just produce, move into the protected senior track.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 20,
+      deadline: "This quarter",
+    },
+  ],
+  senior: [
+    {
+      title: "Establish Your Org's Design-System + AI Governance",
+      description: "Own the standard for how AI-generated design enters the product: component governance, accessibility gates, brand consistency, and review rules. Present to your design and product leadership. Senior designers who own the system-level quality bar in an AI-accelerated org become infrastructure — the layer automation can't remove.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 28,
+      deadline: "45 days",
+    },
+    {
+      title: "Publish Your Design Philosophy for the Generative Era",
+      description: "Document how you direct AI tools toward good design at scale without losing craft and judgment. Publish or speak on it. Senior designers with a named philosophy receive inbound for Design Lead / Head of Design roles — visible authority that outlives any one team's restructuring.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 22,
+      deadline: "30 days",
+    },
+  ],
+  principal: [
+    {
+      title: "Define Design's Strategy for the C-Suite as AI Commoditizes Production",
+      description: "At Head of Design / VP level, make the case to the C-suite: as production craft commoditizes, design's value moves to research, strategy, and systems — and staffing should follow. Write the brief and present it. Design leaders who reframe the function's mandate keep design at the strategy table; those who don't watch it get absorbed into eng/PM.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 38,
+      deadline: "60 days",
+    },
+    {
+      title: "Build Industry Authority at the Design + AI Intersection",
+      description: "Keynote Config / an industry design conference or publish on the future of design in the generative era. Principal design leaders visible here are recruited as VP Design, design advisor, and board members at design-tooling companies — positioning that compounds beyond one salary and any one company's downturn.",
+      layerFocus: "L3 · Role Displacement",
+      riskReductionPct: 32,
+      deadline: "90 days",
+    },
+  ],
+};
+
 const ROLE_SENIORITY_MAP: Record<string, SeniorityActions> = {
   sw:   SW_ACTIONS,
   fin:  FIN_ACTIONS,
@@ -851,11 +1087,20 @@ const ROLE_SENIORITY_MAP: Record<string, SeniorityActions> = {
   data: DATA_ACTIONS,
   prod: PROD_ACTIONS,
   qa:   QA_ACTIONS,
+  // Non-engineering families — previously fell through to GENERIC_ACTIONS
+  sales:  SALES_ACTIONS,
+  ops:    OPS_ACTIONS,
+  design: DESIGN_ACTIONS,
   // Map common aliases to the closest pool
   ds:   DATA_ACTIONS,   // data scientist
   em:   ML_ACTIONS,     // embedded ML
   dev:  SW_ACTIONS,     // generic developer
   mkt:  CNT_ACTIONS,    // marketing (content-adjacent)
+  pm:   PROD_ACTIONS,   // product/program management → closest is product pool
+  sale: SALES_ACTIONS,  // singular alias
+  bd:   SALES_ACTIONS,  // business development
+  ux:   DESIGN_ACTIONS, // UX
+  ops_: OPS_ACTIONS,    // defensive alias
 };
 
 // ── Categorical differentiation verification ──────────────────────────────────

@@ -102,6 +102,8 @@ export interface EnsembleResult extends ScoreResult {
   resolvedPattern: HistoricalPattern | null;
   /** Signal overlap score for the matched pattern (0.70–1.00), null when no match. */
   patternMatchOverlapScore: number | null;
+  /** Role alignment: +1 user's role is in affectedRoles, -1 in protectedRoles, 0 neutral, null no match. */
+  patternMatchRoleFit: number | null;
   geminiSynthesis: GeminiResult["synthesis"];
   modelsUsed: string[];
   fromCache: boolean;
@@ -1335,6 +1337,9 @@ export const runFullEnsembleAnalysis = async (
     // null when no pattern in HISTORICAL_PATTERNS reaches the 70% overlap threshold.
     resolvedPattern:          deterministicPatternMatch?.pattern    ?? null,
     patternMatchOverlapScore: deterministicPatternMatch?.overlapScore ?? null,
+    // roleFit: +1 = user's role is in affectedRoles, -1 = protectedRoles, 0 = neutral.
+    // Surfaced in PatternMatchCard as the "YOUR ROLE IS AFFECTED/PROTECTED" chip.
+    patternMatchRoleFit: deterministicPatternMatch?.candidate.roleFit ?? null,
   };
 
   // ── Step 8: Cache for future requests ────────────────────────────────────

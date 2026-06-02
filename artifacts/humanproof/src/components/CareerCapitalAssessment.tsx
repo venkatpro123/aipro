@@ -12,6 +12,8 @@ import {
   Brain, ChevronDown, ChevronUp, TrendingDown, Lock, Zap,
 } from "lucide-react";
 import { getCapitalStrategy, getPillarPrerequisite, type LeverageStrategy, type PillarPrerequisite } from "../services/capitalLeverageStrategy";
+import { loadFinancialContext } from "../services/financialContextService";
+import { CURRENCY_META } from "../services/currencyService";
 
 export interface CareerCapitalData {
   // Quantifiable capital
@@ -152,24 +154,39 @@ interface Props {
   onCapitalScoreComputed?: (score: CapitalScore, reduction: number) => void;
 }
 
+/** Read previously-saved capital data so reopening the form is not a blank slate. */
+function loadStoredCapital(): CareerCapitalData | null {
+  try {
+    const raw = localStorage.getItem(CAPITAL_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as CareerCapitalData) : null;
+  } catch {
+    return null;
+  }
+}
+
 export const CareerCapitalAssessment: React.FC<Props> = ({
   currentRiskScore,
   onCapitalScoreComputed,
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [capitalScore, setCapitalScore] = useState<CapitalScore | null>(null);
+  const stored = useMemo(() => loadStoredCapital(), []);
 
-  const [clients, setClients] = useState("0");
-  const [clientValue, setClientValue] = useState("0");
-  const [teamSize, setTeamSize] = useState("0");
-  const [products, setProducts] = useState("0");
-  const [patents, setPatents] = useState("0");
-  const [certs, setCerts] = useState("0");
-  const [speaking, setSpeaking] = useState("0");
-  const [domainDepth, setDomainDepth] = useState("5");
-  const [networkStrength, setNetworkStrength] = useState("5");
-  const [uniqueKnowledge, setUniqueKnowledge] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const [saved, setSaved] = useState<boolean>(!!stored);
+  const [capitalScore, setCapitalScore] = useState<CapitalScore | null>(
+    stored ? computeCapitalScore(stored) : null,
+  );
+
+  const num = (v: number | undefined, fallback = "0") => (v != null ? String(v) : fallback);
+  const [clients, setClients] = useState(num(stored?.clientAccountsOwned));
+  const [clientValue, setClientValue] = useState(num(stored?.clientAccountValueLakh));
+  const [teamSize, setTeamSize] = useState(num(stored?.teamSizePeak));
+  const [products, setProducts] = useState(num(stored?.productsShippedEndToEnd));
+  const [patents, setPatents] = useState(num(stored?.patentsOrPublications));
+  const [certs, setCerts] = useState(num(stored?.certifications));
+  const [speaking, setSpeaking] = useState(num(stored?.speakingEngagements));
+  const [domainDepth, setDomainDepth] = useState(num(stored?.domainDepthScore, "5"));
+  const [networkStrength, setNetworkStrength] = useState(num(stored?.networkStrengthScore, "5"));
+  const [uniqueKnowledge, setUniqueKnowledge] = useState(stored?.uniqueKnowledge ?? "");
 
   const handleCompute = () => {
     const data: CareerCapitalData = {
@@ -196,6 +213,17 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
 
   const tierConf = capitalScore ? TIER_CONFIG[capitalScore.tier] : null;
   const adjustedRisk = capitalScore ? Math.max(5, currentRiskScore - capitalScore.riskReduction) : currentRiskScore;
+
+  // Currency-aware label for the "annual account value" field. The field was
+  // previously hardcoded to "(₹L)" — Indian Lakhs — for every user worldwide.
+  // We resolve the user's saved currency and show the right unit: INR → "₹L"
+  // (lakhs), other large-format currencies → "thousands", with the right symbol.
+  const valueUnitLabel = useMemo(() => {
+    const code = loadFinancialContext()?.currency ?? 'USD';
+    const meta = CURRENCY_META[code] ?? CURRENCY_META['USD'];
+    if (meta.largeFormat === 'L') return `${meta.symbol}L`;       // ₹ Lakhs
+    return `${meta.symbol}'000s`;                                  // e.g. $'000s, €'000s
+  }, []);
 
   return (
     <div className="glass-panel rounded-xl overflow-hidden">
@@ -238,7 +266,7 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                 {[
                   { label: "Client Accounts Owned", icon: <Briefcase className="w-3.5 h-3.5" />, value: clients, set: setClients, placeholder: "0", type: "number" },
-                  { label: "Approx. Annual Value (₹L)", icon: <Star className="w-3.5 h-3.5" />, value: clientValue, set: setClientValue, placeholder: "0", type: "number" },
+                  { label: `Approx. Annual Value (${valueUnitLabel})`, icon: <Star className="w-3.5 h-3.5" />, value: clientValue, set: setClientValue, placeholder: "0", type: "number" },
                   { label: "Peak Team Size Led", icon: <Users className="w-3.5 h-3.5" />, value: teamSize, set: setTeamSize, placeholder: "0", type: "number" },
                   { label: "Products Shipped E2E", icon: <Code className="w-3.5 h-3.5" />, value: products, set: setProducts, placeholder: "0", type: "number" },
                   { label: "Patents / Publications", icon: <FileText className="w-3.5 h-3.5" />, value: patents, set: setPatents, placeholder: "0", type: "number" },

@@ -5,6 +5,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { DollarSign, AlertTriangle, TrendingDown, CheckCircle } from "lucide-react";
 import type { CompensationRiskResult, CompensationCascadeStage } from "@/services/compensationRiskEngine";
+import { loadFinancialContext } from "@/services/financialContextService";
+import { CURRENCY_META, convertFromUsd, formatCurrency } from "@/services/currencyService";
 
 interface CompensationRiskPanelProps {
   compensation: CompensationRiskResult;
@@ -36,6 +38,19 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
   const colors = CASCADE_COLORS[compensation.cascadeStage];
   const currentStageIdx = STAGE_STEPS.indexOf(compensation.cascadeStage);
   const layoffProbPct = Math.round(compensation.layoffProbabilityAt12mo * 100);
+
+  // estimatedMarketMedian is USD-denominated. Render it in the user's local
+  // currency when known (it was previously hardcoded to a USD currency symbol,
+  // showing "$" to ₹/€/S$ users). USD stays as the explicit reference.
+  const userCurrency = (loadFinancialContext()?.currency && CURRENCY_META[loadFinancialContext()!.currency])
+    ? loadFinancialContext()!.currency
+    : 'USD';
+  const medianUsd = compensation.estimatedMarketMedian;
+  const medianLabel = medianUsd != null
+    ? userCurrency === 'USD'
+      ? medianUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+      : `${formatCurrency(Math.round(convertFromUsd(medianUsd, userCurrency)), userCurrency)} (≈$${medianUsd.toLocaleString()} USD)`
+    : null;
 
   return (
     <motion.div
@@ -125,9 +140,9 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
             {compensation.payPositionLabel}
           </span>
         </div>
-        {compensation.estimatedMarketMedian && (
+        {medianLabel && (
           <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
-            Est. market median: {compensation.estimatedMarketMedian.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+            Est. market median: {medianLabel}
           </div>
         )}
       </div>

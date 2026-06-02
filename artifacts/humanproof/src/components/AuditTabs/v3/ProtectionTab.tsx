@@ -179,7 +179,10 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
       >
         {/* Wave 2.3: Job Market Liquidity Card — surfaces reemployment weeks estimate */}
         {jobMarketLiquidity && (
-          <JobMarketLiquidityCard jobMarketLiquidity={jobMarketLiquidity} />
+          <JobMarketLiquidityCard
+            jobMarketLiquidity={jobMarketLiquidity}
+            roleKey={result.workTypeKey ?? r.oracleKey ?? 'sw_backend'}
+          />
         )}
         {roleMarketDemand && <RoleMarketDemandPanel roleMarketDemand={roleMarketDemand} />}
         <CareerPortfolioPanel result={result} />
@@ -202,7 +205,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           <VisaRiskPanel
             visaRisk={visaRisk}
             countryCode={companyData.region}
-            tenureYears={r.tenureYears}
+            tenureYears={r.userFactors?.tenureYears ?? r.tenureYears ?? null}
           />
         )}
         {userRunway && <UserFinancialRunwayPanel userFinancialRunway={userRunway} />}
@@ -276,7 +279,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
       >
         <CareerTwinCard
           userRole={result.workTypeKey ?? 'sw_backend'}
-          userExperience={r.tenureYears ?? r.userFactors?.tenureYears ?? 5}
+          userExperience={r.userFactors?.careerYears ?? r.userFactors?.tenureYears ?? r.tenureYears ?? 5}
           userRiskScore={result.total}
           userCountry={r.countryKey ?? 'global'}
           topN={3}
@@ -291,36 +294,136 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         <TechObsolescencePanel techStackObsolescence={techStackObsolescence} />
       )}
 
-      {/* Wave 2.4: Internal Mobility — viability inline card */}
-      {internalMobility && (internalMobility.viabilityScore ?? 0) > 30 && (
+      {/* Wave 2.4: Internal Mobility — personalized viability card */}
+      {internalMobility && (internalMobility.viabilityScore ?? 0) > 20 && (
         <div
-          className="rounded-xl px-4 py-3"
-          style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.20)' }}
+          className="rounded-xl overflow-hidden"
+          style={{ background: 'rgba(20,184,166,0.04)', border: `1px solid ${internalMobility.isGoldenWindow ? 'rgba(245,158,11,0.40)' : 'rgba(20,184,166,0.20)'}` }}
         >
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(20,184,166,0.60)' }}>
-              INTERNAL MOBILITY
-            </p>
-            <span className="text-[14px] font-black" style={{ color: '#14b8a6' }}>
-              {internalMobility.viabilityScore}/100
-            </span>
-          </div>
-          <p className="text-[11px] leading-relaxed mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
-            {internalMobility.viabilityScore >= 65
-              ? 'Strong internal mobility viability — your org size and growth division make this your best near-term defensive move.'
-              : 'Moderate internal mobility potential. Worth exploring before external search escalation.'}
-          </p>
-          {internalMobility.viabilityScore >= 60 && (
-            <div
-              className="flex items-start gap-1.5 rounded-lg px-2.5 py-1.5"
-              style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.18)' }}
-            >
-              <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#14b8a6' }}>↳</span>
-              <p className="text-[10px] italic" style={{ color: 'rgba(20,184,166,0.75)' }}>
-                Request a 1:1 with your skip-level to signal ambition. Highest-ROI action this quarter.
+          {/* Golden window alert — most important signal, pinned at top */}
+          {internalMobility.isGoldenWindow && (
+            <div className="px-4 py-2 flex items-center gap-2"
+              style={{ background: 'rgba(245,158,11,0.12)', borderBottom: '1px solid rgba(245,158,11,0.28)' }}>
+              <span className="text-[11px]">⚡</span>
+              <p className="text-[10px] font-black" style={{ color: '#f59e0b' }}>
+                GOLDEN WINDOW — Internal transfer closing soon. Act before restructuring is announced.
               </p>
             </div>
           )}
+
+          <div className="px-4 py-3">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(20,184,166,0.60)' }}>
+                  INTERNAL MOBILITY
+                </p>
+                <span
+                  className="text-[10px] font-black px-2 py-0.5 rounded-full"
+                  style={{
+                    background: internalMobility.internalTransferViability === 'HIGH' ? 'rgba(16,185,129,0.15)'
+                      : internalMobility.internalTransferViability === 'MODERATE' ? 'rgba(245,158,11,0.12)'
+                      : 'rgba(249,115,22,0.12)',
+                    color: internalMobility.internalTransferViability === 'HIGH' ? '#10b981'
+                      : internalMobility.internalTransferViability === 'MODERATE' ? '#f59e0b' : '#f97316',
+                  }}
+                >
+                  {internalMobility.internalTransferViability}
+                </span>
+              </div>
+              <span className="text-[14px] font-black" style={{ color: '#14b8a6' }}>
+                {internalMobility.viabilityScore}/100
+              </span>
+            </div>
+
+            {/* Engine-generated rationale — not a template */}
+            <p className="text-[11px] leading-relaxed mb-2.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              {internalMobility.viabilityRationale}
+            </p>
+
+            {/* Target departments — personalized to role/archetype */}
+            {(internalMobility.targetDepartments?.length ?? 0) > 0 && (
+              <div className="mb-2.5">
+                <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(20,184,166,0.50)' }}>
+                  BEST INTERNAL TARGETS
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  {internalMobility.targetDepartments.slice(0, 3).map((t: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5"
+                      style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.12)' }}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                            {t.department}
+                          </span>
+                          <span className="text-[10px]" style={{ color: 'rgba(20,184,166,0.70)' }}>
+                            {t.estimatedOpenings}
+                          </span>
+                        </div>
+                        <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                          Bridge: {t.keyBridge}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-[12px] font-black" style={{ color: '#14b8a6' }}>{t.fitScore}</p>
+                        <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>fit</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Timeline + survival boost */}
+            {internalMobility.estimatedTransferTimelineWeeks > 0 && (
+              <div className="flex items-center gap-3 mb-2.5 flex-wrap">
+                <div className="rounded-lg px-2.5 py-1.5 flex-1 text-center"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <p className="text-[12px] font-black" style={{ color: '#14b8a6' }}>
+                    {internalMobility.estimatedTransferTimelineWeeks}w
+                  </p>
+                  <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>transfer timeline</p>
+                </div>
+                {internalMobility.survivalRateBoost > 0 && (
+                  <div className="rounded-lg px-2.5 py-1.5 flex-1 text-center"
+                    style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
+                    <p className="text-[12px] font-black" style={{ color: '#10b981' }}>
+                      +{internalMobility.survivalRateBoost}pp
+                    </p>
+                    <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>survival uplift</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Required skill gaps */}
+            {(internalMobility.requiredSkillGaps?.length ?? 0) > 0 && (
+              <div className="mb-2.5">
+                <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  GAPS TO CLOSE BEFORE TRANSFER
+                </p>
+                {internalMobility.requiredSkillGaps.slice(0, 2).map((gap: string, i: number) => (
+                  <div key={i} className="flex items-start gap-1.5 mb-1">
+                    <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#f59e0b' }}>·</span>
+                    <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.50)' }}>{gap}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Computed strategy — generated by engine, not a template */}
+            {internalMobility.internalJobSearchStrategy && (
+              <div
+                className="flex items-start gap-1.5 rounded-lg px-2.5 py-1.5"
+                style={{ background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.18)' }}
+              >
+                <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#14b8a6' }}>↳</span>
+                <p className="text-[10px] italic leading-relaxed" style={{ color: 'rgba(20,184,166,0.80)' }}>
+                  {internalMobility.internalJobSearchStrategy}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

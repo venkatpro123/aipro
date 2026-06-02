@@ -157,6 +157,7 @@ export function mapToHybridResult(
     // Deterministic historical pattern from matchHistoricalPattern() — never LLM-sourced.
     resolvedPattern:           isEnsemble(result) ? (result as any).resolvedPattern           ?? null : undefined,
     patternMatchOverlapScore:  isEnsemble(result) ? (result as any).patternMatchOverlapScore  ?? null : undefined,
+    patternMatchRoleFit:       isEnsemble(result) ? (result as any).patternMatchRoleFit       ?? null : undefined,
     // v7.0 Fix 5: Thread timing and probabilityForecast for direct OverviewTab access
     timing:              result.timing,
     probabilityForecast: result.probabilityForecast,

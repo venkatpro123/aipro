@@ -1749,6 +1749,59 @@ export interface PatternCandidate {
   matchedSupporting: number;
   totalSupporting: number;
   isContradicted: boolean;
+  /** -1..+1 role alignment: +1 = role is in this pattern's affectedRoles,
+   *  -1 = role is in protectedRoles (pattern does not apply to this person),
+   *  0 = neutral. Used to personalise the match per user, not just per company. */
+  roleFit?: number;
+}
+
+// ── Role-fit personalisation ──────────────────────────────────────────────────
+//
+// WHY: the trigger conditions are dominated by company-level signals, so two
+// users at the SAME company (a manual-QA engineer and a solutions architect)
+// previously resolved to the IDENTICAL pattern — the "same data for every user"
+// complaint. roleFit makes the match person-specific: it boosts patterns whose
+// documented affectedRoles align with the user's role and penalises (even
+// excludes) patterns whose protectedRoles include the user's role, because a
+// "you are protected" role should not be shown a doom pattern as their match.
+
+/** Tokenise a role title into comparable lowercase words (length ≥ 3). */
+function roleTokens(roleTitle: string): string[] {
+  return (roleTitle ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 3 && !ROLE_STOPWORDS.has(w));
+}
+
+const ROLE_STOPWORDS = new Set([
+  'the', 'and', 'for', 'senior', 'junior', 'lead', 'staff', 'principal',
+  'associate', 'manager', 'head', 'sr', 'jr', 'iii', 'ii',
+]);
+
+/** Does the user's role overlap with any role label in the list? */
+function roleListMatches(userTokens: string[], roleList: string[]): boolean {
+  if (userTokens.length === 0) return false;
+  for (const label of roleList) {
+    const labelLower = label.toLowerCase();
+    if (userTokens.some(t => labelLower.includes(t))) return true;
+  }
+  return false;
+}
+
+/**
+ * Compute role alignment for a pattern against the user's role.
+ * +1 affected (this pattern hits this role), -1 protected (does not apply),
+ * 0 neutral. protectedRoles win ties — being protected is the stronger signal.
+ */
+function computeRoleFit(pattern: HistoricalPattern, roleTitle: string): number {
+  const tokens = roleTokens(roleTitle);
+  if (tokens.length === 0) return 0;
+  const protectedHit = roleListMatches(tokens, pattern.protectedRoles ?? []);
+  const affectedHit  = roleListMatches(tokens, pattern.affectedRoles ?? []);
+  if (protectedHit) return -1;
+  if (affectedHit) return +1;
+  return 0;
 }
 
 /**
@@ -1798,7 +1851,17 @@ export function computeTopPatternCandidates(
     const supCoverage = supWeightTotal > 0 ? supWeightMatched / supWeightTotal : 0;
 
     // Overall overlap: required carries 70% of the score, supporting 30%.
-    const overlapScore = (reqCoverage * 0.70) + (supCoverage * 0.30);
+    const baseOverlap = (reqCoverage * 0.70) + (supCoverage * 0.30);
+
+    // Role-fit personalisation: nudge the score by the user's role alignment so
+    // two users at the same company can resolve to DIFFERENT patterns.
+    //   +0.08 when the pattern documents this role as affected,
+    //   −0.12 when the pattern documents this role as protected (stronger — a
+    //          protected user should not be matched to a doom pattern).
+    // Capped to [0,1]. The 70% display threshold still applies downstream.
+    const roleFit = computeRoleFit(pattern, roleTitle);
+    const roleAdjust = roleFit > 0 ? 0.08 : roleFit < 0 ? -0.12 : 0;
+    const overlapScore = Math.max(0, Math.min(1, baseOverlap + roleAdjust));
 
     results.push({
       patternId:         pattern.patternId,
@@ -1808,12 +1871,24 @@ export function computeTopPatternCandidates(
       matchedSupporting: supScores.filter(r => r.matched).length,
       totalSupporting:   supScores.length,
       isContradicted,
+      roleFit,
     });
   }
 
   return results
     .filter(r => !r.isContradicted)
-    .sort((a, b) => b.overlapScore - a.overlapScore)
+    // Deterministic, signal-driven ordering (was: insertion order on ties, which
+    // made the same company-wide pattern win for every user). Tie-breakers:
+    //   1. higher overlap score
+    //   2. better role fit (affected > neutral > protected)
+    //   3. more required conditions matched (more specific pattern)
+    //   4. patternId (stable final tiebreak so output is reproducible)
+    .sort((a, b) =>
+      (b.overlapScore - a.overlapScore)
+      || ((b.roleFit ?? 0) - (a.roleFit ?? 0))
+      || (b.matchedRequired - a.matchedRequired)
+      || a.patternId.localeCompare(b.patternId),
+    )
     .slice(0, maxCandidates);
 }
 
@@ -1865,18 +1940,23 @@ export function matchHistoricalPattern(
   breakdown: ScoreBreakdown & { D7?: number },
   roleTitle: string,
 ): PatternMatchResult | null {
-  // computeTopPatternCandidates returns at most 1 candidate (maxCandidates = 1)
-  // sorted by overlapScore descending, contradicted patterns already excluded.
-  const candidates = computeTopPatternCandidates(companyData, breakdown, roleTitle, 1);
+  // Pull the top few candidates (not just 1) so role-fit can choose a
+  // role-appropriate match rather than always returning the company-wide one.
+  const candidates = computeTopPatternCandidates(companyData, breakdown, roleTitle, 4)
+    .filter(c => c.overlapScore >= PATTERN_MATCH_THRESHOLD);
 
   if (candidates.length === 0) return null;
 
-  const top = candidates[0];
+  // Prefer the highest-overlap candidate the user is NOT protected from. A user
+  // whose role is documented as protected by a pattern should not have that
+  // doom pattern shown as "their" precedent when a genuinely-applicable one
+  // also clears the threshold. Fall back to the top candidate only if every
+  // qualifying pattern marks the user as protected (rare — means the company
+  // signal is overwhelming regardless of role).
+  const nonProtected = candidates.find(c => (c.roleFit ?? 0) >= 0);
+  const chosen = nonProtected ?? candidates[0];
 
-  // Hard threshold — never surface a weak match.
-  if (top.overlapScore < PATTERN_MATCH_THRESHOLD) return null;
-
-  const pattern = HISTORICAL_PATTERNS[top.patternId];
+  const pattern = HISTORICAL_PATTERNS[chosen.patternId];
 
   // Defensive guard — should never be undefined if computeTopPatternCandidates
   // is operating correctly, but we never trust index lookups blindly.
@@ -1884,8 +1964,8 @@ export function matchHistoricalPattern(
 
   return {
     pattern,
-    overlapScore: top.overlapScore,
-    candidate:    top,
+    overlapScore: chosen.overlapScore,
+    candidate:    chosen,
   };
 }
 

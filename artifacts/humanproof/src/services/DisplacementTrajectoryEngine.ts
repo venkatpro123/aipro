@@ -304,11 +304,15 @@ const resolveGrowthProfile = (
     const sorted = [...trend].sort((a, b) => a.year - b.year);
     const rawGrowth = (sorted[sorted.length - 1].riskScore - sorted[0].riskScore)
       / (sorted.length - 1); // avg pts per year
-    const baseGrowth = Math.max(0.3, Math.min(8.0, rawGrowth)); // clamp to sane range
+    // Floor raised from 0.3 to 0.8: even the most protected roles have some
+    // AI-driven risk growth — 0.3%/yr made the optimistic scenario flat-line.
+    const baseGrowth = Math.max(0.8, Math.min(8.0, rawGrowth));
+    // optimisticSave capped at 65% of baseGrowth so the optimistic scenario
+    // always shows some forward risk movement (never zero growth).
     return {
       baseGrowth,
       pessimisticExtra: parseFloat((baseGrowth * 0.55).toFixed(2)),
-      optimisticSave:   parseFloat((baseGrowth * 0.75).toFixed(2)),
+      optimisticSave:   parseFloat((baseGrowth * 0.65).toFixed(2)),
     };
   }
 
@@ -517,7 +521,9 @@ export const computeTrajectory = (params: TrajectoryEngineParams): TrajectoryRes
   // Previously had NO shield — risk grew unboundedly in pessimistic scenario for shielded roles.
   // Even in the worst-case scenario, human factors slow AI displacement somewhat.
   const pessimisticGrowth = (profile.baseGrowth + profile.pessimisticExtra) * threatAmp * expMod / (1 + (shieldFact - 1) * 0.40);
-  const optimisticGrowth  = Math.max(0, (profile.baseGrowth - profile.optimisticSave) * expMod / shieldFact);
+  // Minimum optimistic growth = 0.3 %/yr so the curve never goes flat —
+  // even with intense upskilling, some underlying AI adoption pressure remains.
+  const optimisticGrowth  = Math.max(0.3, (profile.baseGrowth - profile.optimisticSave) * expMod / shieldFact);
 
   const baseYear   = new Date().getFullYear();
   const numYears   = 6;

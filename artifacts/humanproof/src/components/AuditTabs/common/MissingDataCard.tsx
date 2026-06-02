@@ -151,7 +151,14 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
 
   const handleActionClick = (item: MissingDataItem) => {
     if (!item.actionTab) return;
-    window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: item.actionTab } }));
+    if (item.actionTab === 'profile') {
+      // Open ProfileSetupModal. Deep-link to the Financial step for equity/runway
+      // fields, otherwise open at the Core step.
+      const profileStep = item.id === 'equity-vest' ? 'financial' : 'core';
+      window.dispatchEvent(new CustomEvent('hp.profile.open', { detail: { step: profileStep } }));
+    } else {
+      window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: item.actionTab } }));
+    }
   };
 
   return (

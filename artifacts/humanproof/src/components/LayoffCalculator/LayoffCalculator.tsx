@@ -458,10 +458,41 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         hasRecentPromotion: false,
         hasKeyRelationships: false,
       };
-    // HIGH-10: inject profile-captured career years if present (overrides form default)
-    const userFactors = userProfile?.yearsExperience != null
-      ? { ..._baseUserFactors, careerYears: userProfile.yearsExperience }
-      : _baseUserFactors;
+    // Merge profile fields captured by ProfileQuickCapture (visa, runway, dependents)
+    // and any other saved profile data into userFactors so the pipeline has them.
+    // Form-submitted values in _baseUserFactors take priority over profile defaults;
+    // profile fields only fill slots that the form left empty (undefined / falsy).
+    const userFactors = {
+      ..._baseUserFactors,
+      ...(userProfile?.yearsExperience != null     ? { careerYears:          userProfile.yearsExperience }     : {}),
+      ...(userProfile?.visaStatus          != null && !((_baseUserFactors as any).visaStatus)
+                                                   ? { visaStatus:           userProfile.visaStatus as any }           : {}),
+      ...(userProfile?.savingsMonthsRunway != null && !((_baseUserFactors as any).financialRunwayMonths)
+                                                   ? { financialRunwayMonths: userProfile.savingsMonthsRunway } : {}),
+      ...(userProfile?.hasDependents       != null && !((_baseUserFactors as any).hasDependents != null)
+                                                   ? { hasDependents:        userProfile.hasDependents }        : {}),
+      // Preparedness-specific fields: priorJobChanges and priorLayoffSurvived live
+      // in UserProfile but were never merged into userFactors, so the preparedness
+      // engine always saw null for both — Career Clarity and Market Positioning
+      // pillars lost these signals for every user.
+      ...(userProfile?.priorJobChanges   != null && !((_baseUserFactors as any).priorJobChanges != null)
+                                                   ? { priorJobChanges:      userProfile.priorJobChanges }      : {}),
+      ...(userProfile?.priorLayoffSurvived != null && !((_baseUserFactors as any).priorLayoffSurvived != null)
+                                                   ? { priorLayoffSurvived:  userProfile.priorLayoffSurvived }  : {}),
+      // savingsMonthsRunway is the profile field name; pipeline reads it as-is
+      // (distinct from financialRunwayMonths which is the form field name above).
+      ...(userProfile?.savingsMonthsRunway != null && !((_baseUserFactors as any).savingsMonthsRunway != null)
+                                                   ? { savingsMonthsRunway:  userProfile.savingsMonthsRunway }  : {}),
+      // Skill portfolio fields: selfRatedSkills and targetSkills were stored in
+      // UserProfile but never merged into userFactors. The skillPortfolioFit engine
+      // read uf14.userSkills (non-existent) and always got [] — falling back to the
+      // generic "add your skills" placeholder for every user. The skillGapIntelligence
+      // engine also checked uf17.selfRatedSkills which was always undefined.
+      ...(userProfile?.selfRatedSkills?.length && !((_baseUserFactors as any).selfRatedSkills?.length)
+                                                   ? { selfRatedSkills:      userProfile.selfRatedSkills }       : {}),
+      ...(userProfile?.targetSkills?.length    && !((_baseUserFactors as any).targetSkills?.length)
+                                                   ? { targetSkills:         userProfile.targetSkills }          : {}),
+    };
 
     dispatch({
       type: "SET_INPUTS",
@@ -1284,9 +1315,29 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             hasRecentPromotion: false,
             hasKeyRelationships: false,
           };
-          return userProfile?.yearsExperience != null
-            ? { ...base, careerYears: userProfile.yearsExperience }
-            : base;
+          // Merge profile fields (visa, runway, dependents) captured by
+          // ProfileQuickCapture. Form values in `base` take priority; profile
+          // fields only fill slots the form left empty.
+          return {
+            ...base,
+            ...(userProfile?.yearsExperience != null      ? { careerYears:           userProfile.yearsExperience }     : {}),
+            ...(userProfile?.visaStatus          != null && !((base as any).visaStatus)
+                                                          ? { visaStatus:            userProfile.visaStatus as any }           : {}),
+            ...(userProfile?.savingsMonthsRunway != null && !((base as any).financialRunwayMonths)
+                                                          ? { financialRunwayMonths: userProfile.savingsMonthsRunway }  : {}),
+            ...(userProfile?.hasDependents       != null && !((base as any).hasDependents != null)
+                                                          ? { hasDependents:         userProfile.hasDependents }        : {}),
+            ...(userProfile?.priorJobChanges   != null && !((base as any).priorJobChanges != null)
+                                                          ? { priorJobChanges:       userProfile.priorJobChanges }      : {}),
+            ...(userProfile?.priorLayoffSurvived != null && !((base as any).priorLayoffSurvived != null)
+                                                          ? { priorLayoffSurvived:   userProfile.priorLayoffSurvived }  : {}),
+            ...(userProfile?.savingsMonthsRunway != null && !((base as any).savingsMonthsRunway != null)
+                                                          ? { savingsMonthsRunway:   userProfile.savingsMonthsRunway }  : {}),
+            ...(userProfile?.selfRatedSkills?.length && !((base as any).selfRatedSkills?.length)
+                                                          ? { selfRatedSkills:       userProfile.selfRatedSkills }      : {}),
+            ...(userProfile?.targetSkills?.length    && !((base as any).targetSkills?.length)
+                                                          ? { targetSkills:          userProfile.targetSkills }         : {}),
+          };
         })(),
         roleExposureOverride: fetchedRoleExposure,
       };
@@ -1804,20 +1855,12 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
         </>
       )}
 
-      {scraperGateActive && (
-        <LiveScraperGate
-          company={state.companyName ?? ''}
-          roleTitle={state.roleTitle ?? ''}
-          onReady={() => {
-            scraperGateResolveRef.current?.();
-            scraperGateResolveRef.current = null;
-          }}
-        />
-      )}
-
-      {state.isCalculating && !scraperGateActive && (
+      {/* Single loading animation for both the live-scraper gate phase and the
+          compute phase. The LiveScraperGate promise still resolves in the
+          background; we just no longer show a separate UI for it. */}
+      {(scraperGateActive || state.isCalculating) && (
         <SpyLoadingState
-          stage={ensembleStage}
+          stage={scraperGateActive ? 0 : ensembleStage}
           companyName={state.companyName}
           roleTitle={state.roleTitle}
           agentCount={30}
@@ -1825,6 +1868,19 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
           limitedDataReason={(state.companyData as any)?._limitedDataReason ?? undefined}
           skipAnimation={perf.isLowPerformance}
         />
+      )}
+      {/* Invisible gate — resolves the scraper promise without showing a second UI */}
+      {scraperGateActive && (
+        <div className="hidden-gate">
+          <LiveScraperGate
+            company={state.companyName ?? ''}
+            roleTitle={state.roleTitle ?? ''}
+            onReady={() => {
+              scraperGateResolveRef.current?.();
+              scraperGateResolveRef.current = null;
+            }}
+          />
+        </div>
       )}
 
       {state.isCalculating && !scraperGateActive && quorumState.financial !== 'pending' && (
@@ -2028,7 +2084,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             1: 'Acquiring workforce intelligence…',
             2: 'Reconciling live market signals…',
           };
-          const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, auditStage: STAGE_LABELS[ensembleStage] };
+          const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, onRecalculate: handleForceRefresh, auditStage: STAGE_LABELS[ensembleStage] };
           // P1: flag-gated coexistence. Default 'v3' (6-tab, current production). When
           // uiFlags resolves 'v4' (env VITE_DASHBOARD_V4=1 or localStorage 'hp.ui.dashboard'),
           // render the orchestrator-led 3-tab shell. V3 path is byte-identical when flag off.

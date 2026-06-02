@@ -172,6 +172,15 @@ function StepIndicator({ step }: { step: number }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+// Step name → index map so callers can deep-link by name.
+// 'financial' maps to step 1 where equity vest + runway fields live.
+const STEP_BY_NAME: Record<string, number> = {
+  core:      0,
+  financial: 1,
+  situation: 2,
+  skills:    3,
+};
+
 export function ProfileSetupModal() {
   const { userProfile, isHydrated, saveUserProfile } = useHumanProof();
   const { user } = useAuth();
@@ -182,6 +191,26 @@ export function ProfileSetupModal() {
   const [direction, setDirection] = useState<1 | -1>(1);
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Listen for hp.profile.open — dispatched by MissingDataCard and
+  // ProfileQuickCapture. The event detail may carry { step: 'financial' }
+  // (or a step index) to deep-link directly to the right wizard page.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { step?: string | number } | undefined;
+      let targetStep = 0;
+      if (detail?.step != null) {
+        targetStep = typeof detail.step === 'number'
+          ? detail.step
+          : (STEP_BY_NAME[String(detail.step)] ?? 0);
+      }
+      setDirection(1);
+      setStep(targetStep);
+      setOpen(true);
+    };
+    window.addEventListener('hp.profile.open', handler);
+    return () => window.removeEventListener('hp.profile.open', handler);
+  }, []);
 
   // Step 0 — Core
   const [salaryBand, setSalaryBand] = useState<SalaryBand | ''>('');

@@ -15,7 +15,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, ChevronRight, CheckCircle } from 'lucide-react';
-import { upsertUserProfile } from '../services/userProfileService';
+import { useHumanProof } from '../context/HumanProofContext';
 import type { VisaStatus } from '../services/userProfileService';
 
 interface Props {
@@ -36,6 +36,12 @@ const VISA_OPTIONS: { label: string; value: VisaStatus; description: string }[] 
 const RUNWAY_OPTIONS = [0, 3, 6, 9, 12] as const;
 
 export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
+  // Use saveUserProfile from context so every save:
+  //   1. Calls upsertUserProfile (persists to Supabase)
+  //   2. Updates the userProfile object in context (fresh data for pipeline)
+  //   3. Increments profileVersion (triggers re-audit watcher in LayoffCalculator)
+  const { saveUserProfile } = useHumanProof();
+
   const [step, setStep] = useState<Step>(0);
   const [saving, setSaving] = useState(false);
 
@@ -45,10 +51,10 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
   // in-memory for this session) but show the 'done' state without "Profile saved".
   const [saveSucceeded, setSaveSucceeded] = useState<boolean>(false);
 
-  const save = async (patch: Parameters<typeof upsertUserProfile>[0]): Promise<boolean> => {
+  const save = async (patch: Parameters<typeof saveUserProfile>[0]): Promise<boolean> => {
     setSaving(true);
     try {
-      const result = await upsertUserProfile(patch);
+      const result = await saveUserProfile(patch);
       const ok = result !== null;
       if (ok) setSaveSucceeded(true);
       return ok;
@@ -77,11 +83,16 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
 
   const handleDependents = async (has: boolean) => {
     if (saving) return;
-    const ok = await save({ hasDependents: has });
+    await save({ hasDependents: has });
     setStep('done');
-    // Only fire onComplete if at least one save landed — prevents fake-success
-    // for unauthenticated users where all three saves silently returned null.
-    if (ok || saveSucceeded) onComplete?.();
+    // Always fire onComplete after the 3 questions. Even when the Supabase
+    // write returns null (unauthenticated), saveUserProfile now optimistically
+    // applies the patch to the in-memory profile and bumps profileVersion, so
+    // the captured visa/runway/dependents data DOES flow into the audit pipeline
+    // for the session. Gating onComplete on a successful cloud save previously
+    // meant anonymous users got the data captured-but-not-applied (no re-audit,
+    // form never marked complete) — the "not working" bug.
+    onComplete?.();
   };
 
   const stepLabels = ['Visa status', 'Financial runway', 'Dependents'];

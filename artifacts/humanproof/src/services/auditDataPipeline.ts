@@ -50,7 +50,7 @@ import {
 } from "./liveQuorumSpec";
 import { computeCompetitiveIntelligence } from "./competitiveIntelligenceEngine";
 import { computeExitTiming } from "./exitTimingOptimizer";
-import { computeCareerResilience } from "./careerResilienceEngine";
+import { computeCareerResilience, type ResilienceInputs } from "./careerResilienceEngine";
 import { predictLayoffSurvival } from "./layoffSurvivalPredictor";
 // v12.0 intelligence layers
 import { computeManagerRisk } from "./managerRiskEngine";
@@ -73,9 +73,11 @@ import { computeEmergencyResponse } from "./emergencyResponseProtocol";
 import { computeCareerConfidence } from "./careerConfidenceEngine";
 import { computeNetworkLeverage } from "./networkLeverageEngine";
 import { computeStrategySynthesis } from "./strategySynthesisEngine";
+import { getRolePrefix as getStrategyRoleFamily } from "./careerInsuranceEngine";
 import { computeModelCalibration } from "./modelCalibrationEngine";
 // v14.0 intelligence layers (29–38 + calibration)
 import { computeCompensationRisk } from "./compensationRiskEngine";
+import { convertToUsd } from "./currencyService";
 import { computeSkillPortfolioFit } from "./skillPortfolioFitEngine";
 import { computeMARisk } from "./mergerAcquisitionRiskEngine";
 import { computeFundingStageRisk } from "./fundingStageRiskEngine";
@@ -560,6 +562,89 @@ function deriveSequencePhase(deadline: string): 'day1' | 'week1' | 'month1' | 'q
   if (dl.includes('3 day') || dl.includes('48 hour') || dl.includes('72 hour') || dl.includes('7 day') || dl.includes('1 week')) return 'week1';
   if (dl.includes('14 day') || dl.includes('30 day') || dl.includes('2 week') || dl.includes('month')) return 'month1';
   return 'quarter1';
+}
+
+// Stable, deterministic ID derived from an action's title. Action completion
+// state (Action Progress / PhaseProgressSystem) is keyed by action.id, so IDs
+// MUST be stable across audits — an index-based or timestamp ID would orphan a
+// user's prior completions every re-audit. A title hash is stable as long as the
+// action text is the same.
+function stableActionId(prefix: string, title: string): string {
+  let hash = 5381;
+  const s = (title ?? '').toLowerCase().trim();
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) + hash + s.charCodeAt(i)) >>> 0; // djb2
+  }
+  return `${prefix}_${hash.toString(36)}`;
+}
+
+// ── Strategy Synthesis personalization signals ────────────────────────────────
+// Collects the v48.0 personalization inputs (visa grace window, equity vest,
+// role family, seniority, skill portfolio, region) that the strategySynthesis
+// engine needs to produce VISA_WINDOW_EXIT / EQUITY_HARVEST_THEN_EXIT /
+// GEOGRAPHIC_ARBITRAGE strategies and role-family-specific immediate actions.
+// Previously unwired, which forced every audit onto the generic 5-strategy path
+// and made "Your Strategy" read as template-based.
+function buildStrategyPersonalizationSignals(
+  inputs: AuditInputs,
+  companyData: CompanyData,
+  hybridResult: HybridResult,
+  resolvedRole: { canonicalKey?: string | null },
+): {
+  visaGracePeriodDays?: number | null;
+  daysToNextVest?: number | null;
+  nextVestValueUsd?: number | null;
+  hasDependents?: boolean;
+  roleFamily?: string;
+  seniority?: 'junior' | 'mid' | 'senior' | 'staff' | 'exec';
+  skillPortfolioScore?: number;
+  region?: string;
+  targetRegion?: string;
+} {
+  const uf = (inputs.userFactors ?? {}) as any;
+  const visaRisk = (hybridResult as any).visaRisk;
+  const skillPortfolioFit = (hybridResult as any).skillPortfolioFit;
+  const canonicalKey = (resolvedRole.canonicalKey ?? inputs.oracleKey ?? '').toLowerCase();
+
+  // Role family via the careerInsuranceEngine mapping so healthcare keys like
+  // 'nurse_*' / 'physician_*' resolve to 'hc' and finance keys to 'fin' — the
+  // naive first-segment split would have mislabelled many roles as their own
+  // unmatched family, leaving the engine on its 'default' (no-op) path.
+  const roleFamily = getStrategyRoleFamily(canonicalKey) || undefined;
+
+  // Map the 4-tier seniority bracket onto the strategy engine's 5-tier enum.
+  const careerYears = (uf.careerYears ?? uf.tenureYears ?? inputs.userFactors?.tenureYears ?? 5) as number;
+  const bracket = deriveSeniorityBracket(careerYears, canonicalKey || null);
+  const isExecTitle = /chief|cto|cfo|ceo|coo|founder|vp |vice.president|head of/i.test(inputs.roleTitle ?? '');
+  const seniority: 'junior' | 'mid' | 'senior' | 'staff' | 'exec' =
+    isExecTitle ? 'exec' : bracket === 'staff_plus' ? 'staff' : bracket;
+
+  // Equity vest value: equityVestMonths is a horizon (months to next cliff). When
+  // a monthly equity figure is present, estimate the upcoming vest USD value; else
+  // fall back to a conservative threshold so the strategy can still trigger when
+  // the user has confirmed meaningful unvested equity.
+  const equityVestMonths: number | null = uf.equityVestMonths ?? null;
+  const hasEquityVesting: boolean = uf.hasEquityVesting === true || equityVestMonths != null;
+  const monthlyEquityUsd: number | null = uf.monthlyEquityUsd ?? uf.equityMonthlyValueUsd ?? null;
+  const daysToNextVest: number | null = equityVestMonths != null ? Math.round(equityVestMonths * 30) : null;
+  const nextVestValueUsd: number | null =
+    monthlyEquityUsd != null && equityVestMonths != null
+      ? Math.round(monthlyEquityUsd * equityVestMonths)
+      : hasEquityVesting && equityVestMonths != null && equityVestMonths <= 6
+        ? 15_000  // conservative default so harvest strategy can trigger for near-cliff equity
+        : null;
+
+  return {
+    visaGracePeriodDays: visaRisk?.gracePeriodDays ?? null,
+    daysToNextVest,
+    nextVestValueUsd,
+    hasDependents: uf.hasDependents ?? undefined,
+    roleFamily,
+    seniority,
+    skillPortfolioScore: skillPortfolioFit?.fitScore ?? undefined,
+    region: companyData.region ?? undefined,
+    targetRegion: uf.targetRegion ?? undefined,
+  };
 }
 
 function attachAuditMetadata(
@@ -2142,9 +2227,22 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
 
   // 5. Score Sensitivity Analysis — single-lever impact ranking
   try {
+    // Derive a coarse role-family prefix from the canonical oracle key so the
+    // lever action text references a role-appropriate AI workflow rather than a
+    // generic template (e.g. 'sw_backend' → 'sw', 'hc_nurse' → 'hc').
+    const canonicalKey = (resolvedRole.canonicalKey ?? inputs.oracleKey ?? '').toLowerCase();
+    const sensRolePrefix = canonicalKey.split('_')[0] || 'default';
     const scoreSensitivity = computeScoreSensitivity({
       currentScore: hybridResult.total,
       breakdown: finalBreakdown,
+      context: {
+        roleLabel:   inputs.roleTitle || undefined,
+        rolePrefix:  sensRolePrefix,
+        companyName: companyData.name || undefined,
+        industry:    companyData.industry || undefined,
+        region:      companyData.region || undefined,
+        visaStatus:  (inputs.userFactors as any)?.visaStatus ?? null,
+      },
     });
     (hybridResult as any).scoreSensitivity = scoreSensitivity;
   } catch (e) {
@@ -2308,6 +2406,47 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     // Use || instead of ?? because financialRunwayMonths=0 means "not provided" and
     // should default to the 6-month industry standard, not "Critical runway" tier.
     const uf13 = inputs.userFactors as any;
+
+    // ── Derive inputs that were previously always null/false ─────────────────
+    //
+    // hasAiSkills: uf13.hasAiSkills is almost never set explicitly. Derive from
+    // self-rated skills (selfRatedSkills array) and targetSkills — any mention of
+    // AI tooling keywords signals genuine AI fluency. Falls back to explicit field.
+    const aiKeywords = /\b(ai|ml|llm|gpt|langchain|copilot|claude|openai|pytorch|tensorflow|hugging.?face|prompt.?eng|vector.?db|rag\b|fine.?tun|generative)/i;
+    const allSkillText = [
+      ...(uf13.selfRatedSkills ?? []),
+      ...(uf13.targetSkills ?? []),
+      uf13.jobTitle ?? '',
+      resolvedRole.canonicalKey ?? '',
+    ].join(' ');
+    const derivedHasAiSkills: boolean =
+      uf13.hasAiSkills === true ? true
+      : uf13.hasAiSkills === false ? false
+      : aiKeywords.test(allSkillText) || ['ml_engineer', 'ai_engineer', 'llm_engineer', 'data_scientist', 'nlp_engineer', 'cv_engineer'].some(k => (resolvedRole.canonicalKey ?? '').includes(k));
+
+    // networkStrengthSelfReport: uf13.networkStrength is rarely set. Map
+    // networkLeverage score (0–100) → categorical string when direct report absent.
+    const nlScoreForResilience: number | undefined = (hybridResult as any).networkLeverage?.networkScore;
+    const derivedNetworkStrength: ResilienceInputs['networkStrengthSelfReport'] =
+      uf13.networkStrength != null ? uf13.networkStrength
+      : nlScoreForResilience != null
+        ? nlScoreForResilience >= 70 ? 'strong'
+          : nlScoreForResilience >= 45 ? 'moderate'
+          : nlScoreForResilience >= 25 ? 'weak'
+          : 'weak'
+      : undefined;
+
+    // hasAlternativeIncome: explicit flag or infer from freelancer detection (jobTitle).
+    const derivedHasAlternativeIncome: boolean =
+      uf13.hasAlternativeIncome === true ? true
+      : uf13.hasAlternativeIncome === false ? false
+      : /\b(freelance|consulting|contract|self.?employ|side.?hustle|indie|founder)/i.test(uf13.jobTitle ?? '');
+
+    // escapePaths: use 0 as fallback (unknown = no confirmed paths), not 2.
+    // The previous fallback of 2 gave P4 Career Optionality a score of 55 for
+    // everyone without escape path data — masking a real unknown as "adequate".
+    const resolvedEscapePathCount = ((hybridResult as any).escapePaths?.paths?.length) ?? 0;
+
     const careerResilience = computeCareerResilience({
       currentScore: hybridResult.total,
       financialRunwayMonths: inputs.financialRunwayMonths || 6,
@@ -2318,14 +2457,14 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       uniquenessDepth: uf13.uniquenessDepth,
       knowledgeType: uf13.knowledgeType,
       performanceTier: uf13.performanceTier,
-      hasAiSkills: uf13.hasAiSkills ?? false,
-      hasAlternativeIncome: uf13.hasAlternativeIncome ?? false,
-      networkStrengthSelfReport: uf13.networkStrength,
-      escapePaths: escapePathCount,
+      hasAiSkills:             derivedHasAiSkills,
+      hasAlternativeIncome:    derivedHasAlternativeIncome,
+      networkStrengthSelfReport: derivedNetworkStrength,
+      escapePaths:             resolvedEscapePathCount,
       jobMarketLiquidityScore: jobLiquidity?.score,
-      salaryPreservationPct: competitive?.salaryPreservationPct,
-      hasDependents: uf13.hasDependents ?? undefined,
-      dualIncomeHousehold: uf13.dualIncomeHousehold ?? undefined,
+      salaryPreservationPct:   competitive?.salaryPreservationPct,
+      hasDependents:           uf13.hasDependents ?? undefined,
+      dualIncomeHousehold:     uf13.dualIncomeHousehold ?? undefined,
     });
     (hybridResult as any).careerResilience = careerResilience;
   } catch (e) {
@@ -2702,6 +2841,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       scoreVelocityPtsPerMonth: scoreTrajectory?.velocityPtsPerMonth,
       resilienceScore: (hybridResult as any).careerResilience?.compositeScore,
       jobMarketLiquidityScore: (hybridResult as any).jobMarketLiquidity?.reemploymentScore,
+      // ── v48.0 personalization signals — previously unwired, which forced the
+      //    engine onto its generic 5-strategy path (no VISA_WINDOW_EXIT,
+      //    EQUITY_HARVEST_THEN_EXIT, GEOGRAPHIC_ARBITRAGE, or role-family actions).
+      ...buildStrategyPersonalizationSignals(inputs, companyData, hybridResult, resolvedRole),
     });
     (hybridResult as any).strategySynthesis = strategySynthesis;
   } catch (e) {
@@ -2723,11 +2866,22 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
 
   // 29. Compensation Risk — pay position vs. market + cascade stage
   try {
+    // estimateMarketMedian() returns a USD-denominated (region-PPP-adjusted)
+    // figure. userSalary, however, is entered in the user's LOCAL currency.
+    // Passing it raw made an Indian user's ₹2,000,000 compare against a ~$24,000
+    // median → a nonsensical +8,000% "vs. market" delta and a wrong pay-position
+    // classification for every non-USD user. Convert to USD first so both sides
+    // of the comparison share a unit.
+    const rawSalary = (uf14 as any).userSalary as number | undefined | null;
+    const salaryCurrency = (uf14 as any).localCurrencyCode as string | undefined;
+    const userSalaryUsd = rawSalary != null && rawSalary > 0
+      ? Math.round(convertToUsd(rawSalary, salaryCurrency ?? 'USD'))
+      : undefined;
     const compensationRisk = computeCompensationRisk({
       workTypeKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'sw_backend',
       experience: hybridResult.experience ?? '5-10',
       region: companyData.region ?? 'US',
-      userSalary: uf14.userSalary,
+      userSalary: userSalaryUsd,
       hiringFreezeScore: hiringSignalResult?.freezeScore,
       hasContractorCuts: uf14.hasContractorCuts ?? false,
       hasPayFreeze: uf14.hasPayFreeze ?? false,
@@ -2742,8 +2896,32 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
 
   // 30. Skill Portfolio Fit — skill-level market compatibility
   try {
+    // userSkills must be sourced from userProfile.selfRatedSkills (stored in DB)
+    // and userProfile.targetSkills. uf14.userSkills was a field that never existed
+    // and always resolved to [] — causing the fallback path for every user.
+    //
+    // Priority chain:
+    //   1. uf14.selfRatedSkills (explicit in userFactors — rare but possible)
+    //   2. uf14.targetSkills (same)
+    //   3. inputs.userProfile.selfRatedSkills (loaded from DB during LayoffCalculator merge)
+    //   4. uf14.userSkills (legacy field, kept for backward compat)
+    const uf14any = uf14 as any;
+    const profileSkills: string[] = [
+      ...(uf14any.selfRatedSkills ?? []),
+      ...(uf14any.targetSkills ?? []),
+      ...(uf14any.userSkills ?? []),
+    ];
+    // De-duplicate while preserving order
+    const seenSkills = new Set<string>();
+    const deduped: string[] = profileSkills.filter(s => {
+      const k = s.trim().toLowerCase();
+      if (!k || seenSkills.has(k)) return false;
+      seenSkills.add(k);
+      return true;
+    });
+
     const skillPortfolioFit = computeSkillPortfolioFit({
-      userSkills: uf14.userSkills ?? [],
+      userSkills: deduped,
       workTypeKey: resolvedRole.canonicalKey ?? inputs.oracleKey ?? 'sw_backend',
       experience: hybridResult.experience ?? '5-10',
       roleD1Score: hybridResult.breakdown?.L3 ? hybridResult.breakdown.L3 * 100 : 50,
@@ -2873,6 +3051,23 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
 
   // 38. Career Velocity — trajectory momentum analysis
   try {
+    // Derive industryKey for benchmark lookup: map company industry → benchmark key
+    const industryRaw = (companyData.industry ?? '').toLowerCase();
+    const industryKey =
+      /tech|software|saas|cloud|ai|ml/.test(industryRaw)  ? 'tech'
+      : /finance|bank|fintech|insurance|invest/.test(industryRaw) ? 'finance'
+      : /health|medical|pharma|biotech|hospital/.test(industryRaw) ? 'healthcare'
+      : /legal|law/.test(industryRaw)     ? 'legal'
+      : /hr|human.resource|people/.test(industryRaw) ? 'hr'
+      : /marketing|media|content/.test(industryRaw) ? 'marketing'
+      : /operations|supply|logistic/.test(industryRaw) ? 'operations'
+      : /sales/.test(industryRaw) ? 'sales'
+      : 'default';
+
+    // roleFamily: strip extra segments from oracle key to get the benchmark family key
+    const oracleKeyForVelocity = resolvedRole.canonicalKey ?? inputs.oracleKey ?? '';
+    const roleFamily = oracleKeyForVelocity.replace(/-/g, '_').toLowerCase();
+
     const careerVelocity = computeCareerVelocity({
       experience: hybridResult.experience ?? '5-10',
       roleTitle: inputs.roleTitle,
@@ -2883,6 +3078,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       crossTeamProjects: uf14.crossTeamProjects ?? 0,
       hasPublicSpeaking: uf14.hasPublicSpeaking ?? false,
       hasDirectReports: uf14.hasDirectReports ?? 0,
+      industryKey,
+      roleFamily,
     });
     (hybridResult as any).careerVelocity = careerVelocity;
   } catch (e) {
@@ -2974,7 +3171,26 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     ]);
 
     if (warnRes.status === 'fulfilled' && warnRes.value.data?.length) {
-      _v16WarnFilings = warnRes.value.data;
+      // Normalize snake_case DB columns → camelCase WARNFiling fields.
+      // The warn_filings table uses snake_case (layoff_date, filed_date,
+      // affected_count, filing_state, is_confirmed, source_url); computeWARNSignal
+      // accesses camelCase (f.layoffDate, f.filedDate, etc.).  Without this map
+      // every field access returns undefined and filterActiveFilings() always
+      // returns [] — making hasActiveWARN permanently false even when rows exist.
+      _v16WarnFilings = warnRes.value.data.map((row: any) => ({
+        companyName:  row.company_name  ?? row.companyName  ?? '',
+        filingState:  row.filing_state  ?? row.filingState  ?? '',
+        filedDate:    row.filed_date    ?? row.filedDate    ?? '',
+        layoffDate:   row.layoff_date   ?? row.layoffDate   ?? '',
+        affectedCount:row.affected_count?? row.affectedCount?? 0,
+        locations:    Array.isArray(row.locations) ? row.locations
+                      : (typeof row.locations === 'string' && row.locations)
+                        ? row.locations.split(',').map((s: string) => s.trim())
+                        : [],
+        isConfirmed:  row.is_confirmed  ?? row.isConfirmed  ?? false,
+        sourceUrl:    row.source_url    ?? row.sourceUrl    ?? '',
+        rawText:      row.raw_text      ?? row.rawText      ?? undefined,
+      }));
     }
     if (glassdoorRes.status === 'fulfilled' && glassdoorRes.value.data?.length) {
       _v16GlassdoorHistory = glassdoorRes.value.data;
@@ -3231,6 +3447,49 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     if (personalizedActionSet?.profileSignals) {
       (hybridResult as any).profileSignals = personalizedActionSet.profileSignals;
     }
+
+    // BUGFIX (Action Progress personalization): merge the role-specific
+    // personalized actions into hybridResult.recommendations. Previously the
+    // PhaseProgressSystem ("Action Progress") consumed only the GENERIC base
+    // recommendations (l1-high, l3-high, …) while the personalized 412-role
+    // action set lived in a separate field the progress UI never read — so the
+    // phases looked identical for every role. We now prepend the personalized
+    // actions (with stable title-hash IDs so completion state survives re-audits)
+    // and de-duplicate against the base set by title. Skipped when the role fell
+    // back to generic, since in that case there is nothing role-specific to add.
+    if (
+      !personalizedActionSet?.isGenericFallback &&
+      Array.isArray(personalizedActionSet?.actions) &&
+      personalizedActionSet.actions.length > 0
+    ) {
+      const baseRecs = Array.isArray(hybridResult.recommendations) ? hybridResult.recommendations : [];
+      const seenTitles = new Set(baseRecs.map((r: any) => (r.title ?? '').toLowerCase().trim()));
+      const scoreForPriority = hybridResult.total;
+
+      const personalizedRecs = personalizedActionSet.actions
+        .filter(a => a.title && !seenTitles.has(String(a.title).toLowerCase().trim()))
+        .map((a) => {
+          const deadline = a.deadline ?? (scoreForPriority >= 70 ? '7 days' : '30 days');
+          const sequencePhase = (a as any).sequencePhase ?? deriveSequencePhase(deadline);
+          return {
+            ...a,
+            id: a.id ?? stableActionId('pa', String(a.title)),
+            title: a.title,
+            description: a.description ?? '',
+            priority: a.priority ?? (scoreForPriority >= 65 ? 'Critical' : scoreForPriority >= 50 ? 'High' : 'Medium'),
+            layerFocus: (a as any).layerFocus ?? 'L3 · Role Displacement',
+            riskReductionPct: a.riskReductionPct ?? 15,
+            deadline,
+            sequencePhase,
+          } as any;
+        });
+
+      if (personalizedRecs.length > 0) {
+        // Personalized (role-specific) actions lead; generic base actions follow
+        // as supporting depth. Both remain available to the full plan + phases.
+        hybridResult.recommendations = [...personalizedRecs, ...baseRecs];
+      }
+    }
     // Grace-period compression: apply the same deadline remapping to the engine's
     // recommendation array so TakeActionTab's ActionMatrix reflects the real window.
     if (personalizedActionSet?.graceCompressionApplied && personalizedActionSet.graceCompressionTier) {
@@ -3300,10 +3559,17 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   try {
     const uf17 = inputs.userFactors as any;
     const roleMarketDemandResult = (hybridResult as any).roleMarketDemand;
-    if (roleMarketDemandResult && (uf17.selfRatedSkills?.length || uf17.targetSkills?.length)) {
+    // selfRatedSkills and targetSkills come from UserProfile (merged into userFactors
+    // in LayoffCalculator via the profile merge). uf17.selfRatedSkills was always
+    // undefined before the merge fix — so skillGapIntelligence was never computed.
+    // Now merged from profile at both call sites in LayoffCalculator.
+    const selfSkills: string[] = uf17.selfRatedSkills ?? [];
+    const tgtSkills: string[]  = uf17.targetSkills ?? [];
+
+    if (roleMarketDemandResult && (selfSkills.length > 0 || tgtSkills.length > 0)) {
       const skillGapIntelligence = computeSkillGapIntelligence({
-        selfRatedSkills: uf17.selfRatedSkills ?? [],
-        targetSkills: uf17.targetSkills ?? [],
+        selfRatedSkills: selfSkills,
+        targetSkills: tgtSkills,
         roleMarketDemand: roleMarketDemandResult,
         workTypeKey: resolvedRole.canonicalKey ?? 'sw_backend',
         experience: deriveExperienceBracket(inputs.userFactors.tenureYears),
@@ -3390,8 +3656,16 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // v40.0: fetch career market context and pass to the brief service so the LLM
   // can cite real market numbers (openings, hiring bar, success rate) in oneActionThisWeek.
   // getCareerPathMarket is async (tries live Supabase data, falls back to static baseline).
-  // Both the market fetch and the brief fetch are fire-and-forget; neither blocks scoring.
-  getCareerPathMarket(inputs.roleTitle)
+  //
+  // BUGFIX: this was previously fire-and-forget — the .then() mutated hybridResult
+  // AFTER the pipeline had already returned the object to React. Because mutating
+  // a returned object triggers no re-render, the UI saw intelligenceBrief ===
+  // undefined forever and showed an infinite "GENERATING…" skeleton (the
+  // "AI Intelligence Brief not working" report). We now keep a handle to the
+  // promise and await it (bounded) before returning, so the resolved brief is
+  // actually present in the result. On timeout/failure we set it to null (clean
+  // "no brief" state) rather than leaving it undefined (perpetual skeleton).
+  const intelligenceBriefPromise = getCareerPathMarket(inputs.roleTitle)
     .then((marketContext) =>
       fetchIntelligenceBrief(
         companyData.name,
@@ -3407,10 +3681,11 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       ),
     )
     .then((brief) => {
-      if (brief) (hybridResult as any).intelligenceBrief = brief;
+      (hybridResult as any).intelligenceBrief = brief ?? null;
     })
     .catch((e) => {
       console.warn('[AuditPipeline] intelligenceBrief fetch failed:', e);
+      (hybridResult as any).intelligenceBrief = null;
     });
 
   // 53. Career Contingency Plan — 3-path STAY/NEGOTIATE/TRANSITION decision framework
@@ -3454,19 +3729,71 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // 54. Preparedness Score — 5-pillar career layoff-readiness meta-score
   try {
     const uf17 = inputs.userFactors as any;
+
+    // ── Derive inputs that were previously always null ────────────────────────
+
+    // networkStrength1to5: derive from networkLeverage score (0–100 → 1–5).
+    // networkLeverage.networkScore is a reliable proxy: 0–25=1, 26–45=2,
+    // 46–60=3, 61–75=4, 76–100=5. Falls back to user-provided networkSize.
+    const nlScore: number | undefined = (hybridResult as any).networkLeverage?.networkScore;
+    const derivedNetworkStrength: number | null =
+      uf17.networkStrength1to5 != null ? uf17.networkStrength1to5
+      : nlScore != null
+        ? nlScore <= 25 ? 1 : nlScore <= 45 ? 2 : nlScore <= 60 ? 3 : nlScore <= 75 ? 4 : 5
+        : null;
+
+    // careerGoal: hybridResult.careerGoal is declared but never written by the
+    // pipeline. Derive it from risk score + user signals rather than leaving null.
+    //   emergency_exit  → risk ≥ 70 (critical band — user needs to move urgently)
+    //   strategic_exit  → risk 45–69 (elevated — user should prepare proactively)
+    //   stay_and_grow   → risk < 45 with low financial pressure
+    //   explore         → risk < 45 with adequate runway and no strong signal
+    // User-explicit careerGoal from profile (uf17.careerGoal) always wins.
+    const derivedCareerGoal: 'stay_and_grow' | 'strategic_exit' | 'emergency_exit' | 'explore' | null =
+      uf17.careerGoal != null ? uf17.careerGoal
+      : hybridResult.total >= 70 ? 'emergency_exit'
+      : hybridResult.total >= 45 ? 'strategic_exit'
+      : (uf17.savingsMonthsRunway ?? 0) >= 6 ? 'stay_and_grow'
+      : 'explore';
+
+    // hasLinkedInActive: user-explicit > userProfile field > default true for
+    // professionals (LinkedIn is assumed active unless explicitly stated otherwise).
+    const derivedLinkedIn: boolean | null =
+      uf17.hasLinkedInActive != null ? uf17.hasLinkedInActive
+      : uf17.linkedInActive   != null ? uf17.linkedInActive
+      : null;  // null = unknown; engine treats as not penalised
+
+    // hasUpdatedResume: derive from explicit days-ago field or legacy boolean.
+    const derivedHasUpdatedResume: boolean | null =
+      uf17.hasUpdatedResume != null ? uf17.hasUpdatedResume
+      : uf17.resumeUpdatedDaysAgo != null ? uf17.resumeUpdatedDaysAgo <= 365
+      : null;
+
     const preparednessScore = computePreparednessScore({
-      financialRunwayMonths: uf17.savingsMonthsRunway ?? null,
-      userFinancialRunway: (hybridResult as any).userFinancialRunway ?? null,
-      networkSize: hybridResult.networkSize ?? null,
-      networkLeverage: (hybridResult as any).networkLeverage ?? null,
-      careerResilience: (hybridResult as any).careerResilience ?? null,
-      skillPortfolioFit: (hybridResult as any).skillPortfolioFit ?? null,
-      skillGapIntelligence: (hybridResult as any).skillGapIntelligence ?? null,
-      careerGoal: hybridResult.careerGoal ?? null,
-      priorJobChanges: uf17.priorJobChanges ?? null,
-      priorLayoffSurvived: uf17.priorLayoffSurvived ?? null,
-      jobMarketLiquidity: (hybridResult as any).jobMarketLiquidity ?? null,
-      careerVelocity: (hybridResult as any).careerVelocity ?? null,
+      financialRunwayMonths:      uf17.savingsMonthsRunway ?? null,
+      userFinancialRunway:        (hybridResult as any).userFinancialRunway ?? null,
+      // Network — prefer 1-5 derived scale; fall back to categorical string
+      networkStrength1to5:        derivedNetworkStrength,
+      networkSize:                derivedNetworkStrength == null
+                                    ? (hybridResult.networkSize ?? null)
+                                    : null,
+      networkLeverage:            (hybridResult as any).networkLeverage ?? null,
+      careerResilience:           (hybridResult as any).careerResilience ?? null,
+      skillPortfolioFit:          (hybridResult as any).skillPortfolioFit ?? null,
+      skillGapIntelligence:       (hybridResult as any).skillGapIntelligence ?? null,
+      // careerGoal — derived from risk score when not explicitly provided
+      careerGoal:                 derivedCareerGoal,
+      priorJobChanges:            uf17.priorJobChanges ?? null,
+      priorLayoffSurvived:        uf17.priorLayoffSurvived ?? null,
+      jobMarketLiquidity:         (hybridResult as any).jobMarketLiquidity ?? null,
+      careerVelocity:             (hybridResult as any).careerVelocity ?? null,
+      // Operational sub-factors — use explicit values when available
+      hasUpdatedResume:           derivedHasUpdatedResume,
+      resumeUpdatedDaysAgo:       uf17.resumeUpdatedDaysAgo ?? null,
+      resumeImpactBulletsPerRole: uf17.resumeImpactBulletsPerRole ?? null,
+      resumeAtsFormatted:         uf17.resumeAtsFormatted ?? null,
+      hasLinkedInActive:          derivedLinkedIn,
+      hasSavedJobTargets:         uf17.hasSavedJobTargets ?? null,
     });
     (hybridResult as any).preparednessScore = preparednessScore;
   } catch (e) {
@@ -3515,6 +3842,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         scoreVelocityPtsPerMonth: (hybridResult as any).scoreTrajectory?.velocityPtsPerMonth,
         resilienceScore: (hybridResult as any).careerResilience?.compositeScore,
         jobMarketLiquidityScore: (hybridResult as any).jobMarketLiquidity?.reemploymentScore,
+        // Keep in sync with the step-27 call so the recomputed strategy retains
+        // the same v48.0 personalization signals.
+        ...buildStrategyPersonalizationSignals(inputs, companyData, hybridResult, resolvedRole),
       });
     }
   } catch (e) {
@@ -3664,35 +3994,69 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   //     Feeds action plan personalisation, negotiation scripts, and 30/60/90 plan.
   try {
     const uf60 = inputs.userFactors as any;
+    // Derive totalExperienceYears from the correct field name (yearsExperience, not yearsOfExperience)
+    const totalExperienceYears60 =
+      uf60?.careerYears         // from LayoffInputForm Step 2 (total career experience)
+      ?? uf60?.yearsExperience  // from UserProfile (correct field name, no 'Of')
+      ?? uf60?.yearsOfExperience // legacy fallback
+      ?? uf60?.tenureYears
+      ?? 5;
+
+    // Derive seniorityBracket from experience + role title (seniority is not in UserFactors)
+    const rawTitle60 = (inputs.roleTitle ?? '').toLowerCase();
+    const seniorityBracket60: 'junior' | 'mid' | 'senior' | 'principal' =
+      /chief|cto|cfo|ceo|coo|vp |vice.president|director|partner|principal|staff/i.test(rawTitle60) ? 'principal'
+      : /senior|sr\.|lead\b|architect|manager/i.test(rawTitle60) ? 'senior'
+      : /junior|jr\.|entry|intern|associate|graduate|fresher/i.test(rawTitle60) ? 'junior'
+      : totalExperienceYears60 >= 8 ? 'senior'
+      : totalExperienceYears60 >= 4 ? 'mid'
+      : totalExperienceYears60 >= 1 ? 'junior'
+      : 'mid';
+
+    // LinkedIn completion: derive from profile completeness fields — not from
+    // connection count (never populated). If profile has skills + salary + visa, ~85%.
+    const linkedinPct60 =
+      uf60?.linkedinCompletionPct  // explicit (never set currently, for future)
+      ?? (() => {
+        let pct = 40; // baseline: exists but incomplete
+        if (uf60?.selfRatedSkills?.length > 0) pct += 15;
+        if (uf60?.monthlySalaryUsd || uf60?.savingsMonthsRunway) pct += 10;
+        if (uf60?.visaStatus) pct += 10;
+        if (uf60?.yearsExperience || uf60?.careerYears) pct += 10;
+        if (uf60?.hasDependents != null) pct += 5;
+        if (uf60?.metroArea) pct += 10;
+        return Math.min(95, pct);
+      })();
+
     const behavioralPersonalization = computeBehavioralPersonalization({
       tenureYears:                   uf60?.tenureYears ?? 3,
-      totalExperienceYears:          uf60?.yearsOfExperience ?? 5,
-      seniorityBracket:              uf60?.seniority ?? 'mid',
+      totalExperienceYears:          totalExperienceYears60,
+      seniorityBracket:              uf60?.seniority ?? seniorityBracket60,
       workTypeKey:                   resolvedRole.canonicalKey ?? 'software_engineer',
       rolePrefix:                    (resolvedRole.canonicalKey ?? 'software_engineer').split('_')[0],
       industry:                      hybridResult.industryKey ?? '',
       region:                        (hybridResult.countryKey ?? 'IN').toLowerCase(),
-      currentMonthlySalaryLocal:     uf60?.currentMonthlySalaryLocal ?? null,
+      currentMonthlySalaryLocal:     uf60?.currentMonthlySalaryLocal ?? uf60?.monthlySalaryUsd ?? null,
       localCurrencyCode:             uf60?.localCurrencyCode ?? null,
-      annualSalaryUsd:               uf60?.currentSalaryUSD ?? null,
+      annualSalaryUsd:               uf60?.currentSalaryUSD ?? (uf60?.monthlySalaryUsd ? uf60.monthlySalaryUsd * 12 : null),
       employmentGapMonths:           uf60?.employmentGapMonths ?? null,
       yearsAtCurrentTitle:           uf60?.yearsAtCurrentTitle ?? null,
       numberOfJobsLast5Years:        uf60?.numberOfJobsLast5Years ?? null,
       numberOfPromotionsLast5Years:  uf60?.numberOfPromotionsLast5Years ?? null,
-      currentCompanyType:            uf60?.companyType ?? null,
+      currentCompanyType:            uf60?.companyType ?? (companyData as any).size ?? null,
       targetCompanyType:             uf60?.targetCompanyType ?? null,
-      resumeLastUpdatedMonths:       uf60?.resumeLastUpdatedMonths ?? null,
+      resumeLastUpdatedMonths:       uf60?.resumeLastUpdatedMonths ?? (uf60?.resumeUpdatedDaysAgo != null ? Math.round(uf60.resumeUpdatedDaysAgo / 30) : null),
       hasPortfolio:                  uf60?.hasPublicPortfolio ?? null,
       hasRecentInterviewPractice:    uf60?.hasRecentInterviewPractice ?? null,
-      linkedinCompletionPct:         uf60?.linkedinConnectionCount != null ? Math.min(100, 40 + (uf60.linkedinConnectionCount > 200 ? 30 : 0)) : null,
+      linkedinCompletionPct:         linkedinPct60,
       compositeScore:                hybridResult.total,
       careerGoal:                    uf60?.careerGoal ?? null,
       aiDisruptionRisk:              (hybridResult as any).aiExposureIndex ?? null,
-      skillPortfolioScore:           (hybridResult as any).skillFusion?.overallPortfolioScore ?? null,
+      skillPortfolioScore:           (hybridResult as any).skillPortfolioFit?.fitScore ?? (hybridResult as any).skillFusion?.overallPortfolioScore ?? null,
       performanceTier:               hybridResult.performanceTier ?? 'unknown',
       visaStatus:                    uf60?.visaStatus ?? null,
       hasDependents:                 uf60?.hasDependents ?? null,
-      runwayMonths:                  (hybridResult as any).financialRunway?.runwayMonths ?? null,
+      runwayMonths:                  (hybridResult as any).userFinancialRunway?.runwayMonths ?? uf60?.savingsMonthsRunway ?? null,
     });
     (hybridResult as any).behavioralPersonalization = behavioralPersonalization;
   } catch (e) {
@@ -3737,6 +4101,20 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     companyData.source?.toLowerCase().includes("fallback") ? "company_profile" : null,
     (resolvedRole.canonicalKey ? null : "career_skills"),
   ].filter((value): value is string => Boolean(value));
+
+  // Await the intelligence-brief fetch (layer 52) — bounded so a slow/stalled LLM
+  // round-trip can't hang the whole audit. Whatever has resolved by the deadline
+  // is already written onto hybridResult; on timeout we stamp null so the UI shows
+  // a clean "no brief" state instead of an infinite skeleton.
+  try {
+    await Promise.race([
+      intelligenceBriefPromise,
+      new Promise<void>(resolve => setTimeout(resolve, 9000)),
+    ]);
+  } catch { /* handled inside the promise; never throws here */ }
+  if ((hybridResult as any).intelligenceBrief === undefined) {
+    (hybridResult as any).intelligenceBrief = null;
+  }
 
   const finalResult = attachAuditMetadata(hybridResult, companyData, inputs, {
     companyMatchConfidence,

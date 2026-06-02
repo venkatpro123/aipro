@@ -17,7 +17,7 @@
 import React, { useState } from 'react';
 import { useStaggeredReveal } from '../../../hooks/useStaggeredReveal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, ChevronDown, Users, LineChart, AlertTriangle, Clock } from 'lucide-react';
+import { Building2, ChevronDown, Users, LineChart, AlertTriangle, Clock, Briefcase, Hash } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import {
@@ -147,9 +147,62 @@ const ChipRow: React.FC<{ signal: CompressedSignal }> = ({ signal }) => {
   );
 };
 
+// ── Headcount formatter ───────────────────────────────────────────────────────
+// Renders a human-readable count: 1,234 → "1.2K", 234,000 → "234K", etc.
+function formatHeadcount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+  return String(n);
+}
+
+// ── Identity resolver ─────────────────────────────────────────────────────────
+// Resolves company name, industry, and headcount from every available source,
+// prioritising live data over DB over fallback text.
+interface CompanyIdentity {
+  name:      string | null;
+  industry:  string | null;
+  headcount: number | null;
+  headcountSource: 'live' | 'db' | null;
+}
+
+function resolveIdentity(result: HybridResult, companyData?: CompanyData): CompanyIdentity {
+  const r = result as any;
+
+  // ── Name ────────────────────────────────────────────────────────────────────
+  const name =
+    companyData?.name?.trim()        ||
+    r.companyName?.trim()            ||
+    r.companyData?.name?.trim()      ||
+    null;
+
+  // ── Industry ─────────────────────────────────────────────────────────────────
+  const industry =
+    companyData?.industry?.trim()    ||
+    r.companyData?.industry?.trim()  ||
+    r.industryKey?.trim()            ||
+    null;
+
+  // ── Headcount ────────────────────────────────────────────────────────────────
+  // Priority: live Yahoo Finance count > DB workforce_count > employeeCount
+  const liveCount: number | null =
+    r.headcountVelocity?.currentHeadcount           ??
+    r.companyData?.workforce_count                   ??
+    (companyData as any)?.workforce_count            ??
+    null;
+
+  const dbCount: number | null =
+    companyData?.employeeCount > 0 ? companyData!.employeeCount : null;
+
+  const headcount       = liveCount ?? dbCount ?? null;
+  const headcountSource = liveCount != null ? 'live' : dbCount != null ? 'db' : null;
+
+  return { name, industry, headcount, headcountSource };
+}
+
 export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
   const scanning = useIntelligencePulse();
+  const identity  = React.useMemo(() => resolveIdentity(result, companyData), [result, companyData]);
   const workforce = React.useMemo(() => compressWorkforceSignal(result, companyData), [result, companyData]);
   const financial = React.useMemo(() => compressFinancialSignal(result, companyData), [result, companyData]);
   const headline  = pickHeadline(workforce, financial);
@@ -259,6 +312,90 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
           <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
         </motion.div>
       </button>
+
+      {/* ── Company identity row — name / industry / headcount ────────────── */}
+      {(identity.name || identity.industry || identity.headcount != null) && (
+        <div
+          className="mx-3 mb-3 rounded-xl px-3 py-2.5 grid gap-x-3 gap-y-1.5"
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          }}
+        >
+          {/* Company Name */}
+          {identity.name && (
+            <div className="flex items-start gap-2 min-w-0">
+              <div
+                className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ background: 'rgba(0,212,224,0.10)' }}
+              >
+                <Building2 className="w-3 h-3" style={{ color: '#00d4e0' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  Company
+                </p>
+                <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'rgba(255,255,255,0.90)' }}
+                   title={identity.name}>
+                  {identity.name}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Industry */}
+          {identity.industry && (
+            <div className="flex items-start gap-2 min-w-0">
+              <div
+                className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ background: 'rgba(139,92,246,0.12)' }}
+              >
+                <Briefcase className="w-3 h-3" style={{ color: '#a78bfa' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  Industry
+                </p>
+                <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'rgba(255,255,255,0.85)' }}
+                   title={identity.industry}>
+                  {identity.industry}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Headcount */}
+          {identity.headcount != null && (
+            <div className="flex items-start gap-2 min-w-0">
+              <div
+                className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ background: 'rgba(16,185,129,0.10)' }}
+              >
+                <Hash className="w-3 h-3" style={{ color: '#10b981' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  Headcount
+                </p>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-[12px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                    {formatHeadcount(identity.headcount)}
+                  </p>
+                  {identity.headcountSource === 'live' && (
+                    <span
+                      className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}
+                    >
+                      LIVE
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Sub-verdict chips — always visible */}
       <div className="px-3 pb-3 flex gap-2">

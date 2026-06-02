@@ -418,32 +418,68 @@ export async function updateCompanyConfidence(
 
 // ── Search helper — for UI autocomplete / CompanyWatchPanel ──────────────────
 
+// Per-session search result cache. Keyed by normalised query string.
+// Prevents duplicate Supabase round-trips when the user types the same
+// prefix twice (e.g. backspace then retype) and avoids re-fetching while
+// the user pauses mid-word.
+const searchCache = new Map<string, { name: string; industry: string; riskScore: number; nDuplicates?: number }[]>();
+
 export async function searchCompanies(
   query: string,
   limit = 10,
+  signal?: AbortSignal,
 ): Promise<{ name: string; industry: string; riskScore: number; nDuplicates?: number }[]> {
+  const cacheKey = query.toLowerCase().trim();
+  const cached = searchCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
     // v35.1.3: query the canonical view so the dropdown shows ONE row per
     // entity (not 5 Oracle rows). The view's search_haystack column lets
     // short-form queries like "TCS" or "ORCL" hit the canonical row even
     // when the canonical display name is the long form.
+    //
+    // Two-clause OR: prefix-first (ilike `query%`) is index-friendly on the
+    // btree index for exact-prefix lookups. The broader `%query%` is a
+    // fallback for mid-word matches. Supabase executes both in one round-trip.
     const escaped = escapeIlike(query.replace(/[,()]/g, ''));
     const { data, error } = await supabase
       .from('v_company_canonical')
       .select('company_name, industry, company_risk_score, n_duplicates')
-      .or(`company_name.ilike.%${escaped}%,search_haystack.ilike.%${escaped}%`)
-      .limit(limit);
+      .or(
+        `company_name.ilike.${escaped}%,` +
+        `search_haystack.ilike.${escaped}%,` +
+        `company_name.ilike.%${escaped}%,` +
+        `search_haystack.ilike.%${escaped}%`,
+      )
+      .limit(limit)
+      .abortSignal(signal ?? null as any);
 
     if (error || !data) return [];
-    return (data as any[])
-      .filter(r => r.company_name && typeof r.company_name === 'string' && r.company_name.trim().length > 0)
-      .map(r => ({
-        name: r.company_name as string,
-        industry: r.industry ?? 'Unknown',
-        riskScore: Math.round((r.company_risk_score ?? 0.4) * 100),
-        nDuplicates: typeof r.n_duplicates === 'number' ? r.n_duplicates : undefined,
-      }));
-  } catch {
+
+    // Prefix matches first — they are higher confidence than mid-word hits.
+    const esc = escaped.toLowerCase();
+    const rows = (data as any[]).filter(
+      r => r.company_name && typeof r.company_name === 'string' && r.company_name.trim().length > 0,
+    );
+    rows.sort((a, b) => {
+      const aPrefix = (a.company_name as string).toLowerCase().startsWith(esc) ? 0 : 1;
+      const bPrefix = (b.company_name as string).toLowerCase().startsWith(esc) ? 0 : 1;
+      return aPrefix - bPrefix;
+    });
+
+    const result = rows.map(r => ({
+      name: r.company_name as string,
+      industry: r.industry ?? 'Unknown',
+      riskScore: Math.round((r.company_risk_score ?? 0.4) * 100),
+      nDuplicates: typeof r.n_duplicates === 'number' ? r.n_duplicates : undefined,
+    }));
+
+    searchCache.set(cacheKey, result);
+    return result;
+  } catch (err: any) {
+    // AbortError is expected when the caller cancels — not a real failure.
+    if (err?.name === 'AbortError' || err?.message?.includes('abort')) return [];
     return [];
   }
 }
