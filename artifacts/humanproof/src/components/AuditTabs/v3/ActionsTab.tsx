@@ -35,6 +35,7 @@ import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
 import { RecoveryProbabilityCard } from '../common/RecoveryProbabilityCard';
+import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import type { SurvivalProbabilityResult } from '../../../services/layoffSurvivalPredictor';
 import { ExecutiveIntelligencePanel } from '../common/ExecutiveIntelligencePanel';
 import {
@@ -340,6 +341,8 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
     try { localStorage.setItem(QC_KEY, JSON.stringify({ ts: Date.now() })); } catch { /* swallow */ }
     setQuickCaptureCompleted(true);
   };
+  const score = result.total;
+  const scoreSensitivity = r.scoreSensitivity;
   const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
@@ -558,25 +561,16 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           ground truth) but before the rest of the plan. */}
       <StrategySpineCard strategy={strategySynthesis} />
 
-      {/* v40.0: Inline quick profile capture for users without a profile */}
-      {showQuickCapture && (
-        <ProfileQuickCapture onComplete={() => {
-          markQuickCaptureComplete();
-          // Notify the dashboard that profile data changed so the parent
-          // can trigger a recalculate — without this, personalizedSet
-          // stays stale until the user manually re-runs the audit.
-          window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
-        }} />
+      {/* T1: Emergency Anchor Card — directly after strategy spine for crisis users */}
+      {adaptation.mode === 'emergency' && (
+        <EmergencyCallout
+          score={result.total}
+          topAction={recommendations.find(r => r.priority === 'Critical')?.title ?? recommendations[0]?.title}
+          topActionTime={recommendations.find(r => r.priority === 'Critical')?.effortBadge ?? recommendations[0]?.effortBadge}
+        />
       )}
 
-      {/* Wave 8.1: Executive Intelligence Panel — only for C-suite / VP / Director / Founder / Staff+ */}
-      {executiveIntelligence && executiveIntelligence.isExecutive && (
-        <ExecutiveIntelligencePanel intelligence={executiveIntelligence} />
-      )}
-
-      {/* Wave 8.3: Equity Alert — highest-priority card when vest cliff is near + score elevated.
-           Placed before everything else (including emergency callout) so users with equity at risk
-           see it immediately. equityVestMonths < 12 AND score > 50. */}
+      {/* Equity Alert (P2 — important but below primary action flow) */}
       {showEquityAlert && (
         <motion.div
           initial={{ opacity: 0, y: -5 }}
@@ -634,16 +628,53 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
-      {/* T1: Emergency Anchor Card — Wave 3.2 empathetic callout (only in emergency mode) */}
-      {adaptation.mode === 'emergency' && (
-        <EmergencyCallout
-          score={result.total}
-          topAction={recommendations.find(r => r.priority === 'Critical')?.title ?? recommendations[0]?.title}
-          topActionTime={recommendations.find(r => r.priority === 'Critical')?.effortBadge ?? recommendations[0]?.effortBadge}
+      {/* Recovery Probability — "Your Odds" motivational card */}
+      {survivalProbability && (
+        <RecoveryProbabilityCard
+          survival={survivalProbability}
+          criticalActionCount={recommendations.filter(rc => rc.priority === 'Critical').length}
         />
       )}
 
-      {/* v39.0 B1+B6: profile-aware framing + honest fallback notice */}
+      {/* Career Contingency Plan — status-aware rendering */}
+      {contingencyStatus === 'ready' && contingencyPlan
+        ? <CareerContingencyPanel contingencyPlan={contingencyPlan} />
+        : contingencyStatus === 'loading'
+          ? <ContingencyLoading />
+          : contingencyStatus === 'failed'
+            ? <ContingencyFailed />
+            : <ContingencyUnavailable />
+      }
+
+      {/* Time to Safety — week-by-week path to moderate risk (P1, before phase progress) */}
+      {score > 35 && scoreSensitivity && (
+        <TimeToSafetyStrip
+          currentScore={score}
+          scoreSensitivity={scoreSensitivity}
+          financialRunwayMonths={financialRunwayMonths > 0 ? financialRunwayMonths : undefined}
+        />
+      )}
+
+      {/* Phase Progress System — 3-phase unlock with localStorage persistence */}
+      {recommendations.length > 0 && (
+        <PhaseProgressSystem
+          actions={recommendations}
+          companyName={companyData?.name}
+          currentScore={result.total}
+          onActionComplete={(actionId, completedCount) => {
+            window.dispatchEvent(new CustomEvent('hp.action.milestone', {
+              detail: { count: completedCount, actionId }
+            }));
+          }}
+        />
+      )}
+
+      {/* Executive Intelligence Panel (P2) */}
+      {executiveIntelligence && executiveIntelligence.isExecutive && (
+        <ExecutiveIntelligencePanel intelligence={executiveIntelligence} />
+      )}
+
+      {/* Profile context note (P2) */}
       {personalizedSet?.profileContextNote && (
         <div
           className="rounded-2xl p-4"
@@ -678,41 +709,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </div>
       )}
 
-      {/* Wave 5.2: Recovery Probability Card — "Your Odds" motivational card
-           Shows 12-month forced-exit probability without vs. with Phase 1 actions.
-           Uses survivalProbability already computed by layoffSurvivalPredictor.
-           criticalActionCount drives the copy ("3 critical actions" vs "Phase 1 actions"). */}
-      {survivalProbability && (
-        <RecoveryProbabilityCard
-          survival={survivalProbability}
-          criticalActionCount={recommendations.filter(rc => rc.priority === 'Critical').length}
-        />
-      )}
-
-      {/* T1: Career Contingency Plan — status-aware rendering */}
-      {contingencyStatus === 'ready' && contingencyPlan
-        ? <CareerContingencyPanel contingencyPlan={contingencyPlan} />
-        : contingencyStatus === 'loading'
-          ? <ContingencyLoading />
-          : contingencyStatus === 'failed'
-            ? <ContingencyFailed />
-            : <ContingencyUnavailable />
-      }
-
-      {/* Wave 4.1: Phase Progress System — 3-phase unlock with localStorage persistence */}
-      {recommendations.length > 0 && (
-        <PhaseProgressSystem
-          actions={recommendations}
-          companyName={companyData?.name}
-          currentScore={result.total}
-          onActionComplete={(actionId, completedCount) => {
-            // Wave 3.4: Fire celebration event on every completion
-            // The toast component decides which celebration to show based on count
-            window.dispatchEvent(new CustomEvent('hp.action.milestone', {
-              detail: { count: completedCount, actionId }
-            }));
-          }}
-        />
+      {/* Inline quick profile capture (P2 — after primary action flow) */}
+      {showQuickCapture && (
+        <ProfileQuickCapture onComplete={() => {
+          markQuickCaptureComplete();
+          window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
+        }} />
       )}
 
       {/* T3: Full action plan — collapsed

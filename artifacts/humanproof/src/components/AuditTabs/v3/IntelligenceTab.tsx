@@ -104,19 +104,12 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
   return (
     <div className="flex flex-col gap-3">
 
-      {/* ── T1: Unified Company Pulse (Workforce + Financial verdict) ────── */}
+      {/* ── T1: Unified Company Pulse — opens immediately so the verdict is visible */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-        <CompanyPulseCard result={result} companyData={companyData} defaultOpen={false} />
+        <CompanyPulseCard result={result} companyData={companyData} defaultOpen={true} />
       </motion.div>
 
-      {/* Parent company risk — only when subsidiary relationship detected */}
-      {r.parentPropagation && r.parentPropagation.propagationRisk?.level !== 'negligible' && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
-          <ParentRiskCard parentPropagation={r.parentPropagation} />
-        </motion.div>
-      )}
-
-      {/* ── T2: Ground Truth Signals ──────────────────────────────────────── */}
+      {/* ── T1/T2: Ground Truth Signals — moved above ParentRisk (higher certainty) */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <AdaptiveBlock
           title="Ground truth signals"
@@ -165,6 +158,13 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           )}
         </AdaptiveBlock>
       </motion.div>
+
+      {/* ── T2: Parent company risk — only when subsidiary relationship detected */}
+      {r.parentPropagation && r.parentPropagation.propagationRisk?.level !== 'negligible' && (
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+          <ParentRiskCard parentPropagation={r.parentPropagation} />
+        </motion.div>
+      )}
 
       {/* ── T3: Personalized Market Environment ───────────────────────────── */}
       {/* Replaces the three generic panels (RoleMarketDemand, PeerContagion,

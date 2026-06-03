@@ -16,7 +16,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Brain, Zap, BarChart2, Activity, BookOpen, Compass, AlertOctagon, TrendingDown,
+  Brain, Zap, BarChart2, Activity, Compass, AlertOctagon, TrendingDown,
 } from 'lucide-react';
 import { PatternMatchCard } from '../../PatternMatchCard';
 import { computeScoreSufficiency } from '../../../lib/scoreGate';
@@ -26,7 +26,6 @@ import type { ScenarioPlanResult } from '../../../services/scenarioPlanService';
 import type { IntelligenceBriefResult } from '../../../services/intelligenceBriefService';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { RiskBreakdownTab } from '../RiskBreakdownTab';
-import { TransparencyTab } from '../TransparencyTab';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { ScoreSensitivityPanel } from '../common/ScoreSensitivityPanel';
 import { AIReasoningPanel, buildDimensionsFromResult } from '../common/AIReasoningPanel';
@@ -569,55 +568,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
   return (
     <div className="flex flex-col gap-3">
 
-      {/* ── T2: AI Reasoning — chain of thought for the score ───────────────
-           Shown when at least one breakdown dimension (L1/L2/L3) has data.
-           Always appears FIRST so users understand why before reading the prose. */}
-      {aiReasoningDimensions.length > 0 && (
-        <AdaptiveBlock
-          title="How we reached your score"
-          subtitle="The top risk factors and reasoning chains that drive your result"
-          icon={Brain}
-          tier={2}
-          accentColor="#22d3ee"
-          defaultOpen={result.total >= 55}
-        >
-          <AIReasoningPanel
-            dimensions={aiReasoningDimensions}
-            finalScore={result.total}
-            confidencePercent={confPct}
-            primaryDataSources={
-              r._liveDataCoverage?.overallSource === 'live'
-                ? ['Yahoo Finance', 'Google News', 'Bing RSS']
-                : r._liveDataCoverage?.overallSource === 'mixed'
-                ? ['Google News', 'Bing RSS']
-                : []
-            }
-          />
-        </AdaptiveBlock>
-      )}
-
-      {/* ── T2: Signal Tensions — contradiction disclosure ──────────────────
-           Shown when signalContradictions has ≥1 non-LOW contradiction.
-           Helps users understand why the score is uncertain and which
-           signal to trust when positive and negative signals conflict. ── */}
-      {r.signalContradictions && (r.signalContradictions.contradictions?.length ?? 0) > 0 && r.signalContradictions.overallTrustLevel !== 'HIGH' && (
-        <AdaptiveBlock
-          title="Signal tensions"
-          subtitle="Competing signals detected — how the AI resolved them"
-          icon={Zap}
-          tier={2}
-          accentColor="#f59e0b"
-          defaultOpen={r.signalContradictions.overallTrustLevel === 'VERY_LOW' || r.signalContradictions.overallTrustLevel === 'LOW'}
-          badge={r.signalContradictions.hasMaterialUncertainty ? `±${r.signalContradictions.netUncertaintyPoints} pts` : undefined}
-          badgeColor={r.signalContradictions.overallTrustLevel === 'VERY_LOW' ? '#dc2626' : '#f97316'}
-        >
-          <SignalCorrelationInsight report={r.signalContradictions} />
-        </AdaptiveBlock>
-      )}
-
-      {/* ── T2: Intelligence Brief — full text lives here only ─────────────── */}
-      {/* Wrapped in AdaptiveBlock so it can be collapsed (was previously always-visible).
-          defaultOpen for score ≥ 35 (most users) — collapsed only in stable/low mode. */}
+      {/* ── P1: AI Intelligence Brief — first answer: "What did the AI conclude?" */}
       <AdaptiveBlock
         title="AI intelligence brief"
         subtitle="Full AI-generated analysis of your company, role, and situation"
@@ -641,11 +592,37 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         />
       </AdaptiveBlock>
 
-      {/* ── T2: Historical precedent match ───────────────────────────────────
-           Only shown when a verified pattern in HISTORICAL_PATTERNS matches at
-           ≥ 70% signal overlap. Never AI-generated — sourced entirely from
-           manually curated, source-verifiable records.
-           Placed before the score breakdown so context precedes detail. ───── */}
+      {/* ── P1: Dual Gauge — Risk vs Readiness ── */}
+      <AdaptiveBlock
+        title="Risk vs. readiness"
+        subtitle="Side-by-side comparison of your layoff risk score and career preparedness"
+        icon={BarChart2}
+        tier={2}
+        accentColor="#22d3ee"
+        defaultOpen={result.total >= 55}
+      >
+        <DualGaugePanel
+          riskScore={result.total}
+          preparedness={preparedness}
+          scoreSufficient={scoreSufficiency.sufficient}
+          ciLow={scoreSufficiency.ciLow}
+          ciHigh={scoreSufficiency.ciHigh}
+        />
+      </AdaptiveBlock>
+
+      {/* ── P1: Risk dimensions breakdown — open by default; this IS the tab's job */}
+      <AdaptiveBlock
+        title="Risk dimensions breakdown"
+        subtitle="How each L1–L54 layer contributes to your score"
+        icon={BarChart2}
+        tier={2}
+        accentColor="#22d3ee"
+        defaultOpen
+      >
+        <RiskBreakdownTab result={result} companyData={companyData} />
+      </AdaptiveBlock>
+
+      {/* ── P2: Historical precedent match */}
       {result.resolvedPattern && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
           <div className="flex items-center gap-2 mb-2">
@@ -684,25 +661,48 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         </motion.div>
       )}
 
-      {/* ── T2: Dual Gauge — Risk vs Readiness (now collapsible) ──────────── */}
-      <AdaptiveBlock
-        title="Risk vs. readiness"
-        subtitle="Side-by-side comparison of your layoff risk score and career preparedness"
-        icon={BarChart2}
-        tier={2}
-        accentColor="#22d3ee"
-        defaultOpen={result.total >= 55}
-      >
-        <DualGaugePanel
-          riskScore={result.total}
-          preparedness={preparedness}
-          scoreSufficient={scoreSufficiency.sufficient}
-          ciLow={scoreSufficiency.ciLow}
-          ciHigh={scoreSufficiency.ciHigh}
-        />
-      </AdaptiveBlock>
+      {/* ── P2: AI Reasoning — chain of thought for the score */}
+      {aiReasoningDimensions.length > 0 && (
+        <AdaptiveBlock
+          title="How we reached your score"
+          subtitle="The top risk factors and reasoning chains that drive your result"
+          icon={Brain}
+          tier={2}
+          accentColor="#22d3ee"
+          defaultOpen={result.total >= 55}
+        >
+          <AIReasoningPanel
+            dimensions={aiReasoningDimensions}
+            finalScore={result.total}
+            confidencePercent={confPct}
+            primaryDataSources={
+              r._liveDataCoverage?.overallSource === 'live'
+                ? ['Yahoo Finance', 'Google News', 'Bing RSS']
+                : r._liveDataCoverage?.overallSource === 'mixed'
+                ? ['Google News', 'Bing RSS']
+                : []
+            }
+          />
+        </AdaptiveBlock>
+      )}
 
-      {/* ── T2: Score sensitivity — what moves your score the most? ────────── */}
+      {/* ── P2: Signal Tensions — contradiction disclosure */}
+      {r.signalContradictions && (r.signalContradictions.contradictions?.length ?? 0) > 0 && r.signalContradictions.overallTrustLevel !== 'HIGH' && (
+        <AdaptiveBlock
+          title="Signal tensions"
+          subtitle="Competing signals detected — how the AI resolved them"
+          icon={Zap}
+          tier={2}
+          accentColor="#f59e0b"
+          defaultOpen={r.signalContradictions.overallTrustLevel === 'VERY_LOW' || r.signalContradictions.overallTrustLevel === 'LOW'}
+          badge={r.signalContradictions.hasMaterialUncertainty ? `±${r.signalContradictions.netUncertaintyPoints} pts` : undefined}
+          badgeColor={r.signalContradictions.overallTrustLevel === 'VERY_LOW' ? '#dc2626' : '#f97316'}
+        >
+          <SignalCorrelationInsight report={r.signalContradictions} />
+        </AdaptiveBlock>
+      )}
+
+      {/* ── P2: Score sensitivity — what moves your score the most? */}
       {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
         <AdaptiveBlock
           title="Score levers — what moves your risk the most?"
@@ -716,19 +716,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         </AdaptiveBlock>
       )}
 
-      {/* ── T2: Risk dimensions breakdown — open by default; this is the tab's job */}
-      <AdaptiveBlock
-        title="Risk dimensions breakdown"
-        subtitle="How each L1–L54 layer contributes to your score"
-        icon={BarChart2}
-        tier={2}
-        accentColor="#22d3ee"
-        defaultOpen
-      >
-        <RiskBreakdownTab result={result} companyData={companyData} />
-      </AdaptiveBlock>
-
-      {/* ── T3: Prediction Horizon ─────────────────────────────────────────── */}
+      {/* ── P3: Prediction Horizon */}
       {horizon && (
         <AdaptiveBlock
           title="Prediction horizon"
@@ -744,10 +732,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         </AdaptiveBlock>
       )}
 
-      {/* ── T3: Scenario Fan (interactive) ─────────────────────────────────
-           ScenarioExplorer normalises both the old worstCase/baseCase/bestCase
-           format and the newer bearCase/baseCase/bullCase format. Switching
-           tabs updates the action list for that scenario live. */}
+      {/* ── P3: Scenario Fan */}
       {scenario && (
         <AdaptiveBlock
           title="6-month scenarios"
@@ -757,9 +742,6 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           accentColor="#f59e0b"
           defaultOpen={false}
         >
-          {/* Pass the raw scenario object so ScenarioExplorer can access
-              planningHorizonMonths + dominantUncertainty. Previous remapping
-              here stripped those meta fields before they reached the component. */}
           <ScenarioExplorer
             scenario={scenario as any}
             currentScore={result.total}
@@ -767,11 +749,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         </AdaptiveBlock>
       )}
 
-      {/* ── T3: Wave 2.6 — 6-Year AI Displacement Forecast ────────────────
-           Uses DisplacementTrajectoryEngine (zero API cost — pure computation
-           from roleKey growth profiles + current score). Shows bear/base/bull
-           trajectories, crossover year warning, and top recommendation.
-           Always renders — every user has a roleKey; oracleResult optional. */}
+      {/* ── P3: 6-Year AI Displacement Forecast */}
       <AdaptiveBlock
         title="6-year AI displacement forecast"
         subtitle="How AI adoption will likely affect your role over the next 6 years"
@@ -788,18 +766,6 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           experience={displacementExperience}
           careerIntelligence={displacementCareerIntel}
         />
-      </AdaptiveBlock>
-
-      {/* ── T4: Methodology & Transparency ────────────────────────────────── */}
-      <AdaptiveBlock
-        title="Methodology & transparency"
-        subtitle="Data quality, signal provenance, calibration, model agreement"
-        icon={BookOpen}
-        tier={4}
-        accentColor="#94a3b8"
-        defaultOpen={false}
-      >
-        <TransparencyTab result={result} companyData={companyData} />
       </AdaptiveBlock>
 
     </div>

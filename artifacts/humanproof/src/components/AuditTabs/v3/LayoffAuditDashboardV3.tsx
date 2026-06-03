@@ -119,8 +119,8 @@ interface TabConfig {
 const TAB_CONFIG: TabConfig[] = [
   {
     value: 'summary',
-    label: 'Summary',
-    shortLabel: 'Summary',
+    label: 'Command Center',
+    shortLabel: 'Command',
     Icon: TrendingUp,
     getBadge: (r) => {
       const c = riskColor(r.total);
@@ -129,7 +129,7 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'company',
-    label: 'Company',
+    label: 'Company Intel',
     shortLabel: 'Company',
     Icon: Building2,
     getBadge: (r: any) => {
@@ -156,7 +156,7 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'actions',
-    label: 'Act Now',
+    label: 'Action Center',
     shortLabel: 'Actions',
     Icon: Zap,
     getBadge: (r) => {
@@ -166,19 +166,18 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'intel',
-    label: 'Deep Intel',
-    shortLabel: 'Intel',
+    label: 'Intelligence Lab',
+    shortLabel: 'Lab',
     Icon: Radio,
     getBadge: (r) => {
       const live = r.signalQuality?.liveSignals ?? 0;
       return live > 0 ? { text: `${live}`, color: '#10b981' } : null;
     },
   },
-  // v39.0 A6: Transparency / methodology — answers "how was this calculated?"
   {
     value: 'transparency',
-    label: 'Methodology',
-    shortLabel: 'Method',
+    label: 'Transparency',
+    shortLabel: 'Trust',
     Icon: Info,
     getBadge: (r: any) => {
       const conf = r.confidencePercent ?? 0;

@@ -217,7 +217,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
     <div className="flex flex-col gap-3">
       {sectionOrder.map(id => sections[id])}
 
-      {/* Safe Pivot Roles — computed by roleAdjacencyEngine, previously invisible */}
+      {/* Safe Pivot Roles (P2) */}
       {roleAdjacency && (roleAdjacency.adjacentRoles?.length ?? 0) > 0 && (
         <SafePivotRolesCard
           roleAdjacency={roleAdjacency}
@@ -227,6 +227,16 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
             (String(r.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || undefined)
           }
         />
+      )}
+
+      {/* Mini what-if strip — top 2 levers (P2, moved up for actionability) */}
+      {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
+        <ScoreSensitivityStrip scoreSensitivity={scoreSensitivity} />
+      )}
+
+      {/* Career Insurance Status — overall protection anchor (P2, moved up) */}
+      {careerResilience && (careerResilience.pillars?.length ?? 0) > 0 && (
+        <CareerInsuranceStatus resilience={careerResilience} />
       )}
 
       {/* D4 Performance Credibility — adjustment disclosure when tier was corrected */}
@@ -240,12 +250,12 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         />
       )}
 
-      {/* Wave 6.5: Cohort Benchmark — where user stands vs. peers */}
+      {/* Cohort Benchmark — where user stands vs. peers */}
       {competitivePosition && (competitivePosition.overallPercentile != null) && (
         <CohortBenchmarkCard competitivePosition={competitivePosition} />
       )}
 
-      {/* Wave 2.1: Behavioral Intelligence — trajectory, gap, interview readiness, comp gap */}
+      {/* Behavioral Intelligence — trajectory, gap, interview readiness, comp gap */}
       {behavioralPersonalization && (
         <AdaptiveBlock
           title="Your career intelligence"
@@ -264,29 +274,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         </AdaptiveBlock>
       )}
 
-      {/* Wave 2.5: Career Twin Network — people who navigated your situation
-           Uses findCareerTwins() directly (no HybridResult field needed) with
-           workTypeKey + tenureYears + total score + countryKey.
-           T3 collapsible — collapsed by default since it's social-proof context,
-           not primary decision data. */}
-      <AdaptiveBlock
-        title="People who navigated your situation"
-        subtitle="Historical precedents matched to your role, score, and experience level"
-        icon={Users}
-        tier={3}
-        accentColor="#22d3ee"
-        defaultOpen={false}
-      >
-        <CareerTwinCard
-          userRole={result.workTypeKey ?? 'sw_backend'}
-          userExperience={r.userFactors?.careerYears ?? r.userFactors?.tenureYears ?? r.tenureYears ?? 5}
-          userRiskScore={result.total}
-          userCountry={r.countryKey ?? 'global'}
-          topN={3}
-        />
-      </AdaptiveBlock>
-
-      {/* Wave 2.2: Tech Stack Obsolescence — surfaces risky technologies */}
+      {/* Tech Stack Obsolescence (P3) */}
       {techStackObsolescence && (
         (techStackObsolescence.riskyTechnologies?.length ?? 0) > 0 ||
         (techStackObsolescence.overallObsolescenceScore ?? 0) > 30
@@ -294,7 +282,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         <TechObsolescencePanel techStackObsolescence={techStackObsolescence} />
       )}
 
-      {/* Wave 2.4: Internal Mobility — personalized viability card */}
+      {/* Internal Mobility (P3) — full version with all fields */}
       {internalMobility && (internalMobility.viabilityScore ?? 0) > 20 && (
         <div
           className="rounded-xl overflow-hidden"
@@ -427,23 +415,27 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         </div>
       )}
 
-      {/* Mini what-if strip — top 2 levers that move the score most */}
-      {scoreSensitivity && (scoreSensitivity.levers?.filter((l: any) => l.scoreDropIfImproved > 0).length ?? 0) > 0 && (
-        <ScoreSensitivityStrip scoreSensitivity={scoreSensitivity} />
-      )}
+      {/* Career Twin Network (P3) — moved after tech obsolescence */}
+      <AdaptiveBlock
+        title="People who navigated your situation"
+        subtitle="Historical precedents matched to your role, score, and experience level"
+        icon={Users}
+        tier={3}
+        accentColor="#22d3ee"
+        defaultOpen={false}
+      >
+        <CareerTwinCard
+          userRole={result.workTypeKey ?? 'sw_backend'}
+          userExperience={r.userFactors?.careerYears ?? r.userFactors?.tenureYears ?? r.tenureYears ?? 5}
+          userRiskScore={result.total}
+          userCountry={r.countryKey ?? 'global'}
+          topN={3}
+        />
+      </AdaptiveBlock>
 
-      {/* Wave 8.4: Freelancer / Contractor Intelligence — only renders when
-           isFreelancer is detected from job title. Shows client concentration,
-           pipeline diversification, financial buffer gaps, and priority actions. */}
+      {/* Freelancer / Contractor Intelligence */}
       {freelancerIntelligence && freelancerIntelligence.isFreelancer && (
         <FreelancerRiskPanel intelligence={freelancerIntelligence} />
-      )}
-
-      {/* Wave 4.2: Career Insurance Status — persistent 5-pillar tracking card
-           Only renders when careerResilience pillars are available.
-           Placed last so it serves as the "overall protection score" anchor. */}
-      {careerResilience && (careerResilience.pillars?.length ?? 0) > 0 && (
-        <CareerInsuranceStatus resilience={careerResilience} />
       )}
 
       <div className="text-center pt-2 pb-1">

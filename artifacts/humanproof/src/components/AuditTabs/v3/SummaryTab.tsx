@@ -60,7 +60,6 @@ import { ScoreSignalOrbit, type SignalNode } from '../../ScoreSignalOrbit';
 import { ScoreCountUp } from '../../AuditReveal/ScoreCountUp';
 import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
 import { detectScoreDrift } from '../../../services/scoreStorageService';
-import { DisplacementTrajectoryPanel } from '../../LayoffCalculator/DisplacementTrajectoryPanel';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
 function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
@@ -1228,28 +1227,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         )}
       </motion.div>
 
-      {/* ── Score Trend Strip — 30-day trajectory (orphaned field, now surfaced) ── */}
+      {/* ── Score Trend Strip — 30-day trajectory (P1: moved directly after score hero) ── */}
       {scoreSufficiency.sufficient && r.scoreTrajectory && (
         <ScoreTrendStrip
           scoreTrajectory={r.scoreTrajectory}
           currentScore={score}
         />
       )}
-
-      {/* ── Recovery loop — the "since last visit" emotional continuity beat ──
-           Fuses score movement (scoreDelta) + action momentum (streakInfo) into
-           one warm narrative. Returning-user only — renders nothing on a first
-           audit. Replaces the former standalone streak chip + clinical velocity
-           framing with a single human beat (the retention engine). */}
-      {scoreSufficiency.sufficient && (
-        <ProgressNarrativeCard scoreDelta={r.scoreDelta} streakInfo={streakInfo} />
-      )}
-
-      {/* ── Wave 5.1: Time-to-Safety Strip — path to MODERATE risk (≤35) ─────
-           Base guard: score > 35 with scoreSensitivity levers. Orchestrator-gated:
-           inline only in crisis modes (emergency/elevated) where the week-by-week
-           projection is signal; otherwise folded into "Full breakdown" below. ── */}
-      {reveal.evidenceInline.has('timeToSafety') && timeToSafetyNode}
 
       {/* ── Fold capture into the reveal ───────────────────────────────────── */}
       {/* When fewer than 3 personal-context fields are filled, the score is
@@ -1369,46 +1353,11 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       )}
 
       {/* ── Tier-1: Immediate actions ──────────────────────────────────────── */}
-      {/* One-move reconciliation: when the spine surfaced a primary move, this
-          strip shows the SUPPORTING follow-on moves (the hero is deduped out)
-          and is reframed accordingly. */}
       <ImmediateActionsStrip actions={supportingActions} total={recommendations.length} supporting={hasPrimaryMove} />
 
-      {/* ── Evidence surface (orchestrator-gated) ──────────────────────────── */}
-      {/* Each block renders inline-open ONLY when its signal was ranked into the
-          orchestrator's primary set (cap 3) or it crossed its own materiality
-          threshold (see classifySummaryReveal). Everything material-but-not-now
-          folds into the single "Full breakdown" disclosure below. Same data,
-          same components — gated by the editor that already exists. */}
-      {reveal.evidenceInline.has('companyPulse') && companyPulseNode}
-      {reveal.evidenceInline.has('personalRisk') && personalRiskNode}
-      {reveal.evidenceInline.has('opportunity') && opportunityNode}
-      {reveal.evidenceInline.has('inactionCost') && inactionNode}
-
-      {/* ── Full breakdown — one collapsed disclosure for everything else ───── */}
-      {/* Holds the folded evidence blocks (those not material right now), the
-          missing-data card (self-gates), and the signal-weights deep-dive link.
-          Renders only when it would contain something. */}
-      {deepHasContent && (
-        <AdaptiveBlock title="Full breakdown" tier={3} accentColor="#94a3b8" defaultOpen={false}>
-          {reveal.deep.has('companyPulse') && companyPulseNode}
-          {reveal.deep.has('opportunity') && opportunityNode}
-          {reveal.deep.has('personalRisk') && personalRiskNode}
-          {reveal.deep.has('timeToSafety') && timeToSafetyNode}
-          {reveal.deep.has('inactionCost') && inactionNode}
-          <MissingDataCard
-            result={result}
-            companyData={companyData as any}
-            personalFieldsFilled={personalFieldsFilled}
-          />
-          {viewAllWeightsLink}
-        </AdaptiveBlock>
-      )}
-
-      {/* ── Momentum close — the LAST thing the user reads ─────────────────── */}
-      {/* Emotional arc: the screen ends on agency. Restates the ONE move (same
-          source of truth as the spine hero) so the takeaway is "just this next
-          step", not the cost-of-waiting card above it. */}
+      {/* ── Momentum close — directly after actions so user reads the ONE move
+          before supporting evidence. Restates the primary move (same source of
+          truth as the spine hero) — takeaway is "just this next step". */}
       {adaptation.feed?.primaryMove && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -1440,46 +1389,45 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
               className="mt-2 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
               style={{ background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.30)' }}
             >
-              Start in Action Plan →
+              Start in Action Center →
             </button>
           </div>
         </motion.div>
       )}
 
-      {/* ── 6-Year AI Displacement Forecast — final collapsed section ───────── */}
-      {(() => {
-        const roleKey   = result.workTypeKey ?? r.oracleKey ?? 'generic';
-        const roleTitle = (r.roleTitle ?? roleKey).replace(/_/g, ' ');
-        const expBand   = experienceBand(
-          (r.userFactors?.careerYears as number | undefined) ??
-          (r.careerYears as number | undefined),
-        );
-        const careerIntel = r.careerIntelligence ?? null;
-        return (
-          <AdaptiveBlock
-            title="6-Year AI Displacement Forecast"
-            subtitle={`${roleTitle} — year-by-year risk projection · 3 scenarios`}
-            icon={AlertOctagon}
-            tier={3}
-            accentColor="#f97316"
-            defaultOpen={false}
-          >
-            <DisplacementTrajectoryPanel
-              currentScore={result.total}
-              oracleResult={null}
-              roleTitle={roleTitle}
-              roleKey={roleKey}
-              experience={expBand}
-              careerIntelligence={careerIntel}
-            />
-          </AdaptiveBlock>
-        );
-      })()}
+      {/* ── Recovery loop — "since last visit" continuity beat (P2, below primary
+          actions so the emotional anchor doesn't compete with the hero move). */}
+      {scoreSufficiency.sufficient && (
+        <ProgressNarrativeCard scoreDelta={r.scoreDelta} streakInfo={streakInfo} />
+      )}
 
-      {/* Reading hint */}
+      {/* ── Evidence surface (orchestrator-gated) ──────────────────────────── */}
+      {reveal.evidenceInline.has('companyPulse') && companyPulseNode}
+      {reveal.evidenceInline.has('personalRisk') && personalRiskNode}
+      {reveal.evidenceInline.has('opportunity') && opportunityNode}
+      {reveal.evidenceInline.has('inactionCost') && inactionNode}
+
+      {/* ── Full breakdown — one collapsed disclosure for everything else ───── */}
+      {deepHasContent && (
+        <AdaptiveBlock title="Full breakdown" tier={3} accentColor="#94a3b8" defaultOpen={false}>
+          {reveal.deep.has('companyPulse') && companyPulseNode}
+          {reveal.deep.has('opportunity') && opportunityNode}
+          {reveal.deep.has('personalRisk') && personalRiskNode}
+          {reveal.deep.has('timeToSafety') && timeToSafetyNode}
+          {reveal.deep.has('inactionCost') && inactionNode}
+          <MissingDataCard
+            result={result}
+            companyData={companyData as any}
+            personalFieldsFilled={personalFieldsFilled}
+          />
+          {viewAllWeightsLink}
+        </AdaptiveBlock>
+      )}
+
+      {/* Reading hint — Intelligence Lab tab for deeper analysis */}
       <div className="text-center pt-1 pb-2">
         <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
-          Need more depth? Open the Company, Protection, or Intelligence tabs.
+          Need more depth? Open Company Intel, Protection, or Intelligence Lab.
         </p>
       </div>
     </div>
