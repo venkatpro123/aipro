@@ -132,8 +132,8 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
     ? Math.round(availableDims.reduce((sum, d) => sum + d.score, 0) / availableDims.length)
     : 50;
 
-  const strongCount = dimensions.filter(d => d.score >= 70).length;
-  const gapCount = dimensions.filter(d => d.score < 45).length;
+  const strongCount = dimensions.filter(d => d.available && d.score >= 70).length;
+  const gapCount = dimensions.filter(d => d.available && d.score < 45).length;
 
   const overallColor = overallScore >= 70 ? '#10b981' : overallScore >= 45 ? '#f59e0b' : '#f97316';
 

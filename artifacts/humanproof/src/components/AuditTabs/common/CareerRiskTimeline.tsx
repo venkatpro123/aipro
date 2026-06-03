@@ -102,7 +102,8 @@ const TimelineNode: React.FC<{
   );
 };
 
-// Connector line between nodes
+// Connector line between nodes — self-center in the flex row aligns it
+// at the vertical midpoint of the sibling nodes.
 const Connector: React.FC<{ dashed?: boolean }> = ({ dashed }) => (
   <div
     className="flex-shrink-0 self-center"
@@ -111,7 +112,9 @@ const Connector: React.FC<{ dashed?: boolean }> = ({ dashed }) => (
       height: 1,
       background: dashed ? undefined : 'rgba(255,255,255,0.12)',
       borderTop: dashed ? '1px dashed rgba(255,255,255,0.15)' : undefined,
-      marginTop: -10,
+      // Shift up so the line sits in the center of the score chip (~32px tall),
+      // not at the midpoint of the entire node column (chip + label).
+      marginBottom: 18,
     }}
   />
 );
@@ -123,11 +126,14 @@ export const CareerRiskTimeline: React.FC<CareerRiskTimelineProps> = ({
   criticalByDate,
   urgencyCategory,
 }) => {
-  // Take last 3 history entries for this audit context (already filtered by caller)
   const pastEntries = (scoreHistory ?? []).slice(-3);
   const futureMilestones = (milestones ?? []).slice(0, 3);
   const hasPast = pastEntries.length > 0;
-  const hasFuture = futureMilestones.length > 0 || criticalByDate;
+  const hasFuture = futureMilestones.length > 0 || !!criticalByDate;
+
+  // Only render when there is at least past history OR a future milestone.
+  // A timeline with only a single "TODAY" node adds no value.
+  if (!hasPast && !hasFuture) return null;
 
   return (
     <div>

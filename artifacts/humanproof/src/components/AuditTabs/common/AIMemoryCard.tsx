@@ -22,19 +22,20 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
   completedActionCount,
 }) => {
   // Only render for returning users
-  const hasScoreDrift = scoreDelta && Math.abs(scoreDelta.delta30d ?? 0) >= 1;
+  const deltaRaw = scoreDelta?.delta30d ?? 0;
+  const deltaRounded = Math.round(Math.abs(deltaRaw));
+  const hasScoreDrift = deltaRounded >= 1;
   const hasStreak = streakInfo && streakInfo.currentStreak > 0;
   const hasActions = typeof completedActionCount === 'number' && completedActionCount > 0;
   const hasDays = typeof daysSinceLastAudit === 'number' && daysSinceLastAudit > 0;
 
   if (!hasScoreDrift && !hasStreak && !hasActions && !hasDays) return null;
 
-  const delta = Math.abs(scoreDelta?.delta30d ?? 0);
   const direction = scoreDelta?.direction;
 
   const ScoreDriftIcon = direction === 'worsening' ? TrendingUp : direction === 'improving' ? TrendingDown : Minus;
   const driftColor = direction === 'worsening' ? '#dc2626' : direction === 'improving' ? '#10b981' : 'rgba(255,255,255,0.40)';
-  const driftLabel = direction === 'worsening' ? `+${delta}pt` : direction === 'improving' ? `-${delta}pt` : `${delta}pt`;
+  const driftLabel = direction === 'worsening' ? `+${deltaRounded}pt` : direction === 'improving' ? `-${deltaRounded}pt` : `${deltaRounded}pt`;
 
   return (
     <motion.div

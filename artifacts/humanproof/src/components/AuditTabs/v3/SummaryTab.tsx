@@ -812,7 +812,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
   // Beast Mode V3 — AI Memory + Timeline data
   const companyNameForV3 = (companyData as any)?.name ?? r.companyName ?? '';
-  const roleTitleForV3   = r.roleTitle ?? r.userProfile?.currentRole ?? r.userProfile?.roleTitle ?? '';
   const scoreHistoryForTimeline = useMemo(() => {
     try {
       const history = getLayoffScoreHistory();

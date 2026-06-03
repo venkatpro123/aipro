@@ -61,26 +61,21 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
   scoreSensitivity,
   financialRunwayMonths,
 }) => {
-  const hasSensitivity = Boolean(scoreSensitivity?.levers?.length);
-  const hasSurvival = Boolean(survivalProbability);
-  if (!hasSensitivity && !hasSurvival) return null;
-
+  // All hooks must be called unconditionally before any early return
   const scenarios: ScenarioCard[] = useMemo(() => {
     const levers = scoreSensitivity?.levers ?? [];
     const top5Drop = levers.slice(0, 5).reduce((sum, l) => sum + (l.scoreDropIfImproved ?? 0), 0);
     const top2Drop = levers.slice(0, 2).reduce((sum, l) => sum + (l.scoreDropIfImproved ?? 0), 0);
 
-    // Drift: worsening adds ~5pts over 3mo, deteriorating ~3pts, stable 0, improving -3
     const driftMap: Record<string, number> = {
       accelerating_risk: 8, deteriorating: 5, stable: 0, improving: -3,
     };
     const drift = driftMap[scoreTrajectory?.trajectoryDirection ?? 'stable'] ?? 0;
 
-    const doNothingScore  = clamp(currentScore + drift, 0, 99);
-    const partialScore    = clamp(currentScore - top2Drop, 0, 99);
-    const fullScore       = clamp(currentScore - top5Drop, 0, 99);
+    const doNothingScore = clamp(currentScore + drift, 0, 99);
+    const partialScore   = clamp(currentScore - top2Drop, 0, 99);
+    const fullScore      = clamp(currentScore - top5Drop, 0, 99);
 
-    // Probabilities
     const inactionProb = survivalProbability?.inactionProbability12m ?? null;
     const currentProb  = survivalProbability?.probability12m ?? null;
 
@@ -88,12 +83,14 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
       ? Math.round(inactionProb * 100)
       : Math.min(99, Math.round((doNothingScore / 100) * 80));
 
+    // Guard against division by zero when currentScore is 0
+    const safeScore = Math.max(1, currentScore);
     const currentProbPct = currentProb != null
       ? Math.round(currentProb * 100)
-      : Math.round((currentScore / 100) * 65);
+      : Math.round((safeScore / 100) * 65);
 
-    const partialProbPct = Math.max(5, Math.round(currentProbPct * (partialScore / currentScore)));
-    const fullProbPct    = Math.max(3, Math.round(currentProbPct * (fullScore / currentScore)));
+    const partialProbPct = Math.max(5, Math.round(currentProbPct * (partialScore / safeScore)));
+    const fullProbPct    = Math.max(3, Math.round(currentProbPct * (fullScore / safeScore)));
 
     const runwayNote = financialRunwayMonths && financialRunwayMonths <= 6
       ? `${financialRunwayMonths}mo runway at risk`
@@ -130,6 +127,9 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
       },
     ];
   }, [currentScore, survivalProbability, scoreTrajectory, scoreSensitivity, financialRunwayMonths]);
+
+  // Gate after all hooks — no data means no value to show
+  if (!scoreSensitivity?.levers?.length && !survivalProbability) return null;
 
   return (
     <div>

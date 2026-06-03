@@ -57,7 +57,9 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
       className="relative rounded-2xl overflow-hidden"
       style={{
         background: 'rgba(255,255,255,0.025)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
         borderLeft: `3px solid ${accentColor}`,
       }}
     >
