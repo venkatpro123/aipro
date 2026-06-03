@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
-import PreparednessScorePanel from '../common/PreparednessScorePanel';
+import { CareerHealthDashboard } from '../common/CareerHealthDashboard';
 import SkillGapIntelligencePanel from '../common/SkillGapIntelligencePanel';
 import SkillPortfolioPanel from '../common/SkillPortfolioPanel';
 import CareerVelocityPanel from '../common/CareerVelocityPanel';
@@ -128,11 +128,19 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   }, [adaptation.mode, preparedness]);
 
   const sections: Record<SectionId, React.ReactNode> = {
-    preparedness: preparedness ? (
+    preparedness: (
       <motion.div key="preparedness" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-        <PreparednessScorePanel preparedness={preparedness} />
+        <CareerHealthDashboard
+          preparedness={preparedness}
+          careerResilience={careerResilience}
+          skillGapIntelligence={skillGap}
+          jobMarketLiquidity={jobMarketLiquidity}
+          userFinancialRunway={userRunway}
+          careerVelocity={careerVelocity}
+          currentScore={result.total}
+        />
       </motion.div>
-    ) : null,
+    ),
 
     skills: (
       <AdaptiveBlock

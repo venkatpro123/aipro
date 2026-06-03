@@ -59,7 +59,12 @@ import Tilt3D from '../../ui/Tilt3D';
 import { ScoreSignalOrbit, type SignalNode } from '../../ScoreSignalOrbit';
 import { ScoreCountUp } from '../../AuditReveal/ScoreCountUp';
 import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
-import { detectScoreDrift } from '../../../services/scoreStorageService';
+import { detectScoreDrift, getLayoffScoreHistory } from '../../../services/scoreStorageService';
+// Beast Mode V3 — new AI OS components
+import { MissionBriefCard } from '../common/MissionBriefCard';
+import { AIMemoryCard } from '../common/AIMemoryCard';
+import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
+import { PersonalImpactSimulator } from '../common/PersonalImpactSimulator';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
 function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
@@ -805,6 +810,44 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   // Wave 4.4: streak data (safe — reads localStorage, never throws)
   const streakInfo = useMemo(() => { try { return getStreakInfo(); } catch { return null; } }, []);
 
+  // Beast Mode V3 — AI Memory + Timeline data
+  const companyNameForV3 = (companyData as any)?.name ?? r.companyName ?? '';
+  const roleTitleForV3   = r.roleTitle ?? r.userProfile?.currentRole ?? r.userProfile?.roleTitle ?? '';
+  const scoreHistoryForTimeline = useMemo(() => {
+    try {
+      const history = getLayoffScoreHistory();
+      // Filter to matching company+role and take last 3
+      return history
+        .filter(e => companyNameForV3 && e.companyName?.toLowerCase() === companyNameForV3.toLowerCase())
+        .slice(-3);
+    } catch { return []; }
+  }, [companyNameForV3]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Days since last audit (from scoreStorageService last entry)
+  const daysSinceLastAudit = useMemo(() => {
+    try {
+      const history = getLayoffScoreHistory();
+      const last = history.filter(e => companyNameForV3 && e.companyName?.toLowerCase() === companyNameForV3.toLowerCase()).at(-1);
+      if (!last) return undefined;
+      const ms = Date.now() - new Date(last.timestamp).getTime();
+      return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
+    } catch { return undefined; }
+  }, [companyNameForV3]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Completed action count from PhaseProgressSystem localStorage
+  const completedActionCount = useMemo(() => {
+    try {
+      const key = `hp.phases.${companyNameForV3}`;
+      const raw = localStorage.getItem(key);
+      if (!raw) return 0;
+      const data = JSON.parse(raw) as Record<string, boolean>;
+      return Object.values(data).filter(Boolean).length;
+    } catch { return 0; }
+  }, [companyNameForV3]);
+
+  // V3 personalizedTimeline from result if available
+  const v3Timeline = r.personalizedTimeline as { criticalByDate?: string | null; milestones?: any[]; urgencyCategory?: string } | undefined;
+
   // v40.0: calibration limitation check for underrepresented segments
   const calibrationLimitation = isCalibrationLimitedForCompany(
     result.industryKey ?? companyData?.industry ?? null,
@@ -1050,6 +1093,25 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
+      {/* ── V3: Mission Brief — 3-line AI executive summary (Situation/Risk/Action) */}
+      <MissionBriefCard
+        companyName={companyNameForV3}
+        score={score}
+        urgency={urgency}
+        spine={adaptation.feed?.spine}
+        singleBiggestRisk={(result as any).strategySynthesis?.singleBiggestRisk}
+        topAction={adaptation.feed?.primaryMove?.action?.title}
+        confidencePercent={confPct}
+      />
+
+      {/* ── V3: AI Memory — score drift + streak + completed actions since last check */}
+      <AIMemoryCard
+        scoreDelta={r.scoreDelta}
+        streakInfo={streakInfo ?? undefined}
+        daysSinceLastAudit={daysSinceLastAudit}
+        completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
+      />
+
       {/* v39.0 F2 + v35.1 empathetic rewrite — Emergency guide card PRECEDES score hero.
           Framing matters: user sees "you're ahead" narrative before the score number,
           so the number is read as data, not as alarm.
@@ -1235,6 +1297,15 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
+      {/* ── V3: Career Risk Timeline — Past → Present → Future story strip */}
+      <CareerRiskTimeline
+        currentScore={score}
+        scoreHistory={scoreHistoryForTimeline.length > 0 ? scoreHistoryForTimeline : undefined}
+        milestones={v3Timeline?.milestones}
+        criticalByDate={v3Timeline?.criticalByDate}
+        urgencyCategory={v3Timeline?.urgencyCategory}
+      />
+
       {/* ── Fold capture into the reveal ───────────────────────────────────── */}
       {/* When fewer than 3 personal-context fields are filled, the score is
           company + market risk only — personal amplifiers (visa, runway, family)
@@ -1351,6 +1422,15 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       {score > 35 && scoreSensitivity && (
         <TopLeverBridge scoreSensitivity={scoreSensitivity} currentScore={score} primaryMoveTitle={primaryMoveTitle} />
       )}
+
+      {/* ── V3: Personal Impact Simulator — Do Nothing / Partial / Full Action */}
+      <PersonalImpactSimulator
+        currentScore={score}
+        survivalProbability={r.survivalProbability}
+        scoreTrajectory={r.scoreTrajectory}
+        scoreSensitivity={scoreSensitivity}
+        financialRunwayMonths={financialRunwayMonths}
+      />
 
       {/* ── Tier-1: Immediate actions ──────────────────────────────────────── */}
       <ImmediateActionsStrip actions={supportingActions} total={recommendations.length} supporting={hasPrimaryMove} />
