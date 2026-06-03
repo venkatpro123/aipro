@@ -353,18 +353,21 @@ const MobileBottomNav: React.FC<{
             className="flex-1 flex flex-col items-center justify-center relative"
             style={{
               color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.42)',
+              // min 58px tap target; safe-area padding added by parent
               minHeight: 58,
-              padding: '8px 2px 6px',
+              // tight horizontal padding so 6 tabs fit on 320px screens
+              padding: '7px 1px 5px',
               transition: 'color 0.18s ease',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
-            {/* Animated pill background for active tab */}
+            {/* Animated active-tab background pill */}
             {isActive && (
               <motion.div
                 layoutId="mobile-tab-pill"
-                className="absolute inset-x-1 rounded-xl"
+                className="absolute rounded-xl"
                 style={{
-                  top: 4, bottom: 4,
+                  inset: '3px 2px',
                   background: 'rgba(0,212,224,0.10)',
                   border: '1px solid rgba(0,212,224,0.22)',
                 }}
@@ -373,40 +376,38 @@ const MobileBottomNav: React.FC<{
             )}
 
             {/* Icon with notification badge */}
-            <div className="relative z-10 mb-0.5">
+            <div className="relative z-10" style={{ marginBottom: 3 }}>
               <motion.div
-                animate={isActive ? { scale: 1.12, y: -1 } : { scale: 1, y: 0 }}
+                animate={isActive ? { scale: 1.10, y: -1 } : { scale: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 420, damping: 24 }}
               >
+                {/* Icon size clamps: 18px on very narrow screens, 20px standard */}
                 <Icon
-                  style={{ width: isActive ? 22 : 20, height: isActive ? 22 : 20 }}
+                  style={{
+                    width: 'clamp(17px, 4.5vw, 20px)',
+                    height: 'clamp(17px, 4.5vw, 20px)',
+                  }}
                   strokeWidth={isActive ? 2.2 : 1.6}
                 />
               </motion.div>
               {badge && (() => {
-                // Tab buttons are only ~63px wide on mobile, so a wide word badge
-                // (e.g. "MODERATE") overflows past the leftmost/rightmost tab edge.
-                // For anything longer than 3 chars, collapse to a colored dot —
-                // the severity is already encoded by the badge color. Short
-                // badges (numbers, "2×", "low", "WARN") render as text.
+                // Collapse to a dot when badge text is longer than 3 chars —
+                // prevents overflow at the outermost tabs on 320px screens.
                 const isLong = badge.text.length > 3;
                 return isLong ? (
                   <span
-                    className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
-                    style={{
-                      background: badge.color,
-                      boxShadow: `0 0 6px ${badge.color}aa`,
-                    }}
+                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
+                    style={{ background: badge.color, boxShadow: `0 0 5px ${badge.color}aa` }}
                   />
                 ) : (
                   <span
-                    className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black whitespace-nowrap"
+                    className="absolute -top-1 -right-1.5 min-w-[13px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black whitespace-nowrap"
                     style={{
                       background: badge.color,
                       color: '#fff',
-                      fontSize: 9,
+                      fontSize: 8,
                       lineHeight: 1,
-                      boxShadow: `0 0 6px ${badge.color}88`,
+                      boxShadow: `0 0 5px ${badge.color}88`,
                     }}
                   >
                     {badge.text}
@@ -415,10 +416,14 @@ const MobileBottomNav: React.FC<{
               })()}
             </div>
 
-            {/* Label */}
+            {/* Label — clamp font size so it never wraps */}
             <span
-              className="relative z-10 font-semibold leading-none"
-              style={{ fontSize: 9.5, letterSpacing: isActive ? '0.02em' : '0' }}
+              className="relative z-10 font-semibold leading-none truncate w-full text-center"
+              style={{
+                fontSize: 'clamp(8px, 2.2vw, 10px)',
+                letterSpacing: isActive ? '0.03em' : '0',
+                maxWidth: '100%',
+              }}
             >
               {shortLabel}
             </span>
@@ -660,47 +665,53 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       <div className="flex flex-col" ref={scrollRef}>
 
         {/* ── Permanent top bar — always visible, always at the top ─────────── */}
-        {/* The ViewModeToggle MUST be visible immediately on page load.
-            StickyCompanyHeader only appears after scroll, so we need a separate
-            always-on top bar that shows the toggle at all times. */}
         <div
           className="sticky top-0 z-40"
           style={{
             background: 'rgba(9,12,20,0.95)',
             backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             borderBottom: '1px solid rgba(255,255,255,0.07)',
           }}
         >
-          {/* Row 1: permanent top bar — company name + score + mode toggle */}
-          <div className="flex items-center justify-between px-4 py-2.5">
+          {/* Single row: company name (truncated) + score chip + mode toggle.
+              On phones ≤480px the score label is hidden to prevent overflow. */}
+          <div className="flex items-center gap-2 px-3 py-2.5 sm:px-4">
+            {/* Company name — takes available space, truncates cleanly */}
             <p
-              className="text-[13px] font-semibold truncate"
+              className="flex-1 min-w-0 text-[13px] font-semibold truncate"
               style={{ color: 'rgba(255,255,255,0.85)' }}
               title={companyData?.name ?? result.companyName ?? 'Company'}
             >
               {companyData?.name ?? result.companyName ?? 'Company'}
             </p>
-            <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-              {/* Score chip */}
-              <div
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                style={{ background: riskColor(result.total) + '22', border: `1px solid ${riskColor(result.total)}40` }}
+
+            {/* Score chip — hide the text label on smallest phones */}
+            <div
+              className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
+              style={{ background: riskColor(result.total) + '22', border: `1px solid ${riskColor(result.total)}40` }}
+            >
+              <span className="text-[12px] font-black leading-none" style={{ color: riskColor(result.total) }}>
+                {result.total}
+              </span>
+              <span
+                className="hidden xs:inline text-[10px] font-bold tracking-wide"
+                style={{ color: riskColor(result.total) + 'cc' }}
               >
-                <span className="text-[12px] font-black" style={{ color: riskColor(result.total) }}>{result.total}</span>
-                <span className="text-[10px] font-bold tracking-wide" style={{ color: riskColor(result.total) + 'cc' }}>
-                  {riskLabel(result.total)}
-                </span>
-              </div>
-              {/* Mode toggle — always visible */}
-              <ViewModeToggle
-                viewMode={viewMode}
-                onSelect={setViewMode}
-                emergencyMode={isEmergency}
-              />
+                {riskLabel(result.total)}
+              </span>
             </div>
+
+            {/* Mode toggle — compact (icon-only) on phones */}
+            <ViewModeToggle
+              viewMode={viewMode}
+              onSelect={setViewMode}
+              emergencyMode={isEmergency}
+              compact={true}
+            />
           </div>
 
-          {/* Row 2: tab bar — only in Beast Mode */}
+          {/* Row 2: tab bar — only in Beast Mode, desktop/tablet only */}
           {viewMode === 'beast' && (
             <DesktopTabBar
               active={activeTab}
@@ -813,8 +824,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
 
         {/* ── Content area — Guidance / Analysis / Beast ── */}
         {viewMode === 'guidance' ? (
-          /* ── Guidance Mode: 5-section decision-oriented advisor experience ── */
-          <div className="px-4 pt-4 sm:px-0 sm:pt-0" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+          /* ── Guidance Mode ── */
+          <div className="hp-guidance-content px-3 pt-3 sm:px-0 sm:pt-0">
             <TabErrorBoundary tabLabel="Guidance">
               <Suspense fallback={<SummaryTabSkeleton />}>
                 <GuidanceView
@@ -831,8 +842,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             </TabErrorBoundary>
           </div>
         ) : viewMode === 'analysis' ? (
-          /* ── Analysis Mode: 4-tab middle-layer experience ── */
-          <div className="px-4 pt-4 sm:px-0 sm:pt-0" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+          /* ── Analysis Mode ── */
+          <div className="hp-analysis-content px-3 pt-3 sm:px-0 sm:pt-0">
             <TabErrorBoundary tabLabel="Analysis">
               <Suspense fallback={<SummaryTabSkeleton />}>
                 <AnalysisView
@@ -849,15 +860,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             </TabErrorBoundary>
           </div>
         ) : (
-          /* ── Beast Mode: full 6-tab intelligence command center — unchanged ── */
+          /* ── Beast Mode: full 6-tab intelligence command center ── */
           <>
-            {/* Tab content */}
-            {/* v40.0 FIX-7: removed mode="wait" — was forcing exit-then-enter
-                sequentially (~360ms blocking transition per tab switch). Parallel
-                exit/enter feels snappier and avoids perceived lag on rapid clicks. */}
-            {/* Swipe wrapper: gesture handler on a plain div to avoid onDrag type
-                conflict between @use-gesture/react and framer-motion. */}
-            <div {...swipeBind()} style={{ touchAction: 'pan-y' }}>
+            <div {...swipeBind()} className="swipe-tab-container">
             <AnimatePresence>
               <motion.div
                 key={activeTab}
@@ -865,8 +870,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.18 }}
-                className="px-4 pt-4 sm:px-0 sm:pt-0"
-                style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
+                className="hp-beast-content px-3 pt-3 sm:px-0 sm:pt-0"
               >
                 {activeTab === 'summary' && (
                   <TabErrorBoundary tabLabel="Summary">

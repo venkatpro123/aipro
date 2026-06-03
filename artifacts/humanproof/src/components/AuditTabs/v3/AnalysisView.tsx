@@ -106,14 +106,13 @@ const AnalysisMobileBottomNav: React.FC<{
     <div
       role="tablist"
       aria-label="Analysis sections"
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch"
+      className="analysis-mobile-nav sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch"
       style={{
         background: 'rgba(7,10,18,0.97)',
         backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         borderTop: '1px solid rgba(255,255,255,0.08)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
-        minHeight: 58,
       }}
     >
       {ANALYSIS_TABS.map(({ value, label, shortLabel, Icon }) => {
@@ -130,31 +129,41 @@ const AnalysisMobileBottomNav: React.FC<{
             style={{
               color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.42)',
               minHeight: 58,
-              padding: '8px 2px 6px',
+              padding: '7px 1px 5px',
               transition: 'color 0.18s ease',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
             {isActive && (
               <motion.div
                 layoutId="analysis-tab-pill"
-                className="absolute inset-x-1 rounded-xl"
+                className="absolute rounded-xl"
                 style={{
-                  top: 4, bottom: 4,
+                  inset: '3px 2px',
                   background: 'rgba(0,212,224,0.10)',
                   border: '1px solid rgba(0,212,224,0.22)',
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 38 }}
               />
             )}
-            <div className="relative z-10 mb-0.5">
+            <div className="relative z-10" style={{ marginBottom: 3 }}>
               <motion.div
-                animate={isActive ? { scale: 1.12, y: -1 } : { scale: 1, y: 0 }}
+                animate={isActive ? { scale: 1.10, y: -1 } : { scale: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 420, damping: 24 }}
               >
-                <Icon style={{ width: isActive ? 22 : 20, height: isActive ? 22 : 20 }} strokeWidth={isActive ? 2.2 : 1.6} />
+                <Icon
+                  style={{
+                    width: 'clamp(17px, 5vw, 20px)',
+                    height: 'clamp(17px, 5vw, 20px)',
+                  }}
+                  strokeWidth={isActive ? 2.2 : 1.6}
+                />
               </motion.div>
             </div>
-            <span className="relative z-10 font-semibold leading-none" style={{ fontSize: 9.5 }}>
+            <span
+              className="relative z-10 font-semibold leading-none truncate w-full text-center"
+              style={{ fontSize: 'clamp(8px, 2.4vw, 10px)' }}
+            >
               {shortLabel}
             </span>
           </button>
@@ -195,19 +204,21 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
 
   return (
     <div className="flex flex-col">
-      {/* Tab bar — sticky, below the main header */}
+      {/* Tab bar — sticky below the permanent dashboard top bar.
+          top value = top-bar height: ~44px on mobile, ~48px on desktop */}
       <div
-        className="sticky top-[48px] z-30"
+        className="sticky top-[44px] sm:top-[48px] z-30"
         style={{
           background: 'rgba(9,12,20,0.95)',
           backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
         }}
       >
         <AnalysisDesktopTabBar active={activeTab} onChange={handleTabChange} />
       </div>
 
       {/* Tab content */}
-      <div {...swipeBind()} style={{ touchAction: 'pan-y' }}>
+      <div {...swipeBind()} className="swipe-tab-container">
         <AnimatePresence>
           <motion.div
             key={activeTab}
@@ -215,7 +226,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.18 }}
-            style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}
+            className="analysis-view-content"
           >
             {activeTab === 'summary' && (
               <TabErrorBoundary tabLabel="Summary">

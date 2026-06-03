@@ -7178,3 +7178,310 @@ number-flow,
 }
 
 /* ── End of v46.0 additions ──────────────────────────────────────────────── */
+
+/* ============================================================================
+   MOBILE NAVIGATION & LAYOUT OVERHAUL — v47.0
+   Fixes every mobile view for phone screens (320px–480px)
+   ============================================================================ */
+
+/* ── ViewModeToggle label: full text ≥481px, first-char only ≤480px ── */
+.vmt-label {
+  display: inline;
+}
+@media (max-width: 480px) {
+  .vmt-label {
+    /* Show only the first character on compact phones to prevent overflow */
+    font-size: 0;        /* hide full text */
+  }
+  .vmt-label::first-letter {
+    font-size: 10px;     /* show first letter at normal size */
+  }
+}
+
+/* ── Dashboard feature nav: 6-tab bottom bar ─────────────────────── */
+/* Ensure the feature bottom nav (portal) always accounts for safe area */
+@media (max-width: 768px) {
+  /* The MobileBottomNav portal container */
+  .hp-feature-nav-bar {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Content area must scroll above the 58px feature nav */
+  .hp-beast-content {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + 12px) !important;
+  }
+
+  /* Guidance / Analysis mode: no tab nav, just safe area */
+  .hp-guidance-content,
+  .hp-analysis-content {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ── Top dashboard header bar ────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Tighten horizontal padding on small phones */
+  .hp-dashboard-topbar {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  /* Score chip: hide the text label, show number only */
+  .hp-score-chip-label {
+    display: none;
+  }
+}
+
+/* ── Desktop tab bar: hide below 640px (sm), let mobile nav take over ── */
+@media (max-width: 639px) {
+  [data-tab-bar] {
+    display: none !important;
+  }
+}
+
+/* ── Card padding: tighter on phones ─────────────────────────────── */
+@media (max-width: 480px) {
+  .rounded-2xl.p-4 {
+    padding: 12px !important;
+  }
+  .rounded-2xl.p-3 {
+    padding: 10px !important;
+  }
+  /* Driver strip: single column on very small phones */
+  .driver-strip {
+    grid-template-columns: 1fr !important;
+  }
+  /* Stat chip row: allow 2-up wrap */
+  .flex.gap-2.overflow-x-auto {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── Score hero ring: responsive clamp ───────────────────────────── */
+.score-hero-ring {
+  width:  clamp(140px, 42vw, 200px);
+  height: clamp(140px, 42vw, 200px);
+}
+.score-hero-number {
+  font-size: clamp(2.5rem, 11vw, 3.75rem);
+}
+.score-hero-label {
+  font-size: clamp(0.65rem, 2.5vw, 0.8rem);
+  padding: 4px 12px;
+}
+
+/* ── Mission brief, AI memory, timeline: full-width on phone ─────── */
+@media (max-width: 480px) {
+  /* 3-col simulator grid collapses to 1-col */
+  .grid-cols-1.sm\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  /* Career health dashboard: tighter bars */
+  .h-1\.5 {
+    height: 5px !important;
+  }
+}
+
+/* ── Emergency banner: compact on phone ──────────────────────────── */
+@media (max-width: 480px) {
+  .emergency-mode-banner {
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .emergency-mode-banner .text-\[11px\] {
+    font-size: 10px;
+  }
+}
+
+/* ── AdaptiveBlock: tighter on phone ─────────────────────────────── */
+@media (max-width: 480px) {
+  .adaptive-block-header {
+    padding: 10px 12px;
+  }
+  .adaptive-block-body {
+    padding: 10px 12px 12px;
+  }
+}
+
+/* ── Action cards: compact on phone ──────────────────────────────── */
+@media (max-width: 480px) {
+  .action-card {
+    padding: 10px 12px;
+  }
+  .action-effort-badge {
+    font-size: 8px;
+    padding: 2px 6px;
+  }
+}
+
+/* ── Horizontal scrollable strips: hide scrollbar, full bleed ─────── */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none; /* Firefox 64+ */
+  }
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/iOS */
+  }
+  /* Career risk timeline: ensure nodes don't clip at edges */
+  .career-risk-timeline-track {
+    padding-left: 4px;
+    padding-right: 16px;
+  }
+}
+
+/* ── Peer comparison + company timeline: full width on phone ──────── */
+@media (max-width: 480px) {
+  /* Peer comparison bar labels: hide on very small screens */
+  .peer-comparison-signal {
+    display: none;
+  }
+}
+
+/* ── AnalysisView (Analysis mode): bottom nav pad ─────────────────── */
+@media (max-width: 768px) {
+  .analysis-view-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  /* Analysis mode tab bar: fixed at bottom */
+  .analysis-mobile-nav {
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* ── Swipe gesture area: touch-action pan-y for vertical scroll ────── */
+.swipe-tab-container {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Prevent layout shift from sticky header + safe area ─────────── */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .hp-dashboard-topbar-sticky {
+    padding-top: max(0px, env(safe-area-inset-top, 0px));
+  }
+}
+
+/* ── Global page bottom padding: always lift content above nav ─────── */
+@media (max-width: 768px) {
+  /* Any page with the global mobile-bottom-nav */
+  body:not(.hp-feature-page) .page-content,
+  body:not(.hp-feature-page) main {
+    padding-bottom: calc(var(--nav-bottom-h, 64px) + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+}
+
+/* ── Compact typography on small phones ──────────────────────────── */
+@media (max-width: 390px) {
+  /* Tab labels in mobile nav: tighter */
+  .mobile-tab-shortlabel {
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+  /* Cards: edge-to-edge feel */
+  .rounded-2xl {
+    border-radius: 10px;
+  }
+  .rounded-xl {
+    border-radius: 8px;
+  }
+}
+
+/* ── GuidanceView: compact on phone ──────────────────────────────── */
+@media (max-width: 480px) {
+  .guidance-section-card {
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .guidance-score-hero {
+    padding: 16px 12px;
+  }
+}
+
+/* ── ProfileSetupModal: full screen on phone ──────────────────────── */
+@media (max-width: 640px) {
+  .profile-modal-card {
+    border-radius: 0 !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 20px 16px !important;
+  }
+}
+
+/* ── Transparency tab: horizontal scroll on tables ────────────────── */
+@media (max-width: 640px) {
+  .transparency-table,
+  .signal-attribution-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
+
+/* ── First audit tour: ensure it fits above bottom nav ───────────── */
+@media (max-width: 768px) {
+  .first-audit-tour-tooltip {
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ── Intelligence Update Banner: compact on phone ────────────────── */
+@media (max-width: 480px) {
+  .intelligence-update-banner {
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+}
+
+/* ── Dual gauge: stack vertically on phone ────────────────────────── */
+@media (max-width: 480px) {
+  .dual-gauge-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 20px !important;
+  }
+}
+
+/* ── Score sensitivity strip: full width levers ──────────────────── */
+@media (max-width: 480px) {
+  .sensitivity-lever-bar {
+    width: 100% !important;
+  }
+}
+
+/* ── Re-engagement nudge: compact ────────────────────────────────── */
+@media (max-width: 480px) {
+  .re-engagement-banner {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+}
+
+/* ── ViewModeToggle: ensure always fits in header ─────────────────── */
+@media (max-width: 360px) {
+  /* At 360px and below, shrink toggle segments even more */
+  .view-mode-toggle-btn {
+    padding: 0 5px !important;
+    min-width: 24px !important;
+  }
+}
+
+/* ── Prevent horizontal overflow on all phone sizes ──────────────── */
+@media (max-width: 640px) {
+  body, .page-wrap {
+    overflow-x: hidden;
+  }
+  /* Cards with grids: force single column when no explicit override */
+  .sm\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  .sm\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
