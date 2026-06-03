@@ -64,8 +64,10 @@ import { onNewLayoffEvent } from '../../../data/layoffNewsCache';
 // ── View mode imports (Guidance / Intelligence toggle) ───────────────────────
 import { useViewMode } from '../../../hooks/useViewMode';
 import { ViewModeToggle } from './ViewModeToggle';
-// GuidanceView is lazy-loaded so it never bloats the Intelligence Mode bundle.
-const GuidanceView = lazy(() => import('./GuidanceView').then(m => ({ default: m.GuidanceView ?? m.default })));
+// GuidanceView is lazy-loaded so it never bloats the Intelligence/Analysis bundle.
+const GuidanceView  = lazy(() => import('./GuidanceView').then(m => ({ default: m.GuidanceView ?? m.default })));
+// AnalysisView is lazy-loaded — 4-tab middle-layer experience.
+const AnalysisView  = lazy(() => import('./AnalysisView').then(m => ({ default: m.AnalysisView ?? m.default })));
 
 // Lazy-load each tab. Code-splitting is critical for first-paint perf — the
 // Action Plan tab alone is ~180kB gzipped because it includes the negotiation /
@@ -489,9 +491,10 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const adaptation = useDashboardAdaptation(result, companyData, userProfile);
 
   // ── Dual experience mode ──────────────────────────────────────────────────
-  // 'guidance' → compressed 5-section advisor view (default for new users)
-  // 'beast'    → full 6-tab intelligence command center for power users
-  const { viewMode, toggleViewMode } = useViewMode();
+  // 'guidance'  → compressed 5-section advisor view (default for new users)
+  // 'analysis'  → 4-tab middle-layer experience
+  // 'beast'     → full 6-tab intelligence command center for power users
+  const { viewMode, setViewMode } = useViewMode();
   const isEmergency = result.total >= 80 || (result as any).warnSignal?.hasActiveWARN === true;
 
   const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
@@ -692,7 +695,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               {/* Mode toggle — always visible */}
               <ViewModeToggle
                 viewMode={viewMode}
-                onToggle={toggleViewMode}
+                onSelect={setViewMode}
                 emergencyMode={isEmergency}
               />
             </div>
@@ -796,9 +799,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         )}
 
         {/* ── Emergency banner — only shown in Beast Mode.
-            In Guidance Mode, GuidanceView renders its own emergency layout
-            (red banner + dominant action). Showing both would double-stack
-            two separate red emergency panels for the same situation. */}
+            Guidance and Analysis modes render their own inline emergency state.
+            Showing both would double-stack two separate red emergency panels. */}
         {adaptation.showEmergencyBanner && viewMode === 'beast' && (
           <div className="px-4 pt-3 sm:px-0">
             <EmergencyModeBanner
@@ -810,7 +812,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           </div>
         )}
 
-        {/* ── Content area — switches between Guidance Mode and Beast Mode ── */}
+        {/* ── Content area — Guidance / Analysis / Beast ── */}
         {viewMode === 'guidance' ? (
           /* ── Guidance Mode: 5-section decision-oriented advisor experience ── */
           <div className="px-4 pt-4 sm:px-0 sm:pt-0" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
@@ -821,8 +823,26 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                   companyData={companyData}
                   emergencyMode={isEmergency}
                   onSwitchToBeast={() => {
-                    toggleViewMode();         // switch to Beast Mode
-                    setActiveTab('summary'); // land on summary tab — full picture first
+                    setViewMode('beast');
+                    setActiveTab('summary');
+                    setUserChangedTab(true);
+                  }}
+                />
+              </Suspense>
+            </TabErrorBoundary>
+          </div>
+        ) : viewMode === 'analysis' ? (
+          /* ── Analysis Mode: 4-tab middle-layer experience ── */
+          <div className="px-4 pt-4 sm:px-0 sm:pt-0" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
+            <TabErrorBoundary tabLabel="Analysis">
+              <Suspense fallback={<SummaryTabSkeleton />}>
+                <AnalysisView
+                  result={result}
+                  companyData={companyData}
+                  emergencyMode={isEmergency}
+                  onSwitchToBeast={() => {
+                    setViewMode('beast');
+                    setActiveTab('summary');
                     setUserChangedTab(true);
                   }}
                 />

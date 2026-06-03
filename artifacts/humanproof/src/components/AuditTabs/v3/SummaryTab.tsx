@@ -569,7 +569,7 @@ const verdictLine = (score: number, urgency: string): string => {
 
 // ── Tier-1 strips ────────────────────────────────────────────────────────────
 
-interface DriverItem {
+export interface DriverItem {
   key:   string;
   label: string;
   score: number;
@@ -594,7 +594,7 @@ const toneForScore = (s: number) =>
 const normalizeMoveTitle = (s: string | undefined): string =>
   (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
+export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
   const scanning = useIntelligencePulse(drivers.length > 0);
   if (drivers.length === 0) return null;
   return (

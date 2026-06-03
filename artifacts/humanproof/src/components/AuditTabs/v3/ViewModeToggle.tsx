@@ -1,35 +1,34 @@
 // ViewModeToggle.tsx
 //
-// Two-segment animated pill toggle that switches between Guidance Mode
-// (compressed expert-advisor view) and Intelligence Mode (full 6-tab analysis).
+// Three-segment animated pill toggle: Guided → Analysis → Beast Mode.
 //
 // Design:
 //   • Animated selection indicator using framer-motion layoutId so the active
 //     pill slides smoothly between segments rather than cutting.
 //   • Emergency de-emphasis: when score ≥ 80 or WARN active, the toggle dims
-//     to 50% opacity and shows a "Focus mode" tooltip — still usable but
-//     visually deprioritised so the user stays focused on the critical state.
-//   • Compact: ~130px wide, lives in the sticky header above the tab bar.
+//     to 50% opacity — still usable but visually deprioritised.
+//   • ~180px wide to fit 3 labels. Lives in the sticky header.
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Zap } from 'lucide-react';
+import { Eye, BarChart2, Zap } from 'lucide-react';
 import type { ViewMode } from '../../../hooks/useViewMode';
 
 interface ViewModeToggleProps {
   viewMode: ViewMode;
-  onToggle: () => void;
+  onSelect: (mode: ViewMode) => void;
   emergencyMode?: boolean;
 }
 
 export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
   viewMode,
-  onToggle,
+  onSelect,
   emergencyMode = false,
 }) => {
   const segments: { value: ViewMode; label: string; Icon: React.ElementType }[] = [
-    { value: 'guidance', label: 'Guided',     Icon: Eye },
-    { value: 'beast',    label: 'Beast Mode', Icon: Zap },
+    { value: 'guidance', label: 'Guided',   Icon: Eye },
+    { value: 'analysis', label: 'Analysis', Icon: BarChart2 },
+    { value: 'beast',    label: 'Beast',    Icon: Zap },
   ];
 
   return (
@@ -51,18 +50,18 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
             <button
               key={value}
               type="button"
-              onClick={onToggle}
+              onClick={() => onSelect(value)}
               aria-pressed={isActive}
               aria-label={`Switch to ${label} mode`}
-              className="relative flex items-center gap-1.5 px-3 py-1 rounded-full z-10 transition-colors"
+              className="relative flex items-center gap-1 px-2.5 py-1 rounded-full z-10 transition-colors"
               style={{
                 color: isActive ? '#000' : 'rgba(255,255,255,0.45)',
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: isActive ? 700 : 500,
                 letterSpacing: '0.02em',
+                whiteSpace: 'nowrap',
               }}
             >
-              {/* Animated selection pill — slides under the active segment */}
               {isActive && (
                 <motion.span
                   layoutId="view-mode-pill"
@@ -72,7 +71,7 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
                 />
               )}
               <Icon
-                className="w-3 h-3 flex-shrink-0"
+                className="w-2.5 h-2.5 flex-shrink-0"
                 style={{ color: isActive ? '#000' : 'rgba(255,255,255,0.45)' }}
               />
               <span>{label}</span>
