@@ -1288,7 +1288,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         )}
       </motion.div>
 
-      {/* ── Score Trend Strip — 30-day trajectory (P1: moved directly after score hero) ── */}
+      {/* ── Score Trend Strip — 30-day trajectory (P1: directly after score hero) ── */}
       {scoreSufficiency.sufficient && r.scoreTrajectory && (
         <ScoreTrendStrip
           scoreTrajectory={r.scoreTrajectory}
@@ -1296,30 +1296,9 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
-      {/* ── V3: Career Risk Timeline — Past → Present → Future story strip */}
-      <CareerRiskTimeline
-        currentScore={score}
-        scoreHistory={scoreHistoryForTimeline.length > 0 ? scoreHistoryForTimeline : undefined}
-        milestones={v3Timeline?.milestones}
-        criticalByDate={v3Timeline?.criticalByDate}
-        urgencyCategory={v3Timeline?.urgencyCategory}
-      />
-
-      {/* ── Fold capture into the reveal ───────────────────────────────────── */}
-      {/* When fewer than 3 personal-context fields are filled, the score is
-          company + market risk only — personal amplifiers (visa, runway, family)
-          have NOT been applied. Rather than render this as a passive caveat that
-          sends the user away, we reframe it as an opportunity acted on in place:
-          a 3-question inline capture that, on completion, recomputes the audit so
-          the score visibly moves. The honesty is unchanged (same factors, same
-          ±8–25 pt framing) — only the posture is. */}
-      {profileIsEmpty && <SharpenScorePrompt />}
-
-      {/* ── Progressive honesty — one block, not a caveat stack ─────────────── */}
-      {/* Aggregates the former TrustCallout + freshness + calibration cards into
-          a single collapsible that LEADS with a confident one-liner and tucks
-          the honest details one tap away. Opens by default only when something
-          material is off (hard source failure / heuristic-only baseline). */}
+      {/* ── Layer 2: Confidence Meter — directly after score hero per V3 spec.
+          Placed here so the user reads confidence BEFORE the timeline and simulator.
+          Opens by default only when something material is off. */}
       <ConfidenceDisclosure
         confPct={confPct}
         confidenceLabel={canonicalConf.userFacing.label}
@@ -1332,6 +1311,18 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         freshnessTier={result.unifiedFreshness?.tier}
         calibrationLimitationReason={calibrationLimitation.limited ? calibrationLimitation.reason : null}
       />
+
+      {/* ── V3: Career Risk Timeline — Past → Present → Future story strip */}
+      <CareerRiskTimeline
+        currentScore={score}
+        scoreHistory={scoreHistoryForTimeline.length > 0 ? scoreHistoryForTimeline : undefined}
+        milestones={v3Timeline?.milestones}
+        criticalByDate={v3Timeline?.criticalByDate}
+        urgencyCategory={v3Timeline?.urgencyCategory}
+      />
+
+      {/* ── Fold capture into the reveal ───────────────────────────────────── */}
+      {profileIsEmpty && <SharpenScorePrompt />}
 
       {/* Missing Data Card now lives inside the single "Full breakdown"
           disclosure near the bottom (still self-gates to ≥2 meaningful gaps). */}

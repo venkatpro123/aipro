@@ -1,13 +1,15 @@
-// v3/IntelligenceTab.tsx — v34.0 UX redesign
+// v3/IntelligenceTab.tsx — v34.0 UX redesign + V3 Beast Mode
 //
 // COMPANY tab (the 2nd tab in the v34 IA). Despite the filename, this tab is
-// the company-facing intelligence surface. Renamed in the IA as "Company".
+// the company-facing intelligence surface. Renamed in the IA as "Company Intel".
 //
 // Render order (decision-driven, Tier-labeled):
 //   1. CompanyPulseCard            (T1)  ← unified Workforce + Financial verdict
 //   2. Ground Truth Signals        (T2)  ← WARN, SEC, BLS — open if any active
-//   3. Market Environment          (T3)  ← role demand, peer contagion, macro
-//   4. Cross-source event search   (T3)  ← raw event timeline
+//   3. Company Story               (T2)  ← V3: chronological event timeline
+//   4. Peer Risk Comparison        (T3)  ← V3: how company ranks vs sector peers
+//   5. Market Environment          (T3)  ← role demand, peer contagion, macro
+//   6. Cross-source event search   (T3)  ← raw event timeline
 //
 // The previous standalone WorkforceStabilityCard + FinancialHealthCard are now
 // merged into CompanyPulseCard at the top. Methodology / transparency moved to
@@ -49,6 +51,8 @@ import { EventSearchPanel, isEventSearchAvailable } from '../../audit/EventSearc
 import CompanyPulseCard from '../common/CompanyPulseCard';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { ParentRiskCard } from '../common/ParentRiskCard';
+import { CompanyTimelineCard } from '../common/CompanyTimelineCard';
+import { PeerComparisonCard } from '../common/PeerComparisonCard';
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
@@ -165,6 +169,12 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
           <ParentRiskCard parentPropagation={r.parentPropagation} />
         </motion.div>
       )}
+
+      {/* ── V3 T2: Company Story — chronological event timeline */}
+      <CompanyTimelineCard result={result} companyData={companyData} />
+
+      {/* ── V3 T3: Peer Risk Comparison — ranks company vs sector peers */}
+      <PeerComparisonCard result={result} companyData={companyData} />
 
       {/* ── T3: Personalized Market Environment ───────────────────────────── */}
       {/* Replaces the three generic panels (RoleMarketDemand, PeerContagion,

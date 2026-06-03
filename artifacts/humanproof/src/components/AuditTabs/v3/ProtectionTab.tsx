@@ -44,6 +44,7 @@ import { CohortBenchmarkCard } from '../common/CohortBenchmarkCard';
 import { CareerInsuranceStatus } from '../common/CareerInsuranceStatus';
 import { CareerTwinCard } from '../../CareerTwinCard';
 import { FreelancerRiskPanel } from '../common/FreelancerRiskPanel';
+import { CareerResilienceSimulator } from '../common/CareerResilienceSimulator';
 import {
   runFreelancerIntelligence,
   detectFreelancerType,
@@ -224,6 +225,19 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   return (
     <div className="flex flex-col gap-3">
       {sectionOrder.map(id => sections[id])}
+
+      {/* ── V3: Career Resilience Simulator — "if disruption hits tomorrow" */}
+      <CareerResilienceSimulator
+        jobMarketLiquidity={jobMarketLiquidity}
+        careerResilience={careerResilience}
+        roleAdjacency={roleAdjacency}
+        userFinancialRunway={userRunway}
+        currentScore={result.total}
+        currentRoleLabel={
+          r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ??
+          (String(result.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || undefined)
+        }
+      />
 
       {/* Safe Pivot Roles (P2) */}
       {roleAdjacency && (roleAdjacency.adjacentRoles?.length ?? 0) > 0 && (
