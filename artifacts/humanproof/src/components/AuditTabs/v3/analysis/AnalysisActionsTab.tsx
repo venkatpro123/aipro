@@ -3,9 +3,9 @@
 // Action plan: strategy, contingency paths, 3-bucket roadmap, phase progress.
 // No ExecutiveIntelligencePanel, no StrategyTab negotiation scripts, no full ActionPlanTab matrix.
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Siren, Timer, Key, Clock, TrendingDown } from 'lucide-react';
+import { AlertTriangle, Siren, Timer, Key, Clock } from 'lucide-react';
 import type { HybridResult } from '../../../../types/hybridResult';
 import type { CompanyData } from '../../../../data/companyDatabase';
 import type { ActionPlanItem } from '../../../../types/hybridResult';
@@ -15,11 +15,7 @@ import type { SurvivalProbabilityResult } from '../../../../services/layoffSurvi
 import { StrategySpineCard } from '../../common/StrategySpineCard';
 import { RecoveryProbabilityCard } from '../../common/RecoveryProbabilityCard';
 import CareerContingencyPanel from '../../common/CareerContingencyPanel';
-import { ScoreSensitivityPanel } from '../../common/ScoreSensitivityPanel';
-import { PhaseProgressSystem } from '../../common/PhaseProgressSystem';
-import AdaptiveBlock from '../../common/AdaptiveBlock';
 import { riskColor } from '../../../../lib/riskTokens';
-import { Activity } from 'lucide-react';
 
 interface Props {
   result: HybridResult;
@@ -54,7 +50,6 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData, onSwi
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const survivalProbability: SurvivalProbabilityResult | undefined = r.survivalProbability;
-  const scoreSensitivity = r.scoreSensitivity;
 
   const warnSignal = r.warnSignal as
     | { hasActiveWARN: boolean; daysUntilLayoff: number | null; totalAffectedCount: number }
@@ -281,34 +276,6 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData, onSwi
             </div>
           )}
         </div>
-      )}
-
-      {/* Action Impact */}
-      {scoreSensitivity && (
-        <AdaptiveBlock
-          title="Action impact simulator"
-          subtitle="Which actions reduce your risk score most"
-          icon={Activity}
-          tier={2}
-          accentColor="#22d3ee"
-          defaultOpen={false}
-        >
-          <ScoreSensitivityPanel scoreSensitivity={scoreSensitivity} liveScore={score} />
-        </AdaptiveBlock>
-      )}
-
-      {/* Phase Progress System */}
-      {recommendations.length > 0 && (
-        <PhaseProgressSystem
-          actions={recommendations}
-          companyName={companyData?.name}
-          currentScore={score}
-          onActionComplete={(actionId, completedCount) => {
-            window.dispatchEvent(new CustomEvent('hp.action.milestone', {
-              detail: { count: completedCount, actionId },
-            }));
-          }}
-        />
       )}
 
       {/* Depth invite */}

@@ -13,8 +13,6 @@ import { ScoreRingHero, TopDriversStrip, type DriverItem } from '../SummaryTab';
 import { ReasoningSpineCard } from '../../common/ReasoningSpineCard';
 import { VerdictReassurance } from '../../common/VerdictReassurance';
 import { ScoreTrendStrip } from '../../common/ScoreTrendStrip';
-import { TimeToSafetyStrip } from '../../common/TimeToSafetyStrip';
-import { ConfidenceDisclosure } from '../../common/ConfidenceDisclosure';
 import { useDashboardAdaptation } from '../../../../hooks/useDashboardAdaptation';
 import { riskColor, riskLabel, riskGradient } from '../../../../lib/riskTokens';
 import { computeCanonicalConfidence } from '../../../../services/canonicalConfidence';
@@ -57,7 +55,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
   const preparedness = r.preparednessScore;
-  const scoreSensitivity = r.scoreSensitivity;
   const urgency = r.intelligenceBrief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
 
   const ciLow  = result.confidenceInterval?.low  ?? undefined;
@@ -108,12 +105,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
     const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
     return sentences[0].trim();
   };
-
-  const lowDataWarning = result.signalQuality?.lowDataWarning as any;
-  const conflictCount  = result.signalQuality?.conflictingSignals?.length ?? 0;
-  const hardFailures   = [...(result.signalQuality?.hardFailures ?? [])];
-  const dagDegraded    = r._dagDegradedLayerCount ?? 0;
-  if (dagDegraded > 2) hardFailures.push(`${dagDegraded} intelligence modules degraded`);
 
   return (
     <div className="flex flex-col gap-4 py-2">
@@ -200,25 +191,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
       {r.scoreTrajectory && (
         <ScoreTrendStrip scoreTrajectory={r.scoreTrajectory} currentScore={score} />
       )}
-
-      {/* Time to Safety */}
-      {score > 35 && scoreSensitivity && (
-        <TimeToSafetyStrip currentScore={score} scoreSensitivity={scoreSensitivity} financialRunwayMonths={r.userFinancialRunway?.runwayMonths} />
-      )}
-
-      {/* Confidence Disclosure */}
-      <ConfidenceDisclosure
-        confPct={confPct}
-        confidenceLabel={canonicalConf.userFacing.label}
-        confidenceColor={canonicalConf.userFacing.color}
-        primarySource={canonicalConf.primarySource}
-        calibrationMode={calibrationMode}
-        lowDataWarning={lowDataWarning}
-        conflictCount={conflictCount}
-        hardFailures={hardFailures}
-        freshnessTier={result.unifiedFreshness?.tier}
-        calibrationLimitationReason={null}
-      />
 
       {/* Primary recommendation */}
       {primaryRec && (
