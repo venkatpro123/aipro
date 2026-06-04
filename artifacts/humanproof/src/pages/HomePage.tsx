@@ -379,6 +379,124 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── SECTION: PROFESSION RISK ── */}
+      <section className="hp-section hp-fs" style={{ padding:"6rem 0" }}>
+        <div className="hp-container hp-z2">
+          <div style={{
+            maxWidth: 860,
+            margin: "0 auto",
+            textAlign: "center",
+          }}>
+            {/* Eyebrow */}
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "5px 14px",
+              borderRadius: 999,
+              background: "rgba(239,68,68,0.08)",
+              border: "1px solid rgba(239,68,68,0.22)",
+              marginBottom: "2rem",
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 8px #ef4444", animation: "hp-bpulse 2s infinite", display: "inline-block" }} />
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: "#ef4444", fontWeight: 700 }}>
+                Long-Term Career Risk
+              </span>
+            </div>
+
+            {/* Headline */}
+            <h2 style={{
+              fontFamily: "'Syne',sans-serif",
+              fontSize: "clamp(1.75rem,4vw,2.75rem)",
+              fontWeight: 800,
+              lineHeight: 1.18,
+              marginBottom: "1.6rem",
+              color: "var(--hp-text)",
+            }}>
+              Your Company May Be{" "}
+              <span style={{ color: "var(--hp-cyan)" }}>Stable Today.</span>
+              <br />
+              Your Profession May{" "}
+              <span style={{
+                background: "linear-gradient(90deg,#ef4444,#f97316)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>Not Be.</span>
+            </h2>
+
+            {/* Body copy */}
+            <p style={{
+              fontSize: "clamp(1rem,2vw,1.15rem)",
+              color: "var(--hp-muted)",
+              lineHeight: 1.8,
+              marginBottom: "1.2rem",
+              maxWidth: 680,
+              margin: "0 auto 1.2rem",
+            }}>
+              HumanProof does not only measure current layoff risk.
+            </p>
+            <p style={{
+              fontSize: "clamp(0.95rem,1.8vw,1.05rem)",
+              color: "var(--hp-muted)",
+              lineHeight: 1.85,
+              marginBottom: "2.8rem",
+              maxWidth: 680,
+              margin: "0 auto 2.8rem",
+            }}>
+              It also monitors long-term workforce transformation pressure, AI disruption exposure,
+              career durability, and future labour market shifts.
+            </p>
+
+            {/* Divider statement */}
+            <div style={{
+              display: "inline-block",
+              padding: "14px 28px",
+              borderRadius: 12,
+              background: "rgba(0,212,255,0.05)",
+              border: "1px solid rgba(0,212,255,0.15)",
+              marginBottom: "2.8rem",
+            }}>
+              <p style={{ margin: 0, fontSize: "clamp(0.95rem,1.8vw,1.05rem)", color: "var(--hp-cyan)", fontWeight: 600, lineHeight: 1.7 }}>
+                Because career risk is no longer only about your employer.
+              </p>
+              <p style={{ margin: "6px 0 0", fontSize: "clamp(0.9rem,1.6vw,1rem)", color: "var(--hp-text)", fontWeight: 700, lineHeight: 1.5 }}>
+                It is increasingly about the future value of your profession.
+              </p>
+            </div>
+
+            {/* 4 pillars */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+              gap: 14,
+              marginTop: "0.5rem",
+            }}>
+              {[
+                { icon: "🌊", label: "Workforce Transformation Pressure", color: "rgba(0,212,255,0.12)", border: "rgba(0,212,255,0.22)", tc: "var(--hp-cyan)" },
+                { icon: "🤖", label: "AI Disruption Exposure",            color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: "#ef4444" },
+                { icon: "🛡️", label: "Career Durability Index",           color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: "#10b981" },
+                { icon: "📡", label: "Future Labour Market Shifts",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: "#f59e0b" },
+              ].map(p => (
+                <div key={p.label} style={{
+                  padding: "18px 16px",
+                  borderRadius: 12,
+                  background: p.color,
+                  border: `1px solid ${p.border}`,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 10,
+                }}>
+                  <span style={{ fontSize: "1.6rem" }}>{p.icon}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: p.tc, lineHeight: 1.4, textAlign: "center" }}>{p.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── SECTION 4: INTELLIGENCE ENGINE ── */}
       <section className="hp-ie-section hp-section hp-fs">
         <div className="hp-container hp-z2">
