@@ -20,18 +20,15 @@ import RiskCalculatorNeuralLoader from '../components/RiskOracle/RiskCalculatorN
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
 import { recordScore, getScoreDelta, type ScoreDelta } from '../services/scoreDeltaService';
 import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect';
-import { StrategicRoadmap } from '../components/StrategicRoadmap';
 import { getCareerIntelligence } from '../data/intelligence/index';
-import { AIRiskSkillMatrix } from '../components/AIRiskSkillMatrix';
 import { RoleRiskComparison } from '../components/RoleRiskComparison';
-import { ScoreComparison } from '../components/ScoreComparison';
 import { PortfolioShield } from '../components/PortfolioShield';
 import { DataFreshnessBadge } from '../components/DataFreshnessBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase, Cpu, Database, Globe, Layout, Lock, Smartphone,
-  Users, ShieldCheck, BarChart, PenTool, Stethoscope, Gavel,
-  GraduationCap, Factory, ShoppingBag, Zap, Clock, Star, Shield,
+  Users, BarChart, PenTool, Stethoscope, Gavel,
+  GraduationCap, Factory, ShoppingBag, Zap, Star, Shield,
   Search, Share2, Check, SlidersHorizontal, ChevronDown, ChevronUp,
   RefreshCw,
 } from 'lucide-react';

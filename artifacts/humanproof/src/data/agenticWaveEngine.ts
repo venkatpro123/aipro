@@ -331,11 +331,13 @@ function computeTaskExposureBreakdown(
   const entries: TaskExposureEntry[] = [];
 
   if (intel?.skills) {
-    // Priority 1: derive from seeded skill tiers
+    // Priority 1: derive from seeded skill tiers.
+    // aiPct values are deterministic mid-points for each tier band — no Math.random()
+    // so repeated calls with the same inputs always produce the same output.
     const allSkills = [
-      ...(intel.skills.obsolete ?? []).slice(0, 3).map(s => ({ name: s.skill, aiPct: 72 + Math.round(Math.random() * 12), tier: 'obsolete' as const, aiTool: s.aiTool })),
-      ...(intel.skills.at_risk  ?? []).slice(0, 3).map(s => ({ name: s.skill, aiPct: 42 + Math.round(Math.random() * 16), tier: 'at_risk' as const, aiTool: s.aiTool })),
-      ...(intel.skills.safe     ?? []).slice(0, 2).map(s => ({ name: s.skill, aiPct: 10 + Math.round(Math.random() * 18), tier: 'safe'    as const, aiTool: undefined as string | undefined })),
+      ...(intel.skills.obsolete ?? []).slice(0, 3).map((s, i) => ({ name: s.skill, aiPct: 72 + i * 4, tier: 'obsolete' as const, aiTool: s.aiTool })),
+      ...(intel.skills.at_risk  ?? []).slice(0, 3).map((s, i) => ({ name: s.skill, aiPct: 50 + i * 4, tier: 'at_risk' as const, aiTool: s.aiTool })),
+      ...(intel.skills.safe     ?? []).slice(0, 2).map((s, i) => ({ name: s.skill, aiPct: 14 + i * 6, tier: 'safe'    as const, aiTool: undefined as string | undefined })),
     ];
 
     for (const s of allSkills) {
@@ -361,9 +363,11 @@ function computeTaskExposureBreakdown(
 
     tasks.slice(0, 8).forEach((task, i) => {
       if (entries.some(e => e.task === task)) return;
-      // Graduate aiPct across the task list (first tasks more exposed)
-      const baseFraction = 1 - (i / (n - 1));
-      const rawAiPct = clamp(round(d1 * baseFraction + 5 + (Math.random() - 0.5) * 8), 5, 95);
+      // Graduate aiPct across the task list (first tasks more exposed).
+      // Deterministic: use position fraction, no Math.random().
+      // Guard n===1 division-by-zero: when only one task, treat baseFraction as 1.
+      const baseFraction = n <= 1 ? 1 : 1 - (i / (n - 1));
+      const rawAiPct = clamp(round(d1 * baseFraction + 5), 5, 95);
       const humanPct = 100 - rawAiPct;
       const exposureLevel =
         rawAiPct >= 75 ? 'critical' :
@@ -372,7 +376,9 @@ function computeTaskExposureBreakdown(
       const trajectory =
         rawAiPct >= 60 ? 'ai_dominant' :
         rawAiPct >= 35 ? 'ai_gaining'  : 'stable';
-      entries.push({ task, humanPct, aiPct: rawAiPct, trajectory, exposureLevel, aiTool: tools[i % tools.length] });
+      // Guard empty tools array: only attach aiTool when tools is non-empty
+      const aiTool = tools.length > 0 ? tools[i % tools.length] : undefined;
+      entries.push({ task, humanPct, aiPct: rawAiPct, trajectory, exposureLevel, aiTool });
     });
   }
 
@@ -459,10 +465,12 @@ function computeFutureRoleEvolution(
 
   if (intel?.careerPaths && intel.careerPaths.length > 0) {
     const p0 = intel.careerPaths[0];
+    // Ensure max > min: if result.total is very low, use a safe floor
+    const step1Risk = clamp(result.total - (p0.riskReduction ?? 15), 10, Math.max(result.total - 3, 12));
     steps.push({
       role: p0.role,
       timeframe: p0.timeToTransition ?? '12–24 months',
-      riskLevel: clamp(result.total - (p0.riskReduction ?? 15), 15, result.total - 5),
+      riskLevel: step1Risk,
       isCurrentRole: false,
       transitionNote: p0.skillGap ? `Key gap: ${p0.skillGap}` : undefined,
     });
@@ -503,8 +511,12 @@ function computeActionPlan(
   experience: string,
 ): ActionHorizon[] {
   const road = intel?.roadmap;
-  const expKey = experience as keyof typeof road;
-  const expRoadmap = road ? (road[expKey] ?? road['5-10'] ?? road['2-5']) : null;
+  // Use typed key lookup — only access if road is defined to avoid keyof undefined
+  type RoadmapKey = '0-2' | '2-5' | '5-10' | '10-20' | '20+';
+  const expKey = experience as RoadmapKey;
+  const expRoadmap = road
+    ? (road[expKey] ?? road['5-10'] ?? road['2-5'] ?? null)
+    : null;
 
   const careerPath = intel?.careerPaths?.[0];
   const fullRiskReduction = careerPath?.riskReduction ?? 20;

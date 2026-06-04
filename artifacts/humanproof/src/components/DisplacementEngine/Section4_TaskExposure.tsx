@@ -23,6 +23,15 @@ const TRAJECTORY_LABEL: Record<string, string> = {
 };
 
 export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
+  if (!tasks || tasks.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px 16px', opacity: 0.5 }}>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+          Task exposure data is not available for this role type.
+        </p>
+      </div>
+    );
+  }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
