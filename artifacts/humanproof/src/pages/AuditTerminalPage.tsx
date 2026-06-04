@@ -16,7 +16,7 @@ import {
 } from '../data/riskFormula';
 // normalizeExperience used internally in riskFormula; not needed at the page level.
 import type { ScoreResult } from '../data/riskFormula';
-import NeuralSphereLoader from '../components/RiskOracle/NeuralSphereLoader';
+import RiskCalculatorNeuralLoader from '../components/RiskOracle/RiskCalculatorNeuralLoader';
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
 import { recordScore, getScoreDelta, type ScoreDelta } from '../services/scoreDeltaService';
 import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect';
@@ -301,7 +301,7 @@ const AuditTerminalPage: React.FC = () => {
     const url  = `${window.location.origin}${window.location.pathname}#${hash}`;
 
     const text = [
-      `🤖 Risk Oracle Result`,
+      `🤖 Risk Calculator Result`,
       `Role: ${roleLabel} · ${industryLabel}`,
       `Experience: ${expLabel} · Country: ${countryLabel}`,
       `Score: ${result.total}/100 — ${getVerdict(result.total)}`,
@@ -369,7 +369,7 @@ const AuditTerminalPage: React.FC = () => {
   return (
     <div className="page-wrap" style={{ fontFamily: 'var(--font-sans)' }}>
       {loaderActive && (
-        <NeuralSphereLoader
+        <RiskCalculatorNeuralLoader
           stage={loaderStage}
           roleLabel={workTypeOptions.find((o) => o.key === workTypeKey)?.label}
           industryLabel={industryOptions.find((o) => o.key === industryKey)?.label}
