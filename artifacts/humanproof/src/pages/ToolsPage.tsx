@@ -25,7 +25,6 @@ import ScoreDriftTracker, {
 const LayoffCalculator = lazy(() =>
   import('../components/LayoffCalculator/LayoffCalculator').then(m => ({ default: m.LayoffCalculator }))
 );
-const AuditTerminalPage = lazy(() => import('./AuditTerminalPage'));
 import UpskillingRoadmap from "../components/UpskillingRoadmap";
 import HumanEdgeJournal from "../components/HumanEdgeJournal";
 import ResilienceBadge from "../components/ResilienceBadge";
@@ -73,29 +72,11 @@ class TabErrorBoundary extends Component<
   }
 }
 
-// v35.1.4 — dashboard pared to the two primary surfaces. The other tools
-// (Skill Health, Human Value, Action Plan, Journal, Progress, Forecast)
-// are still routable elsewhere in the app; they are simply not surfaced
-// on this dashboard. Reintroduce here when the product needs them back.
-const TABS = [
-  { id: "layoff-audit", label: "Layoff Audit", icon: "📉", desc: "Company-specific risk audit" },
-  { id: "risk-oracle",  label: "Risk Oracle",  icon: "🎯", desc: "6-dimension role displacement" },
-];
-
-const VALID_TAB_IDS = new Set(TABS.map(t => t.id));
-
 const STALE_DAYS = 90;
 const SESSION_DRIFT_KEY = "hp_drift_banner_seen_session";
 
 export default function ToolsPage() {
   const { state, dispatch } = useHumanProof();
-  // v35.1.4 — if a user's persisted tab points to a removed surface, fall
-  // back to the new default so the dashboard never renders an empty pane.
-  const initialTab = state.activeToolTab && VALID_TAB_IDS.has(state.activeToolTab)
-    ? state.activeToolTab
-    : "layoff-audit";
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
-  const [mountedTabs, setMountedTabs] = useState<Set<string>>(new Set([initialTab]));
   const [showDriftBannerState, setShowDriftBannerState] = useState(false);
   const [showStalenessBanner, setShowStalenessBanner] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -111,7 +92,7 @@ export default function ToolsPage() {
       return (Date.now() - latest.timestamp) / (1000 * 60 * 60 * 24) > STALE_DAYS;
     };
     setShowStalenessBanner(isStale());
-  }, [activeTab]);
+  }, []);
 
   useEffect(() => {
     const alreadySeen = sessionStorage.getItem(SESSION_DRIFT_KEY);
@@ -127,16 +108,9 @@ export default function ToolsPage() {
 
   const switchTab = useCallback(
     (tabId: string) => {
-      if (tabId === activeTab) return;
-      setActiveTab(tabId);
-      setMountedTabs((prev) => new Set([...prev, tabId]));
       dispatch({ type: "SET_ACTIVE_TAB", tab: tabId });
-      // Scroll tab content into view smoothly
-      setTimeout(() => {
-        tabContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
     },
-    [activeTab, dispatch],
+    [dispatch],
   );
 
   const handleExport = useCallback(
@@ -231,85 +205,14 @@ export default function ToolsPage() {
           </div>
         )}
 
-        {/* ── Tab Strip (desktop) ───────────────────────────────────────── */}
-        {/* Hidden on mobile via CSS; replaced by compact pill row below. */}
-        <div className="dashboard-tabs-strip">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => switchTab(tab.id)}
-              className={`dashboard-tab-btn ${activeTab === tab.id ? "active" : ""}`}
-              title={tab.desc}
-            >
-              <span style={{ fontSize: '1rem' }}>{tab.icon}</span>
-              <span className="tab-label-text">{tab.label}</span>
-            </button>
-          ))}
-        </div>
 
-        {/* ── Mobile-only compact tool switcher ────────────────────────── */}
-        {/* Shown only on mobile (sm:hidden equivalent via inline style).  */}
-        {/* Replaces the full dashboard-tabs-strip which is hidden at ≤768px. */}
-        <div
-          className="sm:hidden"
-          style={{ display: 'flex', gap: 8, marginBottom: 16 }}
-        >
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => switchTab(tab.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '7px 14px',
-                  borderRadius: 999,
-                  border: `1px solid ${isActive ? 'var(--border-cyan)' : 'var(--border-2)'}`,
-                  background: isActive ? 'var(--cyan-dim)' : 'var(--glass-mid)',
-                  color: isActive ? 'var(--cyan)' : 'var(--text-3)',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  minHeight: 36,
-                }}
-              >
-                <span style={{ fontSize: '0.85rem' }}>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── Tab Content ───────────────────────────────────────────────── */}
+        {/* ── Content ───────────────────────────────────────────────────── */}
         <div ref={tabContentRef} style={{ minHeight: '60vh' }}>
-          <AnimatePresence mode="wait">
-            {TABS.map((tab) => (
-              activeTab === tab.id && (
-                <motion.div
-                  key={tab.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {mountedTabs.has(tab.id) && (
-                    <TabErrorBoundary tabId={tab.id}>
-                      <Suspense fallback={null}>
-                        {tab.id === "layoff-audit" && (
-                          <LayoffCalculator onSwitchTab={switchTab} />
-                        )}
-                        {tab.id === "risk-oracle" && <AuditTerminalPage />}
-                      </Suspense>
-                    </TabErrorBoundary>
-                  )}
-                </motion.div>
-              )
-            ))}
-          </AnimatePresence>
+          <TabErrorBoundary tabId="layoff-audit">
+            <Suspense fallback={null}>
+              <LayoffCalculator onSwitchTab={switchTab} />
+            </Suspense>
+          </TabErrorBoundary>
         </div>
       </div>
 

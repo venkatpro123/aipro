@@ -32,6 +32,7 @@ import TeamDashboardPage from "./pages/TeamDashboardPage";
 // Pages — lazy-loaded (career-intelligence chunk 187KB gzip)
 const AuditTerminalPage = lazy(() => import("./pages/AuditTerminalPage"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));
+const RiskCalculatorPage = lazy(() => import("./pages/RiskCalculatorPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const PredictionLedgerPage = lazy(() => import("./pages/PredictionLedgerPage"));
 const CommunityIntelligencePage = lazy(() => import("./pages/CommunityIntelligencePage"));
@@ -125,10 +126,12 @@ function NavigationBridge() {
 // remain accessible via direct URL but are no longer surfaced in the nav.
 const NAV_ITEMS = [
   { to: "/terminal", label: "Layoff Audit" },
+  { to: "/risk-calculator", label: "Risk Calculator" },
 ];
 
 const MOBILE_PRIMARY = [
   { to: "/terminal", label: "Layoff Audit", Icon: LayoutDashboard },
+  { to: "/risk-calculator", label: "Risk Calc", Icon: Sparkles },
 ];
 
 // Secondary nav items — appear in the "More" slide-up sheet.
@@ -726,6 +729,7 @@ function AppContent() {
               <Route path="/"                              element={<HomePage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
+              <Route path="/risk-calculator"               element={<RiskCalculatorPage />} />
               <Route path="/products"                      element={<ProductsPage />} />
               <Route path="/pricing"                       element={<PricingPage />} />
               <Route path="/settings"                      element={<SettingsPage />} />
