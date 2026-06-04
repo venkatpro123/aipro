@@ -22,7 +22,6 @@ import { recordScore, getScoreDelta, type ScoreDelta } from '../services/scoreDe
 import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect';
 import { StrategicRoadmap } from '../components/StrategicRoadmap';
 import { getCareerIntelligence } from '../data/intelligence/index';
-import { DimensionRadar } from '../components/DimensionRadar';
 import { AIRiskSkillMatrix } from '../components/AIRiskSkillMatrix';
 import { RoleRiskComparison } from '../components/RoleRiskComparison';
 import { ScoreComparison } from '../components/ScoreComparison';
@@ -801,35 +800,6 @@ const AuditTerminalPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Radar + synthesis */}
-                  <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    <div>
-                      <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>RADAR</h3>
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <DimensionRadar
-                          dimensions={result.dimensions.map((d) => ({ key: d.key, label: DIM_INFO[d.key]?.label ?? d.label, score: d.score }))}
-                          size={280}
-                          color={scoreColor}
-                        />
-                      </div>
-                    </div>
-
-                    {synthesis && (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                          <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>ORACLE SYNTHESIS</h3>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(0,212,224,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,212,224,0.2)' }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', animation: 'pulse 2s infinite' }} />
-                            <span style={{ fontSize: '0.6rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>ORACLE</span>
-                          </div>
-                        </div>
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
-                          <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cyan)' }} />
-                          <p style={{ color: 'var(--text-2)', fontSize: '0.9rem', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>"{synthesis}"</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
 
