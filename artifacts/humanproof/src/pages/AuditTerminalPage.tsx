@@ -37,6 +37,43 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { calculateScore as calculateScoreFn } from '../data/riskFormula';
+import { computeTrajectory }       from '../services/DisplacementTrajectoryEngine';
+import type { OracleDimension }    from '../services/DisplacementTrajectoryEngine';
+import { computeAgenticExposureScore } from '../services/agenticExposureEngine';
+import { getAutomationTimeline, ROLE_EVOLUTION_PATHS } from '../data/automationTimelineData';
+import { industryRiskData }        from '../data/industryRiskData';
+import { CurrentRiskMetrics }      from '../components/AIDisplacementEngine/CurrentRiskMetrics';
+import { AgenticExposurePanel }    from '../components/AIDisplacementEngine/AgenticExposurePanel';
+import { CapabilityThresholdPanel }from '../components/AIDisplacementEngine/CapabilityThresholdPanel';
+import { TaskExposureMatrix }      from '../components/AIDisplacementEngine/TaskExposureMatrix';
+import { SurvivalFactorsPanel }    from '../components/AIDisplacementEngine/SurvivalFactorsPanel';
+import { RoleEvolutionPath }       from '../components/AIDisplacementEngine/RoleEvolutionPath';
+import { EarlyWarningSignals }     from '../components/AIDisplacementEngine/EarlyWarningSignals';
+import { EnhancedActionPlan }      from '../components/AIDisplacementEngine/EnhancedActionPlan';
+import { PsychologicalFramingPanel }from '../components/AIDisplacementEngine/PsychologicalFramingPanel';
+
+// ── Bridge: catalogData industry keys → industryRiskData keys ────────────────
+const INDUSTRY_TO_RISK_KEY: Record<string, string> = {
+  it_software: 'Technology', it_web: 'Technology', it_mobile: 'Technology',
+  it_saas: 'Technology', it_ai_ml: 'Technology', it_cybersec: 'Cybersecurity',
+  it_devops: 'Technology', it_blockchain: 'Technology', it_gaming: 'Gaming',
+  it_qa: 'Technology', it_erp: 'Technology',
+  finance: 'Financial Services', fintech: 'FinTech', insurance: 'Insurance',
+  investment: 'Financial Services',
+  media: 'Media & Publishing', content: 'Media & Publishing',
+  marketing: 'Media & Publishing', advertising: 'Media & Publishing',
+  healthcare: 'Healthcare', pharma: 'Biotech/Pharma', biotech: 'Biotech/Pharma',
+  education: 'Education', edtech: 'EdTech',
+  ecommerce: 'E-commerce', retail: 'Retail',
+  manufacturing: 'Manufacturing', engineering: 'Manufacturing',
+  energy: 'Energy', construction: 'Construction',
+  legal: 'Legal', consulting: 'Consulting', hr: 'Consulting',
+  government: 'Government', nonprofit: 'Nonprofit',
+  hospitality: 'Hospitality', logistics: 'Logistics',
+  telecom: 'Telecom', realestate: 'Real Estate',
+  bpo: 'BPO', ites: 'ITES', it_services: 'IT Services',
+  banking: 'Banking', mobility: 'Mobility',
+};
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -93,7 +130,7 @@ const getRoleIcon = (label: string | undefined | null): React.ReactNode => {
   return <Star className="w-4 h-4" />;
 };
 
-type TabKey = 'analysis' | 'matrix' | 'roadmap' | 'forecast';
+type TabKey = 'overview' | 'intelligence' | 'tasks' | 'protection' | 'strategy';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -104,7 +141,7 @@ const AuditTerminalPage: React.FC = () => {
   const [countryKey, setCountryKey]   = useState('usa');
   const [result, setResult]           = useState<ScoreResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [activeTab, setActiveTab]     = useState<TabKey>('analysis');
+  const [activeTab, setActiveTab]     = useState<TabKey>('overview');
   const [delta, setDelta]             = useState<ScoreDelta | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
@@ -178,7 +215,7 @@ const AuditTerminalPage: React.FC = () => {
       setResult(p.score);
       setDelta(p.delta);
     }
-    setActiveTab('analysis');
+    setActiveTab('overview');
     setIsCalculating(false);
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
   };
@@ -359,11 +396,60 @@ const AuditTerminalPage: React.FC = () => {
     } catch { /* ignore */ }
   }, []);
 
+  // ── Optional advanced profile inputs ──────────────────────────────────────
+  const [showAdvanced,    setShowAdvanced]   = useState(false);
+  const [salaryRange,     setSalaryRange]    = useState('');
+  const [hasManagement,   setHasManagement]  = useState(false);
+  const [companyType,     setCompanyType]    = useState('');
+  const [techStack,       setTechStack]      = useState('');
+
+  // ── AI Displacement Intelligence Engine derived data ──────────────────────
+  const automationTimeline = useMemo(
+    () => workTypeKey ? getAutomationTimeline(workTypeKey) : null,
+    [workTypeKey],
+  );
+
+  const industryRiskEntry = useMemo(() => {
+    const rk = INDUSTRY_TO_RISK_KEY[industryKey];
+    return rk ? (industryRiskData[rk] ?? null) : null;
+  }, [industryKey]);
+
+  const agenticScore = useMemo(() => {
+    if (!result || !workTypeKey) return null;
+    return computeAgenticExposureScore({
+      dimensions: result.dimensions,
+      industryKey,
+      roleKey: workTypeKey,
+      experience,
+      countryKey,
+      companyType: companyType || undefined,
+    });
+  }, [result, industryKey, workTypeKey, experience, countryKey, companyType]);
+
+  const trajectory = useMemo(() => {
+    if (!result || !workTypeKey) return null;
+    return computeTrajectory({
+      currentScore: result.total,
+      oracleResult: {
+        total: result.total,
+        dimensions: result.dimensions as OracleDimension[],
+      },
+      roleKey: workTypeKey,
+      experience,
+      careerIntelligence: intel ?? undefined,
+    });
+  }, [result, workTypeKey, experience, intel]);
+
+  const evolutionPath = workTypeKey ? ROLE_EVOLUTION_PATHS[workTypeKey] : undefined;
+  const roleLabel     = workTypeOptions.find((o) => o.key === workTypeKey)?.label ?? workTypeKey;
+  const industryLabel = industryOptions.find((o) => o.key === industryKey)?.label ?? industryKey;
+
   const TABS: { key: TabKey; label: string }[] = [
-    { key: 'analysis', label: 'Dimension Analysis' },
-    { key: 'matrix',   label: 'Skill Matrix' },
-    { key: 'roadmap',  label: 'Upskilling Roadmap' },
-    { key: 'forecast', label: 'Risk Forecast' },
+    { key: 'overview',     label: 'Overview' },
+    { key: 'intelligence', label: 'AI Intelligence' },
+    { key: 'tasks',        label: 'Task Analysis' },
+    { key: 'protection',   label: 'Protection' },
+    { key: 'strategy',     label: 'Action Strategy' },
   ];
 
   return (
@@ -437,6 +523,72 @@ const AuditTerminalPage: React.FC = () => {
               placeholder="Select country"
             />
           </div>
+        </div>
+
+        {/* ── Advanced Profile (optional) ─────────────────────────────── */}
+        <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', marginBottom: '16px', overflow: 'hidden' }}>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(v => !v)}
+            aria-expanded={showAdvanced ? 'true' : 'false'}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 16px', background: 'rgba(255,255,255,0.02)',
+              border: 'none', cursor: 'pointer', color: 'var(--text-3)',
+            }}
+          >
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.07em' }}>
+              ADVANCED PROFILE (OPTIONAL) — personalizes AI wave & action plan
+            </span>
+            {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
+          {showAdvanced && (
+            <div style={{ padding: '16px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                <div>
+                  <label className="label-xs" style={{ display: 'block', marginBottom: '6px', color: 'var(--text-3)' }}>SALARY RANGE</label>
+                  <select value={salaryRange} onChange={e => setSalaryRange(e.target.value)}
+                    aria-label="Salary range"
+                    title="Salary range"
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)', fontSize: '0.75rem' }}>
+                    <option value="">Not specified</option>
+                    <option value="<50k">&lt;$50k</option>
+                    <option value="50-100k">$50k–$100k</option>
+                    <option value="100-200k">$100k–$200k</option>
+                    <option value="200k+">$200k+</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label-xs" style={{ display: 'block', marginBottom: '6px', color: 'var(--text-3)' }}>COMPANY TYPE</label>
+                  <select value={companyType} onChange={e => setCompanyType(e.target.value)}
+                    aria-label="Company type"
+                    title="Company type"
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)', fontSize: '0.75rem' }}>
+                    <option value="">Not specified</option>
+                    <option value="startup">Startup</option>
+                    <option value="scaleup">Scaleup</option>
+                    <option value="enterprise">Enterprise</option>
+                    <option value="government">Government</option>
+                    <option value="freelance">Freelance / Contractor</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label-xs" style={{ display: 'block', marginBottom: '6px', color: 'var(--text-3)' }}>TECH STACK (optional)</label>
+                  <input
+                    type="text" value={techStack} onChange={e => setTechStack(e.target.value.slice(0, 120))}
+                    placeholder="e.g. React, Python, AWS"
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)', fontSize: '0.75rem', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '18px' }}>
+                  <input type="checkbox" id="mgmt-toggle" checked={hasManagement} onChange={e => setHasManagement(e.target.checked)} />
+                  <label htmlFor="mgmt-toggle" style={{ fontSize: '0.75rem', color: 'var(--text-2)', cursor: 'pointer' }}>
+                    Management responsibility
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <button
@@ -576,6 +728,14 @@ const AuditTerminalPage: React.FC = () => {
                     <div style={{ fontWeight: 800, fontSize: '0.95rem', color: scoreColor }}>{getUrgency(result.total)}</div>
                   </div>
                 </div>
+
+                {/* §1 — Current Risk Metrics pills */}
+                <CurrentRiskMetrics
+                  d1Score={result.dimensions.find(d => d.key === 'D1')?.score ?? 50}
+                  industryRisk={industryRiskEntry}
+                  timeline={automationTimeline}
+                  scoreColor={scoreColor}
+                />
                 {delta && Math.abs(delta.delta) >= 1 && (
                   <div style={{ marginTop: '10px', fontSize: '0.75rem', color: delta.delta > 0 ? 'var(--red)' : 'var(--emerald)', fontFamily: 'var(--font-mono)' }}>
                     {delta.delta > 0 ? '▲' : '▼'} {Math.abs(delta.delta).toFixed(1)} pts since last audit
@@ -772,142 +932,183 @@ const AuditTerminalPage: React.FC = () => {
             {/* Tab content panel */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '32px' }}>
 
-              {/* ANALYSIS */}
-              {activeTab === 'analysis' && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
-                  {/* Dimension bars */}
-                  <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-                    <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>DIMENSION BREAKDOWN</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {result.dimensions.map((dim) => {
-                        const info = DIM_INFO[dim.key];
-                        const dc = getScoreColor(dim.score);
-                        return (
-                          <div key={dim.key}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                              <div>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>{info?.label ?? dim.label}</div>
-                                {info?.desc && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '2px' }}>{info.desc}</div>}
+              {/* ── TAB 1: OVERVIEW ─────────────────────────────────────────── */}
+              {activeTab === 'overview' && (
+                <div>
+                  {/* D1–D6 dimension bars + radar */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
+                    <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+                      <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>DIMENSION BREAKDOWN</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {result.dimensions.map((dim) => {
+                          const info = DIM_INFO[dim.key];
+                          const dc = getScoreColor(dim.score);
+                          return (
+                            <div key={dim.key}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                <div>
+                                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>{info?.label ?? dim.label}</div>
+                                  {info?.desc && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '2px' }}>{info.desc}</div>}
+                                </div>
+                                <span style={{ fontWeight: 900, fontFamily: 'var(--font-mono)', color: dc, fontSize: '0.9rem', marginLeft: '12px', flexShrink: 0 }}>{dim.score}</span>
                               </div>
-                              <span style={{ fontWeight: 900, fontFamily: 'var(--font-mono)', color: dc, fontSize: '0.9rem', marginLeft: '12px', flexShrink: 0 }}>{dim.score}</span>
+                              <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${dim.score}%`, background: dc, borderRadius: '2px', transition: 'width 0.8s ease', boxShadow: `0 0 6px ${dc}66` }} />
+                              </div>
+                              {dim.reason && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '4px', fontStyle: 'italic' }}>{dim.reason}</div>}
                             </div>
-                            <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${dim.score}%`, background: dc, borderRadius: '2px', transition: 'width 0.8s ease', boxShadow: `0 0 6px ${dc}66` }} />
-                            </div>
-                            {dim.reason && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '4px', fontStyle: 'italic' }}>{dim.reason}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Radar + synthesis */}
-                  <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    <div>
-                      <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>RADAR</h3>
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
-                        <DimensionRadar
-                          dimensions={result.dimensions.map((d) => ({ key: d.key, label: DIM_INFO[d.key]?.label ?? d.label, score: d.score }))}
-                          size={280}
-                          color={scoreColor}
-                        />
+                          );
+                        })}
                       </div>
                     </div>
 
-                    {synthesis && (
+                    <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '32px' }}>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                          <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>ORACLE SYNTHESIS</h3>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(0,212,224,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,212,224,0.2)' }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', animation: 'pulse 2s infinite' }} />
-                            <span style={{ fontSize: '0.6rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>ORACLE</span>
-                          </div>
-                        </div>
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
-                          <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cyan)' }} />
-                          <p style={{ color: 'var(--text-2)', fontSize: '0.9rem', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>"{synthesis}"</p>
+                        <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>RADAR</h3>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <DimensionRadar
+                            dimensions={result.dimensions.map((d) => ({ key: d.key, label: DIM_INFO[d.key]?.label ?? d.label, score: d.score }))}
+                            size={280}
+                            color={scoreColor}
+                          />
                         </div>
                       </div>
-                    )}
+
+                      {synthesis && (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                            <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>ORACLE SYNTHESIS</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(0,212,224,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,212,224,0.2)' }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', animation: 'pulse 2s infinite' }} />
+                              <span style={{ fontSize: '0.6rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>ORACLE</span>
+                            </div>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cyan)' }} />
+                            <p style={{ color: 'var(--text-2)', fontSize: '0.9rem', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>"{synthesis}"</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* §2 — Agentic AI Wave Exposure */}
+                  {agenticScore && (
+                    <AgenticExposurePanel
+                      result={agenticScore}
+                      currentScore={result.total}
+                      currentScoreColor={scoreColor}
+                    />
+                  )}
                 </div>
               )}
 
-              {/* MATRIX */}
-              {activeTab === 'matrix' && (
-                intel
-                  ? <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={workTypeKey} />
-                  : (
+              {/* ── TAB 2: AI INTELLIGENCE ──────────────────────────────────── */}
+              {activeTab === 'intelligence' && (
+                <div>
+                  {/* §3 — Capability Threshold Forecast */}
+                  {trajectory && automationTimeline ? (
+                    <CapabilityThresholdPanel
+                      trajectory={trajectory}
+                      timeline={automationTimeline}
+                      scoreColor={scoreColor}
+                    />
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '32px', opacity: 0.4 }}>
+                      <Clock size={36} style={{ marginBottom: '12px' }} />
+                      <p className="label-xs">Run the oracle to see capability threshold data.</p>
+                    </div>
+                  )}
+
+                  {/* §7 — Early Warning Signals */}
+                  {automationTimeline && (
+                    <EarlyWarningSignals
+                      timeline={automationTimeline}
+                      industryRisk={industryRiskEntry}
+                      scoreColor={scoreColor}
+                      industryLabel={industryLabel}
+                    />
+                  )}
+
+                  {/* §9 — Psychological Framing */}
+                  {agenticScore && automationTimeline && (
+                    <PsychologicalFramingPanel
+                      score={result.total}
+                      agenticTier={agenticScore.tier}
+                      impactTimeline={automationTimeline.impactTimeline}
+                      verdict={getVerdict(result.total)}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* ── TAB 3: TASK ANALYSIS ────────────────────────────────────── */}
+              {activeTab === 'tasks' && (
+                <div>
+                  {/* §4 — Task Exposure Matrix */}
+                  {automationTimeline && (
+                    <TaskExposureMatrix
+                      timeline={automationTimeline}
+                      d1Score={result.dimensions.find(d => d.key === 'D1')?.score ?? 50}
+                      techStack={techStack || undefined}
+                    />
+                  )}
+
+                  {/* Existing skill matrix */}
+                  {intel && (
+                    <div style={{ marginTop: '32px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+                      <h3 className="label-xs" style={{ marginBottom: '16px', color: 'var(--text-3)' }}>SKILL RISK MATRIX</h3>
+                      <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={workTypeKey} />
+                    </div>
+                  )}
+                  {!intel && !automationTimeline && (
                     <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
                       <Cpu size={40} style={{ marginBottom: '12px', color: scoreColor }} />
                       <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
                         Heuristic estimate — no seeded skill data for this role
-                      </p>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 380, margin: '0 auto 16px' }}>
-                        Deep skill intelligence is available for 412 common roles. This role's D1–D6 scores were
-                        computed from industry patterns. Try the <strong>Dimension Analysis</strong> tab for
-                        the full breakdown, or explore a neighbouring role in the comparison below.
                       </p>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
                         Data quality: {result.dataQuality === 'DQ_FULL' ? 'Full' : result.dataQuality === 'DQ_PARTIAL' ? 'Partial' : 'Estimated'}
                         {' · '}Confidence: {result.confidence}
                       </div>
                     </div>
-                  )
-              )}
-
-              {/* ROADMAP */}
-              {activeTab === 'roadmap' && (
-                intel
-                  ? <StrategicRoadmap intel={intel} experience={experience} scoreColor={scoreColor} score={result.total} />
-                  : (
-                    <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
-                      <ShieldCheck size={40} style={{ marginBottom: '12px', color: scoreColor }} />
-                      <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
-                        Heuristic roadmap — using dimension-driven action plan
-                      </p>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 380, margin: '0 auto 12px' }}>
-                        The seeded roadmap (with specific certifications, timelines, and salary outcomes) is
-                        available for 412 roles. Your role uses the modular block engine — check the
-                        <strong> Oracle Synthesis</strong> section on the Analysis tab for your personalised
-                        action steps.
-                      </p>
-                    </div>
-                  )
-              )}
-
-              {/* FORECAST */}
-              {activeTab === 'forecast' && (
-                <div>
-                  <h3 className="label-xs" style={{ marginBottom: '24px', color: 'var(--text-3)' }}>TEMPORAL DISPLACEMENT TRAJECTORY</h3>
-                  {result.riskTrend && result.riskTrend.length > 0 ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginBottom: '32px' }}>
-                      {result.riskTrend.map((t: { year?: string; score?: number; riskScore?: number; label?: string }, i: number) => {
-                        const val: number = t.score ?? t.riskScore ?? 0;
-                        const c = getScoreColor(val);
-                        return (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.08 }}
-                            className="glass-panel"
-                            style={{ padding: '20px 12px', textAlign: 'center', borderRadius: '12px' }}
-                          >
-                            <div style={{ color: 'var(--text-3)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>{t.year}</div>
-                            <div style={{ fontWeight: 900, fontSize: '1.4rem', color: c }}>{val}%</div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '32px', opacity: 0.4 }}>
-                      <Clock size={36} style={{ marginBottom: '12px' }} />
-                      <p className="label-xs">No forecast trajectory data for this role.</p>
-                    </div>
                   )}
-                  <ScoreComparison />
                 </div>
+              )}
+
+              {/* ── TAB 4: PROTECTION ───────────────────────────────────────── */}
+              {activeTab === 'protection' && (
+                <div>
+                  {/* §5 — Survival Factors */}
+                  <SurvivalFactorsPanel
+                    dimensions={result.dimensions}
+                    intel={intel}
+                    experience={experience}
+                    scoreColor={scoreColor}
+                    hasManagement={hasManagement}
+                  />
+
+                  {/* §6 — Role Evolution Path */}
+                  <RoleEvolutionPath
+                    roleKey={workTypeKey}
+                    roleLabel={roleLabel}
+                    intel={intel}
+                    scoreColor={scoreColor}
+                    evolutionPath={evolutionPath}
+                  />
+                </div>
+              )}
+
+              {/* ── TAB 5: ACTION STRATEGY ──────────────────────────────────── */}
+              {activeTab === 'strategy' && (
+                <EnhancedActionPlan
+                  intel={intel}
+                  experience={experience}
+                  score={result.total}
+                  trajectory={trajectory}
+                  scoreColor={scoreColor}
+                  salaryRange={salaryRange || undefined}
+                />
               )}
             </div>
 

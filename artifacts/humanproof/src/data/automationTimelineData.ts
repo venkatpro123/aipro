@@ -2528,6 +2528,155 @@ export function listRolesWithAutomationData(): string[] {
   return Object.keys(AUTOMATION_TIMELINE_DB);
 }
 
+// ─── Role Evolution Paths ─────────────────────────────────────────────────────
+// Career evolution rail for RoleEvolutionPath.tsx.
+// Additive only — does not change any existing exports.
+
+export interface RoleEvolutionNode {
+  label: string;
+  timeframe: string;
+  type: 'current' | 'augmented' | 'specialized' | 'transformed';
+}
+
+export const ROLE_EVOLUTION_PATHS: Partial<Record<string, RoleEvolutionNode[]>> = {
+  // Software
+  swe: [
+    { label: 'Software Engineer',                   timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Engineer',               timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Product Engineering Specialist',      timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Systems Architect',                timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  sw_frontend: [
+    { label: 'Frontend Developer',                  timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Frontend Engineer',      timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Product Engineering Specialist',      timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Systems Coordinator',              timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  sw_backend: [
+    { label: 'Backend Engineer',                    timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Backend Specialist',     timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Distributed Systems Architect',       timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Infrastructure Lead',              timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  ml_engineer: [
+    { label: 'ML Engineer',                         timeframe: 'Now',        type: 'current' },
+    { label: 'Foundation Model Specialist',         timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'AI Systems Architect',                timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Research Director',                timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  data_analyst: [
+    { label: 'Data Analyst',                        timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Analyst',                timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Decision Intelligence Specialist',    timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Business Intelligence Strategist',    timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  data_scientist: [
+    { label: 'Data Scientist',                      timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Data Scientist',         timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Applied AI Researcher',               timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Strategy Lead',                    timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  devops: [
+    { label: 'DevOps Engineer',                     timeframe: 'Now',        type: 'current' },
+    { label: 'Platform Engineering Specialist',     timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'AI-Ops Architect',                    timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Autonomous Systems Reliability Lead', timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  product_manager: [
+    { label: 'Product Manager',                     timeframe: 'Now',        type: 'current' },
+    { label: 'AI Product Strategist',               timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'AI Product Director',                 timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Human-AI Experience Lead',            timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Finance
+  financial_analyst: [
+    { label: 'Financial Analyst',                   timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Analyst',                timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Strategic Finance Specialist',        timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Finance Director',                 timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  accountant: [
+    { label: 'Accountant',                          timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Assisted Controller',              timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Advisory & Compliance Specialist',    timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Financial Intelligence Strategist',   timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Marketing & Content
+  content_writer: [
+    { label: 'Content Writer',                      timeframe: 'Now',        type: 'current' },
+    { label: 'AI Content Director',                 timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Brand Narrative Strategist',          timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Human Insight Lead',                  timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  digital_marketer: [
+    { label: 'Digital Marketer',                    timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Growth Specialist',      timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Customer Intelligence Strategist',    timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Marketing Architect',              timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Design
+  ux_designer: [
+    { label: 'UX Designer',                         timeframe: 'Now',        type: 'current' },
+    { label: 'AI UX Specialist',                    timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Human Experience Architect',          timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Interaction Design Lead',          timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // HR
+  hr_specialist: [
+    { label: 'HR Specialist',                       timeframe: 'Now',        type: 'current' },
+    { label: 'People Analytics Specialist',         timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Organizational Intelligence Lead',    timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Human Capital Strategist',            timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Customer Support
+  customer_support: [
+    { label: 'Customer Support Specialist',         timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Escalation Specialist',            timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Customer Experience Designer',        timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'CX Intelligence Lead',                timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Sales
+  sales_rep: [
+    { label: 'Sales Representative',               timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Account Executive',      timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Strategic Account Specialist',        timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Revenue Intelligence Director',       timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Legal
+  lawyer: [
+    { label: 'Lawyer',                              timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Legal Counsel',          timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Legal Strategy Specialist',           timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Legal Intelligence Director',         timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  // Healthcare
+  registered_nurse: [
+    { label: 'Registered Nurse',                    timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Assisted Clinical Specialist',     timeframe: '~2027–2029', type: 'augmented' },
+    { label: 'Advanced Clinical Practitioner',      timeframe: '~2029–2031', type: 'specialized' },
+    { label: 'Health Systems Integration Lead',     timeframe: '~2032+',     type: 'transformed' },
+  ],
+  physician: [
+    { label: 'Physician',                           timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Diagnostician',          timeframe: '~2027–2029', type: 'augmented' },
+    { label: 'Complex Case Specialist',             timeframe: '~2029–2032', type: 'specialized' },
+    { label: 'Medical Intelligence Architect',      timeframe: '~2032+',     type: 'transformed' },
+  ],
+  // Operations
+  project_manager: [
+    { label: 'Project Manager',                     timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Program Manager',        timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Strategic Program Architect',         timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'AI Operations Director',              timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+  operations_analyst: [
+    { label: 'Operations Analyst',                  timeframe: 'Now',        type: 'current' },
+    { label: 'AI-Augmented Ops Specialist',         timeframe: '~2026–2027', type: 'augmented' },
+    { label: 'Process Intelligence Lead',           timeframe: '~2028–2030', type: 'specialized' },
+    { label: 'Autonomous Operations Architect',     timeframe: '~2031–2032+',type: 'transformed' },
+  ],
+};
+
 export function getDisplacementProbabilityByYear(
   roleKey: string,
   year: 2026 | 2028 | 2030 | 2032,
