@@ -86,9 +86,14 @@ RETURNS void LANGUAGE sql AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION public.expire_analysis_cache()
-RETURNS void LANGUAGE sql AS $$
-  DELETE FROM public.layoff_analysis_cache
-  WHERE created_at < NOW() - INTERVAL '24 hours';
+RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema = 'public' AND table_name = 'layoff_analysis_cache') THEN
+    DELETE FROM public.layoff_analysis_cache
+    WHERE created_at < NOW() - INTERVAL '24 hours';
+  END IF;
+END;
 $$;
 
 -- refresh_peer_benchmarks() depends on layoff_scores and peer_benchmarks.

@@ -5,36 +5,42 @@
 
 INSERT INTO public.company_intelligence
   (company_name, ticker, is_public, industry, region, employee_count,
+   company_size, stage,
    financial_signals, layoff_history, hiring_signals,
    ai_exposure_index, company_risk_score, confidence_score, archetype,
    data_source, last_updated)
 VALUES
 -- ── Tier 1: FAANG / mega-cap ────────────────────────────────────────────────
 ('Google', 'GOOGL', true, 'Technology', 'US', 180000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":15,"stock_90d_change":8,"revenue_per_employee":380000}',
  '{"last24months":[{"date":"2024-01-20","percentCut":6}],"rounds":1,"last_percent":6}',
  '{"is_public":true,"ticker":"GOOGL","region":"US"}',
  0.75, 42, 0.92, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Meta', 'META', true, 'Technology', 'US', 72000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":22,"stock_90d_change":14,"revenue_per_employee":520000}',
  '{"last24months":[{"date":"2026-01-10","percentCut":3},{"date":"2025-02-15","percentCut":5}],"rounds":2,"last_percent":3}',
  '{"is_public":true,"ticker":"META","region":"US"}',
  0.85, 38, 0.93, 'hyper_growth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Amazon', 'AMZN', true, 'E-commerce', 'US', 1500000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":11,"stock_90d_change":5,"revenue_per_employee":290000}',
  '{"last24months":[{"date":"2026-01-15","percentCut":1},{"date":"2025-03-01","percentCut":1}],"rounds":2,"last_percent":1}',
  '{"is_public":true,"ticker":"AMZN","region":"US"}',
  0.80, 35, 0.94, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Apple', 'AAPL', true, 'Technology', 'US', 161000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":5,"stock_90d_change":2,"revenue_per_employee":2400000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"AAPL","region":"US"}',
  0.70, 22, 0.95, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Microsoft', 'MSFT', true, 'Technology', 'US', 221000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":18,"stock_90d_change":12,"revenue_per_employee":950000}',
  '{"last24months":[{"date":"2025-10-10","percentCut":2}],"rounds":1,"last_percent":2}',
  '{"is_public":true,"ticker":"MSFT","region":"US"}',
@@ -42,30 +48,35 @@ VALUES
 
 -- ── Enterprise SaaS / Cloud ──────────────────────────────────────────────────
 ('Salesforce', 'CRM', true, 'Technology', 'US', 72000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":11,"stock_90d_change":-4,"revenue_per_employee":480000}',
  '{"last24months":[{"date":"2025-01-20","percentCut":8}],"rounds":1,"last_percent":8}',
  '{"is_public":true,"ticker":"CRM","region":"US"}',
  0.80, 45, 0.88, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Oracle', 'ORCL', true, 'Technology', 'US', 143000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":7,"stock_90d_change":-12,"revenue_per_employee":310000}',
  '{"last24months":[{"date":"2026-04-01","percentCut":21}],"rounds":1,"last_percent":21}',
  '{"is_public":true,"ticker":"ORCL","region":"US"}',
  0.65, 58, 0.85, 'restructuring', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('SAP', 'SAP', true, 'Technology', 'EU', 105000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":9,"stock_90d_change":6,"revenue_per_employee":340000}',
  '{"last24months":[{"date":"2024-01-24","percentCut":8}],"rounds":1,"last_percent":8}',
  '{"is_public":true,"ticker":"SAP","region":"EU"}',
  0.70, 42, 0.87, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Zoom', 'ZM', true, 'Technology', 'US', 7400,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":3,"stock_90d_change":-12,"revenue_per_employee":620000}',
  '{"last24months":[{"date":"2023-02-07","percentCut":15}],"rounds":1,"last_percent":15}',
  '{"is_public":true,"ticker":"ZM","region":"US"}',
  0.65, 52, 0.82, 'post_hypergrowth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Dropbox', 'DBX', true, 'Technology', 'US', 2500,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":4,"stock_90d_change":-14,"revenue_per_employee":960000}',
  '{"last24months":[{"date":"2024-04-26","percentCut":20}],"rounds":1,"last_percent":20}',
  '{"is_public":true,"ticker":"DBX","region":"US"}',
@@ -73,24 +84,28 @@ VALUES
 
 -- ── Semiconductor / Hardware ─────────────────────────────────────────────────
 ('Intel', 'INTC', true, 'Technology', 'US', 124800,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":-16,"stock_90d_change":-35,"revenue_per_employee":570000}',
  '{"last24months":[{"date":"2024-08-01","percentCut":15},{"date":"2025-06-01","percentCut":5}],"rounds":2,"last_percent":5}',
  '{"is_public":true,"ticker":"INTC","region":"US"}',
  0.60, 74, 0.87, 'restructuring', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('IBM', 'IBM', true, 'Technology', 'US', 288000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":3,"stock_90d_change":8,"revenue_per_employee":215000}',
  '{"last24months":[{"date":"2024-01-10","percentCut":1.5}],"rounds":1,"last_percent":1.5}',
  '{"is_public":true,"ticker":"IBM","region":"US"}',
  0.85, 38, 0.86, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Cisco', 'CSCO', true, 'Technology', 'US', 84000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":-6,"stock_90d_change":-10,"revenue_per_employee":680000}',
  '{"last24months":[{"date":"2024-02-15","percentCut":5},{"date":"2024-08-14","percentCut":7}],"rounds":2,"last_percent":7}',
  '{"is_public":true,"ticker":"CSCO","region":"US"}',
  0.68, 56, 0.86, 'restructuring', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Dell Technologies', 'DELL', true, 'Technology', 'US', 120000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":-14,"stock_90d_change":-18,"revenue_per_employee":750000}',
  '{"last24months":[{"date":"2024-02-05","percentCut":5}],"rounds":1,"last_percent":5}',
  '{"is_public":true,"ticker":"DELL","region":"US"}',
@@ -98,18 +113,21 @@ VALUES
 
 -- ── Social / Consumer Tech ───────────────────────────────────────────────────
 ('Snap', 'SNAP', true, 'Technology', 'US', 5000,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":14,"stock_90d_change":-22,"revenue_per_employee":920000}',
  '{"last24months":[{"date":"2023-08-30","percentCut":20}],"rounds":1,"last_percent":20}',
  '{"is_public":true,"ticker":"SNAP","region":"US"}',
  0.60, 62, 0.80, 'post_hypergrowth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Twitter / X', NULL, false, 'Technology', 'US', 1500,
+ 'mid_market', 'private',
  '{"revenue_growth_yoy":-40,"stock_90d_change":null,"revenue_per_employee":1800000}',
  '{"last24months":[{"date":"2022-11-04","percentCut":50},{"date":"2023-02-26","percentCut":10}],"rounds":2,"last_percent":10}',
  '{"is_public":false,"region":"US"}',
  0.50, 78, 0.72, 'restructuring', 'Layoffs.fyi', '2026-04-01'),
 
 ('ByteDance', NULL, false, 'Technology', 'APAC', 110000,
+ 'enterprise', 'private',
  '{"revenue_growth_yoy":30,"stock_90d_change":null,"revenue_per_employee":850000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":false,"region":"APAC"}',
@@ -117,12 +135,14 @@ VALUES
 
 -- ── E-commerce / Marketplace ─────────────────────────────────────────────────
 ('Shopify', 'SHOP', true, 'E-commerce', 'US', 8300,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":26,"stock_90d_change":5,"revenue_per_employee":850000}',
  '{"last24months":[{"date":"2023-05-04","percentCut":20}],"rounds":1,"last_percent":20}',
  '{"is_public":true,"ticker":"SHOP","region":"US"}',
  0.78, 40, 0.84, 'hyper_growth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Airbnb', 'ABNB', true, 'Hospitality', 'US', 6900,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":12,"stock_90d_change":-5,"revenue_per_employee":1380000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"ABNB","region":"US"}',
@@ -130,18 +150,21 @@ VALUES
 
 -- ── Transport / Gig ──────────────────────────────────────────────────────────
 ('Uber', 'UBER', true, 'Transportation', 'US', 32000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":16,"stock_90d_change":3,"revenue_per_employee":1150000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"UBER","region":"US"}',
  0.68, 25, 0.88, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Lyft', 'LYFT', true, 'Transportation', 'US', 4000,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":7,"stock_90d_change":-8,"revenue_per_employee":1100000}',
  '{"last24months":[{"date":"2023-04-27","percentCut":26}],"rounds":1,"last_percent":26}',
  '{"is_public":true,"ticker":"LYFT","region":"US"}',
  0.55, 55, 0.80, 'post_hypergrowth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Tesla', 'TSLA', true, 'Manufacturing', 'US', 140000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":-3,"stock_90d_change":-25,"revenue_per_employee":640000}',
  '{"last24months":[{"date":"2025-04-15","percentCut":10}],"rounds":1,"last_percent":10}',
  '{"is_public":true,"ticker":"TSLA","region":"US"}',
@@ -149,24 +172,28 @@ VALUES
 
 -- ── Media / Entertainment ────────────────────────────────────────────────────
 ('Netflix', 'NFLX', true, 'Media & Publishing', 'US', 13000,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":15,"stock_90d_change":10,"revenue_per_employee":2500000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"NFLX","region":"US"}',
  0.70, 20, 0.90, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Spotify', 'SPOT', true, 'Media & Publishing', 'EU', 7000,
+ 'mid_market', 'public',
  '{"revenue_growth_yoy":18,"stock_90d_change":20,"revenue_per_employee":2100000}',
  '{"last24months":[{"date":"2025-06-01","percentCut":17}],"rounds":1,"last_percent":17}',
  '{"is_public":true,"ticker":"SPOT","region":"EU"}',
  0.60, 42, 0.82, 'post_hypergrowth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Disney', 'DIS', true, 'Media & Publishing', 'US', 220000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":4,"stock_90d_change":-8,"revenue_per_employee":290000}',
  '{"last24months":[{"date":"2023-03-27","percentCut":3.5}],"rounds":1,"last_percent":3.5}',
  '{"is_public":true,"ticker":"DIS","region":"US"}',
  0.50, 48, 0.85, 'restructuring', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Warner Bros Discovery', 'WBD', true, 'Media & Publishing', 'US', 35000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":-5,"stock_90d_change":-18,"revenue_per_employee":520000}',
  '{"last24months":[{"date":"2023-04-01","percentCut":6}],"rounds":1,"last_percent":6}',
  '{"is_public":true,"ticker":"WBD","region":"US"}',
@@ -174,36 +201,42 @@ VALUES
 
 -- ── Finance ──────────────────────────────────────────────────────────────────
 ('JPMorgan Chase', 'JPM', true, 'Financial Services', 'US', 310000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":9,"stock_90d_change":6,"revenue_per_employee":420000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"JPM","region":"US"}',
  0.72, 22, 0.90, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Goldman Sachs', 'GS', true, 'Financial Services', 'US', 45000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":5,"stock_90d_change":10,"revenue_per_employee":2400000}',
  '{"last24months":[{"date":"2023-01-11","percentCut":6}],"rounds":1,"last_percent":6}',
  '{"is_public":true,"ticker":"GS","region":"US"}',
  0.75, 30, 0.88, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Morgan Stanley', 'MS', true, 'Financial Services', 'US', 82000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":8,"stock_90d_change":12,"revenue_per_employee":1500000}',
  '{"last24months":[{"date":"2023-12-01","percentCut":2}],"rounds":1,"last_percent":2}',
  '{"is_public":true,"ticker":"MS","region":"US"}',
  0.70, 28, 0.87, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('HSBC', 'HSBC', true, 'Financial Services', 'EU', 220000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":6,"stock_90d_change":4,"revenue_per_employee":380000}',
  '{"last24months":[{"date":"2023-10-01","percentCut":2}],"rounds":1,"last_percent":2}',
  '{"is_public":true,"ticker":"HSBC","region":"EU"}',
  0.60, 32, 0.85, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('PayPal', 'PYPL', true, 'Financial Services', 'US', 27200,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":6,"stock_90d_change":-8,"revenue_per_employee":1050000}',
  '{"last24months":[{"date":"2024-01-30","percentCut":9}],"rounds":1,"last_percent":9}',
  '{"is_public":true,"ticker":"PYPL","region":"US"}',
  0.75, 48, 0.85, 'post_hypergrowth', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Stripe', NULL, false, 'Financial Services', 'US', 7000,
+ 'mid_market', 'private',
  '{"revenue_growth_yoy":25,"stock_90d_change":null,"revenue_per_employee":600000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":false,"region":"US","last_funding_round":"Series I","months_since_funding":18}',
@@ -211,30 +244,35 @@ VALUES
 
 -- ── Consulting / Professional Services ───────────────────────────────────────
 ('Accenture', 'ACN', true, 'Consulting', 'GLOBAL', 738000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":3,"stock_90d_change":-5,"revenue_per_employee":85000}',
  '{"last24months":[{"date":"2025-03-20","percentCut":2.5}],"rounds":1,"last_percent":2.5}',
  '{"is_public":true,"ticker":"ACN","region":"GLOBAL"}',
  0.72, 35, 0.88, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('McKinsey', NULL, false, 'Consulting', 'GLOBAL', 45000,
+ 'enterprise', 'private',
  '{"revenue_growth_yoy":8,"stock_90d_change":null,"revenue_per_employee":350000}',
  '{"last24months":[{"date":"2025-06-15","percentCut":3}],"rounds":1,"last_percent":3}',
  '{"is_public":false,"region":"GLOBAL"}',
  0.60, 30, 0.78, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Deloitte', NULL, false, 'Consulting', 'GLOBAL', 415000,
+ 'enterprise', 'private',
  '{"revenue_growth_yoy":5,"stock_90d_change":null,"revenue_per_employee":75000}',
  '{"last24months":[{"date":"2024-05-01","percentCut":2}],"rounds":1,"last_percent":2}',
  '{"is_public":false,"region":"GLOBAL"}',
  0.65, 30, 0.78, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('PwC', NULL, false, 'Consulting', 'GLOBAL', 328000,
+ 'enterprise', 'private',
  '{"revenue_growth_yoy":4,"stock_90d_change":null,"revenue_per_employee":120000}',
  '{"last24months":[{"date":"2024-10-01","percentCut":2.5}],"rounds":1,"last_percent":2.5}',
  '{"is_public":false,"region":"GLOBAL"}',
  0.60, 28, 0.77, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Capgemini', 'CAP', true, 'Consulting', 'EU', 350000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":3,"stock_90d_change":-6,"revenue_per_employee":55000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"CAP","region":"EU"}',
@@ -242,36 +280,42 @@ VALUES
 
 -- ── Indian IT ────────────────────────────────────────────────────────────────
 ('Tata Consultancy Services', 'TCS', true, 'Technology', 'IN', 615000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":10,"stock_90d_change":15,"revenue_per_employee":35000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"TCS","region":"IN"}',
  0.70, 20, 0.90, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Infosys', 'INFY', true, 'Technology', 'IN', 315000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":6,"stock_90d_change":-3,"revenue_per_employee":58000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"INFY","region":"IN"}',
  0.68, 25, 0.88, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Wipro', 'WIT', true, 'Technology', 'IN', 240000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":2,"stock_90d_change":-8,"revenue_per_employee":45000}',
  '{"last24months":[{"date":"2025-09-01","percentCut":3}],"rounds":1,"last_percent":3}',
  '{"is_public":true,"ticker":"WIT","region":"IN"}',
  0.60, 38, 0.85, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('HCL Technologies', 'HCLTECH', true, 'Technology', 'IN', 227000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":5,"stock_90d_change":2,"revenue_per_employee":42000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"HCLTECH","region":"IN"}',
  0.65, 25, 0.85, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Cognizant', 'CTSH', true, 'Technology', 'US', 340000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":1,"stock_90d_change":-6,"revenue_per_employee":52000}',
  '{"last24months":[{"date":"2025-02-01","percentCut":3.5}],"rounds":1,"last_percent":3.5}',
  '{"is_public":true,"ticker":"CTSH","region":"US"}',
  0.58, 42, 0.85, 'mature_profitable', 'Crunchbase + Layoffs.fyi', '2026-04-01'),
 
 ('Tech Mahindra', 'TECHM', true, 'Technology', 'IN', 148000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":4,"stock_90d_change":-4,"revenue_per_employee":36000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"TECHM","region":"IN"}',
@@ -279,12 +323,14 @@ VALUES
 
 -- ── Retail ───────────────────────────────────────────────────────────────────
 ('Walmart', 'WMT', true, 'Retail', 'US', 2100000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":5,"stock_90d_change":8,"revenue_per_employee":280000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"WMT","region":"US"}',
  0.50, 22, 0.90, 'mature_profitable', 'Crunchbase', '2026-04-01'),
 
 ('Target', 'TGT', true, 'Retail', 'US', 440000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":1,"stock_90d_change":-10,"revenue_per_employee":210000}',
  '{"last24months":[{"date":"2023-05-17","percentCut":0.5}],"rounds":1,"last_percent":0.5}',
  '{"is_public":true,"ticker":"TGT","region":"US"}',
@@ -292,24 +338,28 @@ VALUES
 
 -- ── AI / Startup ─────────────────────────────────────────────────────────────
 ('OpenAI', NULL, false, 'Technology', 'US', 2000,
+ 'startup', 'private',
  '{"revenue_growth_yoy":200,"stock_90d_change":null,"revenue_per_employee":5000000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":false,"region":"US","last_funding_round":"Series F","months_since_funding":6}',
  0.95, 15, 0.75, 'hyper_growth', 'Crunchbase', '2026-04-01'),
 
 ('Databricks', NULL, false, 'Technology', 'US', 5000,
+ 'mid_market', 'private',
  '{"revenue_growth_yoy":50,"stock_90d_change":null,"revenue_per_employee":1800000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":false,"region":"US","last_funding_round":"Series J","months_since_funding":4}',
  0.85, 18, 0.78, 'hyper_growth', 'Crunchbase', '2026-04-01'),
 
 ('Notion', NULL, false, 'Technology', 'US', 600,
+ 'startup', 'private',
  '{"revenue_growth_yoy":60,"stock_90d_change":null,"revenue_per_employee":2200000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":false,"region":"US","last_funding_round":"Series C","months_since_funding":30}',
  0.72, 20, 0.72, 'hyper_growth', 'Crunchbase', '2026-04-01'),
 
 ('Figma', NULL, false, 'Technology', 'US', 1200,
+ 'startup', 'private',
  '{"revenue_growth_yoy":40,"stock_90d_change":null,"revenue_per_employee":3200000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":false,"region":"US","last_funding_round":"Series E","months_since_funding":24}',
@@ -317,6 +367,7 @@ VALUES
 
 -- ── Semiconductor / Consumer Electronics ─────────────────────────────────────
 ('Samsung', '005930', true, 'Technology', 'APAC', 270000,
+ 'enterprise', 'public',
  '{"revenue_growth_yoy":8,"stock_90d_change":-5,"revenue_per_employee":440000}',
  '{"last24months":[],"rounds":0,"last_percent":null}',
  '{"is_public":true,"ticker":"005930","region":"APAC"}',

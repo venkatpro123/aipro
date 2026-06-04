@@ -33,7 +33,6 @@ import DailyChallenge from "../components/DailyChallenge";
 import RiskCalculatorsView from "../components/RiskCalculatorsView";
 import {
   getScoreHistory,
-  getEverCompletedFlags,
   hasLegacyVersionEntries,
 } from "../utils/scoreStorage";
 import {
@@ -166,13 +165,6 @@ export default function ToolsPage() {
     [state],
   );
 
-  const completionCount =
-    Object.values(getEverCompletedFlags()).filter(Boolean).length ||
-    [state.jobRiskScore, state.skillRiskScore, state.humanScore].filter(
-      (x) => x !== null,
-    ).length;
-  const completionPct = Math.round((completionCount / 3) * 100);
-
   return (
     <div className="page-wrap" style={{ background: "var(--bg)" }}>
       <div className="container" style={{ maxWidth: 1280 }}>
@@ -184,60 +176,8 @@ export default function ToolsPage() {
           transition={{ duration: 0.4 }}
           style={{ marginBottom: '40px' }}
         >
-          <div className="dashboard-header-row">
-            <div>
-              <span className="label-xs" style={{ color: 'var(--cyan)', display: 'block', marginBottom: '10px' }}>
-                ● LIVE · NODE CONNECTIVITY
-              </span>
-              <h1 style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 2.75rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.05em',
-                lineHeight: 1,
-                color: 'var(--text)',
-                marginBottom: '8px',
-              }}>
-                MY DASHBOARD
-              </h1>
-              <p style={{ color: 'var(--text-3)', fontSize: '0.875rem', fontWeight: 500 }}>
-                AI displacement intelligence across thousands of global roles
-              </p>
-            </div>
-
+          <div className="dashboard-header-row" style={{ justifyContent: 'flex-end' }}>
             <div className="dashboard-header-actions">
-              {/* Module Progress Ring */}
-              <div className="module-progress-card">
-                <div style={{ position: 'relative', width: 48, height: 48, flexShrink: 0 }}>
-                  <svg width="48" height="48" viewBox="0 0 48 48">
-                    <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-                    <circle cx="24" cy="24" r="20" fill="none"
-                      stroke={completionPct === 100 ? 'var(--emerald)' : 'var(--cyan)'}
-                      strokeWidth="4"
-                      strokeDasharray={`${(completionPct / 100) * 125.6} 125.6`}
-                      strokeLinecap="round"
-                      transform="rotate(-90 24 24)"
-                      style={{ transition: 'stroke-dasharray 0.8s ease' }}
-                    />
-                  </svg>
-                  <span style={{
-                    position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.6rem', fontWeight: 900, color: completionPct === 100 ? 'var(--emerald)' : 'var(--cyan)',
-                    fontFamily: 'var(--font-mono)',
-                  }}>
-                    {completionPct}%
-                  </span>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--text-2)', textTransform: 'uppercase' }}>
-                    {completionCount}/3 Modules
-                  </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '2px' }}>
-                    {completionPct === 100 ? 'Assessment complete' : 'Complete all for full analysis'}
-                  </div>
-                </div>
-              </div>
-
               {/* Export */}
               <div style={{ position: 'relative' }}>
                 <button onClick={() => setShowExportMenu(!showExportMenu)} className="btn btn-secondary btn-sm">
@@ -326,9 +266,9 @@ export default function ToolsPage() {
                   gap: 6,
                   padding: '7px 14px',
                   borderRadius: 999,
-                  border: `1px solid ${isActive ? 'rgba(0,212,224,0.35)' : 'rgba(255,255,255,0.10)'}`,
-                  background: isActive ? 'rgba(0,212,224,0.10)' : 'rgba(255,255,255,0.04)',
-                  color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.45)',
+                  border: `1px solid ${isActive ? 'var(--border-cyan)' : 'var(--border-2)'}`,
+                  background: isActive ? 'var(--cyan-dim)' : 'var(--glass-mid)',
+                  color: isActive ? 'var(--cyan)' : 'var(--text-3)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   letterSpacing: '0.02em',

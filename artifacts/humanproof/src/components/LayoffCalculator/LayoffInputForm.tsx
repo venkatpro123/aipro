@@ -311,14 +311,7 @@ const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
         </span>
       </div>
       <div style={{ color: 'var(--text-3)', fontSize: '0.72rem', lineHeight: 1.5 }}>
-        Skills &amp; Career tab will show general guidance.{' '}
-        <a
-          href="/contact"
-          style={{ color: '#818cf8', textDecoration: 'underline', cursor: 'pointer' }}
-          onClick={e => { e.stopPropagation(); window.open('/contact', '_blank'); }}
-        >
-          Request coverage →
-        </a>
+        Skills &amp; Career tab will show general guidance.
       </div>
     </div>
   );

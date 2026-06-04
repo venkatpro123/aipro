@@ -467,7 +467,6 @@ export default function IntelligenceReportPage() {
           <div className="flex gap-4 mt-3">
             <Link to="/intelligence" className="text-cyan-400 hover:underline">Intelligence Dashboard</Link>
             <Link to="/predictions" className="text-cyan-400 hover:underline">Prediction Ledger</Link>
-            <Link to="/privacy" className="text-cyan-400 hover:underline">Privacy Policy</Link>
           </div>
         </div>
 

@@ -23,21 +23,34 @@
       frame-ancestors 'none';
       upgrade-insecure-requests;
     ">
-    <title>HumanShield | Ultimate AI Career Protection</title>
-    <meta name="description" content="The high-fidelity standard for AI displacement auditing. Shield your professional future with the world's most advanced frontier AI risk engine." />
+    <title>HumanProof | Career Risk Intelligence Platform</title>
+    <meta name="description" content="Real-time monitoring of your company, role, and market signals — with predictive layoff risk alerts and 30–90 day forecasts." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
     <meta name="theme-color" content="#090c14" />
+    <!-- Pre-paint theme application — avoids flash of wrong theme.
+         Default = dark. 'light' is opt-in and persisted in localStorage. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('hp-theme');
+          if (t === 'light') {
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {}
+        var isLight = document.documentElement.classList.contains('light');
+        document.documentElement.style.background = isLight ? '#f6f7f9' : '#090c14';
+      })();
+    </script>
   </head>
-  <body style="background-color:#090c14;color:#f0f0f5;margin:0;">
+  <body style="margin:0;">
     <div id="root">
-      <!-- Inline loading shell — React replaces this on mount.
-           Prevents blank/black flash before the JS bundle executes. -->
-      <div id="hs-boot" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;">
+      <!-- Inline loading shell — React replaces this on mount. -->
+      <div id="hs-boot" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;background:var(--bg,#090c14);">
         <div style="width:10px;height:10px;border-radius:50%;background:#00d4e0;box-shadow:0 0 16px #00d4e0;animation:hs-pulse 1.4s ease-in-out infinite;"></div>
-        <span style="font-size:0.75rem;letter-spacing:0.12em;color:rgba(240,240,245,0.4);text-transform:uppercase;">HumanShield</span>
+        <span style="font-size:0.75rem;letter-spacing:0.12em;color:rgba(160,170,190,0.5);text-transform:uppercase;">HumanProof</span>
       </div>
     </div>
     <style>
@@ -57,8 +70,8 @@
           if (!boot) return; // React mounted — nothing to do
           boot.innerHTML =
             '<div style="text-align:center;padding:32px;max-width:400px;">' +
-            '<p style="font-size:0.9rem;color:rgba(240,240,245,0.7);margin:0 0 16px">Failed to load. Check your internet connection or try a hard refresh.</p>' +
-            '<button onclick="location.reload(true)" style="background:#00d4e0;color:#000;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:0.875rem;font-weight:600">Refresh</button>' +
+            '<p style="font-size:0.9rem;color:rgba(17,19,26,0.7);margin:0 0 16px">Failed to load. Check your internet connection or try a hard refresh.</p>' +
+            '<button onclick="location.reload(true)" style="background:#0096aa;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:0.875rem;font-weight:600">Refresh</button>' +
             '</div>';
         }, 12000);
         // Cancel the timeout if React mounts and removes hs-boot from the DOM

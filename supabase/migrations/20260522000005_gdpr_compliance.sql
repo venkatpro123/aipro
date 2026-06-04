@@ -25,33 +25,32 @@
 
 -- ── 1. user_profiles: GDPR consent columns ────────────────────────────────────
 
-ALTER TABLE public.user_profiles
-  ADD COLUMN IF NOT EXISTS gdpr_consent_given        BOOLEAN      DEFAULT false,
-  ADD COLUMN IF NOT EXISTS gdpr_consent_at           TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS gdpr_consent_version      TEXT,          -- consent schema version, e.g. '1.0'
-  ADD COLUMN IF NOT EXISTS is_eu_user                BOOLEAN      DEFAULT false,
-  -- Community share: EU users require explicit opt-IN (reverse of global default).
-  -- Non-EU: controlled by hp_community_share localStorage key.
-  -- EU: controlled by this DB column AND the hp_community_share key.
-  ADD COLUMN IF NOT EXISTS community_share_consented BOOLEAN      DEFAULT false,
-  -- Financial minimization: when false, monthly_expenses_usd and
-  -- savings_months_runway are never transmitted to Supabase for this user.
-  -- Stored in localStorage (gdprService) and respected by userProfileService.
-  ADD COLUMN IF NOT EXISTS financial_data_consented  BOOLEAN      DEFAULT false;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='user_profiles') THEN
+    ALTER TABLE public.user_profiles
+      ADD COLUMN IF NOT EXISTS gdpr_consent_given        BOOLEAN      DEFAULT false,
+      ADD COLUMN IF NOT EXISTS gdpr_consent_at           TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS gdpr_consent_version      TEXT,
+      ADD COLUMN IF NOT EXISTS is_eu_user                BOOLEAN      DEFAULT false,
+      ADD COLUMN IF NOT EXISTS community_share_consented BOOLEAN      DEFAULT false,
+      ADD COLUMN IF NOT EXISTS financial_data_consented  BOOLEAN      DEFAULT false;
+  END IF;
+END $$;
 
-COMMENT ON COLUMN public.user_profiles.is_eu_user IS
-  'True when user is in an EU member state (detected by timezone/currency/IP '
-  'or explicitly set by user). Governs GDPR-specific data handling rules.';
-
-COMMENT ON COLUMN public.user_profiles.community_share_consented IS
-  'EU-specific: explicit opt-IN for community risk signal sharing. '
-  'Non-EU users use the hp_community_share localStorage key. '
-  'For EU users, both this column AND the localStorage key must be true.';
-
-COMMENT ON COLUMN public.user_profiles.financial_data_consented IS
-  'EU-specific: explicit consent to store monthly_expenses_usd and '
-  'savings_months_runway in Supabase. When false, those fields are '
-  'localStorage-only (gdprService.getLocalFinancialData()).';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='user_profiles' AND column_name='is_eu_user') THEN
+    COMMENT ON COLUMN public.user_profiles.is_eu_user IS
+      'True when user is in an EU member state. Governs GDPR-specific data handling rules.';
+    COMMENT ON COLUMN public.user_profiles.community_share_consented IS
+      'EU-specific: explicit opt-IN for community risk signal sharing.';
+    COMMENT ON COLUMN public.user_profiles.financial_data_consented IS
+      'EU-specific: explicit consent to store financial data in Supabase.';
+  END IF;
+END $$;
 
 -- ── 2. user_data_deletion_requests ────────────────────────────────────────────
 -- Permanent audit trail of GDPR Art. 17 requests.
@@ -71,9 +70,8 @@ CREATE TABLE IF NOT EXISTS public.user_data_deletion_requests (
 
   requested_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
-  -- 30-day SLA deadline (GDPR Art. 12.3)
-  sla_deadline_at       TIMESTAMPTZ   NOT NULL
-    GENERATED ALWAYS AS (requested_at + INTERVAL '30 days') STORED,
+  -- 30-day SLA deadline (GDPR Art. 12.3) — computed on insert
+  sla_deadline_at       TIMESTAMPTZ   NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
 
   -- Filled when deletion completes
   completed_at          TIMESTAMPTZ,
@@ -138,21 +136,29 @@ DECLARE
   v_up_rows  INTEGER := 0;
   v_req_id   UUID;
 BEGIN
-  -- layoff_scores
-  DELETE FROM public.layoff_scores WHERE user_id = p_user_id;
-  GET DIAGNOSTICS v_ls_rows = ROW_COUNT;
+  -- layoff_scores (dynamic to survive missing table on fresh DB)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='layoff_scores') THEN
+    EXECUTE 'DELETE FROM public.layoff_scores WHERE user_id = $1' USING p_user_id;
+    GET DIAGNOSTICS v_ls_rows = ROW_COUNT;
+  END IF;
 
   -- score_trajectory
-  DELETE FROM public.score_trajectory WHERE user_id = p_user_id;
-  GET DIAGNOSTICS v_st_rows = ROW_COUNT;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='score_trajectory') THEN
+    EXECUTE 'DELETE FROM public.score_trajectory WHERE user_id = $1' USING p_user_id;
+    GET DIAGNOSTICS v_st_rows = ROW_COUNT;
+  END IF;
 
   -- user_prediction_outcomes (bypasses upo_no_delete via SECURITY DEFINER)
-  DELETE FROM public.user_prediction_outcomes WHERE user_id = p_user_id;
-  GET DIAGNOSTICS v_upo_rows = ROW_COUNT;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='user_prediction_outcomes') THEN
+    EXECUTE 'DELETE FROM public.user_prediction_outcomes WHERE user_id = $1' USING p_user_id;
+    GET DIAGNOSTICS v_upo_rows = ROW_COUNT;
+  END IF;
 
   -- user_profiles (last — cascading FKs may depend on this row)
-  DELETE FROM public.user_profiles WHERE user_id = p_user_id;
-  GET DIAGNOSTICS v_up_rows = ROW_COUNT;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='user_profiles') THEN
+    EXECUTE 'DELETE FROM public.user_profiles WHERE user_id = $1' USING p_user_id;
+    GET DIAGNOSTICS v_up_rows = ROW_COUNT;
+  END IF;
 
   -- Insert audit record (with TEXT user_id so it survives the cascade)
   INSERT INTO public.user_data_deletion_requests (
@@ -201,19 +207,31 @@ COMMENT ON FUNCTION public.delete_user_data_gdpr IS
 -- expose a clean direct-delete path for authenticated users.
 -- Drop the blanket no-delete policy, add own-row delete.
 
-DROP POLICY IF EXISTS upo_no_delete ON public.user_prediction_outcomes;
-
-CREATE POLICY upo_own_rows_delete ON public.user_prediction_outcomes
-  FOR DELETE TO authenticated
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='user_prediction_outcomes') THEN
+    DROP POLICY IF EXISTS upo_no_delete ON public.user_prediction_outcomes;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='user_prediction_outcomes' AND policyname='upo_own_rows_delete') THEN
+      CREATE POLICY upo_own_rows_delete ON public.user_prediction_outcomes
+        FOR DELETE TO authenticated
+        USING (auth.uid() = user_id);
+    END IF;
+  END IF;
+END $$;
 
 -- ── 5. RLS: allow own-row DELETE on score_trajectory ─────────────────────────
--- score_trajectory was designed as "immutable history" with no delete policy.
--- GDPR Art. 17 overrides this design decision for EU users.
-
-CREATE POLICY st_own_rows_delete ON public.score_trajectory
-  FOR DELETE TO authenticated
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='score_trajectory') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='score_trajectory' AND policyname='st_own_rows_delete') THEN
+      CREATE POLICY st_own_rows_delete ON public.score_trajectory
+        FOR DELETE TO authenticated
+        USING (auth.uid() = user_id);
+    END IF;
+  END IF;
+END $$;
 
 -- ── 6. community_risk_signals view: EU consent guard ─────────────────────────
 -- The existing view exposes all rows with allow_community_share = true.
@@ -223,28 +241,30 @@ CREATE POLICY st_own_rows_delete ON public.score_trajectory
 -- Non-EU users: existing allow_community_share behavior unchanged.
 -- EU users:     allow_community_share AND community_share_consented required.
 
-CREATE OR REPLACE VIEW public.community_risk_signals AS
-SELECT
-  ls.role_key,
-  ls.industry_key,
-  ls.score,
-  ls.tier,
-  ls.confidence,
-  ls.breakdown,
-  ls.data_quality,
-  ls.calculated_at
-FROM public.layoff_scores ls
-LEFT JOIN public.user_profiles up ON up.user_id = ls.user_id
-WHERE ls.allow_community_share = true
-  AND (
-    -- Non-EU users: standard community share flag suffices
-    (up.is_eu_user IS NOT TRUE)
-    OR
-    -- EU users: require explicit profile-level opt-IN
-    (up.is_eu_user = true AND up.community_share_consented = true)
-  );
-
-COMMENT ON VIEW public.community_risk_signals IS
-  'Community-aggregated risk signals. EU users (is_eu_user=true) require '
-  'both allow_community_share=true AND community_share_consented=true. '
-  'Non-EU users: allow_community_share=true suffices.';
+-- EU-consent guard applied to community_risk_signals only when user_profiles exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='user_profiles')
+     AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='layoff_scores') THEN
+    EXECUTE $view$
+      CREATE OR REPLACE VIEW public.community_risk_signals AS
+      SELECT
+        ls.role_key,
+        ls.industry_key,
+        ls.score,
+        ls.tier,
+        ls.confidence,
+        ls.breakdown,
+        ls.data_quality,
+        ls.calculated_at
+      FROM public.layoff_scores ls
+      LEFT JOIN public.user_profiles up ON up.user_id = ls.user_id
+      WHERE ls.allow_community_share = true
+        AND (
+          (up.is_eu_user IS NOT TRUE)
+          OR
+          (up.is_eu_user = true AND up.community_share_consented = true)
+        )
+    $view$;
+  END IF;
+END $$;

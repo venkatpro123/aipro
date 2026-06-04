@@ -190,7 +190,7 @@ $$;
 SELECT public._v35_register_cron(
   'v35_prune_engine_events',
   '0 5 * * *',
-  $$SELECT public.prune_engine_events();$$
+  $cmd$SELECT public.prune_engine_events();$cmd$
 );
 
 COMMENT ON TABLE public.engine_events IS

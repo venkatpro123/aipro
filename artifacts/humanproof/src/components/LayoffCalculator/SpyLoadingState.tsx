@@ -1,8 +1,8 @@
-// SpyLoadingState.tsx — Globe intelligence-scan loader.
-// Delegates to GlobeAuditLoader. Props preserved for backwards-compatibility.
+// SpyLoadingState.tsx — Neural-network intelligence-scan loader.
+// Delegates to NeuralAuditLoader. Props preserved for backwards-compatibility.
 
 import React from 'react';
-import { GlobeAuditLoader } from './GlobeAuditLoader';
+import { NeuralAuditLoader } from './NeuralAuditLoader';
 import { mapEnsembleStage } from './AuditLoader';
 
 interface Props {
@@ -71,7 +71,7 @@ export const SpyLoadingState: React.FC<Props> = ({
     return <SimpleLoader companyName={companyName} stage={stage} />;
   }
   return (
-    <GlobeAuditLoader
+    <NeuralAuditLoader
       stage={mapEnsembleStage(stage)}
       companyName={companyName}
       limitedDataMode={limitedDataMode}

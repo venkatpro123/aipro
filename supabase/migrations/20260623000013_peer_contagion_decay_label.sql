@@ -74,23 +74,14 @@ ALTER TABLE public.engine_calibration_constants
   ADD COLUMN IF NOT EXISTS added_in_version TEXT;
 
 -- ── 1. Register decay constants in engine_calibration_constants ───────────────
-INSERT INTO public.engine_calibration_constants (key, value, provenance, description, status, cohort_scope, added_in_version)
+INSERT INTO public.engine_calibration_constants (key, value, provenance, description, rationale, status, cohort_scope, added_in_version)
 VALUES
   (
     'sectorContagionAgent.decayLambda',
     '0.023',
     'uncalibrated_placeholder',
-    'GAP-A02 — Exponential decay constant λ for peer contagion recency weighting. '
-    'At λ=0.023: a peer cut 30 days ago carries 50% weight (half-life=30.1 days); '
-    '100 days ago carries 10% weight. '
-    'ESTIMATED: developer choice based on qualitative analysis of 2022-2024 sector wave timing '
-    '(follow-on announcements observed to cluster in 2-6 weeks). '
-    'NOT regression-fitted. '
-    'Calibration method: fit exponential decay to the lag distribution between first '
-    'and follow-on announcements across all documented sector waves in layoffs.fyi 2022-2024. '
-    'INCONSISTENCY: signalDecayModel.sector_contagion uses 21-day half-life (λ≈0.033); '
-    'this constant uses 30-day half-life (λ=0.023). Both are ESTIMATED. '
-    'July 2026 calibration target: unify under one regression-derived value.',
+    'GAP-A02 — Exponential decay constant λ for peer contagion recency weighting.',
+    'ESTIMATED: developer choice based on qualitative analysis of 2022-2024 sector wave timing. July 2026 calibration target: fit regression on lag distribution between first and follow-on announcements.',
     'active',
     'GLOBAL',
     'v40.0'
@@ -99,18 +90,13 @@ VALUES
     'sectorContagionAgent.macroTriggerFraction',
     '0.40',
     'uncalibrated_placeholder',
-    'GAP-A02 — Fraction of sector companies cutting simultaneously above which cuts '
-    'are treated as macro-driven rather than causal contagion. '
-    'ANALYST_DERIVED: 2022 tech wave analysis (analyst observation, not regression). '
-    'At 8% sector fraction (July 2022): ~70% contagion. '
-    'At 38% sector fraction (Nov 2022): ~45% contagion → inflection at ~35-40%. '
-    'Threshold set at 0.40 = midpoint of observed inflection range. '
-    'Calibration requires regression on contagion% vs sectorFraction across all waves.',
+    'GAP-A02 — Fraction of sector companies cutting simultaneously above which cuts are treated as macro-driven rather than causal contagion.',
+    'ANALYST_DERIVED: 2022 tech wave analysis. Threshold set at 0.40 = midpoint of observed inflection range. Calibration requires regression on contagion% vs sectorFraction.',
     'active',
     'GLOBAL',
     'v40.0'
   )
-ON CONFLICT (key, status, cohort_scope) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 
 -- ── 2. Log to scoring_architecture_log ───────────────────────────────────────

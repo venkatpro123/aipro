@@ -1,3 +1,6 @@
+-- Ensure internal schema exists (not present on fresh Supabase projects)
+CREATE SCHEMA IF NOT EXISTS internal;
+
 -- Migration: Pipeline write controls
 -- Adds three things:
 --   1. pipeline_audit_log — immutable record of every write the pipeline makes
@@ -80,22 +83,30 @@ BEGIN
 END;
 $$;
 
--- Attach audit trigger to all static data tables
-CREATE OR REPLACE TRIGGER audit_companies
-  AFTER INSERT OR UPDATE OR DELETE ON public.companies
-  FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
-
-CREATE OR REPLACE TRIGGER audit_company_layoff_rounds
-  AFTER INSERT OR UPDATE OR DELETE ON public.company_layoff_rounds
-  FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
-
-CREATE OR REPLACE TRIGGER audit_industry_risk_data
-  AFTER INSERT OR UPDATE OR DELETE ON public.industry_risk_data
-  FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
-
-CREATE OR REPLACE TRIGGER audit_role_exposure_data
-  AFTER INSERT OR UPDATE OR DELETE ON public.role_exposure_data
-  FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
+-- Attach audit trigger to static data tables only if they exist
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='companies') THEN
+    CREATE OR REPLACE TRIGGER audit_companies
+      AFTER INSERT OR UPDATE OR DELETE ON public.companies
+      FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='company_layoff_rounds') THEN
+    CREATE OR REPLACE TRIGGER audit_company_layoff_rounds
+      AFTER INSERT OR UPDATE OR DELETE ON public.company_layoff_rounds
+      FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='industry_risk_data') THEN
+    CREATE OR REPLACE TRIGGER audit_industry_risk_data
+      AFTER INSERT OR UPDATE OR DELETE ON public.industry_risk_data
+      FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='role_exposure_data') THEN
+    CREATE OR REPLACE TRIGGER audit_role_exposure_data
+      AFTER INSERT OR UPDATE OR DELETE ON public.role_exposure_data
+      FOR EACH ROW EXECUTE FUNCTION internal.pipeline_audit_trigger();
+  END IF;
+END $$;
 
 -- ── 3. Table-scoped write guard function ──────────────────────────────────────
 --
@@ -197,30 +208,42 @@ GRANT  EXECUTE ON FUNCTION public.pipeline_upsert_static TO authenticated;
 GRANT  EXECUTE ON FUNCTION public.pipeline_upsert_static TO service_role;
 
 -- ── 4. Add explicit deny policies for writes on static tables ─────────────────
--- These policies apply to the anon and authenticated roles (not service_role,
--- which bypasses RLS). They make the intent explicit and block accidental writes
--- from browser clients that somehow obtain an authenticated session.
-
-CREATE POLICY "companies_no_anon_write"
-  ON public.companies FOR INSERT WITH CHECK (false);
-CREATE POLICY "companies_no_anon_update"
-  ON public.companies FOR UPDATE USING (false);
-CREATE POLICY "companies_no_anon_delete"
-  ON public.companies FOR DELETE USING (false);
-
-CREATE POLICY "industry_risk_no_anon_write"
-  ON public.industry_risk_data FOR INSERT WITH CHECK (false);
-CREATE POLICY "industry_risk_no_anon_update"
-  ON public.industry_risk_data FOR UPDATE USING (false);
-CREATE POLICY "industry_risk_no_anon_delete"
-  ON public.industry_risk_data FOR DELETE USING (false);
-
-CREATE POLICY "role_exposure_no_anon_write"
-  ON public.role_exposure_data FOR INSERT WITH CHECK (false);
-CREATE POLICY "role_exposure_no_anon_update"
-  ON public.role_exposure_data FOR UPDATE USING (false);
-CREATE POLICY "role_exposure_no_anon_delete"
-  ON public.role_exposure_data FOR DELETE USING (false);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='companies') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='companies' AND policyname='companies_no_anon_write') THEN
+      CREATE POLICY "companies_no_anon_write" ON public.companies FOR INSERT WITH CHECK (false);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='companies' AND policyname='companies_no_anon_update') THEN
+      CREATE POLICY "companies_no_anon_update" ON public.companies FOR UPDATE USING (false);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='companies' AND policyname='companies_no_anon_delete') THEN
+      CREATE POLICY "companies_no_anon_delete" ON public.companies FOR DELETE USING (false);
+    END IF;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='industry_risk_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='industry_risk_data' AND policyname='industry_risk_no_anon_write') THEN
+      CREATE POLICY "industry_risk_no_anon_write" ON public.industry_risk_data FOR INSERT WITH CHECK (false);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='industry_risk_data' AND policyname='industry_risk_no_anon_update') THEN
+      CREATE POLICY "industry_risk_no_anon_update" ON public.industry_risk_data FOR UPDATE USING (false);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='industry_risk_data' AND policyname='industry_risk_no_anon_delete') THEN
+      CREATE POLICY "industry_risk_no_anon_delete" ON public.industry_risk_data FOR DELETE USING (false);
+    END IF;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='role_exposure_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='role_exposure_data' AND policyname='role_exposure_no_anon_write') THEN
+      CREATE POLICY "role_exposure_no_anon_write" ON public.role_exposure_data FOR INSERT WITH CHECK (false);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='role_exposure_data' AND policyname='role_exposure_no_anon_update') THEN
+      CREATE POLICY "role_exposure_no_anon_update" ON public.role_exposure_data FOR UPDATE USING (false);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='role_exposure_data' AND policyname='role_exposure_no_anon_delete') THEN
+      CREATE POLICY "role_exposure_no_anon_delete" ON public.role_exposure_data FOR DELETE USING (false);
+    END IF;
+  END IF;
+END $$;
 
 COMMENT ON FUNCTION public.pipeline_upsert_static IS
   'Table-scoped write guard for CI pipeline and data-engineering scripts. '

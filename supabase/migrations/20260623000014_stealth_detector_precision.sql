@@ -172,22 +172,14 @@ ALTER TABLE public.engine_calibration_constants
   ADD COLUMN IF NOT EXISTS added_in_version TEXT;
 
 INSERT INTO public.engine_calibration_constants
-  (key, value, provenance, description, status, cohort_scope, added_in_version)
+  (key, value, provenance, description, rationale, status, cohort_scope, added_in_version)
 VALUES
   (
     'stealthLayoffDetector.precisionStatus',
     '"UNKNOWN"',
     'uncalibrated_placeholder',
-    'GAP-A03 — Precision of the stealth layoff detector (fraction of flagged audits '
-    'where a real layoff occurred within 90 days). '
-    'UNKNOWN: flag=off + source-filter bug means 0 production cases have fired. '
-    'Gate required before activating floors: '
-    'SILENT_TRIM (60pts): precision >= 0.60 on >= 20 confirmed outcomes; '
-    'SILENT_CUT (65pts): precision >= 0.65; '
-    'SILENT_PURGE (70pts): precision >= 0.70. '
-    'TransparencyTab must display "Precision: UNKNOWN" when stealth_layoff_floor fires '
-    'until this gate is cleared. '
-    'Source of precision data: stealth_layoff_precision_summary view.',
+    'GAP-A03 — Precision of the stealth layoff detector. UNKNOWN until 20+ confirmed outcomes.',
+    'Flag=off + source-filter bug means 0 production cases have fired. Gate required: precision >= 0.60 on >= 20 confirmed outcomes before floor activation.',
     'active',
     'GLOBAL',
     'v40.0'
@@ -196,17 +188,13 @@ VALUES
     'stealthLayoffDetector.dataSourceFilter',
     '"linkedin,sec-edgar,wikipedia"',
     'uncalibrated_placeholder',
-    'GAP-A03 SOURCE FIX — Accepted source values for workforce_velocity_6mo queries. '
-    'Previously hard-coded to linkedin only; broadened to accept sec-edgar and wikipedia '
-    'because the scraper writes sec-edgar (company_intelligence path) and wikipedia rows. '
-    'LinkedIn-sourced rows (most accurate) are preferred when available (ordered by '
-    'measurement_confidence DESC). Until real LinkedIn scraping is active, all detection '
-    'runs on sec-edgar/wikipedia data — lower confidence (0.78-0.90 vs 0.95 for LinkedIn).',
+    'GAP-A03 SOURCE FIX — Accepted source values for workforce_velocity_6mo queries.',
+    'Broadened from linkedin-only to sec-edgar and wikipedia because scraper writes sec-edgar and wikipedia rows. LinkedIn preferred when available (ordered by measurement_confidence DESC).',
     'active',
     'GLOBAL',
     'v40.0'
   )
-ON CONFLICT (key, status, cohort_scope) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 
 -- ── 4. Log all five findings to scoring_architecture_log ─────────────────

@@ -149,7 +149,7 @@ const Toast: React.FC<{
         right: "24px",
         zIndex: 10000,
         background: bg,
-        color: "#fff",
+        color: "var(--text)",
         padding: "12px 20px",
         borderRadius: "8px",
         fontSize: "0.95rem",
@@ -1832,7 +1832,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             <h1
               style={{
                 fontSize: "2.5rem",
-                color: "#fff",
+                color: "var(--text)",
                 marginBottom: "8px",
                 fontWeight: 700,
               }}

@@ -26,27 +26,29 @@
 -- ROLLBACK: see down section at bottom.
 -- ════════════════════════════════════════════════════════════════════════════
 
--- Add the column (idempotent — safe to re-run)
-ALTER TABLE market_intelligence_cache
-  ADD COLUMN IF NOT EXISTS regional_openings JSONB;
-
--- GIN index for regionKey-based lookups (so future queries like
--- "find roles with > 1000 openings in Germany" stay fast)
-CREATE INDEX IF NOT EXISTS idx_mic_regional_openings_gin
-  ON market_intelligence_cache USING GIN (regional_openings);
-
--- Constraint: regional_openings must be a JSON object (not array, not scalar)
-ALTER TABLE market_intelligence_cache
-  DROP CONSTRAINT IF EXISTS regional_openings_is_object;
-ALTER TABLE market_intelligence_cache
-  ADD CONSTRAINT regional_openings_is_object
-    CHECK (regional_openings IS NULL OR jsonb_typeof(regional_openings) = 'object');
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='market_intelligence_cache') THEN
+    ALTER TABLE market_intelligence_cache
+      ADD COLUMN IF NOT EXISTS regional_openings JSONB;
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE tablename='market_intelligence_cache' AND indexname='idx_mic_regional_openings_gin') THEN
+      CREATE INDEX idx_mic_regional_openings_gin
+        ON market_intelligence_cache USING GIN (regional_openings);
+    END IF;
+    ALTER TABLE market_intelligence_cache
+      DROP CONSTRAINT IF EXISTS regional_openings_is_object;
+    ALTER TABLE market_intelligence_cache
+      ADD CONSTRAINT regional_openings_is_object
+        CHECK (regional_openings IS NULL OR jsonb_typeof(regional_openings) = 'object');
+  END IF;
+END $$;
 
 -- Backfill: existing rows have NULL regional_openings until the refresh
 -- Edge Function repopulates them. The application code handles NULL gracefully
 -- by falling back to globalOpenings + an "unavailable for {region}" disclosure.
 
-COMMENT ON COLUMN market_intelligence_cache.regional_openings IS 'v40.0: per-region opening counts + source attribution. Map of regionKey (germany/uk/usa/canada/singapore/australia/uae/india/etc.) to { count, source, asOf, isLive }. Eliminates the India-only LLM prompt bug where Berlin users received Naukri data. Populated weekly by the refresh-market-intelligence Edge Function.';
+-- COMMENT ON COLUMN market_intelligence_cache.regional_openings deferred (table may not exist)
 
 -- ─── Rollback (uncomment + run to revert) ───────────────────────────────────
 -- ALTER TABLE market_intelligence_cache DROP CONSTRAINT IF EXISTS regional_openings_is_object;

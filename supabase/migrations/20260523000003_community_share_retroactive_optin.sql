@@ -13,11 +13,17 @@
 -- ── 1. UPDATE policy — users can flip allow_community_share on their own rows ──
 
 DROP POLICY IF EXISTS "Users update own community share" ON public.layoff_scores;
-CREATE POLICY "Users update own community share"
-  ON public.layoff_scores FOR UPDATE
-  TO authenticated
-  USING  (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='layoff_scores' AND column_name='user_id') THEN
+    CREATE POLICY "Users update own community share"
+      ON public.layoff_scores FOR UPDATE
+      TO authenticated
+      USING  (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- ── 2. Retroactive consent RPC ────────────────────────────────────────────────
 -- Updates allow_community_share on ALL of the caller's layoff_scores rows in one

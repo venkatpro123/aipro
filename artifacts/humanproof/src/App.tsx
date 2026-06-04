@@ -11,11 +11,8 @@ import {
 import { LiquidAIBackground } from "./components/LiquidAIBackground";
 import {
   LayoutDashboard,
-  TrendingUp,
   Sparkles,
   MoreHorizontal,
-  ShieldCheck,
-  GraduationCap,
   Award,
   Settings,
   LogOut,
@@ -28,11 +25,6 @@ import {
 // Pages — critical loads
 import HomePage from "./pages/HomePage";
 import PricingPage from "./pages/PricingPage";
-import { AboutPage } from "./pages/AboutPage";
-import { PrivacyPage } from "./pages/PrivacyPage";
-import { TermsPage } from "./pages/TermsPage";
-import { BlogPage } from "./pages/BlogPage";
-import { ContactPage } from "./pages/ContactPage";
 import NotFoundPage from "./pages/not-found";
 import SettingsPage from "./pages/SettingsPage";
 import TeamDashboardPage from "./pages/TeamDashboardPage";
@@ -41,19 +33,6 @@ import TeamDashboardPage from "./pages/TeamDashboardPage";
 const AuditTerminalPage = lazy(() => import("./pages/AuditTerminalPage"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
-const SafeCareersPage = lazy(() =>
-  import("./pages/SafeCareersPage").then((m) => ({ default: m.SafeCareersPage })),
-);
-const CareerDetailPage = lazy(() =>
-  import("./pages/CareerDetailPage").then((m) => ({ default: m.CareerDetailPage })),
-);
-const LearningHubPage = lazy(() =>
-  import("./pages/LearningHubPage").then((m) => ({ default: m.LearningHubPage })),
-);
-const AuditLogPage = lazy(() =>
-  import("./pages/AuditLogPage").then((m) => ({ default: m.AuditLogPage })),
-);
-const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const PredictionLedgerPage = lazy(() => import("./pages/PredictionLedgerPage"));
 const CommunityIntelligencePage = lazy(() => import("./pages/CommunityIntelligencePage"));
 const CertificationPage = lazy(() => import("./pages/CertificationPage"));
@@ -75,7 +54,6 @@ import { useBreakingNewsPoller } from "./hooks/useBreakingNewsPoller";
 import { syncCircuitStateFromSupabase, resetAllOpenCircuits } from "./services/apiCircuitBreaker";
 import { getScoreHistory } from "./utils/scoreStorage";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
-import { LanguageSelector } from "./components/LanguageSelector";
 import { applyWhiteLabelCssVars, getWhiteLabelConfig } from "./services/whiteLabelService";
 import { page as trackPage, identify } from "./services/analyticsService";
 import { Toaster as SonnerToaster } from "./components/ui/sonner";
@@ -146,21 +124,16 @@ function NavigationBridge() {
 // Other routes (/intelligence, /safe-careers, /learning-hub, /certification)
 // remain accessible via direct URL but are no longer surfaced in the nav.
 const NAV_ITEMS = [
-  { to: "/terminal",    label: "Layoff Audit" },
-  { to: "/leaderboard", label: "Risk Oracle"  },
+  { to: "/terminal", label: "Layoff Audit" },
 ];
 
 const MOBILE_PRIMARY = [
-  { to: "/terminal",    label: "Layoff Audit", Icon: LayoutDashboard },
-  { to: "/leaderboard", label: "Risk Oracle",  Icon: TrendingUp      },
+  { to: "/terminal", label: "Layoff Audit", Icon: LayoutDashboard },
 ];
 
 // Secondary nav items — appear in the "More" slide-up sheet.
-// Adding these surfaces pages that were previously only reachable via direct URL on mobile.
 const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [
-  { to: "/safe-careers",  label: "Safe Careers",  Icon: ShieldCheck    },
-  { to: "/learning-hub",  label: "Learning Hub",  Icon: GraduationCap  },
-  { to: "/settings",      label: "Settings",      Icon: Settings       },
+  { to: "/settings", label: "Settings", Icon: Settings },
 ];
 
 function useIsActive() {
@@ -206,7 +179,7 @@ function AppNav({
         {/* Logo */}
         <Link to="/" className="nav-logo" style={{ textDecoration: "none" }}>
           <span className="nav-logo-dot" />
-          HumanShield
+          Human<span style={{ color: "var(--cyan)" }}>Proof</span>
         </Link>
 
         {/* Desktop nav links */}
@@ -238,7 +211,6 @@ function AppNav({
         <div className="nav-actions">
           {/* Desktop actions */}
           <div className="nav-desktop-actions">
-            <LanguageSelector />
             <button
               onClick={toggleTheme}
               className="theme-toggle"
@@ -287,11 +259,7 @@ function AppNav({
                   Sign out
                 </button>
               </>
-            ) : (
-              <button onClick={onAuthOpen} className="btn btn-primary btn-sm shimmer-sweep">
-                Get Access
-              </button>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile compact bar — theme + auth pill only (bottom nav handles routing) */}
@@ -500,18 +468,8 @@ function AppFooter() {
 
   const footerLinks = {
     platform: [
-      { to: "/terminal",     label: "Risk Oracle"   },
-      { to: "/learning-hub", label: "Learning Hub"  },
-      { to: "/safe-careers", label: "Safe Careers"  },
-      { to: "/leaderboard",  label: "Risk Index"    },
-      { to: "/about",        label: "About"         },
-    ],
-    legal: [
-      { to: "/privacy",   label: "Privacy Policy" },
-      { to: "/terms",     label: "Terms of Use"   },
-      { to: "/audit-log", label: "Audit Log"      },
-      { to: "/blog",      label: "Blog"           },
-      { to: "/contact",   label: "Contact"        },
+      { to: "/terminal", label: "Layoff Audit" },
+      { to: "/pricing",  label: "Pricing"      },
     ],
   };
 
@@ -561,7 +519,7 @@ function AppFooter() {
                 color: "var(--text)",
                 letterSpacing: "-0.04em",
               }}>
-                HumanShield
+                Human<span style={{ color: "var(--cyan)" }}>Proof</span>
               </span>
             </Link>
             <p style={{
@@ -640,31 +598,6 @@ function AppFooter() {
               ))}
             </ul>
           </div>
-
-          {/* Legal links */}
-          <div>
-            <h4 className="label-xs" style={{ marginBottom: 20, color: "var(--text-3)" }}>Legal</h4>
-            <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
-              {footerLinks.legal.map((l) => (
-                <li key={l.label}>
-                  <Link
-                    to={l.to}
-                    style={{
-                      color: "var(--text-2)",
-                      textDecoration: "none",
-                      fontSize: "0.875rem",
-                      fontWeight: 500,
-                      transition: "color 150ms",
-                    }}
-                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text)")}
-                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-2)")}
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Bottom bar */}
@@ -678,7 +611,7 @@ function AppFooter() {
           gap: 12,
         }}>
           <span style={{ color: "var(--text-3)", fontSize: "0.8rem" }}>
-            © {new Date().getFullYear()} HumanShield · All rights reserved
+            © {new Date().getFullYear()} HumanProof · All rights reserved
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div className="badge badge-cyan">
@@ -701,7 +634,13 @@ function AppContent() {
   const { user } = useAuth();
   const location  = useLocation();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    // Read persisted preference (set pre-paint in index.html). Default = dark.
+    if (typeof document !== "undefined") {
+      return !document.documentElement.classList.contains("light");
+    }
+    return true;
+  });
 
   // Hide global nav on feature pages so we don't stack two bottom bars
   const isFeaturePage = FEATURE_ROUTES.some(
@@ -756,8 +695,15 @@ function AppContent() {
 
   const toggleTheme = () => {
     setIsDark((d) => {
-      const next = !d;
-      document.documentElement.classList.toggle("light", !next);
+      const next = !d;              // next === true  => DARK
+      const light = !next;          // light === true => LIGHT
+      document.documentElement.classList.toggle("light", light);
+      try {
+        localStorage.setItem("hp-theme", light ? "light" : "dark");
+      } catch { /* storage may be unavailable */ }
+      // Keep the address-bar / PWA theme-color in sync
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", light ? "#f6f7f9" : "#090c14");
       return next;
     });
   };
@@ -780,20 +726,10 @@ function AppContent() {
               <Route path="/"                              element={<HomePage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
-              <Route path="/safe-careers"                  element={<SafeCareersPage />} />
-              <Route path="/career/:id"                    element={<CareerDetailPage />} />
-              <Route path="/learning-hub"                  element={<LearningHubPage />} />
-              <Route path="/audit-log"                     element={<AuditLogPage />} />
               <Route path="/products"                      element={<ProductsPage />} />
               <Route path="/pricing"                       element={<PricingPage />} />
-              <Route path="/about"                         element={<AboutPage />} />
-              <Route path="/contact"                       element={<ContactPage />} />
-              <Route path="/privacy"                       element={<PrivacyPage />} />
-              <Route path="/terms"                         element={<TermsPage />} />
-              <Route path="/blog"                          element={<BlogPage />} />
               <Route path="/settings"                      element={<SettingsPage />} />
               <Route path="/team"                          element={<TeamDashboardPage />} />
-              <Route path="/leaderboard"                   element={<LeaderboardPage />} />
               <Route path="/predictions"                   element={<PredictionLedgerPage />} />
               <Route path="/intelligence"                  element={<CommunityIntelligencePage />} />
               <Route path="/intelligence/report"           element={<IntelligenceReportPage />} />

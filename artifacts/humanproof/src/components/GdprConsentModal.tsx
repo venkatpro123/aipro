@@ -15,7 +15,7 @@
 // localStorage AND to user_profiles (if authenticated).
 
 import React, { useState } from 'react';
-import { Shield, Download, Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { Shield, Download, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   saveGdprConsent,
   exportUserData,
@@ -294,18 +294,6 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
               </button>
             </div>
 
-            <a
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                color: 'rgba(0,212,224,0.55)', fontSize: 10, marginTop: 10,
-                textDecoration: 'none',
-              }}
-            >
-              Privacy Policy <ExternalLink size={9} />
-            </a>
           </div>
         )}
 

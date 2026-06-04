@@ -118,7 +118,7 @@ $$;
 SELECT public._v35_register_cron(
   'v35_prune_engine_constant_resolutions',
   '10 4 * * *',
-  $$SELECT public.prune_engine_constant_resolutions();$$
+  $cmd$SELECT public.prune_engine_constant_resolutions();$cmd$
 );
 
 COMMENT ON VIEW public.v_uncalibrated_exposure IS

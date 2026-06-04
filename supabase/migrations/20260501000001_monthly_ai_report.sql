@@ -68,13 +68,13 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   email_alerts      BOOLEAN NOT NULL DEFAULT false,
-  /** When true, user receives the monthly India AI Displacement Report email */
+  -- When true, user receives the monthly India AI Displacement Report email
   monthly_report    BOOLEAN NOT NULL DEFAULT false,
-  /** ISO country code — used to personalise report content. Default: IN (India) */
+  -- ISO country code — used to personalise report content. Default: IN (India)
   country_code      TEXT NOT NULL DEFAULT 'IN',
-  /** Preferred role prefix for personalised report headline. Null = generic */
+  -- Preferred role prefix for personalised report headline. Null = generic
   preferred_role_prefix TEXT,
-  /** ISO city key for city-specific employer mentions */
+  -- ISO city key for city-specific employer mentions
   city_key          TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -122,26 +122,15 @@ CREATE OR REPLACE TRIGGER user_preferences_updated_at
 
 CREATE TABLE IF NOT EXISTS public.monthly_reports (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  /** ISO year-month key, e.g. '2026-05'. Unique — one report per calendar month. */
+  -- ISO year-month key, e.g. '2026-05'. Unique — one report per calendar month.
   year_month    TEXT NOT NULL,
-  /**
-   * Full JSON report payload. Shape:
-   * {
-   *   generated_at:  ISO timestamp
-   *   top_risk_roles:     [{role_key, industry, avg_score, sample_size, change_vs_prior}]
-   *   most_improved:      [{role_key, industry, avg_score, prior_score, improvement}]
-   *   company_changes:    [{company_name, prior_stage, current_stage, change_date}]
-   *   transition_story:   {from_role, to_role, salary_change_pct, transition_months}
-   *   prediction_updates: [{company_role, swarm_score, actual_outcome, accuracy_score}]
-   *   metadata:           {total_audits_this_month, total_opt_in_users, report_version}
-   * }
-   */
+  -- Full JSON report payload (see send-monthly-report edge function for shape)
   payload       JSONB NOT NULL,
-  /** How many email recipients received this report */
+  -- How many email recipients received this report
   email_count   INTEGER,
-  /** When the Edge Function confirmed delivery */
+  -- When the Edge Function confirmed delivery
   sent_at       TIMESTAMPTZ,
-  /** pg_cron / manual trigger */
+  -- pg_cron / manual trigger
   triggered_by  TEXT NOT NULL DEFAULT 'pg_cron',
   generated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (year_month)
@@ -413,15 +402,14 @@ DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     -- Remove any stale schedule with the same name before (re-)creating
-    PERFORM cron.unschedule('monthly-ai-displacement-report')
-    WHERE EXISTS (
-      SELECT 1 FROM cron.job WHERE jobname = 'monthly-ai-displacement-report'
-    );
+    IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'monthly-ai-displacement-report') THEN
+      PERFORM cron.unschedule('monthly-ai-displacement-report');
+    END IF;
 
     PERFORM cron.schedule(
       'monthly-ai-displacement-report',
-      '30 0 * * 1',                     -- every Monday 00:30 UTC (06:00 IST)
-      $$SELECT public.generate_monthly_report()$$
+      '30 0 * * 1',
+      $cmd$SELECT public.generate_monthly_report()$cmd$
     );
     RAISE NOTICE '[MonthlyReport] pg_cron job scheduled (every Monday 00:30 UTC; first-Monday guard inside function)';
   ELSE

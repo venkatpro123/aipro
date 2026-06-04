@@ -290,84 +290,57 @@ BEGIN
     'subheadline',
       'HumanProof analysis of ' || v_total_audits::TEXT ||
       ' India tech audits — ' || v_month_display,
-    'key_stats', COALESCE(
-      (
-        SELECT jsonb_agg(stat_row)
-        FROM (
-          SELECT jsonb_build_object(
-            'stat',   (elem->>'pct_high_critical') || '%',
-            'label',  'of ' || INITCAP(REPLACE(elem->>'role_key','_',' ')) ||
-                      ' at High/Critical risk (' || (elem->>'industry') || ')',
-            'n',      (elem->>'sample_size')::INT,
-            'source', 'HumanProof community signals'
-          ) AS stat_row
-          FROM jsonb_array_elements(COALESCE(v_top_risk, '[]'::JSONB)) AS elem
-          WHERE (elem->>'pct_high_critical') IS NOT NULL
-          LIMIT 3
-        ) stats
+    'key_stats',
+      COALESCE(
+        (SELECT jsonb_agg(stat_row)
+         FROM (
+           SELECT jsonb_build_object(
+             'stat',   (elem->>'pct_high_critical') || '%',
+             'label',  'of ' || INITCAP(REPLACE(elem->>'role_key','_',' ')) ||
+                       ' at High/Critical risk (' || (elem->>'industry') || ')',
+             'n',      (elem->>'sample_size')::INT,
+             'source', 'HumanProof community signals'
+           ) AS stat_row
+           FROM jsonb_array_elements(COALESCE(v_top_risk, '[]'::JSONB)) AS elem
+           WHERE (elem->>'pct_high_critical') IS NOT NULL
+           LIMIT 3
+         ) stats
+        ),
+        '[]'::JSONB
+      ) || jsonb_build_array(
+        jsonb_build_object(
+          'stat',   v_total_audits::TEXT,
+          'label',  'total audits analysed this month',
+          'source', 'HumanProof platform'
+        )
       ),
-      '[]'::JSONB
-    ) ||
-    jsonb_build_array(
-      jsonb_build_object(
-        'stat',   v_total_audits::TEXT,
-        'label',  'total audits analysed this month',
-        'source', 'HumanProof platform'
-      )
-    ),
-    'press_bullets', COALESCE(
-      (
-        SELECT jsonb_agg(bullet)
-        FROM (
-          -- Bullet 1: top-risk role headline stat
-          SELECT jsonb_build_object(
-            'order', 1,
-            'text',
-              'HumanProof data shows ' ||
-              (elem->>'pct_high_critical') || '% of ' ||
-              INITCAP(REPLACE(elem->>'role_key','_',' ')) ||
-              ' in India ' || (elem->>'industry') ||
-              ' scored High or Critical AI displacement risk in ' || v_month_display || '.'
-          ) AS bullet
-          FROM jsonb_array_elements(COALESCE(v_top_risk, '[]'::JSONB)) AS elem
-          WHERE (elem->>'pct_high_critical') IS NOT NULL
-          LIMIT 1
-
-          UNION ALL
-
-          -- Bullet 2: most-improved signal
-          SELECT jsonb_build_object(
-            'order', 2,
-            'text',
-              CASE
-                WHEN jsonb_array_length(COALESCE(v_most_improved,'[]'::JSONB)) > 0 THEN
-                  'The most improved roles saw up to ' ||
-                  (
-                    SELECT MAX((e->>'improvement')::NUMERIC)::TEXT
-                    FROM jsonb_array_elements(v_most_improved) AS e
-                  ) ||
-                  '-point score reductions vs the prior 30-day period.'
-                ELSE
-                  'Risk scores for top-5 roles remained elevated vs the prior 30-day period.'
-              END
-          )
-
-          UNION ALL
-
-          -- Bullet 3: company watch count
-          SELECT jsonb_build_object(
-            'order', 3,
-            'text',
-              jsonb_array_length(COALESCE(v_company_changes,'[]'::JSONB))::TEXT ||
-              ' companies flagged with elevated risk signals in ' || v_month_display ||
-              ' according to HumanProof company intelligence.'
-          )
-
-          ORDER BY (bullet->>'order')::INT
-        ) bullet_rows
+    'press_bullets',
+      COALESCE(
+        (SELECT jsonb_agg(b ORDER BY idx)
+         FROM (
+           SELECT 1 AS idx, jsonb_build_object('order',1,'text',
+             'HumanProof data: ' ||
+             COALESCE(
+               (SELECT (e->>'pct_high_critical')
+                FROM jsonb_array_elements(COALESCE(v_top_risk,'[]'::JSONB)) AS e
+                WHERE (e->>'pct_high_critical') IS NOT NULL
+                LIMIT 1),
+               'N/A'
+             ) || '% risk in top role in ' || v_month_display || '.') AS b
+           UNION ALL
+           SELECT 2, jsonb_build_object('order',2,'text',
+             CASE WHEN jsonb_array_length(COALESCE(v_most_improved,'[]'::JSONB)) > 0
+               THEN 'Most improved roles saw score reductions in ' || v_month_display || '.'
+               ELSE 'Risk scores for top roles remained elevated vs prior period.'
+             END) AS b
+           UNION ALL
+           SELECT 3, jsonb_build_object('order',3,'text',
+             jsonb_array_length(COALESCE(v_company_changes,'[]'::JSONB))::TEXT ||
+             ' companies flagged with elevated risk signals in ' || v_month_display || '.') AS b
+         ) bullets(idx, b)
+        ),
+        '[]'::JSONB
       ),
-      '[]'::JSONB
-    ),
     'attribution',
       'Source: HumanProof AI displacement risk intelligence platform. '
       'Based on anonymised community audit data (minimum n=20 per role-industry cell). '

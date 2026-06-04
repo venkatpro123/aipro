@@ -100,12 +100,17 @@ COMMENT ON TABLE public.swarm_warm_cache IS
 -- Extend to include 'cache_warm' so the warming job records effectiveness stats
 -- in the same permanent audit log (not subject to 14-day retention).
 
-ALTER TABLE public.calibration_drift_events
-  DROP CONSTRAINT IF EXISTS calibration_drift_events_event_kind_check;
-
-ALTER TABLE public.calibration_drift_events
-  ADD CONSTRAINT calibration_drift_events_event_kind_check
-  CHECK (event_kind IN ('range_violation', 'directional_bias', 'cache_warm'));
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='calibration_drift_events') THEN
+    ALTER TABLE public.calibration_drift_events
+      DROP CONSTRAINT IF EXISTS calibration_drift_events_event_kind_check;
+    ALTER TABLE public.calibration_drift_events
+      ADD CONSTRAINT calibration_drift_events_event_kind_check
+      CHECK (event_kind IN ('range_violation', 'directional_bias', 'cache_warm'));
+  END IF;
+END $$;
 
 -- JSON metadata for cache_warm events:
 --   {
@@ -117,44 +122,50 @@ ALTER TABLE public.calibration_drift_events
 --     top_misses:        string[], -- company names that had no snapshot (up to 10)
 --     cache_ttl_hours:   number    -- 24 (constant, for self-documenting records)
 --   }
-ALTER TABLE public.calibration_drift_events
-  ADD COLUMN IF NOT EXISTS warm_metadata JSONB;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='calibration_drift_events') THEN
+    ALTER TABLE public.calibration_drift_events
+      ADD COLUMN IF NOT EXISTS warm_metadata JSONB;
 
-COMMENT ON COLUMN public.calibration_drift_events.warm_metadata IS
-  'Populated only for event_kind=cache_warm. JSON: {combos_attempted, combos_warmed, '
-  'combos_missed, warm_rate_pct, duration_ms, top_misses, cache_ttl_hours}.';
-
--- Index for monitoring cache warm effectiveness over time
-CREATE INDEX IF NOT EXISTS idx_cde_cache_warm
-  ON public.calibration_drift_events (fired_at DESC)
-  WHERE event_kind = 'cache_warm';
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes
+                   WHERE tablename='calibration_drift_events' AND indexname='idx_cde_cache_warm') THEN
+      CREATE INDEX idx_cde_cache_warm
+        ON public.calibration_drift_events (fired_at DESC)
+        WHERE event_kind = 'cache_warm';
+    END IF;
+  END IF;
+END $$;
 
 -- ── 3. pg_cron: warm-swarm-cache at 05:00 UTC every Monday ───────────────────
 
 DO $$
 BEGIN
-  BEGIN
-    PERFORM cron.unschedule('warm_swarm_cache_monday');
-  EXCEPTION WHEN OTHERS THEN
-    NULL; -- job did not exist, safe to ignore
-  END;
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    BEGIN
+      PERFORM cron.unschedule('warm_swarm_cache_monday');
+    EXCEPTION WHEN OTHERS THEN
+      NULL;
+    END;
+    PERFORM cron.schedule(
+      'warm_swarm_cache_monday',
+      '0 5 * * 1',
+      $cmd$SELECT net.http_post(
+        url     := current_setting('app.supabase_functions_url', true) || '/warm-swarm-cache',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key', true),
+          'Content-Type',  'application/json'
+        ),
+        body    := '{}'::jsonb
+      )$cmd$
+    );
+    RAISE NOTICE '[SwarmCache] pg_cron job scheduled: warm_swarm_cache_monday';
+  ELSE
+    RAISE NOTICE '[SwarmCache] pg_cron not available — skipping schedule.';
+  END IF;
 END;
 $$;
-
-SELECT cron.schedule(
-  'warm_swarm_cache_monday',
-  '0 5 * * 1',
-  $$
-  SELECT net.http_post(
-    url     := current_setting('app.supabase_functions_url', true) || '/warm-swarm-cache',
-    headers := jsonb_build_object(
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key', true),
-      'Content-Type',  'application/json'
-    ),
-    body    := '{}'::jsonb
-  );
-  $$
-);
 
 -- ── 4. Cleanup: expire swarm_warm_cache entries older than 24h ────────────────
 -- Piggybacked on the existing expire_analysis_cache() call pattern.

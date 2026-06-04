@@ -166,7 +166,7 @@ $$;
 SELECT public._v35_register_cron(
   'v35_prune_cron_runs',
   '20 4 * * *',
-  $$SELECT public.prune_cron_runs();$$
+  $cmd$SELECT public.prune_cron_runs();$cmd$
 );
 
 COMMENT ON FUNCTION public.with_cron_guard IS

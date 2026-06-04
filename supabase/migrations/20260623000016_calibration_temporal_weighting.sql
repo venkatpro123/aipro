@@ -355,61 +355,35 @@ COMMENT ON FUNCTION public.compute_stratified_training_set IS
 
 -- ── Fix 1+2+3: Populate scoring_architecture_log with findings ────────────────
 
-INSERT INTO public.scoring_architecture_log (layer_id, finding, severity, status, resolution)
+INSERT INTO public.scoring_architecture_log (dimension_key, layer_id, finding, severity, status, resolution)
 VALUES
   (
+    'v40_cal_temporal_backtest',
     'calibrationBacktester.runFullBacktest',
-    'Flat mean Brier score and unweighted ROC: training events from the 2022–2024 '
-    'tech layoff wave were given identical weight to 2019 or 2026 events. Bootstrap '
-    'used layoffs.fyi 2023–2025 dataset (n=200) with no temporal down-weighting. '
-    'EFFICIENCY cohort (profitable companies cutting for AI efficiency) over-represented.',
-    'high',
-    'resolved',
-    'Fix 1 (calibrationBacktester.ts): computeTemporalWeights() applies exp(-ln(2)×months/18). '
-    'runFullBacktest() now accepts WeightingConfig and computes weighted Brier score and '
-    'weighted AUC. Default: temporal=true, halfLife=18mo, classBalance=true, maxPositive=0.60.'
+    'Flat mean Brier score — training events not temporally weighted.',
+    'high', 'resolved',
+    'computeTemporalWeights() applies exp(-ln(2)*months/18). Weighted Brier and AUC now computed.'
   ),
   (
+    'v40_cal_temporal_window',
     'engine_calibration_versions.training_window',
-    'training_window_start/end columns existed as documentation only. No code enforced '
-    'that any single year contribute ≤ 30% of training mass. With 2023 representing ~40% '
-    'of layoffs.fyi events (peak wave year), EFFICIENCY cohort weights were systematically '
-    'over-fitted to wave conditions.',
-    'high',
-    'resolved',
-    'Fix 2 (migration): Added max_single_year_fraction (default 0.30), stratification_applied, '
-    'outcome_year_distribution, wave_period_fraction columns. compute_stratified_training_set() '
-    'function returns year-band-capped + temporally weighted training set. '
-    'v_training_set_health VIEW shows year distribution + cap status.'
+    'training_window columns documentation-only — no year-cap enforced.',
+    'high', 'resolved',
+    'Added max_single_year_fraction (0.30), compute_stratified_training_set() function.'
   ),
   (
+    'v40_cal_temporal_asymmetry',
     'user_prediction_outcomes.implicit_detection_asymmetry',
-    'Implicit detectors (implicit_warn, implicit_layoffsfyi, implicit_news) only fire on '
-    'POSITIVE outcomes (laid_off / company_closed). Negative outcomes (still_employed, '
-    'false_alarm) are user_reported only. The detection_confidence >= 0.75 filter applies '
-    'symmetrically per row, but net effect: implicit detection inflates positive fraction '
-    'in training set without matching negatives. Expected positive fraction at scale: 60–75%+ '
-    'vs base rate of ~25–35%. This causes the model to be over-calibrated for positive class.',
-    'high',
-    'resolved',
-    'Fix 3 (migration): Added class_balance_config + effective_positive_fraction to '
-    'engine_calibration_versions. compute_stratified_training_set() down-weights excess '
-    'positives. v_class_balance_health + v_class_balance_summary VIEWs surface current split. '
-    'sample_weight + temporal_weight + class_balance_weight columns on user_prediction_outcomes '
-    'allow training runs to be reproduced and audited.'
+    'Implicit detectors only fire on POSITIVE outcomes — inflates positive fraction.',
+    'high', 'resolved',
+    'Added class_balance_config + effective_positive_fraction to engine_calibration_versions.'
   ),
   (
+    'v40_cal_temporal_bootstrap',
     'empiricalCalibration.LAYER_CALIBRATION.bootstrap',
-    'Bootstrap AUC hardcoded as distress=0.96, efficiency=0.76, wave=0.72. '
-    'distress=0.96 is implausibly high and was likely inflated by the wave-era dataset '
-    'where distress events were overrepresented vs a normal market. '
-    'This value is shown in TransparencyTab as if it is a validated measurement.',
-    'medium',
-    'resolved',
-    'Fix 1 (calibrationBacktester.ts): WeightedBacktestSummary.weightingApplied field '
-    'surfaces whether temporal and class-balance weighting were applied to the AUC measurement. '
-    'TransparencyTab should not surface bootstrap AUC as a validated measurement — '
-    'only DB-backed calibration rows (source=db:*) carry validated AUC figures.'
+    'Bootstrap AUC hardcoded — distress=0.96 implausibly high.',
+    'medium', 'resolved',
+    'WeightingApplied field surfaces whether temporal/class-balance weighting was applied.'
   )
 ON CONFLICT DO NOTHING;
 

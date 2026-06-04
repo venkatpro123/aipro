@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS internal.bracket_alert_log (
   dispatched_at   timestamptz NOT NULL DEFAULT now(),
   resolved_at     timestamptz,
   resolution_note text,
-  UNIQUE (work_type_key, original_bracket, dispatched_at::date)
+  UNIQUE (work_type_key, original_bracket, dispatched_at)
 );
 
 COMMENT ON TABLE internal.bracket_alert_log IS
@@ -93,7 +93,7 @@ BEGIN
       (v_alert.work_type_key, v_alert.original_bracket,
        v_alert.override_rate_pct, v_alert.sample_size,
        v_alert.most_common_override_target)
-    ON CONFLICT (work_type_key, original_bracket, (dispatched_at::date)) DO NOTHING;
+    ON CONFLICT (work_type_key, original_bracket, dispatched_at) DO NOTHING;
 
     -- Build payload for the gh-issue-creator Edge Function.
     v_payload := jsonb_build_object(

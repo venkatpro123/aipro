@@ -297,6 +297,8 @@ BEGIN
     status,
     l1_multiplier, l2_multiplier, l3_multiplier, l4_multiplier, l5_multiplier,
     d8_beta0, d8_beta_l1, d8_beta_l2, d8_beta_ai_signal, d8_beta_layoff_rounds,
+    revenue_growth_thresholds, stock_trend_thresholds, fcf_margin_thresholds,
+    n_events_total,
     d8_validation_metadata,
     created_at
   )
@@ -307,6 +309,8 @@ BEGIN
     -- Inherit GLOBAL multipliers (WAVE uses same calibration constants)
     l1_multiplier, l2_multiplier, l3_multiplier, l4_multiplier, l5_multiplier,
     d8_beta0, d8_beta_l1, d8_beta_l2, d8_beta_ai_signal, d8_beta_layoff_rounds,
+    revenue_growth_thresholds, stock_trend_thresholds, fcf_margin_thresholds,
+    n_events_total,
     jsonb_build_object(
       'n_heldout',               v_n,
       'n_positive',              v_n_pos,
@@ -416,6 +420,7 @@ ON CONFLICT (flag_key) DO NOTHING;
 --   Raw ≈ 0.583 → ~58, pushed to 62–72 by wave-specific multipliers
 INSERT INTO public.synthetic_probe_scenarios (
   scenario_name,
+  description,
   expected_score,
   tolerance_low,
   tolerance_high,
@@ -425,6 +430,7 @@ INSERT INTO public.synthetic_probe_scenarios (
 )
 VALUES (
   'WAVE_EFFICIENCY_HYBRID',
+  'D8 wave cohort expansion probe — sector_wave archetype hybrid efficiency scenario',
   67,   -- midpoint
   62,   -- tolerance_low  (expectedMin)
   72,   -- tolerance_high (expectedMax)
@@ -486,6 +492,8 @@ INSERT INTO public.engine_calibration_versions (
   status,
   l1_multiplier, l2_multiplier, l3_multiplier, l4_multiplier, l5_multiplier,
   d8_beta0, d8_beta_l1, d8_beta_l2, d8_beta_ai_signal, d8_beta_layoff_rounds,
+  revenue_growth_thresholds, stock_trend_thresholds, fcf_margin_thresholds,
+  n_events_total,
   d8_validation_metadata,
   created_at
 )
@@ -495,6 +503,8 @@ SELECT
   'pending',
   l1_multiplier, l2_multiplier, l3_multiplier, l4_multiplier, l5_multiplier,
   d8_beta0, d8_beta_l1, d8_beta_l2, d8_beta_ai_signal, d8_beta_layoff_rounds,
+  revenue_growth_thresholds, stock_trend_thresholds, fcf_margin_thresholds,
+  n_events_total,
   jsonb_build_object(
     'n_heldout',           0,
     'passes_gate',         false,
@@ -506,8 +516,7 @@ SELECT
     ),
     'evaluated_at',    NOW(),
     'evaluated_by',    'migration-20260623000011',
-    'note',            'Placeholder pending WAVE gate evaluation. '
-                       'call check_d8_wave_expansion() after adding ≥100 WAVE events.'
+    'note',            'Placeholder pending WAVE gate evaluation.'
   ),
   NOW()
 FROM public.engine_calibration_versions

@@ -71,7 +71,7 @@ $$;
 SELECT public._v35_register_cron(
   'v35_prune_synthetic_probe_results',
   '15 5 * * *',
-  $$SELECT public.prune_synthetic_probe_results();$$
+  $cmd$SELECT public.prune_synthetic_probe_results();$cmd$
 );
 
 COMMENT ON TABLE public.synthetic_probe_results IS

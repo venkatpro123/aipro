@@ -338,7 +338,6 @@ export default function PricingPage() {
                   <button
                     onClick={() => {
                       if (plan.action === 'free') navigate('/calculator');
-                      else if (plan.action === 'sales') navigate('/contact');
                       else setShowWaitlist(true);
                     }}
                     className={`btn btn-full btn-lg ${plan.featured ? 'btn-primary' : 'btn-secondary'}`}

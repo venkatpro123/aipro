@@ -40,14 +40,6 @@ export const RecommendationPanel: React.FC<Props> = ({ recommendations }) => {
             <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>
               {rec.description}
             </p>
-            <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(0, 245, 255, 0.05)', borderRadius: '8px', borderLeft: '2px solid var(--cyan)' }}>
-              <div style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 600, marginBottom: '8px' }}>
-                🚀 Recommended Free Upskilling
-              </div>
-              <a href="/learning-hub" style={{ color: 'var(--cyan)', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                View curated AI transition paths →
-              </a>
-            </div>
             <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#64748b' }}>
               Signal Source: {rec.layerFocus}
             </div>

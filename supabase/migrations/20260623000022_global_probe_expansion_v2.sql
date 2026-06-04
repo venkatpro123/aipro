@@ -116,13 +116,12 @@ ON CONFLICT (scenario_name) DO UPDATE SET
 
 -- ── Audit log ────────────────────────────────────────────────────────────────
 INSERT INTO scoring_architecture_log
-  (dimension_key, change_type, previous_value, new_value, rationale, migration_version)
+  (dimension_key, change_type, description, migration_ref)
 VALUES
   (
     'synthetic_probe_global_expansion_v2',
     'scenarios_updated',
-    '{"count": 16, "deprecated": ["SINGAPORE_GCC_PARENT_CUT"]}',
-    '{"count": 19, "added": ["GERMANY_AUTOMOTIVE_AUTOMATION", "MENA_VISA_URGENCY", "UK_FINTECH_TIGHTENING", "SINGAPORE_GCC_PARENT"], "revised": ["EU_REGULATORY_RESTRUCTURING", "LATAM_FUNDING_CRISIS"]}',
-    'Global probe expansion v2: 3 new scenarios covering Germany automotive automation (SDV/Betriebsrat/D1), MENA visa urgency (<3mo runway/UAE visa), UK fintech FCA tightening; revised EU regulatory (BaFin focus 58→48), LatAm funding crisis (69→63); renamed SINGAPORE_GCC_PARENT_CUT→SINGAPORE_GCC_PARENT (5-month lag)',
+    'Global probe expansion v2: 3 new scenarios (GERMANY_AUTOMOTIVE_AUTOMATION, MENA_VISA_URGENCY, UK_FINTECH_TIGHTENING); revised EU_REGULATORY_RESTRUCTURING and LATAM_FUNDING_CRISIS; renamed SINGAPORE_GCC_PARENT_CUT to SINGAPORE_GCC_PARENT.',
     '20260623000022'
-  );
+  )
+ON CONFLICT (dimension_key) DO NOTHING;

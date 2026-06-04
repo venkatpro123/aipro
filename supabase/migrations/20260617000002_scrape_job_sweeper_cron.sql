@@ -18,20 +18,13 @@
 SELECT public._v35_register_cron(
   'v35_scrape_job_sweeper',
   '* * * * *',
-  $$
-  SELECT net.http_post(
-    url := current_setting('app.supabase_functions_url', true) || '/scrape-job-sweeper',
-    headers := jsonb_build_object(
-      'Authorization', 'Bearer ' || current_setting('app.service_role_jwt', true),
-      'Content-Type', 'application/json'
-    ),
-    body := '{}'::jsonb
-  );
-  $$
+  $cmd$SELECT net.http_post(url:=current_setting('app.supabase_functions_url',true)||'/scrape-job-sweeper',headers:=jsonb_build_object('Authorization','Bearer '||current_setting('app.service_role_jwt',true),'Content-Type','application/json'),body:='{}'::jsonb);$cmd$
 );
 
-COMMENT ON EXTENSION pg_cron IS
-  'WS11 — v35_scrape_job_sweeper runs every minute to reap stuck '
-  'scrape_jobs.status=running rows whose heartbeat is stale (>10min). '
-  'Without this, a worker crash leaves jobs stuck forever and quorum '
-  'gates wait their full 45s ceiling on dead workers.';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    COMMENT ON EXTENSION pg_cron IS
+      'WS11 — v35_scrape_job_sweeper runs every minute to reap stuck scrape_jobs rows.';
+  END IF;
+END $$;

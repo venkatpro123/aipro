@@ -6,14 +6,5 @@
 SELECT public._v35_register_cron(
   'v35_synthetic_probe',
   '*/5 * * * *',
-  $$
-  SELECT net.http_post(
-    url     := current_setting('app.supabase_functions_url', true) || '/synthetic-probe',
-    headers := jsonb_build_object(
-      'Authorization', 'Bearer ' || current_setting('app.supabase_service_role_key', true),
-      'Content-Type',  'application/json'
-    ),
-    body    := '{}'::jsonb
-  );
-  $$
+  $cmd$SELECT net.http_post(url:=current_setting('app.supabase_functions_url',true)||'/synthetic-probe',headers:=jsonb_build_object('Authorization','Bearer '||current_setting('app.supabase_service_role_key',true),'Content-Type','application/json'),body:='{}'::jsonb);$cmd$
 );
