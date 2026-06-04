@@ -34,10 +34,6 @@ import {
   getScoreHistory,
   hasLegacyVersionEntries,
 } from "../utils/scoreStorage";
-import {
-  generateAssessmentSnapshot,
-  generateShareableLink,
-} from "../utils/assessmentExport";
 
 class TabErrorBoundary extends Component<
   { tabId: string; children: ReactNode },
@@ -79,9 +75,7 @@ export default function ToolsPage() {
   const { state, dispatch } = useHumanProof();
   const [showDriftBannerState, setShowDriftBannerState] = useState(false);
   const [showStalenessBanner, setShowStalenessBanner] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showLegacyVersionBanner, setShowLegacyVersionBanner] = useState(false);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const tabContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,79 +107,11 @@ export default function ToolsPage() {
     [dispatch],
   );
 
-  const handleExport = useCallback(
-    async (format: "json" | "pdf") => {
-      if (format === "json") {
-        const snapshot = generateAssessmentSnapshot(
-          state.jobRiskScore,
-          state.jobTitle,
-          state.skillRiskScore,
-          state.humanScore,
-        );
-        const url = URL.createObjectURL(
-          new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" }),
-        );
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `hp-audit-${new Date().toISOString().split("T")[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        setToastMsg("📄 PDF generation coming in Q2 2026.");
-        setTimeout(() => setToastMsg(null), 3000);
-      }
-      setShowExportMenu(false);
-    },
-    [state],
-  );
 
   return (
     <div className="page-wrap" style={{ background: "var(--bg)" }}>
       <div className="container" style={{ maxWidth: 1280 }}>
 
-        {/* ── Premium Dashboard Header ──────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          style={{ marginBottom: '40px' }}
-        >
-          <div className="dashboard-header-row" style={{ justifyContent: 'flex-end' }}>
-            <div className="dashboard-header-actions">
-              {/* Export */}
-              <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowExportMenu(!showExportMenu)} className="btn btn-secondary btn-sm">
-                  Export
-                </button>
-                {showExportMenu && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: 'var(--bg-card)',
-                    border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '4px',
-                    minWidth: 140, zIndex: 100, boxShadow: 'var(--shadow-lg)',
-                  }}>
-                    <button onClick={() => handleExport('json')} className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'flex-start' }}>
-                      JSON Export
-                    </button>
-                    <button onClick={() => handleExport('pdf')} className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'flex-start' }}>
-                      PDF Report
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.origin + "/" + generateShareableLink());
-                  setToastMsg("✓ Link copied to clipboard");
-                  setTimeout(() => setToastMsg(null), 2500);
-                }}
-                className="btn btn-primary btn-sm"
-              >
-                Share
-              </button>
-            </div>
-          </div>
-        </motion.div>
 
         {/* ── System Banners ────────────────────────────────────────────── */}
         {(showStalenessBanner || showDriftBannerState || showLegacyVersionBanner) && (
@@ -216,26 +142,6 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      {/* Toast */}
-      <AnimatePresence>
-        {toastMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
-            style={{
-              position: 'fixed', bottom: 'var(--toast-bottom, 32px)', left: '50%', transform: 'translateX(-50%)',
-              zIndex: 10000, padding: '12px 24px',
-              background: 'var(--text)', color: 'var(--bg)',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.05em',
-              boxShadow: 'var(--shadow-xl)',
-            }}
-          >
-            {toastMsg}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
