@@ -36,6 +36,18 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { calculateScore as calculateScoreFn } from '../data/riskFormula';
+import { computeAgenticWaveEngine } from '../data/agenticWaveEngine';
+import type { AgenticWaveResult } from '../data/agenticWaveTypes';
+import { IntelligenceHeader } from '../components/DisplacementEngine/IntelligenceHeader';
+import { Section1_CurrentRisk } from '../components/DisplacementEngine/Section1_CurrentRisk';
+import { Section2_AgenticWaveExposure } from '../components/DisplacementEngine/Section2_AgenticWaveExposure';
+import { Section3_CapabilityThreshold } from '../components/DisplacementEngine/Section3_CapabilityThreshold';
+import { Section4_TaskExposure } from '../components/DisplacementEngine/Section4_TaskExposure';
+import { Section5_SurvivalFactors } from '../components/DisplacementEngine/Section5_SurvivalFactors';
+import { Section6_FutureRoleEvolution } from '../components/DisplacementEngine/Section6_FutureRoleEvolution';
+import { Section7_EarlyWarningSignals } from '../components/DisplacementEngine/Section7_EarlyWarningSignals';
+import { Section8_PersonalActionPlan } from '../components/DisplacementEngine/Section8_PersonalActionPlan';
+import { Section9_PsychologicalFraming } from '../components/DisplacementEngine/Section9_PsychologicalFraming';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -92,7 +104,7 @@ const getRoleIcon = (label: string | undefined | null): React.ReactNode => {
   return <Star className="w-4 h-4" />;
 };
 
-type TabKey = 'analysis' | 'matrix' | 'roadmap' | 'forecast';
+type TabKey = 'risk-intel' | 'wave-analysis' | 'career-defense' | 'action-plan';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -103,7 +115,7 @@ const AuditTerminalPage: React.FC = () => {
   const [countryKey, setCountryKey]   = useState('usa');
   const [result, setResult]           = useState<ScoreResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [activeTab, setActiveTab]     = useState<TabKey>('analysis');
+  const [activeTab, setActiveTab]     = useState<TabKey>('risk-intel');
   const [delta, setDelta]             = useState<ScoreDelta | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
@@ -177,7 +189,7 @@ const AuditTerminalPage: React.FC = () => {
       setResult(p.score);
       setDelta(p.delta);
     }
-    setActiveTab('analysis');
+    setActiveTab('risk-intel');
     setIsCalculating(false);
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
   };
@@ -285,6 +297,12 @@ const AuditTerminalPage: React.FC = () => {
   const catColor         = currentIndustry ? (CAT_COLORS[currentIndustry.cat] ?? 'var(--cyan)') : 'var(--cyan)';
   const synthesis        = result?.inaction_scenario ?? null;
 
+  // Agentic wave intelligence — derived synchronously from existing score + intel corpus
+  const agenticResult = useMemo<AgenticWaveResult | null>(() => {
+    if (!result || !workTypeKey || !industryKey) return null;
+    return computeAgenticWaveEngine(result, intel, workTypeKey, industryKey, experience);
+  }, [result, intel, workTypeKey, industryKey, experience]);
+
   // ── Share button state ────────────────────────────────────────────────────
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -358,11 +376,11 @@ const AuditTerminalPage: React.FC = () => {
     } catch { /* ignore */ }
   }, []);
 
-  const TABS: { key: TabKey; label: string }[] = [
-    { key: 'analysis', label: 'Dimension Analysis' },
-    { key: 'matrix',   label: 'Skill Matrix' },
-    { key: 'roadmap',  label: 'Upskilling Roadmap' },
-    { key: 'forecast', label: 'Risk Forecast' },
+  const TABS: { key: TabKey; label: string; sub: string }[] = [
+    { key: 'risk-intel',     label: 'Risk Intel',     sub: 'Current · Threshold · Wave' },
+    { key: 'wave-analysis',  label: 'Wave Analysis',  sub: '2030 Exposure · Task Heat Map' },
+    { key: 'career-defense', label: 'Career Defense', sub: 'Survival · Role Evolution' },
+    { key: 'action-plan',    label: 'Action Plan',    sub: 'Horizons · Framing' },
   ];
 
   return (
@@ -746,8 +764,15 @@ const AuditTerminalPage: React.FC = () => {
               )}
             </div>
 
+            {/* Intelligence Header — sticky bar with score + wave status */}
+            {agenticResult && (
+              <div style={{ margin: '0 -32px', borderRadius: 0 }}>
+                <IntelligenceHeader result={result} agentic={agenticResult} />
+              </div>
+            )}
+
             {/* Tab switcher */}
-            <div role="tablist" aria-label="Risk Oracle result sections" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            <div role="tablist" aria-label="AI Displacement Intelligence sections" style={{ display: 'flex', gap: '6px', margin: '16px 0', flexWrap: 'wrap' }}>
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
@@ -756,127 +781,90 @@ const AuditTerminalPage: React.FC = () => {
                   aria-controls={`tabpanel-${tab.key}`}
                   onClick={() => setActiveTab(tab.key)}
                   style={{
-                    padding: '10px 16px', minHeight: '44px', borderRadius: '6px', border: 'none',
+                    padding: '10px 16px', minHeight: '44px', borderRadius: '8px', border: 'none',
                     background: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.05)',
                     color: activeTab === tab.key ? '#000' : 'rgba(255,255,255,0.5)',
-                    fontWeight: 700, fontSize: '0.75rem', fontFamily: 'var(--font-mono)',
+                    fontWeight: 700, fontSize: '0.73rem', fontFamily: 'var(--font-mono)',
                     letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s ease',
+                    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
                   }}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  <span style={{ fontSize: '0.60rem', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
                 </button>
               ))}
             </div>
 
             {/* Tab content panel */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '32px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '24px' }}>
 
-              {/* ANALYSIS */}
-              {activeTab === 'analysis' && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
-                  {/* Dimension bars */}
-                  <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-                    <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>DIMENSION BREAKDOWN</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {result.dimensions.map((dim) => {
-                        const info = DIM_INFO[dim.key];
-                        const dc = getScoreColor(dim.score);
-                        return (
-                          <div key={dim.key}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                              <div>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>{info?.label ?? dim.label}</div>
-                                {info?.desc && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '2px' }}>{info.desc}</div>}
-                              </div>
-                              <span style={{ fontWeight: 900, fontFamily: 'var(--font-mono)', color: dc, fontSize: '0.9rem', marginLeft: '12px', flexShrink: 0 }}>{dim.score}</span>
-                            </div>
-                            <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${dim.score}%`, background: dc, borderRadius: '2px', transition: 'width 0.8s ease', boxShadow: `0 0 6px ${dc}66` }} />
-                            </div>
-                            {dim.reason && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '4px', fontStyle: 'italic' }}>{dim.reason}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
+              {/* TAB 1: RISK INTEL — Current Risk + Capability Threshold + Early Warning */}
+              {activeTab === 'risk-intel' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+                  <Section1_CurrentRisk result={result} />
+                  {agenticResult && (
+                    <>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                          Capability Threshold Model
+                        </div>
+                        <Section3_CapabilityThreshold threshold={agenticResult.capabilityThreshold} />
+                      </div>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                          Early Warning Signals
+                        </div>
+                        <Section7_EarlyWarningSignals waveStatusDetail={agenticResult.waveStatusDetail} />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
-              {/* MATRIX */}
-              {activeTab === 'matrix' && (
-                intel
-                  ? <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={workTypeKey} />
-                  : (
-                    <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
-                      <Cpu size={40} style={{ marginBottom: '12px', color: scoreColor }} />
-                      <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
-                        Heuristic estimate — no seeded skill data for this role
-                      </p>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 380, margin: '0 auto 16px' }}>
-                        Deep skill intelligence is available for 412 common roles. This role's D1–D6 scores were
-                        computed from industry patterns. Try the <strong>Dimension Analysis</strong> tab for
-                        the full breakdown, or explore a neighbouring role in the comparison below.
-                      </p>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                        Data quality: {result.dataQuality === 'DQ_FULL' ? 'Full' : result.dataQuality === 'DQ_PARTIAL' ? 'Partial' : 'Estimated'}
-                        {' · '}Confidence: {result.confidence}
-                      </div>
+              {/* TAB 2: WAVE ANALYSIS — Agentic Wave Exposure + Task Exposure */}
+              {activeTab === 'wave-analysis' && agenticResult && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+                  <Section2_AgenticWaveExposure waveScore={agenticResult.waveScore} />
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                      Task-Level AI Exposure
                     </div>
-                  )
+                    <Section4_TaskExposure tasks={agenticResult.taskExposure} />
+                  </div>
+                </div>
               )}
 
-              {/* ROADMAP */}
-              {activeTab === 'roadmap' && (
-                intel
-                  ? <StrategicRoadmap intel={intel} experience={experience} scoreColor={scoreColor} score={result.total} />
-                  : (
-                    <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
-                      <ShieldCheck size={40} style={{ marginBottom: '12px', color: scoreColor }} />
-                      <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
-                        Heuristic roadmap — using dimension-driven action plan
-                      </p>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', maxWidth: 380, margin: '0 auto 12px' }}>
-                        The seeded roadmap (with specific certifications, timelines, and salary outcomes) is
-                        available for 412 roles. Your role uses the modular block engine — check the
-                        <strong> Oracle Synthesis</strong> section on the Analysis tab for your personalised
-                        action steps.
-                      </p>
+              {/* TAB 3: CAREER DEFENSE — Survival Factors + Future Role Evolution */}
+              {activeTab === 'career-defense' && agenticResult && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+                  <Section5_SurvivalFactors factors={agenticResult.survivalFactors} />
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                      Future Role Evolution Path
                     </div>
-                  )
+                    <Section6_FutureRoleEvolution steps={agenticResult.futureRoleEvolution} />
+                  </div>
+                </div>
               )}
 
-              {/* FORECAST */}
-              {activeTab === 'forecast' && (
-                <div>
-                  <h3 className="label-xs" style={{ marginBottom: '24px', color: 'var(--text-3)' }}>TEMPORAL DISPLACEMENT TRAJECTORY</h3>
-                  {result.riskTrend && result.riskTrend.length > 0 ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginBottom: '32px' }}>
-                      {result.riskTrend.map((t: { year?: string; score?: number; riskScore?: number; label?: string }, i: number) => {
-                        const val: number = t.score ?? t.riskScore ?? 0;
-                        const c = getScoreColor(val);
-                        return (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.08 }}
-                            className="glass-panel"
-                            style={{ padding: '20px 12px', textAlign: 'center', borderRadius: '12px' }}
-                          >
-                            <div style={{ color: 'var(--text-3)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>{t.year}</div>
-                            <div style={{ fontWeight: 900, fontSize: '1.4rem', color: c }}>{val}%</div>
-                          </motion.div>
-                        );
-                      })}
+              {/* TAB 4: ACTION PLAN — Personal Action Plan + Psychological Framing */}
+              {activeTab === 'action-plan' && agenticResult && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+                  <Section8_PersonalActionPlan actionPlan={agenticResult.actionPlan} />
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                      Your Situation In Context
                     </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '32px', opacity: 0.4 }}>
-                      <Clock size={36} style={{ marginBottom: '12px' }} />
-                      <p className="label-xs">No forecast trajectory data for this role.</p>
-                    </div>
-                  )}
-                  <ScoreComparison />
+                    <Section9_PsychologicalFraming frame={agenticResult.psychFrame} />
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback while agenticResult is computing (should be instant) */}
+              {!agenticResult && (activeTab !== 'risk-intel') && (
+                <div style={{ textAlign: 'center', padding: '48px 24px', opacity: 0.5 }}>
+                  <Cpu size={32} style={{ marginBottom: 12, color: scoreColor }} />
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-3)' }}>Computing intelligence…</p>
                 </div>
               )}
             </div>

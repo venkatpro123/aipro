@@ -29,17 +29,17 @@ const STATUS_MESSAGES = [
   'Initializing 6-dimension displacement engine…',
   'Mapping task automatability for your role…',
   'Modeling AI tool maturity across your sector…',
-  'Probing human amplification factors…',
+  'Analyzing agentic wave exposure vectors…',
   'Propagating activations through hidden layers…',
-  'Detecting displacement risk patterns…',
+  'Mapping capability threshold state…',
+  'Computing 2030 structural disruption exposure…',
   'Correlating country labour-market signals…',
   'Fusing experience-shield coefficients…',
   'Scoring social capital moat depth…',
-  'Back-propagating confidence weights…',
-  'Resolving cross-dimension exposure clusters…',
+  'Detecting task-level AI automation patterns…',
   'Validating against 8,400+ role assessments…',
   'Calibrating displacement confidence intervals…',
-  'Synthesizing your AI displacement score…',
+  'Synthesizing your AI displacement intelligence…',
 ];
 
 const PATTERN_CALLOUTS = [

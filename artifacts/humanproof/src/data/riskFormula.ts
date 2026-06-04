@@ -112,7 +112,7 @@ const INDUSTRY_KEY_TO_RISK_KEY: Record<string, string> = {
 
 // ─── Role type cognitive complexity proxy (for D3) ───────────────────
 // Higher = more human cognitive complexity = LOWER displacement risk
-const ROLE_COMPLEXITY_MAP: Record<string, number> = {
+export const ROLE_COMPLEXITY_MAP: Record<string, number> = {
   // Strategy / Leadership — near-immune
   sw_arch: 0.12, it_lead: 0.10, sw_pm: 0.14, con_strategy: 0.15, con_mgmt: 0.18,
   gov_policy: 0.15, mh_therapist: 0.08, mh_psychologist: 0.10, mh_crisis: 0.08,
@@ -381,7 +381,7 @@ export const calculateD1 = (workType: string, _industry: string, country: string
 //
 // Values = 0–1 representing how mature AI tooling is for this role category.
 // Source: vendor deployment research, analyst reports, industry surveys.
-const D2_ROLE_CATEGORY_MATURITY: Record<string, number> = {
+export const D2_ROLE_CATEGORY_MATURITY: Record<string, number> = {
   // ── Extremely mature tools (ChatGPT, Jasper, specialized platforms deployed at scale) ──
   bpo: 0.92,   adm: 0.90,   cnt: 0.88,   // BPO, admin, content creation
   // ── Highly mature (CoPilot, Bloomberg AI, Midjourney, Adobe AI) ──────────────────────
