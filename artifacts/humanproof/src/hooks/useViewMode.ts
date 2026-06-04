@@ -21,12 +21,10 @@ const LS_KEY = 'hp.ui.viewmode';
 
 function readMode(): ViewMode {
   try {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) : null;
-    if (stored === 'beast' || stored === 'intelligence') return 'beast';
-    if (stored === 'analysis') return 'analysis';
-    return 'guidance';
+    // Always lock to analysis mode — guidance and beast are hidden
+    return 'analysis';
   } catch {
-    return 'guidance';
+    return 'analysis';
   }
 }
 

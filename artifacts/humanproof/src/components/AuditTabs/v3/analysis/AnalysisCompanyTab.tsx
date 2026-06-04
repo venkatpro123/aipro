@@ -118,14 +118,6 @@ export const AnalysisCompanyTab: React.FC<Props> = ({ result, companyData, onSwi
         </motion.div>
       )}
 
-      {/* Depth invite */}
-      <div className="text-center pt-2 pb-2">
-        <button type="button" onClick={onSwitchToBeast}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)' }}>Explore full intelligence </span>
-          <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>→</span>
-        </button>
-      </div>
 
     </div>
   );

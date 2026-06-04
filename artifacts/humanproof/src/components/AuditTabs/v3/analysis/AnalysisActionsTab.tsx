@@ -5,7 +5,7 @@
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Siren, Timer, Key, Clock } from 'lucide-react';
+import { AlertTriangle, Siren, Timer, Key, Clock, BookOpen, Activity } from 'lucide-react';
 import type { HybridResult } from '../../../../types/hybridResult';
 import type { CompanyData } from '../../../../data/companyDatabase';
 import type { ActionPlanItem } from '../../../../types/hybridResult';
@@ -16,6 +16,9 @@ import { StrategySpineCard } from '../../common/StrategySpineCard';
 import { RecoveryProbabilityCard } from '../../common/RecoveryProbabilityCard';
 import CareerContingencyPanel from '../../common/CareerContingencyPanel';
 import { riskColor } from '../../../../lib/riskTokens';
+import AdaptiveBlock from '../../common/AdaptiveBlock';
+import { ActionPlanTab } from '../../ActionPlanTab';
+import StrategyTab from '../../StrategyTab';
 
 interface Props {
   result: HybridResult;
@@ -278,14 +281,30 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData, onSwi
         </div>
       )}
 
-      {/* Depth invite */}
-      <div className="text-center pt-2 pb-2">
-        <button type="button" onClick={onSwitchToBeast}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)' }}>Explore full intelligence </span>
-          <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>→</span>
-        </button>
-      </div>
+      {/* Complete action plan — collapsed */}
+      <AdaptiveBlock
+        title="Complete action plan"
+        subtitle="Full ranked list with deadlines, effort estimates, evidence"
+        icon={BookOpen}
+        tier={3}
+        accentColor="#22d3ee"
+        defaultOpen={false}
+      >
+        <ActionPlanTab result={result} companyData={companyData} />
+      </AdaptiveBlock>
+
+      {/* Strategic plan & negotiation — collapsed */}
+      <AdaptiveBlock
+        title="Strategic plan & negotiation"
+        subtitle="Exit timing, offer evaluation, negotiation intelligence, phase roadmap"
+        icon={Activity}
+        tier={3}
+        accentColor="#f59e0b"
+        defaultOpen={false}
+      >
+        <StrategyTab result={result} companyData={companyData} />
+      </AdaptiveBlock>
+
 
     </div>
   );

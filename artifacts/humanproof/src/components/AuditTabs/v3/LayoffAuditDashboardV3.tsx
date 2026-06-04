@@ -702,13 +702,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               </span>
             </div>
 
-            {/* Mode toggle — compact (icon-only) on phones */}
-            <ViewModeToggle
-              viewMode={viewMode}
-              onSelect={setViewMode}
-              emergencyMode={isEmergency}
-              compact={true}
-            />
+            {/* Mode toggle hidden — analysis mode only */}
           </div>
 
           {/* Row 2: tab bar — only in Beast Mode, desktop/tablet only */}
