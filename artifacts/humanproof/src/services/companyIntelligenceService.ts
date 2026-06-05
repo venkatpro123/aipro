@@ -476,9 +476,72 @@ export async function searchCompanies(
     }));
 
     searchCache.set(cacheKey, result);
+
+    // If company_intelligence returned nothing, fall through to verified_company_intelligence
+    // (5,208 companies) as a secondary search source.
+    if (result.length === 0) {
+      const vciResult = await searchVerifiedCompanyIntelligence(query, limit, signal);
+      if (vciResult.length > 0) {
+        searchCache.set(cacheKey, vciResult);
+        return vciResult;
+      }
+    }
+
     return result;
   } catch (err: any) {
     // AbortError is expected when the caller cancels — not a real failure.
+    if (err?.name === 'AbortError' || err?.message?.includes('abort')) return [];
+    // On any other error, try verified_company_intelligence as a last resort.
+    return searchVerifiedCompanyIntelligence(query, limit, signal).catch(() => []);
+  }
+}
+
+/**
+ * Search the verified_company_intelligence table (5,208 companies) as a
+ * fallback when company_intelligence returns no results.
+ * Returns the same shape as searchCompanies() so callers are interchangeable.
+ */
+export async function searchVerifiedCompanyIntelligence(
+  query: string,
+  limit = 10,
+  signal?: AbortSignal,
+): Promise<{ name: string; industry: string; riskScore: number }[]> {
+  if (!query || query.length < 2) return [];
+  try {
+    const escaped = query.replace(/[%_\\]/g, c => `\\${c}`).replace(/[,()]/g, '');
+    const { data, error } = await supabase
+      .from('verified_company_intelligence')
+      .select('display_name, canonical_name, data_quality_tier')
+      .or(
+        `display_name.ilike.${escaped}%,` +
+        `canonical_name.ilike.${escaped}%,` +
+        `display_name.ilike.%${escaped}%,` +
+        `canonical_name.ilike.%${escaped}%`,
+      )
+      .order('last_enriched_at', { ascending: false })
+      .limit(limit)
+      .abortSignal(signal ?? null as any);
+
+    if (error || !data) return [];
+
+    const esc = escaped.toLowerCase();
+    const rows = (data as any[]).filter(
+      r => (r.display_name ?? r.canonical_name) && typeof (r.display_name ?? r.canonical_name) === 'string',
+    );
+
+    // Prefix matches first
+    rows.sort((a, b) => {
+      const aName = (a.display_name ?? a.canonical_name ?? '').toLowerCase();
+      const bName = (b.display_name ?? b.canonical_name ?? '').toLowerCase();
+      return (aName.startsWith(esc) ? 0 : 1) - (bName.startsWith(esc) ? 0 : 1);
+    });
+
+    return rows.map(r => ({
+      name: r.display_name ?? r.canonical_name,
+      industry: 'Company',   // VCI table does not store industry
+      riskScore: 50,         // No risk score in VCI; neutral default
+    }));
+  } catch (err: any) {
     if (err?.name === 'AbortError' || err?.message?.includes('abort')) return [];
     return [];
   }

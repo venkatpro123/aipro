@@ -4,6 +4,7 @@ import { useHumanProof } from "../../context/HumanProofContext";
 import { searchAllCompanies, resolveCompanyData } from "../../data/companyIntelligenceBridge";
 import {
   searchCompanies as searchSupabaseCompanies,
+  searchVerifiedCompanyIntelligence,
   computeMatchRatio,
   computeMatchConfidence,
   FUZZY_MATCH_MIN_RATIO,
@@ -456,16 +457,30 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     // ── Phase 2: Supabase augmentation (async, non-blocking) ─────────────────
     const controller = new AbortController();
 
-    searchSupabaseCompanies(trimmed, 10, controller.signal).then(supabaseResults => {
+    searchSupabaseCompanies(trimmed, 10, controller.signal).then(async supabaseResults => {
+      if (controller.signal.aborted) return;
+
+      // Phase 2b: if company_intelligence returned nothing, query
+      // verified_company_intelligence (5,208 companies) as fallback.
+      let effectiveResults = supabaseResults;
+      if (supabaseResults.length === 0 && !controller.signal.aborted) {
+        try {
+          const vciResults = await searchVerifiedCompanyIntelligence(trimmed, 10, controller.signal);
+          if (vciResults.length > 0 && !controller.signal.aborted) {
+            effectiveResults = vciResults;
+          }
+        } catch { /* non-fatal — keep local results */ }
+      }
+
       if (controller.signal.aborted) return;
 
       // Disambiguation check.
       const rootWord = trimmed.split(' ')[0].toLowerCase();
-      const sameRootCount = supabaseResults.filter(r =>
+      const sameRootCount = effectiveResults.filter(r =>
         r.name != null && r.name.toLowerCase().startsWith(rootWord),
       ).length;
       if (sameRootCount >= 3) {
-        setDisambiguationCandidates(supabaseResults.slice(0, 5).map(r => ({
+        setDisambiguationCandidates(effectiveResults.slice(0, 5).map(r => ({
           name: r.name, industry: r.industry, region: 'GLOBAL', riskScore: r.riskScore,
         })));
         setShowDisambiguation(true);
@@ -474,9 +489,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
         setDisambiguationCandidates([]);
       }
 
-      // Merge Supabase rows (front of list — they have riskScore) with local
+      // Merge Supabase / VCI rows (front of list — they have riskScore) with local
       // results that weren't already covered.
-      const sbMapped: any[] = supabaseResults
+      const sbMapped: any[] = effectiveResults
         .filter(r => r.name != null && r.name.length > 0)
         .slice(0, 8)
         .map(r => ({

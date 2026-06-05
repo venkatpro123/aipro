@@ -19,6 +19,7 @@ import { buildHybridScorePayload } from "./hybridConsensusBuilder";
 // v40.0 Task 5.5: IndexedDB offline audit cache
 import { cacheLastAuditResult, getLastAuditResult } from "./pwaService";
 import { queryCompanyIntelligenceWithMatch, saveToDiscoveryQueue } from "./companyIntelligenceService";
+import { getVerifiedCompanyData, type VerifiedCompanyRow } from "../data/companyIntelligenceDB";
 import { supabase } from "../utils/supabase";
 import { IndustryRisk } from "../data/industryRiskData";
 import { getAllIndustryRisk } from "./db/staticDataService";
@@ -301,6 +302,41 @@ const STALE_SEED_DATE = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOSt
  * Converts raw OSINT Edge Function response to CompanyData schema.
  * The EF queries company_intelligence (seeded DB) — data is NOT live scraped.
  */
+/**
+ * Map a VerifiedCompanyRow (verified_company_intelligence table, 5,208 companies)
+ * to the CompanyData shape expected by the scoring engine.
+ *
+ * VCI data is sourced from Wikipedia (workforce), Yahoo Finance (financials),
+ * and breaking_news_events (layoffs) — it is real data, not seeded estimates.
+ */
+function mapVerifiedCompanyRowToCompanyData(row: VerifiedCompanyRow): CompanyData {
+  const recentLayoffPct = row.largest_layoff_pct ?? (row.recent_layoff_count > 0 ? 5 : 0);
+  return {
+    name: row.display_name ?? row.canonical_name,
+    isPublic: row.is_public,
+    industry: row.industry ?? 'Technology',
+    region: normalizeRegion(row.country_code ?? 'US'),
+    employeeCount: row.workforce_count ?? 1000,
+    ticker: row.ticker ?? undefined,
+    stock90DayChange: row.stock_90d_change ?? null,
+    revenueGrowthYoY: null,                           // not in VCI schema
+    revenuePerEmployee: row.revenue_ttm_usd && row.workforce_count
+      ? Math.round((row.revenue_ttm_usd * 1e6) / row.workforce_count)
+      : 150_000,
+    aiInvestmentSignal: 'medium',
+    layoffsLast24Months: row.recent_layoff_count > 0
+      ? [{ date: row.layoff_last_event_at ?? new Date().toISOString(), percentCut: recentLayoffPct, source: 'verified_company_intelligence' }]
+      : [],
+    layoffRounds: row.recent_layoff_count > 0 ? 1 : 0,
+    lastLayoffPercent: recentLayoffPct || null,
+    hiringVelocity: row.hiring_velocity_score != null
+      ? (row.hiring_velocity_score > 60 ? 'growing' : row.hiring_velocity_score < 30 ? 'contracting' : 'stable')
+      : 'stable',
+    source: `verified_company_intelligence · ${row.data_quality_tier}`,
+    lastUpdated: row.last_enriched_at ?? row.updated_at,
+  } as unknown as CompanyData;
+}
+
 function mapOsintToCompanyData(osintData: any, sourceName?: string): CompanyData {
   const resolvedIsPublic = Boolean(
     osintData.is_public === true || osintData.is_public === "true",
@@ -1051,6 +1087,29 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
   }
 
+  // Step 2b: verified_company_intelligence table (5,208 companies).
+  // Queried when both the Edge Function (Step 1) and the company_intelligence
+  // table (Step 2) return nothing for this company. VCI has real sourced data
+  // from Wikipedia, Yahoo Finance, and breaking_news_events — it is a reliable
+  // baseline even when live scraping hasn't run yet for this company.
+  if (!companyData) {
+    try {
+      const vciRow: VerifiedCompanyRow | null = await getVerifiedCompanyData(supabase as any, inputs.companyName);
+      if (vciRow) {
+        companyData = mapVerifiedCompanyRowToCompanyData(vciRow);
+        dataSource = (vciRow.data_quality_tier === 'verified' || vciRow.data_quality_tier === 'live') ? 'live' : 'db';
+        (companyData as any)._isVCIBaseline = true;
+        (companyData as any)._vciTier = vciRow.data_quality_tier;
+        if (companyMatchConfidence === 0) {
+          companyMatchConfidence = 0.9; // canonical match from VCI
+          companyMatchType = 'exact';
+        }
+      }
+    } catch (err) {
+      console.warn('[AuditPipeline] verified_company_intelligence lookup failed:', err);
+    }
+  }
+
   // Step 3: Legacy companyDatabase (18 companies) — static code-side fallback.
   if (!companyData) {
     const legacy = getCompanyByName(inputs.companyName);
@@ -1456,6 +1515,49 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         (companyData as any)._quorumInsufficient = true;
         (companyData as any)._quorumPositiveClassCount = 0;
         (companyData as any)._quorumStructuralNote = null;
+      }
+
+      // VCI signal fallback: when quorum timed out with zero positive classes,
+      // backfill key companyData fields from verified_company_intelligence (5,208
+      // companies). VCI stores real sourced data (Wikipedia workforce, Yahoo Finance
+      // stock, breaking_news_events layoffs) and is the best available baseline when
+      // live scraping failed to retrieve signals for this specific company.
+      if (liveQuorum && liveQuorum.timedOut && !liveQuorum.reached) {
+        try {
+          const vciRow = await getVerifiedCompanyData(supabase as any, inputs.companyName);
+          if (vciRow) {
+            // Backfill only fields that are null/missing in companyData — never
+            // overwrite fields that live reconciliation already populated.
+            if (companyData) {
+              if (!companyData.employeeCount && vciRow.workforce_count) {
+                companyData.employeeCount = vciRow.workforce_count;
+              }
+              if (companyData.stock90DayChange === null && vciRow.stock_90d_change != null) {
+                companyData.stock90DayChange = vciRow.stock_90d_change;
+              }
+              if ((!companyData.layoffRounds || companyData.layoffRounds === 0) && vciRow.recent_layoff_count > 0) {
+                companyData.layoffRounds = 1;
+                companyData.lastLayoffPercent = vciRow.largest_layoff_pct ?? 5;
+                if (!companyData.layoffsLast24Months || companyData.layoffsLast24Months.length === 0) {
+                  companyData.layoffsLast24Months = [{
+                    date: vciRow.layoff_last_event_at ?? new Date().toISOString(),
+                    percentCut: vciRow.largest_layoff_pct ?? 5,
+                    source: 'verified_company_intelligence',
+                  }];
+                }
+              }
+              if (vciRow.hiring_velocity_score != null && !(companyData as any).hiringVelocity) {
+                (companyData as any).hiringVelocity =
+                  vciRow.hiring_velocity_score > 60 ? 'growing' :
+                  vciRow.hiring_velocity_score < 30 ? 'contracting' : 'stable';
+              }
+              (companyData as any)._vciSignalBackfill = true;
+              (companyData as any)._vciTier = vciRow.data_quality_tier;
+            }
+          }
+        } catch {
+          // Non-fatal — audit continues with whatever signals are available
+        }
       }
       (companyData as any)._liveDataCoverage = {
         liveWonKeys:   reconciledSignals.summary.liveWonKeys,
