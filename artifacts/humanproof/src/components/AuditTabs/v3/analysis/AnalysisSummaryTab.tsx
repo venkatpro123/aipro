@@ -179,9 +179,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
         style={{ scrollbarWidth: 'none' }}
       >
         <StatChip label="Confidence" value={`${confPct}%`} sub={canonicalConf.userFacing.label.toLowerCase()} color={canonicalConf.userFacing.color} icon={Shield} />
-        <StatChip label="Readiness" value={`${pScore}`} sub={preparedness?.readinessLabel ?? '—'} color={pColor} icon={Shield} />
-        <StatChip label="Live Signals" value={`${liveCount}`} sub={liveCount >= 4 ? 'full live' : liveCount >= 2 ? 'partial' : 'heuristic'} color={liveCount >= 4 ? '#10b981' : liveCount >= 2 ? '#22d3ee' : '#f59e0b'} icon={Signal} />
-        <StatChip label="Data Age" value={`${dataAge}d`} sub={dataAge <= 1 ? 'fresh' : dataAge <= 7 ? 'recent' : 'stale'} color={dataAge <= 1 ? '#10b981' : dataAge <= 7 ? '#22d3ee' : '#f97316'} icon={Clock} />
       </motion.div>
 
       {/* Top Risk Drivers */}

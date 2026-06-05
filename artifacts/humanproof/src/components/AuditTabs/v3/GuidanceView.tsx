@@ -352,8 +352,6 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           <SectionLabel text="Confidence & Trust" />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="rgba(255,255,255,0.55)" />
-            <ConfidenceBadge text={`${confidenceSummary.liveSignals} live signals`} color="rgba(255,255,255,0.55)" />
-            <ConfidenceBadge text={FRESHNESS_LABEL[confidenceSummary.freshnessTier] ?? 'Estimated'} color={confidenceSummary.freshnessTier === 'live' ? '#10b981' : confidenceSummary.freshnessTier === 'stale' ? '#f97316' : 'rgba(255,255,255,0.55)'} />
             {confidenceSummary.lowDataWarning && (
               <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />
             )}
@@ -578,19 +576,6 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           <ConfidenceBadge
             text={`${confidenceSummary.confidencePercent}% confident`}
             color="rgba(255,255,255,0.55)"
-          />
-          <ConfidenceBadge
-            text={`${confidenceSummary.liveSignals} live signal${confidenceSummary.liveSignals !== 1 ? 's' : ''}`}
-            color={confidenceSummary.liveSignals > 0 ? '#10b981' : 'rgba(255,255,255,0.40)'}
-          />
-          <ConfidenceBadge
-            text={FRESHNESS_LABEL[confidenceSummary.freshnessTier] ?? 'Estimated'}
-            color={
-              confidenceSummary.freshnessTier === 'live'   ? '#10b981' :
-              confidenceSummary.freshnessTier === 'mixed'  ? '#22d3ee' :
-              confidenceSummary.freshnessTier === 'stale'  ? '#f97316' :
-                                                             'rgba(255,255,255,0.40)'
-            }
           />
           {confidenceSummary.lowDataWarning && (
             <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />

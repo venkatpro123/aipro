@@ -23,7 +23,6 @@ import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect
 import { getCareerIntelligence } from '../data/intelligence/index';
 import { RoleRiskComparison } from '../components/RoleRiskComparison';
 import { PortfolioShield } from '../components/PortfolioShield';
-import { DataFreshnessBadge } from '../components/DataFreshnessBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase, Cpu, Database, Globe, Layout, Lock, Smartphone,
@@ -879,7 +878,6 @@ const AuditTerminalPage: React.FC = () => {
               </div>
               <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <PortfolioShield />
-                <DataFreshnessBadge roleKey={workTypeKey} />
               </div>
             </div>
           </motion.div>
