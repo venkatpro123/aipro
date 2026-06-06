@@ -26,7 +26,6 @@ function demandColor(outlook: string): string {
 }
 
 export const CurrentRiskMetrics: React.FC<Props> = ({ d1Score, industryRisk, timeline, scoreColor }) => {
-  const dp2026 = timeline ? Math.round(timeline.displacementByYear[2026] * 100) : null;
   const hiring = industryRisk ? hiringTrendLabel(industryRisk.avgLayoffRate2025) : null;
   const outlook = industryRisk?.growthOutlook ?? null;
 
@@ -47,13 +46,6 @@ export const CurrentRiskMetrics: React.FC<Props> = ({ d1Score, industryRisk, tim
       label: 'Hiring Trend',
       value: hiring?.label ?? '—',
       color: hiring?.color ?? 'var(--text-3)',
-    },
-    {
-      label: 'Displacement Pressure',
-      value: dp2026 !== null ? `${dp2026}%` : '—',
-      color: dp2026 !== null
-        ? dp2026 >= 15 ? 'var(--red)' : dp2026 >= 8 ? 'var(--amber)' : 'var(--emerald)'
-        : 'var(--text-3)',
     },
   ];
 

@@ -25,11 +25,8 @@ import { RoleCombobox } from '../components/ui/RoleCombobox';
 import { generateDynamicRoleIntelligence } from '../services/dynamicRoleIntelligence';
 import { StrategicRoadmap } from '../components/StrategicRoadmap';
 import { getCareerIntelligence } from '../data/intelligence/index';
-import { DimensionRadar } from '../components/DimensionRadar';
 import { AIRiskSkillMatrix } from '../components/AIRiskSkillMatrix';
-import { RoleRiskComparison } from '../components/RoleRiskComparison';
 import { ScoreComparison } from '../components/ScoreComparison';
-import { PortfolioShield } from '../components/PortfolioShield';
 import { DataFreshnessBadge } from '../components/DataFreshnessBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -761,15 +758,9 @@ const AuditTerminalPage: React.FC = () => {
                   );
                 })()}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '4px' }}>Exposure Horizon</div>
-                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text)' }}>{getTimeline(result.total)}</div>
-                  </div>
-                  <div>
-                    <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '4px' }}>Action Urgency</div>
-                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: scoreColor }}>{getUrgency(result.total)}</div>
-                  </div>
+                <div>
+                  <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '4px' }}>Action Urgency</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: scoreColor }}>{getUrgency(result.total)}</div>
                 </div>
 
                 {/* §1 — Current Risk Metrics pills */}
@@ -978,62 +969,22 @@ const AuditTerminalPage: React.FC = () => {
               {/* ── TAB 1: OVERVIEW ─────────────────────────────────────────── */}
               {activeTab === 'overview' && (
                 <div>
-                  {/* D1–D6 dimension bars + radar */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
-                    <div style={{ flex: '1 1 280px', minWidth: 0 }}>
-                      <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>DIMENSION BREAKDOWN</h3>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {result.dimensions.map((dim) => {
-                          const info = DIM_INFO[dim.key];
-                          const dc = getScoreColor(dim.score);
-                          return (
-                            <div key={dim.key}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                                <div>
-                                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>{info?.label ?? dim.label}</div>
-                                  {info?.desc && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '2px' }}>{info.desc}</div>}
-                                </div>
-                                <span style={{ fontWeight: 900, fontFamily: 'var(--font-mono)', color: dc, fontSize: '0.9rem', marginLeft: '12px', flexShrink: 0 }}>{dim.score}</span>
-                              </div>
-                              <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${dim.score}%`, background: dc, borderRadius: '2px', transition: 'width 0.8s ease', boxShadow: `0 0 6px ${dc}66` }} />
-                              </div>
-                              {dim.reason && <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: '4px', fontStyle: 'italic' }}>{dim.reason}</div>}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                      <div>
-                        <h3 className="label-xs" style={{ marginBottom: '20px', color: 'var(--text-3)' }}>RADAR</h3>
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <DimensionRadar
-                            dimensions={result.dimensions.map((d) => ({ key: d.key, label: DIM_INFO[d.key]?.label ?? d.label, score: d.score }))}
-                            size={280}
-                            color={scoreColor}
-                          />
+                  {/* Oracle synthesis */}
+                  {synthesis && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>ORACLE SYNTHESIS</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(0,212,224,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,212,224,0.2)' }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', animation: 'pulse 2s infinite' }} />
+                          <span style={{ fontSize: '0.6rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>ORACLE</span>
                         </div>
                       </div>
-
-                      {synthesis && (
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                            <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>ORACLE SYNTHESIS</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(0,212,224,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,212,224,0.2)' }}>
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', animation: 'pulse 2s infinite' }} />
-                              <span style={{ fontSize: '0.6rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>ORACLE</span>
-                            </div>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
-                            <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cyan)' }} />
-                            <p style={{ color: 'var(--text-2)', fontSize: '0.9rem', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>"{synthesis}"</p>
-                          </div>
-                        </div>
-                      )}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cyan)' }} />
+                        <p style={{ color: 'var(--text-2)', fontSize: '0.9rem', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>"{synthesis}"</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* §2 — Agentic AI Wave Exposure */}
                   {agenticScore && (
@@ -1179,20 +1130,8 @@ const AuditTerminalPage: React.FC = () => {
             </div>
 
             {/* Bottom widgets */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '16px' }}>
-              <div style={{ flex: '2 1 320px' }}>
-                {/* Pass experience + country so comparison scores use the same parameters */}
-                <RoleRiskComparison
-                  currentRoleKey={workTypeKey}
-                  currentScore={result.total}
-                  experience={experience}
-                  country={countryKey}
-                />
-              </div>
-              <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <PortfolioShield />
-                <DataFreshnessBadge roleKey={workTypeKey} />
-              </div>
+            <div style={{ marginTop: '16px' }}>
+              <DataFreshnessBadge roleKey={workTypeKey} />
             </div>
           </motion.div>
         )}
