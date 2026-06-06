@@ -372,6 +372,26 @@ export const TaskExposureMatrix: React.FC<Props> = ({
         )}
       </div>
 
+      {/* Feature explanation banner */}
+      <div style={{
+        display: 'flex', gap: '12px', alignItems: 'flex-start',
+        padding: '12px 14px', borderRadius: '8px', marginBottom: '14px',
+        background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.18)',
+      }}>
+        <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>🔍</span>
+        <div>
+          <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text)', fontWeight: 700, lineHeight: 1.4 }}>
+            What is this showing you?
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.6 }}>
+            Every task in your role is scored for how much AI can do it by 2026, 2028, and 2030 — and how much human judgment it still requires. Tasks in red are where AI is moving fastest. Tasks in green are where you're hardest to replace. Use the filter buttons below to see your most vulnerable tasks, your safest ones, or the ones changing fastest.
+          </p>
+          <p style={{ margin: '6px 0 0', fontSize: '0.68rem', color: 'rgba(99,102,241,0.8)', fontWeight: 600 }}>
+            Tip: Start with "Most Vulnerable" to see where to focus, then "Highest Human Value" to see what to protect.
+          </p>
+        </div>
+      </div>
+
       {/* Summary badges */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <div style={{ padding: '5px 12px', borderRadius: '6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', fontSize: '0.68rem', color: 'var(--red)', fontWeight: 700 }}>

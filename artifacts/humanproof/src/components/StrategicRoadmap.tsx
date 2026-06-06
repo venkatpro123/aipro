@@ -321,6 +321,186 @@ const PhaseCard = ({
   );
 };
 
+// ── Role-Aware 12-Month Plan (fallback when no roadmap data) ──────────────────
+// Builds 3 concrete phases from the role's actual intel: safe skills, at-risk
+// tasks to offload, and best-fit career pivot path. No generic text.
+function RoleAware12MonthPlan({
+  intel, expMeta, careerPaths, scoreColor, score,
+}: {
+  intel: CareerIntelligence;
+  expMeta: { label: string; persona: string; urgencyMod: string };
+  careerPaths: CareerIntelligence['careerPaths'];
+  scoreColor: string;
+  score: number;
+}) {
+  const role = intel.displayRole ?? 'your role';
+  const topSafe = intel.skills.safe?.[0]?.skill ?? 'your most human-essential skill';
+  const topSafe2 = intel.skills.safe?.[1]?.skill ?? 'your domain expertise';
+  const topAtRisk = intel.skills.at_risk?.[0]?.skill ?? intel.skills.obsolete?.[0]?.skill ?? 'your most automatable tasks';
+  const topAtRiskTool = intel.skills.at_risk?.[0]?.aiTool ?? intel.skills.obsolete?.[0]?.aiTool ?? 'AI tools';
+  const bestPivot = careerPaths?.[0];
+  const pivotSkillGap = bestPivot?.skillGap?.split(',')?.[0]?.trim() ?? 'adjacent skills';
+  const pivotRole = bestPivot?.role ?? 'a more AI-resilient adjacent role';
+  const pivotSalary = bestPivot?.salaryDelta ?? '+10-30%';
+  const pivotTime = bestPivot?.timeToTransition ?? '12-18 months';
+
+  const phases = [
+    {
+      color: '#3b82f6',
+      timeline: 'Months 1–3',
+      focus: 'Protect your position',
+      actions: [
+        {
+          action: `Identify and document every task in your ${role} that ${topAtRiskTool} can now do`,
+          why: `${topAtRisk} is your highest-displacement risk. Making it visible lets you strategically offload it and shift your time toward protected work.`,
+          outcome: 'Personal displacement map — you know exactly what to move away from',
+        },
+        {
+          action: `Deepen ${topSafe} — the skill most likely to protect your position long-term`,
+          why: 'The tasks AI cannot do well are where your career durability is. Deepening them now increases the gap between you and replacement.',
+          outcome: 'Stronger positioning in your current role before the market compresses opportunity',
+        },
+        {
+          action: 'Build or update your external professional profile to reflect your human-essential skills',
+          why: 'If your LinkedIn or portfolio still describes automatable tasks, you appear more replaceable than you are. Update your narrative now.',
+          outcome: 'Discoverable by roles that value what you do best',
+        },
+      ],
+    },
+    {
+      color: '#8b5cf6',
+      timeline: 'Months 4–8',
+      focus: 'Build your next capability',
+      actions: [
+        {
+          action: `Start learning ${pivotSkillGap} — the fastest bridge to ${pivotRole}`,
+          why: `The best-fit pivot path from ${role} leads to ${pivotRole} (${pivotSalary} salary, ${pivotTime} transition). The first skill gap is ${pivotSkillGap} — closing it now opens that door.`,
+          outcome: `Credible candidate for ${pivotRole} within 12 months`,
+          tool: 'Coursera, LinkedIn Learning, or a domain-specific certification program',
+        },
+        {
+          action: `Develop ${topSafe2} into a demonstrable credential or portfolio piece`,
+          why: 'Skills that live only in your head are invisible to the market. Convert this protected capability into something concrete: a project, a publication, a talk.',
+          outcome: 'External proof of irreplaceable value that travels with you across employers',
+        },
+        {
+          action: 'Make 2–3 connections per month inside your target pivot community',
+          why: 'The role you want next is filled 60–70% of the time through relationships. Begin building in the direction of your pivot before you need it.',
+          outcome: 'Warm network in your target role community 6 months before you need it',
+        },
+      ],
+    },
+    {
+      color: '#10b981',
+      timeline: 'Months 9–12',
+      focus: 'Execute your transition or deepen your moat',
+      actions: [
+        {
+          action: `Evaluate and apply for roles as ${pivotRole} or negotiate a scope change in your current role`,
+          why: `With ${pivotSkillGap} developing and your network growing, months 9–12 are when transition becomes credible. Either move, or negotiate AI-resistant scope internally.`,
+          outcome: 'You are in a new, more protected role — or have repositioned your current one',
+        },
+        {
+          action: 'Systematically offload your top 3 automatable tasks to AI tools',
+          why: `If you're staying in ${role}, use AI for ${topAtRisk} — freeing your time for the work only you can do. This makes you more efficient and less replaceable simultaneously.`,
+          outcome: '20–30% more time on human-essential work within your current role',
+        },
+        {
+          action: 'Review and repeat: re-audit your task profile against where AI has advanced in the past year',
+          why: 'AI capabilities change every 6–12 months. The audit that protected you in Month 1 needs refreshing in Month 12 so you stay ahead of the next wave.',
+          outcome: 'Annual rhythm that keeps you ahead of displacement rather than reacting to it',
+        },
+      ],
+    },
+  ];
+
+  return (
+    <div>
+      {phases.map((phase, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'relative',
+            paddingLeft: 28,
+            paddingBottom: i < phases.length - 1 ? 24 : 0,
+          }}
+        >
+          {i < phases.length - 1 && (
+            <div style={{
+              position: 'absolute', left: 11, top: 32, bottom: 0,
+              width: 2, background: `linear-gradient(to bottom, ${phase.color}40, transparent)`,
+            }} />
+          )}
+          <div style={{
+            position: 'absolute', left: 0, top: 8,
+            width: 22, height: 22, borderRadius: '50%',
+            background: phase.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.65rem', fontWeight: 900, color: '#fff',
+            boxShadow: `0 0 12px ${phase.color}50`,
+          }}>{i + 1}</div>
+
+          <div style={{
+            background: 'rgba(255,255,255,0.03)', borderRadius: 12,
+            border: `1px solid ${phase.color}25`, padding: '14px 16px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9rem', color: phase.color, letterSpacing: '-0.02em' }}>
+                {phase.focus}
+              </span>
+              <span style={{ background: `${phase.color}15`, color: phase.color, borderRadius: 6, padding: '1px 8px', fontSize: '0.65rem', fontWeight: 700 }}>
+                ⏱ {phase.timeline}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {phase.actions.map((action, j) => (
+                <div key={j} style={{
+                  background: `${phase.color}08`, borderRadius: 8,
+                  padding: '10px 12px', borderLeft: `3px solid ${phase.color}40`,
+                }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 6, background: `${phase.color}20`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <CheckCircle2 size={11} color={phase.color} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text)', fontWeight: 600, lineHeight: 1.4 }}>
+                        {action.action}
+                      </p>
+                      {action.why && (
+                        <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                          <span style={{ color: phase.color, fontWeight: 700 }}>Why: </span>{action.why}
+                        </p>
+                      )}
+                      {action.outcome && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                          <Sparkles size={10} color={phase.color} />
+                          <span style={{ fontSize: '0.7rem', color: phase.color, fontWeight: 700 }}>{action.outcome}</span>
+                        </div>
+                      )}
+                      {action.tool && (
+                        <div style={{ marginTop: 6 }}>
+                          <span style={{
+                            background: 'rgba(139,92,246,0.12)', color: '#8b5cf6',
+                            borderRadius: 4, padding: '1px 7px', fontSize: '0.68rem', fontWeight: 700,
+                            fontFamily: 'var(--font-mono, monospace)',
+                          }}>🔧 {action.tool}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props) => {
   const [activeTab, setActiveTab] = useState<'roadmap' | 'pivots'>('roadmap');
@@ -343,7 +523,7 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
           <h3 style={{
             fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem',
             letterSpacing: '-0.03em', color: 'var(--text)', margin: 0,
-          }}>Strategic Transformation Roadmap</h3>
+          }}>Your 12-Month Action Plan</h3>
           <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-3)' }}>
             {expMeta.label} · {expMeta.persona}
           </p>
@@ -405,57 +585,8 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
               ))}
             </div>
           ) : (
-            /* Generative fallback when no data for experience level */
-            <div style={{
-              background: 'rgba(255,255,255,0.03)', borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.08)', padding: 24,
-            }}>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
-                <AlertCircle size={16} color={scoreColor} style={{ flexShrink: 0, marginTop: 2 }} />
-                <div>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text)', fontWeight: 700 }}>
-                    Universal Transformation Protocol — {expMeta.label}
-                  </p>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    Applied when no role-specific roadmap is available for your experience band
-                  </p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[
-                  {
-                    step: 'AI Skill Audit (Week 1)',
-                    desc: 'List every task you perform. Mark each as: Automatable, Augmented, or Human-only. This is your personal risk map.',
-                    color: '#3b82f6',
-                  },
-                  {
-                    step: 'Build One AI-Native Skill (Month 1-2)',
-                    desc: 'Pick the single AI tool most relevant to your domain. Commit 30 mins/day until you are measurably in the top 10% of your team in that specific tool.',
-                    color: '#8b5cf6',
-                  },
-                  {
-                    step: 'Pivot Positioning (Month 3-6)',
-                    desc: `Identify which of the ${careerPaths.length} pivot paths fits your existing strengths and network. Begin making 3 connections per week in that direction.`,
-                    color: '#10b981',
-                  },
-                ].map((item, i) => (
-                  <div key={i} style={{
-                    display: 'flex', gap: 12, background: `${item.color}08`,
-                    borderRadius: 10, padding: '12px 14px', borderLeft: `3px solid ${item.color}40`,
-                  }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: 8,
-                      background: `${item.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, fontSize: '0.75rem', fontWeight: 900, color: item.color,
-                    }}>{i + 1}</div>
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: '0.8rem', color: item.color }}>{item.step}</p>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            /* Role-aware 12-month plan built from intel data */
+            <RoleAware12MonthPlan intel={intel} expMeta={expMeta} careerPaths={careerPaths} scoreColor={scoreColor} score={score} />
           )}
         </div>
       )}
