@@ -146,10 +146,10 @@ export const StructuralRiskPanel: React.FC<Props> = ({
           fontSize: '0.62rem', fontWeight: 800, color: 'var(--amber)',
           fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
         }}>
-          FUTURE AI WAVE ASSESSMENT
+          HOW YOUR ROLE CHANGES OVER TIME
         </div>
         <span style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>
-          Structural intelligence — two time horizons
+          2028 and 2032 outlook for your role
         </span>
       </div>
 
@@ -211,7 +211,7 @@ export const StructuralRiskPanel: React.FC<Props> = ({
         borderTop: '1px solid rgba(255,255,255,0.06)',
         fontSize: '0.62rem', color: 'var(--text-3)', lineHeight: 1.5,
       }}>
-        Projections are probabilistic estimates conditioned on D7 (Agentic Disruption Potential) and AI adoption research. Post-threshold values represent scenarios, not guarantees. Timing depends on regulatory, economic, and technical factors outside any model's certainty.
+        These projections are estimates, not guarantees. Timing depends on how fast AI develops, regulations, and economic factors no model can fully predict.
       </div>
     </div>
   );

@@ -51,27 +51,27 @@ function deriveFactors(
 
   const factors: FactorCard[] = [
     {
-      name: 'Human Judgment & Creativity',
+      name: 'Judgment & Original Thinking',
       icon: '🧠',
-      description: 'Capacity for contextual reasoning, ethical judgment, and original thinking that AI cannot replicate.',
+      description: "Your ability to think through complex situations, make ethical calls, and come up with original ideas — things AI still can't do well.",
       protectionScore: d3,
       futureValueScore: Math.min(100, d3 + 15),
       marketScarcityScore: Math.min(100, d3 + 10),
       color: 'var(--violet)',
     },
     {
-      name: 'Domain Experience Shield',
+      name: 'Years of Deep Experience',
       icon: '🛡',
-      description: 'Years of domain expertise, pattern recognition, and institutional knowledge that accumulates non-linearly.',
+      description: "The deep knowledge and pattern recognition you've built up over years — the kind that can't be learned from a textbook or prompt.",
       protectionScore: d4,
       futureValueScore: Math.min(100, d4 + 10),
       marketScarcityScore: Math.min(100, d4 + Math.round(seniorityBonus)),
       color: 'var(--cyan)',
     },
     {
-      name: 'Professional Network & Trust',
+      name: 'Your Professional Relationships',
       icon: '🤝',
-      description: 'Relationships, reputation, and trust built over time that enable collaboration, influence, and referrals.',
+      description: "The professional relationships and reputation you've built — people trust you personally, which no AI can replicate.",
       protectionScore: d6,
       futureValueScore: Math.min(100, d6 + 20),
       marketScarcityScore: Math.min(100, d6 + 15),
@@ -82,9 +82,9 @@ function deriveFactors(
   // Add management factor if applicable
   if (hasManagement) {
     factors.push({
-      name: 'Leadership & Team Direction',
+      name: 'Leading and Directing People',
       icon: '🎯',
-      description: 'Ability to direct, motivate, and align human teams — becomes more valuable as AI handles execution.',
+      description: 'Your ability to lead, motivate, and coordinate people — this becomes more valuable as AI takes over the routine execution work.',
       protectionScore: Math.min(100, d6 + 15),
       futureValueScore: 85,
       marketScarcityScore: 78,
@@ -110,9 +110,9 @@ function deriveFactors(
   } else {
     // Generic AI-era skills as fallback
     factors.push({
-      name: 'AI Tool Proficiency',
+      name: 'Using AI Tools Effectively',
       icon: '⚡',
-      description: 'Ability to direct, evaluate, and amplify AI tools — transforms AI from a threat into a career multiplier.',
+      description: 'Your ability to use and direct AI tools well — this turns AI from a threat into your biggest career advantage.',
       protectionScore: 72,
       futureValueScore: 88,
       marketScarcityScore: 62,
@@ -141,9 +141,9 @@ export const SurvivalFactorsPanel: React.FC<Props> = ({ dimensions, intel, exper
 
   return (
     <div>
-      <h3 className="label-xs" style={{ marginBottom: '8px', color: 'var(--text-3)' }}>SURVIVAL FACTORS</h3>
+      <h3 className="label-xs" style={{ marginBottom: '8px', color: 'var(--text-3)' }}>WHAT PROTECTS YOUR CAREER</h3>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: '24px', lineHeight: 1.5 }}>
-        What protects you today and what will be most valuable after the agentic AI wave. Higher scores indicate stronger protection.
+        The skills and qualities that make you harder to replace — both today and as AI advances.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -170,19 +170,19 @@ export const SurvivalFactorsPanel: React.FC<Props> = ({ dimensions, intel, exper
             {/* Three metric bars */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', width: '130px', flexShrink: 0 }}>Protection Score</span>
+                <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', width: '130px', flexShrink: 0 }}>Protects you today</span>
                 <div style={{ flex: 1 }}>
                   <MiniBar value={factor.protectionScore} color={scarcityColor(factor.protectionScore)} />
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', width: '130px', flexShrink: 0 }}>Future Value Score</span>
+                <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', width: '130px', flexShrink: 0 }}>Value in 2030</span>
                 <div style={{ flex: 1 }}>
                   <MiniBar value={factor.futureValueScore} color={factor.color} />
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', width: '130px', flexShrink: 0 }}>Market Scarcity Score</span>
+                <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', width: '130px', flexShrink: 0 }}>Hard to replace</span>
                 <div style={{ flex: 1 }}>
                   <MiniBar value={factor.marketScarcityScore} color={scarcityColor(factor.marketScarcityScore)} />
                 </div>
@@ -197,7 +197,7 @@ export const SurvivalFactorsPanel: React.FC<Props> = ({ dimensions, intel, exper
         background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
         fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.55,
       }}>
-        Scores are derived from your D3–D6 Oracle dimensions and role intelligence data. Future Value projections assume large-scale agentic AI adoption by 2030–2032.
+        Based on your role, experience, and industry data. Future scores estimate how valuable each quality becomes as AI advances.
       </div>
     </div>
   );

@@ -23,6 +23,8 @@ import { EMERGING_INTELLIGENCE }      from './emerging';
 import { SERVICES_GOV_INTELLIGENCE }  from './services_gov';
 import { SERVICES_EDU_INTELLIGENCE }  from './services_edu';
 import { SERVICES_RETAIL_INTELLIGENCE } from './services_retail';
+import { SERVICES_TRAVEL_INTELLIGENCE } from './services_travel';
+import { SERVICES_MEDIA_INTELLIGENCE }  from './services_media';
 
 /**
  * Fully assembled corpus. Returned by the dynamic import and spread into
@@ -44,6 +46,8 @@ export const ASSEMBLED_CORPUS: Record<string, CareerIntelligence> = {
   ...SERVICES_GOV_INTELLIGENCE,
   ...SERVICES_EDU_INTELLIGENCE,
   ...SERVICES_RETAIL_INTELLIGENCE,
+  ...SERVICES_TRAVEL_INTELLIGENCE,
+  ...SERVICES_MEDIA_INTELLIGENCE,
 };
 
 // Dev-only duplicate-key guard — moved here from index.ts where it ran at
@@ -63,6 +67,8 @@ if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
     ['SERVICES_GOV',     SERVICES_GOV_INTELLIGENCE],
     ['SERVICES_EDU',     SERVICES_EDU_INTELLIGENCE],
     ['SERVICES_RETAIL',  SERVICES_RETAIL_INTELLIGENCE],
+    ['SERVICES_TRAVEL',  SERVICES_TRAVEL_INTELLIGENCE],
+    ['SERVICES_MEDIA',   SERVICES_MEDIA_INTELLIGENCE],
   ];
   const INTENTIONAL_OVERRIDES = new Set([
     'ser_legal_ops', 'gov_defender', 'gov_tax_auditor',

@@ -68,35 +68,35 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
   const phases: Phase[] = [
     {
       id: 'current',
-      label: 'CURRENT STATE',
-      sublabel: 'AI assists workers',
-      detail: 'AI tools augment productivity. Human oversight drives quality and decisions. Role value remains intact.',
+      label: 'TODAY',
+      sublabel: "AI tools help, but you're in charge",
+      detail: 'AI tools help you work faster, but you make the decisions. Your role value is intact.',
       color: 'var(--emerald)',
       active: activePhaseIdx === 0,
     },
     {
       id: 'approaching',
-      label: 'APPROACHING',
-      sublabel: 'AI completes significant workflows',
-      detail: 'Autonomous AI handles multi-step tasks. Human role shifts toward direction, review, and exception handling.',
+      label: 'NEAR FUTURE',
+      sublabel: 'AI handles more steps on its own',
+      detail: 'AI takes on multi-step tasks with less oversight. Your role shifts toward directing, reviewing, and handling exceptions.',
       color: 'var(--cyan)',
       active: activePhaseIdx === 1,
     },
     {
       id: 'threshold',
-      label: 'AGENTIC THRESHOLD',
+      label: 'MAJOR SHIFT',
       sublabel: thresholdForecast
         ? thresholdForecast.thresholdWindows.capabilityThreshold
         : 'Timeline — monitoring',
-      detail: 'Capability crossover window where agentic AI can perform the majority of this role\'s routine execution tasks independently.',
+      detail: "AI can do most of the core routine work in this role on its own. This is when the biggest changes happen.",
       color: 'var(--amber)',
       active: activePhaseIdx === 2,
     },
     {
       id: 'post',
-      label: 'POST-THRESHOLD',
-      sublabel: 'AI performs majority of execution tasks',
-      detail: 'Role fundamentally transformed. Human value concentrated in strategy, ethics, novel problems, and client relationships.',
+      label: 'TRANSFORMED',
+      sublabel: 'Your role looks very different',
+      detail: 'The role has fundamentally changed. Human value is concentrated in strategy, ethics, novel problems, and relationships.',
       color: scoreColor,
       active: activePhaseIdx === 3,
     },
@@ -105,13 +105,13 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
-        <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>CAPABILITY THRESHOLD FORECAST</h3>
+        <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>WHEN WILL AI CHANGE YOUR JOB?</h3>
         <div style={{
           padding: '2px 8px', borderRadius: '4px',
           background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)',
           fontSize: '0.58rem', color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontWeight: 800,
         }}>
-          PHASE-BASED · D7-CONDITIONED
+          BASED ON ROLE-SPECIFIC AI RESEARCH
         </div>
       </div>
 
@@ -180,7 +180,7 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
             marginBottom: '28px',
           }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, color: active.color, marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>
-              CURRENT PHASE DETAIL
+              WHERE YOU ARE NOW
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.65, margin: 0 }}>
               {active.detail}
@@ -194,14 +194,14 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
         <div style={{ marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
-              THREE PARALLEL FORECASTS
+              THREE POSSIBLE FUTURES FOR YOUR ROLE
             </div>
             {/* Legend */}
             <div style={{ display: 'flex', gap: '16px' }}>
               {[
-                { color: 'var(--emerald)', label: 'Current AI' },
-                { color: 'var(--cyan)',    label: 'Agentic Transition' },
-                { color: 'var(--red)',     label: 'Structural Disruption' },
+                { color: 'var(--emerald)', label: 'AI tools today' },
+                { color: 'var(--cyan)',    label: 'Advanced AI (next wave)' },
+                { color: 'var(--red)',     label: 'Full automation scenario' },
               ].map(({ color, label }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <div style={{ width: 8, height: 8, borderRadius: '2px', background: color }} />
@@ -218,8 +218,8 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
               background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.25)',
               fontSize: '0.65rem', color: 'var(--amber)',
             }}>
-              <strong>AGENTIC THRESHOLD ZONE</strong> — columns highlighted amber show years where the structural inflection is expected.
-              Jump magnitude: <strong>+{thresholdForecast.thresholdJumpMagnitude}pts</strong> (D7 score: {thresholdForecast.d7Score}/100)
+              These years are when the biggest shift is expected for roles like yours.
+              Expected change size: <strong>+{thresholdForecast.thresholdJumpMagnitude}pts</strong>
             </div>
           )}
 
@@ -299,13 +299,13 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
       {thresholdForecast && (
         <div style={{ marginBottom: '28px' }}>
           <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '12px' }}>
-            AGENTIC THRESHOLD WINDOWS
+            WHEN EACH STAGE IS EXPECTED
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {[
-              { label: 'CAPABILITY THRESHOLD',  value: thresholdForecast.thresholdWindows.capabilityThreshold,  color: 'var(--amber)', desc: 'When autonomous AI can execute core workflows' },
-              { label: 'ORG ADOPTION WINDOW',   value: thresholdForecast.thresholdWindows.orgAdoption,          color: 'var(--cyan)',  desc: 'When enterprises broadly deploy agentic systems' },
-              { label: 'WORKFORCE REDUCTION',   value: thresholdForecast.thresholdWindows.workforceReduction,   color: 'var(--red)',   desc: 'When structural headcount changes materialize' },
+              { label: 'AI CAN DO THE WORK',      value: thresholdForecast.thresholdWindows.capabilityThreshold,  color: 'var(--amber)', desc: 'When AI tools become capable enough to do your core tasks' },
+              { label: 'COMPANIES START SWITCHING', value: thresholdForecast.thresholdWindows.orgAdoption,       color: 'var(--cyan)',  desc: 'When most employers start using these AI tools at scale' },
+              { label: 'JOBS START CHANGING',    value: thresholdForecast.thresholdWindows.workforceReduction,   color: 'var(--red)',   desc: 'When people in this role are likely to see real impact' },
             ].map(({ label, value, color, desc }) => (
               <div key={label} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -335,9 +335,9 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
       {/* ── Existing confidence bands ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '28px' }}>
         {[
-          { label: 'Direction Confidence', value: conf.direction },
-          { label: 'Timing Confidence',    value: conf.timing },
-          { label: 'Impact Severity',      value: conf.impact },
+          { label: 'Direction certainty', value: conf.direction },
+          { label: 'Timing certainty',    value: conf.timing },
+          { label: 'Expected impact',     value: conf.impact },
         ].map(({ label, value }) => {
           const c = confidenceColor(value);
           return (
@@ -363,7 +363,7 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
         background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
         fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.55,
       }}>
-        <strong style={{ color: 'var(--text-2)' }}>Methodology note:</strong> Phases represent capability thresholds derived from AI adoption research (WEF 2025, McKinsey 2024). The three parallel forecasts are conditioned on D7 (Agentic Disruption Potential) — higher D7 scores produce larger post-threshold inflections. Timing windows are probabilistic ranges; actual transition speed depends on regulatory environment, economic conditions, and breakthrough events. This is structural intelligence, not a guaranteed forecast.
+        Timing estimates are based on AI adoption research (WEF 2025, McKinsey 2024) and are ranges, not exact dates. The three scenarios show optimistic, middle, and worst-case paths. This is a planning tool, not a guarantee.
       </div>
     </div>
   );

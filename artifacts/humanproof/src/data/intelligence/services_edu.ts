@@ -43,6 +43,7 @@ export const SERVICES_EDU_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Chief Research Officer (CRO)', riskReduction: 40, skillGap: 'Research commercialization, Grant strategy at institutional level, Industry partnership development', transitionDifficulty: 'Hard', industryMapping: ['Biotech', 'Tech Research Labs', 'Defense R&D'], salaryDelta: '+50-150%', timeToTransition: '36 months' },
     ],
+    inactionScenario: 'Professors who focus only on standard content delivery will be out-performed by AI tutoring. The survivable niche is novel frontier research and graduate mentorship — both of which require the human scientific mind.',
     riskTrend: [{ year: 2024, riskScore: 25, label: 'Now' }, { year: 2025, riskScore: 32, label: '+1yr' }, { year: 2026, riskScore: 40, label: '+2yr' }, { year: 2027, riskScore: 48, label: '+3yr' }, { year: 2028, riskScore: 55, label: '+4yr' }],
     confidenceScore: 95,
     contextTags: ['education', 'moderate-risk', 'research', 'academic', 'pivot-window'],
@@ -63,9 +64,11 @@ export const SERVICES_EDU_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'District Superintendent / CEO of Academy Trust', riskReduction: 22, skillGap: 'Systems governance, Multi-school financial management, Political/regulatory navigation', transitionDifficulty: 'Hard', industryMapping: ['School Districts', 'Academy Trusts', 'Charter Networks'], salaryDelta: '+40-100%', timeToTransition: '36 months' },
     ],
+    inactionScenario: 'School principals who do not develop AI governance competency will struggle to manage AI tools being deployed in their schools. The human accountability and community trust role is irreplaceable — the challenge is leading AI adoption, not resisting it.',
     riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 9, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 13, label: '+5yr' }],
     confidenceScore: 98,
     contextTags: ['education', 'ai-resilient', 'leadership-premium', 'human-touch', 'community-anchored'],
+    evolutionHorizon: '2030',
   },
 
   edu_special_needs_teacher: {
@@ -82,9 +85,11 @@ export const SERVICES_EDU_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Director of Special Education Services', riskReduction: 28, skillGap: 'IDEA compliance, Budget management, Multi-district program design', transitionDifficulty: 'Hard', industryMapping: ['School Districts', 'Residential Centers', 'Government'], salaryDelta: '+30-80%', timeToTransition: '36 months' },
     ],
+    inactionScenario: 'SPED teachers who do not stay current with AI-assisted progress tracking tools will lose time to administrative tasks. The irreplaceable value — the physical, in-the-room therapeutic relationship — cannot be automated and must be protected.',
     riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 5, label: '+2yr' }, { year: 2027, riskScore: 6, label: '+3yr' }, { year: 2028, riskScore: 7, label: '+4yr' }, { year: 2029, riskScore: 8, label: '+5yr' }],
     confidenceScore: 99,
     contextTags: ['education', 'irreplaceable', 'human-touch', 'safety-critical', 'disability-services'],
+    evolutionHorizon: '2035',
   },
 
   edu_corporate_trainer: {
@@ -147,8 +152,10 @@ export const SERVICES_EDU_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Partner at Education-Focused VC Fund', riskReduction: 20, skillGap: 'Investment thesis, LP relations, Portfolio company support', transitionDifficulty: 'Very Hard', industryMapping: ['EdTech VC', 'Impact Investing'], salaryDelta: '+200-500%', timeToTransition: '48 months' },
     ],
+    inactionScenario: 'EdTech founders who build AI tools without deep classroom understanding will fail. The irreplaceable insight is what teachers will actually adopt — and why most EdTech products fail despite being technically impressive.',
     riskTrend: [{ year: 2024, riskScore: 12, label: 'Now' }, { year: 2026, riskScore: 10, label: '+2yr' }, { year: 2027, riskScore: 9, label: '+3yr' }, { year: 2028, riskScore: 9, label: '+4yr' }, { year: 2029, riskScore: 10, label: '+5yr' }],
     confidenceScore: 97,
     contextTags: ['education', 'ai-resilient', 'ai-native', 'entrepreneurship', 'emerging-role'],
+    evolutionHorizon: '2028',
   },
 };

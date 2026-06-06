@@ -1055,33 +1055,33 @@ const D8ValidationPanel: React.FC = () => {
 const MethodologyExplainer: React.FC = () => {
   const sections: MethodologySection[] = [
     {
-      title: "Multi-Layered Risk Assessment",
+      title: "How we calculate your score",
       description:
-        "Your risk score is calculated across 5 dimensions: Financial Vulnerability, Layoff History, Industry Risk, Role Displacement, and Regional Factors. Each dimension contributes a weighted portion to your final score.",
+        "Your risk score looks at 5 things: how financially stable your company is, whether they've laid off before, how much AI is targeting your type of work, how protected your specific role is, and what the job market looks like in your country.",
       icon: <Layers className="w-6 h-6 text-blue-400" />,
     },
     {
-      title: "Heuristic Signal Processing",
+      title: "How we process the signals",
       description:
-        "A set of domain-specific analysis modules process career, market, and company signals using empirically-derived and developer-estimated weights. Outputs are merged through a weighted consensus with conflict detection and data-quality discounting. Select dimensions use LLM-backed Edge Functions for narrative generation.",
+        "We run your information through a set of analysis tools that weight different signals based on how much each one predicts real layoffs. Where we have live data, we use it. Where we don't, we use industry patterns as our best estimate.",
       icon: <BarChart className="w-6 h-6 text-violet-400" />,
     },
     {
-      title: "Real-Time Data Integration",
+      title: "Where our data comes from",
       description:
-        "Live data from over 15 sources is continuously processed, including company financials, industry trends, regional economic indicators, and role-specific automation rates.",
+        "We pull from over 15 live sources, including company financial reports, job market trends, regional economic indicators, and role-specific AI research. When live data isn't available, we use the most recent verified information.",
       icon: <Database className="w-6 h-6 text-cyan-400" />,
     },
     {
-      title: "Confidence Calibration & Validation",
+      title: "How accurate is this?",
       description:
-        "L1–L5 thresholds calibrated via logistic regression on 200 verified layoff events (layoffs.fyi 2023–2025, AUC-ROC 0.81 on 40-event hold-out). Cross-sectional validation on 56 companies (2024–2026) produced L1-only AUC 0.73 (95% CI: 0.58–0.86). The model accurately detects distress-driven layoffs (AUC 0.96 for this cohort); D8 (efficiency-driven restructuring) is regression-calibrated (47 events, AUC 0.76) but held pending a 15-event held-out gate. Next temporal recalibration: July 2026.",
+        "Our model was trained on 200+ real layoffs and tested against 40 it hadn't seen before. It correctly identified high-risk situations 81% of the time in testing. It's most accurate for financial-distress layoffs and less certain for AI-driven efficiency restructuring, which we flag separately.",
       icon: <BarChart2 className="w-6 h-6 text-amber-400" />,
     },
     {
-      title: "Known Model Limitations",
+      title: "What we don't know yet",
       description:
-        "The system predicts two distinct layoff types differently: (1) Distress-driven layoffs (financial pressure + high L1/L2) — accurately predicted, AUC ~0.96. (2) Efficiency-driven restructuring (profitable companies replacing workers with AI) — covered by D8 signal (regression-calibrated, 47 events), currently held pending held-out validation gate (n ≥ 15, AUC ≥ 0.72, precision ≥ 0.65). Heuristic fallback active. Companies with no prior rounds (Anthropic, OpenAI) correctly score as low risk despite high AI investment. Score confidence intervals reflect this uncertainty.",
+        "We're most confident predicting layoffs caused by financial pressure. We're still building confidence in predicting AI-driven restructuring at profitable companies (like replacing a team that's already performing well). We flag which type of risk applies to your situation and how confident we are.",
       icon: <Shield className="w-6 h-6 text-orange-400" />,
     },
   ];
@@ -1103,25 +1103,30 @@ const MethodologyExplainer: React.FC = () => {
         </div>
       ))}
 
-      <div className="bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-20 rounded-lg p-4 mt-4">
-        <div className="flex gap-3">
-          <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-1" />
-          <div>
-            <h4 className="text-sm font-medium text-blue-400 mb-1">
-              System Transparency
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Formula: 10-term composite (D1–D8, L1, L2), weights defined to sum to 1.00.
-              D8 (AI efficiency restructuring, weight 9%) contributes to the score only when
-              the v39_d8_ai_efficiency_active flag is on (validated logistic, 47 events, AUC 0.76)
-              or when the EFFICIENCY cohort heuristic fires. When D8 = 0, the maximum
-              achievable composite from the formula alone is 91 — the D8 weight slot is
-              occupied but inactive. The Effective Layer Weights table above shows D8's
-              current state for this audit. Deployment gate status in Known Model Limitations above.
-            </p>
+      <details className="mt-4">
+        <summary className="cursor-pointer text-xs text-muted-foreground hover:text-white transition-colors py-1">
+          See technical details
+        </summary>
+        <div className="bg-blue-500 bg-opacity-10 border border-blue-500 border-opacity-20 rounded-lg p-4 mt-2">
+          <div className="flex gap-3">
+            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-1" />
+            <div>
+              <h4 className="text-sm font-medium text-blue-400 mb-1">
+                Technical Details
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Formula: 10-term composite (D1–D8, L1, L2), weights defined to sum to 1.00.
+                D8 (AI efficiency restructuring, weight 9%) contributes to the score only when
+                the v39_d8_ai_efficiency_active flag is on (validated logistic, 47 events, AUC 0.76)
+                or when the EFFICIENCY cohort heuristic fires. When D8 = 0, the maximum
+                achievable composite from the formula alone is 91 — the D8 weight slot is
+                occupied but inactive. The Effective Layer Weights table above shows D8's
+                current state for this audit. Deployment gate status in the "What we don't know yet" section above.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </details>
     </div>
   );
 };

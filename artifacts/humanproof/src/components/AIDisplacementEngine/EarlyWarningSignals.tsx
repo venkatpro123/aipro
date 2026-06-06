@@ -28,12 +28,20 @@ const WAVE_COLORS: Record<WaveStatus, string> = {
   'ACTIVE DISRUPTION': 'var(--red)',
 };
 
+const WAVE_LABELS: Record<WaveStatus, string> = {
+  'EARLY':             'EARLY STAGE',
+  'BUILDING':          'PICKING UP',
+  'ACCELERATING':      'MOVING FAST',
+  'INFLECTION POINT':  'AT THE TURNING POINT',
+  'ACTIVE DISRUPTION': 'MAJOR CHANGE UNDERWAY',
+};
+
 const WAVE_DESC: Record<WaveStatus, string> = {
-  'EARLY':             'Early indicators present. AI capabilities exist but adoption in this sector is limited. Preparation window is wide.',
-  'BUILDING':          'AI capability is maturing and enterprise adoption is increasing. Workflow changes are beginning to appear across the industry.',
-  'ACCELERATING':      'Rapid capability advancement combined with accelerating adoption. Meaningful role restructuring is underway in leading organizations.',
-  'INFLECTION POINT':  'The capability-economics threshold has been reached. AI can now perform a significant portion of core tasks at scale. Major workforce adjustments are starting.',
-  'ACTIVE DISRUPTION': 'Full-scale autonomous AI deployment underway. Role function is changing at industry-wide pace. Immediate strategic action required.',
+  'EARLY':             "AI tools exist for this field, but most companies aren't using them yet. You have plenty of time to prepare.",
+  'BUILDING':          'More companies are starting to use AI tools. Some roles are already changing. Good time to start adapting.',
+  'ACCELERATING':      'AI adoption is speeding up. Leading companies are already restructuring roles. Action now pays off most.',
+  'INFLECTION POINT':  'AI can now handle a large part of this work at scale. Companies are starting to make staffing changes. Adapt now.',
+  'ACTIVE DISRUPTION': 'AI is being deployed across the industry at scale. Roles like yours are changing everywhere. Act immediately.',
 };
 
 function deriveWaveStatus(timeline: AutomationTimeline, industryRisk: IndustryRisk | null): WaveStatus {
@@ -54,28 +62,28 @@ function buildSignals(timeline: AutomationTimeline, waveStatus: WaveStatus, indu
 
   return [
     {
-      name: 'Agent Capability Breakthroughs',
-      description: `New autonomous AI agents capable of multi-step ${timeline.topTasksAtRisk[0]?.toLowerCase() ?? 'task execution'} without human oversight`,
+      name: 'New AI that can do multi-step work alone',
+      description: `AI tools now capable of handling ${timeline.topTasksAtRisk[0]?.toLowerCase() ?? 'complex tasks'} from start to finish without a human`,
       status: isActive ? 'ACTIVE' : isAccelerating ? 'MONITORING' : 'PENDING',
     },
     {
-      name: `Major Workforce Reductions in ${industryLabel}`,
-      description: `Large-scale headcount reductions citing AI automation or productivity improvements across sector peers`,
+      name: `Large layoffs citing AI in ${industryLabel}`,
+      description: `Companies in your industry have announced major headcount reductions, citing AI tools or productivity gains`,
       status: isActive ? 'ACTIVE' : isAccelerating ? 'ACTIVE' : 'MONITORING',
     },
     {
-      name: 'AI-First Company Announcements',
-      description: `Public announcements of AI-first operating models replacing traditional role structures`,
+      name: 'Companies replacing teams with AI',
+      description: `Public announcements of companies switching to AI-first operating models in your field`,
       status: isAccelerating || isActive ? 'ACTIVE' : 'MONITORING',
     },
     {
-      name: 'Productivity Multiplier Reports',
-      description: `Research showing ${timeline.automationDrivers[0]?.split('/')[0] ?? 'AI tools'} delivering 3–10× productivity gains for this role category`,
+      name: 'Research showing AI doing this work 3–10× faster',
+      description: `Studies showing ${timeline.automationDrivers[0]?.split('/')[0] ?? 'AI tools'} dramatically outperforming humans on tasks in this role`,
       status: timeline.impactTimeline === 'short' ? 'ACTIVE' : 'MONITORING',
     },
     {
-      name: 'Automation Milestone Events',
-      description: `Demonstrations of AI completing "${timeline.topTasksAtRisk[1] ?? 'core workflows'}" end-to-end without human review`,
+      name: 'AI completing full tasks without human review',
+      description: `Demonstrated cases of AI handling "${timeline.topTasksAtRisk[1] ?? 'core tasks'}" end-to-end, with no human checking the output`,
       status: timeline.riskTier === 'very_high' ? 'ACTIVE' : timeline.riskTier === 'high' ? 'MONITORING' : 'PENDING',
     },
   ];
@@ -102,9 +110,9 @@ export const EarlyWarningSignals: React.FC<Props> = ({ timeline, industryRisk, s
 
   return (
     <div style={{ marginTop: '28px' }}>
-      <h3 className="label-xs" style={{ marginBottom: '8px', color: 'var(--text-3)' }}>EARLY WARNING SIGNALS</h3>
+      <h3 className="label-xs" style={{ marginBottom: '8px', color: 'var(--text-3)' }}>WHAT'S CHANGING IN YOUR FIELD</h3>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: '20px', lineHeight: 1.5 }}>
-        Key indicators monitoring the progression of AI capability adoption in your sector.
+        Five signs we watch to understand how quickly AI is affecting jobs like yours.
       </p>
 
       {/* Wave status */}
@@ -116,7 +124,7 @@ export const EarlyWarningSignals: React.FC<Props> = ({ timeline, industryRisk, s
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px', letterSpacing: '0.08em' }}>
-              CURRENT WAVE STATUS
+              WHERE YOUR INDUSTRY IS RIGHT NOW
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px',
@@ -128,7 +136,7 @@ export const EarlyWarningSignals: React.FC<Props> = ({ timeline, industryRisk, s
                 display: 'inline-block', flexShrink: 0,
               }} />
               <span style={{ fontSize: '1.2rem', fontWeight: 900, color: waveColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-                {waveStatus}
+                {WAVE_LABELS[waveStatus]}
               </span>
             </div>
           </div>
@@ -150,7 +158,7 @@ export const EarlyWarningSignals: React.FC<Props> = ({ timeline, industryRisk, s
                 color: s === waveStatus ? waveColor : 'rgba(255,255,255,0.15)',
                 fontWeight: s === waveStatus ? 800 : 400,
               }}>
-                {s.split(' ')[0]}
+                {({ 'EARLY': 'Early', 'BUILDING': 'Picking Up', 'ACCELERATING': 'Fast', 'INFLECTION POINT': 'Turning Point', 'ACTIVE DISRUPTION': 'Major Change' } as Record<WaveStatus, string>)[s]}
               </span>
             ))}
           </div>

@@ -103,12 +103,12 @@ const CAT_COLORS: Record<string, string> = {
 };
 
 const DIM_INFO: Record<string, { label: string; desc: string }> = {
-  D1: { label: 'Task Automatability', desc: 'What fraction of your daily tasks can AI fully automate today?' },
-  D2: { label: 'AI Tool Maturity',    desc: 'How mature and widely deployed are AI tools targeting your role?' },
-  D3: { label: 'Human Amplification', desc: 'How much does your role uniquely benefit from human judgment, empathy, or creativity?' },
-  D4: { label: 'Experience Shield',   desc: 'How much does seniority and track record protect you from replacement?' },
-  D5: { label: 'Country Exposure',    desc: "How aggressively is AI being adopted in your country's labour market?" },
-  D6: { label: 'Social Capital Moat', desc: 'How much do your professional network and relationships protect you?' },
+  D1: { label: 'How much AI can do your job',         desc: 'What percentage of your daily tasks AI tools can do without you' },
+  D2: { label: 'How advanced the AI tools are',       desc: 'How developed and widely used AI tools are for your specific type of work' },
+  D3: { label: "Where you're irreplaceable",          desc: 'How much your role depends on things only humans can do — judgment, empathy, creativity' },
+  D4: { label: 'How much your experience protects you', desc: 'How much your years of experience and track record make you harder to replace' },
+  D5: { label: 'How fast AI is moving in your country', desc: 'How quickly AI is being adopted in jobs like yours in your country' },
+  D6: { label: 'How strong your professional network is', desc: 'How much your professional relationships and reputation protect your career' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -716,6 +716,12 @@ const AuditTerminalPage: React.FC = () => {
                   <span style={{ fontSize: '0.8rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
                     {getVerdict(result.total).toUpperCase()}
                   </span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: '8px', marginTop: '-4px' }}>
+                  {result.total < 25 ? 'AI is unlikely to displace your role in the near term'
+                    : result.total < 50 ? 'You have some exposure but strong enough protection to adapt'
+                    : result.total < 70 ? 'A meaningful part of your work will be automated — adapting now matters'
+                    : 'Significant automation is likely within 2 years — act now'}
                 </div>
 
                 {/* ── Role context row: role label + category badge ── */}

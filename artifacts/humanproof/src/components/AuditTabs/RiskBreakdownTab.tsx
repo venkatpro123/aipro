@@ -186,7 +186,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
   const narrative = meta ? getNarrative(meta, score) : null;
   const Icon = meta?.icon ?? Activity;
 
-  const verdictLabel = score < 35 ? "PROTECTED" : score < 65 ? "MODERATE" : "ELEVATED";
+  const verdictLabel = score < 35 ? "WELL PROTECTED" : score < 65 ? "SOME RISK" : "HIGHER RISK";
   const verdictColor = score < 35 ? "var(--emerald)" : score < 65 ? "var(--amber)" : "var(--red)";
 
   const provenance = React.useMemo(
@@ -359,7 +359,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
                 cursor: 'help',
               }}
             >
-              weight: estimated
+              not yet validated
             </span>
           ) : dim.weightCalibrationStatus === 'regression_derived' && dim.weightCalibratedAt ? (
             <span
@@ -377,7 +377,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
                 cursor: 'help',
               }}
             >
-              regression ✓
+              validated against real data
             </span>
           ) : null}
         </span>
@@ -537,7 +537,7 @@ const ScoreConfidenceInterval: React.FC<{
     <div className="glass-panel-heavy p-[var(--space-6)] rounded-xl border border-[var(--border-2)]">
       <div className="flex justify-between items-center mb-[var(--space-6)]">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className="label-sm text-[var(--cyan)] tracking-[0.2em] font-black uppercase">Certainty Calibration</div>
+          <div className="label-sm text-[var(--cyan)] tracking-[0.2em] font-black uppercase">How confident are we?</div>
           <button
             type="button"
             onClick={() => setShowEpistemicNote(v => !v)}
@@ -556,20 +556,11 @@ const ScoreConfidenceInterval: React.FC<{
       {/* Epistemic uncertainty explanation — toggles on info click */}
       {showEpistemicNote && (
         <div style={{ marginBottom: 20, padding: '12px 14px', borderRadius: 10, background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.15)' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-            Epistemic uncertainty — not a statistical error bar
-          </div>
           <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)' }}>
-            This range represents <strong style={{ color: 'rgba(255,255,255,0.92)' }}>genuine uncertainty</strong> in your score based on signal quality, data freshness, and source conflicts. It reflects what we do not know — not measurement noise around a known value.
-          </p>
-          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)' }}>
-            A ±{halfRange}pt interval means your true risk could be anywhere from{' '}
-            <strong style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)' }}>{low}</strong> to{' '}
-            <strong style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)' }}>{high}</strong>.
-            The central mark (<span style={{ fontFamily: 'var(--font-mono)', color }}>{score}</span>) is the model's best estimate given available signals.
+            This range ({low}–{high}) is our uncertainty window — your true risk likely falls somewhere in here. The more live data we had for your company and role, the tighter this range. Better data = more certainty.
           </p>
           <p style={{ margin: 0, fontSize: '0.71rem', lineHeight: 1.6, color: 'rgba(255,255,255,0.50)' }}>
-            With better data — more live sources, more recent signals, fewer source conflicts — this range would narrow. Three independent factors widen it: data staleness, cross-source conflict penalties, and missing critical signals (null-data guard). All three are broken down in the Transparency tab.
+            The central number (<span style={{ fontFamily: 'var(--font-mono)', color }}>{score}%</span>) is our best estimate. The range shows how much confidence we have in it.
           </p>
         </div>
       )}
@@ -607,14 +598,14 @@ const ScoreConfidenceInterval: React.FC<{
         <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed text-amber-200/70">
-            <strong>Ambiguity Warning:</strong> Dimensional signal variance exceeds 30pts ({low}–{high}). Human-in-the-loop validation of the highest-scoring dimensions is recommended before acting.
+            <strong>Wider uncertainty than usual</strong> — your score could be anywhere from {low} to {high}. We recommend checking the details below before acting on this.
           </p>
         </div>
       ) : (
         <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg flex items-start gap-3">
           <CheckSquare className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed text-emerald-200/70">
-            <strong>Signal Convergence:</strong> Tight confidence interval ({low}–{high}) indicates high internal consistency across all risk vectors. Score is stable at {confidencePercent}% confidence.
+            <strong>Good signal quality</strong> — our sources agreed, which makes this estimate more reliable. Score range: {low}–{high}.
           </p>
         </div>
       )}

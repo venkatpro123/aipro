@@ -64,14 +64,122 @@ function getCountryPlatformNote(countryKey: string): { platform: string; certNot
 
 function getRoleFirst30DayAction(roleKey: string, roleLabel: string): ActionCard {
   const rl = (roleKey || roleLabel || '').toLowerCase();
-  if (rl.includes('bpo') || rl.includes('customer_support') || rl.includes('support'))
-    return { title: 'Document your 5 highest-complexity escalation cases', detail: 'Write up the 5 most complex customer situations you resolved that required genuine human judgment — emotional intelligence, regulatory nuance, or multi-system context. These cases are your displacement shield: they demonstrate irreplaceable capability no AI system handles today.', riskReduction: 4, protectionIncrease: 8, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '3–4 hrs total', roi: 'High' };
-  if (rl.includes('swe') || rl.includes('software') || rl.includes('engineer') || rl.includes('developer') || rl.includes('frontend') || rl.includes('backend') || rl.includes('fullstack'))
+
+  // Software / engineering — sw_*, em_vibe_coder, em_agentic_sys_designer, em_spatial_computing_dev
+  const isSWE = rl.startsWith('sw_') || rl.startsWith('em_vibe') || rl.startsWith('em_agentic') || rl.startsWith('em_spatial') || rl.startsWith('em_digital_human') || rl.startsWith('em_robotics') || rl.includes('swe') || rl.includes('software') || rl.includes('developer') || rl.includes('frontend') || rl.includes('backend') || rl.includes('fullstack');
+  if (isSWE)
     return { title: 'Audit which of your recent work an LLM could generate without you', detail: 'Review your last 10 pull requests or tasks. Score each: could Claude Code or Cursor have written this with a good prompt? The ones that score "yes" are your highest-displacement tasks. The ones that score "no" are your moat. This audit becomes your personalized repositioning roadmap.', riskReduction: 4, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
-  if (rl.includes('nurse') || rl.includes('physician') || rl.includes('doctor') || rl.includes('health') || rl.includes('clinical'))
-    return { title: 'Map the clinical tasks where your physical presence was irreplaceable this week', detail: 'Identify 3 patient interactions this week that required your physical presence, touch, or in-person emotional attunement. Document what would have been lost without you in the room. This is not just a resilience exercise — it is also career positioning evidence for the AI-augmented clinical era.', riskReduction: 2, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '1–2 hrs', roi: 'Moderate' };
-  if (rl.includes('financial') || rl.includes('analyst') || rl.includes('finance') || rl.includes('invest'))
+
+  // Data / ML / AI — da_*, ml_*, ds_*, em_synthetic_data_eng, em_climate_ai_analyst
+  const isData = rl.startsWith('da_') || rl.startsWith('ml_') || rl.startsWith('ds_') || rl.startsWith('em_synthetic') || rl.startsWith('em_climate') || rl.startsWith('em_llm') || rl.startsWith('em_ai_') || rl.includes('data_analyst') || rl.includes('data_scientist') || rl.includes('machine_learning');
+  if (isData)
+    return { title: 'Document the business decisions that required your data interpretation — not just the output', detail: 'Your non-displaceable value is not producing charts; it is translating ambiguous data into decisions under uncertainty. Review your last 5 analyses: where did you catch something a dashboard would have missed? Where did context, business knowledge, or instinct matter more than the number? That list is your moat.', riskReduction: 4, protectionIncrease: 8, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Finance / accounting / investment — fin_*, inv_*, ins_*, ec_*
+  const isFinance = rl.startsWith('fin_') || rl.startsWith('inv_') || rl.startsWith('ins_') || rl.startsWith('ec_') || rl.includes('financial') || rl.includes('finance') || rl.includes('invest') || rl.includes('account') || rl.includes('actuar');
+  if (isFinance)
     return { title: 'Identify which of your analyses required contextual judgment no AI prompted', detail: 'Review your last 5 major deliverables. For each, ask: what decision or insight required your knowledge of organizational context, relationship dynamics, or business strategy that no AI tool could have surfaced from the data alone? Document these moments — they define your non-displaceable value.', riskReduction: 4, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Healthcare / nursing / mental health / medical — hc_*, nur_*, mh_*, vet_*
+  const isHealthcare = rl.startsWith('hc_') || rl.startsWith('nur_') || rl.startsWith('mh_') || rl.startsWith('vet_') || rl.includes('nurse') || rl.includes('physician') || rl.includes('doctor') || rl.includes('clinical') || rl.includes('therapist') || rl.includes('pharmacist');
+  if (isHealthcare)
+    return { title: 'Map the clinical tasks where your physical presence was irreplaceable this week', detail: 'Identify 3 patient interactions this week that required your physical presence, touch, or in-person emotional attunement. Document what would have been lost without you in the room. This is not just a resilience exercise — it is also career positioning evidence for the AI-augmented clinical era.', riskReduction: 2, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '1–2 hrs', roi: 'Moderate' };
+
+  // BPO / customer support / CX — bpo_*, cx_*, adm_*
+  const isBPO = rl.startsWith('bpo_') || rl.startsWith('cx_') || rl.startsWith('adm_') || rl.includes('customer_support') || rl.includes('support') || rl.includes('customer service');
+  if (isBPO)
+    return { title: 'Document your 5 highest-complexity escalation cases', detail: 'Write up the 5 most complex customer situations you resolved that required genuine human judgment — emotional intelligence, regulatory nuance, or multi-system context. These cases are your displacement shield: they demonstrate irreplaceable capability no AI system handles today.', riskReduction: 4, protectionIncrease: 8, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '3–4 hrs total', roi: 'High' };
+
+  // Security / DevOps / Cloud / Infra — sec_*, dev_*, cloud_*
+  const isSecOps = rl.startsWith('sec_') || rl.startsWith('dev_') || rl.startsWith('cloud_') || rl.startsWith('em_ai_red') || rl.includes('security') || rl.includes('devops') || rl.includes('sre') || rl.includes('cloud') || rl.includes('infra');
+  if (isSecOps)
+    return { title: 'Document your last 3 incidents: what would an AI have missed?', detail: 'Write up your last 3 production incidents or security events. For each, identify the specific moment where human pattern recognition, cross-system context, or organizational judgment was decisive. This documentation is your proof of non-displaceable value — and becomes your strongest career positioning asset.', riskReduction: 4, protectionIncrease: 9, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '3–4 hrs', roi: 'High' };
+
+  // HR / People — hr_*, po_*
+  const isHR = rl.startsWith('hr_') || rl.startsWith('po_') || rl.includes('human resources') || rl.includes('recruiter') || rl.includes('talent');
+  if (isHR)
+    return { title: 'Map your highest-trust, most human-sensitive interactions from the past month', detail: 'List every conversation in the past 30 days that required genuine empathy, confidentiality, or conflict navigation. These interactions — performance conversations, sensitive exits, wellbeing check-ins — are where AI tools categorically fail and you are irreplaceable. Documenting this pattern is your repositioning evidence.', riskReduction: 3, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Legal — leg_*, comp_law
+  const isLegal = rl.startsWith('leg_') || rl.startsWith('comp_law') || rl.includes('legal') || rl.includes('lawyer') || rl.includes('attorney') || rl.includes('paralegal') || rl.includes('compliance');
+  if (isLegal)
+    return { title: 'Identify the judgment calls in your last 5 matters that required case-specific strategy', detail: 'Review your last 5 matters or compliance cases. For each, document the moment where legal strategy, risk calibration, or relationship context — not just research — determined the outcome. Those moments are what AI legal research tools cannot replicate and what clients are actually paying for.', riskReduction: 2, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'Moderate' };
+
+  // Consulting / strategy — con_*, pm_*
+  const isConsulting = rl.startsWith('con_') || rl.startsWith('pm_') || rl.includes('consultant') || rl.includes('strategy') || rl.includes('management') || rl.includes('program_manager') || rl.includes('product_manager');
+  if (isConsulting)
+    return { title: 'Document the stakeholder dynamics that determined your last 3 project outcomes', detail: 'In consulting and strategy, the analysis is rarely the hardest part — the navigation is. Write up the last 3 projects: where did stakeholder trust, political context, or relationship capital determine what was actually implemented? That navigation skill is your irreplaceable advantage in the AI era.', riskReduction: 3, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Marketing / content / creative — mkt_*, cnt_*, crt_*, des_*
+  const isMarketing = rl.startsWith('mkt_') || rl.startsWith('cnt_') || rl.startsWith('crt_') || rl.startsWith('des_') || rl.includes('marketing') || rl.includes('content') || rl.includes('creative') || rl.includes('design') || rl.includes('copywriter');
+  if (isMarketing)
+    return { title: 'Map the creative decisions this month where brand instinct, not templates, drove results', detail: 'AI tools can generate infinite content variants — but brand coherence, audience intuition, and creative risk-taking require a human with deep context. Document 3 creative decisions from the past month where your judgment, not a prompt, shaped the output. That judgment is your positioning evidence.', riskReduction: 3, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'Moderate' };
+
+  // Education — edu_*, edt_*, tr_*
+  const isEducation = rl.startsWith('edu_') || rl.startsWith('edt_') || rl.startsWith('tr_') || rl.includes('teacher') || rl.includes('professor') || rl.includes('instructor') || rl.includes('trainer') || rl.includes('educator');
+  if (isEducation)
+    return { title: 'Document the student breakthroughs that required your personal intervention', detail: 'Identify 3 moments from the past term where a student\'s progress depended on your specific intervention — recognizing a struggle, adapting your explanation, or providing emotional support. These moments are where teaching is categorically irreplaceable. They are also your professional differentiation narrative.', riskReduction: 2, protectionIncrease: 5, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '1–2 hrs', roi: 'Moderate' };
+
+  // Logistics / supply chain / ops — log_*, ops_*, sc_*
+  const isLogistics = rl.startsWith('log_') || rl.startsWith('ops_') || rl.startsWith('sc_') || rl.includes('logistics') || rl.includes('supply_chain') || rl.includes('operations') || rl.includes('warehouse');
+  if (isLogistics)
+    return { title: 'Document the supply chain exceptions you resolved that systems flagged but could not solve', detail: 'Every logistics role has moments where the system raises an alert but the resolution requires calling a supplier, understanding a seasonal pattern, or reading a relationship. Collect your last 5 of those moments. They define the human-essential layer of your role that process automation cannot capture.', riskReduction: 4, protectionIncrease: 8, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Manufacturing / trades / industrial — mfg_*, trd_*, ind_*
+  const isManufacturing = rl.startsWith('mfg_') || rl.startsWith('trd_') || rl.startsWith('ind_') || rl.includes('manufacturing') || rl.includes('electrician') || rl.includes('plumber') || rl.includes('machinist') || rl.includes('welder') || rl.includes('technician');
+  if (isManufacturing)
+    return { title: 'Document 3 physical problem-solving moments this month that required hands-on expertise', detail: 'Skilled trades and manufacturing have the highest natural protection against AI displacement — but only when that expertise is visible and documented. Write up 3 situations where your physical presence, tactile judgment, or on-the-job experience resolved something no sensor or AI model could have. This is your career positioning record.', riskReduction: 2, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '1–2 hrs', roi: 'Moderate' };
+
+  // Sales / retail / real estate — sal_*, ret_*, re_*
+  const isSales = rl.startsWith('sal_') || rl.startsWith('ret_') || rl.startsWith('re_') || rl.includes('sales') || rl.includes('account_exec') || rl.includes('business_dev') || rl.includes('retail') || rl.includes('real_estate');
+  if (isSales)
+    return { title: 'Identify which of your closed deals required relationship capital that AI cannot replicate', detail: 'Review your last 10 deals or customer interactions. Which closed because of your specific relationship, your personal credibility, or the trust you built over time? Those are your irreplaceable contributions — and the foundation of your non-displaceable positioning in an AI-assisted sales environment.', riskReduction: 3, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Government / public sector / NGO — gov_*, pub_*, ngo_*, ph_*
+  const isGovPublic = rl.startsWith('gov_') || rl.startsWith('pub_') || rl.startsWith('ngo_') || rl.startsWith('ph_') || rl.includes('government') || rl.includes('public_sector') || rl.includes('nonprofit') || rl.includes('policy');
+  if (isGovPublic)
+    return { title: 'Map the stakeholder relationships that make your policy or program work actually move', detail: 'In public sector and NGO work, execution depends on coalition-building and trust that no AI system can forge. Document the key relationships you maintain that translate plans into outcomes. This network is your irreplaceable asset — and your career insurance.', riskReduction: 2, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'Moderate' };
+
+  // AI orchestration / governance / transformation — em_agent_ops, em_ai_workflow, em_ai_governance, em_ai_transformation, em_ai_workforce
+  const isAIOrch = rl.startsWith('em_agent_ops') || rl.startsWith('em_ai_workflow') || rl.startsWith('em_ai_governance') || rl.startsWith('em_ai_transformation') || rl.startsWith('em_ai_workforce') || rl.startsWith('em_autonomous') || rl.startsWith('em_human_ai') || rl.includes('agent operations') || rl.includes('ai governance') || rl.includes('ai transformation');
+  if (isAIOrch)
+    return { title: 'Document the AI system failures or misalignments you caught and corrected this month', detail: 'Human-AI orchestration roles derive their value from catching what AI systems get wrong — hallucinations, misaligned incentives, edge cases, and trust failures. Document 3 moments this month where your oversight changed an AI-generated output. This is your proof of irreplaceable supervisory value in the agentic era.', riskReduction: 2, protectionIncrease: 8, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Media / journalism — med_*
+  const isMedia = rl.startsWith('med_');
+  if (isMedia)
+    return { title: 'Document the investigative insights from your last 3 stories that no AI could have found', detail: 'Your non-displaceable value is source relationships, editorial instinct, and the original angles you see that no AI generates from a prompt. Write up your last 3 stories: which facts came from a human source who trusted you personally? Which editorial angles emerged from field observation rather than data? That record is your positioning evidence in the AI content era.', riskReduction: 3, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Animation / photography / video — anim_*, photo_*, video_*
+  const isCreativeVisual = rl.startsWith('anim_') || rl.startsWith('photo_') || rl.startsWith('video_');
+  if (isCreativeVisual)
+    return { title: 'Identify the creative decisions this month where your artistic direction — not execution — made the difference', detail: 'AI tools can generate infinite visual variants; what they cannot do is decide which one is right for this client, this brand, this emotional moment. Document 3 creative decisions from the past month where your judgment — not a prompt — shaped the final output. That judgment is your career moat.', riskReduction: 3, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'Moderate' };
+
+  // Travel / hospitality — trav_*
+  const isTravel = rl.startsWith('trav_');
+  if (isTravel)
+    return { title: 'Document your last 5 complex client situations that required personal knowledge AI couldn\'t provide', detail: 'AI travel tools handle standard bookings well. Your value is the judgment call when an itinerary breaks down, the local knowledge that saved a trip, the personal relationship that got a client a room during a sold-out week. Document 5 of these situations. They define the irreplaceable layer of your role.', riskReduction: 3, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'Moderate' };
+
+  // Aerospace — aero_*
+  const isAerospace = rl.startsWith('aero_');
+  if (isAerospace)
+    return { title: 'Document the safety-critical judgment calls you made this month that simulation couldn\'t resolve', detail: 'Simulation and AI tools flag anomalies — but the physical inspection instinct, the multi-system context awareness, and the safety sign-off judgment are yours. Write up 3 situations this month where your on-the-ground expertise changed the outcome of an AI-flagged issue. These are your irreplaceable credentials.', riskReduction: 2, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
+  // Agriculture — agri_*
+  const isAgriculture = rl.startsWith('agri_');
+  if (isAgriculture)
+    return { title: 'Map the field observations this season where your on-the-ground judgment changed what the model recommended', detail: 'Precision ag tools give recommendations — but local soil variability, microclimate patterns, and farmer relationship context require human judgment. Document 3 cases this season where your field observation led you to deviate from the automated recommendation, and why that was right. This is your advisory value record.', riskReduction: 2, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '1–2 hrs', roi: 'Moderate' };
+
+  // Gaming — game_*
+  const isGaming = rl.startsWith('game_');
+  if (isGaming)
+    return { title: 'Audit your last sprint: which creative decisions required player empathy that no tool could have made?', detail: 'AI tools generate assets, code, and dialogue — but the judgment about what makes a moment feel fun, fair, or emotionally resonant requires someone who has played games, felt frustration, and understands player psychology. Document 3 decisions from your last sprint where that empathy drove the design. That is your irreplaceable contribution.', riskReduction: 3, protectionIncrease: 6, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'Moderate' };
+
+  // Blockchain — bc_*
+  const isBlockchain = rl.startsWith('bc_');
+  if (isBlockchain)
+    return { title: 'Document the protocol security or regulatory judgment calls from your last project that automated tools missed', detail: 'AI code audit tools catch known vulnerability patterns. Your value is the novel threat reasoning, the regulatory interpretation for an emerging protocol, and the cross-chain integration decisions that have no prior precedent. Document 3 cases where your judgment went beyond what automated tools flagged. This is your positioning evidence in a rapidly AI-augmented space.', riskReduction: 3, protectionIncrease: 7, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '2–3 hrs', roi: 'High' };
+
   // generic fallback
   return { title: 'Audit your task profile for AI replaceability', detail: 'List your 10 most frequent daily tasks and score each on AI replaceability (1 = fully replaceable, 5 = fully human-essential). This creates your personal displacement map and reveals exactly where to invest your repositioning energy.', riskReduction: 3, protectionIncrease: 5, effort: 'Low', category: 'Positioning', strategicImpact: 'Medium', timeRequired: '2–3 hrs', roi: 'High' };
 }
@@ -82,18 +190,93 @@ function getRoleCertAction(roleKey: string, roleLabel: string, countryKey: strin
   let certTitle = 'Complete one role-relevant AI tool proficiency credential';
   let certDetail = `Earning an AI tool certification signals adaptability and builds real capability. Use ${certNote} as your primary resource.`;
 
-  if (rl.includes('swe') || rl.includes('software') || rl.includes('developer') || rl.includes('frontend') || rl.includes('backend'))
+  // Software / engineering — sw_*, em_vibe_coder, em_agentic_sys_designer, em_spatial_computing_dev
+  if (rl.startsWith('sw_') || rl.startsWith('em_vibe') || rl.startsWith('em_agentic') || rl.startsWith('em_spatial') || rl.startsWith('em_digital_human') || rl.startsWith('em_robotics') || rl.includes('swe') || rl.includes('software') || rl.includes('developer') || rl.includes('frontend') || rl.includes('backend'))
     { certTitle = 'Earn a GitHub Copilot or Claude API developer credential'; certDetail = `Complete GitHub's Copilot certification or build a project using the Claude API. AI-native coding is the new baseline for senior engineers. Use ${certNote}.`; }
-  else if (rl.includes('data_analyst') || (rl.includes('data') && rl.includes('analyst')))
-    { certTitle = 'Complete a dbt + LLM pipeline or Snowflake ML certification'; certDetail = `Data analysts who can orchestrate AI-powered data pipelines command a significant premium. DBT Core certification + one LLM tool integration project demonstrates both skill and adaptability. Use ${certNote}.`; }
-  else if (rl.includes('bpo') || rl.includes('customer_support'))
-    { certTitle = 'Complete an AI CX design certification (Salesforce Einstein or Intercom AI)'; certDetail = `Understanding how AI tools you work alongside are architected transforms you from someone AI replaces into someone who configures and improves it. Salesforce and Intercom both offer free certifications. Use ${certNote}.`; }
-  else if (rl.includes('nurse') || rl.includes('clinical'))
+
+  // Data / ML — da_*, ml_*, ds_*, em_synthetic_data_eng, em_climate_ai_analyst
+  else if (rl.startsWith('da_') || rl.startsWith('ml_') || rl.startsWith('ds_') || rl.startsWith('em_synthetic') || rl.startsWith('em_climate') || rl.startsWith('em_llm') || rl.includes('data_analyst') || rl.includes('data_scientist') || rl.includes('machine_learning'))
+    { certTitle = 'Complete a dbt + LLM pipeline or Snowflake ML certification'; certDetail = `Data professionals who can orchestrate AI-powered pipelines command a significant premium. DBT Core certification + one LLM tool integration project demonstrates both skill and adaptability. Use ${certNote}.`; }
+
+  // Finance / accounting / investment — fin_*, inv_*, ins_*, ec_*
+  else if (rl.startsWith('fin_') || rl.startsWith('inv_') || rl.startsWith('ins_') || rl.startsWith('ec_') || rl.includes('financial') || rl.includes('finance') || rl.includes('invest') || rl.includes('actuar') || rl.includes('accounting'))
+    { certTitle = 'Earn Bloomberg AI Terminal or AlphaSense proficiency'; certDetail = `Analysts who master AI-augmented research tools are 3-5x more productive than peers who do not. Bloomberg AI and AlphaSense both offer training tracks. This directly compresses displacement risk on your most automatable tasks. Use ${certNote}.`; }
+
+  // Healthcare — hc_*, nur_*, mh_*, vet_*
+  else if (rl.startsWith('hc_') || rl.startsWith('nur_') || rl.startsWith('mh_') || rl.startsWith('vet_') || rl.includes('nurse') || rl.includes('physician') || rl.includes('doctor') || rl.includes('clinical') || rl.includes('therapist') || rl.includes('pharmacist'))
     { certTitle = 'Complete clinical AI documentation training (Epic AI or Nuance DAX)'; certDetail = `Clinical AI literacy — understanding how ambient documentation and AI co-pilot tools work — positions you as a clinical AI champion rather than a resistant observer. Your hospital likely offers Epic-adjacent training. Use ${certNote}.`; }
-  else if (rl.includes('financial') || (rl.includes('finance') && rl.includes('analyst')))
-    { certTitle = 'Earn Bloomberg AI Terminal or AlphaSense proficiency'; certDetail = `Analysts who master AI-augmented research tools are 3-5x more productive than those who do not. Bloomberg AI and AlphaSense both offer training tracks. This directly compresses the displacement risk on your most automatable tasks. Use ${certNote}.`; }
-  else if (rl.includes('soc') || rl.includes('security') || rl.includes('cyber'))
-    { certTitle = 'Complete a SOAR platform or Security AI tool certification'; certDetail = `Proficiency in platforms like XSIAM, Sentinel, or Security Copilot transforms you from a target of AI displacement into an AI security systems operator. Vendors offer free learning paths. Use ${certNote}.`; }
+
+  // BPO / customer support — bpo_*, cx_*, adm_*
+  else if (rl.startsWith('bpo_') || rl.startsWith('cx_') || rl.startsWith('adm_') || rl.includes('customer_support') || rl.includes('support') || rl.includes('customer service'))
+    { certTitle = 'Complete an AI CX design certification (Salesforce Einstein or Intercom AI)'; certDetail = `Understanding how AI tools you work alongside are architected transforms you from someone AI replaces into someone who configures and improves it. Salesforce and Intercom both offer free certifications. Use ${certNote}.`; }
+
+  // Security / DevOps / Cloud — sec_*, dev_*, cloud_*, em_ai_red_teamer
+  else if (rl.startsWith('sec_') || rl.startsWith('dev_') || rl.startsWith('cloud_') || rl.startsWith('em_ai_red') || rl.includes('security') || rl.includes('devops') || rl.includes('sre') || rl.includes('cloud') || rl.includes('infra') || rl.includes('soc'))
+    { certTitle = 'Complete a SOAR platform or Security AI tool certification'; certDetail = `Proficiency in platforms like XSIAM, Microsoft Sentinel, or Security Copilot transforms you from a target of AI displacement into an AI security systems operator. Vendors offer free learning paths. Use ${certNote}.`; }
+
+  // HR / People — hr_*, po_*
+  else if (rl.startsWith('hr_') || rl.startsWith('po_') || rl.includes('human resources') || rl.includes('recruiter') || rl.includes('talent'))
+    { certTitle = 'Earn a SHRM AI in HR or LinkedIn Talent Insights certification'; certDetail = `HR professionals who can leverage AI for talent analytics and candidate matching position themselves as strategic enablers rather than administrative processors. SHRM and LinkedIn both offer AI-focused HR credentials. Use ${certNote}.`; }
+
+  // Legal — leg_*, comp_law
+  else if (rl.startsWith('leg_') || rl.startsWith('comp_law') || rl.includes('legal') || rl.includes('lawyer') || rl.includes('attorney') || rl.includes('paralegal') || rl.includes('compliance'))
+    { certTitle = 'Complete a legal AI tools proficiency program (Harvey AI or Thomson Reuters CoCounsel)'; certDetail = `Legal AI literacy — understanding how LLM legal research tools work, where they hallucinate, and how to supervise their outputs — is the fastest-growing differentiator in law. Thomson Reuters and Harvey both offer practitioner training. Use ${certNote}.`; }
+
+  // Consulting / strategy / PM — con_*, pm_*
+  else if (rl.startsWith('con_') || rl.startsWith('pm_') || rl.includes('consultant') || rl.includes('strategy') || rl.includes('program_manager') || rl.includes('product_manager'))
+    { certTitle = 'Complete a strategic AI applications course (McKinsey AI or PwC AI Academy)'; certDetail = `Consultants who can lead AI implementation engagements — not just pitch them — command 30-40% fee premiums. McKinsey, PwC, and Coursera all offer practitioner-level AI strategy credentials. This directly widens your moat. Use ${certNote}.`; }
+
+  // Marketing / content / creative — mkt_*, cnt_*, crt_*, des_*
+  else if (rl.startsWith('mkt_') || rl.startsWith('cnt_') || rl.startsWith('crt_') || rl.startsWith('des_') || rl.includes('marketing') || rl.includes('content') || rl.includes('creative') || rl.includes('design') || rl.includes('copywriter'))
+    { certTitle = 'Earn a Meta AI Creative Tools or Google AI for Marketing certification'; certDetail = `Marketers who can direct AI creative tools — rather than be replaced by them — command premium rates. Meta Blueprint and Google Skillshop both offer free AI marketing credentials. Creative direction + AI fluency is the winning combination. Use ${certNote}.`; }
+
+  // Education — edu_*, edt_*, tr_*
+  else if (rl.startsWith('edu_') || rl.startsWith('edt_') || rl.startsWith('tr_') || rl.includes('teacher') || rl.includes('professor') || rl.includes('instructor') || rl.includes('trainer'))
+    { certTitle = 'Complete an AI in Education certification (Google for Education AI or Coursera Teaching in the Age of AI)'; certDetail = `Educators who integrate AI tools into their pedagogy — rather than resist them — are better positioned in both institutional roles and the growing EdTech market. Google and Coursera both offer relevant credentials. Use ${certNote}.`; }
+
+  // Logistics / operations / supply chain — log_*, ops_*, sc_*
+  else if (rl.startsWith('log_') || rl.startsWith('ops_') || rl.startsWith('sc_') || rl.includes('logistics') || rl.includes('supply_chain') || rl.includes('operations'))
+    { certTitle = 'Earn an APICS CSCP or SAP AI Supply Chain certification'; certDetail = `Operations professionals who can implement and supervise AI-optimized supply chain systems are in high demand as companies automate routing and inventory decisions. APICS CSCP and SAP both offer practitioner credentials. Use ${certNote}.`; }
+
+  // Manufacturing / trades — mfg_*, trd_*, ind_*
+  else if (rl.startsWith('mfg_') || rl.startsWith('trd_') || rl.startsWith('ind_') || rl.includes('manufacturing') || rl.includes('electrician') || rl.includes('machinist') || rl.includes('welder') || rl.includes('technician'))
+    { certTitle = 'Complete an industrial automation or PLC programming certification'; certDetail = `Skilled trades professionals who can also operate, program, and maintain automated systems — PLCs, cobots, CNC programming — become indispensable in the hybrid human-machine factory. NIMS or vendor (Fanuc, Siemens) certifications add immediate market value. Use ${certNote}.`; }
+
+  // Sales / business development — sal_*, biz_*
+  else if (rl.startsWith('sal_') || rl.startsWith('biz_') || rl.includes('sales') || rl.includes('account_exec') || rl.includes('business_dev'))
+    { certTitle = 'Complete a Salesforce Einstein AI or HubSpot AI Sales certification'; certDetail = `Sales professionals who can configure, use, and pitch AI-augmented CRM tools close deals faster and demonstrate more value to employers. Both Salesforce and HubSpot offer free AI sales certifications. Use ${certNote}.`; }
+
+  // AI orchestration / governance / transformation — em_agent_ops, em_ai_workflow, em_ai_governance, em_ai_transformation
+  else if (rl.startsWith('em_agent_ops') || rl.startsWith('em_ai_workflow') || rl.startsWith('em_ai_governance') || rl.startsWith('em_ai_transformation') || rl.startsWith('em_ai_workforce') || rl.startsWith('em_autonomous') || rl.startsWith('em_human_ai') || rl.includes('agent operations') || rl.includes('ai governance') || rl.includes('ai transformation'))
+    { certTitle = 'Earn an AI governance or responsible AI certification (IEEE, CAIDP, or Coursera AI Ethics)'; certDetail = `AI orchestration roles require credibility in both technical AI fluency and governance frameworks. IEEE's CertifAIEd program and Coursera AI Ethics offer practitioner-level credentials that directly support your advisory positioning. Use ${certNote}.`; }
+
+  // Media / journalism — med_*
+  else if (rl.startsWith('med_'))
+    { certTitle = 'Complete a data journalism or AI-assisted reporting certification'; certDetail = `Journalists who can use AI tools to investigate data at scale — while maintaining editorial integrity — are more valuable than ever. Reuters Institute Journalism AI, Google News Initiative, and Knight Center all offer practitioner courses. Use ${certNote}.`; }
+
+  // Animation / photography / video — anim_*, photo_*, video_*
+  else if (rl.startsWith('anim_') || rl.startsWith('photo_') || rl.startsWith('video_'))
+    { certTitle = 'Complete an AI creative tools certification (Adobe Firefly Professional or Runway Gen-3 Creator Course)'; certDetail = `Creative professionals who can direct, edit, and quality-control AI-generated assets are 3–5× more productive and harder to replace. Adobe's Firefly certification and Runway's Gen-3 creator course both offer practitioner-level credentials. Use ${certNote}.`; }
+
+  // Travel / hospitality — trav_*
+  else if (rl.startsWith('trav_'))
+    { certTitle = 'Complete a travel AI tools certification (Amadeus AI Travel or Sabre AI platform training)'; certDetail = `Travel professionals who understand AI booking platforms — how they work, where they fail, and when human judgment matters — are better positioned as the industry automates. Amadeus and Sabre both offer practitioner training paths. Use ${certNote}.`; }
+
+  // Aerospace — aero_*
+  else if (rl.startsWith('aero_'))
+    { certTitle = 'Complete an AI-assisted engineering tools course (Siemens NX AI, ANSYS AI, or digital twin fundamentals)'; certDetail = `Aerospace engineers who can work alongside AI simulation and digital twin tools — running, interpreting, and questioning AI outputs — are significantly more valuable than those who resist them. Siemens, ANSYS, and Altair all offer practitioner certification paths. Use ${certNote}.`; }
+
+  // Agriculture — agri_*
+  else if (rl.startsWith('agri_'))
+    { certTitle = 'Complete a precision agriculture AI certification (Trimble Ag or John Deere Operations Center training)'; certDetail = `Agronomists and farm managers who can work with AI precision agriculture platforms — interpreting sensor data, supervising automated recommendations, and advising on AI-assisted decisions — are the next generation of the field. Trimble and John Deere both offer practitioner paths. Use ${certNote}.`; }
+
+  // Gaming — game_*
+  else if (rl.startsWith('game_'))
+    { certTitle = 'Complete a generative AI for game development course (Unity Muse, Unreal MetaHuman, or Inworld AI creator certification)'; certDetail = `Game developers who can use and direct AI tools for asset creation, NPC behavior, and procedural generation are significantly more productive and versatile. Unity, Epic, and Inworld AI all offer practitioner-level paths. Use ${certNote}.`; }
+
+  // Blockchain — bc_*
+  else if (rl.startsWith('bc_'))
+    { certTitle = 'Complete an advanced smart contract security or AI audit tools certification (Trail of Bits training or OpenZeppelin Defender)'; certDetail = `Blockchain professionals who can work with AI-assisted audit tools — while understanding their limits — command a significant premium in the security-conscious Web3 space. Trail of Bits, OpenZeppelin, and Cyfrin all offer practitioner security credentials. Use ${certNote}.`; }
 
   return { title: certTitle, detail: certDetail, riskReduction: 8, protectionIncrease: 14, effort: 'Medium', category: 'Skill', strategicImpact: 'Critical', timeRequired: '40–60 hrs total', roi: 'Exceptional' };
 }

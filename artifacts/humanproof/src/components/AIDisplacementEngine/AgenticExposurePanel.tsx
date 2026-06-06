@@ -19,19 +19,19 @@ const TIER_COLORS: Record<AgenticTier, string> = {
 };
 
 const TIER_DESC: Record<AgenticTier, string> = {
-  LOW:      'Strong structural resilience against autonomous AI displacement',
-  MODERATE: 'Moderate structural exposure — augmentation more likely than displacement',
-  HIGH:     'High structural exposure — significant workflow automation ahead',
-  SEVERE:   'Severe structural exposure — role transformation highly likely',
-  EXTREME:  'Extreme structural exposure — immediate strategic repositioning warranted',
+  LOW:      'Very well protected — AI is unlikely to change your core work',
+  MODERATE: 'Mostly protected — AI will help you more than replace you',
+  HIGH:     'At risk — a significant part of your work will be automated',
+  SEVERE:   'High risk — your role will look very different in a few years',
+  EXTREME:  'Critical — act now to reposition before your role is eliminated',
 };
 
 const SUB_LABELS: Record<string, string> = {
-  taskAutoPotential:           'Task Automation Potential',
-  agenticProgression:          'Agentic Capability Progression',
-  laborEcon:                   'Labor Replacement Economics',
-  orgRestructure:              'Org Restructuring Likelihood',
-  agenticDisruptionPotential:  'Agentic Disruption Potential (D7)',
+  taskAutoPotential:           'How much of this work AI can take over',
+  agenticProgression:          'How quickly AI is advancing in this area',
+  laborEcon:                   'Whether replacing workers saves money',
+  orgRestructure:              'Chance of headcount cuts in your area',
+  agenticDisruptionPotential:  'Long-term risk from advanced AI (2030+)',
 };
 
 function subScoreColor(v: number): string {
@@ -64,10 +64,10 @@ export const AgenticExposurePanel: React.FC<Props> = ({ result, currentScore, cu
           fontSize: '0.62rem', fontWeight: 800, color: tierColor,
           fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
         }}>
-          AGENTIC AI WAVE EXPOSURE
+          YOUR 2030 AI RISK PICTURE
         </div>
         <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
-          2030 structural forecast — separate from current risk score
+          How your role looks in 2030, based on where AI is heading
         </div>
       </div>
 
@@ -79,7 +79,7 @@ export const AgenticExposurePanel: React.FC<Props> = ({ result, currentScore, cu
           {/* Current score (smaller) */}
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '6px', letterSpacing: '0.08em' }}>
-              CURRENT RISK
+              TODAY'S RISK
             </div>
             <svg width="72" height="72" viewBox="0 0 96 96">
               <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
@@ -99,7 +99,7 @@ export const AgenticExposurePanel: React.FC<Props> = ({ result, currentScore, cu
           {/* Agentic score (larger, prominent) */}
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.6rem', color: tierColor, fontFamily: 'var(--font-mono)', marginBottom: '6px', letterSpacing: '0.08em', fontWeight: 800 }}>
-              2030 STRUCTURAL EXPOSURE
+              2030 RISK OUTLOOK
             </div>
             <svg width="96" height="96" viewBox="0 0 96 96">
               <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
@@ -128,7 +128,7 @@ export const AgenticExposurePanel: React.FC<Props> = ({ result, currentScore, cu
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: tierColor, display: 'inline-block', boxShadow: `0 0 6px ${tierColor}` }} />
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: tierColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
-              {result.tier} EXPOSURE
+              {result.tier} RISK
             </span>
           </div>
           <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginBottom: '16px', lineHeight: 1.5 }}>

@@ -107,21 +107,86 @@ function buildAdjacentPath(
   ];
 }
 
+function classifyRoleFamily(roleKey: string, roleLabel: string): string {
+  const rk = roleKey.toLowerCase();
+  const rl = roleLabel.toLowerCase();
+  // prefix-first on catalog key, then label fallback
+  if (rk.startsWith('sw_') || rk.startsWith('em_vibe') || rk.startsWith('em_agentic') || rk.startsWith('em_spatial') || rk.startsWith('em_digital_human') || rk.startsWith('em_robotics')) return 'software';
+  if (rk.startsWith('da_') || rk.startsWith('ml_') || rk.startsWith('ds_') || rk.startsWith('em_synthetic') || rk.startsWith('em_climate') || rk.startsWith('em_llm')) return 'data';
+  if (rk.startsWith('fin_') || rk.startsWith('inv_') || rk.startsWith('ins_') || rk.startsWith('ec_')) return 'finance';
+  if (rk.startsWith('hc_') || rk.startsWith('nur_') || rk.startsWith('mh_') || rk.startsWith('vet_')) return 'health';
+  if (rk.startsWith('bpo_') || rk.startsWith('cx_') || rk.startsWith('adm_')) return 'cx';
+  if (rk.startsWith('sec_') || rk.startsWith('dev_') || rk.startsWith('cloud_') || rk.startsWith('em_ai_red')) return 'security';
+  if (rk.startsWith('hr_') || rk.startsWith('po_')) return 'hr';
+  if (rk.startsWith('leg_') || rk.startsWith('comp_law')) return 'legal';
+  if (rk.startsWith('con_') || rk.startsWith('pm_')) return 'consulting';
+  if (rk.startsWith('mkt_') || rk.startsWith('cnt_') || rk.startsWith('crt_') || rk.startsWith('des_')) return 'marketing';
+  if (rk.startsWith('edu_') || rk.startsWith('edt_') || rk.startsWith('tr_')) return 'education';
+  if (rk.startsWith('log_') || rk.startsWith('ops_') || rk.startsWith('sc_')) return 'logistics';
+  if (rk.startsWith('mfg_') || rk.startsWith('trd_') || rk.startsWith('ind_')) return 'manufacturing';
+  if (rk.startsWith('sal_') || rk.startsWith('ret_') || rk.startsWith('re_')) return 'sales';
+  if (rk.startsWith('gov_') || rk.startsWith('pub_') || rk.startsWith('ngo_') || rk.startsWith('ph_')) return 'government';
+  if (rk.startsWith('em_agent_ops') || rk.startsWith('em_ai_workflow') || rk.startsWith('em_ai_governance') || rk.startsWith('em_ai_transformation') || rk.startsWith('em_ai_workforce') || rk.startsWith('em_autonomous') || rk.startsWith('em_human_ai')) return 'ai_orchestration';
+  if (rk.startsWith('med_')) return 'media';
+  if (rk.startsWith('anim_') || rk.startsWith('photo_') || rk.startsWith('video_')) return 'creative_visual';
+  if (rk.startsWith('trav_')) return 'travel';
+  if (rk.startsWith('aero_')) return 'aerospace';
+  if (rk.startsWith('agri_')) return 'agriculture';
+  if (rk.startsWith('game_')) return 'gaming';
+  if (rk.startsWith('bc_')) return 'blockchain';
+  // label fallback for custom roles or unrecognized keys
+  if (rl.includes('data') || rl.includes('analyt') || rl.includes('scientist')) return 'data';
+  if (rl.includes('finance') || rl.includes('invest') || rl.includes('account') || rl.includes('actuar')) return 'finance';
+  if (rl.includes('nurse') || rl.includes('health') || rl.includes('doctor') || rl.includes('clinical') || rl.includes('therapist')) return 'health';
+  if (rl.includes('legal') || rl.includes('law') || rl.includes('compliance')) return 'legal';
+  if (rl.includes('market') || rl.includes('content') || rl.includes('creative')) return 'marketing';
+  if (rl.includes('security') || rl.includes('soc') || rl.includes('cyber')) return 'security';
+  if (rl.includes('software') || rl.includes('engineer') || rl.includes('developer') || rl.includes('backend') || rl.includes('frontend')) return 'software';
+  if (rl.includes('teach') || rl.includes('edu') || rl.includes('train') || rl.includes('instruct')) return 'education';
+  if (rl.includes('logistics') || rl.includes('supply') || rl.includes('operations') || rl.includes('warehouse')) return 'logistics';
+  if (rl.includes('manufactur') || rl.includes('electrician') || rl.includes('welder') || rl.includes('machinist')) return 'manufacturing';
+  if (rl.includes('sales') || rl.includes('retail') || rl.includes('real estate')) return 'sales';
+  if (rl.includes('hr') || rl.includes('recruit') || rl.includes('people')) return 'hr';
+  if (rl.includes('support') || rl.includes('customer service') || rl.includes('bpo')) return 'cx';
+  if (rl.includes('agent') || rl.includes('governance') || rl.includes('ai transformation')) return 'ai_orchestration';
+  return 'general';
+}
+
 function buildHighUpsidePath(
+  roleKey: string,
   roleLabel: string,
   intel: CareerIntelligence | null,
   natural: RoleEvolutionNode[],
   d7Score: number,
   adoptionSpeed: number,
 ): RoleEvolutionNode[] {
-  const rl = roleLabel.toLowerCase();
-  let stage4Label = 'AI Product Director';
-  if (rl.includes('data') || rl.includes('analyt'))  stage4Label = 'AI Data Strategy Lead';
-  if (rl.includes('finance') || rl.includes('invest')) stage4Label = 'AI Finance Director';
-  if (rl.includes('nurse') || rl.includes('health'))  stage4Label = 'Clinical AI Integration Lead';
-  if (rl.includes('legal') || rl.includes('law'))    stage4Label = 'Legal Intelligence Director';
-  if (rl.includes('market') || rl.includes('content')) stage4Label = 'AI Marketing Architect';
-  if (rl.includes('security') || rl.includes('soc'))  stage4Label = 'Threat Intelligence Strategy Lead';
+  const family = classifyRoleFamily(roleKey, roleLabel);
+  const UPSIDE_STAGE4: Record<string, string> = {
+    software:       'AI Systems Architect',
+    data:           'AI Data Strategy Lead',
+    finance:        'AI Finance Director',
+    health:         'Clinical AI Integration Lead',
+    legal:          'Legal Intelligence Director',
+    marketing:      'AI Marketing Architect',
+    security:       'Threat Intelligence Strategy Lead',
+    hr:             'People Analytics & AI HR Lead',
+    consulting:     'AI Transformation Partner',
+    education:      'AI Curriculum & Learning Design Lead',
+    logistics:      'Supply Chain AI Strategy Lead',
+    manufacturing:  'Industrial AI Systems Lead',
+    sales:          'AI Revenue Strategy Director',
+    government:     'Public Sector AI Policy Lead',
+    cx:             'AI Customer Experience Architect',
+    ai_orchestration: 'Chief AI Operations Officer',
+    media:          'AI-Augmented Investigative Editor',
+    creative_visual: 'AI Creative Director (Generative)',
+    travel:         'AI-Powered Travel Experience Architect',
+    aerospace:      'Autonomous Systems Integration Lead',
+    agriculture:    'Precision Ag AI Strategy Lead',
+    gaming:         'AI Game Experience Director',
+    blockchain:     'Web3 AI Protocol Architect',
+  };
+  const stage4Label = UPSIDE_STAGE4[family] ?? 'AI Product Director';
   const stage3 = intel?.careerPaths?.[0]?.role ?? `${roleLabel} Specialist`;
   return [
     natural[0],
@@ -132,23 +197,45 @@ function buildHighUpsidePath(
 }
 
 function buildSafestPath(
+  roleKey: string,
   roleLabel: string,
   intel: CareerIntelligence | null,
   natural: RoleEvolutionNode[],
   adoptionSpeed: number,
 ): RoleEvolutionNode[] {
-  const rl = roleLabel.toLowerCase();
-  let safestStage3 = 'Client-Facing Domain Expert';
-  let safestStage4 = 'Human Relationship & Trust Lead';
-  if (rl.includes('data'))    { safestStage3 = 'Data Governance Specialist'; safestStage4 = 'Data Quality & Compliance Lead'; }
-  if (rl.includes('finance')) { safestStage3 = 'Strategic Advisory Specialist'; safestStage4 = 'Investment Relationship Manager'; }
-  if (rl.includes('nurse'))   { safestStage3 = 'Advanced Practice Nurse'; safestStage4 = 'Palliative & Complex Care Specialist'; }
-  if (rl.includes('security')){ safestStage3 = 'Security Awareness & Culture Lead'; safestStage4 = 'Enterprise Risk Governance Lead'; }
+  const family = classifyRoleFamily(roleKey, roleLabel);
+  type SafestStages = { stage3: string; stage4: string };
+  const SAFEST_STAGES: Record<string, SafestStages> = {
+    software:       { stage3: 'Technical Architecture Specialist', stage4: 'Human-AI Systems Integrator' },
+    data:           { stage3: 'Data Governance Specialist', stage4: 'Data Quality & Compliance Lead' },
+    finance:        { stage3: 'Strategic Advisory Specialist', stage4: 'Investment Relationship Manager' },
+    health:         { stage3: 'Advanced Practice Clinician', stage4: 'Palliative & Complex Care Specialist' },
+    legal:          { stage3: 'Complex Litigation Specialist', stage4: 'Legal Ethics & AI Oversight Counsel' },
+    marketing:      { stage3: 'Brand & Creative Strategy Lead', stage4: 'Human-Centered Experience Director' },
+    security:       { stage3: 'Security Awareness & Culture Lead', stage4: 'Enterprise Risk Governance Lead' },
+    hr:             { stage3: 'Employee Relations & Culture Lead', stage4: 'Organizational Wellbeing Director' },
+    consulting:     { stage3: 'Executive Advisory Specialist', stage4: 'Change Management & Trust Lead' },
+    education:      { stage3: 'Specialist Educator & Mentor', stage4: 'Learning Experience Design Lead' },
+    logistics:      { stage3: 'Supply Chain Risk & Resilience Lead', stage4: 'Critical Infrastructure Operations Lead' },
+    manufacturing:  { stage3: 'Precision Manufacturing Specialist', stage4: 'Advanced Trades & Robotics Supervisor' },
+    sales:          { stage3: 'Complex Deal & Relationship Specialist', stage4: 'Strategic Account & Trust Lead' },
+    government:     { stage3: 'Public Trust & Policy Implementation Lead', stage4: 'Community Resilience Programme Director' },
+    cx:             { stage3: 'Complex Resolution & Empathy Specialist', stage4: 'Human Experience Quality Lead' },
+    ai_orchestration: { stage3: 'AI Systems Auditor & Governance Lead', stage4: 'Human Oversight & AI Trust Director' },
+    media:          { stage3: 'Deep Sourcing & Investigative Specialist', stage4: 'Narrative & Editorial Trust Lead' },
+    creative_visual: { stage3: 'Handcrafted & Bespoke Visual Specialist', stage4: 'Artistic Direction & Brand Identity Lead' },
+    travel:         { stage3: 'Complex Itinerary & VIP Experience Specialist', stage4: 'High-Touch Concierge & Crisis Expert' },
+    aerospace:      { stage3: 'Safety-Critical Engineering Authority', stage4: 'Human Judgment & Airworthiness Lead' },
+    agriculture:    { stage3: 'Field Advisory & Adaptive Farming Specialist', stage4: 'Sustainable Agriculture Systems Lead' },
+    gaming:         { stage3: 'Narrative & Player Empathy Design Lead', stage4: 'Human Game Experience Director' },
+    blockchain:     { stage3: 'Protocol Security & Novel Threat Specialist', stage4: 'Regulatory Navigation & Trust Lead' },
+  };
+  const stages = SAFEST_STAGES[family] ?? { stage3: 'Client-Facing Domain Expert', stage4: 'Human Relationship & Trust Lead' };
   return [
     natural[0],
     { ...natural[1] ?? { label: `AI-Assisted ${roleLabel}`, timeframe: shiftTimeframe('~2026–2027', adoptionSpeed), type: 'augmented' }, label: `AI-Assisted ${roleLabel}` },
-    { label: safestStage3, timeframe: shiftTimeframe('~2028–2030', adoptionSpeed), type: 'specialized', demandOutlook: 'Stable', aiResistance: 'High', transitionDifficulty: 'Moderate', confidence: 'Medium' },
-    { label: safestStage4,  timeframe: shiftTimeframe('~2031–2032+', adoptionSpeed), type: 'transformed', demandOutlook: 'Stable', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
+    { label: stages.stage3, timeframe: shiftTimeframe('~2028–2030', adoptionSpeed), type: 'specialized', demandOutlook: 'Stable', aiResistance: 'High', transitionDifficulty: 'Moderate', confidence: 'Medium' },
+    { label: stages.stage4, timeframe: shiftTimeframe('~2031–2032+', adoptionSpeed), type: 'transformed', demandOutlook: 'Stable', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
   ];
 }
 
@@ -177,8 +264,8 @@ export const RoleEvolutionPath: React.FC<Props> = ({
   const pathNodes: Record<PathType, RoleEvolutionNode[]> = {
     natural:    naturalNodes,
     adjacent:   buildAdjacentPath(roleLabel, intel, naturalNodes, adoptionSpeed),
-    highUpside: buildHighUpsidePath(roleLabel, intel, naturalNodes, d7Score, adoptionSpeed),
-    safest:     buildSafestPath(roleLabel, intel, naturalNodes, adoptionSpeed),
+    highUpside: buildHighUpsidePath(roleKey, roleLabel, intel, naturalNodes, d7Score, adoptionSpeed),
+    safest:     buildSafestPath(roleKey, roleLabel, intel, naturalNodes, adoptionSpeed),
   };
   const nodes = pathNodes[activePathType];
   const expBanner = getExpTierBanner(experience);

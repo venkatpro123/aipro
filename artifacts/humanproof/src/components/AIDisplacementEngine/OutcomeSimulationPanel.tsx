@@ -76,9 +76,9 @@ function computeOutcomes(
 }
 
 const SCENARIOS: { key: 'noAction' | 'plan50' | 'planFull'; label: string; sub: string; color: string; bg: string }[] = [
-  { key: 'noAction', label: 'No Action',  sub: 'Current trajectory continues', color: 'var(--red)',     bg: 'rgba(239,68,68,0.06)' },
-  { key: 'plan50',   label: '50% Plan',   sub: 'Partial action on key items',  color: 'var(--amber)',   bg: 'rgba(251,191,36,0.06)' },
-  { key: 'planFull', label: 'Full Plan',  sub: 'All recommended actions taken', color: 'var(--emerald)', bg: 'rgba(16,185,129,0.06)' },
+  { key: 'noAction', label: 'Do Nothing',      sub: "You keep doing what you're doing today",    color: 'var(--red)',     bg: 'rgba(239,68,68,0.06)' },
+  { key: 'plan50',   label: 'Take Some Steps', sub: 'You follow some of the recommended actions', color: 'var(--amber)',   bg: 'rgba(251,191,36,0.06)' },
+  { key: 'planFull', label: 'Take Full Action', sub: 'You follow the full action plan',            color: 'var(--emerald)', bg: 'rgba(16,185,129,0.06)' },
 ];
 
 function riskColor(risk: number): string {
@@ -123,9 +123,9 @@ export const OutcomeSimulationPanel: React.FC<Props> = ({
           fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-2)',
           fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
         }}>
-          OUTCOME SIMULATION · DETERMINISTIC FORECAST
+          WHAT HAPPENS IF YOU ACT (VS. DON'T)
         </div>
-        <span style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>2028–2030 projection · three scenarios</span>
+        <span style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>Estimated risk in 2028 and 2030 across three paths</span>
       </div>
 
       {/* 3-column scenarios */}
@@ -145,23 +145,23 @@ export const OutcomeSimulationPanel: React.FC<Props> = ({
                 <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', lineHeight: 1.4 }}>{sub}</div>
               </div>
 
-              <MetricRow label="2028 Risk" value={`${r.risk2028}%`} color={riskColor(r.risk2028)} />
-              <MetricRow label="2030 Risk" value={`${r.risk2030}%`} color={riskColor(r.risk2030)} />
+              <MetricRow label="Risk in 2028" value={`${r.risk2028}%`} color={riskColor(r.risk2028)} />
+              <MetricRow label="Risk in 2030" value={`${r.risk2030}%`} color={riskColor(r.risk2030)} />
 
               <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
 
               <MetricRow
-                label="Extra Runway"
+                label="Extra time gained"
                 value={r.runwayYears > 0 ? `+${r.runwayYears} yrs` : '—'}
                 color={r.runwayYears > 0 ? 'var(--emerald)' : 'var(--text-3)'}
               />
               <MetricRow
-                label="Remain Competitive"
+                label="Chance of staying competitive"
                 value={`${r.competitiveProbability}%`}
                 color={r.competitiveProbability >= 60 ? 'var(--emerald)' : r.competitiveProbability >= 35 ? 'var(--amber)' : 'var(--red)'}
               />
               <MetricRow
-                label="AI Resilience Gain"
+                label="How much stronger your position gets"
                 value={r.resilienceGain > 0 ? `+${r.resilienceGain} pts` : 'No change'}
                 color={r.resilienceGain > 0 ? color : 'var(--text-3)'}
               />
@@ -176,7 +176,7 @@ export const OutcomeSimulationPanel: React.FC<Props> = ({
         borderTop: '1px solid rgba(255,255,255,0.06)',
         fontSize: '0.62rem', color: 'var(--text-3)', lineHeight: 1.5,
       }}>
-        Projections are deterministic estimates based on role displacement research (McKinsey, Oxford Martin) and career transition outcome studies. Individual results depend on execution quality, market conditions, and timing. "Remain Competitive" reflects the probability of maintaining current career trajectory without major displacement.
+        These projections are estimates based on research into how careers evolve with AI. They're directional — your actual outcome depends on how you execute, market timing, and factors outside anyone's model. Use them for direction, not prediction.
       </div>
     </div>
   );

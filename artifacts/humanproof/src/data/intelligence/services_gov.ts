@@ -19,6 +19,7 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Director of Policy', riskReduction: 38, skillGap: 'Executive stakeholder management, Budget responsibility, Political communication', transitionDifficulty: 'Hard', industryMapping: ['Government', 'Think Tanks', 'IGOs'], salaryDelta: '+40-100%', timeToTransition: '36 months' },
     ],
+    inactionScenario: 'Policy analysts who only produce standard research will be replaced by AI tools. The survivors are political navigators and coalition architects — skills AI cannot perform.',
     riskTrend: [{ year: 2024, riskScore: 18, label: 'Now' }, { year: 2025, riskScore: 20, label: '+1yr' }, { year: 2026, riskScore: 23, label: '+2yr' }, { year: 2027, riskScore: 27, label: '+3yr' }, { year: 2028, riskScore: 30, label: '+4yr' }],
     confidenceScore: 97,
     contextTags: ['government', 'ai-resilient', 'policy', 'political-moat'],
@@ -39,9 +40,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Ambassador / Senior Envoy', riskReduction: 10, skillGap: 'Deep expertise in specific regional political systems, Executive communication at head-of-state level', transitionDifficulty: 'Very Hard', industryMapping: ['Government', 'International Organizations'], salaryDelta: '+30-100%', timeToTransition: '120+ months' },
     ],
+    inactionScenario: 'Diplomats who rely only on standard cable writing and briefing note formats will be out-performed. The irreplaceable value is the personal network and cultural intelligence built over decades.',
     riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 5, label: '+2yr' }, { year: 2027, riskScore: 6, label: '+3yr' }, { year: 2028, riskScore: 7, label: '+4yr' }, { year: 2029, riskScore: 8, label: '+5yr' }],
     confidenceScore: 99,
     contextTags: ['government', 'irreplaceable', 'trust-critical', 'human-touch', 'international'],
+    evolutionHorizon: '2035',
   },
 
   gov_intelligence_analyst: {
@@ -58,9 +61,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Senior Intelligence Officer / Station Chief', riskReduction: 20, skillGap: 'Deep regional area expertise, Source development skills, Operational tradecraft', transitionDifficulty: 'Very Hard', industryMapping: ['Intelligence Agencies', 'Defense'], salaryDelta: '+30-80%', timeToTransition: '60 months' },
     ],
+    inactionScenario: 'Intelligence analysts who only process structured data will be replaced by AI systems. The irreplaceable skills are HUMINT source evaluation and novel threat synthesis — skills that require human judgment and cannot be automated.',
     riskTrend: [{ year: 2024, riskScore: 20, label: 'Now' }, { year: 2025, riskScore: 22, label: '+1yr' }, { year: 2026, riskScore: 24, label: '+2yr' }, { year: 2027, riskScore: 26, label: '+3yr' }, { year: 2028, riskScore: 28, label: '+4yr' }],
     confidenceScore: 98,
     contextTags: ['government', 'ai-resilient', 'security', 'national-security', 'human-judgment'],
+    evolutionHorizon: '2030',
   },
 
   gov_urban_mayor: {
@@ -77,9 +82,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'State/Regional Director', riskReduction: 20, skillGap: 'Legislative relations, State budget process, Political coalition management', transitionDifficulty: 'Hard', industryMapping: ['State Government', 'Regional Authorities'], salaryDelta: '+30-80%', timeToTransition: '48 months' },
     ],
+    inactionScenario: 'City managers who do not develop AI-literacy will struggle to govern AI-augmented municipal services. The irreplaceable value is crisis leadership and democratic accountability.',
     riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 9, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 11, label: '+4yr' }, { year: 2029, riskScore: 12, label: '+5yr' }],
     confidenceScore: 98,
     contextTags: ['government', 'ai-resilient', 'leadership-premium', 'executive', 'political-moat'],
+    evolutionHorizon: '2032',
   },
 
   gov_social_worker: {
@@ -96,9 +103,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Director of Social Services', riskReduction: 25, skillGap: 'Budget management, Workforce development, Policy implementation', transitionDifficulty: 'Hard', industryMapping: ['Local Government', 'NGOs', 'Charities'], salaryDelta: '+30-70%', timeToTransition: '36 months' },
     ],
+    inactionScenario: 'Social workers who do not stay current with AI safeguarding risk tools will be less effective at the administrative side of their work. The human relationship is irreplaceable but must be protected by staying ahead of documentation automation.',
     riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 9, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 14, label: '+5yr' }],
     confidenceScore: 99,
     contextTags: ['government', 'irreplaceable', 'human-touch', 'safety-critical', 'protected-by-law'],
+    evolutionHorizon: '2035',
   },
 
   gov_public_prosecutor: {
@@ -115,9 +124,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Judge / Magistrate', riskReduction: 15, skillGap: 'Judicial application, Appellate procedure, Judicial temperament development', transitionDifficulty: 'Very Hard', industryMapping: ['Federal/State Courts'], salaryDelta: '+20-60%', timeToTransition: '60 months' },
     ],
+    inactionScenario: 'Prosecutors who rely on AI-generated case summaries without developing prosecutorial judgment skills will lose credibility in court. The irreplaceable value is moral discretion and jury communication.',
     riskTrend: [{ year: 2024, riskScore: 12, label: 'Now' }, { year: 2026, riskScore: 14, label: '+2yr' }, { year: 2027, riskScore: 16, label: '+3yr' }, { year: 2028, riskScore: 18, label: '+4yr' }, { year: 2029, riskScore: 20, label: '+5yr' }],
     confidenceScore: 98,
     contextTags: ['government', 'legal', 'ai-resilient', 'protected-by-law', 'moral-accountability'],
+    evolutionHorizon: '2032',
   },
 
   gov_military_officer: {
@@ -134,9 +145,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Senior Defense Executive / Contractor', riskReduction: 20, skillGap: 'Defense procurement, Program management, Private sector transition (EO/political dynamics)', transitionDifficulty: 'Hard', industryMapping: ['Defense Contractors', 'Government Relations'], salaryDelta: '+50-150%', timeToTransition: '12 months' },
     ],
+    inactionScenario: 'Military officers who do not develop literacy in AI-assisted planning and autonomous systems will be less effective advisors. But command authority will remain human — the question is which officers understand AI well enough to govern its use.',
     riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 5, label: '+2yr' }, { year: 2027, riskScore: 5, label: '+3yr' }, { year: 2028, riskScore: 6, label: '+4yr' }, { year: 2029, riskScore: 7, label: '+5yr' }],
     confidenceScore: 99,
     contextTags: ['government', 'irreplaceable', 'safety-critical', 'protected-by-law', 'military'],
+    evolutionHorizon: '2035',
   },
 
   gov_regulator: {
@@ -153,9 +166,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Chief Compliance Officer (CCO)', riskReduction: 38, skillGap: 'Corporate governance, Financial reporting supervision, C-suite executive management', transitionDifficulty: 'Hard', industryMapping: ['Financial Services', 'Big Tech', 'Healthcare'], salaryDelta: '+60-150%', timeToTransition: '24 months' },
     ],
+    inactionScenario: 'Regulators who do not develop AI-specific technical literacy will struggle to regulate AI systems credibly. The future regulator must understand what they are regulating — including its limits and failure modes.',
     riskTrend: [{ year: 2024, riskScore: 12, label: 'Now' }, { year: 2026, riskScore: 11, label: '+2yr' }, { year: 2027, riskScore: 11, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 13, label: '+5yr' }],
     confidenceScore: 98,
     contextTags: ['government', 'ai-resilient', 'regulatory-driven', 'protected-by-law', 'leadership-premium'],
+    evolutionHorizon: '2030',
   },
 
   gov_public_health_dir: {
@@ -172,9 +187,11 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Secretary of Health (Cabinet Level)', riskReduction: 5, skillGap: 'Legislative relations, National media communication, Federal budget process', transitionDifficulty: 'Very Hard', industryMapping: ['Federal Government', 'WHO / IGOs'], salaryDelta: '+20-80%', timeToTransition: '60 months' },
     ],
+    inactionScenario: 'Public health directors who do not integrate AI epidemiological modeling into their decision-making will be at a disadvantage in future outbreaks. The irreplaceable value is command leadership and coalition authority.',
     riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 5, label: '+2yr' }, { year: 2027, riskScore: 5, label: '+3yr' }, { year: 2028, riskScore: 6, label: '+4yr' }, { year: 2029, riskScore: 6, label: '+5yr' }],
     confidenceScore: 99,
     contextTags: ['government', 'irreplaceable', 'safety-critical', 'leadership-premium', 'executive'],
+    evolutionHorizon: '2035',
   },
 
   gov_judge: {
@@ -191,6 +208,7 @@ export const SERVICES_GOV_INTELLIGENCE: Record<string, CareerIntelligence> = {
     careerPaths: [
       { role: 'Appellate Judge / Justice', riskReduction: 5, skillGap: 'Appellate procedure, Constitutional law, Judicial scholarship', transitionDifficulty: 'Very Hard', industryMapping: ['Federal Courts', 'State Courts'], salaryDelta: '+10-40%', timeToTransition: '120+ months (career long)' },
     ],
+    inactionScenario: 'Judges who do not develop literacy in AI evidence and AI bias issues will be less equipped to rule on AI-related cases — a category growing rapidly. The role itself is irreplaceable; the competence to govern AI is not automatic.',
     riskTrend: [{ year: 2024, riskScore: 3, label: 'Now' }, { year: 2026, riskScore: 4, label: '+2yr' }, { year: 2027, riskScore: 4, label: '+3yr' }, { year: 2028, riskScore: 5, label: '+4yr' }, { year: 2029, riskScore: 5, label: '+5yr' }],
     confidenceScore: 99,
     contextTags: ['government', 'irreplaceable', 'protected-by-law', 'constitutional-protection', 'legal'],
