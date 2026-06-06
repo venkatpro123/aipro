@@ -15,12 +15,12 @@ interface Props {
 }
 
 const KS_LABELS: Record<string, string> = {
-  confirmed_recent_layoff_news:      'Confirmed layoff news',
-  financial_distress_triad:          'Financial distress triad',
-  pre_layoff_precursor:              'Pre-layoff precursor',
-  pre_layoff_precursor_inferred:     'Pre-layoff (inferred)',
-  warn_act_filing:                   'WARN Act filing',
-  stealth_layoff_floor:              'Stealth layoff detected',
+  confirmed_recent_layoff_news:      'We found layoff news about your company',
+  financial_distress_triad:          'Your company is showing financial stress signals',
+  pre_layoff_precursor:              'Early warning signs detected',
+  pre_layoff_precursor_inferred:     'Possible warning signs (unconfirmed)',
+  warn_act_filing:                   'Government layoff notice filed',
+  stealth_layoff_floor:              'Quiet layoffs may be happening',
 };
 
 const KillSwitchFloorBadge: React.FC<Props> = ({
@@ -52,14 +52,14 @@ const KillSwitchFloorBadge: React.FC<Props> = ({
         background: 'rgba(249,115,22,0.15)',
         border: '1px solid rgba(249,115,22,0.40)',
       }}
-      title={`Score floored to ${winningFloor} (formula: ${formulaScore}). Active floors: ${details}`}
+      title={`A serious signal raised your score to ${winningFloor}. Without it, the formula gave ${formulaScore}.`}
     >
       <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f97316' }} />
       <span
         className="text-[10px] font-mono font-semibold whitespace-nowrap"
         style={{ color: '#f97316' }}
       >
-        Floor: {winningFloor} → Formula: {formulaScore}
+        Raised to: {winningFloor} · Formula only: {formulaScore}
         {extraCount > 0 && (
           <span style={{ opacity: 0.75 }}> +{extraCount} more</span>
         )}

@@ -177,7 +177,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <Scale size={14} className="text-blue-400" />
-        <span className="text-sm font-semibold text-white">Negotiation Intelligence</span>
+        <span className="text-sm font-semibold text-white">Negotiation Guide</span>
         <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
           {cfg.label}
         </span>
@@ -186,7 +186,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
       {/* Leverage bar */}
       <div className="mb-3">
         <div className="flex justify-between text-[11px] text-gray-400 mb-1">
-          <span>Leverage score</span>
+          <span>Your negotiating strength</span>
           <span>{negotiation.leverageScore}/100</span>
         </div>
         <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
@@ -209,7 +209,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
       {/* BATNA + timing */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="p-2 rounded-lg bg-white/3 border border-white/5">
-          <div className="text-[10px] text-gray-500 mb-0.5">Outside Option (BATNA)</div>
+          <div className="text-[10px] text-gray-500 mb-0.5">Your backup option</div>
           <div className="text-[11px] text-gray-300">{negotiation.batnaStrength}</div>
         </div>
         <div className="p-2 rounded-lg bg-white/3 border border-white/5">
@@ -223,10 +223,10 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
         <div className="border-t border-white/5 pt-3 mb-3">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[11px] font-semibold text-gray-300">
-              Ready-to-send email scripts
+              Email templates — ready to send
             </span>
             <span className="text-[10px] text-muted-foreground">
-              — personalised, copy-paste ready
+              — tailored to your situation
             </span>
           </div>
           <div className="space-y-2">
@@ -245,7 +245,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
             onClick={() => setShowRisks(!showRisks)}
             className="w-full flex items-center justify-between text-[11px] text-gray-400 hover:text-gray-200 transition-colors"
           >
-            <span>Risks &amp; red lines</span>
+            <span>What to watch out for</span>
             {showRisks ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
           <AnimatePresence>

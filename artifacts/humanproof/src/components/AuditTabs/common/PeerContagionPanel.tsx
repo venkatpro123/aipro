@@ -32,7 +32,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4" style={{ color: colors.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Sector Contagion Wave</span>
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Industry Layoff Spread</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full"
@@ -70,7 +70,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
             <div className="text-sm font-black" style={{ color: contagion.contagionScore > 30 ? colors.text : 'rgba(255,255,255,0.7)' }}>
               {contagion.contagionScore}
             </div>
-            <div className="text-[10px] opacity-40 mt-0.5">Contagion score</div>
+            <div className="text-[10px] opacity-40 mt-0.5">Spread risk</div>
           </div>
         </div>
       )}
@@ -121,7 +121,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5" style={{ color: colors.text }} />
             <span className="text-xs font-semibold" style={{ color: colors.text }}>
-              Estimated propagation: ~{contagion.estimatedPropagationDays} days
+              Could reach your company in ~{contagion.estimatedPropagationDays} days
             </span>
           </div>
           <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
@@ -133,7 +133,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       {/* Action implication */}
       <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          ACTION IMPLICATION
+          WHAT THIS MEANS FOR YOU
         </p>
         <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
           {contagion.actionImplication}
@@ -144,7 +144,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
         <div className="mt-2 flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" style={{ color: colors.text, opacity: 0.6 }} />
           <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Amplifier ×{contagion.scoreAmplifier.toFixed(2)} applied to company risk score
+            This raised your company's risk score by ×{contagion.scoreAmplifier.toFixed(2)}
           </span>
         </div>
       )}
@@ -155,7 +155,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       }}>
         <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(148,163,184,0.6)' }} />
         <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.7)' }}>
-          Static peer graph · Curated layoff cache · Not real-time peer monitoring
+          Based on documented layoffs — not live tracking
         </p>
       </div>
       {/* Confidence disclosure — user-appropriate framing of model maturity.
@@ -167,8 +167,8 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
         <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(148,163,184,0.45)' }} />
         <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
           {contagion.multipliersCalibrationStatus === 'developer_estimate'
-            ? 'Sector-peer weighting is estimated — real-world data accumulation is in progress. Treat contagion scores as directional, not precise.'
-            : `Sector-peer weighting is empirically calibrated from ${contagion.decayEvidenceCount > 0 ? `${contagion.decayEvidenceCount} documented events` : 'layoff pattern data'}. Full details in Methodology.`}
+            ? 'Our estimates for how layoffs spread are still being refined with real data. Treat these as directional, not precise.'
+            : `Based on ${contagion.decayEvidenceCount > 0 ? `${contagion.decayEvidenceCount} documented cases` : 'layoff pattern data'}. Full details in the Methodology tab.`}
         </p>
       </div>
     </div>

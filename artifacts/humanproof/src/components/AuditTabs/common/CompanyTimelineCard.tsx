@@ -85,10 +85,10 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
         date: r.warnSignal?.filingDate ?? 'Recent',
         dateMs: dt || Date.now() - 30 * 24 * 60 * 60 * 1000,
         type: 'warn',
-        label: 'WARN Act Filing',
+        label: 'Official Layoff Notice Filed',
         detail: r.warnSignal?.workerCount
-          ? `${r.warnSignal.workerCount.toLocaleString()} workers — 60-day legal advance notice`
-          : 'Legal 60-day advance notice filed',
+          ? `${r.warnSignal.workerCount.toLocaleString()} workers — government-required 60-day notice`
+          : 'Government-required 60-day notice filed',
         severity: 'critical',
       });
     }

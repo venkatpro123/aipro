@@ -341,14 +341,14 @@ export function buildDynamicActions(
     // prepending makes the intent explicit to future readers.
     actions.unshift({
       id:          `dept-freeze-phase0-${roleKey}`,
-      title:       `[Phase 0] ${deptName} shows ${freezeScore}% hiring freeze at ${companyName} — timeline recalibration required`,
+      title:       `⚠ ${deptName} shows ${freezeScore}% hiring freeze at ${companyName} — act sooner than your score suggests`,
       description: [
         `Your department ${deptName} shows ${freezeScore}% hiring freeze at ${companyName}.`,
         `Departments at ${freezeLabel} are historically cut 2–3 months before company-wide announcements.`,
         `Your effective timeline is ${adjustedTimeline}, not ${baseTimeline}.`,
         `Begin transition 6–8 weeks earlier than the overall risk score suggests.`,
         ``,
-        `This is a timeline recalibration, not an upskilling action. Do not start long-horizon skill-building (Phase 1) until you have read and understood this signal. The overall risk score (${Math.round(score)}/100) uses company-wide data — your department-level freeze score (${freezeScore}%) is a stronger, more specific leading indicator.`,
+        `This is a timing warning, not an upskilling task. Don't start long-term skill-building plans until you've read this. Your overall score (${Math.round(score)}/100) uses company-wide data — but department-level hiring freezes are a more specific early warning and usually arrive weeks before company-wide announcements.`,
         ``,
         `Immediate step: acknowledge this signal and set a concrete start date for your job search, 6–8 weeks earlier than you would have based on the company-wide score alone.`,
       ].join('\n'),
@@ -373,14 +373,14 @@ export function buildDynamicActions(
   ) {
     actions.unshift({
       id:          `stage3-emergency-phase0-${roleKey}`,
-      title:       `[Phase 0] Stage 3 collapse signals active at ${companyName} — emergency timeline`,
+      title:       `🔴 Multiple serious warning signs at ${companyName} — treat your timeline as urgent`,
       description: [
-        `Stage 3 collapse signals are active at ${companyName}.`,
-        `The combination of leadership instability, sustained negative coverage, and layoff history has crossed the threshold that historically precedes formal announcements by 4–8 weeks.`,
+        `Multiple serious warning signs are active at ${companyName}.`,
+        `Leadership instability, sustained negative news, and layoff history have reached a level that historically precedes formal announcements by 4–8 weeks.`,
         `Your effective timeline is now, not the horizon implied by the overall score.`,
         `Begin transition 6–8 weeks earlier than the overall risk score suggests.`,
         ``,
-        `This is not a "watch and wait" situation. Phase 1 actions are locked until you complete this step: treat your job search as a full-time parallel project this week. Schedule 3 targeted applications by end of week. Do not let the apparent stability of your current role delay this action.`,
+        `This is not a "watch and wait" situation. Start your job search as a serious parallel project this week. Schedule 3 targeted applications by end of week. Don't let the day-to-day feel of your role delay this action.`,
       ].join('\n'),
       priority:         'Critical',
       layerFocus:       'L2 · Layoff & Instability History',
@@ -401,7 +401,7 @@ export function buildDynamicActions(
     actions.push({
       id: `dyn-urgent-${roleKey}`,
       title: `Initiate Role Transition Planning — ${Math.round(score)}% Displacement Risk`,
-      description: `Your risk score of ${score}/100 puts you in the top quartile for AI displacement. ${seniorityFraming[seniorityBracket]} Begin mapping an adjacent role transition now — the best time to start is 18 months before you need to.`,
+      description: `Your risk score of ${score}/100 puts you among the most exposed roles to AI change. ${seniorityFraming[seniorityBracket]} Begin mapping an adjacent role transition now — the best time to start is 18 months before you need to.`,
       priority: "Critical",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 30,
@@ -442,7 +442,7 @@ export function buildDynamicActions(
     actions.push({
       id: `skill-atrisk-${topAtRisk.skill.replace(/\s/g, '-')}`,
       title: `Reduce Dependence on "${topAtRisk.skill}" (Risk: ${topAtRisk.riskScore}/100)`,
-      description: `${topAtRisk.reason}. Transition to owning the strategy and validation layer for this skill rather than the execution layer. ${topAtRisk.aiTool ? `AI tools doing this today: ${topAtRisk.aiTool}.` : ""}`,
+      description: `${topAtRisk.reason}. Shift your focus to the high-judgment parts of this skill — the decisions and oversight — rather than the routine work that AI can already do. ${topAtRisk.aiTool ? `AI tools doing this today: ${topAtRisk.aiTool}.` : ""}`,
       priority: (topAtRisk.riskScore ?? 0) >= 80 ? "High" : "Medium",
       layerFocus: "L3 · Role Displacement",
       riskReductionPct: 18,
@@ -457,11 +457,11 @@ export function buildDynamicActions(
       junior:    `At your stage, depth beats breadth. Pick one project where this skill is the primary value add and ship it publicly — GitHub, blog, or a demo. Junior professionals with 1 visible proof of this skill are hired above more experienced candidates who cannot show it.`,
       mid:       `Move from practitioner to recognized practitioner. Write a LinkedIn post, internal tech talk, or case study documenting your most complex application of this skill. Mid-level professionals who publish domain expertise receive 3× more senior-role referrals from their own network.`,
       senior:    `Your depth in this skill is your most durable asset. The next step is not learning — it is multiplication: mentor 1–2 junior people in this skill, or write the framework for how your organization applies it. Senior experts who systematize their knowledge cannot be replaced, only succeeded.`,
-      principal: `At principal level, your moat is not doing — it is defining. Write the authoritative resource (book chapter, industry white paper, conference talk) on this skill's application in your domain. This converts your expertise from valuable-to-your-employer into visible-to-the-market.`,
+      principal: `At principal level, your advantage is not doing the work — it is defining how it gets done. Write the authoritative resource (book chapter, industry white paper, conference talk) on this skill's application in your domain. This converts your expertise from valuable-to-your-employer into visible-to-the-market.`,
     };
     actions.push({
       id: `skill-safe-${topSafe.skill.replace(/\s/g, '-')}`,
-      title: `Deepen "${topSafe.skill}" — Your Primary Human Moat (LTV: ${topSafe.longTermValue}/100)`,
+      title: `Deepen "${topSafe.skill}" — Your Most Future-Proof Skill`,
       description: `${topSafe.whySafe} ${safeSkillAction[seniorityBracket]}`,
       priority: "Medium",
       layerFocus: "L5 · Personal Protection",
@@ -476,7 +476,7 @@ export function buildDynamicActions(
     actions.push({
       id: `company-financial-${companyName.replace(/\s/g, '-')}`,
       title: `Update Emergency Fund — ${companyName} Financial Signals Elevated`,
-      description: `Company financial health score: ${Math.round(financialRisk * 100)}/100. Industry-normalized analysis suggests elevated restructuring probability in the next 12 months. Ensure you have 6–9 months of expenses covered and your resume, LinkedIn, and portfolio are current.`,
+      description: `${companyName}'s financial health is showing stress signals. Companies in this situation have a higher chance of restructuring in the next 12 months. Ensure you have 6–9 months of expenses covered and your resume, LinkedIn, and portfolio are current.`,
       priority: financialRisk > 0.8 ? "Critical" : "High",
       layerFocus: "L1 · Financial Health",
       riskReductionPct: 10,
@@ -490,7 +490,7 @@ export function buildDynamicActions(
     actions.push({
       id: `layoff-history-action`,
       title: "Activate Your Professional Network Proactively",
-      description: `Layoff history signal is elevated (${Math.round(layoffRisk * 100)}/100). Reach out to 3 trusted colleagues or hiring managers this week — not to ask for jobs, but to reconnect. People hired in downturns overwhelmingly come from warm referrals, not cold applications.`,
+      description: `Your company has a history of layoffs that we're factoring into your score. Reach out to 3 trusted colleagues or hiring managers this week — not to ask for jobs, but to reconnect. People hired in downturns overwhelmingly come from warm referrals, not cold applications.`,
       priority: "High",
       layerFocus: "L2 · Layoff History",
       riskReductionPct: 14,
@@ -1176,7 +1176,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
               letterSpacing: '0.06em',
             }}>
               <Target className="w-2.5 h-2.5" />
-              {item.layerFocus}
+              {(item.layerFocus ?? '').replace(/^L\d+\s*·\s*|^D\d+\s*·\s*/i, '')}
             </div>
             {item.deadline && (
               <div style={{
@@ -1998,10 +1998,10 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                       flexShrink: 0, animation: 'pulse-live 1.8s ease-in-out infinite',
                     }} />
                     <span className="text-xs font-black tracking-widest uppercase" style={{ color: '#dc2626', fontFamily: 'var(--font-mono)' }}>
-                      ⚡ PHASE 0 — EMERGENCY
+                      ⚡ DO THESE FIRST — URGENT
                     </span>
                     <span className="text-[10px] text-muted-foreground ml-1">
-                      Complete before Phase 1 unlocks
+                      Complete these before moving on
                     </span>
                     <span className="text-xs text-muted-foreground font-mono ml-auto">
                       {phase0Items.filter(i => completedItems[i.id]).length}/{phase0Items.length}

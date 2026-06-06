@@ -131,7 +131,7 @@ const D_DIMENSIONS: Record<string, DimMeta> = {
     icon: Briefcase,
     narrativeLow:  "Strong network and stakeholder relationships provide meaningful protection — jobs are filled through warm referrals during downturns.",
     narrativeMid:  "Moderate professional network. Some insulation from relationships, but network density is below the level needed for proactive protection.",
-    narrativeHigh: "Limited social capital signal for this role. Network moats are weak — active relationship building should be prioritized.",
+    narrativeHigh: "Limited professional network for this role. Connections that protect you in a downturn are thin — active relationship building should be a priority.",
   },
 };
 

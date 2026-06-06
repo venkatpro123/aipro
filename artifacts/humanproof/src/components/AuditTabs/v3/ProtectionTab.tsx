@@ -146,8 +146,8 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
     skills: (
       <AdaptiveBlock
         key="skills"
-        title="Skill risk & portfolio fit"
-        subtitle="How your skills line up with current market demand"
+        title="Your skills vs. what the market wants"
+        subtitle="Are your skills in demand right now?"
         icon={GraduationCap}
         tier={2}
         accentColor="#10b981"
@@ -162,8 +162,8 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
     mobility: (
       <AdaptiveBlock
         key="mobility"
-        title="Internal mobility & resilience"
-        subtitle="Pivot options inside your company + overall career resilience"
+        title="Options inside your company"
+        subtitle="What you could move into — and how resilient your career is overall"
         icon={Compass}
         tier={adaptation.mode === 'emergency' ? 1 : 2}
         accentColor="#14b8a6"
@@ -178,8 +178,8 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
     market: (
       <AdaptiveBlock
         key="market"
-        title="Job market liquidity & escape paths"
-        subtitle="Reemployment timeline + safe pivot roles + role market demand"
+        title="How quickly you could find a new job"
+        subtitle="How long a job search would take, and what roles are your best bets"
         icon={ArrowUpRight}
         tier={adaptation.mode === 'emergency' ? 1 : 3}
         accentColor="#06b6d4"

@@ -856,7 +856,7 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                 </p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {result.total < 40
-                    ? "Strong skill moat. Focus on deepening uniquely human capabilities."
+                    ? "Your skills are well-protected. Keep deepening the ones AI can't replace."
                     : result.total < 65
                       ? "Moderate exposure. Shift effort toward AI-adjacent and human-only skills."
                       : "High vulnerability. Immediate portfolio restructuring recommended."}
@@ -868,7 +868,7 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
           <div>
             <SectionHeader
               title="What-If Skill Simulator"
-              description="Adjust proficiency sliders to model how upskilling safe skills or reducing reliance on at-risk skills changes your overall risk score."
+              description="Adjust the sliders to see how improving certain skills — or reducing reliance on risky ones — changes your overall risk score."
             />
             <WhatIfSkillSimulator
               intel={intel}

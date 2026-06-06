@@ -1136,7 +1136,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
               </div>
               <p style={{ fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--text-2)', marginBottom: 8 }}>
                 {(result as any).warnSignal?.hasActiveWARN
-                  ? 'A WARN Act filing is confirmed — a legal 60-day advance notice for your company. Your Action Plan has been updated with time-sensitive steps.'
+                  ? 'A government layoff notice has been filed for your company — this is a legal 60-day warning. Your Action Plan has been updated with time-sensitive steps.'
                   : 'You\'re discovering this risk months early. Most people find out 2 weeks before layoffs. That gap is your advantage — use it.'}
               </p>
               <button

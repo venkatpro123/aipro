@@ -113,19 +113,19 @@ const TIER_COLOR: Record<string, string> = {
 
 const MODE_COPY = {
   live_empirical: {
-    badge: 'LIVE EMPIRICAL',
+    badge: 'CALIBRATED',
     color: '#10b981',
-    body: 'Formula weights recalibrated from verified outcomes. Accuracy metrics reflect real tracked predictions.',
+    body: 'Our formula has been tuned using real verified outcomes. The accuracy numbers below reflect actual predictions we tracked.',
   },
   live_developing: {
-    badge: 'DEVELOPING',
+    badge: 'LEARNING',
     color: '#22d3ee',
-    body: 'Outcome data is being collected. Current weights use the 2026-01 regression anchor. Directional accuracy is ~70%+ for high-risk tiers.',
+    body: 'We\'re collecting real outcomes to improve accuracy. Current formula is based on our early 2026 data. Getting it right for high-risk scores ~70%+ of the time.',
   },
   bootstrap: {
-    badge: 'BOOTSTRAP',
+    badge: 'EARLY STAGE',
     color: '#f59e0b',
-    body: 'Pre-calibration mode. Formula anchored to published research (n=200). Directional accuracy is ~65–73% depending on score range.',
+    body: 'We haven\'t yet tracked enough real outcomes to fine-tune the formula. It\'s based on published research (200+ cases). Accuracy is roughly 65–73% depending on your score range.',
   },
 };
 
@@ -196,7 +196,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
           <div className="flex items-center gap-1.5 mb-2">
             <BarChart className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
             <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.28)' }}>
-              DIRECTIONAL ACCURACY BY SCORE RANGE
+              HOW OFTEN WE GOT IT RIGHT
             </p>
           </div>
           <div className="space-y-1.5">
@@ -238,7 +238,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
             })}
           </div>
           <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.18)' }}>
-            Directional accuracy = correct risk tier prediction (not point-estimate precision)
+            Accuracy = we predicted the right risk level (not the exact score)
           </p>
         </div>
       )}
@@ -248,7 +248,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
         <div className="flex items-center gap-1.5 mb-2">
           <CheckCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(16,185,129,0.50)' }} />
           <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.28)' }}>
-            NOTABLE PREDICTIONS (ILLUSTRATIVE)
+            EXAMPLE CALLS WE MADE
           </p>
         </div>
         <div className="space-y-2">

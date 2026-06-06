@@ -93,19 +93,18 @@ const IntelligenceBriefBlock: React.FC<{
         <div className="flex items-center gap-2 mb-2">
           <Brain className="w-4 h-4" style={{ color: 'rgba(148,163,184,0.45)' }} />
           <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(148,163,184,0.45)' }}>
-            INTELLIGENCE BRIEF
+            AI SUMMARY
           </span>
           <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.25)', fontFamily: 'var(--font-mono)' }}>
             NO LIVE DATA
           </span>
         </div>
         <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          No live signals were retrieved{companyName ? ` for ${companyName}` : ''}. A brief
-          grounded in sector averages would look specific but wouldn't be — so we're not
-          generating one. Live data is resolving in the background.
+          We couldn't get live data{companyName ? ` for ${companyName}` : ''}. A summary without
+          it would be misleading — so we're waiting. Live data is loading in the background.
         </p>
         <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
-          Sector context is still available in Market Environment below.
+          You can still see industry context in the market section below.
         </p>
       </div>
     );
@@ -118,7 +117,7 @@ const IntelligenceBriefBlock: React.FC<{
           <div className="flex items-center gap-2">
             <Brain className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.6)' }} />
             <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              INTELLIGENCE BRIEF
+              AI SUMMARY
             </span>
           </div>
           {interimSummary && (
@@ -137,7 +136,7 @@ const IntelligenceBriefBlock: React.FC<{
             <div className="flex items-center gap-2 mt-2">
               <div className="w-3 h-3 rounded-full border-2 border-[rgba(0,212,224,0.15)] border-t-[#22d3ee] animate-spin" />
               <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                Refining into a full AI brief from live data…
+                Building your full summary from live data…
               </p>
             </div>
           </>
@@ -149,7 +148,7 @@ const IntelligenceBriefBlock: React.FC<{
               ))}
             </div>
             <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              AI analysis generating…
+              Analyzing your situation…
             </p>
           </>
         )}
@@ -176,7 +175,7 @@ const IntelligenceBriefBlock: React.FC<{
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4" style={{ color: uc.color }} />
           <span className="text-[10px] font-bold tracking-widest" style={{ color: uc.color + 'cc' }}>
-            INTELLIGENCE BRIEF
+            AI SUMMARY
           </span>
         </div>
         <span
@@ -195,9 +194,8 @@ const IntelligenceBriefBlock: React.FC<{
           <span className="text-amber-400 text-[11px] font-semibold flex-shrink-0">⚠</span>
           <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
             <span className="font-semibold text-amber-400">Low confidence ({confidencePct}%). </span>
-            This analysis is directional — not enough live signals resolved to write a
-            company-specific brief. Statements below reflect sector patterns more than
-            this specific company's current situation.
+            There wasn't enough live data to write something specific to {companyName || 'this company'}.
+            What follows reflects typical patterns for your industry.
           </p>
         </div>
       )}
@@ -224,7 +222,7 @@ const IntelligenceBriefBlock: React.FC<{
           <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: uc.color }} />
           <div>
             <p className="text-[10px] font-bold tracking-wider mb-0.5" style={{ color: uc.color }}>
-              TOP ACTION THIS WEEK
+              YOUR MOVE THIS WEEK
             </p>
             <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.80)' }}>
               {brief.topActionThisWeek}
@@ -239,7 +237,7 @@ const IntelligenceBriefBlock: React.FC<{
           className="mt-3 text-[10px] font-semibold tracking-wide"
           style={{ color: uc.color + 'cc' }}
         >
-          {expanded ? '↑ Show less' : '↓ Read full analysis'}
+          {expanded ? '↑ Show less' : '↓ Read full summary'}
         </button>
       )}
     </motion.div>
@@ -503,7 +501,7 @@ const QuorumProgressBar: React.FC<{ stageLabel?: string }> = ({ stageLabel }) =>
         />
       </div>
       <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
-        {pct}% · Intelligence pipeline running
+        {pct}% · Analyzing your data…
       </p>
     </div>
   );

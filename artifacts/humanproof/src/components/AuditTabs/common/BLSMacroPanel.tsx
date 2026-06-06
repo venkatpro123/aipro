@@ -34,7 +34,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4" style={{ color }} />
           <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            BLS JOLTS + Macro Indicators
+            Job Market &amp; Economic Conditions
           </span>
         </div>
         <span
@@ -70,7 +70,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           }
         >
           <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.quitsFallSignal ? '#ef4444' : 'rgba(255,255,255,0.20)', color: 'transparent' }} />
-          Quits Fall
+          Fewer people quitting
         </span>
         <span
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
@@ -80,7 +80,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           }
         >
           <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.yieldCurveWarning ? '#f59e0b' : 'rgba(255,255,255,0.20)', color: 'transparent' }} />
-          Yield Curve Inverted
+          Recession warning signal
         </span>
         <span
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
@@ -90,7 +90,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           }
         >
           <TrendingDown className="w-3 h-3" />
-          Layoff Acceleration
+          Layoffs increasing
         </span>
       </div>
 
@@ -98,7 +98,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
       {blsMacroSignal.keyInsights.length > 0 && (
         <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-[10px] font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            KEY MACRO INSIGHTS
+            KEY TAKEAWAYS
           </div>
           <div className="space-y-1.5">
             {blsMacroSignal.keyInsights.slice(0, 3).map((insight, i) => (
@@ -123,7 +123,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
         }}>
           <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
           <p className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
-            Heuristic baseline · Live BLS/FRED data unavailable for this audit
+            Estimated — not live economic data
           </p>
         </div>
       )}

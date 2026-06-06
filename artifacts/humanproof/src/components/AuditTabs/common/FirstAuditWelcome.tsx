@@ -74,7 +74,7 @@ export const FirstAuditWelcome: React.FC<Props> = ({
     {
       icon:  Radio,
       label: liveSignalCount > 0 ? `${liveSignalCount} live signal${liveSignalCount === 1 ? '' : 's'} read just now` : 'Scanning live sources',
-      sub:   'WARN filings, hiring trends, SEC filings, news, and more.',
+      sub:   'Hiring activity, news, government filings, and more.',
       color: '#10b981',
     },
     {

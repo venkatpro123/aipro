@@ -104,7 +104,7 @@ function deriveOpportunities(props: Props): Opportunity[] {
     opps.push({
       id: 'competitive-edge',
       icon: Star,
-      title: `You outperform ${percentile}% of your peer cohort`,
+      title: `You're stronger than ${percentile}% of people in similar roles`,
       body: `Your profile is stronger than most people in your role/seniority bracket.${strengths.length > 0 ? ` Key edge: ${strengths.join(', ')}.` : ''} This is your leverage window — act before market conditions shift.`,
       accentColor: '#a78bfa',
       cta: 'See your position',

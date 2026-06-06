@@ -14,6 +14,25 @@
 // topTasksAtRisk: the 3 specific tasks within the role most likely to automate first
 // automationDrivers: what technology specifically is driving risk
 
+export interface TaskDetail {
+  name: string;
+  taskType: 'core' | 'secondary' | 'administrative' | 'strategic' | 'human-interaction' | 'decision-making' | 'creative';
+  risk2026: number;
+  risk2028: number;
+  risk2030: number;
+  humanAdvantageScore: number;
+  aiCapabilityTrend: 'Rapid' | 'Moderate' | 'Slow' | 'Plateau';
+  displacementTimeline: 'Immediate' | '2–3 years' | '4–6 years' | '7+ years';
+  confidence: 'High' | 'Medium' | 'Speculative';
+}
+
+export interface DriverNarrative {
+  driver: string;
+  currentImpact: 'Low' | 'Moderate' | 'High' | 'Critical';
+  futureImpact: 'Low' | 'Moderate' | 'High' | 'Critical';
+  reason: string;
+}
+
 export interface AutomationTimeline {
   roleKey: string;
   /** 0–1: probability AI augments this role (raises productivity, preserves role) */
@@ -37,6 +56,10 @@ export interface AutomationTimeline {
   impactTimeline: 'short' | 'medium' | 'long';
   /** Risk category for UI display */
   riskTier: 'very_high' | 'high' | 'moderate' | 'low' | 'very_low';
+  /** Per-task temporal risk breakdown (optional — falls back to heuristic if absent) */
+  taskDetails?: TaskDetail[];
+  /** WHY each automation driver matters — with current/future impact and narrative */
+  driverNarratives?: DriverNarrative[];
 }
 
 const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
@@ -52,6 +75,20 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
     automationDrivers: ['GitHub Copilot / Claude Code / Cursor', 'AI-native IDEs', 'LLM code synthesis'],
     impactTimeline: 'short',
     riskTier: 'moderate',
+    taskDetails: [
+      { name: 'Boilerplate code generation', taskType: 'core', risk2026: 72, risk2028: 85, risk2030: 91, humanAdvantageScore: 12, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Unit test writing', taskType: 'secondary', risk2026: 65, risk2028: 80, risk2030: 88, humanAdvantageScore: 18, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Code documentation & comments', taskType: 'administrative', risk2026: 68, risk2028: 82, risk2030: 90, humanAdvantageScore: 14, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Code review (standard patterns)', taskType: 'secondary', risk2026: 45, risk2028: 62, risk2030: 74, humanAdvantageScore: 38, aiCapabilityTrend: 'Moderate', displacementTimeline: '2–3 years', confidence: 'Medium' },
+      { name: 'System architecture decisions', taskType: 'strategic', risk2026: 8, risk2028: 14, risk2030: 22, humanAdvantageScore: 88, aiCapabilityTrend: 'Slow', displacementTimeline: '7+ years', confidence: 'High' },
+      { name: 'Requirements negotiation with stakeholders', taskType: 'human-interaction', risk2026: 5, risk2028: 10, risk2030: 16, humanAdvantageScore: 92, aiCapabilityTrend: 'Plateau', displacementTimeline: '7+ years', confidence: 'High' },
+      { name: 'Debugging complex distributed failures', taskType: 'decision-making', risk2026: 18, risk2028: 28, risk2030: 38, humanAdvantageScore: 75, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+    ],
+    driverNarratives: [
+      { driver: 'GitHub Copilot / Claude Code / Cursor', currentImpact: 'High', futureImpact: 'Critical', reason: 'AI coding assistants now generate 30–40% of production code at early adopters. As agentic coding agents mature, complete feature implementations from natural language specs become viable — shifting engineer work toward specification, review, and architecture.' },
+      { driver: 'AI-native IDEs', currentImpact: 'Moderate', futureImpact: 'High', reason: 'Cursor and Windsurf represent a new IDE generation where the default interaction is AI-first. Engineers who anchor to traditional IDEs will face a compounding productivity gap relative to AI-native peers.' },
+      { driver: 'LLM code synthesis', currentImpact: 'Moderate', futureImpact: 'Critical', reason: 'As LLMs cross the threshold of reliable multi-file, multi-context code generation, the tasks that define junior-to-mid SWE work (feature implementation, bug fixing, test coverage) become progressively automated.' },
+    ],
   },
   ml_engineer: {
     roleKey: 'ml_engineer',
@@ -74,6 +111,21 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
     automationDrivers: ['Natural language BI tools', 'LLM-powered SQL generation', 'Auto-generated dashboards'],
     impactTimeline: 'short',
     riskTier: 'high',
+    taskDetails: [
+      { name: 'SQL query generation & optimization', taskType: 'core', risk2026: 78, risk2028: 89, risk2030: 93, humanAdvantageScore: 10, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Dashboard & report creation', taskType: 'administrative', risk2026: 72, risk2028: 85, risk2030: 92, humanAdvantageScore: 14, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Ad-hoc data extraction', taskType: 'core', risk2026: 70, risk2028: 84, risk2030: 91, humanAdvantageScore: 12, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Standard variance analysis', taskType: 'secondary', risk2026: 55, risk2028: 72, risk2030: 82, humanAdvantageScore: 22, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Business context interpretation', taskType: 'decision-making', risk2026: 18, risk2028: 28, risk2030: 38, humanAdvantageScore: 78, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Stakeholder storytelling & communication', taskType: 'human-interaction', risk2026: 12, risk2028: 20, risk2030: 30, humanAdvantageScore: 85, aiCapabilityTrend: 'Slow', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Data quality judgment & remediation', taskType: 'strategic', risk2026: 22, risk2028: 32, risk2030: 44, humanAdvantageScore: 72, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+    ],
+    driverNarratives: [
+      { driver: 'Natural language BI tools', currentImpact: 'High', futureImpact: 'Critical', reason: 'Tools like Microsoft Copilot for Power BI and Tableau AI allow business users to directly query data in plain English — bypassing the analyst layer for standard reports. Self-service analytics eliminates a core justification for the data analyst role.' },
+      { driver: 'LLM-powered SQL generation', currentImpact: 'High', futureImpact: 'Critical', reason: 'Text-to-SQL accuracy has crossed the threshold where non-technical users can generate production-quality queries via chat interfaces. The SQL knowledge that defined analyst differentiation is becoming a commodity.' },
+      { driver: 'Auto-generated dashboards', currentImpact: 'Moderate', futureImpact: 'High', reason: 'AI tools can now auto-generate dashboard layouts, calculate the relevant KPIs, and produce narrative summaries from raw data. Dashboard creation, once a primary analyst deliverable, is moving toward automated generation with human curation.' },
+      { driver: 'Agentic data agents', currentImpact: 'Low', futureImpact: 'Critical', reason: 'The next wave of AI data tools are agentic — they identify business questions, pull data, run analyses, and produce reports autonomously. When these cross enterprise adoption thresholds, they will replace a significant portion of routine analyst workflows.' },
+    ],
   },
   data_scientist: {
     roleKey: 'data_scientist',
@@ -98,6 +150,20 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
     automationDrivers: ['Conversational AI (GPT-4o voice, Claude)', 'Agentic AI for form processing', 'LLM-powered help desks'],
     impactTimeline: 'short',
     riskTier: 'very_high',
+    taskDetails: [
+      { name: 'Tier 1 customer query resolution', taskType: 'core', risk2026: 88, risk2028: 93, risk2030: 95, humanAdvantageScore: 8, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Data entry and form processing', taskType: 'administrative', risk2026: 92, risk2028: 95, risk2030: 95, humanAdvantageScore: 5, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Standard complaint handling', taskType: 'core', risk2026: 82, risk2028: 91, risk2030: 94, humanAdvantageScore: 10, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'FAQ & knowledge base lookups', taskType: 'secondary', risk2026: 90, risk2028: 94, risk2030: 95, humanAdvantageScore: 6, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Complex escalation management', taskType: 'human-interaction', risk2026: 22, risk2028: 35, risk2030: 50, humanAdvantageScore: 72, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Regulatory compliance judgment', taskType: 'decision-making', risk2026: 28, risk2028: 40, risk2030: 55, humanAdvantageScore: 65, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Novel problem resolution', taskType: 'strategic', risk2026: 18, risk2028: 30, risk2030: 45, humanAdvantageScore: 78, aiCapabilityTrend: 'Slow', displacementTimeline: '4–6 years', confidence: 'Medium' },
+    ],
+    driverNarratives: [
+      { driver: 'Conversational AI (GPT-4o voice, Claude)', currentImpact: 'Critical', futureImpact: 'Critical', reason: 'Voice AI systems can now handle Tier 1 calls with satisfaction rates approaching human agents for standard queries. The economic case for replacing large BPO workforces is compelling — a single AI system handles thousands of simultaneous calls at near-zero marginal cost.' },
+      { driver: 'Agentic AI for form processing', currentImpact: 'High', futureImpact: 'Critical', reason: 'Agentic AI can now navigate enterprise systems, extract information, and complete multi-step form workflows autonomously. Data entry — a core BPO task — is being eliminated by end-to-end automation pipelines that require no human intermediary.' },
+      { driver: 'LLM-powered help desks', currentImpact: 'High', futureImpact: 'Critical', reason: 'Intercom, Zendesk, and Salesforce have deployed AI-first support products that resolve the majority of tickets without human escalation. Clients adopting these platforms reduce headcount rather than grow it.' },
+    ],
   },
   customer_support_specialist: {
     roleKey: 'customer_support_specialist',
@@ -122,6 +188,19 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
     automationDrivers: ['AI clinical documentation assistants', 'Smart medication dispensing systems', 'EHR AI co-pilots'],
     impactTimeline: 'long',
     riskTier: 'very_low',
+    taskDetails: [
+      { name: 'Clinical documentation & charting', taskType: 'administrative', risk2026: 45, risk2028: 62, risk2030: 72, humanAdvantageScore: 32, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'High' },
+      { name: 'Medication schedule calculations', taskType: 'secondary', risk2026: 38, risk2028: 55, risk2030: 68, humanAdvantageScore: 40, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Standard protocol lookups', taskType: 'administrative', risk2026: 42, risk2028: 58, risk2030: 70, humanAdvantageScore: 35, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'High' },
+      { name: 'Patient assessment & physical examination', taskType: 'core', risk2026: 4, risk2028: 6, risk2030: 10, humanAdvantageScore: 96, aiCapabilityTrend: 'Plateau', displacementTimeline: '7+ years', confidence: 'High' },
+      { name: 'Emotional support and therapeutic presence', taskType: 'human-interaction', risk2026: 2, risk2028: 4, risk2030: 6, humanAdvantageScore: 98, aiCapabilityTrend: 'Plateau', displacementTimeline: '7+ years', confidence: 'High' },
+      { name: 'Rapid clinical judgment in ambiguous situations', taskType: 'decision-making', risk2026: 5, risk2028: 8, risk2030: 14, humanAdvantageScore: 94, aiCapabilityTrend: 'Slow', displacementTimeline: '7+ years', confidence: 'High' },
+    ],
+    driverNarratives: [
+      { driver: 'AI clinical documentation assistants', currentImpact: 'Moderate', futureImpact: 'High', reason: 'Nuance DAX and similar ambient AI documentation tools reduce charting time by 30–50%, freeing nurses for direct patient care. These tools augment rather than replace — but they do reduce the headcount needed per patient caseload over time.' },
+      { driver: 'Smart medication dispensing systems', currentImpact: 'Low', futureImpact: 'Moderate', reason: 'Automated dispensing cabinets (Pyxis, Omnicell) with AI verification layers reduce medication administration errors and the verification burden on nursing staff. The net effect is productivity enhancement, not displacement.' },
+      { driver: 'EHR AI co-pilots', currentImpact: 'Low', futureImpact: 'Moderate', reason: 'AI systems embedded in Epic and Cerner can now generate nursing notes, flag abnormal vitals, and surface care protocol reminders. The administrative burden shifts to AI — preserving the irreplaceable human clinical contact.' },
+    ],
   },
   physician_general_practitioner: {
     roleKey: 'physician_general_practitioner',
@@ -203,6 +282,21 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
     automationDrivers: ['AI financial modeling tools (Runway, Mosaic)', 'LLM report generation', 'Auto-reconciliation platforms'],
     impactTimeline: 'short',
     riskTier: 'high',
+    taskDetails: [
+      { name: 'Financial model template population', taskType: 'administrative', risk2026: 72, risk2028: 84, risk2030: 90, humanAdvantageScore: 12, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Standard variance analysis', taskType: 'core', risk2026: 68, risk2028: 80, risk2030: 88, humanAdvantageScore: 18, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Data aggregation & management reporting', taskType: 'administrative', risk2026: 74, risk2028: 86, risk2030: 91, humanAdvantageScore: 10, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Excel/spreadsheet model building', taskType: 'secondary', risk2026: 60, risk2028: 78, risk2030: 87, humanAdvantageScore: 20, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Business insight generation', taskType: 'strategic', risk2026: 20, risk2028: 32, risk2030: 46, humanAdvantageScore: 78, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Executive & investor communication', taskType: 'human-interaction', risk2026: 10, risk2028: 18, risk2030: 28, humanAdvantageScore: 88, aiCapabilityTrend: 'Slow', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Strategic assumption setting & scenario planning', taskType: 'decision-making', risk2026: 15, risk2028: 25, risk2030: 38, humanAdvantageScore: 82, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+    ],
+    driverNarratives: [
+      { driver: 'AI financial modeling tools (Runway, Mosaic)', currentImpact: 'High', futureImpact: 'Critical', reason: 'Runway and Mosaic automate financial model population, variance tracking, and scenario analysis — tasks that previously justified a team of junior analysts. As these platforms mature, the analyst-to-model ratio shifts significantly.' },
+      { driver: 'LLM report generation', currentImpact: 'Moderate', futureImpact: 'High', reason: 'Large language models can now generate management commentary, board presentation narratives, and investment memos from structured financial data. The narrative authorship that distinguished senior analysts is increasingly automatable.' },
+      { driver: 'Auto-reconciliation platforms', currentImpact: 'High', futureImpact: 'High', reason: 'AI-powered reconciliation tools (BlackLine, Trintech) eliminate one of the most time-intensive analyst tasks. Automated reconciliation at scale compresses the junior analyst pipeline.' },
+      { driver: 'Bloomberg AI Terminal / AlphaSense', currentImpact: 'Moderate', futureImpact: 'Critical', reason: 'The integration of large language model search into Bloomberg and AlphaSense reduces the research and synthesis time for equity analysts by 60-80%. Analysts who master these tools become 3-5x more productive; those who do not adapt face headcount consolidation.' },
+    ],
   },
   actuarial_analyst: {
     roleKey: 'actuarial_analyst',
@@ -623,6 +717,20 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
     humanEssentialTasks: ['Novel incident escalation judgment', 'Customer communication during active events', 'Cross-team coordination'],
     automationDrivers: ['SOAR platforms (Palo Alto XSIAM)', 'CrowdStrike Charlotte AI', 'Microsoft Security Copilot'],
     impactTimeline: 'short', riskTier: 'high',
+    taskDetails: [
+      { name: 'Alert triage & false-positive elimination', taskType: 'core', risk2026: 72, risk2028: 86, risk2030: 92, humanAdvantageScore: 12, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Standard playbook execution', taskType: 'administrative', risk2026: 68, risk2028: 84, risk2030: 91, humanAdvantageScore: 14, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Log correlation across known patterns', taskType: 'core', risk2026: 65, risk2028: 82, risk2030: 90, humanAdvantageScore: 16, aiCapabilityTrend: 'Rapid', displacementTimeline: '2–3 years', confidence: 'High' },
+      { name: 'Routine incident documentation', taskType: 'administrative', risk2026: 70, risk2028: 85, risk2030: 92, humanAdvantageScore: 10, aiCapabilityTrend: 'Rapid', displacementTimeline: 'Immediate', confidence: 'High' },
+      { name: 'Novel incident escalation & judgment', taskType: 'decision-making', risk2026: 20, risk2028: 32, risk2030: 45, humanAdvantageScore: 78, aiCapabilityTrend: 'Moderate', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Stakeholder communication during active events', taskType: 'human-interaction', risk2026: 14, risk2028: 24, risk2030: 36, humanAdvantageScore: 82, aiCapabilityTrend: 'Slow', displacementTimeline: '4–6 years', confidence: 'Medium' },
+      { name: 'Cross-team coordination & war-room facilitation', taskType: 'human-interaction', risk2026: 10, risk2028: 18, risk2030: 28, humanAdvantageScore: 88, aiCapabilityTrend: 'Slow', displacementTimeline: '7+ years', confidence: 'Medium' },
+    ],
+    driverNarratives: [
+      { driver: 'SOAR platforms (Palo Alto XSIAM)', currentImpact: 'High', futureImpact: 'Critical', reason: 'XSIAM combines SIEM, SOAR, and AI into a single platform that automatically triages, investigates, and responds to the majority of Tier 1 alerts without human intervention. Early adopters report 80%+ reduction in Tier 1 analyst workload within 18 months.' },
+      { driver: 'CrowdStrike Charlotte AI', currentImpact: 'Moderate', futureImpact: 'High', reason: 'Charlotte AI can interpret and respond to complex security events across the CrowdStrike platform using natural language. As the system matures, it eliminates many of the manual investigation steps that define Tier 1 analyst work.' },
+      { driver: 'Microsoft Security Copilot', currentImpact: 'Moderate', futureImpact: 'High', reason: 'Security Copilot integrates with Sentinel, Defender, and Entra to automate alert summarization, root cause analysis, and response recommendations. In Microsoft-heavy enterprise environments, this compresses the Tier 1 to Tier 2 analyst boundary.' },
+    ],
   },
   soc_analyst_tier_2: {
     roleKey: 'soc_analyst_tier_2', augmentationProbability: 0.65, displacementProbability2032: 0.22,
@@ -2500,6 +2608,25 @@ const AUTOMATION_TIMELINE_DB: Record<string, AutomationTimeline> = {
   tax_cpa_specialist: { roleKey: 'tax_cpa_specialist', augmentationProbability: 0.62, displacementProbability2032: 0.28, displacementByYear: { 2026: 0.05, 2028: 0.13, 2030: 0.21, 2032: 0.28 }, topTasksAtRisk: ['Routine 1040 preparation', 'Standard tax form filing'], humanEssentialTasks: ['Complex business tax strategy', 'IRS audit defense', 'Estate planning'], automationDrivers: ['TurboTax AI, Intuit Tax Domain LLM compressing simple returns'], impactTimeline: 'medium', riskTier: 'moderate' },
   foreign_service_officer: { roleKey: 'foreign_service_officer', augmentationProbability: 0.68, displacementProbability2032: 0.06, displacementByYear: { 2026: 0.01, 2028: 0.02, 2030: 0.04, 2032: 0.06 }, topTasksAtRisk: ['Routine cable drafting'], humanEssentialTasks: ['Diplomatic relationship management', 'Crisis response abroad', 'Consular services'], automationDrivers: ['Limited — relationship-driven diplomatic work'], impactTimeline: 'long', riskTier: 'very_low' },
   customs_border_officer: { roleKey: 'customs_border_officer', augmentationProbability: 0.45, displacementProbability2032: 0.12, displacementByYear: { 2026: 0.02, 2028: 0.06, 2030: 0.09, 2032: 0.12 }, topTasksAtRisk: ['Routine document scanning'], humanEssentialTasks: ['Physical inspection', 'Interview protocols', 'Smuggling detection'], automationDrivers: ['AI document review augments; physical inspection stays human'], impactTimeline: 'long', riskTier: 'low' },
+
+  // ─── AI-Native Roles (v50.0) — exist because of AI, protected from displacement ─
+  em_vibe_coder: { roleKey: 'em_vibe_coder', augmentationProbability: 0.90, displacementProbability2032: 0.18, displacementByYear: { 2026: 0.02, 2028: 0.05, 2030: 0.10, 2032: 0.18 }, topTasksAtRisk: ['Repetitive prompt scaffolding', 'Boilerplate specification writing'], humanEssentialTasks: ['Creative vision and intent specification', 'Output quality judgment', 'Cross-system coherence decisions', 'Novel domain adaptation'], automationDrivers: ['Autonomous coding agents (Devin, GitHub Copilot Workspace)', 'LLM code generation maturity', 'Agentic testing pipelines'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_synthetic_data_eng: { roleKey: 'em_synthetic_data_eng', augmentationProbability: 0.85, displacementProbability2032: 0.18, displacementByYear: { 2026: 0.02, 2028: 0.05, 2030: 0.10, 2032: 0.18 }, topTasksAtRisk: ['Routine schema generation', 'Standard augmentation pipelines'], humanEssentialTasks: ['Adversarial test case design', 'Distribution edge-case identification', 'Model failure pattern recognition', 'Privacy-preserving dataset curation'], automationDrivers: ['Auto-data-aug pipelines', 'LLM-generated synthetic corpora', 'Diffusion model data generation'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_ai_red_teamer: { roleKey: 'em_ai_red_teamer', augmentationProbability: 0.88, displacementProbability2032: 0.12, displacementByYear: { 2026: 0.01, 2028: 0.03, 2030: 0.06, 2032: 0.12 }, topTasksAtRisk: ['Known jailbreak pattern testing'], humanEssentialTasks: ['Novel adversarial attack design', 'Societal harm assessment', 'Regulatory edge-case discovery', 'Creative misuse scenario generation'], automationDrivers: ['Automated red-teaming tools (Garak, PyRIT)', 'LLM self-adversarial testing'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_robotics_ai_trainer: { roleKey: 'em_robotics_ai_trainer', augmentationProbability: 0.85, displacementProbability2032: 0.15, displacementByYear: { 2026: 0.01, 2028: 0.04, 2030: 0.08, 2032: 0.15 }, topTasksAtRisk: ['Standard teleoperation demos', 'Routine policy evaluation scripts'], humanEssentialTasks: ['Physical grounding and embodiment judgment', 'Novel task generalization design', 'Safety boundary definition', 'Real-world edge-case labeling'], automationDrivers: ['Simulation-based training (IsaacSim)', 'Foundation models for robotics (RT-2)'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_spatial_computing_dev: { roleKey: 'em_spatial_computing_dev', augmentationProbability: 0.88, displacementProbability2032: 0.18, displacementByYear: { 2026: 0.02, 2028: 0.05, 2030: 0.10, 2032: 0.18 }, topTasksAtRisk: ['Routine 3D asset placement', 'Standard shader authoring'], humanEssentialTasks: ['Spatial UX design for novel form factors', 'Physics simulation judgment', 'Cross-platform rendering architecture', 'User comfort and safety in immersive environments'], automationDrivers: ['AI 3D generation (Luma, Meshy)', 'Procedural XR content generation'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_climate_ai_analyst: { roleKey: 'em_climate_ai_analyst', augmentationProbability: 0.82, displacementProbability2032: 0.16, displacementByYear: { 2026: 0.02, 2028: 0.05, 2030: 0.09, 2032: 0.16 }, topTasksAtRisk: ['Routine emissions data aggregation', 'Standard climate model report formatting'], humanEssentialTasks: ['Scientific domain interpretation', 'Policy implication analysis', 'Stakeholder communication on uncertainty', 'Regulatory compliance strategy'], automationDrivers: ['Climate model AI (Google DeepMind weather AI)', 'Carbon accounting automation'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_agentic_sys_designer: { roleKey: 'em_agentic_sys_designer', augmentationProbability: 0.92, displacementProbability2032: 0.15, displacementByYear: { 2026: 0.01, 2028: 0.04, 2030: 0.08, 2032: 0.15 }, topTasksAtRisk: ['Boilerplate agent scaffolding', 'Standard tool-calling wiring'], humanEssentialTasks: ['System architecture for novel agent use cases', 'Failure mode and safety design', 'Human oversight protocol design', 'Cross-agent coordination strategy'], automationDrivers: ['LLM agent frameworks (LangGraph, AutoGen)', 'AI agent auto-coding tools'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_human_ai_collab_designer: { roleKey: 'em_human_ai_collab_designer', augmentationProbability: 0.88, displacementProbability2032: 0.16, displacementByYear: { 2026: 0.02, 2028: 0.04, 2030: 0.09, 2032: 0.16 }, topTasksAtRisk: ['Routine user research synthesis', 'Standard AI interface documentation'], humanEssentialTasks: ['Cognitive load and trust design', 'AI transparency UX architecture', 'Human override protocol design', 'Bias detection in human-AI workflows'], automationDrivers: ['AI UX generation tools', 'Automated usability testing AI'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_digital_human_designer: { roleKey: 'em_digital_human_designer', augmentationProbability: 0.85, displacementProbability2032: 0.22, displacementByYear: { 2026: 0.02, 2028: 0.06, 2030: 0.12, 2032: 0.22 }, topTasksAtRisk: ['Routine avatar animation scripting', 'Standard dialogue tree authoring'], humanEssentialTasks: ['Emotional authenticity design', 'Uncanny valley judgment', 'Brand voice and persona architecture', 'Real-time behavior programming for edge cases'], automationDrivers: ['AI avatar generation (HeyGen, Synthesia)', 'LLM dialogue generation', 'Generative facial animation'], impactTimeline: 'long', riskTier: 'low' },
+
+  // ─── Human-AI Orchestration Roles (v50.0) — oversight and governance of AI systems ─
+  em_agent_ops_mgr: { roleKey: 'em_agent_ops_mgr', augmentationProbability: 0.88, displacementProbability2032: 0.12, displacementByYear: { 2026: 0.01, 2028: 0.03, 2030: 0.06, 2032: 0.12 }, topTasksAtRisk: ['Routine agent performance logging', 'Standard SLA reporting'], humanEssentialTasks: ['Escalation judgment for novel AI failures', 'Vendor and stakeholder negotiation', 'Cross-team AI deployment coordination', 'Edge-case resolution requiring business context'], automationDrivers: ['AI operations dashboards (Datadog AI)', 'Automated anomaly detection pipelines'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_ai_workflow_arch: { roleKey: 'em_ai_workflow_arch', augmentationProbability: 0.90, displacementProbability2032: 0.14, displacementByYear: { 2026: 0.01, 2028: 0.04, 2030: 0.07, 2032: 0.14 }, topTasksAtRisk: ['Routine process mapping documentation', 'Standard API integration planning'], humanEssentialTasks: ['End-to-end business process redesign', 'Change management and stakeholder alignment', 'Governance and compliance architecture', 'Novel integration pattern design'], automationDrivers: ['AI process mining tools (Celonis AI)', 'Automated workflow generation'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_ai_workforce_strategist: { roleKey: 'em_ai_workforce_strategist', augmentationProbability: 0.85, displacementProbability2032: 0.12, displacementByYear: { 2026: 0.01, 2028: 0.03, 2030: 0.06, 2032: 0.12 }, topTasksAtRisk: ['Routine role impact analysis', 'Standard AI adoption readiness surveys'], humanEssentialTasks: ['Organizational change navigation', 'Executive alignment and influence', 'Labor relations and union coordination', 'Human capital strategy under uncertainty'], automationDrivers: ['HR analytics AI', 'AI workforce planning tools (Eightfold, Beamery)'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_ai_governance_lead: { roleKey: 'em_ai_governance_lead', augmentationProbability: 0.82, displacementProbability2032: 0.10, displacementByYear: { 2026: 0.01, 2028: 0.02, 2030: 0.05, 2032: 0.10 }, topTasksAtRisk: ['Routine policy documentation', 'Standard AI audit checklist execution'], humanEssentialTasks: ['Regulatory interpretation under novel AI law', 'Ethical judgment in ambiguous AI deployment cases', 'Cross-jurisdictional compliance strategy', 'Stakeholder trust architecture'], automationDrivers: ['RegTech AI tools', 'Automated AI audit platforms'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_autonomous_agent_supervisor: { roleKey: 'em_autonomous_agent_supervisor', augmentationProbability: 0.88, displacementProbability2032: 0.14, displacementByYear: { 2026: 0.01, 2028: 0.03, 2030: 0.07, 2032: 0.14 }, topTasksAtRisk: ['Routine agent output logging', 'Standard alert triage for known failure types'], humanEssentialTasks: ['Novel failure mode identification', 'Safety-critical intervention decisions', 'Trust calibration and feedback loop management', 'Incident root-cause judgment'], automationDrivers: ['Automated agent monitoring (LangSmith, Langfuse)', 'AI anomaly detection pipelines'], impactTimeline: 'long', riskTier: 'very_low' },
+  em_ai_transformation_lead: { roleKey: 'em_ai_transformation_lead', augmentationProbability: 0.85, displacementProbability2032: 0.08, displacementByYear: { 2026: 0.01, 2028: 0.02, 2030: 0.04, 2032: 0.08 }, topTasksAtRisk: ['Routine AI readiness assessment reports', 'Standard transformation roadmap templating'], humanEssentialTasks: ['Executive vision setting for AI adoption', 'Cultural change leadership', 'Board and investor AI strategy communication', 'Cross-functional transformation governance'], automationDrivers: ['AI strategy consulting tools (limited)', 'AI maturity assessment platforms'], impactTimeline: 'long', riskTier: 'very_low' },
 };
 
 // ─── Fallback for unrecognized roles ─────────────────────────────────────────
@@ -2536,15 +2663,21 @@ export interface RoleEvolutionNode {
   label: string;
   timeframe: string;
   type: 'current' | 'augmented' | 'specialized' | 'transformed';
+  responsibilities?: string[];
+  demandOutlook?: 'Rising' | 'Stable' | 'Declining';
+  salaryPotential?: string;
+  aiResistance?: 'High' | 'Moderate' | 'Low';
+  transitionDifficulty?: 'Easy' | 'Moderate' | 'Hard';
+  confidence?: 'High' | 'Medium' | 'Speculative';
 }
 
 export const ROLE_EVOLUTION_PATHS: Partial<Record<string, RoleEvolutionNode[]>> = {
   // Software
   swe: [
-    { label: 'Software Engineer',                   timeframe: 'Now',        type: 'current' },
-    { label: 'AI-Augmented Engineer',               timeframe: '~2026–2027', type: 'augmented' },
-    { label: 'Product Engineering Specialist',      timeframe: '~2028–2030', type: 'specialized' },
-    { label: 'AI Systems Architect',                timeframe: '~2031–2032+',type: 'transformed' },
+    { label: 'Software Engineer', timeframe: 'Now', type: 'current', responsibilities: ['Build product features end-to-end', 'Write and review code', 'Debug and maintain systems'], demandOutlook: 'Stable', aiResistance: 'Moderate', confidence: 'High' },
+    { label: 'AI-Augmented Engineer', timeframe: '~2026–2027', type: 'augmented', responsibilities: ['Direct AI coding tools to generate features', 'Review and integrate AI-generated code', 'Own system quality and architecture'], demandOutlook: 'Rising', salaryPotential: '↑ 15–25% vs current', aiResistance: 'High', transitionDifficulty: 'Easy', confidence: 'High' },
+    { label: 'Product Engineering Specialist', timeframe: '~2028–2030', type: 'specialized', responsibilities: ['Own cross-functional product surfaces', 'Define technical requirements from user needs', 'Orchestrate AI agents for implementation'], demandOutlook: 'Rising', salaryPotential: '↑ 30–50% vs current', aiResistance: 'High', transitionDifficulty: 'Moderate', confidence: 'Medium' },
+    { label: 'AI Systems Architect', timeframe: '~2031–2032+', type: 'transformed', responsibilities: ['Design AI-native system architectures', 'Set standards for human-AI collaboration', 'Lead strategic technical direction'], demandOutlook: 'Rising', salaryPotential: '↑ 60–100% vs current', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
   ],
   sw_frontend: [
     { label: 'Frontend Developer',                  timeframe: 'Now',        type: 'current' },
@@ -2565,10 +2698,10 @@ export const ROLE_EVOLUTION_PATHS: Partial<Record<string, RoleEvolutionNode[]>> 
     { label: 'AI Research Director',                timeframe: '~2031–2032+',type: 'transformed' },
   ],
   data_analyst: [
-    { label: 'Data Analyst',                        timeframe: 'Now',        type: 'current' },
-    { label: 'AI-Augmented Analyst',                timeframe: '~2026–2027', type: 'augmented' },
-    { label: 'Decision Intelligence Specialist',    timeframe: '~2028–2030', type: 'specialized' },
-    { label: 'Business Intelligence Strategist',    timeframe: '~2031–2032+',type: 'transformed' },
+    { label: 'Data Analyst', timeframe: 'Now', type: 'current', responsibilities: ['Write SQL and build dashboards', 'Answer ad-hoc business questions with data', 'Create reports for stakeholders'], demandOutlook: 'Declining', aiResistance: 'Low', confidence: 'High' },
+    { label: 'AI-Augmented Analyst', timeframe: '~2026–2027', type: 'augmented', responsibilities: ['Curate and validate AI-generated analyses', 'Translate business questions into AI tool workflows', 'Ensure data quality and interpretation accuracy'], demandOutlook: 'Stable', salaryPotential: '↑ 10–20% vs current', aiResistance: 'Moderate', transitionDifficulty: 'Easy', confidence: 'High' },
+    { label: 'Decision Intelligence Specialist', timeframe: '~2028–2030', type: 'specialized', responsibilities: ['Design data strategy and governance', 'Own business intelligence architecture', 'Connect data insights to executive decision-making'], demandOutlook: 'Rising', salaryPotential: '↑ 35–60% vs current', aiResistance: 'High', transitionDifficulty: 'Moderate', confidence: 'Medium' },
+    { label: 'Business Intelligence Strategist', timeframe: '~2031–2032+', type: 'transformed', responsibilities: ['Own organizational data intelligence strategy', 'Lead AI-human analytical teams', 'Drive data-driven culture at executive level'], demandOutlook: 'Rising', salaryPotential: '↑ 70–120% vs current', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
   ],
   data_scientist: [
     { label: 'Data Scientist',                      timeframe: 'Now',        type: 'current' },
@@ -2590,10 +2723,10 @@ export const ROLE_EVOLUTION_PATHS: Partial<Record<string, RoleEvolutionNode[]>> 
   ],
   // Finance
   financial_analyst: [
-    { label: 'Financial Analyst',                   timeframe: 'Now',        type: 'current' },
-    { label: 'AI-Augmented Analyst',                timeframe: '~2026–2027', type: 'augmented' },
-    { label: 'Strategic Finance Specialist',        timeframe: '~2028–2030', type: 'specialized' },
-    { label: 'AI Finance Director',                 timeframe: '~2031–2032+',type: 'transformed' },
+    { label: 'Financial Analyst', timeframe: 'Now', type: 'current', responsibilities: ['Build financial models and forecasts', 'Produce management reporting', 'Analyze business performance data'], demandOutlook: 'Declining', aiResistance: 'Low', confidence: 'High' },
+    { label: 'AI-Augmented Finance Analyst', timeframe: '~2026–2027', type: 'augmented', responsibilities: ['Oversee AI-generated models and reports', 'Validate financial intelligence outputs', 'Communicate insights with business context'], demandOutlook: 'Stable', salaryPotential: '↑ 10–20% vs current', aiResistance: 'Moderate', transitionDifficulty: 'Easy', confidence: 'High' },
+    { label: 'Strategic Finance Specialist', timeframe: '~2028–2030', type: 'specialized', responsibilities: ['Own strategic planning and scenario modeling', 'Partner with C-suite on capital allocation', 'Lead AI-assisted financial intelligence function'], demandOutlook: 'Rising', salaryPotential: '↑ 40–70% vs current', aiResistance: 'High', transitionDifficulty: 'Moderate', confidence: 'Medium' },
+    { label: 'AI Finance Director', timeframe: '~2031–2032+', type: 'transformed', responsibilities: ['Set financial intelligence strategy for the enterprise', 'Build and lead hybrid AI-human finance teams', 'Own the relationship between financial data and business outcomes'], demandOutlook: 'Rising', salaryPotential: '↑ 80–150% vs current', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
   ],
   accountant: [
     { label: 'Accountant',                          timeframe: 'Now',        type: 'current' },
@@ -2651,10 +2784,10 @@ export const ROLE_EVOLUTION_PATHS: Partial<Record<string, RoleEvolutionNode[]>> 
   ],
   // Healthcare
   registered_nurse: [
-    { label: 'Registered Nurse',                    timeframe: 'Now',        type: 'current' },
-    { label: 'AI-Assisted Clinical Specialist',     timeframe: '~2027–2029', type: 'augmented' },
-    { label: 'Advanced Clinical Practitioner',      timeframe: '~2029–2031', type: 'specialized' },
-    { label: 'Health Systems Integration Lead',     timeframe: '~2032+',     type: 'transformed' },
+    { label: 'Registered Nurse', timeframe: 'Now', type: 'current', responsibilities: ['Deliver direct patient care', 'Administer medications and treatments', 'Monitor and document patient status'], demandOutlook: 'Rising', aiResistance: 'High', confidence: 'High' },
+    { label: 'AI-Assisted Clinical Specialist', timeframe: '~2027–2029', type: 'augmented', responsibilities: ['Use AI documentation tools to reduce charting time', 'Interpret AI-flagged patient alerts', 'Maintain irreplaceable physical care presence'], demandOutlook: 'Rising', salaryPotential: '↑ 10–18% vs current', aiResistance: 'High', transitionDifficulty: 'Easy', confidence: 'High' },
+    { label: 'Advanced Clinical Practitioner', timeframe: '~2029–2031', type: 'specialized', responsibilities: ['Lead complex patient care protocols', 'Mentor nursing staff on AI-assisted workflows', 'Specialize in high-acuity care requiring deep judgment'], demandOutlook: 'Rising', salaryPotential: '↑ 25–45% vs current', aiResistance: 'High', transitionDifficulty: 'Moderate', confidence: 'Medium' },
+    { label: 'Health Systems Integration Lead', timeframe: '~2032+', type: 'transformed', responsibilities: ['Bridge clinical practice and AI health systems', 'Design human-AI care protocols', 'Lead interdisciplinary care quality initiatives'], demandOutlook: 'Rising', salaryPotential: '↑ 50–80% vs current', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
   ],
   physician: [
     { label: 'Physician',                           timeframe: 'Now',        type: 'current' },

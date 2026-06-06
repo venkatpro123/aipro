@@ -53,9 +53,9 @@ export function deriveMissingDataItems(
   if (companyData?.isPublic === false || result?.companyData?.isPublic === false) {
     items.push({
       id: 'private-company',
-      label: 'Private company — no SEC filings',
+      label: 'Private company — less public data available',
       impact: '±10 pts',
-      reason: `${companyData?.name ?? 'This company'} hasn't filed public financial disclosures. Financial health signals rely on news + LinkedIn + headcount proxies.`,
+      reason: `${companyData?.name ?? 'This company'} doesn't file public financial reports. We're using news, hiring activity, and headcount instead.`,
       severity: 'high',
     });
   }
@@ -66,9 +66,9 @@ export function deriveMissingDataItems(
   if (hasEquity !== false && vestMonths == null) {
     items.push({
       id: 'equity-vest',
-      label: 'Equity vest schedule not provided',
+      label: 'No vesting schedule added',
       impact: '±5 pts',
-      reason: 'Without vest timing, the model can\'t weight stay-vs-leave timing and negotiation leverage.',
+      reason: 'Knowing when your equity vests helps us tell you whether to stay or go — and how to negotiate.',
       userAction: 'Add equity vest months in Profile',
       actionTab: 'profile',
       severity: 'medium',
@@ -79,9 +79,9 @@ export function deriveMissingDataItems(
   if (typeof personalFieldsFilled === 'number' && personalFieldsFilled < 3) {
     items.push({
       id: 'profile-empty',
-      label: 'Personal risk factors not filled',
+      label: 'Your profile isn\'t complete yet',
       impact: '±8–25 pts',
-      reason: 'Visa status, financial runway, and family situation amplify or dampen company risk. Without them, score reflects company exposure only.',
+      reason: 'Things like your visa, savings, and family situation change your personal risk a lot. Without them, we\'re only looking at the company side.',
       userAction: 'Fill out your profile',
       actionTab: 'profile',
       severity: 'high',
@@ -94,9 +94,9 @@ export function deriveMissingDataItems(
       // Only add this if they've filled SOME profile fields but missed visa
       items.push({
         id: 'visa-unknown',
-        label: 'Visa dependency not specified',
+        label: 'Visa status not added',
         impact: '±4 pts',
-        reason: 'Work authorization status changes how much time you have if laid off and which actions matter most.',
+        reason: 'Your visa situation affects how much time you\'d have after a layoff — and what to do first.',
         userAction: 'Add visa status in Profile',
         actionTab: 'profile',
         severity: 'medium',
@@ -109,9 +109,9 @@ export function deriveMissingDataItems(
   if (ageInDays >= 14) {
     items.push({
       id: 'stale-data',
-      label: `Some signals are ${ageInDays} days old`,
+      label: `Some data is ${ageInDays} days old`,
       impact: '±3 pts',
-      reason: 'Hiring, news, and headcount data refreshes on a rolling schedule. Signals older than 14 days may not reflect current conditions.',
+      reason: 'We update hiring, news, and headcount data regularly. Data older than 2 weeks may not show what\'s happening right now.',
       severity: 'low',
     });
   }
@@ -121,9 +121,9 @@ export function deriveMissingDataItems(
   if (confPct < 45 && items.length < 2) {
     items.push({
       id: 'low-confidence',
-      label: 'Low overall data confidence',
+      label: 'Score is a rough guide — limited data available',
       impact: `±${Math.max(5, Math.round((60 - confPct) / 3))} pts`,
-      reason: `Confidence is ${confPct}% — below the typical 60% threshold. The score is a direction indicator, not a precise measurement.`,
+      reason: `We're only ${confPct}% confident in this score. Use it as a direction, not an exact number.`,
       severity: 'medium',
     });
   }
@@ -180,9 +180,9 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
         <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: `${headerColor}70` }} />
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.38)' }}>
-            CONFIDENCE: {result?.confidencePercent ?? '?'}% —{' '}
+            {result?.confidencePercent ?? '?'}% confident ·{' '}
             <span style={{ color: headerColor }}>
-              {items.length} data gap{items.length !== 1 ? 's' : ''} affecting this score
+              {items.length} gap{items.length !== 1 ? 's' : ''} in our data
             </span>
           </p>
         </div>
@@ -213,7 +213,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
               style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
             >
               <p className="text-[10px] py-2 mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                What we don't know yet — and how it affects your score:
+                Here's what's missing — and how it affects your score:
               </p>
               <div className="space-y-2">
                 {items.map(item => {

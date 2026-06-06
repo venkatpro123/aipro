@@ -97,7 +97,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
             {traj.label.toUpperCase()}
           </span>
           <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
-            risk {velocity.velocityScore}/100
+            score {velocity.velocityScore}/100
           </span>
         </div>
       </div>
@@ -125,7 +125,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
               ? '#f59e0b' : '#ef4444',
           }}
         >
-          {velocity.careerStageProfile.optionality} optionality
+          {velocity.careerStageProfile.optionality === 'HIGH' ? 'Lots of options' : velocity.careerStageProfile.optionality === 'MEDIUM' ? 'Some options' : 'Limited options'}
         </div>
       </div>
 
@@ -135,7 +135,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
           <div className="text-[10px] font-bold" style={{ color: plateau.text }}>
             {velocity.plateauRisk}
           </div>
-          <div className="text-[10px] opacity-40 mt-0.5">Plateau Risk</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Growth Risk</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div
@@ -185,7 +185,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
       {/* ── Role tenure ────────────────────────────────────────────────────── */}
       <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>ROLE TENURE</span>
+          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>TIME IN ROLE</span>
           <span
             className="text-[10px] px-1.5 py-0.5 rounded-full font-bold"
             style={{
@@ -229,7 +229,7 @@ const CareerVelocityPanel: React.FC<CareerVelocityPanelProps> = ({ velocity }) =
           >
             <DollarSign className="w-3 h-3 flex-shrink-0" style={{ color: compColor }} />
             <span className="text-[10px] font-bold flex-1" style={{ color: compColor }}>
-              Comp Growth: {velocity.compensationGrowthSignal}
+              Pay Growth: {velocity.compensationGrowthSignal === 'STRONG' ? 'Strong' : velocity.compensationGrowthSignal === 'ADEQUATE' ? 'On Track' : velocity.compensationGrowthSignal === 'LAGGING' ? 'Lagging' : velocity.compensationGrowthSignal === 'STAGNANT' ? 'Stagnant' : velocity.compensationGrowthSignal}
             </span>
             {showCompDetails
               ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />

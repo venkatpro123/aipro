@@ -68,7 +68,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-black tracking-widest" style={{ color: tierColor }}>
-                {emergency.protocolTier} — 72-HOUR PROTOCOL
+                {emergency.protocolTier === 'CRITICAL' ? 'URGENT' : emergency.protocolTier} — YOUR NEXT 72 HOURS
               </span>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>

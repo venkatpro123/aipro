@@ -165,7 +165,7 @@ function buildInactionScenario(result: HybridResult): string | null {
     return (
       `Your domain expertise provides moderate protection — the company cannot immediately replace you. ` +
       `However, within 18–24 months the company can hire AI-capable specialists from the market.\n\n` +
-      `The specialist moat erodes as AI capability in your specific domain advances and as companies ` +
+      `That protection weakens as AI capability in your specific domain advances and as companies ` +
       `build training programmes for the replacement profile. The threat is not automation of your entire ` +
       `role — it is that the new AI-capable version of your specialisation is hireable from outside for ` +
       `less than you cost. The augmentation window is open now. Begin transitioning your specialisation ` +
@@ -253,7 +253,7 @@ function buildQuickActions(result: HybridResult): Array<{ text: string; urgency:
   }
   const topSafe = intel?.skills?.safe?.[0];
   if (topSafe) {
-    actions.push({ text: `Deepen "${topSafe.skill}" (LTV: ${topSafe.longTermValue}/100) — compound the one skill AI cannot replicate`, urgency: 'low' });
+    actions.push({ text: `Deepen "${topSafe.skill}" — this is one skill AI can't replicate, and it compounds over time`, urgency: 'low' });
   } else {
     actions.push({ text: 'Build visible cross-functional presence — present work to adjacent teams monthly', urgency: 'low' });
   }
@@ -616,7 +616,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
       <div className="flex items-center gap-2 mb-3">
         <Target className="w-3.5 h-3.5" style={{ color: 'var(--cyan)' }} />
         <span className="data-label" style={{ color: 'var(--text-2)', letterSpacing: '0.16em' }}>
-          ANALYST INTELLIGENCE BRIEF
+          AI SUMMARY
         </span>
         <span className="ml-auto text-[10px] font-mono opacity-35 uppercase tracking-widest">precision · v9</span>
       </div>
@@ -2226,7 +2226,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   const quickStats = useMemo(() => [
     { label: 'Confidence', value: `${result.confidencePercent}%`, icon: ShieldCheck, hint: `Score reliable within ±${Math.round((result.confidenceInterval.high - result.confidenceInterval.low) / 2)} pts` },
-    { label: 'Live Signals', value: result.signalQuality.liveSignals, icon: Activity, hint: `${result.signalQuality.heuristicSignals} heuristic signals also used` },
+    { label: 'Live Signals', value: result.signalQuality.liveSignals, icon: Activity, hint: `${result.signalQuality.heuristicSignals} estimated signals also used` },
     { label: 'Data Age', value: `${result.dataFreshness.ageInDays}d`, icon: Clock, hint: result.dataFreshness.stalenessWarning ?? 'Data freshness within acceptable range' },
     { label: 'Overrides', value: result.consensusSnapshot?.overridesApplied.length || 0, icon: AlertTriangle, hint: 'Kill-switch safety overrides applied during scoring' },
   ], [result]);
@@ -2791,7 +2791,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div>
               <p className="text-sm font-semibold text-amber-300 mb-1">
                 Score based on {result.signalQuality.liveSignals} live signal{result.signalQuality.liveSignals === 1 ? '' : 's'}
-                {' '}— {result.signalQuality.heuristicSignals} heuristic fallback{result.signalQuality.heuristicSignals === 1 ? '' : 's'} used
+                {' '}— {result.signalQuality.heuristicSignals} estimated signal{result.signalQuality.heuristicSignals === 1 ? '' : 's'} used
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Stock return, revenue growth, or hiring data could not be fetched from live APIs.

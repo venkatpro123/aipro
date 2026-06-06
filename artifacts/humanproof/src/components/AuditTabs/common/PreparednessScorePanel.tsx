@@ -141,9 +141,9 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                       color: '#f59e0b',
                       border: '1px solid rgba(245,158,11,0.30)',
                     }}
-                    title={`Heuristic: ${(pillar.heuristicInputs ?? []).join(', ') || 'industry priors'}`}
+                    title={`Estimated from typical industry patterns: ${(pillar.heuristicInputs ?? []).join(', ') || 'no live data available'}`}
                   >
-                    PRIORS
+                    ESTIMATED
                   </span>
                 )}
               </span>

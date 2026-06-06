@@ -48,7 +48,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4" style={{ color: urgency.color }} />
           <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>
-            WARN Act Filing Detected
+            Official Layoff Notice Filed
           </span>
         </div>
         <span
@@ -87,7 +87,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       {/* WARN risk score bar */}
       <div className="mb-3">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>WARN RISK SCORE</span>
+          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>LAYOFF RISK FROM THIS NOTICE</span>
           <span className="text-[10px] font-bold" style={{ color: urgency.color }}>{warnSignal.warnRiskScore}/100</span>
         </div>
         <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -103,7 +103,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
         <div className="mb-2.5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <MapPin className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.40)' }} />
-            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>AFFECTED LOCATIONS</span>
+            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>LOCATIONS MENTIONED</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {displayedLocations.map((loc, i) => (

@@ -185,7 +185,7 @@ function aiDisplacementCopy(
   if (aiRisk >= 0.65) {
     return {
       headline: `${pct}% of ${roleDisplay} tasks automatable by 2027`,
-      body: `AI tools are actively replacing core ${roleDisplay} workflows. Your current risk score of ${currentScore}/100 reflects this. Job openings in this role are declining ${Math.abs(yoyChange)}% YoY. Pivot to adjacent AI-augmented roles now — the window is 12–18 months.`,
+      body: `AI tools are actively replacing core ${roleDisplay} workflows. Your current risk score of ${currentScore}/100 reflects this. Job openings in this role are down ${Math.abs(yoyChange)}% this year. Pivot to adjacent AI-augmented roles now — the window is 12–18 months.`,
       urgency: 'high',
     };
   }
@@ -524,7 +524,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             )}
             {yoyChange !== 0 && (
               <StatRow
-                label="YoY job openings change"
+                label="Job openings change (annual)"
                 value={`${yoyChange > 0 ? '+' : ''}${yoyChange}%`}
                 valueColor={yoyChange > 10 ? EMERALD : yoyChange < -10 ? RED : AMBER}
               />
@@ -655,7 +655,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
               sub="posting to accepted offer"
             />
             <StatRow
-              label="Job openings YoY"
+              label="Job openings (annual change)"
               value={`${yoyChange > 0 ? '+' : ''}${yoyChange}%`}
               valueColor={yoyChange > 10 ? EMERALD : yoyChange < -10 ? RED : AMBER}
               sub="vs same quarter last year"

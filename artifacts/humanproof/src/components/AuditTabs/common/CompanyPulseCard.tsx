@@ -53,14 +53,14 @@ const hexToTone = (hex: string): string => {
 };
 
 const VERDICT_LABEL: Record<VerdictLabel, string> = {
-  critical:           'Critical',
-  distressed:         'Distressed',
-  softening:          'Softening',
+  critical:           'Critical Risk',
+  distressed:         'In Trouble',
+  softening:          'Signs of Strain',
   stable:             'Stable',
   healthy:            'Healthy',
   'stable-confirmed': 'Stable',
   'data-unavailable': 'Unverified',
-  unknown:            'No data',
+  unknown:            'No Data Yet',
 };
 
 // Pick the more severe of two signals for the headline.
@@ -238,8 +238,8 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
   const summary = headline.verdict !== 'unknown'
     ? `Workforce: ${VERDICT_LABEL[workforce.verdict]} · Financial: ${VERDICT_LABEL[financial.verdict]}`
     : liveAttemptedButEmpty
-      ? 'Attempted live + DB — no signal returned. Likely upstream rate-limit; retrying in background.'
-      : 'No attempt made — company isn\'t in our intelligence layer yet.';
+      ? 'We tried to get live data but hit a snag. We\'re retrying in the background.'
+      : 'We don\'t have data for this company yet — check back after your next re-scan.';
 
   // v40.0 audit fix: surface heuristic/stale freshness so users know when
   // the analysis is based on historical baselines rather than live data.

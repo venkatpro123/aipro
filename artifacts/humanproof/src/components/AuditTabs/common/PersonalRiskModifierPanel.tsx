@@ -42,22 +42,22 @@ const VisaUrgencyChip: React.FC<{
         background: 'rgba(249,115,22,0.08)',
         border: '1px solid rgba(249,115,22,0.30)',
       }}
-      aria-label={`Visa urgency: ${statusLabel} status increases effective urgency by ${pct}%`}
+      aria-label={`Your ${statusLabel} visa raises urgency by ${pct}%`}
     >
       <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f97316' }} />
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: '#f97316' }}>
-          Your {statusLabel} status increases effective urgency by {pct}%.
+          Your {statusLabel} visa raises urgency by {pct}%.
         </p>
         <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
           {gracePeriodDays != null && gracePeriodDays > 0
-            ? `Timeline reflects your ${gracePeriodDays}-day grace period constraint. Action deadlines are compressed proportionally.`
-            : 'Status ends immediately on termination — no grace period. Action deadlines are compressed proportionally.'}
+            ? `You have a ${gracePeriodDays}-day window after a layoff. Action timelines are adjusted to fit.`
+            : 'Your work authorization ends immediately if laid off. Timelines are compressed to reflect this.'}
         </p>
       </div>
       <div
         className="flex-shrink-0 text-right"
-        aria-label={`${pct}% urgency increase`}
+        aria-label={`${pct}% more urgent`}
       >
         <span className="text-[13px] font-black" style={{ color: '#f97316' }}>
           +{pct}%
@@ -93,8 +93,8 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
     return (
       <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <AdaptiveBlock
-          title="Personal risk adjustment"
-          subtitle="Your individual circumstances did not move the score"
+          title="How your personal situation affects your score"
+          subtitle="Your personal situation is close to average — no adjustment needed"
           icon={User}
           tier={3}
           accentColor="#94a3b8"
@@ -104,12 +104,12 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />
               <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
-                No personal adjustment applied (|delta| &lt; 0.5 pt)
+                No adjustment applied — your circumstances matched the baseline
               </span>
             </div>
             <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              We considered: {consideredComponents.length > 0 ? consideredComponents.join(', ') : 'visa, manager risk, skill fit, network, career velocity'}.
-              Your profile signals were close enough to the cohort baseline that they did not measurably shift the score.
+              We looked at your {consideredComponents.length > 0 ? consideredComponents.join(', ') : 'visa, manager risk, skill fit, network, and career velocity'}.
+              They were close enough to typical that they didn't change your score.
             </p>
           </div>
         </AdaptiveBlock>
@@ -125,14 +125,14 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
 
   const Icon = rawModifier > 0 ? ArrowUp : rawModifier < 0 ? ArrowDown : Minus;
   const dirLabel = rawModifier > 0
-    ? `+${rawModifier} pts personal risk`
-    : `${rawModifier} pts personal protection`;
+    ? `+${rawModifier} points added to your score`
+    : `−${Math.abs(rawModifier)} points off your score`;
 
   return (
     <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
       <AdaptiveBlock
-        title="Personal risk adjustment"
-        subtitle="Your individual circumstances move the score beyond the company baseline"
+        title="How your personal situation affects your score"
+        subtitle="Your personal situation changes your risk beyond just the company"
         icon={User}
         tier={tier}
         accentColor={accentColor}
@@ -162,7 +162,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
               </span>
             </div>
             <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              applied after company + role baseline
+              added on top of the company and role score
             </span>
           </div>
 
@@ -188,7 +188,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
           )}
 
           <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-            Calibration: developer estimate — pending regression on outcome data
+            This adjustment is estimated — we're still calibrating it with real outcomes
           </p>
         </div>
       </AdaptiveBlock>

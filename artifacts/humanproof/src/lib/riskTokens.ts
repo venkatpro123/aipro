@@ -18,10 +18,10 @@ export function riskColor(score: number): string {
 }
 
 export function riskLabel(score: number): string {
-  if (score >= 75) return 'CRITICAL';
-  if (score >= 55) return 'HIGH';
-  if (score >= 35) return 'MODERATE';
-  return 'LOW';
+  if (score >= 75) return 'Urgent';
+  if (score >= 55) return 'High Risk';
+  if (score >= 35) return 'Some Risk';
+  return 'Looking Good';
 }
 
 export function riskGradient(score: number): string {

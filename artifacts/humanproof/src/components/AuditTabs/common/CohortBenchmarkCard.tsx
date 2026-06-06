@@ -97,11 +97,11 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           </div>
           <div>
             <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
-              YOUR POSITION VS PEERS
+              HOW YOU COMPARE
             </p>
             {cohortLabel && (
               <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                {cohortLabel}{cohortSize ? ` · ${cohortSize.toLocaleString()} profiles` : ''}
+                {cohortLabel}{cohortSize ? ` · ${cohortSize.toLocaleString()} similar professionals` : ''}
               </p>
             )}
           </div>
@@ -179,7 +179,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           style={{ background: 'rgba(167,139,250,0.06)', border: '1px solid rgba(167,139,250,0.20)' }}
         >
           <p className="text-[10px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(167,139,250,0.60)' }}>
-            YOUR DIFFERENTIATOR
+            YOUR EDGE
           </p>
           <p className="text-[11px] italic leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
             "{differentiatorStatement}"
@@ -194,7 +194,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
             <div className="rounded-lg px-2.5 py-2"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                WIN RATE
+                SUCCESS RATE
               </p>
               <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
                 {winRateEstimate}
@@ -205,7 +205,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
             <div className="rounded-lg px-2.5 py-2"
               style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.15)' }}>
               <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(249,115,22,0.55)' }}>
-                MAIN COMPETITOR
+                YOUR COMPETITION
               </p>
               <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.58)' }}>
                 {competitiveThreat}
@@ -224,7 +224,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
             style={{ color: 'rgba(255,255,255,0.30)' }}
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {expanded ? 'Hide' : 'Show'} close-gap roadmap ({closeGapRoadmap.length} actions)
+            {expanded ? 'Hide' : 'Show how to close the gap'} ({closeGapRoadmap.length} steps)
           </button>
           {expanded && (
             <div className="mt-2 space-y-1.5">
@@ -243,7 +243,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
                       {step.effort}
                     </span>
                     <span className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>
-                      +{step.percentileGain}%ile
+                      +{step.percentileGain} points
                     </span>
                   </div>
                 </div>

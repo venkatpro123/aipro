@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════════════════════════════
 // emerging.ts — AI-Era & Future-of-Work Roles Intelligence
 // 55 brand-new roles that didn't exist (or were tiny niches) pre-2022.
 // These are the roles CREATED by the AI disruption, not destroyed by it.
@@ -27,6 +27,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-native', 'frontier-skill', 'ai-resilient', 'critical-undersupply'],
     evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
   em_llm_engineer: {
     displayRole: 'LLM Systems & Inference Engineer',
@@ -47,6 +48,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-native', 'tech-sector', 'extreme-demand', 'frontier-skill'],
     evolutionHorizon: '2028',
+    roleCategory: 'ai_native',
   },
   em_prompt_engineer: {
     displayRole: 'Enterprise Prompt Engineer',
@@ -68,6 +70,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 95,
     contextTags: ['emerging-role', 'ai-native', 'tech-sector', 'pivot-window', 'moderate-risk'],
     evolutionHorizon: '2026',
+    roleCategory: 'ai_native',
   },
   em_ai_product_mgr: {
     displayRole: 'AI Product Manager',
@@ -89,6 +92,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-native', 'tech-sector', 'ai-resilient', 'frontier-skill'],
     evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
   em_ai_ethics: {
     displayRole: 'AI Ethics Officer',
@@ -109,6 +113,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-native', 'frontier-skill', 'ai-resilient', 'regulatory-driven', 'social-impact'],
     evolutionHorizon: '2030',
+    roleCategory: 'human_ai_orchestration',
   },
   em_digital_twin_arch: {
     displayRole: 'Digital Twin Architect',
@@ -128,6 +133,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 98,
     contextTags: ['emerging-role', 'industrial-sector', 'ai-resilient', 'frontier-skill', 'industry-4-0'],
     evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
   em_climate_tech: {
     displayRole: 'Climate Tech Solutions Analyst',
@@ -148,6 +154,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 98,
     contextTags: ['emerging-role', 'ai-resilient', 'frontier-skill', 'climate-tech', 'regulatory-driven'],
     evolutionHorizon: '2030',
+    roleCategory: 'traditional',
   },
   em_spatial_computing: {
     displayRole: 'Spatial Computing Experience Designer (AR/VR)',
@@ -167,6 +174,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 97,
     contextTags: ['emerging-role', 'creative-sector', 'ai-resilient', 'frontier-skill', 'spatial-computing'],
     evolutionHorizon: '2028',
+    roleCategory: 'ai_native',
   },
   em_robotics_sw: {
     displayRole: 'Humanoid Robotics Software Engineer',
@@ -186,6 +194,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-native', 'tech-sector', 'frontier-skill', 'critical-undersupply'],
     evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
   em_synthetic_bio: {
     displayRole: 'Synthetic Biology Engineer',
@@ -205,6 +214,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'biotech', 'ai-resilient', 'frontier-skill', 'critical-undersupply'],
     evolutionHorizon: '2030',
+    roleCategory: 'traditional',
   },
   em_longevity_sci: {
     displayRole: 'Longevity Scientist / Anti-Aging Researcher',
@@ -224,6 +234,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'biotech', 'ai-resilient', 'frontier-skill', 'critical-undersupply'],
     evolutionHorizon: '2030',
+    roleCategory: 'traditional',
   },
   em_web3_protocol: {
     displayRole: 'Web3 Protocol Architect',
@@ -243,6 +254,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 92,
     contextTags: ['emerging-role', 'tech-sector', 'web3', 'cryptography-moat', 'frontier-skill'],
     evolutionHorizon: '2027',
+    roleCategory: 'ai_augmented',
   },
   em_ai_red_team: {
     displayRole: 'AI Red Team Lead',
@@ -262,6 +274,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-native', 'security', 'frontier-skill', 'ai-resilient'],
     evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
   em_autonomous_vehicle: {
     displayRole: 'Autonomous Vehicle Systems Engineer',
@@ -281,6 +294,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 98,
     contextTags: ['emerging-role', 'ai-native', 'tech-sector', 'safety-critical', 'ai-resilient'],
     evolutionHorizon: '2029',
+    roleCategory: 'ai_native',
   },
   em_neurotech: {
     displayRole: 'Neurotech Interface Engineer',
@@ -300,6 +314,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'biotech', 'ai-resilient', 'frontier-skill', 'critical-undersupply'],
     evolutionHorizon: '2035',
+    roleCategory: 'traditional',
   },
   em_quantum_sw: {
     displayRole: 'Quantum Software Architect',
@@ -319,6 +334,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 99,
     contextTags: ['emerging-role', 'ai-resilient', 'frontier-skill', 'critical-undersupply', 'quantum'],
     evolutionHorizon: '2030',
+    roleCategory: 'traditional',
   },
   em_ai_npc_designer: {
     displayRole: 'AI Game NPC Designer (Generative AI)',
@@ -338,6 +354,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 95,
     contextTags: ['emerging-role', 'creative-sector', 'ai-native', 'game-design', 'high-demand'],
     evolutionHorizon: '2028',
+    roleCategory: 'ai_native',
   },
   em_supply_chain_ai: {
     displayRole: 'AI Supply Chain Strategist',
@@ -357,6 +374,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 97,
     contextTags: ['emerging-role', 'ai-native', 'supply-chain', 'ai-resilient', 'strategy-moat'],
     evolutionHorizon: '2029',
+    roleCategory: 'ai_augmented',
   },
   em_fintech_engineer: {
     displayRole: 'FinTech Platform Engineer',
@@ -376,6 +394,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 97,
     contextTags: ['emerging-role', 'fintech', 'tech-sector', 'ai-resilient', 'regulatory-driven'],
     evolutionHorizon: '2028',
+    roleCategory: 'ai_augmented',
   },
   em_creator_economy: {
     displayRole: 'Creator Economy Strategist',
@@ -395,6 +414,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 93,
     contextTags: ['emerging-role', 'creative-sector', 'ai-resilient', 'creator-economy', 'human-brand'],
     evolutionHorizon: '2028',
+    roleCategory: 'traditional',
   },
 
   // ── v40.0: Modern role intelligence additions ────────────────────────────────
@@ -418,6 +438,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 94,
     contextTags: ['emerging-role', 'ai-native', 'high-demand', 'product-leadership'],
     evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
 
   ml_platform: {
@@ -439,6 +460,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 92,
     contextTags: ['emerging-role', 'ai-infrastructure', 'high-demand', 'tech-sector'],
     evolutionHorizon: '2029',
+    roleCategory: 'ai_native',
   },
 
   rev_ops: {
@@ -460,6 +482,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 90,
     contextTags: ['commercial-role', 'saas', 'high-demand', 'gtm-function'],
     evolutionHorizon: '2029',
+    roleCategory: 'traditional',
   },
 
   growth: {
@@ -481,6 +504,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 89,
     contextTags: ['commercial-role', 'consumer', 'plg', 'high-demand', 'founder-adjacent'],
     evolutionHorizon: '2029',
+    roleCategory: 'traditional',
   },
 
   chief_of_staff: {
@@ -502,6 +526,7 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 91,
     contextTags: ['operational-role', 'executive-adjacency', 'launchpad-role', 'tenure-bounded'],
     evolutionHorizon: '2030',
+    roleCategory: 'traditional',
   },
 
   strategy_ops: {
@@ -523,5 +548,368 @@ export const EMERGING_INTELLIGENCE: Record<string, CareerIntelligence> = {
     confidenceScore: 90,
     contextTags: ['operational-role', 'analytical', 'high-demand', 'cross-functional'],
     evolutionHorizon: '2030',
+    roleCategory: 'traditional',
+  },
+
+  // ── v50.0: AI-Native & Human-AI Orchestration Roles ─────────────────────────
+
+  em_vibe_coder: {
+    displayRole: 'Vibe Coding Developer',
+    summary: 'High near-term demand; building software products by directing AI coding systems rather than writing code manually. Most exposed at junior level; most resilient at architecture/product layer.',
+    skills: {
+      obsolete: [{ skill: 'Manual line-by-line code authoring for standard CRUD operations', riskScore: 96, riskType: 'Automatable', horizon: '1yr', reason: 'AI coding systems like Claude Code, Cursor, and Copilot generate boilerplate and standard patterns without human keystroke input.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard debugging of AI-generated code without architectural context', riskScore: 72, riskType: 'Augmented', horizon: '2yr', reason: 'AI-assisted debugging tools increasingly identify and fix common errors in generated code.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Product Intent Translation to AI Systems', whySafe: 'Converting fuzzy business goals into precise multi-step AI coding directives — knowing when to trust output and when to override — requires human product judgment AI cannot supply.', longTermValue: 98, difficulty: 'High' },
+        { skill: 'AI Output Architecture Review', whySafe: 'Evaluating whether AI-generated code is structurally sound for scale, security, and maintainability requires systems thinking beyond syntax correctness.', longTermValue: 97, difficulty: 'Very High' },
+        { skill: 'Prompt Engineering for Complex Software Systems', whySafe: 'Composing multi-file, multi-context AI coding sessions that produce coherent systems — not just isolated functions — is a distinct engineering skill.', longTermValue: 96, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'AI Systems Architect', riskReduction: 35, skillGap: 'System design, scalability patterns, security', transitionDifficulty: 'Hard', industryMapping: ['SaaS', 'AI Startups', 'Enterprise Tech'], salaryDelta: '+40-100%', timeToTransition: '18 months' },
+      { role: 'AI-Native Product Builder / Founder', riskReduction: 20, skillGap: 'Product strategy, GTM, fundraising', transitionDifficulty: 'Hard', industryMapping: ['Startup', 'Indie Hacker'], salaryDelta: '+Equity upside', timeToTransition: '6 months' },
+    ],
+    inactionScenario: 'Vibe coding is the new baseline for building software products rapidly. Those who learn to direct AI systems effectively will outproduce traditional developers 5-10x. Those who do not adapt will find their output speed increasingly uncompetitive.',
+    riskTrend: [{ year: 2024, riskScore: 30, label: 'Now' }, { year: 2026, riskScore: 35, label: '+2yr' }, { year: 2027, riskScore: 42, label: '+3yr' }, { year: 2028, riskScore: 50, label: '+4yr' }, { year: 2029, riskScore: 55, label: '+5yr' }],
+    confidenceScore: 85,
+    contextTags: ['emerging-role', 'ai-native', 'tech-sector', 'high-demand', 'pivot-window'],
+    evolutionHorizon: '2028',
+    roleCategory: 'ai_native',
+  },
+
+  em_agent_ops_mgr: {
+    displayRole: 'Agent Operations Manager',
+    summary: 'Critically undersupplied 2025-2028; managing, monitoring, and optimizing networks of autonomous AI agents running business processes end-to-end.',
+    skills: {
+      obsolete: [{ skill: 'Manual step-by-step workflow documentation for human-executed processes', riskScore: 90, riskType: 'Automatable', horizon: '1yr', reason: 'AI process documentation tools auto-map workflows from execution logs and screen recordings.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard SLA monitoring for rule-based automation pipelines', riskScore: 68, riskType: 'Augmented', horizon: '2yr', reason: 'Observability platforms auto-detect SLA violations and generate root-cause hypotheses for agentic pipelines.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Agentic Failure Mode Analysis', whySafe: 'Identifying why an autonomous AI agent made an incorrect decision — and redesigning the task decomposition or guardrails to prevent recurrence — requires human systems thinking AI cannot perform on itself.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Human-Agent Escalation Protocol Design', whySafe: 'Deciding which decisions require human judgment versus agent autonomy — and designing escalation thresholds that are safe and practical — is irreducibly human organizational design work.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Multi-Agent Orchestration Strategy', whySafe: 'Architecting which agents handle which tasks, how they hand off, and how errors propagate requires systems architecture judgment no AI can supply about its own network.', longTermValue: 98, difficulty: 'Extremely High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Head of AI Operations', riskReduction: 10, skillGap: 'Team leadership, P&L accountability, enterprise AI governance', transitionDifficulty: 'Hard', industryMapping: ['Enterprise Tech', 'Financial Services', 'Consulting'], salaryDelta: '+80-180%', timeToTransition: '18 months' },
+      { role: 'AI Transformation Director', riskReduction: 8, skillGap: 'Change management, stakeholder alignment, vendor management', transitionDifficulty: 'Hard', industryMapping: ['Enterprise', 'Government', 'Healthcare'], salaryDelta: '+60-150%', timeToTransition: '24 months' },
+    ],
+    inactionScenario: 'This is one of the most critically undersupplied emerging roles of 2025-2028. Companies are deploying AI agents without people qualified to operate them. Not entering this field is the opportunity cost risk.',
+    riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 4, label: '+2yr' }, { year: 2027, riskScore: 4, label: '+3yr' }, { year: 2028, riskScore: 5, label: '+4yr' }, { year: 2029, riskScore: 6, label: '+5yr' }],
+    confidenceScore: 90,
+    contextTags: ['emerging-role', 'human-ai-orchestration', 'frontier-skill', 'critical-undersupply', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'human_ai_orchestration',
+  },
+
+  em_ai_workflow_arch: {
+    displayRole: 'AI Workflow Architect',
+    summary: 'High demand at enterprises deploying AI at scale; designing end-to-end AI-augmented business processes that combine LLMs, tools, human touchpoints, and data pipelines.',
+    skills: {
+      obsolete: [{ skill: 'Manual business process mapping using static flowchart tools', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'AI process mining tools auto-generate workflow maps from system logs.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard API integration for fixed two-system workflows', riskScore: 70, riskType: 'Augmented', horizon: '2yr', reason: 'No-code integration platforms handle standard API connections without architectural design.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'AI + Human Handoff Design', whySafe: 'Determining exactly where in a business process AI should stop and a human should take over — and designing the interface between them — is organizational design work requiring human accountability judgment.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Multi-Modal AI Pipeline Architecture', whySafe: 'Composing workflows that combine text, image, voice, and structured data AI systems into coherent business processes requires cross-domain systems thinking.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'AI Workflow Failure Recovery Design', whySafe: 'Designing graceful degradation when AI components fail in production — maintaining business continuity and human trust — requires human risk and systems engineering judgment.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Enterprise AI Architecture Lead', riskReduction: 15, skillGap: 'Enterprise architecture, cloud systems, vendor governance', transitionDifficulty: 'Hard', industryMapping: ['Consulting', 'Financial Services', 'Healthcare'], salaryDelta: '+60-140%', timeToTransition: '18 months' },
+      { role: 'AI Solutions Architect (Vendor)', riskReduction: 20, skillGap: 'Sales engineering, customer success', transitionDifficulty: 'Moderate', industryMapping: ['Microsoft', 'Salesforce', 'ServiceNow', 'AI Startups'], salaryDelta: '+40-100%', timeToTransition: '12 months' },
+    ],
+    inactionScenario: 'As enterprises move from AI pilot to AI production, AI Workflow Architects become the critical connective tissue between AI capability and business value. Early movers will command significant premiums.',
+    riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 7, label: '+2yr' }, { year: 2027, riskScore: 8, label: '+3yr' }, { year: 2028, riskScore: 10, label: '+4yr' }, { year: 2029, riskScore: 13, label: '+5yr' }],
+    confidenceScore: 88,
+    contextTags: ['emerging-role', 'human-ai-orchestration', 'enterprise', 'high-demand', 'frontier-skill'],
+    evolutionHorizon: '2030',
+    roleCategory: 'human_ai_orchestration',
+  },
+
+  em_ai_workforce_strategist: {
+    displayRole: 'AI Workforce Strategist',
+    summary: 'Growing enterprise function; advising organizations on how to restructure teams, redefine roles, and reskill people as AI changes the composition of work.',
+    skills: {
+      obsolete: [{ skill: 'Static headcount planning based on historical growth ratios', riskScore: 85, riskType: 'Automatable', horizon: '1yr', reason: 'AI workforce analytics tools generate headcount projections from productivity and automation data.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard competency framework design from job family templates', riskScore: 65, riskType: 'Augmented', horizon: '2yr', reason: 'AI HR tools generate competency frameworks from role descriptions and industry benchmarks.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'AI Displacement Impact Assessment', whySafe: 'Evaluating which human roles will be partially vs. fully displaced by AI — and communicating that assessment with honesty and care — requires human empathy, organizational knowledge, and ethical responsibility.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Workforce Transition Program Design', whySafe: 'Designing reskilling programs that actually change behavior — not just deliver content — requires deep human learning psychology and organizational change expertise.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Human-AI Role Redesign', whySafe: 'Redefining what humans do in an AI-augmented organization — preserving meaning and human contribution while eliminating pure automation — is a definitively human organizational design challenge.', longTermValue: 99, difficulty: 'Extremely High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Chief People Officer (AI-Era)', riskReduction: 10, skillGap: 'C-suite communication, board relations, total rewards', transitionDifficulty: 'Very Hard', industryMapping: ['Enterprise', 'Consulting', 'Financial Services'], salaryDelta: '+100-300%', timeToTransition: '36 months' },
+      { role: 'Future of Work Consulting Partner', riskReduction: 15, skillGap: 'Client development, consulting methodology, practice building', transitionDifficulty: 'Hard', industryMapping: ['McKinsey', 'Deloitte', 'Mercer', 'WEF'], salaryDelta: '+60-150%', timeToTransition: '24 months' },
+    ],
+    inactionScenario: 'Organizations without AI workforce strategists are making multimillion-dollar decisions about automation and restructuring without specialized guidance. This function is nascent but growing rapidly.',
+    riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 6, label: '+2yr' }, { year: 2027, riskScore: 5, label: '+3yr' }, { year: 2028, riskScore: 5, label: '+4yr' }, { year: 2029, riskScore: 5, label: '+5yr' }],
+    confidenceScore: 85,
+    contextTags: ['emerging-role', 'human-ai-orchestration', 'hr-function', 'consulting', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'human_ai_orchestration',
+  },
+
+  em_ai_governance_lead: {
+    displayRole: 'AI Governance Lead',
+    summary: 'Regulatory-driven demand surge; ensuring AI systems deployed in organizations comply with EU AI Act, NIST AI RMF, and internal responsible AI policies.',
+    skills: {
+      obsolete: [{ skill: 'Manual AI system inventory tracking via spreadsheets', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'AI governance platforms auto-discover and catalog AI systems from infrastructure logs and vendor contracts.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard risk classification of AI systems using published frameworks', riskScore: 68, riskType: 'Augmented', horizon: '2yr', reason: 'AI governance tools auto-classify system risk using regulatory framework rules from system descriptions.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'AI Regulatory Interpretation and Application', whySafe: 'Interpreting how emerging regulations (EU AI Act, NIST AI RMF, ISO 42001) apply to specific organizational AI deployments requires legal + technical + ethical synthesis no AI can reliably perform.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'AI Incident Response and Accountability', whySafe: 'When an AI system causes harm, determining organizational accountability, remediating the system, and communicating to regulators requires human judgment and legal authority.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Responsible AI Policy Writing', whySafe: 'Drafting internal AI use policies that are both practically enforceable and ethically sound requires deep human legal, organizational, and ethical expertise.', longTermValue: 98, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Chief AI Officer / CAiO', riskReduction: 5, skillGap: 'Board-level communication, strategic AI deployment, P&L ownership', transitionDifficulty: 'Very Hard', industryMapping: ['Financial Services', 'Healthcare', 'Government', 'Enterprise Tech'], salaryDelta: '+150-400%', timeToTransition: '36 months' },
+      { role: 'AI Policy Director (Government)', riskReduction: 8, skillGap: 'Policy writing, political communication, stakeholder management', transitionDifficulty: 'Hard', industryMapping: ['Government', 'International Bodies', 'Think Tanks'], salaryDelta: '+30-100%', timeToTransition: '24 months' },
+    ],
+    inactionScenario: 'EU AI Act and emerging global AI regulations are creating mandatory AI governance functions in organizations with high-risk AI systems. This is a regulatory compliance function that will grow regardless of AI capability trends.',
+    riskTrend: [{ year: 2024, riskScore: 6, label: 'Now' }, { year: 2026, riskScore: 5, label: '+2yr' }, { year: 2027, riskScore: 4, label: '+3yr' }, { year: 2028, riskScore: 4, label: '+4yr' }, { year: 2029, riskScore: 4, label: '+5yr' }],
+    confidenceScore: 92,
+    contextTags: ['emerging-role', 'human-ai-orchestration', 'regulatory-driven', 'frontier-skill', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'human_ai_orchestration',
+  },
+
+  em_autonomous_agent_supervisor: {
+    displayRole: 'Autonomous Agent Supervisor',
+    summary: 'Frontline role in AI-native operations; monitoring agent pipelines in real time, catching errors, and maintaining quality standards across automated workflows.',
+    skills: {
+      obsolete: [{ skill: 'Manual queue management and ticket routing in human support pipelines', riskScore: 95, riskType: 'Automatable', horizon: '1yr', reason: 'Agent orchestration platforms route tasks automatically based on classification and priority rules.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard quality sampling from agent output batches', riskScore: 70, riskType: 'Augmented', horizon: '2yr', reason: 'AI quality assurance tools auto-sample and score agent outputs against rubrics.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Agent Behavioral Anomaly Detection', whySafe: 'Recognizing when an agent is behaving unusually — within specification but producing wrong business outcomes — requires human business judgment the agent cannot apply to its own outputs.', longTermValue: 98, difficulty: 'High' },
+        { skill: 'Edge Case Escalation Judgment', whySafe: 'Deciding whether an unusual agent output should be overridden, escalated, or used as-is requires human authority and contextual wisdom.', longTermValue: 98, difficulty: 'High' },
+        { skill: 'Agent Training Feedback Loop Management', whySafe: 'Curating which agent errors become training examples — and which are acceptable exceptions — requires human judgment about business intent and risk.', longTermValue: 97, difficulty: 'Very High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Agent Operations Manager', riskReduction: 30, skillGap: 'Systems thinking, team leadership, process design', transitionDifficulty: 'Moderate', industryMapping: ['BPO', 'Financial Services', 'Enterprise Tech', 'E-commerce'], salaryDelta: '+40-80%', timeToTransition: '12 months' },
+      { role: 'AI Quality Assurance Lead', riskReduction: 25, skillGap: 'Evaluation design, metrics, compliance', transitionDifficulty: 'Moderate', industryMapping: ['Enterprise AI', 'AI Labs', 'Consulting'], salaryDelta: '+30-70%', timeToTransition: '12 months' },
+    ],
+    inactionScenario: 'As BPO, financial, and operational processes are increasingly handled by AI agents, human supervisors become the accountability layer. This role will expand significantly before automation catches up to oversight itself.',
+    riskTrend: [{ year: 2024, riskScore: 12, label: 'Now' }, { year: 2026, riskScore: 10, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 15, label: '+5yr' }],
+    confidenceScore: 85,
+    contextTags: ['emerging-role', 'human-ai-orchestration', 'operations', 'ai-resilient', 'growth-role'],
+    evolutionHorizon: '2029',
+    roleCategory: 'human_ai_orchestration',
+  },
+
+  em_human_ai_collab_designer: {
+    displayRole: 'Human-AI Collaboration Designer',
+    summary: 'Emerging at the intersection of UX, organizational design, and AI; designing workflows, interfaces, and experiences where humans and AI systems work together effectively.',
+    skills: {
+      obsolete: [{ skill: 'Standard user interface wireframing for purely human-operated software', riskScore: 82, riskType: 'Automatable', horizon: '1yr', reason: 'AI design tools generate standard UI wireframes from feature descriptions without manual effort.', aiReplacement: 'Partial' }],
+      at_risk: [{ skill: 'Usability heuristic evaluation using published Nielsen heuristics', riskScore: 68, riskType: 'Augmented', horizon: '2yr', reason: 'AI UX tools auto-apply standard usability heuristics to screen recordings and prototypes.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'AI Trust Calibration UX Design', whySafe: 'Designing interfaces that help users appropriately trust AI outputs — not too much, not too little — requires deep human psychological and domain understanding.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Human Cognitive Load Optimization in AI Workflows', whySafe: 'Ensuring human oversight in AI-assisted workflows does not create unmanageable cognitive burden requires human ergonomics and systems design expertise.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Organizational Behavior Design for AI-Augmented Teams', whySafe: 'Designing how teams of humans and AI agents collaborate — including role boundaries, accountability structures, and failure modes — is human organizational design work.', longTermValue: 99, difficulty: 'Extremely High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Head of Human-Centered AI Design', riskReduction: 15, skillGap: 'Research leadership, organizational design, AI product strategy', transitionDifficulty: 'Hard', industryMapping: ['Big Tech', 'AI Labs', 'Enterprise SaaS'], salaryDelta: '+60-150%', timeToTransition: '24 months' },
+      { role: 'AI UX Research Lead', riskReduction: 20, skillGap: 'Research methods, quantitative analysis', transitionDifficulty: 'Moderate', industryMapping: ['AI Product Companies', 'Consulting'], salaryDelta: '+30-80%', timeToTransition: '12 months' },
+    ],
+    inactionScenario: 'As AI systems proliferate, the quality of human-AI interaction design will determine whether AI actually improves human productivity or creates new failure modes. Early specialists will command significant premiums.',
+    riskTrend: [{ year: 2024, riskScore: 10, label: 'Now' }, { year: 2026, riskScore: 8, label: '+2yr' }, { year: 2027, riskScore: 7, label: '+3yr' }, { year: 2028, riskScore: 8, label: '+4yr' }, { year: 2029, riskScore: 10, label: '+5yr' }],
+    confidenceScore: 82,
+    contextTags: ['emerging-role', 'ai-native', 'ux-design', 'frontier-skill', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
+  },
+
+  em_synthetic_data_eng: {
+    displayRole: 'Synthetic Data Engineer',
+    summary: 'Strong demand driven by privacy regulations and AI training data scarcity; generating, validating, and curating synthetic datasets that enable AI model training without real-world privacy exposure.',
+    skills: {
+      obsolete: [{ skill: 'Manual data anonymization via row-by-row spreadsheet editing', riskScore: 95, riskType: 'Automatable', horizon: '1yr', reason: 'AI anonymization tools auto-detect and mask PII fields across large datasets.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard synthetic data validation using summary statistics', riskScore: 70, riskType: 'Augmented', horizon: '2yr', reason: 'AI data quality tools auto-run statistical fidelity checks and distribution comparisons.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Domain-Specific Synthetic Data Fidelity Design', whySafe: 'Determining what properties synthetic medical, financial, or industrial data must preserve to be useful for AI training requires deep domain expertise no generalist AI can supply.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Privacy Leakage Audit for Generative Models', whySafe: 'Testing whether generative models memorize and reproduce training data — and designing mitigation strategies — requires human adversarial thinking and privacy law expertise.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Rare Event Augmentation Strategy', whySafe: 'Designing synthetic data generation strategies for rare but critical events (fraud patterns, disease states, edge cases) that preserve realism requires domain judgment and statistical creativity.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'AI Data Strategy Lead', riskReduction: 20, skillGap: 'Data governance, privacy law, model evaluation', transitionDifficulty: 'Hard', industryMapping: ['Healthcare AI', 'Financial AI', 'Autonomous Vehicles', 'Enterprise AI'], salaryDelta: '+50-120%', timeToTransition: '18 months' },
+      { role: 'MLOps / Data Platform Lead', riskReduction: 25, skillGap: 'Infrastructure, orchestration, feature stores', transitionDifficulty: 'Moderate', industryMapping: ['AI Labs', 'Enterprise ML Teams'], salaryDelta: '+40-100%', timeToTransition: '12 months' },
+    ],
+    inactionScenario: 'GDPR, HIPAA, and emerging AI data regulations are driving enterprise demand for synthetic data at scale. This is a regulatory-driven function that will grow regardless of AI capability trends.',
+    riskTrend: [{ year: 2024, riskScore: 10, label: 'Now' }, { year: 2026, riskScore: 8, label: '+2yr' }, { year: 2027, riskScore: 8, label: '+3yr' }, { year: 2028, riskScore: 10, label: '+4yr' }, { year: 2029, riskScore: 12, label: '+5yr' }],
+    confidenceScore: 88,
+    contextTags: ['emerging-role', 'ai-native', 'data-engineering', 'regulatory-driven', 'frontier-skill'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
+  },
+
+  em_ai_red_teamer: {
+    displayRole: 'AI Red Teamer / Adversarial ML Specialist',
+    summary: 'Critical and undersupplied; systematically attacking AI systems to find vulnerabilities, bias, and failure modes before malicious actors or real-world incidents do.',
+    skills: {
+      obsolete: [{ skill: 'Manual jailbreak attempt logging from known public datasets', riskScore: 90, riskType: 'Automatable', horizon: '1yr', reason: 'AI red-teaming platforms auto-generate and test adversarial prompts from known attack taxonomy databases.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard prompt injection testing using published attack patterns', riskScore: 72, riskType: 'Augmented', horizon: '2yr', reason: 'Automated security scanners run standard injection attack patterns without manual execution.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Novel Attack Vector Discovery', whySafe: 'Finding new, previously unknown ways to compromise AI systems — beyond known patterns — requires human adversarial creativity and systems thinking that exceeds automated scanners.', longTermValue: 99, difficulty: 'Extremely High' },
+        { skill: 'Sociotechnical Vulnerability Analysis', whySafe: 'Identifying how AI system failures interact with human behavior, organizational processes, and societal norms to create harm requires human social and systems thinking.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'AI Bias and Fairness Adversarial Testing', whySafe: 'Designing tests that surface discriminatory AI behavior across protected attributes — including subtle intersectional bias — requires human cultural competency and domain knowledge.', longTermValue: 98, difficulty: 'Very High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Head of AI Security / Red Team Lead', riskReduction: 5, skillGap: 'Team leadership, security research publication, executive communication', transitionDifficulty: 'Hard', industryMapping: ['AI Labs', 'Government', 'Financial Services', 'Defense'], salaryDelta: '+80-200%', timeToTransition: '24 months' },
+      { role: 'AI Safety Researcher', riskReduction: 8, skillGap: 'ML research methods, academic publishing, interpretability', transitionDifficulty: 'Very Hard', industryMapping: ['Anthropic', 'OpenAI', 'DeepMind', 'Government'], salaryDelta: '+50-150%', timeToTransition: '24 months' },
+    ],
+    inactionScenario: 'This is one of the most critically undersupplied specializations in AI safety. Organizations deploying AI at scale have almost no red team capacity. Early entrants will command exceptional premiums.',
+    riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 4, label: '+2yr' }, { year: 2027, riskScore: 4, label: '+3yr' }, { year: 2028, riskScore: 4, label: '+4yr' }, { year: 2029, riskScore: 5, label: '+5yr' }],
+    confidenceScore: 92,
+    contextTags: ['emerging-role', 'ai-native', 'security', 'frontier-skill', 'critical-undersupply', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
+  },
+
+  em_robotics_ai_trainer: {
+    displayRole: 'Robotics AI Trainer',
+    summary: 'Rapidly growing with manufacturing and logistics automation; training robot systems through demonstration, feedback, and environment design to perform physical tasks reliably.',
+    skills: {
+      obsolete: [{ skill: 'Manual robot programming via teach pendant for fixed-path movements', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'AI-based robot programming tools generate motion paths from task demonstrations without manual pendant programming.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard simulation environment setup for known task categories', riskScore: 70, riskType: 'Augmented', horizon: '2yr', reason: 'AI simulation platforms auto-generate environments from task descriptions and physical specifications.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Physical Task Decomposition for Robot Learning', whySafe: 'Breaking down complex physical tasks into learnable sub-tasks that a robot can master — knowing what the robot can and cannot generalize — requires human physical intuition and robot learning expertise.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Robot Failure Mode Identification and Remediation', whySafe: 'Identifying why a robot is failing at a task in a physical environment — and designing targeted training interventions — requires hands-on physical judgment and robotics expertise.', longTermValue: 97, difficulty: 'Very High' },
+        { skill: 'Human Demonstration Curation for Imitation Learning', whySafe: 'Selecting which human demonstrations of a physical task best teach a robot — balancing skill level, variation, and edge case coverage — requires human pedagogical judgment.', longTermValue: 96, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Robotics AI Platform Lead', riskReduction: 20, skillGap: 'ML research, hardware integration, team leadership', transitionDifficulty: 'Hard', industryMapping: ['Logistics', 'Manufacturing', 'Autonomous Systems', 'AgriTech'], salaryDelta: '+60-150%', timeToTransition: '24 months' },
+      { role: 'Autonomous Systems Engineer', riskReduction: 25, skillGap: 'Control systems, computer vision, embedded AI', transitionDifficulty: 'Hard', industryMapping: ['Robotics Companies', 'Defense', 'Aerospace'], salaryDelta: '+50-130%', timeToTransition: '18 months' },
+    ],
+    inactionScenario: 'As manufacturing and logistics automation accelerates, the bottleneck will not be robot hardware but human expertise in training those systems. Early entrants will find exceptional demand across automotive, logistics, and agriculture.',
+    riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 7, label: '+2yr' }, { year: 2027, riskScore: 7, label: '+3yr' }, { year: 2028, riskScore: 8, label: '+4yr' }, { year: 2029, riskScore: 10, label: '+5yr' }],
+    confidenceScore: 88,
+    contextTags: ['emerging-role', 'ai-native', 'robotics', 'frontier-skill', 'manufacturing', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
+  },
+
+  em_spatial_computing_dev: {
+    displayRole: 'Spatial Computing Developer',
+    summary: 'Growing with Vision Pro, Meta Quest, and industrial XR adoption; building applications that blend digital and physical worlds through augmented and mixed reality.',
+    skills: {
+      obsolete: [{ skill: 'Standard mobile UI layout for 2D screen interfaces', riskScore: 80, riskType: 'Augmented', horizon: '1yr', reason: 'AI UI generation tools create standard 2D interface layouts from design specs.', aiReplacement: 'Partial' }],
+      at_risk: [{ skill: 'Basic 3D object placement and anchor management in known XR frameworks', riskScore: 65, riskType: 'Augmented', horizon: '2yr', reason: 'Spatial computing frameworks automate common 3D placement patterns.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Spatial UX Design for Human Perception', whySafe: 'Designing 3D interfaces that align with human depth perception, attention, and physical comfort requires human embodied experience and perceptual psychology expertise that AI lacks.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Physical-Digital Fusion Architecture', whySafe: 'Designing systems that blend digital overlays with real-world physical environments in real time — handling occlusion, lighting, and semantic understanding — requires novel systems thinking.', longTermValue: 97, difficulty: 'Very High' },
+        { skill: 'Spatial AI Integration (Vision + LLM + Sensor)', whySafe: 'Orchestrating computer vision, language models, and physical sensors into coherent spatial experiences requires cross-domain AI engineering judgment.', longTermValue: 96, difficulty: 'Very High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'XR Platform Lead / Spatial Computing Architect', riskReduction: 20, skillGap: 'Platform SDK expertise, team leadership, enterprise integration', transitionDifficulty: 'Hard', industryMapping: ['Apple', 'Meta', 'Microsoft', 'Industrial Enterprise'], salaryDelta: '+60-150%', timeToTransition: '18 months' },
+      { role: 'Spatial AI Systems Designer', riskReduction: 25, skillGap: 'Computer vision, multi-modal AI, 3D graphics', transitionDifficulty: 'Very Hard', industryMapping: ['AI Labs', 'Defense', 'Healthcare', 'Manufacturing'], salaryDelta: '+80-200%', timeToTransition: '24 months' },
+    ],
+    inactionScenario: 'Spatial computing is transitioning from consumer novelty to industrial productivity platform. Early developers who build spatial AI expertise will have first-mover advantage in a market with severe talent scarcity.',
+    riskTrend: [{ year: 2024, riskScore: 12, label: 'Now' }, { year: 2026, riskScore: 10, label: '+2yr' }, { year: 2027, riskScore: 10, label: '+3yr' }, { year: 2028, riskScore: 12, label: '+4yr' }, { year: 2029, riskScore: 15, label: '+5yr' }],
+    confidenceScore: 82,
+    contextTags: ['emerging-role', 'ai-native', 'spatial-computing', 'frontier-skill', 'high-demand'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
+  },
+
+  em_climate_ai_analyst: {
+    displayRole: 'Climate AI / Carbon Intelligence Analyst',
+    summary: 'Regulatory-driven demand; using AI to model carbon footprints, optimize decarbonization strategies, and verify emissions claims across supply chains.',
+    skills: {
+      obsolete: [{ skill: 'Manual Scope 3 emissions data collection from supplier surveys', riskScore: 90, riskType: 'Automatable', horizon: '1yr', reason: 'AI supply chain platforms auto-extract emissions data from supplier databases and shipping records.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard GHG Protocol emissions calculation for known activity categories', riskScore: 70, riskType: 'Augmented', horizon: '2yr', reason: 'AI carbon accounting tools auto-calculate emissions factors from activity data inputs.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'AI-Generated Emissions Forecast Validation', whySafe: 'Critically evaluating AI-generated climate projections — identifying when model assumptions diverge from physical reality — requires deep climate science and domain expertise.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Decarbonization Strategy Design', whySafe: 'Designing cost-effective pathways to net-zero for specific industrial or organizational contexts requires synthesis of technical, economic, and stakeholder factors no AI can reliably integrate.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Carbon Credit Integrity Verification', whySafe: 'Determining whether a carbon offset actually represents real, additional, and permanent emissions reduction — including local community and biodiversity impacts — requires on-the-ground expertise and scientific judgment.', longTermValue: 99, difficulty: 'Extremely High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Head of Climate Intelligence / Chief Sustainability Officer', riskReduction: 10, skillGap: 'Board communication, regulatory expertise, strategy', transitionDifficulty: 'Hard', industryMapping: ['Financial Services', 'Energy', 'Manufacturing', 'Government'], salaryDelta: '+80-200%', timeToTransition: '24 months' },
+      { role: 'Climate Risk Quantitative Analyst', riskReduction: 15, skillGap: 'Quantitative methods, financial modeling, regulatory frameworks', transitionDifficulty: 'Hard', industryMapping: ['Banks', 'Insurance', 'Asset Management'], salaryDelta: '+50-120%', timeToTransition: '18 months' },
+    ],
+    inactionScenario: 'CSRD, SEC climate disclosure, and ISSB reporting requirements are creating mandatory climate intelligence functions in large organizations. Demand will continue regardless of political headwinds as regulatory pressure increases.',
+    riskTrend: [{ year: 2024, riskScore: 10, label: 'Now' }, { year: 2026, riskScore: 8, label: '+2yr' }, { year: 2027, riskScore: 7, label: '+3yr' }, { year: 2028, riskScore: 7, label: '+4yr' }, { year: 2029, riskScore: 7, label: '+5yr' }],
+    confidenceScore: 88,
+    contextTags: ['emerging-role', 'ai-native', 'climate-tech', 'regulatory-driven', 'ai-resilient', 'frontier-skill'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
+  },
+
+  em_agentic_sys_designer: {
+    displayRole: 'Agentic Systems Designer',
+    summary: 'Frontier role at the intersection of software architecture and AI; designing the structure, guardrails, and interaction patterns of multi-agent AI systems that accomplish complex goals autonomously.',
+    skills: {
+      obsolete: [{ skill: 'Single-agent LLM prompt optimization for isolated tasks', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'Automated prompt optimization tools tune single-agent prompts from evaluation metrics without manual iteration.', aiReplacement: 'Partial' }],
+      at_risk: [{ skill: 'Standard agent memory and context management using published patterns', riskScore: 68, riskType: 'Augmented', horizon: '2yr', reason: 'Agent frameworks auto-manage context windows and memory retrieval using standard implementations.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Multi-Agent Coordination Protocol Design', whySafe: 'Designing how multiple specialized AI agents share information, divide tasks, and resolve conflicts requires systems architecture judgment that no agent can perform about its own network.', longTermValue: 99, difficulty: 'Extremely High' },
+        { skill: 'Agentic Failure Mode Anticipation', whySafe: 'Identifying how a multi-agent system could fail in unexpected ways — including emergent failure modes from agent interactions — requires human adversarial systems thinking.', longTermValue: 99, difficulty: 'Extremely High' },
+        { skill: 'Agent Safety Constraint Architecture', whySafe: 'Designing the guardrails that prevent autonomous agents from taking harmful real-world actions — while preserving their utility — is a foundational AI safety engineering challenge requiring human judgment.', longTermValue: 99, difficulty: 'Extremely High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'AI Systems Architect / Principal AI Engineer', riskReduction: 10, skillGap: 'Distributed systems, formal verification, enterprise architecture', transitionDifficulty: 'Very Hard', industryMapping: ['AI Labs', 'Enterprise AI Platforms', 'Defense', 'Financial Services'], salaryDelta: '+80-200%', timeToTransition: '24 months' },
+      { role: 'AI Research Engineer (Agentic Systems)', riskReduction: 8, skillGap: 'ML research, reinforcement learning, academic publishing', transitionDifficulty: 'Very Hard', industryMapping: ['Anthropic', 'OpenAI', 'DeepMind', 'Research Labs'], salaryDelta: '+100-300%', timeToTransition: '36 months' },
+    ],
+    inactionScenario: 'Agentic systems design is the most advanced and undersupplied AI engineering skill of 2025-2028. As AI agent deployment scales, the demand for people who can design reliable, safe, multi-agent architectures will far exceed supply.',
+    riskTrend: [{ year: 2024, riskScore: 5, label: 'Now' }, { year: 2026, riskScore: 4, label: '+2yr' }, { year: 2027, riskScore: 4, label: '+3yr' }, { year: 2028, riskScore: 5, label: '+4yr' }, { year: 2029, riskScore: 6, label: '+5yr' }],
+    confidenceScore: 88,
+    contextTags: ['emerging-role', 'ai-native', 'frontier-skill', 'critical-undersupply', 'ai-resilient'],
+    evolutionHorizon: '2032',
+    roleCategory: 'ai_native',
+  },
+
+  em_ai_transformation_lead: {
+    displayRole: 'AI Transformation Lead',
+    summary: 'High enterprise demand; leading the organizational change, technology deployment, and culture shift required to make a traditional company AI-capable.',
+    skills: {
+      obsolete: [{ skill: 'Static digital transformation roadmap documentation using generic frameworks', riskScore: 85, riskType: 'Automatable', horizon: '1yr', reason: 'AI strategy tools generate transformation roadmaps from organizational data and industry benchmarks.', aiReplacement: 'Partial' }],
+      at_risk: [{ skill: 'Standard change management communication plan creation', riskScore: 65, riskType: 'Augmented', horizon: '2yr', reason: 'AI communication tools generate change management content from stakeholder analysis inputs.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Executive AI Literacy and Alignment', whySafe: 'Helping C-suite leaders accurately understand AI capability, risk, and organizational implications — without hype or fear — requires human trust, credibility, and communication skill no AI can replicate.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'AI Resistance and Culture Change Navigation', whySafe: 'Identifying and addressing the human fears, political dynamics, and organizational inertia that block AI adoption requires human empathy, organizational psychology, and political intelligence.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'AI ROI Measurement Design', whySafe: 'Designing metrics that accurately capture the business value of AI transformation — including productivity gains, quality improvements, and risk reduction — requires human business judgment and organizational knowledge.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Chief AI Officer / Chief Digital Officer', riskReduction: 8, skillGap: 'P&L ownership, board relations, technology strategy', transitionDifficulty: 'Very Hard', industryMapping: ['Financial Services', 'Healthcare', 'Manufacturing', 'Government'], salaryDelta: '+100-300%', timeToTransition: '36 months' },
+      { role: 'AI Transformation Partner (Big 4 / Consulting)', riskReduction: 12, skillGap: 'Client development, practice building, research publication', transitionDifficulty: 'Hard', industryMapping: ['McKinsey', 'Deloitte', 'BCG', 'Accenture'], salaryDelta: '+60-150%', timeToTransition: '24 months' },
+    ],
+    inactionScenario: 'Organizations that fail to transform for AI will lose competitive position to AI-native competitors. The role of AI Transformation Lead is the organizational bridge between AI capability and business value capture.',
+    riskTrend: [{ year: 2024, riskScore: 8, label: 'Now' }, { year: 2026, riskScore: 6, label: '+2yr' }, { year: 2027, riskScore: 6, label: '+3yr' }, { year: 2028, riskScore: 7, label: '+4yr' }, { year: 2029, riskScore: 8, label: '+5yr' }],
+    confidenceScore: 88,
+    contextTags: ['emerging-role', 'human-ai-orchestration', 'enterprise', 'consulting', 'ai-resilient'],
+    evolutionHorizon: '2030',
+    roleCategory: 'human_ai_orchestration',
+  },
+
+  em_digital_human_designer: {
+    displayRole: 'Digital Human & Avatar Systems Designer',
+    summary: 'Growing with virtual assistants, metaverse, and enterprise avatar use cases; designing AI-driven digital humans that communicate, emote, and interact believably with real people.',
+    skills: {
+      obsolete: [{ skill: 'Static character rig animation using manual keyframe workflows', riskScore: 88, riskType: 'Automatable', horizon: '1yr', reason: 'AI animation tools generate motion from text or audio prompts without manual keyframe work.', aiReplacement: 'Full' }],
+      at_risk: [{ skill: 'Standard lip-sync implementation using published audio-to-animation libraries', riskScore: 72, riskType: 'Augmented', horizon: '2yr', reason: 'AI-driven lip sync platforms auto-generate speech animation from audio input.', aiReplacement: 'Partial' }],
+      safe: [
+        { skill: 'Uncanny Valley Navigation and Trust Design', whySafe: 'Designing digital humans that feel trustworthy and comfortable to interact with — avoiding the uncanny valley while achieving emotional authenticity — requires deep human perceptual psychology.', longTermValue: 98, difficulty: 'Very High' },
+        { skill: 'Behavioral AI Personality Architecture', whySafe: 'Defining the personality, emotional range, and behavioral boundaries of an AI-driven digital human character — including how it handles edge cases and sensitive interactions — requires human ethical and psychological design.', longTermValue: 99, difficulty: 'Very High' },
+        { skill: 'Cross-Cultural Embodiment Design', whySafe: 'Designing digital human appearances, communication styles, and behaviors that are appropriate and trustworthy across different cultural contexts requires irreducible human cultural competency.', longTermValue: 97, difficulty: 'High' },
+      ],
+    },
+    careerPaths: [
+      { role: 'Digital Human Experience Director', riskReduction: 15, skillGap: 'Product leadership, enterprise sales, technical vision', transitionDifficulty: 'Hard', industryMapping: ['Customer Experience', 'Healthcare AI', 'Media', 'Enterprise SaaS'], salaryDelta: '+60-150%', timeToTransition: '18 months' },
+      { role: 'AI Character Systems Lead (Entertainment)', riskReduction: 20, skillGap: 'Game AI, narrative design, real-time rendering', transitionDifficulty: 'Hard', industryMapping: ['Gaming', 'Film', 'Theme Parks', 'VR/AR'], salaryDelta: '+50-130%', timeToTransition: '18 months' },
+    ],
+    inactionScenario: 'Digital humans are becoming the primary interface for AI customer service, healthcare, and enterprise applications. Designers who can make these characters trustworthy and effective will find growing demand across industries.',
+    riskTrend: [{ year: 2024, riskScore: 15, label: 'Now' }, { year: 2026, riskScore: 12, label: '+2yr' }, { year: 2027, riskScore: 12, label: '+3yr' }, { year: 2028, riskScore: 14, label: '+4yr' }, { year: 2029, riskScore: 18, label: '+5yr' }],
+    confidenceScore: 80,
+    contextTags: ['emerging-role', 'ai-native', 'creative-sector', 'frontier-skill', 'spatial-computing'],
+    evolutionHorizon: '2030',
+    roleCategory: 'ai_native',
   },
 };

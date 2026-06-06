@@ -34,12 +34,12 @@ const ActionHook: React.FC<{ text: string }> = ({ text }) => (
 /** GAP H: Small freshness/source indicator shown beside heuristic signal blocks. */
 const HeuristicBadge: React.FC = () => (
   <span
-    title="Estimated baseline — calibrated from May 2026 data, not a live API feed"
+    title="This is an estimate, not live data. Based on typical patterns from 2026."
     className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
     style={{ background: 'rgba(148,163,184,0.12)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.22)' }}
   >
     <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: '#94a3b8' }} />
-    est. baseline
+    estimate
   </span>
 );
 import type { TabProps } from '../common/types';
@@ -101,8 +101,8 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
 
   const warnActiveCount = warnSignal?.hasActiveWARN ? 1 : 0;
   const groundTruthBadge = hasGroundTruth
-    ? (warnActiveCount > 0 ? 'WARN ACTIVE' : 'REGULATORY')
-    : 'NO RED FLAGS';
+    ? (warnActiveCount > 0 ? 'Layoff Notice Filed' : 'Official Filing')
+    : 'No Alerts';
   const groundTruthColor = warnActiveCount > 0 ? '#dc2626' : hasGroundTruth ? '#f97316' : '#10b981';
 
   return (
@@ -116,8 +116,8 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
       {/* ── T1/T2: Ground Truth Signals — moved above ParentRisk (higher certainty) */}
       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
         <AdaptiveBlock
-          title="Ground truth signals"
-          subtitle="Legally filed or regulatory-sourced — highest confidence"
+          title="Verified official sources"
+          subtitle="From government filings and legal records — highest confidence"
           icon={ShieldAlert}
           tier={2}
           accentColor={groundTruthColor}
@@ -134,30 +134,27 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
               style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}
             >
               <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
-                No active WARN Act filing or SEC material-event disclosure for{' '}
-                {companyData?.name ?? 'this company'} this quarter — the absence of regulatory
-                red flags is itself a mildly reassuring signal. Ground-truth sources are our
-                highest-confidence layer; we re-check them continuously and will surface any new
-                filing the moment it appears.
+                No official layoff notices or government filings found for{' '}
+                {companyData?.name ?? 'this company'} this quarter. That's a good sign — we check these continuously.
               </p>
             </div>
           )}
           {warnSignal?.hasActiveWARN && (
             <>
               <WARNSignalPanel warnSignal={warnSignal} />
-              <ActionHook text="Update your resume and activate your network now. Active WARN filings precede layoffs by 60–90 days — the window to move proactively is open." />
+              <ActionHook text="Update your resume and reach out to your network now. Companies file these notices 60–90 days before layoffs. Start moving." />
             </>
           )}
           {secHasContent && (
             <>
               <SECEnhancedPanel secEnhancedSignals={secEnhanced} />
-              <ActionHook text="FCF trends in SEC filings are a leading indicator of headcount decisions. Monitor the next earnings call date and watch for guidance downgrades." />
+              <ActionHook text="Watch for the next earnings call. When companies start burning through cash, headcount cuts often follow." />
             </>
           )}
           {blsMacroIsLive && (
             <>
               <BLSMacroPanel blsMacroSignal={blsMacro} />
-              <ActionHook text="Declining JOLTS quits mean fewer external opportunities. Prioritize retention negotiation and internal visibility over job search for the next 30–60 days." />
+              <ActionHook text="The job market is tighter right now. Focus on being visible internally and negotiating your position before looking outside." />
             </>
           )}
         </AdaptiveBlock>
@@ -194,7 +191,7 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
                 <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  Market Environment
+                  What's happening in the market
                 </span>
                 <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
                   style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
@@ -220,8 +217,8 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
       {isEventSearchAvailable() && (
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
           <AdaptiveBlock
-            title="Cross-source event search"
-            subtitle="Raw timeline of company events from news + filings + signals"
+            title="Event timeline"
+            subtitle="A timeline of news, filings, and signals about your company"
             icon={Search}
             tier={3}
             accentColor="#22d3ee"

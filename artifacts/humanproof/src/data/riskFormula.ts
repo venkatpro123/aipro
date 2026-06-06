@@ -108,6 +108,12 @@ const INDUSTRY_KEY_TO_RISK_KEY: Record<string, string> = {
   government: 'Government',
   ngo: 'Nonprofit',
   agriculture: 'Agriculture',
+  // New AI-era industries (v50.0)
+  ai_infra:       'Technology',
+  ai_safety_gov:  'Technology',
+  autonomous_sys: 'Technology',
+  spatial_xr:     'Technology',
+  climate_ai:     'Energy',
 };
 
 // ─── Role type cognitive complexity proxy (for D3) ───────────────────
@@ -231,6 +237,43 @@ const ROLE_COMPLEXITY_MAP: Record<string, number> = {
   gov_admin: 0.55, gov_public_finance: 0.45, gov_social: 0.18, gov_it: 0.35,
   ngo_fundraise: 0.38, ngo_comms: 0.40, ngo_field: 0.20, ngo_research: 0.22,
   agri_farming: 0.42, agri_tech: 0.28, agri_supply: 0.48, agri_research: 0.22, agri_finance: 0.45,
+
+  // ── Emerging AI-era roles (v50.0) — category-calibrated complexity values ──
+  // AI-native roles: exist because of AI, actively shape AI systems → very low displacement
+  em_vibe_coder:           0.18,  // ai_native  — prompt-driven dev, judgment-heavy craft
+  em_synthetic_data_eng:   0.22,  // ai_native  — dataset curation, quality eval, adversarial testing
+  em_ai_red_teamer:        0.15,  // ai_native  — adversarial reasoning, creativity-led
+  em_robotics_ai_trainer:  0.20,  // ai_native  — physical grounding + policy design
+  em_spatial_computing_dev:0.25,  // ai_native  — XR + physics + perception stack
+  em_climate_ai_analyst:   0.22,  // ai_native  — scientific domain depth + ML
+  em_agentic_sys_designer: 0.18,  // ai_native  — system architecture for AI agents
+  em_human_ai_collab_designer: 0.20, // ai_native — HCI + cognitive science + AI safety
+  em_digital_human_designer:   0.28, // ai_native — avatar animation + behavior scripting
+
+  // Human-AI orchestration roles: governance, strategy, oversight → well protected
+  em_agent_ops_mgr:          0.22, // human_ai_orchestration — ops + escalation judgment
+  em_ai_workflow_arch:       0.20, // human_ai_orchestration — system design + process redesign
+  em_ai_workforce_strategist:0.15, // human_ai_orchestration — org strategy + change mgmt
+  em_ai_governance_lead:     0.14, // human_ai_orchestration — policy + compliance + risk
+  em_autonomous_agent_supervisor: 0.18, // human_ai_orchestration — QA + safety for AI agents
+  em_ai_transformation_lead: 0.12, // human_ai_orchestration — exec-level org transformation
+
+  // Existing emerging roles (v40.0 seeded) — ensure they're not stuck at 0.50 default
+  em_llm_engineer:   0.22,
+  em_ai_ethicist:    0.14,
+  em_prompt_eng:     0.30,
+  em_no_code_dev:    0.48,
+  em_ai_trainer:     0.28,
+  em_ai_artist:      0.35,
+  em_blockchain_dev: 0.25,
+  em_nft_curator:    0.55,
+  em_metaverse_arch: 0.28,
+  em_iot_eng:        0.30,
+  em_quantum_dev:    0.18,
+  em_bio_info:       0.20,
+  em_digital_twin:   0.25,
+  em_sustainability: 0.28,
+  em_xr_dev:         0.25,
 };
 
 // ─── Industry D6 Network Density proxy ──────────────────────────────
@@ -337,10 +380,14 @@ const INDUSTRY_NETWORK_DENSITY: Record<string, number> = {
 export const calculateD1 = (workType: string, _industry: string, country: string = 'usa'): number => {
   // Role-specific AI risk from roleExposureData (via fuzzy matching on workType)
   const roleData = inferRoleRisk(workType);
-  const roleAiRisk = roleData.aiRisk;
+  // inferRoleRisk returns 0.40 for unrecognised keys. When we have an explicit
+  // ROLE_COMPLEXITY_MAP entry (which is the more precise signal), use it as the
+  // aiRisk too — otherwise 'em_vibe_coder' (complexity 0.18) would be blended
+  // against 0.40 and land at 27 instead of the correct ~18.
+  const hasExplicitMap = workType in ROLE_COMPLEXITY_MAP;
+  const roleAiRisk = hasExplicitMap ? ROLE_COMPLEXITY_MAP[workType] : roleData.aiRisk;
 
   // Direct complexity map for higher precision; falls back to inferred role risk
-  const hasExplicitMap = workType in ROLE_COMPLEXITY_MAP;
   const complexityProxy = hasExplicitMap ? ROLE_COMPLEXITY_MAP[workType] : roleAiRisk;
 
   // Blend of two role-level signals:
@@ -522,6 +569,16 @@ export const calculateD6 = (workType: string, experience: string = "5-10"): numb
   return Math.min(100, Math.max(5, baseScore + expBonus));
 };
 
+/**
+ * D7 — Agentic Disruption Potential
+ * How vulnerable is this role once autonomous AI executes complete workflows?
+ * Supplementary signal — NOT included in formula weights (D1–D6 unchanged).
+ * Returns 0–100 (higher = more post-threshold vulnerable)
+ */
+import { D7_AGENTIC_DISRUPTION } from './riskData';
+export const calculateD7 = (workType: string): number =>
+  D7_AGENTIC_DISRUPTION[workType] ?? D7_AGENTIC_DISRUPTION['default'] ?? 55;
+
 // ─── Dynamic Weight Engine ───────────────────────────────────────────
 // Weights are not global constants — they vary by role category
 interface DimensionWeights {
@@ -553,6 +610,11 @@ function getDynamicWeights(workType: string, industry: string): DimensionWeights
   // Tech / Development — task automatability + AI tool maturity lead
   if (ind.startsWith('it_') || ind === 'fintech') {
     return { d1: 0.28, d2: 0.20, d3: 0.18, d4: 0.16, d5: 0.09, d6: 0.09 };
+  }
+  // AI-era industries — human amplification (D3) and experience shield (D4) matter most;
+  // these roles are defined by judgment and system oversight, not raw automation exposure.
+  if (['ai_infra', 'ai_safety_gov', 'autonomous_sys', 'spatial_xr', 'climate_ai'].includes(ind)) {
+    return { d1: 0.18, d2: 0.14, d3: 0.32, d4: 0.20, d5: 0.08, d6: 0.08 };
   }
   // Finance — balanced but D1/D2 higher
   if (['finance', 'insurance', 'investment'].includes(ind)) {

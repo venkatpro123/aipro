@@ -281,7 +281,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           >
             <Flame className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
             <p className="text-[10px] font-semibold" style={{ color: '#10b981' }}>
-              You're in the top 15% of career-protected professionals in your cohort.
+              You're in the top 15% of career-protected professionals in your field.
             </p>
           </div>
         )}

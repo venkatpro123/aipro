@@ -112,20 +112,20 @@ const DataQualityDashboard: React.FC<{
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <Database className="w-12 h-12" />
         </div>
-        <div className="label-xs text-muted-foreground uppercase tracking-widest mb-[var(--space-2)]">Data Freshness</div>
+        <div className="label-xs text-muted-foreground tracking-widest mb-[var(--space-2)]">How fresh is our data?</div>
         <div className="text-3xl font-black tracking-tighter mb-1"
           style={{ color: avgFreshness <= 7 ? 'var(--emerald)' : avgFreshness <= 30 ? 'var(--amber)' : 'var(--red)' }}>
           {avgFreshness}d
         </div>
         <div className="text-[10px] text-muted-foreground font-mono uppercase mb-[var(--space-2)]">
-          {isDbDominant ? 'Database Snapshot (not live)' : 'Signal Latency'}
+          {isDbDominant ? 'Stored data (not live)' : 'Data age'}
         </div>
         <div className="text-[11px] text-muted-foreground mb-[var(--space-3)] leading-relaxed">
-          {avgFreshness <= 1 ? "Same-day data — highest accuracy" :
-           avgFreshness <= 7 ? "Fresh — within weekly update window" :
-           avgFreshness <= 30 ? "⚠ Moderate staleness — recent events may not be reflected" :
-           avgFreshness <= 90 ? "🔴 Stale data — confidence reduced. Scores may lag market reality by months." :
-           "🔴 Critical staleness — data is over 90 days old. Score treats missing signals as neutral, which may understate real risk."}
+          {avgFreshness <= 1 ? "Data from today — most accurate" :
+           avgFreshness <= 7 ? "Data is recent — updated within the week" :
+           avgFreshness <= 30 ? "⚠ A bit older — recent events may not show up yet" :
+           avgFreshness <= 90 ? "🔴 Outdated data — your score may miss recent events" :
+           "🔴 Very old data — over 3 months. Your risk may actually be higher than shown."}
         </div>
         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
           <motion.div
@@ -141,20 +141,20 @@ const DataQualityDashboard: React.FC<{
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <BarChart2 className="w-12 h-12" />
         </div>
-        <div className="label-xs text-muted-foreground uppercase tracking-widest mb-[var(--space-2)]">Signal Coverage</div>
+        <div className="label-xs text-muted-foreground tracking-widest mb-[var(--space-2)]">How much live data we found</div>
         <div className="text-3xl font-black tracking-tighter mb-1"
           style={{ color: liveSignalPercent >= 50 ? 'var(--cyan)' : liveSignalPercent >= 25 ? 'var(--amber)' : 'var(--text-3)' }}>
           {liveSignalPercent}%
         </div>
         <div className="text-[10px] text-muted-foreground font-mono uppercase mb-[var(--space-2)]">
-          {liveSignals}/{totalSignals} Signals Non-Heuristic
+          {liveSignals} of {totalSignals} signals came from live sources
         </div>
         <div className="text-[11px] text-muted-foreground mb-[var(--space-3)] leading-relaxed">
           {liveSignalPercent >= 70
-            ? "Strong coverage — most signals from fresh sources"
+            ? "Good coverage — most of our signals are from live data"
             : liveSignalPercent >= 40
-              ? "Partial coverage — mix of fresh and static signals"
-              : "⚠ Heuristic-dominant — live APIs unavailable; score uses industry baselines and DB snapshots"}
+              ? "Partial coverage — some live data, some estimates"
+              : "⚠ Limited live data — we mostly used typical industry patterns for this score"}
         </div>
         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
           <motion.div 
@@ -170,13 +170,13 @@ const DataQualityDashboard: React.FC<{
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <AlertTriangle className="w-12 h-12" />
         </div>
-        <div className="label-xs text-muted-foreground uppercase tracking-widest mb-[var(--space-2)]">Signal Conflicts</div>
+        <div className="label-xs text-muted-foreground tracking-widest mb-[var(--space-2)]">Did our sources agree?</div>
         <div className="text-3xl font-black tracking-tighter mb-1">{signalQuality.conflictingSignals.length}</div>
         <div className="text-[10px] text-muted-foreground font-mono uppercase mb-[var(--space-2)]">
-          {signalQuality.conflictingSignals.length === 0 ? "No Conflicts — Clean Consensus" : "Conflicts Detected & Resolved"}
+          {signalQuality.conflictingSignals.length === 0 ? "Yes — all sources agreed" : "Some sources disagreed — we resolved it"}
         </div>
         <div className="text-[11px] text-muted-foreground mb-[var(--space-3)] leading-relaxed">
-          {signalQuality.conflictingSignals.length === 0 ? "All signal sources converged — highest consensus confidence" : `${signalQuality.conflictingSignals.length} conflict(s) resolved via weighted arbitration. See Conflict Log below.`}
+          {signalQuality.conflictingSignals.length === 0 ? "All our data sources pointed the same way — highest confidence" : `${signalQuality.conflictingSignals.length} source${signalQuality.conflictingSignals.length !== 1 ? 's' : ''} disagreed. We chose the most reliable one. Details below.`}
         </div>
         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
           <motion.div 
@@ -883,7 +883,7 @@ const EffectiveWeightsPanel: React.FC<{
               const d8Label    = d8FlagActive
                 ? 'AI Efficiency (logistic)'
                 : d8HeuristicActive
-                ? 'AI Efficiency (heuristic)'
+                ? 'AI Efficiency (estimated)'
                 : d8WeightRedistributed
                 ? 'AI Efficiency (redistributed)'
                 : 'AI Efficiency (inactive)';
@@ -1044,8 +1044,7 @@ const D8ValidationPanel: React.FC = () => {
             {gateRow('precision', prec !== null ? prec.toFixed(3) : null, String(gate.PRECISION_MIN),  precOk)}
           </div>
           <p className="text-xs text-muted-foreground mt-1.5">
-            Heuristic fallback active (EFFICIENCY cohort + Condition 3). D8 will be
-            auto-promoted when gate clears via recalibrate-engine cron.
+            Estimated — using typical efficiency patterns (Condition 3). This will improve automatically as more data comes in.
           </p>
         </div>
       </div>
@@ -1457,7 +1456,7 @@ const IndiaIntelligencePanel: React.FC<{
             <div>
               <p className="text-[10px] text-muted-foreground uppercase">EPFO Growth</p>
               <p className={`text-sm font-bold ${enrichment.sectorPulse.epfoGrowthRate < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                {enrichment.sectorPulse.epfoGrowthRate > 0 ? '+' : ''}{enrichment.sectorPulse.epfoGrowthRate}% YoY
+                {enrichment.sectorPulse.epfoGrowthRate > 0 ? '+' : ''}{enrichment.sectorPulse.epfoGrowthRate}% (annual)
               </p>
             </div>
             <div>
@@ -1754,7 +1753,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
           <div>
             <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#fbbf24' }}>
-              Pooled CI — cohort data insufficient
+              Widened range — limited data for your profile type
             </p>
             <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
               Your audit was classified as <span className="font-mono font-bold" style={{ color: COHORT_COLORS[requestedCohort]?.text ?? '#9ca3af' }}>{requestedCohort}</span>, but
@@ -1777,8 +1776,8 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
           <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
             Insufficient calibration data across all cohorts (fewer than 80 confirmed outcomes).
-            This is a heuristic width estimate — not an empirically validated coverage guarantee.
-            Do not interpret as a "90% credible interval."
+            This is an estimated range — we don't yet have enough real outcomes to give a precise guarantee.
+            Treat this as a directional guide, not an exact interval.
           </p>
         </div>
       )}
@@ -1932,25 +1931,25 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
       description: "AI adoption velocity, labor market tightness, and employment protection legislation index by country/region. Powers L5 (Regional Headwinds). Covers 40+ countries. Sources: WEF Global Competitiveness, OECD Employment Outlook.",
     },
     ...(liveCount > 0 ? [{
-      name: "Live OSINT — Financial Signals",
+      name: "Live Financial Signals",
       type: "Financial",
-      domain: "proxy-live-signals Edge Function (Yahoo Finance, SEC EDGAR, RSS news, job board scrapers)",
+      domain: "Yahoo Finance, financial filings, news feeds, job board data",
       lastUpdated: new Date().toISOString().split("T")[0],
-      description: `${liveCount} real-time signals fetched for this audit: stock 90-day price change, revenue YoY growth, employee count, revenue-per-employee ratio, recent layoff news headlines, and hiring posting trend. Directly modifies L1 and L2 scores.`,
+      description: `${liveCount} live signals fetched for this audit: stock trend (90 days), revenue growth, headcount, revenue per employee, recent layoff news, and hiring activity. These directly affect your score.`,
     }] : []),
     {
       name: "Layoffs.fyi Community Dataset",
       type: "Workforce",
       domain: "layoffs.fyi (GitHub CSV, community-verified)",
       lastUpdated: new Date().toISOString().split("T")[0],
-      description: "Crowdsourced + press-verified layoff event database covering 3000+ companies globally since 2020. Each event includes company, date, headcount cut %, source URL, and affected departments. Primary source for L2 (Layoff History) when OSINT is unavailable.",
+      description: "Community-verified layoff event database covering 3000+ companies globally since 2020. Each record includes the company, date, headcount cut %, and source URL. Used when live data isn't available.",
     },
     {
-      name: "WARN Act / SEC / Regulatory Filings",
+      name: "Government & Regulatory Filings",
       type: "Regulatory",
-      domain: "SEC EDGAR, US WARN Act, DOLE India, Companies House UK",
+      domain: "US layoff notices, Indian labour filings, UK company filings",
       lastUpdated: new Date().toISOString().split("T")[0],
-      description: "Legal workforce reduction disclosures. WARN Act (US) requires 60-day advance notice for mass layoffs. SEC 8-K/10-K filings. These are the highest-confidence signals — regulatory filings cannot be disputed.",
+      description: "Official government filings about workforce reductions. In the US, companies must give 60 days' advance notice before mass layoffs. These are the most reliable signals we have — they can't be disputed.",
     },
   ];
 
@@ -1988,7 +1987,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
       status: liveCount > 0 ? "success" : "warning",
       details: liveCount > 0
         ? `${liveCount} live signals fetched from ${dbSource}`
-        : `Heuristic fallback — ${result.signalQuality?.heuristicSignals ?? 0} signals estimated`,
+        : `Estimated from typical patterns — ${result.signalQuality?.heuristicSignals ?? 0} signals`,
     },
     {
       timestamp: t(12),
@@ -2314,13 +2313,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
               confirmed_recent_layoff_news:
                 'confirmed_recent_layoff_news floor applied — minimum score 72 (breaking news event detected within 30 days).',
               financial_distress_triad:
-                'financial_distress_triad floor applied — minimum score 65 (L1 > 75%, negative FCF, stock < −30%).',
+                'Multiple financial stress signals detected — score raised to at least 65 (revenue risk high, cash flow negative, stock down over 30%).',
               pre_layoff_precursor:
                 'pre_layoff_precursor floor applied — minimum score 58 (confirmed hiring freeze, layoff history, sector contagion detected).',
               pre_layoff_precursor_inferred:
                 'pre_layoff_precursor_inferred floor applied — minimum score 52 (AI inference from news/Glassdoor).',
               warn_act_filing:
-                'warn_act_filing floor applied — minimum score 68 (active WARN Act filing is regulatory ground truth: company legally confirmed a planned mass layoff).',
+                'Official layoff notice detected — score raised to at least 68 (the company legally confirmed a planned mass layoff).',
               stealth_layoff_floor:
                 'stealth_layoff_floor floor applied — aggregate headcount decline detected without public announcement.',
             };
@@ -2721,7 +2720,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     >
                       {result.calibrationFallbackLevel === 'segment_db'       ? 'DB-calibrated (≥80 outcomes)' :
                        result.calibrationFallbackLevel === 'segment_bootstrap' ? 'Research bootstrap' :
-                       result.calibrationFallbackLevel === 'cohort_db'         ? 'Cohort DB' :
+                       result.calibrationFallbackLevel === 'cohort_db'         ? 'Similar profiles' :
                                                                                  'Global bootstrap'}
                     </span>
                   </div>
@@ -2832,7 +2831,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                   <div className="w-full">
                     <h4 className="font-semibold text-amber-300 text-sm mb-1.5">
-                      D4 · Performance Credibility Analysis
+                      Performance Credibility Check
                     </h4>
 
                     {/* Spec-exact line 1: "Reported performance: Top. Effective (credibility-adjusted): Moderate." */}
@@ -3080,10 +3079,8 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
 
                     {hc.contributingSources.length > 0 && (
                       <p className="text-[10px] text-[var(--text-muted)] mt-2 leading-relaxed">
-                        Weighted by source reliability: SEC EDGAR 1.00 · Yahoo Finance 0.92 ·
-                        Wikipedia 0.78 · LinkedIn 0.55 · Intelligence DB 0.40 · Career page 0.30.
-                        Outlier rule: any source reporting &gt;10× the median is unconditionally
-                        rejected before MAD z-score classification.
+                        Sources ranked by reliability: government filings (highest) · Yahoo Finance · Wikipedia · LinkedIn · our database · company career pages (lowest).
+                        Any source reporting more than 10× the typical number is automatically excluded before averaging.
                       </p>
                     )}
                   </div>
@@ -3190,7 +3187,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       )}
                       {!isLive && (
                         <span className="text-xs text-[var(--text-secondary)]">
-                          No L3 adjustment — heuristic data excluded from scoring
+                          No AI risk adjustment — live data wasn't available for this
                         </span>
                       )}
                     </div>

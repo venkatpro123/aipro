@@ -43,7 +43,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
         <div className="flex items-center gap-2">
           <MessageSquare className="w-4 h-4" style={{ color }} />
           <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            Glassdoor Velocity Intelligence
+            Employee Sentiment
           </span>
         </div>
         <span
@@ -82,7 +82,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
                 {velocitySign}{glassdoorVelocity.ceoApprovalVelocity.toFixed(1)}
               </span>
             </div>
-            <div className="text-[10px] opacity-45 mt-0.5">pp/month velocity</div>
+            <div className="text-[10px] opacity-45 mt-0.5">Change per month</div>
           </div>
         )}
       </div>
@@ -95,7 +95,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
         >
           <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#ef4444' }} />
           <p className="text-[10px] leading-relaxed font-semibold" style={{ color: 'rgba(239,68,68,0.90)' }}>
-            Early warning active — sentiment deterioration meets layoff-precursor threshold
+            Warning: employee sentiment is falling fast — an early sign of layoffs
           </p>
         </div>
       )}
@@ -108,7 +108,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
         >
           <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f97316' }} />
           <span className="text-[10px] font-semibold" style={{ color: '#f97316' }}>
-            Review volume spike detected — {glassdoorVelocity.reviewVolumeSpikeNote}
+            Unusual spike in employee reviews — {glassdoorVelocity.reviewVolumeSpikeNote}
           </span>
         </div>
       )}
@@ -119,7 +119,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
           style={{ background: 'rgba(255,255,255,0.04)' }}>
           <Clock className="w-3 h-3 flex-shrink-0" style={{ color }} />
           <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
-            Est. <span className="font-bold" style={{ color }}>{glassdoorVelocity.leadTimeEstimateDays} days</span> lead time
+            Est. <span className="font-bold" style={{ color }}>{glassdoorVelocity.leadTimeEstimateDays} days</span> advance warning
           </span>
         </div>
       )}

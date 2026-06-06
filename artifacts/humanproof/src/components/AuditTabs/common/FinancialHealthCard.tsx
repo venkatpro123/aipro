@@ -47,9 +47,9 @@ function computeVerdict(result: HybridResult): VerdictMeta {
       else if (stock >= 15)  { reasons.push(`Stock +${stock}% (90d)`); }
     }
     if (typeof revYoy === 'number') {
-      if (revYoy <= -10)     { score += 22; reasons.push(`Revenue ${revYoy}% YoY`); }
-      else if (revYoy < 0)   { score += 12; reasons.push(`Revenue ${revYoy}% YoY`); }
-      else if (revYoy >= 10) { reasons.push(`Revenue +${revYoy}% YoY`); }
+      if (revYoy <= -10)     { score += 22; reasons.push(`Revenue ${revYoy}% (annual)`); }
+      else if (revYoy < 0)   { score += 12; reasons.push(`Revenue ${revYoy}% (annual)`); }
+      else if (revYoy >= 10) { reasons.push(`Revenue +${revYoy}% (annual)`); }
     }
   } else {
     // Private — funding-stage signals dominate
@@ -61,7 +61,7 @@ function computeVerdict(result: HybridResult): VerdictMeta {
     if (fundingStage === 'bootstrapped') { score += 5; }
   }
 
-  if (secMaterial) { score += 25; reasons.push('SEC material event filed'); }
+  if (secMaterial) { score += 25; reasons.push('Financial warning filed with regulators'); }
 
   // No data? Surface honestly.
   if (stock == null && revYoy == null && fundingStage == null && monthsSinceRaise == null && !secMaterial) {
@@ -150,7 +150,7 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
             tone={stock < -10 ? '#dc2626' : stock < 0 ? '#f97316' : '#10b981'} />
         )}
         {typeof revYoy === 'number' && (
-          <MiniChip label="Revenue YoY" value={`${revYoy > 0 ? '+' : ''}${revYoy}%`}
+          <MiniChip label="Revenue growth" value={`${revYoy > 0 ? '+' : ''}${revYoy}%`}
             tone={revYoy < 0 ? '#f97316' : '#10b981'} />
         )}
         {!isPublic && typeof monthsSinceRaise === 'number' && (
@@ -185,8 +185,8 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
               <DrillCell title="Revenue trajectory" tone={typeof revYoy === 'number' && revYoy < 0 ? '#f97316' : '#10b981'}>
                 <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
                   {typeof revYoy === 'number'
-                    ? `${revYoy > 0 ? '+' : ''}${revYoy}% YoY`
-                    : 'No revenue YoY signal available'}
+                    ? `${revYoy > 0 ? '+' : ''}${revYoy}% (annual)`
+                    : 'No revenue data available'}
                 </p>
               </DrillCell>
             </div>

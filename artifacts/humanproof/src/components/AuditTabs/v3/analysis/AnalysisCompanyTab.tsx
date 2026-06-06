@@ -60,12 +60,12 @@ export const AnalysisCompanyTab: React.FC<Props> = ({ result, companyData, onSwi
             <div className="flex-1 min-w-0">
               <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
                 style={{ background: 'rgba(220,38,38,0.22)', color: '#dc2626' }}>
-                LEGAL GROUND TRUTH · WARN ACT FILED
+                OFFICIAL LAYOFF NOTICE FILED
               </span>
               <p className="text-[13px] font-bold mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
                 {warnDaysLeft !== null && warnDaysLeft > 0
                   ? `Confirmed layoff notice — ${warnDaysLeft} days remaining`
-                  : 'Active WARN Act filing detected for your company'}
+                  : 'An official layoff notice was filed for your company'}
               </p>
             </div>
           </div>

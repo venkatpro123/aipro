@@ -52,25 +52,25 @@ const CONFIG: Record<ProvenanceKind, {
   title: string;
 }> = {
   measured: {
-    label: 'MEASURED',
+    label: 'FROM LIVE DATA',
     color: '#34d399',
     bg: 'rgba(52,211,153,0.10)',
     border: 'rgba(52,211,153,0.28)',
-    title: 'Directly observed from a live or verified source (stock price, SEC filing, WARN notice, etc.)',
+    title: 'We got this directly from a live source — like stock prices, government filings, or news.',
   },
   modeled: {
-    label: 'MODELED',
+    label: 'CALCULATED',
     color: '#60a5fa',
     bg: 'rgba(96,165,250,0.10)',
     border: 'rgba(96,165,250,0.25)',
-    title: 'Computed by HumanProof\'s scoring formula from measured inputs. The model has been calibrated against historical outcomes.',
+    title: 'We calculated this using our formula, which has been tested against real layoffs.',
   },
   estimated: {
-    label: 'ESTIMATED',
+    label: 'BEST ESTIMATE',
     color: '#fbbf24',
     bg: 'rgba(251,191,36,0.10)',
     border: 'rgba(251,191,36,0.28)',
-    title: 'Sector or cohort baseline — not a live observation for this specific company or role. Treat with appropriate uncertainty.',
+    title: 'This is our best estimate based on companies similar to yours. It may not be exact.',
   },
 };
 

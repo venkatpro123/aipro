@@ -40,7 +40,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <BarChart2 className="w-4 h-4" style={{ color: text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Headcount Velocity</span>
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Company Hiring Activity</span>
         </div>
         <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${text}18`, color: text, border: `1px solid ${text}30` }}>
@@ -74,7 +74,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           }}>
             {headcount.contractorRatioRisk}
           </div>
-          <div className="text-[10px] opacity-40 mt-0.5">Contractor Risk</div>
+          <div className="text-[10px] opacity-40 mt-0.5">Contractor Exposure</div>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <Users className="w-3 h-3 flex-shrink-0" style={{ color: TREND_COLOR[headcount.headcountTrend] }} />
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>Headcount Signal</span>
+          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>Hiring Trend</span>
         </div>
         <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
           {headcount.headcountNote}
@@ -102,7 +102,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       {headcount.earlyWarningSignals.length > 0 && (
         <div>
           <div className="text-[10px] font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            EARLY WARNING SIGNALS
+            EARLY WARNING SIGNS
             {headcount.estimatedLayoffLeadTimeDays && (
               <span style={{ color: '#f59e0b' }}> — ~{headcount.estimatedLayoffLeadTimeDays} days lead time</span>
             )}
@@ -140,7 +140,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           border: '1px solid rgba(245,158,11,0.25)',
         }}>
           <span className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
-            ⚠ No live workforce data — neutral baseline shown
+            ⚠ No live data — showing typical baseline
           </span>
         </div>
       ) : headcount.inputsProvided && headcount.inputsProvided.length < 4 ? (

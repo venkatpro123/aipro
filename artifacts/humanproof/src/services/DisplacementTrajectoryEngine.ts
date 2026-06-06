@@ -73,6 +73,32 @@ export interface TrajectoryResult {
   recommendations: TrajectoryRecommendation[];
   displacementCrossover: string | null;    // year base crosses threshold, or null
   growthPerYear: number;                   // average annual % growth in base scenario
+  thresholdForecast?: ThresholdForecastResult; // D7-conditioned 3-scenario agentic forecast
+}
+
+// ─── Threshold Forecast types (D7 Agentic Disruption Layer) ──────────────────
+
+export interface ThresholdForecastPoint {
+  year: string;
+  currentState: number;          // today's AI tools only (mirrors base trajectory)
+  agenticTransition: number;     // enterprise autonomous AI adoption scenario
+  structuralDisruption: number;  // worst-case labor restructuring
+  confidenceBand: 'high' | 'medium' | 'speculative';
+  isThresholdZone: boolean;      // true for years straddling the D7-derived agentic jump
+}
+
+export interface AgenticThresholdWindows {
+  capabilityThreshold: string;  // e.g. "2028–2030"
+  orgAdoption: string;          // e.g. "2029–2032"
+  workforceReduction: string;   // e.g. "2030–2033"
+}
+
+export interface ThresholdForecastResult {
+  points: ThresholdForecastPoint[];
+  thresholdWindows: AgenticThresholdWindows;
+  d7Score: number;
+  thresholdJumpMagnitude: number;  // pts added at agentic inflection
+  narrative: string;
 }
 
 // ─── Annual growth rate table ──────────────────────────────────────────────
@@ -495,6 +521,113 @@ const generateRecommendations = (
   return recs;
 };
 
+// ─── D7-conditioned threshold forecast ──────────────────────────────────────
+
+/**
+ * computeThresholdForecast — generates 3 parallel forecast scenarios
+ * conditioned on D7 (Agentic Disruption Potential score 0-100).
+ *
+ * The "agentic jump" magnitude is derived from D7 so only structurally
+ * vulnerable roles (high D7) show a visible inflection — physical/relational
+ * roles get a near-flat post-threshold curve instead.
+ */
+const computeThresholdForecast = (
+  baseYearPoints: TrajectoryPoint[],
+  d7Score: number,
+  impactTimeline: 'short' | 'medium' | 'long',
+  currentScore: number,
+): ThresholdForecastResult => {
+  const baseYear = new Date().getFullYear(); // 2026
+
+  // ── Jump magnitude from D7 ──────────────────────────────────────────────
+  let jumpMagnitude: number;
+  if (d7Score < 30)      jumpMagnitude = 3 + Math.round((d7Score / 30) * 3);       // 3–6
+  else if (d7Score < 55) jumpMagnitude = 7 + Math.round(((d7Score - 30) / 25) * 5); // 7–12
+  else if (d7Score < 75) jumpMagnitude = 13 + Math.round(((d7Score - 55) / 20) * 7); // 13–20
+  else                   jumpMagnitude = 21 + Math.round(((d7Score - 75) / 25) * 14); // 21–35
+
+  jumpMagnitude = Math.min(35, jumpMagnitude); // hard cap
+
+  // ── Threshold midpoint year from impactTimeline + D7 adjustment ──────────
+  // Base midpoints: short → 2028, medium → 2029, long → 2030
+  const baseThresholdMidpoints: Record<string, number> = {
+    short: 2028, medium: 2029, long: 2030,
+  };
+  let thresholdMid = baseThresholdMidpoints[impactTimeline] ?? 2029;
+  if (d7Score > 75) thresholdMid -= 1; // earlier for highly vulnerable roles
+  if (d7Score < 30) thresholdMid += 1; // later for resilient roles
+  thresholdMid = Math.min(2031, Math.max(2027, thresholdMid));
+
+  // ── Threshold windows (always ranges, never exact years) ─────────────────
+  const capStart = thresholdMid - 1;
+  const capEnd   = thresholdMid + 1;
+  const thresholdWindows: AgenticThresholdWindows = {
+    capabilityThreshold: `${capStart}–${capEnd}`,
+    orgAdoption:         `${capStart + 1}–${capEnd + 2}`,
+    workforceReduction:  `${capStart + 2}–${capEnd + 3}`,
+  };
+
+  // ── Confidence bands per year ─────────────────────────────────────────────
+  const CONFIDENCE: Record<number, ThresholdForecastPoint['confidenceBand']> = {
+    0: 'high', 1: 'high', 2: 'medium', 3: 'medium', 4: 'speculative', 5: 'speculative',
+  };
+
+  // ── Sigmoid ramp helper (smooth S-curve for agentic adoption) ────────────
+  // Returns 0-1 representing fraction of jump applied at position t
+  // Centered on the threshold midpoint, spread ±1.5 years.
+  const sigmoid = (t: number): number => 1 / (1 + Math.exp(-3 * (t - thresholdMid + baseYear)));
+
+  // ── Build 6-year point array ──────────────────────────────────────────────
+  const points: ThresholdForecastPoint[] = baseYearPoints.map((bp, i) => {
+    const yearNum = parseInt(bp.year, 10);
+
+    // currentState mirrors existing base trajectory exactly
+    const currentState = bp.base;
+
+    // agenticTransition: base + sigmoid-ramped jump centered on threshold mid
+    const rampFraction  = sigmoid(yearNum);
+    const agenticJump   = Math.round(jumpMagnitude * rampFraction);
+    const agenticTransition = clamp(currentState + agenticJump);
+
+    // structuralDisruption: agenticTransition + D7-scaled post-threshold pressure
+    // Only adds above-base pressure in years at or after threshold zone
+    const postThresholdFraction = Math.max(0, rampFraction - 0.5) * 2; // 0→1 after mid
+    const extraDisruption = Math.round((d7Score * 0.15) * postThresholdFraction);
+    const structuralDisruption = clamp(agenticTransition + extraDisruption);
+
+    const isThresholdZone = yearNum >= capStart && yearNum <= capEnd;
+
+    return {
+      year: bp.year,
+      currentState,
+      agenticTransition,
+      structuralDisruption,
+      confidenceBand: CONFIDENCE[i] ?? 'speculative',
+      isThresholdZone,
+    };
+  });
+
+  // ── Role-specific narrative (honest, no fear framing) ────────────────────
+  let narrative: string;
+  if (d7Score < 30) {
+    narrative = `Your role is resilient today. Structural AI disruption may affect supporting workflows over the coming decade, but the core of your work depends on capabilities autonomous AI is unlikely to replicate in this timeframe.`;
+  } else if (d7Score < 55) {
+    narrative = `Your role is resilient today, but structural AI disruption may materially change the landscape over the next several years. The degree of impact depends on how quickly autonomous AI crosses enterprise adoption thresholds — an uncertain but real possibility.`;
+  } else if (d7Score < 75) {
+    narrative = `Today's AI tools present moderate exposure. If autonomous AI reaches enterprise scale within this decade — which is uncertain but possible — the nature of this role could change significantly. The window for strategic repositioning remains open.`;
+  } else {
+    narrative = `This role carries meaningful structural exposure to autonomous AI adoption. Today's risk is manageable. The material question is whether and when agentic AI crosses enterprise adoption thresholds — and whether preparation begins before that happens.`;
+  }
+
+  return {
+    points,
+    thresholdWindows,
+    d7Score,
+    thresholdJumpMagnitude: jumpMagnitude,
+    narrative,
+  };
+};
+
 // ─── Main export ──────────────────────────────────────────────────────────
 export interface TrajectoryEngineParams {
   currentScore: number;                  // 0-100 from ensemble/oracle
@@ -502,10 +635,11 @@ export interface TrajectoryEngineParams {
   roleKey: string;                       // e.g. "sw_backend", "fin_account"
   experience?: string;                   // "0-2" | "2-5" | "5-10" | "10-15" | "15+"
   careerIntelligence?: CareerIntelligence | null;
+  d7Score?: number;                      // D7 Agentic Disruption Potential (0-100), default 55
 }
 
 export const computeTrajectory = (params: TrajectoryEngineParams): TrajectoryResult => {
-  const { currentScore, oracleResult, roleKey, experience = '5-10', careerIntelligence } = params;
+  const { currentScore, oracleResult, roleKey, experience = '5-10', careerIntelligence, d7Score = 55 } = params;
 
   const dimensions = oracleResult?.dimensions ?? [];
   // ── Upgraded: pass careerIntelligence so data-driven profile takes priority ──
@@ -579,6 +713,14 @@ export const computeTrajectory = (params: TrajectoryEngineParams): TrajectoryRes
     careerIntelligence
   );
 
+  // Derive impact timeline from crossover/growth for threshold forecast
+  const impactTimeline: 'short' | 'medium' | 'long' =
+    (interpretation === 'critical_now' || interpretation === 'high_risk_imminent') ? 'short'
+    : (interpretation === 'moderate_rising' || growthPerYear >= 3)                ? 'medium'
+    : 'long';
+
+  const thresholdForecast = computeThresholdForecast(years, d7Score, impactTimeline, currentScore);
+
   return {
     years,
     threshold,
@@ -591,5 +733,6 @@ export const computeTrajectory = (params: TrajectoryEngineParams): TrajectoryRes
     recommendations,
     displacementCrossover,
     growthPerYear,
+    thresholdForecast,
   };
 };

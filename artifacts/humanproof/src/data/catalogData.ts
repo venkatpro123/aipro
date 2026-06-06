@@ -66,6 +66,11 @@ export const INDUSTRIES: Industry[] = [
   {key:'government',label:'Government / Public Sector',icon:'🏛️',cat:'Government & Social'},
   {key:'ngo',label:'NGO / Non-profit / Social Sector',icon:'🌍',cat:'Government & Social'},
   {key:'agriculture',label:'Agriculture / Agritech',icon:'🌾',cat:'Government & Social'},
+  {key:'ai_infra',label:'AI Infrastructure / MLOps',icon:'🧠',cat:'AI & Emerging'},
+  {key:'ai_safety_gov',label:'AI Safety / Governance',icon:'⚖️',cat:'AI & Emerging'},
+  {key:'autonomous_sys',label:'Autonomous Systems / Robotics',icon:'🤖',cat:'AI & Emerging'},
+  {key:'spatial_xr',label:'Spatial Computing / XR',icon:'🥽',cat:'AI & Emerging'},
+  {key:'climate_ai',label:'Climate Tech / Green AI',icon:'🌍',cat:'AI & Emerging'},
 ];
 
 export const WORK_TYPES: Record<string, WorkType[]> = {
@@ -118,6 +123,11 @@ export const WORK_TYPES: Record<string, WorkType[]> = {
   government:[{key:'gov_admin',label:'Government Administration'},{key:'gov_policy',label:'Policy Making / Analysis'},{key:'gov_public_finance',label:'Public Finance'},{key:'gov_social',label:'Social Welfare Administration'},{key:'gov_it',label:'Government IT / e-Governance'}],
   ngo:[{key:'ngo_program',label:'Programme Management'},{key:'ngo_fundraise',label:'Fundraising / Donor Relations'},{key:'ngo_comms',label:'Communications / Advocacy'},{key:'ngo_field',label:'Field Operations'},{key:'ngo_research',label:'Policy Research'}],
   agriculture:[{key:'agri_farming',label:'Farming / Crop Management'},{key:'agri_tech',label:'AgriTech / Precision Farming'},{key:'agri_supply',label:'Agri Supply Chain'},{key:'agri_research',label:'Agricultural Research'},{key:'agri_finance',label:'Agri Finance'}],
+  ai_infra:[{key:'em_llm_engineer',label:'LLM Systems Engineer'},{key:'em_agent_ops_mgr',label:'Agent Operations Manager'},{key:'em_ai_workflow_arch',label:'AI Workflow Architect'},{key:'ml_platform',label:'MLOps / ML Platform Engineer'},{key:'em_agentic_sys_designer',label:'Agentic Systems Designer'},{key:'em_synthetic_data_eng',label:'Synthetic Data Engineer'}],
+  ai_safety_gov:[{key:'em_ai_safety',label:'AI Safety Researcher'},{key:'em_ai_governance_lead',label:'AI Governance Lead'},{key:'em_ai_ethics',label:'AI Ethics Officer'},{key:'em_ai_red_teamer',label:'AI Red Teamer'},{key:'em_ai_transformation_lead',label:'AI Transformation Lead'}],
+  autonomous_sys:[{key:'em_autonomous_agent_supervisor',label:'Autonomous Agent Supervisor'},{key:'em_robotics_ai_trainer',label:'Robotics AI Trainer'},{key:'em_digital_twin_arch',label:'Digital Twin Architect'},{key:'em_ai_workforce_strategist',label:'AI Workforce Strategist'}],
+  spatial_xr:[{key:'em_spatial_computing_dev',label:'Spatial Computing Developer'},{key:'em_digital_human_designer',label:'Digital Human Designer'},{key:'em_human_ai_collab_designer',label:'Human-AI Collaboration Designer'}],
+  climate_ai:[{key:'em_climate_tech',label:'Climate Tech Solutions Analyst'},{key:'em_climate_ai_analyst',label:'Climate AI / Carbon Intelligence Analyst'}],
   default:[{key:'data',label:'Data Processing / Analysis'},{key:'content_default',label:'Content Creation / Writing'},{key:'coding',label:'Software / Coding'},{key:'communication',label:'Customer Service'},{key:'creative',label:'Visual / Creative Design'},{key:'management',label:'Management / Administration'},{key:'physical',label:'Physical / Field Work'},{key:'strategy',label:'Strategy / Consulting'},{key:'teaching',label:'Teaching / Training'},{key:'care',label:'Healthcare / Care'}]
 };
 

@@ -109,11 +109,11 @@ const ActionCard: React.FC<{
         </span>
         <span className="text-[10px] opacity-30">·</span>
         <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          ROI {action.roiScore}/100
+          Impact {action.roiScore}/100
         </span>
         <span className="text-[10px] opacity-30">·</span>
         <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          {action.sourceLayer}
+          {(action.sourceLayer ?? '').replace(/^L\d+\s*·\s*|^D\d+\s*·\s*/i, '')}
         </span>
       </div>
     </div>
@@ -642,16 +642,16 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         if (compRisk?.cascadeStage === 'PAY_FREEZE' || compRisk?.cascadeStage === 'PAY_CUT' || compRisk?.cascadeStage === 'PRE_LAYOFF') {
           alerts.push({ icon: '🔴', text: `${compRisk.cascadeStageLabel}`, color: '#ef4444' });
         }
-        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'In M&A peak restructuring window (months 6–18)', color: '#ef4444' });
-        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: `Sentiment early warning — ${sentiment.sentimentLeadTimeEstimate}`, color: '#f59e0b' });
-        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: leadership.vpClusteringNote?.split('.')[0] ?? 'VP departure cluster detected', color: '#f97316' });
-        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'CFO departure — strongest 90-day layoff predictor', color: '#ef4444' });
+        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'Company is in the highest-risk window for restructuring after a merger or acquisition (months 6–18)', color: '#ef4444' });
+        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: `Employee sentiment is declining — ${sentiment.sentimentLeadTimeEstimate}`, color: '#f59e0b' });
+        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: leadership.vpClusteringNote?.split('.')[0] ?? 'Multiple VP-level departures in a short window', color: '#f97316' });
+        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'CFO has recently left — one of the strongest early signs of restructuring', color: '#ef4444' });
 
         if (alerts.length === 0) return null;
         return (
           <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
             <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              v14.0 SIGNAL ALERTS ({alerts.length})
+              WHAT WE'RE WATCHING ({alerts.length})
             </div>
             {alerts.map((a, i) => (
               <div key={i} className="flex items-start gap-2">
@@ -671,7 +671,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>TOP PRIORITY NOW</span>
             {typeof synthesis.topPriorityAction?.roiScore === 'number' && (
               <span className="text-[9px] font-mono ml-auto px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0' }}>
-                ROI {synthesis.topPriorityAction.roiScore}
+                Impact {synthesis.topPriorityAction.roiScore}/100
               </span>
             )}
           </div>
@@ -692,7 +692,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               <>
                 <span className="text-[10px] opacity-30">·</span>
                 <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  {synthesis.topPriorityAction.sourceLayer}
+                  {(synthesis.topPriorityAction.sourceLayer ?? '').replace(/^L\d+\s*·\s*|^D\d+\s*·\s*/i, '')}
                 </span>
               </>
             )}

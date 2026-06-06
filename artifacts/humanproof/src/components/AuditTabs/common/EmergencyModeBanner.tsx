@@ -36,8 +36,8 @@ function getEmpathyHeadline(result: HybridResult): { main: string; sub: string }
     const notices = r.warnSignal?.recentNotices?.length ?? 0;
     return {
       main: notices > 0
-        ? `WARN filing on record — ${notices} notice${notices === 1 ? '' : 's'} detected`
-        : 'Active WARN filing detected for this company',
+        ? `Official layoff notice on record — ${notices} filing${notices === 1 ? '' : 's'} found`
+        : 'An official layoff notice was filed for this company',
       sub: "This is a 60–90 day window. You're reading this early enough to act."
     };
   }

@@ -29,9 +29,9 @@ const ANALYST_CONFIG: Record<AnalystConsensus, { label: string; color: string; b
 };
 
 const COHORT_CONFIG = {
-  DISTRESS:   { label: 'DISTRESS',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.28)'   },
-  EFFICIENCY: { label: 'EFFICIENCY', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.24)'  },
-  WAVE:       { label: 'WAVE',       color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.24)'  },
+  DISTRESS:   { label: 'FINANCIAL STRESS',    color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.28)'   },
+  EFFICIENCY: { label: 'COST CUTTING',        color: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.24)'  },
+  WAVE:       { label: 'SECTOR LAYOFF WAVE',  color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.24)'  },
 };
 
 function fcfColor(margin: number): string {
@@ -70,7 +70,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         <div className="flex items-center gap-2">
           <BarChart2 className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.55)' }} />
           <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            SEC Enhanced Financial Signals
+            Financial Health Signals
           </span>
         </div>
         <span
@@ -87,7 +87,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         {/* Free Cash Flow Margin */}
         <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
           style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Free Cash Flow Margin</span>
+          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Cash Flow Health</span>
           {financialSignals.freeCashFlowMargin !== null ? (
             <span className="text-[11px] font-bold" style={{ color: fcfColor(financialSignals.freeCashFlowMargin) }}>
               {(financialSignals.freeCashFlowMargin * 100).toFixed(1)}%
@@ -101,7 +101,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         {financialSignals.priceTargetChangePct !== null && (
           <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Price Target Change (90d)</span>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Analyst Price Target (last 3 months)</span>
             <div className="flex items-center gap-1">
               {financialSignals.priceTargetChangePct > 0
                 ? <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />
@@ -144,7 +144,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
             <div className="text-[10px] font-bold" style={{ color: earningsConf.color }}>
               {earningsConf.label}
             </div>
-            <div className="text-[10px] opacity-50 mt-0.5">Earnings Surprise</div>
+            <div className="text-[10px] opacity-50 mt-0.5">Last Earnings</div>
           </div>
         )}
         {analystConf && (
@@ -152,7 +152,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
             <div className="text-[10px] font-bold" style={{ color: analystConf.color }}>
               {analystConf.label}
             </div>
-            <div className="text-[10px] opacity-50 mt-0.5">Analyst Consensus</div>
+            <div className="text-[10px] opacity-50 mt-0.5">Analyst Rating</div>
           </div>
         )}
       </div>
@@ -161,7 +161,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
       {cohortConf && (
         <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 mb-2.5"
           style={{ background: cohortConf.bg, border: `1px solid ${cohortConf.border}` }}>
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>Cohort signal:</span>
+          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>Similar companies:</span>
           <span className="text-[10px] font-black tracking-widest" style={{ color: cohortConf.color }}>
             {cohortConf.label}
           </span>
@@ -173,7 +173,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
-              Score Adjustment
+              Score Impact
             </span>
             <span className="text-[11px] font-black" style={{ color: adjColor }}>
               {adjSign}{riskAdjustment} pts

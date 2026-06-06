@@ -119,8 +119,8 @@ interface TabConfig {
 const TAB_CONFIG: TabConfig[] = [
   {
     value: 'summary',
-    label: 'Command Center',
-    shortLabel: 'Command',
+    label: 'My Risk',
+    shortLabel: 'Risk',
     Icon: TrendingUp,
     getBadge: (r) => {
       const c = riskColor(r.total);
@@ -129,7 +129,7 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'company',
-    label: 'Company Intel',
+    label: 'Company',
     shortLabel: 'Company',
     Icon: Building2,
     getBadge: (r: any) => {
@@ -166,8 +166,8 @@ const TAB_CONFIG: TabConfig[] = [
   },
   {
     value: 'intel',
-    label: 'Intelligence Lab',
-    shortLabel: 'Lab',
+    label: 'Deep Dive',
+    shortLabel: 'Dive',
     Icon: Radio,
     getBadge: (r) => {
       const live = r.signalQuality?.liveSignals ?? 0;

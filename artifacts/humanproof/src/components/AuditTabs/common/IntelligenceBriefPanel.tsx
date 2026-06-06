@@ -113,9 +113,7 @@ const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => 
           {companyName ? ` for ${companyName}` : ''}.
         </p>
         <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          A company-specific intelligence brief requires at least one live data source — stock
-          signals, news coverage, job postings, or a WARN filing — so the analysis is grounded
-          in what is actually happening at this company right now, not in sector averages.
+          A company summary requires at least one live source — stock data, news, job postings, or an official filing — so it reflects what's actually happening right now, not just industry averages.
         </p>
         <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.30)' }}>
           A brief will be generated automatically once live signals resolve. You can also

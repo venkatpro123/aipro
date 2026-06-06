@@ -234,7 +234,7 @@ const CompanyIdentityCard: React.FC<{
       }}>
         {[
           {
-            label: 'Revenue YoY',
+            label: 'Revenue Growth (annual)',
             value: revGrowth != null ? `${revGrowth > 0 ? '+' : ''}${revGrowth}%` : '—',
             color: revGrowth == null ? 'var(--text-3)' : revGrowth >= 0 ? '#10b981' : '#ef4444',
             icon: revGrowth != null ? (revGrowth >= 0 ? '▲' : '▼') : '—',
@@ -426,7 +426,7 @@ const FinancialHealthDossier: React.FC<{
 
     if (companyData.revenueGrowthYoY != null) {
       m.push({
-        label: "Revenue Growth (YoY)",
+        label: "Revenue Growth (annual)",
         value: `${companyData.revenueGrowthYoY > 0 ? "+" : ""}${companyData.revenueGrowthYoY}%`,
         trend: companyData.revenueGrowthYoY > 0 ? "up" : companyData.revenueGrowthYoY < 0 ? "down" : "neutral",
         icon: <BarChart4 className="w-4 h-4 text-blue-400" />,
@@ -1055,7 +1055,7 @@ const buildIntelligentSignals = (
       timestamp: fetchedAt,
       source: "Filings + analyst consensus",
       type: "financial",
-      content: `Revenue ${yoy > 0 ? "+" : ""}${yoy}% YoY — ${verdict}`,
+      content: `Revenue ${yoy > 0 ? "+" : ""}${yoy}% (annual) — ${verdict}`,
       impact: yoy < -10 ? "high" : yoy < 0 ? "medium" : "low",
     });
   }
@@ -1252,7 +1252,7 @@ const buildDepartmentNews = (
       sentiment: "negative",
       tag: "FINANCIAL",
       highlights: [
-        `Revenue down ${Math.abs(companyData.revenueGrowthYoY)}% YoY — well below ${bench.growthOutlook} sector outlook`,
+        `Revenue down ${Math.abs(companyData.revenueGrowthYoY)}% this year — well below ${bench.growthOutlook} sector outlook`,
         "Revenue contractions of this magnitude historically precede workforce reductions within 1–2 quarters",
         `Based on ${employeeCount.toLocaleString()} headcount and current revenue/employee ratio`,
       ],
@@ -1570,7 +1570,7 @@ export const CompanyProfileTab: React.FC<TabProps> = ({ result, companyData }) =
             <div>
               <SectionHeader
                 title="Live Signal Feed"
-                description="Real-time and heuristic signals derived from financial data, job board activity, AI investment levels, and layoff patterns."
+                description="Live data from financial reports, job boards, AI trends, and layoff patterns."
               />
               <LiveSignalFeed signals={liveSignals} />
             </div>

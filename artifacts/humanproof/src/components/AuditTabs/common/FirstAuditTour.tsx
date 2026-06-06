@@ -109,7 +109,7 @@ const STEPS: Step[] = [
         return 'A hiring freeze is one of the strongest early layoff signals the AI tracks. The Company tab has the full breakdown — worth checking next.';
       if (rounds > 0)
         return 'Multiple layoff rounds are a heavy risk signal. The Company tab shows exactly when they happened and what the data says now.';
-      return 'The Company tab has live signals — WARN filings, hiring trends, news — updated as they change. Check it to see the ground truth behind your score.';
+      return 'The Company tab has live data — hiring trends, official notices, news — updated as things change. Check it to see what\'s driving your score.';
     },
   },
 ];

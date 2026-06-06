@@ -54,11 +54,11 @@ const ACCENT = '#22d3ee';
 function provenanceLine(calibrationMode?: string): string {
   switch (calibrationMode) {
     case 'live_empirical':
-      return 'This read is calibrated against 200+ real layoff outcomes.';
+      return 'This is based on 200+ real layoffs we studied.';
     case 'live_developing':
-      return 'Calibrated on a growing set of real outcomes — accuracy improves as more come in.';
+      return 'We\'re learning from real outcomes — accuracy improves over time.';
     default:
-      return 'We lean on cautious estimates while real outcomes accumulate — deliberately conservative, not alarmist.';
+      return 'We\'re being cautious with estimates until we have more real data to learn from.';
   }
 }
 
@@ -87,13 +87,13 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
     caveats.push({
       icon: AlertTriangle,
       color: '#f59e0b',
-      text: 'No live data this run — the analysis draws on historical sector averages.',
+      text: 'No live company data this time — we used typical patterns for your industry.',
     });
   } else if (freshnessTier === 'stale') {
     caveats.push({
       icon: Clock,
       color: 'rgba(255,255,255,0.55)',
-      text: 'Some signals are cached — the read uses live data supplemented by recent baselines.',
+      text: 'Some data is recent, some is from our last check. Both are factored in.',
     });
   }
 
@@ -101,7 +101,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
     caveats.push({
       icon: Info,
       color: '#f59e0b',
-      text: `${lowDataWarning.missingCount} important signal${lowDataWarning.missingCount > 1 ? 's' : ''} couldn't be confirmed — the score is held to a ${Math.round(lowDataWarning.capAt * 100)}% confidence cap until they're in.`,
+      text: `${lowDataWarning.missingCount} important signal${lowDataWarning.missingCount > 1 ? 's' : ''} couldn't be confirmed — so we're capping our confidence at ${Math.round(lowDataWarning.capAt * 100)}% until we can.`,
     });
   }
 
@@ -109,7 +109,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
     caveats.push({
       icon: AlertTriangle,
       color: '#f97316',
-      text: `${conflictCount} signal${conflictCount > 1 ? 's' : ''} pointed different directions — we widened the range rather than pick a side.`,
+      text: `${conflictCount} signal${conflictCount > 1 ? 's' : ''} pointed in different directions — we widened the estimate rather than guess.`,
     });
   }
 
@@ -133,7 +133,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
 
   return (
     <AdaptiveBlock
-      title="How confident is this read?"
+      title="How sure are we about this score?"
       subtitle={leadLine}
       icon={severe ? Gauge : ShieldCheck}
       accentColor={severe ? '#f59e0b' : ACCENT}
@@ -165,7 +165,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
 
       {caveats.length === 0 && (
         <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          No data-quality flags this run — live signals resolved cleanly and nothing conflicted.
+          Everything checked out — signals were consistent and data was fresh.
         </p>
       )}
     </AdaptiveBlock>

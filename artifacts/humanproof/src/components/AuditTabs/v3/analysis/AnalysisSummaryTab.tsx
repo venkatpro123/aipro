@@ -131,7 +131,7 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
               </div>
               <p style={{ fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--text-2,rgba(255,255,255,0.75))', marginBottom: 8 }}>
                 {r.warnSignal?.hasActiveWARN
-                  ? 'A WARN Act filing is confirmed — a legal 60-day advance notice for your company.'
+                  ? 'An official layoff notice has been filed for your company — a government-required 60-day warning.'
                   : "You're discovering this risk months early. That gap is your advantage."}
               </p>
             </div>
@@ -180,7 +180,7 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
       >
         <StatChip label="Confidence" value={`${confPct}%`} sub={canonicalConf.userFacing.label.toLowerCase()} color={canonicalConf.userFacing.color} icon={Shield} />
         <StatChip label="Readiness" value={`${pScore}`} sub={preparedness?.readinessLabel ?? '—'} color={pColor} icon={Shield} />
-        <StatChip label="Live Signals" value={`${liveCount}`} sub={liveCount >= 4 ? 'full live' : liveCount >= 2 ? 'partial' : 'heuristic'} color={liveCount >= 4 ? '#10b981' : liveCount >= 2 ? '#22d3ee' : '#f59e0b'} icon={Signal} />
+        <StatChip label="Live Signals" value={`${liveCount}`} sub={liveCount >= 4 ? 'full live' : liveCount >= 2 ? 'partial' : 'estimated'} color={liveCount >= 4 ? '#10b981' : liveCount >= 2 ? '#22d3ee' : '#f59e0b'} icon={Signal} />
         <StatChip label="Data Age" value={`${dataAge}d`} sub={dataAge <= 1 ? 'fresh' : dataAge <= 7 ? 'recent' : 'stale'} color={dataAge <= 1 ? '#10b981' : dataAge <= 7 ? '#22d3ee' : '#f97316'} icon={Clock} />
       </motion.div>
 

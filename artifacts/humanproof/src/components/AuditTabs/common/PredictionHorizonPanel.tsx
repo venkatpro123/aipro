@@ -23,7 +23,7 @@ const WEIGHT_COLORS: Record<string, string> = {
   L1: '#ef4444', L2: '#f97316', L3: '#f59e0b', L4: '#06b6d4', L5: '#10b981',
 };
 const WEIGHT_LABELS: Record<string, string> = {
-  L1: 'Financial', L2: 'Layoff Hist', L3: 'Displacement', L4: 'Sector', L5: 'Protection',
+  L1: 'Financial', L2: 'Layoffs', L3: 'AI Risk', L4: 'Sector', L5: 'Protection',
 };
 
 // Matches AnalysisTab.scoreColor exactly — both live in the same Intel tab;
@@ -39,10 +39,10 @@ function scoreColor(score: number): string {
 }
 
 function confidenceLabel(conf: number): { text: string; color: string } {
-  if (conf >= 0.80) return { text: 'HIGH', color: '#10b981' };
-  if (conf >= 0.65) return { text: 'MOD',  color: '#00d4e0' };
-  if (conf >= 0.50) return { text: 'LOW',  color: '#f59e0b' };
-  return { text: 'WEAK', color: '#f97316' };
+  if (conf >= 0.80) return { text: 'Strong', color: '#10b981' };
+  if (conf >= 0.65) return { text: 'Good',   color: '#00d4e0' };
+  if (conf >= 0.50) return { text: 'Fair',   color: '#f59e0b' };
+  return { text: 'Weak', color: '#f97316' };
 }
 
 const WeightMiniChart: React.FC<{ weights: HorizonRisk['weightsApplied'] }> = ({ weights }) => (
@@ -129,7 +129,7 @@ const HorizonColumn: React.FC<{
           <div className="flex items-center gap-1 mt-1">
             <AlertTriangle className="w-2.5 h-2.5" style={{ color: '#ef4444' }} />
             <span style={{ fontSize: '9px', color: '#ef4444', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.06em' }}>
-              WARN OVERRIDE
+              NOTICE FILED
             </span>
           </div>
         )}
@@ -143,7 +143,7 @@ const HorizonColumn: React.FC<{
       {/* Dominant signal */}
       <div className="pl-2">
         <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
-          Dominant signal
+          Main driver
         </div>
         <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.4 }}>
           {horizon.dominantSignal}
@@ -162,14 +162,11 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
       <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
         <Clock className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
-          Prediction Horizons
-        </span>
-        <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginLeft: '4px' }}>
-          · signal weights adapt per horizon
+          Risk Over Time
         </span>
         {groundTruthOverride && (
           <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded animate-pulse" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
-            WARN ACT ACTIVE
+            LAYOFF NOTICE ACTIVE
           </span>
         )}
       </div>
@@ -233,7 +230,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-            Trajectory Narrative
+            Where your risk is heading
           </div>
           <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.55 }}>
             {trajectoryNarrative}

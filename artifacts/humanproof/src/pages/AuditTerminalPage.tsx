@@ -13,6 +13,7 @@ import {
   getVerdict,
   getTimeline,
   getUrgency,
+  calculateD7,
 } from '../data/riskFormula';
 // normalizeExperience used internally in riskFormula; not needed at the page level.
 import type { ScoreResult } from '../data/riskFormula';
@@ -20,6 +21,8 @@ import NeuralSphereLoader from '../components/RiskOracle/NeuralSphereLoader';
 import { getCachedRisk, setCachedRisk } from '../services/cache/riskCache';
 import { recordScore, getScoreDelta, type ScoreDelta } from '../services/scoreDeltaService';
 import { PremiumSelect, type SelectOption } from '../components/ui/PremiumSelect';
+import { RoleCombobox } from '../components/ui/RoleCombobox';
+import { generateDynamicRoleIntelligence } from '../services/dynamicRoleIntelligence';
 import { StrategicRoadmap } from '../components/StrategicRoadmap';
 import { getCareerIntelligence } from '../data/intelligence/index';
 import { DimensionRadar } from '../components/DimensionRadar';
@@ -51,6 +54,8 @@ import { RoleEvolutionPath }       from '../components/AIDisplacementEngine/Role
 import { EarlyWarningSignals }     from '../components/AIDisplacementEngine/EarlyWarningSignals';
 import { EnhancedActionPlan }      from '../components/AIDisplacementEngine/EnhancedActionPlan';
 import { PsychologicalFramingPanel }from '../components/AIDisplacementEngine/PsychologicalFramingPanel';
+import { StructuralRiskPanel }     from '../components/AIDisplacementEngine/StructuralRiskPanel';
+import { RoleCategoryBadge }       from '../components/AIDisplacementEngine/RoleCategoryBadge';
 
 // ── Bridge: catalogData industry keys → industryRiskData keys ────────────────
 const INDUSTRY_TO_RISK_KEY: Record<string, string> = {
@@ -135,9 +140,10 @@ type TabKey = 'overview' | 'intelligence' | 'tasks' | 'protection' | 'strategy';
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const AuditTerminalPage: React.FC = () => {
-  const [industryKey, setIndustryKey] = useState('');
-  const [workTypeKey, setWorkTypeKey] = useState('');
-  const [experience, setExperience]   = useState('5-10');
+  const [industryKey, setIndustryKey]     = useState('');
+  const [workTypeKey, setWorkTypeKey]     = useState('');
+  const [customRoleTitle, setCustomRoleTitle] = useState('');
+  const [experience, setExperience]       = useState('5-10');
   const [countryKey, setCountryKey]   = useState('usa');
   const [result, setResult]           = useState<ScoreResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -318,7 +324,14 @@ const AuditTerminalPage: React.FC = () => {
   }, []);
 
   const scoreColor       = result ? getScoreColor(result.total) : 'var(--cyan)';
-  const intel            = workTypeKey ? getCareerIntelligence(workTypeKey) : null;
+  const _seededIntel     = workTypeKey && workTypeKey !== '__custom__' ? getCareerIntelligence(workTypeKey) : null;
+  const _dynamicResult   = useMemo(() => {
+    if (workTypeKey !== '__custom__' || !customRoleTitle || !result) return null;
+    const d1 = result.dimensions.find((d) => d.key === 'D1')?.score ?? 50;
+    const d6 = result.dimensions.find((d) => d.key === 'D6')?.score ?? 50;
+    return generateDynamicRoleIntelligence(customRoleTitle, industryKey, experience, countryKey, d1, d6);
+  }, [workTypeKey, customRoleTitle, result, industryKey, experience, countryKey]);
+  const intel            = _seededIntel ?? _dynamicResult?.intel ?? null;
   const currentIndustry  = INDUSTRIES.find((i) => i.key === industryKey);
   const catColor         = currentIndustry ? (CAT_COLORS[currentIndustry.cat] ?? 'var(--cyan)') : 'var(--cyan)';
   const synthesis        = result?.inaction_scenario ?? null;
@@ -404,15 +417,22 @@ const AuditTerminalPage: React.FC = () => {
   const [techStack,       setTechStack]      = useState('');
 
   // ── AI Displacement Intelligence Engine derived data ──────────────────────
-  const automationTimeline = useMemo(
-    () => workTypeKey ? getAutomationTimeline(workTypeKey) : null,
-    [workTypeKey],
-  );
+  const automationTimeline = useMemo(() => {
+    if (!workTypeKey) return null;
+    if (workTypeKey === '__custom__') return _dynamicResult?.timeline ?? null;
+    return getAutomationTimeline(workTypeKey);
+  }, [workTypeKey, _dynamicResult]);
 
   const industryRiskEntry = useMemo(() => {
     const rk = INDUSTRY_TO_RISK_KEY[industryKey];
     return rk ? (industryRiskData[rk] ?? null) : null;
   }, [industryKey]);
+
+  // D7 — Agentic Disruption Potential (supplementary structural signal, not in base formula)
+  const d7Score = useMemo(
+    () => workTypeKey ? calculateD7(workTypeKey) : 55,
+    [workTypeKey],
+  );
 
   const agenticScore = useMemo(() => {
     if (!result || !workTypeKey) return null;
@@ -423,8 +443,9 @@ const AuditTerminalPage: React.FC = () => {
       experience,
       countryKey,
       companyType: companyType || undefined,
+      d7Score,
     });
-  }, [result, industryKey, workTypeKey, experience, countryKey, companyType]);
+  }, [result, industryKey, workTypeKey, experience, countryKey, companyType, d7Score]);
 
   const trajectory = useMemo(() => {
     if (!result || !workTypeKey) return null;
@@ -437,11 +458,12 @@ const AuditTerminalPage: React.FC = () => {
       roleKey: workTypeKey,
       experience,
       careerIntelligence: intel ?? undefined,
+      d7Score,
     });
-  }, [result, workTypeKey, experience, intel]);
+  }, [result, workTypeKey, experience, intel, d7Score]);
 
   const evolutionPath = workTypeKey ? ROLE_EVOLUTION_PATHS[workTypeKey] : undefined;
-  const roleLabel     = workTypeOptions.find((o) => o.key === workTypeKey)?.label ?? workTypeKey;
+  const roleLabel     = workTypeKey === '__custom__' ? (customRoleTitle || 'Custom Role') : (workTypeOptions.find((o) => o.key === workTypeKey)?.label ?? workTypeKey);
   const industryLabel = industryOptions.find((o) => o.key === industryKey)?.label ?? industryKey;
 
   const TABS: { key: TabKey; label: string }[] = [
@@ -495,11 +517,15 @@ const AuditTerminalPage: React.FC = () => {
 
           <div>
             <label className="label-xs" style={{ display: 'block', marginBottom: '8px', color: 'var(--text-3)' }}>YOUR ROLE</label>
-            <PremiumSelect
+            <RoleCombobox
               options={workTypeOptions}
               value={workTypeKey}
-              onChange={setWorkTypeKey}
-              placeholder={industryKey ? 'Select your role' : 'Select industry first'}
+              customTitle={customRoleTitle}
+              onChange={(key, title) => {
+                setWorkTypeKey(key);
+                if (title !== undefined) setCustomRoleTitle(title);
+              }}
+              placeholder={industryKey ? 'Search or type any role...' : 'Select industry first'}
               disabled={!industryKey}
             />
           </div>
@@ -692,14 +718,25 @@ const AuditTerminalPage: React.FC = () => {
                   </span>
                 </div>
 
+                {/* ── Role context row: role label + category badge ── */}
+                {roleLabel && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-2)', fontWeight: 600 }}>{roleLabel}</span>
+                    <RoleCategoryBadge
+                      category={intel?.roleCategory ?? (workTypeKey === '__custom__' ? 'emerging_unknown' : undefined)}
+                      isDynamic={workTypeKey === '__custom__'}
+                    />
+                  </div>
+                )}
+
                 {/* ── Confidence badge — ENHANCEMENT #1 ── */}
                 {(() => {
                   const conf   = result.confidence;
                   const dq     = result.dataQuality;
                   const pct    = result.content_confidence ?? (conf === 'HIGH' ? 88 : conf === 'MODERATE' ? 68 : 48);
                   const cColor = conf === 'HIGH' ? 'var(--emerald)' : conf === 'MODERATE' ? 'var(--amber)' : 'var(--red)';
-                  const cLabel = conf === 'HIGH' ? 'High Confidence' : conf === 'MODERATE' ? 'Moderate Confidence' : 'Low Confidence';
-                  const cDesc  = dq === 'DQ_FULL' ? 'Deep role intelligence · seeded data' : dq === 'DQ_PARTIAL' ? 'Mixed signals · industry heuristics' : 'Estimated · limited role data';
+                  const cLabel = conf === 'HIGH' ? 'Strong confidence' : conf === 'MODERATE' ? 'Moderate confidence' : 'Limited data';
+                  const cDesc  = dq === 'DQ_FULL' ? 'Detailed role data available' : dq === 'DQ_PARTIAL' ? 'Partial data — some estimates used' : 'Estimated — limited data for this role';
                   return (
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '8px',
@@ -1006,12 +1043,23 @@ const AuditTerminalPage: React.FC = () => {
               {/* ── TAB 2: AI INTELLIGENCE ──────────────────────────────────── */}
               {activeTab === 'intelligence' && (
                 <div>
+                  {/* §2b — Future AI Wave Assessment (structural risk card) */}
+                  {agenticScore && trajectory && (
+                    <StructuralRiskPanel
+                      currentScore={result.total}
+                      trajectory={trajectory}
+                      agenticScore={agenticScore}
+                      thresholdForecast={trajectory.thresholdForecast}
+                    />
+                  )}
+
                   {/* §3 — Capability Threshold Forecast */}
                   {trajectory && automationTimeline ? (
                     <CapabilityThresholdPanel
                       trajectory={trajectory}
                       timeline={automationTimeline}
                       scoreColor={scoreColor}
+                      thresholdForecast={trajectory.thresholdForecast}
                     />
                   ) : (
                     <div style={{ textAlign: 'center', padding: '32px', opacity: 0.4 }}>
@@ -1037,6 +1085,7 @@ const AuditTerminalPage: React.FC = () => {
                       agenticTier={agenticScore.tier}
                       impactTimeline={automationTimeline.impactTimeline}
                       verdict={getVerdict(result.total)}
+                      d7Score={d7Score}
                     />
                   )}
                 </div>
@@ -1051,6 +1100,9 @@ const AuditTerminalPage: React.FC = () => {
                       timeline={automationTimeline}
                       d1Score={result.dimensions.find(d => d.key === 'D1')?.score ?? 50}
                       techStack={techStack || undefined}
+                      countryKey={countryKey}
+                      experience={experience}
+                      d7Score={d7Score}
                     />
                   )}
 
@@ -1095,6 +1147,9 @@ const AuditTerminalPage: React.FC = () => {
                     intel={intel}
                     scoreColor={scoreColor}
                     evolutionPath={evolutionPath}
+                    countryKey={countryKey}
+                    experience={experience}
+                    d7Score={d7Score}
                   />
                 </div>
               )}
@@ -1108,6 +1163,11 @@ const AuditTerminalPage: React.FC = () => {
                   trajectory={trajectory}
                   scoreColor={scoreColor}
                   salaryRange={salaryRange || undefined}
+                  countryKey={countryKey}
+                  industryKey={industryKey}
+                  roleKey={workTypeKey}
+                  d7Score={d7Score}
+                  automationTimeline={automationTimeline}
                 />
               )}
             </div>

@@ -43,6 +43,7 @@ export interface AgenticExposureResult {
     agenticProgression: number;
     laborEcon: number;
     orgRestructure: number;
+    agenticDisruptionPotential: number; // D7 — structural agentic vulnerability
   };
   narrative: string;
 }
@@ -83,8 +84,9 @@ export function computeAgenticExposureScore(params: {
   experience: string;
   countryKey: string;
   companyType?: string;
+  d7Score?: number; // D7 Agentic Disruption Potential (0-100), default 55
 }): AgenticExposureResult {
-  const { dimensions, industryKey, roleKey, experience, countryKey, companyType } = params;
+  const { dimensions, industryKey, roleKey, experience, countryKey, companyType, d7Score = 55 } = params;
 
   const timeline     = getAutomationTimeline(roleKey);
   const riskKey      = INDUSTRY_TO_RISK_KEY[industryKey] ?? 'Technology';
@@ -142,7 +144,13 @@ export function computeAgenticExposureScore(params: {
     score,
     tier,
     label: `2030 Structural Exposure: ${score}%`,
-    subScores: { taskAutoPotential, agenticProgression, laborEcon, orgRestructure },
+    subScores: {
+      taskAutoPotential,
+      agenticProgression,
+      laborEcon,
+      orgRestructure,
+      agenticDisruptionPotential: d7Score,
+    },
     narrative: buildNarrative(tier, timeline.impactTimeline, riskKey),
   };
 }

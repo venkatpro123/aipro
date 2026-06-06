@@ -41,7 +41,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4" style={{ color: colors.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Skill Portfolio Fit</span>
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Your Skills Fit</span>
         </div>
         <span
           className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
@@ -61,13 +61,13 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
           <div className="text-sm font-bold" style={{ color: d1Delta < 0 ? '#10b981' : d1Delta > 10 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
             {d1Delta < 0 ? `${d1Delta}` : d1Delta > 0 ? `+${d1Delta}` : '='}{d1Delta !== 0 ? 'pt' : ''}
           </div>
-          <div className="text-[10px] opacity-45 mt-0.5">vs Role-D1</div>
+          <div className="text-[10px] opacity-45 mt-0.5">vs role avg</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-[10px] font-bold" style={{ color: portfolio.skillDecayRisk === 'HIGH' ? '#ef4444' : portfolio.skillDecayRisk === 'MEDIUM' ? '#f59e0b' : '#10b981' }}>
             {portfolio.skillDecayRisk}
           </div>
-          <div className="text-[10px] opacity-45 mt-0.5">Decay Risk</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Skill Decay</div>
         </div>
       </div>
 
@@ -80,7 +80,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       {portfolio.surgingSkills.length > 0 && (
         <div className="mb-2.5">
           <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: '#10b981' }}>
-            <TrendingUp className="w-3 h-3" /> SURGING DEMAND
+            <TrendingUp className="w-3 h-3" /> HIGH DEMAND RIGHT NOW
           </div>
           <div className="flex flex-col gap-1">
             {portfolio.surgingSkills.slice(0, 4).map(s => (
@@ -91,11 +91,11 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                   <span>now: {s.demandScore}</span>
                   {s.demandIn12Months != null && (
                     <span style={{ color: s.demandIn12Months > s.demandScore ? '#10b981' : 'rgba(255,255,255,0.30)' }}>
-                      → {s.demandIn12Months} in 12mo
+                      → {s.demandIn12Months} in 12 months
                     </span>
                   )}
                   {s.halfLifeYears > 0 && (
-                    <span style={{ color: 'rgba(255,255,255,0.25)' }}>~{s.halfLifeYears}yr half-life</span>
+                    <span style={{ color: 'rgba(255,255,255,0.25)' }}>~{s.halfLifeYears}yr shelf life</span>
                   )}
                 </div>
               </div>
@@ -108,7 +108,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       {portfolio.decliningSkills.length > 0 && (
         <div className="mb-2.5">
           <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: '#ef4444' }}>
-            <TrendingDown className="w-3 h-3" /> DECLINING SKILLS
+            <TrendingDown className="w-3 h-3" /> LOSING DEMAND
           </div>
           <div className="flex flex-col gap-1">
             {portfolio.decliningSkills.slice(0, 3).map(s => (
@@ -124,7 +124,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                 </div>
                 <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.40)' }}>
                   {s.demandIn12Months != null && (
-                    <span style={{ color: '#ef4444' }}>→ {s.demandIn12Months} in 12mo</span>
+                    <span style={{ color: '#ef4444' }}>→ {s.demandIn12Months} in 12 months</span>
                   )}
                   <span style={{ color: 'rgba(255,255,255,0.25)' }}>{s.halfLifeYears.toFixed(1)}yr left</span>
                 </div>
@@ -138,7 +138,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       {portfolio.retoolPriority.length > 0 && (
         <div>
           <div className="text-[10px] font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            RETOOL PRIORITY
+            SKILLS TO LEARN NEXT
           </div>
           <div className="space-y-1">
             {portfolio.retoolPriority.slice(0, 3).map((skill, i) => {

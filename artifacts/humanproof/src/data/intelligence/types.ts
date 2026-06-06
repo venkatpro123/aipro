@@ -204,4 +204,5 @@ export interface CareerIntelligence {
     platformRecs?: string[];
   }>>;
   evolutionHorizon?: string;        // e.g. '2027' — when to re-assess this role's risk data
+  roleCategory?: 'traditional' | 'ai_augmented' | 'ai_native' | 'human_ai_orchestration' | 'emerging_unknown';
 }

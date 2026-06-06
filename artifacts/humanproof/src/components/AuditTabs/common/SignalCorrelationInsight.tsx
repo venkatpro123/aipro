@@ -277,10 +277,7 @@ export const SignalCorrelationInsight: React.FC<Props> = ({ report }) => {
 
       {/* Footer note */}
       <p className="text-[10px] leading-relaxed px-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>
-        Signal tensions are resolved using a reliability hierarchy: SEC filings &gt; live hiring data &gt;
-        news sentiment &gt; aggregated surveys. When two signals of equal weight conflict, the AI averages
-        them and widens the confidence interval. Flagged tensions are shown at full uncertainty until
-        additional data resolves the conflict.
+        When sources disagree, we prioritise: official government filings first, then live hiring data, then news, then surveys. If two equal sources conflict, we average them and widen the estimate. You'll see the full range until more data resolves it.
       </p>
     </div>
   );

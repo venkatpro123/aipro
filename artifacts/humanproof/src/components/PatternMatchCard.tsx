@@ -72,12 +72,12 @@ function buildAudienceReframe(
   if (roleFit === -1) {
     // User is in the PROTECTED tier for this pattern — most docs on this card
     // describe someone else's problem. Be explicit.
-    return `Your role category appears in the documented PROTECTED tier for this pattern — meaning roles like yours survived or grew through it. The pattern still signals instability at ${pattern.historicalCompanies[0]?.name ?? 'this type of company'}, but the typical mechanism described here targets a different segment of the workforce. Watch the overall company signals, but the role-specific threat is lower.`;
+    return `Your role category was in the protected group for this pattern — meaning roles like yours survived or even grew through it. The pattern still signals instability at ${pattern.historicalCompanies[0]?.name ?? 'this type of company'}, but the typical impact described here hit a different part of the workforce. Keep an eye on company-level signals, but your role's direct exposure is lower.`;
   }
 
   if (roleFit === 1) {
     const firstAffected = pattern.affectedRoles[0] ?? 'roles like yours';
-    return `Your role category matches the AFFECTED tier documented in this pattern ("${firstAffected}"). The historical cases below are direct precedents for your situation. Treat the outcome timelines as your planning horizon, not background context.`;
+    return `Your role category matches the at-risk group documented in this pattern ("${firstAffected}"). The historical cases below are direct precedents for your situation. Use the timelines as your planning window, not just background reading.`;
   }
 
   // ── Category-specific region-aware reframes ─────────────────────────────────
@@ -178,9 +178,9 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
 
   // Role alignment chip config
   const roleFitChip =
-    roleFit === 1  ? { label: 'YOUR ROLE IS AFFECTED',  bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',   color: '#ef4444' } :
+    roleFit === 1  ? { label: 'YOUR ROLE IS AT RISK',   bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',   color: '#ef4444' } :
     roleFit === -1 ? { label: 'YOUR ROLE IS PROTECTED', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.30)',  color: '#10b981' } :
-    roleFit === 0  ? { label: 'NEUTRAL FOR YOUR ROLE',  bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)' } :
+    roleFit === 0  ? { label: 'LOW IMPACT ON YOUR ROLE', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)' } :
     null;
 
   return (
@@ -212,7 +212,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
                 background: `${matchColor}15`, border: `1px solid ${matchColor}30`,
                 color: matchColor,
               }}>
-                {pctMatch}% signal match
+                {pctMatch}% match
               </span>
             )}
 

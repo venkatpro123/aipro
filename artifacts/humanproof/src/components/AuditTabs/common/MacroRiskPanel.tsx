@@ -49,7 +49,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4" style={{ color: colors.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Macro-Economic Context</span>
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Economic Climate</span>
         </div>
         <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${colors.text}18`, color: colors.text, border: `1px solid ${colors.text}30` }}>
@@ -68,26 +68,26 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
           <div className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
             {REGIME_LABEL[macro.regime] ?? macro.regime}
           </div>
-          <div className="text-[10px] opacity-45 mt-0.5">Regime</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Economy Phase</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
             {RATE_LABEL[macro.rateCyclePhase] ?? macro.rateCyclePhase}
           </div>
-          <div className="text-[10px] opacity-45 mt-0.5">Rate Cycle</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Interest Rates</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="text-xs font-bold" style={{ color: macro.scoreMultiplier > 1.05 ? '#f97316' : '#10b981' }}>
             ×{macro.scoreMultiplier.toFixed(2)}
           </div>
-          <div className="text-[10px] opacity-45 mt-0.5">Score Mult.</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Impact on score</div>
         </div>
       </div>
 
       {/* Sector exposure */}
       <div className="p-2 rounded-lg mb-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <span className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          SECTOR EXPOSURE
+          YOUR INDUSTRY
         </span>
         <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
           {macro.sectorExposure.reasoning}
@@ -109,7 +109,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       {macro.keyMacroRisks.length > 0 && (
         <div>
           <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            ACTIVE MACRO RISKS
+            CURRENT RISKS
           </p>
           {macro.keyMacroRisks.slice(0, 2).map((risk, i) => (
             <div key={i} className="flex gap-2 mb-1.5">
@@ -123,7 +123,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       {/* India specific */}
       {macro.indiaSpecific && (
         <div className="mt-3 pt-3 space-y-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>INDIA MACRO</p>
+          <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>INDIA ECONOMY</p>
           <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{macro.indiaSpecific.narrative}</p>
         </div>
       )}
@@ -137,7 +137,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       }}>
         <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
         <p className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
-          Heuristic baseline · Calibrated May 2026 · Not real-time BLS/FRED data
+          Estimated — based on typical patterns, not live data
         </p>
       </div>
     </div>

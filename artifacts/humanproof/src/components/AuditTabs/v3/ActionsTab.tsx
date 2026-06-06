@@ -71,14 +71,14 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
         <div className="flex items-center gap-2">
           <ListChecks className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.7)' }} />
           <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            ACTION PRIORITY MATRIX
+            YOUR ACTION PLAN
           </p>
           <TierBadge tier={1} />
         </div>
         {criticalCount > 0 && (
           <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
             style={{ background: 'rgba(220,38,38,0.20)', color: '#dc2626' }}>
-            {criticalCount} CRITICAL
+            {criticalCount} URGENT
           </span>
         )}
       </div>
@@ -135,7 +135,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                     {item.riskReductionPct > 0 && (
                       <span className="text-[10px]" style={{ color: '#10b98180' }}>
                         <TrendingDown className="w-2.5 h-2.5 inline mr-1" />
-                        −{item.riskReductionPct}% risk
+                        −{item.riskReductionPct}% less risk
                       </span>
                     )}
                   </div>
@@ -158,7 +158,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
           className="w-full mt-3 py-2 text-[11px] font-semibold rounded-xl transition-colors"
           style={{ color: 'rgba(0,212,224,0.85)', background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.15)' }}
         >
-          {showAll ? 'Show less' : `Show all ${prioritised.length} actions`}
+          {showAll ? 'Show less' : `See all ${prioritised.length} steps`}
         </button>
       )}
     </div>
@@ -431,12 +431,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
                 style={{ background: 'rgba(220,38,38,0.22)', color: '#dc2626' }}
               >
-                LEGAL GROUND TRUTH · WARN ACT FILED
+                OFFICIAL LAYOFF NOTICE FILED
               </span>
               <p className="text-[13px] font-bold mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
                 {warnDaysLeft !== null && warnDaysLeft > 0
                   ? `Confirmed layoff notice — ${warnDaysLeft} days remaining`
-                  : 'Active WARN Act filing detected for your company'}
+                  : 'An official layoff notice was filed for your company'}
               </p>
             </div>
           </div>

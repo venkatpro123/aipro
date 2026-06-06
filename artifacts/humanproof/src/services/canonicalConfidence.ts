@@ -24,8 +24,8 @@
 export type ConfidenceTier = 'live' | 'mixed' | 'stale' | 'heuristic';
 
 export interface UserFacingConfidence {
-  /** "High quality data" | "Typical" | "Below average" | "Very limited" */
-  label: 'High quality' | 'Typical' | 'Below average' | 'Very limited';
+  /** "Strong" | "Good" | "Fair" | "Limited" */
+  label: 'Strong' | 'Good' | 'Fair' | 'Limited';
   /** Hex color for the label */
   color: string;
   /** One-sentence explanation of why confidence is at this level */
@@ -58,10 +58,10 @@ const TIER_ORDER: Record<ConfidenceTier, number> = {
 };
 
 const USER_FACING: Record<ConfidenceTier, Omit<UserFacingConfidence, 'explanation'>> = {
-  live:      { label: 'High quality',   color: '#10b981' },
-  mixed:     { label: 'Typical',        color: '#22d3ee' },
-  stale:     { label: 'Below average',  color: '#f59e0b' },
-  heuristic: { label: 'Very limited',   color: '#f97316' },
+  live:      { label: 'Strong',   color: '#10b981' },
+  mixed:     { label: 'Good',     color: '#22d3ee' },
+  stale:     { label: 'Fair',     color: '#f59e0b' },
+  heuristic: { label: 'Limited',  color: '#f97316' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -84,36 +84,36 @@ function parsePrimarySource(result: any): string {
     if (providers.length > 0) return `Live data (${providers.slice(0, 3).join(', ')})`;
     return 'Live market data';
   }
-  if (src === 'db_cache') return 'Cached data (< 4h old)';
-  if (src === 'seeded')   return 'Industry baseline (no live signals)';
-  return 'Estimated from sector averages';
+  if (src === 'db_cache') return 'Recent data (under 4 hours old)';
+  if (src === 'seeded')   return 'Industry estimates — no live data found';
+  return 'Estimated from industry averages';
 }
 
 function parseLimitingFactor(result: any): string | undefined {
   const companyData = result?.companyData;
-  if (companyData?.isPublic === false) return 'Private company — no public SEC filings';
+  if (companyData?.isPublic === false) return 'Private company — no public financial reports';
 
   const quality = result?.signalQuality;
   const missingCount = quality?.missingDataFallbacks?.length ?? 0;
   const degradedCount = quality?.degradedSignalClasses?.length ?? 0;
-  if (missingCount >= 3) return `${missingCount} data signals unavailable or rate-limited`;
-  if (degradedCount >= 2) return `${degradedCount} signal classes returned degraded data`;
+  if (missingCount >= 3) return `${missingCount} data signals couldn't be retrieved`;
+  if (degradedCount >= 2) return `${degradedCount} data sources returned incomplete information`;
   return undefined;
 }
 
 function buildExplanation(tier: ConfidenceTier, score: number, limitingFactor?: string): string {
   if (limitingFactor) {
-    return `Confidence is limited because: ${limitingFactor}.`;
+    return `We're missing some data: ${limitingFactor}.`;
   }
   switch (tier) {
     case 'live':
-      return `Live data verified within the last 30 minutes. Score accuracy: ±${Math.round((100 - score) / 4)} pts.`;
+      return `Fresh live data from the last 30 minutes. Score is accurate within ±${Math.round((100 - score) / 4)} points.`;
     case 'mixed':
-      return `A mix of live and cached signals. Some data may be up to 4 hours old.`;
+      return `A mix of live and recent data. Some signals may be up to 4 hours old.`;
     case 'stale':
-      return `Primary signals are more than 24 hours old. Market conditions may have shifted.`;
+      return `Most data is more than a day old. Conditions may have changed.`;
     case 'heuristic':
-      return `No live signals were retrieved. Score is based on industry averages and sector benchmarks.`;
+      return `We couldn't get live data. Score is based on typical patterns for your industry.`;
   }
 }
 

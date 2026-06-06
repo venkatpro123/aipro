@@ -27,10 +27,11 @@ const TIER_DESC: Record<AgenticTier, string> = {
 };
 
 const SUB_LABELS: Record<string, string> = {
-  taskAutoPotential:  'Task Automation Potential',
-  agenticProgression: 'Agentic Capability Progression',
-  laborEcon:          'Labor Replacement Economics',
-  orgRestructure:     'Org Restructuring Likelihood',
+  taskAutoPotential:           'Task Automation Potential',
+  agenticProgression:          'Agentic Capability Progression',
+  laborEcon:                   'Labor Replacement Economics',
+  orgRestructure:              'Org Restructuring Likelihood',
+  agenticDisruptionPotential:  'Agentic Disruption Potential (D7)',
 };
 
 function subScoreColor(v: number): string {
