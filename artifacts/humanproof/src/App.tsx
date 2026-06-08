@@ -19,6 +19,7 @@ import {
   Award,
   Settings,
   LogOut,
+  MessageCircle,
   LogIn,
   Sun,
   Moon,
@@ -71,6 +72,7 @@ const CompensationPage = lazy(() => import("./pages/tools/CompensationPage"));
 const CareerStrategyPage = lazy(() => import("./pages/tools/CareerStrategyPage"));
 const OpportunityRadarPage = lazy(() => import("./pages/tools/OpportunityRadarPage"));
 const CareerTwinPage = lazy(() => import("./pages/tools/CareerTwinPage"));
+const CopilotPage = lazy(() => import("./pages/CopilotPage"));
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
@@ -162,15 +164,17 @@ const NAV_ITEMS = [
   { to: "/os",          label: "Career OS"    },
   { to: "/monitor",     label: "Monitor"      },
   { to: "/tools",       label: "Tools"        },
+  { to: "/copilot",     label: "Copilot"      },
   { to: "/terminal",    label: "Layoff Audit" },
   { to: "/leaderboard", label: "Risk Oracle"  },
 ];
 
 const MOBILE_PRIMARY = [
-  { to: "/os",          label: "Home",        Icon: Sparkles        },
-  { to: "/monitor",     label: "Monitor",     Icon: TrendingUp      },
-  { to: "/terminal",    label: "Audit",       Icon: LayoutDashboard },
-  { to: "/settings",    label: "Profile",     Icon: Award           },
+  { to: "/os",       label: "Home",    Icon: Sparkles        },
+  { to: "/monitor",  label: "Monitor", Icon: TrendingUp      },
+  { to: "/copilot",  label: "Copilot", Icon: MessageCircle   },
+  { to: "/terminal", label: "Audit",   Icon: LayoutDashboard },
+  { to: "/settings", label: "Profile", Icon: Award           },
 ];
 
 // Secondary nav items — appear in the "More" slide-up sheet.
@@ -805,6 +809,7 @@ function AppContent() {
               <Route path="/"                              element={<HomePage />} />
               <Route path="/os"                            element={<CareerOSPage />} />
               <Route path="/monitor"                       element={<MonitoringPage />} />
+              <Route path="/copilot"                       element={<CopilotPage />} />
               <Route path="/tools"                         element={<ToolsHubPage />} />
               <Route path="/tools/layoff-defense"          element={<LayoffDefensePage />} />
               <Route path="/tools/ai-defense"              element={<AICareerDefensePage />} />
