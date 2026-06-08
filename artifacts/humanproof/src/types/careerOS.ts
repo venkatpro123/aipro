@@ -8,6 +8,7 @@ export interface MonitoringFeedItem {
   timestamp: string;
   toolLink?: string;
   dismissed: boolean;
+  interpretation?: string;
 }
 
 export interface CareerMemorySummary {

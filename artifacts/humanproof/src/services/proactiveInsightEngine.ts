@@ -37,7 +37,7 @@ export interface BriefSignal {
 
 export interface CareerMoment {
   id: string;
-  type: 'equity_cliff' | 'visa_renewal' | 'salary_review' | 'peer_layoff_surge' | 'score_improvement' | 'action_streak';
+  type: 'equity_cliff' | 'visa_renewal' | 'salary_review' | 'peer_layoff_surge' | 'score_improvement' | 'action_streak' | 'score_velocity_surge' | 'opportunity_window';
   headline: string;
   detail: string;
   urgency: 'immediate' | 'this_week' | 'this_month';
@@ -319,6 +319,44 @@ export async function detectCareerMoments(
       actionLabel: 'AI Career Defense',
       actionRoute: '/tools/ai-defense',
       expiresAt: new Date(now.getTime() + 14 * 86400_000).toISOString(),
+    });
+  }
+
+  // 6. Score velocity surge — risk rising faster than 3 pts/month
+  const velocityPtsPerMonth = (hybridResult as any)?.scoreTrajectory?.velocityPtsPerMonth
+    ?? (hybridResult as any)?.trajectoryPtsPerMonth
+    ?? null;
+  if (typeof velocityPtsPerMonth === 'number' && velocityPtsPerMonth > 3) {
+    const weeksToHigh = hybridResult?.total != null
+      ? Math.max(0, Math.round((60 - hybridResult.total) / velocityPtsPerMonth * 4.3))
+      : null;
+    const weeksClause = weeksToHigh !== null && weeksToHigh > 0
+      ? ` At this pace you'll cross HIGH threshold in ~${weeksToHigh} week${weeksToHigh === 1 ? '' : 's'}.`
+      : '';
+    moments.push({
+      id: 'score_velocity_surge',
+      type: 'score_velocity_surge',
+      headline: `Risk rising ${velocityPtsPerMonth.toFixed(1)} pts/month`,
+      detail: `Your score is accelerating upward — this is the time to act, not wait.${weeksClause}`,
+      urgency: 'this_week',
+      actionLabel: 'View action plan',
+      actionRoute: '/tools/layoff-defense',
+      expiresAt: new Date(now.getTime() + 7 * 86400_000).toISOString(),
+    });
+  }
+
+  // 7. Golden window for internal movement
+  const isGoldenWindow = (hybridResult as any)?.internalMobility?.isGoldenWindow === true;
+  if (isGoldenWindow) {
+    moments.push({
+      id: 'opportunity_window',
+      type: 'opportunity_window',
+      headline: 'Golden window for internal movement',
+      detail: "You're in a favorable window to move internally. Hiring cycles and headcount signals align now.",
+      urgency: 'this_month',
+      actionLabel: 'Explore opportunities',
+      actionRoute: '/tools/opportunity-radar',
+      expiresAt: new Date(now.getTime() + 21 * 86400_000).toISOString(),
     });
   }
 

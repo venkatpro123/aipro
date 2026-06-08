@@ -233,10 +233,10 @@ export default function ToolsPage() {
                 color: 'var(--text)',
                 marginBottom: '8px',
               }}>
-                Career Audit Report
+                Career Audit Terminal
               </h1>
               <p style={{ color: 'var(--text-3)', fontSize: '0.875rem', fontWeight: 400 }}>
-                Detailed risk analysis — run a new audit above, or return to your Career OS dashboard.
+                Run a fresh audit to update your Career OS with live intelligence.
               </p>
             </div>
 

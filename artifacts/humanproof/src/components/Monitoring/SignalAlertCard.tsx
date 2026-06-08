@@ -96,6 +96,17 @@ export function SignalAlertCard({ item, onDismiss, animate = true }: SignalAlert
           </div>
         )}
 
+        {item.interpretation && (
+          <div style={{
+            marginTop: 6, fontSize: "0.74rem", lineHeight: 1.45,
+            color: "rgba(0,245,255,0.65)",
+            display: "flex", gap: 4, alignItems: "flex-start",
+          }}>
+            <span style={{ fontWeight: 700, flexShrink: 0 }}>→ For you:</span>
+            <span>{item.interpretation}</span>
+          </div>
+        )}
+
         {item.toolLink && (
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: item.toolLink!.replace(/^\//, '') } }))}

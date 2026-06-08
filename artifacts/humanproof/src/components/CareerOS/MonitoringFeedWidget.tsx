@@ -4,7 +4,9 @@ import { Radio, AlertTriangle, Info, ChevronRight } from "lucide-react";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
 import { useLayoff } from "../../context/LayoffContext";
 import type { MonitoringFeedItem } from "../../types/careerOS";
+import type { HybridResult } from "../../types/hybridResult";
 import type { BreakingNewsMatch } from "../../services/breakingNewsPoller";
+import { interpretSignal } from "../../services/signalInterpretationEngine";
 
 function newsMatchToFeedItem(m: BreakingNewsMatch): MonitoringFeedItem {
   return {
@@ -54,8 +56,13 @@ export function MonitoringFeedWidget() {
 
   const { currentMatches, isPolling } = useBreakingNewsPoller(state.companyName ?? undefined);
 
+  const hr = state.scoreResult as HybridResult | null;
   const feedItems: MonitoringFeedItem[] = currentMatches
-    .map(newsMatchToFeedItem)
+    .map(m => {
+      const item = newsMatchToFeedItem(m);
+      item.interpretation = interpretSignal(item, hr);
+      return item;
+    })
     .filter(item => !dismissed.has(item.id))
     .slice(0, 5);
 
@@ -122,9 +129,19 @@ export function MonitoringFeedWidget() {
                 }}>
                   {item.headline}
                 </div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-3)" }}>
+                <div style={{ fontSize: "0.7rem", color: "var(--text-3)", marginBottom: item.interpretation ? 5 : 0 }}>
                   {item.detail} · {item.source} · {relativeTime(item.timestamp)}
                 </div>
+                {item.interpretation && (
+                  <div style={{
+                    fontSize: "0.72rem", lineHeight: 1.45,
+                    color: "rgba(0,245,255,0.65)",
+                    display: "flex", gap: 4, alignItems: "flex-start",
+                  }}>
+                    <span style={{ fontWeight: 700, flexShrink: 0 }}>→ For you:</span>
+                    <span>{item.interpretation}</span>
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setDismissed(d => new Set([...d, item.id]))}
