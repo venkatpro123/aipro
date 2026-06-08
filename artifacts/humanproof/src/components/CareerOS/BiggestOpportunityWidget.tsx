@@ -12,9 +12,11 @@ interface EscapePath {
 }
 
 function extractTopEscapePath(hr: HybridResult): EscapePath | null {
-  const paths = (hr as any).escapePaths as EscapePath[] | null;
+  // escapePaths is EscapePathReport (has .paths[]), not a bare array
+  const report = hr.escapePaths;
+  const paths = report?.paths;
   if (!paths || paths.length === 0) return null;
-  return paths[0];
+  return paths[0] as EscapePath;
 }
 
 export function BiggestOpportunityWidget() {

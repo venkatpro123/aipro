@@ -52,9 +52,7 @@ function buildIntelligenceCards(hr: HybridResult | null): IntelligenceCard[] {
   }
 
   // Network weakness warning
-  const networkScore = (hr as any)?.networkLeverage?.networkScore
-    ?? (hr as any)?.networkLeverage?.score
-    ?? null;
+  const networkScore = hr.networkLeverage?.networkScore ?? null;
   if (typeof networkScore === 'number' && networkScore < 40) {
     cards.push({
       id: 'network-weak',

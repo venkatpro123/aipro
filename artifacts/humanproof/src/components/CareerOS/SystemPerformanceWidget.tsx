@@ -6,14 +6,24 @@ import { useAuth } from '../../context/AuthContext';
 import { getCareerMemorySummary } from '../../services/careerMemoryService';
 import type { CareerMemorySummary } from '../../services/careerMemoryService';
 
-export function SystemPerformanceWidget() {
+interface Props {
+  /** Pre-fetched summary from the parent to avoid a duplicate DB call */
+  initialSummary?: CareerMemorySummary | null;
+}
+
+export function SystemPerformanceWidget({ initialSummary }: Props = {}) {
   const { user } = useAuth();
-  const [summary, setSummary] = useState<CareerMemorySummary | null>(null);
+  const [summary, setSummary] = useState<CareerMemorySummary | null>(initialSummary ?? null);
 
   useEffect(() => {
+    // If parent already supplied a summary, skip the fetch
+    if (initialSummary !== undefined) {
+      setSummary(initialSummary ?? null);
+      return;
+    }
     if (!user) return;
     getCareerMemorySummary(user.id).then(setSummary).catch(() => { /* non-fatal */ });
-  }, [user]);
+  }, [user, initialSummary]);
 
   if (!summary?.hasData) return null;
 

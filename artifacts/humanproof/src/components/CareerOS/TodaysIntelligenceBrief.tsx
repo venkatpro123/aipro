@@ -161,7 +161,7 @@ export function TodaysIntelligenceBrief() {
             }}>
               {brief.paragraphs[0]}
               {velocityClause && (
-                <span style={{ color: velocity > 0 ? '#f97316' : '#10b981' }}>
+                <span style={{ color: velocity !== null && velocity > 0 ? '#f97316' : '#10b981' }}>
                   {velocityClause}
                 </span>
               )}

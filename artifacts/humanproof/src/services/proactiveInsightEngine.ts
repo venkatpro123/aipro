@@ -213,7 +213,7 @@ export async function getWeeklyCareerBrief(
 
   // Priority action
   let priorityAction = 'Complete your weekly risk audit to stay informed.';
-  const escape = (hybridResult as any)?.escapePaths?.topPaths?.[0];
+  const escape = (hybridResult as any)?.escapePaths?.paths?.[0];
   if (escape?.targetRole) {
     priorityAction = `Research roles as "${escape.targetRole}" — your best escape path this week.`;
   }

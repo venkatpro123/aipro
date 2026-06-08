@@ -31,7 +31,8 @@ function extractTopDimension(hr: HybridResult): DimEntry | null {
   }
   if (!topKey) return null;
   const narrative = (hr as any).intelligenceBrief?.topRiskNarrative ?? null;
-  return { key: topKey, score: Math.round(topVal), narrative };
+  // breakdown values are 0–1 scale; convert to 0–100 for display
+  return { key: topKey, score: Math.round(topVal * 100), narrative };
 }
 
 export function BiggestThreatWidget() {

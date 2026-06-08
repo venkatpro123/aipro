@@ -294,14 +294,16 @@ export function CareerOSHome() {
   const hasResult = state.scoreResult !== null;
   const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
   const [completenessScore, setCompletenessScore] = useState<number | null>(null);
+  const [memorySummary, setMemorySummary] = useState<import('../../services/careerMemoryService').CareerMemorySummary | null>(null);
 
-  // Load profile completeness for the "Your Career System" chip
+  // Load profile completeness + memory summary once (shared with child widgets to avoid duplicate DB calls)
   useEffect(() => {
     if (!user) return;
     Promise.all([
       fetchUserProfile(),
       getCareerMemorySummary(user.id),
     ]).then(([profile, summary]) => {
+      setMemorySummary(summary);
       const { score } = computeProfileCompleteness(
         profile,
         summary,
@@ -485,8 +487,8 @@ export function CareerOSHome() {
           <StartHereCard />
         ) : (
           <>
-            {/* ── System Performance — OS metrics bar ── */}
-            <SystemPerformanceWidget />
+            {/* ── System Performance — OS metrics bar (uses pre-fetched summary to avoid duplicate DB call) ── */}
+            <SystemPerformanceWidget initialSummary={memorySummary} />
 
             {/* ── Career Moment Alert — urgent moments from proactiveInsightEngine ── */}
             <CareerMomentAlert />

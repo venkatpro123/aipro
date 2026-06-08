@@ -346,6 +346,12 @@ export interface HybridResult {
 
   // ── Recommendations ──────────────────────────────────────────────────────
   recommendations: ActionPlanItem[];
+  /**
+   * Alias of `recommendations` — populated by auditDataPipeline after the
+   * personalization pass so CareerOS widgets (TodaysMissionWidget, copilotService)
+   * can read typed action items without `as any` casts.
+   */
+  actionItems?: ActionPlanItem[];
 
   // ── Context ───────────────────────────────────────────────────────────────
   workTypeKey: string; // role key

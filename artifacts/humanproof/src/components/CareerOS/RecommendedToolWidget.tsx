@@ -25,7 +25,8 @@ function recommendTool(hr: HybridResult | null): ToolRec {
   }
 
   const total = hr.total ?? 0;
-  const d1 = (hr as any).breakdown?.D1 ?? 0;
+  // D1 (AI Displacement) lives in dimensions[], not breakdown (which only has L1-L5 at 0–1 scale)
+  const d1 = hr.dimensions?.find(d => d.key === 'D1')?.score ?? 0;
   const liquidity = (hr as any).jobMarketLiquidity?.score ?? 50;
 
   if (total >= 70) {

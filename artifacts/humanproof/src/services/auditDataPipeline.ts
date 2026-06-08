@@ -3503,6 +3503,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         deadline: rec.sequencePhase ? (_dm[rec.sequencePhase] ?? rec.deadline) : rec.deadline,
       }));
     }
+    // G1: populate typed alias so CareerOS widgets access recommendations without `as any`
+    hybridResult.actionItems = hybridResult.recommendations;
   } catch (e) {
     noteEngineFailure('personalizedActionSet', e);
   }

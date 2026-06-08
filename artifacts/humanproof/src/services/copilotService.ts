@@ -326,9 +326,9 @@ export function buildCopilotSystemPrompt(ctx: CopilotContext): string {
       lines.push(`Top Risk Dimensions: ${topDims.map(d => `${d.label ?? d.key} ${Math.round(d.score ?? 0)}/100`).join(', ')}`);
     }
 
-    const topAction = (hr as any).actionItems?.[0] ?? (hr as any).immediateActions?.[0] ?? (hr as any).recommendations?.[0];
+    const topAction = hr.actionItems?.[0] ?? hr.recommendations?.[0];
     if (topAction) {
-      lines.push(`Top Action: ${topAction.title ?? topAction.action ?? 'See action plan'} (${topAction.effort ?? 'moderate'} effort)`);
+      lines.push(`Top Action: ${topAction.title ?? 'See action plan'} (${(topAction as any).effort ?? topAction.effortBadge ?? 'moderate'} effort)`);
     }
 
     const topPath = hr.escapePaths?.paths?.[0];
