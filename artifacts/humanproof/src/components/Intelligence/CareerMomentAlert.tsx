@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLayoff } from '../../context/LayoffContext';
 import { fetchUserProfile } from '../../services/userProfileService';
 import { detectCareerMoments, type CareerMoment } from '../../services/proactiveInsightEngine';
+import type { HybridResult } from '../../types/hybridResult';
 
 const URGENCY_STYLE: Record<string, { border: string; bg: string; badge: string; badgeText: string }> = {
   immediate: {
@@ -121,7 +122,7 @@ export function CareerMomentAlert() {
     (async () => {
       try {
         const profile = await fetchUserProfile();
-        const ms = await detectCareerMoments(user.id, (state.scoreResult as any) ?? null, profile);
+        const ms = await detectCareerMoments(user.id, (state.scoreResult as HybridResult | null), profile);
         if (!cancelled) setMoments(ms);
       } catch { /* non-fatal */ }
     })();

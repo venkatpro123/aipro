@@ -157,8 +157,8 @@ export async function getCareerMemorySummary(userId: string): Promise<CareerMemo
 
   const first = audits[0];
   const last = audits[audits.length - 1];
-  const firstDate = first.calculated_at ?? first.created_at ?? '';
-  const lastDate = last.calculated_at ?? last.created_at ?? '';
+  const firstDate = first.calculated_at ?? first.created_at ?? new Date().toISOString();
+  const lastDate = last.calculated_at ?? last.created_at ?? new Date().toISOString();
   const daysMonitored = firstDate
     ? Math.max(0, Math.floor((Date.now() - new Date(firstDate).getTime()) / 86_400_000))
     : 0;

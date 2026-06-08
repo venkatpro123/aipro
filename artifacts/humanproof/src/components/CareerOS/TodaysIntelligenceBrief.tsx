@@ -95,7 +95,7 @@ export function TodaysIntelligenceBrief() {
 
   const hour = new Date().getHours();
   const greeting = user?.email ? buildGreeting(user.email, hour) : null;
-  const velocity = (scoreResult as any)?.trajectoryPtsPerMonth ?? null;
+  const velocity = (scoreResult as HybridResult)?.scoreTrajectory?.velocityPtsPerMonth ?? null;
   const velocityClause = buildVelocityClause(velocity, state.alertDrift);
   const urgencyMeta = brief ? (URGENCY_BAR[brief.urgencyLevel] ?? URGENCY_BAR.MODERATE) : null;
 

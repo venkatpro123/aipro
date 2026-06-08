@@ -54,8 +54,8 @@ export function CareerRiskWidget() {
   const color = getRingColor(score);
   const delta = (hr as any).scoreDelta ?? null;
 
-  // Use trajectoryPtsPerMonth if available; fall back to alertDrift computation
-  const rawVelocity = (hr as any).trajectoryPtsPerMonth ?? null;
+  // Use scoreTrajectory.velocityPtsPerMonth if available; fall back to alertDrift computation
+  const rawVelocity = hr.scoreTrajectory?.velocityPtsPerMonth ?? null;
   const velocity: number | null = rawVelocity != null
     ? rawVelocity
     : state.alertDrift
@@ -66,7 +66,7 @@ export function CareerRiskWidget() {
   const trendColor = velocity == null ? "var(--text-3)" : velocity > 0 ? "#ef4444" : "#10b981";
 
   // Last-analyzed date from HybridResult or alertDrift
-  const calcAt: string | null = (hr as any).calculatedAt ?? (hr as any).timestamp ?? null;
+  const calcAt: string | null = hr.calculatedAt ?? state.alertDrift?.fromDate ?? null;
   const isStale = calcAt ? (Date.now() - new Date(calcAt).getTime()) > 30 * 24 * 60 * 60 * 1000 : false;
   const lastAnalyzedLabel = calcAt
     ? new Date(calcAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

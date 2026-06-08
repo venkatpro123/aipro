@@ -20,10 +20,8 @@ function buildIntelligenceCards(hr: HybridResult | null): IntelligenceCard[] {
   const cards: IntelligenceCard[] = [];
 
   // Skill decay warning
-  const skillDecayRisk = (hr as any)?.skillPortfolioFit?.skillDecayRisk
-    ?? (hr as any)?.skillPortfolio?.decayRisk
-    ?? null;
-  if (skillDecayRisk === 'HIGH' || skillDecayRisk === 'CRITICAL') {
+  const skillDecayRisk = hr.skillPortfolioFit?.skillDecayRisk ?? null;
+  if (skillDecayRisk === 'HIGH') {
     cards.push({
       id: 'skill-decay',
       icon: <AlertTriangle size={15} />,
@@ -36,9 +34,7 @@ function buildIntelligenceCards(hr: HybridResult | null): IntelligenceCard[] {
   }
 
   // Financial runway warning
-  const runwayMonths = (hr as any)?.financialRunway?.runwayMonths
-    ?? (hr as any)?.financialContext?.runwayMonths
-    ?? null;
+  const runwayMonths = hr.financialRunway?.runwayMonths ?? null;
   if (typeof runwayMonths === 'number' && runwayMonths < 6) {
     cards.push({
       id: 'runway-warning',

@@ -502,8 +502,8 @@ export function CareerOSHome() {
             <motion.div variants={itemVariants} style={{ marginBottom: 32 }}>
               <SectionLabel label="Signals" />
 
-              {/* Weekly Career Brief — shown on Mondays or when data available */}
-              {isMonday() && <WeeklyCareerBriefCard />}
+              {/* Weekly Career Brief — shown always (component self-manages no-data state) */}
+              <WeeklyCareerBriefCard />
 
               {/* Threat + Opportunity 2-col grid */}
               <div

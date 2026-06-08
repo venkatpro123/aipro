@@ -36,7 +36,7 @@ export const saveLayoffScore = (
   department: string = '',
   dataQuality: 'live' | 'partial' | 'fallback' = 'live'
 ): ScoreHistoryEntry => {
-  const scoreValue = (scoreResult as any).score ?? (scoreResult as any).total ?? 0;
+  const scoreValue = (scoreResult as any).total ?? (scoreResult as any).score ?? 0;
   const entry: ScoreHistoryEntry = {
     id: crypto.randomUUID(),
     score: scoreValue,

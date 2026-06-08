@@ -3,49 +3,45 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Circle, Target, Loader2 } from "lucide-react";
 import { supabase } from "../../utils/supabase";
 import { useLayoff } from "../../context/LayoffContext";
-import type { HybridResult } from "../../types/hybridResult";
+import type { HybridResult, ActionPlanItem } from "../../types/hybridResult";
 
 interface MissionAction {
   id: string;
   title: string;
   effort: string;
-  priority: number;
+  priority: string;
 }
+
+const PRIORITY_RANK: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 
 function extractSmartMission(
   scoreResult: HybridResult | null,
   completedIds: Set<string>,
 ): { top: MissionAction | null; next: MissionAction | null } {
   if (!scoreResult) return { top: null, next: null };
-  const actions = (scoreResult as any).actionItems as Array<{
-    id?: string; actionId?: string; title?: string; action?: string;
-    effort?: string; priority?: number;
-  }> | null;
+  const actions: ActionPlanItem[] | undefined = scoreResult.actionItems;
   if (!actions || actions.length === 0) return { top: null, next: null };
 
   // Filter completed, sort by priority DESC then prefer Low-effort among ties
-  const effortRank: Record<string, number> = { Low: 0, Medium: 1, High: 2 };
+  const effortRank: Record<string, number> = { Low: 0, Medium: 1, High: 2, Critical: 3 };
   const uncompleted = actions
-    .filter(a => {
-      const id = a.id ?? a.actionId ?? '';
-      return !completedIds.has(id);
-    })
+    .filter(a => !completedIds.has(a.id))
     .sort((a, b) => {
-      const pd = (b.priority ?? 0) - (a.priority ?? 0);
+      const pd = (PRIORITY_RANK[a.priority] ?? 2) - (PRIORITY_RANK[b.priority] ?? 2);
       if (pd !== 0) return pd;
-      return (effortRank[a.effort ?? 'Medium'] ?? 1) - (effortRank[b.effort ?? 'Medium'] ?? 1);
+      return (effortRank[a.effortBadge ?? 'Medium'] ?? 1) - (effortRank[b.effortBadge ?? 'Medium'] ?? 1);
     });
 
-  const toMission = (item: typeof actions[0], idx: number): MissionAction => ({
-    id: item.id ?? item.actionId ?? `mission-${idx}`,
-    title: item.title ?? item.action ?? 'Complete priority action',
-    effort: item.effort ?? 'Medium',
-    priority: item.priority ?? 50,
+  const toMission = (item: ActionPlanItem): MissionAction => ({
+    id: item.id,
+    title: item.title,
+    effort: item.effortBadge ?? item.deadline ?? 'Medium',
+    priority: item.priority,
   });
 
   return {
-    top: uncompleted[0] ? toMission(uncompleted[0], 0) : null,
-    next: uncompleted[1] ? toMission(uncompleted[1], 1) : null,
+    top: uncompleted[0] ? toMission(uncompleted[0]) : null,
+    next: uncompleted[1] ? toMission(uncompleted[1]) : null,
   };
 }
 

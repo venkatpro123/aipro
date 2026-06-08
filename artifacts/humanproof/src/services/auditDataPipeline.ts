@@ -3507,6 +3507,10 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     hybridResult.actionItems = hybridResult.recommendations;
   } catch (e) {
     noteEngineFailure('personalizedActionSet', e);
+    // Ensure actionItems alias is always set even if personalization fails
+    if (!hybridResult.actionItems) {
+      hybridResult.actionItems = hybridResult.recommendations ?? [];
+    }
   }
 
   // 46. User Financial Runway — personal financial situation assessment
@@ -4130,6 +4134,9 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   // expected `(hybridResult as any).userFactors` but it was never populated,
   // silently breaking all personalization in the brief and cached scenario plans.
   (finalResult as any).userFactors = inputs.userFactors;
+
+  // Stamp when this audit was produced so CareerRiskWidget can show "Last analyzed: Jun 8"
+  finalResult.calculatedAt = new Date().toISOString();
 
   // Stamp the flag snapshot used for this run. Stored for reproducibility:
   // if a re-audit produces different output, comparing flagSnapshot records

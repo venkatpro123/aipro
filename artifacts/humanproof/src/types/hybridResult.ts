@@ -321,6 +321,9 @@ export interface HybridResult {
   confidencePercent: number; // 0–100
   confidenceInterval: ConfidenceInterval;
 
+  /** ISO timestamp when this audit result was produced. Set by auditDataPipeline. */
+  calculatedAt?: string;
+
   // ── WS6 Tier-A two-stage response (Audit Issue #17) ─────────────────────
   /** Current response phase. `complete` for legacy single-pass audits. */
   auditPhase?: AuditPhase;
