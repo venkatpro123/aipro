@@ -1,4 +1,4 @@
-import {
+﻿import {
   useState,
   useEffect,
   useRef,
@@ -222,21 +222,21 @@ export default function ToolsPage() {
           <div className="dashboard-header-row">
             <div>
               <span className="label-xs" style={{ color: 'var(--cyan)', display: 'block', marginBottom: '10px' }}>
-                ● LIVE · NODE CONNECTIVITY
+                ● LIVE DATA ACTIVE
               </span>
               <h1 style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(1.8rem, 4vw, 2.75rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.05em',
-                lineHeight: 1,
+                fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.03em',
+                lineHeight: 1.1,
                 color: 'var(--text)',
                 marginBottom: '8px',
               }}>
-                MY DASHBOARD
+                Career Audit Report
               </h1>
-              <p style={{ color: 'var(--text-3)', fontSize: '0.875rem', fontWeight: 500 }}>
-                AI displacement intelligence across thousands of global roles
+              <p style={{ color: 'var(--text-3)', fontSize: '0.875rem', fontWeight: 400 }}>
+                Detailed risk analysis — run a new audit above, or return to your Career OS dashboard.
               </p>
             </div>
 
@@ -431,3 +431,4 @@ export default function ToolsPage() {
     </div>
   );
 }
+

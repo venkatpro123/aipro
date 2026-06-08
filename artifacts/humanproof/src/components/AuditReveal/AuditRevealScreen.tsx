@@ -1,4 +1,4 @@
-// AuditRevealScreen.tsx — Wave 3.1 Cinematic Reveal
+﻿// AuditRevealScreen.tsx — Wave 3.1 Cinematic Reveal
 //
 // A 2.8-second reveal sequence shown exactly once per fresh audit.
 // Problem: GlobeAuditLoader disappears → dashboard appears instantly.
@@ -256,7 +256,10 @@ export const AuditRevealScreen: React.FC<Props> = ({
               )}
 
               <button
-                onClick={complete}
+                onClick={() => {
+                  complete();
+                  window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'os' } }));
+                }}
                 className="flex items-center gap-2 text-[12px] font-bold px-5 py-2.5 rounded-2xl"
                 style={{
                   background: 'linear-gradient(135deg, rgba(34,211,238,0.18), rgba(34,211,238,0.08))',
@@ -264,7 +267,14 @@ export const AuditRevealScreen: React.FC<Props> = ({
                   border: '1px solid rgba(34,211,238,0.35)',
                 }}
               >
-                See your full report <ArrowRight className="w-4 h-4" />
+                Open Career OS <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={complete}
+                className="text-[10px]"
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.28)', cursor: 'pointer', padding: '4px 0' }}
+              >
+                View full report instead
               </button>
             </motion.div>
           )}
@@ -276,3 +286,4 @@ export const AuditRevealScreen: React.FC<Props> = ({
 };
 
 export default AuditRevealScreen;
+
