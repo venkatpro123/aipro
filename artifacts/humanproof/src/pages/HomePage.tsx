@@ -50,6 +50,7 @@ export default function HomePage() {
       <main>
         <Hero />
         <SignalTicker />
+        <HowItWorks />
         <ProblemReframe />
         <SystemIntro />
         <OutputPreview />
@@ -108,13 +109,13 @@ function Hero() {
           {/* Premium eyebrow badge */}
           <div className="section-eyebrow float-up">
             <span className="status-dot status-dot-live" />
-            Early warning · Live signals
+            Career OS · Live signals · AI-era protection
           </div>
 
           <h1 className="display-1 mt-6 float-up stagger-float-1">
-            Know your career risk{" "}
+            Your Career Operating System{" "}
             <span className="relative inline-block">
-              <span className="text-gradient-hero gradient-text-animate">before it happens.</span>
+              <span className="text-gradient-hero gradient-text-animate">for the AI Era.</span>
               <svg
                 aria-hidden
                 viewBox="0 0 300 12"
@@ -135,21 +136,21 @@ function Hero() {
             </span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed float-up stagger-float-2" style={{ color: "var(--text-2)" }}>
-            Real-time monitoring of your company, role, and market signals —
-            with predictive risk alerts and 30–90 day forecasts.
+            Monitor your company, detect threats early, get a personalized action plan,
+            execute it, and measure what actually works — continuously, in one place.
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-4 float-up stagger-float-3">
             <a
-              href="#cta"
+              href="/onboarding"
               className="btn btn-cyan btn-lg shimmer-sweep cta-glow-btn"
               style={{ textDecoration: "none" }}
             >
-              Check My Risk
+              Start your career protection
               <ArrowRight size={18} style={{ flexShrink: 0 }} />
             </a>
             <a
-              href="#system"
+              href="#how-it-works"
               className="btn btn-secondary btn-lg"
               style={{ textDecoration: "none" }}
             >
@@ -169,6 +170,78 @@ function Hero() {
         </Reveal>
       </div>
     </section>
+  );
+}
+
+/* ─────────── HOW IT WORKS ─────────── */
+function HowItWorks() {
+  const steps = [
+    { emoji: "📡", label: "Monitor", desc: "Live signals from your company, role, and market — 24/7." },
+    { emoji: "⚡", label: "Detect",  desc: "Early warning alerts before layoffs, freezes, or restructuring hit." },
+    { emoji: "🎯", label: "Guide",   desc: "Personalized action plan ranked by impact for your specific situation." },
+    { emoji: "✅", label: "Execute", desc: "Step-by-step tasks with resources, timelines, and progress tracking." },
+    { emoji: "📈", label: "Measure", desc: "Score every action. See what actually reduced your risk." },
+  ];
+
+  return (
+    <section id="how-it-works" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "72px 24px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+        <div className="section-eyebrow" style={{ justifyContent: "center", marginBottom: 16 }}>
+          <Sparkles size={12} />
+          How the Career OS works
+        </div>
+        <h2 style={{ fontSize: "clamp(1.6rem, 3vw, 2.25rem)", fontWeight: 800, color: "var(--text)", margin: "0 0 48px", letterSpacing: "-0.02em" }}>
+          A continuous loop, not a one-time report
+        </h2>
+
+        <div style={{ display: "flex", gap: 0, alignItems: "stretch", flexWrap: "wrap", justifyContent: "center" }}>
+          {steps.map((step, i) => (
+            <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 0 }}>
+              <Reveal delay={i * 80}>
+                <div className="card-premium" style={{ padding: "24px 20px", width: 148, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontSize: 32 }}>{step.emoji}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "var(--cyan)", letterSpacing: "0.04em" }}>{step.label}</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{step.desc}</div>
+                </div>
+              </Reveal>
+              {i < steps.length - 1 && (
+                <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 20, padding: "0 6px", flexShrink: 0 }}>→</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 40 }}>
+          <a href="/onboarding" className="btn btn-cyan btn-lg shimmer-sweep" style={{ textDecoration: "none" }}>
+            Get started — it's free
+            <ArrowRight size={16} />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────── TOOL PREVIEW CARDS ─────────── */
+function ToolPreviewCards() {
+  const tools = [
+    { emoji: "🛡️", name: "Layoff Defense Center", desc: "Reduce your risk score with targeted actions ranked by impact." },
+    { emoji: "🤖", name: "AI Career Defense",      desc: "Know exactly how AI affects your role and what skills protect you." },
+    { emoji: "👤", name: "Career Twin",            desc: "Your persistent career model that personalizes every recommendation." },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16, maxWidth: 840, margin: "40px auto 0" }}>
+      {tools.map((t, i) => (
+        <Reveal key={t.name} delay={i * 80}>
+          <div className="card-premium" style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontSize: 28 }}>{t.emoji}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{t.name}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{t.desc}</div>
+          </div>
+        </Reveal>
+      ))}
+    </div>
   );
 }
 

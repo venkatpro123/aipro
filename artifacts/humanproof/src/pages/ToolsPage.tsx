@@ -12,6 +12,7 @@ import type { ReactNode, ErrorInfo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useHumanProof } from "../context/HumanProofContext";
+import { useLayoff } from "../context/LayoffContext";
 import SkillRiskCalculator from "../components/SkillRiskCalculator";
 import HumanIrreplacibilityIndex from "../components/HumanIrreplacibilityIndex";
 import ScoreDriftTracker, {
@@ -88,8 +89,11 @@ const VALID_TAB_IDS = new Set(TABS.map(t => t.id));
 const STALE_DAYS = 90;
 const SESSION_DRIFT_KEY = "hp_drift_banner_seen_session";
 
+const ONBOARDING_PREFILL_KEY = 'hp_onboarding_prefill';
+
 export default function ToolsPage() {
   const { state, dispatch } = useHumanProof();
+  const { dispatch: layoffDispatch } = useLayoff();
   // v35.1.4 — if a user's persisted tab points to a removed surface, fall
   // back to the new default so the dashboard never renders an empty pane.
   const initialTab = state.activeToolTab && VALID_TAB_IDS.has(state.activeToolTab)
@@ -124,6 +128,20 @@ export default function ToolsPage() {
 
   useEffect(() => {
     if (hasLegacyVersionEntries()) setShowLegacyVersionBanner(true);
+  }, []);
+
+  // Read onboarding prefill (company + role) and seed LayoffContext
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ONBOARDING_PREFILL_KEY);
+      if (!raw) return;
+      const { companyName, roleTitle } = JSON.parse(raw) as { companyName: string; roleTitle: string };
+      if (companyName || roleTitle) {
+        layoffDispatch({ type: 'SET_INPUTS', payload: { companyName: companyName || null, roleTitle: roleTitle || null } });
+      }
+      sessionStorage.removeItem(ONBOARDING_PREFILL_KEY);
+    } catch { /* non-fatal */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const switchTab = useCallback(
@@ -176,6 +194,23 @@ export default function ToolsPage() {
   return (
     <div className="page-wrap" style={{ background: "var(--bg)" }}>
       <div className="container" style={{ maxWidth: 1280 }}>
+
+        {/* ── Back to Career OS ─────────────────────────────────────────── */}
+        <div style={{ paddingTop: 16, paddingBottom: 4 }}>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "os" } }))}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: 600,
+              padding: '4px 0', transition: 'color 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--cyan)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+          >
+            ← Back to Career OS
+          </button>
+        </div>
 
         {/* ── Premium Dashboard Header ──────────────────────────────────── */}
         <motion.div

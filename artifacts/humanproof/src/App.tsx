@@ -73,6 +73,7 @@ const CareerStrategyPage = lazy(() => import("./pages/tools/CareerStrategyPage")
 const OpportunityRadarPage = lazy(() => import("./pages/tools/OpportunityRadarPage"));
 const CareerTwinPage = lazy(() => import("./pages/tools/CareerTwinPage"));
 const CopilotPage = lazy(() => import("./pages/CopilotPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
@@ -161,27 +162,28 @@ function NavigationBridge() {
 // Other routes (/intelligence, /safe-careers, /learning-hub, /certification)
 // remain accessible via direct URL but are no longer surfaced in the nav.
 const NAV_ITEMS = [
-  { to: "/os",          label: "Career OS"    },
-  { to: "/monitor",     label: "Monitor"      },
-  { to: "/tools",       label: "Tools"        },
-  { to: "/copilot",     label: "Copilot"      },
-  { to: "/terminal",    label: "Layoff Audit" },
-  { to: "/leaderboard", label: "Risk Oracle"  },
+  { to: "/os",          label: "Career OS" },
+  { to: "/monitor",     label: "Monitor"   },
+  { to: "/tools",       label: "Tools"     },
+  { to: "/copilot",     label: "Copilot"   },
+  { to: "/leaderboard", label: "Risk Oracle" },
+  { to: "/terminal",    label: "Audit"     },
 ];
 
 const MOBILE_PRIMARY = [
   { to: "/os",       label: "Home",    Icon: Sparkles        },
   { to: "/monitor",  label: "Monitor", Icon: TrendingUp      },
+  { to: "/tools",    label: "Tools",   Icon: LayoutDashboard },
   { to: "/copilot",  label: "Copilot", Icon: MessageCircle   },
-  { to: "/terminal", label: "Audit",   Icon: LayoutDashboard },
   { to: "/settings", label: "Profile", Icon: Award           },
 ];
 
 // Secondary nav items — appear in the "More" slide-up sheet.
 const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [
-  { to: "/safe-careers",  label: "Safe Careers",  Icon: ShieldCheck   },
-  { to: "/learning-hub",  label: "Learning Hub",  Icon: GraduationCap },
-  { to: "/settings",      label: "Settings",      Icon: Settings      },
+  { to: "/terminal",    label: "Audit",        Icon: LayoutDashboard },
+  { to: "/safe-careers", label: "Safe Careers", Icon: ShieldCheck    },
+  { to: "/learning-hub", label: "Learning Hub", Icon: GraduationCap  },
+  { to: "/settings",     label: "Settings",     Icon: Settings       },
 ];
 
 function useIsActive() {
@@ -725,11 +727,18 @@ function AppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
 
-  // Authenticated users land on the Career OS command center instead of the marketing page
+  // Authenticated users land on the Career OS command center instead of the marketing page.
+  // Brand-new users (first_audit_completed_at is null and onboarding not done) go to /onboarding.
   useEffect(() => {
-    if (!authLoading && user && location.pathname === "/") {
-      navigate("/os", { replace: true });
-    }
+    if (authLoading || !user || location.pathname !== "/") return;
+    try {
+      const onboardingDone = localStorage.getItem('hp_onboarding_done') === '1';
+      if (!onboardingDone) {
+        navigate("/onboarding", { replace: true });
+        return;
+      }
+    } catch { /* storage unavailable */ }
+    navigate("/os", { replace: true });
   }, [authLoading, user, location.pathname, navigate]);
 
   // Hide global nav on feature pages so we don't stack two bottom bars
@@ -821,6 +830,7 @@ function AppContent() {
               <Route path="/tools/strategy"               element={<CareerStrategyPage />} />
               <Route path="/tools/opportunity-radar"      element={<OpportunityRadarPage />} />
               <Route path="/tools/career-twin"            element={<CareerTwinPage />} />
+              <Route path="/onboarding"                    element={<OnboardingPage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
               <Route path="/safe-careers"                  element={<SafeCareersPage />} />
