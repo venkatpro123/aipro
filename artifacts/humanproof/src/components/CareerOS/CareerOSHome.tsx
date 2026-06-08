@@ -6,6 +6,7 @@ import { BiggestOpportunityWidget } from "./BiggestOpportunityWidget";
 import { TodaysMissionWidget } from "./TodaysMissionWidget";
 import { MonitoringFeedWidget } from "./MonitoringFeedWidget";
 import { RecommendedToolWidget } from "./RecommendedToolWidget";
+import { CareerMemorySummaryCard } from "../CareerMemory/CareerMemorySummaryCard";
 
 const containerVariants = {
   hidden: {},
@@ -75,6 +76,9 @@ export function CareerOSHome() {
         <div style={{ gridColumn: "1 / -1" }}>
           <MonitoringFeedWidget />
         </div>
+
+        {/* Career Memory summary */}
+        <CareerMemorySummaryCard />
       </motion.div>
 
       {/* Quick nav strip */}
