@@ -19,6 +19,8 @@ import { CareerHealthScoreWidget } from "../Intelligence/CareerHealthScoreWidget
 import { PersonalizedPredictionPanel } from "../Intelligence/PersonalizedPredictionPanel";
 import { WeeklyCareerBriefCard } from "../Intelligence/WeeklyCareerBriefCard";
 import { CareerMomentAlert } from "../Intelligence/CareerMomentAlert";
+import { ReAuditPromptCard } from "../Intelligence/ReAuditPromptCard";
+import { SystemPerformanceWidget } from "./SystemPerformanceWidget";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -483,8 +485,14 @@ export function CareerOSHome() {
           <StartHereCard />
         ) : (
           <>
+            {/* ── System Performance — OS metrics bar ── */}
+            <SystemPerformanceWidget />
+
             {/* ── Career Moment Alert — urgent moments from proactiveInsightEngine ── */}
             <CareerMomentAlert />
+
+            {/* ── Re-audit nudge — fires when action completed 14+ days ago with no follow-up ── */}
+            <ReAuditPromptCard />
 
             {/* ════════════════════════════════════════════════════════════════════
                 SECTION 2 — WHAT'S MOVING ("SIGNALS")

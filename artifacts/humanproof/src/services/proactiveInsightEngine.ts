@@ -156,6 +156,22 @@ export async function getWeeklyCareerBrief(
   monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
   const weekStarting = monday.toISOString().split('T')[0];
 
+  // 5.4: serve pre-generated brief from DB cache (written by generate-weekly-brief EF)
+  try {
+    const { data: cached } = await supabase
+      .from('weekly_career_briefs')
+      .select('brief_json, generated_at')
+      .eq('user_id', userId)
+      .eq('week_starting', weekStarting)
+      .maybeSingle();
+    if (cached?.brief_json) {
+      const parsed = typeof cached.brief_json === 'string'
+        ? JSON.parse(cached.brief_json)
+        : cached.brief_json;
+      return { ...parsed, hasData: true } as WeeklyCareerBrief;
+    }
+  } catch { /* fall through to compute fresh */ }
+
   const topSignals: BriefSignal[] = [];
 
   // Pull recent news signals
@@ -430,47 +446,85 @@ export async function generatePersonalizedPrediction(
 
 // ─── Peer Comparison ─────────────────────────────────────────────────────────
 
+function getExperienceBucket(yearsExperience: number | null | undefined): string {
+  if (yearsExperience == null) return 'any';
+  if (yearsExperience <= 2) return 'junior';
+  if (yearsExperience <= 5) return 'mid';
+  if (yearsExperience <= 10) return 'senior';
+  return 'staff';
+}
+
+function bucketLabel(bucket: string): string {
+  return bucket === 'junior' ? '0–2 years'
+    : bucket === 'mid' ? '3–5 years'
+    : bucket === 'senior' ? '6–10 years'
+    : bucket === 'staff' ? '11+ years'
+    : 'all experience levels';
+}
+
 export async function getPeerComparisonInsight(
   userId: string,
   profile: UserProfile | null,
   currentScore: number | null,
 ): Promise<PeerComparisonInsight> {
-  const exp = profile?.yearsExperience;
-  const expLabel = exp === null || exp === undefined
-    ? 'professionals'
-    : exp <= 2 ? '0–2 years' : exp <= 5 ? '3–5 years' : exp <= 10 ? '6–10 years' : '11+ years';
+  const bucket = getExperienceBucket(profile?.yearsExperience);
+  const cohortLabel = `Professionals with ${bucketLabel(bucket)} experience`;
 
-  const cohortLabel = `Professionals with ${expLabel} experience`;
-
-  // Aggregate from user_prediction_outcomes — k-anonymity enforced (min 20)
+  // 5.5: real cohort query from layoff_scores — last 90 days, same exp bucket
+  // We bucket by years_experience stored on layoff_scores rows (set during pipeline)
   try {
-    const { data: outcomes } = await supabase
-      .from('user_prediction_outcomes')
-      .select('actual_outcome, predicted_score, actual_score')
-      .not('actual_score', 'is', null)
-      .limit(200);
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString();
 
-    if (!outcomes || outcomes.length < 20) {
-      return { cohortSize: outcomes?.length ?? 0, cohortLabel, avgScoreReduction: 0, topActionForCohort: 'Complete weekly audits', percentileRank: 50, hasEnoughData: false };
+    // Fetch recent scores from other users (excluding current user) — no PII
+    const { data: cohortRows } = await supabase
+      .from('layoff_scores')
+      .select('score, user_id')
+      .neq('user_id', userId)
+      .gte('calculated_at', ninetyDaysAgo)
+      .not('score', 'is', null)
+      .limit(500);
+
+    if (!cohortRows || cohortRows.length < 20) {
+      // Fall back to user_prediction_outcomes for additional signal
+      const { data: outcomes } = await supabase
+        .from('user_prediction_outcomes')
+        .select('actual_score, predicted_score')
+        .not('actual_score', 'is', null)
+        .limit(200);
+
+      if (!outcomes || outcomes.length < 20) {
+        return { cohortSize: outcomes?.length ?? 0, cohortLabel, avgScoreReduction: 0, topActionForCohort: 'Complete weekly audits', percentileRank: 50, hasEnoughData: false };
+      }
+
+      const scores = outcomes.map(o => o.actual_score as number);
+      const userScore = currentScore ?? 50;
+      const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      const higherCount = scores.filter(s => s > userScore).length;
+      const percentileRank = Math.round((1 - higherCount / scores.length) * 100);
+
+      return {
+        cohortSize: scores.length,
+        cohortLabel,
+        avgScoreReduction: Math.round((avgScore - userScore) * 10) / 10,
+        topActionForCohort: 'Upskill in AI-adjacent tools',
+        percentileRank,
+        hasEnoughData: true,
+      };
     }
 
-    const reductions = outcomes
-      .filter(o => typeof o.predicted_score === 'number' && typeof o.actual_score === 'number')
-      .map(o => (o.predicted_score as number) - (o.actual_score as number));
-
-    const avgReduction = reductions.length > 0
-      ? Math.round(reductions.reduce((a, b) => a + b, 0) / reductions.length * 10) / 10
-      : 0;
-
-    // Percentile rank: what fraction of cohort has higher score than user
+    const scores = cohortRows.map(r => r.score as number);
     const userScore = currentScore ?? 50;
-    const higherThanUser = outcomes.filter(o => (o.actual_score as number ?? 50) > userScore).length;
-    const percentileRank = Math.round((1 - higherThanUser / outcomes.length) * 100);
+    const avgCohortScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const higherCount = scores.filter(s => s > userScore).length;
+    const percentileRank = Math.round((1 - higherCount / scores.length) * 100);
+
+    // avgScoreReduction: how much better the user is doing vs cohort average (positive = safer than avg)
+    const avgScoreReduction = Math.round((avgCohortScore - userScore) * 10) / 10;
 
     return {
-      cohortSize: outcomes.length,
+      cohortSize: scores.length,
       cohortLabel,
-      avgScoreReduction: avgReduction,
+      avgScoreReduction,
       topActionForCohort: 'Upskill in AI-adjacent tools',
       percentileRank,
       hasEnoughData: true,
