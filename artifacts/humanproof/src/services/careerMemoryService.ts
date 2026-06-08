@@ -34,6 +34,7 @@ export interface CareerMemorySummary {
   actionsCompleted: number;
   decisionsRecorded: number;
   daysMonitored: number;
+  auditCount: number;
   hasData: boolean;
 }
 
@@ -149,6 +150,7 @@ export async function getCareerMemorySummary(userId: string): Promise<CareerMemo
       actionsCompleted: actionsCount,
       decisionsRecorded: decisionsCount,
       daysMonitored: 0,
+      auditCount: 0,
       hasData: false,
     };
   }
@@ -170,6 +172,7 @@ export async function getCareerMemorySummary(userId: string): Promise<CareerMemo
     actionsCompleted: actionsCount,
     decisionsRecorded: decisionsCount,
     daysMonitored,
+    auditCount: audits.length,
     hasData: true,
   };
 }

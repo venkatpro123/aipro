@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useLayoff } from "../../context/LayoffContext";
+import { computeProfileCompleteness, completenessColor } from "../../services/profileCompletenessEngine";
+import { fetchUserProfile } from "../../services/userProfileService";
+import { getCareerMemorySummary } from "../../services/careerMemoryService";
 import { useAuth } from "../../context/AuthContext";
 import { CareerRiskWidget } from "./CareerRiskWidget";
 import { BiggestThreatWidget } from "./BiggestThreatWidget";
@@ -288,6 +291,24 @@ export function CareerOSHome() {
   const { user } = useAuth();
   const hasResult = state.scoreResult !== null;
   const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
+  const [completenessScore, setCompletenessScore] = useState<number | null>(null);
+
+  // Load profile completeness for the "Your Career System" chip
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      fetchUserProfile(),
+      getCareerMemorySummary(user.id),
+    ]).then(([profile, summary]) => {
+      const { score } = computeProfileCompleteness(
+        profile,
+        summary,
+        !!state.companyName && !!state.roleTitle,
+      );
+      setCompletenessScore(score);
+    }).catch(() => {/* offline — ignore */});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, state.companyName, state.roleTitle]);
 
   useEffect(() => {
     if (!state.companyName || !state.scoreResult) return;
@@ -521,7 +542,38 @@ export function CareerOSHome() {
                   gap: 14,
                 }}
               >
-                <CareerMemorySummaryCard />
+                <div>
+                  <CareerMemorySummaryCard />
+                  {/* System Readiness chip */}
+                  {completenessScore !== null && (
+                    <div style={{
+                      marginTop: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "6px 12px",
+                      borderRadius: 6,
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid var(--border)",
+                      fontSize: "0.75rem",
+                    }}>
+                      <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>
+                        System Readiness
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontWeight: 800, color: completenessColor(completenessScore) }}>
+                          {completenessScore}%
+                        </span>
+                        <Link
+                          to="/tools/career-twin"
+                          style={{ color: "var(--cyan)", textDecoration: "none", fontSize: "0.72rem", fontWeight: 700 }}
+                        >
+                          → Career Twin
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="card-premium" style={{ padding: "20px 22px" }}>
                   <div
                     style={{

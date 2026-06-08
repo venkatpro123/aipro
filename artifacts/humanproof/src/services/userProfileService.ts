@@ -160,6 +160,10 @@ export interface UserProfile {
    * the score amplifier in visaRiskEngine. Null = not provided (treated as 'other').
    */
   citizenshipRegion?: 'eu' | 'us_citizen' | 'uk_citizen' | 'au_citizen' | 'ca_citizen' | 'other' | null;
+
+  // ── Phase 4: Career Twin ──────────────────────────────────────────────────
+  /** Primary career goal set during onboarding — drives recommendation framing */
+  primaryGoal?: string | null;
 }
 
 export type UniquenessKnowledgeType =
@@ -260,6 +264,8 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     citizenshipRegion: data.citizenship_region ?? null,
     // v40.1 performance tier
     performanceTier: data.performance_tier ?? null,
+    // Phase 4: Career Twin
+    primaryGoal: data.primary_goal ?? null,
   };
 }
 
@@ -350,6 +356,9 @@ export async function upsertUserProfile(
 
   // ── v40.1 performance tier ───────────────────────────────────────────────
   if (patch.performanceTier           !== undefined) row.performance_tier            = patch.performanceTier;
+
+  // ── Phase 4: Career Twin ─────────────────────────────────────────────────
+  if (patch.primaryGoal               !== undefined) row.primary_goal               = patch.primaryGoal;
 
   const { error } = await supabase
     .from('user_profiles')

@@ -73,6 +73,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         yearsExperience: step2.yearsExperience ?? undefined,
         salaryBand: step2.salaryBand ?? undefined,
         visaStatus: step2.visaStatus ?? undefined,
+        primaryGoal: step3.primaryGoal || undefined,
       });
     } catch {
       // Non-fatal — proceed anyway
