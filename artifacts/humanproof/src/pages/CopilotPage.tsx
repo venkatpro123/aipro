@@ -1,20 +1,8 @@
 // CopilotPage.tsx — Route /copilot — Career Copilot conversational interface
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
 import { CareerCopilot } from '../components/Copilot/CareerCopilot';
 
 export default function CopilotPage() {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) navigate('/');
-  }, [user, loading, navigate]);
-
-  if (loading || !user) return null;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}

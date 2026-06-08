@@ -10,11 +10,7 @@ export default function CareerStrategyPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && !user) navigate('/');
-  }, [user, loading, navigate]);
 
-  if (loading || !user) return null;
 
   return (
     <motion.div

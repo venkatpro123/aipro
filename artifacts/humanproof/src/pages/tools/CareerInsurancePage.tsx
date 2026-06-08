@@ -9,11 +9,7 @@ export default function CareerInsurancePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && !user) navigate('/', { replace: true });
-  }, [user, loading, navigate]);
 
-  if (loading || !user) return null;
 
   return (
     <ToolPageLayout

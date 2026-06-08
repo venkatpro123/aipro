@@ -1,8 +1,6 @@
 // ToolsHubPage.tsx — Career OS Tools Hub at /tools
 import { useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
 import { useLayoff } from '../context/LayoffContext';
-import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield, Brain, Briefcase, DollarSign, BarChart2, Network,
@@ -113,16 +111,9 @@ const TOOLS = [
 ];
 
 export default function ToolsHubPage() {
-  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { state } = useLayoff();
   const score = (state.scoreResult as import('../types/hybridResult').HybridResult | null)?.total ?? null;
-
-  useEffect(() => {
-    if (!loading && !user) navigate('/', { replace: true });
-  }, [user, loading, navigate]);
-
-  if (loading || !user) return null;
 
   // Recommend tool based on score
   const recommended = score !== null
