@@ -12,21 +12,40 @@ interface MissionAction {
   priority: number;
 }
 
-function extractTopAction(scoreResult: HybridResult | null): MissionAction | null {
-  if (!scoreResult) return null;
+function extractSmartMission(
+  scoreResult: HybridResult | null,
+  completedIds: Set<string>,
+): { top: MissionAction | null; next: MissionAction | null } {
+  if (!scoreResult) return { top: null, next: null };
   const actions = (scoreResult as any).actionItems as Array<{
     id?: string; actionId?: string; title?: string; action?: string;
     effort?: string; priority?: number;
   }> | null;
-  if (!actions || actions.length === 0) return null;
-  // Sort by priority descending, take first
-  const sorted = [...actions].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-  const top = sorted[0];
+  if (!actions || actions.length === 0) return { top: null, next: null };
+
+  // Filter completed, sort by priority DESC then prefer Low-effort among ties
+  const effortRank: Record<string, number> = { Low: 0, Medium: 1, High: 2 };
+  const uncompleted = actions
+    .filter(a => {
+      const id = a.id ?? a.actionId ?? '';
+      return !completedIds.has(id);
+    })
+    .sort((a, b) => {
+      const pd = (b.priority ?? 0) - (a.priority ?? 0);
+      if (pd !== 0) return pd;
+      return (effortRank[a.effort ?? 'Medium'] ?? 1) - (effortRank[b.effort ?? 'Medium'] ?? 1);
+    });
+
+  const toMission = (item: typeof actions[0], idx: number): MissionAction => ({
+    id: item.id ?? item.actionId ?? `mission-${idx}`,
+    title: item.title ?? item.action ?? 'Complete priority action',
+    effort: item.effort ?? 'Medium',
+    priority: item.priority ?? 50,
+  });
+
   return {
-    id: top.id ?? top.actionId ?? "mission-0",
-    title: top.title ?? top.action ?? "Complete priority action",
-    effort: top.effort ?? "Medium",
-    priority: top.priority ?? 50,
+    top: uncompleted[0] ? toMission(uncompleted[0], 0) : null,
+    next: uncompleted[1] ? toMission(uncompleted[1], 1) : null,
   };
 }
 
@@ -35,21 +54,28 @@ export function TodaysMissionWidget() {
   const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkedDB, setCheckedDB] = useState(false);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
 
-  const action = extractTopAction(state.scoreResult as HybridResult | null);
+  const hr = state.scoreResult as HybridResult | null;
+  const score = (hr as any)?.total ?? null;
+  const { top: action, next: nextAction } = extractSmartMission(hr, completedIds);
+  const isUrgent = score !== null && score >= 70;
 
   const checkCompletion = useCallback(async () => {
     if (!action) return;
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setCheckedDB(true); return; }
-      const { data } = await supabase
+      // Fetch all completed action IDs for this user to drive smart ordering
+      const { data: allCompleted } = await supabase
         .from("action_completions")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("action_id", action.id)
-        .maybeSingle();
-      if (data) setCompleted(true);
+        .select("action_id")
+        .eq("user_id", user.id);
+      if (allCompleted) {
+        const ids = new Set(allCompleted.map((r: { action_id: string }) => r.action_id));
+        setCompletedIds(ids);
+        if (ids.has(action.id)) setCompleted(true);
+      }
     } catch { /* offline or unauthed */ }
     setCheckedDB(true);
   }, [action]);
@@ -114,8 +140,10 @@ export function TodaysMissionWidget() {
       style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div className="label-xs" style={{ color: "var(--text-3)" }}>TODAY'S MISSION</div>
-        <Target size={16} style={{ color: "var(--cyan)" }} />
+        <div className="label-xs" style={{ color: isUrgent ? "#f97316" : "var(--text-3)" }}>
+          {isUrgent ? "⚡ URGENT MISSION" : "TODAY'S MISSION"}
+        </div>
+        <Target size={16} style={{ color: isUrgent ? "#f97316" : "var(--cyan)" }} />
       </div>
 
       <div
@@ -142,6 +170,9 @@ export function TodaysMissionWidget() {
             textDecoration: completed ? "line-through" : "none",
             opacity: completed ? 0.5 : 1, lineHeight: 1.4,
           }}>
+            {isUrgent && !completed && (
+              <span style={{ color: "#f97316", marginRight: 4 }}>⚡ Urgent:</span>
+            )}
             {action.title}
           </div>
           <div style={{ marginTop: 4, display: "flex", gap: 6 }}>
@@ -162,6 +193,17 @@ export function TodaysMissionWidget() {
           </div>
         </div>
       </div>
+
+      {nextAction && !completed && (
+        <div style={{
+          borderTop: "1px solid var(--border)", paddingTop: 12,
+          fontSize: "0.75rem", color: "var(--text-3)",
+          display: "flex", gap: 6, alignItems: "center",
+        }}>
+          <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.25)", letterSpacing: "0.06em" }}>UP NEXT</span>
+          <span style={{ color: "var(--text-2)" }}>{nextAction.title}</span>
+        </div>
+      )}
 
       {completed && (
         <motion.div

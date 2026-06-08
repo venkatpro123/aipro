@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, Minus, Clock } from "lucide-react";
 import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
 import ScoreRing from "../ScoreRing";
@@ -53,10 +53,26 @@ export function CareerRiskWidget() {
   const score = hr.total ?? 0;
   const color = getRingColor(score);
   const delta = (hr as any).scoreDelta ?? null;
-  const velocity = (hr as any).trajectoryPtsPerMonth ?? null;
+
+  // Use trajectoryPtsPerMonth if available; fall back to alertDrift computation
+  const rawVelocity = (hr as any).trajectoryPtsPerMonth ?? null;
+  const velocity: number | null = rawVelocity != null
+    ? rawVelocity
+    : state.alertDrift
+      ? state.alertDrift.drift / Math.max(state.alertDrift.daysSince / 30, 1)
+      : null;
 
   const TrendIcon = velocity == null ? Minus : velocity > 0 ? TrendingUp : TrendingDown;
   const trendColor = velocity == null ? "var(--text-3)" : velocity > 0 ? "#ef4444" : "#10b981";
+
+  // Last-analyzed date from HybridResult or alertDrift
+  const calcAt: string | null = (hr as any).calculatedAt ?? (hr as any).timestamp ?? null;
+  const isStale = calcAt ? (Date.now() - new Date(calcAt).getTime()) > 30 * 24 * 60 * 60 * 1000 : false;
+  const lastAnalyzedLabel = calcAt
+    ? new Date(calcAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : state.alertDrift?.fromDate
+      ? new Date(state.alertDrift.fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : null;
 
   return (
     <motion.div
@@ -70,12 +86,23 @@ export function CareerRiskWidget() {
           <div className="label-xs" style={{ color: "var(--text-3)", marginBottom: 4 }}>LAYOFF RISK</div>
           {companyName && <div style={{ fontSize: "0.82rem", color: "var(--text-2)", fontWeight: 500 }}>{companyName}{roleTitle ? ` · ${roleTitle}` : ""}</div>}
         </div>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 4, fontSize: "0.72rem", fontWeight: 700,
-          color: trendColor, fontFamily: "var(--font-mono)",
-        }}>
-          <TrendIcon size={12} />
-          {velocity != null ? `${Math.abs(velocity).toFixed(1)}/mo` : "Stable"}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 4, fontSize: "0.72rem", fontWeight: 700,
+            color: trendColor, fontFamily: "var(--font-mono)",
+          }}>
+            <TrendIcon size={12} />
+            {velocity != null ? `${Math.abs(velocity).toFixed(1)}/mo` : "Stable"}
+          </div>
+          {lastAnalyzedLabel && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 3,
+              fontSize: '0.65rem', color: isStale ? '#f59e0b' : 'rgba(255,255,255,0.25)',
+            }}>
+              <Clock size={9} />
+              {isStale ? `Stale · ${lastAnalyzedLabel}` : lastAnalyzedLabel}
+            </div>
+          )}
         </div>
       </div>
 

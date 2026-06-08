@@ -1,16 +1,22 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useLayoff } from "../../context/LayoffContext";
+import { useAuth } from "../../context/AuthContext";
 import { CareerRiskWidget } from "./CareerRiskWidget";
 import { BiggestThreatWidget } from "./BiggestThreatWidget";
 import { BiggestOpportunityWidget } from "./BiggestOpportunityWidget";
 import { TodaysMissionWidget } from "./TodaysMissionWidget";
 import { MonitoringFeedWidget } from "./MonitoringFeedWidget";
 import { RecommendedToolWidget } from "./RecommendedToolWidget";
+import { TodaysIntelligenceBrief } from "./TodaysIntelligenceBrief";
 import { CareerMemorySummaryCard } from "../CareerMemory/CareerMemorySummaryCard";
 import { FeedbackSummaryPanel } from "../Feedback/FeedbackSummaryPanel";
 import { CareerHealthScoreWidget } from "../Intelligence/CareerHealthScoreWidget";
 import { PersonalizedPredictionPanel } from "../Intelligence/PersonalizedPredictionPanel";
+import { WeeklyCareerBriefCard } from "../Intelligence/WeeklyCareerBriefCard";
+import { CareerMomentAlert } from "../Intelligence/CareerMomentAlert";
+import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -265,9 +271,36 @@ function StartHereCard() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+function formatTodayDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function isMonday(): boolean {
+  return new Date().getDay() === 1;
+}
+
 export function CareerOSHome() {
   const { state } = useLayoff();
+  const { user } = useAuth();
   const hasResult = state.scoreResult !== null;
+  const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
+
+  useEffect(() => {
+    if (!state.companyName || !state.scoreResult) return;
+    const score = (state.scoreResult as any)?.total ?? null;
+    if (score === null) return;
+    try {
+      const result = evaluateReEngagementTrigger(state.companyName, score);
+      if (result && result.type !== 'none') {
+        setReEngageBanner({ headline: result.headline, subtext: result.subtext });
+      }
+    } catch {/* offline — ignore */}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.companyName]);
 
   return (
     <div
@@ -284,40 +317,60 @@ export function CareerOSHome() {
         transition={{ duration: 0.35 }}
         style={{ padding: "32px 0 28px" }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "clamp(1.5rem, 4vw, 2.1rem)",
-              fontFamily: "var(--font-display)",
-              fontWeight: 800,
-              color: "var(--text)",
-              margin: 0,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            HumanProof
-          </h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
           <div
             style={{
-              padding: "3px 10px",
-              borderRadius: 6,
-              background: "rgba(0,245,255,0.1)",
-              border: "1px solid rgba(0,245,255,0.25)",
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              color: "var(--cyan)",
-              letterSpacing: "0.1em",
-              fontFamily: "var(--font-mono, monospace)",
+              display: "flex",
+              alignItems: "baseline",
+              gap: 12,
+              flexWrap: "wrap",
             }}
           >
-            AI CAREER OS
+            <h1
+              style={{
+                fontSize: "clamp(1.5rem, 4vw, 2.1rem)",
+                fontFamily: "var(--font-display)",
+                fontWeight: 800,
+                color: "var(--text)",
+                margin: 0,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              HumanProof
+            </h1>
+            <div
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "3px 10px",
+                borderRadius: 6,
+                background: "rgba(0,245,255,0.1)",
+                border: "1px solid rgba(0,245,255,0.25)",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                color: "var(--cyan)",
+                letterSpacing: "0.1em",
+                fontFamily: "var(--font-mono, monospace)",
+              }}
+            >
+              {/* LIVE pulsing dot */}
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: "var(--cyan)",
+                display: "inline-block",
+                animation: "pulse 1.8s ease-in-out infinite",
+                flexShrink: 0,
+              }} />
+              AI CAREER OS
+            </div>
+          </div>
+          {/* Current date — OS personality */}
+          <div style={{
+            fontSize: "0.75rem", fontWeight: 500,
+            color: "var(--text-3)",
+            fontFamily: "var(--font-mono, monospace)",
+            alignSelf: "center",
+          }}>
+            {formatTodayDate()}
           </div>
         </div>
         <p
@@ -331,6 +384,48 @@ export function CareerOSHome() {
           Monitor · Detect · Recommend · Execute · Measure
         </p>
       </motion.div>
+
+      {/* ── Today's Intelligence Brief (system voice) ── */}
+      <TodaysIntelligenceBrief />
+
+      {/* ── Re-engagement banner (appears when system detects check-in needed) ── */}
+      {reEngageBanner && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            marginBottom: 16,
+            padding: "10px 16px",
+            borderRadius: 8,
+            background: "rgba(245,158,11,0.08)",
+            border: "1px solid rgba(245,158,11,0.25)",
+            fontSize: "0.82rem",
+            color: "#f59e0b",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span>⏰</span>
+          <span>
+            <span style={{ fontWeight: 700 }}>{reEngageBanner.headline}</span>
+            {reEngageBanner.subtext && (
+              <span style={{ fontWeight: 400, opacity: 0.8, marginLeft: 6 }}>{reEngageBanner.subtext}</span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setReEngageBanner(null)}
+            style={{
+              marginLeft: "auto", background: "none", border: "none",
+              color: "rgba(245,158,11,0.5)", cursor: "pointer", fontSize: "1rem",
+            }}
+          >
+            ×
+          </button>
+        </motion.div>
+      )}
 
       <motion.div
         variants={containerVariants}
@@ -367,11 +462,17 @@ export function CareerOSHome() {
           <StartHereCard />
         ) : (
           <>
-            {/* ══════════════════════════════════════════════════════════════
+            {/* ── Career Moment Alert — urgent moments from proactiveInsightEngine ── */}
+            <CareerMomentAlert />
+
+            {/* ════════════════════════════════════════════════════════════════════
                 SECTION 2 — WHAT'S MOVING ("SIGNALS")
-            ══════════════════════════════════════════════════════════════ */}
+            ════════════════════════════════════════════════════════════════════ */}
             <motion.div variants={itemVariants} style={{ marginBottom: 32 }}>
               <SectionLabel label="Signals" />
+
+              {/* Weekly Career Brief — shown on Mondays or when data available */}
+              {isMonday() && <WeeklyCareerBriefCard />}
 
               {/* Threat + Opportunity 2-col grid */}
               <div
