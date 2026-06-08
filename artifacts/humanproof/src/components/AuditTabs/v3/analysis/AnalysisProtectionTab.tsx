@@ -18,6 +18,7 @@ import { CareerInsuranceStatus } from '../../common/CareerInsuranceStatus';
 import AdaptiveBlock from '../../common/AdaptiveBlock';
 import { useDashboardAdaptation } from '../../../../hooks/useDashboardAdaptation';
 import { GraduationCap, ArrowUpRight } from 'lucide-react';
+import { toRoleTitle } from '../../../../lib/riskTokens';
 
 interface Props {
   result: HybridResult;
@@ -43,7 +44,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
 
   const currentRoleLabel = useMemo(() => (
     r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ??
-    (String(r.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || undefined)
+    (toRoleTitle(String(r.workTypeKey ?? '')) || undefined)
   ), [r]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const prepScore = preparedness?.overallScore ?? 50;

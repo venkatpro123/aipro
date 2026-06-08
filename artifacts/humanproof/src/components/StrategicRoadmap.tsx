@@ -554,20 +554,27 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
         </div>
       </div>
 
-      {/* Urgency Banner */}
-      {score >= 45 && (
-        <div style={{
-          display: 'flex', gap: 10, alignItems: 'flex-start',
-          background: `${urgencyColor}08`, border: `1px solid ${urgencyColor}25`,
-          borderRadius: 10, padding: '12px 14px', marginBottom: 20,
-        }}>
-          <Flame size={14} color={urgencyColor} style={{ flexShrink: 0, marginTop: 2 }} />
-          <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
-            <strong style={{ color: urgencyColor }}>Transition Intelligence:</strong>{' '}
-            {expMeta.urgencyMod}
-          </p>
-        </div>
-      )}
+      {/* Urgency / Opportunity Banner — shown for all score levels */}
+      <div style={{
+        display: 'flex', gap: 10, alignItems: 'flex-start',
+        background: `${urgencyColor}08`, border: `1px solid ${urgencyColor}25`,
+        borderRadius: 10, padding: '12px 14px', marginBottom: 20,
+      }}>
+        <Flame size={14} color={urgencyColor} style={{ flexShrink: 0, marginTop: 2 }} />
+        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
+          {score < 45 ? (
+            <>
+              <strong style={{ color: urgencyColor }}>You are well-positioned:</strong>{' '}
+              {expMeta.urgencyMod} Use this window to deepen your moat — roles with strong protection today are the ones that stay strong after the next AI wave.
+            </>
+          ) : (
+            <>
+              <strong style={{ color: urgencyColor }}>Transition Intelligence:</strong>{' '}
+              {expMeta.urgencyMod}
+            </>
+          )}
+        </p>
+      </div>
 
       {/* Tab: Roadmap */}
       {activeTab === 'roadmap' && (

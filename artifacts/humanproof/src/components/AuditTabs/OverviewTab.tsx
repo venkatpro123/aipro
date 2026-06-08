@@ -42,6 +42,7 @@ import {
 } from "@/services/financialContextService";
 import { inferCurrencyFromContext } from "@/services/currencyService";
 import { computePeerPercentile, getLivePeerPercentile, formatPercentile, type PeerPercentileResult } from "@/services/peerPercentile";
+import { toRoleTitle } from '@/lib/riskTokens';
 // v12.0 new panels
 import { ManagerRiskCard } from "./common/ManagerRiskCard";
 import { VisaRiskPanel } from "./common/VisaRiskPanel";
@@ -2152,7 +2153,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   const tierContext = useMemo(() => {
     const p = peerPercentile.percentile;
-    const role = result.workTypeKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const role = toRoleTitle(result.workTypeKey);
     const qualifier = peerPercentile.isResearchEstimate ? 'est.' : 'verified';
     return `${formatPercentile(p)} percentile among ${role} professionals (n≈${peerPercentile.sampleSize.toLocaleString()} ${qualifier})`;
   }, [peerPercentile, result.workTypeKey]);

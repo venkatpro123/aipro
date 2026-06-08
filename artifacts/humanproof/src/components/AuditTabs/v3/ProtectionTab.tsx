@@ -29,7 +29,6 @@ import CareerVelocityPanel from '../common/CareerVelocityPanel';
 import { VisaRiskPanel } from '../common/VisaRiskPanel';
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
-import CareerContingencyPanel from '../common/CareerContingencyPanel';
 import CareerConfidencePanel from '../common/CareerConfidencePanel';
 import { CareerPortfolioPanel } from '../common/CareerPortfolioPanel';
 import AdaptiveBlock from '../common/AdaptiveBlock';
@@ -50,6 +49,7 @@ import {
   detectFreelancerType,
 } from '../../../services/freelancerIntelligenceEngine';
 import type { UserProfile } from '../../../services/userProfileService';
+import { toRoleTitle } from '../../../lib/riskTokens';
 
 type SectionId = 'preparedness' | 'skills' | 'mobility' | 'market' | 'personal';
 
@@ -64,7 +64,6 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   const skillGap                                = r.skillGapIntelligence;
   const skillPortfolio                          = r.skillPortfolioFit;
   const careerVelocity                          = r.careerVelocity;
-  const careerContingency                       = r.careerContingencyPlan;
   const careerConfidence                        = r.careerConfidence;
   const visaRisk                                = r.visaRisk;
   const userRunway                              = r.userFinancialRunway;
@@ -94,7 +93,8 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
   }, [isFreelancer, result.total, userProfile?.jobTitle]);
 
   const hasSkills      = Boolean(skillGap || skillPortfolio);
-  const hasMobility    = Boolean(careerContingency || careerConfidence);
+  // CareerContingencyPanel moved to Action Center — hasMobility now driven by careerConfidence only
+  const hasMobility    = Boolean(careerConfidence);
   const hasMarket      = Boolean(roleMarketDemand);
   const hasPersonal    = Boolean(careerVelocity || visaRisk || userRunway);
 
@@ -170,8 +170,9 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         defaultOpen={hasMobility && (adaptation.mode === 'emergency' || adaptation.mode === 'elevated')}
         empty={!hasMobility}
       >
-        {careerConfidence  && <CareerConfidencePanel confidence={careerConfidence} />}
-        {careerContingency && <CareerContingencyPanel contingencyPlan={careerContingency} />}
+        {careerConfidence && <CareerConfidencePanel confidence={careerConfidence} />}
+        {/* CareerContingencyPanel removed from Protection — canonical home is Action Center.
+            Showing it here duplicated STAY/NEGOTIATE/TRANSITION paths in the scroll. */}
       </AdaptiveBlock>
     ),
 
@@ -235,7 +236,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
         currentScore={result.total}
         currentRoleLabel={
           r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ??
-          (String(result.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || undefined)
+          (toRoleTitle(String(result.workTypeKey ?? '')) || undefined)
         }
       />
 
@@ -246,7 +247,7 @@ export const ProtectionTab: React.FC<TabProps> = (props) => {
           currentScore={result.total}
           currentRoleLabel={
             r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ??
-            (String(r.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || undefined)
+            (toRoleTitle(String(r.workTypeKey ?? '')) || undefined)
           }
         />
       )}

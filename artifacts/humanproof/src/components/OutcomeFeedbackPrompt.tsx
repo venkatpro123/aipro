@@ -16,16 +16,23 @@ interface Props {
 }
 
 const OUTCOME_OPTIONS: Array<{ label: OutcomeLabel; display: string; swarmValue: number }> = [
-  { label: 'layoff_occurred',   display: 'Got laid off',       swarmValue: 100 },
-  { label: 'voluntarily_left',  display: 'Left voluntarily',   swarmValue: 0   },
-  { label: 'no_layoff',         display: 'Still here — no cuts', swarmValue: 0  },
-  { label: 'other',             display: 'Something else',     swarmValue: 50  },
+  { label: 'no_layoff',         display: "I'm still in my role",           swarmValue: 0   },
+  { label: 'no_layoff',         display: 'I got promoted',                 swarmValue: 0   },
+  { label: 'voluntarily_left',  display: 'I switched companies',           swarmValue: 0   },
+  { label: 'voluntarily_left',  display: 'I moved into an AI-focused role', swarmValue: 0  },
+  { label: 'layoff_occurred',   display: 'I was laid off',                 swarmValue: 100 },
+  { label: 'voluntarily_left',  display: 'I started freelancing/a business', swarmValue: 0 },
+  { label: 'other',             display: 'Other',                          swarmValue: 50  },
 ];
+
+const HELPFULNESS_OPTIONS = ['Yes', 'Partially', 'No'] as const;
+type HelpfulRating = typeof HELPFULNESS_OPTIONS[number];
 
 export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predictionDate }) => {
   const [duePrompt, setDuePrompt] = useState<DuePrompt | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [step, setStep] = useState<'outcome' | 'helpful' | 'done'>('outcome');
 
   useEffect(() => {
     // Check for outstanding due-prompts from the edge function (v15.0).
@@ -51,8 +58,13 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
     if (companyRoleKey) {
       recordOutcome(companyRoleKey, option.swarmValue);
     }
+    setStep('helpful');
+  };
+
+  const handleHelpful = (_rating: HelpfulRating) => {
+    setStep('done');
     setSubmitted(true);
-    setTimeout(() => setIsVisible(false), 3000);
+    setTimeout(() => setIsVisible(false), 2000);
   };
 
   if (!isVisible) return null;
@@ -61,6 +73,7 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
   const role = duePrompt?.role_title ?? 'this role';
   const dateStr = duePrompt?.audit_date ?? predictionDate;
   const formattedDate = dateStr ? new Date(dateStr).toLocaleDateString() : 'a previous date';
+  const milestoneLabel = duePrompt?.prompt_milestone === 30 ? '30 days' : duePrompt?.prompt_milestone === 90 ? '3 months' : duePrompt?.prompt_milestone === 180 ? '6 months' : null;
 
   return (
     <AnimatePresence>
@@ -83,15 +96,41 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
           <X className="w-4 h-4" />
         </button>
 
-        {submitted ? (
+        {step === 'done' ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex items-center space-x-3 text-emerald-400 font-medium py-2"
           >
             <CheckCircle className="w-5 h-5" />
-            <p>Thank you — outcome recorded.</p>
+            <p>Thank you — your outcome has been recorded. As more professionals share their results, we'll show you exactly how people in your role navigated the AI transition.</p>
           </motion.div>
+        ) : step === 'helpful' ? (
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3 pr-6">
+              <div className="p-2 bg-emerald-500/10 rounded-lg shrink-0 mt-0.5">
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-1">Outcome recorded</h4>
+                <p className="text-xs text-neutral-400 leading-snug">
+                  One more question — did this Career Survival report help you make decisions?
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {HELPFULNESS_OPTIONS.map((rating) => (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => handleHelpful(rating)}
+                  className="py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white transition-colors text-xs font-medium border border-neutral-700 hover:border-neutral-500"
+                >
+                  {rating}
+                </button>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-start space-x-3 pr-6">
@@ -99,7 +138,9 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
                 <AlertCircle className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-white mb-1">What happened?</h4>
+                <h4 className="text-sm font-semibold text-white mb-1">
+                  {milestoneLabel ? `${milestoneLabel} check-in` : 'What happened?'}
+                </h4>
                 <p className="text-xs text-neutral-400 leading-snug">
                   You ran a risk audit for <strong>{role}</strong> at{' '}
                   <strong>{company}</strong> on {formattedDate}. What actually happened?
@@ -111,7 +152,8 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
             <div className="grid grid-cols-2 gap-2">
               {OUTCOME_OPTIONS.map((opt) => (
                 <button
-                  key={opt.label}
+                  key={opt.display}
+                  type="button"
                   onClick={() => handleOutcome(opt)}
                   className="py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white transition-colors text-xs font-medium border border-neutral-700 hover:border-neutral-500"
                 >

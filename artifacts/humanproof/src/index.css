@@ -7353,10 +7353,10 @@ number-flow,
 }
 
 /* ── Swipe gesture area: touch-action pan-y for vertical scroll ────── */
+/* user-select intentionally NOT set here — swipe is touch-only (pointer: touch)
+   so blocking text selection on this container only hurts desktop copy/paste. */
 .swipe-tab-container {
   touch-action: pan-y;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* ── Prevent layout shift from sticky header + safe area ─────────── */

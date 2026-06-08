@@ -22,6 +22,7 @@ import { getProductivityToolsForRole, familyDisplayLabel, type ProductivityTool 
 import { TimeAvailableTrack, TRACKS } from "../../components/TimeAvailableTrack";
 import type { TrackType } from "../../components/TimeAvailableTrack";
 import { FinancialContextInput } from "../../components/FinancialContextInput";
+import { toRoleTitle } from '@/lib/riskTokens';
 import { CareerCapitalAssessment } from "../../components/CareerCapitalAssessment";
 import { PeerBenchmarkPanel } from "../../components/PeerBenchmarkPanel";
 import {
@@ -1797,7 +1798,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
               description={`${sortedItems.length} actions tailored to ${
                 (result as any).roleTitle ??
                 (result as any).userProfile?.roleTitle ??
-                result.workTypeKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                toRoleTitle(result.workTypeKey)
               } at risk score ${result.total}/100. Set your available hours to see only what's realistic for your schedule.`}
             />
             {/* v8.0: Role personalization badge — shows which role group was resolved */}

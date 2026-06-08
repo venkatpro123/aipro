@@ -375,6 +375,69 @@ export const REPLACEMENT_2026_OVERRIDES: Record<string, number> = {
   'media-article-summarisation':90,'media-image-editing':78,
 };
 
+// ─── D7: Agentic Disruption Potential ──────────────────────
+// Measures vulnerability once autonomous AI executes complete workflows.
+// 6 sub-factors averaged: workflow structure complexity, decision autonomy,
+// human relationship dependency (inverted), physical world dependency (inverted),
+// multi-step reasoning requirements, organizational trust requirements.
+// Range: 8–97 | Higher = more post-threshold vulnerable
+// Does NOT enter GROUNDED_FORMULA_WEIGHTS — supplementary structural signal only.
+export const D7_AGENTIC_DISRUPTION: Record<string, number> = {
+  // BPO / Admin (highest — fully digital, rule-bound, no physical dependency)
+  bpo_data_entry: 97, bpo_chat: 95, bpo_inbound: 90, bpo_email_support: 88,
+  bpo_outbound: 86, bpo_virtual: 82, bpo_hr_ops: 78, bpo_social_mod: 62, bpo_claims: 85,
+  adm_data_entry: 95, adm_office: 80, adm_reception: 72, adm_exec: 60, adm_coord: 65,
+  // Content / Marketing
+  cnt_seo_content: 93, cnt_copy: 88, cnt_blog: 90, cnt_email: 88, cnt_social: 85,
+  cnt_script: 80, cnt_ghostwrite: 82, cnt_translation: 78, cnt_tech_write: 72, cnt_ux_write: 60,
+  mkt_seo: 80, mkt_sem: 75, mkt_analytics: 72, mkt_copywriter: 86,
+  mkt_crm: 68, mkt_social_ads: 74, mkt_growth: 58, mkt_brand: 45, mkt_product: 42,
+  // Finance
+  fin_payroll: 92, fin_account: 85, fin_reporting: 82, fin_audit: 76,
+  fin_tax: 74, fin_credit: 70, fin_fp: 62, fin_risk: 55,
+  fin_compliance: 60, fin_treasury: 58, fin_invest: 50,
+  fin_investment_banker: 50, fin_private_equity: 42, fin_quant: 60,
+  ins_claims: 86, ins_admin: 84, ins_underwrite: 72,
+  // Legal
+  leg_paralegal: 84, leg_contract_attorney: 76, leg_corporate: 58, leg_compliance: 55,
+  leg_litigation: 38, leg_ip: 42, leg_tax_law: 65, leg_cyberlaw: 50,
+  // Software / Tech
+  sw_frontend: 72, sw_backend: 65, sw_fullstack: 68, sw_testing: 78, sw_api: 70,
+  qa_manual: 80, qa_auto: 62, sw_devops: 48, sw_cloud: 42, sw_mobile_dev: 65,
+  sw_security: 35, sw_arch: 30, sw_lead: 28, sw_legacy: 55, sw_db: 68,
+  ml_engineer: 38, ml_research: 28, ml_prompt_eng: 45, ml_nlp: 42, ml_model: 40,
+  ml_analytics: 58, ml_etl: 62, ml_data: 55, ml_mlops: 44, ml_cv: 40,
+  ml_embed: 30, ml_rlhf: 25, ml_ai_safety: 20, ml_prompt: 50,
+  sec_pen: 38, sec_soc: 60, sec_cloud: 45, sec_appsec: 40, sec_grc: 55,
+  data_analyst: 70, data_eng: 60,
+  // Healthcare
+  hc_medical_coding: 88, hc_admin_hc: 78, hc_radiology: 65, hc_pharmacist: 55,
+  hc_tele: 58, hc_nutrition: 45, hc_physio: 22,
+  hc_physician: 22, hc_doctor: 22, hc_surgeon: 12, hc_specialist: 18, hc_pathology: 55,
+  nur_rn: 18, nur_icu: 14, nur_community: 20, nur_midwife: 12, nur_para: 22,
+  mh_therapist: 10, mh_psychologist: 12, mh_coach: 30, mh_social: 16, mh_crisis: 8,
+  ph_research: 36, ph_clinical: 40, ph_regulatory: 48, ph_biotech: 35,
+  // HR
+  hr_recruit: 72, hr_payroll: 85, hr_ops: 70, hr_hrbp: 38,
+  hr_comp: 58, hr_ld: 45, hr_diversity: 36, hr_hris: 65,
+  // Education
+  edu_admin_edu: 65, edt_content: 70, edu_teach: 30, edu_special: 15,
+  edu_higher: 28, edu_counsellor: 20, edu_curriculum: 52,
+  // Engineering / Manufacturing
+  eng_civil: 40, eng_mech: 42, eng_elec: 44, eng_project: 38,
+  mfg_production: 58, mfg_quality: 60, mfg_cad: 55, mfg_supervisor: 42,
+  // Design
+  des_graphic: 65, des_ux: 38, des_ui: 55, des_logo: 60, des_motion: 52, des_product: 36,
+  // Media
+  med_journalism: 68, med_edit: 82, med_video: 50,
+  // Retail / Logistics
+  ret_floor: 70, ret_inventory: 75, ec_catalog: 88, ec_returns: 80, log_warehouse: 72,
+  // Government / NGO
+  gov_admin: 45, gov_policy: 35, ngo_program: 38, ngo_comms: 58,
+  // Default
+  default: 55,
+};
+
 // ─── Specialist Keywords ───────────────────────────────────
 export const SPECIALIST_KEYWORDS = [
   'forensic','chief','principal','distinguished','lead','appellate',

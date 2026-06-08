@@ -653,6 +653,112 @@ export const getUrgency = (score: number) => {
   return "Critical";
 };
 
+// ─── Career Survival Probability ──────────────────────────────────
+// Nonlinear piecewise-linear curve: steepens after risk=50 (capability crossing zone).
+export function riskToSurvival(score: number): number {
+  const anchors: [number, number][] = [
+    [0,95],[10,92],[20,88],[30,82],[40,76],
+    [50,68],[60,58],[70,46],[80,32],[90,18],[100,5],
+  ];
+  const c = Math.max(0, Math.min(100, score));
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const [x0, y0] = anchors[i], [x1, y1] = anchors[i + 1];
+    if (c <= x1) return Math.round(y0 + ((c - x0) / (x1 - x0)) * (y1 - y0));
+  }
+  return 5;
+}
+
+export function getSurvivalVerdict(score: number): string {
+  if (score < 25) return 'Highly Protected';
+  if (score < 50) return 'Currently Protected';
+  if (score < 70) return 'Transition Vulnerable';
+  return 'Immediate Career Pressure';
+}
+
+export function getSurvivalVerdictSubtext(score: number): string {
+  if (score < 25) return 'Well-positioned to remain competitive through the AI workforce transition';
+  if (score < 50) return 'Likely To Remain Competitive Through The AI Workforce Transition';
+  if (score < 70) return 'Facing Increasing Transition Pressure';
+  return 'Immediate Repositioning Required';
+}
+
+export function getPreparationWindow(score: number): string {
+  if (score < 25) return '96–144 Months Remaining';
+  if (score < 50) return '60–96 Months Remaining';
+  if (score < 70) return '24–48 Months Remaining';
+  return 'Act Now';
+}
+
+export function getActionDeadline(score: number): string {
+  const u = getUrgency(score);
+  if (u === 'Low')      return '12–18 Months';
+  if (u === 'Moderate') return '6–12 Months';
+  if (u === 'High')     return '3–6 Months';
+  return 'Act Now';
+}
+
+export function getSurvivalCurrentPosition(survivalPct: number): string {
+  if (survivalPct > 70) return 'Protected';
+  if (survivalPct >= 50) return 'Moderate Risk';
+  return 'At Risk';
+}
+
+export function getSurvivalFutureOutlook(interpretation: string): string {
+  switch (interpretation) {
+    case 'stable':
+    case 'declining_risk':     return 'Stable';
+    case 'safe_rising':        return 'Increasing Pressure';
+    case 'moderate_rising':    return 'High Risk';
+    case 'high_risk_imminent':
+    case 'critical_now':       return 'Critical';
+    default:                   return 'Increasing Pressure';
+  }
+}
+
+export function getCareerProtectionGrade(survivalPct: number): 'A' | 'B' | 'C' | 'D' {
+  if (survivalPct >= 75) return 'A';
+  if (survivalPct >= 55) return 'B';
+  if (survivalPct >= 35) return 'C';
+  return 'D';
+}
+
+export function getPreparationWindowMonths(score: number): number {
+  if (score < 25) return 120;
+  if (score < 50) return 78;
+  if (score < 70) return 36;
+  return 0;
+}
+
+export function getSurvivalWindow(score: number): {
+  best: number; likely: number; worst: number; confidence: 'High' | 'Medium' | 'Low';
+} {
+  // Continuous interpolation: months = 130 - (score * 1.3), clamped 0..144
+  // Guarantees best > likely > worst — never identical — unlike the 4-step version.
+  const monthsFromScore = (s: number) => Math.round(Math.max(0, Math.min(144, 130 - s * 1.3)));
+  const best    = monthsFromScore(Math.max(0,   score - 18));
+  const likely  = monthsFromScore(score);
+  const worst   = monthsFromScore(Math.min(100, score + 18));
+  const confidence: 'High' | 'Medium' | 'Low' = score < 35 ? 'High' : score < 60 ? 'Medium' : 'Low';
+  return { best, likely, worst, confidence };
+}
+
+export function getPersonalizedScoreExplanation(
+  score: number, experience: string, roleLabel: string
+): string {
+  const isSenior = experience === '10-20' || experience === '20+';
+  const isEntry  = experience === '0-2' || experience === '2-5';
+  const role = roleLabel || 'your role';
+  if (isSenior && score < 35) return `Your ${experience} years means you've built architectural judgment and institutional trust that AI systems cannot replicate from code or data alone. That experience is your strongest shield.`;
+  if (isSenior && score < 60) return `Your ${experience} years gives you pattern recognition built from real failures — something AI learns from successes but rarely from hard-won context. Focus on amplifying that advantage.`;
+  if (isSenior)               return `Even with ${experience} years, your role's core tasks are within AI's current capability range. Your experience makes you more adaptable than peers — but active repositioning is needed.`;
+  if (isEntry  && score < 35) return `Early career in a protected role puts you in the best position — you're building skills that will matter more, not less, as AI handles routine work.`;
+  if (isEntry  && score < 60) return `At ${experience} years, some of your daily tasks are in AI's reach. The next 12–18 months of deliberate skill-building will determine whether AI becomes a tool you use or a force that replaces you.`;
+  if (isEntry)                return `Early career in a high-displacement role is the most acute risk combination. The routine tasks defining entry-level ${role} are exactly what AI handles first. Specialization within the next 12 months is critical.`;
+  if (score < 35) return `Your experience and the nature of ${role} work puts you in a well-protected position. AI is augmenting what you do, not replacing it.`;
+  if (score < 60) return `Your experience depth is real, but the tasks defining ${role} are increasingly in AI's capability range. Your edge is the judgment that experience provides — not the execution.`;
+  return `Your experience provides some buffer, but ${role} has significant exposure to the current wave of AI capabilities. Deliberate upskilling in the next 6–12 months is your most important lever.`;
+}
+
 export const getConfidenceLevel = (dq: string): ConfidenceLevel => {
   if (dq === "DQ_FULL") return "HIGH";
   if (dq === "DQ_PARTIAL") return "MODERATE";

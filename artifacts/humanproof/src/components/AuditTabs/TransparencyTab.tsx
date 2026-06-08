@@ -27,8 +27,6 @@ import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
 import type { TabProps } from "./common/types";
 import type { SignalQuality, ConsensusSnapshot } from "../../types/hybridResult";
-// v12.0
-import { SignalAttributionWaterfall } from "./common/SignalAttributionWaterfall";
 // v13.0
 import PeerContagionPanel from "./common/PeerContagionPanel";
 import ModelCalibrationPanel from "./common/ModelCalibrationPanel";
@@ -63,7 +61,6 @@ import { CALIBRATION_META, LAYER_CALIBRATION } from "../../services/empiricalCal
 import type { SegmentCalibrationResult } from "../../services/segmentedCalibrationEngine";
 import type { ParentPropagationResult } from "../../services/parentSubsidiaryPropagation";
 import { getCircuitSnapshot } from "../../services/apiCircuitBreaker";
-import { PatternMatchCard } from "../PatternMatchCard";
 import {
   computeActionCoverage,
   getTopUncoveredPrefixes,
@@ -902,13 +899,13 @@ const EffectiveWeightsPanel: React.FC<{
                       {!d8IsActive && !d8WeightRedistributed && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
-                          LOCKED
+                          NOT ACTIVE
                         </span>
                       )}
                       {d8IsActive && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
                           style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
-                          {d8FlagActive ? 'LOGISTIC' : 'HEURISTIC'}
+                          {d8FlagActive ? 'VALIDATED' : 'ESTIMATED'}
                         </span>
                       )}
                     </div>
@@ -1735,7 +1732,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
               : { background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
             }
           >
-            {isConformal ? 'CONFORMAL' : 'HEURISTIC FALLBACK'}
+            {isConformal ? 'VALIDATED' : 'ESTIMATED'}
           </span>
           {/* Cohort badge */}
           {isConformal && (
@@ -3154,7 +3151,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
                           style={{ background: 'rgba(148,163,184,0.15)', color: '#94a3b8' }}
                         >
-                          HEURISTIC
+                          ESTIMATED
                         </span>
                       )}
                       {hiringMarket && (
@@ -3423,21 +3420,9 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
           <ActionCoveragePanel />
         </div>
 
-        {/* v7.0: Historical precedent pattern — only shown when a verified match exists */}
-        {result.resolvedPattern && (
-          <div className="mb-6">
-            <SectionHeader
-              title="Historical Precedent Match"
-              description="A verified pattern from the database of documented displacement events that matches this profile. Not AI-generated — sourced from public earnings reports, layoffs.fyi, and industry data."
-            />
-            <PatternMatchCard
-              pattern={result.resolvedPattern}
-              overlapScore={result.patternMatchOverlapScore ?? undefined}
-              roleFit={(result as any).patternMatchRoleFit ?? undefined}
-              userRoleTitle={result.workTypeKey?.replace(/_/g, ' ') ?? undefined}
-            />
-          </div>
-        )}
+        {/* PatternMatchCard removed from Transparency — canonical home is Deep Dive (AnalysisTab).
+            Showing the same matched historical pattern in both sections created duplication
+            in the narrative scroll. The Deep Dive section surfaces it with full context. */}
 
         <div className="mb-6">
           <SectionHeader
@@ -3553,10 +3538,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
           </div>
         )}
 
-        {/* v12.0: Signal Attribution Waterfall — how each signal built the final score */}
-        <div className="mt-6">
-          <SignalAttributionWaterfall result={result} />
-        </div>
+        {/* Score Attribution Waterfall lives in Deep Dive (RiskBreakdownTab) to avoid duplication */}
 
         {/* v13.0: Peer Contagion — sector wave propagation status */}
         {(result as any).peerContagion && (

@@ -307,6 +307,11 @@ const EXPERIENCE_MODIFIER: Record<string, number> = {
 // ─── Helper ───────────────────────────────────────────────────────────────
 const clamp = (v: number, min = 0, max = 100): number => Math.max(min, Math.min(max, v));
 
+/** yearIndexToMonthLabel — Display-only conversion for trajectory array indices to month labels. */
+export function yearIndexToMonthLabel(i: number): string {
+  return i === 0 ? 'Now' : `Month ${i * 12}`;
+}
+
 /**
  * resolveGrowthProfile — Returns the GrowthProfile for a role key.
  *

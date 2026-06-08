@@ -208,14 +208,16 @@ const SectionLabel: React.FC<{ text: string }> = ({ text }) => (
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 
-const Section: React.FC<{ delay: number; last?: boolean; children: React.ReactNode }> = ({ delay, last, children }) => (
+const Section: React.FC<{ id?: string; delay: number; last?: boolean; children: React.ReactNode }> = ({ id, delay, last, children }) => (
   <motion.div
+    id={id}
     initial={{ opacity: 0, y: 4 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.32, delay }}
     style={{
       paddingBottom: last ? 0 : '20px',
       borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+      scrollMarginTop: 90,
     }}
   >
     {children}
@@ -261,7 +263,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 0 32px' }}>
 
         {/* Section 1 — Emergency signal banner */}
-        <Section delay={0}>
+        <Section id="guidance-section-situation" delay={0}>
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -286,7 +288,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
         {/* Section 2 — Top drivers (still relevant in emergency) */}
         {topDrivers.length > 0 && (
-          <Section delay={0.06}>
+          <Section id="guidance-section-why" delay={0.06}>
             <SectionLabel text="Why This Is Happening" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {topDrivers.map((driver, i) => (
@@ -309,7 +311,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
         {/* Section 3 — Dominant single action */}
         {topAction && (
-          <Section delay={0.12}>
+          <Section id="guidance-section-actions" delay={0.12}>
             <SectionLabel text="What To Do Next" />
             <button
               type="button"
@@ -348,7 +350,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         )}
 
         {/* Section 5 — Confidence (trust anchor, always shown) */}
-        <Section delay={0.18} last>
+        <Section id="guidance-section-confidence" delay={0.18} last>
           <SectionLabel text="Confidence & Trust" />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="rgba(255,255,255,0.55)" />
@@ -379,7 +381,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 0 32px' }}>
 
       {/* Section 1 — Current Situation */}
-      <Section delay={0}>
+      <Section id="guidance-section-situation" delay={0}>
         <SectionLabel text="Current Situation" />
         {/* Score ring: rendered at 75% scale.
             transform: scale() does not shrink the layout box, so we use a
@@ -416,7 +418,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
       {/* Section 2 — Why This Is Happening */}
       {topDrivers.length > 0 && (
-        <Section delay={0.08}>
+        <Section id="guidance-section-why" delay={0.08}>
           <SectionLabel text="Why This Is Happening" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {topDrivers.map((driver, i) => (
@@ -454,7 +456,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       {/* This is a display card, not a button — the user reads their move here.
           The Beast Mode link is only at the bottom depth invite. */}
       {topAction && (
-        <Section delay={0.16}>
+        <Section id="guidance-section-actions" delay={0.16}>
           <SectionLabel text="What To Do Next" />
           <div
             style={{
@@ -504,7 +506,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
       {/* Section 4 — This Week Action Plan */}
       {thisWeekActions.length > 0 && (
-        <Section delay={0.24}>
+        <Section id="guidance-section-this-week" delay={0.24}>
           <SectionLabel text="Also do this week" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {thisWeekActions.map((action, i) => {
@@ -572,7 +574,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       )}
 
       {/* Section 5 — Confidence & Trust */}
-      <Section delay={0.32} last>
+      <Section id="guidance-section-confidence" delay={0.32} last>
         <SectionLabel text="Confidence & Trust" />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           <ConfidenceBadge

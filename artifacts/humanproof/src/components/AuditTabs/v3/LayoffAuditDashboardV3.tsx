@@ -28,7 +28,6 @@
 
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useDrag } from '@use-gesture/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
@@ -93,6 +92,25 @@ interface Props {
 type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'transparency';
 
 // riskColor and riskLabel are imported from lib/riskTokens.ts (v40.0).
+
+// ── Section divider — visual chapter break between narrative sections ─────────
+// Renders a thin rule + ALL-CAPS section label so the report reads like a
+// structured intelligence briefing rather than a pile of cards.
+const BeastSectionDivider: React.FC<{ label: string }> = ({ label }) => (
+  <div
+    className="flex items-center gap-3 my-6 sm:my-8"
+    aria-hidden="true"
+  >
+    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+    <span
+      className="text-[10px] font-bold tracking-[0.14em] uppercase flex-shrink-0"
+      style={{ color: 'rgba(255,255,255,0.22)' }}
+    >
+      {label}
+    </span>
+    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+  </div>
+);
 
 // ── Tab loader ────────────────────────────────────────────────────────────────
 
@@ -621,36 +639,45 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   }, [activeTab]);
 
   const handleTabChange = (val: TabValue) => {
-    setUserChangedTab(true); // user explicitly chose a tab — stop auto-syncing
-    // v40.0: telemetry for tab navigation
+    setUserChangedTab(true);
     track('tab_switched', {
       from: activeTab,
       to: val,
       score: result.total,
       confidence: result.confidencePercent,
-      freshness_tier: result.unifiedFreshness?.tier,
+      freshness_tier: (result as any).unifiedFreshness?.tier,
     });
     setActiveTab(val);
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Narrative mode: scroll to the section anchor instead of swapping content
+    const el = document.getElementById(`beast-section-${val}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
-  // ── Mobile swipe gesture (left → next tab, right → prev tab) ─────────────
-  // Only triggers on horizontal swipes that clearly outweigh vertical movement.
-  // Threshold: 60px horizontal with at least 2:1 horizontal:vertical ratio.
+  // ── IntersectionObserver — keep tab bar highlight in sync while scrolling ──
+  // Each section has id="beast-section-{value}". When a section crosses the
+  // midpoint of the viewport (rootMargin '-40% 0px -40% 0px'), it becomes
+  // "active" for the tab highlight. This gives the tabs a natural chapter-
+  // indicator role without hiding content.
   const TABS_ORDER: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
-  const swipeBind = useDrag(({ last, movement: [mx, my], cancel }) => {
-    // Cancel if vertical movement dominates — let the user scroll
-    if (Math.abs(my) > Math.abs(mx)) { cancel(); return; }
-    if (!last) return;
-    const threshold = 60;
-    if (mx < -threshold) {
-      const idx = TABS_ORDER.indexOf(activeTab);
-      if (idx < TABS_ORDER.length - 1) handleTabChange(TABS_ORDER[idx + 1]);
-    } else if (mx > threshold) {
-      const idx = TABS_ORDER.indexOf(activeTab);
-      if (idx > 0) handleTabChange(TABS_ORDER[idx - 1]);
-    }
-  }, { axis: 'lock', pointer: { touch: true } });
+  useEffect(() => {
+    if (viewMode !== 'beast') return;
+    const observers: IntersectionObserver[] = [];
+    TABS_ORDER.forEach(tab => {
+      const el = document.getElementById(`beast-section-${tab}`);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveTab(tab);
+        },
+        { rootMargin: '-35% 0px -55% 0px', threshold: 0 },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tabProps = useMemo(() => ({
     result, companyData,
@@ -860,66 +887,83 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             </TabErrorBoundary>
           </div>
         ) : (
-          /* ── Beast Mode: full 6-tab intelligence command center ── */
+          /* ── Beast Mode: narrative single-page scroll ─────────────────────
+             All 6 sections live on the page simultaneously. Tabs are chapter
+             anchors — clicking scrolls to the section, not replaces content.
+             IntersectionObserver keeps the tab bar highlight in sync while
+             the user reads top-to-bottom. ──────────────────────────────── */
           <>
-            <div {...swipeBind()} className="swipe-tab-container">
-            <AnimatePresence>
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.18 }}
-                className="hp-beast-content px-3 pt-3 sm:px-0 sm:pt-0"
-              >
-                {activeTab === 'summary' && (
-                  <TabErrorBoundary tabLabel="Summary">
-                    <Suspense fallback={<SummaryTabSkeleton />}>
-                      <SummaryTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'company' && (
-                  <TabErrorBoundary tabLabel="Company">
-                    <Suspense fallback={<CompanyTabSkeleton />}>
-                      <IntelligenceTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'protection' && (
-                  <TabErrorBoundary tabLabel="Protection">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <ProtectionTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'actions' && (
-                  <TabErrorBoundary tabLabel="Action Plan">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <ActionsTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'intel' && (
-                  <TabErrorBoundary tabLabel="Intelligence">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <AnalysisTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
-                {activeTab === 'transparency' && (
-                  <TabErrorBoundary tabLabel="Methodology">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <TransparencyTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-              </motion.div>
-            </AnimatePresence>
-            </div>{/* /swipe wrapper */}
+            <div className="hp-beast-content flex flex-col px-3 pt-3 sm:px-0 sm:pt-0">
 
-            {/* Mobile bottom nav — only in Beast Mode (Guidance Mode has no tabs) */}
+              {/* Section divider helper: thin rule + chapter label above each section */}
+
+              {/* ── 1. My Risk ─────────────────────────────────────────────── */}
+              <div id="beast-section-summary" style={{ scrollMarginTop: 90 }}>
+                <TabErrorBoundary tabLabel="Summary">
+                  <Suspense fallback={<SummaryTabSkeleton />}>
+                    <SummaryTab {...tabProps} />
+                  </Suspense>
+                </TabErrorBoundary>
+              </div>
+
+              <BeastSectionDivider label="Company" />
+
+              {/* ── 2. Company ─────────────────────────────────────────────── */}
+              <div id="beast-section-company" style={{ scrollMarginTop: 90 }}>
+                <TabErrorBoundary tabLabel="Company">
+                  <Suspense fallback={<CompanyTabSkeleton />}>
+                    <IntelligenceTab {...tabProps} />
+                  </Suspense>
+                </TabErrorBoundary>
+              </div>
+
+              <BeastSectionDivider label="Protection" />
+
+              {/* ── 3. Protection ──────────────────────────────────────────── */}
+              <div id="beast-section-protection" style={{ scrollMarginTop: 90 }}>
+                <TabErrorBoundary tabLabel="Protection">
+                  <Suspense fallback={<GenericTabSkeleton />}>
+                    <ProtectionTab {...tabProps} />
+                  </Suspense>
+                </TabErrorBoundary>
+              </div>
+
+              <BeastSectionDivider label="Action Center" />
+
+              {/* ── 4. Action Center ───────────────────────────────────────── */}
+              <div id="beast-section-actions" style={{ scrollMarginTop: 90 }}>
+                <TabErrorBoundary tabLabel="Action Plan">
+                  <Suspense fallback={<GenericTabSkeleton />}>
+                    <ActionsTab {...tabProps} />
+                  </Suspense>
+                </TabErrorBoundary>
+              </div>
+
+              <BeastSectionDivider label="Deep Dive" />
+
+              {/* ── 5. Deep Dive ───────────────────────────────────────────── */}
+              <div id="beast-section-intel" style={{ scrollMarginTop: 90 }}>
+                <TabErrorBoundary tabLabel="Intelligence">
+                  <Suspense fallback={<GenericTabSkeleton />}>
+                    <AnalysisTab {...tabProps} />
+                  </Suspense>
+                </TabErrorBoundary>
+              </div>
+
+              <BeastSectionDivider label="Transparency" />
+
+              {/* ── 6. Transparency ────────────────────────────────────────── */}
+              <div id="beast-section-transparency" style={{ scrollMarginTop: 90, paddingBottom: 80 }}>
+                <TabErrorBoundary tabLabel="Methodology">
+                  <Suspense fallback={<GenericTabSkeleton />}>
+                    <TransparencyTab {...tabProps} />
+                  </Suspense>
+                </TabErrorBoundary>
+              </div>
+
+            </div>
+
+            {/* Mobile bottom nav — chapter shortcuts, always visible */}
             <MobileBottomNav
               active={activeTab}
               onChange={handleTabChange}

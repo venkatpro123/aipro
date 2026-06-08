@@ -69,7 +69,7 @@ function buildSignals(timeline: AutomationTimeline, waveStatus: WaveStatus, indu
     {
       name: `Large layoffs citing AI in ${industryLabel}`,
       description: `Companies in your industry have announced major headcount reductions, citing AI tools or productivity gains`,
-      status: isActive ? 'ACTIVE' : isAccelerating ? 'ACTIVE' : 'MONITORING',
+      status: isActive ? 'ACTIVE' : isAccelerating ? 'MONITORING' : 'PENDING',
     },
     {
       name: 'Companies replacing teams with AI',
@@ -118,7 +118,9 @@ export const EarlyWarningSignals: React.FC<Props> = ({ timeline, industryRisk, s
       {/* Wave status */}
       <div style={{
         padding: '20px 24px', borderRadius: 'var(--radius-xl)',
-        background: `${waveColor}0a`, border: `1px solid ${waveColor}30`,
+        background: `${waveColor}0a`,
+        border: `1px solid ${waveColor}30`,
+        boxShadow: `0 0 0 1px ${scoreColor}18`,
         marginBottom: '24px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>

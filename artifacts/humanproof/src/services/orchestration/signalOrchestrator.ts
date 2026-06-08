@@ -378,9 +378,17 @@ function buildTrace(
   intel: CompressedIntel,
   profile: ProfileSignalSummary,
 ): ReasoningTrace {
+  const VERDICT_LABEL: Record<string, string> = {
+    critical: 'critical', distressed: 'distressed', softening: 'weakening',
+    stable: 'stable', healthy: 'healthy', 'stable-confirmed': 'confirmed stable',
+    'data-unavailable': 'data unavailable', unknown: 'unknown',
+  };
   const leadChip = topSignal?.chips?.[0];
+  const chipNote = leadChip
+    ? ` (${leadChip.label}: ${leadChip.value}${leadChip.label === 'Ready' || leadChip.label === 'Confident' || leadChip.label === 'Resilient' ? '/100' : ''})`
+    : '';
   const observation = topSignal
-    ? `${topSignal.headline}: ${topSignal.verdict}${leadChip ? ` (${leadChip.label} ${leadChip.value})` : ''}`
+    ? `${topSignal.headline} — ${VERDICT_LABEL[topSignal.verdict] ?? topSignal.verdict}${chipNote}`
     : 'No distress signals surfaced.';
 
   const inference = topSignal

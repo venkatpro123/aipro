@@ -23,6 +23,7 @@ import {
   ArrowUpRight, Clock, Activity, Star, Shield,
 } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { toRoleTitle } from '../../../lib/riskTokens';
 import type { CompanyData } from '../../../data/companyDatabase';
 import type { MarketDemandReport, DemandTrend } from '../../../services/roleMarketDemandService';
 import type { PeerContagionResult } from '../../../services/peerContagionEngine';
@@ -392,8 +393,8 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
   const macroRisk = r.macroEconomicRisk;
 
   const roleKey      = result.workTypeKey ?? r.oracleKey ?? 'generic';
-  const roleTitleRaw = r.roleTitle ?? r.userProfile?.currentRole ?? roleKey.replace(/_/g, ' ');
-  const roleDisplay  = roleTitleRaw.replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const roleTitleRaw = r.roleTitle ?? r.userProfile?.currentRole ?? roleKey;
+  const roleDisplay  = toRoleTitle(roleTitleRaw);
   const companyName  = companyData?.name ?? r.companyName ?? 'your company';
   const industry     = companyData?.industry ?? r.industryKey ?? 'technology';
   const currentScore = result.total;
@@ -453,7 +454,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
     ? `${expLabel} ${roleDisplay} salaries are rising — negotiate above midpoint`
     : snapshot?.salaryTrend === 'falling'
     ? `${roleDisplay} salary benchmarks are under pressure — total comp matters more`
-    : `${roleDisplay} salaries are stable at ${expLabel} level`;
+    : `${roleDisplay} salaries are stable at the ${expLabel} tier`;
 
   // Demand color
   const dColor = demandColor(demandIndex);

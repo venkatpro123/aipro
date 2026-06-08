@@ -119,7 +119,8 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
   if (warnActive) { severity += 40; reasons.push('Active WARN filing'); chips.push({ label: 'WARN', value: 'Active', tone: 'critical' }); }
 
   // Apply freshness decay to layoff history — rounds older than 12 months carry less signal weight.
-  const layoffRoundsArr: Array<{ date?: string }> = r.layoffRounds ?? [];
+  // r.layoffRounds can be a number (count) or an array of round objects — normalise to array.
+  const layoffRoundsArr: Array<{ date?: string }> = Array.isArray(r.layoffRounds) ? r.layoffRounds : [];
   const mostRecentLayoffDate = layoffRoundsArr
     .filter(lr => lr.date)
     .map(lr => new Date(lr.date!).getTime())

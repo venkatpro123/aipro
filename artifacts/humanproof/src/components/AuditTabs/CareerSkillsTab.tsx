@@ -12,6 +12,7 @@ import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { getCareerIntelligence } from "@/data/intelligence";
+import { toRoleTitle } from '@/lib/riskTokens';
 import { LAYER_WEIGHTS } from "@/services/layoffScoreEngine";
 import { getScoreColor } from "@/data/riskEngine";
 import type { TabProps } from "./common/types";
@@ -52,7 +53,7 @@ const buildFallbackIntel = (roleKey: string, score: number): CareerIntelligence 
   const isMedRisk = score >= 40 && score < 65;
 
   return {
-    displayRole: roleKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    displayRole: toRoleTitle(roleKey),
     summary: isHighRisk
       ? `This role has significant AI displacement exposure. Many task categories are automatable with current enterprise AI platforms. Strategic upskilling is recommended within 6–12 months.`
       : isMedRisk

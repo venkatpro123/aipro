@@ -360,7 +360,17 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
     [userRole, userExperience, userRiskScore, userCountry, topN],
   );
 
-  if (twins.length === 0) return null;
+  if (twins.length === 0) return (
+    <div className="flex flex-col items-center gap-3 py-6 text-center">
+      <Users className="w-8 h-8 opacity-20" style={{ color: '#22d3ee' }} />
+      <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        No close matches in the network yet for this role and experience profile.
+      </p>
+      <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        Be the first — your navigation story could help others in the same position.
+      </p>
+    </div>
+  );
 
   const hasGeographicFallback = twins.some(t => t.isGeographicFallback);
   const crossMarketCount = twins.filter(t => t.isDifferentMarket).length;

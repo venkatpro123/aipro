@@ -40,6 +40,9 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
   const accentColor = riskColor(score);
   const prose = URGENCY_PROSE[urgency] ?? 'moderate';
 
+  // Compact mode: only biggest risk shown (spine + action live in ReasoningSpineCard)
+  const compactMode = !spine && !topAction;
+
   const situationText = spine
     ?? `${companyName} is showing ${prose} risk signals. Your displacement probability index is ${score}/100.`;
 
@@ -48,6 +51,38 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
 
   const actionText = topAction
     ?? 'Begin external market positioning and update your professional profile.';
+
+  if (compactMode) {
+    // Compact: single-line biggest risk alert — no duplication with ReasoningSpineCard
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24 }}
+        className="flex items-start gap-2.5 rounded-xl px-3.5 py-2.5"
+        style={{
+          background: `${accentColor}0d`,
+          border: `1px solid ${accentColor}28`,
+        }}
+      >
+        <span
+          className="text-[9px] font-black tracking-[0.12em] uppercase flex-shrink-0 pt-0.5"
+          style={{ color: accentColor, fontFamily: 'var(--font-mono)', minWidth: 80 }}
+        >
+          TOP RISK
+        </span>
+        <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.80)' }}>
+          {riskText}
+        </p>
+        <span
+          className="text-[9px] font-semibold px-1.5 py-0.5 rounded flex-shrink-0 self-start"
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.30)' }}
+        >
+          {confidencePercent}%
+        </span>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

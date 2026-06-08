@@ -66,6 +66,11 @@ const AICareerDefensePage = lazy(() => import("./pages/tools/AICareerDefensePage
 const CareerReadinessPage = lazy(() => import("./pages/tools/CareerReadinessPage"));
 const CareerInsurancePage = lazy(() => import("./pages/tools/CareerInsurancePage"));
 const MarketIntelligencePage = lazy(() => import("./pages/tools/MarketIntelligencePage"));
+const NetworkingOSPage = lazy(() => import("./pages/tools/NetworkingOSPage"));
+const CompensationPage = lazy(() => import("./pages/tools/CompensationPage"));
+const CareerStrategyPage = lazy(() => import("./pages/tools/CareerStrategyPage"));
+const OpportunityRadarPage = lazy(() => import("./pages/tools/OpportunityRadarPage"));
+const CareerTwinPage = lazy(() => import("./pages/tools/CareerTwinPage"));
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
@@ -806,6 +811,11 @@ function AppContent() {
               <Route path="/tools/career-readiness"        element={<CareerReadinessPage />} />
               <Route path="/tools/career-insurance"        element={<CareerInsurancePage />} />
               <Route path="/tools/market-intel"            element={<MarketIntelligencePage />} />
+              <Route path="/tools/networking"              element={<NetworkingOSPage />} />
+              <Route path="/tools/compensation"            element={<CompensationPage />} />
+              <Route path="/tools/strategy"               element={<CareerStrategyPage />} />
+              <Route path="/tools/opportunity-radar"      element={<OpportunityRadarPage />} />
+              <Route path="/tools/career-twin"            element={<CareerTwinPage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
               <Route path="/safe-careers"                  element={<SafeCareersPage />} />

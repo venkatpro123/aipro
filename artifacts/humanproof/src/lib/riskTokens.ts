@@ -24,6 +24,21 @@ export function riskLabel(score: number): string {
   return 'Looking Good';
 }
 
+// Acronyms that must stay fully uppercase when derived from a snake_case role key.
+const ROLE_ACRONYMS = new Set(['sw', 'ml', 'qa', 'ui', 'ux', 'hr', 'it', 'db', 'bi', 'ai', 'ar', 'vr', 'cto', 'cfo', 'coo', 'seo', 'sre', 'devops']);
+
+/** Convert a snake_case role key or free-text string to a display title.
+ *  Handles two-letter role prefixes that a simple \b\w regex would mis-capitalise.
+ *  e.g. "sw_backend" → "SW Backend", "ml_engineer" → "ML Engineer"
+ */
+export function toRoleTitle(raw: string): string {
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b([a-z]+)/g, (word) =>
+      ROLE_ACRONYMS.has(word) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1),
+    );
+}
+
 export function riskGradient(score: number): string {
   const c = riskColor(score);
   // Stay within the color family: bold tint at top-left fading to a very light

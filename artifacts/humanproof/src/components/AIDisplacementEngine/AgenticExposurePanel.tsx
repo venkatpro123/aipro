@@ -94,7 +94,19 @@ export const AgenticExposurePanel: React.FC<Props> = ({ result, currentScore, cu
             </div>
           </div>
 
-          <div style={{ fontSize: '1.2rem', color: 'var(--text-3)', fontWeight: 300 }}>→</div>
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+          }}>
+            <div style={{
+              fontSize: '1.2rem', fontWeight: 700,
+              color: result.score > currentScore ? 'var(--red)' : result.score < currentScore ? 'var(--emerald)' : 'var(--text-3)',
+            }}>
+              {result.score > currentScore ? '↑' : result.score < currentScore ? '↓' : '→'}
+            </div>
+            <div style={{ fontSize: '0.55rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', textAlign: 'center', lineHeight: 1.2 }}>
+              {result.score > currentScore ? '+' : ''}{result.score - currentScore}pts
+            </div>
+          </div>
 
           {/* Agentic score (larger, prominent) */}
           <div style={{ textAlign: 'center' }}>

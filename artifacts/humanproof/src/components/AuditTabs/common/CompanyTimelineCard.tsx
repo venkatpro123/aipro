@@ -94,7 +94,9 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
     }
 
     // 2. Confirmed layoff rounds
-    const rounds: any[] = cd?.layoffRounds ?? r.layoffRounds ?? [];
+    // layoffRounds is a numeric count in most DB rows; only treat as array when it actually is one.
+    const roundsRaw = cd?.layoffRounds ?? r.layoffRounds;
+    const rounds: any[] = Array.isArray(roundsRaw) ? roundsRaw : [];
     rounds.forEach((round: any, i: number) => {
       const dt = parseDateMs(round.date ?? round.announcedDate);
       if (!dt) return;

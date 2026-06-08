@@ -14,7 +14,19 @@ import {
   getTimeline,
   getUrgency,
   calculateD7,
+  riskToSurvival,
+  getSurvivalVerdict,
+  getSurvivalVerdictSubtext,
+  getPreparationWindow,
+  getActionDeadline,
+  getSurvivalCurrentPosition,
+  getSurvivalFutureOutlook,
+  getCareerProtectionGrade,
+  getPreparationWindowMonths,
+  getSurvivalWindow,
+  getPersonalizedScoreExplanation,
 } from '../data/riskFormula';
+import { PeerSurvivalCard } from '../components/AIDisplacementEngine/PeerSurvivalCard';
 // normalizeExperience used internally in riskFormula; not needed at the page level.
 import type { ScoreResult } from '../data/riskFormula';
 import NeuralSphereLoader from '../components/RiskOracle/NeuralSphereLoader';
@@ -37,7 +49,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { calculateScore as calculateScoreFn } from '../data/riskFormula';
-import { computeTrajectory }       from '../services/DisplacementTrajectoryEngine';
+import { computeTrajectory, yearIndexToMonthLabel } from '../services/DisplacementTrajectoryEngine';
 import type { OracleDimension }    from '../services/DisplacementTrajectoryEngine';
 import { computeAgenticExposureScore } from '../services/agenticExposureEngine';
 import { getAutomationTimeline, ROLE_EVOLUTION_PATHS } from '../data/automationTimelineData';
@@ -53,6 +65,14 @@ import { EnhancedActionPlan }      from '../components/AIDisplacementEngine/Enha
 import { PsychologicalFramingPanel }from '../components/AIDisplacementEngine/PsychologicalFramingPanel';
 import { StructuralRiskPanel }     from '../components/AIDisplacementEngine/StructuralRiskPanel';
 import { RoleCategoryBadge }       from '../components/AIDisplacementEngine/RoleCategoryBadge';
+import { ThreatBreakdownPanel }    from '../components/AIDisplacementEngine/ThreatBreakdownPanel';
+import { CareerProtectionScorecard } from '../components/AIDisplacementEngine/CareerProtectionScorecard';
+import { OutcomeFeedbackPrompt }   from '../components/OutcomeFeedbackPrompt';
+import { buildMasterIntelligence } from '../data/masterIntelligenceEngine';
+import { buildNarrativeState }     from '../data/narrativeState';
+import { getCountryIntelligence }  from '../data/countryIntelligence';
+import { getRoleNarrative }        from '../data/roleNarratives';
+import { OpportunityPanel }        from '../components/AIDisplacementEngine/OpportunityPanel';
 
 // ── Bridge: catalogData industry keys → industryRiskData keys ────────────────
 const INDUSTRY_TO_RISK_KEY: Record<string, string> = {
@@ -146,7 +166,19 @@ const AuditTerminalPage: React.FC = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [activeTab, setActiveTab]     = useState<TabKey>('overview');
   const [delta, setDelta]             = useState<ScoreDelta | null>(null);
+  const [stickyVisible, setStickyVisible] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  // Section refs for scroll-driven navigation
+  const sectionRefs: Record<TabKey, React.RefObject<HTMLDivElement>> = {
+    overview:     useRef<HTMLDivElement>(null),
+    intelligence: useRef<HTMLDivElement>(null),
+    tasks:        useRef<HTMLDivElement>(null),
+    protection:   useRef<HTMLDivElement>(null),
+    strategy:     useRef<HTMLDivElement>(null),
+  };
+  const heroRef   = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
 
   // ── Cinematic global-intelligence loader (plays before the score reveal) ──────
@@ -172,6 +204,57 @@ const AuditTerminalPage: React.FC = () => {
       loaderCleanupRef.current?.();
       loaderCleanupRef.current = null;
     };
+  }, []);
+
+  // ── Scroll-driven navigation: IntersectionObserver + sticky bar ──────────
+  useEffect(() => {
+    if (!result) return;
+
+    // Sticky bar appears when hero scrolls above viewport
+    const heroEl = heroRef.current;
+    if (heroEl) {
+      const obs = new IntersectionObserver(
+        ([entry]) => setStickyVisible(!entry.isIntersecting),
+        { threshold: 0 },
+      );
+      obs.observe(heroEl);
+      return () => obs.disconnect();
+    }
+  }, [result]);
+
+  useEffect(() => {
+    if (!result) return;
+
+    // Track which section is currently in view → update active tab pill
+    const observers: IntersectionObserver[] = [];
+    const sectionEntries = new Map<TabKey, boolean>();
+
+    const pickActive = () => {
+      const order: TabKey[] = ['overview', 'intelligence', 'tasks', 'protection', 'strategy'];
+      for (const key of order) {
+        if (sectionEntries.get(key)) { setActiveTab(key); return; }
+      }
+    };
+
+    for (const key of Object.keys(sectionRefs) as TabKey[]) {
+      const el = sectionRefs[key].current;
+      if (!el) continue;
+      const obs = new IntersectionObserver(
+        ([entry]) => { sectionEntries.set(key, entry.isIntersecting); pickActive(); },
+        { threshold: 0.15, rootMargin: '-80px 0px -20% 0px' },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    }
+
+    return () => observers.forEach(o => o.disconnect());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
+
+  const scrollToSection = useCallback((key: TabKey) => {
+    setActiveTab(key);
+    sectionRefs[key].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Select option builders ────────────────────────────────────────────────
@@ -219,6 +302,7 @@ const AuditTerminalPage: React.FC = () => {
       setDelta(p.delta);
     }
     setActiveTab('overview');
+    setStickyVisible(false);
     setIsCalculating(false);
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
   };
@@ -313,6 +397,7 @@ const AuditTerminalPage: React.FC = () => {
     setLoaderStage(0);
     setShowWhatIf(false);
     setShareCopied(false);
+    setStickyVisible(false);
     if (loaderIntervalRef.current) { window.clearInterval(loaderIntervalRef.current); loaderIntervalRef.current = null; }
     if (loaderTimerRef.current)    { window.clearTimeout(loaderTimerRef.current);   loaderTimerRef.current = null; }
     loaderCleanupRef.current?.();
@@ -351,9 +436,9 @@ const AuditTerminalPage: React.FC = () => {
       `🤖 Risk Oracle Result`,
       `Role: ${roleLabel} · ${industryLabel}`,
       `Experience: ${expLabel} · Country: ${countryLabel}`,
-      `Score: ${result.total}/100 — ${getVerdict(result.total)}`,
-      `Exposure Horizon: ${getTimeline(result.total)}`,
-      `Action Urgency: ${getUrgency(result.total)}`,
+      `Career Survival Probability: ${riskToSurvival(result.total)}% — ${getSurvivalVerdict(result.total)}`,
+      `Preparation Window: ${getPreparationWindow(result.total)}`,
+      `Action Deadline: ${getActionDeadline(result.total)}`,
       `\n${url}`,
     ].join('\n');
 
@@ -460,15 +545,154 @@ const AuditTerminalPage: React.FC = () => {
   }, [result, workTypeKey, experience, intel, d7Score]);
 
   const evolutionPath = workTypeKey ? ROLE_EVOLUTION_PATHS[workTypeKey] : undefined;
+
+  // ── Career Survival Probability derived values (placed after trajectory + automationTimeline) ──
+  const survivalPct             = result ? riskToSurvival(result.total) : null;
+  const survivalVerdict         = result ? getSurvivalVerdict(result.total) : '';
+  const survivalVerdictSubtext  = result ? getSurvivalVerdictSubtext(result.total) : '';
+  const survivalCurrentPosition = survivalPct != null ? getSurvivalCurrentPosition(survivalPct) : '';
+  const survivalFutureOutlook   = trajectory ? getSurvivalFutureOutlook(trajectory.interpretation) : '';
+  const preparationWindow       = result ? getPreparationWindow(result.total) : '';
+  const actionDeadline          = result ? getActionDeadline(result.total) : '';
+
+  const improvementPotential = useMemo(() => {
+    if (!result || !automationTimeline || !trajectory) return null;
+    const growthPerYear = Math.max(1, trajectory.growthPerYear);
+    const base2028 = automationTimeline.displacementByYear[2028] * 100;
+    const base2030 = automationTimeline.displacementByYear[2030] * 100;
+    const noAction2028 = Math.min(95, base2028 + growthPerYear * 2);
+    const noAction2030 = Math.min(95, base2030 + growthPerYear * 4);
+    const planFull2028 = Math.round(noAction2028 * 0.53);
+    const planFull2030 = Math.round(noAction2030 * 0.48);
+    const gain2028 = Math.max(0, riskToSurvival(planFull2028) - riskToSurvival(Math.round(noAction2028)));
+    const gain2030 = Math.max(0, riskToSurvival(planFull2030) - riskToSurvival(Math.round(noAction2030)));
+    const lo = Math.min(gain2028, gain2030), hi = Math.max(gain2028, gain2030);
+    return `+${lo}% to +${hi}%`;
+  }, [result, automationTimeline, trajectory]);
+
   const roleLabel     = workTypeKey === '__custom__' ? (customRoleTitle || 'Custom Role') : (workTypeOptions.find((o) => o.key === workTypeKey)?.label ?? workTypeKey);
+
+  // Phase 1: Single master intelligence engine — all downstream components consume this
+  const masterIntel = useMemo(
+    () => result ? buildMasterIntelligence(result, countryKey, experience) : null,
+    [result, countryKey, experience],
+  );
+
+  // Phase 11: Single narrative state — all text-generating sections consume this
+  const narrative = useMemo(
+    () => (masterIntel && result) ? buildNarrativeState(masterIntel, result) : null,
+    [masterIntel, result],
+  );
+
+  // Phase 9: Country intelligence — derived once, passed to country panel
+  const countryIntel = useMemo(
+    () => getCountryIntelligence(countryKey),
+    [countryKey],
+  );
+
+  // Phase 5: Role-specific narrative (for "YOUR ROLE IN THE AI ERA" block)
+  const roleNarrative = useMemo(
+    () => workTypeKey ? getRoleNarrative(workTypeKey) : null,
+    [workTypeKey],
+  );
+
+  const careerGrade      = survivalPct != null ? getCareerProtectionGrade(survivalPct) : null;
+  const prepWindowMonths = result ? getPreparationWindowMonths(result.total) : null;
+  const survivalWindow   = result ? getSurvivalWindow(result.total) : null;
+  const scoreExplanation = result ? getPersonalizedScoreExplanation(result.total, experience, roleLabel) : null;
+
+  // GAP #1 FIX: Generate guaranteed-declining month-by-month trajectory anchored to result.total.
+  // Never uses trajectory.years directly (which can be flat for slow-growth roles).
+  // Uses growthPerYear from trajectory (or fallback 2.5) to build a monotonic decline.
+  const consequencesTimeline = useMemo(() => {
+    if (!result) return null;
+    const growthPerYear = trajectory ? Math.max(1.5, trajectory.growthPerYear) : 2.5;
+    const startRisk = result.total;
+    // Build 6 points: Today, Month 12, 24, 36, 48, 60
+    return [0, 12, 24, 36, 48, 60].map((monthOffset, i) => {
+      const riskAtMonth = Math.min(97, startRisk + (growthPerYear * monthOffset) / 12);
+      const survPct = riskToSurvival(Math.round(riskAtMonth));
+      const riskLevel = riskAtMonth < 30 ? 'Stable' : riskAtMonth < 45 ? 'Minimal pressure' : riskAtMonth < 60 ? 'Competition increases' : riskAtMonth < 75 ? 'Salary pressure' : 'High displacement';
+      return {
+        label: i === 0 ? 'Today' : `Month ${monthOffset}`,
+        survPct,
+        riskPct: Math.round(riskAtMonth),
+        status: riskLevel,
+        isToday: i === 0,
+      };
+    });
+  }, [result, trajectory]);
+
+  // GAP #6 FIX: Role-specific, personalized narrative — not generic boilerplate.
+  const biggestThreat = useMemo(() => {
+    if (!result) return null;
+    const d1 = result.dimensions.find(d => d.key === 'D1')?.score ?? 50;
+    const d2 = result.dimensions.find(d => d.key === 'D2')?.score ?? 50;
+    const d3 = result.dimensions.find(d => d.key === 'D3')?.score ?? 50;
+    const rl = roleLabel || 'professional';
+    if (d2 >= 70) return `Your risk is not coming from full replacement — it's that AI tools now let one ${rl} do the work of three. Companies are quietly reducing headcount by expanding individual output rather than waiting for full automation.`;
+    if (d1 >= 65) return `The core pressure on ${rl}s is task-layer erosion. The parts of your job that feel routine — the steady, predictable work — are the first to be absorbed. What remains requires more judgment and context than most people realize they're already providing.`;
+    if (d3 <= 30) return `Your role has fewer uniquely-human anchors than comparable roles. When organizations run cost optimization exercises, positions with this profile are reviewed first — not because you're easily replaced, but because the case for your uniqueness is harder to make internally.`;
+    return `The most likely threat isn't dramatic — it's that as AI restructures roles adjacent to yours, hiring budgets tighten and headcount pressure spreads inward. ${rl}s are rarely displaced directly; they're squeezed out through attrition as teams stop backfilling vacancies.`;
+  }, [result, roleLabel]);
+
+  // GAP #8 FIX: Ranked threat list — top 3 visible, rest collapsed.
+  const rankedThreats = useMemo(() => {
+    if (!result) return [];
+    const d1 = result.dimensions.find(d => d.key === 'D1')?.score ?? 50;
+    const d2 = result.dimensions.find(d => d.key === 'D2')?.score ?? 50;
+    const d5 = result.dimensions.find(d => d.key === 'D5')?.score ?? 50;
+    const threats = [
+      { name: 'Task automation by AI tools', score: d1, action: 'Build AI collaboration skills — direct tools rather than compete with them' },
+      { name: 'Market saturation & reduced demand', score: Math.round(d2 * 0.65), action: 'Build public portfolio and thought leadership to differentiate from the field' },
+      { name: 'Offshoring & remote hiring pressure', score: Math.round(d5 * 0.7), action: 'Develop domain depth that requires physical proximity, stakeholder relationships, or cultural context' },
+      { name: 'Economic downturn hiring freezes', score: Math.round((d1 + d2) / 2 * 0.5), action: 'Build a cash runway and secondary income stream before downturns arrive' },
+      { name: 'Process automation (pre-full AI)', score: Math.round(d1 * 0.8), action: 'Own the workflow design layer — systems and processes that sit above individual task execution' },
+    ].sort((a, b) => b.score - a.score);
+    return threats;
+  }, [result]);
+
+  // GAP #14 FIX: Single primary recommendation derived from the highest-scoring threat.
+  const primaryRecommendation = useMemo(() => {
+    if (!result) return null;
+    const d1 = result.dimensions.find(d => d.key === 'D1')?.score ?? 50;
+    const d3 = result.dimensions.find(d => d.key === 'D3')?.score ?? 50;
+    const d4 = result.dimensions.find(d => d.key === 'D4')?.score ?? 50;
+    const rl = roleLabel || 'your role';
+    if (d1 >= 65) return `Build AI collaboration expertise now — become the ${rl} who directs AI tools, not the one who competes with them.`;
+    if (d3 <= 35) return `Deepen your uniquely-human skills: stakeholder trust, cross-functional judgment, and organizational context that AI cannot replicate.`;
+    if (d4 >= 60) return `Leverage your experience advantage — move into roles where institutional knowledge and track record are explicit selection criteria.`;
+    if (result.total >= 60) return `Act before conditions change — your current protection window is meaningful, but inaction compounds risk faster than most people expect.`;
+    return `Stay ahead by monitoring AI adoption in your sector — you have structural protection, but early positioning in the next wave matters.`;
+  }, [result, roleLabel]);
+
+  const personalBlindSpots = useMemo(() => {
+    if (!result) return [];
+    const d1 = result.dimensions.find(d => d.key === 'D1')?.score ?? 50;
+    const d2 = result.dimensions.find(d => d.key === 'D2')?.score ?? 50;
+    const d4 = result.dimensions.find(d => d.key === 'D4')?.score ?? 50;
+    const spots: string[] = [];
+    if (d2 >= 60 && d1 < 60)
+      spots.push(`Your AI exposure score looks manageable, but the real pressure is coming from productivity amplification — when one ${roleLabel || 'professional'} can do the work of three with AI tools, companies stop hiring the other two.`);
+    if (d4 < 40 && (experience === '0-2' || experience === '2-5'))
+      spots.push('Early-career in this field puts you in the highest-risk task band — your current work closely overlaps with what AI handles first. The window to build differentiated judgment is shorter than it appears.');
+    if (d1 >= 65)
+      spots.push('The tasks that feel most normal and routine are often the first to be absorbed. The cognitive work that feels hard and unusual is actually your strongest protection — lean into it.');
+    if (d2 < 40)
+      spots.push('Your industry is still early in AI adoption, which feels like safety — but adoption typically accelerates non-linearly after 30% penetration. You likely have 18–36 months before conditions change materially.');
+    if (spots.length === 0)
+      spots.push('Your current position is structurally sound, but the hidden risk is complacency — professionals who plateau on current capabilities for 18+ months often find the gap has widened faster than expected when they next enter the market.');
+    return spots.slice(0, 2);
+  }, [result, roleLabel, experience]);
+
   const industryLabel = industryOptions.find((o) => o.key === industryKey)?.label ?? industryKey;
 
-  const TABS: { key: TabKey; label: string }[] = [
-    { key: 'overview',     label: 'Overview' },
-    { key: 'intelligence', label: 'AI Intelligence' },
-    { key: 'tasks',        label: 'Task Analysis' },
-    { key: 'protection',   label: 'Protection' },
-    { key: 'strategy',     label: 'Action Strategy' },
+  const TABS: { key: TabKey; label: string; chapter: string; question: string }[] = [
+    { key: 'overview',     label: 'Threat Analysis',   chapter: '01', question: 'Why did you receive this score?' },
+    { key: 'intelligence', label: 'AI Timeline',       chapter: '02', question: 'What does the AI timeline look like for your role?' },
+    { key: 'tasks',        label: 'Task Exposure',     chapter: '03', question: 'What specific work is AI already doing in your field?' },
+    { key: 'protection',   label: 'Your Advantages',  chapter: '04', question: 'What still protects you — and why?' },
+    { key: 'strategy',     label: 'Action Plan',       chapter: '05', question: 'What should you do, in what order?' },
   ];
 
   return (
@@ -662,472 +886,1251 @@ const AuditTerminalPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Score header */}
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: '24px',
-              padding: '32px',
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-xl)',
-              marginBottom: '16px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at 20% 50%, ${scoreColor}08, transparent 60%)` }} />
 
-              {/* Score ring — responsive size via clamp */}
-              <div
-                role="img"
-                aria-label={`Risk score: ${result.total} out of 100 — ${getVerdict(result.total)}`}
-                style={{ position: 'relative', flexShrink: 0, width: 'clamp(90px,22vw,120px)', height: 'clamp(90px,22vw,120px)' }}
-              >
-                <svg width="100%" height="100%" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                  <circle
-                    cx="60" cy="60" r="52" fill="none" stroke={scoreColor} strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(result.total / 100) * 326.7} 326.7`}
-                    strokeDashoffset="81.7"
-                    style={{ filter: `drop-shadow(0 0 8px ${scoreColor}66)` }}
-                  />
-                </svg>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{result.total}</span>
-                  <span style={{ fontSize: '0.55rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginTop: '2px' }}>RISK SCORE</span>
-                </div>
-              </div>
+            {/* ── FIXED STICKY NAVIGATION BAR (appears after hero scrolls away) ── */}
+            <AnimatePresence>
+              {stickyVisible && (
+                <motion.div
+                  initial={{ opacity: 0, y: -52 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -52 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+                    background: 'rgba(9,11,19,0.95)',
+                    backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                    borderBottom: `1px solid ${scoreColor}25`,
+                    boxShadow: `0 2px 24px rgba(0,0,0,0.7)`,
+                  }}
+                >
+                  <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', padding: '0 20px', gap: '12px' }}>
+                    {/* Score pill — compact, shows only survival + grade */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px 8px 0', borderRight: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: scoreColor, fontFamily: 'var(--font-mono)' }}>{survivalPct}%</span>
+                      <span style={{ fontSize: '0.58rem', color: 'var(--text-3)' }}>survival</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: careerGrade === 'A' ? 'var(--emerald)' : careerGrade === 'B' ? 'var(--cyan)' : careerGrade === 'C' ? 'var(--amber)' : 'var(--red)', fontFamily: 'var(--font-mono)' }}>Grade {careerGrade}</span>
+                    </div>
+                    {/* Primary recommendation — GAP #14 */}
+                    {primaryRecommendation && (
+                      <div style={{ flex: 1, fontSize: '0.68rem', color: 'var(--text-2)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        ↳ {primaryRecommendation}
+                      </div>
+                    )}
+                    {/* Chapter nav pills */}
+                    <div style={{ display: 'flex', gap: '0', flexShrink: 0, overflowX: 'auto' }}>
+                      {TABS.map((tab) => (
+                        <button key={tab.key} onClick={() => scrollToSection(tab.key)} style={{ padding: '10px 11px', border: 'none', background: 'transparent', color: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.35)', fontWeight: 700, fontSize: '0.6rem', fontFamily: 'var(--font-mono)', cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap', borderBottom: activeTab === tab.key ? `2px solid ${scoreColor}` : '2px solid transparent' }}>
+                          {tab.chapter}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={handleReset} style={{ padding: '5px 9px', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--text-3)', fontSize: '0.58rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer', flexShrink: 0 }}>NEW</button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-              {/* Verdict + confidence + delta */}
-              <div style={{ flex: 1, minWidth: '200px' }}>
-                {/* Verdict chip */}
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  padding: '6px 14px', borderRadius: '6px',
-                  background: `${scoreColor}15`, border: `1px solid ${scoreColor}33`,
-                  marginBottom: '10px',
-                }}>
-                  <Shield className="w-4 h-4" style={{ color: scoreColor }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
-                    {getVerdict(result.total).toUpperCase()}
-                  </span>
-                </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: '8px', marginTop: '-4px' }}>
-                  {result.total < 25 ? 'AI is unlikely to displace your role in the near term'
-                    : result.total < 50 ? 'You have some exposure but strong enough protection to adapt'
-                    : result.total < 70 ? 'A meaningful part of your work will be automated — adapting now matters'
-                    : 'Significant automation is likely within 2 years — act now'}
+            {/* ── CHAPTER 0: HERO — Current Position ────────────────────────── */}
+            <div ref={heroRef}>
+              {/* ── GAP #12: Quick-read summary at very top ─────────────────── */}
+              {primaryRecommendation && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ marginBottom: '8px', padding: '12px 20px', borderRadius: 'var(--radius-lg)', background: `${scoreColor}10`, border: `1px solid ${scoreColor}28`, display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <span style={{ fontSize: '0.55rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', flexShrink: 0 }}>YOUR #1 ACTION</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{primaryRecommendation}</span>
+                  <button type="button" onClick={() => scrollToSection('strategy')} style={{ marginLeft: 'auto', flexShrink: 0, padding: '5px 12px', borderRadius: '5px', border: `1px solid ${scoreColor}40`, background: 'transparent', color: scoreColor, fontSize: '0.6rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer', whiteSpace: 'nowrap' }}>SEE PLAN →</button>
+                </motion.div>
+              )}
+
+              <div style={{
+                padding: '40px 36px',
+                background: `linear-gradient(135deg, rgba(9,11,19,0.98) 0%, ${scoreColor}06 50%, rgba(9,11,19,0.98) 100%)`,
+                border: `1px solid ${scoreColor}25`,
+                borderRadius: 'var(--radius-xl)',
+                marginBottom: '2px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                {/* Radial glow behind ring */}
+                <div style={{ position: 'absolute', top: '-60px', left: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: `radial-gradient(circle, ${scoreColor}10 0%, transparent 70%)`, pointerEvents: 'none' }} />
+
+                {/* Chapter label */}
+                <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '24px' }}>
+                  HUMANPROOF CAREER INTELLIGENCE REPORT · {roleLabel.toUpperCase()}
                 </div>
 
-                {/* ── Role context row: role label + category badge ── */}
-                {roleLabel && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-2)', fontWeight: 600 }}>{roleLabel}</span>
-                    <RoleCategoryBadge
-                      category={intel?.roleCategory ?? (workTypeKey === '__custom__' ? 'emerging_unknown' : undefined)}
-                      isDynamic={workTypeKey === '__custom__'}
-                    />
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '40px' }}>
+                  {/* Score ring — large hero version */}
+                  <div
+                    role="img"
+                    aria-label={`Career Survival: ${survivalPct}% — ${survivalVerdict}`}
+                    style={{ position: 'relative', flexShrink: 0, width: 'clamp(120px,18vw,160px)', height: 'clamp(120px,18vw,160px)' }}
+                  >
+                    <svg width="100%" height="100%" viewBox="0 0 160 160">
+                      <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
+                      <circle
+                        cx="80" cy="80" r="70" fill="none" stroke={scoreColor} strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(result.total / 100) * 439.8} 439.8`}
+                        strokeDashoffset="109.9"
+                        style={{ filter: `drop-shadow(0 0 12px ${scoreColor}88)`, transition: 'stroke-dasharray 1.2s ease' }}
+                      />
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                      <span style={{ fontSize: 'clamp(1.6rem,4vw,2.4rem)', fontWeight: 900, color: scoreColor, lineHeight: 1, fontFamily: 'var(--font-mono)' }}>{survivalPct}%</span>
+                      <span style={{ fontSize: '0.44rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textAlign: 'center', lineHeight: 1.3 }}>CAREER SURVIVAL{'\n'}PROBABILITY</span>
+                    </div>
+                  </div>
+
+                  {/* Hero right column */}
+                  <div style={{ flex: 1, minWidth: '220px' }}>
+                    {/* Verdict */}
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: `${scoreColor}15`, border: `1px solid ${scoreColor}33`, marginBottom: '12px' }}>
+                      <Shield size={14} style={{ color: scoreColor }} />
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>{survivalVerdict.toUpperCase()}</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: '16px' }}>{survivalVerdictSubtext}</div>
+
+                    {/* Role + category */}
+                    {roleLabel && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-2)', fontWeight: 700 }}>{roleLabel}</span>
+                        <RoleCategoryBadge
+                          category={intel?.roleCategory ?? (workTypeKey === '__custom__' ? 'emerging_unknown' : undefined)}
+                          isDynamic={workTypeKey === '__custom__'}
+                        />
+                        {currentIndustry && (
+                          <span style={{ fontSize: '0.62rem', padding: '2px 8px', borderRadius: '4px', background: `${catColor}15`, border: `1px solid ${catColor}30`, color: catColor, fontWeight: 700 }}>{currentIndustry.cat}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 5 hero metrics */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                      {[
+                        { label: 'AI Risk', value: String(result.total), sub: masterIntel ? `${masterIntel.riskRange[0]}–${masterIntel.riskRange[1]} range` : '0–100', color: scoreColor },
+                        { label: 'Grade', value: careerGrade ?? '—', sub: 'A–F protection', color: careerGrade === 'A' ? 'var(--emerald)' : careerGrade === 'B' ? 'var(--cyan)' : careerGrade === 'C' ? 'var(--amber)' : 'var(--red)' },
+                        { label: 'Prep Window', value: prepWindowMonths === 0 ? 'Now' : prepWindowMonths ? `${prepWindowMonths}mo` : '—', sub: getPreparationWindow(result.total), color: 'var(--text)' },
+                        { label: 'Exposure', value: masterIntel ? `${masterIntel.exposureScore}` : '—', sub: masterIntel ? `${masterIntel.exposureRange[0]}–${masterIntel.exposureRange[1]} range` : 'task overlap score', color: masterIntel && masterIntel.exposureScore >= 65 ? 'var(--red)' : masterIntel && masterIntel.exposureScore >= 45 ? 'var(--amber)' : 'var(--emerald)' },
+                        { label: 'Protection', value: masterIntel ? `${masterIntel.protectionScore}` : '—', sub: masterIntel ? `${masterIntel.protectionRange[0]}–${masterIntel.protectionRange[1]} range` : 'shield score', color: masterIntel && masterIntel.protectionScore >= 60 ? 'var(--emerald)' : masterIntel && masterIntel.protectionScore >= 40 ? 'var(--cyan)' : 'var(--amber)' },
+                      ].map(({ label, value, sub, color }) => (
+                        <div key={label} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                          <div style={{ fontSize: 'clamp(0.9rem,2vw,1.2rem)', fontWeight: 900, color, lineHeight: 1, fontFamily: 'var(--font-mono)' }}>{value}</div>
+                          <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', marginTop: '3px' }}>{label.toUpperCase()}</div>
+                          {sub && <div style={{ fontSize: '0.48rem', color: 'var(--text-3)', marginTop: '2px', lineHeight: 1.3 }}>{sub}</div>}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Confidence badge */}
+                    {(() => {
+                      const conf   = result.confidence;
+                      const dq     = result.dataQuality;
+                      const pct    = result.content_confidence ?? (conf === 'HIGH' ? 88 : conf === 'MODERATE' ? 68 : 48);
+                      const cColor = conf === 'HIGH' ? 'var(--emerald)' : conf === 'MODERATE' ? 'var(--amber)' : 'var(--red)';
+                      const cLabel = conf === 'HIGH' ? 'Strong confidence' : conf === 'MODERATE' ? 'Moderate confidence' : 'Limited data';
+                      const cDesc  = dq === 'DQ_FULL' ? 'Detailed role data' : dq === 'DQ_PARTIAL' ? 'Partial data — some estimates used' : 'Estimated — limited role data';
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '6px', marginTop: '12px', background: `${cColor}08`, border: `1px solid ${cColor}20` }}>
+                          <div style={{ width: 36, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', flexShrink: 0 }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: cColor, borderRadius: 2 }} />
+                          </div>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: cColor, fontFamily: 'var(--font-mono)' }}>{cLabel}</span>
+                          <span style={{ fontSize: '0.58rem', color: 'var(--text-3)' }}>{cDesc}</span>
+                          {delta && Math.abs(delta.delta) >= 1 && (
+                            <span style={{ marginLeft: 'auto', fontSize: '0.62rem', color: delta.delta > 0 ? 'var(--red)' : 'var(--emerald)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                              {delta.delta > 0 ? `▲ +${Math.abs(delta.delta).toFixed(1)}` : `▼ ${Math.abs(delta.delta).toFixed(1)}`} vs last audit
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Action buttons — top right */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignSelf: 'flex-start', flexShrink: 0 }}>
+                    <button onClick={handleReset} aria-label="New analysis" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)', fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer', transition: 'all 0.2s ease' }}>
+                      <RefreshCw size={12} /> NEW
+                    </button>
+                    <button onClick={handleShare} aria-label="Share result" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)', background: shareCopied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)', color: shareCopied ? 'var(--emerald)' : 'var(--text-2)', fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer', transition: 'all 0.2s ease' }}>
+                      {shareCopied ? <><Check size={12} /> COPIED</> : <><Share2 size={12} /> SHARE</>}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Personalized score explanation */}
+                {scoreExplanation && (
+                  <div style={{ marginTop: '24px', padding: '14px 18px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${scoreColor}20`, borderLeft: `3px solid ${scoreColor}` }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.7, margin: 0 }}>{scoreExplanation}</p>
                   </div>
                 )}
 
-                {/* ── Confidence badge — ENHANCEMENT #1 ── */}
-                {(() => {
-                  const conf   = result.confidence;
-                  const dq     = result.dataQuality;
-                  const pct    = result.content_confidence ?? (conf === 'HIGH' ? 88 : conf === 'MODERATE' ? 68 : 48);
-                  const cColor = conf === 'HIGH' ? 'var(--emerald)' : conf === 'MODERATE' ? 'var(--amber)' : 'var(--red)';
-                  const cLabel = conf === 'HIGH' ? 'Strong confidence' : conf === 'MODERATE' ? 'Moderate confidence' : 'Limited data';
-                  const cDesc  = dq === 'DQ_FULL' ? 'Detailed role data available' : dq === 'DQ_PARTIAL' ? 'Partial data — some estimates used' : 'Estimated — limited data for this role';
-                  return (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '6px 10px', borderRadius: '6px', marginBottom: '12px',
-                      background: `${cColor}10`, border: `1px solid ${cColor}28`,
-                    }}>
-                      {/* Mini confidence bar */}
-                      <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', flexShrink: 0 }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: cColor, borderRadius: 2, transition: 'width 0.6s ease', boxShadow: `0 0 5px ${cColor}88` }} />
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: cColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{cLabel}</span>
-                        <span style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginLeft: 6 }}>{cDesc}</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div>
-                  <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '4px' }}>Action Urgency</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: scoreColor }}>{getUrgency(result.total)}</div>
+                {/* Profile context chips */}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '16px' }}>
+                  {roleLabel && <span style={{ fontSize: '0.62rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-2)', fontWeight: 600 }}>{roleLabel}</span>}
+                  {countryKey && COUNTRIES.find(c => c.key === countryKey) && <span style={{ fontSize: '0.62rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-2)', fontWeight: 600 }}>{COUNTRIES.find(c => c.key === countryKey)?.label}</span>}
+                  {experience && <span style={{ fontSize: '0.62rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-2)', fontWeight: 600 }}>{experience} yrs exp</span>}
+                  {industryLabel && <span style={{ fontSize: '0.62rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-2)', fontWeight: 600 }}>{industryLabel}</span>}
                 </div>
 
-                {/* §1 — Current Risk Metrics pills */}
+                {/* Current Risk Metrics pills */}
                 <CurrentRiskMetrics
                   d1Score={result.dimensions.find(d => d.key === 'D1')?.score ?? 50}
                   industryRisk={industryRiskEntry}
                   timeline={automationTimeline}
                   scoreColor={scoreColor}
                 />
-                {delta && Math.abs(delta.delta) >= 1 && (
-                  <div style={{ marginTop: '10px', fontSize: '0.75rem', color: delta.delta > 0 ? 'var(--red)' : 'var(--emerald)', fontFamily: 'var(--font-mono)' }}>
-                    {delta.delta > 0 ? '▲' : '▼'} {Math.abs(delta.delta).toFixed(1)} pts since last audit
-                  </div>
+
+                {/* Peer comparison — riskScore passed for score-anchored computed peers (Phase 8) */}
+                {survivalPct != null && (
+                  <PeerSurvivalCard
+                    roleKey={workTypeKey ?? ''}
+                    roleLabel={roleLabel}
+                    survivalPct={survivalPct}
+                    result={result}
+                    countryKey={countryKey}
+                    experience={experience}
+                    riskScore={result.total}
+                  />
                 )}
               </div>
 
-              {currentIndustry && (
-                <div style={{ padding: '10px 18px', borderRadius: '8px', background: `${catColor}12`, border: `1px solid ${catColor}33`, textAlign: 'center', flexShrink: 0 }}>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>SECTOR</div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: catColor }}>{currentIndustry.cat}</div>
+              {/* ── Survival Window strip ──────────────────────────────────── */}
+              {survivalWindow && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.4 }}
+                  style={{ marginBottom: '2px', padding: '20px 28px', borderRadius: 'var(--radius-lg)', background: 'rgba(6,182,212,0.04)', border: '1px solid rgba(6,182,212,0.15)' }}
+                >
+                  <div style={{ fontSize: '0.52rem', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '14px' }}>HOW LONG YOU HAVE TO PREPARE</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px' }}>
+                    {[
+                      { label: 'Best Case', value: survivalWindow.best === 0 ? 'Act Now' : `${survivalWindow.best}mo`, color: 'var(--emerald)' },
+                      { label: 'Most Likely', value: survivalWindow.likely === 0 ? 'Act Now' : `${survivalWindow.likely}mo`, color: 'var(--cyan)' },
+                      { label: 'Worst Case', value: survivalWindow.worst === 0 ? 'Act Now' : `${survivalWindow.worst}mo`, color: survivalWindow.worst <= 36 ? 'var(--red)' : 'var(--amber)' },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} style={{ textAlign: 'center', padding: '12px 8px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{value}</div>
+                        <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', marginTop: '4px', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{label.toUpperCase()}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', marginTop: '10px' }}>
+                    Confidence: <span style={{ color: survivalWindow.confidence === 'High' ? 'var(--emerald)' : survivalWindow.confidence === 'Medium' ? 'var(--amber)' : 'var(--red)', fontWeight: 700 }}>{survivalWindow.confidence}</span>
+                    <span style={{ marginLeft: 8 }}>— based on your score ±18 points scenario spread</span>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── IF YOU STAY / IF YOU ACT ──────────────────────────────── */}
+              {trajectory && (() => {
+                const growthPerYear   = Math.max(1, trajectory.growthPerYear);
+                const riskNoAction60  = Math.min(95, result.total + growthPerYear * 5);
+                const riskWithPlan60  = Math.min(95, result.total + growthPerYear * 5 * 0.6);
+                const sNow            = riskToSurvival(result.total);
+                const sNoAction60     = riskToSurvival(Math.round(riskNoAction60));
+                const sPlan60         = riskToSurvival(Math.round(riskWithPlan60));
+                const decline         = Math.max(0, sNow - sNoAction60);
+                const gain            = Math.max(0, sPlan60 - sNow);
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '8px', marginBottom: '2px' }}>
+                    <div style={{ padding: '18px 20px', borderRadius: 'var(--radius-lg)', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.18)', borderTop: '3px solid var(--red)' }}>
+                      <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--red)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '10px' }}>IF YOU STAY ON YOUR CURRENT PATH</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div><div style={{ fontSize: '0.5rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>NOW</div><div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{sNow}%</div></div>
+                        <div style={{ color: 'var(--text-3)', fontSize: '1.2rem' }}>→</div>
+                        <div><div style={{ fontSize: '0.5rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>MONTH 60</div><div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>{sNoAction60}%</div></div>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--red)', fontWeight: 700 }}>Expected Survival Decline: −{decline}%</div>
+                    </div>
+                    <div style={{ padding: '18px 20px', borderRadius: 'var(--radius-lg)', background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.18)', borderTop: '3px solid var(--emerald)' }}>
+                      <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '10px' }}>IF YOU FOLLOW THE RECOMMENDED PLAN</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div><div style={{ fontSize: '0.5rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>NOW</div><div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{sNow}%</div></div>
+                        <div style={{ color: 'var(--text-3)', fontSize: '1.2rem' }}>→</div>
+                        <div><div style={{ fontSize: '0.5rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>MONTH 60</div><div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--emerald)', fontFamily: 'var(--font-mono)' }}>{sPlan60}%</div></div>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--emerald)', fontWeight: 700 }}>Potential Survival Improvement: +{gain}%</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── 5-Year Trajectory Timeline ─────────────────────────────── */}
+              {consequencesTimeline && (
+                <div style={{ marginBottom: '2px', padding: '20px 24px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '16px' }}>YOUR 5-YEAR CAREER TRAJECTORY (NO ACTION)</div>
+                  <div style={{ display: 'flex', gap: '0', overflowX: 'auto' }}>
+                    {consequencesTimeline.map((pt, i) => {
+                      const ptColor = pt.survPct >= 70 ? 'var(--emerald)' : pt.survPct >= 50 ? 'var(--cyan)' : pt.survPct >= 35 ? 'var(--amber)' : 'var(--red)';
+                      const isLast  = i === consequencesTimeline.length - 1;
+                      return (
+                        <div key={pt.label} style={{ flex: '1 1 0', minWidth: '80px', textAlign: 'center', position: 'relative' }}>
+                          {!isLast && <div style={{ position: 'absolute', top: '14px', left: '50%', right: '-50%', height: '2px', background: 'rgba(255,255,255,0.08)', zIndex: 0 }} />}
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: ptColor, margin: '9px auto 0', position: 'relative', zIndex: 1, boxShadow: `0 0 6px ${ptColor}88` }} />
+                          <div style={{ fontSize: '0.78rem', fontWeight: 900, color: ptColor, fontFamily: 'var(--font-mono)', marginTop: '6px' }}>{pt.survPct}%</div>
+                          <div style={{ fontSize: '0.56rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>{pt.label}</div>
+                          <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', marginTop: '3px', lineHeight: 1.3, padding: '0 4px' }}>{pt.status}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {result?.inaction_scenario && (
+                    <div style={{ marginTop: '14px', padding: '10px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.12)', fontSize: '0.72rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                      {result.inaction_scenario}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* ── New Analysis / Reset ── */}
-              <button
-                onClick={handleReset}
-                aria-label="Start a new Risk Oracle analysis"
-                title="Clear results and run a new analysis"
-                style={{
-                  alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)',
-                  background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)',
-                  fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
-                  cursor: 'pointer', transition: 'all 0.2s ease',
-                }}
-              >
-                <RefreshCw className="w-3.5 h-3.5" />NEW
-              </button>
-
-              {/* ── Share button — ENHANCEMENT #2 ── */}
-              <button
-                onClick={handleShare}
-                aria-label="Copy result summary and permalink to clipboard"
-                title="Copy result summary + permalink"
-                style={{
-                  alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)',
-                  background: shareCopied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
-                  color: shareCopied ? 'var(--emerald)' : 'var(--text-2)',
-                  fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
-                  cursor: 'pointer', transition: 'all 0.2s ease',
-                }}
-              >
-                {shareCopied
-                  ? <><Check className="w-3.5 h-3.5" />COPIED</>
-                  : <><Share2 className="w-3.5 h-3.5" />SHARE</>}
-              </button>
-            </div>
-
-            {/* ── What-if sensitivity panel — ENHANCEMENT #3 ── */}
-            <div style={{
-              border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-              marginBottom: '16px', overflow: 'hidden',
-            }}>
-              <button
-                onClick={() => setShowWhatIf(v => !v)}
-                aria-expanded={showWhatIf}
-                aria-controls="what-if-panel"
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '14px 20px', background: 'rgba(255,255,255,0.02)',
-                  border: 'none', cursor: 'pointer', color: 'var(--text-2)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <SlidersHorizontal size={14} style={{ color: 'var(--cyan)' }} />
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', color: 'var(--cyan)' }}>
-                    WHAT-IF SENSITIVITY
-                  </span>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                    — explore how experience or country changes your risk
-                  </span>
-                </div>
-                {showWhatIf ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-
-              {showWhatIf && (
-                <div id="what-if-panel" style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end' }}>
-                    {/* Experience pill buttons */}
-                    <div style={{ flex: '1 1 200px' }}>
-                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>EXPERIENCE</div>
-                      <div role="radiogroup" aria-label="What-if experience level" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {EXPERIENCE_LEVELS.map((lvl) => (
-                          <button
-                            key={lvl.key}
-                            role="radio"
-                            aria-checked={wiExperience === lvl.key}
-                            onClick={() => setWiExperience(lvl.key)}
-                            style={{
-                              padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer',
-                              fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700,
-                              background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)',
-                              color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)',
-                              outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none',
-                              transition: 'all 0.15s',
-                            }}
-                          >
-                            {lvl.key}
-                          </button>
-                        ))}
+              {/* ── What-if sensitivity panel ────────────────────────────────── */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', marginBottom: '2px', overflow: 'hidden' }}>
+                <button onClick={() => setShowWhatIf(v => !v)} aria-expanded={showWhatIf} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: 'rgba(255,255,255,0.02)', border: 'none', cursor: 'pointer', color: 'var(--text-2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <SlidersHorizontal size={14} style={{ color: 'var(--cyan)' }} />
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', color: 'var(--cyan)' }}>WHAT-IF SENSITIVITY</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>— explore how experience or country changes your risk</span>
+                  </div>
+                  {showWhatIf ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                {showWhatIf && (
+                  <div id="what-if-panel" style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end' }}>
+                      <div style={{ flex: '1 1 200px' }}>
+                        <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>EXPERIENCE</div>
+                        <div role="radiogroup" aria-label="What-if experience level" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {EXPERIENCE_LEVELS.map((lvl) => (
+                            <button key={lvl.key} role="radio" aria-checked={wiExperience === lvl.key} onClick={() => setWiExperience(lvl.key)} style={{ padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700, background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)', color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)', outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none', transition: 'all 0.15s' }}>{lvl.key}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ flex: '1 1 200px' }}>
+                        <label className="label-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: '8px' }}>COUNTRY</label>
+                        <PremiumSelect options={countryOptions} value={wiCountry} onChange={setWiCountry} placeholder="Select country" />
+                      </div>
+                      <div style={{ flex: '0 0 auto', textAlign: 'center', minWidth: '120px' }}>
+                        {whatIfResult ? (
+                          <div style={{ padding: '12px 20px', borderRadius: '10px', background: `${getScoreColor(whatIfResult.total)}12`, border: `1px solid ${getScoreColor(whatIfResult.total)}30` }}>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>WHAT-IF SCORE</div>
+                            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: getScoreColor(whatIfResult.total), lineHeight: 1 }}>{whatIfResult.total}</div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: wiColor, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>{wiDelta > 0 ? `▲ +${wiDelta}` : wiDelta < 0 ? `▼ ${wiDelta}` : '— no change'}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '2px' }}>{getVerdict(whatIfResult.total)}</div>
+                          </div>
+                        ) : (
+                          <div style={{ padding: '12px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-3)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>Adjust sliders<br />to compare</div>
+                        )}
                       </div>
                     </div>
-
-                    {/* Country — PremiumSelect for UI consistency */}
-                    <div style={{ flex: '1 1 200px' }}>
-                      <label className="label-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: '8px' }}>COUNTRY</label>
-                      <PremiumSelect
-                        options={countryOptions}
-                        value={wiCountry}
-                        onChange={setWiCountry}
-                        placeholder="Select country"
-                      />
-                    </div>
-
-                    {/* Live result chip */}
-                    <div style={{ flex: '0 0 auto', textAlign: 'center', minWidth: '120px' }}>
-                      {whatIfResult ? (
-                        <div style={{
-                          padding: '12px 20px', borderRadius: '10px',
-                          background: `${getScoreColor(whatIfResult.total)}12`,
-                          border: `1px solid ${getScoreColor(whatIfResult.total)}30`,
-                        }}>
-                          <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>WHAT-IF SCORE</div>
-                          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: getScoreColor(whatIfResult.total), lineHeight: 1 }}>
-                            {whatIfResult.total}
-                          </div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: wiColor, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
-                            {wiDelta > 0 ? `▲ +${wiDelta}` : wiDelta < 0 ? `▼ ${wiDelta}` : '— no change'}
-                          </div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '2px' }}>
-                            {getVerdict(whatIfResult.total)}
-                          </div>
+                    {whatIfResult && (
+                      <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                        <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '12px' }}>DIMENSION IMPACT</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {whatIfResult.dimensions.map((wd) => {
+                            const orig = result!.dimensions.find((d) => d.key === wd.key);
+                            const diff = wd.score - (orig?.score ?? wd.score);
+                            if (Math.abs(diff) < 1) return null;
+                            const dc = getScoreColor(wd.score);
+                            return (
+                              <div key={wd.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem' }}>
+                                <span style={{ width: 24, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 700 }}>{wd.key}</span>
+                                <span style={{ flex: 1, color: 'var(--text-2)' }}>{DIM_INFO[wd.key]?.label ?? wd.label}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: dc, fontWeight: 700, minWidth: 28, textAlign: 'right' }}>{wd.score}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: diff < 0 ? 'var(--emerald)' : 'var(--red)', fontWeight: 700, minWidth: 36, textAlign: 'right', fontSize: '0.7rem' }}>{diff > 0 ? `+${diff}` : diff}</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ) : (
-                        <div style={{ padding: '12px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-3)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
-                          Adjust sliders<br />to compare
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
+                )}
+              </div>
+            </div>{/* end heroRef */}
 
-                  {/* Per-dimension what-if bars */}
-                  {whatIfResult && (
-                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '12px' }}>DIMENSION IMPACT</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {whatIfResult.dimensions.map((wd) => {
-                          const orig = result!.dimensions.find((d) => d.key === wd.key);
-                          const diff = wd.score - (orig?.score ?? wd.score);
-                          if (Math.abs(diff) < 1) return null;
-                          const dc = getScoreColor(wd.score);
+            {/* ── Phase 9: YOUR MARKET CONTEXT — Country Intelligence Panel ── */}
+            {countryIntel && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                style={{ margin: '0 0 2px', padding: '20px 24px', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '12px' }}>
+                  YOUR MARKET CONTEXT — {(COUNTRIES.find(c => c.key === countryKey)?.label ?? countryKey).toUpperCase()}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                  {[
+                    { label: 'HIRING DEMAND', value: countryIntel.hiringDemandLabel, color: countryIntel.hiringDemandColor },
+                    { label: 'AI ADOPTION SPEED', value: countryIntel.aiAdoptionSpeed, color: countryIntel.aiAdoptionColor },
+                    { label: 'OFFSHORING PRESSURE', value: countryIntel.offshoringPressure, color: countryIntel.offshoringColor },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} style={{ padding: '8px 12px', borderRadius: '8px', background: `${color}08`, border: `1px solid ${color}20` }}>
+                      <div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', marginBottom: '3px' }}>{label}</div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)' }}>{value}</div>
+                    </div>
+                  ))}
+                  <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', gridColumn: 'span 2' }}>
+                    <div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', marginBottom: '3px' }}>LOCAL OPPORTUNITY</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{countryIntel.localOpportunity}</div>
+                  </div>
+                  <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', gridColumn: 'span 2' }}>
+                    <div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', marginBottom: '3px' }}>SALARY CONTEXT</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{countryIntel.salaryContext}</div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════════════
+                FIX #3 — EXECUTIVE SUMMARY immediately after hero
+                "Your career in 60 seconds" — 6 cards max, no charts
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+              style={{ margin: '0 0 0', padding: '24px 28px', background: 'rgba(255,255,255,0.015)', borderBottom: `1px solid ${scoreColor}18` }}
+            >
+              <div style={{ fontSize: '0.48rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '14px' }}>
+                YOUR CAREER IN 60 SECONDS
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
+                {[
+                  {
+                    icon: '📍',
+                    label: 'Current Position',
+                    value: survivalVerdict,
+                    sub: `${roleLabel} · ${experience} yrs`,
+                    color: scoreColor,
+                  },
+                  {
+                    icon: '⚡',
+                    label: 'Biggest Threat',
+                    value: (() => {
+                      const d1 = result.dimensions.find(d => d.key === 'D1')?.score ?? 50;
+                      const d2 = result.dimensions.find(d => d.key === 'D2')?.score ?? 50;
+                      if (d1 >= 65) return 'Task automation';
+                      if (d2 >= 55) return 'Market saturation';
+                      return 'Sector contagion';
+                    })(),
+                    sub: rankedThreats[0]?.name ?? 'See threat analysis',
+                    color: 'var(--red)',
+                  },
+                  {
+                    icon: '🛡',
+                    label: 'Strongest Advantage',
+                    value: (() => {
+                      const d3 = result.dimensions.find(d => d.key === 'D3')?.score ?? 50;
+                      const d4 = result.dimensions.find(d => d.key === 'D4')?.score ?? 50;
+                      if (d3 >= 65) return 'Human skills';
+                      if (d4 >= 60) return 'Experience depth';
+                      return 'Role structure';
+                    })(),
+                    sub: 'Your primary protection',
+                    color: 'var(--emerald)',
+                  },
+                  {
+                    icon: '⏱',
+                    label: 'Time Horizon',
+                    value: prepWindowMonths === 0 ? 'Act Now' : prepWindowMonths ? `${prepWindowMonths}mo` : `${survivalWindow?.likely ?? 60}mo`,
+                    sub: prepWindowMonths === 0 ? 'Window is closing' : 'to take meaningful action',
+                    color: prepWindowMonths === 0 ? 'var(--red)' : prepWindowMonths && prepWindowMonths <= 18 ? 'var(--amber)' : 'var(--cyan)',
+                  },
+                  {
+                    icon: '🎯',
+                    label: 'Top Action',
+                    value: 'See Plan →',
+                    sub: primaryRecommendation ?? 'Chapter 05 has your full plan',
+                    color: scoreColor,
+                    onClick: () => scrollToSection('strategy'),
+                  },
+                  {
+                    icon: '📊',
+                    label: 'Expected Outcome',
+                    value: (() => {
+                      const sNow = riskToSurvival(result.total);
+                      const growth = trajectory ? Math.max(1.5, trajectory.growthPerYear) : 2.5;
+                      const sAct = riskToSurvival(Math.round(Math.min(95, result.total + growth * 5 * 0.45)));
+                      return `${sNow}% → ${sAct}%`;
+                    })(),
+                    sub: 'Survival if you follow the plan',
+                    color: 'var(--emerald)',
+                  },
+                ].map(({ icon, label, value, sub, color, onClick }) => (
+                  <div
+                    key={label}
+                    onClick={onClick}
+                    style={{ padding: '12px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', cursor: onClick ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
+                  >
+                    <div style={{ fontSize: '0.95rem', marginBottom: '5px' }}>{icon}</div>
+                    <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '4px' }}>{label.toUpperCase()}</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1.1, marginBottom: '4px' }}>{value}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', lineHeight: 1.4 }}>{sub}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* ── SCROLL-ANCHOR NAV (inline sticky) ────────────────────────── */}
+            <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,11,19,0.9)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: `1px solid ${scoreColor}20` }}>
+              <div style={{ display: 'flex', gap: '0', overflowX: 'auto' }}>
+                {TABS.map((tab) => (
+                  <button
+                    type="button"
+                    key={tab.key}
+                    onClick={() => scrollToSection(tab.key)}
+                    title={tab.question}
+                    style={{
+                      padding: '11px 14px', border: 'none', background: 'transparent', flexShrink: 0,
+                      color: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.38)',
+                      fontWeight: 700, fontSize: '0.62rem', fontFamily: 'var(--font-mono)',
+                      letterSpacing: '0.04em', cursor: 'pointer', transition: 'color 0.15s',
+                      whiteSpace: 'nowrap',
+                      borderBottom: activeTab === tab.key ? `2px solid ${scoreColor}` : '2px solid transparent',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.42rem', opacity: 0.45, marginRight: '4px' }}>{tab.chapter}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAPTER 01 — WHAT IS WORKING AGAINST YOU
+                Question: Why did you receive this score?
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              ref={sectionRefs.overview}
+              id="section-overview"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.06 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ paddingTop: '52px', scrollMarginTop: '88px' }}
+            >
+              {/* Chapter header */}
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '0.46rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '8px' }}>CHAPTER 01 OF 05</div>
+                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)' }}>What Is Working Against You</h2>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Your score of <strong style={{ color: scoreColor }}>{result.total}/100</strong> isn't random. These are the specific forces driving it.
+                </p>
+              </div>
+
+              {/* GAP #8 FIX: Ranked threats — top 3 prominent, rest collapsed */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '12px' }}>RANKED BY SEVERITY — WHAT IS ACTUALLY THREATENING YOUR ROLE</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {rankedThreats.slice(0, 3).map((t, i) => {
+                    const tColor = t.score >= 60 ? 'var(--red)' : t.score >= 40 ? 'var(--amber)' : 'var(--cyan)';
+                    const tLabel = t.score >= 60 ? 'HIGH' : t.score >= 40 ? 'MODERATE' : 'LOW';
+                    return (
+                      <div key={t.name} style={{ padding: '14px 18px', borderRadius: '10px', background: i === 0 ? `${tColor}08` : 'rgba(255,255,255,0.02)', border: `1px solid ${i === 0 ? tColor + '30' : 'rgba(255,255,255,0.07)'}`, borderLeft: `3px solid ${tColor}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.48rem', fontWeight: 800, color: tColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', background: `${tColor}15`, padding: '2px 6px', borderRadius: '3px' }}>#{i + 1} {tLabel}</span>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>{t.name}</span>
+                          <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 900, color: tColor, fontFamily: 'var(--font-mono)' }}>{t.score}%</span>
+                        </div>
+                        <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden', marginBottom: '8px' }}>
+                          <div style={{ height: '100%', width: `${t.score}%`, background: tColor, borderRadius: '2px', transition: 'width 0.8s ease' }} />
+                        </div>
+                        {/* GAP #9 FIX: Every threat maps to an action */}
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                          <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>→ </span>{t.action}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {rankedThreats.length > 3 && (
+                    <details style={{ marginTop: '4px' }}>
+                      <summary style={{ cursor: 'pointer', fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', padding: '6px 10px', listStyle: 'none' }}>
+                        + {rankedThreats.length - 3} additional threat factors →
+                      </summary>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                        {rankedThreats.slice(3).map((t) => {
+                          const tColor = t.score >= 60 ? 'var(--red)' : t.score >= 40 ? 'var(--amber)' : 'var(--cyan)';
                           return (
-                            <div key={wd.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem' }}>
-                              <span style={{ width: 24, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 700 }}>{wd.key}</span>
-                              <span style={{ flex: 1, color: 'var(--text-2)' }}>{DIM_INFO[wd.key]?.label ?? wd.label}</span>
-                              <span style={{ fontFamily: 'var(--font-mono)', color: dc, fontWeight: 700, minWidth: 28, textAlign: 'right' }}>{wd.score}</span>
-                              <span style={{ fontFamily: 'var(--font-mono)', color: diff < 0 ? 'var(--emerald)' : 'var(--red)', fontWeight: 700, minWidth: 36, textAlign: 'right', fontSize: '0.7rem' }}>
-                                {diff > 0 ? `+${diff}` : diff}
-                              </span>
+                            <div key={t.name} style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `2px solid ${tColor}` }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-2)', fontWeight: 600, marginBottom: '4px' }}>
+                                <span>{t.name}</span><span style={{ color: tColor, fontFamily: 'var(--font-mono)', fontWeight: 800 }}>{t.score}%</span>
+                              </div>
+                              <div style={{ fontSize: '0.62rem', color: 'var(--text-3)' }}>→ {t.action}</div>
                             </div>
                           );
                         })}
                       </div>
-                    </div>
+                    </details>
                   )}
                 </div>
+              </div>
+
+              {/* Full threat breakdown detail */}
+              <ThreatBreakdownPanel result={result} />
+
+              {/* Blind spots */}
+              {personalBlindSpots.length > 0 && (
+                <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {personalBlindSpots.map((spot, i) => (
+                    <div key={i} style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.18)', borderLeft: '3px solid var(--amber)' }}>
+                      <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'var(--amber)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '5px' }}>HIDDEN RISK</div>
+                      <p style={{ fontSize: '0.73rem', color: 'var(--text-2)', lineHeight: 1.65, margin: 0 }}>{spot}</p>
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
 
-            {/* Tab switcher */}
-            <div role="tablist" aria-label="Risk Oracle result sections" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  role="tab"
-                  aria-selected={activeTab === tab.key}
-                  aria-controls={`tabpanel-${tab.key}`}
-                  onClick={() => setActiveTab(tab.key)}
-                  style={{
-                    padding: '10px 16px', minHeight: '44px', borderRadius: '6px', border: 'none',
-                    background: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.05)',
-                    color: activeTab === tab.key ? '#000' : 'rgba(255,255,255,0.5)',
-                    fontWeight: 700, fontSize: '0.75rem', fontFamily: 'var(--font-mono)',
-                    letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s ease',
-                  }}
-                >
-                  {tab.label}
+              {agenticScore && (
+                <AgenticExposurePanel result={agenticScore} currentScore={result.total} currentScoreColor={scoreColor} />
+              )}
+
+              {/* GAP #16 FIX: Narrative transition into next chapter */}
+              <div style={{ marginTop: '40px', padding: '16px 20px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${scoreColor}40` }}>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                  Now that we've mapped the forces creating your risk — the next question is <strong style={{ color: 'var(--text-2)' }}>when</strong>. AI capability moves in waves, not gradually. The timing of those waves determines how much runway you actually have.
+                </p>
+                <button type="button" onClick={() => scrollToSection('intelligence')} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '5px', border: `1px solid ${scoreColor}35`, background: 'transparent', color: scoreColor, fontSize: '0.62rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
+                  WHEN DOES THIS BECOME REAL? →
                 </button>
-              ))}
-            </div>
+              </div>
+            </motion.div>
 
-            {/* Tab content panel */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '32px' }}>
+            {/* ── Chapter divider ── */}
+            <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${scoreColor}15, transparent)`, margin: '56px 0' }} />
 
-              {/* ── TAB 1: OVERVIEW ─────────────────────────────────────────── */}
-              {activeTab === 'overview' && (
-                <div>
-                  {/* Oracle synthesis */}
-                  {synthesis && (
-                    <div style={{ marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                        <h3 className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>ORACLE SYNTHESIS</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(0,212,224,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,212,224,0.2)' }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', animation: 'pulse 2s infinite' }} />
-                          <span style={{ fontSize: '0.6rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>ORACLE</span>
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAPTER 02 — WHEN DOES THIS BECOME REAL
+                Question: What does the AI timeline look like for your role?
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              ref={sectionRefs.intelligence}
+              id="section-intelligence"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.06 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ scrollMarginTop: '88px' }}
+            >
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '0.46rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '8px' }}>CHAPTER 02 OF 05</div>
+                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)' }}>When Does This Become Real</h2>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Your current survival probability is <strong style={{ color: scoreColor }}>{survivalPct}%</strong>. Here's how that changes if nothing does.
+                </p>
+              </div>
+
+              {/* GAP #1 FIX: Real declining trajectory — never flat */}
+              {consequencesTimeline && (() => {
+                const growthPerYear = trajectory ? Math.max(1.5, trajectory.growthPerYear) : 2.5;
+                const sNow = riskToSurvival(result.total);
+                const riskM60 = Math.min(97, result.total + growthPerYear * 5);
+                const sM60 = riskToSurvival(Math.round(riskM60));
+                const riskM60Act = Math.min(97, result.total + growthPerYear * 5 * 0.55);
+                const sM60Act = riskToSurvival(Math.round(riskM60Act));
+                const decline = Math.max(1, sNow - sM60);
+                const saved = Math.max(0, sM60Act - sM60);
+                return (
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '14px' }}>
+                      YOUR SURVIVAL PROBABILITY — NO ACTION TAKEN (MONTH-BY-MONTH)
+                    </div>
+                    {/* Timeline dots — guaranteed declining */}
+                    <div style={{ display: 'flex', overflowX: 'auto', gap: '0', marginBottom: '16px', padding: '16px 0' }}>
+                      {consequencesTimeline.map((pt, i) => {
+                        const ptColor = pt.survPct >= 70 ? 'var(--emerald)' : pt.survPct >= 55 ? 'var(--cyan)' : pt.survPct >= 40 ? 'var(--amber)' : 'var(--red)';
+                        const isLast = i === consequencesTimeline.length - 1;
+                        const isFirst = i === 0;
+                        return (
+                          <div key={pt.label} style={{ flex: '1 1 0', minWidth: '72px', textAlign: 'center', position: 'relative' }}>
+                            {!isLast && <div style={{ position: 'absolute', top: '16px', left: '50%', right: '-50%', height: '2px', background: `linear-gradient(90deg, ${ptColor}60, rgba(255,255,255,0.06))`, zIndex: 0 }} />}
+                            <div style={{ width: isFirst ? '14px' : '10px', height: isFirst ? '14px' : '10px', borderRadius: '50%', background: ptColor, margin: '9px auto 0', position: 'relative', zIndex: 1, boxShadow: `0 0 ${isFirst ? 10 : 6}px ${ptColor}${isFirst ? 'cc' : '88'}`, border: isFirst ? `2px solid ${ptColor}` : 'none' }} />
+                            <div style={{ fontSize: isFirst ? '0.95rem' : '0.78rem', fontWeight: 900, color: ptColor, fontFamily: 'var(--font-mono)', marginTop: '7px' }}>{pt.survPct}%</div>
+                            <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>{pt.label}</div>
+                            <div style={{ fontSize: '0.48rem', color: 'var(--text-3)', marginTop: '3px', lineHeight: 1.3, padding: '0 3px' }}>{pt.status}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* GAP #2 FIX: Single survival model — both panels use same source */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: '8px' }}>
+                      <div style={{ padding: '14px 18px', borderRadius: '10px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderTop: '3px solid var(--red)' }}>
+                        <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'var(--red)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '10px' }}>IF NOTHING CHANGES</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+                          <div><div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>TODAY</div><div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{sNow}%</div></div>
+                          <div style={{ color: 'var(--text-3)', fontSize: '1.2rem', flexShrink: 0 }}>→</div>
+                          <div><div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>MONTH 60</div><div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>{sM60}%</div></div>
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--red)', fontWeight: 700 }}>−{decline}% survival over 5 years without action</div>
+                      </div>
+                      <div style={{ padding: '14px 18px', borderRadius: '10px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderTop: '3px solid var(--emerald)' }}>
+                        <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '10px' }}>IF YOU FOLLOW THE PLAN</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+                          <div><div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>TODAY</div><div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>{sNow}%</div></div>
+                          <div style={{ color: 'var(--text-3)', fontSize: '1.2rem', flexShrink: 0 }}>→</div>
+                          <div><div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>MONTH 60</div><div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--emerald)', fontFamily: 'var(--font-mono)' }}>{sM60Act}%</div></div>
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--emerald)', fontWeight: 700 }}>+{saved}% better outcome vs. inaction over 5 years</div>
+                      </div>
+                    </div>
+                    {result?.inaction_scenario && (
+                      <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.12)', fontSize: '0.7rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                        {result.inaction_scenario}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Survival window */}
+              {survivalWindow && (
+                <div style={{ marginBottom: '20px', padding: '18px 22px', borderRadius: 'var(--radius-lg)', background: 'rgba(6,182,212,0.04)', border: '1px solid rgba(6,182,212,0.15)' }}>
+                  <div style={{ fontSize: '0.52rem', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.12em', marginBottom: '12px' }}>YOUR PREPARATION WINDOW</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px', marginBottom: '10px' }}>
+                    {[
+                      { label: 'Best Case', value: survivalWindow.best === 0 ? 'Act Now' : `${survivalWindow.best}mo`, color: 'var(--emerald)' },
+                      { label: 'Most Likely', value: survivalWindow.likely === 0 ? 'Act Now' : `${survivalWindow.likely}mo`, color: 'var(--cyan)' },
+                      { label: 'Worst Case', value: survivalWindow.worst === 0 ? 'Act Now' : `${survivalWindow.worst}mo`, color: survivalWindow.worst <= 36 ? 'var(--red)' : 'var(--amber)' },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{value}</div>
+                        <div style={{ fontSize: '0.5rem', color: 'var(--text-3)', marginTop: '4px', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{label.toUpperCase()}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--text-3)' }}>
+                    Confidence: <span style={{ color: survivalWindow.confidence === 'High' ? 'var(--emerald)' : survivalWindow.confidence === 'Medium' ? 'var(--amber)' : 'var(--red)', fontWeight: 700 }}>{survivalWindow.confidence}</span>
+                    {' — '}based on ±18 point scenario spread around your score of {result.total}
+                  </div>
+                </div>
+              )}
+
+              {agenticScore && trajectory && (
+                <StructuralRiskPanel currentScore={result.total} trajectory={trajectory} agenticScore={agenticScore} thresholdForecast={trajectory.thresholdForecast} />
+              )}
+
+              {trajectory && automationTimeline && (
+                <CapabilityThresholdPanel trajectory={trajectory} timeline={automationTimeline} scoreColor={scoreColor} thresholdForecast={trajectory.thresholdForecast} />
+              )}
+
+              {automationTimeline && (
+                <EarlyWarningSignals timeline={automationTimeline} industryRisk={industryRiskEntry} scoreColor={scoreColor} industryLabel={industryLabel} />
+              )}
+
+              {agenticScore && automationTimeline && (
+                <PsychologicalFramingPanel score={result.total} agenticTier={agenticScore.tier} impactTimeline={automationTimeline.impactTimeline} verdict={getVerdict(result.total)} d7Score={d7Score} />
+              )}
+
+              {/* What-if sensitivity */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', marginTop: '20px', overflow: 'hidden' }}>
+                <button type="button" onClick={() => setShowWhatIf(v => !v)} aria-expanded={showWhatIf} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', background: 'rgba(255,255,255,0.02)', border: 'none', cursor: 'pointer', color: 'var(--text-2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <SlidersHorizontal size={13} style={{ color: 'var(--cyan)' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--cyan)' }}>WHAT-IF EXPLORER</span>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--text-3)' }}>— how does experience or country change your score?</span>
+                  </div>
+                  {showWhatIf ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+                {showWhatIf && (
+                  <div id="what-if-panel" style={{ padding: '18px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'flex-end' }}>
+                      <div style={{ flex: '1 1 180px' }}>
+                        <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '8px' }}>EXPERIENCE</div>
+                        <div role="radiogroup" aria-label="What-if experience level" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {EXPERIENCE_LEVELS.map((lvl) => (
+                            <button type="button" key={lvl.key} role="radio" aria-checked={wiExperience === lvl.key} onClick={() => setWiExperience(lvl.key)} style={{ padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'var(--font-mono)', fontWeight: 700, background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)', color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)', outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none', transition: 'all 0.15s' }}>{lvl.key}</button>
+                          ))}
                         </div>
                       </div>
-                      <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cyan)' }} />
-                        <p style={{ color: 'var(--text-2)', fontSize: '0.9rem', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>"{synthesis}"</p>
+                      <div style={{ flex: '1 1 180px' }}>
+                        <label className="label-xs" style={{ color: 'var(--text-3)', display: 'block', marginBottom: '8px' }}>COUNTRY</label>
+                        <PremiumSelect options={countryOptions} value={wiCountry} onChange={setWiCountry} placeholder="Select country" />
+                      </div>
+                      <div style={{ flex: '0 0 auto', textAlign: 'center', minWidth: '110px' }}>
+                        {whatIfResult ? (
+                          <div style={{ padding: '10px 16px', borderRadius: '10px', background: `${getScoreColor(whatIfResult.total)}12`, border: `1px solid ${getScoreColor(whatIfResult.total)}30` }}>
+                            <div style={{ fontSize: '0.55rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>WHAT-IF SCORE</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: getScoreColor(whatIfResult.total), lineHeight: 1 }}>{whatIfResult.total}</div>
+                            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: wiColor, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>{wiDelta > 0 ? `▲ +${wiDelta}` : wiDelta < 0 ? `▼ ${wiDelta}` : '— no change'}</div>
+                          </div>
+                        ) : (
+                          <div style={{ padding: '12px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-3)', fontSize: '0.68rem', fontFamily: 'var(--font-mono)' }}>Adjust<br />to compare</div>
+                        )}
                       </div>
                     </div>
-                  )}
-
-                  {/* §2 — Agentic AI Wave Exposure */}
-                  {agenticScore && (
-                    <AgenticExposurePanel
-                      result={agenticScore}
-                      currentScore={result.total}
-                      currentScoreColor={scoreColor}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* ── TAB 2: AI INTELLIGENCE ──────────────────────────────────── */}
-              {activeTab === 'intelligence' && (
-                <div>
-                  {/* §2b — Future AI Wave Assessment (structural risk card) */}
-                  {agenticScore && trajectory && (
-                    <StructuralRiskPanel
-                      currentScore={result.total}
-                      trajectory={trajectory}
-                      agenticScore={agenticScore}
-                      thresholdForecast={trajectory.thresholdForecast}
-                    />
-                  )}
-
-                  {/* §3 — Capability Threshold Forecast */}
-                  {trajectory && automationTimeline ? (
-                    <CapabilityThresholdPanel
-                      trajectory={trajectory}
-                      timeline={automationTimeline}
-                      scoreColor={scoreColor}
-                      thresholdForecast={trajectory.thresholdForecast}
-                    />
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '32px', opacity: 0.4 }}>
-                      <Clock size={36} style={{ marginBottom: '12px' }} />
-                      <p className="label-xs">Run the oracle to see capability threshold data.</p>
-                    </div>
-                  )}
-
-                  {/* §7 — Early Warning Signals */}
-                  {automationTimeline && (
-                    <EarlyWarningSignals
-                      timeline={automationTimeline}
-                      industryRisk={industryRiskEntry}
-                      scoreColor={scoreColor}
-                      industryLabel={industryLabel}
-                    />
-                  )}
-
-                  {/* §9 — Psychological Framing */}
-                  {agenticScore && automationTimeline && (
-                    <PsychologicalFramingPanel
-                      score={result.total}
-                      agenticTier={agenticScore.tier}
-                      impactTimeline={automationTimeline.impactTimeline}
-                      verdict={getVerdict(result.total)}
-                      d7Score={d7Score}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* ── TAB 3: TASK ANALYSIS ────────────────────────────────────── */}
-              {activeTab === 'tasks' && (
-                <div>
-                  {/* §4 — Task Exposure Matrix */}
-                  {automationTimeline && (
-                    <TaskExposureMatrix
-                      timeline={automationTimeline}
-                      d1Score={result.dimensions.find(d => d.key === 'D1')?.score ?? 50}
-                      techStack={techStack || undefined}
-                      countryKey={countryKey}
-                      experience={experience}
-                      d7Score={d7Score}
-                    />
-                  )}
-
-                  {/* Existing skill matrix */}
-                  {intel && (
-                    <div style={{ marginTop: '32px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
-                      <h3 className="label-xs" style={{ marginBottom: '16px', color: 'var(--text-3)' }}>SKILL RISK MATRIX</h3>
-                      <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={workTypeKey} />
-                    </div>
-                  )}
-                  {!intel && !automationTimeline && (
-                    <div style={{ textAlign: 'center', padding: '48px 32px', opacity: 0.7 }}>
-                      <Cpu size={40} style={{ marginBottom: '12px', color: scoreColor }} />
-                      <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
-                        Heuristic estimate — no seeded skill data for this role
-                      </p>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                        Data quality: {result.dataQuality === 'DQ_FULL' ? 'Full' : result.dataQuality === 'DQ_PARTIAL' ? 'Partial' : 'Estimated'}
-                        {' · '}Confidence: {result.confidence}
+                    {whatIfResult && (
+                      <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
+                        <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '10px' }}>DIMENSION IMPACT</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                          {whatIfResult.dimensions.map((wd) => {
+                            const orig = result!.dimensions.find((d) => d.key === wd.key);
+                            const diff = wd.score - (orig?.score ?? wd.score);
+                            if (Math.abs(diff) < 1) return null;
+                            const dc = getScoreColor(wd.score);
+                            return (
+                              <div key={wd.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.72rem' }}>
+                                <span style={{ width: 22, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.62rem', fontWeight: 700 }}>{wd.key}</span>
+                                <span style={{ flex: 1, color: 'var(--text-2)' }}>{DIM_INFO[wd.key]?.label ?? wd.label}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: dc, fontWeight: 700, minWidth: 26, textAlign: 'right' }}>{wd.score}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', color: diff < 0 ? 'var(--emerald)' : 'var(--red)', fontWeight: 700, minWidth: 32, textAlign: 'right', fontSize: '0.68rem' }}>{diff > 0 ? `+${diff}` : diff}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Narrative transition */}
+              <div style={{ marginTop: '40px', padding: '16px 20px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${scoreColor}40` }}>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                  The timeline tells you <em>when</em>. But it's the specific tasks in your daily work that tell you <strong style={{ color: 'var(--text-2)' }}>what</strong> — which parts of your job are already in AI's crosshairs today versus which parts will take years to reach.
+                </p>
+                <button type="button" onClick={() => scrollToSection('tasks')} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '5px', border: `1px solid ${scoreColor}35`, background: 'transparent', color: scoreColor, fontSize: '0.62rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
+                  WHICH TASKS ARE TARGETS? →
+                </button>
+              </div>
+            </motion.div>
+
+            {/* ── Chapter divider ── */}
+            <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${scoreColor}15, transparent)`, margin: '56px 0' }} />
+
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAPTER 03 — WHICH TASKS ARE TARGETS
+                Question: What specific work is AI already doing in your field?
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              ref={sectionRefs.tasks}
+              id="section-tasks"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.06 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ scrollMarginTop: '88px' }}
+            >
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '0.46rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '8px' }}>CHAPTER 03 OF 05</div>
+                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)' }}>Which Tasks Are Targets</h2>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Not your whole role — specific tasks. Some are already partially automated. Others won't be touched for years.
+                </p>
+              </div>
+
+              {/* Phase 5: YOUR ROLE IN THE AI ERA — role-specific narrative block */}
+              {roleNarrative && (
+                <div style={{ marginBottom: '28px', padding: '20px 24px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `3px solid ${scoreColor}` }}>
+                  <div style={{ fontSize: '0.52rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '12px' }}>YOUR ROLE IN THE AI ERA</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    {roleNarrative.uniqueRisks?.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '0.56rem', fontWeight: 700, color: 'var(--red)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '6px' }}>ROLE-SPECIFIC RISKS</div>
+                        <ul style={{ margin: 0, padding: '0 0 0 14px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          {roleNarrative.uniqueRisks.map((r, i) => (
+                            <li key={i} style={{ fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.5 }}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {roleNarrative.uniqueOpportunities?.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '0.56rem', fontWeight: 700, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '6px' }}>ROLE-SPECIFIC OPPORTUNITIES</div>
+                        <ul style={{ margin: 0, padding: '0 0 0 14px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          {roleNarrative.uniqueOpportunities.map((o, i) => (
+                            <li key={i} style={{ fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.5 }}>{o}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {roleNarrative.aiToolsImpacting?.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: '0.56rem', fontWeight: 700, color: 'var(--amber)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '6px' }}>AI TOOLS IMPACTING THIS ROLE</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {roleNarrative.aiToolsImpacting.map((tool) => (
+                            <span key={tool} style={{ padding: '2px 7px', borderRadius: '4px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', fontSize: '0.6rem', color: 'var(--amber)', fontWeight: 600 }}>{tool}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {roleNarrative.humanEdge && (
+                      <div>
+                        <div style={{ fontSize: '0.56rem', fontWeight: 700, color: 'var(--cyan)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '6px' }}>YOUR HUMAN EDGE</div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--text-2)', lineHeight: 1.55 }}>{roleNarrative.humanEdge}</p>
+                      </div>
+                    )}
+                  </div>
+                  {roleNarrative.evolutionBy2030 && (
+                    <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.5, fontStyle: 'italic' }}>
+                      <strong style={{ color: 'var(--text-2)', fontStyle: 'normal' }}>By 2030:</strong> {roleNarrative.evolutionBy2030}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* ── TAB 4: PROTECTION ───────────────────────────────────────── */}
-              {activeTab === 'protection' && (
-                <div>
-                  {/* §5 — Survival Factors */}
-                  <SurvivalFactorsPanel
-                    dimensions={result.dimensions}
-                    intel={intel}
-                    experience={experience}
-                    scoreColor={scoreColor}
-                    hasManagement={hasManagement}
-                  />
-
-                  {/* §6 — Role Evolution Path */}
-                  <RoleEvolutionPath
-                    roleKey={workTypeKey}
-                    roleLabel={roleLabel}
-                    intel={intel}
-                    scoreColor={scoreColor}
-                    evolutionPath={evolutionPath}
-                    countryKey={countryKey}
-                    experience={experience}
-                    d7Score={d7Score}
-                  />
-                </div>
-              )}
-
-              {/* ── TAB 5: ACTION STRATEGY ──────────────────────────────────── */}
-              {activeTab === 'strategy' && (
-                <EnhancedActionPlan
-                  intel={intel}
-                  experience={experience}
-                  score={result.total}
-                  trajectory={trajectory}
-                  scoreColor={scoreColor}
-                  salaryRange={salaryRange || undefined}
+              {automationTimeline && (
+                <TaskExposureMatrix
+                  timeline={automationTimeline}
+                  d1Score={result.dimensions.find(d => d.key === 'D1')?.score ?? 50}
+                  techStack={techStack || undefined}
                   countryKey={countryKey}
-                  industryKey={industryKey}
-                  roleKey={workTypeKey}
+                  experience={experience}
                   d7Score={d7Score}
-                  automationTimeline={automationTimeline}
                 />
               )}
-            </div>
+
+              {intel && (
+                <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '14px' }}>SKILL RISK MATRIX — WHICH SKILLS ARE MOST EXPOSED</div>
+                  <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={workTypeKey} />
+                </div>
+              )}
+
+              {!intel && !automationTimeline && (
+                <div style={{ textAlign: 'center', padding: '40px 28px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <Cpu size={36} style={{ marginBottom: '10px', color: scoreColor }} />
+                  <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '6px', fontSize: '0.85rem' }}>Task data estimated from role heuristics</p>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                    Confidence: {result.confidence === 'HIGH' ? 'Strong' : result.confidence === 'MODERATE' ? 'Moderate' : 'Limited'} — {result.dataQuality === 'DQ_FULL' ? 'full role data available' : 'some estimates used'}
+                  </div>
+                </div>
+              )}
+
+              {/* Narrative transition */}
+              <div style={{ marginTop: '40px', padding: '16px 20px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${scoreColor}40` }}>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                  You've seen what's under pressure. Now the opposite — <strong style={{ color: 'var(--text-2)' }}>what still protects you</strong>. The dimensions where your score is strongest are the most important to understand and intentionally expand.
+                </p>
+                <button type="button" onClick={() => scrollToSection('protection')} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '5px', border: `1px solid ${scoreColor}35`, background: 'transparent', color: scoreColor, fontSize: '0.62rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
+                  WHERE YOU STILL HAVE AN EDGE →
+                </button>
+              </div>
+            </motion.div>
+
+            {/* ── Chapter divider ── */}
+            <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${scoreColor}15, transparent)`, margin: '56px 0' }} />
+
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAPTER 04 — WHERE YOU STILL HAVE AN EDGE
+                Question: What still protects you — and why?
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              ref={sectionRefs.protection}
+              id="section-protection"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.06 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ scrollMarginTop: '88px' }}
+            >
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '0.46rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '8px' }}>CHAPTER 04 OF 05</div>
+                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)' }}>Where You Still Have an Edge</h2>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Your Career Protection Grade is <strong style={{ color: careerGrade === 'A' ? 'var(--emerald)' : careerGrade === 'B' ? 'var(--cyan)' : careerGrade === 'C' ? 'var(--amber)' : 'var(--red)' }}>{careerGrade}</strong>. Here's what's holding you up — and how to strengthen it.
+                </p>
+              </div>
+
+              {/* GAP #7 FIX: Compressed peer comparison — rank + 2 lines only */}
+              {survivalPct != null && (() => {
+                const peers = [
+                  { role: 'AI-Augmented Specialist', pct: Math.min(95, survivalPct + 14), above: true },
+                  { role: 'Senior Domain Expert', pct: Math.min(95, survivalPct + 6), above: true },
+                  { role: roleLabel, pct: survivalPct, isUser: true },
+                  { role: 'General Practitioner', pct: Math.max(5, survivalPct - 8), above: false },
+                  { role: 'Routine Task Worker', pct: Math.max(5, survivalPct - 18), above: false },
+                ].sort((a, b) => b.pct - a.pct);
+                const userRank = peers.findIndex(p => p.isUser) + 1;
+                const saferThan = peers.filter(p => !p.isUser && p.pct < survivalPct).map(p => p.role);
+                const safferAbove = peers.filter(p => !p.isUser && p.pct > survivalPct).map(p => p.role);
+                return (
+                  <div style={{ marginBottom: '20px', padding: '16px 20px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '10px' }}>YOUR MARKET POSITION VS SIMILAR ROLES</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+                      <div style={{ textAlign: 'center', padding: '12px 18px', borderRadius: '8px', background: `${scoreColor}10`, border: `1px solid ${scoreColor}25` }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 900, color: scoreColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>#{userRank}</div>
+                        <div style={{ fontSize: '0.5rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginTop: '3px' }}>OF {peers.length}</div>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        {safferAbove.length > 0 && <div style={{ fontSize: '0.65rem', color: 'var(--emerald)', marginBottom: '4px' }}>↑ Safer above you: {safferAbove.join(', ')}</div>}
+                        {saferThan.length > 0 && <div style={{ fontSize: '0.65rem', color: 'var(--amber)' }}>↓ More exposed below: {saferThan.join(', ')}</div>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {peers.map((p) => {
+                        const pColor = p.pct >= 70 ? 'var(--emerald)' : p.pct >= 50 ? 'var(--cyan)' : p.pct >= 35 ? 'var(--amber)' : 'var(--red)';
+                        return (
+                          <div key={p.role} style={{ display: 'grid', gridTemplateColumns: '1fr 40px', alignItems: 'center', gap: '8px', padding: p.isUser ? '5px 8px' : '3px 8px', borderRadius: '5px', background: p.isUser ? `${scoreColor}08` : 'transparent', border: p.isUser ? `1px solid ${scoreColor}20` : 'none' }}>
+                            <div>
+                              <div style={{ fontSize: '0.65rem', fontWeight: p.isUser ? 800 : 500, color: p.isUser ? scoreColor : 'var(--text-3)', marginBottom: '2px' }}>{p.role}{p.isUser ? ' ← You' : ''}</div>
+                              <div style={{ height: '2px', borderRadius: 1, background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${p.pct}%`, background: pColor, borderRadius: 1, transition: 'width 0.7s ease' }} />
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 900, color: pColor, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>{p.pct}%</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* FIX #11 — Career Protection Journey: current → target progress */}
+              {survivalPct != null && (() => {
+                const currentPct = survivalPct;
+                const targetPct  = Math.min(95, currentPct + (result.total >= 65 ? 20 : result.total >= 45 ? 14 : 9));
+                const potentialGain = targetPct - currentPct;
+                const barColor = currentPct >= 70 ? 'var(--emerald)' : currentPct >= 50 ? 'var(--cyan)' : currentPct >= 35 ? 'var(--amber)' : 'var(--red)';
+                const gradeLabel = careerGrade === 'A' ? 'Strong' : careerGrade === 'B' ? 'Good' : careerGrade === 'C' ? 'Moderate' : 'Low';
+                const gradeColor = careerGrade === 'A' ? 'var(--emerald)' : careerGrade === 'B' ? 'var(--cyan)' : careerGrade === 'C' ? 'var(--amber)' : 'var(--red)';
+                return (
+                  <div style={{ marginBottom: '20px', padding: '20px 22px', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '16px' }}>YOUR CAREER PROTECTION JOURNEY</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '18px' }}>
+                      {[
+                        { label: 'Current Protection', pct: currentPct, color: barColor, sub: `Grade ${careerGrade ?? '—'} · ${gradeLabel}` },
+                        { label: 'Potential Gain', pct: potentialGain, color: 'var(--violet)', sub: `+${potentialGain}% if plan followed`, isGain: true },
+                        { label: 'Target Protection', pct: targetPct, color: 'var(--emerald)', sub: 'With full action plan' },
+                      ].map(({ label, pct, color, sub, isGain }) => (
+                        <div key={label} style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.48rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', marginBottom: '6px' }}>{label.toUpperCase()}</div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                            {isGain ? `+${pct}%` : `${pct}%`}
+                          </div>
+                          <div style={{ fontSize: '0.58rem', color: 'var(--text-3)', marginTop: '4px', lineHeight: 1.3 }}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Progress bar: current vs target */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '5px' }}>
+                        <span>0%</span><span>Today: {currentPct}%</span><span>Target: {targetPct}%</span><span>100%</span>
+                      </div>
+                      <div style={{ position: 'relative', height: '10px', borderRadius: '5px', background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                        {/* Current */}
+                        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${currentPct}%`, background: barColor, borderRadius: '5px', transition: 'width 0.8s ease' }} />
+                        {/* Potential gain overlay */}
+                        <div style={{ position: 'absolute', left: `${currentPct}%`, top: 0, height: '100%', width: `${potentialGain}%`, background: 'rgba(139,92,246,0.45)', borderRadius: '0 5px 5px 0', transition: 'width 0.8s ease' }} />
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: barColor }} />
+                          <span style={{ fontSize: '0.58rem', color: 'var(--text-3)' }}>Current ({currentPct}%)</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'rgba(139,92,246,0.6)' }} />
+                          <span style={{ fontSize: '0.58rem', color: 'var(--text-3)' }}>Potential gain (+{potentialGain}%)</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '14px', padding: '10px 14px', borderRadius: '7px', background: `${gradeColor}08`, border: `1px solid ${gradeColor}20`, fontSize: '0.68rem', color: 'var(--text-2)', lineHeight: 1.55 }}>
+                      Your protection is currently <strong style={{ color: gradeColor }}>Grade {careerGrade} ({gradeLabel})</strong>. Following the action plan in Chapter 05 could increase this by up to <strong style={{ color: 'var(--violet)' }}>{potentialGain} percentage points</strong>, reaching the <strong style={{ color: 'var(--emerald)' }}>target of {targetPct}%</strong>.
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <CareerProtectionScorecard result={result} />
+
+              <SurvivalFactorsPanel
+                dimensions={result.dimensions}
+                intel={intel}
+                experience={experience}
+                scoreColor={scoreColor}
+                hasManagement={hasManagement}
+              />
+
+              <RoleEvolutionPath
+                roleKey={workTypeKey}
+                roleLabel={roleLabel}
+                intel={intel}
+                scoreColor={scoreColor}
+                evolutionPath={evolutionPath}
+                countryKey={countryKey}
+                experience={experience}
+                d7Score={d7Score}
+              />
+
+              {/* Phase 10: Opportunity Engine — equal emphasis on growth paths */}
+              {masterIntel && (
+                <OpportunityPanel
+                  intel={masterIntel}
+                  result={result}
+                  roleKey={workTypeKey}
+                  roleLabel={roleLabel}
+                  experience={experience}
+                />
+              )}
+
+              {/* Narrative transition */}
+              <div style={{ marginTop: '40px', padding: '16px 20px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${scoreColor}40` }}>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-3)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                  Understanding your edge matters only if you act on it. The next section converts everything you've just read into a <strong style={{ color: 'var(--text-2)' }}>concrete sequence of actions</strong> — each one mapped to the specific threats and advantages in your profile.
+                </p>
+                <button type="button" onClick={() => scrollToSection('strategy')} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '5px', border: `1px solid ${scoreColor}35`, background: 'transparent', color: scoreColor, fontSize: '0.62rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
+                  SEE YOUR PROTECTION PLAN →
+                </button>
+              </div>
+            </motion.div>
+
+            {/* ── Chapter divider ── */}
+            <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${scoreColor}15, transparent)`, margin: '56px 0' }} />
+
+            {/* ═══════════════════════════════════════════════════════════════
+                CHAPTER 05 — YOUR PROTECTION PLAN
+                Question: What should you do, in what order?
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              ref={sectionRefs.strategy}
+              id="section-strategy"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.06 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ scrollMarginTop: '88px' }}
+            >
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ fontSize: '0.46rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '8px' }}>CHAPTER 05 OF 05</div>
+                <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(1.1rem,2.5vw,1.5rem)', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)' }}>Your Protection Plan</h2>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                  Each action below directly addresses a threat identified in your profile. The sequence matters — do them in order.
+                </p>
+              </div>
+
+              {/* GAP #14 visible in action plan context */}
+              {primaryRecommendation && (
+                <div style={{ marginBottom: '20px', padding: '14px 18px', borderRadius: '10px', background: `${scoreColor}0c`, border: `1px solid ${scoreColor}30`, borderLeft: `3px solid ${scoreColor}` }}>
+                  <div style={{ fontSize: '0.48rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '6px' }}>YOUR SINGLE MOST IMPORTANT ACTION</div>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.6, fontWeight: 600 }}>{primaryRecommendation}</p>
+                </div>
+              )}
+
+              <EnhancedActionPlan
+                intel={intel}
+                experience={experience}
+                score={result.total}
+                trajectory={trajectory}
+                scoreColor={scoreColor}
+                salaryRange={salaryRange || undefined}
+                countryKey={countryKey}
+                industryKey={industryKey}
+                roleKey={workTypeKey}
+                d7Score={d7Score}
+                automationTimeline={automationTimeline}
+              />
+            </motion.div>
+
+            {/* ── Final divider ── */}
+            <div style={{ height: '1px', background: `linear-gradient(90deg, transparent, ${scoreColor}20, transparent)`, margin: '56px 0' }} />
+
+            {/* ═══════════════════════════════════════════════════════════════
+                EXECUTIVE SUMMARY — YOUR CAREER IN ONE MINUTE
+            ═══════════════════════════════════════════════════════════════ */}
+            <motion.div
+              ref={summaryRef}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              style={{ marginBottom: '32px', padding: '36px', borderRadius: 'var(--radius-xl)', background: `linear-gradient(135deg, ${scoreColor}07 0%, rgba(255,255,255,0.02) 60%)`, border: `1px solid ${scoreColor}20`, position: 'relative', overflow: 'hidden' }}
+            >
+              <div style={{ position: 'absolute', top: 0, right: 0, width: '180px', height: '180px', background: `radial-gradient(circle at 100% 0%, ${scoreColor}09, transparent 70%)`, pointerEvents: 'none' }} />
+
+              <div style={{ fontSize: '0.52rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.15em', marginBottom: '20px' }}>
+                YOUR CAREER IN ONE MINUTE — EXECUTIVE SUMMARY
+              </div>
+
+              {/* Phase 12: Executive Summary — all 6 cards traced to MasterIntelligence + NarrativeState */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                {[
+                  {
+                    label: 'Current Position',
+                    value: narrative?.riskLabel ? narrative.riskLabel.replace(/\b\w/g, c => c.toUpperCase()) : survivalVerdict,
+                    sub: masterIntel
+                      ? `Survival: ${masterIntel.survivalRange[0]}–${masterIntel.survivalRange[1]}% · ${roleLabel}`
+                      : `${roleLabel} · ${experience} yrs`,
+                    color: scoreColor,
+                  },
+                  {
+                    label: 'Biggest Threat',
+                    value: (() => {
+                      const d1 = result.dimensions.find(d => d.key === 'D1')?.score ?? 50;
+                      const d2 = result.dimensions.find(d => d.key === 'D2')?.score ?? 50;
+                      if (d1 >= 65) return 'Task automation';
+                      if (d2 >= 55) return 'Market saturation';
+                      return 'Sector contagion';
+                    })(),
+                    sub: narrative?.primaryThreat?.slice(0, 80) ?? (rankedThreats[0]?.name ?? 'See threat analysis'),
+                    color: 'var(--red)',
+                  },
+                  {
+                    label: 'Strongest Advantage',
+                    value: (() => {
+                      const d3 = result.dimensions.find(d => d.key === 'D3')?.score ?? 50;
+                      const d4 = result.dimensions.find(d => d.key === 'D4')?.score ?? 50;
+                      if (d3 >= 65) return 'Human skills';
+                      if (d4 >= 60) return 'Experience depth';
+                      return 'Role structure';
+                    })(),
+                    sub: narrative?.primaryStrength?.slice(0, 80) ?? 'Your primary protection',
+                    color: 'var(--emerald)',
+                  },
+                  {
+                    label: 'Time Horizon',
+                    value: masterIntel?.forecastWindow ?? (prepWindowMonths === 0 ? 'Act Now' : prepWindowMonths ? `${prepWindowMonths}mo` : '—'),
+                    sub: narrative?.timeHorizon ?? (prepWindowMonths === 0 ? 'Window is closing' : 'to take meaningful action'),
+                    color: prepWindowMonths === 0 ? 'var(--red)' : prepWindowMonths && prepWindowMonths <= 18 ? 'var(--amber)' : 'var(--cyan)',
+                  },
+                  {
+                    label: 'Top Action',
+                    value: narrative?.actionVerb ?? 'See Plan →',
+                    sub: primaryRecommendation ?? 'Chapter 05 has your full plan',
+                    color: scoreColor,
+                    onClick: () => scrollToSection('strategy'),
+                  },
+                  {
+                    label: 'Expected Outcome',
+                    value: masterIntel
+                      ? `${masterIntel.survivalRange[0]}–${masterIntel.survivalRange[1]}%`
+                      : (() => {
+                          const sNow = riskToSurvival(result.total);
+                          const growth = trajectory ? Math.max(1.5, trajectory.growthPerYear) : 2.5;
+                          const sAct = riskToSurvival(Math.round(Math.min(95, result.total + growth * 5 * 0.45)));
+                          return `${sNow}% → ${sAct}%`;
+                        })(),
+                    sub: narrative
+                      ? `If you ${narrative.actionVerb.toLowerCase()} — survival range if plan followed`
+                      : 'Survival if you follow the plan',
+                    color: 'var(--emerald)',
+                  },
+                ].map(({ label, value, sub, color, onClick }) => (
+                  <div key={label} onClick={onClick} style={{ padding: '14px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', cursor: onClick ? 'pointer' : 'default' }}>
+                    <div style={{ fontSize: '0.5rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '6px' }}>{label.toUpperCase()}</div>
+                    <div style={{ fontSize: '1rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1.1, marginBottom: '5px' }}>{value}</div>
+                    <p style={{ margin: 0, fontSize: '0.62rem', color: 'var(--text-3)', lineHeight: 1.5 }}>{sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', paddingTop: '18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-3)', fontStyle: 'italic', maxWidth: '480px' }}>
+                  {narrative?.primaryThreat ?? biggestThreat}
+                </p>
+                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                  <button type="button" onClick={() => scrollToSection('strategy')} style={{ padding: '9px 18px', borderRadius: '7px', border: 'none', background: scoreColor, color: '#000', fontWeight: 800, fontSize: '0.68rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', cursor: 'pointer' }}>
+                    SEE ACTION PLAN →
+                  </button>
+                  <button type="button" onClick={handleShare} style={{ padding: '9px 14px', borderRadius: '7px', border: `1px solid ${scoreColor}40`, background: 'transparent', color: scoreColor, fontWeight: 700, fontSize: '0.68rem', fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
+                    {shareCopied ? '✓ COPIED' : 'SHARE'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
 
             {/* Bottom widgets */}
             <div style={{ marginTop: '16px' }}>
@@ -1137,6 +2140,7 @@ const AuditTerminalPage: React.FC = () => {
         )}
       </AnimatePresence>
       </div>
+      <OutcomeFeedbackPrompt />
     </div>
   );
 };

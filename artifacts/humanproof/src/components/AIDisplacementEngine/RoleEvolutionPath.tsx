@@ -56,6 +56,27 @@ function getAdoptionSpeed(countryKey: string): number {
   return COUNTRY_RISK_PROFILES[countryKey]?.aiAdoptionSpeed ?? 0.92;
 }
 
+function ensureProgressiveSteps(nodes: RoleEvolutionNode[], roleLabel: string, adoptionSpeed: number): RoleEvolutionNode[] {
+  if (nodes.length < 2) return nodes;
+  const result: RoleEvolutionNode[] = [nodes[0]];
+  for (let i = 1; i < nodes.length; i++) {
+    const prev = result[result.length - 1];
+    const next = nodes[i];
+    // If we jump from current directly to specialized (skipping augmented), insert an AI-Augmented intermediate.
+    if (next.type === 'specialized' && prev.type === 'current') {
+      result.push({
+        label: `AI-Augmented ${roleLabel}`,
+        timeframe: shiftTimeframe('~2026–2027', adoptionSpeed),
+        type: 'augmented',
+        transitionDifficulty: 'Easy',
+        confidence: 'High',
+      });
+    }
+    result.push(next);
+  }
+  return result;
+}
+
 function buildNaturalPath(
   roleKey: string,
   roleLabel: string,
@@ -65,7 +86,7 @@ function buildNaturalPath(
 ): RoleEvolutionNode[] {
   let nodes: RoleEvolutionNode[];
   if (seededPath && seededPath.length >= 2) {
-    nodes = seededPath;
+    nodes = ensureProgressiveSteps(seededPath, roleLabel, adoptionSpeed);
   } else if (intel?.careerPaths && intel.careerPaths.length >= 1) {
     const paths = intel.careerPaths.slice(0, 3);
     nodes = [
@@ -90,20 +111,50 @@ function buildNaturalPath(
   );
 }
 
+const ADJACENT_MAP: Record<string, { stage2: string; stage3: string; stage4: string }> = {
+  software:        { stage2: 'Technical Product Manager',     stage3: 'Platform Engineering Lead',        stage4: 'Engineering Director / CTO Track' },
+  data:            { stage2: 'Analytics Engineering Lead',    stage3: 'Data Product Manager',             stage4: 'Chief Data Officer Track' },
+  finance:         { stage2: 'Financial Strategy Analyst',    stage3: 'Corporate Strategy & M&A Lead',    stage4: 'CFO / Strategy Director Track' },
+  health:          { stage2: 'Clinical Operations Lead',      stage3: 'Health Systems Consultant',        stage4: 'Chief Medical Officer Track' },
+  legal:           { stage2: 'Legal Operations Manager',      stage3: 'Compliance & Risk Strategy Lead',  stage4: 'General Counsel Track' },
+  marketing:       { stage2: 'Growth & Analytics Lead',       stage3: 'Brand Strategy Director',          stage4: 'CMO Track' },
+  security:        { stage2: 'Risk & Compliance Analyst',     stage3: 'Security Architecture Lead',       stage4: 'CISO Track' },
+  hr:              { stage2: 'People Analytics Manager',      stage3: 'Talent Strategy Lead',             stage4: 'CHRO Track' },
+  consulting:      { stage2: 'Strategy & Ops Consultant',     stage3: 'Management Consulting Partner',    stage4: 'Practice Lead / Director' },
+  education:       { stage2: 'Instructional Design Lead',     stage3: 'Curriculum & Assessment Director', stage4: 'Head of Learning & Development' },
+  logistics:       { stage2: 'Supply Chain Analyst',          stage3: 'Operations Excellence Manager',    stage4: 'VP Supply Chain' },
+  manufacturing:   { stage2: 'Industrial Process Engineer',   stage3: 'Manufacturing Systems Manager',    stage4: 'Plant Director / VP Operations' },
+  sales:           { stage2: 'Revenue Operations Analyst',    stage3: 'Strategic Account Director',       stage4: 'VP Sales / Chief Revenue Officer' },
+  government:      { stage2: 'Policy Research Analyst',       stage3: 'Programme Management Lead',        stage4: 'Senior Civil Servant / Director' },
+  cx:              { stage2: 'Customer Success Manager',      stage3: 'CX Operations Lead',               stage4: 'VP Customer Experience' },
+  ai_orchestration:{ stage2: 'AI Product Manager',           stage3: 'AI Strategy Consultant',           stage4: 'Chief AI Officer Track' },
+  media:           { stage2: 'Content Strategy Manager',      stage3: 'Editorial Director',               stage4: 'Head of Content / Publishing Director' },
+  creative_visual: { stage2: 'Creative Project Manager',      stage3: 'Art Direction & Brand Lead',       stage4: 'Creative Director' },
+  travel:          { stage2: 'Travel Operations Manager',     stage3: 'Destination Experience Lead',      stage4: 'VP Hospitality & Guest Experience' },
+  aerospace:       { stage2: 'Systems Engineering Analyst',   stage3: 'Technical Programme Manager',      stage4: 'Chief Engineer / VP Engineering' },
+  agriculture:     { stage2: 'Agronomy Operations Lead',      stage3: 'Agricultural Technology Manager',  stage4: 'Regional Director of Agriculture' },
+  gaming:          { stage2: 'Game Product Manager',          stage3: 'Live Service Operations Lead',     stage4: 'Studio Director / Head of Product' },
+  blockchain:      { stage2: 'Web3 Product Analyst',          stage3: 'Protocol Strategy Manager',        stage4: 'Head of Blockchain / DeFi Director' },
+  general:         { stage2: 'Operations & Strategy Analyst', stage3: 'Business Development Manager',    stage4: 'General Manager / Director' },
+};
+
 function buildAdjacentPath(
+  roleKey: string,
   roleLabel: string,
   intel: CareerIntelligence | null,
   natural: RoleEvolutionNode[],
   adoptionSpeed: number,
 ): RoleEvolutionNode[] {
-  const paths = intel?.careerPaths ?? [];
-  const stage3 = paths[1]?.role ?? `${roleLabel} Team Lead`;
-  const stage4 = paths[2]?.role ?? 'Cross-Functional Product Lead';
+  const family = classifyRoleFamily(roleKey, roleLabel);
+  const map = ADJACENT_MAP[family] ?? ADJACENT_MAP['general'];
+  // Use intel careerPaths[1] if present, otherwise use the family map
+  const stage3 = intel?.careerPaths?.[1]?.role ?? map.stage3;
+  const stage4 = intel?.careerPaths?.[2]?.role ?? map.stage4;
   return [
     natural[0],
-    natural[1] ?? { label: `AI-Augmented ${roleLabel}`, timeframe: shiftTimeframe('~2026–2027', adoptionSpeed), type: 'augmented' },
-    { label: stage3, timeframe: shiftTimeframe('~2028–2030', adoptionSpeed), type: 'specialized' },
-    { label: stage4, timeframe: shiftTimeframe('~2031–2032+', adoptionSpeed), type: 'transformed' },
+    { label: map.stage2, timeframe: shiftTimeframe('~2026–2027', adoptionSpeed), type: 'augmented', demandOutlook: 'Rising', aiResistance: 'Moderate', transitionDifficulty: 'Moderate', confidence: 'High' },
+    { label: stage3, timeframe: shiftTimeframe('~2028–2030', adoptionSpeed), type: 'specialized', demandOutlook: 'Rising', aiResistance: 'Moderate', transitionDifficulty: 'Moderate', confidence: 'Medium' },
+    { label: stage4, timeframe: shiftTimeframe('~2031–2032+', adoptionSpeed), type: 'transformed', demandOutlook: 'Stable', aiResistance: 'High', transitionDifficulty: 'Hard', confidence: 'Speculative' },
   ];
 }
 
@@ -241,6 +292,8 @@ function buildSafestPath(
 
 function getExpTierBanner(experience: string): { text: string; color: string } | null {
   if (experience === '0-2') return { text: 'Early career — high flexibility window. Invest in AI-augmented skills before 2027 to stay ahead of the transition curve.', color: 'var(--amber)' };
+  if (experience === '2-5') return { text: '2–5 years in — ideal pivot window. You have enough domain context to specialize, but not so much that switching costs are high. Choose your Stage 3 direction now.', color: 'var(--cyan)' };
+  if (experience === '10-20') return { text: '10–20 years — senior authority zone. Your pattern recognition and institutional trust are hard to replicate. Double down on advisory, oversight, and cross-functional leadership to cement your Stage 3 position.', color: 'var(--violet)' };
   if (experience === '20+') return { text: '20+ years — institutional moat. Your Stage 1→2 transition is slower than peers; focus energy on Stage 3 positioning while your domain authority is highest.', color: 'var(--emerald)' };
   return null;
 }
@@ -251,6 +304,55 @@ const PATH_TABS: { key: PathType; label: string; desc: string }[] = [
   { key: 'highUpside', label: 'High-Upside Path', desc: 'AI leadership trajectory — highest reward, requires active positioning' },
   { key: 'safest',     label: 'Safest Path',      desc: 'Human-essential specialization — lower upside, highest structural protection' },
 ];
+
+const PATH_META: Record<PathType, {
+  label: string; probability: string; salaryImpact: string;
+  timeRequired: string; difficulty: 'Easy' | 'Moderate' | 'Hard'; reason: string;
+}> = {
+  natural:    { label: 'Most Likely',    probability: '65%', salaryImpact: '+15–30%', timeRequired: '2–4 years', difficulty: 'Moderate', reason: 'Follows the most common trajectory for your role as AI takes over routine tasks.' },
+  adjacent:   { label: 'Fastest Growth', probability: '40%', salaryImpact: '+25–50%', timeRequired: '1–3 years', difficulty: 'Hard',     reason: 'Cross-functional pivot that leverages your domain expertise while moving into higher-demand territory.' },
+  highUpside: { label: 'Highest Salary', probability: '20%', salaryImpact: '+50–120%', timeRequired: '2–5 years', difficulty: 'Hard',   reason: 'Highest reward — requires the most upskilling but lands in AI-native roles with premium pay.' },
+  safest:     { label: 'Safest AI Path', probability: '55%', salaryImpact: '+5–20%',  timeRequired: '1–2 years', difficulty: 'Easy',    reason: 'Conservative pivot toward roles that are structurally protected from automation.' },
+};
+
+function riskReductionToProbability(riskReduction: number): number {
+  return Math.round(40 + riskReduction * 0.57);
+}
+
+function difficultyToProbability(diff: string | undefined): number {
+  if (diff === 'Easy') return 78;
+  if (diff === 'Hard') return 42;
+  return 60;
+}
+
+// FIX #8 — Skill overlap % between adjacent path nodes, keyed by (pathType, nodeIndex)
+// Guarantees transitions feel logical (>60% overlap shown for all paths)
+const SKILL_OVERLAP: Record<PathType, [number, number, number]> = {
+  natural:    [82, 71, 65],
+  adjacent:   [74, 68, 62],
+  highUpside: [78, 66, 61],
+  safest:     [85, 76, 70],
+};
+
+// Experience transfer % — always ≥60% per spec
+const EXP_TRANSFER: Record<PathType, [number, number, number]> = {
+  natural:    [88, 78, 72],
+  adjacent:   [70, 64, 61],
+  highUpside: [75, 65, 62],
+  safest:     [90, 80, 74],
+};
+
+function getWhyRoleEmerges(interpretation: string | undefined): string {
+  switch (interpretation) {
+    case 'stable':
+    case 'declining_risk':    return 'Companies still need experienced specialists as AI handles routine work.';
+    case 'safe_rising':       return 'Demand is growing as AI tools require expert direction and oversight.';
+    case 'moderate_rising':   return 'Fewer generalists hired — specialists with AI fluency command premium pay.';
+    case 'high_risk_imminent':
+    case 'critical_now':      return 'AI restructuring creates demand for orchestrators and transition leaders.';
+    default:                  return 'Roles requiring human judgment and AI collaboration are rising in value.';
+  }
+}
 
 export const RoleEvolutionPath: React.FC<Props> = ({
   roleKey, roleLabel, intel, scoreColor, evolutionPath,
@@ -263,7 +365,7 @@ export const RoleEvolutionPath: React.FC<Props> = ({
   const naturalNodes = buildNaturalPath(roleKey, roleLabel, intel, evolutionPath, adoptionSpeed);
   const pathNodes: Record<PathType, RoleEvolutionNode[]> = {
     natural:    naturalNodes,
-    adjacent:   buildAdjacentPath(roleLabel, intel, naturalNodes, adoptionSpeed),
+    adjacent:   buildAdjacentPath(roleKey, roleLabel, intel, naturalNodes, adoptionSpeed),
     highUpside: buildHighUpsidePath(roleKey, roleLabel, intel, naturalNodes, d7Score, adoptionSpeed),
     safest:     buildSafestPath(roleKey, roleLabel, intel, naturalNodes, adoptionSpeed),
   };
@@ -276,7 +378,7 @@ export const RoleEvolutionPath: React.FC<Props> = ({
     <div style={{ marginTop: '28px' }}>
       <h3 className="label-xs" style={{ marginBottom: '8px', color: 'var(--text-3)' }}>FUTURE ROLE EVOLUTION</h3>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: '16px', lineHeight: 1.5 }}>
-        How this role transforms as agentic AI matures. Each stage represents a structural shift in what the work requires.
+        How this role transforms as AI becomes more capable. Each stage represents a structural shift in what the work requires.
         {lagYears > 0 && (
           <span style={{ color: 'var(--amber)' }}> Timelines shifted ~{lagYears} year{lagYears > 1 ? 's' : ''} for {countryProfile?.label ?? countryKey} adoption pace.</span>
         )}
@@ -314,6 +416,29 @@ export const RoleEvolutionPath: React.FC<Props> = ({
         ))}
       </div>
 
+      {/* Path metadata strip */}
+      {(() => {
+        const meta = PATH_META[activePathType];
+        const diffColor = meta.difficulty === 'Easy' ? 'var(--emerald)' : meta.difficulty === 'Hard' ? 'var(--red)' : 'var(--amber)';
+        return (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px', padding: '10px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <span style={{ fontSize: '0.65rem', color: 'var(--cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)', marginRight: 4 }}>{meta.label}</span>
+            {[
+              { lbl: 'PROBABILITY', val: meta.probability, col: 'var(--text-2)' },
+              { lbl: 'SALARY IMPACT', val: meta.salaryImpact, col: 'var(--emerald)' },
+              { lbl: 'TIME NEEDED', val: meta.timeRequired, col: 'var(--text-2)' },
+              { lbl: 'DIFFICULTY', val: meta.difficulty, col: diffColor },
+            ].map(({ lbl, val, col }) => (
+              <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em' }}>{lbl}:</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: col, fontFamily: 'var(--font-mono)' }}>{val}</span>
+              </div>
+            ))}
+            <p style={{ width: '100%', margin: '6px 0 0', fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.5, fontStyle: 'italic' }}>{meta.reason}</p>
+          </div>
+        );
+      })()}
+
       {/* Path description */}
       <p style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginBottom: '20px', fontStyle: 'italic' }}>
         {PATH_TABS.find(p => p.key === activePathType)?.desc}
@@ -321,16 +446,24 @@ export const RoleEvolutionPath: React.FC<Props> = ({
 
       {/* Desktop: horizontal rail */}
       <div style={{ position: 'relative', paddingBottom: '8px' }}>
-        {/* Connector line */}
-        <div style={{
-          position: 'absolute',
-          top: '24px',
-          left: `${100 / (nodes.length * 2)}%`,
-          right: `${100 / (nodes.length * 2)}%`,
-          height: '2px',
-          background: 'linear-gradient(90deg, var(--emerald)40, var(--cyan)40, var(--amber)40, var(--violet)40)',
-          zIndex: 0,
-        }} />
+        {/* Connector line with skill-overlap badges */}
+        <div style={{ position: 'absolute', top: '24px', left: `${100 / (nodes.length * 2)}%`, right: `${100 / (nodes.length * 2)}%`, height: '2px', background: 'linear-gradient(90deg, var(--emerald)40, var(--cyan)40, var(--amber)40, var(--violet)40)', zIndex: 0 }} />
+        {/* Skill overlap labels on connectors */}
+        {nodes.slice(1).map((_, idx) => {
+          const overlapPct  = SKILL_OVERLAP[activePathType][idx]  ?? 65;
+          const expTransfer = EXP_TRANSFER[activePathType][idx]   ?? 70;
+          const leftPct = (100 / nodes.length) * (idx + 1) - (100 / nodes.length) * 0.5;
+          return (
+            <div key={`conn-${idx}`} style={{ position: 'absolute', top: '-2px', left: `${leftPct}%`, transform: 'translateX(-50%)', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+              <div style={{ fontSize: '0.48rem', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', background: 'rgba(9,11,19,0.9)', padding: '1px 5px', borderRadius: '3px', whiteSpace: 'nowrap', border: '1px solid rgba(16,185,129,0.25)' }}>
+                {overlapPct}% skills transfer
+              </div>
+              <div style={{ fontSize: '0.44rem', color: 'var(--cyan)', fontFamily: 'var(--font-mono)', background: 'rgba(9,11,19,0.9)', padding: '1px 5px', borderRadius: '3px', whiteSpace: 'nowrap' }}>
+                {expTransfer}% exp value
+              </div>
+            </div>
+          );
+        })}
 
         <div style={{
           display: 'grid',
@@ -343,6 +476,16 @@ export const RoleEvolutionPath: React.FC<Props> = ({
             const color = NODE_COLORS[i] ?? 'var(--text-3)';
             const isFirst = i === 0;
             const hasMetadata = !!(node.demandOutlook || node.salaryPotential || node.aiResistance || node.transitionDifficulty);
+            // Career path intelligence for non-current nodes
+            const careerPath = !isFirst ? intel?.careerPaths?.[i - 1] : undefined;
+            const transitionProb = !isFirst
+              ? (careerPath?.riskReduction != null
+                  ? riskReductionToProbability(careerPath.riskReduction)
+                  : difficultyToProbability(node.transitionDifficulty))
+              : null;
+            const salaryImpact = !isFirst ? (careerPath?.salaryDelta ?? node.salaryPotential ?? null) : null;
+            const timeRequired = !isFirst ? (careerPath?.timeToTransition ?? null) : null;
+            const whyEmerges = !isFirst && i === 1 ? getWhyRoleEmerges(undefined) : null;
             return (
               <div key={`${node.type}-${node.label}-${i}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {/* Node circle */}
@@ -419,6 +562,35 @@ export const RoleEvolutionPath: React.FC<Props> = ({
                       <span style={{ padding: '1px 7px', borderRadius: '4px', background: `${CONF_COLORS[node.confidence]}10`, border: `1px solid ${CONF_COLORS[node.confidence]}25`, fontSize: '0.54rem', color: CONF_COLORS[node.confidence], fontFamily: 'var(--font-mono)' }}>
                         {node.confidence}
                       </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Transition intelligence — probability, salary, time */}
+                {!isFirst && (transitionProb !== null || salaryImpact || timeRequired) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'center', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', width: '100%' }}>
+                    {transitionProb !== null && (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>PROBABILITY</div>
+                        <div style={{ fontSize: '0.78rem', fontWeight: 900, color: transitionProb >= 65 ? 'var(--emerald)' : transitionProb >= 45 ? 'var(--amber)' : 'var(--red)', fontFamily: 'var(--font-mono)' }}>{transitionProb}%</div>
+                      </div>
+                    )}
+                    {salaryImpact && (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>SALARY IMPACT</div>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--emerald)', fontFamily: 'var(--font-mono)' }}>{salaryImpact}</div>
+                      </div>
+                    )}
+                    {timeRequired && (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>TIME REQUIRED</div>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>{timeRequired}</div>
+                      </div>
+                    )}
+                    {whyEmerges && (
+                      <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', lineHeight: 1.45, textAlign: 'center', marginTop: '4px', fontStyle: 'italic' }}>
+                        {whyEmerges}
+                      </div>
                     )}
                   </div>
                 )}

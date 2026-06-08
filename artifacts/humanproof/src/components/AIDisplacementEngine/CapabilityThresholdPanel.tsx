@@ -4,6 +4,7 @@
 
 import React from 'react';
 import type { TrajectoryResult, ThresholdForecastResult } from '../../services/DisplacementTrajectoryEngine';
+import { yearIndexToMonthLabel } from '../../services/DisplacementTrajectoryEngine';
 import type { AutomationTimeline } from '../../data/automationTimelineData';
 
 interface Props {
@@ -225,7 +226,7 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
 
           {/* Bar chart */}
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${thresholdForecast.points.length}, 1fr)`, gap: '6px' }}>
-            {thresholdForecast.points.map((pt) => {
+            {thresholdForecast.points.map((pt, ptIdx) => {
               const maxVal = Math.max(pt.currentState, pt.agenticTransition, pt.structuralDisruption, 30);
               const barH   = 90; // total bar area px
               const bColor = BAND_COLORS[pt.confidenceBand];
@@ -263,9 +264,9 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
                     ))}
                   </div>
 
-                  {/* Year label */}
+                  {/* Month label */}
                   <div style={{ fontSize: '0.6rem', color: pt.isThresholdZone ? 'var(--amber)' : 'var(--text-3)', fontFamily: 'var(--font-mono)', fontWeight: pt.isThresholdZone ? 800 : 400 }}>
-                    {pt.year}
+                    {yearIndexToMonthLabel(ptIdx)}
                   </div>
 
                   {/* Confidence band chip */}
@@ -291,6 +292,62 @@ export const CapabilityThresholdPanel: React.FC<Props> = ({
             <p style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.65, margin: 0, fontStyle: 'italic' }}>
               {thresholdForecast.narrative}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Fallback when thresholdForecast is unavailable ── */}
+      {!thresholdForecast && (
+        <div style={{ marginBottom: '28px', padding: '20px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '12px' }}>
+            TIMING ESTIMATES
+          </div>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-2)', lineHeight: 1.65, margin: '0 0 16px' }}>
+            Detailed year-by-year forecast data is not available for this role yet. Based on the current AI capability trajectory and your industry adoption rate, here is what we can estimate:
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[
+              {
+                label: 'AI CAN DO THE WORK',
+                value: timeline.impactTimeline === 'short' ? '2026–2028' : timeline.impactTimeline === 'medium' ? '2028–2031' : '2031–2035+',
+                color: 'var(--amber)',
+                desc: 'Estimated window when AI becomes capable enough to handle core tasks in this role',
+              },
+              {
+                label: 'COMPANIES START SWITCHING',
+                value: timeline.impactTimeline === 'short' ? '2027–2029' : timeline.impactTimeline === 'medium' ? '2029–2032' : '2032–2036+',
+                color: 'var(--cyan)',
+                desc: 'When most employers in your sector are expected to deploy AI at scale',
+              },
+              {
+                label: 'JOBS START CHANGING',
+                value: timeline.impactTimeline === 'short' ? '2027–2030' : timeline.impactTimeline === 'medium' ? '2030–2033' : '2033–2037+',
+                color: 'var(--red)',
+                desc: 'When people in roles like yours are likely to see real structural impact',
+              },
+            ].map(({ label, value, color, desc }) => (
+              <div key={label} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 14px', borderRadius: '8px',
+                background: `${color}06`, border: `1px solid ${color}20`,
+                flexWrap: 'wrap', gap: '8px',
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.58rem', fontWeight: 800, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '2px' }}>{label}</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>{desc}</div>
+                </div>
+                <div style={{
+                  fontSize: '0.9rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)',
+                  padding: '4px 10px', borderRadius: '6px',
+                  background: `${color}12`, border: `1px solid ${color}30`,
+                }}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: '12px', fontSize: '0.63rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+            These are broad estimates derived from industry AI adoption research. Role-specific forecast data will be available as we expand our model.
           </div>
         </div>
       )}

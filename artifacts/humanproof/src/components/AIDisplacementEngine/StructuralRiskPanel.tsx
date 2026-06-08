@@ -63,6 +63,24 @@ function agenticTierColor(tier: string): string {
   return map[tier] ?? 'var(--text-3)';
 }
 
+function deriveForecastConfidence(interpretation: string, thresholdForecast?: ThresholdForecastResult): string {
+  const hasLongRange = !!thresholdForecast && thresholdForecast.points.length > 0;
+  if (!hasLongRange) {
+    if (interpretation === 'critical_now' || interpretation === 'high_risk_imminent') return 'HIGH · MEDIUM';
+    return 'MEDIUM · SPECULATIVE';
+  }
+  if (interpretation === 'critical_now' || interpretation === 'high_risk_imminent') return 'HIGH · HIGH · MEDIUM';
+  if (interpretation === 'moderate_rising') return 'HIGH · MEDIUM · SPECULATIVE';
+  return 'MEDIUM · MEDIUM · SPECULATIVE';
+}
+
+function deriveForecastConfidenceColor(interpretation: string, thresholdForecast?: ThresholdForecastResult): string {
+  if (!thresholdForecast) return 'var(--text-3)';
+  if (interpretation === 'critical_now' || interpretation === 'high_risk_imminent') return 'var(--amber)';
+  if (interpretation === 'moderate_rising') return 'var(--cyan)';
+  return 'var(--text-2)';
+}
+
 export const StructuralRiskPanel: React.FC<Props> = ({
   currentScore, trajectory, agenticScore, thresholdForecast,
 }) => {
@@ -75,7 +93,7 @@ export const StructuralRiskPanel: React.FC<Props> = ({
 
   const fields: { label: string; value: string; color: string; sub?: string }[] = [
     {
-      label: 'Current Risk',
+      label: 'Your Risk Today',
       value: `${currentScore}%`,
       color: scoreColor,
       sub: `${currentScore < 25 ? 'AI-Resistant' : currentScore < 50 ? 'Resilient' : currentScore < 70 ? 'Exposed' : 'Critical Risk'}`,
@@ -87,38 +105,38 @@ export const StructuralRiskPanel: React.FC<Props> = ({
       sub: `${trajectory.growthPerYear.toFixed(1)}% avg growth / yr`,
     },
     {
-      label: 'Agentic Exposure',
+      label: 'Advanced AI Wave Risk',
       value: `${agenticScore.score}%`,
       color: agentCol,
-      sub: `${agenticScore.tier} structural tier`,
+      sub: `${agenticScore.tier === 'EXTREME' || agenticScore.tier === 'SEVERE' ? 'Severe' : agenticScore.tier === 'HIGH' ? 'Elevated' : agenticScore.tier === 'MODERATE' ? 'Moderate' : 'Low'} wave exposure`,
     },
     {
-      label: 'Capability Threshold Window',
+      label: 'When AI Becomes Dangerous',
       value: threshWindow,
       color: 'var(--amber)',
       sub: 'Estimated range — not a guarantee',
     },
     {
-      label: 'Post-Threshold Projection',
+      label: 'Survival If AI Wave Hits',
       value: postRisk,
       color: thresholdForecast && thresholdForecast.points.length > 0
         ? getScoreColor(thresholdForecast.points[thresholdForecast.points.length - 1].agenticTransition)
         : 'var(--text-3)',
-      sub: 'Agentic transition / worst-case scenarios',
+      sub: 'Worst-case AI wave scenarios',
     },
     {
       label: 'Forecast Confidence',
-      value: 'HIGH · MEDIUM · SPECULATIVE',
-      color: 'var(--text-2)',
-      sub: '2026–27 · 2028–29 · 2030–31',
+      value: deriveForecastConfidence(trajectory.interpretation, thresholdForecast),
+      color: deriveForecastConfidenceColor(trajectory.interpretation, thresholdForecast),
+      sub: thresholdForecast ? '2026–27 · 2028–29 · 2030–31' : 'Near-term only — long range unclear',
     },
     {
-      label: 'Strategic Runway Remaining',
+      label: 'Time Before Major Disruption',
       value: runway,
       color: runway.includes('act now') ? 'var(--red)'
            : runway.includes('actively') ? 'var(--amber)'
            : 'var(--emerald)',
-      sub: 'Before capability threshold window opens',
+      sub: 'Before the major AI shift arrives',
     },
   ];
 
@@ -146,7 +164,7 @@ export const StructuralRiskPanel: React.FC<Props> = ({
           fontSize: '0.62rem', fontWeight: 800, color: 'var(--amber)',
           fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
         }}>
-          HOW YOUR ROLE CHANGES OVER TIME
+          WHAT HAPPENS TO YOUR ROLE OVER TIME
         </div>
         <span style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>
           2028 and 2032 outlook for your role

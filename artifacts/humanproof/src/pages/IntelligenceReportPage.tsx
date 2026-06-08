@@ -10,6 +10,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
+import { toRoleTitle } from '../lib/riskTokens';
 import {
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
   ExternalLink, Share2, Calendar, BarChart2, Users,
@@ -78,7 +79,7 @@ function formatMonthName(yearMonth: string): string {
 }
 
 function formatRole(key: string): string {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return toRoleTitle(key);
 }
 
 function ScoreBadge({ score }: { score: number }) {

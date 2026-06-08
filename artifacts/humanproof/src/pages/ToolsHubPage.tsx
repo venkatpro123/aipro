@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield, Brain, Briefcase, DollarSign, BarChart2, Network,
-  TrendingUp, Target, Zap, Users, ArrowRight, Lock
+  TrendingUp, Target, Zap, Users, ArrowRight
 } from 'lucide-react';
 
 const TOOLS = [
@@ -69,7 +69,6 @@ const TOOLS = [
     subtitle: 'Build strategic connections',
     description: 'Network map, relationship tracker, referral intelligence.',
     phase: 4,
-    comingSoon: true,
   },
   {
     id: 'compensation',
@@ -80,7 +79,6 @@ const TOOLS = [
     subtitle: 'Know your market worth',
     description: 'Salary benchmarks, offer analysis, raise planning, negotiation scripts.',
     phase: 4,
-    comingSoon: true,
   },
   {
     id: 'strategy',
@@ -91,7 +89,6 @@ const TOOLS = [
     subtitle: 'Build your career roadmap',
     description: 'Stay/exit strategy, promotion planning, career pivot navigator.',
     phase: 4,
-    comingSoon: true,
   },
   {
     id: 'opportunity-radar',
@@ -102,7 +99,6 @@ const TOOLS = [
     subtitle: 'Find hidden openings',
     description: 'Hiring detection, company targeting, market alerts.',
     phase: 4,
-    comingSoon: true,
   },
   {
     id: 'career-twin',
@@ -113,7 +109,6 @@ const TOOLS = [
     subtitle: 'Your persistent career model',
     description: 'Profile, career history, skills inventory, goals tracker.',
     phase: 4,
-    comingSoon: true,
   },
 ];
 
@@ -180,13 +175,13 @@ export default function ToolsHubPage() {
                   className="card-premium"
                   style={{
                     padding: 20,
-                    cursor: tool.comingSoon ? 'default' : 'pointer',
-                    opacity: tool.comingSoon ? 0.6 : 1,
+                    cursor: 'pointer',
+                    opacity: 1,
                     position: 'relative',
                     border: isRecommended ? `1px solid ${tool.color}44` : undefined,
                     transition: 'all 0.2s',
                   }}
-                  onClick={() => !tool.comingSoon && navigate(tool.route)}
+                  onClick={() => navigate(tool.route)}
                 >
                   {isRecommended && (
                     <div style={{
@@ -202,20 +197,6 @@ export default function ToolsHubPage() {
                       letterSpacing: '0.05em',
                     }}>
                       RECOMMENDED
-                    </div>
-                  )}
-                  {tool.comingSoon && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      color: 'rgba(255,255,255,0.3)',
-                      fontSize: 11,
-                    }}>
-                      <Lock size={12} /> Phase 4
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
@@ -241,7 +222,7 @@ export default function ToolsHubPage() {
                       </div>
                     </div>
                   </div>
-                  {!tool.comingSoon && (
+                  {(
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',

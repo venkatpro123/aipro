@@ -76,6 +76,15 @@ const L_DIMENSIONS: Record<string, DimMeta> = {
     narrativeMid:  "Moderate AI exposure in your role category. The execution layer is being augmented by AI, but oversight and strategy functions remain human-native.",
     narrativeHigh: "High task automatability in your role. AI tools are actively absorbing execution-layer work in this function across the market.",
   },
+  L4: {
+    label: "Industry Risk",
+    fullLabel: "Industry AI Adoption & Sector Risk",
+    weight: 0.12,
+    icon: Zap,
+    narrativeLow:  "Your industry sector has a measured AI adoption pace and stable employment trajectory — sector headwinds are minimal.",
+    narrativeMid:  "Moderate sector-level AI adoption velocity. Industry-wide restructuring pressure is building but has not yet peaked.",
+    narrativeHigh: "High industry AI adoption rate and above-average sector layoff concentration. Sector dynamics are amplifying your individual displacement risk.",
+  },
   L5: {
     label: "Regional Risk",
     fullLabel: "Regional & Macro Headwinds",

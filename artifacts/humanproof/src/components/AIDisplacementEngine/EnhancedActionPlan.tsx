@@ -37,6 +37,8 @@ interface ActionCard {
   strategicImpact?: 'Critical' | 'High' | 'Medium' | 'Low';
   timeRequired?: string;
   roi?: 'Exceptional' | 'High' | 'Moderate' | 'Low';
+  reason?: string;
+  survivalMonths?: number;
 }
 
 const EFFORT_COLORS = { Low: 'var(--emerald)', Medium: 'var(--amber)', High: 'var(--red)' };
@@ -546,10 +548,41 @@ function buildPersonalizedActions(
 
   const action_t3: ActionCard = getRoleTransitionAction(roleKey, roleLabel, expTier, platform);
 
+  // ── 12-month: strategic repositioning ────────────────────────────────────────
+  const action12_1: ActionCard = isHighRisk
+    ? { title: 'Complete a full role-transition evaluation and pick your target tier', detail: `High AI risk means your current role's task profile will shift materially in 2–3 years. Spend this year systematically evaluating adjacent roles that are structurally protected: AI orchestration, domain expertise roles, or human-judgment-intensive positions. Map your transferable skills, identify the 2–3 target roles, and begin positioning now while your current role gives you credibility and income. Use ${platform} to research target role compensation and requirements.`, riskReduction: 14, protectionIncrease: 22, effort: 'High', category: 'Positioning', strategicImpact: 'Critical', timeRequired: '5–8 hrs/week', roi: 'Exceptional' }
+    : isMedRisk
+    ? { title: 'Establish yourself as the AI-augmented leader in your function', detail: `Medium risk means AI tools are changing your function but not eliminating your role. The 12-month window is your opportunity to be the person who shapes how your team adopts AI — not the person who waits to be told. Own one AI tool rollout, one process redesign, or one AI training initiative. Professionals who lead AI adoption are systematically the last to be displaced by it. Use ${platform} to find relevant professional communities.`, riskReduction: 10, protectionIncrease: 18, effort: 'High', category: 'Positioning', strategicImpact: 'High', timeRequired: '4–6 hrs/week', roi: 'High' }
+    : { title: 'Deepen your domain expertise into areas AI cannot credibly enter', detail: 'Low AI risk gives you the luxury of strategic deepening rather than reactive pivoting. Use this 12-month window to go deeper into the most judgment-intensive, relationship-dependent, or physically-embodied parts of your field. The professionals who compound this advantage now will be the most protected when AI capabilities eventually expand further.', riskReduction: 6, protectionIncrease: 14, effort: 'High', category: 'Skill', strategicImpact: 'High', timeRequired: '4–6 hrs/week', roi: 'High' };
+
+  const action12_2: ActionCard = (() => {
+    const rl = (roleKey || roleLabel || '').toLowerCase();
+    const isSWE = rl.startsWith('sw_') || rl.includes('software') || rl.includes('developer') || rl.includes('engineer');
+    const isData = rl.startsWith('da_') || rl.startsWith('ml_') || rl.startsWith('ds_') || rl.includes('data');
+    const isFinance = rl.startsWith('fin_') || rl.startsWith('inv_') || rl.includes('finance') || rl.includes('financial');
+    const isHC = rl.startsWith('hc_') || rl.startsWith('nur_') || rl.includes('nurse') || rl.includes('physician') || rl.includes('clinical');
+    const isLegal = rl.startsWith('leg_') || rl.includes('legal') || rl.includes('lawyer') || rl.includes('attorney');
+    const isCreative = rl.startsWith('mkt_') || rl.startsWith('des_') || rl.startsWith('cnt_') || rl.includes('marketing') || rl.includes('design') || rl.includes('creative');
+
+    if (isSWE)   return { title: 'Build a public technical portfolio with at least one AI-integrated system', detail: `A GitHub portfolio showing real AI-integrated systems — not just CRUD apps — is the strongest signal in the engineering job market right now. Spend this year shipping one project that uses an LLM, an agent framework, or AI infrastructure (vector stores, embedding pipelines, evaluators). A deployed system with real usage data is worth more than any certification. Use ${platform} to benchmark against your target role requirements.`, riskReduction: 11, protectionIncrease: 19, effort: 'High', category: 'Positioning', strategicImpact: 'High', timeRequired: '6–8 hrs/week', roi: 'Exceptional' };
+    if (isData)  return { title: 'Lead one end-to-end AI project that produces a measurable business decision', detail: `Data professionals who can close the loop from raw data to AI-generated insight to implemented business decision are significantly more protected than those who stop at the dashboard. Identify one project this year where you own the full chain — data, model, insight, and implementation. Document the business impact. Use ${platform} to research how this positions you vs. peers.`, riskReduction: 11, protectionIncrease: 18, effort: 'High', category: 'Positioning', strategicImpact: 'High', timeRequired: '5–8 hrs/week', roi: 'Exceptional' };
+    if (isFinance) return { title: 'Build a track record of AI-augmented advisory recommendations', detail: `Finance professionals who can document a track record of better recommendations made faster using AI tools are the most promotable and most protected in the field. Spend this year deliberately tracking: which analyses used AI tools, how much time was saved, and what additional advisory value you delivered with the freed capacity. This evidence becomes your strongest career asset. Use ${platform}.`, riskReduction: 10, protectionIncrease: 17, effort: 'High', category: 'Positioning', strategicImpact: 'High', timeRequired: '4–6 hrs/week', roi: 'High' };
+    if (isHC)    return { title: 'Earn one advanced clinical specialization or AI clinical literacy credential', detail: 'The 12-month window is long enough to complete a subspecialty certification, a telehealth or informatics credential, or formal training in AI clinical decision support. Clinical professionals with documented specialization in areas AI tools cannot replicate — complex multi-system cases, trauma-informed care, rare disease — are the most protected tier in healthcare.', riskReduction: 9, protectionIncrease: 17, effort: 'High', category: 'Skill', strategicImpact: 'High', timeRequired: '5–8 hrs/week', roi: 'High' };
+    if (isLegal) return { title: 'Develop a public-facing specialization in emerging law with an original body of written analysis', detail: 'AI law, data privacy, regulatory technology, and emerging liability frameworks are the fastest-growing legal practice areas — and the areas where AI research tools are weakest. Spend this year building a public record: two or three well-researched articles, one conference presentation, or a newsletter covering your specialization. Lawyers with a visible public record in emerging areas attract clients independently of their firm.', riskReduction: 10, protectionIncrease: 18, effort: 'High', category: 'Network', strategicImpact: 'High', timeRequired: '4–6 hrs/week', roi: 'High' };
+    if (isCreative) return { title: 'Establish a public portfolio that shows creative direction, not just execution', detail: `The 12-month horizon is long enough to build a meaningful body of work that demonstrates your creative judgment — not just your ability to use tools. Pick one creative challenge this year and document your full process: brief, direction decisions, execution, and outcome. Publish it. Creative directors who show their thinking are categorically more resilient than those who show only their output. Use ${platform} to find your audience.`, riskReduction: 10, protectionIncrease: 18, effort: 'High', category: 'Network', strategicImpact: 'High', timeRequired: '4–6 hrs/week', roi: 'High' };
+    return { title: 'Build one publicly visible proof of expertise in your most AI-resistant skill', detail: `A publication, case study, conference presentation, or open-source contribution that demonstrates your deepest, most judgment-intensive expertise creates career optionality that no job listing can provide. Spend this year producing one externally visible piece of work that shows the specific judgment AI cannot replicate in your field. Use ${platform} to identify where your audience is.`, riskReduction: 10, protectionIncrease: 17, effort: 'High', category: 'Network', strategicImpact: 'High', timeRequired: '4–6 hrs/week', roi: 'High' };
+  })();
+
+  const action12_3: ActionCard = { title: 'Build and activate a strategic professional network of 20+ target contacts', detail: `Network connections in roles 1–2 levels above yours and in adjacent AI-resilient functions are your most underrated career insurance. Spend the year making 2 new strategic connections per month — not random LinkedIn adds, but specific people whose career trajectories represent where you want to be. A warm network is the single most effective buffer against forced career transitions. Use ${platform} to identify your targets.`, riskReduction: 5, protectionIncrease: 14, effort: 'Medium', category: 'Network', strategicImpact: 'High', timeRequired: '2–3 hrs/week', roi: 'High' };
+
+  const action12_4: ActionCard = { title: `Negotiate a ${isHighRisk ? 'skills-expansion or role-evolution' : 'strategic responsibility expansion'} into your next performance review`, detail: isHighRisk ? `High AI risk means waiting for your employer to redefine your role is a losing strategy. Before your next review cycle, propose a role evolution: one AI tool you will own, one process you will redesign, one strategic responsibility you will take on. Professionals who proactively reshape their role before it is reshaped for them retain agency and compensation leverage.` : `Your current protection level gives you negotiating leverage to expand strategically. Propose adding one AI-adjacent responsibility in your next review — a tool evaluation, an AI pilot project, or a cross-functional initiative. This positions you as an AI-forward leader without requiring a role change.`, riskReduction: 7, protectionIncrease: 13, effort: 'Medium', category: 'Positioning', strategicImpact: 'High', timeRequired: '3–5 hrs prep', roi: 'Exceptional' };
+
+  const action12_5: ActionCard = { title: 'Run an annual career survival self-audit', detail: 'At the 12-month mark, re-assess: which tasks in your role have become more automated since you ran this report? Which skills have you built that did not exist in your profile a year ago? Which threats have materialized and which have not? Careers that survive AI disruption are managed actively, not passively. Schedule a quarterly 90-minute review of your task profile, market position, and AI capability changes in your sector.', riskReduction: 4, protectionIncrease: 10, effort: 'Low', category: 'Positioning', strategicImpact: 'High', timeRequired: '90 min/quarter', roi: 'High' };
+
   return {
     '30d': [action30_1, action30_2, action30_3],
     '90d': [action90_1, action90_2, action90_3],
-    '12m': [],
+    '12m': [action12_1, action12_2, action12_3, action12_4, action12_5],
     'threshold': [action_t1, action_t2, action_t3],
   };
 }
@@ -584,7 +617,18 @@ export const EnhancedActionPlan: React.FC<Props> = ({
     { key: 'threshold', label: thresholdLabel },
   ];
 
-  const currentActions = personalized[activeHorizon];
+  // Dedup within the active horizon only — each horizon is independent.
+  // Cross-horizon dedup was the bug: a shared Set swallowed later horizons entirely.
+  function dedupeActions(actions: ActionCard[]): ActionCard[] {
+    const seen = new Set<string>();
+    return actions.filter(a => {
+      const key = a.title.toLowerCase().trim().slice(0, 40);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  const currentActions = dedupeActions(personalized[activeHorizon]);
   const allActions = [
     ...personalized['30d'],
     ...personalized['90d'],
@@ -618,6 +662,25 @@ export const EnhancedActionPlan: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* Experience-tier callout */}
+      {(() => {
+        const expTier = getExpTier(experience);
+        const expMessages: Record<ExpTier, string> = {
+          entry:     "Because you're early in your career, these actions focus on building a durable skill foundation before the first wave of automation hits entry-level tasks.",
+          early:     "Because you have 2–5 years of experience, these actions focus on deepening your specialization and building the contextual judgment AI tools still cannot replicate.",
+          mid:       "Because you already have 5–10 years, you've seen architectural failures and organizational dynamics that AI cannot learn from code alone. These actions help you convert that into visible positioning.",
+          senior:    "With 10–20 years, your edge is institutional trust and judgment. These actions focus on making that expertise visible and compounding your human-advantage moat.",
+          principal: "At 20+ years, your experience is your most durable asset. These actions protect the relationship and judgment network that no AI system can replicate.",
+        };
+        return (
+          <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.15)', marginBottom: '16px' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--cyan)', lineHeight: 1.6, margin: 0 }}>
+              {expMessages[expTier]}
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Horizon tab pills */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
         {horizons.map(({ key, label }) => (
@@ -638,28 +701,48 @@ export const EnhancedActionPlan: React.FC<Props> = ({
         ))}
       </div>
 
-      {/* 12-month: use StrategicRoadmap */}
-      {activeHorizon === '12m' ? (
-        intel ? (
-          <StrategicRoadmap intel={intel} experience={experience} scoreColor={scoreColor} score={score} />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {personalized['90d'].map((action) => (
-              <ActionCardComponent key={action.title} action={{ ...action, riskReduction: action.riskReduction + 5, protectionIncrease: action.protectionIncrease + 8 }} scoreColor={scoreColor} />
-            ))}
-          </div>
-        )
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {currentActions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px', opacity: 0.5, fontSize: '0.8rem', color: 'var(--text-3)' }}>
-              No specific actions for this horizon.
+      {/* Impact statement — runway extension in human terms */}
+      {(() => {
+        const totalProtection = currentActions.reduce((s, a) => s + (a.protectionIncrease ?? 0), 0);
+        const highCount = currentActions.filter(a => (a.protectionIncrease ?? 0) >= 8).length;
+        const runwayMonthsEst = Math.round(totalProtection * 0.6);
+        if (runwayMonthsEst < 1) return null;
+        const runwayText = runwayMonthsEst >= 12
+          ? `~${Math.round(runwayMonthsEst / 12 * 10) / 10} year${Math.round(runwayMonthsEst / 12 * 10) / 10 !== 1 ? 's' : ''}`
+          : `~${runwayMonthsEst} month${runwayMonthsEst !== 1 ? 's' : ''}`;
+        return (
+          <div style={{
+            padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+            background: `${scoreColor}08`, border: `1px solid ${scoreColor}22`,
+            display: 'flex', gap: '10px', alignItems: 'center',
+          }}>
+            <span style={{ fontSize: '1rem', flexShrink: 0 }}>📈</span>
+            <div>
+              <span style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-1)' }}>
+                Completing these {activeHorizon === '30d' ? '30-day' : activeHorizon === '90d' ? '90-day' : activeHorizon === '12m' ? '12-month' : 'threshold'} actions can extend your career runway by {runwayText}
+              </span>
+              {highCount > 0 && (
+                <span style={{ fontSize: '0.68rem', color: scoreColor, marginLeft: '6px', fontWeight: 600 }}>
+                  · {highCount} HIGH IMPACT action{highCount !== 1 ? 's' : ''}
+                </span>
+              )}
             </div>
-          ) : (
-            currentActions.map((action) => (
-              <ActionCardComponent key={action.title} action={action} scoreColor={scoreColor} />
-            ))
-          )}
+          </div>
+        );
+      })()}
+
+      {/* Action cards — all horizons use currentActions (never empty by design) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {currentActions.map((action) => (
+          <ActionCardComponent key={action.title} action={action} scoreColor={scoreColor} />
+        ))}
+      </div>
+
+      {/* 12-month: StrategicRoadmap appended below the action cards if intel available */}
+      {activeHorizon === '12m' && intel && (
+        <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.52rem', fontWeight: 800, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: '14px' }}>FULL 12-MONTH STRATEGIC ROADMAP</div>
+          <StrategicRoadmap intel={intel} experience={experience} scoreColor={scoreColor} score={score} />
         </div>
       )}
 
@@ -688,60 +771,83 @@ export const EnhancedActionPlan: React.FC<Props> = ({
 };
 
 function ActionCardComponent({ action, scoreColor }: { action: ActionCard; scoreColor: string }) {
+  const [expanded, setExpanded] = React.useState(false);
   const effortC = EFFORT_COLORS[action.effort];
   const catC    = CAT_COLORS[action.category];
-  const impactC = action.strategicImpact ? IMPACT_COLORS[action.strategicImpact] : 'var(--text-3)';
   const roiC    = action.roi ? ROI_COLORS[action.roi] : 'var(--text-3)';
+  const survivalIncrease = Math.round(action.protectionIncrease * 0.4);
+  // Impact level replaces fake-precise "+N months" badge
+  const impactLevel = action.protectionIncrease >= 8 ? 'HIGH IMPACT'
+    : action.protectionIncrease >= 5 ? 'MODERATE IMPACT'
+    : 'FOUNDATIONAL';
+  const impactColor = impactLevel === 'HIGH IMPACT' ? 'var(--emerald)'
+    : impactLevel === 'MODERATE IMPACT' ? 'var(--cyan)' : 'var(--text-3)';
+  // Extract reason: first sentence of detail, or use action.reason if provided
+  const reason = action.reason ?? (action.detail.split('. ')[0] + '.');
 
   return (
     <div style={{
-      padding: '16px 20px', borderRadius: '10px',
+      borderRadius: '10px',
       background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)',
+      overflow: 'hidden',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
-        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>
-          {action.title}
-        </div>
-        <div style={{ display: 'flex', gap: '5px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <span style={{ padding: '2px 7px', borderRadius: '4px', background: `${catC}15`, border: `1px solid ${catC}30`, fontSize: '0.58rem', fontWeight: 800, color: catC, fontFamily: 'var(--font-mono)' }}>
-            {action.category.toUpperCase()}
-          </span>
-          <span style={{ padding: '2px 7px', borderRadius: '4px', background: `${effortC}15`, border: `1px solid ${effortC}30`, fontSize: '0.58rem', fontWeight: 800, color: effortC, fontFamily: 'var(--font-mono)' }}>
-            {action.effort.toUpperCase()} EFFORT
-          </span>
-          {action.strategicImpact && (
-            <span style={{ padding: '2px 7px', borderRadius: '4px', background: `${impactC}12`, border: `1px solid ${impactC}28`, fontSize: '0.58rem', fontWeight: 800, color: impactC, fontFamily: 'var(--font-mono)' }}>
-              {action.strategicImpact.toUpperCase()} IMPACT
+      {/* Header */}
+      <div style={{ padding: '16px 20px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>
+            {action.title}
+          </div>
+          <div style={{ display: 'flex', gap: '5px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <span style={{ padding: '2px 7px', borderRadius: '4px', background: `${catC}15`, border: `1px solid ${catC}30`, fontSize: '0.58rem', fontWeight: 800, color: catC, fontFamily: 'var(--font-mono)' }}>
+              {action.category.toUpperCase()}
             </span>
+            <span style={{ padding: '2px 8px', borderRadius: '4px', background: `${impactColor}12`, border: `1px solid ${impactColor}30`, fontSize: '0.6rem', fontWeight: 900, color: impactColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+              {impactLevel === 'FOUNDATIONAL' ? '●' : '▲'} {impactLevel}
+            </span>
+          </div>
+        </div>
+
+        {/* Why this protects you */}
+        <div style={{ padding: '8px 12px', borderRadius: '6px', background: `${scoreColor}08`, border: `1px solid ${scoreColor}20`, marginBottom: '10px' }}>
+          <div style={{ fontSize: '0.56rem', fontWeight: 800, color: scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '3px' }}>WHY THIS PROTECTS YOU</div>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-2)', lineHeight: 1.55, margin: 0 }}>{reason}</p>
+        </div>
+
+        {/* Metrics row */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+          <div style={{ padding: '4px 10px', borderRadius: '5px', background: `${effortC}08`, border: `1px solid ${effortC}20`, fontSize: '0.65rem', color: effortC, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+            Difficulty: {action.effort}
+          </div>
+          {action.timeRequired && (
+            <div style={{ padding: '4px 10px', borderRadius: '5px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+              Time: {action.timeRequired}
+            </div>
+          )}
+          {action.roi && (
+            <div style={{ padding: '4px 10px', borderRadius: '5px', background: `${roiC}08`, border: `1px solid ${roiC}20`, fontSize: '0.65rem', color: roiC, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+              ROI: {action.roi}
+            </div>
           )}
         </div>
+
+        {/* Expand toggle */}
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', fontSize: '0.65rem', fontFamily: 'var(--font-mono)', padding: 0, display: 'flex', alignItems: 'center', gap: '4px' }}
+        >
+          {expanded ? '▲ Hide detail' : '▼ Show full detail'}
+        </button>
       </div>
 
-      <p style={{ fontSize: '0.73rem', color: 'var(--text-3)', lineHeight: 1.6, margin: '0 0 12px' }}>
-        {action.detail}
-      </p>
-
-      {/* Metrics row */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {action.riskReduction > 0 && (
-          <div style={{ padding: '4px 10px', borderRadius: '5px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', fontSize: '0.65rem', color: 'var(--red)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            Risk Reduction: −{action.riskReduction} pts
-          </div>
-        )}
-        <div style={{ padding: '4px 10px', borderRadius: '5px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', fontSize: '0.65rem', color: 'var(--emerald)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-          Protection +{action.protectionIncrease}%
+      {/* Collapsible full detail */}
+      {expanded && (
+        <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.1)' }}>
+          <p style={{ fontSize: '0.73rem', color: 'var(--text-3)', lineHeight: 1.65, margin: 0 }}>
+            {action.detail}
+          </p>
         </div>
-        {action.timeRequired && (
-          <div style={{ padding: '4px 10px', borderRadius: '5px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-            ⏱ {action.timeRequired}
-          </div>
-        )}
-        {action.roi && (
-          <div style={{ padding: '4px 10px', borderRadius: '5px', background: `${roiC}08`, border: `1px solid ${roiC}20`, fontSize: '0.65rem', color: roiC, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            ROI: {action.roi}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

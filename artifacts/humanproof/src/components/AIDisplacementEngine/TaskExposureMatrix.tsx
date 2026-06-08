@@ -7,6 +7,26 @@ import React, { useState } from 'react';
 import type { AutomationTimeline, TaskDetail, DriverNarrative } from '../../data/automationTimelineData';
 import { COUNTRY_RISK_PROFILES } from '../../data/countryRiskProfile';
 
+const WHY_AI: Record<string, string> = {
+  'core':              'Pattern-based, repetitive, high training data availability — AI tools learn from millions of examples of this exact work.',
+  'administrative':    'Structured workflow, rule-following, form-based — AI handles these faster and without fatigue.',
+  'secondary':         'Templated output, well-defined process — AI generates drafts instantly from patterns.',
+  'strategic':         'AI assists with synthesis and structuring, reducing the effort needed for analysis.',
+  'human-interaction': 'Conversational in nature — AI chatbots and voice agents already attempt this work at scale.',
+  'decision-making':   'AI can model scenarios and surface recommendations — humans still approve, but the work shrinks.',
+  'creative':          'AI generates high volumes of variations quickly — volume tasks become automated.',
+};
+
+const WHY_HUMAN: Record<string, string> = {
+  'core':              'Business logic, security implications, and edge-case judgment still require human accountability.',
+  'administrative':    'Exception handling and judgment under ambiguity remain human responsibilities.',
+  'secondary':         'Contextual nuance, relationship continuity, and quality curation require human involvement.',
+  'strategic':         'Stakeholder dynamics, ethical calls, and organizational context cannot be captured by AI.',
+  'human-interaction': 'Emotional attunement, genuine trust, and physical presence remain irreplaceable.',
+  'decision-making':   'Accountability, lived experience, and organizational context drive the final call.',
+  'creative':          'Artistic direction, style ownership, and original vision are distinctly human.',
+};
+
 interface Props {
   timeline: AutomationTimeline;
   d1Score: number;
@@ -53,9 +73,13 @@ function lerp(a: number, b: number, t: number): number {
 }
 
 function getExperienceModifier(experience: string): number {
-  if (experience === '0-2') return +5;
-  if (experience === '10-20' || experience === '20+') return -8;
-  return 0;
+  // Positive = reduces risk & increases human advantage (seniors are harder to replace)
+  // Negative = increases risk (entry-level easier to replace)
+  if (experience === '0-2') return -5;
+  if (experience === '2-5') return -2;
+  if (experience === '10-20') return +8;
+  if (experience === '20+') return +12;
+  return 0; // '5-10' mid — baseline
 }
 
 function getAdoptionLag(countryKey: string): number {
@@ -72,10 +96,12 @@ function applyCountryAndExpModifiers(
   const lag = getAdoptionLag(countryKey);
   const expMod = getExperienceModifier(experience);
   return tasks.map(t => {
-    const adj2026 = Math.min(95, Math.max(2, t.risk2026 + expMod));
-    const adj2028 = Math.min(95, Math.max(2, Math.round(lerp(t.risk2026, t.risk2028, 1 - lag * 0.5)) + expMod));
-    const adj2030 = Math.min(95, Math.max(2, Math.round(lerp(t.risk2028, t.risk2030, 1 - lag * 0.4)) + expMod));
-    const adjHuman = Math.min(98, Math.max(2, t.humanAdvantageScore - expMod)); // inverse of risk
+    // expMod > 0 for seniors: lowers AI risk scores, raises human advantage
+    // expMod < 0 for entry-level: raises AI risk scores, lowers human advantage
+    const adj2026 = Math.min(95, Math.max(2, t.risk2026 - expMod));
+    const adj2028 = Math.min(95, Math.max(2, Math.round(lerp(t.risk2026, t.risk2028, 1 - lag * 0.5)) - expMod));
+    const adj2030 = Math.min(95, Math.max(2, Math.round(lerp(t.risk2028, t.risk2030, 1 - lag * 0.4)) - expMod));
+    const adjHuman = Math.min(98, Math.max(2, t.humanAdvantageScore + expMod));
     return { ...t, risk2026: adj2026, risk2028: adj2028, risk2030: adj2030, humanAdvantageScore: adjHuman };
   });
 }
@@ -182,7 +208,7 @@ const GROUP_VIEWS: { key: GroupView; label: string }[] = [
   { key: 'defensible',  label: 'Most Defensible' },
   { key: 'fastest',     label: 'Fastest Changing' },
   { key: 'human',       label: 'Highest Human Value' },
-  { key: 'agentic',     label: 'Highest Agentic Risk' },
+  { key: 'agentic',     label: 'Highest AI Risk' },
 ];
 
 // ── Role-specific task label overrides ───────────────────────────────────────
@@ -351,9 +377,36 @@ export const TaskExposureMatrix: React.FC<Props> = ({
   const lag = getAdoptionLag(countryKey);
   const lagLabel = lag > 0.25 ? `~${Math.round(lag * 30)} months behind US adoption pace` : null;
 
-  const highCount = displayed.filter(t => t.risk2028 >= 65).length;
-  const protCount = displayed.filter(t => t.humanAdvantageScore >= 70).length;
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [showAllTasks, setShowAllTasks] = useState(false);
+
+  const highCount = tasks.filter(t => t.risk2028 >= 65).length;
+  const protCount = tasks.filter(t => t.humanAdvantageScore >= 70).length;
   const isHeuristic = !timeline.taskDetails?.length;
+
+  // 4 spotlight tasks shown by default — each a distinct category (no overlap)
+  const spotlightTasks = (() => {
+    const seen = new Set<string>();
+    const pick = (cand: TaskDetail | undefined, badge: string): (TaskDetail & { spotlightBadge: string }) | null => {
+      if (!cand || seen.has(cand.name)) return null;
+      seen.add(cand.name);
+      return { ...cand, spotlightBadge: badge };
+    };
+    const mostVulnerable  = pick([...tasks].sort((a, b) => b.risk2026 - a.risk2026)[0], 'MOST VULNERABLE');
+    const mostDefensible  = pick([...tasks].sort((a, b) => b.humanAdvantageScore - a.humanAdvantageScore)[0], 'MOST DEFENSIBLE');
+    const fastestChanging = pick(
+      [...tasks].filter(t => t.aiCapabilityTrend === 'Rapid').sort((a, b) => (b.risk2030 - b.risk2026) - (a.risk2030 - a.risk2026))[0]
+      ?? [...tasks].sort((a, b) => (b.risk2030 - b.risk2026) - (a.risk2030 - a.risk2026))[0],
+      'FASTEST CHANGING',
+    );
+    const humanTypes = ['strategic', 'decision-making', 'human-interaction'] as Array<TaskDetail['taskType']>;
+    const highestHumanValue = pick(
+      [...tasks].filter(t => humanTypes.includes(t.taskType)).sort((a, b) => b.humanAdvantageScore - a.humanAdvantageScore)[0]
+      ?? [...tasks].sort((a, b) => b.humanAdvantageScore - a.humanAdvantageScore).find(t => !seen.has(t.name)),
+      'HIGHEST HUMAN VALUE',
+    );
+    return [mostVulnerable, mostDefensible, fastestChanging, highestHumanValue].filter(Boolean) as (TaskDetail & { spotlightBadge: string })[];
+  })();
 
   return (
     <div>
@@ -392,13 +445,19 @@ export const TaskExposureMatrix: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Summary badges */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      {/* Summary badges — task count chip + category breakdown */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ padding: '5px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.68rem', color: 'var(--text-2)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+          {tasks.length} tasks analyzed
+        </div>
         <div style={{ padding: '5px 12px', borderRadius: '6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', fontSize: '0.68rem', color: 'var(--red)', fontWeight: 700 }}>
-          {highCount} HIGH-EXPOSURE TASKS (2028)
+          {highCount} at risk
         </div>
         <div style={{ padding: '5px 12px', borderRadius: '6px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', fontSize: '0.68rem', color: 'var(--emerald)', fontWeight: 700 }}>
-          {protCount} HUMAN-ESSENTIAL TASKS
+          {protCount} protected
+        </div>
+        <div style={{ padding: '5px 12px', borderRadius: '6px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: '0.68rem', color: 'var(--amber)', fontWeight: 700 }}>
+          {tasks.filter(t => t.aiCapabilityTrend === 'Rapid').length} fast-changing
         </div>
       </div>
 
@@ -432,57 +491,154 @@ export const TaskExposureMatrix: React.FC<Props> = ({
         <span style={{ fontSize: '0.56rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>Trend</span>
       </div>
 
-      {/* Task rows */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-        {displayed.map((task) => {
-          const typeColor = TASK_TYPE_COLORS[task.taskType] ?? 'var(--text-3)';
+      {/* Task rows — spotlight (4) by default; expand to see all */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+        {(showAllTasks ? displayed : spotlightTasks).map((task) => {
+          const spotlightBadge = (task as TaskDetail & { spotlightBadge?: string }).spotlightBadge;
+          const typeColor  = TASK_TYPE_COLORS[task.taskType] ?? 'var(--text-3)';
           const trendColor = TREND_COLORS[task.aiCapabilityTrend] ?? 'var(--text-3)';
           const confColor  = CONFIDENCE_COLORS[task.confidence] ?? 'var(--text-3)';
+          const isExpanded = expandedTask === task.name;
+          const whyAI    = WHY_AI[task.taskType]    ?? 'High training data availability for this type of work.';
+          const whyHuman = WHY_HUMAN[task.taskType] ?? 'Contextual judgment and accountability remain human.';
+          const impactColor = task.risk2028 >= 65 ? 'var(--red)' : task.risk2028 >= 45 ? 'var(--amber)' : 'var(--emerald)';
+          const impactLabel = task.risk2028 >= 65 ? 'HIGH' : task.risk2028 >= 45 ? 'MODERATE' : 'LOW';
           return (
             <div key={task.name} style={{
-              padding: '10px 14px',
               borderRadius: '8px',
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: isExpanded ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${isExpanded ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)'}`,
+              overflow: 'hidden',
             }}>
-              {/* Top row: name + type chip + timeline chip + confidence */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)', flex: 1, minWidth: '120px' }}>{task.name}</span>
-                <Chip label={task.taskType.toUpperCase().replace('-', ' ')} color={typeColor} small />
-                <Chip label={task.displacementTimeline} color={task.displacementTimeline === 'Immediate' ? 'var(--red)' : task.displacementTimeline === '2–3 years' ? 'var(--amber)' : task.displacementTimeline === '4–6 years' ? 'var(--cyan)' : 'var(--emerald)'} small />
-                <Chip label={task.confidence} color={confColor} small />
-              </div>
-              {/* Grid: 4 bars + trend chip */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '8px', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>2026 Risk</div>
-                  <RiskBar value={task.risk2026} />
+              {/* Clickable header row */}
+              <button
+                type="button"
+                onClick={() => setExpandedTask(isExpanded ? null : task.name)}
+                aria-expanded={isExpanded ? 'true' : 'false'}
+                style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '10px 14px' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginRight: '2px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)', flex: 1, minWidth: '120px' }}>{task.name}</span>
+                  {spotlightBadge && (
+                    <span style={{ padding: '1px 6px', borderRadius: '3px', background: 'rgba(99,102,241,0.14)', border: '1px solid rgba(99,102,241,0.28)', fontSize: '0.5rem', fontWeight: 900, color: 'rgba(99,102,241,0.9)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+                      {spotlightBadge}
+                    </span>
+                  )}
+                  <Chip label={task.taskType.toUpperCase().replace('-', ' ')} color={typeColor} small />
+                  <Chip label={task.displacementTimeline} color={task.displacementTimeline === 'Immediate' ? 'var(--red)' : task.displacementTimeline === '2–3 years' ? 'var(--amber)' : task.displacementTimeline === '4–6 years' ? 'var(--cyan)' : 'var(--emerald)'} small />
+                  <Chip label={task.confidence} color={confColor} small />
                 </div>
-                <div>
-                  <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>2028 Risk</div>
-                  <RiskBar value={task.risk2028} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>2030 Risk</div>
-                  <RiskBar value={task.risk2030} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.52rem', color: 'var(--emerald)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>Human Adv.</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ flex: 1, height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${task.humanAdvantageScore}%`, background: 'var(--emerald)', borderRadius: '3px', transition: 'width 0.7s ease' }} />
+                {/* Grid: 4 bars + trend chip */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '8px', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>2026 Risk</div>
+                    <RiskBar value={task.risk2026} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>2028 Risk</div>
+                    <RiskBar value={task.risk2028} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>2030 Risk</div>
+                    <RiskBar value={task.risk2030} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.52rem', color: 'var(--emerald)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>Human Adv.</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ flex: 1, height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${task.humanAdvantageScore}%`, background: 'var(--emerald)', borderRadius: '3px', transition: 'width 0.7s ease' }} />
+                      </div>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', minWidth: '28px', textAlign: 'right' }}>{task.humanAdvantageScore}</span>
                     </div>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', minWidth: '28px', textAlign: 'right' }}>{task.humanAdvantageScore}</span>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>AI Trend</div>
+                    <Chip label={task.aiCapabilityTrend.toUpperCase()} color={trendColor} small />
                   </div>
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '3px' }}>AI Trend</div>
-                  <Chip label={task.aiCapabilityTrend.toUpperCase()} color={trendColor} small />
+              </button>
+
+              {/* Expandable WHY block */}
+              {isExpanded && (
+                <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.15)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
+                    <div style={{ padding: '10px 12px', borderRadius: '6px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                      <div style={{ fontSize: '0.56rem', fontWeight: 800, color: 'var(--red)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '5px' }}>WHY AI CAN DO THIS</div>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.55, margin: 0 }}>{whyAI}</p>
+                    </div>
+                    <div style={{ padding: '10px 12px', borderRadius: '6px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                      <div style={{ fontSize: '0.56rem', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: '5px' }}>WHY HUMANS STILL MATTER</div>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.55, margin: 0 }}>{whyHuman}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: '0.56rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>CONFIDENCE</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-2)' }}>
+                        {task.confidence
+                          ? task.confidence
+                          : task.risk2026 >= 75 ? 'High' : task.risk2026 >= 50 ? 'Medium' : 'Low'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.56rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>EXPECTED CHANGE WINDOW</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-2)' }}>{task.displacementTimeline}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.56rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '2px' }}>CAREER IMPACT</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: impactColor }}>{impactLabel}</div>
+                    </div>
+                  </div>
+                  {/* Importance dimensions row */}
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    {(() => {
+                      const humanAdv = task.humanAdvantageScore;
+                      const humanAdvLabel = humanAdv >= 70 ? `Strong (${humanAdv}/100)` : humanAdv >= 40 ? `Moderate (${humanAdv}/100)` : `Weak (${humanAdv}/100)`;
+                      const humanAdvColor = humanAdv >= 70 ? 'var(--emerald)' : humanAdv >= 40 ? 'var(--amber)' : 'var(--red)';
+                      const bizValueLabel = ['strategic','decision-making'].includes(task.taskType) ? 'High' : ['human-interaction','creative'].includes(task.taskType) ? 'Medium-High' : 'Medium';
+                      const bizValueColor = bizValueLabel === 'High' ? 'var(--emerald)' : bizValueLabel === 'Medium-High' ? 'var(--cyan)' : 'var(--text-3)';
+                      const cpv = humanAdv + (['strategic','decision-making','human-interaction','creative'].includes(task.taskType) ? 10 : 0);
+                      const cpvLabel = cpv >= 75 ? 'High — build on this' : cpv >= 45 ? 'Moderate' : 'Low — seek to reduce';
+                      const cpvColor = cpv >= 75 ? 'var(--emerald)' : cpv >= 45 ? 'var(--amber)' : 'var(--red)';
+                      return (
+                        <>
+                          <div style={{ flex: 1, minWidth: '140px' }}>
+                            <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', marginBottom: '2px' }}>YOUR HUMAN ADVANTAGE</div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: humanAdvColor }}>{humanAdvLabel}</div>
+                          </div>
+                          <div style={{ flex: 1, minWidth: '140px' }}>
+                            <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', marginBottom: '2px' }}>BUSINESS VALUE</div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: bizValueColor }}>{bizValueLabel}</div>
+                          </div>
+                          <div style={{ flex: 1, minWidth: '140px' }}>
+                            <div style={{ fontSize: '0.52rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.07em', marginBottom: '2px' }}>CAREER PROTECTION VALUE</div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: cpvColor }}>{cpvLabel}</div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
+      </div>
+
+      {/* Expand / collapse all tasks */}
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <button
+          type="button"
+          onClick={() => setShowAllTasks(prev => !prev)}
+          style={{
+            padding: '7px 18px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)',
+            background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)',
+            fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer',
+          }}
+        >
+          {showAllTasks ? '▲ Show Spotlight Tasks' : `▼ View Full Task Library (${tasks.length} tasks)`}
+        </button>
       </div>
 
       {/* Automation Drivers — WHY section */}

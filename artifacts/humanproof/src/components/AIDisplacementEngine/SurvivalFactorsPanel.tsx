@@ -41,9 +41,14 @@ function deriveFactors(
   experience: string,
   hasManagement: boolean,
 ): FactorCard[] {
-  const d3 = dimensions.find(d => d.key === 'D3')?.score ?? 50;
-  const d4 = dimensions.find(d => d.key === 'D4')?.score ?? 50;
-  const d6 = dimensions.find(d => d.key === 'D6')?.score ?? 50;
+  // D3/D4/D6 are "exposure" dimensions: higher score = more AI risk.
+  // Invert to get protection strength: 100 - score = how well this factor shields the user.
+  const d3Raw = dimensions.find(d => d.key === 'D3')?.score ?? 50;
+  const d4Raw = dimensions.find(d => d.key === 'D4')?.score ?? 50;
+  const d6Raw = dimensions.find(d => d.key === 'D6')?.score ?? 50;
+  const d3 = Math.max(5, 100 - d3Raw); // judgment protection
+  const d4 = Math.max(5, 100 - d4Raw); // experience shield strength
+  const d6 = Math.max(5, 100 - d6Raw); // network/reputation moat strength
 
   const expRaw   = parseInt(experience.split('-')[0] || '5', 10);
   const expYears = isNaN(expRaw) ? 5 : expRaw;
@@ -139,12 +144,35 @@ function MiniBar({ value, color }: { value: number; color: string }) {
 export const SurvivalFactorsPanel: React.FC<Props> = ({ dimensions, intel, experience, scoreColor, hasManagement = false }) => {
   const factors = deriveFactors(dimensions, intel, experience, hasManagement);
 
+  const d3Raw = dimensions.find(d => d.key === 'D3')?.score ?? 50;
+  const d4Raw = dimensions.find(d => d.key === 'D4')?.score ?? 50;
+  const d6Raw = dimensions.find(d => d.key === 'D6')?.score ?? 50;
+  const allStrong = (100 - d3Raw) >= 70 && (100 - d4Raw) >= 70 && (100 - d6Raw) >= 70;
+
   return (
     <div>
       <h3 className="label-xs" style={{ marginBottom: '8px', color: 'var(--text-3)' }}>WHAT PROTECTS YOUR CAREER</h3>
       <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: '24px', lineHeight: 1.5 }}>
         The skills and qualities that make you harder to replace — both today and as AI advances.
       </p>
+
+      {allStrong && (
+        <div style={{
+          marginBottom: '20px', padding: '12px 16px', borderRadius: '8px',
+          background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)',
+          display: 'flex', alignItems: 'flex-start', gap: '10px',
+        }}>
+          <span style={{ fontSize: '1rem', flexShrink: 0 }}>🛡</span>
+          <div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--emerald)', marginBottom: '3px' }}>
+              Well protected across all three pillars
+            </div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+              Your judgment, experience, and professional relationships are all strong. Roles like yours tend to survive AI waves by evolving rather than being replaced — focus on staying ahead of the next shift, not catching up.
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {factors.map((factor) => (

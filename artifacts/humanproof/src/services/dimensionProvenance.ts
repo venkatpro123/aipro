@@ -44,18 +44,29 @@ export interface DimensionProvenanceData {
 
 function formatRelativeAge(isoOrDate: string, nowMs: number = Date.now()): string {
   try {
-    const t = new Date(isoOrDate).getTime();
+    // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight which can appear
+    // "in the future" for users east of UTC — parse them as local noon instead.
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(isoOrDate.trim());
+    const normalized = isDateOnly ? isoOrDate.trim() + 'T12:00:00' : isoOrDate;
+    const t = new Date(normalized).getTime();
     if (isNaN(t)) return 'unknown';
     const diffMs = nowMs - t;
-    if (diffMs < 0) return 'just now';
+    // For dates that are in the future (clock skew or future-dated data), show the date
+    if (diffMs < 0) {
+      return new Date(t).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
     const mins  = Math.floor(diffMs / 60_000);
     const hours = Math.floor(diffMs / 3_600_000);
     const days  = Math.floor(diffMs / 86_400_000);
-    if (mins  <  2)  return 'just now';
-    if (mins  < 60)  return `${mins} min ago`;
-    if (hours < 24)  return `${hours}h ago`;
-    if (days  ===  1) return '1 day ago';
-    return `${days} days ago`;
+    const months = Math.floor(days / 30);
+    const years  = Math.floor(days / 365);
+    if (mins  <  2)   return 'moments ago';
+    if (mins  < 60)   return `${mins} min ago`;
+    if (hours < 24)   return `${hours}h ago`;
+    if (days  <  7)   return `${days} day${days === 1 ? '' : 's'} ago`;
+    if (months < 1)   return `${Math.floor(days / 7)} week${Math.floor(days / 7) === 1 ? '' : 's'} ago`;
+    if (years  < 1)   return `${months} month${months === 1 ? '' : 's'} ago`;
+    return `${years} year${years === 1 ? '' : 's'} ago`;
   } catch {
     return 'unknown';
   }

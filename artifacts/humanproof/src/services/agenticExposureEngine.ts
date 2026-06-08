@@ -130,12 +130,17 @@ export function computeAgenticExposureScore(params: {
   };
   const orgRestructure = Math.min(100, Math.round(orgRestructureRaw * (companyMult[companyType ?? ''] ?? 1.0)));
 
-  // Final weighted score
+  // Sub-E: Agentic Disruption Potential (D7) — blended at 0.10 weight
+  // d7Score is 0-100; clamp to prevent it dominating the composite.
+  const agenticDisruptionPotential = Math.min(100, Math.max(0, d7Score));
+
+  // Final weighted score — D7 contributes 10%, redistributed from orgRestructure
   const raw = (
-    taskAutoPotential  * 0.30 +
-    agenticProgression * 0.30 +
-    laborEcon          * 0.25 +
-    orgRestructure     * 0.15
+    taskAutoPotential          * 0.30 +
+    agenticProgression         * 0.28 +
+    laborEcon                  * 0.22 +
+    orgRestructure             * 0.10 +
+    agenticDisruptionPotential * 0.10
   );
   const score = Math.min(100, Math.max(0, Math.round(raw)));
   const tier  = getAgenticTier(score);
@@ -149,7 +154,7 @@ export function computeAgenticExposureScore(params: {
       agenticProgression,
       laborEcon,
       orgRestructure,
-      agenticDisruptionPotential: d7Score,
+      agenticDisruptionPotential,
     },
     narrative: buildNarrative(tier, timeline.impactTimeline, riskKey),
   };

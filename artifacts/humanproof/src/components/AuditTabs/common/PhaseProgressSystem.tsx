@@ -64,6 +64,14 @@ function phaseActions(actions: ActionPlanItem[]): [ActionPlanItem[], ActionPlanI
     }
   }
 
+  // Ensure phase 2 always has at least 2 items so the phase is visible.
+  // If critical-overflow already filled it, this is a no-op.
+  if (phase2.length < 2 && phase3.length > 0) {
+    while (phase2.length < 2 && phase3.length > 0) {
+      phase2.push(phase3.shift()!);
+    }
+  }
+
   return [phase1.slice(0, 4), phase2.slice(0, 5), phase3.slice(0, 6)];
 }
 
