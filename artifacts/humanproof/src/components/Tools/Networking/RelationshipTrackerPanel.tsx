@@ -24,17 +24,22 @@ export function RelationshipTrackerPanel() {
   const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', company: '', relationship_type: 'peer', last_contact_date: '', notes: '' });
 
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from('career_network_contacts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { setContacts((data as Contact[]) ?? []); setLoading(false); });
+    if (!user) { setLoading(false); return; }
+    Promise.resolve(
+      supabase
+        .from('career_network_contacts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+    ).then(({ data, error }) => {
+      if (error) { setFetchError(true); } else { setContacts((data as Contact[]) ?? []); }
+      setLoading(false);
+    }).catch(() => { setFetchError(true); setLoading(false); });
   }, [user]);
 
   const save = async () => {
@@ -137,6 +142,10 @@ export function RelationshipTrackerPanel() {
       {/* Contact list */}
       {loading ? (
         <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Loading contacts…</div>
+      ) : fetchError ? (
+        <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', fontSize: 13, color: '#ef4444' }}>
+          Failed to load contacts. Check your connection and refresh.
+        </div>
       ) : contacts.length === 0 ? (
         <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '40px 0' }}>
           No contacts yet. Add your first contact to start tracking your network.
@@ -162,7 +171,12 @@ export function RelationshipTrackerPanel() {
                     {c.last_contact_date ? `${daysSince}d ago` : 'Never contacted'}
                   </div>
                 </div>
-                <button onClick={() => remove(c.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.3)' }}>
+                <button
+                  type="button"
+                  onClick={() => remove(c.id)}
+                  aria-label={`Remove ${c.name} from contacts`}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.3)' }}
+                >
                   <Trash2 size={14} />
                 </button>
               </div>

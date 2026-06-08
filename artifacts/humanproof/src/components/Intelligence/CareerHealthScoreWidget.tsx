@@ -86,6 +86,7 @@ export function CareerHealthScoreWidget() {
   const { state } = useLayoff();
   const [health, setHealth] = useState<CareerHealthScore | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
 
   useEffect(() => {
     if (!user?.id) { setLoading(false); return; }
@@ -100,7 +101,7 @@ export function CareerHealthScoreWidget() {
         );
         if (!cancelled) setHealth(score);
       } catch {
-        // non-fatal
+        if (!cancelled) setFetchFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -139,6 +140,10 @@ export function CareerHealthScoreWidget() {
         <div style={{ height: 80, background: 'rgba(255,255,255,0.04)', borderRadius: 8, animation: 'pulse 1.5s infinite' }} />
       ) : !user ? (
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Sign in to see your career health score.</p>
+      ) : fetchFailed ? (
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Unable to compute health score right now — check your connection or re-run your audit.</p>
+      ) : !health ? (
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Run your first audit to unlock your Career Health Score.</p>
       ) : (
         <>
           {/* Score ring + sparkline */}

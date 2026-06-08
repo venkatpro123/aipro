@@ -16,13 +16,16 @@ export function CompanyWatchlistPanel() {
   const [signals, setSignals] = useState<CompanySignal[]>([]);
   const [newCompany, setNewCompany] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    getWatchlist().then(list => {
-      setWatchlist(list);
-      setLoading(false);
-      if (list.length > 0) fetchSignals(list);
-    });
+    getWatchlist()
+      .then(list => {
+        setWatchlist(list);
+        setLoading(false);
+        if (list.length > 0) fetchSignals(list);
+      })
+      .catch(() => { setError(true); setLoading(false); });
   }, []);
 
   async function fetchSignals(list: string[]) {
@@ -105,7 +108,13 @@ export function CompanyWatchlistPanel() {
         </button>
       </div>
 
-      {watchlist.length === 0 && !loading && (
+      {error && (
+        <div style={{ padding: '16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', fontSize: 13, color: '#ef4444', marginBottom: 16 }}>
+          Failed to load watchlist. Check your connection and try refreshing.
+        </div>
+      )}
+
+      {watchlist.length === 0 && !loading && !error && (
         <div style={{
           textAlign: 'center',
           padding: '40px 24px',
@@ -137,7 +146,9 @@ export function CompanyWatchlistPanel() {
             }}>
               {co}
               <button
+                type="button"
                 onClick={() => handleRemove(co)}
+                aria-label={`Remove ${co} from watchlist`}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', lineHeight: 1 }}
               >
                 <X size={14} />

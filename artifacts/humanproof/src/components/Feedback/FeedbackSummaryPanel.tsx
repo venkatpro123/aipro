@@ -94,16 +94,24 @@ export function FeedbackSummaryPanel({ compact = false }: Props) {
 
   if (loading) {
     return (
-      <div style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '24px 0', fontSize: 13 }}>
-        Loading feedback…
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {[1, 2].map(i => (
+          <div key={i} style={{ height: 48, borderRadius: 8, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
+        ))}
       </div>
     );
   }
 
   if (!summary?.hasData && pending.length === 0) {
     return (
-      <div style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '24px 0', fontSize: 13 }}>
-        Complete actions to start tracking your ROI.
+      <div style={{ textAlign: 'center', padding: '28px 0' }}>
+        <div style={{ fontSize: 28, marginBottom: 10 }}>📋</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
+          No feedback data yet
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', maxWidth: 260, margin: '0 auto' }}>
+          Complete actions from your audit to start tracking which ones actually reduced your risk.
+        </div>
       </div>
     );
   }

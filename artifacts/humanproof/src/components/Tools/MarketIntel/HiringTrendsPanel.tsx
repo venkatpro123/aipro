@@ -15,33 +15,54 @@ interface SectorTrend {
   isUserSector: boolean;
 }
 
-function buildSectorTrends(scoreResult: HybridResult): SectorTrend[] {
+// Baseline sector trends — BLS/LinkedIn 2025. User's sector row is updated with live audit data when available.
+const BASELINE_TRENDS: SectorTrend[] = [
+  { sector: 'AI & Machine Learning', velocity: 'GROWING',          changePercent: 34,  postings: 'High',     isUserSector: false },
+  { sector: 'Cybersecurity',         velocity: 'GROWING',          changePercent: 22,  postings: 'High',     isUserSector: false },
+  { sector: 'Cloud Infrastructure',  velocity: 'GROWING',          changePercent: 18,  postings: 'High',     isUserSector: false },
+  { sector: 'Healthcare Technology', velocity: 'GROWING',          changePercent: 15,  postings: 'Moderate', isUserSector: false },
+  { sector: 'Fintech',               velocity: 'STABLE',           changePercent:  3,  postings: 'Moderate', isUserSector: false },
+  { sector: 'E-commerce / Retail',   velocity: 'STABLE',           changePercent: -2,  postings: 'Moderate', isUserSector: false },
+  { sector: 'Media & Advertising',   velocity: 'DECLINING',        changePercent: -8,  postings: 'Low',      isUserSector: false },
+  { sector: 'Traditional Finance',   velocity: 'DECLINING',        changePercent: -12, postings: 'Low',      isUserSector: false },
+  { sector: 'Crypto / Web3',         velocity: 'DECLINING_SHARPLY',changePercent: -28, postings: 'Very Low', isUserSector: false },
+];
+
+function buildSectorTrends(scoreResult: HybridResult): { trends: SectorTrend[]; hasLiveData: boolean } {
   const hv = scoreResult.headcountVelocity;
-  const userSector = scoreResult.roleMarketDemand?.snapshot?.roleName ?? 'Technology';
+  const userSector = scoreResult.roleMarketDemand?.snapshot?.roleName ?? '';
+  let hasLiveData = false;
 
-  const baseTrends: SectorTrend[] = [
-    { sector: 'AI & Machine Learning', velocity: 'GROWING', changePercent: 34, postings: 'High', isUserSector: false },
-    { sector: 'Cybersecurity', velocity: 'GROWING', changePercent: 22, postings: 'High', isUserSector: false },
-    { sector: 'Cloud Infrastructure', velocity: 'GROWING', changePercent: 18, postings: 'High', isUserSector: false },
-    { sector: 'Healthcare Technology', velocity: 'GROWING', changePercent: 15, postings: 'Moderate', isUserSector: false },
-    { sector: 'Fintech', velocity: 'STABLE', changePercent: 3, postings: 'Moderate', isUserSector: false },
-    { sector: 'E-commerce / Retail', velocity: 'STABLE', changePercent: -2, postings: 'Moderate', isUserSector: false },
-    { sector: 'Media & Advertising', velocity: 'DECLINING', changePercent: -8, postings: 'Low', isUserSector: false },
-    { sector: 'Traditional Finance', velocity: 'DECLINING', changePercent: -12, postings: 'Low', isUserSector: false },
-    { sector: 'Crypto / Web3', velocity: 'DECLINING_SHARPLY', changePercent: -28, postings: 'Very Low', isUserSector: false },
-  ];
+  const trends = BASELINE_TRENDS.map(trend => {
+    const isUser = userSector.length > 0 && (
+      trend.sector.toLowerCase().includes(userSector.toLowerCase()) ||
+      userSector.toLowerCase().includes(trend.sector.split(' ')[0].toLowerCase())
+    );
 
-  // Mark user sector and inject headcount velocity data
-  return baseTrends.map(trend => {
-    const isUser = trend.sector.toLowerCase().includes(userSector.toLowerCase()) ||
-                   userSector.toLowerCase().includes(trend.sector.split(' ')[0].toLowerCase());
-    let changePercent = trend.changePercent;
+    // Override user's sector row with live headcount velocity from audit
     if (isUser && hv) {
-      changePercent = hv.postingVelocity === 'ACCELERATING' ? Math.abs(changePercent) :
-                      hv.postingVelocity === 'DECELERATING' ? -Math.abs(changePercent) : changePercent;
+      hasLiveData = true;
+      const liveChange = hv.postingVelocity === 'ACCELERATING' ? Math.abs(trend.changePercent)
+        : hv.postingVelocity === 'DECELERATING' ? -Math.abs(trend.changePercent)
+        : trend.changePercent;
+      const liveVelocity: SectorTrend['velocity'] = hv.headcountTrend === 'GROWING' ? 'GROWING'
+        : hv.headcountTrend === 'DECLINING' ? 'DECLINING'
+        : 'STABLE';
+      return { ...trend, isUserSector: true, changePercent: liveChange, velocity: liveVelocity };
     }
-    return { ...trend, isUserSector: isUser, changePercent };
+
+    return { ...trend, isUserSector: isUser };
   });
+
+  // Sort: user sector first, then by change % desc
+  return {
+    trends: trends.sort((a, b) => {
+      if (a.isUserSector) return -1;
+      if (b.isUserSector) return 1;
+      return b.changePercent - a.changePercent;
+    }),
+    hasLiveData,
+  };
 }
 
 const VELOCITY_CONFIG = {
@@ -52,7 +73,7 @@ const VELOCITY_CONFIG = {
 };
 
 export function HiringTrendsPanel({ scoreResult }: Props) {
-  const trends = useMemo(() => buildSectorTrends(scoreResult), [scoreResult]);
+  const { trends, hasLiveData } = useMemo(() => buildSectorTrends(scoreResult), [scoreResult]);
   const hv = scoreResult.headcountVelocity;
 
   return (
@@ -63,6 +84,7 @@ export function HiringTrendsPanel({ scoreResult }: Props) {
         </div>
         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>
           Where hiring is growing and where it's contracting — sourced from job posting velocity.
+          {!hasLiveData && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}> · Baseline estimates (run audit for your sector's live data)</span>}
         </div>
       </div>
 
@@ -129,7 +151,9 @@ export function HiringTrendsPanel({ scoreResult }: Props) {
       </div>
 
       <div style={{ marginTop: 16, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
-        * Sector trends based on job posting velocity analysis · Q1 2026 · updated monthly
+        {hasLiveData
+          ? '* Your sector row updated with live audit data · baseline from BLS/LinkedIn 2025 · updated monthly'
+          : '* Baseline sector trends from BLS/LinkedIn 2025 · run your audit to personalize your sector row'}
       </div>
     </div>
   );

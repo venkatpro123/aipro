@@ -47,8 +47,18 @@ function computeStayScore(scoreResult: HybridResult): { score: number; reasons: 
   return { score, reasons, risks, actions };
 }
 
+function getDataCompleteness(scoreResult: HybridResult): { pct: number; missing: string[] } {
+  const missing: string[] = [];
+  if (!scoreResult.financialRunway?.runwayMonths) missing.push('financial runway');
+  if (!scoreResult.internalMobility) missing.push('internal mobility');
+  if (!scoreResult.careerVelocity) missing.push('career velocity');
+  const pct = Math.round(((3 - missing.length) / 3) * 100);
+  return { pct, missing };
+}
+
 export function StayStrategyPanel({ scoreResult }: Props) {
   const { score, reasons, risks, actions } = useMemo(() => computeStayScore(scoreResult), [scoreResult]);
+  const { pct: dataPct, missing } = useMemo(() => getDataCompleteness(scoreResult), [scoreResult]);
   const color = score >= 60 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
   const verdict = score >= 60 ? 'Stay & Strengthen' : score >= 40 ? 'Stay with Caution' : 'Consider Exiting';
 
@@ -60,6 +70,13 @@ export function StayStrategyPanel({ scoreResult }: Props) {
           Should you stay and strengthen your position, or plan an exit? A data-driven decision.
         </div>
       </div>
+
+      {dataPct < 100 && (
+        <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ color: '#f59e0b', fontWeight: 700 }}>~{dataPct}% data</span>
+          — score uses defaults for: {missing.join(', ')}. Fill your profile for a sharper recommendation.
+        </div>
+      )}
 
       {/* Score hero */}
       <div style={{ padding: '20px 24px', borderRadius: 14, background: `${color}10`, border: `1px solid ${color}33` }}>

@@ -20,17 +20,22 @@ export function CompanyTargetingPanel({ scoreResult }: Props) {
   const { user } = useAuth();
   const [targets, setTargets] = useState<TargetCompany[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [input, setInput] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from('user_target_companies')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('added_at', { ascending: false })
-      .then(({ data }) => { setTargets((data as TargetCompany[]) ?? []); setLoading(false); });
+    if (!user) { setLoading(false); return; }
+    Promise.resolve(
+      supabase
+        .from('user_target_companies')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('added_at', { ascending: false })
+    ).then(({ data, error }) => {
+      if (error) { setFetchError(true); } else { setTargets((data as TargetCompany[]) ?? []); }
+      setLoading(false);
+    }).catch(() => { setFetchError(true); setLoading(false); });
   }, [user]);
 
   const addCompany = async () => {
@@ -102,6 +107,10 @@ export function CompanyTargetingPanel({ scoreResult }: Props) {
       {/* Target list */}
       {loading ? (
         <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Loading targets…</div>
+      ) : fetchError ? (
+        <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', fontSize: 13, color: '#ef4444' }}>
+          Failed to load your target companies. Check your connection and refresh.
+        </div>
       ) : targets.length === 0 ? (
         <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '40px 0' }}>
           No target companies yet. Add the companies you want to work at next.
@@ -118,7 +127,12 @@ export function CompanyTargetingPanel({ scoreResult }: Props) {
                   {i < 3 && <span style={{ marginLeft: 8, color: '#f59e0b', fontWeight: 600 }}>Top priority</span>}
                 </div>
               </div>
-              <button onClick={() => remove(co.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.3)' }}>
+              <button
+                type="button"
+                onClick={() => remove(co.id)}
+                aria-label={`Remove ${co.company_name} from targets`}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'rgba(255,255,255,0.3)' }}
+              >
                 <Trash2 size={14} />
               </button>
             </div>

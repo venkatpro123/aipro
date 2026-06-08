@@ -84,6 +84,8 @@ export function TodaysMissionWidget() {
     setLoading(false);
   };
 
+  const hasAudit = state.scoreResult != null;
+
   if (!action) {
     return (
       <motion.div
@@ -95,7 +97,9 @@ export function TodaysMissionWidget() {
       >
         <Target size={24} style={{ color: "var(--text-3)" }} />
         <div style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>
-          No mission yet — run your first audit to get today's action
+          {hasAudit
+            ? "No action items generated for this audit — try re-running with more profile detail"
+            : "Run your first audit to unlock today's mission"}
         </div>
       </motion.div>
     );
