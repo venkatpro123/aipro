@@ -1,6 +1,6 @@
-// DemandScanner.tsx — Adjacent high-demand roles from market demand report
+// DemandScanner.tsx — Adjacent high-demand roles from market demand + escape paths
 import { useMemo } from 'react';
-import { TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 
 interface Props {
@@ -11,14 +11,44 @@ interface RoleCard {
   title: string;
   demandIndex: number;
   demandTrend: number;
-  avgSalaryUSD: number;
+  avgSalaryUSD: number | null;
   growthRate: number;
   isAdjacent: boolean;
+  riskReduction?: number;
 }
 
 const DEMAND_TREND_MAP: Record<string, number> = {
   surging: 15, rising: 8, stable: 0, declining: -8, falling: -15,
 };
+
+// Role-family to median USD salary map (BLS / LinkedIn Salary 2025)
+const ROLE_SALARY_MAP: Record<string, number> = {
+  'software engineer':         130000,
+  'data scientist':            120000,
+  'product manager':           125000,
+  'data analyst':              85000,
+  'machine learning engineer': 145000,
+  'devops engineer':           125000,
+  'ux designer':               95000,
+  'product designer':          100000,
+  'marketing manager':         90000,
+  'sales manager':             105000,
+  'financial analyst':         85000,
+  'operations manager':        90000,
+  'project manager':           95000,
+  'hr manager':                80000,
+  'cybersecurity analyst':     105000,
+  'cloud architect':           150000,
+  'ai engineer':               155000,
+};
+
+function estimateSalary(roleTitle: string): number | null {
+  const lower = roleTitle.toLowerCase();
+  for (const [key, sal] of Object.entries(ROLE_SALARY_MAP)) {
+    if (lower.includes(key) || key.includes(lower)) return sal;
+  }
+  return null;
+}
 
 function buildRoleCards(scoreResult: HybridResult): RoleCard[] {
   const market = scoreResult.roleMarketDemand;
@@ -26,18 +56,40 @@ function buildRoleCards(scoreResult: HybridResult): RoleCard[] {
 
   const snap = market.snapshot;
   const trendNum = DEMAND_TREND_MAP[snap.demandTrend] ?? 0;
-
   const cards: RoleCard[] = [];
 
-  // Primary role
+  // Primary role — try compensationRisk for median salary
+  const primarySalary =
+    (scoreResult.compensationRisk as any)?.marketMedianUSD ??
+    estimateSalary(snap.roleName ?? '') ??
+    null;
+
   cards.push({
     title: snap.roleName ?? 'Your Current Role',
     demandIndex: market.adjustedDemandIndex ?? snap.demandIndex ?? 50,
     demandTrend: trendNum,
-    avgSalaryUSD: 80000,
+    avgSalaryUSD: primarySalary,
     growthRate: snap.yoyJobOpeningsChange ?? trendNum,
     isAdjacent: false,
   });
+
+  // Adjacent roles from escape paths
+  const escapePaths = scoreResult.escapePaths?.paths ?? [];
+  for (const path of escapePaths.slice(0, 5)) {
+    const titleWords = path.title ?? path.headline ?? '';
+    const salEstimate = estimateSalary(titleWords);
+    // Map estimatedScoreDrop to a demand index (higher score drop → role is in higher demand)
+    const demandIdx = Math.max(20, Math.min(95, 55 + (path.estimatedScoreDrop ?? 0)));
+    cards.push({
+      title: titleWords,
+      demandIndex: demandIdx,
+      demandTrend: 5,
+      avgSalaryUSD: salEstimate,
+      growthRate: 5,
+      isAdjacent: true,
+      riskReduction: path.estimatedScoreDrop,
+    });
+  }
 
   return cards.sort((a, b) => b.demandIndex - a.demandIndex);
 }
@@ -61,7 +113,7 @@ export function DemandScanner({ scoreResult }: Props) {
           Role Demand Scanner
         </div>
         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>
-          Current and adjacent roles ranked by market demand. Higher index = more open roles and stronger hiring.
+          Your current role + adjacent opportunities ranked by market demand. Higher index = more open roles and stronger hiring.
         </div>
       </div>
 
@@ -79,7 +131,7 @@ export function DemandScanner({ scoreResult }: Props) {
               gap: 16,
               border: !role.isAdjacent ? '1px solid rgba(245,158,11,0.4)' : undefined,
             }}>
-              {/* Demand index bar */}
+              {/* Demand index */}
               <div style={{ width: 48, flexShrink: 0, textAlign: 'center' }}>
                 <div style={{ fontWeight: 800, fontSize: 22, color: demandColor }}>{Math.round(role.demandIndex)}</div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>DEMAND</div>
@@ -87,21 +139,25 @@ export function DemandScanner({ scoreResult }: Props) {
 
               {/* Role info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{role.title}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {role.title}
+                  </div>
                   {!role.isAdjacent && (
-                    <span style={{
-                      fontSize: 10,
-                      color: '#f59e0b',
-                      background: 'rgba(245,158,11,0.15)',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      fontWeight: 700,
-                    }}>YOUR ROLE</span>
+                    <span style={{ fontSize: 10, color: '#f59e0b', background: 'rgba(245,158,11,0.15)', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
+                      YOUR ROLE
+                    </span>
+                  )}
+                  {role.isAdjacent && role.riskReduction != null && role.riskReduction > 0 && (
+                    <span style={{ fontSize: 10, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
+                      −{Math.round(role.riskReduction)}pts risk
+                    </span>
                   )}
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
-                  Avg salary: ${role.avgSalaryUSD.toLocaleString()}
+                  {role.avgSalaryUSD != null
+                    ? `Avg salary: $${role.avgSalaryUSD.toLocaleString()}`
+                    : role.isAdjacent ? 'Adjacent opportunity' : 'Salary data unavailable'}
                 </div>
               </div>
 
@@ -120,6 +176,11 @@ export function DemandScanner({ scoreResult }: Props) {
       {market.snapshot?.dataQuarter && (
         <div style={{ marginTop: 16, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
           Data as of {market.snapshot.dataQuarter} · {market.snapshot.calibrationNote}
+        </div>
+      )}
+      {roles.filter(r => r.isAdjacent).length > 0 && (
+        <div style={{ marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+          Adjacent roles sourced from your career escape path analysis · Salary estimates from BLS/LinkedIn 2025
         </div>
       )}
     </div>

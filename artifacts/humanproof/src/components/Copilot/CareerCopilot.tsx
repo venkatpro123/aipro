@@ -1,7 +1,7 @@
 // CareerCopilot.tsx — Full copilot chat UI
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Bot } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useLayoff } from '../../context/LayoffContext';
 import { useAuth } from '../../context/AuthContext';
 import type { HybridResult } from '../../types/hybridResult';
@@ -9,16 +9,23 @@ import { useCopilot } from '../../hooks/useCopilot';
 import { CopilotMessageBubble } from './CopilotMessage';
 import { CopilotInput } from './CopilotInput';
 import { CopilotSuggestions } from './CopilotSuggestions';
+import { fetchUserProfile, type UserProfile } from '../../services/userProfileService';
 
 export function CareerCopilot() {
   const { state } = useLayoff();
   const { user } = useAuth();
   const scoreResult = state.scoreResult as HybridResult | null;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchUserProfile().then(setUserProfile).catch(() => {});
+  }, [user?.id]);
 
   const ctx = {
     hybridResult: scoreResult,
-    userProfile: null, // hydrated in future via userProfileService if needed
+    userProfile,
   };
 
   const { messages, isThinking, suggestions, sendMessage, clearMessages, sendSuggestion } = useCopilot(ctx);

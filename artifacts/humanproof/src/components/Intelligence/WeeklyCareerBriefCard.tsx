@@ -63,8 +63,8 @@ export function WeeklyCareerBriefCard() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
-  // Always show on Monday; show on other days if there's critical data
-  const shouldShow = isMonday() || (brief?.topSignals?.some(s => s.severity === 'CRITICAL') ?? false);
+  const hasCritical = brief?.topSignals?.some(s => s.severity === 'CRITICAL') ?? false;
+  const shouldShow = isMonday() || hasCritical || (brief?.hasData ?? false);
 
   useEffect(() => {
     if (!user?.id) { setLoading(false); return; }
