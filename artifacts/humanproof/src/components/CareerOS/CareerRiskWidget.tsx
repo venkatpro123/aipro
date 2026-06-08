@@ -110,7 +110,7 @@ export function CareerRiskWidget() {
         <ScoreRing score={score} color={color} size={140} isMobile scoreDelta={delta} velocityPtsPerMonth={velocity} />
       </div>
 
-      <div style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
         <span style={{
           display: "inline-block", padding: "3px 10px", borderRadius: 6,
           background: `${color}18`, border: `1px solid ${color}40`,
@@ -118,6 +118,20 @@ export function CareerRiskWidget() {
           fontFamily: "var(--font-mono)",
         }}>
           {getTierLabel(score)}
+        </span>
+        {/* Rule 17+10: confidence source label — earn trust through accuracy */}
+        <span style={{
+          display: "inline-block", padding: "2px 7px", borderRadius: 5,
+          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+          fontSize: "0.63rem", fontWeight: 600, color: "rgba(255,255,255,0.2)",
+          fontFamily: "var(--font-mono)",
+          letterSpacing: "0.06em",
+        }}>
+          {hr.confidencePercent != null && hr.confidencePercent >= 70
+            ? "MEASURED"
+            : hr.confidencePercent != null && hr.confidencePercent >= 45
+            ? "MODELED"
+            : "ESTIMATED"}
         </span>
       </div>
 

@@ -10,6 +10,9 @@ interface MissionAction {
   title: string;
   effort: string;
   priority: string;
+  whyItMatters?: string;
+  consequence?: string;
+  impactConfidenceSource?: 'MEASURED' | 'MODELED' | 'ESTIMATED';
 }
 
 const PRIORITY_RANK: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
@@ -22,11 +25,13 @@ function extractSmartMission(
   const actions: ActionPlanItem[] | undefined = scoreResult.actionItems;
   if (!actions || actions.length === 0) return { top: null, next: null };
 
-  // Filter completed, sort by priority DESC then prefer Low-effort among ties
+  // Filter completed; sort by rankScore (impact÷effort composite) if present, else priority+effort
   const effortRank: Record<string, number> = { Low: 0, Medium: 1, High: 2, Critical: 3 };
   const uncompleted = actions
     .filter(a => !completedIds.has(a.id))
     .sort((a, b) => {
+      // Rule 2+5: prefer rankScore (outcome-weighted) over raw priority string
+      if (a.rankScore != null && b.rankScore != null) return b.rankScore - a.rankScore;
       const pd = (PRIORITY_RANK[a.priority] ?? 2) - (PRIORITY_RANK[b.priority] ?? 2);
       if (pd !== 0) return pd;
       return (effortRank[a.effortBadge ?? 'Medium'] ?? 1) - (effortRank[b.effortBadge ?? 'Medium'] ?? 1);
@@ -37,6 +42,9 @@ function extractSmartMission(
     title: item.title,
     effort: item.effortBadge ?? item.deadline ?? 'Medium',
     priority: item.priority,
+    whyItMatters: item.whyItMatters,
+    consequence: item.consequence,
+    impactConfidenceSource: item.impactConfidenceSource,
   });
 
   return {
@@ -189,6 +197,38 @@ export function TodaysMissionWidget() {
           </div>
         </div>
       </div>
+
+      {/* Rule 1: Why it matters + consequence framing */}
+      {!completed && action.whyItMatters && (
+        <div style={{
+          background: "rgba(0,245,255,0.04)",
+          border: "1px solid rgba(0,245,255,0.12)",
+          borderRadius: 8, padding: "10px 12px",
+          display: "flex", flexDirection: "column", gap: 6,
+        }}>
+          <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--cyan)", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            Why this matters
+          </div>
+          <div style={{ fontSize: "0.79rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
+            {action.whyItMatters}
+          </div>
+          {action.consequence && (
+            <>
+              <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "#f97316", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.07em", marginTop: 4 }}>
+                If you don't
+              </div>
+              <div style={{ fontSize: "0.79rem", color: "rgba(255,150,80,0.7)", lineHeight: 1.5 }}>
+                {action.consequence}
+              </div>
+            </>
+          )}
+          {action.impactConfidenceSource && (
+            <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", marginTop: 2, fontFamily: "var(--font-mono, monospace)" }}>
+              Impact estimate: {action.impactConfidenceSource}
+            </div>
+          )}
+        </div>
+      )}
 
       {nextAction && !completed && (
         <div style={{

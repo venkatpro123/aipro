@@ -261,6 +261,29 @@ export interface ActionPlanItem {
   costCurrencyCode?: string;
   /** GAP-P03: human-readable cost label, e.g. "S$288 (≈$215 USD)". MODELED · 2024-Q2 rates. */
   costDisplayLabel?: string;
+  /**
+   * Rule 1 — "Why it matters": one sentence explaining the real-world significance
+   * of this action for the user's specific situation (e.g. "Your role has 34% AI
+   * displacement risk — this builds the human skill that AI cannot replicate.").
+   * Populated by actionConsequenceEngine after personalization pass.
+   */
+  whyItMatters?: string;
+  /**
+   * Rule 1 — "If you don't": one sentence on the cost of inaction within the
+   * action's deadline window (e.g. "Without this, your market visibility drops
+   * as hiring managers move to AI-screened pipelines.").
+   */
+  consequence?: string;
+  /**
+   * Rule 2/5 — Composite rank score from actionRankingService: (impact × priority) ÷ effort.
+   * Higher = surface first. Populated after personalization pass.
+   */
+  rankScore?: number;
+  /**
+   * Rule 17 — Confidence methodology label for this specific action's impact estimate.
+   * MEASURED = from real outcome data; MODELED = regression/formula; ESTIMATED = heuristic.
+   */
+  impactConfidenceSource?: 'MEASURED' | 'MODELED' | 'ESTIMATED';
 }
 
 /**

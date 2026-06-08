@@ -138,11 +138,17 @@ export function TodaysIntelligenceBrief() {
               {urgencyMeta.label}
             </span>
           )}
-          {brief?.fromCache && (
-            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' }}>
-              cached
-            </span>
-          )}
+          {/* Rule 17+10: confidence label — let the user know how the brief was produced */}
+          <span style={{
+            fontSize: 9, fontWeight: 600, letterSpacing: '0.06em',
+            color: 'rgba(255,255,255,0.18)',
+            fontFamily: 'var(--font-mono, monospace)',
+            marginLeft: 'auto',
+          }}>
+            {brief
+              ? (brief.fromCache ? 'MODELED · cached' : 'MODELED · live')
+              : 'ESTIMATED'}
+          </span>
         </div>
 
         {/* Narrative content */}

@@ -118,7 +118,7 @@ import { computePredictionHorizon } from "./predictionHorizonService";
 import { computeSkillGapIntelligence } from "./skillGapIntelligenceService";
 import { computePersonalizedTimeline } from "./personalizedTimelineService";
 import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
-import { computeActionEffortBadge } from "./actionRankingService";
+import { computeActionEffortBadge, rankActions } from "./actionRankingService";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
 import { getCareerPathMarket, getCareerPathMarketSync } from "./careerPathMarket";
 import { evaluateJobOffer } from "./offerEvaluationEngine";
@@ -168,6 +168,7 @@ import { invokeEdgeFunction } from "../infrastructure/requestId";
 // failure paths become visible on the SLO dashboard instead of being lost
 // in `.catch(() => null)`.
 import { markFallback } from "./observability/withFallback";
+import { injectActionConsequences } from "./actionConsequenceEngine";
 
 const safeLower = (value: unknown, fallback = ""): string =>
   typeof value === "string" && value.trim().length > 0 ? value.toLowerCase() : fallback;
@@ -3505,11 +3506,21 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     }
     // G1: populate typed alias so CareerOS widgets access recommendations without `as any`
     hybridResult.actionItems = hybridResult.recommendations;
+    // Rule 1: inject why-it-matters + consequence framing into every action
+    hybridResult.actionItems = injectActionConsequences(hybridResult.actionItems, hybridResult);
+    // Rule 2+5: stamp rankScore onto each item so UI sorts by impact÷effort, not just priority string
+    const _userProfileForRanking = (inputs.userFactors as any) ?? null;
+    const _ranked = rankActions(hybridResult.actionItems, _userProfileForRanking);
+    hybridResult.actionItems = _ranked.map(r => ({
+      ...(r.action as import('../types/hybridResult').ActionPlanItem),
+      rankScore: r.rankScore,
+    }));
+    hybridResult.recommendations = hybridResult.actionItems;
   } catch (e) {
     noteEngineFailure('personalizedActionSet', e);
     // Ensure actionItems alias is always set even if personalization fails
     if (!hybridResult.actionItems) {
-      hybridResult.actionItems = hybridResult.recommendations ?? [];
+      hybridResult.actionItems = injectActionConsequences(hybridResult.recommendations ?? [], hybridResult);
     }
   }
 

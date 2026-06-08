@@ -37,7 +37,7 @@ export interface BriefSignal {
 
 export interface CareerMoment {
   id: string;
-  type: 'equity_cliff' | 'visa_renewal' | 'salary_review' | 'peer_layoff_surge' | 'score_improvement' | 'action_streak' | 'score_velocity_surge' | 'opportunity_window';
+  type: 'equity_cliff' | 'visa_renewal' | 'salary_review' | 'peer_layoff_surge' | 'score_improvement' | 'action_streak' | 'score_velocity_surge' | 'opportunity_window' | 'hiring_freeze' | 'skill_demand_shift' | 'ai_automation_surge' | 'compensation_gap' | 'career_stagnation';
   headline: string;
   detail: string;
   urgency: 'immediate' | 'this_week' | 'this_month';
@@ -376,7 +376,94 @@ export async function detectCareerMoments(
     });
   }
 
-  return moments.slice(0, 3); // cap at 3 moments
+  // 8. Hiring freeze detected at user's company (Rule 3)
+  const hiringFreezeScore = (hybridResult as any)?.hiringSignal?.freezeScore ?? null;
+  const hiringFreezeConfirmed = (hybridResult as any)?.hiringSignal?.isFrozen === true;
+  if (hiringFreezeConfirmed || (typeof hiringFreezeScore === 'number' && hiringFreezeScore > 70)) {
+    moments.push({
+      id: 'hiring_freeze',
+      type: 'hiring_freeze',
+      headline: 'Hiring freeze signal detected at your company',
+      detail: 'When internal hiring stops, internal mobility dries up and cost-cut targets expand. This is the time to build external options — before you need them.',
+      urgency: 'this_week',
+      actionLabel: 'Open external search',
+      actionRoute: '/tools/job-targeting',
+      expiresAt: new Date(now.getTime() + 14 * 86400_000).toISOString(),
+    });
+  }
+
+  // 9. Skill demand shift — a role-relevant skill is rising fast (Rule 3)
+  const topRisingSkill = (hybridResult as any)?.skillPortfolioFit?.topRisingSkill
+    ?? (hybridResult as any)?.marketDemand?.topRisingSkill
+    ?? null;
+  const demandGrowthPct = (hybridResult as any)?.skillPortfolioFit?.topRisingSkillGrowthPct ?? null;
+  if (topRisingSkill && typeof demandGrowthPct === 'number' && demandGrowthPct > 20) {
+    moments.push({
+      id: 'skill_demand_shift',
+      type: 'skill_demand_shift',
+      headline: `${topRisingSkill} demand up ${demandGrowthPct}% in your market`,
+      detail: `Employers hiring for your role increasingly require ${topRisingSkill}. Adding this now while supply is low gives you a first-mover advantage.`,
+      urgency: 'this_month',
+      actionLabel: 'Explore skill path',
+      actionRoute: '/tools/career-readiness',
+      expiresAt: new Date(now.getTime() + 30 * 86400_000).toISOString(),
+    });
+  }
+
+  // 10. AI automation surge — displacement accelerating for user's role (Rule 3)
+  const aiDisplacementScore = hybridResult.dimensions?.find(d => d.key === 'D1')?.score ?? null;
+  const prevAiScore = (hybridResult as any)?.scoreTrajectory?.dimensionTrajectory?.D1 ?? null;
+  const aiSurging = typeof aiDisplacementScore === 'number' && aiDisplacementScore > 60
+    && (prevAiScore === null || aiDisplacementScore > prevAiScore + 5);
+  if (aiSurging) {
+    moments.push({
+      id: 'ai_automation_surge',
+      type: 'ai_automation_surge',
+      headline: `AI automation risk is accelerating for your role (${Math.round(aiDisplacementScore)}/100)`,
+      detail: 'The window to differentiate yourself with human-advantage skills is narrowing. Those who act now become the managers and architects of AI — not its first casualties.',
+      urgency: 'this_week',
+      actionLabel: 'Build AI amplification plan',
+      actionRoute: '/tools/ai-defense',
+      expiresAt: new Date(now.getTime() + 7 * 86400_000).toISOString(),
+    });
+  }
+
+  // 11. Compensation gap — user appears underpaid vs. market (Rule 3)
+  const salaryGapPct = (hybridResult as any)?.compensationRisk?.salaryGapPercent
+    ?? (hybridResult as any)?.compensation?.gapFromMedianPct
+    ?? null;
+  if (typeof salaryGapPct === 'number' && salaryGapPct < -10) {
+    moments.push({
+      id: 'compensation_gap',
+      type: 'compensation_gap',
+      headline: `You're likely ${Math.abs(Math.round(salaryGapPct))}% below market rate`,
+      detail: 'Compensation gaps compound annually. The best time to close this gap is before a crisis — leverage windows exist now that disappear after a layoff event.',
+      urgency: 'this_month',
+      actionLabel: 'Run salary negotiation',
+      actionRoute: '/tools/salary-negotiation',
+      expiresAt: new Date(now.getTime() + 30 * 86400_000).toISOString(),
+    });
+  }
+
+  // 12. Career stagnation — no promotions, no tenure growth, low velocity (Rule 3)
+  const velocityScore = (hybridResult as any)?.careerVelocity?.velocityScore ?? null;
+  const tenureYears = (hybridResult as any)?.userFactors?.tenureYears ?? null;
+  const stagnating = typeof velocityScore === 'number' && velocityScore < 30
+    && typeof tenureYears === 'number' && tenureYears > 2;
+  if (stagnating) {
+    moments.push({
+      id: 'career_stagnation',
+      type: 'career_stagnation',
+      headline: 'Career velocity is stalling — take action before it becomes a pattern',
+      detail: 'Stagnation makes you a cost rather than an asset in restructuring decisions. A visible win or transition in the next 60 days resets the narrative.',
+      urgency: 'this_month',
+      actionLabel: 'Build visibility plan',
+      actionRoute: '/tools/strategy',
+      expiresAt: new Date(now.getTime() + 21 * 86400_000).toISOString(),
+    });
+  }
+
+  return moments.slice(0, 4); // cap at 4 moments (raised from 3 to surface detection signals)
 }
 
 // ─── Personalized Prediction ──────────────────────────────────────────────────

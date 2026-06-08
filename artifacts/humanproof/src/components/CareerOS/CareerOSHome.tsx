@@ -12,6 +12,7 @@ import { BiggestOpportunityWidget } from "./BiggestOpportunityWidget";
 import { TodaysMissionWidget } from "./TodaysMissionWidget";
 import { MonitoringFeedWidget } from "./MonitoringFeedWidget";
 import { RecommendedToolWidget } from "./RecommendedToolWidget";
+import { AIAmplificationWidget } from "./AIAmplificationWidget";
 import { TodaysIntelligenceBrief } from "./TodaysIntelligenceBrief";
 import { CareerMemorySummaryCard } from "../CareerMemory/CareerMemorySummaryCard";
 import { FeedbackSummaryPanel } from "../Feedback/FeedbackSummaryPanel";
@@ -21,6 +22,8 @@ import { WeeklyCareerBriefCard } from "../Intelligence/WeeklyCareerBriefCard";
 import { CareerMomentAlert } from "../Intelligence/CareerMomentAlert";
 import { ReAuditPromptCard } from "../Intelligence/ReAuditPromptCard";
 import { SystemPerformanceWidget } from "./SystemPerformanceWidget";
+import { FiveYearArcPanel } from "./FiveYearArcPanel";
+import { OutcomeInsightPanel } from "./OutcomeInsightPanel";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -520,6 +523,11 @@ export function CareerOSHome() {
 
               {/* Full-width monitoring feed */}
               <MonitoringFeedWidget />
+
+              {/* Rule 14: AI Amplification — shift framing from "protect from AI" to "amplify with AI" */}
+              <div style={{ marginTop: 14 }}>
+                <AIAmplificationWidget />
+              </div>
             </motion.div>
 
             {/* ══════════════════════════════════════════════════════════════
@@ -542,6 +550,16 @@ export function CareerOSHome() {
               >
                 <CareerHealthScoreWidget />
                 <PersonalizedPredictionPanel />
+              </div>
+
+              {/* Rule 15: 5-Year Arc — where the career is heading, not just today's score */}
+              <div style={{ marginBottom: 14 }}>
+                <FiveYearArcPanel />
+              </div>
+
+              {/* Rule 18: Outcome Monopoly — top actions by MEASURED risk reduction */}
+              <div style={{ marginBottom: 14 }}>
+                <OutcomeInsightPanel />
               </div>
 
               {/* Memory + Feedback side by side */}
