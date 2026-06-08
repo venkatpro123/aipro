@@ -39,14 +39,17 @@ export function CopilotMessageBubble({ message }: Props) {
         <div style={{
           padding: '10px 16px', borderRadius: '18px 18px 18px 4px',
           background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-          display: 'flex', gap: 4, alignItems: 'center',
+          display: 'flex', gap: 8, alignItems: 'center',
         }}>
+          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
+            Analyzing your career data...
+          </span>
           {[0, 1, 2].map(i => (
             <motion.div
               key={i}
               animate={{ opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-              style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }}
+              style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(0,245,255,0.5)' }}
             />
           ))}
         </div>

@@ -78,9 +78,50 @@ export function ToolPageLayout({ title, subtitle, icon, accentColor = 'var(--cya
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px 80px' }}
+        style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px 40px' }}
       >
         {children}
+
+        {/* Return-to-OS footer CTA — applies to all 10 tool pages */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          style={{
+            marginTop: 48,
+            paddingTop: 24,
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>
+            This tool is part of your Career OS
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/os')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'rgba(0,245,255,0.07)',
+              border: '1px solid rgba(0,245,255,0.2)',
+              borderRadius: 8,
+              padding: '8px 16px',
+              color: 'var(--cyan)',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 150ms',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,245,255,0.12)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,245,255,0.07)'; }}
+          >
+            ← Back to Career OS dashboard
+          </button>
+        </motion.div>
       </motion.div>
     </div>
   );

@@ -10,6 +10,7 @@
 } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useHumanProof } from "../context/HumanProofContext";
 import { useLayoff } from "../context/LayoffContext";
@@ -94,6 +95,9 @@ const ONBOARDING_PREFILL_KEY = 'hp_onboarding_prefill';
 export default function ToolsPage() {
   const { state, dispatch } = useHumanProof();
   const { dispatch: layoffDispatch } = useLayoff();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const fromOnboarding = (location.state as any)?.fromOnboarding === true;
   // v35.1.4 — if a user's persisted tab points to a removed surface, fall
   // back to the new default so the dashboard never renders an empty pane.
   const initialTab = state.activeToolTab && VALID_TAB_IDS.has(state.activeToolTab)
@@ -395,7 +399,10 @@ export default function ToolsPage() {
                     <TabErrorBoundary tabId={tab.id}>
                       <Suspense fallback={null}>
                         {tab.id === "layoff-audit" && (
-                          <LayoffCalculator onSwitchTab={switchTab} />
+                          <LayoffCalculator
+                            onSwitchTab={switchTab}
+                            onAfterReveal={fromOnboarding ? () => navigate('/os', { replace: true }) : undefined}
+                          />
                         )}
                         {tab.id === "risk-oracle" && <AuditTerminalPage />}
                       </Suspense>

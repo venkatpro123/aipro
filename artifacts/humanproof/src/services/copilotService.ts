@@ -1,7 +1,7 @@
-// copilotService.ts — Deterministic intent classification + structured answer generation
-// No external AI API required. Routes user questions to existing HybridResult intelligence.
+// copilotService.ts — Deterministic intent classification + LLM-powered answers
 import type { HybridResult } from '../types/hybridResult';
 import type { UserProfile } from './userProfileService';
+import { supabase } from '../utils/supabase';
 
 export interface CopilotContext {
   hybridResult: HybridResult | null;
@@ -296,4 +296,140 @@ export function getSuggestedQuestions(ctx: CopilotContext): string[] {
     "What should I learn next?",
     "How do I negotiate a promotion?",
   ];
+}
+
+// ─── LLM system prompt builder ────────────────────────────────────────────────
+// Serialises HybridResult into a compact structured block for the LLM.
+// Keeps token count low: top 3 dimensions, top action, escape path, key fields.
+export function buildCopilotSystemPrompt(ctx: CopilotContext): string {
+  const hr = ctx.hybridResult;
+  const profile = ctx.userProfile;
+
+  const lines: string[] = [
+    'You are a Career Copilot embedded in HumanProof, an AI career protection system.',
+    'The user is asking questions about their career situation.',
+    'Answer specifically and concisely, citing actual numbers from their data.',
+    'End every response with a relevant tool recommendation on a new line starting with "→ Tool:".',
+    '',
+    '=== USER CAREER DATA ===',
+  ];
+
+  if (hr) {
+    lines.push(`Risk Score: ${Math.round(hr.total ?? 0)}/100 (${hr.total >= 70 ? 'HIGH' : hr.total >= 40 ? 'MODERATE' : 'LOW'} risk)`);
+    if (hr.companyName) lines.push(`Company: ${hr.companyName}`);
+    lines.push(`Confidence: ${Math.round((hr as any).confidencePercent ?? 0)}%`);
+
+    const topDims = [...(hr.dimensions ?? [])]
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .slice(0, 3);
+    if (topDims.length) {
+      lines.push(`Top Risk Dimensions: ${topDims.map(d => `${d.label ?? d.key} ${Math.round(d.score ?? 0)}/100`).join(', ')}`);
+    }
+
+    const topAction = (hr as any).actionItems?.[0] ?? (hr as any).immediateActions?.[0] ?? (hr as any).recommendations?.[0];
+    if (topAction) {
+      lines.push(`Top Action: ${topAction.title ?? topAction.action ?? 'See action plan'} (${topAction.effort ?? 'moderate'} effort)`);
+    }
+
+    const topPath = hr.escapePaths?.paths?.[0];
+    if (topPath) {
+      lines.push(`Top Escape Path: ${topPath.title} — ${topPath.effort} effort, ${topPath.timeToImpact} to impact`);
+    }
+
+    const runway = hr.financialRunway?.runwayMonths;
+    if (runway != null) lines.push(`Financial Runway: ${runway} months`);
+
+    const velocity = (hr as any).trajectoryPtsPerMonth ?? (hr as any).scoreTrajectory?.velocityPtsPerMonth;
+    if (velocity != null) lines.push(`Score Velocity: ${velocity > 0 ? '+' : ''}${velocity.toFixed(1)} pts/month`);
+  } else {
+    lines.push('No audit data available yet — user has not run their first audit.');
+  }
+
+  if (profile) {
+    const parts: string[] = [];
+    if (profile.jobTitle) parts.push(`Role: ${profile.jobTitle}`);
+    if (profile.yearsExperience) parts.push(`Experience: ${profile.yearsExperience} yrs`);
+    if (profile.metro) parts.push(`Location: ${profile.metro}`);
+    if (profile.visaStatus && profile.visaStatus !== 'citizen') parts.push(`Visa: ${profile.visaStatus}`);
+    if (parts.length) lines.push(`Profile: ${parts.join(' | ')}`);
+  }
+
+  lines.push('=== END USER DATA ===');
+  return lines.join('\n');
+}
+
+// ─── LLM-powered answer ───────────────────────────────────────────────────────
+// Calls llm-analyze EF with copilotMode flag and conversation history.
+// Falls back to deterministic answerQuestion() on any failure.
+export async function answerWithLLM(
+  messages: Array<{ role: 'user' | 'copilot'; text: string }>,
+  ctx: CopilotContext,
+  userId: string,
+): Promise<CopilotResponse> {
+  try {
+    const systemContext = buildCopilotSystemPrompt(ctx);
+
+    // Format conversation history for the LLM (last 8 turns max to stay within token budget)
+    const history = messages.slice(-8).map(m => ({
+      role: m.role === 'copilot' ? 'assistant' : 'user',
+      content: m.text,
+    }));
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) throw new Error('No auth token');
+
+    const supabaseUrl = (supabase as any).supabaseUrl as string;
+    const efUrl = `${supabaseUrl}/functions/v1/llm-analyze`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    let res: Response;
+    try {
+      res = await fetch(efUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          copilotMode: true,
+          systemContext,
+          conversationHistory: history,
+          userId,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!res.ok) throw new Error(`EF HTTP ${res.status}`);
+    const data = await res.json() as Record<string, unknown>;
+
+    const reply = (data.reply as string) ?? (data.synthesis as string) ?? '';
+    if (!reply) throw new Error('Empty reply from EF');
+
+    // Detect which tool to recommend from the reply text
+    const replyLower = reply.toLowerCase();
+    const toolCard = replyLower.includes('layoff defense') ? { toolName: 'Layoff Defense Center', toolRoute: '/tools/layoff-defense', emoji: '🛡️' }
+      : replyLower.includes('compensation') ? { toolName: 'Compensation Intelligence', toolRoute: '/tools/compensation', emoji: '💰' }
+      : replyLower.includes('ai defense') || replyLower.includes('ai career') ? { toolName: 'AI Career Defense', toolRoute: '/tools/ai-defense', emoji: '🤖' }
+      : replyLower.includes('strategy') ? { toolName: 'Career Strategy Studio', toolRoute: '/tools/strategy', emoji: '🧭' }
+      : replyLower.includes('networking') ? { toolName: 'Networking OS', toolRoute: '/tools/networking', emoji: '🔗' }
+      : replyLower.includes('career insurance') ? { toolName: 'Career Insurance Center', toolRoute: '/tools/career-insurance', emoji: '🔐' }
+      : undefined;
+
+    return {
+      text: reply,
+      toolCard,
+      intent: 'llm',
+      confidence: 'high',
+    };
+  } catch {
+    // Deterministic fallback — always works, no network required
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    return answerQuestion(lastUserMsg?.text ?? '', ctx);
+  }
 }

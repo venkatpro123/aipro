@@ -104,6 +104,8 @@ import { hydrateSwarmCache } from "../../services/swarm/swarmCache";
 interface Props {
   /** Optional: passed from ToolsPage so action plan links can switch tabs */
   onSwitchTab?: (tabId: string) => void;
+  /** Optional: called after the reveal animation completes (used by onboarding flow to navigate to /os) */
+  onAfterReveal?: () => void;
 }
 
 // ── Helper: derive experience bracket from tenure years ───────────────────────
@@ -200,7 +202,7 @@ function resolveUserMarketRegion(
   return companyRegion ?? undefined;
 }
 
-export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
+export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile, profileVersion } = useHumanProof();
   // Wave 9.4: detect slow connections / low-end devices to reduce animation cost
@@ -2037,7 +2039,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             ?? (state.scoreResult as any).actions?.[0]?.title}
           firstActionEffort={(state.scoreResult as any).immediateActions?.[0]?.effort
             ?? (state.scoreResult as any).topActions?.[0]?.timeEstimate}
-          onRevealComplete={() => setRevealActive(false)}
+          onRevealComplete={() => { setRevealActive(false); onAfterReveal?.(); }}
         />
       )}
 

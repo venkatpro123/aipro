@@ -1,6 +1,6 @@
-// useCopilot.ts — Conversation state management for Career Copilot
-import { useState, useCallback, useEffect } from 'react';
-import { answerQuestion, getSuggestedQuestions } from '../services/copilotService';
+// useCopilot.ts — Conversation state + LLM-powered answers with deterministic fallback
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { answerQuestion, answerWithLLM, getSuggestedQuestions } from '../services/copilotService';
 import type { CopilotContext } from '../services/copilotService';
 
 export interface CopilotMessage {
@@ -33,14 +33,19 @@ function saveSessionMessages(msgs: CopilotMessage[]) {
   }
 }
 
-export function useCopilot(ctx: CopilotContext) {
+export function useCopilot(ctx: CopilotContext, userId?: string) {
   const [messages, setMessages] = useState<CopilotMessage[]>(loadSessionMessages);
   const [isThinking, setIsThinking] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>(() => getSuggestedQuestions(ctx));
 
-  // Update suggestions when context changes (e.g. after audit)
+  // Keep a ref to the latest messages so sendMessage can read history without
+  // being a stale closure — avoids setMessages hacks
+  const messagesRef = useRef<CopilotMessage[]>(messages);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+
   useEffect(() => {
     setSuggestions(getSuggestedQuestions(ctx));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx.hybridResult?.total]);
 
   const sendMessage = useCallback(async (text: string) => {
@@ -52,7 +57,6 @@ export function useCopilot(ctx: CopilotContext) {
       text: text.trim(),
       timestamp: Date.now(),
     };
-
     const thinkingMsg: CopilotMessage = {
       id: `t-${Date.now()}`,
       role: 'copilot',
@@ -61,15 +65,21 @@ export function useCopilot(ctx: CopilotContext) {
       isThinking: true,
     };
 
-    const withUser = (prev: CopilotMessage[]) => [...prev, userMsg, thinkingMsg];
-    setMessages(withUser);
+    setMessages(prev => [...prev, userMsg, thinkingMsg]);
     setIsThinking(true);
 
-    // Simulate brief thinking delay (250–600ms) so it doesn't feel instantaneous
-    const delay = 250 + Math.random() * 350;
-    await new Promise(r => setTimeout(r, delay));
+    // Build conversation history from the ref (includes new userMsg, excludes thinking)
+    const history = [...messagesRef.current, userMsg]
+      .filter(m => !m.isThinking)
+      .map(m => ({ role: m.role as 'user' | 'copilot', text: m.text }));
 
-    const response = answerQuestion(text, ctx);
+    let response;
+    if (userId) {
+      response = await answerWithLLM(history, ctx, userId);
+    } else {
+      await new Promise(r => setTimeout(r, 300 + Math.random() * 300));
+      response = answerQuestion(text, ctx);
+    }
 
     const copilotMsg: CopilotMessage = {
       id: `c-${Date.now()}`,
@@ -87,7 +97,8 @@ export function useCopilot(ctx: CopilotContext) {
       return updated;
     });
     setIsThinking(false);
-  }, [ctx, isThinking]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx, isThinking, userId]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

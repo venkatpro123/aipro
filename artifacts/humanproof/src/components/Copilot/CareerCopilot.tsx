@@ -28,7 +28,7 @@ export function CareerCopilot() {
     userProfile,
   };
 
-  const { messages, isThinking, suggestions, sendMessage, clearMessages, sendSuggestion } = useCopilot(ctx);
+  const { messages, isThinking, suggestions, sendMessage, clearMessages, sendSuggestion } = useCopilot(ctx, user?.id);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -107,20 +107,32 @@ export function CareerCopilot() {
       </div>
 
       {/* Suggestion chips — shown only when few messages */}
-      {(isEmpty || messages.length <= 3) && (
-        <div style={{ padding: '12px 0', flexShrink: 0 }}>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Suggested questions
+      {(isEmpty || messages.length <= 4) && (() => {
+        const lastCopilotMsg = [...messages].reverse().find(m => m.role === 'copilot' && !m.isThinking);
+        const lastIntent = lastCopilotMsg?.intent;
+        const label = lastIntent && lastIntent !== 'llm' && lastIntent !== 'fallback'
+          ? 'Follow-up questions'
+          : 'Suggested questions';
+        return (
+          <div style={{ padding: '12px 0', flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 600, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {label}
+            </div>
+            <CopilotSuggestions
+              suggestions={suggestions}
+              onSelect={sendSuggestion}
+              disabled={isThinking}
+              lastIntent={lastIntent}
+            />
           </div>
-          <CopilotSuggestions suggestions={suggestions} onSelect={sendSuggestion} disabled={isThinking} />
-        </div>
-      )}
+        );
+      })()}
 
       {/* Input */}
       <div style={{ flexShrink: 0, paddingTop: 8 }}>
         <CopilotInput onSend={sendMessage} disabled={isThinking} />
         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', textAlign: 'center', marginTop: 8 }}>
-          Answers are based on your audit data · Conversation clears on page refresh
+          Powered by your live career data · Session memory preserved
         </div>
       </div>
     </div>

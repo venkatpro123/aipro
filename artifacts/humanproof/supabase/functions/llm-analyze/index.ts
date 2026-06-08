@@ -212,6 +212,48 @@ serve(async (req: Request) => {
   try { body = await req.json(); }
   catch { return errJson('Invalid JSON body', 400); }
 
+  // ── Copilot mode branch ────────────────────────────────────────────────────
+  if (body.copilotMode === true) {
+    const systemContext      = (body.systemContext      as string) ?? '';
+    const conversationHistory = (body.conversationHistory as Array<{ role: string; content: string }>) ?? [];
+
+    const copilotSystem = `You are a Career Copilot embedded in HumanProof, an AI career protection system.
+Answer the user's question specifically and concisely, citing actual numbers from their career data.
+Be direct and actionable — 2–4 sentences max.
+End your response with a relevant tool recommendation on a new line starting with "→ Tool: [Tool Name]".
+Never fabricate statistics. If data is missing, say so honestly.
+
+${systemContext}`;
+
+    const messages = conversationHistory.map((m: { role: string; content: string }) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }));
+
+    // Build prompt for single-message models (DeepSeek / Groq via system+last-user)
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    const copilotUserMsg = lastUser?.content ?? 'What should I know about my career situation?';
+
+    let copilotResult: { text: string; model: string } | null = null;
+
+    if (deepseekKey) {
+      copilotResult = await callDeepSeek(deepseekKey, copilotSystem, copilotUserMsg);
+    }
+    if (!copilotResult && geminiKey) {
+      copilotResult = await callGemini(geminiKey, copilotSystem, copilotUserMsg);
+    }
+    if (!copilotResult && groqKey) {
+      copilotResult = await callGroq(groqKey, copilotSystem, copilotUserMsg);
+    }
+
+    if (!copilotResult) return errJson('All AI providers failed for copilot mode', 502);
+
+    return new Response(
+      JSON.stringify({ reply: copilotResult.text, model: copilotResult.model }),
+      { headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+    );
+  }
+
   const {
     companyName        = 'Unknown company',
     roleTitle          = 'Unknown role',
