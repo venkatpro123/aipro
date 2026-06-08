@@ -1,4 +1,4 @@
-// CareerHistoryPanel.tsx — Career timeline with decision recorder
+// CareerHistoryPanel.tsx — Career timeline with decision recorder + ROI accuracy
 import { useState, useEffect, useCallback } from 'react';
 import { PlusCircle, Award } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
@@ -7,6 +7,7 @@ import { getCareerTimeline } from '../../../services/careerMemoryService';
 import { CareerTimelineView } from '../../CareerMemory/CareerTimelineView';
 import { CareerDecisionRecorder } from '../../CareerMemory/CareerDecisionRecorder';
 import { CareerOutcomeRecorder } from '../../CareerMemory/CareerOutcomeRecorder';
+import { RecommendationAccuracyCard } from '../../Feedback/RecommendationAccuracyCard';
 import type { TimelineEvent } from '../../../services/careerMemoryService';
 import type { HybridResult } from '../../../types/hybridResult';
 
@@ -100,6 +101,13 @@ export function CareerHistoryPanel() {
       <div className="card-premium" style={{ padding: '20px' }}>
         <CareerTimelineView events={events} loading={loading} />
       </div>
+
+      {/* Action ROI accuracy */}
+      {!loading && events.filter(e => e.type === 'audit').length >= 2 && (
+        <div className="card-premium" style={{ padding: '20px' }}>
+          <RecommendationAccuracyCard />
+        </div>
+      )}
 
       {/* Hint */}
       {!loading && events.length > 0 && (

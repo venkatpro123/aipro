@@ -7,6 +7,7 @@ import { TodaysMissionWidget } from "./TodaysMissionWidget";
 import { MonitoringFeedWidget } from "./MonitoringFeedWidget";
 import { RecommendedToolWidget } from "./RecommendedToolWidget";
 import { CareerMemorySummaryCard } from "../CareerMemory/CareerMemorySummaryCard";
+import { FeedbackSummaryPanel } from "../Feedback/FeedbackSummaryPanel";
 
 const containerVariants = {
   hidden: {},
@@ -79,6 +80,16 @@ export function CareerOSHome() {
 
         {/* Career Memory summary */}
         <CareerMemorySummaryCard />
+
+        {/* Feedback summary — pending thumbs prompts + ROI */}
+        <div style={{ gridColumn: "1 / -1" }}>
+          <div className="card-premium" style={{ padding: "20px 22px" }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 14 }}>
+              Action Feedback &amp; ROI
+            </div>
+            <FeedbackSummaryPanel compact />
+          </div>
+        </div>
       </motion.div>
 
       {/* Quick nav strip */}

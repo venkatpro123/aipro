@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { LearningOutcomeTracker } from "../components/Feedback/LearningOutcomeTracker";
 
 // Fallback resources when API is unavailable (expanded 50+ courses)
 const FALLBACK_RESOURCES: Resource[] = [
@@ -631,6 +632,7 @@ export const LearningHubPage: React.FC = () => {
     null,
   );
   const [generating, setGenerating] = useState(false);
+  const [outcomeModal, setOutcomeModal] = useState<{ courseId: string; courseTitle: string } | null>(null);
   const [generateError, setGenerateError] = useState("");
 
   const urlRoleKey = location.state?.roleKey || "";
@@ -714,6 +716,11 @@ export const LearningHubPage: React.FC = () => {
         ...v,
         [resourceId]: { ...v[resourceId], status: current ?? "not_started" },
       }));
+    }
+    // Trigger outcome tracker when newly marking as complete
+    if (newStatus === "completed") {
+      const res = resources.find(r => r.id === resourceId);
+      setOutcomeModal({ courseId: resourceId, courseTitle: res?.title ?? resourceId });
     }
   };
 
@@ -1029,6 +1036,17 @@ export const LearningHubPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Learning outcome tracker modal — fires when a course is marked complete */}
+      {outcomeModal && (
+        <LearningOutcomeTracker
+          open={!!outcomeModal}
+          onClose={() => setOutcomeModal(null)}
+          courseId={outcomeModal.courseId}
+          courseTitle={outcomeModal.courseTitle}
+          onSaved={() => setOutcomeModal(null)}
+        />
+      )}
     </div>
   );
 };
