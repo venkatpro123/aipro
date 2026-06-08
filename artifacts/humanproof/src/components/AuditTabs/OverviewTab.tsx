@@ -5,6 +5,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { PersonalizedPredictionPanel } from "../Intelligence/PersonalizedPredictionPanel";
 import {
   Shield, AlertTriangle, Zap, Clock, ShieldCheck, Activity,
   ThumbsUp, ThumbsDown, ArrowRight, AlertCircle, Info,
@@ -2861,6 +2862,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               Pulse New Audit
             </button>
           )}
+        </div>
+
+        {/* Phase 9: 90-day personalized forecast */}
+        <div className="mt-6 pt-6 border-t border-white/5">
+          <PersonalizedPredictionPanel inline />
         </div>
 
         {/* Prediction Feedback */}

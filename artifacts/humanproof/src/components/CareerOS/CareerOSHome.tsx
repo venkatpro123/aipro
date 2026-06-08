@@ -8,6 +8,12 @@ import { MonitoringFeedWidget } from "./MonitoringFeedWidget";
 import { RecommendedToolWidget } from "./RecommendedToolWidget";
 import { CareerMemorySummaryCard } from "../CareerMemory/CareerMemorySummaryCard";
 import { FeedbackSummaryPanel } from "../Feedback/FeedbackSummaryPanel";
+// Phase 9 — Intelligence Amplification
+import { WeeklyCareerBriefCard } from "../Intelligence/WeeklyCareerBriefCard";
+import { CareerMomentAlert } from "../Intelligence/CareerMomentAlert";
+import { CareerHealthScoreWidget } from "../Intelligence/CareerHealthScoreWidget";
+import { PersonalizedPredictionPanel } from "../Intelligence/PersonalizedPredictionPanel";
+import { PeerComparisonInsight } from "../Intelligence/PeerComparisonInsight";
 
 const containerVariants = {
   hidden: {},
@@ -63,6 +69,12 @@ export function CareerOSHome() {
           gap: 16,
         }}
       >
+        {/* Phase 9: Career moment banners — full-width, top of grid */}
+        <CareerMomentAlert />
+
+        {/* Phase 9: Weekly brief — Monday only / critical signals */}
+        <WeeklyCareerBriefCard />
+
         {/* Row 1: Risk + Strength + Threat */}
         <CareerRiskWidget />
         <CareerStrengthWidget />
@@ -72,6 +84,15 @@ export function CareerOSHome() {
         <BiggestOpportunityWidget />
         <TodaysMissionWidget />
         <RecommendedToolWidget />
+
+        {/* Phase 9: Career Health Score widget */}
+        <CareerHealthScoreWidget />
+
+        {/* Phase 9: 90-day prediction */}
+        <PersonalizedPredictionPanel />
+
+        {/* Phase 9: Peer comparison */}
+        <PeerComparisonInsight />
 
         {/* Full-width monitoring feed */}
         <div style={{ gridColumn: "1 / -1" }}>
