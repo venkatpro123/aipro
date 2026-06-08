@@ -58,6 +58,8 @@ const PredictionLedgerPage = lazy(() => import("./pages/PredictionLedgerPage"));
 const CommunityIntelligencePage = lazy(() => import("./pages/CommunityIntelligencePage"));
 const CertificationPage = lazy(() => import("./pages/CertificationPage"));
 const IntelligenceReportPage = lazy(() => import("./pages/IntelligenceReportPage"));
+const CareerOSPage = lazy(() => import("./pages/CareerOSPage"));
+const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
@@ -146,21 +148,24 @@ function NavigationBridge() {
 // Other routes (/intelligence, /safe-careers, /learning-hub, /certification)
 // remain accessible via direct URL but are no longer surfaced in the nav.
 const NAV_ITEMS = [
+  { to: "/os",          label: "Career OS"    },
+  { to: "/monitor",     label: "Monitor"      },
   { to: "/terminal",    label: "Layoff Audit" },
   { to: "/leaderboard", label: "Risk Oracle"  },
 ];
 
 const MOBILE_PRIMARY = [
-  { to: "/terminal",    label: "Layoff Audit", Icon: LayoutDashboard },
-  { to: "/leaderboard", label: "Risk Oracle",  Icon: TrendingUp      },
+  { to: "/os",          label: "Home",        Icon: Sparkles        },
+  { to: "/monitor",     label: "Monitor",     Icon: TrendingUp      },
+  { to: "/terminal",    label: "Audit",       Icon: LayoutDashboard },
+  { to: "/settings",    label: "Profile",     Icon: Award           },
 ];
 
 // Secondary nav items — appear in the "More" slide-up sheet.
-// Adding these surfaces pages that were previously only reachable via direct URL on mobile.
 const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [
-  { to: "/safe-careers",  label: "Safe Careers",  Icon: ShieldCheck    },
-  { to: "/learning-hub",  label: "Learning Hub",  Icon: GraduationCap  },
-  { to: "/settings",      label: "Settings",      Icon: Settings       },
+  { to: "/safe-careers",  label: "Safe Careers",  Icon: ShieldCheck   },
+  { to: "/learning-hub",  label: "Learning Hub",  Icon: GraduationCap },
+  { to: "/settings",      label: "Settings",      Icon: Settings      },
 ];
 
 function useIsActive() {
@@ -694,14 +699,22 @@ function AppFooter() {
 
 // Routes where the global mobile bottom nav should be hidden because the
 // feature has its own dedicated tab bar (LayoffAuditDashboardV3, etc.)
-const FEATURE_ROUTES = ['/terminal', '/leaderboard'];
+const FEATURE_ROUTES = ['/terminal', '/leaderboard', '/os', '/monitor'];
 
 // ─── Main App Content ─────────────────────────────────────────────────────────
 function AppContent() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const location  = useLocation();
+  const navigate  = useNavigate();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
+
+  // Authenticated users land on the Career OS command center instead of the marketing page
+  useEffect(() => {
+    if (!authLoading && user && location.pathname === "/") {
+      navigate("/os", { replace: true });
+    }
+  }, [authLoading, user, location.pathname, navigate]);
 
   // Hide global nav on feature pages so we don't stack two bottom bars
   const isFeaturePage = FEATURE_ROUTES.some(
@@ -778,6 +791,8 @@ function AppContent() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/"                              element={<HomePage />} />
+              <Route path="/os"                            element={<CareerOSPage />} />
+              <Route path="/monitor"                       element={<MonitoringPage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
               <Route path="/safe-careers"                  element={<SafeCareersPage />} />

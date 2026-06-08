@@ -1,0 +1,176 @@
+import { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, Circle, Target, Loader2 } from "lucide-react";
+import { supabase } from "../../utils/supabase";
+import { useLayoff } from "../../context/LayoffContext";
+import type { HybridResult } from "../../types/hybridResult";
+
+interface MissionAction {
+  id: string;
+  title: string;
+  effort: string;
+  priority: number;
+}
+
+function extractTopAction(scoreResult: HybridResult | null): MissionAction | null {
+  if (!scoreResult) return null;
+  const actions = (scoreResult as any).actionItems as Array<{
+    id?: string; actionId?: string; title?: string; action?: string;
+    effort?: string; priority?: number;
+  }> | null;
+  if (!actions || actions.length === 0) return null;
+  // Sort by priority descending, take first
+  const sorted = [...actions].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+  const top = sorted[0];
+  return {
+    id: top.id ?? top.actionId ?? "mission-0",
+    title: top.title ?? top.action ?? "Complete priority action",
+    effort: top.effort ?? "Medium",
+    priority: top.priority ?? 50,
+  };
+}
+
+export function TodaysMissionWidget() {
+  const { state } = useLayoff();
+  const [completed, setCompleted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [checkedDB, setCheckedDB] = useState(false);
+
+  const action = extractTopAction(state.scoreResult as HybridResult | null);
+
+  const checkCompletion = useCallback(async () => {
+    if (!action) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setCheckedDB(true); return; }
+      const { data } = await supabase
+        .from("action_completions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("action_id", action.id)
+        .maybeSingle();
+      if (data) setCompleted(true);
+    } catch { /* offline or unauthed */ }
+    setCheckedDB(true);
+  }, [action]);
+
+  useEffect(() => { checkCompletion(); }, [checkCompletion]);
+
+  const toggleCompletion = async () => {
+    if (!action || loading) return;
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCompleted(c => !c);
+        setLoading(false);
+        return;
+      }
+      if (!completed) {
+        await supabase.from("action_completions").upsert({
+          user_id: user.id,
+          action_id: action.id,
+          completed_at: new Date().toISOString(),
+        }, { onConflict: "user_id,action_id" });
+        setCompleted(true);
+      } else {
+        await supabase.from("action_completions")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("action_id", action.id);
+        setCompleted(false);
+      }
+    } catch { /* offline — optimistic toggle */ setCompleted(c => !c); }
+    setLoading(false);
+  };
+
+  if (!action) {
+    return (
+      <motion.div
+        className="card-premium"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.32 }}
+        style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12, minHeight: 160, justifyContent: "center", alignItems: "center", textAlign: "center" }}
+      >
+        <Target size={24} style={{ color: "var(--text-3)" }} />
+        <div style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>
+          No mission yet — run your first audit to get today's action
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="card-premium"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.32 }}
+      style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="label-xs" style={{ color: "var(--text-3)" }}>TODAY'S MISSION</div>
+        <Target size={16} style={{ color: "var(--cyan)" }} />
+      </div>
+
+      <div
+        onClick={toggleCompletion}
+        style={{
+          display: "flex", gap: 12, alignItems: "flex-start", cursor: "pointer",
+          opacity: checkedDB ? 1 : 0.6, transition: "opacity 200ms",
+        }}
+        role="button"
+        aria-pressed={completed}
+      >
+        <div style={{ flexShrink: 0, marginTop: 1 }}>
+          {loading ? (
+            <Loader2 size={20} style={{ color: "var(--cyan)", animation: "spin 1s linear infinite" }} />
+          ) : completed ? (
+            <CheckCircle2 size={20} style={{ color: "#10b981" }} />
+          ) : (
+            <Circle size={20} style={{ color: "var(--text-3)" }} />
+          )}
+        </div>
+        <div>
+          <div style={{
+            fontWeight: 600, fontSize: "0.92rem", color: "var(--text)",
+            textDecoration: completed ? "line-through" : "none",
+            opacity: completed ? 0.5 : 1, lineHeight: 1.4,
+          }}>
+            {action.title}
+          </div>
+          <div style={{ marginTop: 4, display: "flex", gap: 6 }}>
+            <span style={{
+              padding: "1px 7px", borderRadius: 5, fontSize: "0.7rem", fontWeight: 600,
+              background: "rgba(0,245,255,0.08)", border: "1px solid rgba(0,245,255,0.2)",
+              color: "var(--cyan)",
+            }}>
+              {action.effort} effort
+            </span>
+            <span style={{
+              padding: "1px 7px", borderRadius: 5, fontSize: "0.7rem", fontWeight: 600,
+              background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+              color: "var(--text-3)",
+            }}>
+              Priority {action.priority}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {completed && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{
+            background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)",
+            borderRadius: 8, padding: "8px 12px", fontSize: "0.78rem", color: "#10b981", fontWeight: 600,
+          }}
+        >
+          ✓ Mission complete — great work! Check back tomorrow for your next action.
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
