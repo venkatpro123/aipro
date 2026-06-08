@@ -7485,3 +7485,9 @@ number-flow,
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Auth page responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .auth-left-panel, .auth-page-left { display: none !important; }
+  .auth-mobile-logo { display: flex !important; }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+﻿import { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   BrowserRouter as Router,
@@ -74,6 +74,7 @@ const OpportunityRadarPage = lazy(() => import("./pages/tools/OpportunityRadarPa
 const CareerTwinPage = lazy(() => import("./pages/tools/CareerTwinPage"));
 const CopilotPage = lazy(() => import("./pages/CopilotPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
@@ -83,6 +84,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { digestAPI } from "./utils/apiClient";
 import { useAuth } from "./context/AuthContext";
 import { AuthModal } from "./components/AuthModal";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ToastProvider } from "./components/Toast";
 import { RealtimeSignalToast } from "./components/audit/RealtimeSignalToast";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
@@ -816,20 +818,21 @@ function AppContent() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/"                              element={<HomePage />} />
-              <Route path="/os"                            element={<CareerOSPage />} />
-              <Route path="/monitor"                       element={<MonitoringPage />} />
-              <Route path="/copilot"                       element={<CopilotPage />} />
-              <Route path="/tools"                         element={<ToolsHubPage />} />
-              <Route path="/tools/layoff-defense"          element={<LayoffDefensePage />} />
-              <Route path="/tools/ai-defense"              element={<AICareerDefensePage />} />
-              <Route path="/tools/career-readiness"        element={<CareerReadinessPage />} />
-              <Route path="/tools/career-insurance"        element={<CareerInsurancePage />} />
-              <Route path="/tools/market-intel"            element={<MarketIntelligencePage />} />
-              <Route path="/tools/networking"              element={<NetworkingOSPage />} />
-              <Route path="/tools/compensation"            element={<CompensationPage />} />
-              <Route path="/tools/strategy"               element={<CareerStrategyPage />} />
-              <Route path="/tools/opportunity-radar"      element={<OpportunityRadarPage />} />
-              <Route path="/tools/career-twin"            element={<CareerTwinPage />} />
+              <Route path="/os"                            element={<ProtectedRoute><CareerOSPage /></ProtectedRoute>} />
+              <Route path="/monitor"                       element={<ProtectedRoute><MonitoringPage /></ProtectedRoute>} />
+              <Route path="/copilot"                       element={<ProtectedRoute><CopilotPage /></ProtectedRoute>} />
+              <Route path="/tools"                         element={<ProtectedRoute><ToolsHubPage /></ProtectedRoute>} />
+              <Route path="/tools/layoff-defense"          element={<ProtectedRoute><LayoffDefensePage /></ProtectedRoute>} />
+              <Route path="/tools/ai-defense"              element={<ProtectedRoute><AICareerDefensePage /></ProtectedRoute>} />
+              <Route path="/tools/career-readiness"        element={<ProtectedRoute><CareerReadinessPage /></ProtectedRoute>} />
+              <Route path="/tools/career-insurance"        element={<ProtectedRoute><CareerInsurancePage /></ProtectedRoute>} />
+              <Route path="/tools/market-intel"            element={<ProtectedRoute><MarketIntelligencePage /></ProtectedRoute>} />
+              <Route path="/tools/networking"              element={<ProtectedRoute><NetworkingOSPage /></ProtectedRoute>} />
+              <Route path="/tools/compensation"            element={<ProtectedRoute><CompensationPage /></ProtectedRoute>} />
+              <Route path="/tools/strategy"               element={<ProtectedRoute><CareerStrategyPage /></ProtectedRoute>} />
+              <Route path="/tools/opportunity-radar"      element={<ProtectedRoute><OpportunityRadarPage /></ProtectedRoute>} />
+              <Route path="/tools/career-twin"            element={<ProtectedRoute><CareerTwinPage /></ProtectedRoute>} />
+              <Route path="/auth"                           element={<AuthPage />} />
               <Route path="/onboarding"                    element={<OnboardingPage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
@@ -904,3 +907,4 @@ function App() {
 }
 
 export default App;
+
