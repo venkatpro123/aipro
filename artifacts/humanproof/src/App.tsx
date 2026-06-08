@@ -60,6 +60,12 @@ const CertificationPage = lazy(() => import("./pages/CertificationPage"));
 const IntelligenceReportPage = lazy(() => import("./pages/IntelligenceReportPage"));
 const CareerOSPage = lazy(() => import("./pages/CareerOSPage"));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
+const ToolsHubPage = lazy(() => import("./pages/ToolsHubPage"));
+const LayoffDefensePage = lazy(() => import("./pages/tools/LayoffDefensePage"));
+const AICareerDefensePage = lazy(() => import("./pages/tools/AICareerDefensePage"));
+const CareerReadinessPage = lazy(() => import("./pages/tools/CareerReadinessPage"));
+const CareerInsurancePage = lazy(() => import("./pages/tools/CareerInsurancePage"));
+const MarketIntelligencePage = lazy(() => import("./pages/tools/MarketIntelligencePage"));
 
 // Context & Components
 import { HumanProofProvider } from "./context/HumanProofContext";
@@ -150,6 +156,7 @@ function NavigationBridge() {
 const NAV_ITEMS = [
   { to: "/os",          label: "Career OS"    },
   { to: "/monitor",     label: "Monitor"      },
+  { to: "/tools",       label: "Tools"        },
   { to: "/terminal",    label: "Layoff Audit" },
   { to: "/leaderboard", label: "Risk Oracle"  },
 ];
@@ -699,7 +706,7 @@ function AppFooter() {
 
 // Routes where the global mobile bottom nav should be hidden because the
 // feature has its own dedicated tab bar (LayoffAuditDashboardV3, etc.)
-const FEATURE_ROUTES = ['/terminal', '/leaderboard', '/os', '/monitor'];
+const FEATURE_ROUTES = ['/terminal', '/leaderboard', '/os', '/monitor', '/tools'];
 
 // ─── Main App Content ─────────────────────────────────────────────────────────
 function AppContent() {
@@ -793,6 +800,12 @@ function AppContent() {
               <Route path="/"                              element={<HomePage />} />
               <Route path="/os"                            element={<CareerOSPage />} />
               <Route path="/monitor"                       element={<MonitoringPage />} />
+              <Route path="/tools"                         element={<ToolsHubPage />} />
+              <Route path="/tools/layoff-defense"          element={<LayoffDefensePage />} />
+              <Route path="/tools/ai-defense"              element={<AICareerDefensePage />} />
+              <Route path="/tools/career-readiness"        element={<CareerReadinessPage />} />
+              <Route path="/tools/career-insurance"        element={<CareerInsurancePage />} />
+              <Route path="/tools/market-intel"            element={<MarketIntelligencePage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
               <Route path="/terminal"                      element={<ToolsPage />} />
               <Route path="/safe-careers"                  element={<SafeCareersPage />} />
