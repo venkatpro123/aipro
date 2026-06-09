@@ -1,194 +1,543 @@
+// CareerOSHome.tsx — AI Career Command Center
+// Architecture: OBSERVE → UNDERSTAND → DECIDE → ACT within 15 seconds
+// Rule: Show what changed, not what is. Route to tools, never report.
+
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { useLayoff } from "../../context/LayoffContext";
 import { computeProfileCompleteness, completenessColor } from "../../services/profileCompletenessEngine";
 import { fetchUserProfile } from "../../services/userProfileService";
 import { getCareerMemorySummary } from "../../services/careerMemoryService";
 import { useAuth } from "../../context/AuthContext";
-import { CareerRiskWidget } from "./CareerRiskWidget";
-import { BiggestThreatWidget } from "./BiggestThreatWidget";
-import { BiggestOpportunityWidget } from "./BiggestOpportunityWidget";
-import { MonitoringFeedWidget } from "./MonitoringFeedWidget";
-import { RecommendedToolWidget } from "./RecommendedToolWidget";
-import { AIAmplificationWidget } from "./AIAmplificationWidget";
-import { TodaysIntelligenceBrief } from "./TodaysIntelligenceBrief";
-import { CareerMemorySummaryCard } from "../CareerMemory/CareerMemorySummaryCard";
-import { FeedbackSummaryPanel } from "../Feedback/FeedbackSummaryPanel";
-import { CareerHealthScoreWidget } from "../Intelligence/CareerHealthScoreWidget";
-import { PersonalizedPredictionPanel } from "../Intelligence/PersonalizedPredictionPanel";
-import { WeeklyCareerBriefCard } from "../Intelligence/WeeklyCareerBriefCard";
-import { CareerMomentAlert } from "../Intelligence/CareerMomentAlert";
-import { ReAuditPromptCard } from "../Intelligence/ReAuditPromptCard";
-import { FiveYearArcPanel } from "./FiveYearArcPanel";
-import { OutcomeInsightPanel } from "./OutcomeInsightPanel";
+import { MissionCard } from "./MissionCard";
+import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
 import { detectAdaptationTriggers, type AdaptationTrigger } from "../../services/adaptationTriggerService";
 import { useAutopilotAlerts } from "../../hooks/useAutopilotAlerts";
 import { syncTwinFromProfile } from "../../services/careerTwinService";
-import { ProgressTrackerWidget } from "./ProgressTrackerWidget";
-import { MissionCard } from "./MissionCard";
-import { EarlyWarningStrip } from "./EarlyWarningStrip";
-import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
-import { CareerResultsPanel } from "./CareerResultsPanel";
-import { QuickFeedbackBanner } from "./QuickFeedbackBanner";
-import { FeedbackLoopStatus } from "./FeedbackLoopStatus";
-import { RecordOutcomeModal } from "./RecordOutcomeModal";
-import { AdaptationLoopStatus } from "./AdaptationLoopStatus";
-import { CareerGraphInsights } from "./CareerGraphInsights";
 import { orchestrate } from "../../services/orchestration/signalOrchestrator";
 import { getCohortOutcomeStats, tenureBandFromYears } from "../../services/cohortOutcomesAggregator";
 import { getActionFeedbackBoosts } from "../../services/feedbackEngine";
 import type { HybridResult } from "../../types/hybridResult";
 import type { UserProfile } from "../../services/userProfileService";
 
-// ─── Animation variants ───────────────────────────────────────────────────────
+// ─── Animation variants ────────────────────────────────────────────────────────
 
 const containerVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
+  visible: { transition: { staggerChildren: 0.07 } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.32 } },
 };
 
-// ─── Section label ────────────────────────────────────────────────────────────
+// ─── Pure helpers ──────────────────────────────────────────────────────────────
+
+function formatTodayDate(): string {
+  return new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+function formatLastUpdated(calcAt: string | null | undefined): string | null {
+  if (!calcAt) return null;
+  const ms = Date.now() - new Date(calcAt).getTime();
+  const d = Math.floor(ms / 86_400_000);
+  const h = Math.floor(ms / 3_600_000);
+  if (d >= 2) return `${d} days ago`;
+  if (d === 1) return "yesterday";
+  if (h >= 1) return `${h}h ago`;
+  return "just now";
+}
+
+interface ToolRec { label: string; to: string; icon: string; reason: string; urgent: boolean }
+
+function getDynamicTools(hr: HybridResult, triggers: AdaptationTrigger[]): ToolRec[] {
+  const tools: ToolRec[] = [];
+  const riskScore = hr.total ?? 50;
+  const d1 = ((hr as any).breakdown?.D1 as number | undefined) ?? 0;
+  const hiringFreeze = (hr as any).hiringSignalResult?.hiringFreezeDetected === true;
+  const stealthSev = (hr as any)._stealthSignal?.severity as string | undefined;
+  const marketTrend = (hr as any).marketDemand?.demandTrend as string | undefined;
+  const hasPeerSurge = triggers.some(t => t.type === 'peer_surge');
+
+  if (riskScore >= 45 || (stealthSev && stealthSev !== 'STABLE')) {
+    tools.push({
+      label: 'Layoff Defense', to: '/tools/layoff-defense', icon: '🛡️',
+      reason: riskScore >= 65
+        ? 'Risk is elevated — activate your full defense protocol'
+        : 'Monitor company signals and prepare contingency plans',
+      urgent: riskScore >= 65,
+    });
+  }
+
+  if (d1 > 0.45) {
+    tools.push({
+      label: 'AI Defense Center', to: '/tools/ai-defense', icon: '🤖',
+      reason: `AI targets ${Math.round(d1 * 100)}% of your role's tasks — build leverage before it peaks`,
+      urgent: d1 > 0.65,
+    });
+  }
+
+  if (hiringFreeze || marketTrend === 'declining' || hasPeerSurge) {
+    tools.push({
+      label: 'Market Intelligence', to: '/tools/market-intel', icon: '📊',
+      reason: hiringFreeze
+        ? 'Hiring freeze detected — understand your options before demand recovers'
+        : 'Demand shifts in your sector require a positioning adjustment',
+      urgent: false,
+    });
+  }
+
+  if (tools.length < 2) {
+    tools.push({
+      label: 'Career Strategy', to: '/tools/strategy', icon: '🗺️',
+      reason: riskScore < 35
+        ? 'Strong position — plan your next career milestone now'
+        : 'Map your escape paths and growth options',
+      urgent: false,
+    });
+  }
+
+  return tools.slice(0, 3);
+}
+
+function buildOfficerBullets(
+  hr: HybridResult,
+  companyName: string | null,
+  roleTitle: string | null,
+  adaptationTriggers: AdaptationTrigger[],
+  reEngageBanner: { headline: string; subtext: string } | null,
+): string[] {
+  const lines: string[] = [];
+  const companyLabel = companyName ?? 'Your company';
+  const roleLabel = roleTitle ?? 'your role';
+
+  // Bullet 1: Company signal
+  const stealthSev = (hr as any)._stealthSignal?.severity as string | undefined;
+  const collapseStage = ((hr as any).collapseStage?.stage as number | undefined) ?? 0;
+  if (stealthSev === 'SILENT_PURGE' || collapseStage >= 3) {
+    lines.push(`${companyLabel}: Active workforce reduction signals detected.`);
+  } else if (stealthSev && stealthSev !== 'STABLE') {
+    lines.push(`${companyLabel}: Headcount pressure building — monitoring closely.`);
+  } else {
+    const rounds = ((hr as any).layoffRoundsSummary?.totalRounds as number | undefined) ?? 0;
+    lines.push(rounds > 0
+      ? `${companyLabel}: ${rounds} layoff round${rounds > 1 ? 's' : ''} in history. No new signals this week.`
+      : `${companyLabel}: No active workforce reduction signals.`
+    );
+  }
+
+  // Bullet 2: Market / role signal
+  const d1 = ((hr as any).breakdown?.D1 as number | undefined) ?? 0;
+  const hiringFreeze = (hr as any).hiringSignalResult?.hiringFreezeDetected === true;
+  const marketTrend = (hr as any).marketDemand?.demandTrend as string | undefined;
+  if (hiringFreeze) {
+    lines.push(`Hiring freeze detected in your sector — external moves are harder right now.`);
+  } else if (d1 > 0.65) {
+    lines.push(`AI automation targets ${Math.round(d1 * 100)}% of tasks in ${roleLabel}. Upskilling is your highest-leverage move.`);
+  } else if (marketTrend === 'declining') {
+    lines.push(`Demand for ${roleLabel} is declining. Transition readiness is your key asset.`);
+  } else if (marketTrend === 'rising') {
+    lines.push(`Demand for ${roleLabel} is rising — strong window to negotiate or move up.`);
+  } else {
+    lines.push(`Market conditions for ${roleLabel} are stable.`);
+  }
+
+  // Bullet 3: Score change or re-engagement signal or trigger
+  if (reEngageBanner) {
+    lines.push(reEngageBanner.headline + (reEngageBanner.subtext ? ` ${reEngageBanner.subtext}` : ''));
+  } else {
+    const scoreDelta = (hr as any).scoreDelta as number | null | undefined;
+    if (scoreDelta != null && Math.abs(scoreDelta) >= 3) {
+      const dir = scoreDelta > 0 ? 'increased' : 'decreased';
+      lines.push(`Risk score ${dir} ${Math.abs(Math.round(scoreDelta))} pts since your last audit.`);
+    } else if (adaptationTriggers.length > 0) {
+      lines.push(adaptationTriggers[0].message);
+    } else {
+      lines.push(`No significant changes since your last audit.`);
+    }
+  }
+
+  return lines.slice(0, 3);
+}
+
+// ─── Section label ─────────────────────────────────────────────────────────────
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
       <span style={{
-        fontSize: 11, fontWeight: 700, color: "var(--text-3)",
-        letterSpacing: "0.1em", textTransform: "uppercase" as const,
+        fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.28)",
+        letterSpacing: "0.13em", textTransform: "uppercase" as const,
         whiteSpace: "nowrap" as const, fontFamily: "var(--font-mono, monospace)",
       }}>
         {label}
       </span>
-      <div style={{ flex: 1, height: 1, background: "var(--border)", opacity: 0.5 }} />
+      <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
     </div>
   );
 }
 
-// ─── Tool quick-launch ────────────────────────────────────────────────────────
+// ─── Section 1: AI Career Officer Brief ───────────────────────────────────────
 
-const TOOL_LINKS = [
-  { label: "Layoff Defense", to: "/tools/layoff-defense", icon: "🛡️" },
-  { label: "AI Defense", to: "/tools/ai-defense", icon: "🤖" },
-  { label: "Market Intel", to: "/tools/market-intel", icon: "📊" },
-  { label: "Career Strategy", to: "/tools/strategy", icon: "🗺️" },
-] as const;
+interface OfficerBriefProps {
+  hr: HybridResult;
+  companyName: string | null;
+  roleTitle: string | null;
+  adaptationTriggers: AdaptationTrigger[];
+  reEngageBanner: { headline: string; subtext: string } | null;
+  onJumpToMission: () => void;
+}
 
-function ToolQuickLaunch() {
+function AICareerOfficerBrief({
+  hr, companyName, roleTitle, adaptationTriggers, reEngageBanner, onJumpToMission,
+}: OfficerBriefProps) {
+  const riskScore = hr.total ?? 50;
+  const status = riskScore >= 65 ? 'ACTION REQUIRED' : riskScore >= 50 ? 'ELEVATED' : riskScore >= 35 ? 'MONITOR' : 'STRONG';
+  const statusColor = riskScore >= 65 ? '#ef4444' : riskScore >= 50 ? '#f97316' : riskScore >= 35 ? '#f59e0b' : '#10b981';
+  const textOnStatus = riskScore < 35 ? '#000' : '#fff';
+
+  const bullets = buildOfficerBullets(hr, companyName, roleTitle, adaptationTriggers, reEngageBanner);
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const lastUpdated = formatLastUpdated(hr.calculatedAt);
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 100px), 1fr))", gap: 10, marginBottom: 20 }}>
-      {TOOL_LINKS.map((tool) => (
-        <Link
-          key={tool.to}
-          to={tool.to}
-          aria-label={tool.label}
+    <motion.div
+      variants={itemVariants}
+      style={{
+        marginBottom: 16, padding: '22px 24px', borderRadius: 14,
+        background: `linear-gradient(135deg, ${statusColor}07 0%, rgba(255,255,255,0.01) 100%)`,
+        border: `1px solid ${statusColor}22`,
+      }}
+    >
+      {/* Header row */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 14, flexWrap: 'wrap', gap: 8,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{
+            fontSize: '0.62rem', fontWeight: 800, color: 'rgba(255,255,255,0.28)',
+            letterSpacing: '0.12em', textTransform: 'uppercase' as const,
+            fontFamily: 'var(--font-mono, monospace)',
+          }}>
+            AI CAREER OFFICER
+          </span>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            padding: '2px 9px', borderRadius: 5,
+            background: `${statusColor}18`, border: `1px solid ${statusColor}35`,
+            fontSize: '0.62rem', fontWeight: 800, color: statusColor,
+            letterSpacing: '0.08em', fontFamily: 'var(--font-mono, monospace)',
+          }}>
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%', background: statusColor,
+              display: 'inline-block', animation: 'pulse 2s ease-in-out infinite', flexShrink: 0,
+            }} />
+            {status}
+          </span>
+        </div>
+        {lastUpdated && (
+          <span style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono, monospace)' }}>
+            Updated {lastUpdated}
+          </span>
+        )}
+      </div>
+
+      {/* Greeting */}
+      <p style={{ margin: '0 0 14px', fontSize: '0.97rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.4 }}>
+        {greeting}.
+      </p>
+
+      {/* Intelligence bullets */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 20 }}>
+        {bullets.map((line, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{
+              flexShrink: 0, marginTop: 7, width: 4, height: 4, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.3)', display: 'inline-block',
+            }} />
+            <span style={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.56 }}>
+              {line}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.32)' }}>
+          Your highest-leverage action is ready below.
+        </span>
+        <button
+          type="button"
+          onClick={onJumpToMission}
           style={{
-            display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 6,
-            padding: "14px 8px", background: "rgba(255,255,255,0.03)",
-            border: "1px solid var(--border)", borderRadius: 10,
-            textDecoration: "none", color: "var(--text-2)",
-            fontSize: "0.75rem", fontWeight: 600, transition: "all 150ms ease",
-            textAlign: "center" as const, outline: "none",
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: statusColor, color: textOnStatus,
+            border: 'none', borderRadius: 8,
+            padding: '8px 18px', fontSize: '0.8rem', fontWeight: 700,
+            cursor: 'pointer', transition: 'opacity 150ms',
           }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
-            (e.currentTarget as HTMLElement).style.color = "var(--cyan)";
-            (e.currentTarget as HTMLElement).style.background = "rgba(0,245,255,0.05)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
-            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-          }}
-          onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px var(--cyan)44";
-          }}
-          onBlur={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLElement).style.boxShadow = "none";
-          }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.85'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
         >
-          <span style={{ fontSize: 20 }}>{tool.icon}</span>
-          <span style={{ lineHeight: 1.3 }}>{tool.label}</span>
-        </Link>
-      ))}
-    </div>
+          See Mission <ArrowRight size={13} />
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
-// ─── First-time "Start Here" card ─────────────────────────────────────────────
+// ─── Section 2: What Changed ──────────────────────────────────────────────────
+
+interface ChangeItem { label: string; kind: 'positive' | 'negative' | 'neutral' }
+
+function WhatChangedStrip({ hr, adaptationTriggers }: { hr: HybridResult; adaptationTriggers: AdaptationTrigger[] }) {
+  const changes: ChangeItem[] = [];
+
+  const scoreDelta = (hr as any).scoreDelta as number | null | undefined;
+  if (scoreDelta != null && Math.abs(scoreDelta) >= 3) {
+    const pts = Math.abs(Math.round(scoreDelta));
+    changes.push({ label: scoreDelta > 0 ? `Risk +${pts} pts` : `Risk −${pts} pts`, kind: scoreDelta > 0 ? 'negative' : 'positive' });
+  }
+
+  const stealthSev = (hr as any)._stealthSignal?.severity as string | undefined;
+  if (stealthSev && stealthSev !== 'STABLE') changes.push({ label: 'Company signals active', kind: 'negative' });
+
+  const marketTrend = (hr as any).marketDemand?.demandTrend as string | undefined;
+  if (marketTrend === 'declining') changes.push({ label: 'Market demand declining', kind: 'negative' });
+  if (marketTrend === 'rising') changes.push({ label: 'Market demand rising', kind: 'positive' });
+
+  if ((hr as any).hiringSignalResult?.hiringFreezeDetected === true) changes.push({ label: 'Hiring freeze active', kind: 'negative' });
+  if (adaptationTriggers.some(t => t.type === 'peer_surge')) changes.push({ label: 'Industry layoffs detected', kind: 'negative' });
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      style={{
+        display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10,
+        marginBottom: 16, padding: '9px 14px', borderRadius: 9,
+        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      <span style={{
+        fontSize: '0.61rem', fontWeight: 800, color: 'rgba(255,255,255,0.28)',
+        letterSpacing: '0.12em', textTransform: 'uppercase' as const,
+        fontFamily: 'var(--font-mono, monospace)', flexShrink: 0,
+      }}>
+        WHAT CHANGED
+      </span>
+      {changes.length === 0 ? (
+        <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)' }}>
+          No significant changes since your last audit.
+        </span>
+      ) : (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {changes.map((c, i) => (
+            <span key={i} style={{
+              padding: '2px 9px', borderRadius: 5, fontSize: '0.72rem', fontWeight: 600,
+              background: c.kind === 'positive' ? 'rgba(16,185,129,0.1)' : c.kind === 'negative' ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${c.kind === 'positive' ? 'rgba(16,185,129,0.25)' : c.kind === 'negative' ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.1)'}`,
+              color: c.kind === 'positive' ? '#10b981' : c.kind === 'negative' ? '#ef4444' : 'rgba(255,255,255,0.5)',
+            }}>
+              {c.kind === 'positive' ? '↑ ' : c.kind === 'negative' ? '↓ ' : ''}{c.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// ─── Section 4: Dynamic Tool Recommendations ──────────────────────────────────
+
+function DynamicToolRow({ hr, adaptationTriggers }: { hr: HybridResult; adaptationTriggers: AdaptationTrigger[] }) {
+  const navigate = useNavigate();
+  const tools = getDynamicTools(hr, adaptationTriggers);
+
+  return (
+    <motion.div variants={itemVariants} style={{ marginBottom: 20 }}>
+      <SectionLabel label="Recommended For You" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {tools.map(tool => (
+          <button
+            key={tool.to}
+            type="button"
+            onClick={() => navigate(tool.to)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              background: tool.urgent ? 'rgba(239,68,68,0.03)' : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${tool.urgent ? 'rgba(239,68,68,0.18)' : 'var(--border)'}`,
+              borderRadius: 10, padding: '14px 16px', cursor: 'pointer',
+              transition: 'all 150ms', textAlign: 'left' as const, width: '100%',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--cyan)';
+              (e.currentTarget as HTMLElement).style.background = 'rgba(0,245,255,0.03)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.borderColor = tool.urgent ? 'rgba(239,68,68,0.18)' : 'var(--border)';
+              (e.currentTarget as HTMLElement).style.background = tool.urgent ? 'rgba(239,68,68,0.03)' : 'rgba(255,255,255,0.02)';
+            }}
+          >
+            <span style={{ fontSize: 20, flexShrink: 0 }}>{tool.icon}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.87rem', color: 'var(--text)' }}>{tool.label}</span>
+                {tool.urgent && (
+                  <span style={{
+                    fontSize: '0.59rem', fontWeight: 800, color: '#ef4444',
+                    padding: '1px 6px', background: 'rgba(239,68,68,0.12)',
+                    border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4,
+                    letterSpacing: '0.06em', fontFamily: 'var(--font-mono, monospace)',
+                  }}>
+                    ACTION NEEDED
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '0.77rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.45 }}>
+                {tool.reason}
+              </div>
+            </div>
+            <ArrowRight size={14} style={{ flexShrink: 0, color: 'rgba(255,255,255,0.25)' }} />
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Section 5: Career Twin Status ────────────────────────────────────────────
+
+function CareerTwinStatus({ completenessScore }: { completenessScore: number | null }) {
+  const navigate = useNavigate();
+  const score = completenessScore ?? 0;
+  const color = completenessColor(score);
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      style={{
+        padding: '16px 20px', borderRadius: 12,
+        background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 12, marginBottom: 20,
+      }}
+    >
+      <div>
+        <div style={{
+          fontSize: '0.61rem', fontWeight: 800, color: 'rgba(255,255,255,0.28)',
+          letterSpacing: '0.12em', textTransform: 'uppercase' as const,
+          fontFamily: 'var(--font-mono, monospace)', marginBottom: 7,
+        }}>
+          CAREER TWIN STATUS
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'center' }}>
+          <span style={{ fontSize: '1.15rem', fontWeight: 800, color, fontFamily: 'var(--font-mono, monospace)', lineHeight: 1 }}>
+            {score}%
+          </span>
+          <span style={{ fontSize: '0.71rem', color: 'rgba(255,255,255,0.28)' }}>Confidence</span>
+          <span style={{ color: 'rgba(255,255,255,0.14)', fontSize: '0.7rem' }}>·</span>
+          <span style={{ fontSize: '0.71rem', color: 'rgba(255,255,255,0.28)' }}>
+            Monitoring: Company · Role · Market · AI · Compensation
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate('/tools/career-twin')}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+          background: 'none', border: '1px solid var(--border)', borderRadius: 7,
+          color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 600,
+          padding: '6px 12px', cursor: 'pointer', transition: 'all 150ms',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = 'var(--cyan)';
+          (e.currentTarget as HTMLElement).style.color = 'var(--cyan)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+          (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.4)';
+        }}
+      >
+        View Twin <ArrowRight size={11} />
+      </button>
+    </motion.div>
+  );
+}
+
+// ─── New user entry card ───────────────────────────────────────────────────────
 
 function StartHereCard() {
   const navigate = useNavigate();
-  const PREVIEWS = [
-    { icon: "🎯", title: "Career Readiness", desc: "How prepared you are — not just how at-risk you are. Higher is better." },
-    { icon: "📋", title: "Weekly Mission", desc: "One specific action per week, with a clear reason and consequence if skipped." },
-    { icon: "⚡", title: "Early Warnings", desc: "Detected signals — stealth headcount cuts, market shifts, peer layoffs." },
-  ];
-
   return (
     <motion.div variants={itemVariants}>
-      <div className="card-premium" style={{
-        padding: "40px 36px", textAlign: "center",
-        background: "linear-gradient(135deg, rgba(0,245,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
-        border: "1px solid rgba(0,245,255,0.2)", borderRadius: 16, marginBottom: 24,
+      <div style={{
+        padding: '52px 36px', textAlign: 'center',
+        background: 'linear-gradient(135deg, rgba(0,245,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+        border: '1px solid rgba(0,245,255,0.18)', borderRadius: 16, marginBottom: 24,
       }}>
-        <div style={{ fontSize: 36, marginBottom: 16 }}>🎯</div>
-        <h2 style={{
-          fontSize: "clamp(1.3rem, 3vw, 1.7rem)", fontFamily: "var(--font-display)",
-          fontWeight: 800, color: "var(--text)", margin: "0 0 10px", letterSpacing: "-0.02em",
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '4px 13px', borderRadius: 6, marginBottom: 22,
+          background: 'rgba(0,245,255,0.1)', border: '1px solid rgba(0,245,255,0.25)',
+          fontSize: '0.63rem', fontWeight: 800, color: 'var(--cyan)',
+          letterSpacing: '0.12em', fontFamily: 'var(--font-mono, monospace)',
         }}>
-          Your Career Adaptation OS is ready
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%', background: 'var(--cyan)',
+            display: 'inline-block', animation: 'pulse 1.8s ease-in-out infinite',
+          }} />
+          AI CAREER OFFICER · READY
+        </div>
+
+        <h2 style={{
+          fontSize: 'clamp(1.4rem, 3.5vw, 1.9rem)', fontFamily: 'var(--font-display)',
+          fontWeight: 800, color: 'var(--text)', margin: '0 0 14px', letterSpacing: '-0.02em',
+        }}>
+          Your AI Career OS is standing by.
         </h2>
-        <p style={{ fontSize: "0.95rem", color: "var(--text-2)", margin: "0 auto 28px", maxWidth: 480, lineHeight: 1.6 }}>
-          Run your first audit to unlock real-time career readiness scoring, your weekly mission, and continuous adaptation monitoring.
+        <p style={{
+          fontSize: '0.93rem', color: 'rgba(255,255,255,0.46)', margin: '0 auto 32px',
+          maxWidth: 420, lineHeight: 1.65,
+        }}>
+          Run a 90-second audit. Your AI career officer will monitor your position 24/7 and tell you exactly what to do next — without asking you to read reports.
         </p>
+
         <button
           type="button"
           onClick={() => navigate('/terminal', { state: { newAudit: true } })}
           style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "var(--cyan)", color: "#000", fontWeight: 800,
-            fontSize: "0.95rem", padding: "13px 28px", borderRadius: 10,
-            border: "none", cursor: "pointer", transition: "opacity 150ms ease",
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'var(--cyan)', color: '#000', fontWeight: 800,
+            fontSize: '0.95rem', padding: '14px 32px', borderRadius: 10,
+            border: 'none', cursor: 'pointer', transition: 'opacity 150ms ease',
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.85'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
         >
-          Run Career Audit →
+          Run Career Audit <ArrowRight size={16} />
         </button>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginTop: 36, textAlign: "left" as const }}>
-          {PREVIEWS.map((p) => (
-            <div key={p.title} style={{
-              background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)",
-              borderRadius: 10, padding: "16px 18px",
-            }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }}>{p.icon}</div>
-              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text)", marginBottom: 5 }}>{p.title}</div>
-              <div style={{ fontSize: "0.78rem", color: "var(--text-3)", lineHeight: 1.5 }}>{p.desc}</div>
-            </div>
-          ))}
+        <div style={{
+          marginTop: 22, fontSize: '0.71rem', color: 'rgba(255,255,255,0.18)',
+          fontFamily: 'var(--font-mono, monospace)',
+        }}>
+          90 seconds · 5,208+ companies tracked · 412 role profiles
         </div>
       </div>
     </motion.div>
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatTodayDate(): string {
-  return new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main component ────────────────────────────────────────────────────────────
 
 export function CareerOSHome() {
   const { state } = useLayoff();
@@ -196,8 +545,7 @@ export function CareerOSHome() {
   const navigate = useNavigate();
   const hasResult = state.scoreResult !== null;
 
-  // Show a skeleton instead of StartHereCard while useAuditPersistence is
-  // fetching the prior result from DB (new browser session, sessionStorage empty).
+  // Restore skeleton while useAuditPersistence fetches from DB
   const [isAwaitingRestore, setIsAwaitingRestore] = useState(() => {
     if (hasResult) return false;
     try {
@@ -211,60 +559,45 @@ export function CareerOSHome() {
     if (!isAwaitingRestore) return;
     const t = setTimeout(() => setIsAwaitingRestore(false), 5000);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasResult]);
 
   const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
   const [completenessScore, setCompletenessScore] = useState<number | null>(null);
-  const [memorySummary, setMemorySummary] = useState<import('../../services/careerMemoryService').CareerMemorySummary | null>(null);
   const [adaptationTriggers, setAdaptationTriggers] = useState<AdaptationTrigger[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [peerBenchmark, setPeerBenchmark] = useState<{ n: number; avgPtsGain: number } | null>(null);
-  const [recordOutcomeOpen, setRecordOutcomeOpen] = useState(false);
-  const [outcomeVersion, setOutcomeVersion] = useState(0);
   const { unreadCount: autopilotUnreadCount } = useAutopilotAlerts();
 
-  // ── Profile + memory + twin sync ──
+  // Profile + memory + twin sync
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    Promise.all([
-      fetchUserProfile(),
-      getCareerMemorySummary(user.id),
-    ]).then(([profile, summary]) => {
+    Promise.all([fetchUserProfile(), getCareerMemorySummary(user.id)]).then(([profile, summary]) => {
       if (cancelled) return;
       setUserProfile(profile);
-      setMemorySummary(summary);
-      const { score } = computeProfileCompleteness(
-        profile, summary,
-        !!state.companyName && !!state.roleTitle,
-      );
+      const { score } = computeProfileCompleteness(profile, summary, !!state.companyName && !!state.roleTitle);
       setCompletenessScore(score);
-
       const hr = state.scoreResult as HybridResult | null;
-      if (profile && hr && hr.total != null) {
-        void syncTwinFromProfile(profile, hr);
-      }
-    }).catch(() => {/* offline */});
+      if (profile && hr && hr.total != null) void syncTwinFromProfile(profile, hr);
+    }).catch(() => {});
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, state.companyName, state.roleTitle, state.scoreResult]);
 
-  // ── Re-engagement banner ──
+  // Re-engagement signal (folded into officer brief)
   useEffect(() => {
     if (!state.companyName || !state.scoreResult) return;
     const score = (state.scoreResult as any)?.total ?? null;
     if (score === null) return;
     try {
       const result = evaluateReEngagementTrigger(state.companyName, score);
-      if (result && result.type !== 'none') {
-        setReEngageBanner({ headline: result.headline, subtext: result.subtext });
-      }
-    } catch {/* offline */}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (result && result.type !== 'none') setReEngageBanner({ headline: result.headline, subtext: result.subtext });
+    } catch { /* offline */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.companyName]);
 
-  // ── Adaptation triggers ──
+  // Adaptation triggers
   useEffect(() => {
     if (!state.scoreResult) { setAdaptationTriggers([]); return; }
     const hr = state.scoreResult as HybridResult;
@@ -273,12 +606,11 @@ export function CareerOSHome() {
       const raw = sessionStorage.getItem('hp_completed_actions');
       if (raw) completedIds.push(...JSON.parse(raw));
     } catch { /* ignore */ }
-    const triggers = detectAdaptationTriggers(hr, completedIds, hr.calculatedAt ?? null, []);
-    setAdaptationTriggers(triggers);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setAdaptationTriggers(detectAdaptationTriggers(hr, completedIds, hr.calculatedAt ?? null, []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.scoreResult]);
 
-  // ── Feedback boost map — thumbs history rewires primary move ranking ──
+  // Feedback boost map for action ranking
   const [feedbackBoosts, setFeedbackBoosts] = useState<Map<string, number>>(new Map());
   useEffect(() => {
     if (!user?.id || !state.scoreResult) return;
@@ -290,23 +622,20 @@ export function CareerOSHome() {
     getActionFeedbackBoosts(user.id, actionIds)
       .then(boosts => { if (boosts.size > 0) setFeedbackBoosts(boosts); })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, state.scoreResult]);
 
-  // ── Primary move (weekly mission) — computed from signal orchestrator ──
+  // Primary move (weekly mission)
   const orchestratedFeed = useMemo(() => {
     if (!state.scoreResult) return null;
-    try {
-      return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts });
-    } catch {
-      return null;
-    }
+    try { return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts }); }
+    catch { return null; }
   }, [state.scoreResult, userProfile, feedbackBoosts]);
 
   const primaryMove = orchestratedFeed?.primaryMove ?? null;
   const primaryMoveActionId = primaryMove?.action.id ?? primaryMove?.action.title ?? null;
 
-  // ── Peer benchmark for MissionCard — cohort data for the primary action ──
+  // Peer benchmark for MissionCard
   useEffect(() => {
     if (!state.scoreResult || !primaryMoveActionId) return;
     const hr = state.scoreResult as HybridResult;
@@ -314,35 +643,30 @@ export function CareerOSHome() {
     const band = tenureBandFromYears(userProfile?.yearsExperience ?? 5);
     getCohortOutcomeStats(roleKey, band, primaryMoveActionId)
       .then(stats => {
-        if (stats && stats.count >= 5) {
-          setPeerBenchmark({ n: stats.count, avgPtsGain: Math.round(stats.avgRiskReduction) });
-        }
+        if (stats && stats.count >= 5) setPeerBenchmark({ n: stats.count, avgPtsGain: Math.round(stats.avgRiskReduction) });
       })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primaryMoveActionId, userProfile?.yearsExperience]);
 
-  // ── Derived readiness values for GPS bar ──
   const hr = state.scoreResult as HybridResult | null;
   const riskScore = hr?.total ?? 0;
   const readiness = 100 - riskScore;
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 16px 80px" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px 80px" }}>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          CAREER GPS HEADER
-      ══════════════════════════════════════════════════════════════════════ */}
+      {/* ── GPS Header ── */}
       <motion.div
-        initial={{ opacity: 0, y: -12 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        style={{ padding: "28px 0 20px" }}
+        transition={{ duration: 0.3 }}
+        style={{ padding: "24px 0 16px" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
             <h1 style={{
-              fontSize: "clamp(1.4rem, 4vw, 2rem)", fontFamily: "var(--font-display)",
+              fontSize: "clamp(1.3rem, 4vw, 1.8rem)", fontFamily: "var(--font-display)",
               fontWeight: 800, color: "var(--text)", margin: 0, letterSpacing: "-0.02em",
             }}>
               HumanProof
@@ -350,104 +674,65 @@ export function CareerOSHome() {
             <div style={{
               display: "flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 6,
               background: "rgba(0,245,255,0.1)", border: "1px solid rgba(0,245,255,0.25)",
-              fontSize: "0.72rem", fontWeight: 700, color: "var(--cyan)",
+              fontSize: "0.67rem", fontWeight: 700, color: "var(--cyan)",
               letterSpacing: "0.1em", fontFamily: "var(--font-mono, monospace)",
             }}>
               <span style={{
-                width: 6, height: 6, borderRadius: "50%", background: "var(--cyan)",
+                width: 5, height: 5, borderRadius: "50%", background: "var(--cyan)",
                 display: "inline-block", animation: "pulse 1.8s ease-in-out infinite", flexShrink: 0,
               }} />
-              CAREER GPS
+              CAREER OS
             </div>
           </div>
           <div style={{
-            fontSize: "0.75rem", fontWeight: 500, color: "var(--text-3)",
+            fontSize: "0.71rem", fontWeight: 500, color: "rgba(255,255,255,0.22)",
             fontFamily: "var(--font-mono, monospace)", alignSelf: "center",
           }}>
             {formatTodayDate()}
           </div>
         </div>
 
-        {/* GPS status bar — Role · Readiness · Velocity */}
+        {/* GPS status line — shows only when result is available */}
         {hasResult && hr && (
           <div style={{
-            marginTop: 14, display: "flex", flexWrap: "wrap",
-            gap: "4px 16px", fontSize: "0.74rem", fontFamily: "var(--font-mono, monospace)",
+            marginTop: 12, display: "flex", flexWrap: "wrap",
+            gap: "3px 14px", fontSize: "0.71rem", fontFamily: "var(--font-mono, monospace)",
             alignItems: "center",
           }}>
-            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>YOU ARE</span>
-            <span style={{ color: "var(--text-2)", fontWeight: 600 }}>
-              {state.roleTitle ? `${state.roleTitle} ` : ''}{state.companyName ? `@ ${state.companyName}` : "your current role"}
+            <span style={{ color: "rgba(255,255,255,0.28)", fontWeight: 600 }}>YOU ARE</span>
+            <span style={{ color: "rgba(255,255,255,0.52)", fontWeight: 600 }}>
+              {state.roleTitle ? `${state.roleTitle} ` : ''}
+              {state.companyName ? `@ ${state.companyName}` : 'your current role'}
             </span>
-            <span style={{ color: "rgba(255,255,255,0.65)" }}>·</span>
-            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>READINESS</span>
-            <span style={{ fontWeight: 800, color: readiness >= 60 ? '#10b981' : readiness >= 40 ? '#f59e0b' : '#ef4444' }}>
+            <span style={{ color: "rgba(255,255,255,0.18)" }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.28)", fontWeight: 600 }}>READINESS</span>
+            <span style={{
+              fontWeight: 800,
+              color: readiness >= 60 ? '#10b981' : readiness >= 40 ? '#f59e0b' : '#ef4444',
+            }}>
               {readiness}
             </span>
             <AdaptationVelocityBadge scoreResult={hr} compact />
-            {(() => {
-              const targetPath = (hr as any)?.escapePaths?.paths?.[0]?.title ?? null;
-              return targetPath ? (
-                <>
-                  <span style={{ color: "rgba(255,255,255,0.65)" }}>·</span>
-                  <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>TARGET</span>
-                  <span style={{ color: "var(--cyan)", fontWeight: 600 }}>{targetPath}</span>
-                </>
-              ) : null;
-            })()}
           </div>
         )}
       </motion.div>
 
-      {/* ── Today's Intelligence Brief (system voice, compact) ── */}
-      <TodaysIntelligenceBrief />
-
-      {/* ── 14-day feedback banner — shown when action is due a follow-up ── */}
-      <QuickFeedbackBanner />
-
-      {/* ── Re-engagement banner ── */}
-      {reEngageBanner && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            marginBottom: 16, padding: "10px 16px", borderRadius: 8,
-            background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)",
-            fontSize: "0.82rem", color: "#f59e0b", fontWeight: 600,
-            display: "flex", alignItems: "center", gap: 8,
-          }}
-        >
-          <span>⏰</span>
-          <span>
-            <span style={{ fontWeight: 700 }}>{reEngageBanner.headline}</span>
-            {reEngageBanner.subtext && (
-              <span style={{ fontWeight: 400, opacity: 0.8, marginLeft: 6 }}>{reEngageBanner.subtext}</span>
-            )}
-          </span>
-          <button
-            type="button"
-            aria-label="Dismiss re-engagement notification"
-            onClick={() => setReEngageBanner(null)}
-            style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(245,158,11,0.5)", cursor: "pointer", fontSize: "1rem", padding: "4px 6px" }}
-          >×</button>
-        </motion.div>
-      )}
-
+      {/* ═══════════════════════════════════════════════════
+          COMMAND CENTER CONTENT
+      ═══════════════════════════════════════════════════ */}
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
 
-        {/* ══════════════════════════════════════════════════════════════════════
-            ABOVE FOLD — MISSION CARD (dominant, full-width) — Rule 5
-        ══════════════════════════════════════════════════════════════════════ */}
         {!hasResult ? (
+          /* ── No audit yet ── */
           isAwaitingRestore ? (
             <motion.div variants={itemVariants}>
               <div style={{
-                padding: '40px 36px', textAlign: 'center', borderRadius: 16,
-                background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.1)',
-                marginBottom: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+                padding: '44px 36px', textAlign: 'center', borderRadius: 16,
+                background: 'rgba(0,245,255,0.02)', border: '1px solid rgba(0,245,255,0.08)',
+                marginBottom: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
               }}>
-                <div className="spinner" style={{ width: 28, height: 28 }} />
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', fontFamily: 'var(--font-mono, monospace)' }}>
+                <div className="spinner" style={{ width: 26, height: 26 }} />
+                <span style={{ color: 'rgba(255,255,255,0.32)', fontSize: '0.82rem', fontFamily: 'var(--font-mono, monospace)' }}>
                   Restoring your career audit…
                 </span>
               </div>
@@ -457,57 +742,30 @@ export function CareerOSHome() {
           )
         ) : (
           <>
-            {/* Career Moment Alert — urgent system flags */}
-            <CareerMomentAlert />
+            {/* ── 1. AI Career Officer Brief (OBSERVE) ── */}
+            {hr && (
+              <AICareerOfficerBrief
+                hr={hr}
+                companyName={state.companyName}
+                roleTitle={state.roleTitle}
+                adaptationTriggers={adaptationTriggers}
+                reEngageBanner={reEngageBanner}
+                onJumpToMission={() =>
+                  document.getElementById('active-mission')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+              />
+            )}
 
-            {/* Adaptation triggers */}
-            {adaptationTriggers.map(trigger => (
-              <motion.div
-                key={trigger.type}
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{
-                  marginBottom: 12, padding: '10px 14px', borderRadius: 8,
-                  background: trigger.severity === 'critical' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.06)',
-                  border: `1px solid ${trigger.severity === 'critical' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.18)'}`,
-                  display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.8rem',
-                }}
-              >
-                <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>
-                  {trigger.severity === 'critical' ? '🚨' : '⚠️'}
-                </span>
-                <span style={{ color: trigger.severity === 'critical' ? '#ef4444' : 'rgba(255,255,255,0.65)', lineHeight: 1.4, flex: 1 }}>
-                  {trigger.message}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => navigate('/terminal', { state: { newAudit: true } })}
-                  style={{
-                    flexShrink: 0, background: 'none',
-                    border: `1px solid ${trigger.severity === 'critical' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.35)'}`,
-                    borderRadius: 6, color: trigger.severity === 'critical' ? '#ef4444' : '#f59e0b',
-                    fontSize: '0.72rem', fontWeight: 700, padding: '4px 10px', cursor: 'pointer',
-                  }}
-                >
-                  {trigger.ctaLabel} →
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Dismiss ${trigger.type} alert`}
-                  onClick={() => setAdaptationTriggers(prev => prev.filter(t => t.type !== trigger.type))}
-                  style={{
-                    flexShrink: 0, background: 'none', border: 'none',
-                    color: 'rgba(255,255,255,0.25)', cursor: 'pointer',
-                    padding: '4px 6px', fontSize: '1rem', lineHeight: 1,
-                  }}
-                >
-                  ×
-                </button>
-              </motion.div>
-            ))}
+            {/* ── 2. What Changed (UNDERSTAND) ── */}
+            {hr && <WhatChangedStrip hr={hr} adaptationTriggers={adaptationTriggers} />}
 
-            {/* MISSION CARD — dominant single-action above fold (Rules 1, 4, 5) */}
-            <motion.div variants={itemVariants} style={{ marginBottom: 14 }}>
+            {/* ── 3. Active Mission (DECIDE) ── */}
+            <motion.div
+              variants={itemVariants}
+              id="active-mission"
+              style={{ marginBottom: 22 }}
+            >
+              <SectionLabel label="Active Mission" />
               {primaryMove ? (
                 <MissionCard
                   primaryMove={primaryMove}
@@ -517,22 +775,20 @@ export function CareerOSHome() {
                   onSkip={() => navigate('/monitor')}
                 />
               ) : (
-                // Fallback when no primary move is computed yet
                 <div className="card-premium" style={{
-                  padding: "24px 28px",
-                  border: "1px solid rgba(0,245,255,0.2)",
-                  background: "rgba(0,245,255,0.03)",
-                  textAlign: "center",
+                  padding: '24px 28px', textAlign: 'center',
+                  border: '1px solid rgba(0,245,255,0.15)',
+                  background: 'rgba(0,245,255,0.02)',
                 }}>
-                  <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.5)", marginBottom: 14 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.38)', marginBottom: 14 }}>
                     Computing your weekly mission…
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate('/terminal', { state: { newAudit: true } })}
                     style={{
-                      background: "var(--cyan)", color: "#000", border: "none", borderRadius: 8,
-                      padding: "10px 22px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer",
+                      background: 'var(--cyan)', color: '#000', border: 'none', borderRadius: 8,
+                      padding: '9px 20px', fontSize: '0.84rem', fontWeight: 700, cursor: 'pointer',
                     }}
                   >
                     Run New Audit →
@@ -541,199 +797,56 @@ export function CareerOSHome() {
               )}
             </motion.div>
 
-            {/* EARLY WARNING STRIP — compact detection strip (Rule 3, 11) */}
-            {hr && (
-              <motion.div variants={itemVariants}>
-                <EarlyWarningStrip scoreResult={hr} adaptationTriggers={adaptationTriggers} />
-              </motion.div>
-            )}
+            {/* ── 4. Recommended Tools (ACT) ── */}
+            {hr && <DynamicToolRow hr={hr} adaptationTriggers={adaptationTriggers} />}
 
-            {/* Re-audit nudge */}
-            <ReAuditPromptCard />
-
-            {/* ── PROGRESS + RESULTS SECTION ── */}
-            <motion.div variants={itemVariants} style={{ marginBottom: 28 }}>
-              <SectionLabel label="Your Progress" />
-              <ProgressTrackerWidget />
-              <div style={{ marginTop: 16 }}>
-                <CareerResultsPanel
-                  onRecordOutcome={() => setRecordOutcomeOpen(true)}
-                  refreshKey={outcomeVersion}
-                />
-              </div>
-            </motion.div>
-
-            {/* ══════════════════════════════════════════════════════════════
-                BELOW FOLD — DEEP INTELLIGENCE
-            ══════════════════════════════════════════════════════════════ */}
-            <motion.div variants={itemVariants} style={{ marginBottom: 32 }}>
-              <SectionLabel label="Career Readiness Score" />
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
-                gap: 14, marginBottom: 14,
-              }}>
-                <CareerRiskWidget />
-                <RecommendedToolWidget />
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} style={{ marginBottom: 32 }}>
-              <SectionLabel label="Signals" />
-
-              <WeeklyCareerBriefCard />
-
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-                gap: 14, marginBottom: 14,
-              }}>
-                <BiggestThreatWidget />
-                <BiggestOpportunityWidget />
-              </div>
-
-              <MonitoringFeedWidget />
-
-              <div style={{ marginTop: 14 }}>
-                <AIAmplificationWidget />
-              </div>
-            </motion.div>
-
-            {/* ══════════════════════════════════════════════════════════════
-                CAREER SYSTEM
-            ══════════════════════════════════════════════════════════════ */}
-            <motion.div variants={itemVariants}>
-              <SectionLabel label="Your Career System" />
-
-              <ToolQuickLaunch />
-
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-                gap: 14, marginBottom: 14,
-              }}>
-                <CareerHealthScoreWidget />
-                <PersonalizedPredictionPanel />
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <FiveYearArcPanel />
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <OutcomeInsightPanel />
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <FeedbackLoopStatus />
-              </div>
-
-              {/* ADAPTATION LOOP — Rule 11: visible 6-stage loop status (Phase 5) */}
-              <div style={{ marginBottom: 14 }}>
-                <AdaptationLoopStatus scoreResult={hr} primaryMove={primaryMove} />
-              </div>
-
-              {/* CAREER GRAPH INSIGHTS — Rule 9/18: cohort outcome patterns (Phase 5) */}
-              <div style={{ marginBottom: 14 }}>
-                <CareerGraphInsights userProfile={userProfile} />
-              </div>
-
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-                gap: 14,
-              }}>
-                <div>
-                  <CareerMemorySummaryCard />
-                  {completenessScore !== null && (
-                    <div style={{
-                      marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "6px 12px", borderRadius: 6,
-                      background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)",
-                      fontSize: "0.75rem",
-                    }}>
-                      <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>System Readiness</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontWeight: 800, color: completenessColor(completenessScore) }}>
-                          {completenessScore}%
-                        </span>
-                        <Link to="/tools/career-twin" style={{ color: "var(--cyan)", textDecoration: "none", fontSize: "0.72rem", fontWeight: 700 }}>
-                          → Career Twin
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="card-premium" style={{ padding: "20px 22px" }}>
-                  <div style={{
-                    fontSize: 11, fontWeight: 700, color: "var(--text-3)",
-                    textTransform: "uppercase" as const, letterSpacing: "0.1em",
-                    marginBottom: 14, fontFamily: "var(--font-mono, monospace)",
-                  }}>
-                    Action Feedback &amp; ROI
-                  </div>
-                  <FeedbackSummaryPanel compact />
-                </div>
-              </div>
-            </motion.div>
+            {/* ── 5. Career Twin Status ── */}
+            <CareerTwinStatus completenessScore={completenessScore} />
           </>
         )}
 
-        {/* ── Bottom nav strip ── */}
-        <motion.div variants={itemVariants} style={{ marginTop: 32, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          {[
-            { label: "Run New Audit", path: "/terminal", badge: 0 },
-            { label: "Monitor Signals", path: "/monitor", badge: autopilotUnreadCount },
-            { label: "All Tools", path: "/tools", badge: 0 },
-            { label: "Career Settings", path: "/settings", badge: 0 },
-          ].map((link) => (
+        {/* ── Bottom nav ── */}
+        <motion.div variants={itemVariants} style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {([
+            { label: 'New Audit', path: '/terminal', newAudit: true, badge: 0 },
+            { label: 'Monitor Signals', path: '/monitor', newAudit: false, badge: autopilotUnreadCount },
+            { label: 'All Tools', path: '/tools', newAudit: false, badge: 0 },
+            { label: 'Settings', path: '/settings', newAudit: false, badge: 0 },
+          ] as const).map(link => (
             <button
-              type="button"
               key={link.path}
-              onClick={() => navigate(link.path)}
+              type="button"
+              onClick={() => navigate(link.path, link.newAudit ? { state: { newAudit: true } } : undefined)}
               style={{
-                background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: 8,
-                color: "var(--text-2)", fontSize: "0.8rem", fontWeight: 600,
-                padding: "7px 16px", cursor: "pointer", transition: "all 150ms ease", outline: "none",
+                background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 8,
+                color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', fontWeight: 600,
+                padding: '6px 14px', cursor: 'pointer', transition: 'all 150ms', outline: 'none',
+                display: 'flex', alignItems: 'center', gap: 5,
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
-                (e.currentTarget as HTMLElement).style.color = "var(--cyan)";
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--cyan)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--cyan)';
               }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-                (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
-              }}
-              onFocus={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
-                (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px var(--cyan)44";
-              }}
-              onBlur={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-                (e.currentTarget as HTMLElement).style.boxShadow = "none";
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.4)';
               }}
             >
               {link.label}
               {link.badge > 0 && (
                 <span style={{
-                  marginLeft: 6, display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  width: 16, height: 16, borderRadius: "50%",
-                  background: "#ef4444", color: "#fff", fontSize: 10, fontWeight: 800,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 15, height: 15, borderRadius: '50%',
+                  background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800,
                 }}>
-                  {link.badge > 9 ? "9+" : link.badge}
+                  {link.badge > 9 ? '9+' : link.badge}
                 </span>
               )}
-              {" →"}
+              {' →'}
             </button>
           ))}
         </motion.div>
       </motion.div>
-
-      <RecordOutcomeModal
-        open={recordOutcomeOpen}
-        onClose={() => setRecordOutcomeOpen(false)}
-        onRecorded={() => setOutcomeVersion(v => v + 1)}
-      />
     </div>
   );
 }
