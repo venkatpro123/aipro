@@ -1,29 +1,52 @@
 // OutcomeInsightPanel.tsx — Rule 18: Outcome Monopoly
 // Shows top actions ranked by MEASURED risk reduction from real user feedback data.
 // Closes the loop: "You did X → your risk dropped Y points."
+// Phase 5: adds cohort comparison row ("Users like you averaged X pts reduction")
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BarChart2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useLayoff } from "../../context/LayoffContext";
 import { getFeedbackSummary, type ActionROI } from "../../services/feedbackEngine";
+import { getCohortOutcomeStats, type CohortOutcomeStats } from "../../services/cohortOutcomesAggregator";
+import type { HybridResult } from "../../types/hybridResult";
 
 export function OutcomeInsightPanel() {
   const { user } = useAuth();
+  const { state } = useLayoff();
   const [top, setTop] = useState<ActionROI[]>([]);
+  const [cohortStats, setCohortStats] = useState<Record<string, CohortOutcomeStats>>({});
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(false);
+
+  const hr = state.scoreResult as HybridResult | null;
 
   useEffect(() => {
     if (!user) { setChecked(true); return; }
     setLoading(true);
     getFeedbackSummary(user.id)
-      .then(s => {
+      .then(async s => {
         // Only show actions with a measured reduction > 0
         const effective = (s.topEffectiveActions ?? []).filter(a => a.reduction > 0);
-        setTop(effective.slice(0, 5));
+        const displayed = effective.slice(0, 5);
+        setTop(displayed);
+
+        // Fetch cohort stats for each action (best-effort — non-blocking)
+        const roleKey = (hr as any)?.roleKey ?? (hr as any)?.role ?? 'unknown';
+        const yearsExp = (hr as any)?.yearsExperience ?? 5;
+        const band = yearsExp < 2 ? '<2' : yearsExp < 5 ? '2-5' : yearsExp < 10 ? '5-10' : '10+';
+        const statsMap: Record<string, CohortOutcomeStats> = {};
+        await Promise.allSettled(
+          displayed.map(async action => {
+            const stats = await getCohortOutcomeStats(roleKey, band as any, action.actionId);
+            if (stats && stats.count >= 3) statsMap[action.actionId] = stats;
+          })
+        );
+        setCohortStats(statsMap);
       })
       .catch(() => {})
       .finally(() => { setLoading(false); setChecked(true); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Don't render until checked — avoids flash of "no data" on first load
@@ -117,6 +140,28 @@ export function OutcomeInsightPanel() {
                   }}
                 />
               </div>
+
+              {/* Rule 18: Cohort comparison row — "Users like you averaged N pts" */}
+              {cohortStats[action.actionId] && (() => {
+                const cs = cohortStats[action.actionId];
+                const confColor = cs.confidenceLevel === 'high' ? '#10b981' : cs.confidenceLevel === 'medium' ? '#f59e0b' : 'rgba(255,255,255,0.2)';
+                return (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    fontSize: "0.68rem", color: "rgba(255,255,255,0.3)",
+                    fontFamily: "var(--font-mono, monospace)",
+                    marginTop: 2,
+                  }}>
+                    <span>Users like you avg</span>
+                    <span style={{ fontWeight: 700, color: confColor }}>
+                      −{cs.avgRiskReduction.toFixed(1)}pts
+                    </span>
+                    <span style={{ color: confColor, opacity: 0.7 }}>
+                      · {cs.confidenceLevel === 'high' ? 'High' : 'Moderate'} confidence · {cs.count} users
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
