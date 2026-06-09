@@ -73,7 +73,7 @@ function rowToEvent(row: Record<string, unknown>): CareerOutcomeEvent {
     companyName: (row.company_name as string | null) ?? undefined,
     roleTitle: (row.role_title as string | null) ?? undefined,
     details: (row.details as Record<string, unknown> | null) ?? undefined,
-    source: (row.source as 'user_reported' | 'auto_detected') ?? 'user_reported',
+    source: row.source === 'auto_detected' ? 'auto_detected' : 'user_reported',
     createdAt: row.created_at as string,
   };
 }

@@ -1,6 +1,6 @@
 // RecordOutcomeModal — Rule 9 (Career Graph seed), Rule 2 (Outcome Monopoly)
 // 3-tap capture of any career win. Feeds CareerResultsPanel and future Career Graph.
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check } from 'lucide-react';
@@ -36,12 +36,24 @@ const EVENT_PROMPTS: Record<OutcomeEventType, string> = {
 
 export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
   const { state } = useLayoff();
-  const [step, setStep] = useState<'type' | 'detail' | 'done'>('type');
+  const [step, setStep] = useState<'type' | 'detail' | 'done' | 'error'>('type');
   const [selectedType, setSelectedType] = useState<OutcomeEventType | null>(null);
   const [detail, setDetail] = useState('');
   const [saving, setSaving] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear pending close timer on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current != null) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   function reset() {
+    if (closeTimerRef.current != null) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     setStep('type');
     setSelectedType(null);
     setDetail('');
@@ -59,16 +71,24 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
     const detailObj: Record<string, string> = {};
     if (detail.trim()) detailObj.note = detail.trim();
 
-    await recordOutcomeEvent(selectedType, {
+    const saved = await recordOutcomeEvent(selectedType, {
       companyName: state.companyName ?? undefined,
       roleTitle: state.roleTitle ?? undefined,
       details: detailObj,
     });
 
     setSaving(false);
+    if (!saved) {
+      setStep('error');
+      return;
+    }
     setStep('done');
-    onRecorded?.();
-    setTimeout(() => { handleClose(); }, 1800);
+    // Notify parent only after the success animation plays, just before close
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null;
+      onRecorded?.();
+      handleClose();
+    }, 1800);
   }
 
   if (!open) return null;
@@ -142,6 +162,26 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
                   {selectedType ? OUTCOME_LABELS[selectedType] : 'Career win'} added to your career story.
                 </div>
               </motion.div>
+            ) : step === 'error' ? (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ef4444', marginBottom: 8 }}>
+                  Save failed
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>
+                  Could not save your career win. Please try again.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep('detail')}
+                  style={{
+                    padding: '9px 20px', borderRadius: 8, cursor: 'pointer',
+                    background: '#10b981', border: 'none', color: '#000',
+                    fontSize: '0.85rem', fontWeight: 700,
+                  }}
+                >
+                  Try again
+                </button>
+              </div>
             ) : step === 'type' ? (
               <>
                 <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', marginBottom: 14 }}>

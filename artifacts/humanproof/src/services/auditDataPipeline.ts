@@ -118,7 +118,8 @@ import { computePredictionHorizon } from "./predictionHorizonService";
 import { computeSkillGapIntelligence } from "./skillGapIntelligenceService";
 import { computePersonalizedTimeline } from "./personalizedTimelineService";
 import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
-import { computeActionEffortBadge, rankActions } from "./actionRankingService";
+import { computeActionEffortBadge, rankActions, loadCohortBoosts } from "./actionRankingService";
+import { tenureBandFromYears } from "./cohortOutcomesAggregator";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
 import { getCareerPathMarket, getCareerPathMarketSync } from "./careerPathMarket";
 import { evaluateJobOffer } from "./offerEvaluationEngine";
@@ -3508,9 +3509,19 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     hybridResult.actionItems = hybridResult.recommendations;
     // Rule 1: inject why-it-matters + consequence framing into every action
     hybridResult.actionItems = injectActionConsequences(hybridResult.actionItems, hybridResult);
-    // Rule 2+5: stamp rankScore onto each item so UI sorts by impact÷effort, not just priority string
+    // Rule 2+5+18: stamp rankScore; Phase 5 boosts actions proven effective for similar users
     const _userProfileForRanking = (inputs.userFactors as any) ?? null;
-    const _ranked = rankActions(hybridResult.actionItems, _userProfileForRanking);
+    const _actionIds = hybridResult.actionItems
+      .map((a: any) => (a.id ?? a.title ?? '') as string)
+      .filter(Boolean);
+    const _cohortBoosts = _userProfileForRanking && _actionIds.length > 0
+      ? await loadCohortBoosts(
+          (_userProfileForRanking.roleTitle ?? 'unknown').toLowerCase().replace(/\s+/g, '_'),
+          tenureBandFromYears(_userProfileForRanking.tenureYears ?? null),
+          _actionIds,
+        ).catch(() => null)
+      : null;
+    const _ranked = rankActions(hybridResult.actionItems, _userProfileForRanking, null, _cohortBoosts);
     hybridResult.actionItems = _ranked.map(r => ({
       ...(r.action as import('../types/hybridResult').ActionPlanItem),
       rankScore: r.rankScore,

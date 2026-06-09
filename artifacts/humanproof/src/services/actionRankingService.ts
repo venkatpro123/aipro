@@ -161,17 +161,24 @@ export function cohortMultiplier(avgRiskReduction: number | null | undefined, ne
  * Returns a map actionId → cohortMultiplier for all actions with N ≥ 5 data.
  * Non-blocking — returns empty map on failure.
  */
+type TenureBand = '<2' | '2-5' | '5-10' | '10+';
+const TENURE_BAND_VALUES: TenureBand[] = ['<2', '2-5', '5-10', '10+'];
+function toTenureBand(s: string): TenureBand {
+  return (TENURE_BAND_VALUES as string[]).includes(s) ? (s as TenureBand) : '<2';
+}
+
 export async function loadCohortBoosts(
   roleKey: string,
   tenureBand: string,
   actionIds: string[],
 ): Promise<CohortBoostMap> {
   const { getCohortOutcomeStats } = await import('./cohortOutcomesAggregator');
+  const safeBand = toTenureBand(tenureBand);
   const map: CohortBoostMap = new Map();
   await Promise.all(
     actionIds.slice(0, 10).map(async (id) => {
       try {
-        const stats = await getCohortOutcomeStats(roleKey, tenureBand as never, id);
+        const stats = await getCohortOutcomeStats(roleKey, safeBand, id);
         if (stats && stats.count >= 5) {
           map.set(id, cohortMultiplier(stats.avgRiskReduction));
         }

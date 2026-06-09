@@ -8,7 +8,7 @@ import { Users, TrendingUp, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLayoff } from '../../context/LayoffContext';
 import { supabase } from '../../utils/supabase';
-import { getCohortOutcomeStats, tenureBandFromYears } from '../../services/cohortOutcomesAggregator';
+import { tenureBandFromYears } from '../../services/cohortOutcomesAggregator';
 import type { HybridResult } from '../../types/hybridResult';
 import type { UserProfile } from '../../services/userProfileService';
 import { DataSourceLabel } from '../shared/DataSourceLabel';
@@ -54,24 +54,27 @@ async function loadFromCohortCache(
   tenureBand: ReturnType<typeof tenureBandFromYears>,
   actionIds: string[],
 ): Promise<GraphInsight[]> {
-  const results: GraphInsight[] = [];
+  // Single batched query instead of per-action round-trips
+  const { data } = await supabase
+    .from('cohort_outcome_cache')
+    .select('action_id, avg_risk_reduction, completion_count')
+    .eq('role_key', roleKey)
+    .eq('tenure_band', tenureBand)
+    .in('action_id', actionIds.slice(0, 6))
+    .gte('completion_count', MIN_N);
 
-  await Promise.all(
-    actionIds.slice(0, 6).map(async (actionId, i) => {
-      const stats = await getCohortOutcomeStats(roleKey, tenureBand, actionId);
-      if (!stats || stats.count < MIN_N) return;
-      results.push({
-        id: `cohort-${i}`,
-        headline: `${stats.count} professionals with your profile tried "${actionId.replace(/_/g, ' ')}"`,
-        subtext: `avg +${Math.round(stats.avgRiskReduction)} readiness pts gained`,
-        sampleSize: stats.count,
-        gainPts: Math.round(stats.avgRiskReduction),
-        confidence: stats.confidenceLevel === 'high' ? 'high' : 'medium',
-      });
-    }),
-  );
+  if (!data || data.length === 0) return [];
 
-  return results.sort((a, b) => b.sampleSize - a.sampleSize);
+  return (data as Array<Record<string, unknown>>)
+    .map((row, i) => ({
+      id: `cohort-${i}`,
+      headline: `${row.completion_count} professionals with your profile tried "${(row.action_id as string).replace(/_/g, ' ')}"`,
+      subtext: `avg +${Math.round(row.avg_risk_reduction as number)} readiness pts gained`,
+      sampleSize: row.completion_count as number,
+      gainPts: Math.round(row.avg_risk_reduction as number),
+      confidence: ((row.completion_count as number) >= 10 ? 'high' : 'medium') as 'high' | 'medium',
+    }))
+    .sort((a, b) => b.sampleSize - a.sampleSize);
 }
 
 // ── Insight card ──────────────────────────────────────────────────────────────

@@ -18,10 +18,12 @@ export function FeedbackLoopStatus({ compact = false }: Props) {
 
   useEffect(() => {
     if (!user) { setChecked(true); return; }
+    let mounted = true;
     loadCareerTwin()
-      .then(t => setTwin(t))
+      .then(t => { if (mounted) setTwin(t); })
       .catch(() => {})
-      .finally(() => setChecked(true));
+      .finally(() => { if (mounted) setChecked(true); });
+    return () => { mounted = false; };
   }, [user]);
 
   if (!checked || !twin) return null;

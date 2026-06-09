@@ -1,7 +1,7 @@
 // AdaptationLoopStatus — Rule 11: visible 6-stage continuous adaptation loop (Phase 5)
 // Shows the live state of each loop stage so users see the system is always working.
 // Stages: MONITOR → DETECT → EXPLAIN → RECOMMEND → LEARN → REPEAT
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Radio, Eye, Lightbulb, Target, TrendingUp, RefreshCw, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -164,7 +164,7 @@ export function AdaptationLoopStatus({ scoreResult: hr, primaryMove }: Props) {
 
   // ── Build the 6 stages from available data ──────────────────────────────────
 
-  const signalCount = countActiveSignals(hr);
+  const signalCount = useMemo(() => countActiveSignals(hr), [hr]);
   const auditAge = daysSince(hr.calculatedAt) ?? null;
   const nextAuditDays = auditAge != null ? Math.max(0, 30 - auditAge) : null;
   const lastSignalAge = formatAge(hr.calculatedAt);

@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const { data: profiles } = await supabase
       .from('user_profiles')
       .select('user_id, role_title')
-      .in('user_id', userIds.slice(0, 500));
+      .in('user_id', userIds.slice(0, 100));
 
     const roleByUser = new Map<string, string>();
     for (const p of profiles ?? []) {

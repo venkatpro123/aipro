@@ -61,6 +61,7 @@ export function QuickFeedbackBanner() {
         for (const row of data) {
           const id = row.action_id as string;
           if (alreadySubmitted.has(id)) continue;
+          if (!row.completed_at) continue;
           const age = now - new Date(row.completed_at as string).getTime();
           if (age >= FOURTEEN_DAYS_MS) {
             setPending({

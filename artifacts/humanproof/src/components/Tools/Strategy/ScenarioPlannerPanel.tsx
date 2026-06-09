@@ -1,7 +1,7 @@
 // ScenarioPlannerPanel — Rule 15: Year 1/3/5 three-path scenario planner (Phase 4)
 // Three career paths: Current Trajectory / Adapt / AI Amplification
 // Sources: scenarioPlan + careerVelocity + careerResilience from HybridResult.
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Minus, TrendingDown, Zap, Rocket, ChevronDown, ChevronRight } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
@@ -230,11 +230,11 @@ export function ScenarioPlannerPanel({ scoreResult }: Props) {
   const [selected, setSelected] = useState<PathId>('adapt');
   const [showActions, setShowActions] = useState(false);
 
-  const paths: CareerPath[] = [
+  const paths = useMemo(() => [
     buildCurrentPath(scoreResult),
     buildAdaptPath(scoreResult),
     buildAmplifyPath(scoreResult),
-  ];
+  ], [scoreResult]);
 
   const selectedPath = paths.find(p => p.id === selected) ?? paths[1];
 
