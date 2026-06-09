@@ -783,15 +783,13 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
       const isFirstAudit = prevScore === null;
       const daysSince = prevTs ? Math.round((Date.now() - prevTs) / 86400000) : 0;
 
-      if (isFirstAudit) {
-        // First audit: show reveal screen (skip if revealSeen already set in this session)
-        const alreadySeen = sessionStorage.getItem("hp_reveal_seen");
-        if (!alreadySeen) {
-          setRevealActive(true);
-          sessionStorage.setItem("hp_reveal_seen", "1");
-        }
-      } else if (prevScore != null) {
-        // Re-audit: show what changed card
+      // Always show the reveal screen after every audit completion.
+      // AuditPage clears hp_reveal_seen on mount so repeating is always fresh.
+      setRevealActive(true);
+      try { sessionStorage.setItem("hp_reveal_seen", "1"); } catch { /* ignore */ }
+
+      if (!isFirstAudit && prevScore != null) {
+        // Also queue the "What Changed" card — shown after the reveal is dismissed.
         setWhatChangedState({ previousScore: prevScore, currentScore: newScore, daysSinceLastAudit: daysSince });
         // Celebrate meaningful improvement (≥ 3 pts better)
         if (prevScore - newScore >= 3) {
@@ -893,7 +891,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
       } = await supabase.auth.getSession();
       if (session?.user?.id && state.companyName && state.roleTitle) {
         const allowCommunityShare = getEffectiveCommunityShare();
-        await supabase.from("layoff_scores").insert({
+        const { error: scoreInsertError } = await supabase.from("layoff_scores").insert({
           user_id: session.user.id,
           company_name: state.companyName,
           role_title: state.roleTitle,
@@ -907,8 +905,6 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
           data_quality: pipelineQuality,
           calculated_at: new Date().toISOString(),
           allow_community_share: allowCommunityShare,
-          // Snapshot of company signals at scoring time — required for server-side
-          // delta attribution on multi-device users (localStorage doesn't travel).
           company_snapshot: {
             stock90DayChange:   companyData.stock90DayChange ?? null,
             revenueGrowthYoY:   companyData.revenueGrowthYoY ?? null,
@@ -918,6 +914,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
             aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
           },
         });
+        if (scoreInsertError) {
+          console.error("[Layoff] layoff_scores insert failed (pipeline path):", scoreInsertError.message);
+        }
 
         // WS7 — Server-authoritative score trajectory (Audit Issue #13).
         //
@@ -1650,7 +1649,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
           const allowCommunityShare = (() => {
             try { return localStorage.getItem('hp_community_share') === '1'; } catch { return false; }
           })();
-          await supabase.from("layoff_scores").insert({
+          const { error: ensembleInsertError } = await supabase.from("layoff_scores").insert({
             user_id: session.user.id,
             company_name: state.companyName,
             role_title: state.roleTitle,
@@ -1673,6 +1672,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
               aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
             },
           });
+          if (ensembleInsertError) {
+            console.error("[Layoff] layoff_scores insert failed (ensemble path):", ensembleInsertError.message);
+          }
 
           // Non-blocking score_history sync via scoreSyncService
           scoreSyncService.setUserId(session.user.id);

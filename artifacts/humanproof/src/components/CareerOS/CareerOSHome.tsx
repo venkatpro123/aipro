@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLayoff } from "../../context/LayoffContext";
 import { computeProfileCompleteness, completenessColor } from "../../services/profileCompletenessEngine";
 import { fetchUserProfile } from "../../services/userProfileService";
@@ -294,6 +294,7 @@ function isMonday(): boolean {
 export function CareerOSHome() {
   const { state } = useLayoff();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const hasResult = state.scoreResult !== null;
   const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
   const [completenessScore, setCompletenessScore] = useState<number | null>(null);
@@ -634,21 +635,15 @@ export function CareerOSHome() {
           }}
         >
           {[
-            { label: "Run New Audit", route: "terminal" },
-            { label: "Monitor Signals", route: "monitor" },
-            { label: "All Tools", route: "tools" },
-            { label: "Career Settings", route: "settings" },
+            { label: "Run New Audit", path: "/terminal" },
+            { label: "Monitor Signals", path: "/monitor" },
+            { label: "All Tools", path: "/tools" },
+            { label: "Career Settings", path: "/settings" },
           ].map((link) => (
             <button
               type="button"
-              key={link.route}
-              onClick={() =>
-                window.dispatchEvent(
-                  new CustomEvent("navigate", {
-                    detail: { page: link.route },
-                  })
-                )
-              }
+              key={link.path}
+              onClick={() => navigate(link.path)}
               style={{
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid var(--border)",
