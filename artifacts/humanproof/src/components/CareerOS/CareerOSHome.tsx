@@ -30,7 +30,12 @@ import { ProgressTrackerWidget } from "./ProgressTrackerWidget";
 import { MissionCard } from "./MissionCard";
 import { EarlyWarningStrip } from "./EarlyWarningStrip";
 import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
+import { CareerResultsPanel } from "./CareerResultsPanel";
+import { QuickFeedbackBanner } from "./QuickFeedbackBanner";
+import { FeedbackLoopStatus } from "./FeedbackLoopStatus";
+import { RecordOutcomeModal } from "./RecordOutcomeModal";
 import { orchestrate } from "../../services/orchestration/signalOrchestrator";
+import { getCohortOutcomeStats, tenureBandFromYears } from "../../services/cohortOutcomesAggregator";
 import type { HybridResult } from "../../types/hybridResult";
 import type { UserProfile } from "../../services/userProfileService";
 
@@ -182,6 +187,9 @@ export function CareerOSHome() {
   const [memorySummary, setMemorySummary] = useState<import('../../services/careerMemoryService').CareerMemorySummary | null>(null);
   const [adaptationTriggers, setAdaptationTriggers] = useState<AdaptationTrigger[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [peerBenchmark, setPeerBenchmark] = useState<{ n: number; avgPtsGain: number } | null>(null);
+  const [recordOutcomeOpen, setRecordOutcomeOpen] = useState(false);
+  const [outcomeVersion, setOutcomeVersion] = useState(0);
   const { unreadCount: autopilotUnreadCount } = useAutopilotAlerts();
 
   // ── Profile + memory + twin sync ──
@@ -246,6 +254,23 @@ export function CareerOSHome() {
   }, [state.scoreResult, userProfile]);
 
   const primaryMove = orchestratedFeed?.primaryMove ?? null;
+  const primaryMoveActionId = primaryMove?.action.id ?? primaryMove?.action.title ?? null;
+
+  // ── Peer benchmark for MissionCard — cohort data for the primary action ──
+  useEffect(() => {
+    if (!state.scoreResult || !primaryMoveActionId) return;
+    const hr = state.scoreResult as HybridResult;
+    const roleKey = (hr as any)?.roleKey ?? (hr as any)?.role ?? 'unknown';
+    const band = tenureBandFromYears(userProfile?.yearsExperience ?? 5);
+    getCohortOutcomeStats(roleKey, band, primaryMoveActionId)
+      .then(stats => {
+        if (stats && stats.count >= 5) {
+          setPeerBenchmark({ n: stats.count, avgPtsGain: Math.round(stats.avgRiskReduction) });
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryMoveActionId, userProfile?.yearsExperience]);
 
   // ── Derived readiness values for GPS bar ──
   const hr = state.scoreResult as HybridResult | null;
@@ -327,6 +352,9 @@ export function CareerOSHome() {
       {/* ── Today's Intelligence Brief (system voice, compact) ── */}
       <TodaysIntelligenceBrief />
 
+      {/* ── 14-day feedback banner — shown when action is due a follow-up ── */}
+      <QuickFeedbackBanner />
+
       {/* ── Re-engagement banner ── */}
       {reEngageBanner && (
         <motion.div
@@ -406,7 +434,7 @@ export function CareerOSHome() {
                 <MissionCard
                   primaryMove={primaryMove}
                   riskScore={riskScore}
-                  peerBenchmark={null}
+                  peerBenchmark={peerBenchmark}
                   onHelp={() => navigate('/tools/strategy')}
                   onSkip={() => navigate('/monitor')}
                 />
@@ -445,10 +473,16 @@ export function CareerOSHome() {
             {/* Re-audit nudge */}
             <ReAuditPromptCard />
 
-            {/* ── PROGRESS SECTION ── */}
+            {/* ── PROGRESS + RESULTS SECTION ── */}
             <motion.div variants={itemVariants} style={{ marginBottom: 28 }}>
               <SectionLabel label="Your Progress" />
               <ProgressTrackerWidget />
+              <div style={{ marginTop: 16 }}>
+                <CareerResultsPanel
+                  onRecordOutcome={() => setRecordOutcomeOpen(true)}
+                  refreshKey={outcomeVersion}
+                />
+              </div>
             </motion.div>
 
             {/* ══════════════════════════════════════════════════════════════
@@ -510,6 +544,10 @@ export function CareerOSHome() {
 
               <div style={{ marginBottom: 14 }}>
                 <OutcomeInsightPanel />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <FeedbackLoopStatus />
               </div>
 
               <div style={{
@@ -594,6 +632,12 @@ export function CareerOSHome() {
           ))}
         </motion.div>
       </motion.div>
+
+      <RecordOutcomeModal
+        open={recordOutcomeOpen}
+        onClose={() => setRecordOutcomeOpen(false)}
+        onRecorded={() => setOutcomeVersion(v => v + 1)}
+      />
     </div>
   );
 }
