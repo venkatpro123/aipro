@@ -149,37 +149,37 @@ export function MissionCard({ primaryMove, riskScore, peerBenchmark, onHelp, onS
       }}>
         <div>
           <div style={{
-            fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.25)',
+            fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.45)',
             letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5,
             fontFamily: 'var(--font-mono, monospace)',
           }}>
             WHAT HAPPENED
           </div>
-          <div style={{ fontSize: '0.79rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.79rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
             {whatHappened}
           </div>
         </div>
         <div>
           <div style={{
-            fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.25)',
+            fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.45)',
             letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5,
             fontFamily: 'var(--font-mono, monospace)',
           }}>
             WHY IT MATTERS
           </div>
-          <div style={{ fontSize: '0.79rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.79rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
             {whyItMatters}
           </div>
         </div>
         <div>
           <div style={{
-            fontSize: '0.63rem', fontWeight: 800, color: '#ef444440',
+            fontSize: '0.63rem', fontWeight: 800, color: 'rgba(239,68,68,0.75)',
             letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5,
             fontFamily: 'var(--font-mono, monospace)',
           }}>
             IF YOU SKIP
           </div>
-          <div style={{ fontSize: '0.79rem', color: 'rgba(239,68,68,0.65)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.79rem', color: 'rgba(239,68,68,0.75)', lineHeight: 1.5 }}>
             {ifYouSkip}
           </div>
         </div>
@@ -228,16 +228,19 @@ export function MissionCard({ primaryMove, riskScore, peerBenchmark, onHelp, onS
         <button
           type="button"
           onClick={handleComplete}
+          aria-label="Mark this week's mission as complete"
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
             background: accentColor, color: '#000',
             fontWeight: 800, fontSize: '0.88rem',
-            padding: '11px 22px', borderRadius: 9, border: 'none',
+            padding: '11px 22px', borderRadius: 9, border: '2px solid transparent',
             cursor: 'pointer', flex: '1 1 140px', justifyContent: 'center',
-            transition: 'opacity 150ms',
+            transition: 'opacity 150ms', outline: 'none',
           }}
           onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.85'}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+          onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 3px ${accentColor}55`}
+          onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
         >
           <CheckCircle2 size={15} />
           Mark Complete
@@ -246,6 +249,7 @@ export function MissionCard({ primaryMove, riskScore, peerBenchmark, onHelp, onS
           <button
             type="button"
             onClick={onHelp}
+            aria-label="Get help with this mission"
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'rgba(255,255,255,0.06)', color: 'var(--text-2)',
@@ -253,10 +257,12 @@ export function MissionCard({ primaryMove, riskScore, peerBenchmark, onHelp, onS
               padding: '11px 18px', borderRadius: 9,
               border: '1px solid var(--border)',
               cursor: 'pointer', flex: '0 1 auto',
-              transition: 'all 150ms',
+              transition: 'all 150ms', outline: 'none',
             }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--cyan)'; (e.currentTarget as HTMLElement).style.color = 'var(--cyan)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-2)'; }}
+            onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px var(--cyan)'}
+            onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
           >
             <HelpCircle size={13} />
             I need help
@@ -266,17 +272,20 @@ export function MissionCard({ primaryMove, riskScore, peerBenchmark, onHelp, onS
           <button
             type="button"
             onClick={onSkip}
+            aria-label="Skip this week's mission"
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              background: 'none', color: 'rgba(255,255,255,0.25)',
+              background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.45)',
               fontWeight: 600, fontSize: '0.78rem',
               padding: '11px 14px', borderRadius: 9,
-              border: '1px solid transparent',
+              border: '1px solid rgba(255,255,255,0.12)',
               cursor: 'pointer', flex: '0 1 auto',
-              transition: 'color 150ms',
+              transition: 'all 150ms', outline: 'none',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.25)'}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}
+            onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px rgba(255,255,255,0.3)'}
+            onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
           >
             Skip this week
             <ChevronRight size={12} />

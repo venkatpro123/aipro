@@ -45,7 +45,20 @@ export function CareerResultsPanel({ onRecordOutcome, refreshKey = 0 }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, refreshKey]);
 
-  if (!checked || loading) return null;
+  if (!checked || loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {[80, 100, 60].map((w, i) => (
+          <div key={i} style={{
+            height: 14, borderRadius: 6,
+            background: 'rgba(255,255,255,0.06)',
+            width: `${w}%`,
+            animation: 'pulse 1.6s ease-in-out infinite',
+          }} />
+        ))}
+      </div>
+    );
+  }
 
   const hasAnyData = roi.length > 0 || (outcomes?.events?.length ?? 0) > 0;
   const totalWins = (outcomes?.totalWins ?? 0) + roi.filter(r => r.reduction > 2).length;
@@ -77,12 +90,18 @@ export function CareerResultsPanel({ onRecordOutcome, refreshKey = 0 }: Props) {
         <button
           type="button"
           onClick={onRecordOutcome}
+          aria-label="Record a career outcome"
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
             background: 'rgba(0,245,255,0.07)', border: '1px solid rgba(0,245,255,0.2)',
             borderRadius: 7, color: 'var(--cyan)', fontSize: '0.75rem',
             fontWeight: 700, padding: '5px 12px', cursor: 'pointer',
+            transition: 'all 150ms', outline: 'none',
           }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,245,255,0.14)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,245,255,0.4)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,245,255,0.07)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,245,255,0.2)'; }}
+          onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px var(--cyan)44'}
+          onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
         >
           <Plus size={11} />
           Record outcome

@@ -100,7 +100,20 @@ export function ProgressTrackerWidget({ profile }: Props) {
     return () => window.removeEventListener('hp:action-completed', handler);
   }, []);
 
-  if (isLoading || !scoreResult) return null;
+  if (isLoading) {
+    return (
+      <div className="card-premium" style={{ padding: '18px 20px' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.6s ease-in-out infinite', flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '60%', animation: 'pulse 1.6s ease-in-out infinite' }} />
+            <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '40%', animation: 'pulse 1.6s ease-in-out infinite' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!scoreResult) return null;
 
   const momentumLabel = trajectoryStatus === 'improving'
     ? 'Risk improving'

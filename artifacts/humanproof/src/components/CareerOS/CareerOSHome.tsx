@@ -81,17 +81,19 @@ const TOOL_LINKS = [
 
 function ToolQuickLaunch() {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 100px), 1fr))", gap: 10, marginBottom: 20 }}>
       {TOOL_LINKS.map((tool) => (
         <Link
           key={tool.to}
           to={tool.to}
+          aria-label={tool.label}
           style={{
             display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 6,
-            padding: "14px 10px", background: "rgba(255,255,255,0.03)",
+            padding: "14px 8px", background: "rgba(255,255,255,0.03)",
             border: "1px solid var(--border)", borderRadius: 10,
             textDecoration: "none", color: "var(--text-2)",
-            fontSize: "0.78rem", fontWeight: 600, transition: "all 150ms ease", textAlign: "center" as const,
+            fontSize: "0.75rem", fontWeight: 600, transition: "all 150ms ease",
+            textAlign: "center" as const, outline: "none",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
@@ -103,9 +105,17 @@ function ToolQuickLaunch() {
             (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
             (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
           }}
+          onFocus={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
+            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px var(--cyan)44";
+          }}
+          onBlur={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+            (e.currentTarget as HTMLElement).style.boxShadow = "none";
+          }}
         >
           <span style={{ fontSize: 20 }}>{tool.icon}</span>
-          <span>{tool.label}</span>
+          <span style={{ lineHeight: 1.3 }}>{tool.label}</span>
         </Link>
       ))}
     </div>
@@ -331,7 +341,7 @@ export function CareerOSHome() {
             <span style={{ color: "var(--text-2)", fontWeight: 600 }}>
               {state.roleTitle ? `${state.roleTitle} ` : ''}{state.companyName ? `@ ${state.companyName}` : "your current role"}
             </span>
-            <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
             <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>READINESS</span>
             <span style={{ fontWeight: 800, color: readiness >= 60 ? '#10b981' : readiness >= 40 ? '#f59e0b' : '#ef4444' }}>
               {readiness}
@@ -341,7 +351,7 @@ export function CareerOSHome() {
               const targetPath = (hr as any)?.escapePaths?.paths?.[0]?.title ?? null;
               return targetPath ? (
                 <>
-                  <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+                  <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
                   <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>TARGET</span>
                   <span style={{ color: "var(--cyan)", fontWeight: 600 }}>{targetPath}</span>
                 </>
@@ -378,8 +388,9 @@ export function CareerOSHome() {
           </span>
           <button
             type="button"
+            aria-label="Dismiss re-engagement notification"
             onClick={() => setReEngageBanner(null)}
-            style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(245,158,11,0.5)", cursor: "pointer", fontSize: "1rem" }}
+            style={{ marginLeft: "auto", background: "none", border: "none", color: "rgba(245,158,11,0.5)", cursor: "pointer", fontSize: "1rem", padding: "4px 6px" }}
           >×</button>
         </motion.div>
       )}
@@ -426,6 +437,18 @@ export function CareerOSHome() {
                   }}
                 >
                   {trigger.ctaLabel} →
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Dismiss ${trigger.type} alert`}
+                  onClick={() => setAdaptationTriggers(prev => prev.filter(t => t.type !== trigger.type))}
+                  style={{
+                    flexShrink: 0, background: 'none', border: 'none',
+                    color: 'rgba(255,255,255,0.25)', cursor: 'pointer',
+                    padding: '4px 6px', fontSize: '1rem', lineHeight: 1,
+                  }}
+                >
+                  ×
                 </button>
               </motion.div>
             ))}
@@ -618,7 +641,7 @@ export function CareerOSHome() {
               style={{
                 background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)", borderRadius: 8,
                 color: "var(--text-2)", fontSize: "0.8rem", fontWeight: 600,
-                padding: "7px 16px", cursor: "pointer", transition: "all 150ms ease",
+                padding: "7px 16px", cursor: "pointer", transition: "all 150ms ease", outline: "none",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
@@ -627,6 +650,14 @@ export function CareerOSHome() {
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
                 (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
+              }}
+              onFocus={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--cyan)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px var(--cyan)44";
+              }}
+              onBlur={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "none";
               }}
             >
               {link.label}

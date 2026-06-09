@@ -839,8 +839,10 @@ const AuditTerminalPage: React.FC = () => {
         </div>
 
         <button
+          type="button"
           onClick={handleCalculate}
           disabled={!workTypeKey || !industryKey || isCalculating}
+          aria-busy={isCalculating ? 'true' : 'false'}
           style={{
             width: '100%',
             padding: '16px',
@@ -919,12 +921,12 @@ const AuditTerminalPage: React.FC = () => {
                     {/* Chapter nav pills */}
                     <div style={{ display: 'flex', gap: '0', flexShrink: 0, overflowX: 'auto' }}>
                       {TABS.map((tab) => (
-                        <button key={tab.key} onClick={() => scrollToSection(tab.key)} style={{ padding: '10px 11px', border: 'none', background: 'transparent', color: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.35)', fontWeight: 700, fontSize: '0.6rem', fontFamily: 'var(--font-mono)', cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap', borderBottom: activeTab === tab.key ? `2px solid ${scoreColor}` : '2px solid transparent' }}>
+                        <button type="button" key={tab.key} onClick={() => scrollToSection(tab.key)} style={{ padding: '10px 11px', border: 'none', background: 'transparent', color: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.35)', fontWeight: 700, fontSize: '0.6rem', fontFamily: 'var(--font-mono)', cursor: 'pointer', transition: 'color 0.15s', whiteSpace: 'nowrap', borderBottom: activeTab === tab.key ? `2px solid ${scoreColor}` : '2px solid transparent' }}>
                           {tab.chapter}
                         </button>
                       ))}
                     </div>
-                    <button onClick={handleReset} style={{ padding: '5px 9px', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--text-3)', fontSize: '0.58rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer', flexShrink: 0 }}>NEW</button>
+                    <button type="button" aria-label="Start a new audit" onClick={handleReset} style={{ padding: '5px 9px', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--text-3)', fontSize: '0.58rem', fontWeight: 700, fontFamily: 'var(--font-mono)', cursor: 'pointer', flexShrink: 0 }}>NEW</button>
                   </div>
                 </motion.div>
               )}

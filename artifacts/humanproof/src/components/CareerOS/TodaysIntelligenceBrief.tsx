@@ -202,6 +202,7 @@ export function TodaysIntelligenceBrief() {
             )}
             <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
+                type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'terminal' } }))}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,

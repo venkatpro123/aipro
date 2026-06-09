@@ -112,19 +112,26 @@ export function EarlyWarningStrip({ scoreResult, adaptationTriggers }: Props) {
             const Icon = CATEGORY_ICON[sig.category];
             const color = SEV_COLOR[sig.severity];
             return (
-              <div
+              <button
                 key={sig.category}
+                type="button"
+                aria-label={`${sig.label} — view details`}
+                onClick={() => navigate('/monitor')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 5,
                   padding: '3px 9px', borderRadius: 6,
                   background: `${color}10`, border: `1px solid ${color}25`,
                   fontSize: '0.73rem', fontWeight: 600, color,
-                  cursor: 'default',
+                  cursor: 'pointer', transition: 'background 150ms', outline: 'none',
                 }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = `${color}20`}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = `${color}10`}
+                onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px ${color}55`}
+                onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
               >
                 <Icon size={11} style={{ flexShrink: 0 }} />
                 {sig.count > 1 ? `${sig.count} ` : ''}{sig.label}
-              </div>
+              </button>
             );
           })}
         </div>
