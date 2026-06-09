@@ -15,15 +15,13 @@ export default function AuditPage() {
   const navigate = useNavigate();
   const { dispatch } = useLayoff();
 
-  // Reset the LayoffContext state every time the user navigates to this page
-  // so they always see the input form, not the previous audit result.
-  // Also clear sessionStorage caches that would otherwise skip the form:
-  //  - hp_last_score_session: the 10-min result cache that auto-restores state
-  //  - hp_reveal_seen: suppresses the reveal screen on repeat audits
+  // Reset LayoffContext so the input form is always shown on entry.
+  // hp_last_score_session is deliberately preserved — LayoffCalculator reads it
+  // as "previous result" to compute the What Changed card after the new audit.
+  // hp_reveal_seen is cleared so the reveal screen fires on every new audit.
   useEffect(() => {
     dispatch({ type: "RESET" });
     try {
-      sessionStorage.removeItem("hp_last_score_session");
       sessionStorage.removeItem("hp_reveal_seen");
     } catch { /* storage unavailable */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps

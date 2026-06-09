@@ -98,6 +98,7 @@ import { LanguageSelector } from "./components/LanguageSelector";
 import { applyWhiteLabelCssVars, getWhiteLabelConfig } from "./services/whiteLabelService";
 import { page as trackPage, identify } from "./services/analyticsService";
 import { Toaster as SonnerToaster } from "./components/ui/sonner";
+import { useAuditPersistence } from "./hooks/useAuditPersistence";
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
 function PageLoader() {
@@ -727,6 +728,11 @@ function AppContent() {
   const { user, loading: authLoading } = useAuth();
   const location  = useLocation();
   const navigate  = useNavigate();
+
+  // Restore the most recent audit result from DB on authenticated app load,
+  // covering browser refresh, new tab, device switch, and session restart.
+  // Runs only when LayoffContext has no result yet (safe to call unconditionally).
+  useAuditPersistence(user?.id);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
 

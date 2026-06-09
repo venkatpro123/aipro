@@ -298,8 +298,10 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
   // here with an unsupported `ilike` filter caused duplicate subscriptions and silent failures.
 
   // ── ARCHITECTURE: Session result cache ────────────────────────────────────
-  // Key = companyName + roleKey + experience + country hash (10-min TTL)
-  const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+  // TTL = 24 hours. Covers browser refresh, tab close/reopen within a day.
+  // The DB restore path (useAuditPersistence) is the durable fallback for
+  // longer gaps (new device, cleared storage, session expired).
+  const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
   const buildCacheKey = (
     company: string,
     roleKey: string,
@@ -913,6 +915,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
             lastLayoffDate:     companyData.layoffsLast24Months?.[0]?.date ?? null,
             aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
           },
+          // Persist the full HybridResult so any browser refresh / device switch
+          // can restore the complete audit state without forcing a re-audit.
+          full_result: mergedResult,
         });
         if (scoreInsertError) {
           console.error("[Layoff] layoff_scores insert failed (pipeline path):", scoreInsertError.message);
@@ -1671,6 +1676,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
               lastLayoffDate:     companyData.layoffsLast24Months?.[0]?.date ?? null,
               aiInvestmentSignal: companyData.aiInvestmentSignal ?? 'medium',
             },
+            // enrichedResult is the value dispatched to state — it includes
+            // oracleResult and careerIntelligence on top of ensembleResult.
+            full_result: enrichedResult,
           });
           if (ensembleInsertError) {
             console.error("[Layoff] layoff_scores insert failed (ensemble path):", ensembleInsertError.message);
