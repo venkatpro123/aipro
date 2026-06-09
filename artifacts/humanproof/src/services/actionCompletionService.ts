@@ -15,6 +15,7 @@
 // local (server wins on conflicts — authoritative source of truth).
 
 import { supabase } from '../utils/supabase';
+import { incrementTwinActionCount } from './careerTwinService';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -95,6 +96,16 @@ export async function markActionComplete(
   } catch {
     // Non-fatal: local state is already updated
   }
+
+  // 3. Dispatch custom event so ProgressTrackerWidget can update without polling
+  try {
+    window.dispatchEvent(new CustomEvent('hp:action-completed', {
+      detail: { actionId, scoreAtCompletion: opts.scoreAtCompletion ?? null },
+    }));
+  } catch { /* SSR / non-browser env */ }
+
+  // 4. Increment Career Twin action counters (async, non-blocking)
+  void incrementTwinActionCount();
 }
 
 /**
@@ -167,6 +178,7 @@ export async function submitActionFeedback(
   actionId: string,
   feedback: 1 | 2 | 3 | 4 | 5,
   followUpSignal?: string,
+  actionCategory?: string,
 ): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -181,4 +193,10 @@ export async function submitActionFeedback(
       .eq('user_id', user.id)
       .eq('action_id', actionId);
   } catch { /* non-fatal */ }
+
+  // Rating 1–2 (not helpful) → suppress this action + category in twin for 14 days
+  if (feedback <= 2 && actionCategory) {
+    const { suppressActionCategory } = await import('./careerTwinService');
+    void suppressActionCategory(actionId, actionCategory);
+  }
 }

@@ -239,3 +239,56 @@ export async function readTrajectory(
     source: 'server',
   };
 }
+
+/**
+ * Convenience reader for ProgressTrackerWidget and CareerOSHome.
+ *
+ * Returns the last N score entries for a user across ALL companies,
+ * sorted newest first. Falls back to the localStorage history when the
+ * flag is off or the DB read fails.
+ */
+export async function readServerTrajectory(
+  userId: string | null,
+  limitEntries = 10,
+): Promise<{ entries: Array<{ score: number; createdAt: string; company: string }>; source: 'server' | 'local' }> {
+  if (!userId) return { entries: [], source: 'local' };
+
+  const flag = evaluateFlagSync('ws7_server_score_trajectory');
+  if (!flag.isActive && !flag.isShadow) {
+    const { getLayoffScoreHistory } = await import('./scoreStorageService');
+    const local = getLayoffScoreHistory().slice(0, limitEntries).map(e => ({
+      score: e.score,
+      createdAt: e.timestamp,
+      company: e.companyName ?? '',
+    }));
+    return { entries: local, source: 'local' };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('score_trajectory')
+      .select('score,created_at,company_canonical_name')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limitEntries);
+
+    if (error || !data) throw error ?? new Error('no data');
+
+    return {
+      entries: (data as Array<{ score: number; created_at: string; company_canonical_name: string }>).map(r => ({
+        score: r.score,
+        createdAt: r.created_at,
+        company: r.company_canonical_name,
+      })),
+      source: 'server',
+    };
+  } catch {
+    const { getLayoffScoreHistory } = await import('./scoreStorageService');
+    const local = getLayoffScoreHistory().slice(0, limitEntries).map(e => ({
+      score: e.score,
+      createdAt: e.timestamp,
+      company: e.companyName ?? '',
+    }));
+    return { entries: local, source: 'local' };
+  }
+}

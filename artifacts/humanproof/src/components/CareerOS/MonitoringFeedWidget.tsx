@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Radio, AlertTriangle, Info, ChevronRight } from "lucide-react";
+import { Radio, AlertTriangle, Info, ChevronRight, Bell, ExternalLink } from "lucide-react";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
+import { useAutopilotAlerts, type AutopilotAlert } from "../../hooks/useAutopilotAlerts";
 import { useLayoff } from "../../context/LayoffContext";
 import type { MonitoringFeedItem } from "../../types/careerOS";
 import type { HybridResult } from "../../types/hybridResult";
@@ -50,9 +51,28 @@ function relativeTime(iso: string): string {
   return "just now";
 }
 
+function autopilotSeverityBg(severity: AutopilotAlert['severity']): string {
+  if (severity === 'critical') return 'rgba(239,68,68,0.08)';
+  if (severity === 'high') return 'rgba(249,115,22,0.08)';
+  return 'rgba(0,212,255,0.05)';
+}
+
+function autopilotSeverityBorder(severity: AutopilotAlert['severity']): string {
+  if (severity === 'critical') return 'rgba(239,68,68,0.25)';
+  if (severity === 'high') return 'rgba(249,115,22,0.22)';
+  return 'rgba(0,212,255,0.15)';
+}
+
+function autopilotSeverityColor(severity: AutopilotAlert['severity']): string {
+  if (severity === 'critical') return '#ef4444';
+  if (severity === 'high') return '#f97316';
+  return 'var(--cyan)';
+}
+
 export function MonitoringFeedWidget() {
   const { state } = useLayoff();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const { alerts: autopilotAlerts, markRead, dismiss: dismissAlert } = useAutopilotAlerts();
 
   const { currentMatches, isPolling } = useBreakingNewsPoller(state.companyName ?? undefined);
 
@@ -84,8 +104,87 @@ export function MonitoringFeedWidget() {
             }} />
           )}
         </div>
-        <Radio size={15} style={{ color: isPolling ? "var(--cyan)" : "var(--text-3)" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {autopilotAlerts.filter(a => !a.is_read).length > 0 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 4,
+              padding: "2px 7px", borderRadius: 20,
+              background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)",
+            }}>
+              <Bell size={11} style={{ color: "#ef4444" }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#ef4444" }}>
+                {autopilotAlerts.filter(a => !a.is_read).length}
+              </span>
+            </div>
+          )}
+          <Radio size={15} style={{ color: isPolling ? "var(--cyan)" : "var(--text-3)" }} />
+        </div>
       </div>
+
+      {/* Autopilot alerts — shown above live signals */}
+      {autopilotAlerts.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            CAREER OS ALERTS
+          </div>
+          {autopilotAlerts.slice(0, 3).map(alert => (
+            <motion.div
+              key={alert.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              style={{
+                background: autopilotSeverityBg(alert.severity),
+                border: `1px solid ${autopilotSeverityBorder(alert.severity)}`,
+                borderRadius: 8, padding: "10px 12px",
+                display: "flex", gap: 8, alignItems: "flex-start",
+              }}
+              onClick={() => { void markRead(alert.id); }}
+            >
+              <Bell size={13} style={{ color: autopilotSeverityColor(alert.severity), flexShrink: 0, marginTop: 1 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: "0.79rem", fontWeight: alert.is_read ? 500 : 700,
+                  color: "var(--text)", lineHeight: 1.4, marginBottom: 2,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
+                  {alert.headline}
+                </div>
+                <div style={{ fontSize: "0.7rem", color: "var(--text-3)" }}>
+                  {relativeTime(alert.created_at)}
+                  {!alert.is_read && (
+                    <span style={{ marginLeft: 6, color: autopilotSeverityColor(alert.severity), fontWeight: 700 }}>NEW</span>
+                  )}
+                </div>
+                {alert.action_route && alert.action_label && (
+                  <a
+                    href={alert.action_route}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 3, marginTop: 5,
+                      fontSize: "0.7rem", fontWeight: 700, color: autopilotSeverityColor(alert.severity),
+                      textDecoration: "none",
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {alert.action_label} <ExternalLink size={10} />
+                  </a>
+                )}
+              </div>
+              <button
+                onClick={e => { e.stopPropagation(); void dismissAlert(alert.id); }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-3)", fontSize: "1rem", lineHeight: 1, padding: 0, flexShrink: 0 }}
+                title="Dismiss"
+              >
+                ×
+              </button>
+            </motion.div>
+          ))}
+          {autopilotAlerts.length > 3 && (
+            <div style={{ fontSize: "0.72rem", color: "var(--text-3)", textAlign: "center" }}>
+              +{autopilotAlerts.length - 3} more alerts
+            </div>
+          )}
+        </div>
+      )}
 
       {feedItems.length === 0 ? (
         <div style={{

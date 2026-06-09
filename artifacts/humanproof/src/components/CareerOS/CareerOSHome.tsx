@@ -26,6 +26,9 @@ import { FiveYearArcPanel } from "./FiveYearArcPanel";
 import { OutcomeInsightPanel } from "./OutcomeInsightPanel";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
 import { detectAdaptationTriggers, type AdaptationTrigger } from "../../services/adaptationTriggerService";
+import { useAutopilotAlerts } from "../../hooks/useAutopilotAlerts";
+import { syncTwinFromProfile } from "../../services/careerTwinService";
+import { ProgressTrackerWidget } from "./ProgressTrackerWidget";
 import { InactionWarningStrip } from "./InactionWarningStrip";
 import type { HybridResult } from "../../types/hybridResult";
 
@@ -303,6 +306,7 @@ export function CareerOSHome() {
   const [completenessScore, setCompletenessScore] = useState<number | null>(null);
   const [memorySummary, setMemorySummary] = useState<import('../../services/careerMemoryService').CareerMemorySummary | null>(null);
   const [adaptationTriggers, setAdaptationTriggers] = useState<AdaptationTrigger[]>([]);
+  const { unreadCount: autopilotUnreadCount } = useAutopilotAlerts();
 
   // Load profile completeness + memory summary once (shared with child widgets to avoid duplicate DB calls)
   useEffect(() => {
@@ -318,9 +322,15 @@ export function CareerOSHome() {
         !!state.companyName && !!state.roleTitle,
       );
       setCompletenessScore(score);
+
+      // Sync Career Twin whenever the OS loads with a fresh HybridResult
+      const hr = state.scoreResult as HybridResult | null;
+      if (profile && hr && hr.total != null) {
+        void syncTwinFromProfile(profile, hr);
+      }
     }).catch(() => {/* offline — ignore */});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, state.companyName, state.roleTitle]);
+  }, [user, state.companyName, state.roleTitle, state.scoreResult]);
 
   useEffect(() => {
     if (!state.companyName || !state.scoreResult) return;
@@ -635,6 +645,11 @@ export function CareerOSHome() {
             <motion.div variants={itemVariants}>
               <SectionLabel label="Your Career System" />
 
+              {/* Progress tracker — momentum strip with health score, weekly actions, trajectory */}
+              <div style={{ marginBottom: 14 }}>
+                <ProgressTrackerWidget />
+              </div>
+
               {/* Tool quick-launch 4-col row */}
               <ToolQuickLaunch />
 
@@ -733,10 +748,10 @@ export function CareerOSHome() {
           }}
         >
           {[
-            { label: "Run New Audit", path: "/terminal" },
-            { label: "Monitor Signals", path: "/monitor" },
-            { label: "All Tools", path: "/tools" },
-            { label: "Career Settings", path: "/settings" },
+            { label: "Run New Audit", path: "/terminal", badge: 0 },
+            { label: "Monitor Signals", path: "/monitor", badge: autopilotUnreadCount },
+            { label: "All Tools", path: "/tools", badge: 0 },
+            { label: "Career Settings", path: "/settings", badge: 0 },
           ].map((link) => (
             <button
               type="button"
@@ -764,7 +779,17 @@ export function CareerOSHome() {
                 (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
               }}
             >
-              {link.label} →
+              {link.label}
+              {link.badge > 0 && (
+                <span style={{
+                  marginLeft: 6, display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: 16, height: 16, borderRadius: "50%",
+                  background: "#ef4444", color: "#fff", fontSize: 10, fontWeight: 800,
+                }}>
+                  {link.badge > 9 ? "9+" : link.badge}
+                </span>
+              )}
+              {" →"}
             </button>
           ))}
         </motion.div>

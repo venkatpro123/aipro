@@ -94,6 +94,18 @@ export interface OrchestratedFeed {
 export interface OrchestrateConfig {
   /** Number of signals on the primary surface. Default 3. */
   cap?: number;
+  /**
+   * Optional twin influence from careerTwinService.getTwinInfluence().
+   * When present: boosts signals matching prioritySignalGroups by +5 relevance,
+   * applies careerGroupBoost to career-group signals, and suppresses
+   * suppressedActionIds from primaryMove selection.
+   * Fully backwards-compatible — existing call sites pass no twinInfluence.
+   */
+  twinInfluence?: {
+    prioritySignalGroups: Array<'workforce' | 'financial' | 'market' | 'career'>;
+    suppressedActionIds: string[];
+    careerGroupBoost: number;
+  };
 }
 
 const DEFAULT_CAP = 3;
@@ -432,11 +444,40 @@ export function orchestrateFromIntel(
   const cap = Math.max(1, config?.cap ?? DEFAULT_CAP);
   const confPct = resolveConfidencePercent(result);
   const confFactor = clamp(confPct / 100, 0.4, 1);
+  const twin = config?.twinInfluence;
 
-  const ranked = rankSignals(intel, profileSignals, confFactor);
+  let ranked = rankSignals(intel, profileSignals, confFactor);
+
+  // Apply twin influence: boost priority groups + careerGroupBoost
+  if (twin && (twin.prioritySignalGroups.length > 0 || twin.careerGroupBoost !== 1.0)) {
+    ranked = ranked.map(rs => {
+      let delta = 0;
+      const group = rs.signal.group as string;
+      if (twin.prioritySignalGroups.includes(group as 'workforce' | 'financial' | 'market' | 'career')) {
+        delta += 5;
+      }
+      if (group === 'career' && twin.careerGroupBoost !== 1.0) {
+        delta += Math.round((twin.careerGroupBoost - 1.0) * rs.relevanceScore);
+      }
+      if (delta === 0) return rs;
+      return {
+        ...rs,
+        relevanceScore: clamp(rs.relevanceScore + delta, 0, 100),
+        adjustmentReasons: [...rs.adjustmentReasons, `twin: +${delta} (goal alignment)`],
+      };
+    });
+    // Re-sort after twin adjustments
+    ranked = [...ranked].sort((a, b) => b.relevanceScore - a.relevanceScore);
+  }
+
   const { primary, overflow } = splitPrimaryOverflow(ranked, cap);
 
-  const primaryMove = pickPrimaryMove(result.recommendations, profileSignals);
+  // Filter suppressed action IDs from recommendation pool before picking primaryMove
+  const filteredRecommendations = twin?.suppressedActionIds.length
+    ? (result.recommendations ?? []).filter(r => !twin!.suppressedActionIds.includes(r.id ?? ''))
+    : result.recommendations;
+
+  const primaryMove = pickPrimaryMove(filteredRecommendations, profileSignals);
   const trace = buildTrace(primary[0]?.signal, primaryMove, confPct, intel, profileSignals);
   const spine = renderSpine(trace);
 

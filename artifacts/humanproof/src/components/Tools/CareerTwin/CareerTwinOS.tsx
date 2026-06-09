@@ -1,4 +1,4 @@
-// CareerTwinOS.tsx — Tool 10: Career Twin (5-tab layout)
+// CareerTwinOS.tsx — Tool 10: Career Twin (6-tab layout)
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
@@ -8,6 +8,7 @@ import { SkillsInventoryPanel } from './SkillsInventoryPanel';
 import { GoalsProgressPanel } from './GoalsProgressPanel';
 import { PreferencesPanel } from './PreferencesPanel';
 import { CareerHistoryPanel } from './CareerHistoryPanel';
+import { WhatIfPanel } from './WhatIfPanel';
 
 const TABS = [
   { id: 'profile',     label: 'Profile'         },
@@ -15,6 +16,7 @@ const TABS = [
   { id: 'goals',       label: 'Goals'            },
   { id: 'preferences', label: 'Preferences'      },
   { id: 'history',     label: 'Career History'   },
+  { id: 'whatif',      label: 'What-If'          },
 ];
 
 const ACCENT = '#a78bfa';
@@ -74,6 +76,10 @@ export function CareerTwinOS() {
 
         <TabsContent value="history">
           <CareerHistoryPanel />
+        </TabsContent>
+
+        <TabsContent value="whatif">
+          <WhatIfPanel />
         </TabsContent>
       </Tabs>
     </div>
