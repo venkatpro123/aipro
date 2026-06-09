@@ -285,27 +285,121 @@ export function RiskForecast({ scoreResult }: Props) {
         </div>
       </div>
 
-      {/* Assumption chips */}
-      <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono, monospace)', marginRight: 2 }}>
-          ASSUMPTIONS:
-        </span>
-        {[
-          { label: `Macro: ${macroTier}`, kind: 'estimated' as const },
-          { label: `Your velocity: ${velDir}`, kind: 'modeled' as const },
-          { label: `If you act: −${actionPct} pts month 1`, kind: 'modeled' as const },
-        ].map(chip => (
-          <div key={chip.label} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '3px 8px', borderRadius: 5,
-            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-            fontSize: 10, color: 'rgba(255,255,255,0.45)',
-          }}>
-            {chip.label}
-            <ProvenanceLabel kind={chip.kind} size="xs" />
-          </div>
-        ))}
+      {/* Per-scenario assumption cards */}
+      <div style={{ marginTop: 20 }}>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 10 }}>
+          WHY EACH SCENARIO EXISTS
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            {
+              id: 'bear',
+              label: 'Bear (No Action)',
+              color: '#ef4444',
+              bg: 'rgba(239,68,68,0.06)',
+              border: 'rgba(239,68,68,0.2)',
+              prob: Math.round(bearProb * 100),
+              score6m: six.bear,
+              description: scoreResult.scenarioPlan?.worstCase?.triggerConditions?.join('. ')
+                ?? 'AI adoption accelerates in your sector, hiring freezes deepen, and no defensive action is taken.',
+              assumptions: [
+                { label: `Macro environment: ${macroTier}`, kind: 'estimated' as const },
+                { label: 'No skill investment or job search activity', kind: 'modeled' as const },
+                { label: 'Sector headwinds persist or worsen', kind: 'estimated' as const },
+              ],
+            },
+            {
+              id: 'base',
+              label: 'Base (Current Trend)',
+              color: '#f59e0b',
+              bg: 'rgba(245,158,11,0.06)',
+              border: 'rgba(245,158,11,0.2)',
+              prob: Math.round(baseProb * 100),
+              score6m: six.base,
+              description: scoreResult.scenarioPlan?.baseCase?.triggerConditions?.join('. ')
+                ?? 'Current behaviour maintained. Risk evolves with market, no acceleration in either direction.',
+              assumptions: [
+                { label: `Your velocity: ${velDir}`, kind: 'modeled' as const },
+                { label: `Macro: ${macroTier}`, kind: 'estimated' as const },
+                { label: 'No major role or company changes', kind: 'modeled' as const },
+              ],
+            },
+            {
+              id: 'bull',
+              label: 'Bull (Active Plan)',
+              color: '#10b981',
+              bg: 'rgba(16,185,129,0.06)',
+              border: 'rgba(16,185,129,0.2)',
+              prob: Math.round(bullProb * 100),
+              score6m: six.bull,
+              description: scoreResult.scenarioPlan?.bestCase?.triggerConditions?.join('. ')
+                ?? 'You complete your top 3 defence actions in the first 60 days. Skill gaps close, visibility increases.',
+              assumptions: [
+                { label: `If you act: −${actionPct} pts in month 1`, kind: 'modeled' as const },
+                { label: 'Top 3 priority actions completed by month 2', kind: 'modeled' as const },
+                { label: 'Network and job-search activity begins', kind: 'estimated' as const },
+              ],
+            },
+          ].map(scenario => (
+            <ScenarioAssumptionCard key={scenario.id} {...scenario} />
+          ))}
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Scenario assumption card ─────────────────────────────────────────────────
+
+interface ScenarioCardProps {
+  label: string; color: string; bg: string; border: string;
+  prob: number; score6m: number; description: string;
+  assumptions: { label: string; kind: 'estimated' | 'modeled' | 'measured' }[];
+}
+
+function ScenarioAssumptionCard({ label, color, bg, border, prob, score6m, description, assumptions }: ScenarioCardProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div style={{ borderRadius: 10, background: bg, border: `1px solid ${border}`, overflow: 'hidden' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+          padding: '11px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <span style={{
+          width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0,
+          boxShadow: `0 0 5px ${color}80`,
+        }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color, flex: 1 }}>{label}</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono, monospace)', flexShrink: 0 }}>
+          {prob}% · {score6m} at 6M
+        </span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>{open ? '▲' : '▾'}</span>
+      </button>
+
+      {open && (
+        <div style={{ padding: '0 16px 14px', borderTop: `1px solid ${border}` }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.55, marginTop: 10, marginBottom: 10 }}>
+            {description}
+          </p>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700, letterSpacing: '0.09em', marginBottom: 6 }}>
+            ASSUMPTIONS
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {assumptions.map((a, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 4, height: 4, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', flex: 1 }}>{a.label}</span>
+                <ProvenanceLabel kind={a.kind} size="xs" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

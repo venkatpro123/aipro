@@ -1,6 +1,6 @@
-// RiskReductionPlanner.tsx — Phase D: Signal echo strip wired in
+// RiskReductionPlanner.tsx — Defence Priority Engine + live signal echo
 import { useState } from 'react';
-import { WhatIfSimulatorPanel } from '../../AuditTabs/WhatIfSimulatorPanel';
+import { DefensePriorityEngine } from './DefensePriorityEngine';
 import type { HybridResult } from '../../../types/hybridResult';
 import ProvenanceLabel, { provenanceKindFromSource } from '../../AuditTabs/common/ProvenanceLabel';
 import { useOrchestratorBus } from '../../../hooks/useOrchestratorBus';
@@ -18,11 +18,10 @@ export function RiskReductionPlanner({ scoreResult }: Props) {
     <div>
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 6 }}>
-          Risk Reduction Planner
+          Defence Priority Engine
         </div>
         <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>
-          Simulate which changes will lower your layoff risk score most.
-          Adjust inputs to see projected impact.
+          Ranked actions by risk reduction impact. Complete the top card first.
         </div>
       </div>
 
@@ -80,7 +79,7 @@ export function RiskReductionPlanner({ scoreResult }: Props) {
         </div>
       )}
 
-      <WhatIfSimulatorPanel result={scoreResult} />
+      <DefensePriorityEngine scoreResult={scoreResult} />
     </div>
   );
 }
