@@ -7,12 +7,14 @@ import { AIReadinessAnalysis } from './AIReadinessAnalysis';
 import { FutureProofingRoadmap } from './FutureProofingRoadmap';
 import { EmergingOpportunityDetector } from './EmergingOpportunityDetector';
 import { SkillDemandTracker } from './SkillDemandTracker';
+import { AIAmplificationRoadmap } from './AIAmplificationRoadmap';
 
 const TABS = [
   { id: 'skills',        label: 'Skill Demand'         },
+  { id: 'amplify',       label: 'AI Amplify'           },
   { id: 'replacement',   label: 'AI Landscape'         },
   { id: 'readiness',     label: 'AI Readiness'         },
-  { id: 'roadmap',       label: 'Amplify Roadmap'      },
+  { id: 'roadmap',       label: 'Future Roadmap'       },
   { id: 'opportunities', label: 'Emerging Roles'       },
 ];
 
@@ -75,6 +77,7 @@ export function AICareerDefenseCenter() {
         ))}
       </TabsList>
       <TabsContent value="skills">        <SkillDemandTracker scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="amplify">       <AIAmplificationRoadmap scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="replacement">   <AIReplacementAnalysis scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="readiness">     <AIReadinessAnalysis scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="roadmap">       <FutureProofingRoadmap scoreResult={scoreResult} /></TabsContent>

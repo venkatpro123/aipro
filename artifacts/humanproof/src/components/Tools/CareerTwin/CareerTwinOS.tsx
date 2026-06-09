@@ -1,4 +1,4 @@
-// CareerTwinOS.tsx — Tool 10: Career Twin (6-tab layout)
+// CareerTwinOS.tsx — Tool 10: Career Twin (7-tab layout, Phase 4)
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
@@ -7,16 +7,18 @@ import { CareerProfilePanel } from './CareerProfilePanel';
 import { SkillsInventoryPanel } from './SkillsInventoryPanel';
 import { GoalsProgressPanel } from './GoalsProgressPanel';
 import { PreferencesPanel } from './PreferencesPanel';
-import { CareerHistoryPanel } from './CareerHistoryPanel';
+import { CareerMemoryTimeline } from './CareerMemoryTimeline';
+import { SkillVaultPanel } from './SkillVaultPanel';
 import { WhatIfPanel } from './WhatIfPanel';
 
 const TABS = [
-  { id: 'profile',     label: 'Profile'         },
-  { id: 'skills',      label: 'Skills'           },
-  { id: 'goals',       label: 'Goals'            },
-  { id: 'preferences', label: 'Preferences'      },
-  { id: 'history',     label: 'Career History'   },
-  { id: 'whatif',      label: 'What-If'          },
+  { id: 'profile',      label: 'Profile'        },
+  { id: 'skills',       label: 'Skills'          },
+  { id: 'skill-vault',  label: 'Skill Vault'     },
+  { id: 'goals',        label: 'Goals'           },
+  { id: 'preferences',  label: 'Preferences'     },
+  { id: 'history',      label: 'Career Story'    },
+  { id: 'whatif',       label: 'What-If'         },
 ];
 
 const ACCENT = '#a78bfa';
@@ -74,8 +76,22 @@ export function CareerTwinOS() {
           <PreferencesPanel />
         </TabsContent>
 
+        <TabsContent value="skill-vault">
+          {scoreResult ? (
+            <SkillVaultPanel />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '60px 24px', background: 'rgba(167,139,250,0.05)', borderRadius: 16, border: '1px solid rgba(167,139,250,0.15)' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>🔐</div>
+              <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 8 }}>Run an audit to populate your Skill Vault</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, maxWidth: 380, margin: '0 auto' }}>
+                Your skill demand signals require an active audit result.
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="history">
-          <CareerHistoryPanel />
+          <CareerMemoryTimeline />
         </TabsContent>
 
         <TabsContent value="whatif">

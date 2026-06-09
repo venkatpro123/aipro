@@ -7,8 +7,10 @@ import { StayStrategyPanel } from './StayStrategyPanel';
 import { ExitStrategyPanel } from './ExitStrategyPanel';
 import { PromotionStrategyPanel } from './PromotionStrategyPanel';
 import { TransitionStrategyPanel } from './TransitionStrategyPanel';
+import { ScenarioPlannerPanel } from './ScenarioPlannerPanel';
 
 const TABS = [
+  { id: 'scenarios',  label: '5-Year Paths'    },
   { id: 'stay',       label: 'Stay Strategy'   },
   { id: 'exit',       label: 'Exit Paths'      },
   { id: 'promotion',  label: 'Promotion Plan'  },
@@ -16,7 +18,7 @@ const TABS = [
 ];
 
 export function CareerStrategyStudio() {
-  const [activeTab, setActiveTab] = useState('stay');
+  const [activeTab, setActiveTab] = useState('scenarios');
   const { state } = useLayoff();
   const scoreResult = state.scoreResult as HybridResult | null;
 
@@ -44,6 +46,7 @@ export function CareerStrategyStudio() {
           }}>{t.label}</TabsTrigger>
         ))}
       </TabsList>
+      <TabsContent value="scenarios">  <ScenarioPlannerPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="stay">       <StayStrategyPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="exit">       <ExitStrategyPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="promotion">  <PromotionStrategyPanel scoreResult={scoreResult} /></TabsContent>
