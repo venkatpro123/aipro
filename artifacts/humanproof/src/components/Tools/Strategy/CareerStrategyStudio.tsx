@@ -1,7 +1,10 @@
 // CareerStrategyStudio.tsx — Tool 8: Career Strategy Studio (4-tab layout)
+// Phase E: twin writes on tab change so Career Twin learns strategy exploration patterns.
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
+import { useAuth } from '../../../context/AuthContext';
+import { recordTwinDecision } from '../../../services/careerTwinService';
 import type { HybridResult } from '../../../types/hybridResult';
 import { StayStrategyPanel } from './StayStrategyPanel';
 import { ExitStrategyPanel } from './ExitStrategyPanel';
@@ -21,12 +24,21 @@ const STRATEGY_TAB_KEY = 'hp.strategy.tab';
 
 export function CareerStrategyStudio() {
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem(STRATEGY_TAB_KEY) ?? 'scenarios');
+  const { user } = useAuth();
+  const { state } = useLayoff();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     try { localStorage.setItem(STRATEGY_TAB_KEY, tab); } catch { /* storage unavailable */ }
+    if (user?.id) {
+      recordTwinDecision({
+        userId: user.id,
+        decisionType: 'other',
+        notes: `Strategy: viewed ${tab} tab`,
+        decidedAt: new Date().toISOString().slice(0, 10),
+      }).catch(() => {});
+    }
   };
-  const { state } = useLayoff();
   const scoreResult = state.scoreResult as HybridResult | null;
 
   if (!scoreResult) {

@@ -1,7 +1,10 @@
 // AICareerDefenseCenter.tsx — Tool 2: AI Career Defense (Phase 2: amplification framing)
+// Phase E: twin writes on tab change so Career Twin learns from tool exploration.
 import { useState, lazy, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
+import { useAuth } from '../../../context/AuthContext';
+import { recordTwinDecision } from '../../../services/careerTwinService';
 import { AIReplacementAnalysis } from './AIReplacementAnalysis';
 import { AIReadinessAnalysis } from './AIReadinessAnalysis';
 import { FutureProofingRoadmap } from './FutureProofingRoadmap';
@@ -27,12 +30,21 @@ const AI_DEFENSE_TAB_KEY = 'hp.ai-defense.tab';
 
 export function AICareerDefenseCenter() {
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem(AI_DEFENSE_TAB_KEY) ?? 'skills');
+  const { user } = useAuth();
+  const { state } = useLayoff();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     try { localStorage.setItem(AI_DEFENSE_TAB_KEY, tab); } catch { /* storage unavailable */ }
+    if (user?.id) {
+      recordTwinDecision({
+        userId: user.id,
+        decisionType: 'other',
+        notes: `AI Defense: explored ${tab} tab`,
+        decidedAt: new Date().toISOString().slice(0, 10),
+      }).catch(() => {});
+    }
   };
-  const { state } = useLayoff();
   const scoreResult = state.scoreResult as import('../../../types/hybridResult').HybridResult | null;
 
   if (!scoreResult) {

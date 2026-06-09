@@ -1,7 +1,10 @@
 // CompensationCenter.tsx — Tool 7: Compensation Intelligence Center (4-tab layout)
+// Phase E: twin write on tab change (decisionType 'negotiated' — compensation is a negotiation signal).
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
+import { useAuth } from '../../../context/AuthContext';
+import { recordTwinDecision } from '../../../services/careerTwinService';
 import type { HybridResult } from '../../../types/hybridResult';
 import { SalaryBenchmarkPanel } from './SalaryBenchmarkPanel';
 import { OfferAnalysisPanel } from './OfferAnalysisPanel';
@@ -17,7 +20,20 @@ const TABS = [
 
 export function CompensationCenter() {
   const [activeTab, setActiveTab] = useState('benchmark');
+  const { user } = useAuth();
   const { state } = useLayoff();
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (user?.id) {
+      recordTwinDecision({
+        userId: user.id,
+        decisionType: 'negotiated',
+        notes: `Compensation: explored ${tab} tab`,
+        decidedAt: new Date().toISOString().slice(0, 10),
+      }).catch(() => {});
+    }
+  };
   const scoreResult = state.scoreResult as HybridResult | null;
 
   if (!scoreResult) {
@@ -33,7 +49,7 @@ export function CompensationCenter() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4, border: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto' }}>
         {TABS.map(t => (
           <TabsTrigger key={t.id} value={t.id} style={{

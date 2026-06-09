@@ -1,10 +1,11 @@
 // ScenarioPlannerPanel — Rule 15: Year 1/3/5 three-path scenario planner (Phase 4)
-// Three career paths: Current Trajectory / Adapt / AI Amplification
-// Sources: scenarioPlan + careerVelocity + careerResilience from HybridResult.
+// Phase D addition: useOrchestratorBus signal echo strip + ifYouSkip cost warning
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Minus, TrendingDown, Zap, Rocket, ChevronDown, ChevronRight } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
+import ProvenanceLabel, { provenanceKindFromSource } from '../../AuditTabs/common/ProvenanceLabel';
+import { useOrchestratorBus } from '../../../hooks/useOrchestratorBus';
 
 interface Props {
   scoreResult: HybridResult;
@@ -229,6 +230,11 @@ function PathCard({ path, isSelected, onSelect }: { path: CareerPath; isSelected
 export function ScenarioPlannerPanel({ scoreResult }: Props) {
   const [selected, setSelected] = useState<PathId>('adapt');
   const [showActions, setShowActions] = useState(false);
+  const [showSignals, setShowSignals] = useState(false);
+
+  const feed = useOrchestratorBus();
+  const topSignals = feed?.primary.slice(0, 2) ?? [];
+  const ifYouSkip = feed?.primaryMove?.ifYouSkip ?? null;
 
   const paths = useMemo(() => [
     buildCurrentPath(scoreResult),
@@ -240,6 +246,72 @@ export function ScenarioPlannerPanel({ scoreResult }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+      {/* Live signal echo strip */}
+      {topSignals.length > 0 && (
+        <div style={{
+          borderRadius: 9,
+          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+          overflow: 'hidden',
+        }}>
+          <button
+            type="button"
+            onClick={() => setShowSignals(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              width: '100%', padding: '9px 14px',
+              background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            <span style={{
+              width: 7, height: 7, borderRadius: '50%', background: 'var(--cyan)',
+              flexShrink: 0, boxShadow: '0 0 6px var(--cyan)',
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.55)', flex: 1 }}>
+              {topSignals.length} live signal{topSignals.length !== 1 ? 's' : ''} affecting this plan
+            </span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+              {showSignals ? '▲' : '▾'}
+            </span>
+          </button>
+          {showSignals && (
+            <div style={{ padding: '2px 14px 12px' }}>
+              {topSignals.map((rs, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  paddingTop: 8, borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined,
+                }}>
+                  <span style={{
+                    padding: '1px 5px', borderRadius: 3,
+                    background: 'rgba(0,245,255,0.07)', border: '1px solid rgba(0,245,255,0.18)',
+                    fontSize: 9, fontWeight: 700, color: 'var(--cyan)',
+                    fontFamily: 'var(--font-mono, monospace)', flexShrink: 0,
+                  }}>
+                    T{rs.signal.tier}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', flex: 1, lineHeight: 1.4 }}>
+                    {rs.signal.headline}
+                  </span>
+                  <ProvenanceLabel kind={provenanceKindFromSource(rs.signal.sourceKind)} size="xs" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* If-you-skip cost — visible consequence of staying on current trajectory */}
+      {ifYouSkip && (
+        <div style={{
+          padding: '10px 14px', borderRadius: 9,
+          background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)',
+          fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5,
+          display: 'flex', gap: 8, alignItems: 'flex-start',
+        }}>
+          <span style={{ color: '#ef4444', fontWeight: 700, flexShrink: 0 }}>⚠</span>
+          <span>{ifYouSkip}</span>
+        </div>
+      )}
 
       {/* Header */}
       <div>

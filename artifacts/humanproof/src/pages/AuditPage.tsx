@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useLayoff } from "../context/LayoffContext";
 
@@ -13,23 +13,17 @@ const LayoffCalculator = lazy(() =>
 
 export default function AuditPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { dispatch } = useLayoff();
 
-  // Only reset when the user explicitly navigates here to start a NEW audit
-  // (navigation state carries { newAudit: true }). Plain page refresh or
-  // direct URL navigation must NOT reset — the existing result is restored
-  // from sessionStorage / DB by useAuditPersistence and LayoffCalculator.
+  // /terminal is always the "start a fresh audit" page. Reset on every mount so
+  // users who arrive here from /os (or type the URL directly) always see the form.
+  // Results persist on /os via useAuditPersistence; there is no results view here.
   useEffect(() => {
-    const isNewAuditIntent = (location.state as Record<string, unknown> | null)?.newAudit === true;
-    if (!isNewAuditIntent) return;
-
     dispatch({ type: "RESET" });
     try {
       sessionStorage.removeItem("hp_reveal_seen");
+      sessionStorage.removeItem("hp_last_score_session");
     } catch { /* storage unavailable */ }
-    // Remove the flag from history so a subsequent refresh doesn't re-reset
-    window.history.replaceState({}, '', window.location.pathname);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -62,6 +56,7 @@ export default function AuditPage() {
         >
           <Suspense fallback={null}>
             <LayoffCalculator
+              forceReset
               onAfterReveal={() => navigate("/os", { replace: true })}
             />
           </Suspense>

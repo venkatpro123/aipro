@@ -96,6 +96,9 @@ interface Props {
   onSwitchTab?: (tabId: string) => void;
   /** Optional: called after the reveal animation completes (used by onboarding flow to navigate to /os) */
   onAfterReveal?: () => void;
+  /** When true, skip the restore-pending skeleton and go straight to the form.
+   *  Used by AuditPage which always resets context on mount. */
+  forceReset?: boolean;
 }
 
 // ── Helper: derive experience bracket from tenure years ───────────────────────
@@ -192,7 +195,7 @@ function resolveUserMarketRegion(
   return companyRegion ?? undefined;
 }
 
-export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }) => {
+export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal, forceReset = false }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile, profileVersion } = useHumanProof();
   // Wave 9.4: detect slow connections / low-end devices to reduce animation cost
@@ -309,6 +312,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
   // input form before useAuditPersistence finishes the async DB restore.
   // Show a skeleton instead until the result lands in context.
   const [isAwaitingRestore, setIsAwaitingRestore] = React.useState(() => {
+    if (forceReset) return false;
     try {
       const hasSession = !!sessionStorage.getItem('hp_last_score_session');
       if (hasSession) return false;
