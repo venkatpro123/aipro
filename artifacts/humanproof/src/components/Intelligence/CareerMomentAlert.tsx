@@ -7,7 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useLayoff } from '../../context/LayoffContext';
 import { fetchUserProfile } from '../../services/userProfileService';
 import { detectCareerMoments, type CareerMoment } from '../../services/proactiveInsightEngine';
-import type { HybridResult } from '../../types/hybridResult';
+import type { HybridResult, ActionPlanItem } from '../../types/hybridResult';
+import { computeInaction30Day } from '../../services/inactionConsequenceCalculator';
+import { ConsequenceFrameStrip } from '../shared/ConsequenceFrameStrip';
 
 const URGENCY_STYLE: Record<string, { border: string; bg: string; badge: string; badgeText: string }> = {
   immediate: {
@@ -30,12 +32,21 @@ const URGENCY_STYLE: Record<string, { border: string; bg: string; badge: string;
   },
 };
 
+interface Consequence30 {
+  currentScore: number;
+  projectedScore: number;
+  label: import('../../services/inactionConsequenceCalculator').InactionRiskLabel;
+  targetDate: string;
+}
+
 function MomentBanner({
   moment,
   onDismiss,
+  consequence30,
 }: {
   moment: CareerMoment;
   onDismiss: (id: string) => void;
+  consequence30?: Consequence30 | null;
 }) {
   const navigate = useNavigate();
   const style = URGENCY_STYLE[moment.urgency] ?? URGENCY_STYLE.this_month;
@@ -72,6 +83,12 @@ function MomentBanner({
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
           {moment.detail}
         </div>
+        {consequence30 && (
+          <ConsequenceFrameStrip
+            trajectory={{ days: 30, projectedScore: consequence30.projectedScore, label: consequence30.label, rationale: `Without action by ${consequence30.targetDate}, risk compounds further.` }}
+            currentScore={consequence30.currentScore}
+          />
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -141,11 +158,20 @@ export function CareerMomentAlert() {
   const visible = moments.filter(m => !dismissed.has(m.id));
   if (!user || visible.length === 0) return null;
 
+  const currentScore = (state.scoreResult as HybridResult | null)?.total ?? null;
+  const topAction = (state.scoreResult as HybridResult | null)?.actionItems?.[0] as ActionPlanItem | undefined;
+
+  function getConsequence30(m: CareerMoment): Consequence30 | null {
+    if (m.urgency !== 'immediate' || currentScore == null || !topAction) return null;
+    const r = computeInaction30Day(currentScore, null, topAction);
+    return { currentScore, ...r };
+  }
+
   return (
     <div role="status" aria-live="polite" style={{ gridColumn: '1 / -1' }}>
       <AnimatePresence mode="popLayout">
         {visible.map(m => (
-          <MomentBanner key={m.id} moment={m} onDismiss={handleDismiss} />
+          <MomentBanner key={m.id} moment={m} onDismiss={handleDismiss} consequence30={getConsequence30(m)} />
         ))}
       </AnimatePresence>
     </div>

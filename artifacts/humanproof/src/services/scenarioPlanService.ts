@@ -406,3 +406,124 @@ export function computeScenarioPlan(input: ScenarioPlanInput): ScenarioPlanResul
     planningHorizonMonths,
   };
 }
+
+// ─── Decade Scenarios (P15 — Build For Next Decade) ──────────────────────────
+// Extends 6-month projections to 3/5/10-year horizons using a compounding decay
+// model: each 6-month period's delta compounds at 0.7× of the previous.
+// Geometric series sum: S(n) = (1 - 0.7^n) / (1 - 0.7)
+
+export interface DecadeScenario extends ScenarioOutcome {
+  horizonYears: 3 | 5 | 10;
+  agenticCollaborationRoadmap: string[];
+  worstScore: number;
+  bestScore: number;
+  worstProbability: number;
+  bestProbability: number;
+}
+
+const AGENTIC_ROADMAPS: Record<3 | 5 | 10, Record<'bear' | 'base' | 'bull', string[]>> = {
+  3: {
+    bear: [
+      'Year 1: Adopt 2+ AI tools to reclaim 5h/week — document the productivity gain',
+      'Year 2: Complete one AI-adjacent certification to expand role options',
+      'Year 3: Build AI-augmented deliverables that prove 2× output vs. peers',
+    ],
+    base: [
+      'Year 1: Integrate AI into core workflow — move from experimenting to integrating level',
+      'Year 2: Lead an AI-enabled project — visibility above your immediate team',
+      'Year 3: Own a measurable AI-amplified outcome in your performance record',
+    ],
+    bull: [
+      'Year 1: Adopt 3+ tools and build a personal AI workflow others replicate',
+      'Year 2: Mentor peers on AI integration — establish internal thought leadership',
+      'Year 3: Position as the AI amplification lead for your function',
+    ],
+  },
+  5: {
+    bear: [
+      'Yr 1–2: AI adoption as survival mode — document every efficiency gain',
+      'Yr 3: Transition to AI-adjacent role if displacement risk remains elevated',
+      'Yr 4–5: Build portable skillset combining domain + AI fluency for exit optionality',
+    ],
+    base: [
+      'Yr 1–2: Full AI integration — 2× output baseline established',
+      'Yr 3: Collaborate with AI agents for research, synthesis, and draft work',
+      'Yr 4–5: Manage hybrid human-AI workflows — a new seniority tier',
+    ],
+    bull: [
+      'Yr 1–2: AI amplification drives measurable career velocity',
+      'Yr 3: Lead AI-enabled team or function — expanded scope through AI leverage',
+      'Yr 4–5: Architect agentic workflows for your team — next-level career capital',
+    ],
+  },
+  10: {
+    bear: [
+      'Decade pivot: domain expertise + AI fluency is the defensible combination',
+      'Specialist + AI operator roles persist even in high-automation environments',
+      'Build career around judgment, ethics, and oversight of AI systems',
+      'Target industries where regulation limits full AI replacement (healthcare, law, gov)',
+    ],
+    base: [
+      'Human-AI collaboration is the baseline — not a differentiator, a prerequisite',
+      'Career capital = unique judgment + AI orchestration + institutional trust',
+      'New roles in AI governance, model evaluation, and agentic workflow design',
+      'Build reputation for outcomes, not hours — AI compresses the "hours" signal',
+    ],
+    bull: [
+      'AI amplification enables career scope unimaginable with human-only execution',
+      'Individual contributors with AI reach team-level outputs',
+      'Agentic AI handles routine; your career capital is in high-stakes judgment',
+      'Build the professional identity vault now — credentials + network + outcomes',
+    ],
+  },
+};
+
+function geometricDecaySum(periods: number, decayRate = 0.7): number {
+  // Sum of geometric series: 1 + r + r² + … + r^(n-1) = (1 - r^n) / (1 - r)
+  return (1 - Math.pow(decayRate, periods)) / (1 - decayRate);
+}
+
+export function computeDecadeScenarios(input: ScenarioPlanInput): DecadeScenario[] {
+  const cohort = input.primaryCohort ?? 'UNKNOWN';
+  const deltas = SCENARIO_DELTAS[cohort as keyof typeof SCENARIO_DELTAS] ?? SCENARIO_DELTAS.UNKNOWN;
+
+  const horizons: Array<3 | 5 | 10> = [3, 5, 10];
+  return horizons.map(horizonYears => {
+    const periods = horizonYears * 2; // 6-month periods
+    const bearMultiplier  = geometricDecaySum(periods);
+    const baseMultiplier  = geometricDecaySum(periods, 0.6);
+    const bullMultiplier  = geometricDecaySum(Math.min(periods, 6), 0.65);
+
+    // Headroom guards from computeScenarioPlan
+    const headroom = 99 - input.currentScore;
+    const floor    = input.currentScore;
+    const bearDelta = Math.min(Math.round(deltas.bear * bearMultiplier * 0.35), Math.round(headroom * 0.80));
+    const baseDelta = Math.min(Math.round(deltas.base * baseMultiplier * 0.20), Math.round(headroom * 0.50));
+    const bullDelta = Math.min(Math.round(Math.abs(deltas.bull) * bullMultiplier * 0.25), Math.round(floor * 0.70));
+
+    const probBear = Math.max(0.10, Math.min(0.65, 0.25 + horizonYears * 0.02));
+    const probBull = Math.max(0.10, Math.min(0.50, 0.25 + horizonYears * 0.01));
+    const probBase = Math.max(0.10, 1 - probBear - probBull);
+
+    const scenario: 'bear' | 'base' | 'bull' =
+      input.currentScore >= 65 ? 'bear' : input.currentScore >= 35 ? 'base' : 'bull';
+
+    return {
+      horizonYears,
+      score: clampScore(input.currentScore + baseDelta),
+      probability: Math.round(probBase * 100) / 100,
+      triggerConditions: [
+        `Current AI adoption trajectory held over ${horizonYears} years`,
+        `Macro regime shifts ${Math.floor(horizonYears / 2)} times (historically observed frequency)`,
+      ],
+      recommendedActions: AGENTIC_ROADMAPS[horizonYears][scenario],
+      agenticCollaborationRoadmap: AGENTIC_ROADMAPS[horizonYears][
+        input.currentScore >= 65 ? 'bear' : input.currentScore <= 30 ? 'bull' : 'base'
+      ],
+      worstScore: clampScore(input.currentScore + bearDelta),
+      bestScore: clampScore(input.currentScore - bullDelta),
+      worstProbability: Math.round(probBear * 100) / 100,
+      bestProbability: Math.round(probBull * 100) / 100,
+    };
+  });
+}

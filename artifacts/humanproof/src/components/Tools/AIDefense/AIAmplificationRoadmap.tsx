@@ -7,6 +7,12 @@ import { Zap, ArrowRight, CheckCircle2, BookOpen } from 'lucide-react';
 import { useLayoff } from '../../../context/LayoffContext';
 import type { HybridResult } from '../../../types/hybridResult';
 import { AI_TOOLS_BY_ROLE, detectRoleFamily, type AITool } from '../../../data/aiToolsByRole';
+import {
+  computeAILeverageScore,
+  getProgressionLadder,
+  type AIProgressionLevel,
+} from '../../../services/aiAmplificationService';
+import { ConfidenceSourceBadge } from '../../shared/ConfidenceSourceBadge';
 
 interface Props {
   scoreResult: HybridResult;
@@ -19,18 +25,12 @@ const CATEGORY_COLORS = {
   creation:      { color: '#f59e0b',  bg: 'rgba(245,158,11,0.08)',  label: 'CREATES'    },
 };
 
-function computeAIReadinessScore(hr: HybridResult): { score: number; label: string; color: string } {
-  const d1Score = hr.dimensions?.find(d => d.key === 'D1')?.score ?? 50;
-  const surging = hr.skillPortfolioFit?.surgingSkills?.length ?? 0;
-  const retool = hr.skillPortfolioFit?.retoolPriority?.length ?? 0;
-  // Higher D1 = more AI displacement = lower readiness (unless you're adapting)
-  // Surging skills = you're already adapting = readiness boost
-  const base = Math.round(100 - d1Score * 0.4 + surging * 4 - retool * 2);
-  const score = Math.max(10, Math.min(100, base));
-  const label = score >= 75 ? 'AI-Ready' : score >= 50 ? 'Adapting' : score >= 30 ? 'Behind' : 'At Risk';
-  const color = score >= 75 ? '#10b981' : score >= 50 ? 'var(--cyan)' : score >= 30 ? '#f59e0b' : '#ef4444';
-  return { score, label, color };
-}
+const LEVEL_COLOR: Record<AIProgressionLevel, string> = {
+  Aware: 'rgba(255,255,255,0.3)',
+  Experimenting: '#f59e0b',
+  Integrating: 'var(--cyan)',
+  Amplified: '#10b981',
+};
 
 function ToolCard({ tool, index, checked, onToggle }: {
   tool: AITool;
@@ -123,26 +123,27 @@ export function AIAmplificationRoadmap({ scoreResult }: Props) {
     });
   }
 
-  const readiness = computeAIReadinessScore(scoreResult);
-  const adoptedCount = tools.filter(t => adopted.has(t.name)).length;
-
-  // Adjusted readiness + adoption boost
-  const adoptionBoost = Math.round(adoptedCount * 8);
-  const adjustedScore = Math.min(100, readiness.score + adoptionBoost);
+  const adoptedToolNames = tools.filter(t => adopted.has(t.name)).map(t => t.name);
+  const ampState = computeAILeverageScore(adoptedToolNames, scoreResult);
+  const adjustedScore = ampState.leverageScore;
   const adjustedColor = adjustedScore >= 75 ? '#10b981' : adjustedScore >= 50 ? 'var(--cyan)' : adjustedScore >= 30 ? '#f59e0b' : '#ef4444';
+  const ladder = getProgressionLadder();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
 
-      {/* AI Readiness Score hero */}
+      {/* AI Leverage Score hero */}
       <div style={{
         padding: '20px 22px', borderRadius: 14,
         background: `${adjustedColor}08`, border: `1px solid ${adjustedColor}25`,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono, monospace)', marginBottom: 4 }}>
-              AI READINESS SCORE
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono, monospace)' }}>
+                AI LEVERAGE SCORE
+              </span>
+              <ConfidenceSourceBadge source="MODELED" size="sm" />
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
               <span style={{ fontWeight: 800, fontSize: '2.5rem', color: adjustedColor, lineHeight: 1, fontFamily: 'var(--font-mono, monospace)' }}>
@@ -153,17 +154,17 @@ export function AIAmplificationRoadmap({ scoreResult }: Props) {
                 background: `${adjustedColor}18`, color: adjustedColor,
                 fontFamily: 'var(--font-mono, monospace)',
               }}>
-                {readiness.label}
+                {ampState.progressionLevel}
               </span>
             </div>
           </div>
-          {adoptedCount > 0 && (
+          {ampState.adoptedToolCount > 0 && (
             <div style={{
               padding: '6px 12px', borderRadius: 8,
               background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)',
               fontSize: '0.75rem', color: '#10b981', fontWeight: 700, textAlign: 'center' as const,
             }}>
-              <div style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '1rem' }}>{adoptedCount}/{tools.length}</div>
+              <div style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '1rem' }}>{ampState.adoptedToolCount}/{tools.length}</div>
               <div style={{ fontSize: '0.62rem', color: 'rgba(16,185,129,0.6)', marginTop: 1 }}>tools adopted</div>
             </div>
           )}
@@ -179,11 +180,48 @@ export function AIAmplificationRoadmap({ scoreResult }: Props) {
           />
         </div>
 
-        {adoptedCount < tools.length && (
-          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>
-            Adopt all {tools.length} tools below to unlock +{tools.reduce((s, t) => s + t.aiReadinessBoost, 0) - adoptionBoost} readiness pts
-          </div>
-        )}
+        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>
+          {ampState.nextLevelRequirement}
+        </div>
+      </div>
+
+      {/* 4-level progression ladder */}
+      <div style={{
+        padding: '14px 16px', borderRadius: 10,
+        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono, monospace)', marginBottom: 12 }}>
+          AMPLIFICATION LADDER
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+          {ladder.map((step) => {
+            const isActive = step.level === ampState.progressionLevel;
+            const isPast = ladder.indexOf(step) < ladder.findIndex(l => l.level === ampState.progressionLevel);
+            const color = isPast ? '#10b981' : isActive ? LEVEL_COLOR[step.level] : 'rgba(255,255,255,0.2)';
+            return (
+              <div
+                key={step.level}
+                title={step.description}
+                style={{
+                  padding: '8px 6px', borderRadius: 7, textAlign: 'center' as const,
+                  background: isActive ? `${color}12` : 'transparent',
+                  border: `1px solid ${isActive ? color : 'rgba(255,255,255,0.06)'}`,
+                  transition: 'all 0.2s',
+                }}
+              >
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: color,
+                  margin: '0 auto 5px',
+                  boxShadow: isActive ? `0 0 6px ${color}` : 'none',
+                }} />
+                <div style={{ fontSize: '0.62rem', fontWeight: 800, color, letterSpacing: '0.04em' }}>
+                  {step.level}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Role context */}

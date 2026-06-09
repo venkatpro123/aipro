@@ -337,6 +337,61 @@ export function sortByROIWithinPhases(
   return result;
 }
 
+// ── Phase 3 / P5: Behavioral re-ranking ───────────────────────────────────────
+// Applied as a second pass AFTER the main rankActions() call, once
+// behavioralPersonalization is available (layer 60 in the pipeline).
+// Takes the already-ranked action items (with rankScore stamped on them) and
+// adjusts the scores by trajectory/compensation/risk-tolerance multipliers,
+// then re-sorts. Pure function, no I/O.
+
+export interface BehavioralRankProfile {
+  trajectory: 'ascending' | 'plateauing' | 'declining' | 'resetting' | 'early';
+  compensationPosition: 'significantly_under' | 'under_market' | 'at_market' | 'above_market' | 'significantly_above' | 'unknown';
+  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+  suppressedActionIds?: string[];
+}
+
+const TRAJECTORY_MULT: Record<string, Partial<Record<ActionCategory, number>>> = {
+  declining:  { skills: 1.30, network: 1.30, resume: 1.20, negotiate: 0.90 },
+  plateauing: { skills: 1.10, network: 1.10 },
+  ascending:  { negotiate: 1.15, network: 1.10 },
+};
+
+const COMP_MULT: Record<string, Partial<Record<ActionCategory, number>>> = {
+  significantly_under: { negotiate: 1.25 },
+  under_market:        { negotiate: 1.10 },
+};
+
+const RISK_MULT: Record<string, Partial<Record<ActionCategory, number>>> = {
+  aggressive:   { resume: 0.80, skills: 1.15, network: 1.20 },
+  conservative: { resume: 1.15, skills: 1.05 },
+};
+
+function behavioralCategoryMult(category: ActionCategory, bp: BehavioralRankProfile): number {
+  const t = TRAJECTORY_MULT[bp.trajectory]?.[category] ?? 1.0;
+  const c = COMP_MULT[bp.compensationPosition]?.[category] ?? 1.0;
+  const r = RISK_MULT[bp.riskTolerance]?.[category] ?? 1.0;
+  return t * c * r;
+}
+
+export function applyBehavioralRerank<T extends { rankScore?: number; id?: string; title?: string } & Record<string, unknown>>(
+  items: T[],
+  bp: BehavioralRankProfile,
+): T[] {
+  const suppressed = new Set(bp.suppressedActionIds ?? []);
+  return items
+    .map(item => {
+      // Suppress actions completed/suppressed by twin influence
+      if (item.id && suppressed.has(item.id as string)) {
+        return { ...item, rankScore: 0 };
+      }
+      const category = classifyActionCategory(item as Partial<ActionPlanItem>);
+      const mult = behavioralCategoryMult(category, bp);
+      return { ...item, rankScore: ((item.rankScore as number) ?? 1) * mult };
+    })
+    .sort((a, b) => ((b.rankScore as number) ?? 0) - ((a.rankScore as number) ?? 0));
+}
+
 /** GAP F: convert raw effort-hours estimate to a human-readable badge */
 export function formatEffortBadge(hours: number): string {
   if (hours <= 0.5) return '15 min';

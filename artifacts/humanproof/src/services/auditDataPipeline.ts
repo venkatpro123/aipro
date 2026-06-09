@@ -118,7 +118,7 @@ import { computePredictionHorizon } from "./predictionHorizonService";
 import { computeSkillGapIntelligence } from "./skillGapIntelligenceService";
 import { computePersonalizedTimeline } from "./personalizedTimelineService";
 import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
-import { computeActionEffortBadge, rankActions, loadCohortBoosts } from "./actionRankingService";
+import { computeActionEffortBadge, rankActions, loadCohortBoosts, applyBehavioralRerank } from "./actionRankingService";
 import { tenureBandFromYears } from "./cohortOutcomesAggregator";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
 import { getCareerPathMarket, getCareerPathMarketSync } from "./careerPathMarket";
@@ -4087,6 +4087,21 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       runwayMonths:                  (hybridResult as any).userFinancialRunway?.runwayMonths ?? uf60?.savingsMonthsRunway ?? null,
     });
     (hybridResult as any).behavioralPersonalization = behavioralPersonalization;
+
+    // Phase 3 / P5: Apply behavioral re-ranking now that personalization is available.
+    // Second pass adjusts rankScore by trajectory/compensation/riskTolerance multipliers.
+    if (hybridResult.actionItems && hybridResult.actionItems.length > 0) {
+      const bp = behavioralPersonalization;
+      hybridResult.actionItems = applyBehavioralRerank(
+        hybridResult.actionItems as unknown as Array<Record<string, unknown>>,
+        {
+          trajectory: bp.careerTrajectory.trajectory,
+          compensationPosition: bp.compensationIntelligence.position,
+          riskTolerance: bp.riskTolerance,
+        },
+      ) as unknown as typeof hybridResult.actionItems;
+      hybridResult.recommendations = hybridResult.actionItems;
+    }
   } catch (e) {
     noteEngineFailure('behavioralPersonalization', e);
   }

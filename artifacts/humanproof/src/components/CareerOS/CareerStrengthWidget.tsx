@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Shield, Zap } from "lucide-react";
 import { useHumanProof } from "../../context/HumanProofContext";
+import { ConfidenceSourceBadge } from "../shared/ConfidenceSourceBadge";
 
 function getStrengthColor(score: number): string {
   if (score >= 70) return "#10b981";
@@ -61,8 +62,11 @@ export function CareerStrengthWidget() {
             }}>
               {strengthScore}
             </div>
-            <div className="label-xs" style={{ color, opacity: 0.8, letterSpacing: "0.14em", marginTop: 4 }}>
-              {getStrengthLabel(strengthScore)}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 4 }}>
+              <div className="label-xs" style={{ color, opacity: 0.8, letterSpacing: "0.14em" }}>
+                {getStrengthLabel(strengthScore)}
+              </div>
+              <ConfidenceSourceBadge source="ESTIMATED" />
             </div>
           </div>
 

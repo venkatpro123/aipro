@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLayoff } from '../../context/LayoffContext';
 import { generatePersonalizedPrediction, type PersonalizedPrediction } from '../../services/proactiveInsightEngine';
+import { ConfidenceSourceBadge } from '../shared/ConfidenceSourceBadge';
 
 const itemVariant = {
   hidden: { opacity: 0, y: 16 },
@@ -81,6 +82,7 @@ export function PersonalizedPredictionPanel({ inline = false }: Props) {
         <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           90-Day Projection
         </span>
+        <ConfidenceSourceBadge source="MODELED" />
       </div>
 
       {loading ? (

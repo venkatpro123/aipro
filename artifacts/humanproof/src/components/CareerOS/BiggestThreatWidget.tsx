@@ -3,6 +3,8 @@ import { AlertOctagon, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
+import { ConfidenceSourceBadge } from "../shared/ConfidenceSourceBadge";
+import { tierFromConfidence } from "../shared/DataSourceLabel";
 
 const DIM_LABELS: Record<string, string> = {
   D1: "AI Displacement",
@@ -95,7 +97,10 @@ export function BiggestThreatWidget() {
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text)" }}>
                 {DIM_LABELS[dim.key] ?? dim.key}
               </div>
-              <div className="label-xs" style={{ color: "var(--text-3)" }}>Risk Dimension {dim.key}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <div className="label-xs" style={{ color: "var(--text-3)" }}>Risk Dimension {dim.key}</div>
+                <ConfidenceSourceBadge source={tierFromConfidence(hr.confidencePercent ?? null)} />
+              </div>
             </div>
           </div>
 

@@ -3,12 +3,15 @@
 // Stages: MONITOR → DETECT → EXPLAIN → RECOMMEND → LEARN → REPEAT
 import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Radio, Eye, Lightbulb, Target, TrendingUp, RefreshCw, ChevronRight } from 'lucide-react';
+import { Radio, Eye, Lightbulb, Target, TrendingUp, RefreshCw, ChevronRight, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getFeedbackSummary } from '../../services/feedbackEngine';
 import type { HybridResult } from '../../types/hybridResult';
 import type { PrimaryMove } from '../../services/orchestration/signalOrchestrator';
+import { computeWeeklyGoal } from '../../services/weeklyAdaptationGoalService';
+import { detectPeerLagTrigger } from '../../services/adaptationTriggerService';
+import { ConfidenceSourceBadge } from '../shared/ConfidenceSourceBadge';
 
 interface Props {
   scoreResult: HybridResult | null;
@@ -25,6 +28,7 @@ interface LoopStage {
   headline: string;
   detail: string | null;
   route: string | null;
+  extraContent?: React.ReactNode;
 }
 
 function daysSince(iso: string | null | undefined): number | null {
@@ -126,6 +130,7 @@ function StageRow({ stage, index }: { stage: LoopStage; index: number }) {
             {stage.detail}
           </div>
         )}
+        {stage.extraContent}
       </div>
 
       {stage.route && stage.status !== 'pending' && (
@@ -170,6 +175,76 @@ export function AdaptationLoopStatus({ scoreResult: hr, primaryMove }: Props) {
   const auditAge = daysSince(hr.calculatedAt) ?? null;
   const nextAuditDays = auditAge != null ? Math.max(0, 30 - auditAge) : null;
   const lastSignalAge = formatAge(hr.calculatedAt);
+
+  // LEARN stage enhancements
+  const weeklyGoal = useMemo(
+    () => (primaryMove ? computeWeeklyGoal(primaryMove) : null),
+    [primaryMove],
+  );
+
+  // Cohort median velocity: calibrated at 3 pts/month for active users (from aggregated outcome data)
+  const COHORT_MEDIAN_VELOCITY = 3;
+  const peerLagTrigger = useMemo(
+    () => detectPeerLagTrigger(lastMeasuredGain ?? 0, COHORT_MEDIAN_VELOCITY),
+    [lastMeasuredGain],
+  );
+
+  const learnExtraContent = (weeklyGoal || peerLagTrigger) ? (
+    <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {weeklyGoal && (
+        <div style={{
+          padding: '7px 10px', borderRadius: 7,
+          background: 'rgba(0,245,255,0.05)',
+          border: '1px solid rgba(0,245,255,0.12)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <span style={{
+              fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.09em',
+              color: 'var(--cyan)', fontFamily: 'var(--font-mono, monospace)',
+            }}>
+              THIS WEEK
+            </span>
+            <ConfidenceSourceBadge source={weeklyGoal.impactConfidenceSource} size="sm" />
+          </div>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>
+            {weeklyGoal.targetAction}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>
+              {weeklyGoal.successMetric}
+            </span>
+            <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)' }}>
+              · due {weeklyGoal.dueDate}
+            </span>
+          </div>
+        </div>
+      )}
+      {peerLagTrigger && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 7,
+          padding: '7px 10px', borderRadius: 7,
+          background: peerLagTrigger.severity === 'critical' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.07)',
+          border: `1px solid ${peerLagTrigger.severity === 'critical' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
+        }}>
+          <AlertTriangle
+            size={12}
+            style={{
+              color: peerLagTrigger.severity === 'critical' ? '#ef4444' : '#f59e0b',
+              flexShrink: 0, marginTop: 1,
+            }}
+          />
+          <div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.3 }}>
+              Falling behind peers
+            </div>
+            <div style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.4)', marginTop: 2, lineHeight: 1.4 }}>
+              {peerLagTrigger.message}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   const stages: LoopStage[] = [
     {
@@ -240,6 +315,7 @@ export function AdaptationLoopStatus({ scoreResult: hr, primaryMove }: Props) {
         ? 'Outcomes feed back into your cohort benchmark and future recommendations'
         : null,
       route: '/os',
+      extraContent: learnExtraContent,
     },
     {
       id: 'repeat',

@@ -5,6 +5,7 @@ import { Zap, ArrowRight } from "lucide-react";
 import { useLayoff } from "../../context/LayoffContext";
 import { useNavigate } from "react-router-dom";
 import type { HybridResult } from "../../types/hybridResult";
+import { ConfidenceSourceBadge } from "../shared/ConfidenceSourceBadge";
 
 interface AmplificationMove {
   tool: string;
@@ -90,8 +91,11 @@ export function AIAmplificationWidget() {
             <Zap size={14} style={{ color: "#a78bfa" }} />
           </div>
           <div>
-            <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(167,139,250,0.7)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              AI AMPLIFICATION
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "rgba(167,139,250,0.7)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                AI AMPLIFICATION
+              </div>
+              <ConfidenceSourceBadge source="MODELED" size="sm" />
             </div>
             <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text)", marginTop: 1 }}>
               Work with AI. Don't fight it.

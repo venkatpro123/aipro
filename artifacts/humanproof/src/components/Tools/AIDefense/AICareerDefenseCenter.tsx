@@ -1,5 +1,5 @@
 // AICareerDefenseCenter.tsx — Tool 2: AI Career Defense (Phase 2: amplification framing)
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
 import { AIReplacementAnalysis } from './AIReplacementAnalysis';
@@ -9,6 +9,10 @@ import { EmergingOpportunityDetector } from './EmergingOpportunityDetector';
 import { SkillDemandTracker } from './SkillDemandTracker';
 import { AIAmplificationRoadmap } from './AIAmplificationRoadmap';
 
+const DecadeScenarioPlannerPanel = lazy(() =>
+  import('./DecadeScenarioPlannerPanel').then(m => ({ default: m.DecadeScenarioPlannerPanel })),
+);
+
 const TABS = [
   { id: 'skills',        label: 'Skill Demand'         },
   { id: 'amplify',       label: 'AI Amplify'           },
@@ -16,6 +20,7 @@ const TABS = [
   { id: 'readiness',     label: 'AI Readiness'         },
   { id: 'roadmap',       label: 'Future Roadmap'       },
   { id: 'opportunities', label: 'Emerging Roles'       },
+  { id: 'decade',        label: 'Decade Plan'          },
 ];
 
 const AI_DEFENSE_TAB_KEY = 'hp.ai-defense.tab';
@@ -89,6 +94,11 @@ export function AICareerDefenseCenter() {
       <TabsContent value="readiness">     <AIReadinessAnalysis scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="roadmap">       <FutureProofingRoadmap scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="opportunities"> <EmergingOpportunityDetector scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="decade">
+        <Suspense fallback={<div style={{ padding: '32px 0', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>Loading decade planner…</div>}>
+          <DecadeScenarioPlannerPanel />
+        </Suspense>
+      </TabsContent>
     </Tabs>
   );
 }

@@ -80,6 +80,121 @@ function decisionRowToEvent(row: Record<string, unknown>): TimelineEvent {
   };
 }
 
+// ─── Pattern Detection (pure, no I/O) ────────────────────────────────────────
+
+export type PatternType = 'plateau' | 'repeated_inaction' | 'repeated_decision';
+
+export interface PatternDetection {
+  patternType: PatternType;
+  occurrences: number;
+  lastSeen: string;
+  whatHappened: string;
+  whyItMatters: string;
+  consequence: string;
+}
+
+export function detectRepeatedPatterns(events: TimelineEvent[]): PatternDetection[] {
+  const auditEvents = events
+    .filter(e => e.type === 'audit' && typeof e.score === 'number')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  if (auditEvents.length < 2) return [];
+
+  const patterns: PatternDetection[] = [];
+  const sorted = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // 1. Score plateau: 2+ consecutive audits where score diff <= 3 pts
+  let maxRun = 1, currentRun = 1, plateauLastSeen = auditEvents[0].date;
+  for (let i = 1; i < auditEvents.length; i++) {
+    if (Math.abs((auditEvents[i].score ?? 0) - (auditEvents[i - 1].score ?? 0)) <= 3) {
+      currentRun++;
+      if (currentRun > maxRun) { maxRun = currentRun; plateauLastSeen = auditEvents[i].date; }
+    } else {
+      currentRun = 1;
+    }
+  }
+  if (maxRun >= 2) {
+    patterns.push({
+      patternType: 'plateau',
+      occurrences: maxRun,
+      lastSeen: plateauLastSeen,
+      whatHappened: `Risk score barely moved across ${maxRun} consecutive audits`,
+      whyItMatters: `Plateaus like this have historically resolved when a new skill or targeted action broke the stagnation`,
+      consequence: `Without a deliberate intervention, risk compounds as market conditions shift around a static profile`,
+    });
+  }
+
+  // 2. Repeated inaction: 2+ high-risk audits (score >= 60) with no action between them
+  let highRiskStreak = 0, lastHighRiskDate = '', sawActionSinceHighRisk = false;
+  for (const e of sorted) {
+    if (e.type === 'audit' && typeof e.score === 'number' && e.score >= 60) {
+      if (highRiskStreak > 0 && !sawActionSinceHighRisk) { highRiskStreak++; }
+      else { highRiskStreak = 1; sawActionSinceHighRisk = false; }
+      lastHighRiskDate = e.date;
+    } else if (e.type === 'action' && highRiskStreak > 0) {
+      sawActionSinceHighRisk = true;
+    }
+  }
+  if (highRiskStreak >= 2) {
+    patterns.push({
+      patternType: 'repeated_inaction',
+      occurrences: highRiskStreak,
+      lastSeen: lastHighRiskDate,
+      whatHappened: `Audited at elevated risk (60+) ${highRiskStreak} times without a protective action in between`,
+      whyItMatters: `In similar profiles, one targeted action per audit cycle consistently broke this pattern`,
+      consequence: `Each high-risk audit without a follow-through action reinforces the pattern and compounds exposure`,
+    });
+  }
+
+  // 3. Repeated decision: same decision type 3+ times
+  const decisionCounts: Record<string, { count: number; lastSeen: string }> = {};
+  for (const e of sorted) {
+    if (e.type === 'decision') {
+      const dt = (e.metadata?.decisionType as string) ?? 'other';
+      if (!decisionCounts[dt]) decisionCounts[dt] = { count: 0, lastSeen: '' };
+      decisionCounts[dt].count++;
+      decisionCounts[dt].lastSeen = e.date;
+    }
+  }
+  for (const [dt, stats] of Object.entries(decisionCounts)) {
+    if (stats.count >= 3) {
+      patterns.push({
+        patternType: 'repeated_decision',
+        occurrences: stats.count,
+        lastSeen: stats.lastSeen,
+        whatHappened: `The "${dt}" decision has been recorded ${stats.count} times`,
+        whyItMatters: `Repeated decisions of the same type often signal an unresolved structural constraint — naming it unlocks new options`,
+        consequence: `Without acknowledging the pattern, the same decision cycle tends to repeat rather than evolve`,
+      });
+    }
+  }
+
+  return patterns;
+}
+
+export function buildCareerArcNarrative(
+  summary: CareerMemorySummary,
+  patterns: PatternDetection[],
+): string {
+  if (!summary.hasData || summary.auditCount < 2) return '';
+  const deltaStr = summary.scoreDelta != null
+    ? summary.scoreDelta > 0 ? `risk has risen ${Math.abs(summary.scoreDelta)} pts`
+      : summary.scoreDelta < 0 ? `risk has improved ${Math.abs(summary.scoreDelta)} pts`
+      : 'risk has held steady'
+    : 'trend is tracked';
+  const sentence1 = `Over ${summary.daysMonitored} days of monitoring, your career ${deltaStr}.`;
+  const plateau = patterns.find(p => p.patternType === 'plateau');
+  const inaction = patterns.find(p => p.patternType === 'repeated_inaction');
+  const sentence2 = plateau
+    ? `A score plateau has appeared across ${plateau.occurrences} consecutive audits — a targeted action breaks it.`
+    : inaction
+    ? `You've hit elevated risk without acting ${inaction.occurrences} times — one move per cycle changes this.`
+    : summary.actionsCompleted > 0
+    ? `${summary.actionsCompleted} completed action${summary.actionsCompleted > 1 ? 's show' : ' shows'} the adaptation loop is working.`
+    : '';
+  return sentence2 ? `${sentence1} ${sentence2}` : sentence1;
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function getCareerTimeline(userId: string): Promise<TimelineEvent[]> {

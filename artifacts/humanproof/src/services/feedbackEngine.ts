@@ -204,6 +204,60 @@ export async function getFeedbackSummary(userId: string): Promise<FeedbackSummar
   };
 }
 
+// ─── Feedback boost map for pickPrimaryMove ──────────────────────────────────
+// Returns a Map<actionId, multiplier> where:
+//   0   = suppress (2+ thumbs-down → never surface as primary move)
+//   1.3 = boost (2+ thumbs-up → elevate in ranking)
+// No entry → 1.0 (no feedback history)
+
+export async function getActionFeedbackBoosts(
+  userId: string,
+  actionIds: string[],
+): Promise<Map<string, number>> {
+  if (actionIds.length === 0) return new Map();
+  const { data } = await supabase
+    .from('action_completions')
+    .select('action_id, thumbs_up')
+    .eq('user_id', userId)
+    .in('action_id', actionIds.slice(0, 50))
+    .not('thumbs_up', 'is', null);
+
+  const upCounts: Record<string, number> = {};
+  const downCounts: Record<string, number> = {};
+  for (const row of (data ?? []) as { action_id: string; thumbs_up: boolean }[]) {
+    if (row.thumbs_up) upCounts[row.action_id] = (upCounts[row.action_id] ?? 0) + 1;
+    else downCounts[row.action_id] = (downCounts[row.action_id] ?? 0) + 1;
+  }
+
+  const boosts = new Map<string, number>();
+  for (const id of actionIds) {
+    const down = downCounts[id] ?? 0;
+    const up = upCounts[id] ?? 0;
+    if (down >= 2) boosts.set(id, 0);
+    else if (up >= 2) boosts.set(id, 1.3);
+  }
+  return boosts;
+}
+
+// ─── Outcome summary by type ──────────────────────────────────────────────────
+
+export async function getOutcomeSummaryByType(): Promise<Record<string, number>> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) return {};
+
+  const { data } = await supabase
+    .from('career_outcome_events')
+    .select('event_type')
+    .eq('user_id', userId);
+
+  const counts: Record<string, number> = {};
+  for (const row of (data ?? []) as { event_type: string }[]) {
+    counts[row.event_type] = (counts[row.event_type] ?? 0) + 1;
+  }
+  return counts;
+}
+
 // ─── Learning outcomes ────────────────────────────────────────────────────────
 
 export async function recordLearningOutcome(outcome: LearningOutcome): Promise<boolean> {

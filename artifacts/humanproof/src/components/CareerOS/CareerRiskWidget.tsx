@@ -3,6 +3,8 @@ import { AlertTriangle, TrendingUp, TrendingDown, Minus, Clock } from "lucide-re
 import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
 import ScoreRing from "../ScoreRing";
+import { ConfidenceSourceBadge } from "../shared/ConfidenceSourceBadge";
+import { tierFromConfidence } from "../shared/DataSourceLabel";
 
 // Career Readiness = 100 - riskScore (higher = better, more adaptable)
 function getReadinessColor(readiness: number): string {
@@ -124,20 +126,7 @@ export function CareerRiskWidget() {
         }}>
           {getReadinessLabel(readiness)}
         </span>
-        {/* Rule 17+10: confidence source label — earn trust through accuracy */}
-        <span style={{
-          display: "inline-block", padding: "2px 7px", borderRadius: 5,
-          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-          fontSize: "0.63rem", fontWeight: 600, color: "rgba(255,255,255,0.2)",
-          fontFamily: "var(--font-mono)",
-          letterSpacing: "0.06em",
-        }}>
-          {hr.confidencePercent != null && hr.confidencePercent >= 70
-            ? "MEASURED"
-            : hr.confidencePercent != null && hr.confidencePercent >= 45
-            ? "MODELED"
-            : "ESTIMATED"}
-        </span>
+        <ConfidenceSourceBadge source={tierFromConfidence(hr.confidencePercent ?? null)} />
       </div>
 
       <button

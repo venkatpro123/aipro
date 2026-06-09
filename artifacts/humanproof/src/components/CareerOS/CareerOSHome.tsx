@@ -38,6 +38,7 @@ import { AdaptationLoopStatus } from "./AdaptationLoopStatus";
 import { CareerGraphInsights } from "./CareerGraphInsights";
 import { orchestrate } from "../../services/orchestration/signalOrchestrator";
 import { getCohortOutcomeStats, tenureBandFromYears } from "../../services/cohortOutcomesAggregator";
+import { getActionFeedbackBoosts } from "../../services/feedbackEngine";
 import type { HybridResult } from "../../types/hybridResult";
 import type { UserProfile } from "../../services/userProfileService";
 
@@ -259,15 +260,30 @@ export function CareerOSHome() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.scoreResult]);
 
+  // ── Feedback boost map — thumbs history rewires primary move ranking ──
+  const [feedbackBoosts, setFeedbackBoosts] = useState<Map<string, number>>(new Map());
+  useEffect(() => {
+    if (!user?.id || !state.scoreResult) return;
+    const hr = state.scoreResult as HybridResult;
+    const actionIds = (hr.actionItems ?? hr.recommendations ?? [])
+      .map(r => r.id ?? (r as any).title)
+      .filter((id): id is string => typeof id === 'string');
+    if (actionIds.length === 0) return;
+    getActionFeedbackBoosts(user.id, actionIds)
+      .then(boosts => { if (boosts.size > 0) setFeedbackBoosts(boosts); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, state.scoreResult]);
+
   // ── Primary move (weekly mission) — computed from signal orchestrator ──
   const orchestratedFeed = useMemo(() => {
     if (!state.scoreResult) return null;
     try {
-      return orchestrate(state.scoreResult as HybridResult, undefined, userProfile);
+      return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts });
     } catch {
       return null;
     }
-  }, [state.scoreResult, userProfile]);
+  }, [state.scoreResult, userProfile, feedbackBoosts]);
 
   const primaryMove = orchestratedFeed?.primaryMove ?? null;
   const primaryMoveActionId = primaryMove?.action.id ?? primaryMove?.action.title ?? null;

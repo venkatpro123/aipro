@@ -39,6 +39,7 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
   const [step, setStep] = useState<'type' | 'detail' | 'done' | 'error'>('type');
   const [selectedType, setSelectedType] = useState<OutcomeEventType | null>(null);
   const [detail, setDetail] = useState('');
+  const [numericDetail, setNumericDetail] = useState('');
   const [saving, setSaving] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,6 +66,7 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
     setStep('type');
     setSelectedType(null);
     setDetail('');
+    setNumericDetail('');
     setSaving(false);
   }
 
@@ -76,8 +78,13 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
   async function handleSave() {
     if (!selectedType) return;
     setSaving(true);
-    const detailObj: Record<string, string> = {};
+    const detailObj: Record<string, string | number> = {};
     if (detail.trim()) detailObj.note = detail.trim();
+    const numVal = parseFloat(numericDetail);
+    if (!isNaN(numVal) && numericDetail.trim()) {
+      if (selectedType === 'salary_increase') detailObj.salary_change_pct = numVal;
+      else if (selectedType === 'offer_received') detailObj.interviews_generated = Math.round(numVal);
+    }
 
     const saved = await recordOutcomeEvent(selectedType, {
       companyName: state.companyName ?? undefined,
@@ -256,6 +263,30 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
                     boxSizing: 'border-box' as const,
                   }}
                 />
+
+                {(selectedType === 'salary_increase' || selectedType === 'offer_received') && (
+                  <div style={{ marginTop: 12 }}>
+                    <label
+                      htmlFor="outcome-numeric"
+                      style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', display: 'block', marginBottom: 6 }}
+                    >
+                      {selectedType === 'salary_increase' ? 'Salary increase % (optional)' : 'How many interviews generated (optional)'}
+                    </label>
+                    <input
+                      id="outcome-numeric"
+                      type="number"
+                      min={0}
+                      value={numericDetail}
+                      onChange={e => setNumericDetail(e.target.value)}
+                      placeholder={selectedType === 'salary_increase' ? 'e.g. 12' : 'e.g. 3'}
+                      style={{
+                        width: '50%', padding: '8px 12px', borderRadius: 7,
+                        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
+                        color: 'var(--text)', fontSize: '0.85rem', boxSizing: 'border-box' as const,
+                      }}
+                    />
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                   <button

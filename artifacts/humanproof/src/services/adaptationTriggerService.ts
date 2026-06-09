@@ -14,7 +14,7 @@
 import type { HybridResult } from '../types/hybridResult';
 import type { MonitoringFeedItem } from '../types/careerOS';
 
-export type AdaptationTriggerType = 'signal_changed' | 'action_completed' | 'score_stale' | 'peer_surge';
+export type AdaptationTriggerType = 'signal_changed' | 'action_completed' | 'score_stale' | 'peer_surge' | 'peer_lag';
 
 export interface AdaptationTrigger {
   type: AdaptationTriggerType;
@@ -114,4 +114,23 @@ export function detectAdaptationTriggers(
   return triggers
     .sort((a, b) => (severityOrder[a.severity] ?? 2) - (severityOrder[b.severity] ?? 2))
     .slice(0, 2);
+}
+
+// ── Peer-lag detector (pure, no I/O) ─────────────────────────────────────────
+// Fires when the user's score velocity is more than 10 points worse than the
+// cohort median velocity over the same period.
+
+export function detectPeerLagTrigger(
+  userVelocity: number,
+  cohortMedianVelocity: number,
+): AdaptationTrigger | null {
+  const lag = cohortMedianVelocity - userVelocity;
+  if (lag <= 10) return null;
+  return {
+    type: 'peer_lag',
+    severity: lag >= 20 ? 'critical' : 'warning',
+    message: `Your readiness is improving ${Math.round(lag)} pts/month slower than similar professionals. They are widening the gap.`,
+    recommendedAction: 'Review your top-priority action and close one skill gap this week.',
+    ctaLabel: 'Catch up',
+  };
 }

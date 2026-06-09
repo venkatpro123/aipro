@@ -5,6 +5,7 @@ import { Newspaper, TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide
 import { useAuth } from '../../context/AuthContext';
 import { useLayoff } from '../../context/LayoffContext';
 import { getWeeklyCareerBrief, type WeeklyCareerBrief, type BriefSignal } from '../../services/proactiveInsightEngine';
+import { ConfidenceSourceBadge } from '../shared/ConfidenceSourceBadge';
 
 const itemVariant = {
   hidden: { opacity: 0, y: 16 },
@@ -115,6 +116,7 @@ export function WeeklyCareerBriefCard() {
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>
               · Week of {new Date(brief.weekStarting).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
+            <ConfidenceSourceBadge source="MODELED" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: trendColor }}>
             <TrendIcon size={13} />

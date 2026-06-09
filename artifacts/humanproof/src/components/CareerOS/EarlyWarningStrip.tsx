@@ -5,7 +5,10 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, TrendingDown, Zap, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { HybridResult } from '../../types/hybridResult';
+import type { ActionPlanItem } from '../../types/hybridResult';
 import type { AdaptationTrigger } from '../../services/adaptationTriggerService';
+import { computeInaction30Day } from '../../services/inactionConsequenceCalculator';
+import { ConsequenceFrameStrip } from '../shared/ConsequenceFrameStrip';
 
 interface DetectedSignal {
   category: 'company' | 'market' | 'peer';
@@ -86,6 +89,14 @@ export function EarlyWarningStrip({ scoreResult, adaptationTriggers }: Props) {
 
   if (signals.length === 0) return null;
 
+  // Consequence framing (Rule 7): show 30-day projection when high/critical signals active
+  const hasSevereSignal = signals.some(s => s.severity === 'critical' || s.severity === 'high');
+  const currentScore = scoreResult.total ?? 0;
+  const topAction = (scoreResult.actionItems ?? [])[0] as ActionPlanItem | undefined;
+  const consequence30 = hasSevereSignal && topAction
+    ? computeInaction30Day(currentScore, null, topAction)
+    : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -4 }}
@@ -153,6 +164,13 @@ export function EarlyWarningStrip({ scoreResult, adaptationTriggers }: Props) {
           <ArrowUpRight size={11} />
         </button>
       </div>
+
+      {consequence30 && (
+        <ConsequenceFrameStrip
+          trajectory={{ days: 30, projectedScore: consequence30.projectedScore, label: consequence30.label, rationale: `If signals persist unaddressed by ${consequence30.targetDate}, risk compounds further.` }}
+          currentScore={currentScore}
+        />
+      )}
     </motion.div>
   );
 }

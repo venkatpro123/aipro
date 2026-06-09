@@ -113,6 +113,8 @@ export interface OrchestrateConfig {
     suppressedActionIds: string[];
     careerGroupBoost: number;
   };
+  /** Feedback boost map from getActionFeedbackBoosts(). 0=suppress, 1.3=elevate. */
+  feedbackBoosts?: Map<string, number>;
 }
 
 const DEFAULT_CAP = 3;
@@ -327,14 +329,29 @@ export function isActionableRecommendation(r: ActionPlanItem | null | undefined)
 export function pickPrimaryMove(
   recommendations: ActionPlanItem[] | undefined,
   profile: ProfileSignalSummary,
+  feedbackBoosts?: Map<string, number>,
 ): PrimaryMove | null {
-  const recs = (recommendations ?? []).filter(isActionableRecommendation);
+  let recs = (recommendations ?? []).filter(isActionableRecommendation);
+
+  // Apply feedback suppression: drop actions with boost = 0 (2+ thumbs-down)
+  if (feedbackBoosts?.size) {
+    recs = recs.filter(r => {
+      const boost = feedbackBoosts.get(r.id ?? r.title ?? '');
+      return boost === undefined || boost > 0;
+    });
+  }
+
   if (recs.length === 0) return null;
 
   const runwayCritical = profile.runwayTier === 'critical';
 
-  // Rank by score DESC. Stable enough for determinism since inputs are ordered.
-  const ranked = [...recs].sort((a, b) => moveScore(b, profile) - moveScore(a, profile));
+  // Rank by score DESC, multiplied by feedback boost where applicable.
+  const scoreWithBoost = (r: ActionPlanItem) => {
+    const base = moveScore(r, profile);
+    const boost = feedbackBoosts?.get(r.id ?? r.title ?? '') ?? 1.0;
+    return base * boost;
+  };
+  const ranked = [...recs].sort((a, b) => scoreWithBoost(b) - scoreWithBoost(a));
 
   if (runwayCritical) {
     // Feasibility gate: with critical runway, the user can't afford a long bet.
@@ -484,7 +501,7 @@ export function orchestrateFromIntel(
     ? (result.recommendations ?? []).filter(r => !twin!.suppressedActionIds.includes(r.id ?? ''))
     : result.recommendations;
 
-  const primaryMove = pickPrimaryMove(filteredRecommendations, profileSignals);
+  const primaryMove = pickPrimaryMove(filteredRecommendations, profileSignals, config?.feedbackBoosts);
   const trace = buildTrace(primary[0]?.signal, primaryMove, confPct, intel, profileSignals);
   const spine = renderSpine(trace);
 

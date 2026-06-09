@@ -3,9 +3,14 @@
 // Merges: audits, actions, decisions (careerMemoryService) + outcome events (Phase 3).
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { getCareerTimeline, type TimelineEvent } from '../../../services/careerMemoryService';
+import {
+  getCareerTimeline,
+  detectRepeatedPatterns,
+  type TimelineEvent,
+  type PatternDetection,
+} from '../../../services/careerMemoryService';
 import { getOutcomeEvents, type CareerOutcomeEvent, OUTCOME_LABELS, OUTCOME_ICONS } from '../../../services/careerOutcomeService';
 import { RecordOutcomeModal } from '../../CareerOS/RecordOutcomeModal';
 import { CareerDecisionRecorder } from '../../CareerMemory/CareerDecisionRecorder';
@@ -139,11 +144,68 @@ function EventItem({ event }: { event: UnifiedEvent }) {
   );
 }
 
+// ── Pattern Detected Banner ───────────────────────────────────────────────────
+
+const PATTERN_LABEL: Record<PatternDetection['patternType'], string> = {
+  plateau: 'SCORE PLATEAU',
+  repeated_inaction: 'REPEATED INACTION',
+  repeated_decision: 'REPEATED DECISION',
+};
+
+function PatternDetectedBanner({ patterns }: { patterns: PatternDetection[] }) {
+  const top = patterns[0];
+  if (!top) return null;
+  return (
+    <div style={{
+      padding: '12px 14px', borderRadius: 10,
+      background: 'rgba(245,158,11,0.06)',
+      border: '1px solid rgba(245,158,11,0.22)',
+      marginBottom: 6,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+        <AlertTriangle size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
+        <span style={{
+          fontSize: '0.6rem', fontWeight: 800, color: '#f59e0b',
+          letterSpacing: '0.1em', fontFamily: 'var(--font-mono, monospace)',
+        }}>
+          PATTERN DETECTED · {PATTERN_LABEL[top.patternType]}
+        </span>
+        <span style={{
+          fontSize: '0.62rem', color: 'rgba(255,255,255,0.25)',
+          padding: '1px 6px', borderRadius: 4, background: 'rgba(255,255,255,0.04)',
+        }}>
+          {top.occurrences}×
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', width: 100, flexShrink: 0 }}>WHAT HAPPENED</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text)', lineHeight: 1.4 }}>{top.whatHappened}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', width: 100, flexShrink: 0 }}>WHY IT MATTERS</span>
+          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.4 }}>{top.whyItMatters}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#f59e0b', width: 100, flexShrink: 0 }}>CONSEQUENCE</span>
+          <span style={{ fontSize: '0.72rem', color: 'rgba(245,158,11,0.7)', lineHeight: 1.4 }}>{top.consequence}</span>
+        </div>
+      </div>
+      {patterns.length > 1 && (
+        <div style={{ marginTop: 8, fontSize: '0.67rem', color: 'rgba(255,255,255,0.3)' }}>
+          +{patterns.length - 1} more pattern{patterns.length > 2 ? 's' : ''} detected in your timeline
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function CareerMemoryTimeline() {
   const { user } = useAuth();
   const [events, setEvents] = useState<UnifiedEvent[]>([]);
+  const [patterns, setPatterns] = useState<PatternDetection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
@@ -157,6 +219,7 @@ export function CareerMemoryTimeline() {
         getCareerTimeline(user.id),
         getOutcomeEvents(user.id),
       ]);
+      setPatterns(detectRepeatedPatterns(timelineEvents));
       const all: UnifiedEvent[] = [
         ...timelineEvents.map(timelineToUnified),
         ...outcomeEvents.map(outcomeToUnified),
@@ -267,6 +330,9 @@ export function CareerMemoryTimeline() {
           </div>
         ))}
       </div>
+
+      {/* Pattern detection banner */}
+      {!loading && patterns.length > 0 && <PatternDetectedBanner patterns={patterns} />}
 
       {/* Timeline by year */}
       {loading ? (

@@ -6,7 +6,37 @@
 import { supabase } from '../utils/supabase';
 import { invokeEdgeFunction } from '../infrastructure/requestId';
 
-export type OutcomeLabel = 'layoff_occurred' | 'no_layoff' | 'voluntarily_left' | 'other';
+export type OutcomeLabel =
+  | 'layoff_occurred'
+  | 'no_layoff'
+  | 'voluntarily_left'
+  | 'promoted'
+  | 'salary_increase'
+  | 'interview_generated'
+  | 'successful_transition'
+  | 'other';
+
+export interface ExtendedOutcomePayload {
+  outcomeLabel: OutcomeLabel;
+  salaryChangePct?: number;
+  promotionReceived?: boolean;
+  interviewsGenerated?: number;
+  transitionCompleted?: boolean;
+}
+
+export async function recordExtendedOutcome(
+  auditId: string,
+  payload: ExtendedOutcomePayload,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('user_prediction_outcomes')
+    .update({
+      outcome_reported: payload.outcomeLabel,
+      outcome_date: new Date().toISOString(),
+    })
+    .eq('id', auditId);
+  return !error;
+}
 
 export interface DuePrompt {
   audit_id: string;
