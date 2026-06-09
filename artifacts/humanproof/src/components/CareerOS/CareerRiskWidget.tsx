@@ -4,19 +4,20 @@ import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
 import ScoreRing from "../ScoreRing";
 
-function getRingColor(score: number): string {
-  if (score >= 70) return "#ef4444";
-  if (score >= 50) return "#f97316";
-  if (score >= 35) return "#f59e0b";
-  return "#10b981";
+// Career Readiness = 100 - riskScore (higher = better, more adaptable)
+function getReadinessColor(readiness: number): string {
+  if (readiness >= 70) return "#10b981";
+  if (readiness >= 50) return "#f59e0b";
+  if (readiness >= 35) return "#f97316";
+  return "#ef4444";
 }
 
-function getTierLabel(score: number): string {
-  if (score >= 75) return "CRITICAL";
-  if (score >= 60) return "HIGH RISK";
-  if (score >= 40) return "ELEVATED";
-  if (score >= 20) return "MODERATE";
-  return "LOW RISK";
+function getReadinessLabel(readiness: number): string {
+  if (readiness >= 75) return "STRONG";
+  if (readiness >= 60) return "GOOD";
+  if (readiness >= 40) return "NEEDS WORK";
+  if (readiness >= 20) return "AT RISK";
+  return "CRITICAL";
 }
 
 export function CareerRiskWidget() {
@@ -50,20 +51,24 @@ export function CareerRiskWidget() {
   }
 
   const hr = scoreResult as HybridResult;
-  const score = hr.total ?? 0;
-  const color = getRingColor(score);
+  const riskScore = hr.total ?? 0;
+  const readiness = 100 - riskScore;
+  const color = getReadinessColor(readiness);
   const delta = (hr as any).scoreDelta ?? null;
+  const readinessDelta = delta != null ? -delta : null;
 
-  // Use scoreTrajectory.velocityPtsPerMonth if available; fall back to alertDrift computation
-  const rawVelocity = hr.scoreTrajectory?.velocityPtsPerMonth ?? null;
-  const velocity: number | null = rawVelocity != null
-    ? rawVelocity
+  // Readiness velocity is the inverse of risk velocity
+  const rawRiskVelocity = hr.scoreTrajectory?.velocityPtsPerMonth ?? null;
+  const riskVelocity: number | null = rawRiskVelocity != null
+    ? rawRiskVelocity
     : state.alertDrift
       ? state.alertDrift.drift / Math.max(state.alertDrift.daysSince / 30, 1)
       : null;
+  // Positive risk velocity = readiness declining; negative risk velocity = readiness improving
+  const readinessVelocity = riskVelocity != null ? -riskVelocity : null;
 
-  const TrendIcon = velocity == null ? Minus : velocity > 0 ? TrendingUp : TrendingDown;
-  const trendColor = velocity == null ? "var(--text-3)" : velocity > 0 ? "#ef4444" : "#10b981";
+  const TrendIcon = readinessVelocity == null ? Minus : readinessVelocity > 0 ? TrendingUp : TrendingDown;
+  const trendColor = readinessVelocity == null ? "var(--text-3)" : readinessVelocity > 0 ? "#10b981" : "#ef4444";
 
   // Last-analyzed date from HybridResult or alertDrift
   const calcAt: string | null = hr.calculatedAt ?? state.alertDrift?.fromDate ?? null;
@@ -83,7 +88,7 @@ export function CareerRiskWidget() {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div className="label-xs" style={{ color: "var(--text-3)", marginBottom: 4 }}>LAYOFF RISK</div>
+          <div className="label-xs" style={{ color: "var(--text-3)", marginBottom: 4 }}>CAREER READINESS</div>
           {companyName && <div style={{ fontSize: "0.82rem", color: "var(--text-2)", fontWeight: 500 }}>{companyName}{roleTitle ? ` · ${roleTitle}` : ""}</div>}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
@@ -92,7 +97,7 @@ export function CareerRiskWidget() {
             color: trendColor, fontFamily: "var(--font-mono)",
           }}>
             <TrendIcon size={12} />
-            {velocity != null ? `${Math.abs(velocity).toFixed(1)}/mo` : "Stable"}
+            {readinessVelocity != null ? `${Math.abs(readinessVelocity).toFixed(1)}/mo` : "Stable"}
           </div>
           {lastAnalyzedLabel && (
             <div style={{
@@ -107,7 +112,7 @@ export function CareerRiskWidget() {
       </div>
 
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <ScoreRing score={score} color={color} size={140} isMobile scoreDelta={delta} velocityPtsPerMonth={velocity} />
+        <ScoreRing score={readiness} color={color} size={140} isMobile scoreDelta={readinessDelta} velocityPtsPerMonth={readinessVelocity} />
       </div>
 
       <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -117,7 +122,7 @@ export function CareerRiskWidget() {
           fontSize: "0.7rem", fontWeight: 700, color, letterSpacing: "0.1em",
           fontFamily: "var(--font-mono)",
         }}>
-          {getTierLabel(score)}
+          {getReadinessLabel(readiness)}
         </span>
         {/* Rule 17+10: confidence source label — earn trust through accuracy */}
         <span style={{

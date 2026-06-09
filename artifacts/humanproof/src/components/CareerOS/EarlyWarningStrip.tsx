@@ -1,0 +1,148 @@
+// EarlyWarningStrip — compact detection strip (Rule 3, Rule 11)
+// Shows detected signals (NOT predictions) organized by category.
+// Only renders if any signals are active — stays invisible when clear.
+import { motion } from 'framer-motion';
+import { AlertTriangle, TrendingDown, Zap, ArrowUpRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { HybridResult } from '../../types/hybridResult';
+import type { AdaptationTrigger } from '../../services/adaptationTriggerService';
+
+interface DetectedSignal {
+  category: 'company' | 'market' | 'peer';
+  label: string;
+  count: number;
+  severity: 'critical' | 'high' | 'info';
+}
+
+interface Props {
+  scoreResult: HybridResult;
+  adaptationTriggers: AdaptationTrigger[];
+}
+
+function buildSignals(hr: HybridResult, triggers: AdaptationTrigger[]): DetectedSignal[] {
+  const signals: DetectedSignal[] = [];
+
+  // Company health signals — stealth layoff + collapse stage
+  const stealth = (hr as any)._stealthSignal;
+  const collapseStage = (hr as any).collapseStage;
+  let companyCount = 0;
+  if (stealth?.severity && stealth.severity !== 'STABLE') companyCount++;
+  if (collapseStage?.stage && collapseStage.stage >= 2) companyCount++;
+  if (triggers.some(t => t.type === 'signal_changed')) companyCount++;
+  if (companyCount > 0) {
+    const hasCollapse = collapseStage?.stage >= 3;
+    signals.push({
+      category: 'company',
+      label: hasCollapse ? 'Company collapse indicators active' : 'Company health signals',
+      count: companyCount,
+      severity: hasCollapse || (stealth?.severity === 'SILENT_PURGE') ? 'critical' : 'high',
+    });
+  }
+
+  // Market / skill demand signals
+  const marketSignal = (hr as any).marketDemand;
+  const hiringSignal = (hr as any).hiringSignalResult;
+  let marketCount = 0;
+  if (marketSignal?.demandTrend === 'declining') marketCount++;
+  if (hiringSignal?.hiringFreezeDetected) marketCount++;
+  if (marketCount > 0) {
+    signals.push({
+      category: 'market',
+      label: hiringSignal?.hiringFreezeDetected ? 'Hiring freeze detected' : 'Market demand shifting',
+      count: marketCount,
+      severity: 'high',
+    });
+  }
+
+  // Peer sector layoffs
+  const peerTrigger = triggers.find(t => t.type === 'peer_surge');
+  if (peerTrigger) {
+    signals.push({
+      category: 'peer',
+      label: 'Layoff events in your industry',
+      count: 1,
+      severity: peerTrigger.severity === 'critical' ? 'critical' : 'high',
+    });
+  }
+
+  return signals;
+}
+
+const CATEGORY_ICON = {
+  company: AlertTriangle,
+  market: TrendingDown,
+  peer: Zap,
+} as const;
+
+const SEV_COLOR = {
+  critical: '#ef4444',
+  high: '#f59e0b',
+  info: 'rgba(255,255,255,0.4)',
+} as const;
+
+export function EarlyWarningStrip({ scoreResult, adaptationTriggers }: Props) {
+  const navigate = useNavigate();
+  const signals = buildSignals(scoreResult, adaptationTriggers);
+
+  if (signals.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ marginBottom: 14 }}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8,
+        padding: '10px 16px',
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 10,
+      }}>
+        <div style={{
+          fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.2)',
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+          fontFamily: 'var(--font-mono, monospace)', flexShrink: 0,
+        }}>
+          EARLY WARNINGS
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flex: 1 }}>
+          {signals.map(sig => {
+            const Icon = CATEGORY_ICON[sig.category];
+            const color = SEV_COLOR[sig.severity];
+            return (
+              <div
+                key={sig.category}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '3px 9px', borderRadius: 6,
+                  background: `${color}10`, border: `1px solid ${color}25`,
+                  fontSize: '0.73rem', fontWeight: 600, color,
+                  cursor: 'default',
+                }}
+              >
+                <Icon size={11} style={{ flexShrink: 0 }} />
+                {sig.count > 1 ? `${sig.count} ` : ''}{sig.label}
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/monitor')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: 'none', border: 'none',
+            color: 'var(--cyan)', fontSize: '0.72rem', fontWeight: 700,
+            cursor: 'pointer', padding: '2px 4px', flexShrink: 0,
+          }}
+        >
+          View all
+          <ArrowUpRight size={11} />
+        </button>
+      </div>
+    </motion.div>
+  );
+}

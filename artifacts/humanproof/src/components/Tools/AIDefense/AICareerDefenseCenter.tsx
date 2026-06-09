@@ -1,4 +1,4 @@
-// AICareerDefenseCenter.tsx — Tool 2: AI Career Defense
+// AICareerDefenseCenter.tsx — Tool 2: AI Career Defense (Phase 2: amplification framing)
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
@@ -6,16 +6,18 @@ import { AIReplacementAnalysis } from './AIReplacementAnalysis';
 import { AIReadinessAnalysis } from './AIReadinessAnalysis';
 import { FutureProofingRoadmap } from './FutureProofingRoadmap';
 import { EmergingOpportunityDetector } from './EmergingOpportunityDetector';
+import { SkillDemandTracker } from './SkillDemandTracker';
 
 const TABS = [
-  { id: 'replacement',   label: 'AI Exposure'         },
-  { id: 'readiness',     label: 'Readiness Score'      },
-  { id: 'roadmap',       label: 'Futureproof Roadmap'  },
+  { id: 'skills',        label: 'Skill Demand'         },
+  { id: 'replacement',   label: 'AI Landscape'         },
+  { id: 'readiness',     label: 'AI Readiness'         },
+  { id: 'roadmap',       label: 'Amplify Roadmap'      },
   { id: 'opportunities', label: 'Emerging Roles'       },
 ];
 
 export function AICareerDefenseCenter() {
-  const [activeTab, setActiveTab] = useState('replacement');
+  const [activeTab, setActiveTab] = useState('skills');
   const { state } = useLayoff();
   const scoreResult = state.scoreResult as import('../../../types/hybridResult').HybridResult | null;
 
@@ -72,6 +74,7 @@ export function AICareerDefenseCenter() {
           </TabsTrigger>
         ))}
       </TabsList>
+      <TabsContent value="skills">        <SkillDemandTracker scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="replacement">   <AIReplacementAnalysis scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="readiness">     <AIReadinessAnalysis scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="roadmap">       <FutureProofingRoadmap scoreResult={scoreResult} /></TabsContent>

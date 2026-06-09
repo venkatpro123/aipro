@@ -86,6 +86,9 @@ export function MonitoringFeedWidget() {
     .filter(item => !dismissed.has(item.id))
     .slice(0, 5);
 
+  // Build signal count label — detection language (Rule 3)
+  const totalSignalCount = feedItems.length + autopilotAlerts.length;
+
   return (
     <motion.div
       className="card-premium"
@@ -96,7 +99,9 @@ export function MonitoringFeedWidget() {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div className="label-xs" style={{ color: "var(--text-3)" }}>MONITORING FEED</div>
+          <div className="label-xs" style={{ color: "var(--text-3)" }}>
+            {totalSignalCount > 0 ? `${totalSignalCount} SIGNAL${totalSignalCount > 1 ? 'S' : ''} DETECTED` : 'SIGNAL MONITOR'}
+          </div>
           {isPolling && (
             <div style={{
               width: 6, height: 6, borderRadius: "50%", background: "var(--cyan)",

@@ -67,6 +67,13 @@ export interface PrimaryMove {
   /** Verb-first action headline (derived from the action's description), so the
    *  "one move" reads as something to DO, not a diagnosis title. */
   moveLabel: string;
+  // ── Rule 1: 4-question card pattern ─────────────────────────────────────────
+  /** What signal triggered this recommendation (from top ranked signal headline). */
+  whatHappened?: string;
+  /** Why the user should act — audience-aware (from actionConsequenceEngine). */
+  whyItMatters?: string;
+  /** Consequence of inaction (from actionConsequenceEngine). */
+  ifYouSkip?: string;
 }
 
 export interface OrchestratedFeed {
@@ -481,10 +488,18 @@ export function orchestrateFromIntel(
   const trace = buildTrace(primary[0]?.signal, primaryMove, confPct, intel, profileSignals);
   const spine = renderSpine(trace);
 
+  // Enrich primaryMove with 4-question card data (Rule 1)
+  const enrichedMove: PrimaryMove | null = primaryMove ? {
+    ...primaryMove,
+    whatHappened: primary[0]?.signal.headline ?? trace.observation,
+    whyItMatters: primaryMove.action.whyItMatters ?? primaryMove.rationale,
+    ifYouSkip: primaryMove.action.consequence ?? `Inaction allows this risk factor to compound — ${primaryMove.action.deadline ? `act by ${primaryMove.action.deadline}` : 'act this week'}.`,
+  } : null;
+
   return {
     primary,
     overflow,
-    primaryMove,
+    primaryMove: enrichedMove,
     spine,
     trace,
     intel,
