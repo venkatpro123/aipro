@@ -1,5 +1,7 @@
-// actionRankingService.ts — v15.0
+// actionRankingService.ts — v15.1 (Phase 5: cohort outcome multiplier)
 // Re-ranks personalized actions by (impact ÷ effort) × profile multipliers.
+// Phase 5 adds an optional cohortBoosts map: actions with positive cohort outcomes
+// are ranked higher; actions with ≥3 "not helpful" signals are demoted.
 // Existing actionPersonalizationEngine.ts owns the action POOL (what is in the
 // list); this module owns the ORDERING (which goes first for THIS user).
 
@@ -138,6 +140,47 @@ export interface RankingContext {
   careerConfidenceScore?: number | null;
 }
 
+// Phase 5: cohort boost map — preloaded async by callers via loadCohortBoosts().
+// Key = action id or title (same as ActionPlanItem.id). Value = cohort multiplier.
+export type CohortBoostMap = Map<string, number>;
+
+/**
+ * Compute a ranking multiplier from cohort outcome stats.
+ * Positive avg reduction → 1.1–1.35 boost; negative/neutral stays 1.0.
+ * Actions with ≥3 "not helpful" cohort signals get a 0.7 demotion.
+ */
+export function cohortMultiplier(avgRiskReduction: number | null | undefined, negativeSignals = 0): number {
+  if (negativeSignals >= 3) return 0.70;
+  if (avgRiskReduction == null || avgRiskReduction <= 0) return 1.0;
+  // Soft cap: a 20pt avg reduction gives max 1.35× boost
+  return Math.min(1.35, 1.0 + Math.max(0, avgRiskReduction) / 100);
+}
+
+/**
+ * Phase 5: async pre-fetch of cohort boosts for a set of action IDs.
+ * Returns a map actionId → cohortMultiplier for all actions with N ≥ 5 data.
+ * Non-blocking — returns empty map on failure.
+ */
+export async function loadCohortBoosts(
+  roleKey: string,
+  tenureBand: string,
+  actionIds: string[],
+): Promise<CohortBoostMap> {
+  const { getCohortOutcomeStats } = await import('./cohortOutcomesAggregator');
+  const map: CohortBoostMap = new Map();
+  await Promise.all(
+    actionIds.slice(0, 10).map(async (id) => {
+      try {
+        const stats = await getCohortOutcomeStats(roleKey, tenureBand as never, id);
+        if (stats && stats.count >= 5) {
+          map.set(id, cohortMultiplier(stats.avgRiskReduction));
+        }
+      } catch { /* non-fatal */ }
+    }),
+  );
+  return map;
+}
+
 export interface RankingScore {
   action: Partial<ActionPlanItem>;
   rankScore: number;
@@ -170,6 +213,7 @@ export function rankActions(
   actions: Array<Partial<ActionPlanItem>>,
   profile: UserProfile | null,
   context?: RankingContext | null,
+  cohortBoosts?: CohortBoostMap | null,
 ): RankingScore[] {
   const salaryMult   = profile?.salaryBand ? SALARY_MULTIPLIER[profile.salaryBand] : 1.0;
   const visaMult     = profile?.visaStatus  ? VISA_MULTIPLIER[profile.visaStatus]  : 1.0;
@@ -183,9 +227,10 @@ export function rankActions(
       const impact = action.riskReductionPct ?? 5;
       const effort = effortHours(action);
       const priorityMult = action.priority ? PRIORITY_BASE[action.priority] : 1.0;
-      // Wave 8.2: seniority-differentiated category weight (per-action)
       const seniorityMult = seniorityMultiplier(action, profile?.tenureYears ?? null);
-      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult;
+      // Phase 5: cohort outcome boost — actions proven to help users like this one rank higher
+      const cohortMult = cohortBoosts?.get(action.id ?? action.title ?? '') ?? 1.0;
+      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult * cohortMult;
 
       // Score = priority-weighted impact density × profile multiplier
       const rankScore = (impact * priorityMult * profileMult) / Math.max(1, effort);
@@ -195,6 +240,7 @@ export function rankActions(
       if (runwayMult !== 1.0)    contextParts.push(`runway=${runwayMult.toFixed(2)}`);
       if (confMult !== 1.0)      contextParts.push(`conf=${confMult.toFixed(2)}`);
       if (seniorityMult !== 1.0) contextParts.push(`seniority=${seniorityMult.toFixed(2)}`);
+      if (cohortMult !== 1.0)    contextParts.push(`cohort=${cohortMult.toFixed(2)}`);
 
       const rationale =
         `priority=${(priorityMult).toFixed(2)} · ` +
@@ -214,8 +260,9 @@ export function rankAndUnwrap(
   actions: Array<Partial<ActionPlanItem>>,
   profile: UserProfile | null,
   context?: RankingContext | null,
+  cohortBoosts?: CohortBoostMap | null,
 ): Array<Partial<ActionPlanItem>> {
-  return rankActions(actions, profile, context).map((r) => r.action);
+  return rankActions(actions, profile, context, cohortBoosts).map((r) => r.action);
 }
 
 /**

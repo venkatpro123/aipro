@@ -34,6 +34,8 @@ import { CareerResultsPanel } from "./CareerResultsPanel";
 import { QuickFeedbackBanner } from "./QuickFeedbackBanner";
 import { FeedbackLoopStatus } from "./FeedbackLoopStatus";
 import { RecordOutcomeModal } from "./RecordOutcomeModal";
+import { AdaptationLoopStatus } from "./AdaptationLoopStatus";
+import { CareerGraphInsights } from "./CareerGraphInsights";
 import { orchestrate } from "../../services/orchestration/signalOrchestrator";
 import { getCohortOutcomeStats, tenureBandFromYears } from "../../services/cohortOutcomesAggregator";
 import type { HybridResult } from "../../types/hybridResult";
@@ -548,6 +550,16 @@ export function CareerOSHome() {
 
               <div style={{ marginBottom: 14 }}>
                 <FeedbackLoopStatus />
+              </div>
+
+              {/* ADAPTATION LOOP — Rule 11: visible 6-stage loop status (Phase 5) */}
+              <div style={{ marginBottom: 14 }}>
+                <AdaptationLoopStatus scoreResult={hr} primaryMove={primaryMove} />
+              </div>
+
+              {/* CAREER GRAPH INSIGHTS — Rule 9/18: cohort outcome patterns (Phase 5) */}
+              <div style={{ marginBottom: 14 }}>
+                <CareerGraphInsights userProfile={userProfile} />
               </div>
 
               <div style={{
