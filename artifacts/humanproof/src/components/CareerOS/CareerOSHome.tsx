@@ -152,7 +152,7 @@ function StartHereCard() {
         </p>
         <button
           type="button"
-          onClick={() => navigate('/terminal')}
+          onClick={() => navigate('/terminal', { state: { newAudit: true } })}
           style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "var(--cyan)", color: "#000", fontWeight: 800,
@@ -195,6 +195,24 @@ export function CareerOSHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const hasResult = state.scoreResult !== null;
+
+  // Show a skeleton instead of StartHereCard while useAuditPersistence is
+  // fetching the prior result from DB (new browser session, sessionStorage empty).
+  const [isAwaitingRestore, setIsAwaitingRestore] = useState(() => {
+    if (hasResult) return false;
+    try {
+      const hasSession = !!sessionStorage.getItem('hp_last_score_session');
+      if (hasSession) return false;
+      return localStorage.getItem('hp_has_prior_audit') === '1';
+    } catch { return false; }
+  });
+  useEffect(() => {
+    if (hasResult) { setIsAwaitingRestore(false); return; }
+    if (!isAwaitingRestore) return;
+    const t = setTimeout(() => setIsAwaitingRestore(false), 5000);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasResult]);
 
   const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
   const [completenessScore, setCompletenessScore] = useState<number | null>(null);
@@ -421,7 +439,22 @@ export function CareerOSHome() {
             ABOVE FOLD — MISSION CARD (dominant, full-width) — Rule 5
         ══════════════════════════════════════════════════════════════════════ */}
         {!hasResult ? (
-          <StartHereCard />
+          isAwaitingRestore ? (
+            <motion.div variants={itemVariants}>
+              <div style={{
+                padding: '40px 36px', textAlign: 'center', borderRadius: 16,
+                background: 'rgba(0,245,255,0.03)', border: '1px solid rgba(0,245,255,0.1)',
+                marginBottom: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+              }}>
+                <div className="spinner" style={{ width: 28, height: 28 }} />
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', fontFamily: 'var(--font-mono, monospace)' }}>
+                  Restoring your career audit…
+                </span>
+              </div>
+            </motion.div>
+          ) : (
+            <StartHereCard />
+          )
         ) : (
           <>
             {/* Career Moment Alert — urgent system flags */}
@@ -448,7 +481,7 @@ export function CareerOSHome() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => navigate('/terminal')}
+                  onClick={() => navigate('/terminal', { state: { newAudit: true } })}
                   style={{
                     flexShrink: 0, background: 'none',
                     border: `1px solid ${trigger.severity === 'critical' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.35)'}`,
@@ -496,7 +529,7 @@ export function CareerOSHome() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => navigate('/terminal')}
+                    onClick={() => navigate('/terminal', { state: { newAudit: true } })}
                     style={{
                       background: "var(--cyan)", color: "#000", border: "none", borderRadius: 8,
                       padding: "10px 22px", fontSize: "0.85rem", fontWeight: 700, cursor: "pointer",

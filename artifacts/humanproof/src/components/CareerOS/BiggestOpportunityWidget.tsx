@@ -38,7 +38,7 @@ export function BiggestOpportunityWidget() {
         <div style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>Run an audit to discover your top opportunity</div>
         <button
           type="button"
-          onClick={() => navigate('/terminal')}
+          onClick={() => navigate('/terminal', { state: { newAudit: true } })}
           style={{
             background: "var(--cyan)", color: "#000", border: "none", borderRadius: 7,
             padding: "7px 16px", fontSize: "0.76rem", fontWeight: 800, cursor: "pointer",
@@ -114,7 +114,7 @@ export function BiggestOpportunityWidget() {
 
           <button
             type="button"
-            onClick={() => navigate('/terminal')}
+            onClick={() => navigate('/terminal', { state: { newAudit: true } })}
             style={{
               background: "transparent", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8,
               color: "#10b981", fontSize: "0.78rem", fontWeight: 600, padding: "6px 0",

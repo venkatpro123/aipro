@@ -88,7 +88,7 @@ export function ReAuditPromptCard() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/terminal')}
+            onClick={() => navigate('/terminal', { state: { newAudit: true } })}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: 'var(--cyan)', color: '#000',

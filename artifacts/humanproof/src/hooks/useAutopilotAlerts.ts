@@ -31,8 +31,6 @@ export interface UseAutopilotAlertsReturn {
   isLoading: boolean;
 }
 
-const CHANNEL_ID = 'autopilot-alerts';
-
 export function useAutopilotAlerts(): UseAutopilotAlertsReturn {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<AutopilotAlert[]>([]);
@@ -72,48 +70,72 @@ export function useAutopilotAlerts(): UseAutopilotAlertsReturn {
     void fetchAlerts(userId);
 
     // ── Realtime subscription ─────────────────────────────────────────────
-    const channel = supabase
-      .channel(CHANNEL_ID)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_autopilot_alerts',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newAlert = payload.new as AutopilotAlert;
-          // Deduplicate and prepend
-          setAlerts(prev => {
-            if (prev.some(a => a.id === newAlert.id)) return prev;
-            return [newAlert, ...prev];
-          });
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_autopilot_alerts',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const updated = payload.new as AutopilotAlert;
-          setAlerts(prev =>
-            updated.is_dismissed
-              ? prev.filter(a => a.id !== updated.id)
-              : prev.map(a => (a.id === updated.id ? updated : a)),
-          );
-        },
-      )
-      .subscribe();
+    // Channel name must be unique per effect invocation. Supabase caches
+    // channels by name — reusing a static name returns the already-subscribed
+    // object, and calling .on() on it throws "cannot add postgres_changes
+    // callbacks after subscribe()". A UUID salt per mount prevents this.
+    // Same pattern as useCompanySignalSubscription.ts (channelSalt).
+    const salt = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const channelId = `autopilot-alerts-${userId.slice(0, 8)}-${salt}`;
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(channelId)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'user_autopilot_alerts',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const newAlert = payload.new as AutopilotAlert;
+            // Deduplicate and prepend
+            setAlerts(prev => {
+              if (prev.some(a => a.id === newAlert.id)) return prev;
+              return [newAlert, ...prev];
+            });
+          },
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'user_autopilot_alerts',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const updated = payload.new as AutopilotAlert;
+            setAlerts(prev =>
+              updated.is_dismissed
+                ? prev.filter(a => a.id !== updated.id)
+                : prev.map(a => (a.id === updated.id ? updated : a)),
+            );
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      // Realtime unavailable — REST polling in fetchAlerts is the fallback.
+      console.warn('[useAutopilotAlerts] realtime subscribe failed:', err);
+      channel = null;
+    }
 
     channelRef.current = channel;
 
     return () => {
-      void supabase.removeChannel(channel);
+      const ch = channelRef.current;
+      channelRef.current = null;
+      if (ch) {
+        // Synchronous unsubscribe marks the channel closed immediately so a
+        // rapid re-mount cannot get the same channel object back from Supabase.
+        try { ch.unsubscribe(); } catch { /* ignore */ }
+        void supabase.removeChannel(ch);
+      }
     };
   }, [user?.id, fetchAlerts]);
 

@@ -203,7 +203,7 @@ export function TodaysIntelligenceBrief() {
             <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => navigate('/terminal')}
+                onClick={() => navigate('/terminal', { state: { newAudit: true } })}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   background: 'none', border: '1px solid rgba(255,255,255,0.12)',

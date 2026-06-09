@@ -56,7 +56,7 @@ export function BiggestThreatWidget() {
         <div style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>Run an audit to reveal your biggest threat</div>
         <button
           type="button"
-          onClick={() => navigate('/terminal')}
+          onClick={() => navigate('/terminal', { state: { newAudit: true } })}
           style={{
             background: "var(--cyan)", color: "#000", border: "none", borderRadius: 7,
             padding: "7px 16px", fontSize: "0.76rem", fontWeight: 800, cursor: "pointer",
@@ -115,7 +115,7 @@ export function BiggestThreatWidget() {
           )}
 
           <button
-            onClick={() => navigate('/terminal')}
+            onClick={() => navigate('/terminal', { state: { newAudit: true } })}
             style={{
               background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8,
               color: "#ef4444", fontSize: "0.78rem", fontWeight: 600, padding: "6px 0",

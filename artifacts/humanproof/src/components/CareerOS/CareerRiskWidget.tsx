@@ -39,7 +39,7 @@ export function CareerRiskWidget() {
           <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text)", marginBottom: 6 }}>No Audit Yet</div>
           <div style={{ fontSize: "0.8rem", color: "var(--text-3)", marginBottom: 16 }}>Run your first layoff audit to see your risk score here</div>
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal" } }))}
+            onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal", params: { newAudit: true } } }))}
             style={{
               background: "var(--cyan)", color: "#000", border: "none", borderRadius: 8,
               padding: "8px 20px", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
@@ -130,7 +130,7 @@ export function CareerRiskWidget() {
       </div>
 
       <button
-        onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal" } }))}
+        onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal", params: { newAudit: true } } }))}
         style={{
           background: "transparent", border: "1px solid var(--border)", borderRadius: 8,
           color: "var(--text-2)", fontSize: "0.78rem", fontWeight: 600, padding: "6px 0",

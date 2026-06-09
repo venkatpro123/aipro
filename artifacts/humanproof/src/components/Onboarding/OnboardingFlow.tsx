@@ -265,7 +265,7 @@ export function OnboardingFlow({ onComplete }: Props) {
         {step === 0 && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <button
-              onClick={() => navigate('/terminal')}
+              onClick={() => navigate('/terminal', { state: { newAudit: true } })}
               style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
             >
               Skip setup — go straight to audit

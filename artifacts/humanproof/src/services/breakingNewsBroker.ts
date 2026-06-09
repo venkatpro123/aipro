@@ -182,13 +182,11 @@ function attachRealtime(key: string, entry: ChannelEntry, companyName: string): 
           // eslint-disable-next-line no-console
           console.warn(`[breakingNewsBroker] realtime ${status} for ${key}; downgrading to polling`);
           entry.realtimeFailed = true;
-          if (entry.channel) {
-            try {
-              entry.channel.unsubscribe();
-            } catch {
-              /* ignore */
-            }
-            entry.channel = null;
+          const ch = entry.channel;
+          entry.channel = null;
+          if (ch) {
+            try { ch.unsubscribe(); } catch { /* ignore */ }
+            void supabase.removeChannel(ch);
           }
           startPolling(key, entry);
         }
@@ -215,12 +213,10 @@ function reconcileTransport(key: string, companyName: string, entry: ChannelEntr
 
   if (fanoutEnabled && tooManySubscribers && !entry.pollTimer) {
     if (entry.channel) {
-      try {
-        entry.channel.unsubscribe();
-      } catch {
-        /* ignore */
-      }
+      const ch = entry.channel;
       entry.channel = null;
+      try { ch.unsubscribe(); } catch { /* ignore */ }
+      void supabase.removeChannel(ch);
     }
     startPolling(key, entry);
     return;
@@ -270,13 +266,11 @@ export function subscribeBreakingNews(
     entry.callbacks.delete(callback);
     if (entry.callbacks.size === 0) {
       // Last subscriber gone — tear down both transports.
-      if (entry.channel) {
-        try {
-          entry.channel.unsubscribe();
-        } catch {
-          /* ignore */
-        }
-        entry.channel = null;
+      const ch = entry.channel;
+      entry.channel = null;
+      if (ch) {
+        try { ch.unsubscribe(); } catch { /* ignore */ }
+        void supabase.removeChannel(ch);
       }
       stopPolling(entry);
       channels.delete(key);
@@ -311,12 +305,11 @@ export function listActiveSubscriptions(): Array<{
  */
 export function __resetBrokerForTesting(): void {
   for (const entry of channels.values()) {
-    if (entry.channel) {
-      try {
-        entry.channel.unsubscribe();
-      } catch {
-        /* ignore */
-      }
+    const ch = entry.channel;
+    entry.channel = null;
+    if (ch) {
+      try { ch.unsubscribe(); } catch { /* ignore */ }
+      void supabase.removeChannel(ch);
     }
     stopPolling(entry);
   }

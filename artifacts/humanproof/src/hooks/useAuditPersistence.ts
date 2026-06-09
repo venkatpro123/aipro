@@ -120,6 +120,7 @@ export function useAuditPersistence(userId: string | null | undefined): void {
           roleTitle: data.role_title ?? null,
           ts: Date.now(),
         });
+        try { localStorage.setItem('hp_has_prior_audit', '1'); } catch { /* ignore */ }
       } catch (e) {
         console.warn('[useAuditPersistence] Unexpected error:', e);
       }

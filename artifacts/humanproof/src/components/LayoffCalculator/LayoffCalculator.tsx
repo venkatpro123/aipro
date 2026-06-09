@@ -302,6 +302,25 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
   // The DB restore path (useAuditPersistence) is the durable fallback for
   // longer gaps (new device, cleared storage, session expired).
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+  // ── Restore-pending skeleton ──────────────────────────────────────────────
+  // If this is a new browser session (sessionStorage empty) but the user has
+  // a prior audit in the DB (hp_has_prior_audit flag), we must NOT flash the
+  // input form before useAuditPersistence finishes the async DB restore.
+  // Show a skeleton instead until the result lands in context.
+  const [isAwaitingRestore, setIsAwaitingRestore] = React.useState(() => {
+    try {
+      const hasSession = !!sessionStorage.getItem('hp_last_score_session');
+      if (hasSession) return false;
+      return localStorage.getItem('hp_has_prior_audit') === '1';
+    } catch { return false; }
+  });
+  React.useEffect(() => {
+    if (state.hasCompletedAssessment) { setIsAwaitingRestore(false); return; }
+    if (!isAwaitingRestore) return;
+    const t = setTimeout(() => setIsAwaitingRestore(false), 5000);
+    return () => clearTimeout(t);
+  }, [state.hasCompletedAssessment, isAwaitingRestore]);
   const buildCacheKey = (
     company: string,
     roleKey: string,
@@ -981,6 +1000,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
           ts: Date.now(),
         }),
       );
+      localStorage.setItem('hp_has_prior_audit', '1');
     } catch {
       /* ignore */
     }
@@ -1704,7 +1724,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
         console.warn("[Layoff] Server score sync failed:", syncError);
       }
 
-      // ── ARCHITECTURE: Persist result to sessionStorage for page-refresh recovery
+      // ── ARCHITECTURE: Persist result to sessionStorage + durable localStorage flag
       try {
         sessionStorage.setItem(
           "hp_last_score_session",
@@ -1718,6 +1738,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
             ts: Date.now(),
           }),
         );
+        // Durable flag survives browser restarts — read by useAuditPersistence
+        // and the restore-skeleton logic to know a prior audit exists in DB.
+        localStorage.setItem('hp_has_prior_audit', '1');
       } catch {
         /* quota exceeded — ignore */
       }
@@ -1827,7 +1850,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
 
   return (
     <div className="layoff-calculator-wrapper" style={{ padding: "24px 0" }}>
-      {!state.hasCompletedAssessment && !state.isCalculating && (
+      {/* Skeleton shown while useAuditPersistence fetches the prior result from DB */}
+      {isAwaitingRestore && !state.hasCompletedAssessment && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '40vh', gap: 16 }}>
+          <div className="spinner" style={{ width: 32, height: 32 }} />
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', fontFamily: 'var(--font-mono, monospace)' }}>
+            Restoring your audit…
+          </span>
+        </div>
+      )}
+      {!state.hasCompletedAssessment && !state.isCalculating && !isAwaitingRestore && (
         <>
           <LayoffAlertBanner />
           <div style={{ textAlign: "center", marginBottom: "40px" }}>

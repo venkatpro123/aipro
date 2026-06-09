@@ -79,7 +79,7 @@ export function RoleSelectorModal({ isOpen, onClose }: RoleSelectorModalProps) {
               setIsAnalyzing(false);
               onClose();
               dispatch({ type: 'SET_ACTIVE_TAB', tab: 'risk-calculators' });
-              navigate('/terminal');
+              navigate('/terminal', { state: { newAudit: true } });
             }, 500);
             return 100;
           }
