@@ -26,6 +26,8 @@ interface Props {
   firstActionTitle?: string;
   firstActionEffort?: string;
   onRevealComplete: () => void;
+  /** Called when the user explicitly clicks "View full report" — stays in the report, skips OS navigation */
+  onViewReport?: () => void;
 }
 
 // SVG ring for the score display
@@ -112,7 +114,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
   score, tier, companyName,
   liveSignalCount = 0, confidencePercent = 0,
   firstActionTitle, firstActionEffort,
-  onRevealComplete,
+  onRevealComplete, onViewReport,
 }) => {
   const [phase, setPhase] = useState<RevealPhase>('stats');
   const [ringVisible, setRingVisible] = useState(false);
@@ -270,7 +272,15 @@ export const AuditRevealScreen: React.FC<Props> = ({
                 Open Career OS <ArrowRight className="w-4 h-4" />
               </button>
               <button
-                onClick={complete}
+                onClick={() => {
+                  setPhase('done');
+                  // Stay in the report — don't fire onRevealComplete (which navigates to OS)
+                  if (onViewReport) {
+                    setTimeout(onViewReport, 350);
+                  } else {
+                    setTimeout(onRevealComplete, 350);
+                  }
+                }}
                 className="text-[10px]"
                 style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.28)', cursor: 'pointer', padding: '4px 0' }}
               >

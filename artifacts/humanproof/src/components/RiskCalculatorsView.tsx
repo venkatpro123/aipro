@@ -141,7 +141,10 @@ export const RiskCalculatorsView: React.FC<Props> = ({ onSwitchTab }) => {
       {activeCalculator === "risk-oracle" && <AuditTerminalPage />}
       {activeCalculator === "layoff-audit" && (
         <Suspense fallback={<LayoffAuditFallback />}>
-          <LayoffCalculator onSwitchTab={onSwitchTab} />
+          <LayoffCalculator
+            onSwitchTab={onSwitchTab}
+            onAfterReveal={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'os' } }))}
+          />
         </Suspense>
       )}
     </div>

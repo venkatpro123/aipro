@@ -2039,7 +2039,16 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal }
             ?? (state.scoreResult as any).actions?.[0]?.title}
           firstActionEffort={(state.scoreResult as any).immediateActions?.[0]?.effort
             ?? (state.scoreResult as any).topActions?.[0]?.timeEstimate}
-          onRevealComplete={() => { setRevealActive(false); onAfterReveal?.(); }}
+          onRevealComplete={() => {
+            setRevealActive(false);
+            if (onAfterReveal) {
+              onAfterReveal();
+            } else {
+              // Universal fallback: always land on Career OS, not the report
+              window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'os' } }));
+            }
+          }}
+          onViewReport={() => setRevealActive(false)}
         />
       )}
 

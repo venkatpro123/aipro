@@ -401,7 +401,7 @@ export default function ToolsPage() {
                         {tab.id === "layoff-audit" && (
                           <LayoffCalculator
                             onSwitchTab={switchTab}
-                            onAfterReveal={fromOnboarding ? () => navigate('/os', { replace: true }) : undefined}
+                            onAfterReveal={() => navigate('/os', { replace: true })}
                           />
                         )}
                         {tab.id === "risk-oracle" && <AuditTerminalPage />}
