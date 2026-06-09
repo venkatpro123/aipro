@@ -634,7 +634,7 @@ export function CareerOSHome() {
           }}
         >
           {[
-            { label: "Full Audit Report", route: "terminal" },
+            { label: "Run New Audit", route: "terminal" },
             { label: "Monitor Signals", route: "monitor" },
             { label: "All Tools", route: "tools" },
             { label: "Career Settings", route: "settings" },

@@ -40,6 +40,7 @@ import TeamDashboardPage from "./pages/TeamDashboardPage";
 
 // Pages — lazy-loaded (career-intelligence chunk 187KB gzip)
 const AuditTerminalPage = lazy(() => import("./pages/AuditTerminalPage"));
+const AuditPage = lazy(() => import("./pages/AuditPage"));
 const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const SafeCareersPage = lazy(() =>
@@ -525,7 +526,7 @@ function AppFooter() {
 
   const footerLinks = {
     platform: [
-      { to: "/terminal",     label: "Risk Oracle"   },
+      { to: "/risk-oracle",  label: "Risk Oracle"   },
       { to: "/learning-hub", label: "Learning Hub"  },
       { to: "/safe-careers", label: "Safe Careers"  },
       { to: "/leaderboard",  label: "Risk Index"    },
@@ -719,7 +720,7 @@ function AppFooter() {
 
 // Routes where the global mobile bottom nav should be hidden because the
 // feature has its own dedicated tab bar (LayoffAuditDashboardV3, etc.)
-const FEATURE_ROUTES = ['/terminal', '/leaderboard', '/os', '/monitor', '/tools'];
+const FEATURE_ROUTES = ['/terminal', '/risk-oracle', '/leaderboard', '/os', '/monitor', '/tools'];
 
 // ─── Main App Content ─────────────────────────────────────────────────────────
 function AppContent() {
@@ -835,7 +836,8 @@ function AppContent() {
               <Route path="/auth"                           element={<AuthPage />} />
               <Route path="/onboarding"                    element={<OnboardingPage />} />
               <Route path="/calculator"                    element={<AuditTerminalPage />} />
-              <Route path="/terminal"                      element={<ToolsPage />} />
+              <Route path="/terminal"                      element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
+              <Route path="/risk-oracle"                   element={<ProtectedRoute><ToolsPage /></ProtectedRoute>} />
               <Route path="/safe-careers"                  element={<SafeCareersPage />} />
               <Route path="/career/:id"                    element={<CareerDetailPage />} />
               <Route path="/learning-hub"                  element={<LearningHubPage />} />
