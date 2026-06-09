@@ -469,5 +469,35 @@ export function orchestrate(
   const intel = compressAllSignals(result, companyData);
   const profileSignals = deriveProfileSignals(profile, result.total);
   const feed = orchestrateFromIntel(result, intel, profileSignals, config);
-  return { ...feed, meta: { ...feed.meta, usedProfile: profile != null } };
+  const finalFeed = { ...feed, meta: { ...feed.meta, usedProfile: profile != null } };
+  _notifyListeners(finalFeed);
+  return finalFeed;
+}
+
+// ── OrchestratorBus — pub/sub for reactive signal → recommendation updates ──
+// Phase 2 (R11, R13): Components subscribe here to update their state when a
+// new signal fires without requiring a full page refresh or re-audit.
+//
+// Module-level singleton — zero React state. Components subscribe in useEffect
+// and return the unsubscribe function for cleanup.
+
+type OrchestratorListener = (feed: OrchestratedFeed) => void;
+const _listeners = new Set<OrchestratorListener>();
+
+function _notifyListeners(feed: OrchestratedFeed): void {
+  _listeners.forEach(fn => {
+    try { fn(feed); } catch { /* never let a subscriber crash orchestration */ }
+  });
+}
+
+/**
+ * Subscribe to orchestrated feed updates.
+ * Returns an unsubscribe function — call it in useEffect cleanup.
+ *
+ * @example
+ * useEffect(() => subscribeToOrchestrator(feed => setFeed(feed)), []);
+ */
+export function subscribeToOrchestrator(fn: OrchestratorListener): () => void {
+  _listeners.add(fn);
+  return () => { _listeners.delete(fn); };
 }
