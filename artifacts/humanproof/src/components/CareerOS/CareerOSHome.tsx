@@ -125,6 +125,7 @@ function ToolQuickLaunch() {
 // ─── First-time "Start Here" card ─────────────────────────────────────────────
 
 function StartHereCard() {
+  const navigate = useNavigate();
   const PREVIEWS = [
     { icon: "🎯", title: "Career Readiness", desc: "How prepared you are — not just how at-risk you are. Higher is better." },
     { icon: "📋", title: "Weekly Mission", desc: "One specific action per week, with a clear reason and consequence if skipped." },
@@ -150,7 +151,7 @@ function StartHereCard() {
         </p>
         <button
           type="button"
-          onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal" } }))}
+          onClick={() => navigate('/terminal')}
           style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "var(--cyan)", color: "#000", fontWeight: 800,
@@ -207,10 +208,12 @@ export function CareerOSHome() {
   // ── Profile + memory + twin sync ──
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     Promise.all([
       fetchUserProfile(),
       getCareerMemorySummary(user.id),
     ]).then(([profile, summary]) => {
+      if (cancelled) return;
       setUserProfile(profile);
       setMemorySummary(summary);
       const { score } = computeProfileCompleteness(
@@ -224,6 +227,7 @@ export function CareerOSHome() {
         void syncTwinFromProfile(profile, hr);
       }
     }).catch(() => {/* offline */});
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, state.companyName, state.roleTitle, state.scoreResult]);
 
@@ -337,12 +341,12 @@ export function CareerOSHome() {
             gap: "4px 16px", fontSize: "0.74rem", fontFamily: "var(--font-mono, monospace)",
             alignItems: "center",
           }}>
-            <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>YOU ARE</span>
+            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>YOU ARE</span>
             <span style={{ color: "var(--text-2)", fontWeight: 600 }}>
               {state.roleTitle ? `${state.roleTitle} ` : ''}{state.companyName ? `@ ${state.companyName}` : "your current role"}
             </span>
-            <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
-            <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>READINESS</span>
+            <span style={{ color: "rgba(255,255,255,0.65)" }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>READINESS</span>
             <span style={{ fontWeight: 800, color: readiness >= 60 ? '#10b981' : readiness >= 40 ? '#f59e0b' : '#ef4444' }}>
               {readiness}
             </span>
@@ -351,8 +355,8 @@ export function CareerOSHome() {
               const targetPath = (hr as any)?.escapePaths?.paths?.[0]?.title ?? null;
               return targetPath ? (
                 <>
-                  <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
-                  <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>TARGET</span>
+                  <span style={{ color: "rgba(255,255,255,0.65)" }}>·</span>
+                  <span style={{ color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>TARGET</span>
                   <span style={{ color: "var(--cyan)", fontWeight: 600 }}>{targetPath}</span>
                 </>
               ) : null;

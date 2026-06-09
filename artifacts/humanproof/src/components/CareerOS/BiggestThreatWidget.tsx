@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { AlertOctagon, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
 
@@ -38,6 +39,7 @@ function extractTopDimension(hr: HybridResult): DimEntry | null {
 export function BiggestThreatWidget() {
   const { state } = useLayoff();
   const { scoreResult } = state;
+  const navigate = useNavigate();
 
   if (!scoreResult) {
     return (
@@ -50,6 +52,16 @@ export function BiggestThreatWidget() {
       >
         <Lock size={24} style={{ color: "var(--text-3)" }} />
         <div style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>Run an audit to reveal your biggest threat</div>
+        <button
+          type="button"
+          onClick={() => navigate('/terminal')}
+          style={{
+            background: "var(--cyan)", color: "#000", border: "none", borderRadius: 7,
+            padding: "7px 16px", fontSize: "0.76rem", fontWeight: 800, cursor: "pointer",
+          }}
+        >
+          Run Audit →
+        </button>
       </motion.div>
     );
   }
@@ -98,7 +110,7 @@ export function BiggestThreatWidget() {
           )}
 
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal" } }))}
+            onClick={() => navigate('/terminal')}
             style={{
               background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8,
               color: "#ef4444", fontSize: "0.78rem", fontWeight: 600, padding: "6px 0",

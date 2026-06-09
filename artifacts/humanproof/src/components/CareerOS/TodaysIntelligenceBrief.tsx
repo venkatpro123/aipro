@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, AlertTriangle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLayoff } from '../../context/LayoffContext';
 import type { HybridResult } from '../../types/hybridResult';
@@ -59,9 +60,9 @@ function BriefSkeleton() {
 export function TodaysIntelligenceBrief() {
   const { user } = useAuth();
   const { state } = useLayoff();
+  const navigate = useNavigate();
   const [brief, setBrief] = useState<IntelligenceBriefResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const scoreResult = state.scoreResult as HybridResult | null;
   const companyName = state.companyName;
@@ -71,11 +72,8 @@ export function TodaysIntelligenceBrief() {
   const hasAudit = scoreResult !== null && companyName && roleTitle;
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (!hasAudit || !user) return;
+    let cancelled = false;
 
     setLoading(true);
     fetchIntelligenceBrief(
@@ -84,14 +82,15 @@ export function TodaysIntelligenceBrief() {
       scoreResult as unknown as Record<string, unknown>,
       user.id,
     )
-      .then(result => { if (result) setBrief(result); })
+      .then(result => { if (!cancelled && result) setBrief(result); })
       .catch(() => {/* silent — component simply won't render */})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyName, roleTitle, user?.id]);
 
-  // Don't render until hydrated (prevents SSR flash)
-  if (!mounted || !hasAudit) return null;
+  if (!hasAudit) return null;
 
   const hour = new Date().getHours();
   const greeting = user?.email ? buildGreeting(user.email, hour) : null;
@@ -141,7 +140,7 @@ export function TodaysIntelligenceBrief() {
           {/* Rule 17+10: confidence label — let the user know how the brief was produced */}
           <span style={{
             fontSize: 9, fontWeight: 600, letterSpacing: '0.06em',
-            color: 'rgba(255,255,255,0.18)',
+            color: 'rgba(255,255,255,0.4)',
             fontFamily: 'var(--font-mono, monospace)',
             marginLeft: 'auto',
           }}>
@@ -149,6 +148,7 @@ export function TodaysIntelligenceBrief() {
               ? (brief.fromCache ? 'MODELED · cached' : 'MODELED · live')
               : 'ESTIMATED'}
           </span>
+
         </div>
 
         {/* Narrative content */}
@@ -203,7 +203,7 @@ export function TodaysIntelligenceBrief() {
             <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'terminal' } }))}
+                onClick={() => navigate('/terminal')}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
                   background: 'none', border: '1px solid rgba(255,255,255,0.12)',

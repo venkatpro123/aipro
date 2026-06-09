@@ -146,24 +146,38 @@ export function CareerGraphInsights({ userProfile }: Props) {
     const tenureBand = tenureBandFromYears(userProfile?.yearsExperience ?? 5);
     const actionIds = (hr.actionItems ?? []).slice(0, 6).map(a => a.id ?? a.title ?? '').filter(Boolean);
 
+    let cancelled = false;
     setLoading(true);
 
     loadFromGraphTable(roleKey)
       .then(async (graphRows) => {
         if (graphRows.length >= 2) return graphRows;
-        // Fallback to cohort_outcome_cache when graph table is sparse
         return loadFromCohortCache(roleKey, tenureBand, actionIds);
       })
       .then(rows => {
-        setInsights(rows.filter(r => r.gainPts > 0 && r.sampleSize >= MIN_N));
+        if (!cancelled) setInsights(rows.filter(r => r.gainPts > 0 && r.sampleSize >= MIN_N));
       })
-      .catch(() => setInsights([]))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!cancelled) setInsights([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, hr, userProfile?.yearsExperience]);
 
   if (!hr) return null;
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {[100, 80, 65].map((w, i) => (
+          <div key={i} style={{
+            height: 56, borderRadius: 10, width: `${w}%`,
+            background: 'rgba(255,255,255,0.04)',
+            animation: 'pulse 1.5s ease-in-out infinite',
+          }} />
+        ))}
+      </div>
+    );
+  }
   if (insights.length === 0) return null;
 
   return (
@@ -190,7 +204,7 @@ export function CareerGraphInsights({ userProfile }: Props) {
       </div>
 
       {/* Footer disclaimer */}
-      <div style={{ marginTop: 10, fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', lineHeight: 1.5 }}>
+      <div style={{ marginTop: 10, fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
         Outcomes sourced from users with similar role · tenure · industry. Min N={MIN_N} per insight. Correlation, not causation.
       </div>
     </div>

@@ -42,8 +42,8 @@ function SignalRow({ signal }: { signal: BriefSignal }) {
         fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
         color: SEVERITY_COLOR[signal.severity] ?? 'var(--cyan)',
         padding: '2px 6px', borderRadius: 4,
-        background: `${SEVERITY_COLOR[signal.severity] ?? 'var(--cyan)'}18`,
-        border: `1px solid ${SEVERITY_COLOR[signal.severity] ?? 'var(--cyan)'}30`,
+        background: `${SEVERITY_COLOR[signal.severity] ?? 'var(--cyan)'}30`,
+        border: `1px solid ${SEVERITY_COLOR[signal.severity] ?? 'var(--cyan)'}50`,
         flexShrink: 0,
       }}>
         {signal.severity}
@@ -79,7 +79,25 @@ export function WeeklyCareerBriefCard() {
     return () => { cancelled = true; };
   }, [user?.id, state.scoreResult]);
 
-  if (!user || loading || !shouldShow || !brief?.hasData) return null;
+  if (!user || !shouldShow) return null;
+  if (loading) {
+    return (
+      <motion.div variants={itemVariant} style={{ gridColumn: '1 / -1' }}>
+        <div className="card-premium" style={{ padding: '20px 22px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[70, 85, 55].map((w, i) => (
+              <div key={i} style={{
+                height: 12, borderRadius: 4, width: `${w}%`,
+                background: 'rgba(255,255,255,0.06)',
+                animation: 'pulse 1.5s ease-in-out infinite',
+              }} />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+  if (!brief?.hasData) return null;
 
   const TrendIcon = brief.scoreTrend === 'improving' ? TrendingUp : brief.scoreTrend === 'worsening' ? TrendingDown : Minus;
   const trendColor = brief.scoreTrend === 'improving' ? '#10b981' : brief.scoreTrend === 'worsening' ? '#ef4444' : 'rgba(255,255,255,0.4)';

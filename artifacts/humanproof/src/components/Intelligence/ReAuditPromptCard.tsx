@@ -104,9 +104,10 @@ export function ReAuditPromptCard() {
         <button
           type="button"
           onClick={handleDismiss}
+          aria-label="Dismiss"
           style={{
             flexShrink: 0, background: 'none', border: 'none',
-            color: 'rgba(255,255,255,0.25)', cursor: 'pointer', padding: 2,
+            color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: 2,
           }}
         >
           <X size={14} />

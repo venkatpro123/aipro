@@ -99,7 +99,7 @@ function buildAudienceReframe(
   }
 
   if (category === 'big_tech_efficiency') {
-    if (!regionStr.includes('us') && !regionStr.includes('us') && userRegion && !['US', 'Global'].includes(userRegion)) {
+    if (!regionStr.includes('us') && userRegion && !['US', 'Global'].includes(userRegion)) {
       return `This pattern is primarily documented at US-HQ Big Tech companies (FAANG / Meta / Alphabet / Microsoft tier). If your company is a local subsidiary, the parent's efficiency cycle typically reaches international offices 3–6 months after the US announcement. Monitor parent company earnings calls for headcount language.`;
     }
     return null; // neutral for US users

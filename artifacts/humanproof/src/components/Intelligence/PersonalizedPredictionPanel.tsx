@@ -90,7 +90,7 @@ export function PersonalizedPredictionPanel({ inline = false }: Props) {
       ) : (
         <>
           {/* Score gauge */}
-          {currentScore !== null && (
+          {currentScore !== null && pred.projectedScore != null && pred.confidenceLow != null && pred.confidenceHigh != null && (
             <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
               <Gauge
                 current={currentScore}

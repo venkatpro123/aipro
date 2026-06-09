@@ -37,8 +37,8 @@ function Sparkline({ history }: { history: Array<{ total: number }> }) {
         opacity={0.7}
       />
       <circle
-        cx={parseFloat(points.split(' ').at(-1)!.split(',')[0])}
-        cy={parseFloat(points.split(' ').at(-1)!.split(',')[1])}
+        cx={parseFloat(points.split(' ').at(-1)?.split(',')?.[0] ?? '0')}
+        cy={parseFloat(points.split(' ').at(-1)?.split(',')?.[1] ?? '0')}
         r={3}
         fill="var(--cyan)"
       />

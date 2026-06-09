@@ -61,7 +61,7 @@ function MomentBanner({
           <span style={{
             fontSize: 9, fontWeight: 800, letterSpacing: '0.08em',
             color: style.badge, padding: '2px 6px', borderRadius: 4,
-            background: `${style.badge}18`,
+            background: `${style.badge}30`,
           }}>
             {style.badgeText}
           </span>
@@ -142,7 +142,7 @@ export function CareerMomentAlert() {
   if (!user || visible.length === 0) return null;
 
   return (
-    <div style={{ gridColumn: '1 / -1' }}>
+    <div role="status" aria-live="polite" style={{ gridColumn: '1 / -1' }}>
       <AnimatePresence mode="popLayout">
         {visible.map(m => (
           <MomentBanner key={m.id} moment={m} onDismiss={handleDismiss} />

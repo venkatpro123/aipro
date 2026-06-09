@@ -18,8 +18,15 @@ const TABS = [
   { id: 'opportunities', label: 'Emerging Roles'       },
 ];
 
+const AI_DEFENSE_TAB_KEY = 'hp.ai-defense.tab';
+
 export function AICareerDefenseCenter() {
-  const [activeTab, setActiveTab] = useState('skills');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem(AI_DEFENSE_TAB_KEY) ?? 'skills');
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    try { localStorage.setItem(AI_DEFENSE_TAB_KEY, tab); } catch { /* storage unavailable */ }
+  };
   const { state } = useLayoff();
   const scoreResult = state.scoreResult as import('../../../types/hybridResult').HybridResult | null;
 
@@ -44,7 +51,7 @@ export function AICareerDefenseCenter() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList style={{
         display: 'flex',
         gap: 4,

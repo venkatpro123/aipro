@@ -190,8 +190,8 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                 <div>
                   <p className="font-semibold mb-1" style={{ color: '#ef4444' }}>Red lines (never do):</p>
                   <ul className="space-y-0.5">
-                    {emergency.severanceStrategy.redLines.map((r, i) => (
-                      <li key={i} className="flex gap-1.5">
+                    {emergency.severanceStrategy.redLines.map((r) => (
+                      <li key={r.slice(0, 32)} className="flex gap-1.5">
                         <span style={{ color: '#ef4444' }}>×</span>
                         <span>{r}</span>
                       </li>

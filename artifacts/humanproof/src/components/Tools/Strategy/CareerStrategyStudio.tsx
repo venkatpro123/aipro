@@ -17,8 +17,15 @@ const TABS = [
   { id: 'transition', label: 'Career Pivot'    },
 ];
 
+const STRATEGY_TAB_KEY = 'hp.strategy.tab';
+
 export function CareerStrategyStudio() {
-  const [activeTab, setActiveTab] = useState('scenarios');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem(STRATEGY_TAB_KEY) ?? 'scenarios');
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    try { localStorage.setItem(STRATEGY_TAB_KEY, tab); } catch { /* storage unavailable */ }
+  };
   const { state } = useLayoff();
   const scoreResult = state.scoreResult as HybridResult | null;
 
@@ -35,7 +42,7 @@ export function CareerStrategyStudio() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4, border: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto' }}>
         {TABS.map(t => (
           <TabsTrigger key={t.id} value={t.id} style={{

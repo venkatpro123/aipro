@@ -77,12 +77,12 @@ export function DataSourceLabel({ tier, sourceName, date, sampleSize, compact }:
         </span>
       )}
       {date && (
-        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono, monospace)' }}>
+        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono, monospace)' }}>
           {formatDate(date)}
         </span>
       )}
       {sampleSize != null && sampleSize >= 5 && (
-        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono, monospace)' }}>
+        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-mono, monospace)' }}>
           N={sampleSize}
         </span>
       )}

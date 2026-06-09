@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Sparkles, Lock, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
 
@@ -22,6 +23,7 @@ function extractTopEscapePath(hr: HybridResult): EscapePath | null {
 export function BiggestOpportunityWidget() {
   const { state } = useLayoff();
   const { scoreResult } = state;
+  const navigate = useNavigate();
 
   if (!scoreResult) {
     return (
@@ -34,6 +36,16 @@ export function BiggestOpportunityWidget() {
       >
         <Lock size={24} style={{ color: "var(--text-3)" }} />
         <div style={{ fontSize: "0.8rem", color: "var(--text-3)" }}>Run an audit to discover your top opportunity</div>
+        <button
+          type="button"
+          onClick={() => navigate('/terminal')}
+          style={{
+            background: "var(--cyan)", color: "#000", border: "none", borderRadius: 7,
+            padding: "7px 16px", fontSize: "0.76rem", fontWeight: 800, cursor: "pointer",
+          }}
+        >
+          Run Audit →
+        </button>
       </motion.div>
     );
   }
@@ -101,7 +113,8 @@ export function BiggestOpportunityWidget() {
           </div>
 
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "terminal" } }))}
+            type="button"
+            onClick={() => navigate('/terminal')}
             style={{
               background: "transparent", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8,
               color: "#10b981", fontSize: "0.78rem", fontWeight: 600, padding: "6px 0",

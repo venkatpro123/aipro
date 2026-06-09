@@ -73,7 +73,6 @@ export function ProgressTrackerWidget({ profile }: Props) {
       ]);
 
       if (healthResult) setHealthScore(Math.round(healthResult.total));
-
       setActionsThisWeek(twin?.actionsCompletedThisWeek ?? completions.completedIds.size);
 
       if (trajectory.entries.length >= 2) {

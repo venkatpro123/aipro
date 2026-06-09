@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Radio, AlertTriangle, Info, ChevronRight, Bell, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
 import { useAutopilotAlerts, type AutopilotAlert } from "../../hooks/useAutopilotAlerts";
 import { useLayoff } from "../../context/LayoffContext";
@@ -71,6 +72,7 @@ function autopilotSeverityColor(severity: AutopilotAlert['severity']): string {
 
 export function MonitoringFeedWidget() {
   const { state } = useLayoff();
+  const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const { alerts: autopilotAlerts, markRead, dismiss: dismissAlert } = useAutopilotAlerts();
 
@@ -103,10 +105,14 @@ export function MonitoringFeedWidget() {
             {totalSignalCount > 0 ? `${totalSignalCount} SIGNAL${totalSignalCount > 1 ? 'S' : ''} DETECTED` : 'SIGNAL MONITOR'}
           </div>
           {isPolling && (
-            <div style={{
-              width: 6, height: 6, borderRadius: "50%", background: "var(--cyan)",
-              boxShadow: "0 0 6px var(--cyan)", animation: "pulse 1.5s ease-in-out infinite",
-            }} />
+            <div
+              role="status"
+              aria-label="Scanning for signals"
+              style={{
+                width: 6, height: 6, borderRadius: "50%", background: "var(--cyan)",
+                boxShadow: "0 0 6px var(--cyan)", animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -191,7 +197,7 @@ export function MonitoringFeedWidget() {
         </div>
       )}
 
-      {feedItems.length === 0 ? (
+      {feedItems.length === 0 && !isPolling ? (
         <div style={{
           textAlign: "center", padding: "20px 0", display: "flex", flexDirection: "column",
           alignItems: "center", gap: 8,
@@ -209,7 +215,7 @@ export function MonitoringFeedWidget() {
               : "Run an audit to start monitoring your company"}
           </div>
         </div>
-      ) : (
+      ) : feedItems.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {feedItems.map((item, i) => (
             <motion.div
@@ -229,7 +235,6 @@ export function MonitoringFeedWidget() {
                 <div style={{
                   fontSize: "0.79rem", fontWeight: 600, color: "var(--text)",
                   lineHeight: 1.4, marginBottom: 2,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {item.headline}
                 </div>
@@ -257,10 +262,11 @@ export function MonitoringFeedWidget() {
             </motion.div>
           ))}
         </div>
-      )}
+      ) : null}
 
       <button
-        onClick={() => window.dispatchEvent(new CustomEvent("navigate", { detail: { page: "monitor" } }))}
+        type="button"
+        onClick={() => navigate('/monitor')}
         style={{
           background: "transparent", border: "1px solid var(--border)", borderRadius: 8,
           color: "var(--text-2)", fontSize: "0.78rem", fontWeight: 600, padding: "6px 0",
