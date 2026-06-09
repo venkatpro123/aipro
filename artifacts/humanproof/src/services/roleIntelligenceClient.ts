@@ -9,9 +9,7 @@
 //
 // Tables consumed (from migration 20260516000002_role_intelligence_schema.sql):
 //   - roles, role_aliases, role_actions, role_compensation_bands,
-//     role_negotiation_scripts, role_automation_timeline,
-//     role_portability_edges, role_seniority_benchmarks,
-//     cross_industry_transitions
+//     role_negotiation_scripts, role_automation_timeline, role_demand_overrides
 //
 // Public API:
 //   - getRoleOverride(roleKey) → partial override for a single role
