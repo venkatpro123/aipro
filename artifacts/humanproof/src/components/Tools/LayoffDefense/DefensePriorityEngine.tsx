@@ -292,9 +292,71 @@ export function DefensePriorityEngine({ scoreResult }: Props) {
                 </button>
               </div>
 
-              {/* Expanded reason */}
+              {/* Expanded reason — full causal chain */}
               {isOpen && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 14, marginTop: 12, marginLeft: 40 }}>
+
+                  {/* Section 1: WHY THIS ACTION EXISTS — causal chain */}
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.09em', marginBottom: 8 }}>
+                    WHY THIS ACTION EXISTS
+                  </div>
+
+                  {/* Causal chain: signal → driver → impact */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+                    {/* Source signal */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.28)', width: 72, flexShrink: 0, paddingTop: 1, letterSpacing: '0.06em' }}>
+                        SOURCE
+                      </span>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.45, flex: 1 }}>
+                        {(() => {
+                          const sig = topSignals.find(rs => rs.signal?.headline);
+                          return sig?.signal?.headline
+                            ?? `${lever.dimensionLabel} is a top-3 risk contributor in your current audit profile.`;
+                        })()}
+                      </span>
+                    </div>
+
+                    {/* Risk driver bar */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.28)', width: 72, flexShrink: 0, letterSpacing: '0.06em' }}>
+                        DRIVER
+                      </span>
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ flex: 1, height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', borderRadius: 3,
+                            width: `${Math.min(100, Math.round((scoreResult.breakdown?.[lever.dimension] ?? 0) * 100))}%`,
+                            background: '#ef4444', transition: 'width 0.4s ease',
+                          }} />
+                        </div>
+                        <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 700, fontFamily: 'var(--font-mono, monospace)', width: 30, textAlign: 'right', flexShrink: 0 }}>
+                          {Math.round((scoreResult.breakdown?.[lever.dimension] ?? 0) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Score impact */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.28)', width: 72, flexShrink: 0, letterSpacing: '0.06em' }}>
+                        IMPACT
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono, monospace)', color: '#ef4444' }}>
+                          {scoreResult.total}
+                        </span>
+                        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>→</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono, monospace)', color: '#10b981' }}>
+                          {Math.max(5, scoreResult.total - lever.scoreDropIfImproved)}
+                        </span>
+                        <span style={{ fontSize: 10, color: '#10b981', fontWeight: 600 }}>
+                          (−{lever.scoreDropIfImproved} pts)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: WHY THIS WORKS */}
                   <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.09em', marginBottom: 6 }}>
                     WHY THIS WORKS
                   </div>
@@ -302,6 +364,7 @@ export function DefensePriorityEngine({ scoreResult }: Props) {
                     {DIMENSION_REASONS[lever.dimension]
                       ?? `Improving ${lever.dimensionLabel} directly reduces your composite risk score by targeting one of your highest-contributing risk dimensions.`}
                   </div>
+
                   {synergyNote && (
                     <div style={{
                       padding: '9px 13px', borderRadius: 7, marginTop: 4,

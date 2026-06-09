@@ -1,20 +1,26 @@
-// LayoffDefenseCenter.tsx — Active Career Defence System
+// LayoffDefenseCenter.tsx — Real-Time Career Defense Engine
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
 import { DefenseCommandPanel } from './DefenseCommandPanel';
+import { DefenseReadinessPanel } from './DefenseReadinessPanel';
 import { DefensePriorityEngine } from './DefensePriorityEngine';
 import { DefenseStrategyPlan } from './DefenseStrategyPlan';
-import { RiskSimulator } from './RiskSimulator';
+import { CareerDecisionSimulator } from './CareerDecisionSimulator';
+import { ActionOutcomeTracker } from './ActionOutcomeTracker';
 import { CompanyWatchlistPanel } from './CompanyWatchlistPanel';
 import { RiskForecast } from './RiskForecast';
+import { LiveMonitoringFeed } from './LiveMonitoringFeed';
 
 const TABS = [
-  { id: 'priority',  label: 'Priority Actions'  },
-  { id: 'plan',      label: 'Defence Plan'       },
-  { id: 'simulator', label: 'Simulator'          },
-  { id: 'watchlist', label: 'Watchlist'          },
-  { id: 'forecast',  label: 'Forecast'           },
+  { id: 'priority',   label: 'Priority Actions' },
+  { id: 'readiness',  label: 'Readiness'        },
+  { id: 'simulator',  label: 'Decisions'        },
+  { id: 'plan',       label: 'Defence Plan'     },
+  { id: 'monitoring', label: 'Monitoring'       },
+  { id: 'outcomes',   label: 'Outcomes'         },
+  { id: 'watchlist',  label: 'Watchlist'        },
+  { id: 'forecast',   label: 'Forecast'         },
 ];
 
 export function LayoffDefenseCenter() {
@@ -35,7 +41,7 @@ export function LayoffDefenseCenter() {
         </div>
         <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, maxWidth: 380, margin: '0 auto' }}>
           The Active Defence System analyses your personal risk profile and generates
-          ranked actions, a personalised roadmap, and continuous monitoring.
+          ranked actions, decision simulations, readiness scores, and continuous monitoring.
         </div>
       </div>
     );
@@ -43,23 +49,26 @@ export function LayoffDefenseCenter() {
 
   return (
     <div>
-      {/* ── Command panel — always visible above all tabs ─────────────────── */}
+      {/* ── Command panel + readiness — always visible above all tabs ────── */}
       <DefenseCommandPanel scoreResult={scoreResult} />
+      <DefenseReadinessPanel scoreResult={scoreResult} />
 
       {/* ── Tab navigation ────────────────────────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList style={{
           display: 'flex', gap: 4,
           background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4,
-          border: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto',
+          border: '1px solid var(--border)', marginBottom: 24,
+          overflowX: 'auto', WebkitOverflowScrolling: 'touch',
         }}>
           {TABS.map(t => (
             <TabsTrigger
               key={t.id}
               value={t.id}
               style={{
-                padding: '8px 16px', borderRadius: 7, fontSize: 13, fontWeight: 500,
+                padding: '8px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
                 cursor: 'pointer', border: 'none', whiteSpace: 'nowrap', transition: 'all 0.15s',
+                flexShrink: 0,
                 color:      activeTab === t.id ? '#000' : 'rgba(255,255,255,0.6)',
                 background: activeTab === t.id ? '#ef4444' : 'transparent',
               }}
@@ -73,12 +82,24 @@ export function LayoffDefenseCenter() {
           <DefensePriorityEngine scoreResult={scoreResult} />
         </TabsContent>
 
+        <TabsContent value="readiness">
+          <DefenseReadinessPanel scoreResult={scoreResult} />
+        </TabsContent>
+
+        <TabsContent value="simulator">
+          <CareerDecisionSimulator scoreResult={scoreResult} />
+        </TabsContent>
+
         <TabsContent value="plan">
           <DefenseStrategyPlan scoreResult={scoreResult} />
         </TabsContent>
 
-        <TabsContent value="simulator">
-          <RiskSimulator scoreResult={scoreResult} />
+        <TabsContent value="monitoring">
+          <LiveMonitoringFeed />
+        </TabsContent>
+
+        <TabsContent value="outcomes">
+          <ActionOutcomeTracker />
         </TabsContent>
 
         <TabsContent value="watchlist">
