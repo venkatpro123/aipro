@@ -118,7 +118,7 @@ function StageRow({ stage, index }: { stage: LoopStage; index: number }) {
             }} />
           )}
         </div>
-        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: stage.status === 'pending' ? 'rgba(255,255,255,0.25)' : 'var(--text)', lineHeight: 1.3 }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: stage.status === 'pending' ? 'rgba(255,255,255,0.45)' : 'var(--text)', lineHeight: 1.3 }}>
           {stage.headline}
         </div>
         {stage.detail && stage.status !== 'pending' && (
@@ -145,11 +145,12 @@ export function AdaptationLoopStatus({ scoreResult: hr, primaryMove }: Props) {
   // LEARN stage: fetch last measured action gain from feedbackEngine
   useEffect(() => {
     if (!user) return;
+    let mounted = true;
     getFeedbackSummary(user.id)
       .then(summary => {
+        if (!mounted) return;
         setActionsCompleted(summary.actionsCompletedThisMonth);
         if (summary.estimatedScoreImpact != null) {
-          // Convert risk reduction → readiness gain (inverted)
           setLastMeasuredGain(Math.round(summary.estimatedScoreImpact));
         }
         if (!summary.estimatedScoreImpact && summary.topEffectiveActions.length > 0) {
@@ -158,6 +159,7 @@ export function AdaptationLoopStatus({ scoreResult: hr, primaryMove }: Props) {
         }
       })
       .catch(() => {});
+    return () => { mounted = false; };
   }, [user]);
 
   if (!hr) return null;
@@ -277,7 +279,7 @@ export function AdaptationLoopStatus({ scoreResult: hr, primaryMove }: Props) {
         }}>
           YOUR ADAPTATION LOOP
         </span>
-        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', marginLeft: 4 }}>
+        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginLeft: 4 }}>
           · click any stage to navigate
         </span>
       </div>

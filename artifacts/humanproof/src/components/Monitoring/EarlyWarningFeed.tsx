@@ -296,11 +296,15 @@ function CategoryRow({ cat, defaultOpen }: { cat: SignalCategory; defaultOpen: b
       {/* Header */}
       <button
         type="button"
+        disabled={count === 0}
+        aria-label={`${cat.label}${count > 0 ? `, ${count} signal${count > 1 ? 's' : ''}, ${open ? 'collapse' : 'expand'}` : ', all clear'}`}
         onClick={() => count > 0 && setOpen(o => !o)}
+        onFocus={e => count > 0 && ((e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px rgba(255,255,255,0.15)')}
+        onBlur={e => ((e.currentTarget as HTMLElement).style.boxShadow = 'none')}
         style={{
           width: '100%', background: 'none', border: 'none', cursor: count > 0 ? 'pointer' : 'default',
           padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
-          textAlign: 'left',
+          textAlign: 'left', outline: 'none',
         }}
       >
         <cat.Icon size={14} style={{ color: headerColor, flexShrink: 0 }} />
@@ -351,11 +355,15 @@ function CategoryRow({ cat, defaultOpen }: { cat: SignalCategory; defaultOpen: b
                   display: 'flex', flexDirection: 'column', gap: 5,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <div style={{
-                      width: 6, height: 6, borderRadius: '50%', marginTop: 5, flexShrink: 0,
-                      background: severityColor(sig.severity),
-                      boxShadow: `0 0 5px ${severityColor(sig.severity)}60`,
-                    }} />
+                    <div
+                      aria-label={`Severity: ${sig.severity}`}
+                      role="img"
+                      style={{
+                        width: 6, height: 6, borderRadius: '50%', marginTop: 5, flexShrink: 0,
+                        background: severityColor(sig.severity),
+                        boxShadow: `0 0 5px ${severityColor(sig.severity)}60`,
+                      }}
+                    />
                     <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.45 }}>
                       {sig.description}
                     </span>

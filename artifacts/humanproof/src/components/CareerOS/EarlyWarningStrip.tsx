@@ -100,7 +100,7 @@ export function EarlyWarningStrip({ scoreResult, adaptationTriggers }: Props) {
         borderRadius: 10,
       }}>
         <div style={{
-          fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.2)',
+          fontSize: '0.63rem', fontWeight: 800, color: 'rgba(255,255,255,0.45)',
           letterSpacing: '0.1em', textTransform: 'uppercase',
           fontFamily: 'var(--font-mono, monospace)', flexShrink: 0,
         }}>
@@ -138,12 +138,15 @@ export function EarlyWarningStrip({ scoreResult, adaptationTriggers }: Props) {
 
         <button
           type="button"
+          aria-label="View all early warnings"
           onClick={() => navigate('/monitor')}
+          onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px var(--cyan)55'}
+          onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            background: 'none', border: 'none',
+            background: 'none', border: 'none', outline: 'none',
             color: 'var(--cyan)', fontSize: '0.72rem', fontWeight: 700,
-            cursor: 'pointer', padding: '2px 4px', flexShrink: 0,
+            cursor: 'pointer', padding: '2px 4px', flexShrink: 0, borderRadius: 4,
           }}
         >
           View all

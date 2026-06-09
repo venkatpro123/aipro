@@ -54,8 +54,11 @@ function ToolCard({ tool, index, checked, onToggle }: {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <button
           type="button"
+          aria-label={`${checked ? 'Unadopt' : 'Adopt'} ${tool.name}`}
           onClick={onToggle}
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, marginTop: 2 }}
+          onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px rgba(16,185,129,0.5)'}
+          onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, marginTop: 2, borderRadius: '50%', outline: 'none' }}
         >
           {checked
             ? <CheckCircle2 size={16} color="#10b981" />

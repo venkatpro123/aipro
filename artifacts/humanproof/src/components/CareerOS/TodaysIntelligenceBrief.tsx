@@ -219,10 +219,13 @@ export function TodaysIntelligenceBrief() {
             </div>
           </>
         ) : (
-          // Silent fail — no brief yet, show minimal greeting only
+          // Brief unavailable (EF failed or not yet generated) — show greeting + honest status
           greeting ? (
             <div style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.55)' }}>
-              {greeting} Your career intelligence is loading...
+              {greeting}{' '}
+              <span style={{ color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
+                Intelligence brief unavailable — re-run your audit to generate one.
+              </span>
             </div>
           ) : null
         )}

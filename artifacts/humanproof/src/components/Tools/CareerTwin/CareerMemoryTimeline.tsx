@@ -106,7 +106,7 @@ function EventItem({ event }: { event: UnifiedEvent }) {
                 {event.score}
               </span>
             )}
-            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono, monospace)' }}>
+            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-mono, monospace)' }}>
               {dateStr}
             </span>
             {event.detail && (
@@ -292,15 +292,18 @@ export function CareerMemoryTimeline() {
                 {/* Year header */}
                 <button
                   type="button"
+                  aria-label={`${year} — ${yearEvents.length} event${yearEvents.length > 1 ? 's' : ''}, ${isExpanded ? 'collapse' : 'expand'}`}
                   onClick={() => setExpandedYears(prev => {
                     const next = new Set(prev);
                     if (next.has(year)) next.delete(year); else next.add(year);
                     return next;
                   })}
+                  onFocus={e => (e.currentTarget as HTMLElement).style.outline = '2px solid var(--cyan)'}
+                  onBlur={e => (e.currentTarget as HTMLElement).style.outline = 'none'}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-                    padding: '8px 0', textAlign: 'left' as const,
+                    padding: '8px 0', textAlign: 'left' as const, outline: 'none',
                   }}
                 >
                   <span style={{

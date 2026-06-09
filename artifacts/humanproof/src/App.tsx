@@ -253,6 +253,7 @@ function AppNav({
                 <Link
                   to={item.to}
                   className={`nav-link${active ? " active" : ""}`}
+                  aria-current={active ? "page" : undefined}
                   style={{ textDecoration: "none", position: "relative", zIndex: 1 }}
                 >
                   {item.label}
@@ -390,6 +391,7 @@ function MobileBottomNav({
               key={to}
               to={to}
               className={`bottom-nav-item${active ? " active" : ""}`}
+              aria-current={active ? "page" : undefined}
               style={{ textDecoration: "none" }}
               onClick={() => {
                 if (navigator.vibrate) navigator.vibrate(8);
@@ -436,7 +438,7 @@ function MobileBottomNav({
             onClick={() => setMoreOpen(false)}
             aria-hidden
           />
-          <div className="more-sheet" role="dialog" aria-label="More options">
+          <div className="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
             <div className="more-sheet-handle" />
             <p className="more-sheet-title">More pages</p>
 
@@ -609,6 +611,7 @@ function AppFooter() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
+                aria-label="Email address for newsletter"
                 className="input"
                 style={{ flex: 1, fontSize: "0.82rem", height: 42, padding: "0 14px" }}
               />

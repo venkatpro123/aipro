@@ -42,12 +42,20 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
   const [saving, setSaving] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clear pending close timer on unmount
+  // Clear pending close timer on unmount; also handle Escape key + body scroll lock
   useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
+    document.addEventListener('keydown', onKey);
     return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
       if (closeTimerRef.current != null) clearTimeout(closeTimerRef.current);
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function reset() {
     if (closeTimerRef.current != null) {
@@ -109,6 +117,9 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
         onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
       >
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Record a Career Win"
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96 }}
@@ -133,7 +144,7 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
                 Record a Career Win
               </div>
             </div>
-            <button type="button" onClick={handleClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4 }}>
+            <button type="button" aria-label="Close" onClick={handleClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 4, borderRadius: 6, outline: 'none' }} onFocus={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px rgba(255,255,255,0.3)'} onBlur={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}>
               <X size={16} />
             </button>
           </div>
@@ -192,6 +203,7 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
                     <button
                       key={type}
                       type="button"
+                      aria-label={`Select: ${OUTCOME_LABELS[type]}`}
                       onClick={() => { setSelectedType(type); setStep('detail'); }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 8,
@@ -228,10 +240,11 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
                   </span>
                 </div>
 
-                <label style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', display: 'block', marginBottom: 6 }}>
+                <label htmlFor="outcome-detail" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', display: 'block', marginBottom: 6 }}>
                   {selectedType ? EVENT_PROMPTS[selectedType] : 'Any details?'}
                 </label>
                 <textarea
+                  id="outcome-detail"
                   value={detail}
                   onChange={e => setDetail(e.target.value)}
                   placeholder="Optional — leave blank to skip"
@@ -261,7 +274,8 @@ export function RecordOutcomeModal({ open, onClose, onRecorded }: Props) {
                     onClick={handleSave}
                     disabled={saving}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 8, cursor: saving ? 'default' : 'pointer',
+                      flex: 1, padding: '10px 0', borderRadius: 8,
+                      cursor: saving ? 'not-allowed' : 'pointer',
                       background: saving ? 'rgba(16,185,129,0.3)' : '#10b981',
                       border: 'none', color: '#000', fontSize: '0.88rem', fontWeight: 800,
                       opacity: saving ? 0.7 : 1,

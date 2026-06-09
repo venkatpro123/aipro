@@ -134,14 +134,14 @@ export function CareerResultsPanel({ onRecordOutcome, refreshKey = 0 }: Props) {
                 <div style={{ fontWeight: 800, fontSize: '1.6rem', color: '#10b981', lineHeight: 1, fontFamily: 'var(--font-mono, monospace)' }}>
                   {readiness}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>readiness now</div>
+                <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>readiness now</div>
               </div>
               {roi.length > 0 && (
                 <div style={{ textAlign: 'center' as const }}>
                   <div style={{ fontWeight: 800, fontSize: '1.6rem', color: 'var(--cyan)', lineHeight: 1, fontFamily: 'var(--font-mono, monospace)' }}>
                     {roi.length}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>measured actions</div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>measured actions</div>
                 </div>
               )}
               {roi.length > 0 && (
@@ -149,7 +149,7 @@ export function CareerResultsPanel({ onRecordOutcome, refreshKey = 0 }: Props) {
                   <div style={{ fontWeight: 800, fontSize: '1.6rem', color: '#f59e0b', lineHeight: 1, fontFamily: 'var(--font-mono, monospace)' }}>
                     −{roi.reduce((sum, a) => sum + a.reduction, 0).toFixed(1)}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>risk pts removed</div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>risk pts removed</div>
                 </div>
               )}
             </div>
@@ -158,7 +158,7 @@ export function CareerResultsPanel({ onRecordOutcome, refreshKey = 0 }: Props) {
           {/* Measured action ROI */}
           {roi.length > 0 && (
             <div className="card-premium" style={{ padding: '14px 16px' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginBottom: 10, fontFamily: 'var(--font-mono, monospace)' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.1em', marginBottom: 10, fontFamily: 'var(--font-mono, monospace)' }}>
                 WHAT WORKED — MEASURED OUTCOMES
                 <span style={{ marginLeft: 8, padding: '1px 6px', borderRadius: 4, background: 'rgba(16,185,129,0.1)', color: '#10b981', fontSize: '0.6rem' }}>MEASURED</span>
               </div>
@@ -204,7 +204,7 @@ export function CareerResultsPanel({ onRecordOutcome, refreshKey = 0 }: Props) {
           {/* User-recorded career outcomes */}
           {(outcomes?.events?.length ?? 0) > 0 && (
             <div className="card-premium" style={{ padding: '14px 16px' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginBottom: 10, fontFamily: 'var(--font-mono, monospace)' }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.1em', marginBottom: 10, fontFamily: 'var(--font-mono, monospace)' }}>
                 YOUR CAREER MILESTONES
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>

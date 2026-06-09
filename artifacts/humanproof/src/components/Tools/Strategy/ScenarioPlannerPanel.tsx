@@ -305,13 +305,16 @@ export function ScenarioPlannerPanel({ scoreResult }: Props) {
         <div style={{ marginTop: 14, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
           <button
             type="button"
+            aria-label={`${showActions ? 'Hide' : 'Show'} required actions for this path`}
             onClick={() => setShowActions(a => !a)}
+            onFocus={e => (e.currentTarget as HTMLElement).style.outline = `2px solid ${selectedPath.color}88`}
+            onBlur={e => (e.currentTarget as HTMLElement).style.outline = 'none'}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer',
+              background: 'none', border: 'none', cursor: 'pointer', outline: 'none',
               color: selectedPath.color, fontSize: '0.72rem', fontWeight: 700,
               letterSpacing: '0.07em', fontFamily: 'var(--font-mono, monospace)',
-              padding: 0,
+              padding: 0, borderRadius: 4,
             }}
           >
             <Rocket size={11} />
