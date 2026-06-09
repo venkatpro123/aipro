@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { useLayoff } from "../../context/LayoffContext";
 import type { HybridResult } from "../../types/hybridResult";
+import { CareerPathVisualizer } from "./CareerPathVisualizer";
 
 interface Milestone {
   horizon: "1 Year" | "3 Years" | "5 Years";
@@ -186,6 +187,9 @@ export function FiveYearArcPanel() {
           );
         })}
       </div>
+
+      {/* Rule 9+16: Career Path Visualizer — escape path as visual journey */}
+      <CareerPathVisualizer />
     </motion.div>
   );
 }

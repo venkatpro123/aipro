@@ -25,6 +25,7 @@ import { SystemPerformanceWidget } from "./SystemPerformanceWidget";
 import { FiveYearArcPanel } from "./FiveYearArcPanel";
 import { OutcomeInsightPanel } from "./OutcomeInsightPanel";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
+import { detectAdaptationTriggers, type AdaptationTrigger } from "../../services/adaptationTriggerService";
 import { InactionWarningStrip } from "./InactionWarningStrip";
 import type { HybridResult } from "../../types/hybridResult";
 
@@ -301,6 +302,7 @@ export function CareerOSHome() {
   const [reEngageBanner, setReEngageBanner] = useState<{ headline: string; subtext: string } | null>(null);
   const [completenessScore, setCompletenessScore] = useState<number | null>(null);
   const [memorySummary, setMemorySummary] = useState<import('../../services/careerMemoryService').CareerMemorySummary | null>(null);
+  const [adaptationTriggers, setAdaptationTriggers] = useState<AdaptationTrigger[]>([]);
 
   // Load profile completeness + memory summary once (shared with child widgets to avoid duplicate DB calls)
   useEffect(() => {
@@ -332,6 +334,21 @@ export function CareerOSHome() {
     } catch {/* offline — ignore */}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.companyName]);
+
+  // ── Adaptation triggers — fires when signals change without re-audit (R8) ──
+  useEffect(() => {
+    if (!state.scoreResult) { setAdaptationTriggers([]); return; }
+    const hr = state.scoreResult as HybridResult;
+    const completedIds: string[] = [];
+    try {
+      const raw = sessionStorage.getItem('hp_completed_actions');
+      if (raw) completedIds.push(...JSON.parse(raw));
+    } catch { /* ignore */ }
+    const lastAuditDate = hr.calculatedAt ?? null;
+    const triggers = detectAdaptationTriggers(hr, completedIds, lastAuditDate, []);
+    setAdaptationTriggers(triggers);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.scoreResult]);
 
   return (
     <div
@@ -537,6 +554,46 @@ export function CareerOSHome() {
 
             {/* ── Career Moment Alert — urgent moments from proactiveInsightEngine ── */}
             <CareerMomentAlert />
+
+            {/* ── Adaptation Triggers — fires without re-audit when stale / action done / signal changed ── */}
+            {adaptationTriggers.map(trigger => (
+              <motion.div
+                key={trigger.type}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  marginBottom: 12,
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  background: trigger.severity === 'critical' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.06)',
+                  border: `1px solid ${trigger.severity === 'critical' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.18)'}`,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  fontSize: '0.8rem',
+                }}
+              >
+                <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>
+                  {trigger.severity === 'critical' ? '🚨' : '⚠️'}
+                </span>
+                <span style={{
+                  color: trigger.severity === 'critical' ? '#ef4444' : 'rgba(255,255,255,0.65)',
+                  lineHeight: 1.4, flex: 1,
+                }}>
+                  {trigger.message}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/terminal')}
+                  style={{
+                    flexShrink: 0, background: 'none',
+                    border: `1px solid ${trigger.severity === 'critical' ? 'rgba(239,68,68,0.4)' : 'rgba(245,158,11,0.35)'}`,
+                    borderRadius: 6, color: trigger.severity === 'critical' ? '#ef4444' : '#f59e0b',
+                    fontSize: '0.72rem', fontWeight: 700, padding: '4px 10px', cursor: 'pointer',
+                  }}
+                >
+                  {trigger.ctaLabel} →
+                </button>
+              </motion.div>
+            ))}
 
             {/* ── Re-audit nudge — fires when action completed 14+ days ago with no follow-up ── */}
             <ReAuditPromptCard />
