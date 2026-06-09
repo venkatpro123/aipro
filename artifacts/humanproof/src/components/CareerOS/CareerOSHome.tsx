@@ -25,6 +25,8 @@ import { SystemPerformanceWidget } from "./SystemPerformanceWidget";
 import { FiveYearArcPanel } from "./FiveYearArcPanel";
 import { OutcomeInsightPanel } from "./OutcomeInsightPanel";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
+import { InactionWarningStrip } from "./InactionWarningStrip";
+import type { HybridResult } from "../../types/hybridResult";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -412,6 +414,42 @@ export function CareerOSHome() {
         >
           Monitor · Detect · Recommend · Execute · Measure
         </p>
+
+        {/* ── GPS Status Bar — Where you are / Target / Next turn ── */}
+        {hasResult && (() => {
+          const hr = state.scoreResult as HybridResult;
+          const score = (hr as any)?.total ?? 0;
+          const targetPath = (hr as any)?.escapePaths?.paths?.[0]?.title ?? null;
+          const nextAction = (hr as any)?.actionItems?.[0]?.title
+            ?? (hr as any)?.recommendations?.[0]?.title
+            ?? null;
+          const industry = state.companyName ? state.companyName : null;
+          return (
+            <div style={{
+              marginTop: 14,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "4px 16px",
+              fontSize: "0.74rem",
+              fontFamily: "var(--font-mono, monospace)",
+            }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>YOU ARE</span>
+              <span style={{ color: "var(--text-2)", fontWeight: 600 }}>
+                Score {score} · {industry ?? "your company"}
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>TARGET</span>
+              <span style={{ color: targetPath ? "var(--cyan)" : "rgba(255,255,255,0.25)", fontWeight: 600 }}>
+                {targetPath ?? "not yet set — run audit"}
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>NEXT TURN</span>
+              <span style={{ color: "var(--text-2)", fontWeight: 500 }}>
+                {nextAction ?? "—"}
+              </span>
+            </div>
+          );
+        })()}
       </motion.div>
 
       {/* ── Today's Intelligence Brief (system voice) ── */}
@@ -482,6 +520,9 @@ export function CareerOSHome() {
             <RecommendedToolWidget />
           </div>
         </motion.div>
+
+        {/* ── Inaction Warning — "what if I skip today's action?" ── */}
+        <InactionWarningStrip />
 
         {/* ════════════════════════════════════════════════════════════════════
             FIRST-TIME USER: No score result yet
