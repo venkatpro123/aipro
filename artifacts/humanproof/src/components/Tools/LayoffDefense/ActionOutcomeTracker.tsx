@@ -1,21 +1,25 @@
-// ActionOutcomeTracker.tsx — Phase 7: Learning System
-// After taking actions, the user reports what happened.
-// Results are stored in localStorage hp_action_outcomes and surfaced back.
+// ActionOutcomeTracker.tsx — Phase 2 (Career OS): Outcome Learning Engine
+// Outcomes are written to localStorage (optimistic) AND Supabase action_completions (durable).
+// getDimensionSuccessStats() reads back per-user rates and surfaces them as learning insights.
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import { useLayoff } from '../../../context/LayoffContext';
+import { supabase } from '../../../utils/supabase';
+import { getDimensionSuccessStats, type DimensionSuccessStats } from '../../../services/userOutcomeLearningService';
 
 const COMPLETED_KEY = 'hp_completed_actions';
 const OUTCOMES_KEY  = 'hp_action_outcomes';
 
 const OUTCOME_OPTIONS = [
-  { id: 'manager_recognised',  label: '🌟 Manager recognised my work'         },
-  { id: 'new_project',         label: '📋 Assigned to a new / critical project' },
-  { id: 'promotion_discussion', label: '🎯 Promotion discussion started'       },
-  { id: 'recruiter_outreach',  label: '📩 Recruiter reached out'               },
-  { id: 'interview',           label: '🤝 Got an interview'                    },
-  { id: 'salary_increase',     label: '💰 Salary increase or bonus'            },
-  { id: 'role_change',         label: '🚀 Changed role or company'             },
-  { id: 'no_change',           label: '⏳ No visible change yet'               },
+  { id: 'manager_recognised',   label: '🌟 Manager recognised my work'          },
+  { id: 'new_project',          label: '📋 Assigned to a new / critical project' },
+  { id: 'promotion_discussion', label: '🎯 Promotion discussion started'         },
+  { id: 'recruiter_outreach',   label: '📩 Recruiter reached out'                },
+  { id: 'interview',            label: '🤝 Got an interview'                     },
+  { id: 'salary_increase',      label: '💰 Salary increase or bonus'             },
+  { id: 'role_change',          label: '🚀 Changed role or company'              },
+  { id: 'no_change',            label: '⏳ No visible change yet'                },
 ] as const;
 
 type OutcomeId = typeof OUTCOME_OPTIONS[number]['id'];
@@ -40,7 +44,6 @@ function saveOutcomes(outcomes: ActionOutcome[]) {
   try { localStorage.setItem(OUTCOMES_KEY, JSON.stringify(outcomes)); } catch { }
 }
 
-// Labels for completed action IDs (dimension labels from the priority engine)
 const DIM_LABELS: Record<string, string> = {
   D1: 'AI Adaptation', D2: 'Sector Risk', D3: 'Company Risk',
   D4: 'Tenure', D5: 'Geographic Risk', D6: 'Experience Depth',
@@ -49,13 +52,11 @@ const DIM_LABELS: Record<string, string> = {
   L5: 'Location Risk', L6: 'Hiring Signal', L7: 'Sentiment',
 };
 
-// Expected impact per action (from dimension key)
 const EXPECTED_IMPACT: Record<string, number> = {
   D1: 8, D2: 5, D3: 7, D4: 4, D6: 6, D7: 6, D8: 5,
   L1: 9, L2: 8, L3: 7, L4: 4, L5: 3, L6: 4, L7: 3,
 };
 
-// Actual impact per outcome type
 const OUTCOME_IMPACT: Record<string, number> = {
   manager_recognised:   7,
   new_project:          5,
@@ -71,7 +72,6 @@ function computeSystemIntelligence(outcomes: ActionOutcome[]) {
   const positive = outcomes.filter(o => o.outcomeId !== 'no_change');
   const successRate = outcomes.length > 0 ? Math.round(positive.length / outcomes.length * 100) : 0;
 
-  // Compare expected vs actual
   const comparisons = outcomes.map(o => ({
     actionId:  o.actionId,
     expected:  EXPECTED_IMPACT[o.actionId] ?? 5,
@@ -86,7 +86,6 @@ function computeSystemIntelligence(outcomes: ActionOutcome[]) {
     ? Math.round(comparisons.reduce((s, c) => s + c.actual, 0) / comparisons.length * 10) / 10
     : 0;
 
-  // Best performing dimension
   const byDim: Record<string, { total: number; count: number }> = {};
   for (const c of comparisons) {
     if (!byDim[c.actionId]) byDim[c.actionId] = { total: 0, count: 0 };
@@ -101,14 +100,27 @@ function computeSystemIntelligence(outcomes: ActionOutcome[]) {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function ActionOutcomeTracker() {
-  const [completed, setCompleted]   = useState<string[]>([]);
-  const [outcomes,  setOutcomes]    = useState<ActionOutcome[]>([]);
-  const [reporting, setReporting]   = useState<string | null>(null); // actionId being reported
+  const { user }  = useAuth();
+  const { state } = useLayoff();
+  const scoreResult = state.scoreResult;
+
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [outcomes,  setOutcomes]  = useState<ActionOutcome[]>([]);
+  const [reporting, setReporting] = useState<string | null>(null);
+  const [dbStats, setDbStats]     = useState<DimensionSuccessStats[]>([]);
 
   useEffect(() => {
     setCompleted(loadCompleted());
     setOutcomes(loadOutcomes());
   }, []);
+
+  // Phase 2: load per-user success rates from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    getDimensionSuccessStats(user.id)
+      .then(stats => { if (stats.length > 0) setDbStats(stats); })
+      .catch(() => {});
+  }, [user?.id]);
 
   const pending = completed.filter(id => !outcomes.find(o => o.actionId === id));
 
@@ -120,6 +132,30 @@ export function ActionOutcomeTracker() {
     setOutcomes(updated);
     saveOutcomes(updated);
     setReporting(null);
+
+    // Phase 2: dual-write to Supabase (fire-and-forget)
+    if (user?.id) {
+      const uid = user.id;
+      const thumbsUp = outcomeId !== 'no_change';
+      (async () => {
+        await supabase.from('action_completions').upsert(
+          {
+            user_id:               uid,
+            action_id:             actionId,
+            action_text:           DIM_LABELS[actionId] ?? actionId,
+            completed_at:          new Date().toISOString(),
+            thumbs_up:             thumbsUp,
+            outcome_notes:         outcomeId,
+            feedback_requested_at: new Date().toISOString(),
+            score_before:          (scoreResult as { total?: number } | null)?.total ?? null,
+          },
+          { onConflict: 'user_id,action_id' },
+        );
+        // Refresh DB stats inline so the learning panel updates immediately
+        const stats = await getDimensionSuccessStats(uid);
+        if (stats.length > 0) setDbStats(stats);
+      })().catch(() => {});
+    }
   }
 
   if (completed.length === 0) {
@@ -150,13 +186,11 @@ export function ActionOutcomeTracker() {
       </div>
 
       {/* Summary stats */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 20,
-      }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 20 }}>
         {[
-          { label: 'Actions Done',    value: completed.length,               color: '#60a5fa' },
-          { label: 'Outcomes Logged', value: outcomes.length,                color: '#10b981' },
-          { label: 'Awaiting Report', value: pending.length,                 color: '#f59e0b' },
+          { label: 'Actions Done',    value: completed.length, color: '#60a5fa' },
+          { label: 'Outcomes Logged', value: outcomes.length,  color: '#10b981' },
+          { label: 'Awaiting Report', value: pending.length,   color: '#f59e0b' },
         ].map(stat => (
           <div key={stat.label} style={{
             padding: '12px', borderRadius: 8, textAlign: 'center',
@@ -172,22 +206,21 @@ export function ActionOutcomeTracker() {
         ))}
       </div>
 
-      {/* System Intelligence */}
+      {/* System Intelligence — localStorage stats */}
       {outcomes.length >= 2 && (() => {
         const intel = computeSystemIntelligence(outcomes);
         const delta = intel.avgActual - intel.avgExpected;
+        const bestDbStat = dbStats[0] ?? null;
 
         return (
           <div style={{
-            marginBottom: 20, padding: '14px 16px',
-            borderRadius: 10, background: 'rgba(6,182,212,0.05)',
-            border: '1px solid rgba(6,182,212,0.15)',
+            marginBottom: 20, padding: '14px 16px', borderRadius: 10,
+            background: 'rgba(6,182,212,0.05)', border: '1px solid rgba(6,182,212,0.15)',
           }}>
             <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(6,182,212,0.7)', letterSpacing: '0.1em', marginBottom: 10 }}>
               🧠 SYSTEM INTELLIGENCE — What we've learned from your data
             </div>
 
-            {/* 3 metric chips */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
               <div style={{ padding: '8px', borderRadius: 7, background: 'rgba(255,255,255,0.03)', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: 18, fontWeight: 900, color: '#10b981', fontFamily: 'var(--font-mono, monospace)', lineHeight: 1 }}>
@@ -210,7 +243,7 @@ export function ActionOutcomeTracker() {
             </div>
 
             {/* Pattern insight */}
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginBottom: bestDbStat ? 10 : 0 }}>
               {intel.successRate >= 70
                 ? `Your actions are working — ${intel.successRate}% resulted in a positive outcome. ${delta > 0 ? 'Impact exceeded expectations.' : 'Keep this momentum.'}`
                 : intel.successRate >= 40
@@ -218,6 +251,25 @@ export function ActionOutcomeTracker() {
                 : `Early data. More actions needed before patterns emerge. Your best area so far: ${DIM_LABELS[intel.bestDim?.[0]] ?? 'undefined'}.`
               }
             </div>
+
+            {/* Phase 2: per-user DB-backed learning insights */}
+            {bestDbStat && (
+              <div style={{
+                padding: '9px 12px', borderRadius: 8,
+                background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)',
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(16,185,129,0.7)', letterSpacing: '0.08em', marginBottom: 5 }}>
+                  PERSONALISED LEARNING
+                </div>
+                <div style={{ fontSize: 12, color: '#10b981', fontWeight: 600, marginBottom: 3 }}>
+                  Your strongest area: {DIM_LABELS[bestDbStat.dim] ?? bestDbStat.dim} — {Math.round(bestDbStat.successRate * 100)}% success rate
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)' }}>
+                  System now prioritises {DIM_LABELS[bestDbStat.dim] ?? bestDbStat.dim} actions in your next audit
+                  {dbStats.length > 1 && ` · ${dbStats.length} dimensions tracked`}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
@@ -243,7 +295,7 @@ export function ActionOutcomeTracker() {
                     onClick={() => setReporting(isReporting ? null : actionId)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                      padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const,
                     }}
                   >
                     <span style={{ fontSize: 18, flexShrink: 0 }}>✅</span>

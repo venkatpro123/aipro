@@ -140,6 +140,9 @@ export interface RankingContext {
   careerConfidenceScore?: number | null;
   /** Phase 1 (Career OS): boosts derived from career memory patterns. */
   patternBoosts?: { hasInaction?: boolean; hasPlateauPattern?: boolean } | null;
+  /** Phase 2 (Career OS): per-user outcome success rates by dimension key (D1, L1…).
+   *  rate=0→0.70×, rate=0.5→1.00×, rate=1.0→1.30×. Loaded from getDimensionSuccessMap(). */
+  userSuccessRates?: Record<string, number> | null;
 }
 
 // Phase 5: cohort boost map — preloaded async by callers via loadCohortBoosts().
@@ -252,18 +255,26 @@ export function rankActions(
         const cat = classifyActionCategory(action);
         if (cat === 'skills' || cat === 'network') patternMult = 1.10;
       }
-      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult * cohortMult * patternMult;
+      // Phase 2 (Career OS): per-user success rate multiplier — actions that worked for
+      // THIS user in their strongest dimension rank higher; weak dims rank lower.
+      const dimKey = (action.id ?? '').split('_')[0];
+      const userRate = dimKey ? (context?.userSuccessRates?.[dimKey] ?? null) : null;
+      const userSuccessMult = userRate != null
+        ? Math.min(1.30, Math.max(0.70, 0.70 + userRate * 0.60))
+        : 1.0;
+      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult * cohortMult * patternMult * userSuccessMult;
 
       // Score = priority-weighted impact density × profile multiplier
       const rankScore = (impact * priorityMult * profileMult) / Math.max(1, effort);
 
       const contextParts: string[] = [];
-      if (depMult !== 1.0)       contextParts.push(`deps=${depMult.toFixed(2)}`);
-      if (runwayMult !== 1.0)    contextParts.push(`runway=${runwayMult.toFixed(2)}`);
-      if (confMult !== 1.0)      contextParts.push(`conf=${confMult.toFixed(2)}`);
-      if (seniorityMult !== 1.0) contextParts.push(`seniority=${seniorityMult.toFixed(2)}`);
-      if (cohortMult !== 1.0)    contextParts.push(`cohort=${cohortMult.toFixed(2)}`);
-      if (patternMult !== 1.0)   contextParts.push(`pattern=${patternMult.toFixed(2)}`);
+      if (depMult !== 1.0)          contextParts.push(`deps=${depMult.toFixed(2)}`);
+      if (runwayMult !== 1.0)       contextParts.push(`runway=${runwayMult.toFixed(2)}`);
+      if (confMult !== 1.0)         contextParts.push(`conf=${confMult.toFixed(2)}`);
+      if (seniorityMult !== 1.0)    contextParts.push(`seniority=${seniorityMult.toFixed(2)}`);
+      if (cohortMult !== 1.0)       contextParts.push(`cohort=${cohortMult.toFixed(2)}`);
+      if (patternMult !== 1.0)      contextParts.push(`pattern=${patternMult.toFixed(2)}`);
+      if (userSuccessMult !== 1.0)  contextParts.push(`userRate=${userSuccessMult.toFixed(2)}`);
 
       const rationale =
         `priority=${(priorityMult).toFixed(2)} · ` +

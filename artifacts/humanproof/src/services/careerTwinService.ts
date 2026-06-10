@@ -12,6 +12,7 @@ import { supabase } from '../utils/supabase';
 import type { HybridResult } from '../types/hybridResult';
 import type { UserProfile } from './userProfileService';
 import type { CareerDecision } from './careerMemoryService';
+import { getDimensionSuccessMap } from './userOutcomeLearningService';
 
 // ── Public types ───────────────────────────────────────────────────────────────
 
@@ -157,6 +158,17 @@ export async function syncTwinFromProfile(
   await supabase
     .from('career_twin_state')
     .upsert(row, { onConflict: 'user_id' });
+
+  // Phase 2 (Career OS): persist per-user outcome success rates on the twin (fire-and-forget).
+  // Only writes when the user has at least 3 outcomes — getDimensionSuccessMap() returns {} otherwise.
+  getDimensionSuccessMap(userId).then(rates => {
+    if (Object.keys(rates).length === 0) return;
+    supabase
+      .from('career_twin_state')
+      .update({ outcome_success_rates: rates, last_outcome_sync: new Date().toISOString() })
+      .eq('user_id', userId)
+      .then(() => {});
+  }).catch(() => {});
 }
 
 /**
