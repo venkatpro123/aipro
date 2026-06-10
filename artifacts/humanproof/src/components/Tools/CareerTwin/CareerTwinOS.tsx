@@ -60,7 +60,7 @@ export function CareerTwinOS() {
         </TabsList>
 
         <TabsContent value="twin-state">
-          <CareerTwinPanel />
+          <CareerTwinPanel hr={scoreResult} />
         </TabsContent>
 
         <TabsContent value="profile">
