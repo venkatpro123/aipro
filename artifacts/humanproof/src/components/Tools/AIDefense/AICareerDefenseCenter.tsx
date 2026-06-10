@@ -7,21 +7,25 @@ import { useAuth } from '../../../context/AuthContext';
 import { recordTwinDecision } from '../../../services/careerTwinService';
 import { AIReplacementAnalysis } from './AIReplacementAnalysis';
 import { AIReadinessAnalysis } from './AIReadinessAnalysis';
-import { FutureProofingRoadmap } from './FutureProofingRoadmap';
 import { EmergingOpportunityDetector } from './EmergingOpportunityDetector';
 import { SkillDemandTracker } from './SkillDemandTracker';
 import { AIAmplificationRoadmap } from './AIAmplificationRoadmap';
+import { CareerMoatPanel } from './CareerMoatPanel';
+import { SurvivalStrategyPanel } from './SurvivalStrategyPanel';
+import { TransformationRoadmap } from './TransformationRoadmap';
 
 const DecadeScenarioPlannerPanel = lazy(() =>
   import('./DecadeScenarioPlannerPanel').then(m => ({ default: m.DecadeScenarioPlannerPanel })),
 );
 
 const TABS = [
-  { id: 'skills',        label: 'Skill Demand'         },
+  { id: 'replacement',   label: 'AI Threat'            },
+  { id: 'moat',          label: 'Career Moat'          },
+  { id: 'survival',      label: 'Survival Plan'        },
+  { id: 'transformation',label: 'Transformation'       },
   { id: 'amplify',       label: 'AI Amplify'           },
-  { id: 'replacement',   label: 'AI Landscape'         },
+  { id: 'skills',        label: 'Skill Demand'         },
   { id: 'readiness',     label: 'AI Readiness'         },
-  { id: 'roadmap',       label: 'Future Roadmap'       },
   { id: 'opportunities', label: 'Emerging Roles'       },
   { id: 'decade',        label: 'Decade Plan'          },
 ];
@@ -29,7 +33,11 @@ const TABS = [
 const AI_DEFENSE_TAB_KEY = 'hp.ai-defense.tab';
 
 export function AICareerDefenseCenter() {
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem(AI_DEFENSE_TAB_KEY) ?? 'skills');
+  const [activeTab, setActiveTab] = useState(() => {
+    const stored = localStorage.getItem(AI_DEFENSE_TAB_KEY);
+    // Guard against stale ids (e.g. removed 'roadmap') so a valid tab always renders.
+    return stored && TABS.some(t => t.id === stored) ? stored : 'replacement';
+  });
   const { user } = useAuth();
   const { state } = useLayoff();
 
@@ -100,12 +108,14 @@ export function AICareerDefenseCenter() {
           </TabsTrigger>
         ))}
       </TabsList>
-      <TabsContent value="skills">        <SkillDemandTracker scoreResult={scoreResult} /></TabsContent>
-      <TabsContent value="amplify">       <AIAmplificationRoadmap scoreResult={scoreResult} /></TabsContent>
-      <TabsContent value="replacement">   <AIReplacementAnalysis scoreResult={scoreResult} /></TabsContent>
-      <TabsContent value="readiness">     <AIReadinessAnalysis scoreResult={scoreResult} /></TabsContent>
-      <TabsContent value="roadmap">       <FutureProofingRoadmap scoreResult={scoreResult} /></TabsContent>
-      <TabsContent value="opportunities"> <EmergingOpportunityDetector scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="replacement">    <AIReplacementAnalysis scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="moat">           <CareerMoatPanel scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="survival">       <SurvivalStrategyPanel scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="transformation"> <TransformationRoadmap scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="amplify">        <AIAmplificationRoadmap scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="skills">         <SkillDemandTracker scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="readiness">      <AIReadinessAnalysis scoreResult={scoreResult} /></TabsContent>
+      <TabsContent value="opportunities">  <EmergingOpportunityDetector scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="decade">
         <Suspense fallback={<div style={{ padding: '32px 0', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.82rem' }}>Loading decade planner…</div>}>
           <DecadeScenarioPlannerPanel />
