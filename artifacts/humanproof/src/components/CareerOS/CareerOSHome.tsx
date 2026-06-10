@@ -18,6 +18,7 @@ import { CareerOSMemoryPanel } from "./CareerOSMemoryPanel";
 import { CareerDecisionCard } from "./CareerDecisionCard";
 import { CareerAlertCenter } from "./CareerAlertCenter";
 import { OutcomePromptCard } from "./OutcomePromptCard";
+import { CareerDefenseBriefing } from "./CareerDefenseBriefing";
 import { ScoreExplainerPanel } from "../shared/ScoreExplainerPanel";
 import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
@@ -891,6 +892,9 @@ export function CareerOSHome() {
 
             {/* 0a. Alert Center — SYSTEM WATCHES (Phase 4: one causal alert at a time) */}
             {hr && <CareerAlertCenter hr={hr} companyName={state.companyName} />}
+
+            {/* 0a2. Daily Defense Briefing — DAILY HABIT LOOP (dated causal event feed) */}
+            {hr && <CareerDefenseBriefing hr={hr} companyName={state.companyName} />}
 
             {/* 0. Career Memory — SYSTEM REMEMBERS */}
             {hr && (

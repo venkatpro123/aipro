@@ -1,251 +1,62 @@
-// CareerDecisionSimulator.tsx — Phase 4: Decision-Based Career Simulator
-// Answers: "What happens to my risk if I make THIS career decision?"
-// 7 decisions built from real HybridResult dimensions — no hardcoded deltas.
+// CareerDecisionSimulator.tsx — Decision Simulation (Rule #8)
+// "What happens if I stay / switch / move into AI / become a manager / freelance
+//  / relocate / upskill?" — each move projects a FULL alternate future:
+// risk, promotion probability, salary growth, resilience, P(success), timeline,
+// benefits, and risks. All derived from the user's real audit via
+// careerSimulationEngine — no hardcoded universal deltas.
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { HybridResult } from '../../../types/hybridResult';
-
-interface CareerDecision {
-  id:          string;
-  icon:        string;
-  title:       string;
-  subtitle:    string;
-  rationale:   string;
-  // Per-dimension multipliers applied to breakdown[dim]*total for projection
-  changes:     Array<{ dim: string; factor: number }>;
-  // Text that explains the tradeoff
-  tradeoff:    string;
-  // Constraint: when to warn
-  constraint?: (hr: HybridResult) => string | null;
-}
-
-const DECISIONS: CareerDecision[] = [
-  {
-    id:       'stay',
-    icon:     '🏰',
-    title:    'Stay & Defend',
-    subtitle: 'Optimise within current role',
-    rationale: 'Use your best sensitivity levers to reduce risk without leaving. Highest leverage when company health is adequate.',
-    changes:  [
-      { dim: 'D4', factor: -0.22 }, // tenure improvement over time
-      { dim: 'D7', factor: -0.15 }, // performance signalling
-      { dim: 'D8', factor: -0.12 }, // seniority visibility
-    ],
-    tradeoff: 'Lower risk but slower. Best if company fundamentals are solid.',
-    constraint: (hr) => {
-      const companyRisk = (hr.breakdown?.['D3'] ?? 0) + (hr.breakdown?.['L2'] ?? 0);
-      if (companyRisk > 0.7) return 'Warning: company risk is high — staying may be defending a sinking ship.';
-      return null;
-    },
-  },
-  {
-    id:       'switch',
-    icon:     '🚀',
-    title:    'Switch Company',
-    subtitle: 'Move to a healthier employer',
-    rationale: 'Escape company-specific risk. Resets L2/L3 company vulnerability but introduces short-term transition risk.',
-    changes:  [
-      { dim: 'L2', factor: -0.60 }, // company health risk resets
-      { dim: 'L3', factor: -0.35 }, // synthetic risk score improves
-      { dim: 'D3', factor: -0.55 }, // company amplification reduced
-      { dim: 'D4', factor: +0.18 }, // tenure resets to zero — short-term risk
-    ],
-    tradeoff: 'Biggest long-term risk reduction. Short-term tenure/transition cost.',
-    constraint: (hr) => {
-      const visaDep = hr.visaRisk?.dependencyScore ?? 0;
-      if (visaDep > 60) return 'High visa employer dependency — switching requires transfer approval or new sponsorship.';
-      return null;
-    },
-  },
-  {
-    id:       'ai-role',
-    icon:     '🤖',
-    title:    'Move to AI Role',
-    subtitle: 'Transition into AI / automation domain',
-    rationale: 'Reduces AI displacement risk by aligning with the direction of automation rather than opposing it.',
-    changes:  [
-      { dim: 'D1', factor: -0.65 }, // AI displacement risk drops sharply
-      { dim: 'D3', factor: -0.20 }, // broader market demand improves
-      { dim: 'D6', factor: -0.15 }, // experience relevance increases
-    ],
-    tradeoff: 'Strongest AI protection long-term. Requires skill transition investment.',
-    constraint: (hr) => {
-      const runway = hr.financialRunwayMonths ?? 6;
-      if (runway < 3) return 'Financial runway < 3 months — skill transition investment may be unaffordable right now.';
-      return null;
-    },
-  },
-  {
-    id:       'manager',
-    icon:     '👔',
-    title:    'Become a Manager',
-    subtitle: 'Move into people leadership',
-    rationale: 'Managers are typically later in layoff order. Reduces AI displacement exposure for IC roles.',
-    changes:  [
-      { dim: 'D7', factor: -0.25 }, // seniority tier improves
-      { dim: 'D1', factor: -0.30 }, // AI less likely to target managers
-      { dim: 'D6', factor: -0.20 }, // experience complexity increases
-      { dim: 'D8', factor: -0.15 }, // performance more visible as a manager
-    ],
-    tradeoff: 'Good stability improvement. Requires strong internal visibility and endorsement.',
-    constraint: (hr) => {
-      const tenure = hr.breakdown?.['D4'] ?? 0.4;
-      if (tenure > 0.5) return 'Short tenure detected — management track typically requires 2+ years of established performance.';
-      return null;
-    },
-  },
-  {
-    id:       'consulting',
-    icon:     '💼',
-    title:    'Go Consulting / Freelance',
-    subtitle: 'Diversify income across multiple clients',
-    rationale: 'Eliminates single-employer dependency (L2/L3) but increases financial variability. Best for high-network roles.',
-    changes:  [
-      { dim: 'L2', factor: -0.80 }, // company-specific risk eliminated
-      { dim: 'L3', factor: -0.45 },
-      { dim: 'L1', factor: +0.30 }, // financial volatility increases
-      { dim: 'D5', factor: -0.20 }, // geographic freedom improves
-    ],
-    tradeoff: 'Eliminates company-specific risk but adds financial unpredictability. Best for strong networks.',
-    constraint: (hr) => {
-      const network = hr.networkLeverage?.networkScore ?? 30;
-      const runway  = hr.financialRunwayMonths ?? 4;
-      if (network < 40 && runway < 4) return 'Low network + low runway: consulting without clients is high-risk. Build network first.';
-      return null;
-    },
-  },
-  {
-    id:       'relocate',
-    icon:     '✈️',
-    title:    'Relocate',
-    subtitle: 'Move to a higher-demand market',
-    rationale: 'Geographic optionality can significantly lower sector risk if your current region is over-indexed to one industry.',
-    changes:  [
-      { dim: 'L5', factor: -0.40 }, // location risk reduced
-      { dim: 'D2', factor: -0.30 }, // sector/industry risk diversified
-    ],
-    tradeoff: 'High personal impact but strong long-term positioning in demand markets.',
-    constraint: (hr) => {
-      const visaDep = hr.visaRisk?.dependencyScore ?? 0;
-      if (visaDep > 40) return 'Visa dependency may restrict relocation options without employer sponsorship in new country.';
-      return null;
-    },
-  },
-  {
-    id:       'upskill',
-    icon:     '📚',
-    title:    'Intensive Upskilling',
-    subtitle: '3–6 month focused skill investment',
-    rationale: 'Directly reduces AI displacement risk and improves experience relevance score. Fastest ROI when skills are actively hiring.',
-    changes:  [
-      { dim: 'D1', factor: -0.35 }, // AI displacement reduced by skill update
-      { dim: 'D3', factor: -0.18 }, // market demand for role improves
-      { dim: 'D6', factor: -0.25 }, // experience complexity improves
-    ],
-    tradeoff: 'Relatively low disruption. Time investment required. Maximum 6-month horizon to realise gains.',
-    constraint: (hr) => {
-      const runway = hr.financialRunwayMonths ?? 6;
-      if (runway < 2) return 'Runway under 2 months — upskilling time investment may not be viable before financial pressure.';
-      return null;
-    },
-  },
-];
-
-function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)); }
-
-function getDecisionAssumption(decision: CareerDecision, hr: HybridResult): {
-  actionPhrase: string;
-  drivers: Array<{ label: string; change: string; color: string }>;
-  confidence: number;
-  basis: string;
-} {
-  // Confidence derived from how many levers the sensitivity engine found
-  const levers = hr.scoreSensitivity?.levers ?? [];
-  const confidence = levers.length >= 5 ? 76 : levers.length >= 3 ? 64 : 52;
-
-  const ACTION_PHRASES: Record<string, string> = {
-    stay:        'optimise within your current role',
-    switch:      'move to a healthier employer',
-    'ai-role':   'transition into an AI / automation role',
-    manager:     'step into people leadership',
-    consulting:  'go independent (consulting or freelance)',
-    relocate:    'move to a higher-demand market',
-    upskill:     'invest 3–6 months in intensive upskilling',
-  };
-
-  // Build human-readable drivers from the changes array
-  const DRIVER_LABELS: Record<string, string> = {
-    L1: 'Financial Buffer',   L2: 'Company Exposure',   L3: 'Synthetic Risk',
-    L4: 'Industry Risk',      L5: 'Location Risk',
-    D1: 'AI Exposure',        D2: 'Market Demand',      D3: 'Company Risk',
-    D4: 'Tenure Shield',      D5: 'Country Context',    D6: 'Experience Depth',
-    D7: 'Seniority',          D8: 'Performance Signal',
-  };
-
-  const drivers = decision.changes.map(ch => ({
-    label: DRIVER_LABELS[ch.dim] ?? ch.dim,
-    change: ch.factor < 0
-      ? `Reduces by ~${Math.abs(Math.round(ch.factor * 100))}%`
-      : `Increases by ~${Math.abs(Math.round(ch.factor * 100))}%`,
-    color: ch.factor < 0 ? '#10b981' : '#ef4444',
-  }));
-
-  const BASIS_MAP: Record<string, string> = {
-    stay:       'Based on average tenure-accumulation and performance visibility rates',
-    switch:     'Based on company risk reset patterns across role families',
-    'ai-role':  'Based on AI-adoption curves in technical roles',
-    manager:    'Based on management track outcomes in your seniority band',
-    consulting: 'Based on solo-to-client conversion rates for your network tier',
-    relocate:   'Based on geographic demand differentials for your role family',
-    upskill:    'Based on skill-currency improvement timelines for your role category',
-  };
-
-  return {
-    actionPhrase: ACTION_PHRASES[decision.id] ?? decision.title.toLowerCase(),
-    drivers,
-    confidence,
-    basis: BASIS_MAP[decision.id] ?? 'Based on modelled risk factor changes',
-  };
-}
-
-function projectRisk(hr: HybridResult, decision: CareerDecision): number {
-  const b = hr.breakdown ?? {};
-  const base = hr.total;
-
-  // Each change: contribution = breakdown[dim] * total, then apply factor
-  const totalDelta = decision.changes.reduce((sum, ch) => {
-    const contribution = (b[ch.dim] ?? 0) * base;
-    // factor is negative = risk reduction, positive = risk increase
-    return sum + contribution * ch.factor;
-  }, 0);
-
-  return clamp(Math.round(base + totalDelta), 5, 97);
-}
+import {
+  DECISIONS,
+  simulateDecisionFuture,
+  type SimulatedFuture,
+} from '../../../services/careerSimulationEngine';
+import { getCohortSimulationFactors } from '../../../services/userOutcomeLearningService';
+import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 
 function deltaColor(delta: number) {
   if (delta < -10) return '#10b981';
-  if (delta < -3)  return '#34d399';
-  if (delta < 3)   return '#f59e0b';
+  if (delta < -3) return '#34d399';
+  if (delta < 3) return '#f59e0b';
   return '#ef4444';
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
+const RESILIENCE_COLOR: Record<SimulatedFuture['resilience'], string> = {
+  'Very High': '#10b981', High: '#34d399', Moderate: '#f59e0b', Low: '#ef4444',
+};
+
+// A compact outcome metric (label + value + color).
+function Metric({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div style={{ flex: 1, minWidth: 78, textAlign: 'center', padding: '8px 6px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', marginBottom: 4, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, color, fontFamily: 'var(--font-mono, monospace)', lineHeight: 1 }}>{value}</div>
+    </div>
+  );
+}
 
 interface Props { scoreResult: HybridResult }
 
 export function CareerDecisionSimulator({ scoreResult }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [cohortFactors, setCohortFactors] = useState<Record<string, Record<string, number>> | null>(null);
   const base = scoreResult.total;
 
-  const projections = DECISIONS.map(d => {
-    const projected = projectRisk(scoreResult, d);
-    const delta     = projected - base;
-    const warning   = d.constraint ? d.constraint(scoreResult) : null;
-    return { decision: d, projected, delta, warning };
-  });
+  useEffect(() => {
+    let cancelled = false;
+    fetchUserProfile().then(p => { if (!cancelled) setProfile(p); }).catch(() => {});
+    getCohortSimulationFactors().then(f => { if (!cancelled) setCohortFactors(f); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
-  // Sort: biggest risk reduction first
-  projections.sort((a, b) => a.delta - b.delta);
+  // Simulate every decision's full future, sorted by biggest risk reduction.
+  const futures = useMemo(() => {
+    return DECISIONS
+      .map(d => ({ decision: d, future: simulateDecisionFuture(d, scoreResult, profile, cohortFactors) }))
+      .sort((a, b) => a.future.riskDelta - b.future.riskDelta);
+  }, [scoreResult, profile, cohortFactors]);
 
   return (
     <div>
@@ -254,28 +65,22 @@ export function CareerDecisionSimulator({ scoreResult }: Props) {
           CAREER DECISION SIMULATOR
         </div>
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-          See how each career move would change your risk score — based on your actual audit data.
+          Each move projects a full alternate future — risk, promotion odds, salary, resilience, and your probability of pulling it off.
         </div>
       </div>
 
       {/* Current score anchor */}
-      <div style={{
-        padding: '10px 16px', borderRadius: 10,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18,
-      }}>
+      <div style={{ padding: '10px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
         <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Current risk score</span>
-        <span style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-mono, monospace)', color: '#ef4444' }}>
-          {base}
-        </span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Tap any decision to see the projected impact.</span>
+        <span style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-mono, monospace)', color: '#ef4444' }}>{base}</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Tap any decision to explore that future.</span>
       </div>
 
       {/* Decision grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {projections.map(({ decision, projected, delta, warning }) => {
+        {futures.map(({ decision, future }) => {
           const isSelected = selected === decision.id;
-          const dColor = deltaColor(delta);
+          const dColor = deltaColor(future.riskDelta);
 
           return (
             <div key={decision.id}>
@@ -285,132 +90,88 @@ export function CareerDecisionSimulator({ scoreResult }: Props) {
                 style={{
                   width: '100%', background: isSelected ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
                   border: `1px solid ${isSelected ? dColor + '35' : 'rgba(255,255,255,0.06)'}`,
-                  borderRadius: 10, padding: '12px 16px',
-                  cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-                  display: 'flex', alignItems: 'center', gap: 12,
+                  borderRadius: 10, padding: '12px 16px', cursor: 'pointer', textAlign: 'left',
+                  transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 12,
                 }}
               >
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{decision.icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>
-                    {decision.title}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-                    {decision.subtitle}
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{decision.title}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{decision.subtitle}</div>
                 </div>
-
-                {/* Projected score + delta */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
-                  <span style={{
-                    fontSize: 20, fontWeight: 900,
-                    fontFamily: 'var(--font-mono, monospace)', color: dColor, lineHeight: 1,
-                  }}>
-                    {projected}
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: dColor }}>
-                    {delta > 0 ? '+' : ''}{delta} pts
-                  </span>
+                {/* Headline: P(success) + projected risk */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>SUCCESS</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: future.successProbability >= 65 ? '#10b981' : future.successProbability >= 45 ? '#f59e0b' : '#ef4444', fontFamily: 'var(--font-mono, monospace)' }}>
+                      {future.successProbability}%
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span style={{ fontSize: 20, fontWeight: 900, fontFamily: 'var(--font-mono, monospace)', color: dColor, lineHeight: 1 }}>{future.projectedRisk}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: dColor }}>{future.riskDelta > 0 ? '+' : ''}{future.riskDelta} pts</span>
+                  </div>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{isSelected ? '▲' : '▾'}</span>
                 </div>
-
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
-                  {isSelected ? '▲' : '▾'}
-                </span>
               </button>
 
               {isSelected && (
-                <div style={{
-                  padding: '12px 16px 14px', borderRadius: '0 0 10px 10px',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${dColor}20`, borderTop: 'none',
-                  marginTop: -2,
-                }}>
+                <div style={{ padding: '14px 16px 16px', borderRadius: '0 0 10px 10px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${dColor}20`, borderTop: 'none', marginTop: -2 }}>
                   {/* Rationale */}
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 10 }}>
-                    {decision.rationale}
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, marginBottom: 12 }}>{decision.rationale}</div>
+
+                  {/* Four outcome metrics */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <Metric label="Risk" value={`${future.projectedRisk}`} color={dColor} />
+                    <Metric label="Promotion" value={`${future.promotionProbability}%`} color="#60a5fa" />
+                    <Metric label="Salary" value={`+${future.salaryGrowthPct}%`} color="#10b981" />
+                    <Metric label="Resilience" value={future.resilience} color={RESILIENCE_COLOR[future.resilience]} />
                   </div>
 
-                  {/* Score visualization */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono, monospace)' }}>
-                      {base}
+                  {/* Probability + timeline strip */}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}>
+                      P(success) {future.successProbability}%
                     </span>
-                    <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 2, background: dColor,
-                        width: `${Math.abs(delta) / base * 100}%`,
-                        marginLeft: delta < 0 ? undefined : `${projected / base * 100}%`,
-                        transition: 'width 0.3s ease',
-                      }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}>
+                      ⏱ {future.timelineLabel}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', color: '#60a5fa' }}>
+                      {future.confidence}% confidence · {future.confidenceKind.toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Benefits + risks, side by side */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: future.constraintWarning ? 10 : 0 }}>
+                    <div>
+                      <div style={{ fontSize: 9, fontWeight: 800, color: '#10b981', letterSpacing: '0.1em', marginBottom: 6 }}>BENEFITS</div>
+                      {future.benefits.map((b, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                          <span style={{ color: '#10b981', flexShrink: 0, fontSize: 11 }}>+</span>
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.4 }}>{b}</span>
+                        </div>
+                      ))}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: dColor, fontFamily: 'var(--font-mono, monospace)' }}>
-                      {projected}
-                    </span>
-                  </div>
-
-                  {/* Tradeoff */}
-                  <div style={{
-                    fontSize: 11, color: 'rgba(255,255,255,0.4)', padding: '7px 10px',
-                    borderRadius: 6, background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid rgba(255,255,255,0.06)', lineHeight: 1.5, marginBottom: warning ? 8 : 0,
-                  }}>
-                    ⚖️ {decision.tradeoff}
+                    <div>
+                      <div style={{ fontSize: 9, fontWeight: 800, color: '#f59e0b', letterSpacing: '0.1em', marginBottom: 6 }}>RISKS / TRADEOFFS</div>
+                      {future.risks.map((r, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+                          <span style={{ color: '#f59e0b', flexShrink: 0, fontSize: 11 }}>−</span>
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.4 }}>{r}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Constraint warning */}
-                  {warning && (
-                    <div style={{
-                      fontSize: 11, color: '#f59e0b', padding: '7px 10px',
-                      borderRadius: 6, background: 'rgba(245,158,11,0.06)',
-                      border: '1px solid rgba(245,158,11,0.2)', lineHeight: 1.5, marginTop: 8,
-                    }}>
-                      ⚠ {warning}
+                  {future.constraintWarning && (
+                    <div style={{ fontSize: 11, color: '#f59e0b', padding: '7px 10px', borderRadius: 6, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', lineHeight: 1.5, marginTop: 10 }}>
+                      ⚠ {future.constraintWarning}
                     </div>
                   )}
 
-                  {/* Assumption Card */}
-                  {(() => {
-                    const assumption = getDecisionAssumption(decision, scoreResult);
-                    return (
-                      <div style={{
-                        marginTop: 10, marginBottom: 10, padding: '10px 14px',
-                        borderRadius: 8, background: 'rgba(255,255,255,0.025)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                      }}>
-                        <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginBottom: 8 }}>
-                          WHAT THIS ASSUMES
-                        </div>
-
-                        {/* Action phrase */}
-                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 10, lineHeight: 1.5 }}>
-                          You {assumption.actionPhrase}. Here are the factors this change would affect:
-                        </div>
-
-                        {/* Result drivers */}
-                        {assumption.drivers.map(d => (
-                          <div key={d.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{d.label}</span>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: d.color }}>{d.change}</span>
-                          </div>
-                        ))}
-
-                        {/* Confidence */}
-                        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>{assumption.basis}</span>
-                          <span style={{
-                            padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 800,
-                            background: 'rgba(96,165,250,0.1)', color: '#60a5fa',
-                            border: '1px solid rgba(96,165,250,0.2)',
-                          }}>
-                            {assumption.confidence}% confidence · ESTIMATED
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
                   {/* Dimension drivers */}
-                  <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {decision.changes.map(ch => (
                       <span key={ch.dim} style={{
                         padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700,
@@ -431,7 +192,9 @@ export function CareerDecisionSimulator({ scoreResult }: Props) {
       </div>
 
       <div style={{ marginTop: 14, fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.5 }}>
-        ESTIMATED · Projections derived from your audit breakdown dimensions and documented risk factor changes. Actual outcomes depend on execution.
+        {cohortFactors
+          ? 'MODELED · Projections calibrated against outcomes from users who made the same move.'
+          : 'ESTIMATED · Projections derived from your audit breakdown + personal signals (runway, network, skill fit, market demand). They become MODELED once enough users report outcomes for each move. Actual results depend on execution.'}
       </div>
     </div>
   );
