@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { useAuth } from '../../../context/AuthContext';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 import { computePortfolioStrength } from '../../../services/readinessDiagnostics';
 import { DiagnosisHeader, SubScoreBars, GapList, ImprovementList } from './_readinessShared';
@@ -12,11 +13,13 @@ import { EmptyState } from './ResumeReadinessPanel';
 interface Props { scoreResult: HybridResult | null }
 
 export function PortfolioReadinessPanel({ scoreResult }: Props) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   useEffect(() => { let c = false; fetchUserProfile().then(p => { if (!c) setProfile(p); }).catch(() => {}); return () => { c = true; }; }, []);
 
   if (!scoreResult) return <EmptyState icon="🗂️" line="The Proof-of-Work engine scores your portfolio's credibility and names the highest-value project to build next." />;
   const d = computePortfolioStrength(scoreResult, profile);
+  const tracking = user ? { userId: user.id, tab: 'portfolio' as const, scoreNow: d.score } : undefined;
 
   return (
     <div>
@@ -28,7 +31,7 @@ export function PortfolioReadinessPanel({ scoreResult }: Props) {
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.55 }}>{d.nextProject}</div>
       </div>
       <GapList gaps={d.gaps} />
-      <ImprovementList improvements={d.improvements} unit=" pts" />
+      <ImprovementList improvements={d.improvements} unit=" pts" tracking={tracking} />
     </div>
   );
 }

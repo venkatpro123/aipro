@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { useAuth } from '../../../context/AuthContext';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 import { computeResumeIntelligence } from '../../../services/readinessDiagnostics';
 import { DiagnosisHeader, SubScoreBars, ImprovementList } from './_readinessShared';
@@ -11,11 +12,13 @@ import { DiagnosisHeader, SubScoreBars, ImprovementList } from './_readinessShar
 interface Props { scoreResult: HybridResult | null }
 
 export function ResumeReadinessPanel({ scoreResult }: Props) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   useEffect(() => { let c = false; fetchUserProfile().then(p => { if (!c) setProfile(p); }).catch(() => {}); return () => { c = true; }; }, []);
 
   if (!scoreResult) return <EmptyState icon="📄" line="The Resume Intelligence engine derives your ATS match and missing keywords from your role + skill profile." />;
   const d = computeResumeIntelligence(scoreResult, profile);
+  const tracking = user ? { userId: user.id, tab: 'resume' as const, scoreNow: d.score } : undefined;
 
   return (
     <div>
@@ -32,7 +35,7 @@ export function ResumeReadinessPanel({ scoreResult }: Props) {
           <div style={{ marginTop: 8, fontSize: 11.5, color: 'rgba(255,255,255,0.45)' }}>In active demand for your role and absent from your likely keyword set — each one you add lifts ATS ranking.</div>
         </div>
       )}
-      <ImprovementList improvements={d.improvements} unit="% interview prob" />
+      <ImprovementList improvements={d.improvements} unit="% interview prob" tracking={tracking} />
     </div>
   );
 }

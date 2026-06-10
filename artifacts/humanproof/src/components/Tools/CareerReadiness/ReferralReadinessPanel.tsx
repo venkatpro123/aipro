@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { useAuth } from '../../../context/AuthContext';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 import { computeNetworkActivation } from '../../../services/readinessDiagnostics';
 import { DiagnosisHeader, SubScoreBars, ImprovementList, scoreColor } from './_readinessShared';
@@ -12,11 +13,13 @@ import { EmptyState } from './ResumeReadinessPanel';
 interface Props { scoreResult: HybridResult | null }
 
 export function ReferralReadinessPanel({ scoreResult }: Props) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   useEffect(() => { let c = false; fetchUserProfile().then(p => { if (!c) setProfile(p); }).catch(() => {}); return () => { c = true; }; }, []);
 
   if (!scoreResult) return <EmptyState icon="🤝" line="The Network Activation engine tells you who to contact, why, and the odds each yields a referral and an interview." />;
   const d = computeNetworkActivation(scoreResult, profile);
+  const tracking = user ? { userId: user.id, tab: 'referral' as const, scoreNow: d.score } : undefined;
 
   return (
     <div>
@@ -49,7 +52,7 @@ export function ReferralReadinessPanel({ scoreResult }: Props) {
         <div style={{ marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>Contact archetypes and probabilities are modeled from your network strength — no contact list is read.</div>
       </div>
 
-      <ImprovementList improvements={d.improvements} unit=" pts" />
+      <ImprovementList improvements={d.improvements} unit=" pts" tracking={tracking} />
     </div>
   );
 }

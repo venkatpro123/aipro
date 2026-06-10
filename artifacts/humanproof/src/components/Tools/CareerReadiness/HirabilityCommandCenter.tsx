@@ -6,8 +6,10 @@
 
 import { useEffect, useState } from 'react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { useAuth } from '../../../context/AuthContext';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
 import { computeHirability, type HirabilityReport, type HirabilityComponent } from '../../../services/hirabilityEngine';
+import { getReadinessProgressSummary } from '../../../services/readinessOutcomeService';
 import { scoreColor, ProvenanceTag } from './_readinessShared';
 import { EmptyState } from './ResumeReadinessPanel';
 
@@ -57,14 +59,22 @@ function ComponentRow({ comp, onJump }: { comp: HirabilityComponent; onJump?: (t
 }
 
 export function HirabilityCommandCenter({ scoreResult, onJumpToTab }: Props) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [report, setReport] = useState<HirabilityReport | null>(null);
+  const [progress, setProgress] = useState<{ logged: number; rated: number; helped: number } | null>(null);
 
   useEffect(() => { let c = false; fetchUserProfile().then(p => { if (!c) setProfile(p); }).catch(() => {}); return () => { c = true; }; }, []);
   useEffect(() => {
     if (!scoreResult) { setReport(null); return; }
     try { setReport(computeHirability(scoreResult, profile)); } catch { setReport(null); }
   }, [scoreResult, profile]);
+  useEffect(() => {
+    if (!user) return;
+    let c = false;
+    getReadinessProgressSummary(user.id).then(p => { if (!c && p.logged > 0) setProgress(p); }).catch(() => {});
+    return () => { c = true; };
+  }, [user]);
 
   if (!scoreResult) return <EmptyState icon="🎯" line="The Hirability Command Center answers one question: can you get hired tomorrow? Run an audit to find out." />;
   if (!report) return <div style={{ color: 'rgba(255,255,255,0.4)', padding: '32px 0', textAlign: 'center' }}>Computing your hirability…</div>;
@@ -83,6 +93,20 @@ export function HirabilityCommandCenter({ scoreResult, onJumpToTab }: Props) {
         </div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.62)', lineHeight: 1.6 }}>{report.verdictNarrative}</div>
       </div>
+
+      {/* Outcome-loop progress — the system learning from what you actually do */}
+      {progress && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', padding: '10px 16px', borderRadius: 10, background: 'rgba(167,139,250,0.05)', border: '1px solid rgba(167,139,250,0.18)', marginBottom: 16 }}>
+          <span style={{ fontSize: 9, fontWeight: 800, color: '#a78bfa', letterSpacing: '0.1em', fontFamily: 'var(--font-mono, monospace)' }}>LEARNING LOOP</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+            <b style={{ color: 'rgba(255,255,255,0.85)' }}>{progress.logged}</b> actions logged
+            {progress.rated > 0 && <> · <b style={{ color: 'rgba(255,255,255,0.85)' }}>{progress.rated}</b> outcomes reported · <b style={{ color: '#10b981' }}>{Math.round((progress.helped / progress.rated) * 100)}%</b> helped</>}
+          </span>
+          <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', marginLeft: 'auto' }}>
+            {progress.rated >= 3 ? 'Calibrating your guidance to what actually works.' : 'Report a few outcomes to start calibrating.'}
+          </span>
+        </div>
+      )}
 
       {/* Lead probabilities */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
