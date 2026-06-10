@@ -17,6 +17,7 @@ import { MissionCard } from "./MissionCard";
 import { CareerOSMemoryPanel } from "./CareerOSMemoryPanel";
 import { CareerDecisionCard } from "./CareerDecisionCard";
 import { CareerAlertCenter } from "./CareerAlertCenter";
+import { OutcomePromptCard } from "./OutcomePromptCard";
 import { ScoreExplainerPanel } from "../shared/ScoreExplainerPanel";
 import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
@@ -841,6 +842,10 @@ export function CareerOSHome() {
           COMMAND CENTER
       ══════════════════════════════════════════════════════ */}
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
+
+        {/* Outcome check-in — closes the learning loop (Phase 5). Shows on app load
+            whenever a past audit is due for a 30/90/180-day outcome report. */}
+        {user && <OutcomePromptCard />}
 
         {!hasResult ? (
           isAwaitingRestore ? (

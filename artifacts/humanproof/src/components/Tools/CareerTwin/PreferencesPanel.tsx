@@ -2,6 +2,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../context/AuthContext';
+import { fetchUserProfile, upsertUserProfile, type UserProfile } from '../../../services/userProfileService';
+
+// ── Phase 5: decision-shaping personalization (typed columns, not JSON prefs) ──
+type RiskTolerance = NonNullable<UserProfile['riskTolerance']>;
+type GeoMobility = NonNullable<UserProfile['geographicMobility']>;
+const CAREER_VALUE_OPTIONS = ['Stability', 'Growth', 'Compensation', 'Flexibility', 'Impact', 'Work–life balance'];
 
 interface Preferences {
   workMode: 'remote' | 'hybrid' | 'onsite' | '';
@@ -34,13 +40,42 @@ export function PreferencesPanel() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // ── Phase 5: decision-shaping fields (typed user_profiles columns) ──────────
+  const [riskTolerance, setRiskTolerance] = useState<RiskTolerance | ''>('');
+  const [geoMobility, setGeoMobility] = useState<GeoMobility | ''>('');
+  const [careerValues, setCareerValues] = useState<string[]>([]);
+  const [advSaving, setAdvSaving] = useState(false);
+  const [advSaved, setAdvSaved] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     supabase.from('user_profiles').select('career_preferences').eq('user_id', user.id).single().then(({ data }) => {
       if (data?.career_preferences) setPrefs({ ...DEFAULT_PREFS, ...(data.career_preferences as Preferences) });
       setLoading(false);
     });
+    // Load the typed decision fields via the profile service (handles mapping).
+    fetchUserProfile().then(p => {
+      if (!p) return;
+      if (p.riskTolerance) setRiskTolerance(p.riskTolerance);
+      if (p.geographicMobility) setGeoMobility(p.geographicMobility);
+      if (p.careerValues?.length) setCareerValues(p.careerValues);
+    }).catch(() => { /* unauthenticated — leave defaults */ });
   }, [user]);
+
+  const toggleValue = (v: string) =>
+    setCareerValues(cur => cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v]);
+
+  const saveAdvanced = async () => {
+    setAdvSaving(true);
+    await upsertUserProfile({
+      riskTolerance: riskTolerance || null,
+      geographicMobility: geoMobility || null,
+      careerValues: careerValues.length > 0 ? careerValues : null,
+    });
+    setAdvSaving(false);
+    setAdvSaved(true);
+    setTimeout(() => setAdvSaved(false), 2500);
+  };
 
   const save = async () => {
     if (!user) return;
@@ -154,6 +189,71 @@ export function PreferencesPanel() {
       >
         {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Preferences'}
       </button>
+
+      {/* ── Phase 5: Customize Your Advice — shapes the decision engine directly ── */}
+      <div className="card-premium" style={{ padding: 20, borderColor: 'rgba(167,139,250,0.2)' }}>
+        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', marginBottom: 4 }}>Customize Your Advice</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
+          These directly shape the system's stay/leave verdict and strategy — not just job filters.
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+          <div>
+            <div style={labelStyle}>RISK TOLERANCE</div>
+            <select aria-label="Risk tolerance" value={riskTolerance} onChange={e => setRiskTolerance(e.target.value as RiskTolerance | '')} style={selectStyle}>
+              <option value="">Default (balanced)</option>
+              <option value="conservative">Conservative — recommend leaving only at high risk</option>
+              <option value="moderate">Moderate — balanced threshold</option>
+              <option value="aggressive">Aggressive — flag exits earlier</option>
+            </select>
+          </div>
+          <div>
+            <div style={labelStyle}>GEOGRAPHIC MOBILITY</div>
+            <select aria-label="Geographic mobility" value={geoMobility} onChange={e => setGeoMobility(e.target.value as GeoMobility | '')} style={selectStyle}>
+              <option value="">Not specified</option>
+              <option value="none">Can't relocate — keep advice local</option>
+              <option value="same_country">Open within my country</option>
+              <option value="global">Open globally</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={labelStyle}>WHAT YOU OPTIMIZE FOR</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+            {CAREER_VALUE_OPTIONS.map(v => {
+              const active = careerValues.includes(v);
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => toggleValue(v)}
+                  style={{
+                    padding: '6px 13px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    border: `1px solid ${active ? 'rgba(167,139,250,0.5)' : 'var(--border)'}`,
+                    background: active ? 'rgba(167,139,250,0.15)' : 'transparent',
+                    color: active ? '#a78bfa' : 'rgba(255,255,255,0.55)', transition: 'all 0.15s',
+                  }}
+                >
+                  {active ? '✓ ' : ''}{v}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={saveAdvanced}
+          disabled={advSaving}
+          style={{
+            padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+            background: advSaved ? '#10b981' : '#a78bfa', color: '#000', transition: 'background 0.2s',
+          }}
+        >
+          {advSaving ? 'Saving…' : advSaved ? '✓ Saved' : 'Save Advice Settings'}
+        </button>
+      </div>
     </div>
   );
 }

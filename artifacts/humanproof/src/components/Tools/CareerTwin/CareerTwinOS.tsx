@@ -10,8 +10,10 @@ import { PreferencesPanel } from './PreferencesPanel';
 import { CareerMemoryTimeline } from './CareerMemoryTimeline';
 import { SkillVaultPanel } from './SkillVaultPanel';
 import { WhatIfPanel } from './WhatIfPanel';
+import { CareerTwinPanel } from '../../CareerOS/CareerTwinPanel';
 
 const TABS = [
+  { id: 'twin-state',   label: 'Twin State'      },
   { id: 'profile',      label: 'Profile'        },
   { id: 'skills',       label: 'Skills'          },
   { id: 'skill-vault',  label: 'Skill Vault'     },
@@ -26,7 +28,7 @@ const ACCENT = '#a78bfa';
 const TWIN_TAB_KEY = 'hp.career-twin.tab';
 
 export function CareerTwinOS() {
-  const [activeTab, setActiveTab] = useState(() => localStorage.getItem(TWIN_TAB_KEY) ?? 'profile');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem(TWIN_TAB_KEY) ?? 'twin-state');
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -56,6 +58,10 @@ export function CareerTwinOS() {
             }}>{t.label}</TabsTrigger>
           ))}
         </TabsList>
+
+        <TabsContent value="twin-state">
+          <CareerTwinPanel />
+        </TabsContent>
 
         <TabsContent value="profile">
           <CareerProfilePanel />

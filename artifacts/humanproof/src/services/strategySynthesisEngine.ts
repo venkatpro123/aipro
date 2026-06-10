@@ -127,6 +127,12 @@ export interface StrategySynthesisInputs {
   targetRegion?: string;
   /** Current ISO-3166-1 alpha-2 region code */
   region?: string;
+
+  // ── v55.0 (Phase 5) adaptive personalization signals ─────────────────────────
+  /** 'none' suppresses GEOGRAPHIC_ARBITRAGE entirely; 'global' permits cross-border. */
+  geographicMobility?: 'none' | 'same_country' | 'global' | null;
+  /** Shifts exit-strategy thresholds — aggressive exits earlier, conservative later. */
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive' | null;
 }
 
 // ── Overall strategy determination ────────────────────────────────────────────
@@ -137,8 +143,15 @@ function determineOverallStrategy(inputs: StrategySynthesisInputs): OverallStrat
   const { currentScore, collapseStage, financialRunwayMonths, scoreVelocityPtsPerMonth } = inputs;
   const peerWave = inputs.peerContagion?.waveIntensity;
 
+  // v55.0 (Phase 5): risk tolerance shifts the emergency-exit threshold.
+  // aggressive exits ~10pts earlier, conservative ~5pts later. null = baseline 80.
+  const emergencyThreshold =
+    inputs.riskTolerance === 'aggressive'   ? 70 :
+    inputs.riskTolerance === 'conservative' ? 85 :
+    80;
+
   // Emergency first — no other strategy overrides this
-  if (currentScore >= 80 || collapseStage === 3) return 'EMERGENCY_EXIT';
+  if (currentScore >= emergencyThreshold || collapseStage === 3) return 'EMERGENCY_EXIT';
 
   // v48.0: Visa window — compressed grace period forces proactive search regardless of score
   if (
@@ -154,8 +167,10 @@ function determineOverallStrategy(inputs: StrategySynthesisInputs): OverallStrat
     currentScore < 75
   ) return 'EQUITY_HARVEST_THEN_EXIT';
 
-  // v48.0: Geographic arbitrage — strong demand in target market + high local risk
+  // v48.0: Geographic arbitrage — strong demand in target market + high local risk.
+  // v55.0 (Phase 5): suppressed entirely when the user cannot relocate.
   if (
+    inputs.geographicMobility !== 'none' &&
     inputs.targetRegion != null &&
     currentScore >= 55 &&
     (inputs.jobMarketLiquidityScore ?? 0) >= 65 &&
@@ -988,16 +1003,31 @@ export function generateCareerDecision(
   score: number,
   strategy: OverallStrategy,
   breakdown: { L1: number; L2: number; L3: number; L4: number; L5: number },
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive' | null,
 ): CareerDecision {
   let verdict: CareerDecision['verdict'];
   let confidence: number;
   let confidenceKind: CareerDecision['confidenceKind'];
 
-  if (strategy === 'EMERGENCY_EXIT' || score >= 80) {
+  // v55.0 (Phase 5): risk tolerance shifts the stay/leave thresholds.
+  //   conservative → leave later (higher bar)   leaveNow 80 / leave90 65
+  //   moderate     → leaveNow 72 / leave90 58
+  //   aggressive   → leave earlier (lower bar)   leaveNow 62 / leave90 48
+  //   null/unset   → baseline (unchanged)        leaveNow 80 / leave90 65
+  const leaveNowAt =
+    riskTolerance === 'aggressive'   ? 62 :
+    riskTolerance === 'moderate'     ? 72 :
+    80; // conservative + null baseline
+  const leave90At =
+    riskTolerance === 'aggressive'   ? 48 :
+    riskTolerance === 'moderate'     ? 58 :
+    65;
+
+  if (strategy === 'EMERGENCY_EXIT' || score >= leaveNowAt) {
     verdict = 'LEAVE_NOW'; confidence = 85; confidenceKind = 'modeled';
-  } else if (strategy === 'ACCELERATE_EXIT' || strategy === 'VISA_WINDOW_EXIT' || score >= 65) {
+  } else if (strategy === 'ACCELERATE_EXIT' || strategy === 'VISA_WINDOW_EXIT' || score >= leave90At) {
     verdict = 'LEAVE_WITHIN_90_DAYS'; confidence = 72; confidenceKind = 'modeled';
-  } else if (strategy === 'EQUITY_HARVEST_THEN_EXIT' || (score >= 45 && score < 65)) {
+  } else if (strategy === 'EQUITY_HARVEST_THEN_EXIT' || (score >= 45 && score < leave90At)) {
     verdict = 'STAY_AND_DEFEND'; confidence = 68; confidenceKind = 'estimated';
   } else {
     verdict = 'STAY_AND_MONITOR'; confidence = 80; confidenceKind = 'modeled';

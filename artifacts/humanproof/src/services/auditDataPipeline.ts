@@ -604,6 +604,8 @@ function buildStrategyPersonalizationSignals(
   skillPortfolioScore?: number;
   region?: string;
   targetRegion?: string;
+  geographicMobility?: 'none' | 'same_country' | 'global' | null;
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive' | null;
 } {
   const uf = (inputs.userFactors ?? {}) as any;
   const visaRisk = (hybridResult as any).visaRisk;
@@ -648,6 +650,9 @@ function buildStrategyPersonalizationSignals(
     skillPortfolioScore: skillPortfolioFit?.fitScore ?? undefined,
     region: companyData.region ?? undefined,
     targetRegion: uf.targetRegion ?? undefined,
+    // Phase 5 adaptive personalization signals
+    geographicMobility: uf.geographicMobility ?? null,
+    riskTolerance: uf.riskTolerance ?? null,
   };
 }
 
@@ -2827,11 +2832,21 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
   try {
     const uf = inputs.userFactors as any;
     const scoreTrajectory = (hybridResult as any).scoreTrajectory;
+    // Phase 5: debt obligations shorten effective runway (higher monthly burn).
+    // Only adjust when both expenses and debt are known, so we never inflate risk
+    // from a missing field. runway × expenses/(expenses+debt).
+    const _baseRunway = inputs.financialRunwayMonths ?? 0;
+    const _debtMonthly = uf.monthlyDebtObligationsUsd ?? null;
+    const _expensesMonthly = uf.monthlyExpensesUsd ?? null;
+    const _effectiveRunway =
+      _debtMonthly != null && _debtMonthly > 0 && _expensesMonthly != null && _expensesMonthly > 0
+        ? Math.round(_baseRunway * (_expensesMonthly / (_expensesMonthly + _debtMonthly)) * 10) / 10
+        : _baseRunway;
     const strategySynthesis = computeStrategySynthesis({
       currentScore: hybridResult.total,
       collapseStage: (hybridResult as any).collapseStage ?? null,
       tenureYears: inputs.userFactors.tenureYears ?? 3,
-      financialRunwayMonths: inputs.financialRunwayMonths ?? 0,
+      financialRunwayMonths: _effectiveRunway,
       performanceTier: inputs.userFactors.performanceTier ?? 'average',
       industry: companyData.industry ?? 'technology',
       experience: hybridResult.experience ?? '5-10',
@@ -2860,6 +2875,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       hybridResult.total ?? 0,
       _strat,
       { L1: _bd.L1, L2: _bd.L2, L3: _bd.L3, L4: _bd.L4, L5: _bd.L5 },
+      ((inputs.userFactors ?? {}) as any).riskTolerance ?? null,
     );
 
     // Phase 3 (Career OS): attach causal explanation from top breakdown dimensions.

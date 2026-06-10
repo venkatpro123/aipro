@@ -164,6 +164,20 @@ export interface UserProfile {
   // ── Phase 4: Career Twin ──────────────────────────────────────────────────
   /** Primary career goal set during onboarding — drives recommendation framing */
   primaryGoal?: string | null;
+
+  // ── Phase 5: Adaptive personalization ─────────────────────────────────────
+  /** Shifts the LEAVE_NOW decision threshold: conservative=80, moderate=70, aggressive=60 */
+  riskTolerance?: 'conservative' | 'moderate' | 'aggressive' | null;
+  /** 'none' suppresses GEOGRAPHIC_ARBITRAGE strategy; 'global' enables cross-border moves */
+  geographicMobility?: 'none' | 'same_country' | 'global' | null;
+  /** Free-form constraints that filter recommendations (e.g. 'no_travel', 'visa_sponsor_required') */
+  jobSearchConstraints?: string[] | null;
+  /** Monthly debt servicing in USD — subtracted alongside expenses to derive effective runway */
+  monthlyDebtObligationsUsd?: number | null;
+  /** Quality of relationship with current manager — informs internal-mobility advice */
+  managerRelationshipQuality?: 'strong' | 'neutral' | 'strained' | 'unknown' | null;
+  /** What the user optimizes for (e.g. 'stability', 'growth', 'compensation', 'flexibility') */
+  careerValues?: string[] | null;
 }
 
 export type UniquenessKnowledgeType =
@@ -215,6 +229,15 @@ const V16_SELECT_COLUMNS = [
   'citizenship_region',
   // v40.1 performance tier
   'performance_tier',
+  // Phase 4 career twin
+  'primary_goal',
+  // Phase 5 adaptive personalization
+  'risk_tolerance',
+  'geographic_mobility',
+  'job_search_constraints',
+  'monthly_debt_obligations_usd',
+  'manager_relationship_quality',
+  'career_values',
 ].join(', ');
 
 // ─── Row mapper ───────────────────────────────────────────────────────────────
@@ -266,6 +289,13 @@ function rowToProfile(data: Record<string, any>): UserProfile {
     performanceTier: data.performance_tier ?? null,
     // Phase 4: Career Twin
     primaryGoal: data.primary_goal ?? null,
+    // Phase 5: Adaptive personalization
+    riskTolerance: data.risk_tolerance ?? null,
+    geographicMobility: data.geographic_mobility ?? null,
+    jobSearchConstraints: data.job_search_constraints ?? null,
+    monthlyDebtObligationsUsd: data.monthly_debt_obligations_usd != null ? Number(data.monthly_debt_obligations_usd) : null,
+    managerRelationshipQuality: data.manager_relationship_quality ?? null,
+    careerValues: data.career_values ?? null,
   };
 }
 
@@ -359,6 +389,14 @@ export async function upsertUserProfile(
 
   // ── Phase 4: Career Twin ─────────────────────────────────────────────────
   if (patch.primaryGoal               !== undefined) row.primary_goal               = patch.primaryGoal;
+
+  // ── Phase 5: Adaptive personalization ────────────────────────────────────
+  if (patch.riskTolerance             !== undefined) row.risk_tolerance             = patch.riskTolerance;
+  if (patch.geographicMobility        !== undefined) row.geographic_mobility        = patch.geographicMobility;
+  if (patch.jobSearchConstraints      !== undefined) row.job_search_constraints     = patch.jobSearchConstraints;
+  if (patch.monthlyDebtObligationsUsd !== undefined) row.monthly_debt_obligations_usd = patch.monthlyDebtObligationsUsd;
+  if (patch.managerRelationshipQuality !== undefined) row.manager_relationship_quality = patch.managerRelationshipQuality;
+  if (patch.careerValues              !== undefined) row.career_values              = patch.careerValues;
 
   const { error } = await supabase
     .from('user_profiles')

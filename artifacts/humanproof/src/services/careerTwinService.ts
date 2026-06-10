@@ -172,6 +172,44 @@ export async function syncTwinFromProfile(
 }
 
 /**
+ * Phase 5: Load the twin's "living model" fields not surfaced by loadCareerTwin —
+ * the audit-score sparkline and per-dimension outcome success rates. Used by
+ * CareerTwinPanel to visualize how the twin has evolved.
+ */
+export interface TwinLivingState {
+  scoreHistory: Array<{ date: string; score: number; company?: string; role?: string }>;
+  outcomeSuccessRates: Record<string, number>;
+  twinHealth: 'rich' | 'partial' | 'sparse';
+  profileCompleteness: number | null;
+  twinVersion: number;
+  actionsCompletedTotal: number;
+  lastOutcomeSync: string | null;
+}
+
+export async function loadTwinLivingState(): Promise<TwinLivingState | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data, error } = await supabase
+    .from('career_twin_state')
+    .select('audit_score_history, outcome_success_rates, twin_health, profile_completeness, twin_version, actions_completed_total, last_outcome_sync')
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const row = data as Record<string, unknown>;
+  return {
+    scoreHistory: (row.audit_score_history as TwinLivingState['scoreHistory']) ?? [],
+    outcomeSuccessRates: (row.outcome_success_rates as Record<string, number>) ?? {},
+    twinHealth: (row.twin_health as TwinLivingState['twinHealth']) ?? 'sparse',
+    profileCompleteness: (row.profile_completeness as number) ?? null,
+    twinVersion: (row.twin_version as number) ?? 0,
+    actionsCompletedTotal: (row.actions_completed_total as number) ?? 0,
+    lastOutcomeSync: (row.last_outcome_sync as string) ?? null,
+  };
+}
+
+/**
  * Derive influence signals for signalOrchestrator from twin state.
  * Pure function — safe to call with null (returns neutral defaults).
  */

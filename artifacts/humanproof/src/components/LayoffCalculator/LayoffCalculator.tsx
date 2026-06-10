@@ -509,6 +509,13 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab, onAfterReveal, 
                                                    ? { selfRatedSkills:      userProfile.selfRatedSkills }       : {}),
       ...(userProfile?.targetSkills?.length    && !((_baseUserFactors as any).targetSkills?.length)
                                                    ? { targetSkills:         userProfile.targetSkills }          : {}),
+      // Phase 5 adaptive personalization: these gate the decision engine
+      // (riskTolerance shifts the stay/leave threshold; geographicMobility
+      // suppresses GEOGRAPHIC_ARBITRAGE) and the effective-runway calculation.
+      ...(userProfile?.riskTolerance       != null ? { riskTolerance:        userProfile.riskTolerance }        : {}),
+      ...(userProfile?.geographicMobility  != null ? { geographicMobility:   userProfile.geographicMobility }   : {}),
+      ...(userProfile?.monthlyDebtObligationsUsd != null
+                                                   ? { monthlyDebtObligationsUsd: userProfile.monthlyDebtObligationsUsd } : {}),
     };
 
     dispatch({
