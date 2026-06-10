@@ -170,6 +170,8 @@ import { invokeEdgeFunction } from "../infrastructure/requestId";
 // in `.catch(() => null)`.
 import { markFallback } from "./observability/withFallback";
 import { injectActionConsequences } from "./actionConsequenceEngine";
+// Phase 1 (Career OS): twin sync after every audit
+import { syncTwinFromProfile } from "./careerTwinService";
 
 const safeLower = (value: unknown, fallback = ""): string =>
   typeof value === "string" && value.trim().length > 0 ? value.toLowerCase() : fallback;
@@ -4199,6 +4201,13 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     inputs.roleTitle,
     inputs.department,
   ).catch(() => { /* non-fatal */ });
+
+  // Phase 1 (Career OS): record audit in career twin state (fire-and-forget).
+  // Full profile sync happens in CareerOSHome — here we only record the score history.
+  syncTwinFromProfile(
+    { jobTitle: inputs.roleTitle ?? undefined },
+    finalResult,
+  ).catch(() => {});
 
   return { result: finalResult, companyData, source: dataSource, _timer };
 }

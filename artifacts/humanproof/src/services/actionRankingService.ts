@@ -138,6 +138,8 @@ export interface RankingContext {
   hasDependents?: boolean | null;
   runwaySituation?: string | null;
   careerConfidenceScore?: number | null;
+  /** Phase 1 (Career OS): boosts derived from career memory patterns. */
+  patternBoosts?: { hasInaction?: boolean; hasPlateauPattern?: boolean } | null;
 }
 
 // Phase 5: cohort boost map — preloaded async by callers via loadCohortBoosts().
@@ -229,6 +231,10 @@ export function rankActions(
   const runwayMult   = runwayMultiplier(context?.runwaySituation);
   const confMult     = confidenceMultiplier(context?.careerConfidenceScore);
 
+  // Phase 1 (Career OS): pattern-derived boosts from career memory
+  const hasInaction = context?.patternBoosts?.hasInaction ?? false;
+  const hasPlateau  = context?.patternBoosts?.hasPlateauPattern ?? false;
+
   return actions
     .map((action) => {
       const impact = action.riskReductionPct ?? 5;
@@ -237,7 +243,16 @@ export function rankActions(
       const seniorityMult = seniorityMultiplier(action, profile?.tenureYears ?? null);
       // Phase 5: cohort outcome boost — actions proven to help users like this one rank higher
       const cohortMult = cohortBoosts?.get(action.id ?? action.title ?? '') ?? 1.0;
-      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult * cohortMult;
+      // Phase 1 (Career OS): memory pattern boost — repeated inaction → elevate quick wins;
+      // plateau → elevate skills/network actions to break stagnation
+      let patternMult = 1.0;
+      if (hasInaction && effort <= 16) {
+        patternMult = 1.15; // quick action (<= 2-day) gets urgency boost
+      } else if (hasPlateau) {
+        const cat = classifyActionCategory(action);
+        if (cat === 'skills' || cat === 'network') patternMult = 1.10;
+      }
+      const profileMult = salaryMult * visaMult * tenureMult * depMult * runwayMult * confMult * seniorityMult * cohortMult * patternMult;
 
       // Score = priority-weighted impact density × profile multiplier
       const rankScore = (impact * priorityMult * profileMult) / Math.max(1, effort);
@@ -248,6 +263,7 @@ export function rankActions(
       if (confMult !== 1.0)      contextParts.push(`conf=${confMult.toFixed(2)}`);
       if (seniorityMult !== 1.0) contextParts.push(`seniority=${seniorityMult.toFixed(2)}`);
       if (cohortMult !== 1.0)    contextParts.push(`cohort=${cohortMult.toFixed(2)}`);
+      if (patternMult !== 1.0)   contextParts.push(`pattern=${patternMult.toFixed(2)}`);
 
       const rationale =
         `priority=${(priorityMult).toFixed(2)} · ` +

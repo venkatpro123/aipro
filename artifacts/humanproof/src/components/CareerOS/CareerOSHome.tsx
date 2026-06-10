@@ -14,6 +14,7 @@ import { fetchUserProfile } from "../../services/userProfileService";
 import { getCareerMemorySummary } from "../../services/careerMemoryService";
 import { useAuth } from "../../context/AuthContext";
 import { MissionCard } from "./MissionCard";
+import { CareerOSMemoryPanel } from "./CareerOSMemoryPanel";
 import { ScoreExplainerPanel } from "../shared/ScoreExplainerPanel";
 import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
@@ -763,6 +764,7 @@ export function CareerOSHome() {
   }, [state.scoreResult]);
 
   const [feedbackBoosts, setFeedbackBoosts] = useState<Map<string, number>>(new Map());
+  const [patternBoosts, setPatternBoosts] = useState<{ hasInaction: boolean; hasPlateauPattern: boolean }>({ hasInaction: false, hasPlateauPattern: false });
   useEffect(() => {
     if (!user?.id || !state.scoreResult) return;
     const hr = state.scoreResult as HybridResult;
@@ -774,9 +776,9 @@ export function CareerOSHome() {
 
   const orchestratedFeed = useMemo(() => {
     if (!state.scoreResult) return null;
-    try { return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts }); }
+    try { return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts, patternBoosts }); }
     catch { return null; }
-  }, [state.scoreResult, userProfile, feedbackBoosts]);
+  }, [state.scoreResult, userProfile, feedbackBoosts, patternBoosts]);
 
   const primaryMove = orchestratedFeed?.primaryMove ?? null;
   const primaryMoveActionId = primaryMove?.action.id ?? primaryMove?.action.title ?? null;
@@ -878,6 +880,15 @@ export function CareerOSHome() {
                   Re-audit →
                 </a>
               </div>
+            )}
+
+            {/* 0. Career Memory — SYSTEM REMEMBERS */}
+            {hr && (
+              <CareerOSMemoryPanel
+                onPatternsDetected={(hasInaction, hasPlateau) =>
+                  setPatternBoosts({ hasInaction, hasPlateauPattern: hasPlateau })
+                }
+              />
             )}
 
             {/* 1. Career Health Indicator — WHERE AM I? */}

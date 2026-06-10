@@ -110,8 +110,27 @@ export async function syncTwinFromProfile(
   const filledCount = completenessFields.filter(v => v != null && v !== '').length;
   const profileCompleteness = Math.round((filledCount / completenessFields.length) * 100);
 
-  // Read existing decisions_log to preserve it on upsert
+  // Read existing state + audit_score_history to preserve on upsert
   const existing = await loadCareerTwin();
+
+  // Append current audit to score history (cap at 24 = ~2 years of monthly audits)
+  type HistEntry = { date: string; score: number; company?: string; role?: string };
+  let existingHistory: HistEntry[] = [];
+  if (existing) {
+    const { data: histRow } = await supabase
+      .from('career_twin_state')
+      .select('audit_score_history')
+      .eq('user_id', userId)
+      .maybeSingle();
+    existingHistory = ((histRow as Record<string, unknown>)?.audit_score_history as HistEntry[]) ?? [];
+  }
+  const histEntry: HistEntry = {
+    date: new Date().toISOString().slice(0, 10),
+    score: hybrid.total ?? 0,
+    company: (profile as Record<string, unknown>).companyName as string | undefined,
+    role: (profile as Record<string, unknown>).jobTitle as string | undefined,
+  };
+  const auditHistory = [...existingHistory, histEntry].slice(-24);
 
   const row = {
     user_id: userId,
@@ -132,6 +151,7 @@ export async function syncTwinFromProfile(
     actions_completed_this_week: existing?.actionsCompletedThisWeek ?? 0,
     actions_completed_total: existing?.actionsCompletedTotal ?? 0,
     last_interaction_at: new Date().toISOString(),
+    audit_score_history: auditHistory,
   };
 
   await supabase

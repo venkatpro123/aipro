@@ -115,6 +115,8 @@ export interface OrchestrateConfig {
   };
   /** Feedback boost map from getActionFeedbackBoosts(). 0=suppress, 1.3=elevate. */
   feedbackBoosts?: Map<string, number>;
+  /** Phase 1 (Career OS): pattern boosts from career memory (repeated_inaction / plateau). */
+  patternBoosts?: { hasInaction?: boolean; hasPlateauPattern?: boolean } | null;
 }
 
 const DEFAULT_CAP = 3;
