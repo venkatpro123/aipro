@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, lazy, Suspense } from "react";
+﻿import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   BrowserRouter as Router,
@@ -379,7 +379,33 @@ function MobileBottomNav({
   const isActive = useIsActive();
   const location = useLocation();
 
+  // Close on route change
   useEffect(() => { setMoreOpen(false); }, [location.pathname]);
+
+  // Lock body scroll and handle Escape when More sheet is open
+  useEffect(() => {
+    if (!moreOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
+
+  // Swipe-down gesture to close More sheet — useRef avoids re-renders on every touch move
+  const swipeStartY = useRef<number | null>(null);
+  function onTouchStart(e: React.TouchEvent) {
+    swipeStartY.current = e.touches[0].clientY;
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (swipeStartY.current == null) return;
+    const delta = e.changedTouches[0].clientY - swipeStartY.current;
+    if (delta > 60) setMoreOpen(false); // swipe down > 60px closes the sheet
+    swipeStartY.current = null;
+  }
 
   return (
     <>
@@ -438,7 +464,14 @@ function MobileBottomNav({
             onClick={() => setMoreOpen(false)}
             aria-hidden
           />
-          <div className="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
+          <div
+            className="more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More options"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+          >
             <div className="more-sheet-handle" />
             <p className="more-sheet-title">More pages</p>
 
