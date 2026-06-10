@@ -15,6 +15,7 @@ import { getCareerMemorySummary } from "../../services/careerMemoryService";
 import { useAuth } from "../../context/AuthContext";
 import { MissionCard } from "./MissionCard";
 import { CareerOSMemoryPanel } from "./CareerOSMemoryPanel";
+import { CareerDecisionCard } from "./CareerDecisionCard";
 import { ScoreExplainerPanel } from "../shared/ScoreExplainerPanel";
 import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
@@ -890,6 +891,9 @@ export function CareerOSHome() {
                 }
               />
             )}
+
+            {/* 0b. Decision Verdict — WHAT SHOULD I DO? (Phase 3: explicit stay/leave) */}
+            {hr && <CareerDecisionCard hr={hr} />}
 
             {/* 1. Career Health Indicator — WHERE AM I? */}
             {hr && <CareerHealthIndicator hr={hr} />}

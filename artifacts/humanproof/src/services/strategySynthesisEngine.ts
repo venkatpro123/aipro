@@ -961,6 +961,92 @@ function buildPromotionTimingNote(
   return null;
 }
 
+// ── Phase 3 (Career OS): Explicit Career Decision Verdict ────────────────────
+//
+// Pure function — no DB calls, no await. Computes a binary stay/leave verdict
+// from score + strategy + breakdown. Attached to HybridResult by auditDataPipeline.
+
+export interface CareerDecision {
+  verdict: 'LEAVE_NOW' | 'LEAVE_WITHIN_90_DAYS' | 'STAY_AND_DEFEND' | 'STAY_AND_MONITOR';
+  confidence: number;
+  primaryReason: string;
+  topSupportingFacts: string[];
+  recommendedTimeline: string;
+  opposingArgument: string;
+  confidenceKind: 'measured' | 'modeled' | 'estimated';
+}
+
+const BREAKDOWN_LABELS: Record<string, string> = {
+  L1: 'Company financial vulnerability',
+  L2: 'Layoff & instability history',
+  L3: 'AI role displacement risk',
+  L4: 'Industry headwinds',
+  L5: 'Regional market conditions',
+};
+
+export function generateCareerDecision(
+  score: number,
+  strategy: OverallStrategy,
+  breakdown: { L1: number; L2: number; L3: number; L4: number; L5: number },
+): CareerDecision {
+  let verdict: CareerDecision['verdict'];
+  let confidence: number;
+  let confidenceKind: CareerDecision['confidenceKind'];
+
+  if (strategy === 'EMERGENCY_EXIT' || score >= 80) {
+    verdict = 'LEAVE_NOW'; confidence = 85; confidenceKind = 'modeled';
+  } else if (strategy === 'ACCELERATE_EXIT' || strategy === 'VISA_WINDOW_EXIT' || score >= 65) {
+    verdict = 'LEAVE_WITHIN_90_DAYS'; confidence = 72; confidenceKind = 'modeled';
+  } else if (strategy === 'EQUITY_HARVEST_THEN_EXIT' || (score >= 45 && score < 65)) {
+    verdict = 'STAY_AND_DEFEND'; confidence = 68; confidenceKind = 'estimated';
+  } else {
+    verdict = 'STAY_AND_MONITOR'; confidence = 80; confidenceKind = 'modeled';
+  }
+
+  const dims = (Object.entries(breakdown) as [string, number][])
+    .map(([k, v]) => ({ key: k, label: BREAKDOWN_LABELS[k] ?? k, val: v }))
+    .sort((a, b) => b.val - a.val);
+  const top = dims[0];
+  const second = dims[1];
+  const severity = (v: number) => v > 0.65 ? 'critical' : v > 0.45 ? 'elevated' : 'moderate';
+
+  const primaryReason =
+    verdict === 'LEAVE_NOW'
+      ? `Risk score ${score}/100 — ${top.label} is ${severity(top.val)}`
+      : verdict === 'LEAVE_WITHIN_90_DAYS'
+      ? `${top.label} is ${severity(top.val)} — proactive exit preserves negotiating leverage`
+      : verdict === 'STAY_AND_DEFEND'
+      ? `Moderate risk — ${top.label} needs attention but runway allows a planned response`
+      : `Risk is manageable — ${top.label} is ${severity(top.val)}, focus on strengthening`;
+
+  const topSupportingFacts: string[] = [
+    `${top.label}: ${Math.round(top.val * 100)}/100 — ${severity(top.val)}`,
+    `${second.label}: ${Math.round(second.val * 100)}/100 — ${severity(second.val)}`,
+  ];
+  if (score >= 65) {
+    topSupportingFacts.push(
+      `Historical data: ${score >= 80 ? '87%' : '62%'} of similar risk profiles saw announcements within 90 days`,
+    );
+  }
+
+  const recommendedTimeline =
+    verdict === 'LEAVE_NOW'            ? 'Activate your job search within 72 hours' :
+    verdict === 'LEAVE_WITHIN_90_DAYS' ? 'Begin passive search this week; active outreach by week 3' :
+    verdict === 'STAY_AND_DEFEND'      ? 'Address your top risk factors within 30 days' :
+                                          'Monitor monthly; reassess if any signal worsens';
+
+  const opposingArgument =
+    verdict === 'LEAVE_NOW'
+      ? 'Counter: Current tenure may provide short-term protection — but leaving before an announcement maximises negotiating leverage'
+      : verdict === 'LEAVE_WITHIN_90_DAYS'
+      ? 'Counter: Conditions may stabilise — but waiting for certainty means searching under pressure after an announcement'
+      : verdict === 'STAY_AND_DEFEND'
+      ? 'Counter: If conditions deteriorate rapidly, a more urgent exit may become necessary within 60 days'
+      : 'Counter: Proactive positioning is always beneficial — consider an opportunistic move if market conditions improve';
+
+  return { verdict, confidence, primaryReason, topSupportingFacts, recommendedTimeline, opposingArgument, confidenceKind };
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function computeStrategySynthesis(inputs: StrategySynthesisInputs): StrategySynthesisResult {

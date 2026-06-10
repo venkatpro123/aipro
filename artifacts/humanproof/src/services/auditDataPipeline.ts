@@ -72,7 +72,7 @@ import { computePeerContagionLive } from "./peerContagionLiveAdapter";
 import { computeEmergencyResponse } from "./emergencyResponseProtocol";
 import { computeCareerConfidence } from "./careerConfidenceEngine";
 import { computeNetworkLeverage } from "./networkLeverageEngine";
-import { computeStrategySynthesis } from "./strategySynthesisEngine";
+import { computeStrategySynthesis, generateCareerDecision } from "./strategySynthesisEngine";
 import { getRolePrefix as getStrategyRoleFamily } from "./careerInsuranceEngine";
 import { computeModelCalibration } from "./modelCalibrationEngine";
 // v14.0 intelligence layers (29–38 + calibration)
@@ -2851,6 +2851,35 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       ...buildStrategyPersonalizationSignals(inputs, companyData, hybridResult, resolvedRole),
     });
     (hybridResult as any).strategySynthesis = strategySynthesis;
+
+    // Phase 3 (Career OS): attach explicit stay/leave verdict immediately after strategy.
+    // Pure sync function — no await, no DB call.
+    const _strat = strategySynthesis.overallStrategy;
+    const _bd = hybridResult.breakdown;
+    (hybridResult as any).careerDecision = generateCareerDecision(
+      hybridResult.total ?? 0,
+      _strat,
+      { L1: _bd.L1, L2: _bd.L2, L3: _bd.L3, L4: _bd.L4, L5: _bd.L5 },
+    );
+
+    // Phase 3 (Career OS): attach causal explanation from top breakdown dimensions.
+    const _causalDims = [
+      { key: 'L1', label: 'Company financial vulnerability', val: _bd.L1 },
+      { key: 'L2', label: 'Layoff & instability history',   val: _bd.L2 },
+      { key: 'L3', label: 'AI role displacement risk',      val: _bd.L3 },
+      { key: 'L4', label: 'Industry headwinds',             val: _bd.L4 },
+      { key: 'L5', label: 'Regional market conditions',     val: _bd.L5 },
+    ].sort((a, b) => b.val - a.val);
+    const _topCausal = _causalDims[0];
+    const _secCausal = _causalDims[1];
+    (hybridResult as any).causalExplanation = {
+      topCausalFactor: _topCausal.label,
+      causalChain: `${_topCausal.label} → ${_secCausal.label} → overall risk elevation`,
+      scoreIncreasedBecause: [
+        `${_topCausal.label} accounts for the largest share of risk at ${Math.round(_topCausal.val * 100)}/100.`,
+        `${_secCausal.label} is the secondary contributor at ${Math.round(_secCausal.val * 100)}/100.`,
+      ],
+    };
   } catch (e) {
     noteEngineFailure('strategySynthesis', e);
   }

@@ -36,7 +36,7 @@ import type { EmergencyResponseResult } from "../services/emergencyResponseProto
 import type { CareerConfidenceResult } from "../services/careerConfidenceEngine";
 import type { NetworkLeverageResult } from "../services/networkLeverageEngine";
 import type { OfferEvaluationResult } from "../services/offerEvaluationEngine";
-import type { StrategySynthesisResult } from "../services/strategySynthesisEngine";
+import type { StrategySynthesisResult, CareerDecision } from "../services/strategySynthesisEngine";
 import type { ModelCalibrationResult } from "../services/modelCalibrationEngine";
 // v14.0 intelligence layers (Layers 29–38)
 import type { CompensationRiskResult } from "../services/compensationRiskEngine";
@@ -918,6 +918,23 @@ export interface HybridResult {
    * Answers: "Given EVERYTHING, what is THE strategy?"
    */
   strategySynthesis?: StrategySynthesisResult;
+
+  /**
+   * Phase 3 (Career OS): Explicit stay/leave verdict computed from score + strategy + breakdown.
+   * Pure function — attached by auditDataPipeline after strategy synthesis.
+   * Displayed prominently as CareerDecisionCard when verdict is LEAVE_NOW / LEAVE_WITHIN_90_DAYS.
+   */
+  careerDecision?: CareerDecision;
+
+  /**
+   * Phase 3 (Career OS): Causal explanation of the score for user-facing display.
+   * Answers: "Why is my score this high?" — maps top breakdown dims to plain-English sentences.
+   */
+  causalExplanation?: {
+    topCausalFactor: string;      // "AI displacement risk"
+    causalChain: string;          // "AI exposure → role demand shift → company hiring freeze"
+    scoreIncreasedBecause: string[]; // 2 sentences derived from top-2 breakdown dims
+  };
 
   /**
    * Model Calibration Engine — engine accuracy and trust metrics.
