@@ -1,158 +1,48 @@
-// ResumeReadinessPanel.tsx — ATS + AI resume readiness scoring
-import { useState, useEffect } from 'react';
-import { CheckCircle, Circle, Save } from 'lucide-react';
-import { supabase } from '../../../utils/supabase';
+// ResumeReadinessPanel.tsx — Resume Intelligence Engine (rebuilt from checklist → diagnosis).
+// Determines ATS match, achievement density, keyword coverage, AI relevance, and the
+// specific missing keywords + ranked fixes with estimated interview-probability impact.
+
+import { useEffect, useState } from 'react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
+import { computeResumeIntelligence } from '../../../services/readinessDiagnostics';
+import { DiagnosisHeader, SubScoreBars, ImprovementList } from './_readinessShared';
 
-interface Props {
-  scoreResult: HybridResult | null;
-}
-
-interface CheckItem {
-  id: string;
-  label: string;
-  description: string;
-  points: number;
-}
-
-const RESUME_CHECKLIST: CheckItem[] = [
-  { id: 'ats_keywords',    label: 'ATS-optimized keywords',         description: 'Role-specific keywords appear in the first 200 words.',   points: 15 },
-  { id: 'quantified',      label: 'Quantified achievements',        description: 'At least 3 metrics (%, $, #) in the experience section.',  points: 20 },
-  { id: 'ai_tools',        label: 'AI tools mentioned',             description: 'At least 2 AI/automation tools listed in skills section.',  points: 15 },
-  { id: 'linkedin_url',    label: 'LinkedIn URL present',           description: 'Clickable LinkedIn URL in the header/contact block.',       points: 10 },
-  { id: 'action_verbs',    label: 'Strong action verbs',            description: 'Each bullet starts with a past-tense action verb.',         points: 10 },
-  { id: 'no_photos',       label: 'Photo-free for US/UK markets',   description: 'No photos or personal details that trigger ATS rejection.',  points: 5  },
-  { id: 'one_page',        label: '1–2 pages (for <10 yrs exp)',     description: 'Concise length appropriate for your experience level.',     points: 10 },
-  { id: 'recent_dates',    label: 'Dates are current and clear',    description: 'Employment gaps are explained; dates use MM/YYYY format.',   points: 10 },
-  { id: 'tailored',        label: 'Tailored for target role',       description: 'Resume headline/summary matches the target job description.', points: 5 },
-];
-
-function computeScore(checked: Set<string>): number {
-  const total = RESUME_CHECKLIST.reduce((s, i) => s + i.points, 0);
-  const earned = RESUME_CHECKLIST.filter(i => checked.has(i.id)).reduce((s, i) => s + i.points, 0);
-  return Math.round((earned / total) * 100);
-}
+interface Props { scoreResult: HybridResult | null }
 
 export function ResumeReadinessPanel({ scoreResult }: Props) {
-  const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  useEffect(() => { let c = false; fetchUserProfile().then(p => { if (!c) setProfile(p); }).catch(() => {}); return () => { c = true; }; }, []);
 
-  const score = computeScore(checked);
-  const color = score >= 80 ? '#10b981' : score >= 55 ? '#f59e0b' : '#ef4444';
-
-  function toggle(id: string) {
-    setChecked(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-    setSaved(false);
-  }
-
-  async function save() {
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('user_profiles').upsert({
-          user_id: user.id,
-          resume_readiness_score: score,
-        }, { onConflict: 'user_id' });
-      }
-    } catch { /* ignore */ }
-    setSaving(false);
-    setSaved(true);
-  }
+  if (!scoreResult) return <EmptyState icon="📄" line="The Resume Intelligence engine derives your ATS match and missing keywords from your role + skill profile." />;
+  const d = computeResumeIntelligence(scoreResult, profile);
 
   return (
     <div>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 6 }}>
-          Resume Readiness
-        </div>
-        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>
-          Self-assessment checklist to score your resume's market readiness.
-        </div>
-      </div>
-
-      {/* Score ring */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 20,
-        padding: '20px 24px',
-        borderRadius: 14,
-        background: `${color}10`,
-        border: `1px solid ${color}33`,
-        marginBottom: 24,
-      }}>
-        <div style={{ fontWeight: 800, fontSize: 48, color, lineHeight: 1 }}>{score}</div>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text)' }}>
-            {score >= 80 ? 'Market Ready' : score >= 55 ? 'Needs Work' : 'Not Ready'}
+      <DiagnosisHeader title="RESUME INTELLIGENCE" d={d} />
+      <SubScoreBars subScores={d.subScores} />
+      {d.missingKeywords.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: '#f59e0b', letterSpacing: '0.1em', marginBottom: 8 }}>MISSING HIGH-DEMAND KEYWORDS</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {d.missingKeywords.map((k, i) => (
+              <span key={i} style={{ fontSize: 12, fontWeight: 700, padding: '4px 11px', borderRadius: 7, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', color: '#f59e0b' }}>{k}</span>
+            ))}
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
-            Resume readiness score · {checked.size} of {RESUME_CHECKLIST.length} items completed
-          </div>
+          <div style={{ marginTop: 8, fontSize: 11.5, color: 'rgba(255,255,255,0.45)' }}>In active demand for your role and absent from your likely keyword set — each one you add lifts ATS ranking.</div>
         </div>
-        <button
-          onClick={save}
-          disabled={saving}
-          style={{
-            marginLeft: 'auto',
-            background: '#a78bfa',
-            border: 'none',
-            borderRadius: 8,
-            padding: '8px 14px',
-            color: '#000',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          <Save size={14} /> {saved ? 'Saved!' : 'Save Score'}
-        </button>
-      </div>
+      )}
+      <ImprovementList improvements={d.improvements} unit="% interview prob" />
+    </div>
+  );
+}
 
-      {/* Checklist */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {RESUME_CHECKLIST.map(item => {
-          const isDone = checked.has(item.id);
-          return (
-            <div
-              key={item.id}
-              className="card-premium"
-              style={{
-                padding: '14px 16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-                border: isDone ? '1px solid rgba(167,139,250,0.4)' : undefined,
-              }}
-              onClick={() => toggle(item.id)}
-            >
-              {isDone
-                ? <CheckCircle size={18} color="#a78bfa" style={{ flexShrink: 0, marginTop: 1 }} />
-                : <Circle size={18} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, marginTop: 1 }} />
-              }
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: isDone ? '#a78bfa' : 'var(--text)' }}>
-                  {item.label}
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>+{item.points} pts</span>
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>
-                  {item.description}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+export function EmptyState({ icon, line }: { icon: string; line: string }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '56px 24px', background: 'rgba(167,139,250,0.05)', borderRadius: 16, border: '1px solid rgba(167,139,250,0.15)' }}>
+      <div style={{ fontSize: 38, marginBottom: 14 }}>{icon}</div>
+      <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--text)', marginBottom: 8 }}>Run an audit to unlock this diagnosis</div>
+      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, maxWidth: 380, margin: '0 auto' }}>{line}</div>
     </div>
   );
 }

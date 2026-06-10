@@ -1,7 +1,9 @@
 // CareerReadinessCenter.tsx — Tool 3: Career Readiness Center
+// A Career Preparation OS: a Hirability Command Center over five diagnostic engines.
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
+import { HirabilityCommandCenter } from './HirabilityCommandCenter';
 import { ResumeReadinessPanel } from './ResumeReadinessPanel';
 import { LinkedInOptimizationPanel } from './LinkedInOptimizationPanel';
 import { InterviewReadinessPanel } from './InterviewReadinessPanel';
@@ -9,15 +11,16 @@ import { PortfolioReadinessPanel } from './PortfolioReadinessPanel';
 import { ReferralReadinessPanel } from './ReferralReadinessPanel';
 
 const TABS = [
-  { id: 'resume',    label: 'Resume'    },
-  { id: 'linkedin',  label: 'LinkedIn'  },
-  { id: 'interview', label: 'Interview' },
-  { id: 'portfolio', label: 'Portfolio' },
-  { id: 'referral',  label: 'Referrals' },
+  { id: 'hirability', label: 'Hirability' },
+  { id: 'resume',     label: 'Resume'     },
+  { id: 'linkedin',   label: 'LinkedIn'   },
+  { id: 'interview',  label: 'Interview'  },
+  { id: 'portfolio',  label: 'Portfolio'  },
+  { id: 'referral',   label: 'Referrals'  },
 ];
 
 export function CareerReadinessCenter() {
-  const [activeTab, setActiveTab] = useState('resume');
+  const [activeTab, setActiveTab] = useState('hirability');
   const { state } = useLayoff();
   const scoreResult = state.scoreResult as import('../../../types/hybridResult').HybridResult | null;
 
@@ -54,6 +57,7 @@ export function CareerReadinessCenter() {
           </TabsTrigger>
         ))}
       </TabsList>
+      <TabsContent value="hirability"><HirabilityCommandCenter scoreResult={scoreResult} onJumpToTab={setActiveTab} /></TabsContent>
       <TabsContent value="resume">    <ResumeReadinessPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="linkedin">  <LinkedInOptimizationPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="interview"> <InterviewReadinessPanel scoreResult={scoreResult} /></TabsContent>
