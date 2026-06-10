@@ -1,7 +1,10 @@
 // LayoffDefenseCenter.tsx — Real-Time Career Defense Engine
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { useLayoff } from '../../../context/LayoffContext';
+import type { HybridResult } from '../../../types/hybridResult';
+import { DefenseIntelligenceProvider, useDefenseIntelligence } from './DefenseIntelligenceContext';
+import { CareerDefenseTimeline } from './CareerDefenseTimeline';
 import { DefenseCommandPanel } from './DefenseCommandPanel';
 import { DefenseReadinessPanel } from './DefenseReadinessPanel';
 import { DefensePriorityEngine } from './DefensePriorityEngine';
@@ -23,35 +26,47 @@ const TABS = [
   { id: 'forecast',   label: 'Forecast'         },
 ];
 
-export function LayoffDefenseCenter() {
-  const [activeTab, setActiveTab] = useState('priority');
-  const { state } = useLayoff();
-  const scoreResult = state.scoreResult as import('../../../types/hybridResult').HybridResult | null;
-
-  if (!scoreResult) {
-    return (
-      <div style={{
-        textAlign: 'center', padding: '60px 24px',
-        background: 'rgba(239,68,68,0.05)', borderRadius: 16,
-        border: '1px solid rgba(239,68,68,0.15)',
-      }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>🛡️</div>
-        <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 8 }}>
-          Run your first audit to unlock
-        </div>
-        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, maxWidth: 380, margin: '0 auto' }}>
-          The Active Defence System analyses your personal risk profile and generates
-          ranked actions, decision simulations, readiness scores, and continuous monitoring.
-        </div>
+function NoAuditState() {
+  return (
+    <div style={{
+      textAlign: 'center', padding: '60px 24px',
+      background: 'rgba(239,68,68,0.05)', borderRadius: 16,
+      border: '1px solid rgba(239,68,68,0.15)',
+    }}>
+      <div style={{ fontSize: 40, marginBottom: 16 }}>🛡️</div>
+      <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 8 }}>
+        Run your first audit to unlock
       </div>
-    );
-  }
+      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, maxWidth: 380, margin: '0 auto' }}>
+        The Active Defence System analyses your personal risk profile and generates
+        ranked actions, decision simulations, readiness scores, and continuous monitoring.
+      </div>
+    </div>
+  );
+}
+
+function TabNavigationBridge({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
+  const { requestedTab, setRequestedTab } = useDefenseIntelligence();
+
+  useEffect(() => {
+    if (requestedTab) {
+      setActiveTab(requestedTab);
+      setRequestedTab(null); // clear after navigating
+    }
+  }, [requestedTab, setActiveTab, setRequestedTab]);
+
+  return null;
+}
+
+function LayoffDefenseCenterInner({ scoreResult }: { scoreResult: HybridResult }) {
+  const [activeTab, setActiveTab] = useState('priority');
 
   return (
     <div>
-      {/* ── Command panel + readiness — always visible above all tabs ────── */}
+      <TabNavigationBridge setActiveTab={setActiveTab} />
+
+      <CareerDefenseTimeline scoreResult={scoreResult} />
       <DefenseCommandPanel scoreResult={scoreResult} />
-      <DefenseReadinessPanel scoreResult={scoreResult} />
 
       {/* ── Tab navigation ────────────────────────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -95,7 +110,7 @@ export function LayoffDefenseCenter() {
         </TabsContent>
 
         <TabsContent value="monitoring">
-          <LiveMonitoringFeed />
+          <LiveMonitoringFeed scoreResult={scoreResult} />
         </TabsContent>
 
         <TabsContent value="outcomes">
@@ -111,5 +126,20 @@ export function LayoffDefenseCenter() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export function LayoffDefenseCenter() {
+  const { state } = useLayoff();
+  const scoreResult = state.scoreResult as HybridResult | null;
+
+  if (!scoreResult) {
+    return <NoAuditState />;
+  }
+
+  return (
+    <DefenseIntelligenceProvider>
+      <LayoffDefenseCenterInner scoreResult={scoreResult} />
+    </DefenseIntelligenceProvider>
   );
 }

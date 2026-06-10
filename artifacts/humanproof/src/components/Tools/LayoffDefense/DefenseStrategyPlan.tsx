@@ -59,6 +59,74 @@ function distributeLevers(levers: SensitivityLever[], phases: string[]): Sensiti
   return phases.map((_, i) => levers.slice(i * perPhase, (i + 1) * perPhase));
 }
 
+// ── Trajectory ────────────────────────────────────────────────────────────────
+
+interface TrajectorySnapshot {
+  label: string;
+  risk: number;
+  ai: number;      // 0-100 (AI readiness — higher = more ready)
+  network: number; // 0-100 (network strength)
+}
+
+function buildTrajectory(hr: HybridResult): TrajectorySnapshot[] {
+  const levers      = hr.scoreSensitivity?.levers ?? [];
+  const base        = hr.total ?? 50;
+  const D1Raw       = (hr.breakdown?.['D1'] ?? 0.45);
+  const D1          = D1Raw * 100; // convert 0-1 to 0-100
+  const networkBase = (hr as any).networkLeverage?.networkScore ?? 35;
+
+  const getSnapshot = (label: string, planLevers: SensitivityLever[]): TrajectorySnapshot => {
+    const riskDrop = planLevers.reduce((s, l) => s + l.scoreDropIfImproved, 0);
+    const risk     = Math.max(5, Math.round(base - riskDrop));
+
+    // AI improvement: each AI-related lever (D1/D6) drops D1 proportionally
+    const aiLevers      = planLevers.filter(l => l.dimension === 'D1' || l.dimension === 'D6');
+    const aiImprovement = aiLevers.reduce((s, l) => s + l.scoreDropIfImproved * 2.5, 0);
+    const ai            = Math.min(95, Math.round((100 - D1) + aiImprovement));
+
+    // Network improvement: non-AI levers build network
+    const nonAiLevers   = planLevers.filter(l => l.dimension !== 'D1' && l.dimension !== 'D6');
+    const netImprovement = nonAiLevers.length * 4;
+    const network       = Math.min(95, Math.round(networkBase + netImprovement));
+
+    return { label, risk, ai, network };
+  };
+
+  const today: TrajectorySnapshot = {
+    label:   'Today',
+    risk:    Math.round(base),
+    ai:      Math.round(100 - D1),
+    network: Math.round(networkBase),
+  };
+
+  const levers30  = levers.filter(l => l.feasibility === 'immediate' || l.feasibility === 'short_term').slice(0, 3);
+  const levers90  = levers.slice(0, 5);
+  const levers180 = levers.slice(0, 7);
+
+  return [
+    today,
+    getSnapshot('30 Days', levers30),
+    getSnapshot('90 Days', levers90),
+    getSnapshot('180 Days', levers180),
+  ];
+}
+
+function riskColor(risk: number): string {
+  if (risk > 65) return '#ef4444';
+  if (risk > 45) return '#f59e0b';
+  return '#10b981';
+}
+
+function finalRiskLabel(risk: number): string {
+  if (risk > 60) return 'still elevated';
+  if (risk > 44) return 'reduced exposure';
+  if (risk > 29) return 'strong protection';
+  return 'minimal risk';
+}
+
+// Node ring colors by position (today=white, 30=red, 90=amber, 180=green)
+const NODE_COLORS = ['#ffffff', '#ef4444', '#f59e0b', '#10b981'];
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -75,8 +143,8 @@ export function DefenseStrategyPlan({ scoreResult }: Props) {
   const distributed = distributeLevers(planLevers, phases);
 
   // Project score after completing all plan actions
-  const totalDrop     = planLevers.reduce((acc, l) => acc + l.scoreDropIfImproved, 0);
-  const currentScore  = scoreResult.total ?? 0;
+  const totalDrop      = planLevers.reduce((acc, l) => acc + l.scoreDropIfImproved, 0);
+  const currentScore   = scoreResult.total ?? 0;
   const projectedScore = Math.max(5, currentScore - totalDrop);
 
   // Escape paths (available for 180-day plan)
@@ -86,8 +154,175 @@ export function DefenseStrategyPlan({ scoreResult }: Props) {
 
   const actionCount = planLevers.length;
 
+  // Trajectory
+  const trajectory = buildTrajectory(scoreResult);
+  const finalSnap  = trajectory[trajectory.length - 1];
+
   return (
     <div>
+
+      {/* ── TRANSFORMATION TRAJECTORY ─────────────────────────────────────── */}
+      <div style={{
+        marginBottom: 28,
+        padding: '20px 20px 18px',
+        borderRadius: 14,
+        background: 'rgba(255,255,255,0.025)',
+        border: '1px solid rgba(255,255,255,0.09)',
+      }}>
+        {/* Section heading */}
+        <div style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: '0.13em',
+          color: 'rgba(255,255,255,0.35)',
+          marginBottom: 20,
+          fontFamily: 'var(--font-mono, monospace)',
+        }}>
+          TRANSFORMATION TRAJECTORY
+        </div>
+
+        {/* Nodes row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
+          {trajectory.map((snap, idx) => {
+            const nodeColor  = NODE_COLORS[idx];
+            const isToday    = idx === 0;
+            const isLast     = idx === trajectory.length - 1;
+            const aiColor    = snap.ai >= (trajectory[0].ai)   ? '#10b981' : 'rgba(255,255,255,0.4)';
+            const netColor   = snap.network >= (trajectory[0].network) ? '#10b981' : 'rgba(255,255,255,0.4)';
+
+            return (
+              <div key={snap.label} style={{ display: 'flex', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+                {/* Node + metrics */}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {/* Label */}
+                  <div style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    color: isToday ? 'rgba(255,255,255,0.55)' : nodeColor,
+                    letterSpacing: '0.07em',
+                    marginBottom: 8,
+                    fontFamily: 'var(--font-mono, monospace)',
+                    textTransform: 'uppercase' as const,
+                    whiteSpace: 'nowrap' as const,
+                  }}>
+                    {snap.label}
+                  </div>
+
+                  {/* Circle */}
+                  <div style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: '50%',
+                    border: `2px solid ${nodeColor}`,
+                    background: isToday ? nodeColor : `${nodeColor}22`,
+                    boxShadow: isToday ? `0 0 10px ${nodeColor}90` : `0 0 6px ${nodeColor}55`,
+                    flexShrink: 0,
+                    marginBottom: 10,
+                  }} />
+
+                  {/* Metrics */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 3,
+                  }}>
+                    {/* Risk */}
+                    <div style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: riskColor(snap.risk),
+                      fontFamily: 'var(--font-mono, monospace)',
+                      lineHeight: 1,
+                    }}>
+                      {snap.risk}
+                    </div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      RISK
+                    </div>
+
+                    {/* AI */}
+                    <div style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: aiColor,
+                      fontFamily: 'var(--font-mono, monospace)',
+                      lineHeight: 1,
+                    }}>
+                      {snap.ai}
+                    </div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.05em', marginBottom: 2 }}>
+                      AI
+                    </div>
+
+                    {/* Net */}
+                    <div style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: netColor,
+                      fontFamily: 'var(--font-mono, monospace)',
+                      lineHeight: 1,
+                    }}>
+                      {snap.network}
+                    </div>
+                    <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.05em' }}>
+                      NET
+                    </div>
+                  </div>
+                </div>
+
+                {/* Connector line — not after last node */}
+                {!isLast && (
+                  <div style={{
+                    // Align connector to circle vertically: label(~24px) + circle(~14px/2 = 7px) = ~31px from top
+                    marginTop: 31,
+                    flexShrink: 0,
+                    width: 0,
+                    flex: '0 0 auto',
+                    alignSelf: 'flex-start',
+                    display: 'flex',
+                    alignItems: 'center',
+                    // We use a pseudo-connector via border trick on a wrapping div
+                  }}>
+                    <div style={{
+                      width: 20,
+                      height: 1,
+                      borderTop: `1px dashed rgba(255,255,255,0.18)`,
+                    }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Summary sentence */}
+        <div style={{
+          marginTop: 18,
+          paddingTop: 14,
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          fontSize: 12,
+          color: 'rgba(255,255,255,0.5)',
+          lineHeight: 1.55,
+        }}>
+          Starting at{' '}
+          <span style={{ color: riskColor(trajectory[0].risk), fontWeight: 700, fontFamily: 'var(--font-mono, monospace)' }}>
+            {trajectory[0].risk}
+          </span>
+          . The full 180-day plan could bring you to{' '}
+          <span style={{ color: riskColor(finalSnap.risk), fontWeight: 700, fontFamily: 'var(--font-mono, monospace)' }}>
+            {finalSnap.risk}
+          </span>
+          {' '}—{' '}
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+            {finalRiskLabel(finalSnap.risk)}
+          </span>
+          .
+        </div>
+      </div>
+
+      {/* ── PLAN SECTION ──────────────────────────────────────────────────── */}
+
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--text)', marginBottom: 4 }}>

@@ -153,6 +153,61 @@ const DECISIONS: CareerDecision[] = [
 
 function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)); }
 
+function getDecisionAssumption(decision: CareerDecision, hr: HybridResult): {
+  actionPhrase: string;
+  drivers: Array<{ label: string; change: string; color: string }>;
+  confidence: number;
+  basis: string;
+} {
+  // Confidence derived from how many levers the sensitivity engine found
+  const levers = hr.scoreSensitivity?.levers ?? [];
+  const confidence = levers.length >= 5 ? 76 : levers.length >= 3 ? 64 : 52;
+
+  const ACTION_PHRASES: Record<string, string> = {
+    stay:        'optimise within your current role',
+    switch:      'move to a healthier employer',
+    'ai-role':   'transition into an AI / automation role',
+    manager:     'step into people leadership',
+    consulting:  'go independent (consulting or freelance)',
+    relocate:    'move to a higher-demand market',
+    upskill:     'invest 3–6 months in intensive upskilling',
+  };
+
+  // Build human-readable drivers from the changes array
+  const DRIVER_LABELS: Record<string, string> = {
+    L1: 'Financial Buffer',   L2: 'Company Exposure',   L3: 'Synthetic Risk',
+    L4: 'Industry Risk',      L5: 'Location Risk',
+    D1: 'AI Exposure',        D2: 'Market Demand',      D3: 'Company Risk',
+    D4: 'Tenure Shield',      D5: 'Country Context',    D6: 'Experience Depth',
+    D7: 'Seniority',          D8: 'Performance Signal',
+  };
+
+  const drivers = decision.changes.map(ch => ({
+    label: DRIVER_LABELS[ch.dim] ?? ch.dim,
+    change: ch.factor < 0
+      ? `Reduces by ~${Math.abs(Math.round(ch.factor * 100))}%`
+      : `Increases by ~${Math.abs(Math.round(ch.factor * 100))}%`,
+    color: ch.factor < 0 ? '#10b981' : '#ef4444',
+  }));
+
+  const BASIS_MAP: Record<string, string> = {
+    stay:       'Based on average tenure-accumulation and performance visibility rates',
+    switch:     'Based on company risk reset patterns across role families',
+    'ai-role':  'Based on AI-adoption curves in technical roles',
+    manager:    'Based on management track outcomes in your seniority band',
+    consulting: 'Based on solo-to-client conversion rates for your network tier',
+    relocate:   'Based on geographic demand differentials for your role family',
+    upskill:    'Based on skill-currency improvement timelines for your role category',
+  };
+
+  return {
+    actionPhrase: ACTION_PHRASES[decision.id] ?? decision.title.toLowerCase(),
+    drivers,
+    confidence,
+    basis: BASIS_MAP[decision.id] ?? 'Based on modelled risk factor changes',
+  };
+}
+
 function projectRisk(hr: HybridResult, decision: CareerDecision): number {
   const b = hr.breakdown ?? {};
   const base = hr.total;
@@ -312,6 +367,47 @@ export function CareerDecisionSimulator({ scoreResult }: Props) {
                       ⚠ {warning}
                     </div>
                   )}
+
+                  {/* Assumption Card */}
+                  {(() => {
+                    const assumption = getDecisionAssumption(decision, scoreResult);
+                    return (
+                      <div style={{
+                        marginTop: 10, marginBottom: 10, padding: '10px 14px',
+                        borderRadius: 8, background: 'rgba(255,255,255,0.025)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                      }}>
+                        <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginBottom: 8 }}>
+                          WHAT THIS ASSUMES
+                        </div>
+
+                        {/* Action phrase */}
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 10, lineHeight: 1.5 }}>
+                          You {assumption.actionPhrase}. Here are the factors this change would affect:
+                        </div>
+
+                        {/* Result drivers */}
+                        {assumption.drivers.map(d => (
+                          <div key={d.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>{d.label}</span>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: d.color }}>{d.change}</span>
+                          </div>
+                        ))}
+
+                        {/* Confidence */}
+                        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)' }}>{assumption.basis}</span>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 800,
+                            background: 'rgba(96,165,250,0.1)', color: '#60a5fa',
+                            border: '1px solid rgba(96,165,250,0.2)',
+                          }}>
+                            {assumption.confidence}% confidence · ESTIMATED
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Dimension drivers */}
                   <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 5 }}>

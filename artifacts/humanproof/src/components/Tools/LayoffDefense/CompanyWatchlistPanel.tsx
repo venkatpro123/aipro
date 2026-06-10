@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Plus, X, Building, AlertTriangle, CheckCircle } from 'lucide-react';
 import { getWatchlist, addToWatchlist, removeFromWatchlist } from '../../../services/monitoringService';
 import { supabase } from '../../../utils/supabase';
+import { useLayoff } from '../../../context/LayoffContext';
+import type { HybridResult } from '../../../types/hybridResult';
 
 interface CompanySignal {
   company_name: string;
@@ -20,6 +22,12 @@ interface CompanyIntelligence {
   confidence_score: number | null;
   is_public: boolean | null;
   data_quality_tier: string | null;
+}
+
+interface OpportunityScores {
+  stabilityScore: number; // 0–100
+  hiringScore: number;    // 0–100
+  growthScore: number;    // 0–100
 }
 
 // Derive a simple stability tier from intelligence data
@@ -46,7 +54,105 @@ function formatMarketCap(usd: number | null): string {
   return `$${usd.toLocaleString()}`;
 }
 
+/**
+ * Derives approximate opportunity scores for the user's CURRENT employer
+ * from the HybridResult breakdown dimensions (L1–L5, all 0–1).
+ *
+ * L1 = Financial Vulnerability, L2 = Layoff/Instability History,
+ * L3 = Role Displacement Risk, L4 = Industry Headwinds.
+ * Higher L-value = worse; we invert to produce 0–100 "health" scores.
+ */
+function getCurrentEmployerBaseline(hr: HybridResult | null): OpportunityScores | null {
+  if (!hr) return null;
+  const b = hr.breakdown;
+  if (!b) return null;
+
+  // Stability: inversely related to financial vulnerability + layoff history
+  const companyRisk = (b.L1 ?? 0.3) + (b.L2 ?? 0.5);
+  const stabilityScore = Math.round(Math.max(10, Math.min(90, (1 - companyRisk / 2) * 100)));
+
+  // Hiring signal: inverse of role displacement risk (high displacement = market shrinking)
+  const hiringScore = Math.round(Math.max(10, Math.min(90, (1 - (b.L3 ?? 0.35)) * 100)));
+
+  // Growth signal: inverse of industry headwinds
+  const growthScore = Math.round(Math.max(10, Math.min(90, (1 - (b.L4 ?? 0.45)) * 90 + 10)));
+
+  return { stabilityScore, hiringScore, growthScore };
+}
+
+/**
+ * Derives opportunity scores for a watchlist company from its DB intelligence record.
+ */
+function getWatchlistCompanyScores(ci: CompanyIntelligence): OpportunityScores {
+  const layoffs = ci.recent_layoff_count ?? 0;
+  const hiring  = ci.hiring_velocity_score ?? 0.5;
+
+  const stabilityScore = Math.round(Math.max(10, Math.min(90,
+    layoffs > 2 ? 25 : layoffs > 0 ? 50 : hiring > 0.7 ? 85 : 70
+  )));
+  const hiringScore  = Math.round(Math.max(10, Math.min(90, hiring * 90 + 10)));
+  const growthScore  = Math.round(Math.max(10, Math.min(90, hiring * 75 + 20)));
+
+  return { stabilityScore, hiringScore, growthScore };
+}
+
+/** Single bar row for the Opportunity Radar comparison section. */
+function ComparisonBar({
+  label, currentScore, targetScore,
+}: {
+  label: string;
+  currentScore: number;
+  targetScore: number;
+}) {
+  const diff     = targetScore - currentScore;
+  const diffPct  = Math.round(Math.abs(diff));
+  const isBetter = diff > 5;
+  const isWorse  = diff < -5;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+      {/* Label */}
+      <div style={{ width: 90, fontSize: 10, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>
+        {label}
+      </div>
+
+      {/* Dual-layer bar track */}
+      <div style={{ flex: 1, position: 'relative', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.08)' }}>
+        {/* Current employer score (gray baseline) */}
+        <div style={{
+          position: 'absolute', left: 0, top: 0, height: '100%',
+          width: `${currentScore}%`,
+          background: 'rgba(255,255,255,0.2)',
+          borderRadius: 3,
+        }} />
+        {/* Target (watchlist) company score — colored on top */}
+        <div style={{
+          position: 'absolute', left: 0, top: 0, height: '100%',
+          width: `${targetScore}%`,
+          background: isBetter
+            ? 'rgba(16,185,129,0.7)'
+            : isWorse
+              ? 'rgba(239,68,68,0.7)'
+              : 'rgba(96,165,250,0.7)',
+          borderRadius: 3,
+          opacity: 0.8,
+        }} />
+      </div>
+
+      {/* Diff label */}
+      <div style={{
+        width: 72, fontSize: 10, fontWeight: 700, textAlign: 'right', flexShrink: 0,
+        color: isBetter ? '#10b981' : isWorse ? '#ef4444' : 'rgba(255,255,255,0.4)',
+      }}>
+        {isBetter ? `Better +${diffPct}%` : isWorse ? `Lower ${diffPct}%` : 'Similar'}
+      </div>
+    </div>
+  );
+}
+
 export function CompanyWatchlistPanel() {
+  const { state }  = useLayoff();
+
   const [watchlist,    setWatchlist]    = useState<string[]>([]);
   const [signals,      setSignals]      = useState<CompanySignal[]>([]);
   const [intelligence, setIntelligence] = useState<CompanyIntelligence[]>([]);
@@ -54,6 +160,10 @@ export function CompanyWatchlistPanel() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(false);
   const [expandedCo,   setExpandedCo]   = useState<string | null>(null);
+
+  // Derive current employer baseline once; null if no audit has been run
+  const scoreResult      = state.scoreResult as HybridResult | null;
+  const employerBaseline = getCurrentEmployerBaseline(scoreResult);
 
   useEffect(() => {
     getWatchlist()
@@ -179,9 +289,12 @@ export function CompanyWatchlistPanel() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {watchlist.map(co => {
-              const ci = intelligenceMap[co];
+              const ci        = intelligenceMap[co];
               const stability = ci ? getStabilityTier(ci) : null;
               const expanded  = expandedCo === co;
+
+              // Opportunity scores for this watchlist company (only computed when expanded + ci present)
+              const watchCo = expanded && ci ? getWatchlistCompanyScores(ci) : null;
 
               return (
                 <div key={co} className="card-premium" style={{ overflow: 'hidden' }}>
@@ -240,7 +353,48 @@ export function CompanyWatchlistPanel() {
                   {/* Expanded intelligence detail */}
                   {expanded && ci && (
                     <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginTop: 12 }}>
+
+                      {/* ── Opportunity Radar ─────────────────────────────── */}
+                      <div style={{ marginTop: 12, marginBottom: 14 }}>
+                        <div style={{
+                          fontSize: 9, fontWeight: 800,
+                          color: 'rgba(255,255,255,0.4)',
+                          letterSpacing: '0.1em',
+                          marginBottom: 10,
+                        }}>
+                          OPPORTUNITY RADAR vs Current Employer
+                        </div>
+
+                        {employerBaseline && watchCo ? (
+                          <>
+                            <ComparisonBar
+                              label="Stability"
+                              currentScore={employerBaseline.stabilityScore}
+                              targetScore={watchCo.stabilityScore}
+                            />
+                            <ComparisonBar
+                              label="Hiring Signal"
+                              currentScore={employerBaseline.hiringScore}
+                              targetScore={watchCo.hiringScore}
+                            />
+                            <ComparisonBar
+                              label="Growth Signal"
+                              currentScore={employerBaseline.growthScore}
+                              targetScore={watchCo.growthScore}
+                            />
+                            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>
+                              ESTIMATED · Comparison based on audit breakdown dimensions and DB intelligence data.
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                            Run an audit to enable employer comparison.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ── Stats grid ────────────────────────────────────── */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10 }}>
                         {[
                           {
                             label: 'Market Cap',

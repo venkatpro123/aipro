@@ -49,6 +49,55 @@ const DIM_LABELS: Record<string, string> = {
   L5: 'Location Risk', L6: 'Hiring Signal', L7: 'Sentiment',
 };
 
+// Expected impact per action (from dimension key)
+const EXPECTED_IMPACT: Record<string, number> = {
+  D1: 8, D2: 5, D3: 7, D4: 4, D6: 6, D7: 6, D8: 5,
+  L1: 9, L2: 8, L3: 7, L4: 4, L5: 3, L6: 4, L7: 3,
+};
+
+// Actual impact per outcome type
+const OUTCOME_IMPACT: Record<string, number> = {
+  manager_recognised:   7,
+  new_project:          5,
+  promotion_discussion: 9,
+  recruiter_outreach:   6,
+  interview:            8,
+  salary_increase:     10,
+  role_change:         11,
+  no_change:            0,
+};
+
+function computeSystemIntelligence(outcomes: ActionOutcome[]) {
+  const positive = outcomes.filter(o => o.outcomeId !== 'no_change');
+  const successRate = outcomes.length > 0 ? Math.round(positive.length / outcomes.length * 100) : 0;
+
+  // Compare expected vs actual
+  const comparisons = outcomes.map(o => ({
+    actionId:  o.actionId,
+    expected:  EXPECTED_IMPACT[o.actionId] ?? 5,
+    actual:    OUTCOME_IMPACT[o.outcomeId] ?? 0,
+    outcomeId: o.outcomeId,
+  }));
+
+  const avgExpected = comparisons.length > 0
+    ? Math.round(comparisons.reduce((s, c) => s + c.expected, 0) / comparisons.length * 10) / 10
+    : 0;
+  const avgActual = comparisons.length > 0
+    ? Math.round(comparisons.reduce((s, c) => s + c.actual, 0) / comparisons.length * 10) / 10
+    : 0;
+
+  // Best performing dimension
+  const byDim: Record<string, { total: number; count: number }> = {};
+  for (const c of comparisons) {
+    if (!byDim[c.actionId]) byDim[c.actionId] = { total: 0, count: 0 };
+    byDim[c.actionId].total += c.actual;
+    byDim[c.actionId].count++;
+  }
+  const bestDim = Object.entries(byDim).sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
+
+  return { successRate, avgExpected, avgActual, bestDim, comparisons };
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function ActionOutcomeTracker() {
@@ -122,6 +171,56 @@ export function ActionOutcomeTracker() {
           </div>
         ))}
       </div>
+
+      {/* System Intelligence */}
+      {outcomes.length >= 2 && (() => {
+        const intel = computeSystemIntelligence(outcomes);
+        const delta = intel.avgActual - intel.avgExpected;
+
+        return (
+          <div style={{
+            marginBottom: 20, padding: '14px 16px',
+            borderRadius: 10, background: 'rgba(6,182,212,0.05)',
+            border: '1px solid rgba(6,182,212,0.15)',
+          }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(6,182,212,0.7)', letterSpacing: '0.1em', marginBottom: 10 }}>
+              🧠 SYSTEM INTELLIGENCE — What we've learned from your data
+            </div>
+
+            {/* 3 metric chips */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
+              <div style={{ padding: '8px', borderRadius: 7, background: 'rgba(255,255,255,0.03)', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: '#10b981', fontFamily: 'var(--font-mono, monospace)', lineHeight: 1 }}>
+                  {intel.successRate}%
+                </div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>SUCCESS RATE</div>
+              </div>
+              <div style={{ padding: '8px', borderRadius: 7, background: 'rgba(255,255,255,0.03)', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: 18, fontWeight: 900, color: delta >= 0 ? '#10b981' : '#f59e0b', fontFamily: 'var(--font-mono, monospace)', lineHeight: 1 }}>
+                  {delta >= 0 ? '+' : ''}{delta.toFixed(1)}
+                </div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>VS EXPECTED</div>
+              </div>
+              <div style={{ padding: '8px', borderRadius: 7, background: 'rgba(255,255,255,0.03)', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#60a5fa', lineHeight: 1, marginTop: 2 }}>
+                  {DIM_LABELS[intel.bestDim?.[0]] ?? intel.bestDim?.[0] ?? '—'}
+                </div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', marginTop: 3 }}>BEST AREA</div>
+              </div>
+            </div>
+
+            {/* Pattern insight */}
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+              {intel.successRate >= 70
+                ? `Your actions are working — ${intel.successRate}% resulted in a positive outcome. ${delta > 0 ? 'Impact exceeded expectations.' : 'Keep this momentum.'}`
+                : intel.successRate >= 40
+                ? `Mixed results so far. Try focusing more on ${DIM_LABELS[intel.bestDim?.[0]] ?? 'your strongest areas'} where you've seen the best outcomes.`
+                : `Early data. More actions needed before patterns emerge. Your best area so far: ${DIM_LABELS[intel.bestDim?.[0]] ?? 'undefined'}.`
+              }
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Actions pending outcome report */}
       {pending.length > 0 && (
