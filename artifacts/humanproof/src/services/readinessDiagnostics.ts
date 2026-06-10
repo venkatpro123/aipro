@@ -52,6 +52,9 @@ const labelFor = (s: number): ReadinessDiagnostic['label'] =>
 
 function ctx(hr: HybridResult, profile: UserProfile | null) {
   const anyHr = hr as any;
+  const _expM = String(hr.experience ?? '').match(/\d+/); // '20+' / '5-10' → first number; avoids NaN
+  const experienceYears = (typeof profile?.yearsExperience === 'number' && Number.isFinite(profile.yearsExperience))
+    ? profile.yearsExperience : (_expM ? parseInt(_expM[0], 10) : 5);
   return {
     anyHr,
     fit: anyHr.skillPortfolioFit?.fitScore ?? 50,
@@ -62,7 +65,7 @@ function ctx(hr: HybridResult, profile: UserProfile | null) {
     demandTrend: anyHr.roleMarketDemand?.demandTrend as string | undefined,
     d1: hr.dimensions?.find(d => d.key === 'D1')?.score ?? 50,
     aiLeverage: computeAILeverageScore([], hr).leverageScore,
-    experienceYears: profile?.yearsExperience ?? Number((hr.experience ?? '5').split('-')[0]) ?? 5,
+    experienceYears,
     bridgeSkills: (anyHr.techStackObsolescence?.bridgeSkillPriority ?? []) as string[],
     criticalGaps: (anyHr.skillGapIntelligence?.criticalGaps ?? []) as string[],
     strengths: (anyHr.skillGapIntelligence?.existingStrengths ?? []) as string[],
@@ -95,7 +98,8 @@ export function computeResumeIntelligence(hr: HybridResult, profile: UserProfile
   if (achievementDensity < 70) improvements.push({ action: 'Rewrite your top 5 bullets as "[action] → [metric]" with a real number in each.', impactPct: 12, effort: 'Medium', rationale: 'Quantified outcomes are the single strongest resume signal to a hiring manager.' });
   if (aiRelevance < 60) improvements.push({ action: 'Add one line evidencing an AI-augmented workflow you have shipped.', impactPct: 8, effort: 'Medium', rationale: 'AI fluency is now a tier-1 screen in most roles; absence reads as a gap.' });
 
-  const projected = clamp(score + improvements.reduce((s, i) => s + i.impactPct, 0) * 0.5);
+  // Projected is shown against the ATS Match metric — base it on atsMatch, not the overall score.
+  const projected = clamp(atsMatch + improvements.reduce((s, i) => s + i.impactPct, 0) * 0.6);
   return {
     score, label: labelFor(score), confidenceKind: 'modeled',
     headline: missingKeywords.length > 0

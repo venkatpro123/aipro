@@ -46,7 +46,9 @@ const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.ro
 export function computeTransformation(hr: HybridResult, profile: UserProfile | null): TransformationPlan {
   const anyHr = hr as any;
   const currentRole = (profile?.jobTitle ?? anyHr.roleTitle ?? hr.workTypeKey ?? 'your current role').toString();
-  const experienceYears = profile?.yearsExperience ?? Number((hr.experience ?? '5').split('-')[0]) ?? 5;
+  const _expM = String(hr.experience ?? '').match(/\d+/); // '20+' / '5-10' → first number; avoids NaN
+  const experienceYears = (typeof profile?.yearsExperience === 'number' && Number.isFinite(profile.yearsExperience))
+    ? profile.yearsExperience : (_expM ? parseInt(_expM[0], 10) : 5);
 
   const adj = anyHr.roleAdjacency?.adjacentRoles?.[0];
   const gapIntel = anyHr.skillGapIntelligence;

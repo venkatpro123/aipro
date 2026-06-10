@@ -32,13 +32,13 @@ const DIM_LABELS: Record<string, string> = {
   L5: 'Regional market conditions',
 };
 
-type HistEntry = { date: string; score: number; company?: string; role?: string };
+type HistEntry = { date: string; score: number; company?: string; role?: string; skillFit?: number; runway?: number };
 
 /**
  * Read the most recent PRIOR score from the twin's audit history.
  * Returns null when there is no prior audit (first run) or no session.
  */
-export async function getPreviousAuditScore(): Promise<{ score: number; date: string } | null> {
+export async function getPreviousAuditScore(): Promise<{ score: number; date: string; skillFit?: number; runway?: number } | null> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return null;
@@ -51,7 +51,7 @@ export async function getPreviousAuditScore(): Promise<{ score: number; date: st
     if (history.length < 2) return null;
     // Last entry is the current audit; second-to-last is the previous one.
     const prev = history[history.length - 2];
-    return { score: prev.score, date: prev.date };
+    return { score: prev.score, date: prev.date, skillFit: prev.skillFit, runway: prev.runway };
   } catch {
     return null;
   }

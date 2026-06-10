@@ -74,7 +74,9 @@ export function computeHirability(hr: HybridResult, profile: UserProfile | null)
   const marketFit = clamp(anyHr.skillPortfolioFit?.fitScore ?? 50);
   const aiReady = clamp(computeAILeverageScore([], hr).leverageScore);
   const demand = clamp(anyHr.roleMarketDemand?.demandIndex ?? 55);
-  const experienceYears = profile?.yearsExperience ?? Number((hr.experience ?? '5').split('-')[0]) ?? 5;
+  const _expM = String(hr.experience ?? '').match(/\d+/); // '20+' / '5-10' → first number; avoids NaN
+  const experienceYears = (typeof profile?.yearsExperience === 'number' && Number.isFinite(profile.yearsExperience))
+    ? profile.yearsExperience : (_expM ? parseInt(_expM[0], 10) : 5);
   const brand = clamp(net * 0.4 + Math.min(45, experienceYears * 3) + 10); // reputation proxy
   const escapeCount = anyHr.escapePaths?.paths?.length ?? 0;
   const adjCount = anyHr.roleAdjacency?.adjacentRoles?.length ?? 0;
@@ -99,7 +101,11 @@ export function computeHirability(hr: HybridResult, profile: UserProfile | null)
 
   // Derived probabilities the command center leads with.
   const interviewProbability = clamp(resume.score * 0.3 + linkedin.score * 0.25 + net * 0.25 + demand * 0.2);
-  const offerProbability = clamp(interviewProbability * 0.5 + interview.score * 0.35 + portfolio.score * 0.15);
+  // Offer probability is conditional on getting the interview — never higher than interview probability.
+  const offerProbability = Math.min(
+    interviewProbability,
+    clamp(interviewProbability * 0.5 + interview.score * 0.35 + portfolio.score * 0.15),
+  );
   const marketCompetitiveness = clamp(marketFit * 0.5 + demand * 0.3 + aiReady * 0.2);
   const externalMobility = clamp(optionality * 0.5 + net * 0.3 + demand * 0.2);
 

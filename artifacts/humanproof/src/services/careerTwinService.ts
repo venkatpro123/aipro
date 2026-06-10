@@ -114,8 +114,10 @@ export async function syncTwinFromProfile(
   // Read existing state + audit_score_history to preserve on upsert
   const existing = await loadCareerTwin();
 
-  // Append current audit to score history (cap at 24 = ~2 years of monthly audits)
-  type HistEntry = { date: string; score: number; company?: string; role?: string };
+  // Append current audit to score history (cap at 24 = ~2 years of monthly audits).
+  // skillFit/runway are stored per-audit so the monitoring layer can detect
+  // skills-decay and financial-threshold crossings between audits.
+  type HistEntry = { date: string; score: number; company?: string; role?: string; skillFit?: number; runway?: number };
   let existingHistory: HistEntry[] = [];
   if (existing) {
     const { data: histRow } = await supabase
@@ -130,8 +132,19 @@ export async function syncTwinFromProfile(
     score: hybrid.total ?? 0,
     company: (profile as Record<string, unknown>).companyName as string | undefined,
     role: (profile as Record<string, unknown>).jobTitle as string | undefined,
+    skillFit: (hybrid as Record<string, any>).skillPortfolioFit?.fitScore ?? undefined,
+    runway: (hybrid as Record<string, any>).userFinancialRunway?.runwayMonths
+      ?? (hybrid as Record<string, any>).financialRunwayMonths
+      ?? profile.savingsMonthsRunway ?? undefined,
   };
-  const auditHistory = [...existingHistory, histEntry].slice(-24);
+  // Dedupe same-day re-syncs: this function is called by BOTH the audit pipeline and
+  // CareerOSHome (and re-fires on scoreResult changes), so naive appending produced
+  // duplicate history points per audit. Collapse to one entry per day (latest wins).
+  const _last = existingHistory[existingHistory.length - 1];
+  const auditHistory = (_last && _last.date === histEntry.date
+    ? [...existingHistory.slice(0, -1), histEntry]
+    : [...existingHistory, histEntry]
+  ).slice(-24);
 
   const row = {
     user_id: userId,

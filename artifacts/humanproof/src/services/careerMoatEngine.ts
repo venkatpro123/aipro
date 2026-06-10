@@ -66,7 +66,9 @@ const SPEED_FACTOR: Record<CareerMoat['buildSpeed'], number> = { fast: 1.0, medi
 export function computeCareerMoats(hr: HybridResult, profile: UserProfile | null): CareerMoatReport {
   const anyHr = hr as any;
   const d1 = hr.dimensions?.find(d => d.key === 'D1')?.score ?? 50; // AI exposure (higher = worse)
-  const experienceYears = profile?.yearsExperience ?? Number((hr.experience ?? '5').split('-')[0]) ?? 5;
+  const _expM = String(hr.experience ?? '').match(/\d+/); // '20+' / '5-10' → first number; avoids NaN
+  const experienceYears = (typeof profile?.yearsExperience === 'number' && Number.isFinite(profile.yearsExperience))
+    ? profile.yearsExperience : (_expM ? parseInt(_expM[0], 10) : 5);
   const industryYears = profile?.industryYears ?? experienceYears;
   const tenureYears = hr.tenureYears ?? profile?.tenureYears ?? 2;
 

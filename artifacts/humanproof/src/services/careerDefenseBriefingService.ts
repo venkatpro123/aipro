@@ -74,10 +74,12 @@ export async function buildCareerDefenseBriefing(
 ): Promise<CareerDefenseBriefing> {
   const today = new Date().toISOString();
   const events: CareerDefenseEvent[] = [];
+  // Fetch prior-audit signals once; reused for the score-change event AND for the
+  // monitoring change-detection signals (skills decay / financial crossing).
+  const prev = await getPreviousAuditScore().catch(() => null);
 
   // ── 1. Score-change event (vs. last audit) ──────────────────────────────────
   try {
-    const prev = await getPreviousAuditScore();
     const change = detectScoreChange(hr, prev?.score ?? null);
     if (change && change.changeType === 'significant') {
       const safer = change.direction === 'down';
@@ -125,6 +127,7 @@ export async function buildCareerDefenseBriefing(
       hybridResult: hr,
       watchlist: companyName ? [companyName] : [],
       financialRunwayMonths: hr.financialRunwayMonths ?? null,
+      previous: prev ? { skillFitScore: prev.skillFit ?? null, financialRunwayMonths: prev.runway ?? null } : undefined,
     });
     for (const item of feed.filter(f => f.severity !== 'INFO').slice(0, 3)) {
       // Avoid duplicating a trajectory event of the same category.

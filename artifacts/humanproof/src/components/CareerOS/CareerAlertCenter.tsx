@@ -65,7 +65,7 @@ export function CareerAlertCenter({ hr, companyName }: Props) {
     if (!hr) { setTopAlert(null); return; }
     let cancelled = false;
 
-    (async () => {
+    const run = async () => {
       try {
         const [watchlist, dismissed, prev] = await Promise.all([
           getWatchlist(),
@@ -78,6 +78,9 @@ export function CareerAlertCenter({ hr, companyName }: Props) {
           hybridResult: hr,
           watchlist: companyName ? Array.from(new Set([companyName, ...watchlist])) : watchlist,
           financialRunwayMonths: hr.financialRunwayMonths ?? null,
+          // Prior-audit signals so the change-detection signals (skills decay,
+          // financial-threshold crossing) can actually fire.
+          previous: prev ? { skillFitScore: prev.skillFit ?? null, financialRunwayMonths: prev.runway ?? null } : undefined,
         };
 
         const feed = await getMonitoringFeed(ctx, dismissed);
@@ -97,9 +100,14 @@ export function CareerAlertCenter({ hr, companyName }: Props) {
       } catch {
         if (!cancelled) setTopAlert(null);
       }
-    })();
+    };
 
-    return () => { cancelled = true; };
+    // Fetch now, then poll so monitoring is genuinely continuous within the session
+    // (picks up new company/market signals without a page reload).
+    void run();
+    const timer = setInterval(() => { void run(); }, 30 * 60 * 1000);
+
+    return () => { cancelled = true; clearInterval(timer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hr, companyName, dismissedLocally]);
 
