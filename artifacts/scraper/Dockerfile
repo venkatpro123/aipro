@@ -10,7 +10,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Stage 1: TypeScript build ───────────────────────────────────────────────
-FROM node:20-bookworm-slim AS builder
+FROM node:26-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN npm prune --omit=dev
 
 
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
-FROM node:20-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 
 # Playwright + Python + Chromium prereqs (minimal X libs)
 ENV DEBIAN_FRONTEND=noninteractive
