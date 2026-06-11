@@ -13,6 +13,14 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import {
+  getUserAlerts,
+  dismissUserAlert,
+  markAlertSeen,
+  runClientDetectors,
+  type UserAlert,
+} from "../../services/userAlertsService";
 import {
   getMonitoringFeed,
   getDismissedAlertKeys,
@@ -58,8 +66,32 @@ function scoreChangeToAlert(evt: ScoreChangeEvent): MonitoringFeedItem | null {
 
 export function CareerAlertCenter({ hr, companyName }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [topAlert, setTopAlert] = useState<MonitoringFeedItem | null>(null);
   const [dismissedLocally, setDismissedLocally] = useState<Set<string>>(new Set());
+  // Phase 3: alerts the detection network persisted to user_alerts — including
+  // what was detected server-side WHILE THE USER WAS AWAY. These take priority.
+  const [persisted, setPersisted] = useState<UserAlert | null>(null);
+
+  useEffect(() => {
+    if (!user || !hr) { setPersisted(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        // Run the audit-derived detectors (demand/comp) against baselines first,
+        // then read all persisted alerts (server + client) for this user.
+        await runClientDetectors(user.id, hr).catch(() => {});
+        if (cancelled) return;
+        const alerts = await getUserAlerts(user.id);
+        if (cancelled) return;
+        setPersisted(alerts[0] ?? null);
+      } catch {
+        if (!cancelled) setPersisted(null);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, hr]);
 
   useEffect(() => {
     if (!hr) { setTopAlert(null); return; }
@@ -111,119 +143,103 @@ export function CareerAlertCenter({ hr, companyName }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hr, companyName, dismissedLocally]);
 
+  // ── Priority 1: persisted detection-network alert ("while you were away") ────
+  if (persisted) {
+    const s = USER_SEV_STYLE[persisted.severity];
+    return (
+      <AlertCard
+        sev={s}
+        badge="DETECTED WHILE YOU WERE AWAY"
+        source={`${detectorLabel(persisted.detector)} · ${relativeTime(persisted.detectedAt)}`}
+        headline={persisted.headline}
+        detail={persisted.evidence ? `${persisted.detail} ${persisted.evidence}` : persisted.detail}
+        toolLink={persisted.toolLink}
+        lightText={persisted.severity === 'info'}
+        onTakeAction={() => { void markAlertSeen(persisted.id); persisted.toolLink && navigate(persisted.toolLink); }}
+        onDismiss={() => { void dismissUserAlert(persisted.id); setPersisted(null); }}
+      />
+    );
+  }
+
+  // ── Priority 2: in-session monitoring feed ───────────────────────────────────
   if (!topAlert) return null;
-
   const sev = SEVERITY_STYLE[topAlert.severity];
-
   const handleDismiss = () => {
     setDismissedLocally(prev => new Set(prev).add(topAlert.id));
     void dismissAlert(topAlert.id);
   };
-
   return (
-    <div
-      style={{
-        marginBottom: 16,
-        padding: "14px 18px",
-        borderRadius: 12,
-        background: sev.bg,
-        border: `1px solid ${sev.border}`,
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 14,
-      }}
-    >
-      {/* Pulsing severity dot */}
-      <span
-        style={{
-          flexShrink: 0,
-          marginTop: 5,
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: sev.color,
-          display: "inline-block",
-          animation: "pulse 2s ease-in-out infinite",
-        }}
-      />
+    <AlertCard
+      sev={{ color: sev.color, bg: sev.bg, border: sev.border, label: sev.label }}
+      source={topAlert.source}
+      headline={topAlert.headline}
+      detail={topAlert.detail}
+      toolLink={topAlert.toolLink ?? null}
+      lightText={topAlert.severity === 'INFO'}
+      onTakeAction={() => topAlert.toolLink && navigate(topAlert.toolLink)}
+      onDismiss={handleDismiss}
+    />
+  );
+}
 
+// ── Shared alert card ──────────────────────────────────────────────────────────
+
+const USER_SEV_STYLE: Record<UserAlert['severity'], { color: string; bg: string; border: string; label: string }> = {
+  critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.07)', border: 'rgba(239,68,68,0.3)', label: 'CRITICAL' },
+  high:     { color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.28)', label: 'HIGH' },
+  info:     { color: '#3b82f6', bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.22)', label: 'INFO' },
+};
+
+function detectorLabel(d: string): string {
+  return ({ news_event: 'Company watch', demand_shift: 'Market watch', comp_gap: 'Pay watch', stagnation: 'Progress watch', hiring_freeze: 'Hiring watch' } as Record<string, string>)[d] ?? 'Detection';
+}
+
+function relativeTime(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const d = Math.floor(ms / 86_400_000), h = Math.floor(ms / 3_600_000);
+  if (d >= 1) return `${d}d ago`;
+  if (h >= 1) return `${h}h ago`;
+  return 'just now';
+}
+
+interface AlertCardProps {
+  sev: { color: string; bg: string; border: string; label: string };
+  badge?: string;
+  source: string;
+  headline: string;
+  detail: string;
+  toolLink: string | null;
+  lightText: boolean;
+  onTakeAction: () => void;
+  onDismiss: () => void;
+}
+
+function AlertCard({ sev, badge, source, headline, detail, toolLink, lightText, onTakeAction, onDismiss }: AlertCardProps) {
+  return (
+    <div style={{ marginBottom: 16, padding: "14px 18px", borderRadius: 12, background: sev.bg, border: `1px solid ${sev.border}`, display: "flex", alignItems: "flex-start", gap: 14 }}>
+      <span style={{ flexShrink: 0, marginTop: 5, width: 8, height: 8, borderRadius: "50%", background: sev.color, display: "inline-block", animation: "pulse 2s ease-in-out infinite" }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 5 }}>
-          <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "rgba(255,255,255,0.27)", letterSpacing: "0.13em", textTransform: "uppercase" as const, fontFamily: "var(--font-mono, monospace)" }}>
-            ALERT
+          <span style={{ fontSize: "0.58rem", fontWeight: 800, color: badge ? sev.color : "rgba(255,255,255,0.27)", letterSpacing: "0.13em", textTransform: "uppercase" as const, fontFamily: "var(--font-mono, monospace)" }}>
+            {badge ?? 'ALERT'}
           </span>
-          <span
-            style={{
-              padding: "1px 7px",
-              borderRadius: 4,
-              fontSize: "0.58rem",
-              fontWeight: 800,
-              color: sev.color,
-              background: `${sev.color}16`,
-              border: `1px solid ${sev.color}30`,
-              fontFamily: "var(--font-mono, monospace)",
-              letterSpacing: "0.06em",
-            }}
-          >
+          <span style={{ padding: "1px 7px", borderRadius: 4, fontSize: "0.58rem", fontWeight: 800, color: sev.color, background: `${sev.color}16`, border: `1px solid ${sev.color}30`, fontFamily: "var(--font-mono, monospace)", letterSpacing: "0.06em" }}>
             {sev.label}
           </span>
-          <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.24)", fontFamily: "var(--font-mono, monospace)" }}>
-            {topAlert.source}
-          </span>
+          <span style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.24)", fontFamily: "var(--font-mono, monospace)" }}>{source}</span>
         </div>
-
-        <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "rgba(255,255,255,0.78)", lineHeight: 1.45, marginBottom: 4 }}>
-          {topAlert.headline}
-        </div>
-        <div style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.48)", lineHeight: 1.5 }}>
-          {topAlert.detail}
-        </div>
-
+        <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "rgba(255,255,255,0.78)", lineHeight: 1.45, marginBottom: 4 }}>{headline}</div>
+        <div style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.48)", lineHeight: 1.5 }}>{detail}</div>
         <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-          {topAlert.toolLink && (
-            <button
-              type="button"
-              onClick={() => navigate(topAlert.toolLink!)}
-              style={{
-                background: sev.color,
-                color: topAlert.severity === "INFO" ? "#fff" : "#000",
-                border: "none",
-                borderRadius: 7,
-                padding: "6px 14px",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "opacity 0.15s",
-              }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.85")}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-            >
+          {toolLink && (
+            <button type="button" onClick={onTakeAction} style={{ background: sev.color, color: lightText ? "#fff" : "#000", border: "none", borderRadius: 7, padding: "6px 14px", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", transition: "opacity 0.15s" }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.85")} onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}>
               Take action →
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleDismiss}
-            style={{
-              background: "none",
-              border: "1px solid rgba(255,255,255,0.11)",
-              borderRadius: 7,
-              color: "rgba(255,255,255,0.4)",
-              padding: "6px 12px",
-              fontSize: "0.74rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.22)";
-              (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.11)";
-              (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
-            }}
-          >
+          <button type="button" onClick={onDismiss} style={{ background: "none", border: "1px solid rgba(255,255,255,0.11)", borderRadius: 7, color: "rgba(255,255,255,0.4)", padding: "6px 12px", fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.22)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.11)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)"; }}>
             Dismiss
           </button>
         </div>
