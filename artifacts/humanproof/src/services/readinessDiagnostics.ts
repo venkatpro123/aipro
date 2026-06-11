@@ -23,6 +23,14 @@ export interface ImprovementAction {
   impactPct: number;
   effort: 'Low' | 'Medium' | 'High';
   rationale: string;
+  /** Q4 of the decision frame — what skipping costs, with the user's numbers. */
+  ifYouSkip?: string;
+}
+
+// Stamp the tab-level cost-of-inaction onto each improvement (Rule 1's
+// "what happens if I don't?" — keyed to the user's actual numbers).
+function withSkipCost(improvements: ImprovementAction[], skip: string): ImprovementAction[] {
+  return improvements.map(i => ({ ...i, ifYouSkip: i.ifYouSkip ?? skip }));
 }
 
 export interface SubScore { label: string; score: number }
@@ -105,7 +113,9 @@ export function computeResumeIntelligence(hr: HybridResult, profile: UserProfile
     headline: missingKeywords.length > 0
       ? `Your resume likely matches ~${atsMatch}% of ATS filters — ${missingKeywords.length} high-demand keywords are missing.`
       : `Strong keyword coverage; the lever now is quantified achievements, not more skills.`,
-    subScores, gaps: missingKeywords.map(k => `Missing keyword: ${k}`), improvements, projected,
+    subScores, gaps: missingKeywords.map(k => `Missing keyword: ${k}`),
+    improvements: withSkipCost(improvements, `You stay at ~${atsMatch}% ATS match — filters keep dropping you before a human ever reads the resume.`),
+    projected,
     headlineMetric: { label: 'ATS Match', value: atsMatch },
     missingKeywords, atsMatch,
   };
@@ -144,7 +154,8 @@ export function computeLinkedInIntelligence(hr: HybridResult, profile: UserProfi
     score, label: labelFor(score), confidenceKind: 'modeled',
     headline: `Recruiters are estimated to discover you ~${discoveryProbability}% of the time for a relevant search — ${labelFor(discoveryProbability).toLowerCase()} visibility.`,
     subScores, gaps: subScores.filter(s => s.score < 50).map(s => `${s.label} is below par (${s.score}/100)`),
-    improvements, projected,
+    improvements: withSkipCost(improvements, `Recruiter discovery stays ~${discoveryProbability}% — they keep finding someone else for the roles you want.`),
+    projected,
     headlineMetric: { label: 'Recruiter Discovery Probability', value: discoveryProbability },
   };
 }
@@ -184,7 +195,9 @@ export function computeInterviewReadiness(hr: HybridResult, profile: UserProfile
   return {
     score, label: labelFor(score), confidenceKind: 'modeled',
     headline: `Your interview readiness is ${labelFor(score).toLowerCase()} — the system has flagged ${risks.length} likely weaknesses to drill.`,
-    subScores, gaps: risks, improvements, projected, risks,
+    subScores, gaps: risks,
+    improvements: withSkipCost(improvements, `These ${risks.length} weaknesses surface under interview pressure — readiness stays at ${score}/100 and offers keep slipping at the final round.`),
+    projected, risks,
   };
 }
 
@@ -219,7 +232,8 @@ export function computePortfolioStrength(hr: HybridResult, profile: UserProfile 
     score, label: labelFor(score), confidenceKind: 'modeled',
     headline: `Your proof-of-work is ${labelFor(score).toLowerCase()} — capability needs visible evidence, not a checklist.`,
     subScores, gaps: subScores.filter(s => s.score < 50).map(s => `${s.label} is thin (${s.score}/100)`),
-    improvements, projected, nextProject,
+    improvements: withSkipCost(improvements, `Your claims stay unproven at ${score}/100 — you keep competing against candidates who show evidence instead of asserting it.`),
+    projected, nextProject,
   };
 }
 
@@ -266,6 +280,7 @@ export function computeNetworkActivation(hr: HybridResult, profile: UserProfile 
     score, label: labelFor(score), confidenceKind: c.anyHr.networkLeverage ? 'modeled' : 'estimated',
     headline: `Your network can generate referrals at ~${referralReadiness}% readiness — referrals convert 5× better than cold applications.`,
     subScores, gaps: subScores.filter(s => s.score < 50).map(s => `${s.label} is low (${s.score}/100)`),
-    improvements, projected, contacts,
+    improvements: withSkipCost(improvements, `Referral readiness stays ~${referralReadiness}% — you remain in the cold-application lane, which converts ~5× worse.`),
+    projected, contacts,
   };
 }

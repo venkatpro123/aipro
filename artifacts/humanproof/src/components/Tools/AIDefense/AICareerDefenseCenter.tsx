@@ -13,6 +13,7 @@ import { AIAmplificationRoadmap } from './AIAmplificationRoadmap';
 import { CareerMoatPanel } from './CareerMoatPanel';
 import { SurvivalStrategyPanel } from './SurvivalStrategyPanel';
 import { TransformationRoadmap } from './TransformationRoadmap';
+import { NextBestActionBar } from '../../shared/NextBestActionBar';
 
 const DecadeScenarioPlannerPanel = lazy(() =>
   import('./DecadeScenarioPlannerPanel').then(m => ({ default: m.DecadeScenarioPlannerPanel })),
@@ -76,6 +77,9 @@ export function AICareerDefenseCenter() {
   }
 
   return (
+    <>
+    {/* Decision spine (Rule 5): the single highest-impact AI-defense move right now */}
+    <NextBestActionBar tool="ai-defense" hr={scoreResult} accent="#00d4e0" />
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList style={{
         display: 'flex',
@@ -122,5 +126,6 @@ export function AICareerDefenseCenter() {
         </Suspense>
       </TabsContent>
     </Tabs>
+    </>
   );
 }

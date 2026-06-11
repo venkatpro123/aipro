@@ -9,6 +9,7 @@ import { LinkedInOptimizationPanel } from './LinkedInOptimizationPanel';
 import { InterviewReadinessPanel } from './InterviewReadinessPanel';
 import { PortfolioReadinessPanel } from './PortfolioReadinessPanel';
 import { ReferralReadinessPanel } from './ReferralReadinessPanel';
+import { NextBestActionBar } from '../../shared/NextBestActionBar';
 
 const TABS = [
   { id: 'hirability', label: 'Hirability' },
@@ -25,6 +26,9 @@ export function CareerReadinessCenter() {
   const scoreResult = state.scoreResult as import('../../../types/hybridResult').HybridResult | null;
 
   return (
+    <>
+    {/* Decision spine (Rule 5): the single highest-impact readiness fix right now */}
+    <NextBestActionBar tool="readiness" hr={scoreResult} accent="#a78bfa" />
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList style={{
         display: 'flex',
@@ -64,5 +68,6 @@ export function CareerReadinessCenter() {
       <TabsContent value="portfolio"> <PortfolioReadinessPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="referral">  <ReferralReadinessPanel scoreResult={scoreResult} /></TabsContent>
     </Tabs>
+    </>
   );
 }

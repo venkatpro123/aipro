@@ -164,6 +164,13 @@ export function ImprovementList({ improvements, unit = 'pts', tracking }: { impr
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>{imp.rationale}</span>
               </div>
 
+              {/* Q4 — cost of skipping (decision spine framing) */}
+              {imp.ifYouSkip && (
+                <div style={{ marginTop: 6, fontSize: 10.5, color: 'rgba(239,68,68,0.75)', lineHeight: 1.45 }}>
+                  <span style={{ fontWeight: 800 }}>If you skip: </span>{imp.ifYouSkip}
+                </div>
+              )}
+
               {/* Outcome loop controls */}
               {tracking && (
                 <div style={{ marginTop: 9, paddingTop: 9, borderTop: '1px solid rgba(255,255,255,0.05)' }}>

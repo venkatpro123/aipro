@@ -11,6 +11,7 @@ import { ExitStrategyPanel } from './ExitStrategyPanel';
 import { PromotionStrategyPanel } from './PromotionStrategyPanel';
 import { TransitionStrategyPanel } from './TransitionStrategyPanel';
 import { ScenarioPlannerPanel } from './ScenarioPlannerPanel';
+import { NextBestActionBar } from '../../shared/NextBestActionBar';
 
 const TABS = [
   { id: 'scenarios',  label: '5-Year Paths'    },
@@ -54,6 +55,9 @@ export function CareerStrategyStudio() {
   }
 
   return (
+    <>
+    {/* Decision spine (Rule 5): the single highest-impact strategic move right now */}
+    <NextBestActionBar tool="strategy" hr={scoreResult} accent="#a78bfa" />
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4, border: '1px solid var(--border)', marginBottom: 24, overflowX: 'auto' }}>
         {TABS.map(t => (
@@ -71,5 +75,6 @@ export function CareerStrategyStudio() {
       <TabsContent value="promotion">  <PromotionStrategyPanel scoreResult={scoreResult} /></TabsContent>
       <TabsContent value="transition"> <TransitionStrategyPanel scoreResult={scoreResult} /></TabsContent>
     </Tabs>
+    </>
   );
 }

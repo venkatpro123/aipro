@@ -14,6 +14,7 @@ import { ActionOutcomeTracker } from './ActionOutcomeTracker';
 import { CompanyWatchlistPanel } from './CompanyWatchlistPanel';
 import { RiskForecast } from './RiskForecast';
 import { LiveMonitoringFeed } from './LiveMonitoringFeed';
+import { NextBestActionBar } from '../../shared/NextBestActionBar';
 
 const TABS = [
   { id: 'priority',   label: 'Priority Actions' },
@@ -67,6 +68,9 @@ function LayoffDefenseCenterInner({ scoreResult }: { scoreResult: HybridResult }
 
       <CareerDefenseTimeline scoreResult={scoreResult} />
       <DefenseCommandPanel scoreResult={scoreResult} />
+
+      {/* Decision spine (Rule 5): the single highest-impact defense move right now */}
+      <NextBestActionBar tool="layoff-defense" hr={scoreResult} accent="#ef4444" />
 
       {/* ── Tab navigation ────────────────────────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

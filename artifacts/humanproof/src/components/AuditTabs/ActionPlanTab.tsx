@@ -25,6 +25,7 @@ import { FinancialContextInput } from "../../components/FinancialContextInput";
 import { toRoleTitle } from '@/lib/riskTokens';
 import { CareerCapitalAssessment } from "../../components/CareerCapitalAssessment";
 import { PeerBenchmarkPanel } from "../../components/PeerBenchmarkPanel";
+import { NextBestActionBar } from "../shared/NextBestActionBar";
 import {
   loadFinancialContext,
   loadCityKey,
@@ -1725,6 +1726,9 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   return (
     <section aria-labelledby="action-plan-heading" className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+
+        {/* Decision spine (Rule 5): ONE ranked action above the full plan */}
+        <NextBestActionBar tool="action-plan" hr={result} accent="#00d4e0" />
 
         {/* ── Intelligence Engines: Career Insurance + Financial Impact ──────── */}
         {/* These panels sit above the action list so users see the "why" before
