@@ -14,6 +14,7 @@
 
 import type { ActionPlanItem } from '../types/hybridResult';
 import type { HybridResult } from '../types/hybridResult';
+import { extractEvidence, evidenceSuffix, evidenceKeysForText, type EvidenceSet } from './evidenceTokens';
 
 // Layer focus → consequence template when action is skipped
 const LAYER_CONSEQUENCE: Record<string, string> = {
@@ -53,18 +54,22 @@ const KEYWORD_WHY: Array<[RegExp, (score: number, role: string) => string]> = [
   [/visa|immigr|status|sponsor/i, (s, _) => `With ${s}% layoff risk and an employer-tied visa, the clock starts at job loss — this action buys buffer time.`],
 ];
 
-function buildWhyItMatters(action: ActionPlanItem, score: number, role: string): string {
+function buildWhyItMatters(action: ActionPlanItem, score: number, role: string, evidence: EvidenceSet): string {
+  // Rule 12: append the user's actual numbers relevant to THIS action's domain,
+  // so the "why" is personally generated rather than a reusable template.
+  const suffix = evidenceSuffix(evidence, evidenceKeysForText(`${action.title} ${action.description ?? ''}`), 2);
+
   for (const [pattern, fn] of KEYWORD_WHY) {
     if (pattern.test(action.title) || pattern.test(action.description)) {
-      return fn(score, role);
+      return fn(score, role) + suffix;
     }
   }
   // Layer-based fallback
   const layer = action.layerFocus?.toUpperCase();
   if (layer && layer in LAYER_CONSEQUENCE) {
-    return `This targets your ${layer} risk dimension — one of the strongest predictors in your current score of ${score}.`;
+    return `This targets your ${layer} risk dimension — one of the strongest predictors in your current score of ${score}.${suffix}`;
   }
-  return `Your current risk score is ${score}/100. This action directly addresses one of the top drivers identified in your audit.`;
+  return `Your current risk score is ${score}/100. This action directly addresses one of the top drivers identified in your audit.${suffix}`;
 }
 
 function buildConsequence(action: ActionPlanItem, score: number): string {
@@ -92,11 +97,12 @@ export function injectActionConsequences(
 ): ActionPlanItem[] {
   const score = Math.round(hr.total ?? 0);
   const role = (hr as any).roleTitle ?? (hr as any).role ?? '';
+  const evidence = extractEvidence(hr, null); // profile-less: tokens come from the audit itself
 
   return actions.map(action => {
     if (action.whyItMatters && action.consequence) return action; // already set
 
-    const whyItMatters = buildWhyItMatters(action, score, role);
+    const whyItMatters = buildWhyItMatters(action, score, role, evidence);
     const consequence = buildConsequence(action, score);
 
     // Confidence source: if riskReductionPct is from outcome data (evidenceStats present) → MEASURED

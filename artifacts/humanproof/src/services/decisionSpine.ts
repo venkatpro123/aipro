@@ -12,6 +12,7 @@
 
 import type { HybridResult, ActionPlanItem } from '../types/hybridResult';
 import type { UserProfile } from './userProfileService';
+import { extractEvidence } from './evidenceTokens';
 import { rankActions, effortHours, formatEffortBadge } from './actionRankingService';
 import { injectActionConsequences } from './actionConsequenceEngine';
 import { computeCareerMoats } from './careerMoatEngine';
@@ -43,6 +44,8 @@ export interface DecisionFrame {
   confidenceKind: ConfidenceKind;
   /** Which engine selected this action (transparency). */
   source: string;
+  /** Rule 12 honesty gate: 'generic' when the audit carried no user-specific evidence. */
+  personalizationLevel: 'personalized' | 'generic';
 }
 
 export type SpineTool = 'layoff-defense' | 'ai-defense' | 'readiness' | 'strategy' | 'action-plan';
@@ -74,6 +77,7 @@ function frameFromAction(action: ActionPlanItem, hr: HybridResult, source: strin
     confidence: confidenceFor(kind),
     confidenceKind: kind,
     source,
+    personalizationLevel: 'personalized', // overwritten centrally by nextBestActionFor
   };
 }
 
@@ -112,6 +116,7 @@ export function strategyNextAction(hr: HybridResult, _profile: UserProfile | nul
     confidence: 70,
     confidenceKind: 'modeled',
     source: 'Strategy Synthesis',
+    personalizationLevel: 'personalized',
   };
 }
 
@@ -135,6 +140,7 @@ export function aiDefenseNextAction(hr: HybridResult, profile: UserProfile | nul
         confidence: active.command.confidence,
         confidenceKind: active.confidenceKind,
         source: `Survival Strategy · Plan ${active.tier}`,
+        personalizationLevel: 'personalized',
       };
     }
   }
@@ -150,6 +156,7 @@ export function aiDefenseNextAction(hr: HybridResult, profile: UserProfile | nul
     confidence: confidenceFor(roi.confidenceKind),
     confidenceKind: roi.confidenceKind,
     source: 'Career Moat Intelligence',
+    personalizationLevel: 'personalized',
   };
 }
 
@@ -186,6 +193,7 @@ export function readinessNextAction(hr: HybridResult, profile: UserProfile | nul
     confidence: confidenceFor(bottleneck.confidenceKind),
     confidenceKind: bottleneck.confidenceKind,
     source: 'Hirability Engine',
+    personalizationLevel: 'personalized',
   };
 }
 
@@ -197,16 +205,22 @@ export function actionPlanNextAction(hr: HybridResult, profile: UserProfile | nu
 
 export function nextBestActionFor(tool: SpineTool, hr: HybridResult | null, profile: UserProfile | null): DecisionFrame | null {
   if (!hr || hr.total == null) return null;
+  let frame: DecisionFrame | null = null;
   try {
     switch (tool) {
-      case 'layoff-defense': return layoffDefenseNextAction(hr, profile);
-      case 'ai-defense':     return aiDefenseNextAction(hr, profile);
-      case 'readiness':      return readinessNextAction(hr, profile);
-      case 'strategy':       return strategyNextAction(hr, profile) ?? topRankedActionFrame(hr, profile, 'Strategy Synthesis');
-      case 'action-plan':    return actionPlanNextAction(hr, profile);
+      case 'layoff-defense': frame = layoffDefenseNextAction(hr, profile); break;
+      case 'ai-defense':     frame = aiDefenseNextAction(hr, profile); break;
+      case 'readiness':      frame = readinessNextAction(hr, profile); break;
+      case 'strategy':       frame = strategyNextAction(hr, profile) ?? topRankedActionFrame(hr, profile, 'Strategy Synthesis'); break;
+      case 'action-plan':    frame = actionPlanNextAction(hr, profile); break;
     }
   } catch {
     return null; // an engine threw on partial data — hide the bar rather than crash the tool
   }
-  return null;
+  if (frame) {
+    // Rule 12 honesty gate: if the audit produced no user-specific evidence, the
+    // advice can only be generic — say so rather than implying it's tailored.
+    frame.personalizationLevel = extractEvidence(hr, profile).hasAny ? 'personalized' : 'generic';
+  }
+  return frame;
 }

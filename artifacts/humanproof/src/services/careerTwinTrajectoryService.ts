@@ -41,6 +41,8 @@ export interface CareerTrajectory {
   status: 'strong' | 'fair' | 'weak';
   /** Causal drivers — why this trajectory is where it is / moving as it is. */
   drivers: string[];
+  /** Provenance (Rule 17): 'modeled' when a real engine backs it, 'estimated' on fallback. */
+  confidenceKind: 'measured' | 'modeled' | 'estimated';
 }
 
 export interface CareerTwinModel {
@@ -72,7 +74,8 @@ export function computeCareerTrajectories(
   scoreHistory: Array<{ date: string; score: number }> = [],
 ): CareerTwinModel {
   const anyHr = hr as any;
-  const trajectories: CareerTrajectory[] = [];
+  // Built without confidenceKind; stamped in one place after the array is complete.
+  const trajectories: Array<Omit<CareerTrajectory, 'confidenceKind'> & { confidenceKind?: CareerTrajectory['confidenceKind'] }> = [];
 
   // Shared trend signal from the score-trajectory engine (risk pts/month).
   const velPtsPerMonth: number = anyHr.scoreTrajectory?.velocityPtsPerMonth ?? 0;
@@ -268,15 +271,37 @@ export function computeCareerTrajectories(
     });
   }
 
+  // ── Provenance (Rule 17): modeled when a real engine backs the trajectory; ─────
+  //    estimated when it fell back to a default. Stamped here so every push above
+  //    stays terse and the rule is applied in one auditable place.
+  const runwayKnown = profile?.savingsMonthsRunway != null
+    || anyHr.userFinancialRunway?.runwayMonths != null || hr.financialRunwayMonths != null;
+  const SOURCE_PRESENT: Record<TrajectoryKey, boolean> = {
+    layoff_probability:   !!(anyHr.precisionSurvival || anyHr.survivalProbability || anyHr.scoreTrajectory),
+    ai_displacement:      hr.dimensions?.some(d => d.key === 'D1') || anyHr.aiExposureIndex != null,
+    career_momentum:      !!anyHr.careerVelocity,
+    salary:               !!anyHr.compensationRisk,
+    promotion:            !!anyHr.internalMobility,
+    market_demand:        !!anyHr.roleMarketDemand,
+    skill_growth:         !!anyHr.skillPortfolioFit,
+    financial_resilience: runwayKnown,
+  };
+  const finalTrajectories: CareerTrajectory[] = trajectories.map(t => ({
+    ...t,
+    confidenceKind: t.key === 'financial_resilience' && profile?.savingsMonthsRunway != null
+      ? 'measured' // user-provided runway
+      : SOURCE_PRESENT[t.key] ? 'modeled' : 'estimated',
+  }));
+
   // ── Overall synthesis ─────────────────────────────────────────────────────────
-  const strongCount = trajectories.filter(t => t.status === 'strong').length;
-  const weakCount = trajectories.filter(t => t.status === 'weak').length;
+  const strongCount = finalTrajectories.filter(t => t.status === 'strong').length;
+  const weakCount = finalTrajectories.filter(t => t.status === 'weak').length;
 
   // Improving when more trajectories point favorably than unfavorably.
-  const favorable = trajectories.filter(t =>
+  const favorable = finalTrajectories.filter(t =>
     (t.isRisk && t.direction === 'falling') || (!t.isRisk && t.direction === 'rising'),
   ).length;
-  const unfavorable = trajectories.filter(t =>
+  const unfavorable = finalTrajectories.filter(t =>
     (t.isRisk && t.direction === 'rising') || (!t.isRisk && t.direction === 'falling'),
   ).length;
   const overallDirection: CareerTwinModel['overallDirection'] =
@@ -287,5 +312,5 @@ export function computeCareerTrajectories(
     `Your Twin is ${overallDirection === 'improving' ? 'strengthening' : overallDirection === 'deteriorating' ? 'under pressure' : 'holding'} — ` +
     `${strongCount} of 8 trajectories strong${weakCount > 0 ? `, ${weakCount} need defending` : ''}.`;
 
-  return { trajectories, overallDirection, headline, weakCount };
+  return { trajectories: finalTrajectories, overallDirection, headline, weakCount };
 }

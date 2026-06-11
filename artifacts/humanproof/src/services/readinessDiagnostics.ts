@@ -14,6 +14,7 @@
 import type { HybridResult } from '../types/hybridResult';
 import type { UserProfile } from './userProfileService';
 import { computeAILeverageScore } from './aiAmplificationService';
+import { extractEvidence, evidenceSuffix, personalizationLevel, type EvidenceKey, type EvidenceSet } from './evidenceTokens';
 
 export type ConfidenceKind = 'measured' | 'modeled' | 'estimated';
 
@@ -52,6 +53,20 @@ export interface ReadinessDiagnostic {
   projected: number;
   /** Optional headline metric name (e.g. "Recruiter Discovery Probability"). */
   headlineMetric?: { label: string; value: number };
+  /** Rule 12 honesty gate: 'generic' when no user-specific evidence backed the advice. */
+  personalizationLevel?: 'personalized' | 'generic';
+}
+
+// Append the user's real numbers to the lead improvement's rationale and tag the
+// diagnostic's personalization level (Rule 12).
+function withEvidence<T extends ReadinessDiagnostic>(diag: T, evidence: EvidenceSet, keys: EvidenceKey[]): T {
+  const suffix = evidenceSuffix(evidence, keys, 2);
+  if (suffix && diag.improvements[0]) {
+    diag.improvements = diag.improvements.map((imp, i) =>
+      i === 0 ? { ...imp, rationale: imp.rationale.replace(/\.$/, '') + suffix + '.' } : imp);
+  }
+  diag.personalizationLevel = personalizationLevel(evidence, keys);
+  return diag;
 }
 
 const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.round(v)));
@@ -65,6 +80,7 @@ function ctx(hr: HybridResult, profile: UserProfile | null) {
     ? profile.yearsExperience : (_expM ? parseInt(_expM[0], 10) : 5);
   return {
     anyHr,
+    evidence: extractEvidence(hr, profile),
     fit: anyHr.skillPortfolioFit?.fitScore ?? 50,
     net: anyHr.networkLeverage?.networkScore ?? 35,
     referral: anyHr.networkLeverage?.referralAccessScore ?? (anyHr.networkLeverage?.networkScore ?? 35) * 0.8,
@@ -108,8 +124,8 @@ export function computeResumeIntelligence(hr: HybridResult, profile: UserProfile
 
   // Projected is shown against the ATS Match metric — base it on atsMatch, not the overall score.
   const projected = clamp(atsMatch + improvements.reduce((s, i) => s + i.impactPct, 0) * 0.6);
-  return {
-    score, label: labelFor(score), confidenceKind: 'modeled',
+  return withEvidence({
+    score, label: labelFor(score), confidenceKind: 'modeled' as const,
     headline: missingKeywords.length > 0
       ? `Your resume likely matches ~${atsMatch}% of ATS filters — ${missingKeywords.length} high-demand keywords are missing.`
       : `Strong keyword coverage; the lever now is quantified achievements, not more skills.`,
@@ -118,7 +134,7 @@ export function computeResumeIntelligence(hr: HybridResult, profile: UserProfile
     projected,
     headlineMetric: { label: 'ATS Match', value: atsMatch },
     missingKeywords, atsMatch,
-  };
+  }, c.evidence, ['fit', 'gaps', 'demand']);
 }
 
 // ── LinkedIn Intelligence ─────────────────────────────────────────────────────────
@@ -150,14 +166,14 @@ export function computeLinkedInIntelligence(hr: HybridResult, profile: UserProfi
   ];
   const projected = clamp(discoveryProbability + improvements.reduce((s, i) => s + i.impactPct, 0));
 
-  return {
-    score, label: labelFor(score), confidenceKind: 'modeled',
+  return withEvidence({
+    score, label: labelFor(score), confidenceKind: 'modeled' as const,
     headline: `Recruiters are estimated to discover you ~${discoveryProbability}% of the time for a relevant search — ${labelFor(discoveryProbability).toLowerCase()} visibility.`,
     subScores, gaps: subScores.filter(s => s.score < 50).map(s => `${s.label} is below par (${s.score}/100)`),
     improvements: withSkipCost(improvements, `Recruiter discovery stays ~${discoveryProbability}% — they keep finding someone else for the roles you want.`),
     projected,
     headlineMetric: { label: 'Recruiter Discovery Probability', value: discoveryProbability },
-  };
+  }, c.evidence, ['network', 'demand', 'fit']);
 }
 
 // ── Interview Readiness ─────────────────────────────────────────────────────────
@@ -192,13 +208,13 @@ export function computeInterviewReadiness(hr: HybridResult, profile: UserProfile
   ];
   const projected = clamp(score + improvements.reduce((s, i) => s + i.impactPct, 0) * 0.5);
 
-  return {
-    score, label: labelFor(score), confidenceKind: 'modeled',
+  return withEvidence({
+    score, label: labelFor(score), confidenceKind: 'modeled' as const,
     headline: `Your interview readiness is ${labelFor(score).toLowerCase()} — the system has flagged ${risks.length} likely weaknesses to drill.`,
     subScores, gaps: risks,
     improvements: withSkipCost(improvements, `These ${risks.length} weaknesses surface under interview pressure — readiness stays at ${score}/100 and offers keep slipping at the final round.`),
     projected, risks,
-  };
+  }, c.evidence, ['aiExposure', 'fit', 'gaps']) as ReadinessDiagnostic & { risks: string[] };
 }
 
 // ── Portfolio / Proof-of-Work ─────────────────────────────────────────────────────
@@ -228,13 +244,13 @@ export function computePortfolioStrength(hr: HybridResult, profile: UserProfile 
   ];
   const projected = clamp(score + improvements.reduce((s, i) => s + i.impactPct, 0) * 0.5);
 
-  return {
-    score, label: labelFor(score), confidenceKind: 'modeled',
+  return withEvidence({
+    score, label: labelFor(score), confidenceKind: 'modeled' as const,
     headline: `Your proof-of-work is ${labelFor(score).toLowerCase()} — capability needs visible evidence, not a checklist.`,
     subScores, gaps: subScores.filter(s => s.score < 50).map(s => `${s.label} is thin (${s.score}/100)`),
     improvements: withSkipCost(improvements, `Your claims stay unproven at ${score}/100 — you keep competing against candidates who show evidence instead of asserting it.`),
     projected, nextProject,
-  };
+  }, c.evidence, ['fit', 'demand', 'aiExposure']) as ReadinessDiagnostic & { nextProject: string };
 }
 
 // ── Network Activation / Referral ─────────────────────────────────────────────────
@@ -276,11 +292,11 @@ export function computeNetworkActivation(hr: HybridResult, profile: UserProfile 
   ];
   const projected = clamp(score + improvements.reduce((s, i) => s + i.impactPct, 0) * 0.5);
 
-  return {
-    score, label: labelFor(score), confidenceKind: c.anyHr.networkLeverage ? 'modeled' : 'estimated',
+  return withEvidence({
+    score, label: labelFor(score), confidenceKind: (c.anyHr.networkLeverage ? 'modeled' : 'estimated') as ConfidenceKind,
     headline: `Your network can generate referrals at ~${referralReadiness}% readiness — referrals convert 5× better than cold applications.`,
     subScores, gaps: subScores.filter(s => s.score < 50).map(s => `${s.label} is low (${s.score}/100)`),
     improvements: withSkipCost(improvements, `Referral readiness stays ~${referralReadiness}% — you remain in the cold-application lane, which converts ~5× worse.`),
     projected, contacts,
-  };
+  }, c.evidence, ['network', 'demand']) as ReadinessDiagnostic & { contacts: ContactTarget[] };
 }

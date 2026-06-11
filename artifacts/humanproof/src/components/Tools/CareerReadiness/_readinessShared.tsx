@@ -46,6 +46,11 @@ export function DiagnosisHeader({ title, d, metricOverride }: { title: string; d
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em' }}>{title}</span>
         <ProvenanceTag kind={d.confidenceKind} />
+        {d.personalizationLevel === 'generic' && (
+          <span title="Run an audit / complete your profile so this is tailored to your numbers" style={{ fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 5, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.28)', fontFamily: 'var(--font-mono, monospace)' }}>
+            GENERIC
+          </span>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '14px 18px', borderRadius: 12, background: `linear-gradient(135deg, ${color}10 0%, rgba(255,255,255,0.01) 100%)`, border: `1px solid ${color}28` }}>
         <div style={{ textAlign: 'center', flexShrink: 0 }}>

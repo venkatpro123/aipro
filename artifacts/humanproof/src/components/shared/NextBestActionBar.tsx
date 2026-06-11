@@ -78,6 +78,11 @@ export function NextBestActionBar({ tool, hr, accent = 'var(--cyan, #00d4e0)' }:
                 {frame.confidence}% · {frame.confidenceKind.toUpperCase()}
               </span>
               <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontFamily: 'var(--font-mono, monospace)' }}>{frame.source}</span>
+              {frame.personalizationLevel === 'generic' && (
+                <span title="Run an audit / complete your profile so this is tailored to your numbers" style={{ fontSize: 9, fontWeight: 700, padding: '1px 7px', borderRadius: 4, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.28)', fontFamily: 'var(--font-mono, monospace)' }}>
+                  GENERIC · COMPLETE PROFILE
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 14.5, fontWeight: 800, color: 'rgba(255,255,255,0.92)', lineHeight: 1.35, marginBottom: 5 }}>
               {frame.doThis.label}

@@ -69,8 +69,11 @@ function TrajectoryRow({ t }: { t: CareerTrajectory }) {
           }}
         />
       </div>
-      <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.32)", fontFamily: "var(--font-mono, monospace)" }}>
-        6-mo projection: {t.projection6mo}{projDelta !== 0 ? ` (${projDelta > 0 ? "+" : ""}${projDelta})` : " (flat)"}
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 10.5, color: "rgba(255,255,255,0.32)", fontFamily: "var(--font-mono, monospace)" }}>
+        <span>6-mo projection: {t.projection6mo}{projDelta !== 0 ? ` (${projDelta > 0 ? "+" : ""}${projDelta})` : " (flat)"}</span>
+        <span style={{ fontWeight: 800, padding: "0 5px", borderRadius: 3, color: t.confidenceKind === "measured" ? "#10b981" : t.confidenceKind === "modeled" ? "#60a5fa" : "#f59e0b", background: "rgba(255,255,255,0.04)" }}>
+          {t.confidenceKind.toUpperCase()}
+        </span>
       </div>
 
       {open && (

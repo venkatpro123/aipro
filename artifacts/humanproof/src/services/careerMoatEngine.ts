@@ -10,6 +10,19 @@
 import type { HybridResult } from '../types/hybridResult';
 import type { UserProfile } from './userProfileService';
 import { computeAILeverageScore } from './aiAmplificationService';
+import { extractEvidence, evidenceSuffix, type EvidenceKey } from './evidenceTokens';
+
+// Which evidence makes each moat's "build it" advice specific (Rule 12).
+const MOAT_EVIDENCE: Record<MoatKey, EvidenceKey[]> = {
+  technical:    ['fit', 'gaps'],
+  domain:       ['experience', 'demand'],
+  leadership:   ['experience'],
+  relationship: ['network'],
+  reputation:   ['experience'],
+  distribution: ['network'],
+  financial:    ['runway'],
+  ai:           ['aiExposure', 'bridgeSkills'],
+};
 
 export type MoatKey =
   | 'technical' | 'domain' | 'leadership' | 'relationship'
@@ -183,6 +196,13 @@ export function computeCareerMoats(hr: HybridResult, profile: UserProfile | null
       howToBuild: 'Adopt one AI workflow in your real work this week and document the measured time saved.',
       buildSpeed: 'fast', roiScore: 0, confidenceKind: 'modeled',
     });
+  }
+
+  // ── Evidence enrichment (Rule 12): weave the user's real numbers into how-to ──
+  const evidence = extractEvidence(hr, profile);
+  for (const m of moats) {
+    const suffix = evidenceSuffix(evidence, MOAT_EVIDENCE[m.key], 2);
+    if (suffix) m.howToBuild = m.howToBuild.replace(/\.$/, '') + suffix + '.';
   }
 
   // ── ROI scoring + synthesis ───────────────────────────────────────────────────
