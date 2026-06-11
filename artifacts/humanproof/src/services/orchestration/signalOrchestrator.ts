@@ -28,6 +28,7 @@ import type { HybridResult, ActionPlanItem } from '../../types/hybridResult';
 import type { CompanyData } from '../../data/companyDatabase';
 import { compressAllSignals } from '../signalCompressionService';
 import type { CompressedSignal, CompressedIntel } from '../signalCompressionService';
+import { classifyActionCategory, effortHours } from '../actionRankingService';
 import { deriveProfileSignals } from '../actionPersonalizationEngine';
 import { actionHeadline } from './actionHeadline';
 import type { ProfileSignalSummary, UserProfileLike } from '../actionPersonalizationEngine';
@@ -332,6 +333,7 @@ export function pickPrimaryMove(
   recommendations: ActionPlanItem[] | undefined,
   profile: ProfileSignalSummary,
   feedbackBoosts?: Map<string, number>,
+  patternBoosts?: { hasInaction?: boolean; hasPlateauPattern?: boolean } | null,
 ): PrimaryMove | null {
   let recs = (recommendations ?? []).filter(isActionableRecommendation);
 
@@ -347,11 +349,23 @@ export function pickPrimaryMove(
 
   const runwayCritical = profile.runwayTier === 'critical';
 
-  // Rank by score DESC, multiplied by feedback boost where applicable.
+  // Phase 1 (Career OS): career-memory pattern multiplier — mirrors the logic in
+  // rankActions(). Repeated inaction → elevate quick wins the user can actually
+  // finish; score plateau → elevate skills/network moves that break stagnation.
+  const patternMult = (r: ActionPlanItem): number => {
+    if (patternBoosts?.hasInaction && effortHours(r) <= 16) return 1.15;
+    if (patternBoosts?.hasPlateauPattern) {
+      const cat = classifyActionCategory(r);
+      if (cat === 'skills' || cat === 'network') return 1.10;
+    }
+    return 1.0;
+  };
+
+  // Rank by score DESC, multiplied by feedback + pattern boosts where applicable.
   const scoreWithBoost = (r: ActionPlanItem) => {
     const base = moveScore(r, profile);
     const boost = feedbackBoosts?.get(r.id ?? r.title ?? '') ?? 1.0;
-    return base * boost;
+    return base * boost * patternMult(r);
   };
   const ranked = [...recs].sort((a, b) => scoreWithBoost(b) - scoreWithBoost(a));
 
@@ -503,7 +517,7 @@ export function orchestrateFromIntel(
     ? (result.recommendations ?? []).filter(r => !twin!.suppressedActionIds.includes(r.id ?? ''))
     : result.recommendations;
 
-  const primaryMove = pickPrimaryMove(filteredRecommendations, profileSignals, config?.feedbackBoosts);
+  const primaryMove = pickPrimaryMove(filteredRecommendations, profileSignals, config?.feedbackBoosts, config?.patternBoosts);
   const trace = buildTrace(primary[0]?.signal, primaryMove, confPct, intel, profileSignals);
   const spine = renderSpine(trace);
 

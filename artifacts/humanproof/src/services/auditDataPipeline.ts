@@ -3568,7 +3568,25 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
           _actionIds,
         ).catch(() => null)
       : null;
-    const _ranked = rankActions(hybridResult.actionItems, _userProfileForRanking, null, _cohortBoosts);
+    // Phase 2 (Career OS): load THIS user's per-dimension success rates so actions
+    // that historically worked for them rank higher. Anonymous/offline → neutral.
+    // (Previously rankActions always received context=null, so the learning loop
+    // never actually fed ranking.)
+    let _userSuccessRates: Record<string, number> | null = null;
+    try {
+      const { data: { session: _rateSession } } = await supabase.auth.getSession();
+      if (_rateSession?.user?.id) {
+        const { getDimensionSuccessMap } = await import('./userOutcomeLearningService');
+        const _rates = await getDimensionSuccessMap(_rateSession.user.id);
+        if (Object.keys(_rates).length > 0) _userSuccessRates = _rates;
+      }
+    } catch { /* non-fatal — rank without personal success rates */ }
+    const _ranked = rankActions(
+      hybridResult.actionItems,
+      _userProfileForRanking,
+      _userSuccessRates ? { userSuccessRates: _userSuccessRates } : null,
+      _cohortBoosts,
+    );
     hybridResult.actionItems = _ranked.map(r => ({
       ...(r.action as import('../types/hybridResult').ActionPlanItem),
       rankScore: r.rankScore,
@@ -3899,11 +3917,20 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     // NOTE: inputs mirror the earlier computeStrategySynthesis call — keep in sync.
     if (Math.abs(personalRiskModifier.rawModifier) >= 1 && (hybridResult as any).strategySynthesis) {
       const ufS = inputs.userFactors as any;
+      // Phase 5 consistency: mirror the step-27 debt-adjusted effective runway so the
+      // recomputed strategy doesn't silently use a longer runway than the first pass.
+      const _baseRunwayR = inputs.financialRunwayMonths ?? 0;
+      const _debtR = ufS.monthlyDebtObligationsUsd ?? null;
+      const _expR = ufS.monthlyExpensesUsd ?? null;
+      const _effRunwayR =
+        _debtR != null && _debtR > 0 && _expR != null && _expR > 0
+          ? Math.round(_baseRunwayR * (_expR / (_expR + _debtR)) * 10) / 10
+          : _baseRunwayR;
       (hybridResult as any).strategySynthesis = computeStrategySynthesis({
         currentScore: hybridResult.total,
         collapseStage: (hybridResult as any).collapseStage ?? null,
         tenureYears: inputs.userFactors.tenureYears ?? 3,
-        financialRunwayMonths: inputs.financialRunwayMonths ?? 0,
+        financialRunwayMonths: _effRunwayR,
         performanceTier: inputs.userFactors.performanceTier ?? 'average',
         industry: companyData.industry ?? 'technology',
         experience: hybridResult.experience ?? '5-10',
@@ -3921,6 +3948,17 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
         // the same v48.0 personalization signals.
         ...buildStrategyPersonalizationSignals(inputs, companyData, hybridResult, resolvedRole),
       });
+
+      // Phase 3 consistency: the verdict reads score + strategy, both of which just
+      // changed — refresh it so CareerDecisionCard can't contradict the strategy tab.
+      // (causalExplanation reads only breakdown, which the modifier doesn't touch.)
+      const _bdR = hybridResult.breakdown;
+      (hybridResult as any).careerDecision = generateCareerDecision(
+        hybridResult.total ?? 0,
+        (hybridResult as any).strategySynthesis.overallStrategy,
+        { L1: _bdR.L1, L2: _bdR.L2, L3: _bdR.L3, L4: _bdR.L4, L5: _bdR.L5 },
+        ufS.riskTolerance ?? null,
+      );
     }
   } catch (e) {
     noteEngineFailure('personalRiskModifier', e);

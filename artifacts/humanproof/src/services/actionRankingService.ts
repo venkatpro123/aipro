@@ -88,7 +88,7 @@ function tenureMultiplier(years: number | null | undefined): number {
 // Wave 8.2: Seniority-differentiated action category weights.
 // Junior → resume + skills first; principal → network + negotiate first.
 // Category is inferred from the action title via keyword matching.
-type ActionCategory = 'resume' | 'skills' | 'network' | 'negotiate' | 'other';
+export type ActionCategory = 'resume' | 'skills' | 'network' | 'negotiate' | 'other';
 
 const SENIORITY_ACTION_WEIGHTS: Record<string, Record<ActionCategory, number>> = {
   junior:      { resume: 2.0, skills: 1.8, network: 1.2, negotiate: 0.5, other: 1.0 },
@@ -98,7 +98,7 @@ const SENIORITY_ACTION_WEIGHTS: Record<string, Record<ActionCategory, number>> =
   principal:   { resume: 0.5, skills: 0.5, network: 3.0, negotiate: 2.5, other: 1.0 },
 };
 
-function classifyActionCategory(action: Partial<ActionPlanItem>): ActionCategory {
+export function classifyActionCategory(action: Partial<ActionPlanItem>): ActionCategory {
   const t = ((action.title ?? '') + ' ' + (action.description ?? '')).toLowerCase();
   if (/resume|linkedin|portfolio|cv\b|profile updat/.test(t)) return 'resume';
   if (/certif|course|learn|skill|train|bootcamp|aws|gcp|azure|cloud|ai\b|ml\b/.test(t)) return 'skills';
@@ -126,7 +126,7 @@ function seniorityMultiplier(action: Partial<ActionPlanItem>, tenureYears: numbe
 // Convert ActionPlanItem.learningWeeks into an effort-hours estimate. Falls
 // back to the DEFAULT_EFFORT_WEEKS proxy when the action does not carry a
 // learning-weeks block. The chosen track is the median 8h/week schedule.
-function effortHours(action: Partial<ActionPlanItem>): number {
+export function effortHours(action: Partial<ActionPlanItem>): number {
   const lw = action.learningWeeks;
   if (lw && typeof lw.w8 === 'number' && lw.w8 > 0) {
     return lw.w8 * 8;

@@ -43,6 +43,25 @@ export interface CareerTwinState {
   lastInteractionAt: string;
 }
 
+// ── Week-rollover helper ───────────────────────────────────────────────────────
+// actions_completed_this_week previously only ever incremented (never reset), so
+// "this week" grew forever. We key the week off the twin's stored
+// last_interaction_at: when it falls in a previous ISO week (Mon-start), the
+// weekly counter is treated as 0 before any carry-forward or increment.
+function mondayOf(d: Date): number {
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7; // Mon=0 … Sun=6
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - day);
+  return x.getTime();
+}
+function isSameWeek(isoA: string | null | undefined, b: Date): boolean {
+  if (!isoA) return false;
+  const a = new Date(isoA);
+  if (isNaN(a.getTime())) return false;
+  return mondayOf(a) === mondayOf(b);
+}
+
 // ── DB row → domain type ───────────────────────────────────────────────────────
 
 function rowToTwin(row: Record<string, unknown>): CareerTwinState {
@@ -162,7 +181,9 @@ export async function syncTwinFromProfile(
     score_at_last_update: hybrid.total ?? null,
     profile_completeness: profileCompleteness,
     twin_health: twinHealth,
-    actions_completed_this_week: existing?.actionsCompletedThisWeek ?? 0,
+    actions_completed_this_week: isSameWeek(existing?.lastInteractionAt, new Date())
+      ? existing?.actionsCompletedThisWeek ?? 0
+      : 0, // week rolled over since the last interaction — reset the weekly counter
     actions_completed_total: existing?.actionsCompletedTotal ?? 0,
     last_interaction_at: new Date().toISOString(),
     audit_score_history: auditHistory,
@@ -329,11 +350,18 @@ export async function incrementTwinActionCount(): Promise<void> {
   const existing = await loadCareerTwin();
   if (!existing) return;
 
+  // Week rollover: if the last interaction was in a previous ISO week, the weekly
+  // counter restarts at 1 instead of compounding forever.
+  const weeklyBase = isSameWeek(existing.lastInteractionAt, new Date())
+    ? existing.actionsCompletedThisWeek
+    : 0;
+
   await supabase
     .from('career_twin_state')
     .update({
-      actions_completed_this_week: existing.actionsCompletedThisWeek + 1,
+      actions_completed_this_week: weeklyBase + 1,
       actions_completed_total: existing.actionsCompletedTotal + 1,
+      last_interaction_at: new Date().toISOString(),
     })
     .eq('user_id', session.user.id);
 }

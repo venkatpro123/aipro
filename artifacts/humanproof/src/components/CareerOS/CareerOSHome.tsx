@@ -24,7 +24,7 @@ import { AdaptationVelocityBadge } from "./AdaptationVelocityBadge";
 import { evaluateReEngagementTrigger } from "../../services/reEngagementService";
 import { detectAdaptationTriggers, type AdaptationTrigger } from "../../services/adaptationTriggerService";
 import { useAutopilotAlerts } from "../../hooks/useAutopilotAlerts";
-import { syncTwinFromProfile } from "../../services/careerTwinService";
+import { syncTwinFromProfile, loadCareerTwin, getTwinInfluence, type TwinInfluenceSignals } from "../../services/careerTwinService";
 import { orchestrate } from "../../services/orchestration/signalOrchestrator";
 import { getCohortOutcomeStats, tenureBandFromYears } from "../../services/cohortOutcomesAggregator";
 import { getActionFeedbackBoosts } from "../../services/feedbackEngine";
@@ -769,6 +769,17 @@ export function CareerOSHome() {
 
   const [feedbackBoosts, setFeedbackBoosts] = useState<Map<string, number>>(new Map());
   const [patternBoosts, setPatternBoosts] = useState<{ hasInaction: boolean; hasPlateauPattern: boolean }>({ hasInaction: false, hasPlateauPattern: false });
+  // Phase 1 (Career OS): twin influence — goal-aligned signal boosts + suppressed
+  // action ids. Previously suppressions were WRITTEN on bad ratings but never read.
+  const [twinInfluence, setTwinInfluence] = useState<TwinInfluenceSignals | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    loadCareerTwin()
+      .then(twin => { if (!cancelled && twin) setTwinInfluence(getTwinInfluence(twin)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [user]);
   useEffect(() => {
     if (!user?.id || !state.scoreResult) return;
     const hr = state.scoreResult as HybridResult;
@@ -780,9 +791,9 @@ export function CareerOSHome() {
 
   const orchestratedFeed = useMemo(() => {
     if (!state.scoreResult) return null;
-    try { return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts, patternBoosts }); }
+    try { return orchestrate(state.scoreResult as HybridResult, undefined, userProfile, { feedbackBoosts, patternBoosts, twinInfluence: twinInfluence ?? undefined }); }
     catch { return null; }
-  }, [state.scoreResult, userProfile, feedbackBoosts, patternBoosts]);
+  }, [state.scoreResult, userProfile, feedbackBoosts, patternBoosts, twinInfluence]);
 
   const primaryMove = orchestratedFeed?.primaryMove ?? null;
   const primaryMoveActionId = primaryMove?.action.id ?? primaryMove?.action.title ?? null;
