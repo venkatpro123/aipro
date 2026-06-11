@@ -11,6 +11,7 @@ import { DefensePriorityEngine } from './DefensePriorityEngine';
 import { DefenseStrategyPlan } from './DefenseStrategyPlan';
 import { CareerDecisionSimulator } from './CareerDecisionSimulator';
 import { ActionOutcomeTracker } from './ActionOutcomeTracker';
+import { OutcomeDashboard } from './OutcomeDashboard';
 import { CompanyWatchlistPanel } from './CompanyWatchlistPanel';
 import { RiskForecast } from './RiskForecast';
 import { LiveMonitoringFeed } from './LiveMonitoringFeed';
@@ -118,6 +119,7 @@ function LayoffDefenseCenterInner({ scoreResult }: { scoreResult: HybridResult }
         </TabsContent>
 
         <TabsContent value="outcomes">
+          <OutcomeDashboard />
           <ActionOutcomeTracker />
         </TabsContent>
 

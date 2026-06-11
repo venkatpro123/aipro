@@ -193,6 +193,54 @@ export async function loadCohortBoosts(
   return map;
 }
 
+/** Phase 4: measured cohort impact per action (avg pts the score actually fell,
+ *  and the sample size) — used to REPLACE static riskReductionPct with what the
+ *  data shows. Returns the raw stats so the caller can both rank and re-label. */
+export interface CohortImpact { avgRiskReduction: number; count: number; }
+export async function loadCohortImpacts(
+  roleKey: string,
+  tenureBand: string,
+  actionIds: string[],
+): Promise<Map<string, CohortImpact>> {
+  const { getCohortOutcomeStats } = await import('./cohortOutcomesAggregator');
+  const safeBand = toTenureBand(tenureBand);
+  const map = new Map<string, CohortImpact>();
+  await Promise.all(
+    actionIds.slice(0, 10).map(async (id) => {
+      try {
+        const stats = await getCohortOutcomeStats(roleKey, safeBand, id);
+        if (stats && stats.count > 0) map.set(id, { avgRiskReduction: stats.avgRiskReduction, count: stats.count });
+      } catch { /* non-fatal */ }
+    }),
+  );
+  return map;
+}
+
+/** Replace static riskReductionPct with the measured cohort mean when the sample
+ *  is large enough (n>=5), bounded to ±50% of the static estimate so a noisy
+ *  measurement can't produce an absurd number. Stamps impactConfidenceSource so
+ *  the UI labels it MEASURED — the first place outcomes change a displayed number. */
+export function applyMeasuredImpact<T extends Partial<ActionPlanItem>>(
+  actions: T[],
+  impacts: Map<string, CohortImpact>,
+): T[] {
+  if (impacts.size === 0) return actions;
+  return actions.map(a => {
+    const stats = impacts.get(a.id ?? a.title ?? '');
+    if (!stats || stats.count < 5 || stats.avgRiskReduction <= 0) return a;
+    const staticPct = a.riskReductionPct ?? 5;
+    const lo = Math.max(1, Math.round(staticPct * 0.5));
+    const hi = Math.round(staticPct * 1.5);
+    const measured = Math.max(lo, Math.min(hi, Math.round(stats.avgRiskReduction)));
+    return {
+      ...a,
+      riskReductionPct: measured,
+      impactConfidenceSource: 'MEASURED',
+      evidenceStats: `n=${stats.count} · measured ${Math.round(stats.avgRiskReduction * 10) / 10} pts`,
+    } as T;
+  });
+}
+
 export interface RankingScore {
   action: Partial<ActionPlanItem>;
   rankScore: number;

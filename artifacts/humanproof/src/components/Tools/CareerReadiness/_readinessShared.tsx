@@ -154,15 +154,27 @@ export function ImprovementList({ improvements, unit = 'pts', tracking }: { impr
           </span>
         )}
       </div>
+      {/* Phase 4 (Rule 2): once the user has rated 3+ actions in this tab, scale the
+          shown impact by their MEASURED success rate (0.6–1.4×) instead of the
+          static estimate — outcomes changing the displayed number. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {improvements.map((imp, i) => {
           const id = tracking ? readinessActionId(tracking.tab, imp.action) : '';
           const st = tracking ? states[id] : undefined;
+          const calibrated = tabSuccess && tabSuccess.total >= 3;
+          const shownImpact = calibrated
+            ? Math.max(1, Math.round(imp.impactPct * (0.6 + tabSuccess!.rate * 0.8)))
+            : imp.impactPct;
           return (
             <div key={i} style={{ padding: '11px 13px', borderRadius: 9, background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.15)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 5 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: 'rgba(255,255,255,0.8)', lineHeight: 1.45 }}>{imp.action}</span>
-                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 900, color: '#10b981', fontFamily: 'var(--font-mono, monospace)' }}>+{imp.impactPct}{unit}</span>
+                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {calibrated && (
+                    <span title={`Calibrated to your ${Math.round(tabSuccess!.rate*100)}% measured success (${tabSuccess!.total} outcomes)`} style={{ fontSize: 8, fontWeight: 800, padding: '1px 5px', borderRadius: 3, color: '#10b981', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', fontFamily: 'var(--font-mono, monospace)' }}>MEASURED</span>
+                  )}
+                  <span style={{ fontSize: 12, fontWeight: 900, color: '#10b981', fontFamily: 'var(--font-mono, monospace)' }}>+{shownImpact}{unit}</span>
+                </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 7px', borderRadius: 4, color: ACCENT, background: `${ACCENT}14`, border: `1px solid ${ACCENT}28` }}>{imp.effort.toUpperCase()} EFFORT</span>

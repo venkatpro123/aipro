@@ -118,7 +118,7 @@ import { computePredictionHorizon } from "./predictionHorizonService";
 import { computeSkillGapIntelligence } from "./skillGapIntelligenceService";
 import { computePersonalizedTimeline } from "./personalizedTimelineService";
 import { computeScenarioPlan, ScenarioPlanPersonalizationContext } from "./scenarioPlanService";
-import { computeActionEffortBadge, rankActions, loadCohortBoosts, applyBehavioralRerank } from "./actionRankingService";
+import { computeActionEffortBadge, rankActions, loadCohortImpacts, applyMeasuredImpact, cohortMultiplier, applyBehavioralRerank } from "./actionRankingService";
 import { tenureBandFromYears } from "./cohortOutcomesAggregator";
 import { fetchIntelligenceBrief } from "./intelligenceBriefService";
 import { getCareerPathMarket, getCareerPathMarketSync } from "./careerPathMarket";
@@ -3561,12 +3561,17 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
     const _actionIds = hybridResult.actionItems
       .map((a: any) => (a.id ?? a.title ?? '') as string)
       .filter(Boolean);
-    const _cohortBoosts = _userProfileForRanking && _actionIds.length > 0
-      ? await loadCohortBoosts(
+    // Phase 4: load MEASURED cohort impact (avg pts the score actually fell + n)
+    // — used both to rank and, when n is large, to replace the static estimate.
+    const _cohortImpacts = _userProfileForRanking && _actionIds.length > 0
+      ? await loadCohortImpacts(
           (_userProfileForRanking.roleTitle ?? 'unknown').toLowerCase().replace(/\s+/g, '_'),
           tenureBandFromYears(_userProfileForRanking.tenureYears ?? null),
           _actionIds,
         ).catch(() => null)
+      : null;
+    const _cohortBoosts = _cohortImpacts
+      ? new Map([..._cohortImpacts].filter(([, s]) => s.count >= 5).map(([id, s]) => [id, cohortMultiplier(s.avgRiskReduction)]))
       : null;
     // Phase 2 (Career OS): load THIS user's per-dimension success rates so actions
     // that historically worked for them rank higher. Anonymous/offline → neutral.
@@ -3591,6 +3596,11 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       ...(r.action as import('../types/hybridResult').ActionPlanItem),
       rankScore: r.rankScore,
     }));
+    // Phase 4 (Rule 2): outcomes change the numbers — where enough users completed
+    // an action, replace its static riskReductionPct with the MEASURED mean drop.
+    if (_cohortImpacts && _cohortImpacts.size > 0) {
+      hybridResult.actionItems = applyMeasuredImpact(hybridResult.actionItems, _cohortImpacts);
+    }
     hybridResult.recommendations = hybridResult.actionItems;
   } catch (e) {
     noteEngineFailure('personalizedActionSet', e);

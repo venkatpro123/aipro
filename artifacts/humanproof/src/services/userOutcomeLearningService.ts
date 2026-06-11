@@ -89,15 +89,47 @@ export async function getDimensionSuccessStats(userId: string): Promise<Dimensio
   })).sort((a, b) => b.successRate - a.successRate);
 }
 
+// Which recorded outcome types count as a "success" for each simulator decision.
+const DECISION_OUTCOME_MAP: Record<string, string[]> = {
+  switch:     ['job_change', 'offer_received'],
+  relocate:   ['job_change'],
+  consulting: ['job_change', 'offer_received'],
+  manager:    ['promotion'],
+  'ai-role':  ['skill_certified', 'job_change'],
+  upskill:    ['skill_certified'],
+  stay:       ['layoff_avoided', 'negotiation_win', 'salary_increase'],
+};
+
 /**
- * Phase 3 stub: returns calibrated simulation multipliers once ≥ 50 outcomes
- * exist. Until then returns null and the simulator keeps its hardcoded defaults.
+ * Phase 4 (Rule 18): calibrated per-decision simulation factors from REAL recorded
+ * outcomes. Returns null until ≥ 50 outcome events exist (so the simulator stays
+ * honestly ESTIMATED on thin data); once gated, returns a factor per decision that
+ * has ≥ 3 supporting outcomes — careerSimulationEngine treats presence as MODELED.
+ * Community-level when the data is shared; falls back to the user's own otherwise.
  */
 export async function getCohortSimulationFactors(): Promise<Record<string, Record<string, number>> | null> {
-  const { count } = await supabase
-    .from('action_completions')
-    .select('id', { count: 'exact', head: true })
-    .not('thumbs_up', 'is', null);
-  if ((count ?? 0) < 50) return null;
-  return null; // Phase 3: full calibration deferred
+  try {
+    const { data, count } = await supabase
+      .from('career_outcome_events')
+      .select('event_type', { count: 'exact' })
+      .limit(2000);
+    if ((count ?? 0) < 50) return null;
+
+    const byType: Record<string, number> = {};
+    for (const r of (data ?? []) as { event_type: string }[]) {
+      byType[r.event_type] = (byType[r.event_type] ?? 0) + 1;
+    }
+
+    const total = count ?? 0;
+    const factors: Record<string, Record<string, number>> = {};
+    for (const [decision, types] of Object.entries(DECISION_OUTCOME_MAP)) {
+      const supporting = types.reduce((s, t) => s + (byType[t] ?? 0), 0);
+      if (supporting >= 3) {
+        factors[decision] = { supportingOutcomes: supporting, successRate: Math.round((supporting / total) * 100) / 100 };
+      }
+    }
+    return Object.keys(factors).length > 0 ? factors : null;
+  } catch {
+    return null;
+  }
 }
