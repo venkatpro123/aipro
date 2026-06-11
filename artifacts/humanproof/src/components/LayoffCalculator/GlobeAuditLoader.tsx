@@ -408,7 +408,7 @@ export const GlobeAuditLoader: React.FC<Props> = ({
     async function init() {
       // ── dynamic import d3/topojson (separate code chunk) ──────────────────
       const [
-        { geoOrthographic, geoPath, geoGraticule10, geoInterpolate },
+        { geoOrthographic, geoPath, geoGraticule10, geoInterpolate, geoContains },
         { feature: topoFeature },
       ] = await Promise.all([
         import('d3-geo'),
@@ -510,10 +510,10 @@ export const GlobeAuditLoader: React.FC<Props> = ({
       const sphere = { type: 'Sphere' } as any; // d3-geo Sphere — not a standard GeoJSON type
 
       const COL = {
-        ocean0:'#0b2e52', ocean1:'#1a5585',
-        land0:'#3dbe72',  land1:'#1e7040',  // vivid green — high contrast on dark ocean
-        coast:'rgba(100,255,160,.92)',        // bright emerald coast line
-        grat:'rgba(120,200,255,.15)',
+        ocean0:'#08203c', ocean1:'#174a72',
+        land0:'#11414f',  land1:'#0a2836',  // deep teal base — the dot matrix carries the continents
+        coast:'rgba(110,225,255,.50)',        // refined cyan hairline coast
+        grat:'rgba(120,200,255,.11)',
         rim:'rgba(150,220,255,.88)', pulse:'rgba(111,216,255,1)',
         arc:'rgba(180,235,255,.95)', arcVi:'rgba(170,145,255,.95)', arcTeal:'rgba(120,240,210,.95)',
       };
@@ -563,8 +563,84 @@ export const GlobeAuditLoader: React.FC<Props> = ({
       sizeStars();
       fitGlobe();
 
-      function drawGlobe() {
+      // ── Dot-matrix land ("data-point earth") ───────────────────────────────
+      // An area-uniform grid of points tested against the land geometry, drawn as
+      // thousands of softly twinkling data nodes — the continents render as a
+      // living point cloud. Built in row chunks (yields to rAF) so the loader
+      // stays at 60fps while the matrix streams in; spherical coords are
+      // projection-independent so resize costs nothing.
+      type LandDot = { sinLat: number; cosLat: number; lon: number; ph: number; r: number };
+      const dotsByCol: LandDot[][] = [[], [], []]; // cyan / teal / violet passes
+      const DOT_COLS = ['rgba(125,225,255,', 'rgba(130,245,215,', 'rgba(185,165,255,'];
+      const RAD = Math.PI / 180;
+
+      async function buildLandDots() {
+        if (!landMass) return;
+        const latStep = 1.7;
+        let row = 0;
+        for (let lat = -56; lat <= 74; lat += latStep, row++) {
+          if (destroyed) return;
+          const lonStep = latStep / Math.max(0.28, Math.cos(lat * RAD));
+          for (let lon = -180; lon < 180; lon += lonStep) {
+            // jitter breaks the grid pattern → organic point-cloud look
+            const jLon = lon + (Math.random() - 0.5) * lonStep * 0.7;
+            const jLat = lat + (Math.random() - 0.5) * latStep * 0.7;
+            if (geoContains(landMass, [jLon, jLat])) {
+              const rnd = Math.random();
+              const col = rnd < 0.06 ? 2 : rnd < 0.30 ? 1 : 0;
+              dotsByCol[col].push({
+                sinLat: Math.sin(jLat * RAD), cosLat: Math.cos(jLat * RAD),
+                lon: jLon * RAD, ph: Math.random() * Math.PI * 2,
+                r: 0.55 + Math.random() * 0.5,
+              });
+            }
+          }
+          if (row % 6 === 0) await new Promise<void>(r => requestAnimationFrame(() => r()));
+        }
+      }
+      void buildLandDots();
+
+      // Manual orthographic projection of the dot field — same math as isVisible()
+      // (2 trig calls per dot vs. a full d3 proj() call → ~4k dots stay cheap).
+      function drawLandDots(now: number) {
+        const [l0, p0] = proj.rotate();
+        const lr = l0 * RAD, pr = -p0 * RAD;
+        const cosPr = Math.cos(pr), sinPr = Math.sin(pr);
+        const dotScale = Math.max(0.8, Math.min(1.7, sz / 520));
+        gctx.save();
+        for (let c = 0; c < 3; c++) {
+          const dots = dotsByCol[c];
+          if (!dots.length) continue;
+          gctx.fillStyle = DOT_COLS[c] + '1)';
+          for (let i = 0; i < dots.length; i++) {
+            const d = dots[i];
+            const A = d.lon + lr;
+            const cosA = Math.cos(A), sinA = Math.sin(A);
+            const z = d.cosLat * cosA * cosPr + d.sinLat * sinPr;
+            if (z <= 0.02) continue; // back hemisphere
+            const x = d.cosLat * sinA;
+            const y = d.sinLat * cosPr - d.cosLat * cosA * sinPr;
+            const sx = cx + R * x, sy = cy - R * y;
+            const tw = 0.62 + 0.38 * Math.sin(now * 0.0016 + d.ph);
+            gctx.globalAlpha = (0.28 + 0.72 * z) * tw; // limb attenuation + twinkle
+            const r = d.r * dotScale * (0.45 + 0.55 * z);
+            gctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+          }
+        }
+        gctx.restore();
+      }
+
+      function drawGlobe(now: number) {
         gctx.clearRect(0, 0, sz, sz);
+
+        // ── Outer atmosphere halo (drawn first; ocean overdraws the interior) ─
+        const haloR = Math.min(sz / 2, R * 1.05);
+        const halo = gctx.createRadialGradient(cx, cy, R * 0.985, cx, cy, haloR);
+        halo.addColorStop(0, 'rgba(140,220,255,.36)');
+        halo.addColorStop(0.45, 'rgba(120,205,255,.13)');
+        halo.addColorStop(1, 'rgba(120,205,255,0)');
+        gctx.beginPath(); gctx.arc(cx, cy, haloR, 0, Math.PI * 2);
+        gctx.fillStyle = halo; gctx.fill();
 
         // ── Ocean sphere ───────────────────────────────────────────────────
         gctx.beginPath();
@@ -591,10 +667,13 @@ export const GlobeAuditLoader: React.FC<Props> = ({
           gctx.beginPath();
           gpath(countries);
           gctx.strokeStyle = COL.coast;
-          gctx.lineWidth   = 1.2;
+          gctx.lineWidth   = 0.7;
           gctx.lineJoin    = 'round';
           gctx.stroke();
         }
+
+        // ── Dot-matrix land: continents as a living data-point cloud ───────
+        drawLandDots(now);
 
         // ── Terminator shading + specular ──────────────────────────────────
         gctx.save();
@@ -605,6 +684,17 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         const sp = gctx.createRadialGradient(sx,sy,0,sx,sy,R*.55);
         sp.addColorStop(0,'rgba(220,240,255,.45)'); sp.addColorStop(.4,'rgba(180,220,255,.10)'); sp.addColorStop(1,'rgba(180,220,255,0)');
         gctx.fillStyle = sp; gctx.fillRect(0, 0, sz, sz);
+        gctx.restore();
+
+        // ── Fresnel limb glow (atmospheric scattering, clipped to sphere) ──
+        gctx.save();
+        gctx.beginPath(); gpath(sphere); gctx.clip();
+        const fres = gctx.createRadialGradient(cx, cy, R * 0.80, cx, cy, R);
+        fres.addColorStop(0,    'rgba(120,215,255,0)');
+        fres.addColorStop(0.72, 'rgba(120,215,255,.05)');
+        fres.addColorStop(0.92, 'rgba(140,225,255,.15)');
+        fres.addColorStop(1,    'rgba(175,235,255,.40)');
+        gctx.fillStyle = fres; gctx.fillRect(0, 0, sz, sz);
         gctx.restore();
 
         // ── Atmosphere rim ─────────────────────────────────────────────────
@@ -840,7 +930,7 @@ export const GlobeAuditLoader: React.FC<Props> = ({
         lambda = (lambda + dt * 0.006) % 360;
         proj.rotate([lambda, -18, 0]);
         drawStars(now);
-        drawGlobe();
+        drawGlobe(now);
         drawOverlay(now);
         drawSpectrum(now);
         updateTcards(now);
