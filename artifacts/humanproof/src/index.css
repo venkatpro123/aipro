@@ -7786,7 +7786,7 @@ number-flow,
 #hp-particles{position:fixed;inset:0;pointer-events:none;z-index:0}
 .hp-gbg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.035) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 70% at 50% 50%,black 0%,transparent 100%)}
 .hp-z2{position:relative;z-index:2}
-.hp-container{max-width:1240px;margin:0 auto;padding:0 2.5rem}
+.hp-container{max-width:1240px;width:100%;margin:0 auto;padding:0 2.5rem}
 .hp-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;border:1px solid var(--hp-border2);background:rgba(0,212,255,.05);color:var(--hp-cyan);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
 .hp-tdot{width:6px;height:6px;border-radius:50%;background:var(--hp-cyan);animation:hp-bpulse 2s ease-in-out infinite}
 .hp-gtext{background:linear-gradient(130deg,#fff 0%,#38bdf8 55%,#00d4ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -7960,6 +7960,8 @@ number-flow,
 @keyframes hp-float3d{0%,100%{transform:perspective(900px) rotateY(-8deg) rotateX(4deg) translateY(0)}50%{transform:perspective(900px) rotateY(-8deg) rotateX(4deg) translateY(-14px)}}
 @media(max-width:960px){.hp-hero-grid,.hp-tl-illustration,.hp-cmp-wrap,.hp-loop-wrap,.hp-red-wrap{grid-template-columns:1fr}.hp-ai-cards{grid-template-columns:1fr 1fr}.hp-ie-grid{grid-template-columns:1fr 1fr}.hp-ie-center{grid-column:1/3;grid-row:auto}.hp-stats-row{grid-template-columns:1fr 1fr}.hp-trust-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.hp-ai-cards{grid-template-columns:1fr}.hp-trust-grid{grid-template-columns:1fr}.hp-stats-row{grid-template-columns:1fr 1fr}.hp-ie-grid{grid-template-columns:1fr}.hp-ie-center{grid-column:1}}
+@media(max-width:600px){.hp-container{padding:0 1.2rem}.hp-hero-trust{flex-wrap:wrap;gap:.8rem}.hp-trust-div{display:none}.hp-btn-p,.hp-btn-g{padding:12px 20px;font-size:14px}}
+@media(max-width:390px){.hp-container{padding:0 1rem}.hp-hero-title{font-size:clamp(1.9rem,8vw,2.6rem)}.hp-hero-sub{font-size:15px}}
 
 /* ═══ HP World Map 3D ═══ */
 .hp-map3d-wrap{perspective:1400px;margin-top:2.5rem}
@@ -7984,6 +7986,45 @@ number-flow,
 .hp-map3d-hud-item{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#3d5472;display:flex;align-items:center;gap:.4rem}
 .hp-map3d-live{width:5px;height:5px;border-radius:50%;background:#00d4ff;animation:hp-bpulse 1.4s ease-in-out infinite}
 @media(max-width:600px){.hp-map3d-inner{transform:none}.hp-map3d-inner:hover{transform:none}.hp-map3d-corner.bl{bottom:48px}.hp-map3d-corner.br{bottom:48px}}
+
+/* ── Intel header full-bleed (matches .container padding at every breakpoint) ─── */
+.intel-bleed-header {
+  margin: 0 calc(-1 * var(--space-6)); /* -24px — mirrors .container default */
+  border-radius: 0;
+}
+@media (max-width: 480px) {
+  .intel-bleed-header {
+    margin: 0 calc(-1 * var(--space-4)); /* -16px — mirrors .container mobile */
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .intel-bleed-header {
+    margin: 0 calc(-1 * var(--space-8)); /* -32px — mirrors .container tablet */
+  }
+}
+
+/* ── Canonical Card Hierarchy (3 tiers — use these, not legacy variants) ─────── */
+.card-primary {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  padding: 20px;
+}
+.card-secondary {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card-inline {
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0;
+  padding: 12px 0;
+}
 
 /* ════════════════════════════════════════════════════════════════════
    PLATINUM LIGHT THEME  —  scoped under html.light

@@ -57,7 +57,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
         fontSize: 10, color: 'rgba(245,158,11,0.85)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
       }}>
         <AlertTriangle size={11} />
-        PROJECTION — Estimated agentic AI mainstream scenario · 2028–2032 · Not a guaranteed outcome
+        PROJECTION — Estimate if AI agents go mainstream · 2028–2032 · Not a guaranteed outcome
       </div>
 
       {/* Dual score card */}
@@ -89,7 +89,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
 
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 9, fontWeight: 700, color: waveScore.scoreColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
-            2030 Structural Exposure
+            Your 2030 Risk
           </div>
           <ScoreRing score={waveScore.projectedScore} color={waveScore.scoreColor} label={waveScore.scoreLabel} size={100} />
         </div>

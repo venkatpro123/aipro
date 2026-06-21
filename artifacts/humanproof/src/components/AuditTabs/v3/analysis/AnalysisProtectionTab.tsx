@@ -102,7 +102,8 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
         </motion.div>
       )}
 
-      {/* Internal Mobility — simplified */}
+      {/* Internal Mobility — simplified. Auto-opens when the transfer window is
+          closing — too urgent to leave behind a collapsed accordion. */}
       {hasMobility && (
         <AdaptiveBlock
           title="Internal transfer opportunities"
@@ -110,7 +111,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
           icon={Shield}
           tier={3}
           accentColor="#14b8a6"
-          defaultOpen={false}
+          defaultOpen={Boolean(internalMobility?.isGoldenWindow)}
         >
           <div className="flex flex-col gap-2">
             {internalMobility.isGoldenWindow && (
@@ -118,7 +119,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
                 style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.28)' }}>
                 <span className="text-[11px]">⚡</span>
                 <p className="text-[10px] font-black" style={{ color: '#f59e0b' }}>
-                  GOLDEN WINDOW — Act before restructuring is announced.
+                  TRANSFER WINDOW CLOSING — Act before restructuring is announced.
                 </p>
               </div>
             )}

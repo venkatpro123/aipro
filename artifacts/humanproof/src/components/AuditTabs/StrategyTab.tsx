@@ -1,7 +1,7 @@
-// StrategyTab.tsx — v14.0
-// Career Strategy Command Center — 7th tab.
+// StrategyTab.tsx
+// Career Strategy Command Center.
 // Synthesizes ALL intelligence layers into a single strategic command view.
-// Layout: urgency banner → v14.0 signal alerts → phase plan → network leverage → confidence pillars → offer eval modal
+// Layout: urgency banner → early warning signs → phase plan → network leverage → confidence pillars → offer eval modal
 
 import React, { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -9,8 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, Zap, Shield, Clock, ArrowRight, CheckCircle2,
   Circle, AlertTriangle, TrendingUp, Users, Brain, DollarSign,
-  ChevronDown, ChevronRight, Building2, Globe, Briefcase, Star,
-  Scale, Copy, Check, MessageSquare,
+  ChevronDown, ChevronUp, ChevronRight, Building2, Globe, Briefcase, Star,
+  Scale, Copy, Check, MessageSquare, Search,
 } from "lucide-react";
 import type { PsychologicalNegotiationTactic } from "@/services/offerEvaluationEngine";
 import type { HybridResult } from "@/types/hybridResult";
@@ -37,12 +37,40 @@ const STRATEGY_COLORS: Record<string, { bg: string; border: string; text: string
   OPPORTUNISTIC_MOVE:  { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.35)',  text: '#10b981',  accent: '#10b981' },
 };
 
+const STRATEGY_HUMAN_LABELS: Record<string, string> = {
+  EMERGENCY_EXIT:      'Get Out Now',
+  ACCELERATE_EXIT:     'Move Faster',
+  PROTECT_AND_WAIT:    'Hold Your Position',
+  STRENGTHEN_POSITION: 'Build Your Edge',
+  OPPORTUNISTIC_MOVE:  'Make a Smart Move',
+};
+
 const URGENCY_COLORS: Record<string, string> = {
   CRITICAL: '#ef4444',
   HIGH:     '#f97316',
   MODERATE: '#f59e0b',
   LOW:      '#10b981',
 };
+
+const URGENCY_HUMAN_LABELS: Record<string, string> = {
+  CRITICAL: 'Urgent Action Needed',
+  HIGH:     'High Priority',
+  MODERATE: 'Moderate',
+  LOW:      'Stable',
+};
+
+const OFFER_REC_HUMAN_LABELS: Record<string, string> = {
+  STRONG_ACCEPT:    'Strong Accept',
+  ACCEPT:           'Accept',
+  NEGOTIATE:        'Negotiate',
+  NEGOTIATE_HARD:   'Negotiate Hard',
+  DECLINE:          'Decline',
+  INVESTIGATE_MORE: 'Investigate Further',
+  CANNOT_ACCEPT:    'Do Not Accept',
+};
+
+const toTitleCase = (s: string) =>
+  s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
 const PHASE_ICONS = {
   PHASE_0_EMERGENCY:  AlertTriangle,
@@ -109,11 +137,7 @@ const ActionCard: React.FC<{
         </span>
         <span className="text-[10px] opacity-30">·</span>
         <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          ROI {action.roiScore}/100
-        </span>
-        <span className="text-[10px] opacity-30">·</span>
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          {action.sourceLayer}
+          Impact {action.roiScore}/100
         </span>
       </div>
     </div>
@@ -347,7 +371,7 @@ const OfferModal: React.FC<{
                 {offerResult.overallScore}
               </div>
               <div className="text-sm font-bold" style={{ color: REC_COLORS[offerResult.recommendation] }}>
-                {offerResult.recommendation.replace(/_/g, ' ')}
+                {OFFER_REC_HUMAN_LABELS[offerResult.recommendation] ?? offerResult.recommendation.replace(/_/g, ' ')}
               </div>
               <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{offerResult.keyInsight}</p>
             </div>
@@ -371,7 +395,7 @@ const OfferModal: React.FC<{
                 {offerResult.negotiationPoints.map((pt, i) => (
                   <div key={i} className="mb-2">
                     <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                      <span className="font-medium" style={{ color: '#f59e0b' }}>{pt.priority.replace(/_/g, ' ')}: </span>
+                      <span className="font-medium" style={{ color: '#f59e0b' }}>{toTitleCase(pt.priority)}: </span>
                       {pt.lever}
                     </p>
                     {pt.script && (
@@ -519,6 +543,10 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
   const confidence = (result as any).careerConfidence;
   const network = (result as any).networkLeverage;
   const [showOfferModal, setShowOfferModal] = useState(false);
+  // Negotiation scripts, the full phase plan, network leverage, and the
+  // readiness profile stay collapsed by default — they're depth, not the
+  // 3 things a user needs to remember (strategy, top priority, safety window).
+  const [showFullBreakdown, setShowFullBreakdown] = useState(false);
 
   // Persist phase-action completion across remounts (the AdaptiveBlock unmounts
   // StrategyTab when collapsed, which previously wiped progress). Keyed by
@@ -545,8 +573,22 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
   if (!synthesis) {
     return (
-      <div className="flex items-center justify-center py-12 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Strategy synthesis not available for this audit.</p>
+      <div className="flex flex-col items-center text-center gap-2.5 py-10 px-6 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <Target className="w-5 h-5" style={{ color: 'rgba(255,255,255,0.35)' }} />
+        <p className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.8)' }}>Strategy isn't ready yet</p>
+        <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          We need a bit more signal — usually company, role, and experience details — before we can build your personalized strategy.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'summary' } })); } catch { /* SSR */ }
+          }}
+          className="mt-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
+          style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.28)' }}
+        >
+          Complete Your Profile →
+        </button>
       </div>
     );
   }
@@ -579,12 +621,11 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full"
                 style={{ background: `${urgencyColor}18`, color: urgencyColor, border: `1px solid ${urgencyColor}30` }}>
-                {synthesis.urgencyLevel} URGENCY
+                {URGENCY_HUMAN_LABELS[synthesis.urgencyLevel] ?? synthesis.urgencyLevel}
               </span>
-              <span className="text-[10px] tracking-wider opacity-50">STRATEGY v14.0</span>
             </div>
             <h2 className="text-lg font-black mb-1" style={{ color: strategyColors.text }}>
-              {synthesis.overallStrategy.replace(/_/g, ' ')}
+              {STRATEGY_HUMAN_LABELS[synthesis.overallStrategy] ?? synthesis.overallStrategy.replace(/_/g, ' ')}
             </h2>
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
               {synthesis.strategyRationale}
@@ -606,7 +647,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               {synthesis.estimatedSafetyWindowDays}
             </div>
             <div className="text-[10px] tracking-wider opacity-60">DAYS</div>
-            <div className="text-[10px] opacity-45">safety window</div>
+            <div className="text-[10px] opacity-45">est. time to act</div>
           </div>
         </div>
 
@@ -638,7 +679,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         const leadership = (result as any).leadershipTransitionRisk;
         const alerts: Array<{ icon: string; text: string; color: string }> = [];
 
-        if (careerVel?.plateauRisk === 'HIGH') alerts.push({ icon: '⚠', text: `Career plateau risk — ${careerVel.promotionNote?.split('.')[0]}`, color: '#f59e0b' });
+        if (careerVel?.plateauRisk === 'HIGH') alerts.push({ icon: '⚠', text: `Your growth has slowed — ${careerVel.promotionNote?.split('.')[0]}`, color: '#f59e0b' });
         if (compRisk?.cascadeStage === 'PAY_FREEZE' || compRisk?.cascadeStage === 'PAY_CUT' || compRisk?.cascadeStage === 'PRE_LAYOFF') {
           alerts.push({ icon: '🔴', text: `${compRisk.cascadeStageLabel}`, color: '#ef4444' });
         }
@@ -651,7 +692,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         return (
           <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
             <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              v14.0 SIGNAL ALERTS ({alerts.length})
+              EARLY WARNING SIGNS ({alerts.length})
             </div>
             {alerts.map((a, i) => (
               <div key={i} className="flex items-start gap-2">
@@ -688,14 +729,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
               {synthesis.topPriorityAction?.timeHorizon}
             </span>
-            {synthesis.topPriorityAction?.sourceLayer && (
-              <>
-                <span className="text-[10px] opacity-30">·</span>
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  {synthesis.topPriorityAction.sourceLayer}
-                </span>
-              </>
-            )}
+            {null /* sourceLayer is an internal signal code — not surfaced to users */}
           </div>
         </div>
 
@@ -731,6 +765,34 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         <ArrowRight className="w-4 h-4 opacity-40" />
       </motion.button>
 
+      {/* ── Full Strategy Breakdown — negotiation scripts, phase plan, network,
+          readiness profile. Depth for when you want it, not blocking memory. ── */}
+      <button
+        type="button"
+        onClick={() => setShowFullBreakdown(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <div className="flex items-center gap-2">
+          <Search className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.45)' }} />
+          <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+            {showFullBreakdown ? 'Hide full strategy breakdown' : 'See full strategy breakdown'}
+          </span>
+        </div>
+        {showFullBreakdown ? <ChevronUp className="w-4 h-4 opacity-40" /> : <ChevronDown className="w-4 h-4 opacity-40" />}
+      </button>
+
+      <AnimatePresence>
+        {showFullBreakdown && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-5">
+
       {/* Negotiation tactics — the "& negotiation" content, previously unrendered */}
       <NegotiationTacticsSection tactics={synthesis.psychologicalNegotiationTactics ?? []} />
 
@@ -764,7 +826,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
                 background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.25)',
               }}>
-                {network.networkTier.replace(/_/g, ' ')}
+                {toTitleCase(network.networkTier)}
               </span>
             </div>
           </div>
@@ -879,7 +941,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
                 background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)',
               }}>
-                {confidence.confidenceTier.replace(/_/g, ' ')}
+                {toTitleCase(confidence.confidenceTier)}
               </span>
             </div>
           </div>
@@ -950,6 +1012,11 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           </div>
         </div>
       </div>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Offer modal — currentSalary sourced from the user's saved financial
           context so the comp-delta dimension compares against their REAL salary,

@@ -81,7 +81,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
             >
               {title}
             </p>
-            {tier && !empty && <TierBadge tier={tier} />}
+            {/* tier badge hidden — internal disclosure metadata, not user-facing */}
           </div>
           {(subtitle || empty) && (
             <div

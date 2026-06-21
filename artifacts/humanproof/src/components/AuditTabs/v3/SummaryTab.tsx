@@ -32,7 +32,6 @@ import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/sco
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { FirstAuditTour } from '../common/FirstAuditTour';
-import { CompanyPulseCard } from '../common/CompanyPulseCard';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import ReasoningSpineCard from '../common/ReasoningSpineCard';
 import TierBadge from '../common/TierBadge';
@@ -43,7 +42,7 @@ import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
 import { ScoreTrendStrip } from '../common/ScoreTrendStrip';
 import { InactionCostCard } from '../common/InactionCostCard';
 import { VerdictReassurance } from '../common/VerdictReassurance';
-import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
+// TimeToSafetyStrip removed — lives in ActionsTab only (single source, avoids Beast-mode scroll duplicate).
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
 import { MissingDataCard } from '../common/MissingDataCard';
@@ -613,14 +612,6 @@ export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }
           <AlertTriangle size={12} style={{ color: 'var(--amber)' }} />
           Top Risk Drivers
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <TierBadge tier={1} />
-          <ProvenanceLabel
-            kind="modeled"
-            tooltip="These dimension scores are computed by HumanProof's scoring formula. Individual signals feeding them may be MEASURED or ESTIMATED — expand each driver to see sources."
-            size="xs"
-          />
-        </div>
       </div>
       <div className="driver-strip">
         {drivers.slice(0, 3).map((d, i) => (
@@ -690,7 +681,6 @@ const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number; su
           {supporting ? 'Then, This Week' : 'Do This Week'}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <TierBadge tier={1} />
           {remaining > 0 && (
             <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
               +{remaining} more in Action Plan
@@ -998,20 +988,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   // now) or inside the single "Full breakdown" disclosure (when folded). Each is
   // mutually exclusive across reveal.evidenceInline / reveal.deep, so the same
   // element object is only ever mounted in one branch.
-  const companyPulseNode = (
-    <motion.div
-      key="company-pulse"
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.18 }}
-    >
-      <CompanyPulseCard
-        result={result}
-        companyData={companyData}
-        defaultOpen={hasActiveWARN || adaptation.mode === 'emergency'}
-      />
-    </motion.div>
-  );
+  // CompanyPulseCard is not shown here — it lives in the Company section below.
   const personalRiskNode = personalModifierPresent
     ? <PersonalRiskModifierPanel key="personal-risk" modifier={(result as any).personalRiskModifier} />
     : null;
@@ -1044,16 +1021,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       />
     )
     : null;
-  const timeToSafetyNode = timeToSafetyEligible
-    ? (
-      <TimeToSafetyStrip
-        key="time-to-safety"
-        currentScore={score}
-        scoreSensitivity={scoreSensitivity}
-        financialRunwayMonths={financialRunwayMonths}
-      />
-    )
-    : null;
+  const timeToSafetyNode = null;
   const viewAllWeightsLink = topDrivers.length > 0
     ? (
       <div className="flex justify-end px-1" key="view-all-weights">
@@ -1076,7 +1044,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
   // The "Full breakdown" disclosure renders only when it would actually contain
   // something — any folded evidence block, the deep-dive link, or missing-data.
-  const foldedEvidence: SummaryBlockKey[] = (['companyPulse', 'opportunity', 'personalRisk', 'timeToSafety', 'inactionCost'] as const)
+  const foldedEvidence: SummaryBlockKey[] = (['opportunity', 'personalRisk', 'timeToSafety', 'inactionCost'] as const)
     .filter(k => reveal.deep.has(k));
   const deepHasContent = foldedEvidence.length > 0 || viewAllWeightsLink != null;
 
@@ -1172,10 +1140,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         className="rounded-2xl p-3 sm:p-5 flex flex-col items-center text-center relative overflow-hidden"
         style={{ background: riskGradient(score), border: `1px solid ${riskColor(score)}30` }}
       >
-        {/* tier badge floating in corner */}
-        <div className="absolute top-3 right-3">
-          <TierBadge tier={1} label="T1 · CORE" />
-        </div>
+        {/* tier badge removed — internal classification, not user-facing */}
 
         {/* Gate: if CI range > 50 or confidence < 20%, show range instead of point score */}
         {scoreSufficiency.sufficient
@@ -1451,7 +1416,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       )}
 
       {/* ── Evidence surface (orchestrator-gated) ──────────────────────────── */}
-      {reveal.evidenceInline.has('companyPulse') && companyPulseNode}
       {reveal.evidenceInline.has('personalRisk') && personalRiskNode}
       {reveal.evidenceInline.has('opportunity') && opportunityNode}
       {reveal.evidenceInline.has('inactionCost') && inactionNode}
@@ -1459,7 +1423,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       {/* ── Full breakdown — one collapsed disclosure for everything else ───── */}
       {deepHasContent && (
         <AdaptiveBlock title="Full breakdown" tier={3} accentColor="#94a3b8" defaultOpen={false}>
-          {reveal.deep.has('companyPulse') && companyPulseNode}
           {reveal.deep.has('opportunity') && opportunityNode}
           {reveal.deep.has('personalRisk') && personalRiskNode}
           {reveal.deep.has('timeToSafety') && timeToSafetyNode}

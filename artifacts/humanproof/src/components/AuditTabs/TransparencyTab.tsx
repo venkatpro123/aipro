@@ -508,7 +508,7 @@ const CalibrationFreshnessPanel: React.FC<{
         <div className="px-4 py-3 border-b border-white/8 flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-amber-400" />
           <span className="text-xs font-black uppercase tracking-widest text-amber-400">
-            Model Calibration Status
+            Model Accuracy Status
           </span>
           <span
             className="ml-auto text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider"
@@ -1074,7 +1074,7 @@ const MethodologyExplainer: React.FC = () => {
       icon: <Database className="w-6 h-6 text-cyan-400" />,
     },
     {
-      title: "Confidence Calibration & Validation",
+      title: "Accuracy & Validation",
       description:
         "L1–L5 thresholds calibrated via logistic regression on 200 verified layoff events (layoffs.fyi 2023–2025, AUC-ROC 0.81 on 40-event hold-out). Cross-sectional validation on 56 companies (2024–2026) produced L1-only AUC 0.73 (95% CI: 0.58–0.86). The model accurately detects distress-driven layoffs (AUC 0.96 for this cohort); D8 (efficiency-driven restructuring) is regression-calibrated (47 events, AUC 0.76) but held pending a 15-event held-out gate. Next temporal recalibration: July 2026.",
       icon: <BarChart2 className="w-6 h-6 text-amber-400" />,

@@ -21,7 +21,9 @@ const LS_KEY = 'hp.ui.viewmode';
 
 function readMode(): ViewMode {
   try {
-    // Always lock to analysis mode — guidance and beast are hidden
+    const stored = localStorage.getItem(LS_KEY);
+    if (stored === 'beast' || stored === 'intelligence') return 'beast';
+    if (stored === 'guidance') return 'guidance';
     return 'analysis';
   } catch {
     return 'analysis';

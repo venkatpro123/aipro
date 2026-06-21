@@ -95,9 +95,6 @@ const IntelligenceBriefBlock: React.FC<{
           <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(148,163,184,0.45)' }}>
             INTELLIGENCE BRIEF
           </span>
-          <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.25)', fontFamily: 'var(--font-mono)' }}>
-            NO LIVE DATA
-          </span>
         </div>
         <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
           No live signals were retrieved{companyName ? ` for ${companyName}` : ''}. A brief

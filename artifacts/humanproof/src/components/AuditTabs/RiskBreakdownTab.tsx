@@ -537,7 +537,7 @@ const ScoreConfidenceInterval: React.FC<{
     <div className="glass-panel-heavy p-[var(--space-6)] rounded-xl border border-[var(--border-2)]">
       <div className="flex justify-between items-center mb-[var(--space-6)]">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className="label-sm text-[var(--cyan)] tracking-[0.2em] font-black uppercase">Certainty Calibration</div>
+          <div className="label-sm text-[var(--cyan)] tracking-[0.2em] font-black uppercase">Accuracy Range</div>
           <button
             type="button"
             onClick={() => setShowEpistemicNote(v => !v)}
@@ -726,7 +726,7 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
         {(result as any).segmentCalibration && (
           <div className="mb-4 px-4 py-3 rounded-xl border border-white/8 bg-white/3 flex flex-wrap items-center gap-x-5 gap-y-2">
             <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest shrink-0">
-              Segment Calibration
+              Profile Adjustment
             </div>
             <div className="text-[11px] text-foreground/80 font-medium">
               {(result as any).segmentCalibration.segmentLabel}
@@ -793,7 +793,7 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
 
           <div className="flex flex-col">
             <SectionHeader
-              title="Confidence Calibration"
+              title="Accuracy Range"
               description="True risk range based on data completeness and signal coherence. Narrow range = reliable score. Wide range = act with caution."
             />
             <div className="flex-1">

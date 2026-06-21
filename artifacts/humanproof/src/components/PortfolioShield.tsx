@@ -48,7 +48,7 @@ export const PortfolioShield: React.FC<{ score?: number }> = ({ score: externalS
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <PremiumSelect
-            label="Baseline Industry"
+            label="Your Industry"
             placeholder="Select career cluster..."
             value={industry}
             onChange={(val) => { setIndustry(val); setRole(''); }}

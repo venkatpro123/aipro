@@ -31,7 +31,7 @@ import { loadFinancialContext, deriveFinancialProfile } from "@/services/financi
 import {
   Shield, AlertTriangle, TrendingUp, TrendingDown, Cpu,
   Brain, Heart, Lightbulb, Users, Zap, Target, ChevronRight,
-  ArrowRight, BarChart3, Clock, UserCheck,
+  ArrowRight, BarChart3, Clock, UserCheck, ChevronDown, ChevronUp, Search,
 } from "lucide-react";
 // v14.0 intelligence panels
 import SkillPortfolioPanel from "./common/SkillPortfolioPanel";
@@ -136,7 +136,7 @@ const CompanySkillDemandBanner: React.FC<CompanySkillDemandBannerProps> = ({
           </span>
         </p>
         <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          {signalText}. Industry averages hidden — they represent a different confidence level.
+          {signalText}. Showing {companyDisplayName}'s real numbers instead of industry-wide estimates.
         </p>
       </div>
       {companyDemand.currentOpenings != null && (
@@ -301,9 +301,12 @@ const AtRiskSkillsPanel: React.FC<{
 
   if (combined.length === 0) {
     return (
-      <div className="glass-panel p-5 text-center text-sm text-muted-foreground">
-        <Shield className="w-6 h-6 text-emerald-500 mx-auto mb-2 opacity-50" />
-        No high-risk skills flagged for this role profile.
+      <div className="glass-panel p-5 flex flex-col items-center text-center gap-1.5">
+        <Shield className="w-5 h-5 text-emerald-500 opacity-70" />
+        <p className="text-sm font-bold text-foreground">No at-risk skills flagged</p>
+        <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+          Nothing in your current profile faces near-term AI displacement. Keep building on your durable skills below.
+        </p>
       </div>
     );
   }
@@ -583,8 +586,12 @@ const WhatIfSkillSimulator: React.FC<{
 
   if (skills.length === 0) {
     return (
-      <div className="glass-panel p-6 text-center text-sm text-muted-foreground">
-        No skill simulation data available for this role.
+      <div className="glass-panel p-6 flex flex-col items-center text-center gap-1.5">
+        <BarChart3 className="w-5 h-5 text-muted-foreground opacity-50" />
+        <p className="text-sm font-bold text-foreground">No simulation data for this role yet</p>
+        <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+          We don't have enough seeded skill data for this role to model what-if scenarios. Check back as we expand coverage.
+        </p>
       </div>
     );
   }
@@ -790,6 +797,10 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
   const [twinSubmitted, setTwinSubmitted] = useState(() => {
     try { return localStorage.getItem('hp_twin_submitted') === '1'; } catch { return false; }
   });
+  // Simulator, roadmap, portfolio, velocity, and market-context panels stay
+  // collapsed by default — depth for when you want it, not the 3 things to
+  // remember (at-risk skill, durable skill, recommended path).
+  const [showSkillDeepDive, setShowSkillDeepDive] = useState(false);
 
   return (
     <section aria-labelledby="career-skills-heading" className="space-y-8">
@@ -830,87 +841,6 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
               description="Skills that AI cannot replicate due to trust, empathy, contextual judgment, or physical presence. Prioritize building depth in these."
             />
             <HumanDurableSkillsPanel intel={intel} hasCompanyOverlay={companyDemand !== null} />
-          </div>
-        </div>
-
-        {/* ── Resilience Gauge + What-If Simulator ── */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <SectionHeader
-              title="Skill Resilience Score"
-              description="Overall measure of how future-proof your current skill portfolio is against AI disruption trajectories."
-            />
-            <div className="glass-panel p-5 rounded-xl">
-              <SkillRiskGauge
-                score={result.total}
-                safeCriticalSkills={safeCount}
-                atRiskSkills={atRiskCount}
-                obsoleteSkills={obsoleteCount}
-              />
-              <div className="mt-4 text-center space-y-1">
-                <p className="text-sm">
-                  <span className="font-medium">Current Resilience: </span>
-                  <span style={{ color: scoreColor, fontWeight: "bold" }}>
-                    {(100 - result.total).toFixed(0)}%
-                  </span>
-                </p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {result.total < 40
-                    ? "Strong skill moat. Focus on deepening uniquely human capabilities."
-                    : result.total < 65
-                      ? "Moderate exposure. Shift effort toward AI-adjacent and human-only skills."
-                      : "High vulnerability. Immediate portfolio restructuring recommended."}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <SectionHeader
-              title="What-If Skill Simulator"
-              description="Adjust proficiency sliders to model how upskilling safe skills or reducing reliance on at-risk skills changes your overall risk score."
-            />
-            <WhatIfSkillSimulator
-              intel={intel}
-              baseScore={result.total}
-              breakdown={result.breakdown as unknown as Record<string, number>}
-              onScoreChange={setSimulatedScore}
-            />
-            <div className="mt-3 rounded-xl border border-white/10 p-4 glass-panel">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-muted-foreground">Simulated Resilience:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold" style={{ color: getScoreColor(simulatedScore) }}>
-                    {(100 - simulatedScore).toFixed(0)}%
-                  </span>
-                  {simulatedDelta !== 0 && (
-                    <span
-                      className="text-xs font-mono font-bold px-1.5 py-0.5 rounded"
-                      style={{
-                        color: simulatedDelta < 0 ? "var(--emerald)" : "var(--red)",
-                        background: simulatedDelta < 0 ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                      }}
-                    >
-                      {simulatedDelta < 0 ? "▼" : "▲"} {Math.abs(simulatedDelta)} pts risk
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                <AnimatePresence>
-                  <motion.div
-                    className="h-full rounded-full"
-                    animate={{ width: `${100 - simulatedScore}%` }}
-                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                    style={{ backgroundColor: getScoreColor(simulatedScore) }}
-                  />
-                </AnimatePresence>
-              </div>
-              <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground font-mono">
-                <span>HIGH RISK</span>
-                <span>LOW RISK</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1060,9 +990,13 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
               />
 
               {visiblePaths.length === 0 && hiddenPaths.length === 0 && (
-                <p className="text-xs text-muted-foreground p-4 rounded-xl border border-white/10">
-                  No transition paths available for this role profile.
-                </p>
+                <div className="flex flex-col items-center text-center gap-1.5 p-5 rounded-xl border border-white/10">
+                  <ArrowRight className="w-5 h-5 text-muted-foreground opacity-50" />
+                  <p className="text-sm font-bold text-foreground">No pivot paths mapped yet</p>
+                  <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
+                    We haven't seeded transition data for this specific role profile yet. Your AI Risk Skill Matrix above still applies.
+                  </p>
+                </div>
               )}
 
               {visiblePaths.length === 0 && hiddenPaths.length > 0 && (
@@ -1096,15 +1030,13 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
                     <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
                     <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
                       <span className="font-semibold text-amber-400">
-                        {hiddenPaths.length} additional path{hiddenPaths.length > 1 ? 's' : ''} available
+                        {hiddenPaths.length} more path{hiddenPaths.length > 1 ? 's' : ''} worth knowing about
                       </span>
-                      {' '}— these require a{' '}
-                      <span className="font-semibold text-amber-400">{gapLabel}</span>
-                      {' '}not compatible with your current financial runway.
-                      {fpRunwayMonths != null && (
-                        ` Your runway (${fpRunwayMonths.toFixed(1)} months) covers less than half the income gap these transitions require.`
-                      )}
-                      {' '}Increase your emergency fund before pursuing these paths.
+                      {' '}— they take longer to start earning again ({gapLabel}){' '}
+                      {fpRunwayMonths != null
+                        ? `than your current runway (${fpRunwayMonths.toFixed(1)} months) comfortably covers.`
+                        : 'than is typical.'}
+                      {' '}Worth a look once you've built a bigger cushion, or if you can bridge the gap another way.
                     </p>
                   </div>
 
@@ -1117,6 +1049,114 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
             </div>
           );
         })()}
+
+        {/* ── Skill Intelligence Deep Dive — resilience simulator, roadmap, portfolio,
+            velocity, market context, career twin. Depth for when you want it. ── */}
+        <button
+          type="button"
+          onClick={() => setShowSkillDeepDive(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl mb-6"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.45)' }} />
+            <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+              {showSkillDeepDive ? 'Hide skill intelligence deep dive' : 'See skill intelligence deep dive'}
+            </span>
+          </div>
+          {showSkillDeepDive ? <ChevronUp className="w-4 h-4 opacity-40" /> : <ChevronDown className="w-4 h-4 opacity-40" />}
+        </button>
+
+        <AnimatePresence>
+          {showSkillDeepDive && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+
+        {/* ── Resilience Gauge + What-If Simulator ── */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <SectionHeader
+              title="Skill Resilience Score"
+              description="Overall measure of how future-proof your current skill portfolio is against AI disruption trajectories."
+            />
+            <div className="glass-panel p-5 rounded-xl">
+              <SkillRiskGauge
+                score={result.total}
+                safeCriticalSkills={safeCount}
+                atRiskSkills={atRiskCount}
+                obsoleteSkills={obsoleteCount}
+              />
+              <div className="mt-4 text-center space-y-1">
+                <p className="text-sm">
+                  <span className="font-medium">Current Resilience: </span>
+                  <span style={{ color: scoreColor, fontWeight: "bold" }}>
+                    {(100 - result.total).toFixed(0)}%
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {result.total < 40
+                    ? "Strong skill moat. Focus on deepening uniquely human capabilities."
+                    : result.total < 65
+                      ? "Moderate exposure. Shift effort toward AI-adjacent and human-only skills."
+                      : "High vulnerability. Immediate portfolio restructuring recommended."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <SectionHeader
+              title="What-If Skill Simulator"
+              description="Adjust proficiency sliders to model how upskilling safe skills or reducing reliance on at-risk skills changes your overall risk score."
+            />
+            <WhatIfSkillSimulator
+              intel={intel}
+              baseScore={result.total}
+              breakdown={result.breakdown as unknown as Record<string, number>}
+              onScoreChange={setSimulatedScore}
+            />
+            <div className="mt-3 rounded-xl border border-white/10 p-4 glass-panel">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm text-muted-foreground">Simulated Resilience:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold" style={{ color: getScoreColor(simulatedScore) }}>
+                    {(100 - simulatedScore).toFixed(0)}%
+                  </span>
+                  {simulatedDelta !== 0 && (
+                    <span
+                      className="text-xs font-mono font-bold px-1.5 py-0.5 rounded"
+                      style={{
+                        color: simulatedDelta < 0 ? "var(--emerald)" : "var(--red)",
+                        background: simulatedDelta < 0 ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                      }}
+                    >
+                      {simulatedDelta < 0 ? "▼" : "▲"} {Math.abs(simulatedDelta)} pts risk
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                <AnimatePresence>
+                  <motion.div
+                    className="h-full rounded-full"
+                    animate={{ width: `${100 - simulatedScore}%` }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    style={{ backgroundColor: getScoreColor(simulatedScore) }}
+                  />
+                </AnimatePresence>
+              </div>
+              <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground font-mono">
+                <span>HIGH RISK</span>
+                <span>LOW RISK</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* ── Upskilling Roadmap — v4.0 archetype-aware ── */}
         <CollapsibleSection title="Strategic Transformation Roadmap">
@@ -1379,6 +1419,10 @@ export const CareerSkillsTab: React.FC<TabProps> = ({
             </div>
           </div>
         </div>
+
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </motion.div>
 

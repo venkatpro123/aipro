@@ -60,14 +60,14 @@ export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({
           <GitCompare size={20} style={{ color: 'var(--violet)' }} />
         </div>
         <div>
-          <h3 className="label-xs" style={{ margin: 0, fontSize: '0.7rem' }}>Premium Benchmark</h3>
-          <div style={{ fontSize: '0.9rem', color: 'var(--text)', fontWeight: 800, fontFamily: 'var(--font-display)' }}>Role Comparison Engine</div>
+          <h3 className="label-xs" style={{ margin: 0, fontSize: '0.7rem' }}>Compare Career Paths</h3>
+          <div style={{ fontSize: '0.9rem', color: 'var(--text)', fontWeight: 800, fontFamily: 'var(--font-display)' }}>How Would a Different Role Score?</div>
         </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
         <PremiumSelect
-          label="Benchmark Industry"
+          label="Compare Industry"
           placeholder="Select comparison industry..."
           value={targetIndustry}
           onChange={(val) => { setTargetIndustry(val); setTargetRole(''); }}
@@ -75,7 +75,7 @@ export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({
         />
 
         <PremiumSelect
-          label="Benchmark Role"
+          label="Compare Role"
           placeholder="Select comparison role..."
           value={targetRole}
           onChange={(val) => setTargetRole(val)}

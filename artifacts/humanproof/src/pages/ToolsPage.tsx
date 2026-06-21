@@ -30,6 +30,7 @@ import HumanEdgeJournal from "../components/HumanEdgeJournal";
 import ResilienceBadge from "../components/ResilienceBadge";
 import DailyChallenge from "../components/DailyChallenge";
 import RiskCalculatorsView from "../components/RiskCalculatorsView";
+import { SummaryTabSkeleton } from "../components/Skeletons/SummaryTabSkeleton";
 import {
   getScoreHistory,
   hasLegacyVersionEntries,
@@ -135,7 +136,7 @@ export default function ToolsPage() {
         {/* ── Content ───────────────────────────────────────────────────── */}
         <div ref={tabContentRef} style={{ minHeight: '60vh' }}>
           <TabErrorBoundary tabId="layoff-audit">
-            <Suspense fallback={null}>
+            <Suspense fallback={<SummaryTabSkeleton />}>
               <LayoffCalculator onSwitchTab={switchTab} />
             </Suspense>
           </TabErrorBoundary>

@@ -1,25 +1,20 @@
 // AnalysisView.tsx — Analysis Mode shell
 //
-// 4-tab middle layer between Guidance and Beast Mode.
-// Answers: What is happening? Why? How serious? What next? What to do?
-//
-// Tabs: Summary | Company | Protection | Action Plan
-// Navigation: sticky pill tab bar (desktop) + portal bottom nav (mobile) + swipe
-// Each tab is lazy-loaded. The shell mirrors Beast Mode nav patterns exactly.
+// 4-section single-scroll layout. Tabs serve as anchor shortcuts that
+// smooth-scroll to their section; IntersectionObserver keeps the active
+// tab highlight in sync with the user's scroll position.
 
-import React, { Suspense, lazy, useState, useCallback } from 'react';
+import React, { Suspense, lazy, useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useDrag } from '@use-gesture/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { TrendingUp, Building2, Shield, Zap } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { TabErrorBoundary } from '../common/TabErrorBoundary';
 import { CardSkeleton } from '../../Skeletons/CardSkeleton';
 import { SummaryTabSkeleton } from '../../Skeletons/SummaryTabSkeleton';
-import { riskColor, riskLabel } from '../../../lib/riskTokens';
 
-// Lazy-load each tab for code-splitting
+// Lazy-load each section for code-splitting
 const AnalysisSummaryTab    = lazy(() => import('./analysis/AnalysisSummaryTab').then(m => ({ default: m.AnalysisSummaryTab ?? m.default })));
 const AnalysisCompanyTab    = lazy(() => import('./analysis/AnalysisCompanyTab').then(m => ({ default: m.AnalysisCompanyTab ?? m.default })));
 const AnalysisProtectionTab = lazy(() => import('./analysis/AnalysisProtectionTab').then(m => ({ default: m.AnalysisProtectionTab ?? m.default })));
@@ -47,6 +42,9 @@ const ANALYSIS_TABS: TabConfig[] = [
   { value: 'protection', label: 'Protection',  shortLabel: 'Protect', Icon: Shield },
   { value: 'actions',    label: 'Action Plan', shortLabel: 'Actions', Icon: Zap },
 ];
+
+// sticky top bar (~48px) + analysis tab bar (~48px)
+const HEADER_OFFSET = 100;
 
 const GenericTabSkeleton: React.FC = () => (
   <div className="flex flex-col gap-3 py-1">
@@ -174,38 +172,76 @@ const AnalysisMobileBottomNav: React.FC<{
   )
 );
 
+// ── Section component map ─────────────────────────────────────────────────────
+
+type SectionProps = AnalysisViewProps;
+
+const SECTION_COMPONENTS: Record<AnalysisTabKey, React.ComponentType<SectionProps>> = {
+  summary:    AnalysisSummaryTab as React.ComponentType<SectionProps>,
+  company:    AnalysisCompanyTab as React.ComponentType<SectionProps>,
+  protection: AnalysisProtectionTab as React.ComponentType<SectionProps>,
+  actions:    AnalysisActionsTab as React.ComponentType<SectionProps>,
+};
+
+const SECTION_SKELETONS: Record<AnalysisTabKey, React.ReactNode> = {
+  summary:    <SummaryTabSkeleton />,
+  company:    <GenericTabSkeleton />,
+  protection: <GenericTabSkeleton />,
+  actions:    <GenericTabSkeleton />,
+};
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export const AnalysisView: React.FC<AnalysisViewProps> = ({
   result, companyData, emergencyMode, onSwitchToBeast,
 }) => {
   const [activeTab, setActiveTab] = useState<AnalysisTabKey>('summary');
+  const sectionRefs = useRef<Partial<Record<AnalysisTabKey, HTMLElement>>>({});
 
-  const handleTabChange = useCallback((val: AnalysisTabKey) => {
+  // Tab click → smooth-scroll to section (with immediate visual feedback in tab bar)
+  const scrollToSection = useCallback((val: AnalysisTabKey) => {
     setActiveTab(val);
+    const el = sectionRefs.current[val];
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+    window.scrollTo({ top, behavior: 'smooth' });
   }, []);
 
-  const TABS_ORDER: AnalysisTabKey[] = ['summary', 'company', 'protection', 'actions'];
+  // IntersectionObserver: keep tab bar in sync with the user's scroll position
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    // Map tab → latest intersection ratio so we can pick the topmost visible section
+    const ratioMap = new Map<AnalysisTabKey, number>();
 
-  const swipeBind = useDrag(({ last, movement: [mx, my], cancel }) => {
-    if (Math.abs(my) > Math.abs(mx)) { cancel(); return; }
-    if (!last) return;
-    const threshold = 60;
-    if (mx < -threshold) {
-      const idx = TABS_ORDER.indexOf(activeTab);
-      if (idx < TABS_ORDER.length - 1) handleTabChange(TABS_ORDER[idx + 1]);
-    } else if (mx > threshold) {
-      const idx = TABS_ORDER.indexOf(activeTab);
-      if (idx > 0) handleTabChange(TABS_ORDER[idx - 1]);
-    }
-  }, { axis: 'lock', pointer: { touch: true } });
+    ANALYSIS_TABS.forEach(({ value }) => {
+      const el = sectionRefs.current[value];
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            ratioMap.set(value, entry.intersectionRatio);
+          } else {
+            ratioMap.delete(value);
+          }
+          if (ratioMap.size > 0) {
+            const top = [...ratioMap.entries()].reduce((a, b) => a[1] >= b[1] ? a : b);
+            setActiveTab(top[0]);
+          }
+        },
+        { threshold: [0, 0.15, 0.5], rootMargin: '-100px 0px -40% 0px' },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
 
-  const tabProps = { result, companyData, emergencyMode, onSwitchToBeast };
+    return () => observers.forEach(o => o.disconnect());
+  }, []);
+
+  const tabProps: AnalysisViewProps = { result, companyData, emergencyMode, onSwitchToBeast };
 
   return (
     <div className="flex flex-col">
-      {/* Tab bar — sticky below the permanent dashboard top bar.
-          top value = top-bar height: ~44px on mobile, ~48px on desktop */}
+      {/* Sticky tab bar — top offset matches the permanent dashboard top bar */}
       <div
         className="sticky top-[44px] sm:top-[48px] z-30"
         style={{
@@ -214,54 +250,32 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
-        <AnalysisDesktopTabBar active={activeTab} onChange={handleTabChange} />
+        <AnalysisDesktopTabBar active={activeTab} onChange={scrollToSection} />
       </div>
 
-      {/* Tab content */}
-      <div {...swipeBind()} className="swipe-tab-container">
-        <AnimatePresence>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
-            className="analysis-view-content"
-          >
-            {activeTab === 'summary' && (
-              <TabErrorBoundary tabLabel="Summary">
-                <Suspense fallback={<SummaryTabSkeleton />}>
-                  <AnalysisSummaryTab {...tabProps} />
+      {/* All sections rendered as one continuous vertical stack */}
+      <div className="flex flex-col">
+        {ANALYSIS_TABS.map(({ value, label }, idx) => {
+          const SectionComponent = SECTION_COMPONENTS[value];
+          return (
+            <section
+              key={value}
+              id={`av-${value}`}
+              ref={el => { if (el) sectionRefs.current[value] = el; }}
+              style={idx > 0 ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined}
+            >
+              <TabErrorBoundary tabLabel={label}>
+                <Suspense fallback={SECTION_SKELETONS[value]}>
+                  <SectionComponent {...tabProps} />
                 </Suspense>
               </TabErrorBoundary>
-            )}
-            {activeTab === 'company' && (
-              <TabErrorBoundary tabLabel="Company">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <AnalysisCompanyTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {activeTab === 'protection' && (
-              <TabErrorBoundary tabLabel="Protection">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <AnalysisProtectionTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-            {activeTab === 'actions' && (
-              <TabErrorBoundary tabLabel="Action Plan">
-                <Suspense fallback={<GenericTabSkeleton />}>
-                  <AnalysisActionsTab {...tabProps} />
-                </Suspense>
-              </TabErrorBoundary>
-            )}
-          </motion.div>
-        </AnimatePresence>
+            </section>
+          );
+        })}
       </div>
 
-      {/* Mobile bottom nav */}
-      <AnalysisMobileBottomNav active={activeTab} onChange={handleTabChange} />
+      {/* Mobile bottom nav — scrolls to section on tap */}
+      <AnalysisMobileBottomNav active={activeTab} onChange={scrollToSection} />
     </div>
   );
 };

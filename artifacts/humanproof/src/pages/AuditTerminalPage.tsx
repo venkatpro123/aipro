@@ -373,10 +373,10 @@ const AuditTerminalPage: React.FC = () => {
   }, []);
 
   const TABS: { key: TabKey; label: string; sub: string }[] = [
-    { key: 'risk-intel',     label: 'Risk Intel',     sub: 'Current · Threshold · Wave' },
-    { key: 'wave-analysis',  label: 'Wave Analysis',  sub: '2030 Exposure · Task Heat Map' },
-    { key: 'career-defense', label: 'Career Defense', sub: 'Survival · Role Evolution' },
-    { key: 'action-plan',    label: 'Action Plan',    sub: 'Horizons · Framing' },
+    { key: 'risk-intel',     label: 'Your Risk',      sub: 'Score · Skill Floor · Early Warnings' },
+    { key: 'wave-analysis',  label: 'AI Impact',       sub: 'Your 2030 Exposure · What AI Targets' },
+    { key: 'career-defense', label: 'Career Defense', sub: 'What Protects You · Your Future Role' },
+    { key: 'action-plan',    label: 'Action Plan',    sub: 'Next Steps · Perspective' },
   ];
 
   return (
@@ -396,7 +396,7 @@ const AuditTerminalPage: React.FC = () => {
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-xl)',
-        padding: '32px',
+        padding: 'clamp(16px, 4vw, 32px)',
         marginBottom: '24px',
       }}>
         <div style={{ marginBottom: '24px' }}>
@@ -404,7 +404,7 @@ const AuditTerminalPage: React.FC = () => {
             RISK ORACLE
           </h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
-            6-dimension deterministic AI displacement analysis · No company data required
+            See how AI could affect your job · No company data required
           </p>
         </div>
 
@@ -505,8 +505,8 @@ const AuditTerminalPage: React.FC = () => {
               display: 'flex',
               flexWrap: 'wrap',
               alignItems: 'center',
-              gap: '24px',
-              padding: '32px',
+              gap: '16px',
+              padding: 'clamp(16px, 4vw, 32px)',
               background: 'rgba(255,255,255,0.02)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-xl)',
@@ -539,7 +539,7 @@ const AuditTerminalPage: React.FC = () => {
               </div>
 
               {/* Verdict + confidence + delta */}
-              <div style={{ flex: 1, minWidth: '200px' }}>
+              <div style={{ flex: 1, minWidth: 'min(200px, calc(100vw - 160px))' }}>
                 {/* Verdict chip */}
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
@@ -598,7 +598,7 @@ const AuditTerminalPage: React.FC = () => {
 
               {currentIndustry && (
                 <div style={{ padding: '10px 18px', borderRadius: '8px', background: `${catColor}12`, border: `1px solid ${catColor}33`, textAlign: 'center', flexShrink: 0 }}>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>SECTOR</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>Your Industry</div>
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: catColor }}>{currentIndustry.cat}</div>
                 </div>
               )}
@@ -659,7 +659,7 @@ const AuditTerminalPage: React.FC = () => {
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', color: 'var(--cyan)' }}>
                     WHAT-IF SENSITIVITY
                   </span>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                  <span className="hidden sm:inline" style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
                     — explore how experience or country changes your risk
                   </span>
                 </div>
@@ -735,7 +735,7 @@ const AuditTerminalPage: React.FC = () => {
                   {/* Per-dimension what-if bars */}
                   {whatIfResult && (
                     <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '12px' }}>DIMENSION IMPACT</div>
+                      <div className="label-xs" style={{ color: 'var(--text-3)', marginBottom: '12px' }}>Changes by factor:</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {whatIfResult.dimensions.map((wd) => {
                           const orig = result!.dimensions.find((d) => d.key === wd.key);
@@ -762,7 +762,7 @@ const AuditTerminalPage: React.FC = () => {
 
             {/* Intelligence Header — sticky bar with score + wave status */}
             {agenticResult && (
-              <div style={{ margin: '0 -32px', borderRadius: 0 }}>
+              <div className="intel-bleed-header">
                 <IntelligenceHeader result={result} agentic={agenticResult} />
               </div>
             )}
@@ -786,13 +786,13 @@ const AuditTerminalPage: React.FC = () => {
                   }}
                 >
                   <span>{tab.label}</span>
-                  <span style={{ fontSize: '0.60rem', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
+                  <span className="hidden sm:block" style={{ fontSize: '0.60rem', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
                 </button>
               ))}
             </div>
 
             {/* Tab content panel */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '24px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 'clamp(12px, 3vw, 24px)' }}>
 
               {/* TAB 1: RISK INTEL — Current Risk + Capability Threshold + Early Warning */}
               {activeTab === 'risk-intel' && (
@@ -802,7 +802,7 @@ const AuditTerminalPage: React.FC = () => {
                     <>
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
                         <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
-                          Capability Threshold Model
+                          Your Skill Safety Floor
                         </div>
                         <Section3_CapabilityThreshold threshold={agenticResult.capabilityThreshold} />
                       </div>

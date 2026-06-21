@@ -180,7 +180,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <p className="text-[10px] font-black tracking-widest mb-2.5"
                 style={{ color: 'rgba(255,255,255,0.28)' }}>WHERE YOU CAME FROM</p>
-              <div className="grid grid-cols-2 gap-2 mb-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                 <div>
                   <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
                     Previous role *
@@ -204,7 +204,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
                     Years experience
@@ -241,7 +241,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
               style={{ background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.15)' }}>
               <p className="text-[10px] font-black tracking-widest mb-2.5"
                 style={{ color: 'rgba(16,185,129,0.50)' }}>WHERE YOU LANDED</p>
-              <div className="grid grid-cols-2 gap-2 mb-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                 <div>
                   <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
                     New role *
@@ -265,7 +265,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
                     Months to transition *
@@ -360,7 +360,45 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
     [userRole, userExperience, userRiskScore, userCountry, topN],
   );
 
-  if (twins.length === 0) return null;
+  if (twins.length === 0) {
+    return (
+      <>
+        <div className="rounded-2xl border border-white/10 bg-white/3 p-5 flex flex-col items-center text-center gap-2">
+          <Users className="w-5 h-5" style={{ color: 'rgba(255,255,255,0.35)' }} />
+          <p className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+            No matches for {displayRole} yet
+          </p>
+          <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            Nobody in your role has shared their transition story yet. Be the first — your story helps the next person in your position.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowSubmitForm(true)}
+            className="mt-1 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-90"
+            style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.28)' }}
+          >
+            <Send className="w-3 h-3" />
+            Share your transition
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showSubmitForm && (
+            <SubmitTransitionForm
+              onClose={() => setShowSubmitForm(false)}
+              onSuccess={() => {
+                setShowSubmitForm(false);
+                setJustSubmitted(true);
+                setTimeout(() => setJustSubmitted(false), 5000);
+              }}
+              defaultFromRole={displayRole}
+              defaultFromCountry={userCountry === 'global' ? 'India' : userCountry}
+            />
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
 
   const hasGeographicFallback = twins.some(t => t.isGeographicFallback);
   const crossMarketCount = twins.filter(t => t.isDifferentMarket).length;

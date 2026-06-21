@@ -199,24 +199,28 @@ const SectionLabel: React.FC<{ text: string }> = ({ text }) => (
     fontWeight: 700,
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.30)',
-    margin: '0 0 12px',
+    color: 'rgba(255,255,255,0.35)',
+    margin: '0 0 10px',
   }}>
     {text}
   </p>
 );
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
+// card=true wraps content in a glass card (matching Analysis/Beast card pattern).
+// card=false is a plain animation wrapper used when content has its own card styling.
 
-const Section: React.FC<{ delay: number; last?: boolean; children: React.ReactNode }> = ({ delay, last, children }) => (
+const Section: React.FC<{ delay: number; card?: boolean; children: React.ReactNode }> = ({ delay, card = false, children }) => (
   <motion.div
-    initial={{ opacity: 0, y: 4 }}
+    initial={{ opacity: 0, y: 6 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.32, delay }}
-    style={{
-      paddingBottom: last ? 0 : '20px',
-      borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
-    }}
+    transition={{ duration: 0.25, delay }}
+    style={card ? {
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: '16px',
+      padding: '16px',
+    } : undefined}
   >
     {children}
   </motion.div>
@@ -258,7 +262,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
   // ── Emergency layout ──────────────────────────────────────────────────────
   if (emergencyMode) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 0 32px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px 0 32px' }}>
 
         {/* Section 1 — Emergency signal banner */}
         <Section delay={0}>
@@ -267,9 +271,9 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
             style={{
-              background: 'rgba(220,38,38,0.10)',
-              border: '2px solid rgba(220,38,38,0.45)',
-              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(220,38,38,0.10), rgba(153,27,27,0.06))',
+              border: '1px solid rgba(220,38,38,0.28)',
+              borderRadius: '16px',
               padding: '20px',
             }}
           >
@@ -286,7 +290,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
         {/* Section 2 — Top drivers (still relevant in emergency) */}
         {topDrivers.length > 0 && (
-          <Section delay={0.06}>
+          <Section delay={0.06} card>
             <SectionLabel text="Why This Is Happening" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {topDrivers.map((driver, i) => (
@@ -319,7 +323,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                 background: 'rgba(220,38,38,0.15)',
                 border: '1px solid rgba(220,38,38,0.38)',
                 borderLeft: '3px solid #dc2626',
-                borderRadius: '12px',
+                borderRadius: '16px',
                 padding: '20px',
                 textAlign: 'left',
                 cursor: 'pointer',
@@ -348,7 +352,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         )}
 
         {/* Section 5 — Confidence (trust anchor, always shown) */}
-        <Section delay={0.18} last>
+        <Section delay={0.18} card>
           <SectionLabel text="Confidence & Trust" />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="rgba(255,255,255,0.55)" />
@@ -374,10 +378,10 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
   // ── Standard Guidance layout — 5 sections ────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px 0 32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px 0 32px' }}>
 
       {/* Section 1 — Current Situation */}
-      <Section delay={0}>
+      <Section delay={0} card>
         <SectionLabel text="Current Situation" />
         {/* Score ring: rendered at 75% scale.
             transform: scale() does not shrink the layout box, so we use a
@@ -414,7 +418,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
       {/* Section 2 — Why This Is Happening */}
       {topDrivers.length > 0 && (
-        <Section delay={0.08}>
+        <Section delay={0.08} card>
           <SectionLabel text="Why This Is Happening" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {topDrivers.map((driver, i) => (
@@ -460,7 +464,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               background: accentColor + '14',
               border: `1px solid ${accentColor}38`,
               borderLeft: `3px solid ${accentColor}`,
-              borderRadius: '12px',
+              borderRadius: '16px',
               padding: '18px 20px',
               display: 'flex',
               flexDirection: 'column',
@@ -502,7 +506,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
 
       {/* Section 4 — This Week Action Plan */}
       {thisWeekActions.length > 0 && (
-        <Section delay={0.24}>
+        <Section delay={0.24} card>
           <SectionLabel text="Also do this week" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {thisWeekActions.map((action, i) => {
@@ -570,7 +574,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
       )}
 
       {/* Section 5 — Confidence & Trust */}
-      <Section delay={0.32} last>
+      <Section delay={0.32} card>
         <SectionLabel text="Confidence & Trust" />
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           <ConfidenceBadge

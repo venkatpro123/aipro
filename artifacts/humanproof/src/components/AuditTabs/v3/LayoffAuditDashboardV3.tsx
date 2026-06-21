@@ -28,7 +28,6 @@
 
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useDrag } from '@use-gesture/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
@@ -504,6 +503,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Refs for each beast-mode section — used for scroll-to-section navigation
+  const beastSectionRefs = useRef<Partial<Record<TabValue, HTMLElement>>>({});
 
   // v40.0 FIX-13: sync activeTab when the adaptation's defaultTab changes.
   // useState only initializes once, so if profile loads late and changes the
@@ -576,6 +577,11 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         // Only accept known tab values; ignore stray events.
         if (['summary', 'company', 'protection', 'actions', 'intel', 'transparency'].includes(tab)) {
           setActiveTab(tab);
+          const el = beastSectionRefs.current[tab];
+          if (el) {
+            const top = el.getBoundingClientRect().top + window.scrollY - 100;
+            window.scrollTo({ top, behavior: 'smooth' });
+          }
         }
       }
     };
@@ -620,9 +626,39 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     return () => window.removeEventListener('keydown', handler);
   }, [activeTab]);
 
+  // IntersectionObserver: keep beast-mode tab bar in sync with scroll position
+  useEffect(() => {
+    if (viewMode !== 'beast') return;
+    const BEAST_TABS: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
+    const observers: IntersectionObserver[] = [];
+    const ratioMap = new Map<TabValue, number>();
+
+    BEAST_TABS.forEach(tab => {
+      const el = beastSectionRefs.current[tab];
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            ratioMap.set(tab, entry.intersectionRatio);
+          } else {
+            ratioMap.delete(tab);
+          }
+          if (ratioMap.size > 0) {
+            const top = [...ratioMap.entries()].reduce((a, b) => a[1] >= b[1] ? a : b);
+            setActiveTab(top[0]);
+          }
+        },
+        { threshold: [0, 0.15, 0.5], rootMargin: '-100px 0px -40% 0px' },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach(o => o.disconnect());
+  }, [viewMode]);
+
   const handleTabChange = (val: TabValue) => {
-    setUserChangedTab(true); // user explicitly chose a tab — stop auto-syncing
-    // v40.0: telemetry for tab navigation
+    setUserChangedTab(true);
     track('tab_switched', {
       from: activeTab,
       to: val,
@@ -631,26 +667,12 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       freshness_tier: result.unifiedFreshness?.tier,
     });
     setActiveTab(val);
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  // ── Mobile swipe gesture (left → next tab, right → prev tab) ─────────────
-  // Only triggers on horizontal swipes that clearly outweigh vertical movement.
-  // Threshold: 60px horizontal with at least 2:1 horizontal:vertical ratio.
-  const TABS_ORDER: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
-  const swipeBind = useDrag(({ last, movement: [mx, my], cancel }) => {
-    // Cancel if vertical movement dominates — let the user scroll
-    if (Math.abs(my) > Math.abs(mx)) { cancel(); return; }
-    if (!last) return;
-    const threshold = 60;
-    if (mx < -threshold) {
-      const idx = TABS_ORDER.indexOf(activeTab);
-      if (idx < TABS_ORDER.length - 1) handleTabChange(TABS_ORDER[idx + 1]);
-    } else if (mx > threshold) {
-      const idx = TABS_ORDER.indexOf(activeTab);
-      if (idx > 0) handleTabChange(TABS_ORDER[idx - 1]);
+    const el = beastSectionRefs.current[val];
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top, behavior: 'smooth' });
     }
-  }, { axis: 'lock', pointer: { touch: true } });
+  };
 
   const tabProps = useMemo(() => ({
     result, companyData,
@@ -702,7 +724,13 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               </span>
             </div>
 
-            {/* Mode toggle hidden — analysis mode only */}
+            {/* View mode toggle: Guided → Analysis → Beast */}
+            <ViewModeToggle
+              viewMode={viewMode}
+              onSelect={setViewMode}
+              emergencyMode={isEmergency}
+              compact
+            />
           </div>
 
           {/* Row 2: tab bar — only in Beast Mode, desktop/tablet only */}
@@ -854,66 +882,34 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             </TabErrorBoundary>
           </div>
         ) : (
-          /* ── Beast Mode: full 6-tab intelligence command center ── */
+          /* ── Beast Mode: single-scroll command center — all 6 sections stacked ── */
           <>
-            <div {...swipeBind()} className="swipe-tab-container">
-            <AnimatePresence>
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.18 }}
-                className="hp-beast-content px-3 pt-3 sm:px-0 sm:pt-0"
-              >
-                {activeTab === 'summary' && (
-                  <TabErrorBoundary tabLabel="Summary">
-                    <Suspense fallback={<SummaryTabSkeleton />}>
-                      <SummaryTab {...tabProps} />
+            <div className="flex flex-col">
+              {([
+                { key: 'summary',      label: 'Command Center', Comp: SummaryTab,      Fallback: SummaryTabSkeleton },
+                { key: 'company',      label: 'Company Intel',  Comp: IntelligenceTab, Fallback: CompanyTabSkeleton },
+                { key: 'protection',   label: 'Protection',     Comp: ProtectionTab,   Fallback: GenericTabSkeleton },
+                { key: 'actions',      label: 'Action Center',  Comp: ActionsTab,      Fallback: GenericTabSkeleton },
+                { key: 'intel',        label: 'Intelligence',   Comp: AnalysisTab,     Fallback: GenericTabSkeleton },
+                { key: 'transparency', label: 'Methodology',    Comp: TransparencyTab, Fallback: GenericTabSkeleton },
+              ] as const).map(({ key, label, Comp, Fallback }, idx) => (
+                <section
+                  key={key}
+                  id={`bm-${key}`}
+                  ref={el => { if (el) beastSectionRefs.current[key] = el; }}
+                  className="hp-beast-content px-3 pt-3 sm:px-0 sm:pt-0"
+                  style={idx > 0 ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined}
+                >
+                  <TabErrorBoundary tabLabel={label}>
+                    <Suspense fallback={<Fallback />}>
+                      <Comp {...tabProps} />
                     </Suspense>
                   </TabErrorBoundary>
-                )}
-                {activeTab === 'company' && (
-                  <TabErrorBoundary tabLabel="Company">
-                    <Suspense fallback={<CompanyTabSkeleton />}>
-                      <IntelligenceTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'protection' && (
-                  <TabErrorBoundary tabLabel="Protection">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <ProtectionTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'actions' && (
-                  <TabErrorBoundary tabLabel="Action Plan">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <ActionsTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {activeTab === 'intel' && (
-                  <TabErrorBoundary tabLabel="Intelligence">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <AnalysisTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-                {/* v39.0 A6: TransparencyTab — methodology, data provenance, signal attribution. */}
-                {activeTab === 'transparency' && (
-                  <TabErrorBoundary tabLabel="Methodology">
-                    <Suspense fallback={<GenericTabSkeleton />}>
-                      <TransparencyTab {...tabProps} />
-                    </Suspense>
-                  </TabErrorBoundary>
-                )}
-              </motion.div>
-            </AnimatePresence>
-            </div>{/* /swipe wrapper */}
+                </section>
+              ))}
+            </div>
 
-            {/* Mobile bottom nav — only in Beast Mode (Guidance Mode has no tabs) */}
+            {/* Mobile bottom nav — scrolls to section on tap */}
             <MobileBottomNav
               active={activeTab}
               onChange={handleTabChange}

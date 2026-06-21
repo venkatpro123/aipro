@@ -119,7 +119,7 @@ const ObsoleteSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => 
                 <span style={{
                   background: 'rgba(239,68,68,0.15)', color: '#ef4444',
                   borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
-                }}>FULL REPLACEMENT</span>
+                }}>FULLY AUTOMATED</span>
               )}
             </div>
             <p style={{ color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 4, lineHeight: 1.5 }}>
@@ -143,7 +143,7 @@ const ObsoleteSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => 
               {skill.aiTool.split(',').map(t => <AIToolBadge key={t} tool={t.trim()} />)}
             </div>
           )}
-          <ImpactBar score={skill.riskScore} color="#ef4444" label="Disruption Intensity" />
+          <ImpactBar score={skill.riskScore} color="#ef4444" label="AI Replacement Risk" />
           <div style={{
             marginTop: 12, padding: '10px 12px',
             background: 'rgba(239,68,68,0.08)', borderRadius: 8,
@@ -184,7 +184,7 @@ const AtRiskSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => {
               <span style={{
                 background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
                 borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
-              }}>PARTIAL AUTOMATION</span>
+              }}>AI-ASSISTED</span>
             </div>
             <p style={{ color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 4, lineHeight: 1.5 }}>
               {skill.reason}
