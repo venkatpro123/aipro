@@ -93,8 +93,9 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
       });
     }
 
-    // 2. Confirmed layoff rounds
-    const rounds: any[] = cd?.layoffRounds ?? r.layoffRounds ?? [];
+    // 2. Confirmed layoff rounds (layoffsLast24Months is the array; layoffRounds is a count)
+    const rawRounds = cd?.layoffsLast24Months ?? r.layoffsLast24Months ?? cd?.layoffRounds ?? r.layoffRounds ?? [];
+    const rounds: any[] = Array.isArray(rawRounds) ? rawRounds : [];
     rounds.forEach((round: any, i: number) => {
       const dt = parseDateMs(round.date ?? round.announcedDate);
       if (!dt) return;

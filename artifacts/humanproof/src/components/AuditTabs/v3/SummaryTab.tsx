@@ -21,49 +21,36 @@
 // All blocks carry an explicit Tier badge so users (and future maintainers)
 // understand the disclosure hierarchy.
 
-import React, { useMemo, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
   TrendingUp, TrendingDown, Minus,
-  Zap, Shield, Clock, Signal, AlertTriangle, Info, AlertOctagon, Cpu,
+  Zap, Shield, Clock, Signal, AlertTriangle, Info, AlertOctagon,
 } from 'lucide-react';
 import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { FirstAuditTour } from '../common/FirstAuditTour';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
-import ReasoningSpineCard from '../common/ReasoningSpineCard';
 import TierBadge from '../common/TierBadge';
 import ProvenanceLabel from '../common/ProvenanceLabel';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
 import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
-import { ScoreTrendStrip } from '../common/ScoreTrendStrip';
 import { InactionCostCard } from '../common/InactionCostCard';
-import { VerdictReassurance } from '../common/VerdictReassurance';
-// TimeToSafetyStrip removed — lives in ActionsTab only (single source, avoids Beast-mode scroll duplicate).
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
-import { MissingDataCard } from '../common/MissingDataCard';
-import { ConfidenceDisclosure } from '../common/ConfidenceDisclosure';
-import { ProgressNarrativeCard } from '../common/ProgressNarrativeCard';
-import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
 import { computeCanonicalConfidence } from '../../../services/canonicalConfidence';
-import AdaptiveBlock from '../common/AdaptiveBlock';
-import { classifySummaryReveal, type SummaryBlockKey } from './summaryReveal';
 import { explainDriver } from './driverEvidence';
 import { isActionableRecommendation } from '../../../services/orchestration/signalOrchestrator';
 import Tilt3D from '../../ui/Tilt3D';
 import { ScoreSignalOrbit, type SignalNode } from '../../ScoreSignalOrbit';
 import { ScoreCountUp } from '../../AuditReveal/ScoreCountUp';
 import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
-import { detectScoreDrift, getLayoffScoreHistory } from '../../../services/scoreStorageService';
+import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 // Beast Mode V3 — new AI OS components
-import { MissionBriefCard } from '../common/MissionBriefCard';
 import { AIMemoryCard } from '../common/AIMemoryCard';
-import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
-import { PersonalImpactSimulator } from '../common/PersonalImpactSimulator';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
 function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
@@ -768,35 +755,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
     ];
   }, [result, companyData, adaptation.feed]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Intelligence density counters — animated proof of the computation depth.
-  const densityStats = useMemo(
-    () => [
-      { value: 54, label: 'layers' },
-      { value: 8, label: 'risk dims' },
-      { value: Math.max(liveCount, 0), label: 'live signals' },
-    ],
-    [liveCount],
-  );
-
-  // Layer 4 — Intelligence Memory: genuine cross-audit drift vs the user's last
-  // saved check for THIS company+role (distinct from the 30-day projection).
-  // Returns null until there are ≥2 audits with a ≥5pt change, so a first-time
-  // user never sees it — reuses the existing scoreStorageService persistence.
-  const evolution = useMemo(() => {
-    try {
-      const cn = (companyData as any)?.name ?? (companyData as any)?.companyName ?? r.companyName ?? '';
-      const rt = r.roleTitle ?? r.userProfile?.currentRole ?? r.userProfile?.roleTitle ?? r.profile?.roleTitle ?? '';
-      if (!cn || !rt) return null;
-      return detectScoreDrift(cn, rt);
-    } catch {
-      return null;
-    }
-  }, [companyData, result]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Wave 10.1: Score explanation tooltip state — tap the ring area to reveal
-  const [scoreExplainOpen, setScoreExplainOpen] = useState(false);
-  const toggleScoreExplain = useCallback(() => setScoreExplainOpen(o => !o), []);
-
   // Wave 4.4: streak data (safe — reads localStorage, never throws)
   const streakInfo = useMemo(() => { try { return getStreakInfo(); } catch { return null; } }, []);
 
@@ -895,6 +853,30 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       }));
   }, [result, companyData]);
 
+  // One-line opportunity headline for the unified hero (P2 redesign) — mirrors
+  // OpportunityIntelligenceCard's priority cascade but returns only the
+  // headline sentence, since the hero has room for one line, not a full card.
+  const biggestOpportunityLine: string | null = useMemo(() => {
+    if (score >= 75) return null; // emergency mode stays in risk framing
+    const hotAdjacent = (r.roleAdjacency?.adjacentRoles ?? [])
+      .filter((a: any) => a.marketDemandScore >= 72 && a.adjacencyStrength !== 'weak')[0];
+    if (hotAdjacent) {
+      const label = hotAdjacent.targetRoleLabel ?? String(hotAdjacent.targetRoleKey ?? '').replace(/_/g, ' ');
+      return `Strong market demand for ${label} — a viable pivot path.`;
+    }
+    if (r.jobMarketLiquidity?.marketDemandTrend === 'rising' || (r.jobMarketLiquidity?.tier === 'Fast' && score < 55)) {
+      const roleLabel = r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ?? 'your role';
+      return `The job market for ${roleLabel} is active right now.`;
+    }
+    if ((r.competitivePosition?.overallPercentile ?? 0) > 60) {
+      return `You're outperforming ${r.competitivePosition.overallPercentile}% of peers — leverage it.`;
+    }
+    if (score < 50 && (preparedness?.overallScore ?? 0) > 70) {
+      return 'You\'re well-prepared and in a relatively stable position.';
+    }
+    return null;
+  }, [score, r, preparedness]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // AI-exposure callout — surfaces the Role Displacement (L3) dimension as a
   // first-class signal even when it isn't in the top-3 drivers. For knowledge
   // roles this is the most anxiety-relevant fact, and it was previously only
@@ -969,29 +951,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const _inactionScoreMatch = inactionConsequenceRaw.match(/score\s+(\d{1,3})\s*\/\s*100/i);
   const _inactionStale = _inactionScoreMatch ? Math.abs(Number(_inactionScoreMatch[1]) - score) > 8 : false;
   const hasInactionConsequence = inactionConsequenceRaw.length > 0 && !_inactionStale;
-  const timeToSafetyEligible = !!(scoreSufficiency.sufficient && score > 35 && scoreSensitivity);
-  const reveal = useMemo(
-    () => classifySummaryReveal(adaptation.feed, {
-      mode: adaptation.mode,
-      score,
-      hasActiveWARN,
-      personalModifierPresent,
-      personalModifierMaterial,
-      hasInactionConsequence,
-      timeToSafetyEligible,
-    }),
-    [adaptation.feed, adaptation.mode, score, hasActiveWARN, personalModifierPresent,
-     personalModifierMaterial, hasInactionConsequence, timeToSafetyEligible],
-  );
-
-  // Evidence render fragments — defined once, placed either inline (when material
-  // now) or inside the single "Full breakdown" disclosure (when folded). Each is
-  // mutually exclusive across reveal.evidenceInline / reveal.deep, so the same
-  // element object is only ever mounted in one branch.
-  // CompanyPulseCard is not shown here — it lives in the Company section below.
-  const personalRiskNode = personalModifierPresent
-    ? <PersonalRiskModifierPanel key="personal-risk" modifier={(result as any).personalRiskModifier} />
-    : null;
   const opportunityNode = score < 75
     ? (
       <OpportunityIntelligenceCard
@@ -1002,9 +961,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         currentScore={score}
         preparednessScore={preparedness?.overallScore}
         currentRoleLabel={
-          // Prefer the user's original role title (humanised); only fall back to
-          // the internal oracle key if nothing else is available, and prettify it
-          // so users never see raw snake_case ("sw_software_engineer").
           r.roleTitle ??
           r.userProfile?.roleTitle ??
           r.userProfile?.currentRole ??
@@ -1013,40 +969,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       />
     )
     : null;
-  const inactionNode = hasInactionConsequence
-    ? (
-      <InactionCostCard
-        key="inaction"
-        consequence={inactionConsequenceRaw}
-      />
-    )
-    : null;
-  const timeToSafetyNode = null;
-  const viewAllWeightsLink = topDrivers.length > 0
-    ? (
-      <div className="flex justify-end px-1" key="view-all-weights">
-        <a
-          href="#methodology"
-          onClick={(e) => {
-            e.preventDefault();
-            try {
-              window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'transparency' } }));
-            } catch { /* SSR / event-disallowed envs */ }
-          }}
-          className="text-[10px] font-mono uppercase tracking-wider hover:opacity-100 transition-opacity"
-          style={{ color: 'rgba(34,211,238,0.70)', opacity: 0.85 }}
-        >
-          View all signal weights &nbsp;&rarr;
-        </a>
-      </div>
-    )
-    : null;
-
-  // The "Full breakdown" disclosure renders only when it would actually contain
-  // something — any folded evidence block, the deep-dive link, or missing-data.
-  const foldedEvidence: SummaryBlockKey[] = (['opportunity', 'personalRisk', 'timeToSafety', 'inactionCost'] as const)
-    .filter(k => reveal.deep.has(k));
-  const deepHasContent = foldedEvidence.length > 0 || viewAllWeightsLink != null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -1060,26 +982,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       )}
 
-      {/* ── V3: Mission Brief — 3-line AI executive summary (Situation/Risk/Action) */}
-      <MissionBriefCard
-        companyName={companyNameForV3}
-        score={score}
-        urgency={urgency}
-        spine={adaptation.feed?.spine}
-        singleBiggestRisk={(result as any).strategySynthesis?.singleBiggestRisk}
-        topAction={adaptation.feed?.primaryMove?.action?.title}
-        confidencePercent={confPct}
-      />
-
-      {/* ── V3: AI Memory — score drift + streak + completed actions since last check */}
-      <AIMemoryCard
-        scoreDelta={r.scoreDelta}
-        streakInfo={streakInfo ?? undefined}
-        daysSinceLastAudit={daysSinceLastAudit}
-        completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
-      />
-
-      {/* v39.0 F2 + v35.1 empathetic rewrite — Emergency guide card PRECEDES score hero.
+      {/* v39.0 F2 + v35.1 empathetic rewrite — Emergency guide card PRECEDES the hero.
           Framing matters: user sees "you're ahead" narrative before the score number,
           so the number is read as data, not as alarm.
           Includes direct CTA to Action Plan tab (highest-ROI tab in emergency mode). */}
@@ -1121,257 +1024,121 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         </motion.div>
       )}
 
-      {/* ── P1: Reasoning spine — the "one continuously thinking AI" voice.
-          Renders the orchestrator feed (spine + primary move + reasoning trace)
-          above the score so the user reads the AI's conclusion before the number.
-          Guarded: only when the orchestrator produced a feed. */}
-      {adaptation.feed && <ReasoningSpineCard feed={adaptation.feed} />}
-
-      {/* ── Tier-1: Score Hero ─────────────────────────────────────────────── */}
-      {/* v39.0 F6: key={score} forces re-mount when the score changes, so the
-          ring's stroke-dash animation replays. Previously a profile change
-          that shifted the score by 5+ pts would silently update the number
-          without re-animating the ring, breaking the "you moved the needle"
-          feedback loop. */}
+      {/* ── YOUR CAREER POSITION — unified hero ──────────────────────────────
+          Merges what used to be 2 separate cards (Mission Brief + Score Hero)
+          into ONE verdict: score, situation, biggest threat, biggest
+          opportunity, and this week's move. Answers all 4 first-screen
+          questions in one read instead of stitching them across cards. */}
       <motion.div
-        key={`score-hero-${score}`}
+        key={`career-position-${score}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl p-3 sm:p-5 flex flex-col items-center text-center relative overflow-hidden"
+        className="rounded-2xl overflow-hidden relative"
         style={{ background: riskGradient(score), border: `1px solid ${riskColor(score)}30` }}
       >
-        {/* tier badge removed — internal classification, not user-facing */}
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 sm:px-5 pt-4">
+          <span className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: riskColor(score) }}>
+            Your Career Position
+          </span>
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)' }}
+          >
+            {confPct}% confidence
+          </span>
+        </div>
 
-        {/* Gate: if CI range > 50 or confidence < 20%, show range instead of point score */}
-        {scoreSufficiency.sufficient
-          ? <ScoreRingHero
-              score={score}
-              confidence={confPct}
-              calibrationMode={calibrationMode}
-              ciLow={scoreSufficiency.ciLow}
-              ciHigh={scoreSufficiency.ciHigh}
-              trendDirection={r.scoreTrajectory?.trajectoryDirection}
-              signalNodes={signalNodes}
-              densityStats={densityStats}
-              evolution={evolution}
-            />
-          : <ScoreRangeHero gate={scoreSufficiency} />
-        }
-        {/* Verdict line — suppressed when range is shown (it would imply a tier) */}
-        {scoreSufficiency.sufficient && (
-          <p className="mt-3 text-[12px] leading-relaxed max-w-xs"
-            style={{ color: 'rgba(255,255,255,0.70)' }}>
-            {verdictLine(score, urgency)}
-          </p>
-        )}
-        {/* VerdictReassurance — emotional anchoring below the verdict */}
-        {scoreSufficiency.sufficient && (
-          <VerdictReassurance score={score} urgency={urgency} />
-        )}
-        {/* Wave 10.1: Score explanation — tap "Why?" to expand dimension breakdown */}
-        {scoreSufficiency.sufficient && topDrivers.length > 0 && (
-          <div className="mt-2 w-full">
-            <button
-              onClick={toggleScoreExplain}
-              className="mx-auto flex items-center gap-1 text-[10px] font-bold tracking-[0.12em] px-2.5 py-1 rounded-full transition-all hover:opacity-80"
-              style={{
-                background: scoreExplainOpen ? 'rgba(34,211,238,0.10)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${scoreExplainOpen ? 'rgba(34,211,238,0.28)' : 'rgba(255,255,255,0.10)'}`,
-                color: scoreExplainOpen ? '#22d3ee' : 'rgba(255,255,255,0.40)',
-              }}
-              aria-expanded={scoreExplainOpen}
-            >
-              {scoreExplainOpen ? '▲ HIDE REASONING' : '? WHY THIS SCORE'}
-            </button>
-            <AnimatePresence initial={false}>
-              {scoreExplainOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.22 }}
-                  className="overflow-hidden"
-                >
-                  <div
-                    className="mt-2 rounded-xl px-3 py-2.5 text-left"
-                    style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
-                  >
-                    <p className="text-[10px] font-black tracking-[0.14em] mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                      HOW WE REACHED YOUR SCORE
-                    </p>
-                    <div className="space-y-2">
-                      {topDrivers.slice(0, 3).map((d, i) => (
-                        <div key={d.key} className="flex items-start gap-2">
-                          <span
-                            className="text-[10px] font-black w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
-                            style={{
-                              background: 'rgba(255,255,255,0.06)',
-                              color: riskColor(d.score),
-                            }}
-                          >
-                            {i + 1}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.70)' }}>{d.label}</span>
-                              <span
-                                className="text-[10px] font-black px-1.5 py-0.5 rounded"
-                                style={{ background: riskColor(d.score) + '18', color: riskColor(d.score) }}
-                              >
-                                {d.score}/100
-                              </span>
-                            </div>
-                            <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.42)' }}>
-                              {d.why}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-2 pt-2 flex items-center justify-between flex-wrap gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                        Confidence: {confPct}% · {canonicalConf.primarySource}
-                      </span>
-                      <span className="text-[10px] font-bold" style={{ color: canonicalConf.userFacing.color }}>
-                        {canonicalConf.userFacing.label}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-        {/* Score velocity — suppressed when base score is a range (delta from a range is undefined) */}
-        {scoreSufficiency.sufficient && r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
-          <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: velocityColor }}>
-            {React.createElement(velocityIcon, { className: 'w-3.5 h-3.5' })}
-            <span>
-              {Math.abs(r.scoreDelta.delta30d ?? 0)}pt {r.scoreDelta.direction} vs 30d ago
+        {/* Score ring + situation */}
+        <div className="flex flex-col items-center text-center px-3 sm:px-5 pb-2">
+          {scoreSufficiency.sufficient
+            ? <ScoreRingHero
+                score={score}
+                confidence={confPct}
+                calibrationMode={calibrationMode}
+                ciLow={scoreSufficiency.ciLow}
+                ciHigh={scoreSufficiency.ciHigh}
+                trendDirection={r.scoreTrajectory?.trajectoryDirection}
+                signalNodes={signalNodes}
+              />
+            : <ScoreRangeHero gate={scoreSufficiency} />
+          }
+          {scoreSufficiency.sufficient && (
+            <p className="mt-3 text-[12px] leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>
+              {verdictLine(score, urgency)}
+            </p>
+          )}
+          {scoreSufficiency.sufficient && r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
+            <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: velocityColor }}>
+              {React.createElement(velocityIcon, { className: 'w-3.5 h-3.5' })}
+              <span>{Math.abs(r.scoreDelta.delta30d ?? 0)}pt {r.scoreDelta.direction} vs 30d ago</span>
+            </div>
+          )}
+        </div>
+
+        {/* Threat / Opportunity / Action — one line each, divider-separated */}
+        <div className="flex flex-col px-4 sm:px-5 pb-4 pt-2">
+          <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+              Biggest threat
             </span>
-          </div>
-        )}
-      </motion.div>
-
-      {/* ── Score Trend Strip — 30-day trajectory (P1: directly after score hero) ── */}
-      {scoreSufficiency.sufficient && r.scoreTrajectory && (
-        <ScoreTrendStrip
-          scoreTrajectory={r.scoreTrajectory}
-          currentScore={score}
-        />
-      )}
-
-      {/* ── Layer 2: Confidence Meter — directly after score hero per V3 spec.
-          Placed here so the user reads confidence BEFORE the timeline and simulator.
-          Opens by default only when something material is off. */}
-      <ConfidenceDisclosure
-        confPct={confPct}
-        confidenceLabel={canonicalConf.userFacing.label}
-        confidenceColor={canonicalConf.userFacing.color}
-        primarySource={canonicalConf.primarySource}
-        calibrationMode={calibrationMode}
-        lowDataWarning={lowDataWarning}
-        conflictCount={conflictCount}
-        hardFailures={hardFailures}
-        freshnessTier={result.unifiedFreshness?.tier}
-        calibrationLimitationReason={calibrationLimitation.limited ? calibrationLimitation.reason : null}
-      />
-
-      {/* ── V3: Career Risk Timeline — Past → Present → Future story strip */}
-      <CareerRiskTimeline
-        currentScore={score}
-        scoreHistory={scoreHistoryForTimeline.length > 0 ? scoreHistoryForTimeline : undefined}
-        milestones={v3Timeline?.milestones}
-        criticalByDate={v3Timeline?.criticalByDate}
-        urgencyCategory={v3Timeline?.urgencyCategory}
-      />
-
-      {/* ── Fold capture into the reveal ───────────────────────────────────── */}
-      {profileIsEmpty && <SharpenScorePrompt />}
-
-      {/* Missing Data Card now lives inside the single "Full breakdown"
-          disclosure near the bottom (still self-gates to ≥2 meaningful gaps). */}
-
-      {/* ── Tier-1: Quick stats ────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.06 }}
-        className="flex gap-2 overflow-x-auto pb-0.5"
-        style={{ scrollbarWidth: 'none' }}
-      >
-        {/* When gate fires: replace the "Confidence" chip with the range + a clear "insufficient" label */}
-        {scoreSufficiency.sufficient ? (
-          <StatChip
-            label="Confidence"
-            value={`${confPct}%`}
-            sub={canonicalConf.userFacing.label.toLowerCase()}
-            color={canonicalConf.userFacing.color}
-            icon={Shield}
-          />
-        ) : (
-          <StatChip
-            label="Risk Level Range"
-            value={`${scoreSufficiency.ciLow}–${scoreSufficiency.ciHigh}`}
-            sub="point est. unreliable"
-            color="#fbbf24"
-            icon={AlertOctagon}
-          />
-        )}
-      </motion.div>
-
-      {/* ── AI exposure callout — first-class for knowledge roles ───────────── */}
-      {aiExposure && aiExposure.score >= 25 && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex items-start gap-2.5 rounded-xl px-3 py-2.5"
-          style={{ background: `${aiExposure.color}12`, border: `1px solid ${aiExposure.color}30` }}
-        >
-          <Cpu className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: aiExposure.color }} />
-          <div className="min-w-0">
-            <p className="text-[11px] font-black tracking-wide" style={{ color: aiExposure.color }}>
-              AI EXPOSURE · {aiExposure.level.toUpperCase()}
-            </p>
-            <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              {aiExposure.pct != null
-                ? `About ${aiExposure.pct}% of your role's core tasks are exposed to AI automation. `
-                : `Your role faces ${aiExposure.level.toLowerCase()} automation risk (Role Displacement ${aiExposure.score}/100). `}
-              Building AI-augmented skills is the highest-leverage hedge.
+            <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.78)' }}>
+              {(result as any).strategySynthesis?.singleBiggestRisk
+                ?? (topDrivers[0] ? `${topDrivers[0].label} is your largest single risk factor.` : 'No single dominant risk factor detected.')}
             </p>
           </div>
-        </motion.div>
-      )}
+
+          {biggestOpportunityLine && (
+            <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'rgba(16,185,129,0.55)' }}>
+                Opportunity
+              </span>
+              <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.78)' }}>
+                {biggestOpportunityLine}
+              </p>
+            </div>
+          )}
+
+          {adaptation.feed?.primaryMove && (
+            <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: riskColor(score) + 'aa' }}>
+                This week
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold leading-snug" style={{ color: riskColor(score) + 'ee' }}>
+                  {adaptation.feed.primaryMove.moveLabel ?? adaptation.feed.primaryMove.action.title}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
+                  }}
+                  className="mt-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg transition-opacity hover:opacity-90"
+                  style={{ background: riskColor(score) + '18', color: riskColor(score), border: `1px solid ${riskColor(score)}35` }}
+                >
+                  View Full Action Plan →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ── V3: AI Memory — score drift + streak + completed actions since last check */}
+      <AIMemoryCard
+        scoreDelta={r.scoreDelta}
+        streakInfo={streakInfo ?? undefined}
+        daysSinceLastAudit={daysSinceLastAudit}
+        completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
+      />
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <TopDriversStrip drivers={topDrivers} />
-      {/* The "View all signal weights" deep-dive link now lives inside the
-          single "Full breakdown" disclosure near the bottom. */}
 
-      {/* ── Driver→Action bridge: top lever that most reduces score ───────── */}
-      {/* Placed between TopDriversStrip and ImmediateActionsStrip so the user
-          sees WHY (drivers) → WHAT MOVES THE NEEDLE (lever) → WHAT TO DO (actions).
-          Only renders when score > 35 and a meaningful lever exists (≥4 pts impact). */}
-      {score > 35 && scoreSensitivity && (
-        <TopLeverBridge scoreSensitivity={scoreSensitivity} currentScore={score} primaryMoveTitle={primaryMoveTitle} />
-      )}
+      {/* ── Top 3 Opportunities (inline when available) ────────────────────── */}
+      {opportunityNode}
 
-      {/* ── V3: Personal Impact Simulator — Do Nothing / Partial / Full Action */}
-      <PersonalImpactSimulator
-        currentScore={score}
-        survivalProbability={r.survivalProbability}
-        scoreTrajectory={r.scoreTrajectory}
-        scoreSensitivity={scoreSensitivity}
-        financialRunwayMonths={financialRunwayMonths}
-      />
-
-      {/* ── Tier-1: Immediate actions ──────────────────────────────────────── */}
-      <ImmediateActionsStrip actions={supportingActions} total={recommendations.length} supporting={hasPrimaryMove} />
-
-      {/* ── Momentum close — directly after actions so user reads the ONE move
-          before supporting evidence. Restates the primary move (same source of
-          truth as the spine hero) — takeaway is "just this next step". */}
+      {/* ── Next Recommended Action ────────────────────────────────────────── */}
       {adaptation.feed?.primaryMove && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -1391,57 +1158,24 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-black tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(16,185,129,0.75)' }}>
-              You don't have to do everything — just this
+              Your Next Step
             </p>
             <p className="text-[13px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
               {adaptation.feed.primaryMove.moveLabel ?? adaptation.feed.primaryMove.action.title}
             </p>
             <button
+              type="button"
               onClick={() => {
                 try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
               }}
               className="mt-2 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
               style={{ background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.30)' }}
             >
-              Start in Action Center →
+              View Full Action Plan →
             </button>
           </div>
         </motion.div>
       )}
-
-      {/* ── Recovery loop — "since last visit" continuity beat (P2, below primary
-          actions so the emotional anchor doesn't compete with the hero move). */}
-      {scoreSufficiency.sufficient && (
-        <ProgressNarrativeCard scoreDelta={r.scoreDelta} streakInfo={streakInfo} />
-      )}
-
-      {/* ── Evidence surface (orchestrator-gated) ──────────────────────────── */}
-      {reveal.evidenceInline.has('personalRisk') && personalRiskNode}
-      {reveal.evidenceInline.has('opportunity') && opportunityNode}
-      {reveal.evidenceInline.has('inactionCost') && inactionNode}
-
-      {/* ── Full breakdown — one collapsed disclosure for everything else ───── */}
-      {deepHasContent && (
-        <AdaptiveBlock title="Full breakdown" tier={3} accentColor="#94a3b8" defaultOpen={false}>
-          {reveal.deep.has('opportunity') && opportunityNode}
-          {reveal.deep.has('personalRisk') && personalRiskNode}
-          {reveal.deep.has('timeToSafety') && timeToSafetyNode}
-          {reveal.deep.has('inactionCost') && inactionNode}
-          <MissingDataCard
-            result={result}
-            companyData={companyData as any}
-            personalFieldsFilled={personalFieldsFilled}
-          />
-          {viewAllWeightsLink}
-        </AdaptiveBlock>
-      )}
-
-      {/* Reading hint — Intelligence Lab tab for deeper analysis */}
-      <div className="text-center pt-1 pb-2">
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
-          Need more depth? Open Company Intel, Protection, or Intelligence Lab.
-        </p>
-      </div>
     </div>
   );
 };

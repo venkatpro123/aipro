@@ -10,9 +10,8 @@ import {
   Target, Zap, Shield, Clock, ArrowRight, CheckCircle2,
   Circle, AlertTriangle, TrendingUp, Users, Brain, DollarSign,
   ChevronDown, ChevronUp, ChevronRight, Building2, Globe, Briefcase, Star,
-  Scale, Copy, Check, MessageSquare, Search,
+  Search,
 } from "lucide-react";
-import type { PsychologicalNegotiationTactic } from "@/services/offerEvaluationEngine";
 import type { HybridResult } from "@/types/hybridResult";
 import type { CompanyData } from "@/data/companyDatabase";
 import type { StrategyAction, StrategicPlan } from "@/services/strategySynthesisEngine";
@@ -20,8 +19,6 @@ import type { OfferEvaluationInputs } from "@/services/offerEvaluationEngine";
 import { evaluateJobOffer } from "@/services/offerEvaluationEngine";
 import { loadFinancialContext } from "@/services/financialContextService";
 import { CURRENCY_META } from "@/services/currencyService";
-// v17.0
-import IntelligenceBriefPanel from "./common/IntelligenceBriefPanel";
 
 interface StrategyTabProps {
   result: HybridResult;
@@ -436,106 +433,6 @@ const OfferModal: React.FC<{
     : overlay;
 };
 
-// ── Negotiation tactics section ───────────────────────────────────────────────
-// Surfaces synthesis.psychologicalNegotiationTactics — the "& negotiation" half
-// of the "Strategic plan & negotiation" block, which was previously computed by
-// the engine but never rendered anywhere. Each tactic ships a copy-pasteable
-// script grounded in a named psychology principle.
-const TacticCard: React.FC<{ tactic: PsychologicalNegotiationTactic; index: number }> = ({ tactic, index }) => {
-  const [copied, setCopied] = useState(false);
-  const [open, setOpen] = useState(index === 0);
-
-  const copyScript = async () => {
-    try {
-      await navigator.clipboard.writeText(tactic.script);
-    } catch {
-      const el = document.createElement('textarea');
-      el.value = tactic.script;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-2 px-3.5 py-2.5 text-left">
-        <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
-        <span className="text-xs font-semibold flex-1 min-w-0" style={{ color: 'rgba(255,255,255,0.85)' }}>
-          {tactic.tacticName}
-        </span>
-        {open ? <ChevronDown className="w-3.5 h-3.5 opacity-40" /> : <ChevronRight className="w-3.5 h-3.5 opacity-40" />}
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-3.5 pb-3.5">
-              <p className="text-[11px] mb-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                <span className="font-semibold" style={{ color: '#a78bfa' }}>When: </span>{tactic.whenToUse}
-              </p>
-              <div className="rounded-lg p-3 mb-2" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.78)' }}>
-                  {tactic.script}
-                </p>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] leading-snug flex-1 min-w-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>Why it works: </span>{tactic.psychologyBasis}
-                </p>
-                <button
-                  onClick={copyScript}
-                  className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded flex-shrink-0"
-                  style={{
-                    background: copied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
-                    color: copied ? '#34d399' : 'rgba(255,255,255,0.45)',
-                    border: `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`,
-                  }}
-                >
-                  {copied ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
-                </button>
-              </div>
-              {tactic.caution && (
-                <p className="text-[10px] mt-2 leading-snug" style={{ color: '#f59e0b' }}>
-                  ⚠ {tactic.caution}
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const NegotiationTacticsSection: React.FC<{ tactics: PsychologicalNegotiationTactic[] }> = ({ tactics }) => {
-  if (!tactics || tactics.length === 0) return null;
-  return (
-    <div className="rounded-2xl p-4" style={{ background: 'rgba(167,139,250,0.04)', border: '1px solid rgba(167,139,250,0.18)' }}>
-      <div className="flex items-center gap-2 mb-1">
-        <Scale className="w-4 h-4" style={{ color: '#a78bfa' }} />
-        <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Negotiation Tactics</span>
-        <span className="text-[10px] px-2 py-0.5 rounded-full ml-auto" style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}>
-          {tactics.length} ready
-        </span>
-      </div>
-      <p className="text-[11px] mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
-        Evidence-based scripts for retention, severance, or counter-offer conversations — ranked for your leverage.
-      </p>
-      <div className="space-y-2">
-        {tactics.map((t, i) => <TacticCard key={i} tactic={t} index={i} />)}
-      </div>
-    </div>
-  );
-};
 
 // ── Main component ─────────────────────────────────────────────────────────────
 const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
@@ -601,13 +498,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
   return (
     <div className="space-y-5 px-1">
-      {/* v41.0: evidence-floor-gated brief — heuristic tier and low confidence block it */}
-      <IntelligenceBriefPanel
-        intelligenceBrief={(result as any).intelligenceBrief}
-        confidence={result.confidencePercent ?? Math.round(Number(result.confidence ?? 0.5) * 100)}
-        freshnessTier={result.unifiedFreshness?.tier}
-        companyName={(companyData as any)?.name}
-      />
+      {/* IntelligenceBriefPanel removed — same content exists in Intelligence Lab tab */}
 
       {/* Strategy banner */}
       <motion.div
@@ -792,9 +683,6 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             className="overflow-hidden"
           >
             <div className="space-y-5">
-
-      {/* Negotiation tactics — the "& negotiation" content, previously unrendered */}
-      <NegotiationTacticsSection tactics={synthesis.psychologicalNegotiationTactics ?? []} />
 
       {/* Strategic phases */}
       <div>

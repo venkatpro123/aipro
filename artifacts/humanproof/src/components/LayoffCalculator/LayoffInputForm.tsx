@@ -13,7 +13,7 @@ import {
 } from "../../services/companyIntelligenceService";
 import { CompanyData } from "../../data/companyDatabase";
 import { profileUnknownCompany } from "../../services/ensemble/quickProfilerAgent";
-import { Zap, Shield, TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import type { UniquenessDepth, KnowledgeType } from "../../services/layoffScoreEngine";
 import {
   searchOracleRoles,
@@ -26,7 +26,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getCareerIntelligence } from "../../data/careerIntelligenceDB";
 import { resolveRoleInput } from "../../services/roleResolution";
 
-// Pre-loaded company suggestions — replaces CSP-blocked Clearbit autocomplete
 const LOCAL_COMPANY_SUGGESTIONS: string[] = [
   'Apple', 'Google', 'Microsoft', 'Amazon', 'Meta', 'Netflix', 'Tesla', 'NVIDIA',
   'Intel', 'AMD', 'Qualcomm', 'Dell', 'HP', 'IBM', 'Oracle', 'SAP', 'Cisco',
@@ -44,310 +43,184 @@ const LOCAL_COMPANY_SUGGESTIONS: string[] = [
   'Databricks', 'OpenAI', 'Anthropic', 'ByteDance', 'Grab', 'Gojek',
 ];
 
-interface Props {
-  onNext: () => void;
-}
+interface Props { onNext: () => void; }
 
-// ── Step progress dots ───────────────────────────────────────────────────────
-const StepProgress: React.FC<{ current: number; total: number }> = ({ current, total }) => (
-  <div className="audit-step-progress">
-    {Array.from({ length: total }, (_, i) => (
-      <div
-        key={i}
-        className={`audit-step-dot${i + 1 === current ? ' active' : i + 1 < current ? ' done' : ''}`}
-      />
-    ))}
-  </div>
-);
-
-// ── Wizard toggle group (replaces inline-styled ToggleGroup) ─────────────────
-interface ToggleOption {
-  value: string;
-  label: string;
+// ── Premium Option Card ───────────────────────────────────────────────────────
+const OptionCard: React.FC<{
+  selected: boolean;
+  onClick: () => void;
   icon?: React.ReactNode;
+  label: string;
   desc?: string;
-}
-
-const ToggleGroup: React.FC<{
-  options: ToggleOption[];
-  value: string;
-  onChange: (val: string) => void;
-  ariaLabel: string;
-}> = ({ options, value, onChange, ariaLabel }) => (
-  <div
-    role="radiogroup"
-    aria-label={ariaLabel}
-    className={options.length > 2 ? 'audit-grid-3col' : 'audit-grid-2col'}
-    style={{ marginBottom: 'var(--space-5)' }}
+  accent?: string;
+}> = ({ selected, onClick, icon, label, desc, accent = '#22d3ee' }) => (
+  <motion.button
+    type="button"
+    whileTap={{ scale: 0.97 }}
+    onClick={onClick}
+    className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-left"
+    style={{
+      background: selected ? `${accent}12` : 'rgba(255,255,255,0.03)',
+      border: `1.5px solid ${selected ? `${accent}55` : 'rgba(255,255,255,0.08)'}`,
+      cursor: 'pointer',
+      transition: 'all 0.18s ease',
+    }}
   >
-    {options.map((opt) => {
-      const active = value === opt.value;
-      return (
-        <button
-          key={opt.value}
-          role="radio"
-          aria-checked={active}
-          onClick={() => onChange(opt.value)}
-          className={`wizard-toggle-btn${active ? ' active' : ''}`}
-        >
-          {opt.icon && <span className="toggle-icon">{opt.icon}</span>}
-          <span className="toggle-label">{opt.label}</span>
-          {opt.desc && <span className="toggle-desc">{opt.desc}</span>}
-        </button>
-      );
-    })}
-  </div>
+    {icon && (
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
+        style={{ background: selected ? `${accent}22` : 'rgba(255,255,255,0.06)' }}
+      >
+        {icon}
+      </div>
+    )}
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-semibold leading-snug" style={{ color: selected ? '#fff' : 'rgba(255,255,255,0.78)' }}>
+        {label}
+      </p>
+      {desc && (
+        <p className="text-xs mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          {desc}
+        </p>
+      )}
+    </div>
+    <div
+      className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
+      style={{
+        border: `2px solid ${selected ? accent : 'rgba(255,255,255,0.20)'}`,
+        background: selected ? accent : 'transparent',
+        transition: 'all 0.15s ease',
+      }}
+    >
+      {selected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+    </div>
+  </motion.button>
 );
 
-// ── Live risk pulse bar ───────────────────────────────────────────────────────
-const RiskPulse: React.FC<{ score: number }> = ({ score }) => {
-  const color = riskScoreColor(score);
-  return (
-    <div className="signal-card" data-tone={score >= 65 ? 'red' : score >= 45 ? 'amber' : 'emerald'}
-      style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}
-    >
-      <div style={{ position: 'relative', width: 12, height: 12, flexShrink: 0 }}>
-        <motion.div
-          animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0.15, 0.6] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          style={{ position: 'absolute', inset: -4, borderRadius: '50%', background: color }}
-        />
-        <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: '50%', background: color, boxShadow: `0 0 10px ${color}` }} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
-          <span style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Live Risk Pulse
-          </span>
-          <span style={{ fontSize: '0.9rem', fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>{score}%</span>
-        </div>
-        <div className="gauge-track" style={{ height: 4 }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${score}%` }}
-            transition={{ type: "spring", damping: 20 }}
-            className="gauge-fill"
-            style={{ background: color }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── Mini risk trend sparkline ────────────────────────────────────────────────
+// ── Mini sparkline ────────────────────────────────────────────────────────────
 const MiniSparkline: React.FC<{ trend: { riskScore: number }[]; color: string }> = ({ trend, color }) => {
   if (!trend || trend.length < 2) return null;
-  const W = 52, H = 20;
-  const min = Math.min(...trend.map((t) => t.riskScore));
-  const max = Math.max(...trend.map((t) => t.riskScore));
+  const W = 40, H = 16;
+  const min = Math.min(...trend.map(t => t.riskScore));
+  const max = Math.max(...trend.map(t => t.riskScore));
   const range = max - min || 1;
-  const toX = (i: number) => (i / (trend.length - 1)) * W;
-  const toY = (v: number) => H - ((v - min) / range) * H;
-  const path = trend
-    .map((t, i) => `${i === 0 ? "M" : "L"} ${toX(i).toFixed(1)} ${toY(t.riskScore).toFixed(1)}`)
-    .join(" ");
+  const path = trend.map((t, i) =>
+    `${i === 0 ? 'M' : 'L'} ${((i / (trend.length - 1)) * W).toFixed(1)} ${(H - ((t.riskScore - min) / range) * H).toFixed(1)}`
+  ).join(' ');
   return (
-    <svg width={W} height={H} style={{ display: "block" }}>
-      <path d={path} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={W} height={H} style={{ display: 'block' }}>
+      <path d={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 };
 
-// ── Risk direction icon ──────────────────────────────────────────────────────
-const DirectionIcon: React.FC<{ direction: OracleRoleEntry["riskDirection"]; size?: number }> = ({
-  direction, size = 12,
-}) => {
-  if (direction === "rising")  return <TrendingUp size={size} color="#ef4444" />;
-  if (direction === "falling") return <TrendingDown size={size} color="#10b981" />;
+const DirectionIcon: React.FC<{ direction: OracleRoleEntry['riskDirection']; size?: number }> = ({ direction, size = 11 }) => {
+  if (direction === 'rising')  return <TrendingUp size={size} color="#ef4444" />;
+  if (direction === 'falling') return <TrendingDown size={size} color="#10b981" />;
   return <Minus size={size} color="#f59e0b" />;
 };
 
-// ── Role Intelligence Preview Card ───────────────────────────────────────────
-const RoleIntelPreviewCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
-  const riskColor = riskScoreColor(entry.currentRiskScore);
-  const tone = entry.currentRiskScore >= 65 ? 'red' : entry.currentRiskScore >= 45 ? 'amber' : 'emerald';
+// ── Compact role intelligence preview ────────────────────────────────────────
+const RoleIntelCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
+  const color = riskScoreColor(entry.currentRiskScore);
   return (
-    <div
-      className="signal-card"
-      data-tone={tone}
-      style={{ margin: 'var(--space-2) 0 var(--space-5)', animation: 'slideDown 0.25s ease-out' }}
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl px-3.5 py-3 mt-3"
+      style={{ background: `${color}09`, border: `1px solid ${color}25` }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
-        <div>
-          <div style={{ color: riskColor, fontSize: '0.6rem', letterSpacing: '1.5px', fontFamily: 'var(--font-mono)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', fontWeight: 700 }}>
-            Oracle Role Intelligence
-          </div>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: '0.95rem' }}>
-            {entry.displayTitle}
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-1)' }}>
-          <div
-            className={`audit-role-displacement ${entry.currentRiskScore >= 65 ? 'high' : entry.currentRiskScore >= 45 ? 'medium' : 'low'}`}
-            style={{ fontSize: '0.875rem', padding: '4px 12px' }}
-          >
-            {entry.currentRiskScore}%
-          </div>
-          <div style={{ color: 'var(--text-3)', fontSize: '0.62rem', fontFamily: 'var(--font-mono)' }}>
-            {riskScoreLabel(entry.currentRiskScore)}
-          </div>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>{entry.displayTitle}</p>
+        <div className="flex items-center gap-2">
+          <MiniSparkline trend={entry.riskTrend} color={color} />
+          <span className="text-xs font-black px-1.5 py-0.5 rounded" style={{ background: `${color}20`, color }}>{entry.currentRiskScore}%</span>
         </div>
       </div>
-
-      <p style={{ margin: '0 0 var(--space-3)', color: 'var(--text-3)', fontSize: '0.82rem', lineHeight: 1.5 }}>
-        {entry.summary.length > 120 ? entry.summary.slice(0, 120) + '…' : entry.summary}
+      <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        {entry.summary.slice(0, 100)}{entry.summary.length > 100 ? '…' : ''}
       </p>
-
-      <div className="audit-stat-row" style={{ marginBottom: 'var(--space-3)' }}>
+      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
         {entry.topSafeSkill && (
-          <div className="signal-chip signal-chip-live">
-            <Shield size={10} />
-            {entry.topSafeSkill.length > 28 ? entry.topSafeSkill.slice(0, 28) + '…' : entry.topSafeSkill}
-          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+            ✓ {entry.topSafeSkill.slice(0, 22)}
+          </span>
         )}
         {entry.topAtRiskSkill && entry.topAtRiskSkill !== 'None' && (
-          <div className="signal-chip signal-chip-mixed">
-            <Zap size={10} />
-            {entry.topAtRiskSkill.length > 28 ? entry.topAtRiskSkill.slice(0, 28) + '…' : entry.topAtRiskSkill}
-          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
+            ⚡ {entry.topAtRiskSkill.slice(0, 22)}
+          </span>
         )}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <MiniSparkline trend={entry.riskTrend} color={riskColor} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-            <DirectionIcon direction={entry.riskDirection} size={11} />
-            <span style={{
-              color: entry.riskDirection === 'rising' ? '#ef4444' : entry.riskDirection === 'falling' ? '#10b981' : '#f59e0b',
-              fontSize: '0.65rem', fontFamily: 'var(--font-mono)',
-            }}>
-              {entry.riskDirection === 'rising' ? 'Risk rising' : entry.riskDirection === 'falling' ? 'Risk falling' : 'Stable'}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {entry.contextTags.slice(0, 2).map((tag) => (
-            <span
-              key={tag}
-              style={{
-                background: 'rgba(124,58,255,0.12)',
-                border: '1px solid rgba(124,58,255,0.25)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '2px 6px',
-                fontSize: '0.6rem',
-                color: '#a78bfa',
-                fontFamily: 'var(--font-mono)',
-                letterSpacing: '0.5px',
-              }}
-            >
-              {tag}
-            </span>
-          ))}
+        <div className="flex items-center gap-1 ml-auto">
+          <DirectionIcon direction={entry.riskDirection} />
+          <span className="text-[10px]" style={{ color: entry.riskDirection === 'rising' ? '#ef4444' : entry.riskDirection === 'falling' ? '#10b981' : '#f59e0b' }}>
+            {entry.riskDirection === 'rising' ? 'Rising' : entry.riskDirection === 'falling' ? 'Falling' : 'Stable'}
+          </span>
         </div>
       </div>
-
-      <div style={{ marginTop: 'var(--space-2)', fontSize: '0.62rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
-        Oracle confidence: {entry.confidenceScore}%
-      </div>
-    </div>
+    </motion.div>
   );
 };
 
-// ── Role Resolution Banner ────────────────────────────────────────────────────
 const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
   const intel = useMemo(() => getCareerIntelligence(entry.oracleKey), [entry.oracleKey]);
-
-  if (intel) {
-    const atRiskCount = intel.skills.at_risk?.length ?? 0;
-    const safeCount   = intel.skills.safe?.length ?? 0;
-    const pathCount   = intel.careerPaths?.length ?? 0;
-    return (
-      <div className="signal-card" data-tone="emerald" style={{ marginTop: 'calc(var(--space-2) * -1)', marginBottom: 'var(--space-4)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
-          <span className="signal-chip signal-chip-live">✓ Resolved</span>
-          <span style={{ color: 'var(--text)', fontSize: '0.82rem', fontWeight: 600 }}>
-            Analyzing as: {intel.displayRole}
-          </span>
-          <span style={{
-            color: 'var(--text-3)', fontSize: '0.65rem', fontFamily: 'var(--font-mono)',
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 'var(--radius-sm)', padding: '1px 6px',
-          }}>
-            {entry.oracleKey}
-          </span>
-        </div>
-        <div className="audit-stat-row">
-          <span style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>Coverage:</span>
-          {atRiskCount > 0 && (
-            <span style={{ color: 'var(--amber)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
-              {atRiskCount} at-risk skill{atRiskCount !== 1 ? 's' : ''}
-            </span>
-          )}
-          {safeCount > 0 && (
-            <span style={{ color: 'var(--emerald)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
-              {safeCount} safe skill{safeCount !== 1 ? 's' : ''}
-            </span>
-          )}
-          {pathCount > 0 && (
-            <span style={{ color: '#818cf8', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
-              {pathCount} transition path{pathCount !== 1 ? 's' : ''}
-            </span>
-          )}
-          {atRiskCount === 0 && safeCount === 0 && pathCount === 0 && (
-            <span style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>basic</span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="signal-card" data-tone="amber" style={{ marginTop: 'calc(var(--space-2) * -1)', marginBottom: 'var(--space-4)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
-        <span className="signal-chip signal-chip-mixed">⚠ Limited Coverage</span>
-        <span style={{ color: 'var(--text-2)', fontSize: '0.8rem' }}>
-          Role not in database — analysis from risk score.
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mt-1.5 px-3 py-2 rounded-xl flex items-center gap-2"
+      style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.20)' }}
+    >
+      <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
+      <span className="text-xs font-semibold" style={{ color: '#6ee7b7' }}>
+        Analyzing as: {intel?.displayRole ?? entry.displayTitle}
+      </span>
+      {intel && (
+        <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {(intel.skills.at_risk?.length ?? 0) + (intel.skills.safe?.length ?? 0)} skills mapped
         </span>
-      </div>
-      <div style={{ color: 'var(--text-3)', fontSize: '0.72rem', lineHeight: 1.5 }}>
-        Skills &amp; Career tab will show general guidance.
-      </div>
-    </div>
+      )}
+    </motion.div>
   );
 };
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Step question config ──────────────────────────────────────────────────────
+const STEPS = [
+  { q: 'Where do you work?',                    sub: 'We\'ll analyze layoff signals and company health' },
+  { q: 'What\'s your role?',                    sub: 'We\'ll pull your AI displacement risk profile' },
+  { q: 'How long have you been there?',          sub: 'Newer employees typically face higher layoff risk' },
+  { q: 'Total career experience?',              sub: 'Across all companies and roles' },
+  { q: 'How\'s your recent performance?',       sub: 'Be honest — this personalizes your risk score' },
+  { q: 'How replaceable are you?',              sub: 'How hard would it be to replace you in 60 days?' },
+  { q: 'Any of these apply to you?',            sub: 'Select all that apply — they lower your risk' },
+  { q: 'What\'s your financial safety net?',    sub: 'Optional — helps personalize your action plan' },
+];
+
+const TOTAL_STEPS = STEPS.length;
+
+// ── Main Export ───────────────────────────────────────────────────────────────
 export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile } = useHumanProof();
-  const [step, setStep] = useState(1);
 
-  // Step 1 state
-  const [companySearch, setCompanySearch] = useState(state.companyName || "");
-  const [searchResults, setSearchResults] = useState<
-    (CompanyData & { logo?: string; domain?: string; isExternal?: boolean })[]
-  >([]);
-  const [selectedCompany, setSelectedCompany] = useState<CompanyData | null>(
-    state.companyData || null
-  );
+  // Navigation
+  const [qStep, setQStep] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+
+  // Step 0: Company
+  const [companySearch, setCompanySearch] = useState(state.companyName || '');
+  const [searchResults, setSearchResults] = useState<(CompanyData & { logo?: string; domain?: string; isExternal?: boolean })[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyData | null>(state.companyData || null);
   const [isProfiling, setIsProfiling] = useState(false);
   const [profileFailed, setProfileFailed] = useState(false);
-  const [disambiguationCandidates, setDisambiguationCandidates] = useState<Array<{
-    name: string; industry: string; region: string; riskScore: number;
-  }>>([]);
+  const [disambiguationCandidates, setDisambiguationCandidates] = useState<Array<{ name: string; industry: string; region: string; riskScore: number }>>([]);
   const [showDisambiguation, setShowDisambiguation] = useState(false);
   const [pendingMatchConfirmation, setPendingMatchConfirmation] = useState<{
-    company: any;
-    matchedName: string;
-    confidence: number;
-    matchType: MatchType;
-    userQuery: string;
+    company: any; matchedName: string; confidence: number; matchType: MatchType; userQuery: string;
   } | null>(null);
 
-  // Role search state
-  const [roleTitle, setRoleTitle] = useState(state.roleTitle || "");
+  // Step 1: Role
+  const [roleTitle, setRoleTitle] = useState(state.roleTitle || '');
   const [selectedOracleEntry, setSelectedOracleEntry] = useState<OracleRoleEntry | null>(null);
   const [roleSuggestions, setRoleSuggestions] = useState<OracleRoleEntry[]>([]);
   const [showRoleSuggestions, setShowRoleSuggestions] = useState(false);
@@ -355,181 +228,99 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const [oracleSelectionCleared, setOracleSelectionCleared] = useState(false);
   const roleInputRef = useRef<HTMLInputElement>(null);
 
-  // Step 2 state
+  // Steps 2–7: Personal factors
   const [tenureYears, setTenureYears] = useState(state.userFactors?.tenureYears || 1.5);
   const [careerYears, setCareerYears] = useState(state.userFactors?.careerYears ?? 5);
   const [uniquenessDepth, setUniquenessDepth] = useState<UniquenessDepth>(
-    state.userFactors?.uniquenessDepth ??
-    (state.userFactors?.isUniqueRole ? 'critical_knowledge' : 'generic')
+    state.userFactors?.uniquenessDepth ?? (state.userFactors?.isUniqueRole ? 'critical_knowledge' : 'generic')
   );
   const [knowledgeType, setKnowledgeType] = useState<KnowledgeType>(
-    (state.userFactors as any)?.knowledgeType
-    ?? (userProfile?.uniquenessKnowledgeType as KnowledgeType | undefined)
-    ?? 'system_specific'
+    (state.userFactors as any)?.knowledgeType ?? (userProfile?.uniquenessKnowledgeType as KnowledgeType | undefined) ?? 'system_specific'
   );
   const isUniqueRole = uniquenessDepth === 'critical_knowledge';
-  const [performanceTier, setPerformanceTier] = useState(
-    state.userFactors?.performanceTier || "average"
+  const [performanceTier, setPerformanceTier] = useState<'top' | 'average' | 'below' | 'unknown'>(
+    state.userFactors?.performanceTier || 'average'
   );
-  const [hasRecentPromotion, setHasRecentPromotion] = useState(
-    state.userFactors?.hasRecentPromotion ?? false
-  );
+  const [hasRecentPromotion, setHasRecentPromotion] = useState(state.userFactors?.hasRecentPromotion ?? false);
   const [financialRunwayMonths, setFinancialRunwayMonths] = useState<number>(0);
-  const [hasKeyRelationships, setHasKeyRelationships] = useState(
-    state.userFactors?.hasKeyRelationships ?? false
-  );
+  const [hasKeyRelationships, setHasKeyRelationships] = useState(state.userFactors?.hasKeyRelationships ?? false);
 
-  const pulseScore = useMemo(() => {
-    let base = selectedOracleEntry?.currentRiskScore || 45;
-    if (performanceTier === 'top') base -= 15;
-    if (performanceTier === 'below') base += 25;
-    if (tenureYears < 1) base += 10;
-    if (tenureYears > 8) base -= 12;
-    if (uniquenessDepth === 'critical_knowledge') base -= 10;
-    else if (uniquenessDepth === 'functional_specialist') base -= 5;
-    if (hasRecentPromotion) base -= 8;
-    if (hasKeyRelationships) base -= 5;
-    return Math.min(99, Math.max(1, base));
-  }, [selectedOracleEntry, performanceTier, tenureYears, uniquenessDepth, hasRecentPromotion, hasKeyRelationships]);
-
-  // ── Company search — instant local results, background Supabase augmentation ──
-  //
-  // Strategy: show results in two phases so the user never stares at a blank
-  // dropdown waiting for a network round-trip.
-  //
-  //   Phase 1 (0ms): compute local bridge + suggestion matches synchronously
-  //                  and render them immediately.
-  //   Phase 2 (network): fire a Supabase query in the background; when it
-  //                      resolves, merge its results (deduped) into the list.
-  //
-  // The AbortController cancels the in-flight Supabase call whenever the query
-  // changes, so stale responses from a superseded keystroke never clobber fresh
-  // ones.
+  // ── Company search ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!companySearch || companySearch.length < 2 || selectedCompany) {
       setSearchResults([]);
       return;
     }
     const trimmed = companySearch.trim();
-    if (trimmed.length === 0 || trimmed.length > 100) {
-      setSearchResults([]);
-      return;
-    }
+    if (!trimmed || trimmed.length > 100) { setSearchResults([]); return; }
 
-    // ── Phase 1: local sources (synchronous, zero latency) ───────────────────
     const q = trimmed.toLowerCase();
-
-    // Local bridge results — resolve full data once per entry, deduped by name.
-    // resolveCompanyData can return null for unknown keys — skip those entries
-    // rather than spreading null (which silently produces {isExternal,fromSupabase}
-    // with no name and crashes downstream .toLowerCase() calls).
     const localEntries = searchAllCompanies(trimmed);
-    const localMerged: any[] = localEntries
-      .map(c => {
-        const fullData = resolveCompanyData(c.key);
-        if (!fullData || !fullData.name) return null;
-        return { ...(fullData as any), isExternal: false, fromSupabase: false };
-      })
-      .filter(Boolean);
+    const localMerged: any[] = localEntries.map(c => {
+      const fullData = resolveCompanyData(c.key);
+      if (!fullData?.name) return null;
+      return { ...fullData, isExternal: false, fromSupabase: false };
+    }).filter(Boolean);
     const seenNames = new Set(localMerged.map((m: any) => (m.name ?? '').toLowerCase()));
-
-    // Local fallback suggestions.
-    LOCAL_COMPANY_SUGGESTIONS
-      .filter(n => n.toLowerCase().includes(q))
-      .slice(0, 5)
-      .forEach(name => {
-        if (!seenNames.has(name.toLowerCase())) {
-          seenNames.add(name.toLowerCase());
-          localMerged.push({
-            name, isPublic: false, industry: "Company",
-            region: "GLOBAL", employeeCount: 0,
-            layoffsLast24Months: [], layoffRounds: 0,
-            lastLayoffPercent: null, revenuePerEmployee: 150000,
-            aiInvestmentSignal: "medium", source: "Suggestions",
-            lastUpdated: new Date().toISOString(), isExternal: true,
-          } as any);
-        }
-      });
-
-    // Render local results immediately — no waiting.
+    LOCAL_COMPANY_SUGGESTIONS.filter(n => n.toLowerCase().includes(q)).slice(0, 5).forEach(name => {
+      if (!seenNames.has(name.toLowerCase())) {
+        seenNames.add(name.toLowerCase());
+        localMerged.push({
+          name, isPublic: false, industry: 'Company', region: 'GLOBAL', employeeCount: 0,
+          layoffsLast24Months: [], layoffRounds: 0, lastLayoffPercent: null,
+          revenuePerEmployee: 150000, aiInvestmentSignal: 'medium',
+          source: 'Suggestions', lastUpdated: new Date().toISOString(), isExternal: true,
+        } as any);
+      }
+    });
     setSearchResults(localMerged.slice(0, 10));
 
-    // ── Phase 2: Supabase augmentation (async, non-blocking) ─────────────────
     const controller = new AbortController();
-
     searchSupabaseCompanies(trimmed, 10, controller.signal).then(async supabaseResults => {
       if (controller.signal.aborted) return;
-
-      // Phase 2b: if company_intelligence returned nothing, query
-      // verified_company_intelligence (5,208 companies) as fallback.
       let effectiveResults = supabaseResults;
       if (supabaseResults.length === 0 && !controller.signal.aborted) {
         try {
-          const vciResults = await searchVerifiedCompanyIntelligence(trimmed, 10, controller.signal);
-          if (vciResults.length > 0 && !controller.signal.aborted) {
-            effectiveResults = vciResults;
-          }
-        } catch { /* non-fatal — keep local results */ }
+          const vci = await searchVerifiedCompanyIntelligence(trimmed, 10, controller.signal);
+          if (vci.length > 0 && !controller.signal.aborted) effectiveResults = vci;
+        } catch { /* non-fatal */ }
       }
-
       if (controller.signal.aborted) return;
-
-      // Disambiguation check.
       const rootWord = trimmed.split(' ')[0].toLowerCase();
-      const sameRootCount = effectiveResults.filter(r =>
-        r.name != null && r.name.toLowerCase().startsWith(rootWord),
-      ).length;
+      const sameRootCount = effectiveResults.filter(r => r.name?.toLowerCase().startsWith(rootWord)).length;
       if (sameRootCount >= 3) {
-        setDisambiguationCandidates(effectiveResults.slice(0, 5).map(r => ({
-          name: r.name, industry: r.industry, region: 'GLOBAL', riskScore: r.riskScore,
-        })));
+        setDisambiguationCandidates(effectiveResults.slice(0, 5).map(r => ({ name: r.name, industry: r.industry, region: 'GLOBAL', riskScore: r.riskScore })));
         setShowDisambiguation(true);
       } else {
         setShowDisambiguation(false);
         setDisambiguationCandidates([]);
       }
-
-      // Merge Supabase / VCI rows (front of list — they have riskScore) with local
-      // results that weren't already covered.
-      const sbMapped: any[] = effectiveResults
-        .filter(r => r.name != null && r.name.length > 0)
-        .slice(0, 8)
-        .map(r => ({
-          name: r.name, industry: r.industry, isPublic: false, region: "GLOBAL",
-          employeeCount: 0, layoffsLast24Months: [], layoffRounds: 0,
-          lastLayoffPercent: null, revenuePerEmployee: 150000,
-          aiInvestmentSignal: "medium", source: "Supabase Intelligence",
-          lastUpdated: new Date().toISOString(), riskScore: r.riskScore,
-          isExternal: false, fromSupabase: true,
-        } as any));
-
-      // Dedup: keep existing local result if Supabase returns the same name.
+      const sbMapped: any[] = effectiveResults.filter(r => r.name?.length > 0).slice(0, 8).map(r => ({
+        name: r.name, industry: r.industry, isPublic: false, region: 'GLOBAL', employeeCount: 0,
+        layoffsLast24Months: [], layoffRounds: 0, lastLayoffPercent: null, revenuePerEmployee: 150000,
+        aiInvestmentSignal: 'medium', source: 'Supabase Intelligence', lastUpdated: new Date().toISOString(),
+        riskScore: r.riskScore, isExternal: false, fromSupabase: true,
+      } as any));
       const sbNames = new Set(sbMapped.map((r: any) => (r.name ?? '').toLowerCase()));
-      const remainingLocal = localMerged.filter(
-        (m: any) => !sbNames.has((m.name ?? '').toLowerCase()),
-      );
-
-      setSearchResults([...sbMapped, ...remainingLocal].slice(0, 10));
-    }).catch(() => { /* AbortError or network failure — local results already visible */ });
-
+      setSearchResults([...sbMapped, ...localMerged.filter((m: any) => !sbNames.has((m.name ?? '').toLowerCase()))].slice(0, 10));
+    }).catch(() => {});
     return () => controller.abort();
   }, [companySearch, selectedCompany]);
 
-  // ── Oracle role search — instant, in-memory, no debounce needed ─────────────
+  // ── Role search ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (roleTitle.length >= 2) {
       const results = searchOracleRoles(roleTitle, 8);
       setRoleSuggestions(results);
       setShowRoleSuggestions(results.length > 0);
       setFocusedSuggestionIndex(-1);
-      if (selectedOracleEntry && roleTitle && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
+      if (selectedOracleEntry && !selectedOracleEntry.displayTitle.toLowerCase().includes(roleTitle.toLowerCase())) {
         setSelectedOracleEntry(null);
         setOracleSelectionCleared(true);
       }
     } else {
       setShowRoleSuggestions(false);
       setRoleSuggestions([]);
-      setFocusedSuggestionIndex(-1);
     }
   }, [roleTitle]);
 
@@ -540,42 +331,29 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     setShowRoleSuggestions(false);
   };
 
-  // Keyboard navigation for role suggestions
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!showRoleSuggestions || roleSuggestions.length === 0) return;
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setFocusedSuggestionIndex(prev => (prev < roleSuggestions.length - 1 ? prev + 1 : prev));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setFocusedSuggestionIndex(prev => (prev > 0 ? prev - 1 : 0));
-      } else if (e.key === "Enter" && focusedSuggestionIndex >= 0) {
-        e.preventDefault();
-        selectRole(roleSuggestions[focusedSuggestionIndex]);
-      } else if (e.key === "Escape") {
-        setShowRoleSuggestions(false);
-      }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedSuggestionIndex(p => Math.min(p + 1, roleSuggestions.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedSuggestionIndex(p => Math.max(p - 1, 0)); }
+      else if (e.key === 'Enter' && focusedSuggestionIndex >= 0) { e.preventDefault(); selectRole(roleSuggestions[focusedSuggestionIndex]); }
+      else if (e.key === 'Escape') setShowRoleSuggestions(false);
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [showRoleSuggestions, roleSuggestions, focusedSuggestionIndex]);
 
-  // Close role suggestions on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (roleInputRef.current && !roleInputRef.current.contains(e.target as Node)) {
-        setShowRoleSuggestions(false);
-      }
+      if (roleInputRef.current && !roleInputRef.current.contains(e.target as Node)) setShowRoleSuggestions(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // ── Company select handler ────────────────────────────────────────────────
+  // ── Company select ────────────────────────────────────────────────────────
   const handleCompanySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setCompanySearch(val);
+    setCompanySearch(e.target.value);
     setSelectedCompany(null);
     setPendingMatchConfirmation(null);
   };
@@ -584,10 +362,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     if (!skipConfidenceCheck && companySearch && comp.name) {
       const { score: confidence, matchType } = computeMatchConfidence(companySearch, comp.name);
       if (confidence < MATCH_CONFIRMATION_THRESHOLD) {
-        setPendingMatchConfirmation({
-          company: comp, matchedName: comp.name,
-          confidence, matchType, userQuery: companySearch,
-        });
+        setPendingMatchConfirmation({ company: comp, matchedName: comp.name, confidence, matchType, userQuery: companySearch });
         setSearchResults([]);
         return;
       }
@@ -597,301 +372,331 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
     setSearchResults([]);
     if (comp.isExternal) {
       const localMatch = resolveCompanyData(comp.name);
-      if (localMatch && localMatch.name && comp.name && localMatch.name.toLowerCase() === comp.name.toLowerCase()) {
-        setSelectedCompany(localMatch);
-        return;
-      }
+      if (localMatch?.name?.toLowerCase() === comp.name?.toLowerCase()) { setSelectedCompany(localMatch); return; }
       setIsProfiling(true);
       const profile = await profileUnknownCompany(comp.name);
       setIsProfiling(false);
-      if (profile) {
-        const fullComp: CompanyData = {
-          ...comp, industry: profile.industry, isPublic: profile.isPublic,
-          employeeCount: profile.employeeCount, region: profile.region,
-          ticker: profile.ticker, source: `AI Profile (${comp.name})`,
-        };
-        setSelectedCompany(fullComp);
-      } else {
-        setSelectedCompany({ ...comp, industry: "Technology", employeeCount: 500, source: "User Entry" } as CompanyData);
-      }
+      setSelectedCompany(profile
+        ? { ...comp, industry: profile.industry, isPublic: profile.isPublic, employeeCount: profile.employeeCount, region: profile.region, ticker: profile.ticker, source: `AI Profile (${comp.name})` }
+        : { ...comp, industry: 'Technology', employeeCount: 500, source: 'User Entry' } as CompanyData
+      );
     } else {
       setSelectedCompany(comp);
     }
   };
 
-  const handleNextStep1 = async () => {
-    if (!companySearch || !roleTitle.trim()) return;
-    const resolvedRole = resolveRoleInput(roleTitle.trim(), {
-      oracleKey: selectedOracleEntry?.oracleKey ?? null,
-    });
-    if (!resolvedRole.canonicalKey) return;
+  // ── Resolved role preview ─────────────────────────────────────────────────
+  const resolvedRolePreview = resolveRoleInput(roleTitle.trim(), { oracleKey: selectedOracleEntry?.oracleKey ?? null });
 
-    let finalCompany = selectedCompany;
-    if (!finalCompany) {
-      setIsProfiling(true);
-      const profile = await profileUnknownCompany(companySearch);
-      setIsProfiling(false);
-      if (!profile) setProfileFailed(true);
-      else setProfileFailed(false);
-      finalCompany = {
-        name: companySearch, isPublic: profile?.isPublic ?? false,
-        industry: profile?.industry ?? "Technology", region: profile?.region ?? "GLOBAL",
-        employeeCount: profile?.employeeCount ?? 500, ticker: profile?.ticker,
-        revenueGrowthYoY: null, stock90DayChange: null,
-        layoffsLast24Months: [], layoffRounds: 0, lastLayoffPercent: null,
-        revenuePerEmployee: 150000, aiInvestmentSignal: "medium",
-        source: profile ? `AI Profile (${companySearch})` : "User Input",
-        lastUpdated: new Date().toISOString(),
-      };
+  // ── Can-proceed per step ──────────────────────────────────────────────────
+  const canProceed = useMemo(() => {
+    switch (qStep) {
+      case 0: return companySearch.trim().length > 0;
+      case 1: return roleTitle.trim().length > 0 && !!resolvedRolePreview.canonicalKey;
+      default: return true; // all other steps always allow continue (optional or auto-selected)
+    }
+  }, [qStep, companySearch, roleTitle, resolvedRolePreview.canonicalKey]);
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  const goNext = async () => {
+    if (qStep === 1) {
+      // Resolve company + role, dispatch
+      if (!companySearch || !roleTitle.trim()) return;
+      const resolvedRole = resolveRoleInput(roleTitle.trim(), { oracleKey: selectedOracleEntry?.oracleKey ?? null });
+      if (!resolvedRole.canonicalKey) return;
+      let finalCompany = selectedCompany;
+      if (!finalCompany) {
+        setIsProfiling(true);
+        const profile = await profileUnknownCompany(companySearch);
+        setIsProfiling(false);
+        if (!profile) setProfileFailed(true);
+        else setProfileFailed(false);
+        finalCompany = {
+          name: companySearch, isPublic: profile?.isPublic ?? false,
+          industry: profile?.industry ?? 'Technology', region: profile?.region ?? 'GLOBAL',
+          employeeCount: profile?.employeeCount ?? 500, ticker: profile?.ticker,
+          revenueGrowthYoY: null, stock90DayChange: null,
+          layoffsLast24Months: [], layoffRounds: 0, lastLayoffPercent: null,
+          revenuePerEmployee: 150000, aiInvestmentSignal: 'medium',
+          source: profile ? `AI Profile (${companySearch})` : 'User Input',
+          lastUpdated: new Date().toISOString(),
+        };
+      }
+      dispatch({ type: 'SET_COMPANY_DATA', payload: finalCompany });
+      dispatch({
+        type: 'SET_INPUTS',
+        payload: {
+          companyName: finalCompany.name, roleTitle: roleTitle.trim(),
+          department: resolvedRole.canonicalKey ? getAutoDeducedDepartment(resolvedRole.canonicalKey) : 'Operations',
+          oracleKey: resolvedRole.canonicalKey,
+        },
+      });
     }
 
-    const department = resolvedRole.canonicalKey
-      ? getAutoDeducedDepartment(resolvedRole.canonicalKey)
-      : "Operations";
-
-    dispatch({ type: "SET_COMPANY_DATA", payload: finalCompany });
-    dispatch({
-      type: "SET_INPUTS",
-      payload: {
-        companyName: finalCompany.name, roleTitle: roleTitle.trim(),
-        department, oracleKey: resolvedRole.canonicalKey,
-      },
-    });
-    setStep(2);
-  };
-
-  const handleCalculate = () => {
-    let validatedCareerYears = careerYears;
-    if (careerYears < tenureYears) {
-      validatedCareerYears = tenureYears;
-      setCareerYears(tenureYears);
+    if (qStep === TOTAL_STEPS - 1) {
+      // Final step — calculate
+      const validatedCareerYears = careerYears < tenureYears ? tenureYears : careerYears;
+      dispatch({
+        type: 'SET_INPUTS',
+        payload: {
+          userFactors: {
+            tenureYears, careerYears: validatedCareerYears, isUniqueRole, uniquenessDepth,
+            knowledgeType: isUniqueRole ? knowledgeType : undefined,
+            performanceTier: performanceTier as any,
+            hasRecentPromotion, hasKeyRelationships, financialRunwayMonths,
+          } as any,
+        },
+      });
+      onNext();
+      return;
     }
-    dispatch({
-      type: "SET_INPUTS",
-      payload: {
-        userFactors: {
-          tenureYears, careerYears: validatedCareerYears, isUniqueRole, uniquenessDepth,
-          knowledgeType: uniquenessDepth === 'critical_knowledge' ? knowledgeType : undefined,
-          performanceTier: performanceTier as "top" | "average" | "below" | "unknown",
-          hasRecentPromotion, hasKeyRelationships, financialRunwayMonths,
-        } as any,
-      },
-    });
-    onNext();
+
+    setDirection(1);
+    setQStep(s => s + 1);
   };
 
-  const resolvedRolePreview = resolveRoleInput(roleTitle.trim(), {
-    oracleKey: selectedOracleEntry?.oracleKey ?? null,
-  });
-  const canProceedStep1 =
-    companySearch.trim().length > 0 &&
-    roleTitle.trim().length > 0 &&
-    !!resolvedRolePreview.canonicalKey;
+  const goBack = () => {
+    if (qStep === 0) return;
+    setDirection(-1);
+    setQStep(s => s - 1);
+  };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Auto-advance for single-select steps after short delay
+  const autoAdvance = (nextStep?: number) => {
+    setTimeout(() => {
+      setDirection(1);
+      setQStep(s => nextStep ?? s + 1);
+    }, 280);
+  };
+
+  const progress = Math.round((qStep / (TOTAL_STEPS - 1)) * 100);
+  const { q, sub } = STEPS[qStep];
+
+  const runwayLabel = (m: number) =>
+    m === 0 ? 'Not specified' : m < 3 ? `${m} months — Critical` : m < 6 ? `${m} months — Elevated` : m < 12 ? `${m} months — Comfortable` : `${m} months — Strong`;
+  const runwayColor = (m: number) =>
+    m === 0 ? 'rgba(255,255,255,0.35)' : m < 3 ? '#ef4444' : m < 6 ? '#f97316' : m < 12 ? '#f59e0b' : '#10b981';
+
   return (
-    <div className="audit-wizard-shell">
-      <AnimatePresence mode="wait">
+    <div
+      className="flex flex-col"
+      style={{ minHeight: 520, background: 'rgba(9,12,20,1)', borderRadius: 20, overflow: 'hidden', position: 'relative' }}
+    >
+      {/* ── Progress bar ───────────────────────────────────────────────────── */}
+      <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
         <motion.div
-          key={step}
-          initial={{ opacity: 0, x: step === 1 ? -12 : 12 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: step === 1 ? 12 : -12 }}
-          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="audit-wizard-card"
-        >
-          <StepProgress current={step} total={2} />
+          animate={{ width: `${progress}%` }}
+          transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+          style={{ height: '100%', background: 'linear-gradient(90deg, #22d3ee, #0ea5e9)', borderRadius: 2 }}
+        />
+      </div>
 
-          {step === 1 ? (
-            <div>
-              {/* Step header */}
-              <div className="audit-step-header">
-                <div className="audit-step-number">Step 1 of 2</div>
-                <h2 className="audit-step-title">Target Identification</h2>
-                <p className="audit-step-sub">Specify the company and role to initialize the Oracle sensors.</p>
-              </div>
+      {/* ── Step counter ────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-0" style={{ flexShrink: 0 }}>
+        <div className="flex gap-1">
+          {STEPS.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i === qStep ? 16 : 5, height: 5, borderRadius: 3,
+                background: i < qStep ? '#22d3ee' : i === qStep ? '#22d3ee' : 'rgba(255,255,255,0.12)',
+                transition: 'all 0.25s ease',
+              }}
+            />
+          ))}
+        </div>
+        <span className="text-[11px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          {qStep + 1} / {TOTAL_STEPS}
+        </span>
+      </div>
 
-              {profileFailed && (
-                <div className="signal-card" data-tone="amber" style={{ marginBottom: 'var(--space-5)', display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
-                  <span>⚠</span>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--amber)', margin: 0 }}>
-                    Company not found in our verified database. Using industry defaults.
-                  </p>
-                </div>
-              )}
+      {/* ── Question area ───────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-4">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={qStep}
+            custom={direction}
+            initial={{ opacity: 0, x: direction > 0 ? 32 : -32 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction > 0 ? -20 : 20 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Question title */}
+            <h2 className="text-xl font-bold mb-1 leading-snug" style={{ color: '#fff' }}>{q}</h2>
+            <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.42)' }}>{sub}</p>
 
-              {/* Company input */}
-              <div className="audit-field-group" style={{ position: 'relative' }}>
-                <label htmlFor="company-input">Company Name</label>
+            {/* ── Step 0: Company ───────────────────────────────────────── */}
+            {qStep === 0 && (
+              <div>
+                {profileFailed && (
+                  <div className="rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                    <span className="text-sm">⚠</span>
+                    <p className="text-xs" style={{ color: '#f59e0b' }}>Not in our database — using industry defaults.</p>
+                  </div>
+                )}
                 <div style={{ position: 'relative' }}>
-                  <Search
-                    size={15}
-                    style={{
-                      position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
-                      color: 'var(--text-3)', pointerEvents: 'none', zIndex: 1,
-                    }}
-                  />
-                  <input
-                    id="company-input"
-                    type="text"
-                    placeholder="Search company..."
-                    value={companySearch}
-                    onChange={handleCompanySearch}
-                    className="input"
-                    style={{ paddingLeft: 38, paddingRight: isProfiling ? 100 : selectedCompany ? 90 : 16 }}
-                    autoComplete="off"
-                  />
-                  {isProfiling && (
-                    <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}
-                      className="spinner" />
-                  )}
-                  {selectedCompany && !isProfiling && (
-                    <span style={{
-                      position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                      fontSize: '0.62rem', color: 'var(--cyan)', fontWeight: 800,
-                      fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
-                    }}>
-                      VERIFIED
-                    </span>
-                  )}
-                </div>
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.30)' }} />
+                    <input
+                      type="text"
+                      placeholder="Type your company name..."
+                      value={companySearch}
+                      onChange={handleCompanySearch}
+                      autoComplete="off"
+                      autoFocus
+                      className="w-full rounded-2xl text-sm font-medium pl-10 pr-12 py-3.5 outline-none"
+                      style={{
+                        background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)',
+                        color: '#fff', caretColor: '#22d3ee',
+                      }}
+                    />
+                    {isProfiling && (
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 spinner" />
+                    )}
+                    {selectedCompany && !isProfiling && (
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" style={{ color: '#10b981' }} />
+                      </div>
+                    )}
+                  </div>
 
-                {/* Search results dropdown */}
-                {searchResults.length > 0 && (
-                  <div className="audit-suggest-list">
-                    {searchResults.map(res => {
-                      const ratio = computeMatchRatio(companySearch, res.name);
-                      const isPartialMatch = ratio < 0.80 && ratio >= FUZZY_MATCH_MIN_RATIO;
-                      const isBelowThreshold = ratio < FUZZY_MATCH_MIN_RATIO;
-                      return (
-                        <div
-                          key={res.name}
-                          onClick={() => selectCompany(res)}
-                          className="audit-suggest-item"
-                          style={{ opacity: isBelowThreshold ? 0.45 : 1 }}
-                        >
-                          <div className="company-meta">
-                            <div className="company-name">{res.name}</div>
-                            <div className="company-industry">
-                              {res.industry}
-                              {(res as any).fromSupabase && (
-                                <span style={{ marginLeft: 6, color: 'var(--cyan)', fontWeight: 700 }}>· Intelligence DB</span>
-                              )}
-                              {isPartialMatch && (
-                                <span style={{ marginLeft: 6, color: 'var(--amber)', fontWeight: 700 }}>· partial match</span>
-                              )}
+                  {/* Dropdown */}
+                  {searchResults.length > 0 && (
+                    <div className="mt-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(15,18,28,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+                      {searchResults.map(res => {
+                        const ratio = computeMatchRatio(companySearch, res.name);
+                        const isPartial = ratio < 0.80 && ratio >= FUZZY_MATCH_MIN_RATIO;
+                        return (
+                          <div
+                            key={res.name}
+                            onClick={() => selectCompany(res)}
+                            className="flex items-center justify-between px-4 py-3 cursor-pointer"
+                            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: ratio < FUZZY_MATCH_MIN_RATIO ? 0.4 : 1 }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <div>
+                              <p className="text-sm font-semibold" style={{ color: '#fff' }}>{res.name}</p>
+                              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                                {res.industry}
+                                {(res as any).fromSupabase && <span style={{ color: '#22d3ee' }}> · DB</span>}
+                                {isPartial && <span style={{ color: '#f59e0b' }}> · partial</span>}
+                              </p>
                             </div>
-                          </div>
-                          {(res as any).riskScore != null && (
-                            <span
-                              className={`company-chip ${(res as any).riskScore >= 65 ? 'high' : (res as any).riskScore >= 45 ? 'medium' : 'low'}`}
-                              style={{
+                            {(res as any).riskScore != null && (
+                              <span className="text-xs font-black px-2 py-0.5 rounded-lg" style={{
                                 background: (res as any).riskScore >= 65 ? 'rgba(239,68,68,0.15)' : (res as any).riskScore >= 45 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
-                                color: (res as any).riskScore >= 65 ? 'var(--red)' : (res as any).riskScore >= 45 ? 'var(--amber)' : 'var(--emerald)',
-                              }}
-                            >
-                              {(res as any).riskScore}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                                color: (res as any).riskScore >= 65 ? '#ef4444' : (res as any).riskScore >= 45 ? '#f59e0b' : '#10b981',
+                              }}>
+                                {(res as any).riskScore}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                {/* Match confirmation prompt */}
-                {pendingMatchConfirmation && (
-                  <div className="signal-card" data-tone="amber" style={{ marginTop: 'var(--space-2)' }}>
-                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--amber)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}>
-                      Confirm company match
+                  {/* Match confirmation */}
+                  {pendingMatchConfirmation && (
+                    <div className="mt-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                      <p className="text-xs font-bold mb-2" style={{ color: '#f59e0b' }}>Confirm company match</p>
+                      <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        You typed <strong style={{ color: '#fff' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
+                        {' '}Closest match: <strong style={{ color: '#fff' }}>{pendingMatchConfirmation.matchedName}</strong>.
+                      </p>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => selectCompany(pendingMatchConfirmation.company, true)}
+                          className="text-xs font-bold px-3 py-1.5 rounded-xl"
+                          style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.30)' }}>
+                          Yes, use {pendingMatchConfirmation.matchedName}
+                        </button>
+                        <button type="button" onClick={() => { setPendingMatchConfirmation(null); setSearchResults([]); setSelectedCompany(null); }}
+                          className="text-xs font-bold px-3 py-1.5 rounded-xl"
+                          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.60)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                          Search again
+                        </button>
+                      </div>
                     </div>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', marginBottom: 'var(--space-3)', lineHeight: 1.5 }}>
-                      You typed <strong style={{ color: 'var(--text)' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
-                      {' '}Closest match: <strong style={{ color: 'var(--text)' }}>{pendingMatchConfirmation.matchedName}</strong>.
-                      {pendingMatchConfirmation.matchType === 'word_overlap' && (
-                        <span style={{ color: 'var(--amber)' }}> These may be different entities.</span>
-                      )}
-                    </p>
-                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                      <button
-                        onClick={() => selectCompany(pendingMatchConfirmation.company, true)}
-                        className="btn btn-ghost btn-sm"
-                        style={{ background: 'rgba(245,158,11,0.15)', borderColor: 'rgba(245,158,11,0.3)', color: 'var(--amber)', fontWeight: 700 }}
-                      >
-                        Yes, use {pendingMatchConfirmation.matchedName}
-                      </button>
-                      <button
-                        onClick={() => { setPendingMatchConfirmation(null); setSearchResults([]); setSelectedCompany(null); }}
-                        className="btn btn-ghost btn-sm"
-                      >
-                        Search again
-                      </button>
-                    </div>
-                    <p style={{ marginTop: 'var(--space-2)', fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4 }}>
-                      Without confirmation, company is treated as unknown and scored via role + industry signals only.
-                    </p>
-                  </div>
-                )}
+                  )}
 
-                {/* Disambiguation */}
-                {showDisambiguation && disambiguationCandidates.length > 0 && (
-                  <div className="signal-card" data-tone="amber" style={{ marginTop: 'var(--space-2)' }}>
-                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--amber)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}>
-                      Multiple entities found — confirm which one:
+                  {/* Disambiguation */}
+                  {showDisambiguation && disambiguationCandidates.length > 0 && (
+                    <div className="mt-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                      <p className="text-xs font-bold mb-2" style={{ color: '#f59e0b' }}>Multiple entities — pick one:</p>
+                      {disambiguationCandidates.map(c => (
+                        <button key={c.name} type="button"
+                          onClick={() => { setCompanySearch(c.name); setShowDisambiguation(false); setDisambiguationCandidates([]); }}
+                          className="flex items-center gap-2 w-full py-1.5 text-left"
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                          <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                          <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.70)' }}>{c.name}</span>
+                          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>({c.industry})</span>
+                        </button>
+                      ))}
                     </div>
-                    {disambiguationCandidates.map(c => (
-                      <button
-                        key={c.name}
-                        onClick={() => { setCompanySearch(c.name); setShowDisambiguation(false); setDisambiguationCandidates([]); }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: 'var(--space-1) 0', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--text-2)', fontWeight: 600 }}
-                      >
-                        → {c.name} <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>({c.industry})</span>
-                      </button>
-                    ))}
-                  </div>
+                  )}
+                </div>
+
+                {selectedCompany && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-3 rounded-2xl px-4 py-3 flex items-center gap-3"
+                    style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.22)' }}
+                  >
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} />
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: '#6ee7b7' }}>{selectedCompany.name}</p>
+                      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>{selectedCompany.industry} · Verified</p>
+                    </div>
+                  </motion.div>
                 )}
               </div>
+            )}
 
-              {/* Role input */}
-              <div className="audit-field-group" style={{ position: 'relative', marginBottom: 'var(--space-8)' }} ref={roleInputRef}>
-                <label htmlFor="role-input">Job Role</label>
-                <div style={{ position: 'relative' }}>
-                  <Search
-                    size={15}
-                    style={{
-                      position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
-                      color: 'var(--text-3)', pointerEvents: 'none', zIndex: 1,
-                    }}
-                  />
+            {/* ── Step 1: Role ────────────────────────────────────────────── */}
+            {qStep === 1 && (
+              <div ref={roleInputRef}>
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.30)' }} />
                   <input
-                    id="role-input"
+                    ref={roleInputRef as any}
                     type="text"
-                    placeholder="Search role..."
+                    placeholder="e.g. Software Engineer, Data Analyst..."
                     value={roleTitle}
-                    onChange={(e) => setRoleTitle(e.target.value)}
-                    className="input"
-                    style={{ paddingLeft: 38 }}
+                    onChange={e => setRoleTitle(e.target.value)}
                     autoComplete="off"
+                    autoFocus
+                    className="w-full rounded-2xl text-sm font-medium pl-10 pr-4 py-3.5 outline-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)',
+                      color: '#fff', caretColor: '#22d3ee',
+                    }}
                   />
                 </div>
 
-                {/* Role suggestions dropdown */}
                 {showRoleSuggestions && (
-                  <div className="audit-suggest-list">
+                  <div className="mt-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(15,18,28,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
                     {roleSuggestions.map((entry, idx) => {
-                      const rColor = riskScoreColor(entry.currentRiskScore);
-                      const dispClass = entry.currentRiskScore >= 65 ? 'high' : entry.currentRiskScore >= 45 ? 'medium' : 'low';
+                      const color = riskScoreColor(entry.currentRiskScore);
                       return (
                         <div
                           key={entry.oracleKey}
                           onClick={() => selectRole(entry)}
-                          className={`audit-role-item${idx === focusedSuggestionIndex ? ' highlighted' : ''}`}
+                          className="flex items-center justify-between px-4 py-3 cursor-pointer"
+                          style={{
+                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                            background: idx === focusedSuggestionIndex ? 'rgba(34,211,238,0.08)' : 'transparent',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = idx === focusedSuggestionIndex ? 'rgba(34,211,238,0.08)' : 'transparent')}
                         >
                           <div>
-                            <div className="role-name">{entry.displayTitle}</div>
-                            <div className="role-desc">{entry.summary.slice(0, 50)}…</div>
+                            <p className="text-sm font-semibold" style={{ color: '#fff' }}>{entry.displayTitle}</p>
+                            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>{entry.summary.slice(0, 48)}…</p>
                           </div>
-                          <span className={`audit-role-displacement ${dispClass}`}>
+                          <span className="text-xs font-black px-2 py-0.5 rounded-lg flex-shrink-0 ml-2" style={{ background: `${color}20`, color }}>
                             {entry.currentRiskScore}%
                           </span>
                         </div>
@@ -899,210 +704,215 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     })}
                   </div>
                 )}
-              </div>
 
-              {/* Oracle preview cards */}
-              {selectedOracleEntry && <RoleIntelPreviewCard entry={selectedOracleEntry} />}
-              {selectedOracleEntry && <RoleResolutionBanner entry={selectedOracleEntry} />}
+                {selectedOracleEntry && <RoleIntelCard entry={selectedOracleEntry} />}
+                {selectedOracleEntry && <RoleResolutionBanner entry={selectedOracleEntry} />}
 
-              {/* Warning states */}
-              {oracleSelectionCleared && !selectedOracleEntry && (
-                <div className="signal-card" data-tone="amber" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
-                  <span className="signal-chip signal-chip-mixed">No role linked</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    Pick from suggestions to restore calibrated data.
-                  </span>
-                </div>
-              )}
-              {!selectedOracleEntry && roleTitle.trim().length > 1 && !resolvedRolePreview.canonicalKey && (
-                <div className="signal-card" data-tone="red" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
-                  <span className="signal-chip" style={{ background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.3)', color: 'var(--red)' }}>Unresolved role</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    Select a suggestion or use a title like "Software Developer" or "Data Analyst".
-                  </span>
-                </div>
-              )}
-
-              <button
-                onClick={handleNextStep1}
-                disabled={!canProceedStep1}
-                className="btn btn-cyan btn-lg btn-full"
-                style={{ marginTop: 'var(--space-6)' }}
-              >
-                Continue Analysis →
-              </button>
-            </div>
-          ) : (
-            <div>
-              {/* Step header */}
-              <div className="audit-step-header">
-                <div className="audit-step-number">Step 2 of 2</div>
-                <h2 className="audit-step-title">Individual Factors</h2>
-                <p className="audit-step-sub">Contextual data for personalized risk amplification and shield metrics.</p>
-              </div>
-
-              <RiskPulse score={pulseScore} />
-
-              {/* Tenure + Experience row */}
-              <div className="audit-field-row" style={{ marginBottom: 'var(--space-6)' }}>
-                <div className="audit-field-group" style={{ marginBottom: 0 }}>
-                  <label htmlFor="tenure-select">Company Tenure</label>
-                  <select id="tenure-select" value={tenureYears} onChange={(e) => setTenureYears(Number(e.target.value))} className="input">
-                    <option value={0.3}>&lt; 6 months</option>
-                    <option value={1.5}>1–2 years</option>
-                    <option value={3.5}>3–5 years</option>
-                    <option value={7}>5+ years</option>
-                  </select>
-                </div>
-                <div className="audit-field-group" style={{ marginBottom: 0 }}>
-                  <label htmlFor="career-select">Total Experience</label>
-                  <select id="career-select" value={careerYears} onChange={(e) => setCareerYears(Number(e.target.value))} className="input">
-                    <option value={1}>0–2 years</option>
-                    <option value={3.5}>2–5 years</option>
-                    <option value={7}>5–10 years</option>
-                    <option value={15}>15+ years</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Performance tier */}
-              <div className="audit-field-group" style={{ marginBottom: 'var(--space-1)' }}>
-                <label>Performance Tier</label>
-              </div>
-              <ToggleGroup
-                ariaLabel="Performance"
-                options={[
-                  { value: 'top',     label: 'Top',    icon: '★', desc: 'Exceeding targets' },
-                  { value: 'average', label: 'High',   icon: '✔', desc: 'Meeting goals' },
-                  { value: 'below',   label: 'Dev',    icon: '⚠', desc: 'Needs improvement' },
-                ]}
-                value={performanceTier}
-                onChange={v => setPerformanceTier(v as "top" | "average" | "below" | "unknown")}
-              />
-
-              {/* Role uniqueness */}
-              <div className="audit-field-group" style={{ marginBottom: uniquenessDepth === 'critical_knowledge' ? 'var(--space-1)' : 'var(--space-1)' }}>
-                <label>Role Uniqueness</label>
-              </div>
-              <ToggleGroup
-                ariaLabel="Role uniqueness depth"
-                options={[
-                  { value: 'generic',               label: 'Generic',    desc: 'Role exists at thousands of companies' },
-                  { value: 'functional_specialist',  label: 'Specialist', desc: 'Unique expertise, replaceable with hiring' },
-                  { value: 'critical_knowledge',     label: 'Critical',   desc: 'Irreplaceable institutional knowledge' },
-                ]}
-                value={uniquenessDepth}
-                onChange={v => setUniquenessDepth(v as UniquenessDepth)}
-              />
-
-              {/* Knowledge type sub-classification */}
-              {uniquenessDepth === 'critical_knowledge' && (
-                <div style={{ marginBottom: 'var(--space-5)', paddingLeft: 'var(--space-4)', borderLeft: '2px solid rgba(0,212,224,0.2)' }}>
-                  <div className="audit-field-group" style={{ marginBottom: 'var(--space-1)' }}>
-                    <label>Type of institutional knowledge</label>
+                {oracleSelectionCleared && !selectedOracleEntry && (
+                  <div className="mt-3 rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.20)' }}>
+                    <p className="text-xs" style={{ color: '#f59e0b' }}>Pick from suggestions to restore calibrated data.</p>
                   </div>
-                  <ToggleGroup
-                    ariaLabel="Knowledge type"
-                    options={[
-                      { value: 'system_specific',       label: 'System',     desc: 'Legacy code / proprietary system' },
-                      { value: 'client_relationship',   label: 'Clients',    desc: 'Personal client trust — portable' },
-                      { value: 'process_institutional', label: 'Process',    desc: 'Undocumented tribal knowledge' },
-                      { value: 'domain_expert',         label: 'Domain',     desc: 'Regulatory / deep-domain expertise' },
-                      { value: 'leadership_capital',    label: 'Leadership', desc: 'Org authority and team trust' },
-                    ]}
-                    value={knowledgeType}
-                    onChange={v => setKnowledgeType(v as KnowledgeType)}
-                  />
-                </div>
-              )}
+                )}
+                {!selectedOracleEntry && roleTitle.trim().length > 1 && !resolvedRolePreview.canonicalKey && (
+                  <div className="mt-3 rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}>
+                    <p className="text-xs" style={{ color: '#f87171' }}>Select a suggestion or use a title like "Software Developer".</p>
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* Signal toggles */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
+            {/* ── Step 2: Tenure ──────────────────────────────────────────── */}
+            {qStep === 2 && (
+              <div className="flex flex-col gap-3">
                 {[
-                  { key: 'promo',  label: 'Recent Promotion',  active: hasRecentPromotion,   setter: setHasRecentPromotion,   icon: '↗', desc: 'Promoted in the last 12 months' },
-                  { key: 'stake',  label: 'Key Relationships', active: hasKeyRelationships,  setter: setHasKeyRelationships,  icon: '🤝', desc: 'Own critical client/stakeholder relationships' },
-                ].map(item => (
-                  <button
-                    key={item.key}
-                    onClick={() => item.setter(!item.active)}
-                    className={`signal-card${item.active ? '' : ''}`}
-                    data-tone={item.active ? 'cyan' : 'slate'}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
-                      width: '100%', textAlign: 'left', cursor: 'pointer',
-                      transition: 'all var(--dur-base) var(--ease-out)',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{item.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)' }}>{item.label}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{item.desc}</div>
-                    </div>
-                    {item.active && (
-                      <span className="signal-chip signal-chip-live" style={{ flexShrink: 0 }}>Active</span>
-                    )}
-                  </button>
+                  { val: 0.3, label: 'Less than 6 months', desc: 'Still in probation period', icon: '🌱' },
+                  { val: 1.5, label: '1 – 2 years',         desc: 'Building credibility',       icon: '📅' },
+                  { val: 3.5, label: '3 – 5 years',         desc: 'Established contributor',    icon: '💼' },
+                  { val: 7,   label: '5+ years',             desc: 'Long-term institutional asset', icon: '🏆' },
+                ].map(opt => (
+                  <OptionCard
+                    key={opt.val}
+                    selected={tenureYears === opt.val}
+                    onClick={() => { setTenureYears(opt.val); autoAdvance(); }}
+                    icon={opt.icon}
+                    label={opt.label}
+                    desc={opt.desc}
+                  />
                 ))}
               </div>
+            )}
 
-              {/* Financial runway */}
-              <div style={{ marginBottom: 'var(--space-7)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
-                  <div className="audit-section-title">Financial Runway <span style={{ fontWeight: 400, opacity: 0.5, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
-                  <div style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 800,
-                    color: financialRunwayMonths === 0 ? 'var(--text-3)'
-                      : financialRunwayMonths < 3  ? 'var(--red)'
-                      : financialRunwayMonths < 6  ? 'var(--orange)'
-                      : financialRunwayMonths < 12 ? 'var(--amber)'
-                      : 'var(--emerald)',
-                    padding: 'var(--space-1) var(--space-3)',
-                    borderRadius: 'var(--radius-full)',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}>
-                    {financialRunwayMonths === 0 ? 'Not specified'
-                      : financialRunwayMonths < 3  ? `${financialRunwayMonths}mo — Critical`
-                      : financialRunwayMonths < 6  ? `${financialRunwayMonths}mo — Elevated`
-                      : financialRunwayMonths < 12 ? `${financialRunwayMonths}mo — Comfortable`
-                      : `${financialRunwayMonths}mo — Strong`}
-                  </div>
+            {/* ── Step 3: Experience ───────────────────────────────────────── */}
+            {qStep === 3 && (
+              <div className="flex flex-col gap-3">
+                {[
+                  { val: 1,   label: '0 – 2 years',   desc: 'Early career',            icon: '🎓' },
+                  { val: 3.5, label: '2 – 5 years',   desc: 'Mid-level professional',  icon: '📈' },
+                  { val: 7,   label: '5 – 10 years',  desc: 'Experienced professional', icon: '🎯' },
+                  { val: 15,  label: '15+ years',      desc: 'Senior / expert',          icon: '⭐' },
+                ].map(opt => (
+                  <OptionCard
+                    key={opt.val}
+                    selected={careerYears === opt.val}
+                    onClick={() => { setCareerYears(opt.val); autoAdvance(); }}
+                    icon={opt.icon}
+                    label={opt.label}
+                    desc={opt.desc}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* ── Step 4: Performance ─────────────────────────────────────── */}
+            {qStep === 4 && (
+              <div className="flex flex-col gap-3">
+                {[
+                  { val: 'top' as const,     label: 'Top performer',        desc: 'Exceeding targets consistently', icon: '🌟', accent: '#10b981' },
+                  { val: 'average' as const, label: 'Meeting expectations', desc: 'Solid contributor, on track',     icon: '✅', accent: '#22d3ee' },
+                  { val: 'below' as const,   label: 'Needs improvement',    desc: 'Below expectations recently',    icon: '⚠️', accent: '#f59e0b' },
+                ].map(opt => (
+                  <OptionCard
+                    key={opt.val}
+                    selected={performanceTier === opt.val}
+                    onClick={() => { setPerformanceTier(opt.val); autoAdvance(); }}
+                    icon={opt.icon}
+                    label={opt.label}
+                    desc={opt.desc}
+                    accent={opt.accent}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* ── Step 5: Role uniqueness + knowledge type ─────────────────── */}
+            {qStep === 5 && (
+              <div>
+                <div className="flex flex-col gap-3">
+                  {[
+                    { val: 'generic',              label: 'Easily replaceable',       desc: 'Role exists at thousands of companies', icon: '🔄', accent: '#94a3b8' },
+                    { val: 'functional_specialist', label: 'Specialist',               desc: 'Unique expertise but hireable',         icon: '🎯', accent: '#22d3ee' },
+                    { val: 'critical_knowledge',   label: 'Irreplaceable knowledge',  desc: 'Institutional knowledge that lives in you', icon: '💎', accent: '#a78bfa' },
+                  ].map(opt => (
+                    <OptionCard
+                      key={opt.val}
+                      selected={uniquenessDepth === (opt.val as UniquenessDepth)}
+                      onClick={() => setUniquenessDepth(opt.val as UniquenessDepth)}
+                      icon={opt.icon}
+                      label={opt.label}
+                      desc={opt.desc}
+                      accent={opt.accent}
+                    />
+                  ))}
                 </div>
 
+                {/* Knowledge type sub-question */}
+                <AnimatePresence>
+                  {uniquenessDepth === 'critical_knowledge' && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-5">
+                        <p className="text-sm font-semibold mb-3" style={{ color: 'rgba(167,139,250,0.90)' }}>
+                          What kind of knowledge makes you irreplaceable?
+                        </p>
+                        <div className="flex flex-col gap-2.5">
+                          {[
+                            { val: 'system_specific',       label: 'Systems',      desc: 'Legacy code or proprietary tech',       icon: '💻' },
+                            { val: 'client_relationship',   label: 'Client trust', desc: 'Personal client relationships',          icon: '🤝' },
+                            { val: 'process_institutional', label: 'Process',      desc: 'Undocumented tribal knowledge',           icon: '📋' },
+                            { val: 'domain_expert',         label: 'Domain',       desc: 'Deep regulatory or domain expertise',    icon: '🔬' },
+                            { val: 'leadership_capital',    label: 'Leadership',   desc: 'Org authority and team trust',            icon: '👑' },
+                          ].map(opt => (
+                            <OptionCard
+                              key={opt.val}
+                              selected={knowledgeType === opt.val}
+                              onClick={() => setKnowledgeType(opt.val as KnowledgeType)}
+                              icon={opt.icon}
+                              label={opt.label}
+                              desc={opt.desc}
+                              accent="#a78bfa"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* ── Step 6: Signals ─────────────────────────────────────────── */}
+            {qStep === 6 && (
+              <div className="flex flex-col gap-3">
+                <OptionCard
+                  selected={hasRecentPromotion}
+                  onClick={() => setHasRecentPromotion(v => !v)}
+                  icon="↗️"
+                  label="Recent promotion"
+                  desc="Promoted in the last 12 months"
+                  accent="#10b981"
+                />
+                <OptionCard
+                  selected={hasKeyRelationships}
+                  onClick={() => setHasKeyRelationships(v => !v)}
+                  icon="🤝"
+                  label="Key stakeholder relationships"
+                  desc="You own critical client or executive relationships"
+                  accent="#22d3ee"
+                />
+                <p className="text-xs text-center mt-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  Select any that apply — or tap Continue to skip
+                </p>
+              </div>
+            )}
+
+            {/* ── Step 7: Financial runway ─────────────────────────────────── */}
+            {qStep === 7 && (
+              <div>
+                {/* Value display */}
+                <div className="rounded-2xl px-4 py-4 mb-5 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <p className="text-3xl font-black mb-1" style={{ color: runwayColor(financialRunwayMonths) }}>
+                    {financialRunwayMonths === 0 ? '—' : `${financialRunwayMonths}`}
+                    <span className="text-base font-semibold ml-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                      {financialRunwayMonths > 0 ? 'months' : ''}
+                    </span>
+                  </p>
+                  <p className="text-xs font-semibold" style={{ color: runwayColor(financialRunwayMonths) }}>
+                    {runwayLabel(financialRunwayMonths)}
+                  </p>
+                </div>
+
+                {/* Slider */}
                 <input
                   type="range" min={0} max={24} step={1}
                   value={financialRunwayMonths}
                   onChange={e => setFinancialRunwayMonths(Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    accentColor: financialRunwayMonths === 0 ? 'var(--text-3)'
-                      : financialRunwayMonths < 3  ? '#ef4444'
-                      : financialRunwayMonths < 6  ? '#f97316'
-                      : financialRunwayMonths < 12 ? '#f59e0b'
-                      : '#10b981',
-                    cursor: 'pointer', height: '6px', borderRadius: '3px',
-                  }}
+                  className="w-full mb-4"
+                  style={{ accentColor: runwayColor(financialRunwayMonths), cursor: 'pointer', height: 6, borderRadius: 3 }}
                 />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'var(--space-2)' }}>
+                {/* Quick select pills */}
+                <div className="flex flex-wrap gap-2 mb-4">
                   {[
-                    { label: 'Not set',    val: 0 },
-                    { label: 'Critical',   val: 3,  color: 'var(--red)' },
-                    { label: 'Elevated',   val: 6,  color: 'var(--orange)' },
-                    { label: 'Comfortable',val: 12, color: 'var(--amber)' },
-                    { label: '24+ Strong', val: 24, color: 'var(--emerald)' },
+                    { val: 0,  label: 'Not set',    color: 'rgba(255,255,255,0.35)' },
+                    { val: 3,  label: '3 mo',       color: '#ef4444' },
+                    { val: 6,  label: '6 mo',       color: '#f97316' },
+                    { val: 12, label: '12 mo',      color: '#f59e0b' },
+                    { val: 24, label: '24+ mo',     color: '#10b981' },
                   ].map(m => (
                     <button
                       key={m.val}
                       type="button"
                       onClick={() => setFinancialRunwayMonths(m.val)}
+                      className="text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
                       style={{
-                        fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 700,
-                        color: financialRunwayMonths >= m.val && m.val > 0 ? (m.color ?? 'var(--text-2)') : 'var(--text-3)',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        padding: 'var(--space-1) 0',
-                        opacity: financialRunwayMonths === m.val ? 1 : 0.5,
-                        textTransform: 'uppercase', letterSpacing: '0.04em',
+                        background: financialRunwayMonths === m.val ? `${m.color}22` : 'rgba(255,255,255,0.05)',
+                        color: financialRunwayMonths === m.val ? m.color : 'rgba(255,255,255,0.40)',
+                        border: `1px solid ${financialRunwayMonths === m.val ? `${m.color}50` : 'rgba(255,255,255,0.08)'}`,
                       }}
                     >
                       {m.label}
@@ -1110,28 +920,61 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   ))}
                 </div>
 
-                <p style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 'var(--space-2)', lineHeight: 1.4, opacity: 0.7 }}>
-                  Months of living expenses saved. Personalizes your job search strategy and move sequence.
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.28)', lineHeight: 1.5 }}>
+                  Months of living expenses saved. Helps personalize your job search strategy and urgency.
                 </p>
               </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-              {/* CTA row */}
-              <div className="audit-cta-row">
-                <button onClick={() => setStep(1)} className="btn-back">
-                  ← Back
-                </button>
-                <button
-                  onClick={handleCalculate}
-                  className="btn btn-primary btn-lg"
-                  style={{ flex: 1 }}
-                >
-                  Execute Full Audit →
-                </button>
-              </div>
-            </div>
+      {/* ── Navigation ──────────────────────────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(9,12,20,0.95)', flexShrink: 0 }}
+      >
+        {/* Back */}
+        <button
+          type="button"
+          onClick={goBack}
+          className="text-sm font-semibold px-3 py-2 rounded-xl transition-all"
+          style={{
+            color: qStep === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.50)',
+            background: 'transparent', border: 'none', cursor: qStep === 0 ? 'default' : 'pointer',
+          }}
+          disabled={qStep === 0}
+        >
+          ← Back
+        </button>
+
+        {/* Continue / Get Score */}
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.96 }}
+          onClick={goNext}
+          disabled={!canProceed || isProfiling}
+          className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl transition-all"
+          style={{
+            background: canProceed && !isProfiling
+              ? 'linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%)'
+              : 'rgba(255,255,255,0.07)',
+            color: canProceed && !isProfiling ? '#09090b' : 'rgba(255,255,255,0.25)',
+            border: 'none',
+            cursor: canProceed && !isProfiling ? 'pointer' : 'default',
+            boxShadow: canProceed && !isProfiling ? '0 0 20px rgba(34,211,238,0.25)' : 'none',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {isProfiling ? (
+            <>Analyzing<span className="opacity-60">…</span></>
+          ) : qStep === TOTAL_STEPS - 1 ? (
+            <>Get My Risk Score <ArrowRight className="w-4 h-4" /></>
+          ) : (
+            <>Continue <ArrowRight className="w-4 h-4" /></>
           )}
-        </motion.div>
-      </AnimatePresence>
+        </motion.button>
+      </div>
     </div>
   );
 };

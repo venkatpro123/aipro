@@ -29,7 +29,7 @@
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Building2, Shield, Zap, Radio, Info } from 'lucide-react';
+import { TrendingUp, Building2, Shield, Zap } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
@@ -76,9 +76,6 @@ const AnalysisTab     = lazy(() => import('./AnalysisTab').then(m => ({ default:
 const ProtectionTab   = lazy(() => import('./ProtectionTab').then(m => ({ default: m.ProtectionTab })));
 const ActionsTab      = lazy(() => import('./ActionsTab').then(m => ({ default: m.ActionsTab })));
 const IntelligenceTab = lazy(() => import('./IntelligenceTab').then(m => ({ default: m.IntelligenceTab })));
-// v39.0 A6: TransparencyTab — methodology / data provenance surface. Previously
-// orphan-imported in AnalysisTab but never rendered. Wired as the 6th nav tab.
-const TransparencyTab = lazy(() => import('../TransparencyTab').then(m => ({ default: m.TransparencyTab })));
 
 interface Props {
   result: HybridResult;
@@ -89,7 +86,7 @@ interface Props {
   auditStage?: string;
 }
 
-type TabValue = 'summary' | 'company' | 'protection' | 'actions' | 'intel' | 'transparency';
+type TabValue = 'summary' | 'company' | 'protection' | 'actions';
 
 // riskColor and riskLabel are imported from lib/riskTokens.ts (v40.0).
 
@@ -116,74 +113,10 @@ interface TabConfig {
 }
 
 const TAB_CONFIG: TabConfig[] = [
-  {
-    value: 'summary',
-    label: 'Command Center',
-    shortLabel: 'Command',
-    Icon: TrendingUp,
-    getBadge: (r) => {
-      const c = riskColor(r.total);
-      return { text: riskLabel(r.total), color: c };
-    },
-  },
-  {
-    value: 'company',
-    label: 'Company Intel',
-    shortLabel: 'Company',
-    Icon: Building2,
-    getBadge: (r: any) => {
-      const warnActive = r.warnSignal?.hasActiveWARN === true;
-      if (warnActive) return { text: 'WARN', color: '#dc2626' };
-      const rounds = r.companyData?.layoffRounds ?? 0;
-      if (rounds >= 2) return { text: `${rounds}×`, color: '#f97316' };
-      const hiringFreeze = r.hiringSignal?.trend === 'frozen' || r.companyData?._hiringPostingTrend === 'frozen';
-      if (hiringFreeze) return { text: 'frozen', color: '#f97316' };
-      return null;
-    },
-  },
-  {
-    value: 'protection',
-    label: 'Protection',
-    shortLabel: 'Protect',
-    Icon: Shield,
-    getBadge: (r: any) => {
-      const p = r.preparednessScore?.overallScore;
-      if (typeof p !== 'number') return null;
-      const color = p >= 75 ? '#10b981' : p >= 55 ? '#22d3ee' : p >= 35 ? '#f59e0b' : '#f97316';
-      return { text: `${p}`, color };
-    },
-  },
-  {
-    value: 'actions',
-    label: 'Action Center',
-    shortLabel: 'Actions',
-    Icon: Zap,
-    getBadge: (r) => {
-      const critical = (r.recommendations ?? []).filter(rec => rec.priority === 'Critical').length;
-      return critical > 0 ? { text: `${critical}!`, color: '#dc2626' } : null;
-    },
-  },
-  {
-    value: 'intel',
-    label: 'Intelligence Lab',
-    shortLabel: 'Lab',
-    Icon: Radio,
-    getBadge: (r) => {
-      const live = r.signalQuality?.liveSignals ?? 0;
-      return live > 0 ? { text: `${live}`, color: '#10b981' } : null;
-    },
-  },
-  {
-    value: 'transparency',
-    label: 'Transparency',
-    shortLabel: 'Trust',
-    Icon: Info,
-    getBadge: (r: any) => {
-      const conf = r.confidencePercent ?? 0;
-      if (conf < 60) return { text: 'low', color: '#f97316' };
-      return null;
-    },
-  },
+  { value: 'summary',    label: 'Summary',    shortLabel: 'Summary', Icon: TrendingUp },
+  { value: 'company',   label: 'Company',    shortLabel: 'Company', Icon: Building2 },
+  { value: 'protection', label: 'Skills',    shortLabel: 'Skills',  Icon: Shield },
+  { value: 'actions',   label: 'Action Plan', shortLabel: 'Actions', Icon: Zap },
 ];
 
 // ── Sticky company header ─────────────────────────────────────────────────────
@@ -575,7 +508,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       if (detail?.tab && typeof detail.tab === 'string') {
         const tab = detail.tab as TabValue;
         // Only accept known tab values; ignore stray events.
-        if (['summary', 'company', 'protection', 'actions', 'intel', 'transparency'].includes(tab)) {
+        if (['summary', 'company', 'protection', 'actions'].includes(tab)) {
           setActiveTab(tab);
           const el = beastSectionRefs.current[tab];
           if (el) {
@@ -593,7 +526,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   // when focus is on the tab bar. Guard: never intercept keys when focus is
   // inside a text input, textarea, select, or contenteditable.
   useEffect(() => {
-    const TABS: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
+    const TABS: TabValue[] = ['summary', 'company', 'protection', 'actions'];
     const isEditableTarget = (t: EventTarget | null): boolean => {
       if (!(t instanceof HTMLElement)) return false;
       const tag = t.tagName.toLowerCase();
@@ -629,7 +562,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   // IntersectionObserver: keep beast-mode tab bar in sync with scroll position
   useEffect(() => {
     if (viewMode !== 'beast') return;
-    const BEAST_TABS: TabValue[] = ['summary', 'company', 'protection', 'actions', 'intel', 'transparency'];
+    const BEAST_TABS: TabValue[] = ['summary', 'company', 'protection', 'actions'];
     const observers: IntersectionObserver[] = [];
     const ratioMap = new Map<TabValue, number>();
 
@@ -886,12 +819,10 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           <>
             <div className="flex flex-col">
               {([
-                { key: 'summary',      label: 'Command Center', Comp: SummaryTab,      Fallback: SummaryTabSkeleton },
-                { key: 'company',      label: 'Company Intel',  Comp: IntelligenceTab, Fallback: CompanyTabSkeleton },
-                { key: 'protection',   label: 'Protection',     Comp: ProtectionTab,   Fallback: GenericTabSkeleton },
-                { key: 'actions',      label: 'Action Center',  Comp: ActionsTab,      Fallback: GenericTabSkeleton },
-                { key: 'intel',        label: 'Intelligence',   Comp: AnalysisTab,     Fallback: GenericTabSkeleton },
-                { key: 'transparency', label: 'Methodology',    Comp: TransparencyTab, Fallback: GenericTabSkeleton },
+                { key: 'summary',    label: 'Summary',     Comp: SummaryTab,      Fallback: SummaryTabSkeleton },
+                { key: 'company',    label: 'Company',     Comp: IntelligenceTab, Fallback: CompanyTabSkeleton },
+                { key: 'protection', label: 'Skills',      Comp: ProtectionTab,   Fallback: GenericTabSkeleton },
+                { key: 'actions',    label: 'Action Plan', Comp: ActionsTab,      Fallback: GenericTabSkeleton },
               ] as const).map(({ key, label, Comp, Fallback }, idx) => (
                 <section
                   key={key}

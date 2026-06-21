@@ -238,25 +238,8 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
       {/* Header row */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: 0 }}>
-          {/* Dimension pill + label */}
+          {/* Dimension label */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`dimension-pill dimension-pill-${dim.key.startsWith('D') ? dim.key : dim.key}`}
-              style={{
-                background: `${dimHex}22`,
-                color: dimColor,
-                border: `1px solid ${dimHex}38`,
-                padding: '2px 8px',
-                borderRadius: '5px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.58rem',
-                fontWeight: 900,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                flexShrink: 0,
-              }}
-            >
-              {dim.key}
-            </span>
             <span className="text-xs font-semibold text-muted-foreground leading-tight">
               {meta?.fullLabel ?? dim.label}
             </span>
@@ -452,13 +435,6 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
                 {topRisk.score}
               </span>
               <span className="data-label" style={{ opacity: 0.5 }}>/100</span>
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800,
-                color: riskDimColor, background: `${riskDimHex}22`,
-                border: `1px solid ${riskDimHex}38`, borderRadius: '4px', padding: '1px 6px',
-              }}>
-                {topRisk.key}
-              </span>
             </div>
             <div className="text-xs font-bold mb-1" style={{ color: 'var(--text-2)' }}>
               {topRiskMeta?.fullLabel ?? topRisk.label}
@@ -497,13 +473,6 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
                 {topProtective.score}
               </span>
               <span className="data-label" style={{ opacity: 0.5 }}>/100</span>
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800,
-                color: protDimColor, background: `${protDimHex}22`,
-                border: `1px solid ${protDimHex}38`, borderRadius: '4px', padding: '1px 6px',
-              }}>
-                {topProtective.key}
-              </span>
             </div>
             <div className="text-xs font-bold mb-1" style={{ color: 'var(--text-2)' }}>
               {topProtMeta?.fullLabel ?? topProtective.label}
@@ -735,17 +704,23 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
               {/* l4 omitted: D5_countryContext = 0.00, L4 multiplier has no formula effect. */}
               {(['l1','l2','l3','l5'] as const).map(key => {
                 const val: number = (result as any).segmentCalibration[`${key}Multiplier`] ?? 1;
-                const labelMap: Record<string,string> = { l1:'L1', l2:'L2', l3:'L3', l5:'L5' };
+                const labelMap: Record<string,string> = {
+                  l1: 'Financials',
+                  l2: 'Layoff History',
+                  l3: 'AI Risk',
+                  l5: 'Regional',
+                };
                 const isAmplified = val > 1.05;
                 const isSuppressed = val < 0.95;
+                if (Math.abs(val - 1) < 0.05) return null;
                 return (
-                  <span key={key} className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                  <span key={key} className="text-[10px] px-1.5 py-0.5 rounded"
                     style={{
-                      background: isAmplified ? 'var(--red)/10' : isSuppressed ? 'var(--emerald)/10' : 'var(--border)/30',
-                      color: isAmplified ? 'var(--red)' : isSuppressed ? 'var(--emerald)' : 'var(--muted-foreground)',
+                      background: isAmplified ? 'var(--red)/10' : 'var(--emerald)/10',
+                      color: isAmplified ? 'var(--red)' : 'var(--emerald)',
                     }}
                   >
-                    {labelMap[key]}×{val.toFixed(2)}
+                    {labelMap[key]} {isAmplified ? '↑' : '↓'}{Math.abs((val - 1) * 100).toFixed(0)}%
                   </span>
                 );
               })}

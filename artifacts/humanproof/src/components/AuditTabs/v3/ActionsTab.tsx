@@ -19,7 +19,7 @@ import { motion } from 'framer-motion';
 import { riskLabel } from '../../../lib/riskTokens';
 import {
   ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
-  BookOpen, Activity, Key, Siren, Timer,
+  Activity, Key, Siren, Timer,
 } from 'lucide-react';
 import { ProfileQuickCapture } from '../../ProfileQuickCapture';
 import type { TabProps } from '../common/types';
@@ -30,7 +30,6 @@ import { StrategySpineCard } from '../common/StrategySpineCard';
 import type { StrategySynthesisResult } from '../../../services/strategySynthesisEngine';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import StrategyTab from '../StrategyTab';
-import { ActionPlanTab } from '../ActionPlanTab';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
@@ -561,6 +560,17 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           ground truth) but before the rest of the plan. */}
       <StrategySpineCard strategy={strategySynthesis} />
 
+      {/* Recovery Probability — "Your Odds" motivational card. Moved directly
+          after the strategy spine (was buried after Emergency/Equity alerts) —
+          the without-action vs with-action delta is one of the most persuasive,
+          memorable pieces of intelligence on the page and deserves top billing. */}
+      {survivalProbability && (
+        <RecoveryProbabilityCard
+          survival={survivalProbability}
+          criticalActionCount={recommendations.filter(rc => rc.priority === 'Critical').length}
+        />
+      )}
+
       {/* T1: Emergency Anchor Card — directly after strategy spine for crisis users */}
       {adaptation.mode === 'emergency' && (
         <EmergencyCallout
@@ -628,14 +638,6 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
-      {/* Recovery Probability — "Your Odds" motivational card */}
-      {survivalProbability && (
-        <RecoveryProbabilityCard
-          survival={survivalProbability}
-          criticalActionCount={recommendations.filter(rc => rc.priority === 'Critical').length}
-        />
-      )}
-
       {/* Career Contingency Plan — status-aware rendering */}
       {contingencyStatus === 'ready' && contingencyPlan
         ? <CareerContingencyPanel contingencyPlan={contingencyPlan} />
@@ -646,13 +648,26 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             : <ContingencyUnavailable />
       }
 
-      {/* Time to Safety — week-by-week path to moderate risk (P1, before phase progress) */}
+      {/* Time to Safety — week-by-week path to moderate risk. Collapsed by
+          default: the Odds card above already delivers the persuasive
+          without/with-action verdict, and PhaseProgressSystem below carries
+          the actual checklist — this week-by-week score breakdown is
+          supporting detail, not a third competing narrative. */}
       {score > 35 && scoreSensitivity && (
-        <TimeToSafetyStrip
-          currentScore={score}
-          scoreSensitivity={scoreSensitivity}
-          financialRunwayMonths={financialRunwayMonths > 0 ? financialRunwayMonths : undefined}
-        />
+        <AdaptiveBlock
+          title="Week-by-week path to safety"
+          subtitle="Score milestones if you complete your top levers in sequence"
+          icon={Clock}
+          tier={2}
+          accentColor="#22d3ee"
+          defaultOpen={false}
+        >
+          <TimeToSafetyStrip
+            currentScore={score}
+            scoreSensitivity={scoreSensitivity}
+            financialRunwayMonths={financialRunwayMonths > 0 ? financialRunwayMonths : undefined}
+          />
+        </AdaptiveBlock>
       )}
 
       {/* Phase Progress System — 3-phase unlock with localStorage persistence */}
@@ -717,25 +732,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         }} />
       )}
 
-      {/* T3: Full action plan — collapsed
-           ActionMatrix is rendered inside ActionPlanTab here, NOT separately above,
-           since PhaseProgressSystem already displays all actions with checkboxes.
-           Showing ActionMatrix again (same recommendations array) was pure duplication. */}
-      <AdaptiveBlock
-        title="Complete action plan"
-        subtitle="Full ranked list with deadlines, effort estimates, evidence"
-        icon={BookOpen}
-        tier={3}
-        accentColor="#22d3ee"
-        defaultOpen={false}
-      >
-        <ActionPlanTab {...props} />
-      </AdaptiveBlock>
+      {/* PhaseProgressSystem above covers all actions — ActionPlanTab removed (exact duplicate) */}
 
       {/* T3: Strategic plan & negotiation — collapsed */}
       <AdaptiveBlock
-        title="Strategic plan & negotiation"
-        subtitle="Exit timing, offer evaluation, negotiation intelligence, phase roadmap"
+        title="Career Strategy & Negotiation"
+        subtitle="Exit timing, offer evaluation, negotiation scripts, phase roadmap"
         icon={Activity}
         tier={3}
         accentColor="#f59e0b"
