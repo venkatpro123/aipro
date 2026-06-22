@@ -43,8 +43,17 @@ const ANALYSIS_TABS: TabConfig[] = [
   { value: 'actions',    label: 'Action Plan', shortLabel: 'Actions', Icon: Zap },
 ];
 
-// sticky top bar (~48px) + analysis tab bar (~48px)
-const HEADER_OFFSET = 100;
+// Base offset: permanent top bar (~48px) + this tab bar (~48px). The floating
+// global nav (.nav-root, fixed, height var(--nav-h)) sits above both sticky
+// bars and must be added on top of this at read-time since --nav-h varies by
+// breakpoint (0 on mobile where the nav is hidden, 72px on desktop).
+const BASE_HEADER_OFFSET = 100;
+
+function getHeaderOffset(): number {
+  if (typeof window === 'undefined') return BASE_HEADER_OFFSET;
+  const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h'), 10);
+  return BASE_HEADER_OFFSET + (Number.isFinite(navH) ? navH : 0) + 12;
+}
 
 const GenericTabSkeleton: React.FC = () => (
   <div className="flex flex-col gap-3 py-1">
@@ -203,7 +212,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     setActiveTab(val);
     const el = sectionRefs.current[val];
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+    const top = el.getBoundingClientRect().top + window.scrollY - getHeaderOffset();
     window.scrollTo({ top, behavior: 'smooth' });
   }, []);
 
@@ -228,7 +237,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
             setActiveTab(top[0]);
           }
         },
-        { threshold: [0, 0.15, 0.5], rootMargin: '-100px 0px -40% 0px' },
+        { threshold: [0, 0.15, 0.5], rootMargin: `-${getHeaderOffset()}px 0px -40% 0px` },
       );
       obs.observe(el);
       observers.push(obs);
@@ -241,9 +250,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
 
   return (
     <div className="flex flex-col">
-      {/* Sticky tab bar — top offset matches the permanent dashboard top bar */}
+      {/* Sticky tab bar — stacks below the permanent dashboard top bar, which
+          itself sticks below the floating global nav (see getHeaderOffset). */}
       <div
-        className="sticky top-[44px] sm:top-[48px] z-30"
+        className="sticky top-[calc(var(--nav-h,72px)+56px)] sm:top-[calc(var(--nav-h,72px)+60px)] z-30"
         style={{
           background: 'rgba(9,12,20,0.95)',
           backdropFilter: 'blur(16px)',

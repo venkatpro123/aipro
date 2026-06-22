@@ -619,10 +619,14 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     <GlobalErrorBoundary>
       <div className="flex flex-col" ref={scrollRef}>
 
-        {/* ── Permanent top bar — always visible, always at the top ─────────── */}
+        {/* ── Permanent top bar — always visible, sticks just below the floating
+              global nav pill (.nav-root, fixed top:12px height:var(--nav-h)).
+              top:0 here would tuck this bar directly behind that pill once the
+              page scrolls, clipping the company name and tab labels. ─────── */}
         <div
-          className="sticky top-0 z-40"
+          className="sticky z-40"
           style={{
+            top: 'calc(var(--nav-h, 72px) + 12px)',
             background: 'rgba(9,12,20,0.95)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',

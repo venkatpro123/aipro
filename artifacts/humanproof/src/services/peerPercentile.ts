@@ -33,6 +33,8 @@
 // "n=2,100 audits on this platform".
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { formatRoleLabel } from '../data/oracleRoleIndex';
+
 export interface PeerPercentileResult {
   percentile: number;
   /**
@@ -199,7 +201,7 @@ export function computePeerPercentile(
   const [p10, p25, p50, p75, p90, sampleSize] = findDistribution(roleKey, industry);
   const percentile = scoreToPercentile(score, p10, p25, p50, p75, p90);
 
-  const roleName = roleKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const roleName = formatRoleLabel(roleKey);
 
   return {
     percentile,

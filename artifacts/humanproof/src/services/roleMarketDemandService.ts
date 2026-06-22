@@ -48,6 +48,7 @@ import { DEMAND_ADDITIONS_ADVANCED_ENGINEERING_CREATIVE } from "../data/actions/
 import { DEMAND_ADDITIONS_SKILLED_SERVICES_EDU_GOV } from "../data/actions/skilled_services_education_government_actions";
 // v39.0 A1: DB-backed role intelligence override layer
 import { getRoleOverride } from "./roleIntelligenceClient";
+import { formatRoleLabel } from "../data/oracleRoleIndex";
 
 // ─── Public types ────────────────────────────────────────────────────────────
 
@@ -1429,7 +1430,7 @@ type IndustryDemandAddition = {
     const quarter = d.dataQuarter ?? d.dataAsOf ?? '2026-Q1';
     ROLE_DEMAND_DB[roleKey] = {
       roleKey,
-      roleName: d.roleName ?? roleKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      roleName: d.roleName ?? formatRoleLabel(roleKey),
       demandIndex: d.demandIndex,
       demandTrend: validTrend(d.demandTrend as string, 'stable'),
       jobOpeningsTrend: validTrend(d.jobOpeningsTrend as string, 'stable'),

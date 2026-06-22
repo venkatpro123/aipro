@@ -12,6 +12,7 @@
 
 import type { CompanyData } from '../data/companyDatabase';
 import type { ScoreBreakdown } from './layoffScoreEngine';
+import { formatRoleLabel } from '../data/oracleRoleIndex';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -364,7 +365,7 @@ function buildEscapePath(
         id: 'path_ai_augmentation',
         type: 'ai_augmentation',
         title: 'Become the AI-Augmented Version of Your Role',
-        headline: `Add AI tooling fluency to your existing ${inputs.oracleKey.replace(/_/g, ' ')} skillset to shift from automation target to force multiplier`,
+        headline: `Add AI tooling fluency to your existing ${formatRoleLabel(inputs.oracleKey).toLowerCase()} skillset to shift from automation target to force multiplier`,
         rationale: `Your D1 (task automatability) and D2 (AI tool maturity) scores indicate your role is at medium-high risk of AI substitution. However, professionals who actively use AI tools to produce 3–5× output are systematically retained over peers who don't — not as a cost cut, but as a competitive advantage. This path doesn't require a role change.`,
         estimatedScoreDrop: Math.max(8, totalImpact),
         primaryDimension: `D1 + D2 (AI Risk): reducing automatability from ${Math.round(primaryDim.currentScore * 100)} to target ≤35/100`,
@@ -479,7 +480,7 @@ function buildEscapePath(
         effort: 'Medium',
         timeToImpact: '60–90 days',
         confidenceInEstimate: 'Medium',
-        targetProfile: `Senior/Lead ${inputs.oracleKey.replace(/_/g, ' ')} with cross-functional dependencies — L5 target ≤30/100`,
+        targetProfile: `Senior/Lead ${formatRoleLabel(inputs.oracleKey).toLowerCase()} with cross-functional dependencies — L5 target ≤30/100`,
       };
 
     case 'location_shift': {
@@ -501,7 +502,7 @@ function buildEscapePath(
             effort: 'Low' as const,
           }
         : {
-            action: `Research the top 5 cities with the highest demand for ${inputs.oracleKey.replace(/_/g, ' ')} roles — apply to 3 remote-friendly companies headquartered there.`,
+            action: `Research the top 5 cities with the highest demand for ${formatRoleLabel(inputs.oracleKey).toLowerCase()} roles — apply to 3 remote-friendly companies headquartered there.`,
             timeframe: '14 days',
             effort: 'Low' as const,
           };
@@ -599,7 +600,7 @@ function buildCompanySwitchHeadline(company: CompanyData, dims: Array<{ dimensio
 }
 
 function buildRolePivotHeadline(oracleKey: string, l3: number): string {
-  const roleLabel = oracleKey.replace(/_/g, ' ');
+  const roleLabel = formatRoleLabel(oracleKey).toLowerCase();
   const riskPct = Math.round(l3 * 100);
   return `Transition from ${roleLabel} (${riskPct}/100 automatability) to a strategic/systems role where AI augments rather than replaces`;
 }
@@ -628,7 +629,7 @@ function buildRolePivotTargetProfile(oracleKey: string): string {
   for (const [prefix, target] of Object.entries(targets)) {
     if (oracleKey.startsWith(prefix)) return target;
   }
-  return `Senior ${oracleKey.replace(/_/g, ' ')} with AI tooling fluency — L3 ≤30/100`;
+  return `Senior ${formatRoleLabel(oracleKey).toLowerCase()} with AI tooling fluency — L3 ≤30/100`;
 }
 
 function buildAIAugmentationFirstStep(oracleKey: string): string {
@@ -664,7 +665,7 @@ function buildSkillDeepeningFirstStep(oracleKey: string): string {
 
 function buildIndustryShiftHeadline(currentIndustry: string, oracleKey: string): string {
   const target = getTargetIndustry(currentIndustry);
-  return `Carry your ${oracleKey.replace(/_/g, ' ')} skills from ${currentIndustry} into ${target} — a structurally growing market with active demand for your exact profile`;
+  return `Carry your ${formatRoleLabel(oracleKey).toLowerCase()} skills from ${currentIndustry} into ${target} — a structurally growing market with active demand for your exact profile`;
 }
 
 function getTargetIndustry(currentIndustry: string): string {

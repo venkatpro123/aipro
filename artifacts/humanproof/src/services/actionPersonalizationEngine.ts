@@ -446,6 +446,17 @@ export const ROLE_PREFIX_MAP: Record<string, string> = {
   'process analyst': 'bpo_associate',
   'operations analyst': 'bpo_associate',
   'bpo': 'bpo_associate',
+  // Manufacturing / Industrial Engineering
+  'mechanical engineer': 'manufacturing_engineer',
+  'manufacturing engineer': 'manufacturing_engineer',
+  'process engineer': 'process_engineer',
+  'industrial engineer': 'industrial_engineer',
+  'quality engineer': 'manufacturing_engineer',
+  'plant engineer': 'manufacturing_engineer',
+  'production engineer': 'manufacturing_engineer',
+  'civil engineer': 'civil_engineer',
+  'electrical engineer': 'electrical_engineer',
+  'chemical engineer': 'process_engineer',
 };
 
 export function resolveRoleGroup(roleTitle: string): string {
@@ -469,7 +480,7 @@ export function resolveRoleGroup(roleTitle: string): string {
       return ROLE_PREFIX_MAP[prefix];
     }
   }
-  return 'swe'; // default fallback
+  return 'professional_services'; // roles outside the tech/prefix map get generic career actions, not SWE-specific
 }
 
 // ─── Action Pools ─────────────────────────────────────────────────────────────

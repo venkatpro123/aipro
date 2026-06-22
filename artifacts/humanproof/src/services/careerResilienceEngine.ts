@@ -16,6 +16,8 @@
 // Composite score: 0–100
 // Classification: FORTRESS / RESILIENT / ADEQUATE / FRAGILE / CRITICAL
 
+import { formatRoleLabel } from "../data/oracleRoleIndex";
+
 export type ResilienceClass =
   | "FORTRESS"    // 80–100: Multiple escape routes, strong demand, financial safety net
   | "RESILIENT"   // 65–79: Well-positioned for transition if needed
@@ -189,13 +191,13 @@ function scoreMarketDemand(inputs: ResilienceInputs): ResiliencePillar {
   const score = Math.round(liquidityScore * 0.60 + Math.min(100, salaryPreservation) * 0.40);
 
   const insight = liquidityScore >= 70
-    ? `High market demand for ${inputs.oracleKey.replace(/_/g, " ")} — strong re-employment velocity and salary preservation prospects.`
+    ? `High market demand for ${formatRoleLabel(inputs.oracleKey).toLowerCase()} — strong re-employment velocity and salary preservation prospects.`
     : liquidityScore >= 50
     ? `Moderate market demand — competitive but manageable. Differentiation will determine offer speed.`
     : `Low market demand currently — re-employment timeline and salary preservation are the primary risks.`;
 
   const topAction = liquidityScore < 50
-    ? `Upskill toward adjacent roles with higher demand — ${inputs.oracleKey.replace(/_/g, " ")} market is soft; positioning for a 15–20% role shift could triple your demand`
+    ? `Upskill toward adjacent roles with higher demand — ${formatRoleLabel(inputs.oracleKey).toLowerCase()} market is soft; positioning for a 15–20% role shift could triple your demand`
     : liquidityScore < 70
     ? "Build specialized certifications to differentiate from median candidates and tighten your time-to-offer"
     : "Market demand is strong — maximize this advantage by building external visibility (writing, talks, open source)";

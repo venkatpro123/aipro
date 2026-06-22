@@ -29,8 +29,6 @@ import {
 } from '../../../services/signalCompressionService';
 import TierBadge from './TierBadge';
 import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
-// v39.0 C5: industry baseline freshness label
-import { getIndustryRiskStalenessLabel } from '../../../data/industryRiskData';
 
 interface Props {
   result: HybridResult;
@@ -102,9 +100,11 @@ const SubVerdictChip: React.FC<{
     className="signal-card flex-1 rounded-xl p-2.5 min-w-0"
     data-tone={hexToTone(signal.tone)}
   >
-    <div className="flex items-center gap-1.5 mb-1">
-      <Icon className="w-3 h-3 flex-shrink-0" style={{ color: signal.tone }} />
-      <span className="text-[10px] font-bold tracking-wider uppercase truncate" style={{ color: 'rgba(255,255,255,0.40)' }}>
+    <div className="flex items-start gap-1.5 mb-1">
+      <Icon className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: signal.tone }} />
+      {/* No truncate — "Workforce Stability" / "Financial Health" don't fit a
+          single line in a half-width mobile chip; wrapping beats clipping mid-word. */}
+      <span className="text-[10px] font-bold tracking-wider uppercase leading-tight" style={{ color: 'rgba(255,255,255,0.40)' }}>
         {signal.headline}
       </span>
     </div>
@@ -236,20 +236,20 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
 
   // One-line summary that captures both signals
   const summary = headline.verdict !== 'unknown'
-    ? `Workforce: ${VERDICT_LABEL[workforce.verdict]} · Financial: ${VERDICT_LABEL[financial.verdict]}`
+    ? `Staff: ${VERDICT_LABEL[workforce.verdict]} · Finances: ${VERDICT_LABEL[financial.verdict]}`
     : liveAttemptedButEmpty
-      ? 'Attempted live + DB — no signal returned. Likely upstream rate-limit; retrying in background.'
-      : 'No attempt made — company isn\'t in our intelligence layer yet.';
+      ? 'We tried to get current information but couldn\'t right now. We\'ll keep trying.'
+      : 'We don\'t have information on this company yet.';
 
   // v40.0 audit fix: surface heuristic/stale freshness so users know when
   // the analysis is based on historical baselines rather than live data.
   const freshnessTier = result.unifiedFreshness?.tier;
   const freshnessDisclosure = freshnessTier === 'heuristic'
     ? { icon: AlertTriangle, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
-        text: 'Analysis based on historical baselines — no live data retrieved for this company.' }
+        text: 'We don\'t have current data for this company yet — this is based on general industry trends.' }
     : freshnessTier === 'stale'
     ? { icon: Clock, color: '#94a3b8', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)',
-        text: 'Partial live data. Score supplemented with cached historical baselines.' }
+        text: 'We have some current data, but not all of it.' }
     : null;
 
   return (
@@ -290,7 +290,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
           <div className="flex items-center gap-1.5 mb-1">
             <Building2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: tone }} />
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Company Pulse
+              Company Situation
             </span>
             <TierBadge tier={1} />
             <span
@@ -316,11 +316,10 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
       {/* ── Company identity row — name / industry / headcount ────────────── */}
       {(identity.name || identity.industry || identity.headcount != null) && (
         <div
-          className="mx-3 mb-3 rounded-xl px-3 py-2.5 grid gap-x-3 gap-y-1.5"
+          className="mx-3 mb-3 rounded-xl px-3 py-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-1.5"
           style={{
             background: 'rgba(255,255,255,0.03)',
             border: '1px solid rgba(255,255,255,0.07)',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
           }}
         >
           {/* Company Name */}
@@ -403,27 +402,6 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         <SubVerdictChip signal={financial} icon={LineChart} />
       </div>
 
-      {/* v39.0 C5: industry baseline data freshness — only render when ≥ 60d old */}
-      {(() => {
-        const freshness = getIndustryRiskStalenessLabel();
-        if (!freshness.isStale) return null;
-        const color = freshness.ageDays > 120 ? '#f97316' : '#f59e0b';
-        return (
-          <div
-            className="signal-card mx-3 mb-3 px-2.5 py-1.5 rounded-lg flex items-center gap-2"
-            data-tone={freshness.ageDays > 120 ? 'orange' : 'amber'}
-          >
-            <span
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-              style={{ background: color }}
-            />
-            <span className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              {freshness.label}
-            </span>
-          </div>
-        );
-      })()}
-
       {/* Drill-down */}
       <AnimatePresence initial={false}>
         {open && (
@@ -441,7 +419,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Users className="w-3.5 h-3.5" style={{ color: workforce.tone }} />
                   <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                    Workforce evidence
+                    Staffing details
                   </span>
                 </div>
                 <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
@@ -454,7 +432,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <LineChart className="w-3.5 h-3.5" style={{ color: financial.tone }} />
                   <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                    Financial evidence
+                    Money details
                   </span>
                 </div>
                 <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>

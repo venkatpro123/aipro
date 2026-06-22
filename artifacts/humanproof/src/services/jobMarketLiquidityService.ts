@@ -20,6 +20,7 @@
 
 import type { CompanyData } from '../data/companyDatabase';
 import { resolveMetro } from '../data/techClusterMetros';
+import { formatRoleLabel } from '../data/oracleRoleIndex';
 import { getSalaryPreservationProfile } from './marketPriorityEngine';
 import {
   resolveUSCityMarket,
@@ -715,7 +716,7 @@ function buildDemandDetail(roleKey: string, score: number, industry: string): st
 
 function buildBarrierMessage(key: string, score: number, inputs: LiquidityInputs): string {
   const map: Record<string, string> = {
-    roleDemand: `Low market demand for ${inputs.oracleKey.replace(/_/g, ' ')} roles reduces inbound recruiter volume and extends active search time.`,
+    roleDemand: `Low market demand for ${formatRoleLabel(inputs.oracleKey).toLowerCase()} roles reduces inbound recruiter volume and extends active search time.`,
     transferability: `Niche skills limit cross-industry options — most open roles require industry-specific experience that does not transfer broadly.`,
     seniority: `Senior profiles take 20–40% longer to place — fewer openings, longer interview cycles, executive reference requirements.`,
     marketCycle: `Sector downturn means more qualified candidates competing for fewer open roles — expect compressed offers and longer process.`,

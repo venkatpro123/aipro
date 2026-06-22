@@ -23,6 +23,7 @@ import {
   ArrowUpRight, Clock, Activity, Star, Shield,
 } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
+import { formatRoleLabel } from '../../../data/oracleRoleIndex';
 import type { CompanyData } from '../../../data/companyDatabase';
 import type { MarketDemandReport, DemandTrend } from '../../../services/roleMarketDemandService';
 import type { PeerContagionResult } from '../../../services/peerContagionEngine';
@@ -392,7 +393,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
   const macroRisk = r.macroEconomicRisk;
 
   const roleKey      = result.workTypeKey ?? r.oracleKey ?? 'generic';
-  const roleTitleRaw = r.roleTitle ?? r.userProfile?.currentRole ?? roleKey.replace(/_/g, ' ');
+  const roleTitleRaw = r.roleTitle ?? r.userProfile?.currentRole ?? formatRoleLabel(roleKey);
   const roleDisplay  = roleTitleRaw.replace(/\b\w/g, (c: string) => c.toUpperCase());
   const companyName  = companyData?.name ?? r.companyName ?? 'your company';
   const industry     = companyData?.industry ?? r.industryKey ?? 'technology';
@@ -453,7 +454,9 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
     ? `${expLabel} ${roleDisplay} salaries are rising — negotiate above midpoint`
     : snapshot?.salaryTrend === 'falling'
     ? `${roleDisplay} salary benchmarks are under pressure — total comp matters more`
-    : `${roleDisplay} salaries are stable at ${expLabel} level`;
+    // expLabel is already "entry-level" / "mid-level" for those two tiers — appending
+    // " level" unconditionally produced "entry-level level" / "mid-level level".
+    : `${roleDisplay} salaries are stable at ${expLabel}${expLabel.endsWith('level') ? '' : ' level'}`;
 
   // Demand color
   const dColor = demandColor(demandIndex);
@@ -620,7 +623,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
               <Globe style={{ width: 11, height: 11, color: SLATE, flexShrink: 0, marginTop: 2 }} />
               <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.50)' }}>
                 {locationOpps.filter(l => l.isRemoteFriendly && l.opportunityScore > demandIndex).length} cities
-                offer above-your-local demand with remote-friendly ${roleDisplay} hiring — widening your
+                offer above-your-local demand with remote-friendly {roleDisplay} hiring — widening your
                 addressable market without relocation.
                 {visaStatus && visaStatus !== 'citizen' && visaStatus !== 'permanent_resident'
                   ? ' Note: visa status may constrain which remote roles are accessible — verify employer sponsorship policies.'

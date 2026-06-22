@@ -25,6 +25,9 @@ const IMPERATIVE_VERBS = [
   'reduce', 'expand', 'secure', 'create', 'join', 'meet', 'review', 'refresh',
   'pitch', 'position', 'diversify', 'hedge', 'save', 'cut', 'line', 'lock',
   'identify', 'shadow', 'volunteer', 'publish', 'ship', 'learn', 'enroll',
+  'find', 'research', 'pick', 'choose', 'explore', 'move', 'transition',
+  'carry', 'offer', 'implement', 'integrate', 'compare', 'assess', 'calculate',
+  'write', 'take', 'automate', 'specialize', 'commit',
 ];
 
 const VERB_RE = new RegExp('^(?:' + IMPERATIVE_VERBS.join('|') + ')\\b', 'i');
@@ -38,14 +41,26 @@ function clampHeadline(s: string, max = 96): string {
 }
 
 /**
- * Returns a verb-first action headline for a recommendation. Prefers the first
- * imperative sentence in the description; falls back to an imperative title;
- * last resort is the (diagnosis) title so we never render empty.
+ * Returns a verb-first action headline for a recommendation.
+ *
+ * Priority:
+ *   1. Title, when it starts with an imperative verb — titles are hand-authored
+ *      career-strategy headlines ("Write One SQL Optimization Case Study…"),
+ *      while description sentences can be raw technical instructions ("Use
+ *      EXPLAIN ANALYZE to identify the bottleneck…") that confuse users when
+ *      shown as the standalone "one move."
+ *   2. First imperative sentence from description — for diagnosis titles
+ *      ("Industry Headwinds") that aren't actionable on their own.
+ *   3. First description sentence or bare title as last resort.
  */
 export function actionHeadline(item: ActionLike | null | undefined): string {
   const title = (item?.title ?? '').trim();
   const desc = (item?.description ?? '').trim();
 
+  // Title is already an action ("Update your resume…", "Write One SQL…") — use it.
+  if (VERB_RE.test(title)) return clampHeadline(title);
+
+  // Title is a diagnosis ("Industry Headwinds") — extract from description.
   const sentences = desc
     .split(/(?<=[.!?])\s+/)
     .map(s => s.trim())
@@ -55,11 +70,6 @@ export function actionHeadline(item: ActionLike | null | undefined): string {
     if (VERB_RE.test(s)) return clampHeadline(s);
   }
 
-  // Title is already an action ("Update your resume…") — use it.
-  if (VERB_RE.test(title)) return clampHeadline(title);
-
-  // No imperative found: prefer the first description sentence over a bare
-  // diagnosis title (still more actionable context), else the title.
   if (sentences.length > 0) return clampHeadline(sentences[0]);
   return title || 'Take your highest-impact next step';
 }

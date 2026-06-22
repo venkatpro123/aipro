@@ -141,9 +141,28 @@ const HUMAN_TITLE_ALIAS_MAP: Record<string, { canonicalKey: string; displayRole:
   "firmware engineer": { canonicalKey: "embedded_engineer", displayRole: "Firmware Engineer" },
   "iot engineer": { canonicalKey: "embedded_engineer", displayRole: "IoT Engineer" },
   "qa engineer": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+  "qa tester": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+  "qa analyst": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+  "software tester": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+  "manual tester": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+  "test engineer": { canonicalKey: "qa_engineer", displayRole: "Test Engineer" },
+  "testing engineer": { canonicalKey: "qa_engineer", displayRole: "Test Engineer" },
   "sdet": { canonicalKey: "qa_engineer", displayRole: "SDET" },
   "test automation engineer": { canonicalKey: "qa_engineer", displayRole: "Test Automation Engineer" },
   "quality assurance engineer": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+  "quality assurance analyst": { canonicalKey: "qa_engineer", displayRole: "QA Engineer" },
+
+  // ── Non-Software Engineering ───────────────────────────────────────────────
+  "mechanical engineer": { canonicalKey: "eng_mech", displayRole: "Mechanical Engineer" },
+  "civil engineer": { canonicalKey: "eng_civil", displayRole: "Civil Engineer" },
+  "electrical engineer": { canonicalKey: "eng_electrical", displayRole: "Electrical Engineer" },
+  "chemical engineer": { canonicalKey: "eng_chemical", displayRole: "Chemical Engineer" },
+  "industrial engineer": { canonicalKey: "eng_industrial", displayRole: "Industrial Engineer" },
+  "manufacturing engineer": { canonicalKey: "eng_mech", displayRole: "Manufacturing Engineer" },
+  "process engineer": { canonicalKey: "eng_mech", displayRole: "Process Engineer" },
+  "structural engineer": { canonicalKey: "eng_civil", displayRole: "Structural Engineer" },
+  "aerospace engineer": { canonicalKey: "eng_mech", displayRole: "Aerospace Engineer" },
+  "automotive engineer": { canonicalKey: "eng_mech", displayRole: "Automotive Engineer" },
 
   // ── Engineering Leadership ─────────────────────────────────────────────────
   "engineering manager": { canonicalKey: "eng_manager", displayRole: "Engineering Manager" },

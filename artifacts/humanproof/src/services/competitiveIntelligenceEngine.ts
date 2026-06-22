@@ -13,6 +13,8 @@
 //   salary preservation probability under competitive conditions
 //   geographic arbitrage opportunity (remote vs. local)
 
+import { formatRoleLabel } from "../data/oracleRoleIndex";
+
 export type TalentMarketTightness =
   | "EXTREMELY_TIGHT"   // <5 candidates/role — employer's market for talent
   | "TIGHT"             // 5–15 candidates/role — candidate has leverage
@@ -485,7 +487,7 @@ function buildCompetitiveBrief(
   weeksToOffer: number,
   salaryPct: number,
 ): string {
-  const roleDisplay = inputs.oracleKey.replace(/_/g, " ");
+  const roleDisplay = formatRoleLabel(inputs.oracleKey).toLowerCase();
   const regionDisplay = inputs.region === "IN" ? "India" : inputs.region === "US" ? "the US" : inputs.region;
 
   const tightnessDesc: Record<TalentMarketTightness, string> = {
@@ -516,7 +518,7 @@ function buildPositioningActions(
   }
 
   if (arbitrage === "STRONG_ARBITRAGE" && topMarkets.length > 0) {
-    actions.push(`Geographic arbitrage available — target ${topMarkets.slice(0, 2).join(" or ")} for ${inputs.oracleKey.replace(/_/g, " ")} roles: estimated ${inputs.region === "IN" ? "35–50% salary uplift" : "15–20% salary uplift"} for remote positions`);
+    actions.push(`Geographic arbitrage available — target ${topMarkets.slice(0, 2).join(" or ")} for ${formatRoleLabel(inputs.oracleKey).toLowerCase()} roles: estimated ${inputs.region === "IN" ? "35–50% salary uplift" : "15–20% salary uplift"} for remote positions`);
   }
 
   if (hasEdge) {

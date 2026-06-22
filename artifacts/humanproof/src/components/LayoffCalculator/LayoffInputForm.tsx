@@ -230,7 +230,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
 
   // Steps 2–7: Personal factors
   const [tenureYears, setTenureYears] = useState(state.userFactors?.tenureYears || 1.5);
-  const [careerYears, setCareerYears] = useState(state.userFactors?.careerYears ?? 5);
+  // 3.5 matches the "2 – 5 years" option value below so the default renders as
+  // a visibly selected radio instead of leaving all four options unselected.
+  const [careerYears, setCareerYears] = useState(state.userFactors?.careerYears ?? 3.5);
   const [uniquenessDepth, setUniquenessDepth] = useState<UniquenessDepth>(
     state.userFactors?.uniquenessDepth ?? (state.userFactors?.isUniqueRole ? 'critical_knowledge' : 'generic')
   );

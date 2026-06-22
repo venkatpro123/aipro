@@ -235,8 +235,13 @@ export const searchOracleRoles = (
 
   // Group 1: title/key starts with the query (exact prefix — most relevant)
   // Group 2: title/key contains the query anywhere (looser — secondary)
+  // Group 3: shares at least one domain word with the query (fuzzy fallback)
+  //   e.g. "QA Tester" shares "qa" with "QA Engineer" — without this tier,
+  //   any title variant not literally a substring of a catalog entry returns
+  //   zero results and the user gets stuck on the role step.
   const startsWith: OracleRoleEntry[] = [];
   const contains:   OracleRoleEntry[] = [];
+  const wordMatch:  OracleRoleEntry[] = [];
 
   for (const entry of getOracleIndex()) {
     const titleLow = entry.displayTitle.toLowerCase();
@@ -245,8 +250,10 @@ export const searchOracleRoles = (
       startsWith.push(entry);
     } else if (titleLow.includes(q) || keyLow.includes(q)) {
       contains.push(entry);
+    } else if (qWords.length > 0 && domainWordOverlap(entry, qWords) >= 1) {
+      wordMatch.push(entry);
     }
-    if (startsWith.length + contains.length >= limit * 4) break;
+    if (startsWith.length + contains.length + wordMatch.length >= limit * 4) break;
   }
 
   const sortGroup = (arr: OracleRoleEntry[]): OracleRoleEntry[] =>
@@ -256,7 +263,7 @@ export const searchOracleRoles = (
       b.currentRiskScore - a.currentRiskScore                           // higher risk breaks tie
     );
 
-  return [...sortGroup(startsWith), ...sortGroup(contains)].slice(0, limit);
+  return [...sortGroup(startsWith), ...sortGroup(contains), ...sortGroup(wordMatch)].slice(0, limit);
 };
 
 
@@ -266,6 +273,18 @@ export const searchOracleRoles = (
 export const getRoleEntryByKey = (oracleKey: string): OracleRoleEntry | null => {
   return getOracleIndex().find(e => e.oracleKey === oracleKey) ?? null;
 };
+
+/**
+ * Human-readable label for an oracle role key, for use in generated copy.
+ * Prefers the catalog's authored displayTitle (e.g. "Software Engineer");
+ * falls back to slug-casing only for keys with no catalog entry (e.g.
+ * 'generic', '_default'). Naively slug-casing a real key like
+ * "sw_software_engineer" produces "Sw Software Engineer" — the department
+ * namespace prefix leaks as a literal word.
+ */
+export const formatRoleLabel = (oracleKey: string): string =>
+  getRoleEntryByKey(oracleKey)?.displayTitle
+  ?? oracleKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 /**
  * Get risk score color token for a given score (0-100).
