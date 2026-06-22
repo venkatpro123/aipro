@@ -153,8 +153,8 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
       tier: 2,
       severity: 0,
       verdict: 'unknown',
-      headline: 'Workforce Stability',
-      rationale: 'No workforce signals surfaced for this company.',
+      headline: 'Staffing',
+      rationale: 'No staffing information found for this company.',
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'company',
@@ -173,10 +173,10 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
       tier: 2,
       severity: 0,
       verdict: gapIVerdict,
-      headline: 'Workforce Stability',
+      headline: 'Staffing',
       rationale: liveUnavailable
-        ? 'Unable to verify workforce status — treat as elevated until live data confirmed.'
-        : 'No distress signals found in live workforce data.',
+        ? 'We can\'t confirm staffing right now — treating this as a possible concern until we can check.'
+        : 'No staffing problems found right now.',
       chips: [],
       tone: VERDICT_TONE[gapIVerdict],
       group: 'company',
@@ -192,7 +192,7 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
     severity,
     verdict,
     headline: 'Workforce Stability',
-    rationale: reasons.length ? take(reasons, 3).join(' · ') : 'No distress signals confirmed.',
+    rationale: reasons.length ? take(reasons, 3).join(' · ') : 'No staffing problems confirmed.',
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'company',
@@ -201,7 +201,7 @@ export function compressWorkforceSignal(result: HybridResult, companyData?: Comp
   };
 }
 
-// ── Financial Health compression ─────────────────────────────────────────────
+// ── Finances compression ─────────────────────────────────────────────────────
 // Subsumes: stock 90d, revenue YoY, funding, SEC enhanced signals
 
 function fmtMarketCap(n: number): string {
@@ -260,8 +260,8 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
       tier: 2,
       severity: 0,
       verdict: 'unknown',
-      headline: 'Financial Health',
-      rationale: 'Live financial signals unavailable.',
+      headline: 'Finances',
+      rationale: 'No current financial information available.',
       chips: [],
       tone: VERDICT_TONE.unknown,
       group: 'company',
@@ -279,10 +279,10 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
       tier: 2,
       severity: 0,
       verdict: gapIVerdict,
-      headline: 'Financial Health',
+      headline: 'Finances',
       rationale: liveUnavailable
-        ? 'Unable to verify financial status — treat as elevated until live data confirmed.'
-        : 'Financial signals within normal range — no distress confirmed.',
+        ? 'We can\'t confirm finances right now — treating this as a possible concern until we can check.'
+        : 'Finances look normal — no problems found.',
       chips: [],
       tone: VERDICT_TONE[gapIVerdict],
       group: 'company',
@@ -298,7 +298,7 @@ export function compressFinancialSignal(result: HybridResult, companyData?: Comp
     severity,
     verdict,
     headline: 'Financial Health',
-    rationale: reasons.length ? take(reasons, 3).join(' · ') : 'Financial signals nominal.',
+    rationale: reasons.length ? take(reasons, 3).join(' · ') : 'Finances look normal.',
     chips: take(chips, 3),
     tone: VERDICT_TONE[verdict],
     group: 'company',

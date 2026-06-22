@@ -6,9 +6,7 @@
 // when they first see the dashboard):
 //   1. "Am I safe or at risk?"      → ScoreHero + verdict
 //   2. "Why is my score what it is?" → TopDriversStrip
-//   3. "What should I do this week?" → ImmediateActionsStrip
-//   4. "Is the company in trouble?"  → CompanyPulseCard (compressed verdict)
-//   5. "How fresh is this data?"     → liveSignals chip
+//   3. "What should I do this week?" → "What To Do Next" row in the hero card
 //
 // Everything else is TIER 2+ and lives behind progressive disclosure or in
 // dedicated tabs. The Intelligence Brief, Prediction Horizon, and Scenarios
@@ -26,7 +24,7 @@ import { motion } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
   TrendingUp, TrendingDown, Minus,
-  Zap, Shield, Clock, Signal, AlertTriangle, Info, AlertOctagon,
+  AlertTriangle, AlertOctagon,
 } from 'lucide-react';
 import { computeScoreSufficiency, type ScoreSufficiency } from '../../../lib/scoreGate';
 import type { TabProps } from '../common/types';
@@ -34,7 +32,6 @@ import type { PreparednessResult } from '../../../services/preparednessScoreEngi
 import { FirstAuditTour } from '../common/FirstAuditTour';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import TierBadge from '../common/TierBadge';
-import ProvenanceLabel from '../common/ProvenanceLabel';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
 import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
@@ -61,96 +58,6 @@ function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10
   if (years < 15) return '10-15';
   return '15+';
 }
-
-// ── Top-Lever Bridge ───────────────────────────────────────────────────────────
-// Placed between TopDriversStrip and ImmediateActionsStrip.
-// Answers: "What ONE action most directly reduces my #1 risk driver?"
-// Design: compact 2-row card — lever action + score delta — NO duplication of
-// ImmediateActionsStrip (which ranks by priority, not by score sensitivity).
-//
-// Only renders when:
-//   • scoreSensitivity has at least 1 lever with scoreDropIfImproved ≥ 4
-//   • score > 35 (meaningful improvement space exists)
-
-interface LeverBridgeProps {
-  scoreSensitivity: any;
-  currentScore: number;
-  /** Normalised primary-move title — when the top lever IS the hero move, skip it (no triple-surfacing). */
-  primaryMoveTitle?: string;
-}
-
-const normalizeLeverText = (s: string | undefined): string =>
-  (s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-const TopLeverBridge: React.FC<LeverBridgeProps> = ({ scoreSensitivity, currentScore, primaryMoveTitle }) => {
-  const levers: any[] = scoreSensitivity?.levers ?? [];
-  const topLever = levers.find((l: any) => (l.scoreDropIfImproved ?? 0) >= 4);
-  if (!topLever) return null;
-  // One-move reconciliation: if this lever's action is the same as the hero move
-  // already shown above, suppress it — the hero card covers the "what to do";
-  // this strip exists only to quantify score leverage, not to re-issue the task.
-  if (primaryMoveTitle) {
-    const leverText = normalizeLeverText(topLever.fastestAction);
-    if (leverText && (leverText === primaryMoveTitle || leverText.includes(primaryMoveTitle) || primaryMoveTitle.includes(leverText.slice(0, 24)))) {
-      return null;
-    }
-  }
-
-  const projected = Math.max(0, Math.round(currentScore - topLever.scoreDropIfImproved));
-  const feasibilityLabel: Record<string, string> = {
-    immediate: 'This week',
-    short_term: '2–4 weeks',
-    medium_term: '1–3 months',
-  };
-  const timeLabel = feasibilityLabel[topLever.feasibility] ?? topLever.actionTimeframe ?? 'Near-term';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.12 }}
-      className="rounded-xl px-3.5 py-2.5 flex items-start gap-3"
-      style={{
-        background: 'linear-gradient(135deg, rgba(34,211,238,0.05), rgba(16,185,129,0.04))',
-        border: '1px solid rgba(34,211,238,0.18)',
-      }}
-    >
-      {/* Arrow icon */}
-      <div
-        className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-        style={{ background: 'rgba(34,211,238,0.10)' }}
-      >
-        <Zap className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className="text-[10px] font-black tracking-wider" style={{ color: 'rgba(34,211,238,0.65)' }}>
-            TOP SCORE LEVER
-          </span>
-          <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.30)' }}>
-            {timeLabel}
-          </span>
-        </div>
-        <p className="text-[11px] font-semibold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.82)' }}>
-          {topLever.fastestAction?.length > 100 ? topLever.fastestAction.slice(0, 100) + '…' : topLever.fastestAction}
-        </p>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>Score impact:</span>
-          <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>{currentScore}</span>
-          <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.50)' }}>→</span>
-          <span className="text-[11px] font-black" style={{ color: '#22d3ee' }}>{projected}</span>
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(34,211,238,0.10)', color: '#22d3ee' }}
-          >
-            −{topLever.scoreDropIfImproved} pts
-          </span>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // riskColor, riskLabel, riskGradient imported from lib/riskTokens.ts (v40.0)
@@ -338,23 +245,6 @@ const ScoreRingHero: React.FC<{
         </motion.div>
       )}
 
-      <div className="flex flex-col items-center gap-1" style={{ marginTop: 'var(--space-2)' }}>
-        <p style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>
-          {confidence}% confidence
-        </p>
-        <ProvenanceLabel
-          kind="modeled"
-          tooltip={
-            calibrationMode === 'live_empirical'
-              ? 'MODELED — score computed by a formula calibrated against 200+ real outcomes'
-              : calibrationMode === 'live_developing'
-              ? 'MODELED — formula calibrated on developing outcome dataset (47–200 outcomes)'
-              : 'MODELED — formula uses conservative bootstrap priors; empirical calibration in progress'
-          }
-          size="xs"
-        />
-      </div>
-
       {/* Intelligence density — animated proof of the computation behind the score.
           Reinforces "this came from serious analysis" without exposing jargon. */}
       {densityStats && densityStats.length > 0 && (
@@ -393,7 +283,7 @@ const ScoreRingHero: React.FC<{
 const ScoreRangeHero: React.FC<{
   gate: ScoreSufficiency;
 }> = ({ gate }) => {
-  const { ciLow, ciHigh, ciRange, confPct, message } = gate;
+  const { ciLow, ciHigh, message } = gate;
 
   // The range bar fills the zone [ciLow, ciHigh] across the 0-100 axis.
   // Visual: dark track, amber fill for the uncertain zone, tick marks at bounds.
@@ -424,7 +314,7 @@ const ScoreRangeHero: React.FC<{
       >
         <AlertOctagon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
         <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: '#fbbf24' }}>
-          Risk Level Range — Not a Point Estimate
+          We're Not Fully Sure Yet
         </span>
       </div>
 
@@ -493,24 +383,9 @@ const ScoreRangeHero: React.FC<{
         className="mt-1.5 text-center text-[10px] leading-snug max-w-xs"
         style={{ color: 'rgba(255,255,255,0.38)' }}
       >
-        Worst-case exposure reaches <span style={{ color: worstColor, fontWeight: 700 }}>{worstLabel}</span>.
-        {' '}Confidence: {confPct}% · CI width: {ciRange} pts
+        In the worst case, your risk could be <span style={{ color: worstColor, fontWeight: 700 }}>{worstLabel}</span>.
+        {' '}We need a bit more information to give you one exact number.
       </p>
-
-      {/* Provenance */}
-      <div className="mt-2 flex items-center gap-1.5">
-        <span
-          className="text-[10px] font-black px-1.5 py-0.5 rounded font-mono uppercase tracking-wide"
-          style={{
-            background: 'rgba(251,191,36,0.10)',
-            color: '#fbbf24',
-            border: '1px solid rgba(251,191,36,0.28)',
-          }}
-          title="This is an ESTIMATED range, not a measured value. The model has insufficient evidence to narrow it further."
-        >
-          ESTIMATED
-        </span>
-      </div>
     </div>
   );
 };
@@ -586,7 +461,18 @@ const normalizeMoveTitle = (s: string | undefined): string =>
 
 export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }) => {
   const scanning = useIntelligencePulse(drivers.length > 0);
-  if (drivers.length === 0) return null;
+  if (drivers.length === 0) {
+    return (
+      <div className="rounded-xl px-4 py-6 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          No major concerns found yet
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          Add more details about your role and company to see what's driving your risk.
+        </p>
+      </div>
+    );
+  }
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -597,7 +483,7 @@ export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }
       <div className="audit-section-head">
         <div className="audit-section-title">
           <AlertTriangle size={12} style={{ color: 'var(--amber)' }} />
-          Top Risk Drivers
+          Main Concerns
         </div>
       </div>
       <div className="driver-strip">
@@ -629,75 +515,6 @@ export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }
             <div className="driver-card-label">{d.label}</div>
             <div className="driver-card-reason">{d.why}</div>
           </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-};
-
-const phaseClass = (priority: string) =>
-  priority === 'Critical' ? 'action-card-phase-day1'
-    : priority === 'High'   ? 'action-card-phase-week1'
-    : 'action-card-phase-month1';
-
-const phaseLabel = (a: ActionItem): string => {
-  if (a.sequencePhase)
-    return ({ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' } as Record<string,string>)[a.sequencePhase] ?? a.timeline;
-  return a.timeline;
-};
-
-// `supporting` = true when the orchestrator already surfaced a single primary
-// move above (in the ReasoningSpineCard). In that case this strip is reframed
-// from a competing "Do This Week" into the follow-on moves that BACK the one
-// hero action — delivering the "one continuously thinking AI" promise instead
-// of three rankers each shouting a different #1.
-const ImmediateActionsStrip: React.FC<{ actions: ActionItem[]; total: number; supporting?: boolean }> = ({ actions, total, supporting }) => {
-  if (actions.length === 0) return null;
-  // When supporting the hero move, the remaining-count math must account for the
-  // one move already promoted out of this list.
-  const remaining = supporting ? Math.max(0, total - 1 - actions.length) : Math.max(0, total - actions.length);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.14 }}
-    >
-      <div className="audit-section-head">
-        <div className="audit-section-title">
-          <Zap size={12} style={{ color: 'var(--cyan)' }} />
-          {supporting ? 'Then, This Week' : 'Do This Week'}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {remaining > 0 && (
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
-              +{remaining} more in Action Plan
-            </span>
-          )}
-        </div>
-      </div>
-      {supporting && (
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.4, marginTop: 'calc(-1 * var(--space-1))', marginBottom: 'var(--space-2)' }}>
-          These back the move above — do them after, not instead.
-        </p>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-        {actions.slice(0, 3).map((a, i) => (
-          <div key={`${a.priority}-${i}`} className={`action-card ${phaseClass(a.priority)}`}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
-                <span className="action-effort-badge">{phaseLabel(a)}</span>
-                {a.step && <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>· {a.step}</span>}
-              </div>
-              <p style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.35, marginBottom: a.evidenceStats ? 'var(--space-1)' : 0 }}>
-                {a.title}
-              </p>
-              {a.evidenceStats && (
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', fontStyle: 'italic', lineHeight: 1.4 }}>
-                  {a.evidenceStats}
-                </p>
-              )}
-            </div>
-          </div>
         ))}
       </div>
     </motion.div>
@@ -1039,13 +856,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 pt-4">
           <span className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: riskColor(score) }}>
-            Your Career Position
-          </span>
-          <span
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)' }}
-          >
-            {confPct}% confidence
+            Where You Stand Today
           </span>
         </div>
 
@@ -1080,18 +891,18 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         <div className="flex flex-col px-4 sm:px-5 pb-4 pt-2">
           <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
-              Biggest threat
+              Main Concern
             </span>
             <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.78)' }}>
               {(result as any).strategySynthesis?.singleBiggestRisk
-                ?? (topDrivers[0] ? `${topDrivers[0].label} is your largest single risk factor.` : 'No single dominant risk factor detected.')}
+                ?? (topDrivers[0] ? `${topDrivers[0].label} is your biggest concern right now.` : 'Nothing stands out as a major concern right now.')}
             </p>
           </div>
 
           {biggestOpportunityLine && (
             <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'rgba(16,185,129,0.55)' }}>
-                Opportunity
+                Best Opportunity
               </span>
               <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.78)' }}>
                 {biggestOpportunityLine}
@@ -1102,7 +913,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           {adaptation.feed?.primaryMove && (
             <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: riskColor(score) + 'aa' }}>
-                This week
+                What To Do Next
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-semibold leading-snug" style={{ color: riskColor(score) + 'ee' }}>
@@ -1135,47 +946,8 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <TopDriversStrip drivers={topDrivers} />
 
-      {/* ── Top 3 Opportunities (inline when available) ────────────────────── */}
+      {/* ── Good News (inline when available) ────────────────────────────── */}
       {opportunityNode}
-
-      {/* ── Next Recommended Action ────────────────────────────────────────── */}
-      {adaptation.feed?.primaryMove && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-          className="rounded-2xl px-4 py-3.5 flex items-start gap-3"
-          style={{
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.07), rgba(34,211,238,0.04))',
-            border: '1px solid rgba(16,185,129,0.20)',
-          }}
-        >
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}
-          >
-            <Zap className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(16,185,129,0.75)' }}>
-              Your Next Step
-            </p>
-            <p className="text-[13px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
-              {adaptation.feed.primaryMove.moveLabel ?? adaptation.feed.primaryMove.action.title}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
-              }}
-              className="mt-2 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
-              style={{ background: 'rgba(16,185,129,0.15)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.30)' }}
-            >
-              View Full Action Plan →
-            </button>
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 };

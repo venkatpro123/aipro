@@ -120,12 +120,12 @@ export default function HomePage() {
             </p>
             <div className="hp-hbtns">
               <Link to="/terminal" className="hp-btn-p">Run My Layoff Audit →</Link>
-              <Link to="/terminal" className="hp-btn-g">See How It Works</Link>
+              <a href="#how-it-works" className="hp-btn-g">See How It Works</a>
             </div>
             <div className="hp-hero-trust">
               <div className="hp-trust-item"><span className="hp-trust-val">5,200+</span>Companies</div>
               <div className="hp-trust-div" />
-              <div className="hp-trust-item"><span className="hp-trust-val">55+</span>Intel Layers</div>
+              <div className="hp-trust-item"><span className="hp-trust-val">55+</span>Risk Signals</div>
               <div className="hp-trust-div" />
               <div className="hp-trust-item"><span className="hp-trust-val">28+</span>Countries</div>
               <div className="hp-trust-div" />
@@ -198,10 +198,10 @@ export default function HomePage() {
               </div>
               <div className="hp-sig-list">
                 <div className="hp-si"><span className="hp-sd hp-sd-r" />Hiring Slowdown Detected</div>
-                <div className="hp-si"><span className="hp-sd hp-sd-r" />Peer Layoffs in Org Unit</div>
-                <div className="hp-si"><span className="hp-sd hp-sd-a" />AI Exposure Rising (42%)</div>
-                <div className="hp-si"><span className="hp-sd hp-sd-a" />Internal Mobility Weak</div>
-                <div className="hp-si"><span className="hp-sd hp-sd-g" />Skill Demand Still Active</div>
+                <div className="hp-si"><span className="hp-sd hp-sd-r" />Layoffs in Your Department</div>
+                <div className="hp-si"><span className="hp-sd hp-sd-a" />AI Risk to Your Job Rising (42%)</div>
+                <div className="hp-si"><span className="hp-sd hp-sd-a" />Hard to Move Teams Internally</div>
+                <div className="hp-si"><span className="hp-sd hp-sd-g" />Your Skills Still In Demand</div>
               </div>
               <div style={{ marginTop:".8rem" }}>
                 <div className="hp-rml"><span>Safe</span><span>Risk 61/100</span><span>Critical</span></div>
@@ -310,10 +310,10 @@ export default function HomePage() {
               marginTop: "0.5rem",
             }}>
               {[
-                { icon: "🌊", label: "Workforce Transformation Pressure", color: "rgba(0,212,255,0.12)", border: "rgba(0,212,255,0.22)", tc: "var(--hp-cyan)" },
-                { icon: "🤖", label: "AI Disruption Exposure",            color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: "#ef4444" },
-                { icon: "🛡️", label: "Career Durability Index",           color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: "#10b981" },
-                { icon: "📡", label: "Future Labour Market Shifts",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: "#f59e0b" },
+                { icon: "🌊", label: "How Fast Jobs Are Changing",   color: "rgba(0,212,255,0.12)", border: "rgba(0,212,255,0.22)", tc: "var(--hp-cyan)" },
+                { icon: "🤖", label: "How Much AI Affects Your Job", color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: "#ef4444" },
+                { icon: "🛡️", label: "How Stable Your Career Is",    color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: "#10b981" },
+                { icon: "📡", label: "Where Jobs Are Headed",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: "#f59e0b" },
               ].map(p => (
                 <div key={p.label} style={{
                   padding: "18px 16px",
@@ -335,14 +335,14 @@ export default function HomePage() {
       </section>
 
       {/* ── SECTION 7: RISK REDUCTION ── */}
-      <section className="hp-red-section hp-section hp-fs">
+      <section id="how-it-works" className="hp-red-section hp-section hp-fs">
         <div className="hp-container hp-z2">
           <div className="hp-sec-label">How It Works</div>
           <h2 className="hp-sec-title">Don't Just Know The Risk.<br /><span className="hp-gtext">Reduce It.</span></h2>
           <div className="hp-red-wrap">
             <div className="hp-red-steps">
               {[
-                { score:"68", cls:"hp-rs-high", title:"Current Baseline",                  txt:"Your starting career risk score based on all detected signals." },
+                { score:"68", cls:"hp-rs-high", title:"Starting Point",                    txt:"Your starting career risk score based on all detected signals." },
                 { score:"55", cls:"hp-rs-mid",  title:"Complete Internal Mobility Plan",   txt:"Map open roles in adjacent teams. Risk drops 13 points." },
                 { score:"46", cls:"hp-rs-mid",  title:"Build Skill Hedge Profile",          txt:"Add 2 high-demand skills to your verified profile. Risk drops 9 points." },
                 { score:"38", cls:"hp-rs-low",  title:"Activate External Market Visibility",txt:"Turn on passive signal monitoring. Risk drops to manageable zone." },
@@ -395,7 +395,6 @@ export default function HomePage() {
           <p className="hp-cta-sub">Most employees discover career risk after the decision has already been made. HumanProof gives you the intelligence to act while you still have options.</p>
           <div className="hp-cta-actions">
             <Link to="/terminal" className="hp-btn-p" style={{ fontSize:16,padding:"16px 36px" }}>Run My Layoff Audit →</Link>
-            <Link to="/terminal" className="hp-btn-g" style={{ fontSize:16,padding:"16px 36px" }}>See Sample Audit</Link>
           </div>
           <p style={{ marginTop:"2rem",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:"#3d5472",letterSpacing:".07em" }}>
             NO CREDIT CARD REQUIRED · RESULTS IN 3 MINUTES · 28+ COUNTRIES COVERED

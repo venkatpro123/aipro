@@ -24,7 +24,6 @@ import { OracleInsightsPanel } from "./OracleInsightsPanel";
 import { ScoreConfidenceInterval } from "./ScoreConfidenceInterval";
 import { WhatIfSkillSimulator } from "./WhatIfSkillSimulator";
 import { KeyRiskDriversPanel } from "./KeyRiskDriversPanel";
-import { LayoffAuditDashboard } from "./LayoffAuditDashboard";
 import { LayoffAuditDashboardV3, isTabsV3Enabled } from "../AuditTabs/v3/LayoffAuditDashboardV3";
 // P1: V4 (3-tab orchestrator-led shell) is now flag-gated via uiFlags.getDashboardVariant().
 // Lazy-loaded so the V4 chunk only downloads when the flag resolves 'v4' — V3 stays the
@@ -2085,10 +2084,9 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             2: 'Reconciling live market signals…',
           };
           const commonProps = { result: hybridResult, companyData: companyDataFallback, onRetake: handleRetake, onRecalculate: handleForceRefresh, auditStage: STAGE_LABELS[ensembleStage] };
-          // P1: flag-gated coexistence. Default 'v3' (6-tab, current production). When
+          // P1: flag-gated coexistence. Default 'v3' (4-tab, current production). When
           // uiFlags resolves 'v4' (env VITE_DASHBOARD_V4=1 or localStorage 'hp.ui.dashboard'),
           // render the orchestrator-led 3-tab shell. V3 path is byte-identical when flag off.
-          // V1 (LayoffAuditDashboard) kept below as a rollback path — do not delete.
           if (getDashboardVariant() === "v4") {
             return (
               <Suspense fallback={<LayoffAuditDashboardV3 {...commonProps} />}>
@@ -2097,7 +2095,6 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
             );
           }
           return <LayoffAuditDashboardV3 {...commonProps} />;
-          // return <LayoffAuditDashboard {...commonProps} />;
         })()}
 
       {showShareCard && state.scoreResult && (

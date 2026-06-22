@@ -48,7 +48,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
         className="text-[9px] font-black tracking-[0.14em] uppercase mb-2"
         style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
       >
-        AI MEMORY · SINCE YOUR LAST CHECK
+        SINCE YOUR LAST CHECK
       </p>
 
       {/* Pill strip */}

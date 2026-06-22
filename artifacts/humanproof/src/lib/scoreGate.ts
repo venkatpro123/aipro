@@ -111,7 +111,7 @@ export function computeScoreSufficiency(
     ciRange,
     confPct,
     message:
-      `Insufficient signal quality for a reliable point estimate — ` +
-      `your score range is ${ciLow} to ${ciHigh}.`,
+      `We don't have enough information yet to give you one exact number — ` +
+      `your risk is somewhere between ${ciLow} and ${ciHigh}.`,
   };
 }

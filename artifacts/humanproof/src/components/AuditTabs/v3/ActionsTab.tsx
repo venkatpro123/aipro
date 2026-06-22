@@ -1,31 +1,25 @@
-// v3/ActionsTab.tsx — v35.1
-//
-// ACTION PLAN tab (4th tab in v34 IA). Where decision-driven users land
-// directly in Emergency Mode.
+// v3/ActionsTab.tsx — Action Plan tab.
 //
 // Layout (priority order):
-//   0. WARN Act 60-day protocol (T0, legal ground truth — shown first when active)
-//   1. Short runway escalation (T0, only when score ≥ 70 + runway ≤ 3 months)
-//   2. Equity alert (T1, only when vest cliff < 12 months + score > 50)
-//   3. Emergency Anchor Card (T1, only in emergency mode)
-//   4. Career Contingency Plan (T1)  — STAY / NEGOTIATE / TRANSITION decision paths
-//   5. Recovery Probability Card     — "Your Odds" motivational card
-//   6. Phase Progress System (T1)    — 3-phase action unlock with checkboxes
-//   7. Complete action plan (T3)     — full list, collapsed
-//   8. Strategic plan & negotiation (T3) — deep planning, collapsed
+//   0. Layoff notice (only when officially announced)
+//   1. Low savings warning (only when score is high + savings are low)
+//   2. Stock vesting alert (only when relevant)
+//   3. Emergency Anchor Card (only in emergency mode)
+//   4. Recommended Plan
+//   5. Phase Progress System — 3-phase action unlock with checkboxes
+//   6. More Options (collapsed) — full plan, negotiation help, job offer help
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { riskLabel } from '../../../lib/riskTokens';
 import {
-  ListChecks, Zap, Clock, TrendingDown, Shield, AlertTriangle, ShieldAlert,
+  ListChecks, Zap, Clock, TrendingDown, AlertTriangle, ShieldAlert,
   Activity, Key, Siren, Timer,
 } from 'lucide-react';
 import { ProfileQuickCapture } from '../../ProfileQuickCapture';
+import { CareerTwinCard } from '../../CareerTwinCard';
 import type { TabProps } from '../common/types';
-import type { CareerContingencyPlan } from '../../../services/careerContingencyPlanEngine';
 import type { ActionPlanItem } from '../../../types/hybridResult';
-import CareerContingencyPanel from '../common/CareerContingencyPanel';
 import { StrategySpineCard } from '../common/StrategySpineCard';
 import type { StrategySynthesisResult } from '../../../services/strategySynthesisEngine';
 import AdaptiveBlock from '../common/AdaptiveBlock';
@@ -33,9 +27,6 @@ import StrategyTab from '../StrategyTab';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
-import { RecoveryProbabilityCard } from '../common/RecoveryProbabilityCard';
-import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
-import type { SurvivalProbabilityResult } from '../../../services/layoffSurvivalPredictor';
 import { ExecutiveIntelligencePanel } from '../common/ExecutiveIntelligencePanel';
 import {
   runExecutiveIntelligence,
@@ -283,41 +274,6 @@ const EmergencyCallout: React.FC<{
   );
 };
 
-// ── Contingency state renderers ───────────────────────────────────────────────
-
-const ContingencyLoading: React.FC = () => (
-  <div className="rounded-2xl p-4 text-center"
-    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-    <div className="w-6 h-6 mx-auto mb-2 rounded-full border-2 border-[rgba(0,212,224,0.12)] border-t-[var(--cyan,#00d4e0)] animate-spin" />
-    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.40)' }}>Analyzing your career paths…</p>
-  </div>
-);
-
-const ContingencyFailed: React.FC = () => (
-  <div className="rounded-2xl p-4 text-center"
-    style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)' }}>
-    <p className="text-[12px] font-semibold mb-1" style={{ color: 'rgba(245,158,11,0.85)' }}>
-      Could not compute contingency paths
-    </p>
-    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-      An error occurred. Try refreshing or adding more profile data to retry.
-    </p>
-  </div>
-);
-
-const ContingencyUnavailable: React.FC = () => (
-  <div className="rounded-2xl p-4 text-center"
-    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-    <Shield className="w-8 h-8 mx-auto mb-2" style={{ color: 'rgba(255,255,255,0.20)' }} />
-    <p className="text-[12px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
-      Contingency plan unavailable
-    </p>
-    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-      Add your financial runway and career goal in Profile Setup to unlock personalised paths.
-    </p>
-  </div>
-);
-
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const ActionsTab: React.FC<TabProps> = (props) => {
@@ -341,12 +297,8 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
     setQuickCaptureCompleted(true);
   };
   const score = result.total;
-  const scoreSensitivity = r.scoreSensitivity;
   const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
-  const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
-  const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
   const recommendations: ActionPlanItem[] = result.recommendations ?? [];
-  const survivalProbability: SurvivalProbabilityResult | undefined = r.survivalProbability;
 
   // Wave 8.3: equity awareness — show alert when vest cliff is near + risk elevated
   const hasEquityVesting: boolean   = r.userFactors?.hasEquityVesting === true || r.userFactors?.equityVestMonths != null;
@@ -430,12 +382,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
                 style={{ background: 'rgba(220,38,38,0.22)', color: '#dc2626' }}
               >
-                LEGAL GROUND TRUTH · WARN ACT FILED
+                IMPORTANT UPDATE
               </span>
               <p className="text-[13px] font-bold mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
                 {warnDaysLeft !== null && warnDaysLeft > 0
-                  ? `Confirmed layoff notice — ${warnDaysLeft} days remaining`
-                  : 'Active WARN Act filing detected for your company'}
+                  ? `Layoffs are officially planned — ${warnDaysLeft} days notice remaining`
+                  : 'Your company has officially announced layoffs'}
               </p>
             </div>
           </div>
@@ -483,11 +435,11 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.72)' }}>
-              <span style={{ color: 'rgba(255,255,255,0.90)', fontWeight: 600 }}>This is confirmed legal notice</span>
-              {' '}— not a risk signal. Your company is legally required to notify employees at least 60 days before a qualifying layoff.
+              <span style={{ color: 'rgba(255,255,255,0.90)', fontWeight: 600 }}>This is official, not a guess.</span>
+              {' '}Companies must tell employees at least 60 days before layoffs happen.
             </p>
             <p className="text-[11px] leading-relaxed font-semibold" style={{ color: '#fca5a5' }}>
-              Act now: Update your résumé today. Activate your network this week. Do not wait for an individual notice.
+              What to do now: Update your résumé today. Reach out to your contacts this week. Don't wait for your own notice.
             </p>
           </div>
         </motion.div>
@@ -521,28 +473,28 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                   className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
                   style={{ background: 'rgba(245,158,11,0.20)', color: '#f59e0b' }}
                 >
-                  RUNWAY ALERT
+                  THINGS TO WATCH
                 </span>
               </div>
               <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                {financialRunwayMonths} month{financialRunwayMonths !== 1 ? 's' : ''} of runway — high-risk job search window
+                You have {financialRunwayMonths} month{financialRunwayMonths !== 1 ? 's' : ''} of savings — a job search could take longer than that
               </p>
               <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
-                At risk score {result.total}/100, comparable roles typically take{' '}
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>8–16 weeks</span> to land.
-                {' '}Your runway may not cover the full search. Begin positioning <em>now</em>, before financial pressure forces a suboptimal move.
+                People in similar situations usually take{' '}
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>8–16 weeks</span> to find a new job.
+                {' '}Your savings may run out before then. Start looking <em>now</em>, before money pressure forces a rushed decision.
               </p>
               <div
                 className="rounded-xl px-2.5 py-2"
                 style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.20)' }}
               >
                 <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(245,158,11,0.80)' }}>
-                  IMMEDIATE PRIORITY
+                  WHAT TO DO NOW
                 </p>
                 <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                  1. Apply to 3 roles this week (don't wait for résumé to be perfect).
-                  {' '}2. Message 2 contacts at target companies.
-                  {' '}3. Tell your network you're open — privately.
+                  1. Apply to 3 jobs this week (your résumé doesn't need to be perfect).
+                  {' '}2. Message 2 people at companies you'd like to work for.
+                  {' '}3. Quietly let your contacts know you're looking.
                 </p>
               </div>
             </div>
@@ -552,24 +504,9 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
 
       {/* ── END STATE PRIORITY OVERRIDES ────────────────────────────────────────── */}
 
-      {/* Strategy spine — the action-side analogue of the risk spine. One editor
-          voice that states the posture, the single first move, and unifies
-          time-to-safety + biggest risk + biggest opportunity into one beat, so
-          the panels below read as supporting detail, not competing verdicts.
-          Rendered after the legal/equity overrides (which are higher-certainty
-          ground truth) but before the rest of the plan. */}
+      {/* Recommended plan — one voice that states what to do, what's working
+          against you, and what's working for you. */}
       <StrategySpineCard strategy={strategySynthesis} />
-
-      {/* Recovery Probability — "Your Odds" motivational card. Moved directly
-          after the strategy spine (was buried after Emergency/Equity alerts) —
-          the without-action vs with-action delta is one of the most persuasive,
-          memorable pieces of intelligence on the page and deserves top billing. */}
-      {survivalProbability && (
-        <RecoveryProbabilityCard
-          survival={survivalProbability}
-          criticalActionCount={recommendations.filter(rc => rc.priority === 'Critical').length}
-        />
-      )}
 
       {/* T1: Emergency Anchor Card — directly after strategy spine for crisis users */}
       {adaptation.mode === 'emergency' && (
@@ -608,66 +545,34 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                     color: equityUrgency === 'CRITICAL' ? '#dc2626' : '#f97316',
                   }}
                 >
-                  {equityUrgency} · EQUITY ALERT
+                  STOCK ALERT
                 </span>
               </div>
               <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                You have {equityVestMonths} month{equityVestMonths !== 1 ? 's' : ''} of unvested equity
+                You have {equityVestMonths} month{equityVestMonths !== 1 ? 's' : ''} left before your stock fully vests
               </p>
               <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
-                With a risk score of {result.total}/100, your unvested equity is your strongest negotiation lever.{' '}
+                Your unvested stock is one of your best bargaining chips right now.{' '}
                 {equityVestMonths <= 3
-                  ? 'Request accelerated vesting or a retention bonus immediately — restructuring announcements remove this leverage.'
-                  : 'Open a conversation about retention now — before any restructuring discussion happens.'}
+                  ? 'Ask for faster vesting or a bonus to stay — do this before any layoff announcement.'
+                  : 'Bring up staying and your stock now — before any layoff announcement.'}
               </p>
               <div
                 className="rounded-xl px-3 py-2"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
               >
                 <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
-                  NEGOTIATION SCRIPT
+                  WHAT TO SAY
                 </p>
                 <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  "I wanted to discuss my unvested position given the current environment. I'm committed to staying,
-                  but I'd like to explore either accelerated vesting or a retention bonus to align our goals for the
+                  "I wanted to talk about my stock given everything going on. I'm committed to staying,
+                  but I'd like to explore faster vesting or a bonus to keep us both on the same page for the
                   next {equityVestMonths} months."
                 </p>
               </div>
             </div>
           </div>
         </motion.div>
-      )}
-
-      {/* Career Contingency Plan — status-aware rendering */}
-      {contingencyStatus === 'ready' && contingencyPlan
-        ? <CareerContingencyPanel contingencyPlan={contingencyPlan} />
-        : contingencyStatus === 'loading'
-          ? <ContingencyLoading />
-          : contingencyStatus === 'failed'
-            ? <ContingencyFailed />
-            : <ContingencyUnavailable />
-      }
-
-      {/* Time to Safety — week-by-week path to moderate risk. Collapsed by
-          default: the Odds card above already delivers the persuasive
-          without/with-action verdict, and PhaseProgressSystem below carries
-          the actual checklist — this week-by-week score breakdown is
-          supporting detail, not a third competing narrative. */}
-      {score > 35 && scoreSensitivity && (
-        <AdaptiveBlock
-          title="Week-by-week path to safety"
-          subtitle="Score milestones if you complete your top levers in sequence"
-          icon={Clock}
-          tier={2}
-          accentColor="#22d3ee"
-          defaultOpen={false}
-        >
-          <TimeToSafetyStrip
-            currentScore={score}
-            scoreSensitivity={scoreSensitivity}
-            financialRunwayMonths={financialRunwayMonths > 0 ? financialRunwayMonths : undefined}
-          />
-        </AdaptiveBlock>
       )}
 
       {/* Phase Progress System — 3-phase unlock with localStorage persistence */}
@@ -716,10 +621,10 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         >
           <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
           <div className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            <span style={{ color: '#f59e0b', fontWeight: 600 }}>Generic guidance.</span>{' '}
-            Your role is not yet specialised in our database — actions below are drawn from a general
-            tech / professional services pool. The recommendations are still calibrated to your seniority
-            and score, but role-specific certifications, salary bands, and outreach targets may differ.
+            <span style={{ color: '#f59e0b', fontWeight: 600 }}>General advice.</span>{' '}
+            We don't have specific info for your exact role yet, so the actions below are general advice
+            for tech and professional roles. They're still matched to your experience level and risk score,
+            but specific certifications, pay, and companies to target may differ for your role.
           </div>
         </div>
       )}
@@ -734,16 +639,25 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
 
       {/* PhaseProgressSystem above covers all actions — ActionPlanTab removed (exact duplicate) */}
 
-      {/* T3: Strategic plan & negotiation — collapsed */}
+      {/* More options — collapsed */}
       <AdaptiveBlock
-        title="Career Strategy & Negotiation"
-        subtitle="Exit timing, offer evaluation, negotiation scripts, phase roadmap"
+        title="More Options"
+        subtitle="When to leave, job offer help, what to say, and your full plan"
         icon={Activity}
         tier={3}
         accentColor="#f59e0b"
         defaultOpen={false}
       >
-        <StrategyTab {...props} />
+        <div className="flex flex-col gap-4">
+          <CareerTwinCard
+            userRole={result.workTypeKey}
+            userExperience={result.tenureYears ?? 5}
+            userRiskScore={result.total}
+            userCountry={result.countryKey ?? 'global'}
+            topN={3}
+          />
+          <StrategyTab {...props} />
+        </div>
       </AdaptiveBlock>
 
     </div>

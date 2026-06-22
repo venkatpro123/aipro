@@ -42,14 +42,9 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
 
       {/* Skill info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-          <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
-            {item.skill}
-          </span>
-          <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)' }}>
-            demand: {item.marketDemandScore}/100
-          </span>
-        </div>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+          {item.skill}
+        </span>
         <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.45 }}>
           {item.rationale}
         </p>
@@ -61,7 +56,7 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
           {item.estimatedWeeksToLearn}w
         </div>
         <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>
-          to proficiency
+          to learn
         </div>
       </div>
     </motion.div>
@@ -75,11 +70,11 @@ const EmptyPrompt: React.FC = () => (
   >
     <Brain className="w-8 h-8 mb-3" style={{ color: 'rgba(255,255,255,0.2)' }} />
     <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
-      Add your skills to unlock personalized gap analysis
+      Add your skills to see what to improve
     </h3>
     <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.55, maxWidth: '320px', marginBottom: '16px' }}>
-      Enter your current skills and target skills in your profile. The engine cross-references them against
-      2026-Q1 market demand data and surfaces your highest-ROI upskilling priorities ranked by demand score.
+      Add your current skills and the skills you want to your profile. We'll show you which ones are
+      in demand and which ones to learn next.
     </p>
     <button
       onClick={() => {
@@ -109,7 +104,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
   if (!skillGapIntelligence) return <EmptyPrompt />;
 
   const {
-    gapScore, marketReadinessPct, upskillPriority, existingStrengths,
+    marketReadinessPct, upskillPriority, existingStrengths,
     criticalGaps, readinessLabel, narrativeSummary,
   } = skillGapIntelligence;
 
@@ -122,7 +117,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
       <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
         <Brain className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
-          Skill Gap Intelligence
+          Skills To Improve
         </span>
         <span
           className="ml-auto text-[10px] font-black px-2 py-0.5 rounded"
@@ -134,34 +129,24 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
 
       <div className="p-5">
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-          {/* Gap score */}
-          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: gapScore >= 60 ? '#ef4444' : gapScore >= 35 ? '#f59e0b' : '#10b981' }}>
-              {gapScore}
-            </div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Gap Score
-            </div>
-          </div>
-
-          {/* Market readiness */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {/* Readiness score */}
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: readinessColor }}>
               {marketReadinessPct}%
             </div>
             <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Market Ready
+              Readiness Score
             </div>
           </div>
 
-          {/* Critical gaps */}
+          {/* Skills to fix */}
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: criticalGaps.length > 0 ? '#ef4444' : '#10b981' }}>
               {criticalGaps.length}
             </div>
             <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Critical Gaps
+              Urgent Skills
             </div>
           </div>
         </div>
@@ -184,7 +169,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
               <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#10b981' }}>
-                Market Strengths
+                Your Strengths
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -207,7 +192,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
               <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)' }}>
-                Upskill Priorities (by market demand)
+                What To Learn First
               </span>
             </div>
             <div>

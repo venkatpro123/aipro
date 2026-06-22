@@ -37,32 +37,32 @@ interface Props {
 
 type Posture = StrategySynthesisResult['overallStrategy'];
 
-// Humanised posture copy — written for the person living it, not a reviewer.
+// Plain-English posture copy — written for the person living it, not a reviewer.
 const POSTURE_COPY: Record<Posture, { label: string; accent: string }> = {
-  EMERGENCY_EXIT:            { label: 'Emergency exit', accent: '#ef4444' },
-  ACCELERATE_EXIT:           { label: 'Accelerate your exit', accent: '#f97316' },
-  VISA_WINDOW_EXIT:          { label: 'Move inside your visa window', accent: '#f97316' },
-  EQUITY_HARVEST_THEN_EXIT:  { label: 'Hold for vest, then exit', accent: '#f59e0b' },
-  GEOGRAPHIC_ARBITRAGE:      { label: 'Reposition geographically', accent: '#22d3ee' },
-  PROTECT_AND_WAIT:          { label: 'Protect and hold', accent: '#f59e0b' },
-  STRENGTHEN_POSITION:       { label: 'Strengthen your position', accent: '#22d3ee' },
-  OPPORTUNISTIC_MOVE:        { label: 'Move opportunistically', accent: '#10b981' },
+  EMERGENCY_EXIT:            { label: 'Start job hunting now', accent: '#ef4444' },
+  ACCELERATE_EXIT:           { label: 'Start job hunting now', accent: '#f97316' },
+  VISA_WINDOW_EXIT:          { label: 'Start job hunting now', accent: '#f97316' },
+  EQUITY_HARVEST_THEN_EXIT:  { label: 'Stay a bit longer, then move on', accent: '#f59e0b' },
+  GEOGRAPHIC_ARBITRAGE:      { label: 'Consider relocating', accent: '#22d3ee' },
+  PROTECT_AND_WAIT:          { label: 'Stay and improve', accent: '#f59e0b' },
+  STRENGTHEN_POSITION:       { label: 'Stay and improve', accent: '#22d3ee' },
+  OPPORTUNISTIC_MOVE:        { label: 'Watch for a good opportunity', accent: '#10b981' },
 };
 
 const URGENCY_COPY: Record<StrategySynthesisResult['urgencyLevel'], string> = {
   CRITICAL: 'Act this week',
   HIGH: 'Act within days',
-  MODERATE: 'Move deliberately',
-  LOW: 'Time is on your side',
+  MODERATE: 'No rush, but keep moving',
+  LOW: 'You have time',
 };
 
 function safetyWindowPhrase(days: number): string {
-  if (days <= 0) return 'The window to act is now';
-  if (days <= 14) return `About ${days} days before the situation likely shifts`;
+  if (days <= 0) return 'You should act now';
+  if (days <= 14) return `You have about ${days} days before things may change`;
   const weeks = Math.round(days / 7);
-  if (weeks <= 8) return `Roughly ${weeks} weeks before the situation likely shifts`;
+  if (weeks <= 8) return `You have about ${weeks} weeks before things may change`;
   const months = Math.round(days / 30);
-  return `Around ${months} month${months > 1 ? 's' : ''} of runway before the situation likely shifts`;
+  return `You have about ${months} month${months > 1 ? 's' : ''} before things may change`;
 }
 
 export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
@@ -95,7 +95,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: accent }}>
-              Your strategy
+              Recommended Plan
             </p>
             <span
               className="text-[10px] font-black tracking-wide px-1.5 py-0.5 rounded"
@@ -133,20 +133,20 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
         </div>
       )}
 
-      {/* Unified beat: time-to-safety + biggest risk + biggest opportunity */}
+      {/* Unified beat: time remaining + main concern + best opportunity */}
       <div className="px-4 pb-4 space-y-2">
-        <Row icon={CalendarClock} color="rgba(255,255,255,0.55)" label="Window"
+        <Row icon={CalendarClock} color="rgba(255,255,255,0.55)" label="Time"
           text={safetyWindowPhrase(strategy.estimatedSafetyWindowDays)} />
         {strategy.singleBiggestRisk && (
-          <Row icon={ShieldAlert} color="#f59e0b" label="Watch"
+          <Row icon={ShieldAlert} color="#f59e0b" label="Main Concern"
             text={strategy.singleBiggestRisk} />
         )}
         {strategy.singleBiggestOpportunity && (
-          <Row icon={Sparkles} color="#10b981" label="Seize"
+          <Row icon={Sparkles} color="#10b981" label="Best Opportunity"
             text={strategy.singleBiggestOpportunity} />
         )}
         {strategy.competitivePositionStatement && (
-          <Row icon={Trophy} color="#22d3ee" label="Standing"
+          <Row icon={Trophy} color="#22d3ee" label="Where You Stand"
             text={strategy.competitivePositionStatement} />
         )}
       </div>

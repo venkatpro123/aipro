@@ -71,10 +71,10 @@ function deriveOpportunities(props: Props): Opportunity[] {
     opps.push({
       id: 'adjacent-demand',
       icon: ArrowUpRight,
-      title: `Strong demand for ${label}`,
-      body: `Your skills already cover ${Math.round((top as any).skillOverlapPercent ?? 65)}% of this role. Market demand score: ${top.marketDemandScore}/100. ${Math.round((top as any).transitionWeeks ?? 12)}-week path from your current position.`,
+      title: `Companies are hiring for ${label}`,
+      body: `Your skills already match about ${Math.round((top as any).skillOverlapPercent ?? 65)}% of what this role needs. You could likely move into it in about ${Math.round((top as any).transitionWeeks ?? 12)} weeks.`,
       accentColor: '#10b981',
-      cta: 'See pivot paths',
+      cta: 'See ways to switch roles',
       ctaTab: 'protection',
     });
   }
@@ -89,10 +89,10 @@ function deriveOpportunities(props: Props): Opportunity[] {
     opps.push({
       id: 'rising-market',
       icon: TrendingUp,
-      title: `Job market for ${roleLabel} is ${jobMarketLiquidity?.tier === 'Fast' ? 'active' : 'strengthening'}`,
-      body: `Comparable roles are filling in ${months < 2 ? 'under' : 'around'} ${months < 1.5 ? '6' : Math.round(months * 4)} weeks. Recruiters are active. Now is a high-leverage window for positioning.`,
+      title: `Jobs for ${roleLabel} are ${jobMarketLiquidity?.tier === 'Fast' ? 'easy to find right now' : 'getting easier to find'}`,
+      body: `People in similar roles are getting hired in ${months < 2 ? 'under' : 'around'} ${months < 1.5 ? '6' : Math.round(months * 4)} weeks. Companies are actively hiring — a good time to start looking.`,
       accentColor: '#22d3ee',
-      cta: 'See market signals',
+      cta: 'See the job market',
       ctaTab: 'company',  // Company tab (IntelligenceTab) hosts RoleMarketDemand/PeerContagion/Macro panels
     });
   }
@@ -104,10 +104,10 @@ function deriveOpportunities(props: Props): Opportunity[] {
     opps.push({
       id: 'competitive-edge',
       icon: Star,
-      title: `You outperform ${percentile}% of your peer cohort`,
-      body: `Your profile is stronger than most people in your role/seniority bracket.${strengths.length > 0 ? ` Key edge: ${strengths.join(', ')}.` : ''} This is your leverage window — act before market conditions shift.`,
+      title: `You're stronger than most people in similar roles`,
+      body: `Your background is better than most people at your level.${strengths.length > 0 ? ` Your strengths: ${strengths.join(', ')}.` : ''} It's a good time to use this to your advantage — things can change.`,
       accentColor: '#a78bfa',
-      cta: 'See your position',
+      cta: 'See where you stand',
       ctaTab: 'protection',
     });
   }
@@ -122,10 +122,10 @@ function deriveOpportunities(props: Props): Opportunity[] {
     opps.push({
       id: 'stable-prepared',
       icon: Star,
-      title: 'Strong career position — use this window',
-      body: `Low risk score (${currentScore}/100) + preparedness ${preparednessScore}/100 puts you in the top tier for career capital building. Start the growth actions now to widen your lead.`,
+      title: 'You\'re in a strong position — use this time well',
+      body: `Your job looks safe right now, and you're well-prepared if anything changes. This is a good time to keep building your skills and experience.`,
       accentColor: '#10b981',
-      cta: 'See growth actions',
+      cta: 'See ways to grow',
       ctaTab: 'actions',
     });
   }
@@ -169,7 +169,7 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
       >
         <Star className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
         <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          {opportunities.length === 1 ? 'OPPORTUNITY DETECTED' : `${opportunities.length} OPPORTUNITIES DETECTED`}
+          GOOD NEWS
         </p>
         <span
           className="text-[10px] font-black px-2 py-0.5 rounded"

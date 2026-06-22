@@ -68,12 +68,12 @@ const CAT_COLORS: Record<string, string> = {
 };
 
 const DIM_INFO: Record<string, { label: string; desc: string }> = {
-  D1: { label: 'Task Automatability', desc: 'What fraction of your daily tasks can AI fully automate today?' },
-  D2: { label: 'AI Tool Maturity',    desc: 'How mature and widely deployed are AI tools targeting your role?' },
-  D3: { label: 'Human Amplification', desc: 'How much does your role uniquely benefit from human judgment, empathy, or creativity?' },
-  D4: { label: 'Experience Shield',   desc: 'How much does seniority and track record protect you from replacement?' },
-  D5: { label: 'Country Exposure',    desc: "How aggressively is AI being adopted in your country's labour market?" },
-  D6: { label: 'Social Capital Moat', desc: 'How much do your professional network and relationships protect you?' },
+  D1: { label: 'Automatable Tasks',        desc: 'What fraction of your daily tasks can AI fully automate today?' },
+  D2: { label: 'AI Tools In Your Field',   desc: 'How mature and widely deployed are AI tools targeting your role?' },
+  D3: { label: 'Your Human Edge',          desc: 'How much does your role uniquely benefit from human judgment, empathy, or creativity?' },
+  D4: { label: 'Your Experience',          desc: 'How much does seniority and track record protect you from replacement?' },
+  D5: { label: "Your Country's AI Speed",  desc: "How aggressively is AI being adopted in your country's labour market?" },
+  D6: { label: 'Your Network',             desc: 'How much do your professional network and relationships protect you?' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -374,7 +374,7 @@ const AuditTerminalPage: React.FC = () => {
 
   const TABS: { key: TabKey; label: string; sub: string }[] = [
     { key: 'risk-intel',     label: 'Your Risk',      sub: 'Score · Skill Floor · Early Warnings' },
-    { key: 'wave-analysis',  label: 'AI Impact',       sub: 'Your 2030 Exposure · What AI Targets' },
+    { key: 'wave-analysis',  label: 'AI Impact',       sub: 'Your Risk by 2030 · What AI Targets' },
     { key: 'career-defense', label: 'Career Defense', sub: 'What Protects You · Your Future Role' },
     { key: 'action-plan',    label: 'Action Plan',    sub: 'Next Steps · Perspective' },
   ];
@@ -401,7 +401,7 @@ const AuditTerminalPage: React.FC = () => {
       }}>
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', margin: 0, color: 'var(--cyan)' }}>
-            RISK ORACLE
+            AI Job Risk Calculator
           </h2>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
             See how AI could affect your job · No company data required
@@ -480,12 +480,12 @@ const AuditTerminalPage: React.FC = () => {
           {isCalculating ? (
             <>
               <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⟳</span>
-              COMPUTING ORACLE DIMENSIONS...
+              CALCULATING YOUR RISK...
             </>
           ) : (
             <>
               <Zap className="w-4 h-4" />
-              RUN RISK ORACLE
+              CALCULATE MY RISK
             </>
           )}
         </button>
@@ -786,7 +786,7 @@ const AuditTerminalPage: React.FC = () => {
                   }}
                 >
                   <span>{tab.label}</span>
-                  <span className="hidden sm:block" style={{ fontSize: '0.60rem', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
+                  <span style={{ fontSize: 'clamp(0.52rem, 1.6vw, 0.60rem)', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
                 </button>
               ))}
             </div>

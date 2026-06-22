@@ -1,14 +1,13 @@
 // StrategyTab.tsx
-// Career Strategy Command Center.
-// Synthesizes ALL intelligence layers into a single strategic command view.
-// Layout: urgency banner → early warning signs → phase plan → network leverage → confidence pillars → offer eval modal
+// Your full plan: what to do, in what order, plus job offer help.
+// Layout: plan banner → things to watch → action phases → readiness → offer eval modal
 
 import React, { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target, Zap, Shield, Clock, ArrowRight, CheckCircle2,
-  Circle, AlertTriangle, TrendingUp, Users, Brain, DollarSign,
+  Circle, AlertTriangle, TrendingUp, Brain, DollarSign,
   ChevronDown, ChevronUp, ChevronRight, Building2, Globe, Briefcase, Star,
   Search,
 } from "lucide-react";
@@ -35,11 +34,11 @@ const STRATEGY_COLORS: Record<string, { bg: string; border: string; text: string
 };
 
 const STRATEGY_HUMAN_LABELS: Record<string, string> = {
-  EMERGENCY_EXIT:      'Get Out Now',
-  ACCELERATE_EXIT:     'Move Faster',
-  PROTECT_AND_WAIT:    'Hold Your Position',
-  STRENGTHEN_POSITION: 'Build Your Edge',
-  OPPORTUNISTIC_MOVE:  'Make a Smart Move',
+  EMERGENCY_EXIT:      'Start job hunting now',
+  ACCELERATE_EXIT:     'Start job hunting now',
+  PROTECT_AND_WAIT:    'Stay and improve',
+  STRENGTHEN_POSITION: 'Stay and improve',
+  OPPORTUNISTIC_MOVE:  'Watch for a good opportunity',
 };
 
 const URGENCY_COLORS: Record<string, string> = {
@@ -50,10 +49,10 @@ const URGENCY_COLORS: Record<string, string> = {
 };
 
 const URGENCY_HUMAN_LABELS: Record<string, string> = {
-  CRITICAL: 'Urgent Action Needed',
+  CRITICAL: 'Act This Week',
   HIGH:     'High Priority',
-  MODERATE: 'Moderate',
-  LOW:      'Stable',
+  MODERATE: 'No Rush',
+  LOW:      'You Have Time',
 };
 
 const OFFER_REC_HUMAN_LABELS: Record<string, string> = {
@@ -131,10 +130,6 @@ const ActionCard: React.FC<{
       <div className="flex items-center gap-3 mt-2">
         <span className="text-[10px] tracking-wider" style={{ color: phaseColor, opacity: 0.8 }}>
           {action.timeHorizon}
-        </span>
-        <span className="text-[10px] opacity-30">·</span>
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          Impact {action.roiScore}/100
         </span>
       </div>
     </div>
@@ -438,7 +433,6 @@ const OfferModal: React.FC<{
 const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
   const synthesis = (result as any).strategySynthesis;
   const confidence = (result as any).careerConfidence;
-  const network = (result as any).networkLeverage;
   const [showOfferModal, setShowOfferModal] = useState(false);
   // Negotiation scripts, the full phase plan, network leverage, and the
   // readiness profile stay collapsed by default — they're depth, not the
@@ -574,16 +568,16 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         if (compRisk?.cascadeStage === 'PAY_FREEZE' || compRisk?.cascadeStage === 'PAY_CUT' || compRisk?.cascadeStage === 'PRE_LAYOFF') {
           alerts.push({ icon: '🔴', text: `${compRisk.cascadeStageLabel}`, color: '#ef4444' });
         }
-        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'In M&A peak restructuring window (months 6–18)', color: '#ef4444' });
-        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: `Sentiment early warning — ${sentiment.sentimentLeadTimeEstimate}`, color: '#f59e0b' });
-        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: leadership.vpClusteringNote?.split('.')[0] ?? 'VP departure cluster detected', color: '#f97316' });
-        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'CFO departure — strongest 90-day layoff predictor', color: '#ef4444' });
+        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'Your company may be merging or restructuring soon', color: '#ef4444' });
+        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: 'Employees are unhappy — often happens before layoffs', color: '#f59e0b' });
+        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: 'Several leaders have left recently', color: '#f97316' });
+        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'The finance chief left — often happens before layoffs', color: '#ef4444' });
 
         if (alerts.length === 0) return null;
         return (
           <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
             <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              EARLY WARNING SIGNS ({alerts.length})
+              THINGS TO WATCH ({alerts.length})
             </div>
             {alerts.map((a, i) => (
               <div key={i} className="flex items-start gap-2">
@@ -600,12 +594,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         <div className="rounded-xl p-4" style={{ background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.18)' }}>
           <div className="flex items-center gap-2 mb-2">
             <Star className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
-            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>TOP PRIORITY NOW</span>
-            {typeof synthesis.topPriorityAction?.roiScore === 'number' && (
-              <span className="text-[9px] font-mono ml-auto px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0' }}>
-                ROI {synthesis.topPriorityAction.roiScore}
-              </span>
-            )}
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>DO THIS FIRST</span>
           </div>
           <p className="text-sm font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
             {synthesis.topPriorityAction?.title}
@@ -627,7 +616,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         <div className="rounded-xl p-4" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
-            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#10b981' }}>BIGGEST OPPORTUNITY</span>
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#10b981' }}>BEST OPPORTUNITY</span>
           </div>
           <p className="text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.75)' }}>
             {synthesis.singleBiggestOpportunity}
@@ -656,8 +645,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         <ArrowRight className="w-4 h-4 opacity-40" />
       </motion.button>
 
-      {/* ── Full Strategy Breakdown — negotiation scripts, phase plan, network,
-          readiness profile. Depth for when you want it, not blocking memory. ── */}
+      {/* ── See the full plan — depth for when you want it, not blocking memory. ── */}
       <button
         type="button"
         onClick={() => setShowFullBreakdown(v => !v)}
@@ -667,7 +655,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         <div className="flex items-center gap-2">
           <Search className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.45)' }} />
           <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            {showFullBreakdown ? 'Hide full strategy breakdown' : 'See full strategy breakdown'}
+            {showFullBreakdown ? 'Hide full plan' : 'See full plan'}
           </span>
         </div>
         {showFullBreakdown ? <ChevronUp className="w-4 h-4 opacity-40" /> : <ChevronDown className="w-4 h-4 opacity-40" />}
@@ -687,7 +675,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
       {/* Strategic phases */}
       <div>
         <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          YOUR STRATEGIC PLAN
+          YOUR PLAN
         </p>
         <div className="space-y-3">
           {(synthesis.phases ?? []).map((plan: StrategicPlan) => (
@@ -701,126 +689,13 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         </div>
       </div>
 
-      {/* Network leverage summary */}
-      {network && (
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" style={{ color: '#00d4e0' }} />
-              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Network Leverage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-black" style={{ color: '#00d4e0' }}>{network.networkScore}</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
-                background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.25)',
-              }}>
-                {toTitleCase(network.networkTier)}
-              </span>
-            </div>
-          </div>
-          <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>{network.networkHeadline}</p>
-
-          {/* Headline metrics — now includes time-to-first-referral + diversity,
-              both computed by the engine but previously never surfaced. */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div className="text-center">
-              <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.estimatedWarmContacts}</div>
-              <div className="text-[10px] opacity-40">warm contacts</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.referralAccessScore}</div>
-              <div className="text-[10px] opacity-40">referral score</div>
-            </div>
-            {network.networkDiversityScore != null && (
-              <div className="text-center">
-                <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{network.networkDiversityScore}</div>
-                <div className="text-[10px] opacity-40">diversity</div>
-              </div>
-            )}
-            {network.timeToFirstReferral && (
-              <div className="text-center">
-                <div className="text-sm font-bold" style={{ color: '#10b981' }}>{network.timeToFirstReferral}</div>
-                <div className="text-[10px] opacity-40">to 1st referral</div>
-              </div>
-            )}
-          </div>
-
-          {/* Recommended application channel split — was showing only 1 of 3
-              numbers (the warm-referral %), which misrepresented the metric.
-              Now renders the full recommended split as a stacked bar. */}
-          {network.applicationChannelSplit && (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                RECOMMENDED APPLICATION MIX
-              </p>
-              <div className="flex h-2 rounded-full overflow-hidden mb-1.5">
-                <div style={{ width: `${network.applicationChannelSplit.warmReferral}%`, background: '#10b981' }} />
-                <div style={{ width: `${network.applicationChannelSplit.recruiterOutreach}%`, background: '#00d4e0' }} />
-                <div style={{ width: `${network.applicationChannelSplit.directApply}%`, background: 'rgba(255,255,255,0.25)' }} />
-              </div>
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
-                <span className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: '#10b981' }} />
-                  {network.applicationChannelSplit.warmReferral}% warm referral
-                </span>
-                <span className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: '#00d4e0' }} />
-                  {network.applicationChannelSplit.recruiterOutreach}% recruiter
-                </span>
-                <span className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.4)' }} />
-                  {network.applicationChannelSplit.directApply}% direct apply
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Top referral opportunities — specific, computed, never rendered before. */}
-          {Array.isArray(network.topReferralOpportunities) && network.topReferralOpportunities.length > 0 && (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>TOP REFERRAL OPPORTUNITIES</p>
-              <div className="space-y-2">
-                {network.topReferralOpportunities.slice(0, 3).map((opp: any, i: number) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
-                      style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
-                      {Math.round((opp.referralProbability ?? 0) * 100)}%
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>{opp.targetCompanyType}</p>
-                      <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.5)' }}>{opp.actionToActivate}</p>
-                      {opp.timeToReferral && (
-                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>~{opp.timeToReferral}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>ACTIVATION PLAN</p>
-            {/* Show the full sequenced activation plan, not just step 1. */}
-            <div className="space-y-1.5">
-              {(network.activationPlan ?? []).slice(0, 3).map((step: string, i: number) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="text-[10px] font-black flex-shrink-0 mt-0.5" style={{ color: '#00d4e0' }}>{i + 1}.</span>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{step}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Career confidence summary */}
       {confidence && (
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Brain className="w-4 h-4" style={{ color: '#a78bfa' }} />
-              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Readiness Profile</span>
+              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Job Search Readiness</span>
             </div>
             <div className="flex items-center gap-2">
               {typeof confidence.compositeScore === 'number' && (
@@ -883,18 +758,18 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           an empty second column (only BIGGEST RISK rendered), which read as a
           layout bug. Now pairs the biggest risk with the biggest opportunity. */}
       <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>YOUR POSITION</p>
+        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>WHERE YOU STAND</p>
         <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.competitivePositionStatement}</p>
         <div className="mt-3 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
             <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'rgba(239,68,68,0.85)' }}>
-              <AlertTriangle className="w-3 h-3" /> BIGGEST RISK
+              <AlertTriangle className="w-3 h-3" /> MAIN CONCERN
             </p>
             <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.singleBiggestRisk}</p>
           </div>
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
             <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#10b981' }}>
-              <TrendingUp className="w-3 h-3" /> BIGGEST OPPORTUNITY
+              <TrendingUp className="w-3 h-3" /> BEST OPPORTUNITY
             </p>
             <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.singleBiggestOpportunity}</p>
           </div>
