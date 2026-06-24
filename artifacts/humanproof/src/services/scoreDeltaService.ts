@@ -770,3 +770,35 @@ export function getUserReturnType(
   if (delta < -4) return 'improving';
   return 'stable_returner';
 }
+
+/**
+ * Classifies how far into their HumanProof usage journey a user is, based on
+ * audit frequency (this role) and total action-completion volume (all roles).
+ *
+ * PROBLEM: getUserReturnType() modulates LLM narrative framing per-visit, but
+ * nothing tracked cumulative engagement depth — a user on their 8th audit
+ * with 15 completed actions received the same depth of guidance as someone
+ * on their 2nd audit. "Journey stage" lets downstream consumers (the Tier A
+ * LLM prompt, action-plan copy) escalate sophistication over time instead of
+ * repeating orientation-level guidance indefinitely.
+ *
+ * Stages are intentionally coarse (4 buckets) — this is a framing signal, not
+ * a precise progress bar.
+ */
+export type JourneyStage = 'foundation' | 'execution' | 'acceleration' | 'leadership';
+
+export function getJourneyStage(
+  roleKey: string,
+  experience: string,
+  countryKey: string,
+  completedActionCount: number,
+): JourneyStage {
+  const auditCount = loadScoreHistory()
+    .filter(h => h.roleKey === roleKey && h.experience === experience && h.countryKey === countryKey)
+    .length;
+
+  if (completedActionCount >= 16 || auditCount >= 8) return 'leadership';
+  if (completedActionCount >= 8  || auditCount >= 5) return 'acceleration';
+  if (completedActionCount >= 3  || auditCount >= 2) return 'execution';
+  return 'foundation';
+}

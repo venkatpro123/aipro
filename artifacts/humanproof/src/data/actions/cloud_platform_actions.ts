@@ -504,11 +504,15 @@ export const ALIAS_ADDITIONS_CLOUD_PLATFORM: Record<string, { canonicalKey: stri
 
   // Data Engineer variants
   'data engineer': { canonicalKey: 'data_engineer', displayRole: 'Data Engineer' },
-  'analytics engineer': { canonicalKey: 'data_engineer', displayRole: 'Analytics Engineer' },
+  // 'analytics engineer' / 'dbt engineer' route to the dedicated analytics_engineer
+  // canonical key (own ACTION_DB pool in actionPersonalizationEngine.ts) — this
+  // module previously shadowed the correct base roleResolution.ts mapping with
+  // 'data_engineer', making the analytics_engineer pool unreachable by title.
+  'analytics engineer': { canonicalKey: 'analytics_engineer', displayRole: 'Analytics Engineer' },
   'etl engineer': { canonicalKey: 'data_engineer', displayRole: 'ETL Engineer' },
   'elt engineer': { canonicalKey: 'data_engineer', displayRole: 'ELT Engineer' },
   'data pipeline engineer': { canonicalKey: 'data_engineer', displayRole: 'Data Pipeline Engineer' },
-  'dbt engineer': { canonicalKey: 'data_engineer', displayRole: 'dbt Engineer' },
+  'dbt engineer': { canonicalKey: 'analytics_engineer', displayRole: 'dbt Engineer' },
   'snowflake engineer': { canonicalKey: 'data_engineer', displayRole: 'Snowflake Engineer' },
 
   // Data Platform Engineer variants

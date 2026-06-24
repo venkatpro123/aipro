@@ -231,26 +231,24 @@ const AuditTerminalPage: React.FC = () => {
     if (!workTypeKey || !industryKey || loaderActive) return;
     setIsCalculating(true);
 
-    const cacheParams = { roleKey: workTypeKey, industry: industryKey, country: countryKey, experience };
-    const cached = getCachedRisk(cacheParams);
+    try {
+      const cacheParams = { roleKey: workTypeKey, industry: industryKey, country: countryKey, experience };
+      const cached = getCachedRisk(cacheParams);
 
-    // calculateScore() is synchronous & instant; cache hit or fresh, compute now
-    // then play the cinematic loader and reveal on completion.
-    const score = cached ?? calculateScore(workTypeKey, industryKey, experience, countryKey);
-    if (!cached) setCachedRisk(cacheParams, score);
+      const score = cached ?? calculateScore(workTypeKey, industryKey, experience, countryKey);
+      if (!cached) setCachedRisk(cacheParams, score);
 
-    const breakdown = Object.fromEntries(
-      (score.dimensions ?? []).map(dim => [dim.key, dim.score / 100])
-    );
-    // Record FIRST so the new run becomes history[0]; getScoreDelta compares the
-    // current score against history[1] (the genuine previous assessment). Calling
-    // it before recordScore made it skip the real previous run and require 3 audits
-    // before any delta appeared.
-    recordScore({ roleKey: workTypeKey, industryKey, countryKey, experience, score: score.total, timestamp: Date.now(), isGrounded: !cached, breakdown });
-    const d = getScoreDelta(workTypeKey, score.total, experience, countryKey);
+      const breakdown = Object.fromEntries(
+        (score.dimensions ?? []).map(dim => [dim.key, dim.score / 100])
+      );
+      recordScore({ roleKey: workTypeKey, industryKey, countryKey, experience, score: score.total, timestamp: Date.now(), isGrounded: !cached, breakdown });
+      const d = getScoreDelta(workTypeKey, score.total, experience, countryKey);
 
-    pendingRef.current = { score, delta: d };
-    startLoaderSequence();
+      pendingRef.current = { score, delta: d };
+      startLoaderSequence();
+    } catch {
+      setIsCalculating(false);
+    }
   };
 
   // Handle industry change: clear work type since options change.

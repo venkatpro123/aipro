@@ -37,6 +37,12 @@ export interface ActionCompletionState {
 const LS_COMPLETIONS_KEY = 'hp.action.completions';
 const LS_COMPLETIONS_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days (up from 7)
 
+// Actions the user rated 1-2 stars ("did this help?"). These are excluded from
+// future selection the same way completed actions are — a low rating means the
+// action didn't land for this user, so resurfacing it is not useful guidance.
+const LS_LOW_RATED_KEY = 'hp.action.lowRated';
+const LOW_RATING_THRESHOLD = 2; // ratings <= this are suppressed
+
 // ── localStorage layer (fast, optimistic) ─────────────────────────────────────
 
 export function loadCompletionsLocal(): Set<string> {
@@ -56,6 +62,33 @@ export function saveCompletionsLocal(ids: Set<string>): void {
   try {
     localStorage.setItem(
       LS_COMPLETIONS_KEY,
+      JSON.stringify({ ids: Array.from(ids), ts: Date.now() }),
+    );
+  } catch { /* quota exceeded */ }
+}
+
+/**
+ * IDs of actions the user has rated 1-2 stars. Same TTL/shape as completions —
+ * cached locally so getPersonalizedActions() can exclude them synchronously
+ * without an extra Supabase round-trip on every render.
+ */
+export function loadLowRatedActionIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(LS_LOW_RATED_KEY);
+    if (!raw) return new Set();
+    const { ids, ts } = JSON.parse(raw);
+    if (Date.now() - ts > LS_COMPLETIONS_TTL_MS) {
+      localStorage.removeItem(LS_LOW_RATED_KEY);
+      return new Set();
+    }
+    return new Set(ids as string[]);
+  } catch { return new Set(); }
+}
+
+function saveLowRatedActionIdsLocal(ids: Set<string>): void {
+  try {
+    localStorage.setItem(
+      LS_LOW_RATED_KEY,
       JSON.stringify({ ids: Array.from(ids), ts: Date.now() }),
     );
   } catch { /* quota exceeded */ }
@@ -135,19 +168,26 @@ export async function syncCompletionsFromServer(): Promise<ActionCompletionState
 
     const { data, error } = await supabase
       .from('user_action_completions')
-      .select('action_id')
+      .select('action_id, user_feedback')
       .eq('user_id', user.id);
 
     if (error || !data) return { completedIds: local, lastSyncedAt: null, source: 'local' };
 
     // Union: merge server IDs into local set
     const merged = new Set(local);
+    // Cross-device low-rated cache: a 1-2 star rating set on any device should
+    // suppress that action on every device, not just the one it was rated on.
+    const lowRated = loadLowRatedActionIds();
     for (const row of data) {
       merged.add(row.action_id as string);
+      if (typeof row.user_feedback === 'number' && row.user_feedback <= LOW_RATING_THRESHOLD) {
+        lowRated.add(row.action_id as string);
+      }
     }
 
-    // Persist merged set back to localStorage
+    // Persist merged sets back to localStorage
     saveCompletionsLocal(merged);
+    saveLowRatedActionIdsLocal(lowRated);
 
     return {
       completedIds: merged,
@@ -168,6 +208,14 @@ export async function submitActionFeedback(
   feedback: 1 | 2 | 3 | 4 | 5,
   followUpSignal?: string,
 ): Promise<void> {
+  // Optimistic local write — a 1-2 star rating suppresses this action from
+  // future selection immediately, without waiting on the Supabase round-trip.
+  if (feedback <= LOW_RATING_THRESHOLD) {
+    const lowRated = loadLowRatedActionIds();
+    lowRated.add(actionId);
+    saveLowRatedActionIdsLocal(lowRated);
+  }
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;

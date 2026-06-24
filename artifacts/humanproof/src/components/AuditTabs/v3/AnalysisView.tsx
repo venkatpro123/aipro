@@ -216,10 +216,22 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     window.scrollTo({ top, behavior: 'smooth' });
   }, []);
 
+  // Track viewport changes so IntersectionObserver rootMargin stays accurate
+  // after mobile rotation or window resize changes --nav-h.
+  const [observerKey, setObserverKey] = useState(0);
+  useEffect(() => {
+    let prev = getHeaderOffset();
+    const onResize = () => {
+      const next = getHeaderOffset();
+      if (next !== prev) { prev = next; setObserverKey(k => k + 1); }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // IntersectionObserver: keep tab bar in sync with the user's scroll position
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
-    // Map tab → latest intersection ratio so we can pick the topmost visible section
     const ratioMap = new Map<AnalysisTabKey, number>();
 
     ANALYSIS_TABS.forEach(({ value }) => {
@@ -244,7 +256,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     });
 
     return () => observers.forEach(o => o.disconnect());
-  }, []);
+  }, [observerKey]);
 
   const tabProps: AnalysisViewProps = { result, companyData, emergencyMode, onSwitchToBeast };
 

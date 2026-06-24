@@ -155,13 +155,13 @@ describe('StrategySpineCard (single strategy voice)', () => {
 
   it('states the posture, the one move, and unifies window/risk/opportunity', () => {
     const html = render(React.createElement(StrategySpineCard, { strategy: mkStrategy() }));
-    expect(html).toContain('Your strategy');
-    expect(html).toContain('Accelerate your exit');
+    expect(html).toContain('Recommended Plan');
+    expect(html).toContain('Start job hunting now');
     expect(html).toContain('Risk is rising faster');
     // The single first move.
     expect(html).toContain('Open 3 active conversations this week');
     // Unified beat — time-to-safety + risk + opportunity + standing.
-    expect(html).toContain('weeks before the situation likely shifts');
+    expect(html).toContain('weeks before things may change');
     expect(html).toContain('Waiting for certainty');
     expect(html).toContain('active demand in two adjacent sectors');
     expect(html).toContain('ahead of 70% of peers');

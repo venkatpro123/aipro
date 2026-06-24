@@ -15,7 +15,28 @@
  *                           riskScore brackets, USD format
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('../../services/dataConnectors/layoffsFyiConnector', () => ({
+  getSectorLayoffCount: vi.fn().mockResolvedValue(0),
+  getCompanyLayoffs: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../services/dataConnectors/rssNewsConnector', () => ({
+  fetchCompanyNewsSignals: vi.fn().mockResolvedValue({
+    company: 'TestCo', signals: [], negativeCount: 0, layoffSignalCount: 0,
+    sentimentScore: 0.5, fetchedAt: new Date().toISOString(),
+  }),
+}));
+
+vi.mock('../../services/dataConnectors/naukriConnector', () => ({
+  fetchRoleDemandSignal: vi.fn().mockResolvedValue({
+    roleTitle: 'Software Engineer', company: 'TestCo',
+    estimatedOpenings: null, naukriOpenings: null, linkedinOpenings: null,
+    demandTrend: 'stable', hiringFreezeScore: 0.5, isLive: false,
+    source: 'mock', disclosure: '', fetchedAt: new Date().toISOString(),
+  }),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. layoffScoreEngine — uncovered L1 funding and size branches

@@ -42,7 +42,7 @@ import {
   extractMarketSlot,
   slotFromHiringConnector,
 } from "../cache/analysisCache";
-import { loadScoreHistory, getUserReturnType, computeScoreVelocity } from "../scoreDeltaService";
+import { loadScoreHistory, getUserReturnType, computeScoreVelocity, getJourneyStage } from "../scoreDeltaService";
 import { CompanyData } from "../../data/companyDatabase";
 import { IndustryRisk } from "../../data/industryRiskData";
 import { RoleExposure } from "../../data/roleExposureData";
@@ -70,6 +70,7 @@ import {
   resolveRoleGroup,
   getRoleGroupLabel,
 } from "../actionPersonalizationEngine";
+import { loadCompletionsLocal, loadLowRatedActionIds } from "../actionCompletionService";
 import { deriveSeniorityBracket } from "../seniorityActionEngine";
 
 // ── Agent status — transparent LLM failure reporting ─────────────────────────
@@ -573,7 +574,7 @@ export const runFullEnsembleAnalysis = async (
     };
     const _companyContext = _archetypeToContext(scenario.archetype);
     const seniorityBracket = deriveSeniorityBracket(tenureYears, 'average', uniquenessDepth, undefined);
-    const personalizedSet = getPersonalizedActions(role, seniorityBracket, score, cd.region, _companyContext, cd.name);
+    const personalizedSet = getPersonalizedActions(role, seniorityBracket, score, cd.region, _companyContext, cd.name, undefined, undefined, undefined, undefined, undefined, loadCompletionsLocal(), loadLowRatedActionIds());
     // Null-safe: actions array may be empty if no pool matched (should not happen after v8.0 additions)
     const topPersonalizedAction = personalizedSet?.actions?.[0];
     const oneActionThisWeek = topPersonalizedAction?.description
@@ -831,6 +832,18 @@ export const runFullEnsembleAnalysis = async (
       String(inputs.companyData?.region ?? 'US'),
     );
 
+    // Journey stage + completion history: lets the LLM escalate guidance depth
+    // for engaged returning users instead of repeating orientation-level
+    // framing indefinitely, and reference what the user has already done
+    // rather than ignoring completed work entirely.
+    const completedActionIds = loadCompletionsLocal();
+    const journeyStage = getJourneyStage(
+      inputs.roleTitle ?? '',
+      String(tenureYears),
+      String(inputs.companyData?.region ?? 'US'),
+      completedActionIds.size,
+    );
+
     // ── User state classification for question priority ─────────────────────
     // Four mutually exclusive states drive both question_order and question_min_words.
     // The state is resolved once and passed into both functions — never use a
@@ -995,6 +1008,10 @@ export const runFullEnsembleAnalysis = async (
       days_since_last_audit: isReturningUser
         ? Math.round((Date.now() - (loadScoreHistory()[1]?.timestamp ?? Date.now())) / 86400000)
         : null,
+      // v41.0: longitudinal engagement signals — lets the LLM escalate guidance
+      // depth for engaged users and avoid re-suggesting completed work.
+      journey_stage: journeyStage,
+      completed_actions_count: completedActionIds.size,
       // Data quality — tells Claude how much to hedge based on data freshness/source.
       // The LLM should calibrate its confidence to match data_freshness_days.
       // data_source_type distinguishes live API data (hedge less) from static DB
@@ -1100,6 +1117,20 @@ export const runFullEnsembleAnalysis = async (
                     return `User context: first-time user${stage3Suffix}.`;
                 }
               })(),
+              // Journey-stage + completion-history context — prevents the LLM from
+              // treating an engaged, multi-audit user identically to a first-timer,
+              // and lets it reference completed work instead of ignoring it.
+              completedActionIds.size > 0
+                ? `User journey: ${journeyStage} stage, ${completedActionIds.size} action${completedActionIds.size === 1 ? '' : 's'} completed across all prior audits. ${
+                    journeyStage === 'leadership'
+                      ? 'This is a highly engaged, experienced user — guidance should assume familiarity with displacement fundamentals and focus on advanced, strategic moves (ownership of cross-functional initiatives, market positioning, compensation negotiation), not entry-level upskilling advice.'
+                      : journeyStage === 'acceleration'
+                        ? 'This user has already executed several actions — assume foundational steps are done; recommend the next tier of action, not a repeat of basics.'
+                        : journeyStage === 'execution'
+                          ? 'This user has started taking action — acknowledge momentum briefly and build on it rather than re-introducing first steps.'
+                          : 'This user is early in their action journey — foundational guidance is still appropriate.'
+                  }`
+                : `User journey: foundation stage, no completed actions on record yet.`,
               `Do not use corporate language. Speak directly. Do not pad with filler to meet word counts — add substance. Every sentence must be traceable to a specific signal in the data.`,
             ].join(' '),
             outputFormat: 'structured_json',

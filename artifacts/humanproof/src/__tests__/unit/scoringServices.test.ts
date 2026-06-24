@@ -3,7 +3,28 @@
  * Brings overall branch coverage above 85%.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('../../services/dataConnectors/layoffsFyiConnector', () => ({
+  getSectorLayoffCount: vi.fn().mockResolvedValue(0),
+  getCompanyLayoffs: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../services/dataConnectors/rssNewsConnector', () => ({
+  fetchCompanyNewsSignals: vi.fn().mockResolvedValue({
+    company: 'TestCo', signals: [], negativeCount: 0, layoffSignalCount: 0,
+    sentimentScore: 0.5, fetchedAt: new Date().toISOString(),
+  }),
+}));
+
+vi.mock('../../services/dataConnectors/naukriConnector', () => ({
+  fetchRoleDemandSignal: vi.fn().mockResolvedValue({
+    roleTitle: 'Software Engineer', company: 'TestCo',
+    estimatedOpenings: null, naukriOpenings: null, linkedinOpenings: null,
+    demandTrend: 'stable', hiringFreezeScore: 0.5, isLive: false,
+    source: 'mock', disclosure: '', fetchedAt: new Date().toISOString(),
+  }),
+}));
 
 // ──────────────────────────────────────────────────────────────────────────────
 // collapsePredictor.ts
@@ -197,6 +218,8 @@ import {
   recordScore,
   getScoreDelta,
   getAttributedDelta,
+  computeScoreVelocity,
+  getUserReturnType,
   type ScoreHistoryEntry,
 } from '../../services/scoreDeltaService';
 
@@ -275,6 +298,8 @@ import {
   saveFinancialContext,
   loadFinancialContext,
   clearFinancialContext,
+  normaliseCityKey,
+  loadCityKey,
   deriveFinancialProfile,
   getPerformanceCollapseStrategy,
   type FinancialContext,
@@ -379,6 +404,12 @@ import {
   isMarketDataStale,
   marketDataAgeLabel,
   formatDemandTrendLabel,
+  formatSuccessRate,
+  normaliseRegionKey,
+  regionDisplayLabel,
+  isMarketDataFreshWarning,
+  marketDataAgeInline,
+  resolveRegionalMarket,
   MARKET_DATA_STALE_DAYS,
 } from '../../services/careerPathMarket';
 
@@ -589,5 +620,552 @@ describe('scoreDeltaService — snapshot attribution branches', () => {
     expect(r).not.toBeNull();
     const l3dim = r!.dimensionDeltas?.find(d => d.key === 'L3');
     if (l3dim) expect(l3dim.delta).toBeGreaterThan(0);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// scoreDeltaService — computeScoreVelocity & getUserReturnType
+// ──────────────────────────────────────────────────────────────────────────────
+
+function seedHistory(entries: Array<{roleKey: string; score: number; timestamp: number; experience: string; countryKey: string}>) {
+  localStorage.setItem('hp_score_history', JSON.stringify(
+    entries.map(e => ({ industryKey: 'Tech', isGrounded: false, ...e })),
+  ));
+}
+
+describe('computeScoreVelocity', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('returns null when < 2 entries for the role', () => {
+    seedHistory([
+      { roleKey: 'sw_be', score: 50, timestamp: Date.now(), experience: '2-5', countryKey: 'IN' },
+    ]);
+    expect(computeScoreVelocity('sw_be', 50, '2-5', 'IN')).toBeNull();
+  });
+
+  it('returns stable when delta is within +/- 5', () => {
+    const now = Date.now();
+    seedHistory([
+      { roleKey: 'sw_be', score: 50, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 48, timestamp: now - 30 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    const v = computeScoreVelocity('sw_be', 50, '2-5', 'IN');
+    expect(v).not.toBeNull();
+    expect(v!.direction).toBe('stable');
+    expect(v!.velocityRiskAddon).toBe(0);
+  });
+
+  it('returns accelerating with velocityRiskAddon 0.06 when delta > 10', () => {
+    const now = Date.now();
+    seedHistory([
+      { roleKey: 'sw_be', score: 70, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 45, timestamp: now - 30 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    const v = computeScoreVelocity('sw_be', 58, '2-5', 'IN');
+    expect(v).not.toBeNull();
+    expect(v!.direction).toBe('accelerating');
+    expect(v!.velocityRiskAddon).toBe(0.06);
+  });
+
+  it('returns accelerating with velocityRiskAddon 0.03 when delta is 5-10', () => {
+    const now = Date.now();
+    seedHistory([
+      { roleKey: 'sw_be', score: 55, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 48, timestamp: now - 30 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    // currentScore - baseline30.score = 56 - 48 = 8 (between 5 and 10)
+    const v = computeScoreVelocity('sw_be', 56, '2-5', 'IN');
+    expect(v).not.toBeNull();
+    expect(v!.direction).toBe('accelerating');
+    expect(v!.velocityRiskAddon).toBe(0.03);
+  });
+
+  it('returns improving with velocityRiskAddon -0.02 when delta < -5', () => {
+    const now = Date.now();
+    seedHistory([
+      { roleKey: 'sw_be', score: 40, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 55, timestamp: now - 30 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    // currentScore - baseline30.score = 42 - 55 = -13 (< -5)
+    const v = computeScoreVelocity('sw_be', 42, '2-5', 'IN');
+    expect(v).not.toBeNull();
+    expect(v!.direction).toBe('improving');
+    expect(v!.velocityRiskAddon).toBe(-0.02);
+  });
+});
+
+describe('getUserReturnType', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('returns first_time when < 2 entries', () => {
+    seedHistory([
+      { roleKey: 'sw_be', score: 50, timestamp: Date.now(), experience: '2-5', countryKey: 'IN' },
+    ]);
+    expect(getUserReturnType('sw_be', 50, '2-5', 'IN')).toBe('first_time');
+  });
+
+  it('returns crisis when accelerating + delta30d > 10', () => {
+    const now = Date.now();
+    // Need >=2 entries AND a baseline >=25 days old for velocity to compute.
+    // history[0].score - history[1].score must be > 4 for 'declining', but
+    // crisis requires velocity.direction === 'accelerating' && velocity.delta30d > 10.
+    seedHistory([
+      { roleKey: 'sw_be', score: 75, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 50, timestamp: now - 30 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    // currentScore 75, baseline30 score 50 → delta30d = 25 (> 10, accelerating)
+    // history[0].score - history[1].score = 75 - 50 = 25 → delta > 4 → declining path, but crisis takes priority
+    expect(getUserReturnType('sw_be', 75, '2-5', 'IN')).toBe('crisis');
+  });
+
+  it('returns declining when delta > 4 (not crisis)', () => {
+    const now = Date.now();
+    // Two entries close together (within 25 days) so no baseline30 is found
+    // → velocity returns null → crisis branch never fires.
+    // history[0].score - history[1].score = 55 - 50 = 5 (> 4)
+    seedHistory([
+      { roleKey: 'sw_be', score: 55, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 50, timestamp: now - 5 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    expect(getUserReturnType('sw_be', 55, '2-5', 'IN')).toBe('declining');
+  });
+
+  it('returns improving when delta < -4', () => {
+    const now = Date.now();
+    // history[0].score - history[1].score = 40 - 50 = -10 (< -4)
+    seedHistory([
+      { roleKey: 'sw_be', score: 40, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 50, timestamp: now - 5 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    expect(getUserReturnType('sw_be', 40, '2-5', 'IN')).toBe('improving');
+  });
+
+  it('returns stable_returner when delta is within +/- 4', () => {
+    const now = Date.now();
+    // history[0].score - history[1].score = 51 - 50 = 1 (within ±4)
+    seedHistory([
+      { roleKey: 'sw_be', score: 51, timestamp: now, experience: '2-5', countryKey: 'IN' },
+      { roleKey: 'sw_be', score: 50, timestamp: now - 5 * 86_400_000, experience: '2-5', countryKey: 'IN' },
+    ]);
+    expect(getUserReturnType('sw_be', 51, '2-5', 'IN')).toBe('stable_returner');
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// careerPathMarket — pure utility functions
+// ──────────────────────────────────────────────────────────────────────────────
+
+const mkMarket = (daysAgo: number) => ({
+  dataAsOf: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+} as any);
+
+describe('careerPathMarket — normaliseRegionKey', () => {
+  it('returns global for null', () => {
+    expect(normaliseRegionKey(null)).toBe('global');
+  });
+
+  it('returns global for undefined', () => {
+    expect(normaliseRegionKey(undefined)).toBe('global');
+  });
+
+  it('maps "de" to germany', () => {
+    expect(normaliseRegionKey('de')).toBe('germany');
+  });
+
+  it('maps "United Kingdom" (case-insensitive) to uk', () => {
+    expect(normaliseRegionKey('United Kingdom')).toBe('uk');
+  });
+
+  it('returns global for unknown region string', () => {
+    expect(normaliseRegionKey('narnia')).toBe('global');
+  });
+});
+
+describe('careerPathMarket — regionDisplayLabel', () => {
+  it('maps germany to "Germany"', () => {
+    expect(regionDisplayLabel('germany')).toBe('Germany');
+  });
+
+  it('maps global to "global"', () => {
+    expect(regionDisplayLabel('global')).toBe('global');
+  });
+
+  it('maps philippines to "Philippines"', () => {
+    expect(regionDisplayLabel('philippines')).toBe('Philippines');
+  });
+});
+
+describe('careerPathMarket — formatDemandTrendLabel (extended)', () => {
+  it('surging includes double arrow', () => {
+    expect(formatDemandTrendLabel('surging')).toMatch(/↑↑/);
+  });
+
+  it('contracting includes down arrow', () => {
+    expect(formatDemandTrendLabel('contracting')).toMatch(/↓/);
+  });
+});
+
+describe('careerPathMarket — formatSuccessRate', () => {
+  it('high for >= 60%', () => {
+    expect(formatSuccessRate(65)).toBe('65% (high)');
+  });
+
+  it('moderate for 40-59%', () => {
+    expect(formatSuccessRate(45)).toBe('45% (moderate)');
+  });
+
+  it('competitive for < 40%', () => {
+    expect(formatSuccessRate(22)).toBe('22% (competitive)');
+  });
+});
+
+describe('careerPathMarket — isMarketDataFreshWarning', () => {
+  it('returns false for data less than 60 days old', () => {
+    expect(isMarketDataFreshWarning(mkMarket(30))).toBe(false);
+  });
+
+  it('returns true for data 60-90 days old', () => {
+    expect(isMarketDataFreshWarning(mkMarket(75))).toBe(true);
+  });
+
+  it('returns false for data older than 90 days (stale takes precedence)', () => {
+    expect(isMarketDataFreshWarning(mkMarket(100))).toBe(false);
+  });
+});
+
+describe('careerPathMarket — marketDataAgeInline', () => {
+  it('returns "updated this week" for < 7 days', () => {
+    expect(marketDataAgeInline(mkMarket(3))).toBe('updated this week');
+  });
+
+  it('returns "updated Nd ago" for 7-29 days', () => {
+    const label = marketDataAgeInline(mkMarket(15));
+    expect(label).toMatch(/updated 15d ago/);
+  });
+
+  it('returns month-based label with warning for 60-89 days', () => {
+    const label = marketDataAgeInline(mkMarket(75));
+    expect(label).toContain('mo ago');
+    expect(label).toContain('⚠');  // warning sign
+  });
+
+  it('returns "verify live" for >= 90 days', () => {
+    const label = marketDataAgeInline(mkMarket(120));
+    expect(label).toContain('verify live');
+    expect(label).toContain('⚠');
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// careerPathMarket — resolveRegionalMarket branch coverage
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('careerPathMarket — resolveRegionalMarket', () => {
+  const baseMarket = {
+    targetRole: 'sw_fullstack',
+    indiaOpenings: 5000,
+    globalOpenings: 20000,
+    topHiringCompaniesIndia: ['TCS'],
+    topHiringCompaniesGlobal: ['Google'],
+    demandTrend: 'stable' as const,
+    dataSource: 'baseline',
+    dataAsOf: '2026-01-15',
+    weeksToFirstInterview: 4,
+    transitionSuccessRate: 65,
+    remoteOpenings: 3000,
+    topHiringCompaniesRemote: ['GitLab'],
+  } as any;
+
+  it('Step 3 fallback: returns global aggregate when no regional data', () => {
+    const r = resolveRegionalMarket(baseMarket, 'BR');
+    expect(r.isRegionSpecific).toBe(false);
+    expect(r.count).toBe(20000);
+    expect(r.source).toBe('global aggregate');
+  });
+
+  it('Step 1: uses regionalOpenings dictionary when present', () => {
+    const market = {
+      ...baseMarket,
+      regionalOpenings: { usa: { count: 8000, source: 'LinkedIn', asOf: '2026-03-01' } },
+    };
+    const r = resolveRegionalMarket(market, 'US');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(8000);
+    expect(r.source).toBe('LinkedIn');
+  });
+
+  it('Step 1.5: uses named per-region field (us_openings)', () => {
+    const market = { ...baseMarket, us_openings: 7500, topHiringCompaniesUS: ['Amazon'] };
+    const r = resolveRegionalMarket(market, 'US');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(7500);
+  });
+
+  it('Step 1.5: uses eu_openings for Germany', () => {
+    const market = { ...baseMarket, eu_openings: 4000, topHiringCompaniesEU: ['SAP'] };
+    const r = resolveRegionalMarket(market, 'DE');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(4000);
+  });
+
+  it('Step 1.5: uses canada_openings', () => {
+    const market = { ...baseMarket, canada_openings: 2000 };
+    const r = resolveRegionalMarket(market, 'CA');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(2000);
+  });
+
+  it('Step 1.5: uses apac_openings for Singapore', () => {
+    const market = { ...baseMarket, apac_openings: 3000 };
+    const r = resolveRegionalMarket(market, 'SG');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(3000);
+  });
+
+  it('Step 1.5: uses mena_openings for UAE', () => {
+    const market = { ...baseMarket, mena_openings: 1500 };
+    const r = resolveRegionalMarket(market, 'AE');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(1500);
+  });
+
+  it('Step 1.5: uses latam_openings for Brazil', () => {
+    const market = { ...baseMarket, latam_openings: 2500 };
+    const r = resolveRegionalMarket(market, 'BR');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(2500);
+  });
+
+  it('Step 2: India legacy field used when regionKey is india', () => {
+    const r = resolveRegionalMarket(baseMarket, 'IN');
+    expect(r.isRegionSpecific).toBe(true);
+    expect(r.count).toBe(5000);
+    expect(r.source).toBe('Naukri');
+  });
+
+  it('includes remoteOpenings and topHiringCompaniesRemote', () => {
+    const r = resolveRegionalMarket(baseMarket, 'US');
+    expect(r.remoteOpenings).toBe(3000);
+    expect(r.topHiringCompaniesRemote).toEqual(['GitLab']);
+  });
+
+  it('uses region-specific hiring companies when available', () => {
+    const market = { ...baseMarket, topHiringCompaniesUS: ['Meta', 'Apple'] };
+    const r = resolveRegionalMarket(market, 'US');
+    expect(r.hiringCompanies).toEqual(['Meta', 'Apple']);
+    expect(r.isHiringCompaniesRegionSpecific).toBe(true);
+  });
+
+  it('falls back to global companies when no region-specific ones', () => {
+    const r = resolveRegionalMarket(baseMarket, 'BR');
+    expect(r.hiringCompanies).toEqual(['Google']);
+    expect(r.isHiringCompaniesRegionSpecific).toBe(false);
+  });
+
+  it('uses weeksToFirstInterviewByRegion when available', () => {
+    const market = { ...baseMarket, weeksToFirstInterviewByRegion: { usa: 3 } };
+    const r = resolveRegionalMarket(market, 'US');
+    expect(r.weeksToFirstInterview).toBe(3);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// financialContextService — normaliseCityKey + loadCityKey + visa amplifier
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('financialContextService — normaliseCityKey', () => {
+  it('returns null for null/undefined/empty', () => {
+    expect(normaliseCityKey(null)).toBeNull();
+    expect(normaliseCityKey(undefined)).toBeNull();
+    expect(normaliseCityKey('')).toBeNull();
+  });
+
+  it('normalises "Bangalore" and "Bengaluru" to same key', () => {
+    expect(normaliseCityKey('Bangalore')).toBe('bangalore');
+    expect(normaliseCityKey('Bengaluru')).toBe('bangalore');
+  });
+
+  it('normalises case-insensitive aliases', () => {
+    expect(normaliseCityKey('MUMBAI')).toBe('mumbai');
+    expect(normaliseCityKey('bombay')).toBe('mumbai');
+    expect(normaliseCityKey('Delhi NCR')).toBe('delhi_ncr');
+    expect(normaliseCityKey('Madras')).toBe('chennai');
+  });
+
+  it('returns direct key for unrecognised city', () => {
+    expect(normaliseCityKey('San Francisco')).toBe('san_francisco');
+  });
+});
+
+describe('financialContextService — loadCityKey', () => {
+  beforeEach(() => clearFinancialContext());
+
+  it('returns null when no context saved', () => {
+    expect(loadCityKey()).toBeNull();
+  });
+
+  it('returns normalised city from saved context', () => {
+    saveFinancialContext({
+      currency: 'INR', currentAnnualIncome: 1200000, monthlyExpenses: 50000,
+      savingsMonths: 6, dependents: 0, riskAppetite: 'moderate', city: 'Bengaluru',
+    } as any);
+    expect(loadCityKey()).toBe('bangalore');
+  });
+});
+
+describe('financialContextService — visa amplifier branch', () => {
+  beforeEach(() => clearFinancialContext());
+
+  it('applies visa amplifier when > 1.0', () => {
+    const base = deriveFinancialProfile(
+      { currency: 'USD', currentAnnualIncome: 100000, monthlyExpenses: 5000,
+        savingsMonths: 3, dependents: 0, riskAppetite: 'conservative' } as any,
+      70, undefined,
+    );
+    const amplified = deriveFinancialProfile(
+      { currency: 'USD', currentAnnualIncome: 100000, monthlyExpenses: 5000,
+        savingsMonths: 3, dependents: 0, riskAppetite: 'conservative' } as any,
+      70, 1.5,
+    );
+    expect(amplified.urgencyMultiplier).toBeGreaterThan(base.urgencyMultiplier);
+  });
+
+  it('does not apply visa amplifier when <= 1.0', () => {
+    const base = deriveFinancialProfile(
+      { currency: 'USD', currentAnnualIncome: 100000, monthlyExpenses: 5000,
+        savingsMonths: 3, dependents: 0, riskAppetite: 'conservative' } as any,
+      70, undefined,
+    );
+    const same = deriveFinancialProfile(
+      { currency: 'USD', currentAnnualIncome: 100000, monthlyExpenses: 5000,
+        savingsMonths: 3, dependents: 0, riskAppetite: 'conservative' } as any,
+      70, 0.8,
+    );
+    expect(same.urgencyMultiplier).toBe(base.urgencyMultiplier);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// roleExposureData — untested exports
+// ──────────────────────────────────────────────────────────────────────────────
+import { getAllRoleTitles, getOracleRoleMap, getAllOracleRoleTitles } from '../../data/roleExposureData';
+
+describe('roleExposureData — data accessors', () => {
+  it('getAllRoleTitles returns non-empty string array', () => {
+    const titles = getAllRoleTitles();
+    expect(titles.length).toBeGreaterThan(10);
+    expect(typeof titles[0]).toBe('string');
+  });
+
+  it('getOracleRoleMap returns array (may be empty if intel not loaded)', () => {
+    const map = getOracleRoleMap();
+    expect(Array.isArray(map)).toBe(true);
+    if (map.length > 0) {
+      expect(map[0]).toHaveProperty('title');
+      expect(map[0]).toHaveProperty('oracleKey');
+    }
+  });
+
+  it('getAllOracleRoleTitles returns strings matching getOracleRoleMap titles', () => {
+    const titles = getAllOracleRoleTitles();
+    const mapTitles = getOracleRoleMap().map(r => r.title);
+    expect(titles).toEqual(mapTitles);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// industryRiskData — untested exports
+// ──────────────────────────────────────────────────────────────────────────────
+import { getIndustryRiskAgeDays, getIndustryRiskStalenessLabel } from '../../data/industryRiskData';
+
+describe('industryRiskData — freshness functions', () => {
+  it('getIndustryRiskAgeDays returns a non-negative number', () => {
+    const days = getIndustryRiskAgeDays();
+    expect(days).toBeGreaterThanOrEqual(0);
+    expect(Number.isInteger(days)).toBe(true);
+  });
+
+  it('getIndustryRiskStalenessLabel returns complete freshness object', () => {
+    const r = getIndustryRiskStalenessLabel();
+    expect(r).toHaveProperty('ageDays');
+    expect(r).toHaveProperty('isStale');
+    expect(r).toHaveProperty('label');
+    expect(r).toHaveProperty('dataAsOf');
+    expect(r).toHaveProperty('dataQuarter');
+    expect(typeof r.label).toBe('string');
+    expect(typeof r.isStale).toBe('boolean');
+  });
+
+  it('label contains the data quarter', () => {
+    const r = getIndustryRiskStalenessLabel();
+    expect(r.label).toContain(r.dataQuarter);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// companyDatabase — untested utility functions
+// ──────────────────────────────────────────────────────────────────────────────
+import { lookupCompany, getCompanyByName, countryCodeToD5Key } from '../../data/companyDatabase';
+
+describe('companyDatabase — lookupCompany', () => {
+  it('returns empty array for too-short query', () => {
+    expect(lookupCompany('')).toEqual([]);
+    expect(lookupCompany('a')).toEqual([]);
+  });
+
+  it('finds Google by partial name match', () => {
+    const results = lookupCompany('google');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].name.toLowerCase()).toContain('google');
+  });
+
+  it('returns at most 8 results', () => {
+    const results = lookupCompany('in'); // broad match
+    expect(results.length).toBeLessThanOrEqual(8);
+  });
+});
+
+describe('companyDatabase — getCompanyByName', () => {
+  it('returns null for empty name', () => {
+    expect(getCompanyByName('')).toBeNull();
+  });
+
+  it('finds a known company case-insensitively', () => {
+    const r = getCompanyByName('google');
+    expect(r).not.toBeNull();
+    expect(r!.name.toLowerCase()).toBe('google');
+  });
+
+  it('returns null for unknown company', () => {
+    expect(getCompanyByName('NonexistentCorp12345')).toBeNull();
+  });
+});
+
+describe('companyDatabase — countryCodeToD5Key', () => {
+  it('returns "other" for null/undefined', () => {
+    expect(countryCodeToD5Key(null)).toBe('other');
+    expect(countryCodeToD5Key(undefined)).toBe('other');
+  });
+
+  it('maps US/USA to "usa"', () => {
+    expect(countryCodeToD5Key('US')).toBe('usa');
+    expect(countryCodeToD5Key('usa')).toBe('usa');
+  });
+
+  it('maps IN to "india"', () => {
+    expect(countryCodeToD5Key('IN')).toBe('india');
+    expect(countryCodeToD5Key('india')).toBe('india');
+  });
+
+  it('maps GB to "uk"', () => {
+    expect(countryCodeToD5Key('GB')).toBe('uk');
+  });
+
+  it('maps SG to "singapore"', () => {
+    expect(countryCodeToD5Key('SG')).toBe('singapore');
+  });
+
+  it('returns "other" for unknown code', () => {
+    expect(countryCodeToD5Key('ZZ')).toBe('other');
   });
 });

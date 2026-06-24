@@ -217,9 +217,9 @@ describe('actionPersonalizationEngine', () => {
     expect(resolveRoleGroup('Data Analyst')).toBe('data_analyst');
   });
 
-  it('resolveRoleGroup: unknown title falls back to swe', () => {
-    expect(resolveRoleGroup('Blockchain Evangelist')).toBe('swe');
-    expect(resolveRoleGroup('')).toBe('swe');
+  it('resolveRoleGroup: unknown title falls back to professional_services', () => {
+    expect(resolveRoleGroup('Blockchain Evangelist')).toBe('professional_services');
+    expect(resolveRoleGroup('')).toBe('professional_services');
   });
 
   it('scoreToRiskLevel: maps scores to correct risk levels', () => {

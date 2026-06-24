@@ -38,4 +38,40 @@ describe("roleResolution", () => {
     expect(dba.roleGroup).toBe("data_engineer");
     expect(software.roleGroup).not.toBe(backend.roleGroup);
   });
+
+  // Regression: cloud_platform_actions.ts's ALIAS_ADDITIONS_CLOUD_PLATFORM module
+  // loads after the base HUMAN_TITLE_ALIAS_MAP and previously shadowed
+  // 'analytics engineer' / 'dbt engineer' with canonicalKey 'data_engineer',
+  // making the dedicated analytics_engineer ACTION_DB pool (and its Phase-2
+  // content) completely unreachable by title. Fixed to route to the correct
+  // analytics_engineer canonical key.
+  it("resolves Analytics Engineer / dbt Engineer to the dedicated analytics_engineer group, not data_engineer", () => {
+    expect(resolveRoleInput("Analytics Engineer").canonicalKey).toBe("analytics_engineer");
+    expect(resolveRoleInput("dbt engineer").canonicalKey).toBe("analytics_engineer");
+
+    const analyticsEng = getPersonalizedActions("Analytics Engineer", "mid", 62, "US");
+    const dataEng = getPersonalizedActions("Data Engineer", "mid", 62, "US");
+    expect(analyticsEng.roleGroup).toBe("analytics_engineer");
+    expect(analyticsEng.roleGroup).not.toBe(dataEng.roleGroup);
+  });
+
+  // Regression: manufacturing_energy_construction_actions.ts's alias module
+  // (loaded after the base map) previously routed 'quality assurance engineer'
+  // — overwhelmingly a software-QA title on a tech-dominant platform — to its
+  // manufacturing 'quality_engineer' pool (Minitab/SPC/ASQ-CQE actions),
+  // shadowing the far more relevant qa_engineer pool (SDET transition,
+  // contract testing, AI test-generation tooling) for that exact title.
+  it("resolves Quality Assurance Engineer to the software qa_engineer group, not the manufacturing quality_engineer group", () => {
+    expect(resolveRoleInput("Quality Assurance Engineer").canonicalKey).toBe("qa_engineer");
+
+    const qaEng = getPersonalizedActions("Quality Assurance Engineer", "mid", 70, "US");
+    const qaEngShort = getPersonalizedActions("QA Engineer", "mid", 70, "US");
+    expect(qaEng.roleGroup).toBe("qa_engineer");
+    expect(qaEng.roleGroup).toBe(qaEngShort.roleGroup);
+
+    // The plain 'Quality Engineer' (no "assurance") title is unambiguously
+    // manufacturing and should remain unaffected by this fix.
+    const manufacturingQuality = getPersonalizedActions("Quality Engineer", "mid", 70, "US");
+    expect(manufacturingQuality.roleGroup).toBe("quality_engineer");
+  });
 });

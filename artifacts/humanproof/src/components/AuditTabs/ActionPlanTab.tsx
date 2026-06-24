@@ -50,6 +50,8 @@ import {
   resolveRoleGroup,
   scoreToRiskLevel,
 } from "@/services/actionPersonalizationEngine";
+import { loadCompletionsLocal, loadLowRatedActionIds } from "@/services/actionCompletionService";
+import { stableActionId } from "@/services/actionIdUtil";
 import { generateCareerInsurancePlan } from "@/services/careerInsuranceEngine";
 import { generateTrajectoryProjection } from "@/services/trajectoryProjection";
 import { getMarketDemandSignals } from "@/services/marketDemandSignals";
@@ -89,26 +91,6 @@ import CompensationRiskPanel from "./common/CompensationRiskPanel";
 // smell in this file even though nothing rendered it.
 
 const getPrefix = (roleKey: string) => roleKey.split('_')[0];
-
-/**
- * Stable content-hash action ID (djb2). MUST stay byte-for-byte identical to
- * `stableActionId` in auditDataPipeline.ts — the pipeline merges personalized
- * actions into hybridResult.recommendations with `pa_<hash>` IDs, and the
- * Action Progress surface persists completion against those IDs. If this builder
- * emitted index-based IDs (`personalized_0`…) instead, the same action would
- * carry a different ID here than in the pipeline, so a checkmark set on one
- * surface would never appear on the other, and any re-order/re-audit would
- * silently shift completion state onto the wrong row. Hashing the title keys
- * completion to the action's identity, not its position.
- */
-function stableActionId(prefix: string, title: string): string {
-  let hash = 5381;
-  const s = (title ?? '').toLowerCase().trim();
-  for (let i = 0; i < s.length; i++) {
-    hash = ((hash << 5) + hash + s.charCodeAt(i)) >>> 0; // djb2
-  }
-  return `${prefix}_${hash.toString(36)}`;
-}
 
 /** Adjust deadline string by urgency multiplier (e.g. "30 days" × 1.3 → "23 days") */
 function adjustDeadline(deadline: string, multiplier: number): string {
@@ -249,7 +231,7 @@ export function buildDynamicActions(
     equityVestMonths:   uf.equityVestMonths ?? null,
     metroArea:          uf.metroArea ?? null,
   };
-  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined);
+  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadLowRatedActionIds());
   const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a) => ({
     // Match the pipeline's `pa_<hash>` scheme so completion state set here
     // and in Action Progress refer to the same row. (was `personalized_${i}`,
@@ -1816,7 +1798,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                 dualIncomeHousehold: uf2.dualIncomeHousehold ?? null,
                 priorLayoffSurvived: uf2.priorLayoffSurvived ?? null,
               };
-              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2, undefined, uf2.localCurrencyCode ?? undefined);
+              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2, undefined, uf2.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadLowRatedActionIds());
               return (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>

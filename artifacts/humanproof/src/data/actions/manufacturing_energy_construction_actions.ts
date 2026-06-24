@@ -406,7 +406,13 @@ export const ALIAS_ADDITIONS_MANUFACTURING_ENERGY_CONSTRUCTION: Record<string, {
   'logistics manager': { canonicalKey: 'supply_chain_manager', displayRole: 'Logistics Manager' },
   'procurement manager': { canonicalKey: 'supply_chain_manager', displayRole: 'Procurement Manager' },
   'quality engineer': { canonicalKey: 'quality_engineer', displayRole: 'Quality Engineer' },
-  'quality assurance engineer': { canonicalKey: 'quality_engineer', displayRole: 'Quality Assurance Engineer' },
+  // NOTE: 'quality assurance engineer' intentionally NOT aliased here. In tech
+  // hiring (this product's dominant user base) "QA Engineer" / "Quality
+  // Assurance Engineer" overwhelmingly means software QA, which already has
+  // its own dedicated, far more specific qa_engineer pool (SDET transition,
+  // contract testing, AI test-generation tooling). This alias previously
+  // silently routed that common title to the manufacturing quality_engineer
+  // pool instead, making the correct pool unreachable by its most common name.
   'lean engineer': { canonicalKey: 'lean_six_sigma_specialist', displayRole: 'Lean Engineer' },
   'six sigma black belt': { canonicalKey: 'lean_six_sigma_specialist', displayRole: 'Six Sigma Black Belt' },
   'continuous improvement manager': { canonicalKey: 'lean_six_sigma_specialist', displayRole: 'Continuous Improvement Manager' },

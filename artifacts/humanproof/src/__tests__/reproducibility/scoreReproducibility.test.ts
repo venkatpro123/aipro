@@ -519,8 +519,8 @@ describe('Score reproducibility — deterministic engine invariant', () => {
     // This test proves that referenceDate is actually being used — if the engine
     // ignored it, both dates would produce the same score regardless.
     // We pick a company with a layoff 13 months ago relative to REF.
-    // - At REF (2026-04-15): 13 months ago → score bucket: "< 18 months" = moderate
-    // - At 8 months later (2027-12-15): same layoff is now 25 months ago → drops to "old" bucket
+    // - At REF (2026-04-15): 13 months ago → score bucket: "< 18 months" = 0.42
+    // - At LATER (2027-12-15): same layoff is now 33 months ago → ">= 24 months" = 0.15
 
     const pastLayoffDate = '2025-03-10'; // 13 months before REF
     const company = makeCompany({
@@ -534,14 +534,14 @@ describe('Score reproducibility — deterministic engine invariant', () => {
     const inputsAtRef = makeInputs(company, 'Software Engineer', 'Engineering');
     const inputsLater = { ...inputsAtRef, referenceDate: new Date('2027-12-15T12:00:00.000Z') };
 
-    const scoreAtRef   = calculateLayoffScore(inputsAtRef).score;
-    const scoreLater   = calculateLayoffScore(inputsLater).score;
+    const resultAtRef = calculateLayoffScore(inputsAtRef);
+    const resultLater = calculateLayoffScore(inputsLater);
 
-    // The score MUST change as the layoff crosses the 18/24-month recency boundary.
-    // If they're equal, referenceDate is being ignored.
-    expect(scoreLater).not.toBe(scoreAtRef);
-    // The later score should be lower — the layoff is now old enough to be discounted.
-    expect(scoreLater).toBeLessThan(scoreAtRef);
+    // L2 (layoff history) is the layer directly affected by referenceDate via
+    // recency bucket scoring. The composite formula weights L2 at only 0.06,
+    // so the L2 change (~0.107) may not survive integer rounding on the final
+    // score. Assert on breakdown.L2 directly to verify the mechanism works.
+    expect(resultLater.breakdown.L2).toBeLessThan(resultAtRef.breakdown.L2);
   });
 
   it('calculatedAt reflects referenceDate, not wall-clock time', () => {

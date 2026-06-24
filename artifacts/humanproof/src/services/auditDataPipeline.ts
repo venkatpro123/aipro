@@ -108,6 +108,8 @@ import { computeMarketDemandReport } from "./roleMarketDemandService";
 // honest "using generic guidance" notice when the user's role isn't in our
 // 412-specialised database.
 import { getPersonalizedActions } from "./actionPersonalizationEngine";
+import { loadCompletionsLocal, loadLowRatedActionIds } from "./actionCompletionService";
+import { stableActionId } from "./actionIdUtil";
 // v39.0 D2: unified freshness verdict
 import { computeUnifiedFreshness } from "./freshnessUnifier";
 import { getIndustryRiskAgeDays } from "../data/industryRiskData";
@@ -598,20 +600,6 @@ function deriveSequencePhase(deadline: string): 'day1' | 'week1' | 'month1' | 'q
   if (dl.includes('3 day') || dl.includes('48 hour') || dl.includes('72 hour') || dl.includes('7 day') || dl.includes('1 week')) return 'week1';
   if (dl.includes('14 day') || dl.includes('30 day') || dl.includes('2 week') || dl.includes('month')) return 'month1';
   return 'quarter1';
-}
-
-// Stable, deterministic ID derived from an action's title. Action completion
-// state (Action Progress / PhaseProgressSystem) is keyed by action.id, so IDs
-// MUST be stable across audits — an index-based or timestamp ID would orphan a
-// user's prior completions every re-audit. A title hash is stable as long as the
-// action text is the same.
-function stableActionId(prefix: string, title: string): string {
-  let hash = 5381;
-  const s = (title ?? '').toLowerCase().trim();
-  for (let i = 0; i < s.length; i++) {
-    hash = ((hash << 5) + hash + s.charCodeAt(i)) >>> 0; // djb2
-  }
-  return `${prefix}_${hash.toString(36)}`;
 }
 
 // ── Strategy Synthesis personalization signals ────────────────────────────────
@@ -3541,6 +3529,8 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       uf45b.localCurrencyCode ?? undefined,
       _riskAppetite45b,
       _maxCost45b,
+      loadCompletionsLocal(),
+      loadLowRatedActionIds(),
     );
     (hybridResult as any).personalizedActionSet = personalizedActionSet;
     // v40.0 FIX-6: hoist the derived profileSignals to the top of hybridResult so

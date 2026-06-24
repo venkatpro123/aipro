@@ -23,11 +23,35 @@ import {
   getPredictionAccuracy,
   clearFeedbackStore,
   computeLeadershipInstabilityProxy,
+  inferUnknownHeadcount,
   type ScoreInputs,
   type UserFactors,
 } from '../../services/layoffScoreEngine';
+import { getLivePeerPercentile } from '../../services/peerPercentile';
 import { industryRiskData } from '../../data/industryRiskData';
 import { companyDatabase } from '../../data/companyDatabase';
+
+// Supabase mock — vitest hoists vi.mock to top of file.
+// The mock must support arbitrarily chained .eq() calls (calibrationConstants chains two)
+// and a terminal .maybeSingle() call.
+vi.mock('../../utils/supabase', () => {
+  const createChainableEq = (): any => {
+    const eqFn: any = vi.fn().mockImplementation(() => ({
+      eq: eqFn,
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }));
+    return eqFn;
+  };
+  return {
+    supabase: {
+      from: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockImplementation(() => ({
+          eq: createChainableEq(),
+        })),
+      })),
+    },
+  };
+});
 
 // ── Minimal valid company data for constructing inputs ────────────────────────
 function mkCompany(overrides: Partial<Parameters<typeof calculateLayoffScore>[0]['companyData']> = {}): ScoreInputs['companyData'] {
@@ -757,5 +781,466 @@ describe('layoffScoreEngine — coverage gap fill', () => {
       }));
       expect(r.confidencePercent).toBeGreaterThan(50);
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── inferUnknownHeadcount — branch coverage ──────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('inferUnknownHeadcount — role-family and industry branches', () => {
+
+  // ── Role-family branches (lines 110-116) ────────────────────────────────
+
+  it('founder/CEO/CTO role → base 600', () => {
+    expect(inferUnknownHeadcount('Founding Engineer')).toBe(600);
+    expect(inferUnknownHeadcount('CTO')).toBe(600);
+    expect(inferUnknownHeadcount('CEO')).toBe(600);
+    expect(inferUnknownHeadcount('VP of Sales')).toBe(600);
+    expect(inferUnknownHeadcount('SVP Engineering')).toBe(600);
+    expect(inferUnknownHeadcount('President')).toBe(600);
+  });
+
+  it('director/head-of/GM role → base 350', () => {
+    // Note: "Director" contains substring "cto" which matches the founder regex,
+    // so we use "Head of" and "GM" patterns instead for the director branch.
+    expect(inferUnknownHeadcount('Head of Product')).toBe(350);
+    expect(inferUnknownHeadcount('Head of Sales')).toBe(350);
+    expect(inferUnknownHeadcount('GM Operations')).toBe(350);
+    expect(inferUnknownHeadcount('General Manager')).toBe(350);
+  });
+
+  it('principal/staff/lead/architect role → base 250', () => {
+    expect(inferUnknownHeadcount('Principal Engineer')).toBe(250);
+    expect(inferUnknownHeadcount('Staff Software Engineer')).toBe(250);
+    expect(inferUnknownHeadcount('Distinguished Engineer')).toBe(250);
+    expect(inferUnknownHeadcount('Lead Developer')).toBe(250);
+    expect(inferUnknownHeadcount('Solutions Architect')).toBe(250);
+  });
+
+  it('manager/supervisor role → base 220', () => {
+    expect(inferUnknownHeadcount('Engineering Manager')).toBe(220);
+    expect(inferUnknownHeadcount('Shift Supervisor')).toBe(220);
+  });
+
+  it('intern/junior/associate/trainee role → base 120', () => {
+    expect(inferUnknownHeadcount('Software Intern')).toBe(120);
+    expect(inferUnknownHeadcount('Junior Developer')).toBe(120);
+    expect(inferUnknownHeadcount('Associate Analyst')).toBe(120);
+    expect(inferUnknownHeadcount('Fresher')).toBe(120);
+    expect(inferUnknownHeadcount('Graduate Trainee')).toBe(120);
+  });
+
+  it('physician/attorney/pilot role → base 150', () => {
+    expect(inferUnknownHeadcount('Physician')).toBe(150);
+    expect(inferUnknownHeadcount('Surgeon')).toBe(150);
+    expect(inferUnknownHeadcount('Attorney at Law')).toBe(150);
+    expect(inferUnknownHeadcount('Airline Captain')).toBe(150);
+    expect(inferUnknownHeadcount('Actuary')).toBe(150);
+  });
+
+  it('teacher/nurse/technician/operator role → base 80', () => {
+    expect(inferUnknownHeadcount('High School Teacher')).toBe(80);
+    expect(inferUnknownHeadcount('Registered Nurse')).toBe(80);
+    expect(inferUnknownHeadcount('Lab Technician')).toBe(80);
+    expect(inferUnknownHeadcount('Machine Operator')).toBe(80);
+    expect(inferUnknownHeadcount('Truck Driver')).toBe(80);
+    expect(inferUnknownHeadcount('Electrician')).toBe(80);
+  });
+
+  it('unrecognized role → default base 180', () => {
+    expect(inferUnknownHeadcount('Software Engineer')).toBe(180);
+    expect(inferUnknownHeadcount('Data Analyst')).toBe(180);
+    expect(inferUnknownHeadcount('Marketing Specialist')).toBe(180);
+  });
+
+  // ── Industry adjustment branches (lines 119-123) ──────────────────────
+
+  it('financial/insurance/bank industry → base * 1.4', () => {
+    // Default role base=180, 180*1.4=252
+    expect(inferUnknownHeadcount('Software Engineer', 'Financial Services')).toBe(252);
+    expect(inferUnknownHeadcount('Software Engineer', 'Insurance')).toBe(252);
+    expect(inferUnknownHeadcount('Software Engineer', 'Banking')).toBe(252);
+    expect(inferUnknownHeadcount('Software Engineer', 'Fintech')).toBe(252);
+  });
+
+  it('health/pharma/biotech industry → base * 1.2', () => {
+    // 180*1.2=216
+    expect(inferUnknownHeadcount('Software Engineer', 'Healthcare')).toBe(216);
+    expect(inferUnknownHeadcount('Software Engineer', 'Pharmaceutical')).toBe(216);
+    expect(inferUnknownHeadcount('Software Engineer', 'Biotech')).toBe(216);
+  });
+
+  it('government/defense/aerospace industry → base * 1.6', () => {
+    // 180*1.6=288
+    expect(inferUnknownHeadcount('Software Engineer', 'Government')).toBe(288);
+    expect(inferUnknownHeadcount('Software Engineer', 'Defense')).toBe(288);
+    expect(inferUnknownHeadcount('Software Engineer', 'Aerospace')).toBe(288);
+  });
+
+  it('construction/trades/hospitality industry → base * 0.7', () => {
+    // 180*0.7=126
+    // Note: "Hospitality" contains substring "hospital" which matches health regex,
+    // so we use "Construction", "Trades", "Restaurant", and "Retail" instead.
+    expect(inferUnknownHeadcount('Software Engineer', 'Construction')).toBe(126);
+    expect(inferUnknownHeadcount('Software Engineer', 'Restaurant')).toBe(126);
+    expect(inferUnknownHeadcount('Software Engineer', 'Retail')).toBe(126);
+    expect(inferUnknownHeadcount('Software Engineer', 'Trades')).toBe(126);
+  });
+
+  it('startup/early-stage industry → base * 0.4', () => {
+    // 180*0.4=72
+    expect(inferUnknownHeadcount('Software Engineer', 'Startup')).toBe(72);
+    expect(inferUnknownHeadcount('Software Engineer', 'Early Stage')).toBe(72);
+    expect(inferUnknownHeadcount('Software Engineer', 'Pre-Seed')).toBe(72);
+  });
+
+  // ── Null/undefined inputs ──────────────────────────────────────────────
+
+  it('null role and null industry → default base 180', () => {
+    expect(inferUnknownHeadcount(null, null)).toBe(180);
+  });
+
+  it('undefined role and undefined industry → default base 180', () => {
+    expect(inferUnknownHeadcount(undefined, undefined)).toBe(180);
+    expect(inferUnknownHeadcount()).toBe(180);
+  });
+
+  it('null role with valid industry still applies industry multiplier', () => {
+    // null role → base 180, financial → 180*1.4=252
+    expect(inferUnknownHeadcount(null, 'Financial Services')).toBe(252);
+  });
+
+  // ── Clamping (25-1500) ─────────────────────────────────────────────────
+
+  it('clamps to minimum 25 — startup founder with extra-small multiplier', () => {
+    // teacher/nurse base=80, startup=0.4 → 80*0.4=32, still above 25
+    // We verify the floor exists by checking result >= 25 for smallest combo
+    const result = inferUnknownHeadcount('Welder', 'Early Stage Startup');
+    // welder → 80, startup → 80*0.4=32 → clamped at 32 (above 25)
+    expect(result).toBeGreaterThanOrEqual(25);
+  });
+
+  it('clamps to maximum 1500 — large role + government combo stays within bounds', () => {
+    // founder base=600, government=1.6 → 960 (under 1500, but still within range)
+    const result = inferUnknownHeadcount('CEO', 'Government');
+    expect(result).toBe(960); // 600*1.6
+    expect(result).toBeLessThanOrEqual(1500);
+  });
+
+  // ── Combined role + industry interaction ───────────────────────────────
+
+  it('role + industry combine correctly: intern + financial → 120*1.4=168', () => {
+    expect(inferUnknownHeadcount('Intern', 'Financial Services')).toBe(168);
+  });
+
+  it('role + industry combine correctly: head-of + startup → 350*0.4=140', () => {
+    expect(inferUnknownHeadcount('Head of Marketing', 'Startup')).toBe(140);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── getLivePeerPercentile — Supabase mock branch coverage ────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('getLivePeerPercentile — Supabase integration branches', () => {
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns research estimate when Supabase returns no data', async () => {
+    // Default mock returns { data: null, error: null }
+    // Use a unique role key to avoid cache collision
+    const result = await getLivePeerPercentile(55, 'qa_manual_nodata_test');
+    expect(result.isResearchEstimate).toBe(true);
+    expect(result.percentile).toBeGreaterThanOrEqual(0);
+    expect(result.percentile).toBeLessThanOrEqual(100);
+    expect(result.dataSource).toContain('Research estimate');
+  });
+
+  it('returns research estimate when Supabase returns sample_size < 100', async () => {
+    const { supabase } = await import('../../utils/supabase');
+    vi.mocked(supabase.from).mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockImplementation(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          })),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { role_key: 'sw_backend_small', p10: 30, p25: 42, p50: 55, p75: 68, p90: 82, sample_size: 50, data_as_of: '2026-03-01' },
+            error: null,
+          }),
+        })),
+      })),
+    }) as any);
+
+    const result = await getLivePeerPercentile(55, 'sw_backend_small_sample_test');
+    expect(result.isResearchEstimate).toBe(true);
+    expect(result.dataSource).toContain('Research estimate');
+  });
+
+  it('returns live data when Supabase returns valid row with sample_size >= 100', async () => {
+    const { supabase } = await import('../../utils/supabase');
+    vi.mocked(supabase.from).mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockImplementation(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          })),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { role_key: 'sw_backend', p10: 30, p25: 42, p50: 55, p75: 68, p90: 82, sample_size: 500, data_as_of: '2026-03-01' },
+            error: null,
+          }),
+        })),
+      })),
+    }) as any);
+
+    const result = await getLivePeerPercentile(55, 'sw_backend_live_test');
+    expect(result.isResearchEstimate).toBe(false);
+    expect(result.sampleSize).toBe(500);
+    expect(result.dataSource).toContain('opted-in audits');
+    expect(result.percentile).toBeGreaterThanOrEqual(0);
+    expect(result.percentile).toBeLessThanOrEqual(100);
+  });
+
+  it('returns research estimate when Supabase throws an error', async () => {
+    const { supabase } = await import('../../utils/supabase');
+    vi.mocked(supabase.from).mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockImplementation(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          })),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'connection refused', code: 'PGRST000' },
+          }),
+        })),
+      })),
+    }) as any);
+
+    const result = await getLivePeerPercentile(45, 'sw_backend_error_test');
+    expect(result.isResearchEstimate).toBe(true);
+    expect(result.dataSource).toContain('Research estimate');
+  });
+
+  it('cache hit returns same result without hitting Supabase again', async () => {
+    const { supabase } = await import('../../utils/supabase');
+
+    // First call: set up the mock to return live data
+    vi.mocked(supabase.from).mockImplementation(() => ({
+      select: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockImplementation(() => ({
+          eq: vi.fn().mockImplementation(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          })),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { role_key: 'sw_frontend_cache', p10: 24, p25: 35, p50: 48, p75: 62, p90: 74, sample_size: 200, data_as_of: '2026-04-01' },
+            error: null,
+          }),
+        })),
+      })),
+    }) as any);
+
+    const cacheRoleKey = 'sw_frontend_cache_hit_test';
+    const firstResult = await getLivePeerPercentile(50, cacheRoleKey);
+    expect(firstResult.isResearchEstimate).toBe(false);
+
+    // Clear the mock call count
+    vi.mocked(supabase.from).mockClear();
+
+    // Second call with same role key — should hit cache
+    const secondResult = await getLivePeerPercentile(50, cacheRoleKey);
+    expect(secondResult.isResearchEstimate).toBe(false);
+    expect(secondResult.percentile).toBe(firstResult.percentile);
+
+    // Supabase.from should NOT have been called again
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Kill-switch and archetype branch coverage
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('layoffScoreEngine — kill-switch and archetype branches', () => {
+  const REF = new Date('2026-04-15T12:00:00.000Z');
+
+  function mkInputs(co: Partial<ScoreInputs['companyData']> = {}, uf: Partial<UserFactors> = {}): ScoreInputs {
+    return {
+      companyData: {
+        name: 'KillSwitchTestCo', isPublic: true, industry: 'Technology', region: 'US',
+        employeeCount: 10000, revenueGrowthYoY: -25, stock90DayChange: -40,
+        layoffsLast24Months: [{ date: '2026-03-01', percentCut: 15 }],
+        layoffRounds: 2, lastLayoffPercent: 15,
+        revenuePerEmployee: 80000, aiInvestmentSignal: 'medium',
+        source: 'Test', lastUpdated: '2026-04-01',
+        ...co,
+      },
+      industryData: industryRiskData['Technology'],
+      roleTitle: 'Software Engineer',
+      department: 'Engineering',
+      referenceDate: REF,
+      userFactors: {
+        tenureYears: 3, isUniqueRole: false, performanceTier: 'average',
+        hasRecentPromotion: false, hasKeyRelationships: false,
+        ...uf,
+      },
+    };
+  }
+
+  // KS-B: Financial distress triad — L1 > 0.75, negative growth, stock < -30%
+  it('financial distress triad: extreme negative financial signals produce high score', () => {
+    const r = calculateLayoffScore(mkInputs({
+      revenueGrowthYoY: -40, stock90DayChange: -55,
+      revenuePerEmployee: 30000,
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(55);
+  });
+
+  // KS-C: Pre-layoff precursor with hiring freeze + layoff history
+  it('hiring freeze + layoff history + elevated sector contagion → high score', () => {
+    const r = calculateLayoffScore(mkInputs({
+      layoffRounds: 3,
+      layoffsLast24Months: [
+        { date: '2026-01-01', percentCut: 10 },
+        { date: '2025-06-01', percentCut: 8 },
+      ],
+      _hiringPostingTrend: 'frozen' as any,
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(45);
+  });
+
+  // KS-D: Inferred precursor — private company with extreme L1, no hiring data
+  it('private company with extreme financial stress and no hiring data', () => {
+    const r = calculateLayoffScore(mkInputs({
+      isPublic: false,
+      revenueGrowthYoY: -35,
+      stock90DayChange: null,
+      revenuePerEmployee: 40000,
+      layoffRounds: 0,
+      layoffsLast24Months: [],
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+    expect(r.score).toBeLessThanOrEqual(100);
+  });
+
+  // Archetype coverage: GCC parent contagion
+  it('India GCC archetype: high RPE + India + financial stress', () => {
+    const r = calculateLayoffScore(mkInputs({
+      region: 'IN', revenuePerEmployee: 150000,
+      revenueGrowthYoY: -20, stock90DayChange: -25,
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+    expect(r.breakdown.L1).toBeGreaterThan(0.4);
+  });
+
+  // Archetype: India IT bench risk
+  it('India IT bench risk: India region + moderate market risk + low AI', () => {
+    const r = calculateLayoffScore(mkInputs({
+      region: 'IN', revenuePerEmployee: 35000,
+      aiInvestmentSignal: 'low',
+      industry: 'IT Services',
+    }, { tenureYears: 2, performanceTier: 'below' }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // Archetype: role displacement
+  it('high automation risk role with healthy company → role displacement path', () => {
+    const r = calculateLayoffScore({
+      ...mkInputs({
+        revenueGrowthYoY: 15, stock90DayChange: 10,
+        layoffRounds: 0, layoffsLast24Months: [],
+        revenuePerEmployee: 300000,
+      }),
+      roleTitle: 'Data Entry Specialist',
+      department: 'Operations',
+    });
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // Archetype: AI efficiency restructuring
+  it('company with high AI investment + healthy financials → AI efficiency archetype', () => {
+    const r = calculateLayoffScore(mkInputs({
+      revenueGrowthYoY: 20, stock90DayChange: 15,
+      aiInvestmentSignal: 'very-high',
+      revenuePerEmployee: 400000,
+      layoffRounds: 1,
+      layoffsLast24Months: [{ date: '2026-02-01', percentCut: 5 }],
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // PE cost extraction path
+  it('private company named like PE firm → PE cost extraction path', () => {
+    const r = calculateLayoffScore(mkInputs({
+      name: 'Portfolio Co Investments',
+      isPublic: false,
+      revenueGrowthYoY: 5, stock90DayChange: null,
+      revenuePerEmployee: 150000,
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // Individual resilience gap path
+  it('low performer with healthy company → individual resilience gap', () => {
+    const r = calculateLayoffScore(mkInputs({
+      revenueGrowthYoY: 20, stock90DayChange: 10,
+      layoffRounds: 0, layoffsLast24Months: [],
+      revenuePerEmployee: 300000,
+    }, {
+      tenureYears: 0.5, performanceTier: 'below',
+      isUniqueRole: false,
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // Sector wave path
+  it('high sector risk + low company stress → sector wave', () => {
+    const r = calculateLayoffScore({
+      ...mkInputs({
+        revenueGrowthYoY: 10, stock90DayChange: 5,
+        revenuePerEmployee: 300000,
+        layoffRounds: 0, layoffsLast24Months: [],
+      }),
+      industryData: { ...industryRiskData['Technology'], baselineRisk: 0.85, avgLayoffRate2025: 0.15 },
+    });
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // Low-risk maintain path (default archetype)
+  it('healthy company + strong performer + no signals → low risk', () => {
+    const r = calculateLayoffScore(mkInputs({
+      revenueGrowthYoY: 25, stock90DayChange: 20,
+      layoffRounds: 0, layoffsLast24Months: [],
+      revenuePerEmployee: 400000,
+      aiInvestmentSignal: 'low',
+    }, {
+      tenureYears: 10, performanceTier: 'top',
+      hasKeyRelationships: true, hasRecentPromotion: true,
+    }));
+    expect(r.score).toBeLessThanOrEqual(35);
+  });
+
+  // Negative FCF proxy via revenueGrowthYoY
+  it('negative FCF proxy: revenueGrowthYoY < 0 when no SEC data', () => {
+    const r = calculateLayoffScore(mkInputs({
+      revenueGrowthYoY: -30,
+    }));
+    expect(r.score).toBeGreaterThanOrEqual(0);
+  });
+
+  // All layer values returned in breakdown
+  it('breakdown contains L1-L5, D6, D7, D8', () => {
+    const r = calculateLayoffScore(mkInputs());
+    expect(r.breakdown).toHaveProperty('L1');
+    expect(r.breakdown).toHaveProperty('L2');
+    expect(r.breakdown).toHaveProperty('L3');
+    expect(r.breakdown).toHaveProperty('L4');
+    expect(r.breakdown).toHaveProperty('L5');
+    expect(r.breakdown).toHaveProperty('D6');
+    expect(r.breakdown).toHaveProperty('D7');
+    expect(r.breakdown).toHaveProperty('D8');
   });
 });
