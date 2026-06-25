@@ -37,6 +37,7 @@ import { TabErrorBoundary } from '../common/TabErrorBoundary';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import EmergencyModeBanner from '../common/EmergencyModeBanner';
 import { AICommentary } from '../common/AICommentary';
+import { CareerCopilotButton } from '../../CareerCopilot';
 import { riskColor, riskLabel } from '../../../lib/riskTokens';
 import { track } from '../../../services/analyticsService';
 import { fetchUserProfile, type UserProfile } from '../../../services/userProfileService';
@@ -853,6 +854,20 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         {/* ── Wave 3.4: Action completion celebration toast ─────────────── */}
         {/* Fixed bottom-right, appears when 'hp.action.milestone' fires.   */}
         <ActionCelebrationToast />
+
+        {/* ── Phase 17: Career Copilot — contextual guidance panel ──────── */}
+        <CareerCopilotButton context={{
+          score: result.total,
+          workTypeKey: result.workTypeKey,
+          roleTitle: (result as any).roleTitle,
+          industryKey: result.industryKey,
+          tenureYears: result.tenureYears ?? undefined,
+          companyName: result.companyName ?? (companyData as any)?.name,
+          topDriverLabel: (result as any).strategySynthesis?.singleBiggestRisk,
+          topAction: result.recommendations?.[0]?.title,
+          skillGapCount: (result as any).skillGapIntelligence?.upskillPriority?.length,
+          escapePaths: (result as any).escapeReport?.paths?.length,
+        }} />
 
       </div>
     </GlobalErrorBoundary>
