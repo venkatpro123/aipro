@@ -76,7 +76,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p
-              className="text-[12px] font-bold leading-tight truncate"
+              className="text-[12px] font-bold leading-tight sm:truncate"
               style={{ color: empty ? 'rgba(255,255,255,0.30)' : 'rgba(255,255,255,0.85)' }}
             >
               {title}

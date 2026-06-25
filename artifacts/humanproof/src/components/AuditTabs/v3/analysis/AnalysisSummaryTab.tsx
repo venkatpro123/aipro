@@ -12,6 +12,8 @@ import { ScoreRingHero, TopDriversStrip, type DriverItem } from '../SummaryTab';
 import { ReasoningSpineCard } from '../../common/ReasoningSpineCard';
 import { VerdictReassurance } from '../../common/VerdictReassurance';
 import { ScoreTrendStrip } from '../../common/ScoreTrendStrip';
+import { RiskTrendChart } from '../../common/RiskTrendChart';
+import { getLayoffScoreHistory } from '../../../../services/scoreStorageService';
 import { useDashboardAdaptation } from '../../../../hooks/useDashboardAdaptation';
 import { riskColor, riskLabel, riskGradient } from '../../../../lib/riskTokens';
 import { computeCanonicalConfidence } from '../../../../services/canonicalConfidence';
@@ -311,6 +313,16 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
       {r.scoreTrajectory && (
         <ScoreTrendStrip scoreTrajectory={r.scoreTrajectory} currentScore={score} />
       )}
+
+      {/* Risk Trend Chart — visual score evolution over audit history */}
+      {(() => {
+        try {
+          const compName = companyData?.name ?? r.companyName ?? '';
+          const history = getLayoffScoreHistory()
+            .filter((e: any) => compName && e.companyName?.toLowerCase() === compName.toLowerCase());
+          return history.length >= 1 ? <RiskTrendChart history={history} currentScore={score} /> : null;
+        } catch { return null; }
+      })()}
 
       {/* Primary recommendation — dynamic accent via CSS variables */}
       {primaryRec && (

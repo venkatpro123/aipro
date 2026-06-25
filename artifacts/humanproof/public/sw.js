@@ -68,3 +68,37 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
+
+// Push notification handler
+self.addEventListener('push', event => {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    const title = data.title || 'HumanProof Alert';
+    const options = {
+      body: data.body || '',
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: data.tag || 'hp-push',
+      renotify: true,
+      data: { url: data.url || '/' },
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch {}
+});
+
+// Notification click — open or focus the app
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const client of list) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
+});

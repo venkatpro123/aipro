@@ -9,6 +9,9 @@ import {
   useLocation,
 } from "react-router-dom";
 import { LiquidAIBackground } from "./components/LiquidAIBackground";
+import { AutoBreadcrumb } from "./components/AutoBreadcrumb";
+import { CommandPalette } from "./components/CommandPalette";
+import { AchievementToast } from "./components/AchievementToast";
 import {
   LayoutDashboard,
   Sparkles,
@@ -20,6 +23,11 @@ import {
   Sun,
   Moon,
   ArrowUpRight,
+  Home,
+  DollarSign,
+  BookOpen,
+  BarChart3,
+  Shield,
 } from "lucide-react";
 
 // Pages — critical loads
@@ -60,13 +68,11 @@ import { page as trackPage, identify } from "./services/analyticsService";
 import { Toaster as SonnerToaster } from "./components/ui/sonner";
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
+import { BrandedLoader } from "./components/BrandedLoader";
 function PageLoader() {
   return (
     <div className="min-h-[50vh] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="spinner" />
-        <span className="label-xs" style={{ color: "var(--text-3)" }}>Loading module…</span>
-      </div>
+      <BrandedLoader message="Loading module…" size="lg" />
     </div>
   );
 }
@@ -130,12 +136,17 @@ const NAV_ITEMS = [
 ];
 
 const MOBILE_PRIMARY = [
+  { to: "/", label: "Home", Icon: Home },
   { to: "/terminal", label: "Layoff Audit", Icon: LayoutDashboard },
   { to: "/risk-calculator", label: "Risk Calc", Icon: Sparkles },
 ];
 
 // Secondary nav items — appear in the "More" slide-up sheet.
 const MOBILE_MORE: Array<{ to: string; label: string; Icon: React.ElementType }> = [
+  { to: "/pricing", label: "Pricing", Icon: DollarSign },
+  { to: "/intelligence", label: "Intelligence", Icon: BookOpen },
+  { to: "/predictions", label: "Predictions", Icon: BarChart3 },
+  { to: "/certification", label: "Certification", Icon: Shield },
   { to: "/settings", label: "Settings", Icon: Settings },
 ];
 
@@ -265,42 +276,6 @@ function AppNav({
             ) : null}
           </div>
 
-          {/* Mobile compact bar — theme + auth pill only (bottom nav handles routing) */}
-          <div className="nav-mobile-actions">
-            <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
-              <ThemeIcon isDark={isDark} />
-            </button>
-            {user ? (
-              <Link
-                to="/settings"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 34,
-                  height: 34,
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, var(--cyan) 0%, #7c3aed 100%)",
-                  color: "#000",
-                  textDecoration: "none",
-                  fontSize: "0.7rem",
-                  fontWeight: 800,
-                  fontFamily: "var(--font-display)",
-                }}
-                aria-label="Settings"
-              >
-                {(user.email?.[0] ?? "U").toUpperCase()}
-              </Link>
-            ) : (
-              <button
-                onClick={onAuthOpen}
-                className="btn btn-primary btn-sm"
-                style={{ height: 34, padding: "0 14px", fontSize: "0.78rem" }}
-              >
-                Sign in
-              </button>
-            )}
-          </div>
         </div>
       </nav>
     </header>
@@ -722,6 +697,9 @@ function AppContent() {
 
       <AppNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
 
+      {/* Breadcrumb trail for deep pages — auto-generates from URL path */}
+      <AutoBreadcrumb className="container" />
+
       <main id="main-content" style={{ position: "relative", zIndex: 1 }}>
         <GlobalErrorBoundary>
           <Suspense fallback={<PageLoader />}>
@@ -754,6 +732,8 @@ function AppContent() {
         <MobileBottomNav isDark={isDark} toggleTheme={toggleTheme} onAuthOpen={openAuth} />
       )}
 
+      <CommandPalette />
+      <AchievementToast />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <SonnerToaster position="bottom-right" richColors closeButton />
     </div>

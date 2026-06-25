@@ -5,6 +5,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Shield, AlertTriangle, CheckCircle, Zap } from "lucide-react";
 import type { FinancialRunwayAssessment, RunwaySituation } from "../../../services/financialRunwayService";
+import { FinancialRunwayIllustration } from "../../illustrations/AdditionalIllustrations";
 
 interface UserFinancialRunwayPanelProps {
   userFinancialRunway: FinancialRunwayAssessment | undefined;
@@ -72,14 +73,17 @@ const UserFinancialRunwayPanel: React.FC<UserFinancialRunwayPanelProps> = ({ use
       {/* Runway months — prominently displayed */}
       {userFinancialRunway.runwayMonths !== null && (
         <div
-          className="rounded-xl p-3 mb-3 text-center"
+          className="rounded-xl p-3 mb-3 flex items-center gap-3"
           style={{ background: `${color}12`, border: `1px solid ${color}24` }}
         >
-          <div className="text-2xl font-black" style={{ color }}>
-            {userFinancialRunway.runwayMonths}
-          </div>
-          <div className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            months runway
+          <FinancialRunwayIllustration size={44} className="flex-shrink-0 opacity-80" />
+          <div className="flex-1 text-center">
+            <div className="text-2xl font-black" style={{ color }}>
+              {userFinancialRunway.runwayMonths}
+            </div>
+            <div className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              months runway
+            </div>
           </div>
         </div>
       )}

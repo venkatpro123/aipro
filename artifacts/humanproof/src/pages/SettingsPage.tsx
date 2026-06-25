@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AchievementGallery } from '../components/AchievementGallery';
 import { useUserPlan, planDisplayName } from '../services/subscriptionService';
 import {
   listApiKeys,
@@ -88,6 +89,9 @@ function AccountTab() {
           {plan === 'free' ? 'Upgrade →' : 'Manage plan →'}
         </a>
         <a href="/team" className="btn-teal" style={{ padding: '10px 18px' }}>Team dashboard</a>
+      </div>
+      <div style={{ marginTop: 32 }}>
+        <AchievementGallery />
       </div>
     </Panel>
   );

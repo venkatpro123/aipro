@@ -13,7 +13,11 @@ import {
 } from "../../services/companyIntelligenceService";
 import { CompanyData } from "../../data/companyDatabase";
 import { profileUnknownCompany } from "../../services/ensemble/quickProfilerAgent";
-import { TrendingUp, TrendingDown, Minus, Search, CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
+import {
+  TrendingUp, TrendingDown, Minus, Search, CheckCircle2, ArrowRight, ChevronRight,
+  Sprout, Calendar, Briefcase, Trophy, GraduationCap, Target, Star, Sparkles,
+  AlertTriangle, RefreshCw, Gem, Laptop, Handshake, ClipboardList, Microscope, Crown, Zap,
+} from "lucide-react";
 import type { UniquenessDepth, KnowledgeType } from "../../services/layoffScoreEngine";
 import {
   searchOracleRoles,
@@ -142,13 +146,13 @@ const RoleIntelCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
       </p>
       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
         {entry.topSafeSkill && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
-            ✓ {entry.topSafeSkill.slice(0, 22)}
+          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+            <CheckCircle2 size={11} strokeWidth={2} />{entry.topSafeSkill.slice(0, 22)}
           </span>
         )}
         {entry.topAtRiskSkill && entry.topAtRiskSkill !== 'None' && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
-            ⚡ {entry.topAtRiskSkill.slice(0, 22)}
+          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
+            <Zap size={11} strokeWidth={2} />{entry.topAtRiskSkill.slice(0, 22)}
           </span>
         )}
         <div className="flex items-center gap-1 ml-auto">
@@ -482,7 +486,21 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   return (
     <div
       className="flex flex-col"
-      style={{ minHeight: 520, background: 'rgba(9,12,20,1)', borderRadius: 20, overflow: 'hidden', position: 'relative' }}
+      // Intentionally always-dark: every label/border in this wizard is a
+      // literal rgba(255,255,255,…) value tuned for a dark surface, so the
+      // card stays dark in both themes rather than flipping to a near-white
+      // background that would make its own text illegible. The border/shadow
+      // below exist so this reads as a deliberate dark panel against a light
+      // page, not a leftover light-mode bug.
+      style={{
+        minHeight: 520,
+        background: 'rgba(9,12,20,1)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
+        borderRadius: 20,
+        overflow: 'hidden',
+        position: 'relative',
+      }}
     >
       {/* ── Progress bar ───────────────────────────────────────────────────── */}
       <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
@@ -532,7 +550,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
               <div>
                 {profileFailed && (
                   <div className="rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                    <span className="text-sm">⚠</span>
+                    <AlertTriangle size={14} strokeWidth={2} style={{ color: '#f59e0b', flexShrink: 0 }} />
                     <p className="text-xs" style={{ color: '#f59e0b' }}>Not in our database — using industry defaults.</p>
                   </div>
                 )}
@@ -727,10 +745,10 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             {qStep === 2 && (
               <div className="flex flex-col gap-3">
                 {[
-                  { val: 0.3, label: 'Less than 6 months', desc: 'Still in probation period', icon: '🌱' },
-                  { val: 1.5, label: '1 – 2 years',         desc: 'Building credibility',       icon: '📅' },
-                  { val: 3.5, label: '3 – 5 years',         desc: 'Established contributor',    icon: '💼' },
-                  { val: 7,   label: '5+ years',             desc: 'Long-term institutional asset', icon: '🏆' },
+                  { val: 0.3, label: 'Less than 6 months', desc: 'Still in probation period', icon: <Sprout size={18} strokeWidth={1.8} /> },
+                  { val: 1.5, label: '1 – 2 years',         desc: 'Building credibility',       icon: <Calendar size={18} strokeWidth={1.8} /> },
+                  { val: 3.5, label: '3 – 5 years',         desc: 'Established contributor',    icon: <Briefcase size={18} strokeWidth={1.8} /> },
+                  { val: 7,   label: '5+ years',             desc: 'Long-term institutional asset', icon: <Trophy size={18} strokeWidth={1.8} /> },
                 ].map(opt => (
                   <OptionCard
                     key={opt.val}
@@ -748,10 +766,10 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             {qStep === 3 && (
               <div className="flex flex-col gap-3">
                 {[
-                  { val: 1,   label: '0 – 2 years',   desc: 'Early career',            icon: '🎓' },
-                  { val: 3.5, label: '2 – 5 years',   desc: 'Mid-level professional',  icon: '📈' },
-                  { val: 7,   label: '5 – 10 years',  desc: 'Experienced professional', icon: '🎯' },
-                  { val: 15,  label: '15+ years',      desc: 'Senior / expert',          icon: '⭐' },
+                  { val: 1,   label: '0 – 2 years',   desc: 'Early career',            icon: <GraduationCap size={18} strokeWidth={1.8} /> },
+                  { val: 3.5, label: '2 – 5 years',   desc: 'Mid-level professional',  icon: <TrendingUp size={18} strokeWidth={1.8} /> },
+                  { val: 7,   label: '5 – 10 years',  desc: 'Experienced professional', icon: <Target size={18} strokeWidth={1.8} /> },
+                  { val: 15,  label: '15+ years',      desc: 'Senior / expert',          icon: <Star size={18} strokeWidth={1.8} /> },
                 ].map(opt => (
                   <OptionCard
                     key={opt.val}
@@ -769,9 +787,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             {qStep === 4 && (
               <div className="flex flex-col gap-3">
                 {[
-                  { val: 'top' as const,     label: 'Top performer',        desc: 'Exceeding targets consistently', icon: '🌟', accent: '#10b981' },
-                  { val: 'average' as const, label: 'Meeting expectations', desc: 'Solid contributor, on track',     icon: '✅', accent: '#22d3ee' },
-                  { val: 'below' as const,   label: 'Needs improvement',    desc: 'Below expectations recently',    icon: '⚠️', accent: '#f59e0b' },
+                  { val: 'top' as const,     label: 'Top performer',        desc: 'Exceeding targets consistently', icon: <Sparkles size={18} strokeWidth={1.8} />, accent: '#10b981' },
+                  { val: 'average' as const, label: 'Meeting expectations', desc: 'Solid contributor, on track',     icon: <CheckCircle2 size={18} strokeWidth={1.8} />, accent: '#22d3ee' },
+                  { val: 'below' as const,   label: 'Needs improvement',    desc: 'Below expectations recently',    icon: <AlertTriangle size={18} strokeWidth={1.8} />, accent: '#f59e0b' },
                 ].map(opt => (
                   <OptionCard
                     key={opt.val}
@@ -791,9 +809,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
               <div>
                 <div className="flex flex-col gap-3">
                   {[
-                    { val: 'generic',              label: 'Easily replaceable',       desc: 'Role exists at thousands of companies', icon: '🔄', accent: '#94a3b8' },
-                    { val: 'functional_specialist', label: 'Specialist',               desc: 'Unique expertise but hireable',         icon: '🎯', accent: '#22d3ee' },
-                    { val: 'critical_knowledge',   label: 'Irreplaceable knowledge',  desc: 'Institutional knowledge that lives in you', icon: '💎', accent: '#a78bfa' },
+                    { val: 'generic',              label: 'Easily replaceable',       desc: 'Role exists at thousands of companies', icon: <RefreshCw size={18} strokeWidth={1.8} />, accent: '#94a3b8' },
+                    { val: 'functional_specialist', label: 'Specialist',               desc: 'Unique expertise but hireable',         icon: <Target size={18} strokeWidth={1.8} />, accent: '#22d3ee' },
+                    { val: 'critical_knowledge',   label: 'Irreplaceable knowledge',  desc: 'Institutional knowledge that lives in you', icon: <Gem size={18} strokeWidth={1.8} />, accent: '#a78bfa' },
                   ].map(opt => (
                     <OptionCard
                       key={opt.val}
@@ -823,11 +841,11 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                         </p>
                         <div className="flex flex-col gap-2.5">
                           {[
-                            { val: 'system_specific',       label: 'Systems',      desc: 'Legacy code or proprietary tech',       icon: '💻' },
-                            { val: 'client_relationship',   label: 'Client trust', desc: 'Personal client relationships',          icon: '🤝' },
-                            { val: 'process_institutional', label: 'Process',      desc: 'Undocumented tribal knowledge',           icon: '📋' },
-                            { val: 'domain_expert',         label: 'Domain',       desc: 'Deep regulatory or domain expertise',    icon: '🔬' },
-                            { val: 'leadership_capital',    label: 'Leadership',   desc: 'Org authority and team trust',            icon: '👑' },
+                            { val: 'system_specific',       label: 'Systems',      desc: 'Legacy code or proprietary tech',       icon: <Laptop size={18} strokeWidth={1.8} /> },
+                            { val: 'client_relationship',   label: 'Client trust', desc: 'Personal client relationships',          icon: <Handshake size={18} strokeWidth={1.8} /> },
+                            { val: 'process_institutional', label: 'Process',      desc: 'Undocumented tribal knowledge',           icon: <ClipboardList size={18} strokeWidth={1.8} /> },
+                            { val: 'domain_expert',         label: 'Domain',       desc: 'Deep regulatory or domain expertise',    icon: <Microscope size={18} strokeWidth={1.8} /> },
+                            { val: 'leadership_capital',    label: 'Leadership',   desc: 'Org authority and team trust',            icon: <Crown size={18} strokeWidth={1.8} /> },
                           ].map(opt => (
                             <OptionCard
                               key={opt.val}

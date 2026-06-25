@@ -29,7 +29,7 @@
 import React, { Suspense, lazy, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Building2, Shield, Zap } from 'lucide-react';
+import { TrendingUp, Building2, Shield, Zap, X } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import { GlobalErrorBoundary } from '../../GlobalErrorBoundary';
@@ -57,8 +57,13 @@ import {
   type ReEngagementTrigger,
 } from '../../../services/reEngagementService';
 import { ActionCelebrationToast } from '../../ActionCelebration/ActionCelebrationToast';
+import { useSwipeGesture } from '../../../hooks/useSwipeGesture';
+import { ReturnVisitPanel } from '../common/ReturnVisitPanel';
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
 import { onNewLayoffEvent } from '../../../data/layoffNewsCache';
+import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
+import { checkAndUnlockAchievements } from '../../../services/achievementService';
+import { loadCompletionsLocal } from '../../../services/actionCompletionService';
 
 // ── View mode imports (Guidance / Intelligence toggle) ───────────────────────
 import { useViewMode } from '../../../hooks/useViewMode';
@@ -406,6 +411,16 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       clearReEngagementState();      // Fresh audit → no immediate re-engagement nudge
       setReEngagementDismissed(true); // Hide any currently-showing nudge
     }
+    // Achievement checks on audit complete
+    try {
+      const history = getLayoffScoreHistory();
+      const prev = history.length >= 2 ? history[history.length - 2] : null;
+      checkAndUnlockAchievements({
+        auditCount: history.length,
+        currentScore: result.total,
+        previousScore: prev?.score,
+      });
+    } catch {}
   }, [result]);
 
   // Wave 7.1: check for intelligence updates since last audit
@@ -534,6 +549,19 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       window.scrollTo({ top, behavior: 'smooth' });
     }
   };
+
+  // Mobile swipe gesture for tab navigation
+  const SWIPE_TABS: TabValue[] = ['summary', 'company', 'protection', 'actions'];
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: () => {
+      const idx = SWIPE_TABS.indexOf(activeTab);
+      if (idx < SWIPE_TABS.length - 1) handleTabChange(SWIPE_TABS[idx + 1]);
+    },
+    onSwipeRight: () => {
+      const idx = SWIPE_TABS.indexOf(activeTab);
+      if (idx > 0) handleTabChange(SWIPE_TABS[idx - 1]);
+    },
+  });
 
   const tabProps = useMemo(() => ({
     result, companyData,
@@ -670,10 +698,10 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               <button
                 type="button"
                 onClick={() => setReEngagementDismissed(true)}
-                className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity text-[10px] px-1 text-token-1"
+                className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity px-1 text-token-1"
                 aria-label="Dismiss"
               >
-                ✕
+                <X size={12} strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -693,10 +721,53 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           </div>
         )}
 
+        {/* ── Return Visit Panel — shows "Welcome Back" for returning users ── */}
+        {(() => {
+          try {
+            const history = getLayoffScoreHistory();
+            const compName = companyData?.name ?? (result as any).companyName ?? '';
+            const matching = history.filter(e => compName && e.companyName?.toLowerCase() === compName.toLowerCase());
+            const last = matching.at(-1);
+            if (last) {
+              const daysSince = Math.max(1, Math.round((Date.now() - new Date(last.timestamp).getTime()) / 86400000));
+              if (daysSince >= 1) {
+                return (
+                  <div className="px-4 pt-3 sm:px-0">
+                    <ReturnVisitPanel
+                      daysSince={daysSince}
+                      scoreBefore={last.score}
+                      scoreNow={result.total}
+                      newSignals={intelligenceUpdate?.signalCount ?? 0}
+                      companyName={compName || undefined}
+                      completedActions={loadCompletionsLocal().size}
+                      marketChanges={intelligenceUpdate?.topHeadline ? [{
+                        label: 'Breaking news',
+                        direction: 'up',
+                        detail: intelligenceUpdate.topHeadline,
+                      }] : undefined}
+                    />
+                  </div>
+                );
+              }
+            }
+          } catch {}
+          return null;
+        })()}
+
         {/* ── Content area — Guidance / Analysis / Beast ── */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+        <div onTouchStart={swipeHandlers.onTouchStart} onTouchEnd={swipeHandlers.onTouchEnd}>
+        <AnimatePresence mode="wait">
         {viewMode === 'guidance' ? (
           /* ── Guidance Mode ── */
-          <div className="hp-guidance-content px-3 pt-3 sm:px-0 sm:pt-0">
+          <motion.div
+            key="guidance-view"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="hp-guidance-content px-3 pt-3 sm:px-0 sm:pt-0"
+          >
             <TabErrorBoundary tabLabel="Guidance">
               <Suspense fallback={<SummaryTabSkeleton />}>
                 <GuidanceView
@@ -711,10 +782,17 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 />
               </Suspense>
             </TabErrorBoundary>
-          </div>
+          </motion.div>
         ) : viewMode === 'analysis' ? (
           /* ── Analysis Mode ── */
-          <div className="hp-analysis-content px-3 pt-3 sm:px-0 sm:pt-0">
+          <motion.div
+            key="analysis-view"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="hp-analysis-content px-3 pt-3 sm:px-0 sm:pt-0"
+          >
             <TabErrorBoundary tabLabel="Analysis">
               <Suspense fallback={<SummaryTabSkeleton />}>
                 <AnalysisView
@@ -729,7 +807,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 />
               </Suspense>
             </TabErrorBoundary>
-          </div>
+          </motion.div>
         ) : (
           /* ── Beast Mode: single-scroll command center — all 6 sections stacked ── */
           <>
@@ -763,6 +841,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             />
           </>
         )}
+        </AnimatePresence>
+
+        </div>{/* end swipe gesture wrapper */}
 
         {/* ── Wave 7.3: AI Commentary — per-tab floating guidance bubble ──── */}
         {/* Fixed bottom-center overlay, appears 2s after tab load, 1× per session. */}

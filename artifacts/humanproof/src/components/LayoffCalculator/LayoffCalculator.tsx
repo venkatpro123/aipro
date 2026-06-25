@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, lazy, Suspense } from "react";
+import { CheckCircle2, XCircle, AlertTriangle, Info } from "lucide-react";
 import { getEffectiveCommunityShare } from "../../services/gdprService";
 import { useLayoff } from "../../context/LayoffContext";
 import { LayoffInputForm } from "./LayoffInputForm";
@@ -129,16 +130,16 @@ const Toast: React.FC<{
   const getStyle = () => {
     switch (type) {
       case "success":
-        return { bg: "rgba(16,185,129,0.95)", icon: "✓" };
+        return { bg: "rgba(16,185,129,0.95)", Icon: CheckCircle2 };
       case "error":
-        return { bg: "rgba(239,68,68,0.95)", icon: "✗" };
+        return { bg: "rgba(239,68,68,0.95)", Icon: XCircle };
       case "warning":
-        return { bg: "rgba(245,158,11,0.95)", icon: "⚠" };
+        return { bg: "rgba(245,158,11,0.95)", Icon: AlertTriangle };
       case "info":
-        return { bg: "rgba(59,130,246,0.95)", icon: "ℹ" };
+        return { bg: "rgba(59,130,246,0.95)", Icon: Info };
     }
   };
-  const { bg, icon } = getStyle();
+  const { bg, Icon } = getStyle();
 
   return (
     <div
@@ -155,9 +156,12 @@ const Toast: React.FC<{
         fontWeight: 500,
         boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
         animation: "fadeIn 0.3s ease-in",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
       }}
     >
-      {icon} {message}
+      <Icon size={18} strokeWidth={2} style={{ flexShrink: 0 }} /> {message}
     </div>
   );
 };

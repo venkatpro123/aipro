@@ -62,6 +62,23 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
     if (missionState === 'new') activateMission(missionId);
   }, [missionId, missionState]);
 
+  // Auto-progress: when all mission actions are completed, automatically
+  // request the next mission after a short delay (gives celebration time)
+  const autoProgressFired = useRef(false);
+  useEffect(() => {
+    if (!allActionsDone || autoProgressFired.current || !onRequestNextMission) return;
+    autoProgressFired.current = true;
+    const timer = setTimeout(() => {
+      try {
+        window.dispatchEvent(new CustomEvent('hp.action.milestone', {
+          detail: { type: 'phase', phase: 'mission' },
+        }));
+      } catch {}
+      onRequestNextMission();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [allActionsDone, onRequestNextMission]);
+
   const situationText = spine
     ?? `${companyName} is showing ${prose} risk signals. Your displacement probability index is ${score}/100.`;
   const riskText  = singleBiggestRisk

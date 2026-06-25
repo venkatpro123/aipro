@@ -26,6 +26,7 @@ import AdaptiveBlock from '../common/AdaptiveBlock';
 import StrategyTab from '../StrategyTab';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
+import { isActionableRecommendation } from '../../../services/orchestration/signalOrchestrator';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
 import { ExecutiveIntelligencePanel } from '../common/ExecutiveIntelligencePanel';
 import {
@@ -298,7 +299,11 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   };
   const score = result.total;
   const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
-  const recommendations: ActionPlanItem[] = result.recommendations ?? [];
+  // System/meta transparency notices (e.g. "System Override Applied") carry
+  // priority 'Critical' but are not user actions — filter them out here so
+  // they can never become the top action or an action-roadmap card. Mirrors
+  // the same filter already applied in SummaryTab.tsx for result.recommendations.
+  const recommendations: ActionPlanItem[] = (result.recommendations ?? []).filter(isActionableRecommendation);
 
   // Wave 8.3: equity awareness — show alert when vest cliff is near + risk elevated
   const hasEquityVesting: boolean   = r.userFactors?.hasEquityVesting === true || r.userFactors?.equityVestMonths != null;

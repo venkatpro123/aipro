@@ -48,6 +48,7 @@ import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
 import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 // Beast Mode V3 — new AI OS components
 import { AIMemoryCard } from '../common/AIMemoryCard';
+import { RiskTrendChart } from '../common/RiskTrendChart';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
 function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
@@ -942,6 +943,11 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         daysSinceLastAudit={daysSinceLastAudit}
         completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
       />
+
+      {/* ── Risk Trend Chart — visual score evolution over audit history */}
+      {scoreHistoryForTimeline.length >= 1 && (
+        <RiskTrendChart history={scoreHistoryForTimeline} currentScore={score} />
+      )}
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <TopDriversStrip drivers={topDrivers} />

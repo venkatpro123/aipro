@@ -21,6 +21,7 @@ import StrategyTab from '../../StrategyTab';
 import CareerProgressionLadder from '../../common/CareerProgressionLadder';
 import { MissionBriefCard } from '../../common/MissionBriefCard';
 import { deriveMissionId } from '../../../../services/missionCompletionService';
+import { isActionableRecommendation } from '../../../../services/orchestration/signalOrchestrator';
 
 interface Props {
   result: HybridResult;
@@ -53,7 +54,10 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
   const score = result.total;
   const liveSignalCount: number = r.meta?.liveSignalCount ?? result.signalQuality?.liveSignals ?? 0;
   const usedLiveSignals: boolean = r.meta?.usedLiveSignals === true || liveSignalCount > 0;
-  const recommendations: ActionPlanItem[] = result.recommendations ?? [];
+  // Filter out system/meta transparency notices (e.g. "System Override
+  // Applied") before they can reach the mission brief, the Action Roadmap,
+  // or topAction — same filter SummaryTab.tsx and v3/ActionsTab.tsx apply.
+  const recommendations: ActionPlanItem[] = (result.recommendations ?? []).filter(isActionableRecommendation);
   const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
@@ -120,7 +124,8 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
       && !e.source.toLowerCase().includes('heuristic')
       && !e.source.toLowerCase().includes('fallback'),
     ).slice(0, 2);
-    const hasEvidence = topEvidence.length > 0 || !!item.rationale;
+    const rationale = (item as { rationale?: string }).rationale;
+    const hasEvidence = topEvidence.length > 0 || !!rationale;
 
     return (
       <div className={PRIORITY_ROW_CLASS[item.priority] ?? 'action-row action-row--low'}>
@@ -169,8 +174,8 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
                   className="overflow-hidden"
                 >
                   <div className="evidence-row flex-col gap-1">
-                    {item.rationale && (
-                      <p className="text-token-2">{item.rationale}</p>
+                    {rationale && (
+                      <p className="text-token-2">{rationale}</p>
                     )}
                     {topEvidence.map((e, i) => (
                       <p key={i} className="text-token-3">

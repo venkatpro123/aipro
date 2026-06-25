@@ -50,7 +50,7 @@ import {
   resolveRoleGroup,
   scoreToRiskLevel,
 } from "@/services/actionPersonalizationEngine";
-import { loadCompletionsLocal } from "@/services/actionCompletionService";
+import { loadCompletionsLocal, markActionComplete, unmarkActionComplete } from "@/services/actionCompletionService";
 import { loadEffectiveSuppressedActionIds } from "@/services/cohortFeedbackService";
 import { stableActionId } from "@/services/actionIdUtil";
 import { generateCareerInsurancePlan } from "@/services/careerInsuranceEngine";
@@ -1514,6 +1514,20 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   const [search, setSearch] = useState("");
   const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
 
+  // Toggling here must also feed actionCompletionService so the rotation
+  // engine (actionPersonalizationEngine's selectWithRotation) sees this
+  // completion — this view previously kept its own separate "actionPlanCompleted"
+  // localStorage key with no link to that engine, so actions completed here
+  // never stopped recurring in future personalized recommendations.
+  const toggleItemCompletion = (itemId: string, wasCompleted: boolean) => {
+    setCompletedItems(prev => ({ ...prev, [itemId]: !wasCompleted }));
+    if (wasCompleted) {
+      unmarkActionComplete(itemId).catch(() => {});
+    } else {
+      markActionComplete(itemId, { scoreAtCompletion: result.total }).catch(() => {});
+    }
+  };
+
   // v7.0 Fix 3: Returning users see their completed actions hidden by default.
   // This prevents repeat recommendations for actions already taken.
   // First-time users default to showing all (nothing is completed yet).
@@ -1996,7 +2010,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                         key={item.id}
                         item={item}
                         isCompleted={!!completedItems[item.id]}
-                        onToggle={() => setCompletedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                        onToggle={() => toggleItemCompletion(item.id, !!completedItems[item.id])}
                         index={i}
                         isLocked={false}
                         selectedTrack={selectedTrack}
@@ -2054,7 +2068,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                             key={item.id}
                             item={item}
                             isCompleted={!!completedItems[item.id]}
-                            onToggle={() => setCompletedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                            onToggle={() => toggleItemCompletion(item.id, !!completedItems[item.id])}
                             index={i}
                             isLocked={itemIsLocked}
                             selectedTrack={selectedTrack}

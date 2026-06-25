@@ -16,6 +16,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Star, Zap } from 'lucide-react';
+import { checkAndUnlockAchievements } from '../../services/achievementService';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,9 @@ export const ActionCelebrationToast: React.FC = () => {
 
   const addToast = useCallback((toast: Omit<ToastState, 'id'>) => {
     const id = ++idRef.current;
-    setToasts(prev => [...prev.slice(-2), { ...toast, id }]); // max 3 toasts at once
+    setToasts(prev => [...prev.slice(-2), { ...toast, id }]);
+    // Haptic feedback for all celebration events
+    try { if (navigator.vibrate) navigator.vibrate(toast.type === 'phase' ? [50, 30, 50] : 15); } catch {}
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3500);
@@ -52,6 +55,8 @@ export const ActionCelebrationToast: React.FC = () => {
       } else {
         addToast({ type: 'action', count });
       }
+      // Check for achievement unlocks on every action completion
+      checkAndUnlockAchievements({ completedActionCount: count });
     };
 
     const onPhaseComplete = (e: Event) => {
@@ -61,6 +66,8 @@ export const ActionCelebrationToast: React.FC = () => {
         phaseNum: detail.phase,
         nextPhase: detail.nextPhase,
       });
+      // Check phase achievements
+      checkAndUnlockAchievements({ phaseCompleted: detail.phase });
     };
 
     window.addEventListener('hp.action.milestone', onMilestone);

@@ -3,6 +3,10 @@ import type { TabProps } from '../common/types';
 import SkillGapIntelligencePanel from '../common/SkillGapIntelligencePanel';
 import SkillPortfolioPanel from '../common/SkillPortfolioPanel';
 import AIRiskSkillMatrix from '@/components/AIRiskSkillMatrix';
+import { SkillRadarChart, type RadarDimension } from '../common/SkillRadarChart';
+import { CareerPathMap } from '../common/CareerPathMap';
+import { SkillDependencyGraph, type SkillNode, type SkillEdge } from '../common/SkillDependencyGraph';
+import { SkillEvolutionIllustration } from '../../illustrations/CareerIllustrations';
 import { getCareerIntelligence } from '@/data/intelligence';
 import type { CareerIntelligence } from '@/data/intelligence/types';
 import { riskColor } from '../../../lib/riskTokens';
@@ -50,21 +54,97 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
   );
   const scoreColor = riskColor(result.total);
 
+  const radarDimensions: RadarDimension[] = useMemo(() => {
+    if (!intel) return [];
+    const dims: RadarDimension[] = [];
+    const safe = intel.skills?.safe ?? [];
+    const atRisk = intel.skills?.at_risk ?? [];
+    for (const s of safe.slice(0, 4)) {
+      dims.push({
+        key: s.skill,
+        label: s.skill.length > 16 ? s.skill.slice(0, 15) + '…' : s.skill,
+        value: s.longTermValue ?? 80,
+        benchmark: 50,
+        disruption: 10,
+      });
+    }
+    for (const s of atRisk.slice(0, 4)) {
+      dims.push({
+        key: s.skill,
+        label: s.skill.length > 16 ? s.skill.slice(0, 15) + '…' : s.skill,
+        value: Math.max(10, 100 - (s.riskScore ?? 50)),
+        benchmark: 50,
+        disruption: s.riskScore ?? 60,
+      });
+    }
+    return dims.slice(0, 8);
+  }, [intel]);
+
+  // Career path map from roleAdjacency data
+  const careerPaths = useMemo(() => {
+    const adj = r.roleAdjacency?.adjacentRoles ?? [];
+    return adj.slice(0, 5).map((a: any) => ({
+      key: String(a.targetRoleKey ?? a.targetRoleLabel ?? 'role'),
+      label: String(a.targetRoleLabel ?? String(a.targetRoleKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())),
+      type: (a.adjacencyStrength === 'strong' ? 'target' : a.adjacencyStrength === 'moderate' ? 'pivot' : 'stretch') as 'target' | 'pivot' | 'stretch',
+      demand: a.marketDemandScore ?? undefined,
+      riskDelta: typeof a.estimatedRiskDelta === 'number' ? a.estimatedRiskDelta : undefined,
+      adjacencyStrength: a.adjacencyStrength,
+      description: a.transitionNarrative ?? a.rationale ?? undefined,
+    }));
+  }, [r.roleAdjacency]);
+
+  const currentRoleLabel = r.roleTitle ?? r.userProfile?.roleTitle ?? (roleKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Current Role');
   const hasContent = Boolean(skillGap || skillPortfolio || intel);
 
   return (
     <div className="flex flex-col gap-3">
+      {radarDimensions.length >= 3 && (
+        <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
+      )}
       {skillGap      && <SkillGapIntelligencePanel skillGapIntelligence={skillGap} />}
       {skillPortfolio && <SkillPortfolioPanel portfolio={skillPortfolio} />}
       {intel && <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} />}
+      {/* Skill dependency graph — derived from safe/at-risk skills */}
+      {(() => {
+        if (!intel) return null;
+        const safe = intel.skills?.safe ?? [];
+        const atRisk = intel.skills?.at_risk ?? [];
+        const nodes: SkillNode[] = [];
+        const edges: SkillEdge[] = [];
+        safe.slice(0, 3).forEach((s: any, i: number) => {
+          nodes.push({ id: `safe-${i}`, label: s.skill, tier: i === 0 ? 'advanced' : 'intermediate', status: 'safe', value: s.longTermValue });
+        });
+        atRisk.slice(0, 3).forEach((s: any, i: number) => {
+          nodes.push({ id: `risk-${i}`, label: s.skill, tier: 'foundation', status: 'at_risk', value: s.riskScore });
+        });
+        if (nodes.length >= 2) {
+          for (let i = 0; i < Math.min(atRisk.length, 2); i++) {
+            edges.push({ from: `risk-${i}`, to: `safe-0` });
+          }
+          if (safe.length >= 2) edges.push({ from: `safe-1`, to: `safe-0` });
+        }
+        return nodes.length >= 3 ? <SkillDependencyGraph nodes={nodes} edges={edges} /> : null;
+      })()}
+
+      {careerPaths.length > 0 && (
+        <CareerPathMap
+          currentRole={currentRoleLabel}
+          currentScore={result.total}
+          paths={careerPaths}
+        />
+      )}
       {!hasContent && (
-        <div className="rounded-xl px-4 py-8 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
-            We don't know your skills yet
-          </p>
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
-            Add your role details to see which skills to improve.
-          </p>
+        <div className="rounded-xl px-4 py-8 text-center flex flex-col items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <SkillEvolutionIllustration size={80} />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
+              We don't know your skills yet
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+              Add your role details to see which skills to protect and which to evolve.
+            </p>
+          </div>
         </div>
       )}
     </div>

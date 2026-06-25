@@ -17,7 +17,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Check, Lock, ChevronDown, ChevronUp, Zap, Calendar, BarChart3, Clock,
+  Check, Lock, Unlock, ChevronDown, ChevronUp, Zap, Calendar, BarChart3, Clock,
 } from 'lucide-react';
 import type { ActionPlanItem } from '../../../types/hybridResult';
 import { recordStreakActivity } from '../../../services/streakService';
@@ -30,6 +30,7 @@ import {
 import { syncCohortFeedbackFromServer } from '../../../services/cohortFeedbackService';
 import { recordSkillFromAction } from '../../../services/acquiredSkillsService';
 import { completeMission } from '../../../services/missionCompletionService';
+import { SocialProofStrip } from './SocialProofStrip';
 
 interface Props {
   actions: ActionPlanItem[];
@@ -160,6 +161,9 @@ const CheckItem: React.FC<{
             </span>
           )}
         </div>
+        {!isCompleted && (
+          <SocialProofStrip actionPriority={action.priority} riskTier={action.priority} />
+        )}
       </div>
     </motion.div>
   );
@@ -220,7 +224,7 @@ const PhaseBlock: React.FC<{
               borderBottom: `1px solid ${cfg.accent}25`,
             }}
           >
-            <span className="text-[11px]" role="img" aria-label="unlocked">🔓</span>
+            <Unlock size={12} strokeWidth={2} style={{ color: cfg.accent, flexShrink: 0 }} />
             <span className="text-[10px] font-black" style={{ color: cfg.accent }}>
               PHASE {phase} UNLOCKED!
             </span>
@@ -257,9 +261,9 @@ const PhaseBlock: React.FC<{
               PHASE {phase}: {cfg.label}
             </span>
             {isComplete && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                 style={{ background: 'rgba(16,185,129,0.18)', color: '#10b981' }}>
-                ✓ DONE
+                <Check size={10} strokeWidth={2.5} />DONE
               </span>
             )}
           </div>

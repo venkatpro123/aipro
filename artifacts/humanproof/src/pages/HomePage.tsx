@@ -1,5 +1,11 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import {
+  MarketDynamicsIllustration,
+  AIDisplacementIllustration,
+  ProtectionIllustration,
+  OpportunityIllustration,
+} from "../components/illustrations/CareerIllustrations";
 
 /* ─── Particle canvas hook ─── */
 function useParticles(canvasId: string) {
@@ -310,10 +316,10 @@ export default function HomePage() {
               marginTop: "0.5rem",
             }}>
               {[
-                { icon: "🌊", label: "How Fast Jobs Are Changing",   color: "rgba(0,212,255,0.12)", border: "rgba(0,212,255,0.22)", tc: "var(--hp-cyan)" },
-                { icon: "🤖", label: "How Much AI Affects Your Job", color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: "#ef4444" },
-                { icon: "🛡️", label: "How Stable Your Career Is",    color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: "#10b981" },
-                { icon: "📡", label: "Where Jobs Are Headed",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: "#f59e0b" },
+                { Illustration: MarketDynamicsIllustration, label: "How Fast Jobs Are Changing",   color: "rgba(0,212,255,0.12)", border: "rgba(0,212,255,0.22)", tc: "var(--hp-cyan)" },
+                { Illustration: AIDisplacementIllustration, label: "How Much AI Affects Your Job", color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: "#ef4444" },
+                { Illustration: ProtectionIllustration,     label: "How Stable Your Career Is",    color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: "#10b981" },
+                { Illustration: OpportunityIllustration,    label: "Where Jobs Are Headed",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: "#f59e0b" },
               ].map(p => (
                 <div key={p.label} style={{
                   padding: "18px 16px",
@@ -325,7 +331,7 @@ export default function HomePage() {
                   alignItems: "center",
                   gap: 10,
                 }}>
-                  <span style={{ fontSize: "1.6rem" }}>{p.icon}</span>
+                  <p.Illustration size={56} />
                   <span style={{ fontSize: 12, fontWeight: 700, color: p.tc, lineHeight: 1.4, textAlign: "center" }}>{p.label}</span>
                 </div>
               ))}

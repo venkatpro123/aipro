@@ -8,6 +8,7 @@ import type {
   NegotiationClauseKey,
 } from '../../../services/negotiationIntelligenceService';
 import { NEGOTIATION_CLAUSE_LABELS } from '../../../services/negotiationIntelligenceService';
+import { NegotiationIllustration } from '../../illustrations/AdditionalIllustrations';
 
 interface Props {
   negotiation: NegotiationIntelligenceResult;
@@ -175,12 +176,15 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
       className={`rounded-xl border p-4 mb-4 ${cfg.bg} ${cfg.border}`}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <Scale size={14} className="text-blue-400" />
-        <span className="text-sm font-semibold text-white">Negotiation Intelligence</span>
-        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
-          {cfg.label}
-        </span>
+      <div className="flex items-center gap-3 mb-3">
+        <NegotiationIllustration size={36} className="flex-shrink-0 opacity-80" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Scale size={14} className="text-blue-400" />
+          <span className="text-sm font-semibold text-white">Negotiation Intelligence</span>
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
+            {cfg.label}
+          </span>
+        </div>
       </div>
 
       {/* Leverage bar */}
