@@ -196,7 +196,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           strokeDasharray={circ}
           initial={{ strokeDashoffset: circ }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.4, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
           strokeLinecap="round"
           filter={`url(#${glowId})`}
         />
@@ -212,7 +212,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           animate={{ opacity: [0.7, 1, 0.7], scale: 1 }}
           transition={{
             opacity: { repeat: Infinity, duration: 2.2, ease: "easeInOut" },
-            scale: { duration: 0.4, delay: 1.0, ease: [0.34, 1.56, 0.64, 1] },
+            scale: { duration: 0.4, delay: 1.0, ease: [0.22, 1, 0.36, 1] },
           }}
         />
       </svg>
@@ -224,7 +224,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           className="score-massive"
           initial={{ opacity: 0, scale: 0.6, filter: "blur(8px)" }}
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-          transition={{ duration: 0.55, delay: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 0.55, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           style={{
             fontSize,
             color: start,

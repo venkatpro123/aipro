@@ -53,7 +53,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
               key={`${i}-${monthStr}`}
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25, delay: i * 0.04, ease: [0.34, 1.56, 0.64, 1] }}
+              transition={{ duration: 0.25, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
               style={{ position: "relative" }}
               onMouseEnter={e => {
                 const rect = (e.target as HTMLElement).closest('[data-heatmap-cell]')?.getBoundingClientRect()

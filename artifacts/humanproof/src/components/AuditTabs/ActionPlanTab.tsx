@@ -1090,7 +1090,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.4), ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{ delay: Math.min(index * 0.04, 0.4), ease: [0.22, 1, 0.36, 1] }}
       className={`action-card ${phaseClass}${isLocked ? ' opacity-35 pointer-events-none' : ''}`}
       style={{ opacity: isCompleted ? 0.5 : 1 }}
     >

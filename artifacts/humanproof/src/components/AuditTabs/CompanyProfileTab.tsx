@@ -166,7 +166,7 @@ const CompanyIdentityCard: React.FC<{
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className="glass-panel-heavy shadow-xl"
       style={{ borderRadius: '16px', overflow: 'hidden' }}
     >
@@ -532,7 +532,7 @@ const FinancialHealthDossier: React.FC<{
               key={i}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, ease: [0.34, 1.56, 0.64, 1] }}
+              transition={{ delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
               className="group"
               style={{
                 padding: '16px',
@@ -676,7 +676,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                       key={i}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, ease: [0.34, 1.56, 0.64, 1] }}
+                      transition={{ delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
                       style={{ flexShrink: 0, width: '160px' }}
                     >
                       {/* Timeline dot */}

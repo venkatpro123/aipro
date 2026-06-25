@@ -143,7 +143,7 @@ export const GaugeDial: React.FC<GaugeDialProps> = ({
             filter={`url(#gauge_glow_${value})`}
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1], delay: 0.15 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
           />
         )}
 
@@ -157,7 +157,7 @@ export const GaugeDial: React.FC<GaugeDialProps> = ({
             style={{ filter: `drop-shadow(0 0 6px ${arcColor})` }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.0, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+            transition={{ delay: 1.0, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           />
         )}
 
@@ -189,7 +189,7 @@ export const GaugeDial: React.FC<GaugeDialProps> = ({
         <motion.div
           initial={{ opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{
             fontFamily: "var(--font-display)",
             fontSize: "1.6rem",

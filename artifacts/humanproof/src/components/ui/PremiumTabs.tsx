@@ -71,7 +71,7 @@ export const PremiumTabs: React.FC<PremiumTabsProps> = ({
                       scale: isActive ? 1.18 : 1,
                       filter: isActive ? "brightness(1.3)" : "brightness(1)",
                     }}
-                    transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     style={{
                       display: "flex",
                       alignItems: "center",

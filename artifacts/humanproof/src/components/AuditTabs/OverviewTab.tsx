@@ -291,7 +291,7 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
     <motion.div
       initial={{ opacity: 0, scale: 0.88 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       role="status"
       style={{
         display: 'inline-flex',
@@ -452,7 +452,7 @@ const QuickStatsRow: React.FC<{
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.07 + 0.1, ease: [0.34, 1.56, 0.64, 1] }}
+              transition={{ duration: 0.4, delay: i * 0.07 + 0.1, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 fontFamily: 'var(--font-display)',
                 fontSize: '1.6rem',
@@ -628,7 +628,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
             key={c.type}
             initial={{ opacity: 0, y: 10, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.15 + i * 0.08, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+            transition={{ delay: 0.15 + i * 0.08, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             style={{
               background: c.gradBg,
               border: `1px solid ${c.border}`,

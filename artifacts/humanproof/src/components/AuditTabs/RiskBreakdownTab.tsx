@@ -212,7 +212,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="group transition-all duration-300"
       style={{
         display: "flex",
@@ -412,7 +412,7 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
       <motion.div
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         style={{
           padding: '16px',
           borderRadius: '14px',
@@ -450,7 +450,7 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
       <motion.div
         initial={{ opacity: 0, x: 12 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.35, delay: 0.08, ease: [0.34, 1.56, 0.64, 1] }}
+        transition={{ duration: 0.35, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
         style={{
           padding: '16px',
           borderRadius: '14px',
