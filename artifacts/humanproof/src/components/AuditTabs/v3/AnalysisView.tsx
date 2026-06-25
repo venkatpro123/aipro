@@ -3,6 +3,8 @@
 // 4-section single-scroll layout. Tabs serve as anchor shortcuts that
 // smooth-scroll to their section; IntersectionObserver keeps the active
 // tab highlight in sync with the user's scroll position.
+// No inline styles — all surfaces use CSS token-based utility classes
+// so light/dark mode adapts automatically.
 
 import React, { Suspense, lazy, useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -37,16 +39,12 @@ interface TabConfig {
 }
 
 const ANALYSIS_TABS: TabConfig[] = [
-  { value: 'summary',    label: 'Summary',     shortLabel: 'Summary', Icon: TrendingUp },
-  { value: 'company',    label: 'Company',     shortLabel: 'Company', Icon: Building2 },
-  { value: 'protection', label: 'Protection',  shortLabel: 'Protect', Icon: Shield },
-  { value: 'actions',    label: 'Action Plan', shortLabel: 'Actions', Icon: Zap },
+  { value: 'summary',    label: 'Overview',      shortLabel: 'Overview',  Icon: TrendingUp },
+  { value: 'company',    label: 'Market Intel',  shortLabel: 'Intel',     Icon: Building2  },
+  { value: 'protection', label: 'Your Edge',     shortLabel: 'Edge',      Icon: Shield     },
+  { value: 'actions',    label: 'Action Plan',   shortLabel: 'Actions',   Icon: Zap        },
 ];
 
-// Base offset: permanent top bar (~48px) + this tab bar (~48px). The floating
-// global nav (.nav-root, fixed, height var(--nav-h)) sits above both sticky
-// bars and must be added on top of this at read-time since --nav-h varies by
-// breakpoint (0 on mobile where the nav is hidden, 72px on desktop).
 const BASE_HEADER_OFFSET = 100;
 
 function getHeaderOffset(): number {
@@ -69,15 +67,9 @@ const AnalysisDesktopTabBar: React.FC<{
   active: AnalysisTabKey;
   onChange: (v: AnalysisTabKey) => void;
 }> = ({ active, onChange }) => (
-  <div
-    role="tablist"
+  <nav
     aria-label="Analysis sections"
-    className="hidden sm:flex items-center gap-1 px-2 py-2 overflow-x-auto"
-    style={{
-      background: 'rgba(9,12,20,0.92)',
-      backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(255,255,255,0.07)',
-    }}
+    className="hidden sm:flex items-center gap-1 px-2 py-2 overflow-x-auto scrollbar-none nav-surface"
   >
     {ANALYSIS_TABS.map(({ value, label, Icon }) => {
       const isActive = value === active;
@@ -85,22 +77,16 @@ const AnalysisDesktopTabBar: React.FC<{
         <button
           key={value}
           type="button"
-          role="tab"
-          aria-selected={isActive}
+          aria-current={isActive ? 'page' : undefined}
           onClick={() => onChange(value)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap"
-          style={{
-            background: isActive ? 'rgba(0,212,224,0.12)' : 'transparent',
-            border: `1px solid ${isActive ? 'rgba(0,212,224,0.30)' : 'transparent'}`,
-            color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.50)',
-          }}
+          className={`tab-btn ${isActive ? 'tab-btn--active' : ''}`}
         >
           <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="text-[12px] font-semibold">{label}</span>
+          <span>{label}</span>
         </button>
       );
     })}
-  </div>
+  </nav>
 );
 
 // ── Mobile bottom nav ─────────────────────────────────────────────────────────
@@ -110,17 +96,9 @@ const AnalysisMobileBottomNav: React.FC<{
   onChange: (v: AnalysisTabKey) => void;
 }> = ({ active, onChange }) => (
   createPortal(
-    <div
-      role="tablist"
+    <nav
       aria-label="Analysis sections"
-      className="analysis-mobile-nav sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch"
-      style={{
-        background: 'rgba(7,10,18,0.97)',
-        backdropFilter: 'blur(24px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
-      }}
+      className="analysis-mobile-nav sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch nav-surface-heavy safe-area-bottom"
     >
       {ANALYSIS_TABS.map(({ value, label, shortLabel, Icon }) => {
         const isActive = value === active;
@@ -128,55 +106,36 @@ const AnalysisMobileBottomNav: React.FC<{
           <button
             key={value}
             type="button"
-            role="tab"
-            aria-selected={isActive}
+            aria-current={isActive ? 'page' : undefined}
             aria-label={label}
             onClick={() => onChange(value)}
-            className="flex-1 flex flex-col items-center justify-center relative"
-            style={{
-              color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.42)',
-              minHeight: 58,
-              padding: '7px 1px 5px',
-              transition: 'color 0.18s ease',
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            className={`tab-btn-mobile ${isActive ? 'tab-btn-mobile--active' : ''}`}
           >
             {isActive && (
               <motion.div
                 layoutId="analysis-tab-pill"
-                className="absolute rounded-xl"
-                style={{
-                  inset: '3px 2px',
-                  background: 'rgba(0,212,224,0.10)',
-                  border: '1px solid rgba(0,212,224,0.22)',
-                }}
+                className="tab-btn-mobile-pill"
                 transition={{ type: 'spring', stiffness: 400, damping: 38 }}
               />
             )}
-            <div className="relative z-10" style={{ marginBottom: 3 }}>
+            <div className="relative z-10 mb-0.5">
               <motion.div
                 animate={isActive ? { scale: 1.10, y: -1 } : { scale: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 420, damping: 24 }}
               >
                 <Icon
-                  style={{
-                    width: 'clamp(17px, 5vw, 20px)',
-                    height: 'clamp(17px, 5vw, 20px)',
-                  }}
+                  style={{ width: 'clamp(17px, 5vw, 20px)', height: 'clamp(17px, 5vw, 20px)' } as React.CSSProperties}
                   strokeWidth={isActive ? 2.2 : 1.6}
                 />
               </motion.div>
             </div>
-            <span
-              className="relative z-10 font-semibold leading-none truncate w-full text-center"
-              style={{ fontSize: 'clamp(8px, 2.4vw, 10px)' }}
-            >
+            <span className="relative z-10 tab-btn-mobile-label truncate w-full text-center">
               {shortLabel}
             </span>
           </button>
         );
       })}
-    </div>,
+    </nav>,
     document.body,
   )
 );
@@ -207,7 +166,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
   const [activeTab, setActiveTab] = useState<AnalysisTabKey>('summary');
   const sectionRefs = useRef<Partial<Record<AnalysisTabKey, HTMLElement>>>({});
 
-  // Tab click → smooth-scroll to section (with immediate visual feedback in tab bar)
   const scrollToSection = useCallback((val: AnalysisTabKey) => {
     setActiveTab(val);
     const el = sectionRefs.current[val];
@@ -216,8 +174,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     window.scrollTo({ top, behavior: 'smooth' });
   }, []);
 
-  // Track viewport changes so IntersectionObserver rootMargin stays accurate
-  // after mobile rotation or window resize changes --nav-h.
   const [observerKey, setObserverKey] = useState(0);
   useEffect(() => {
     let prev = getHeaderOffset();
@@ -229,7 +185,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // IntersectionObserver: keep tab bar in sync with the user's scroll position
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     const ratioMap = new Map<AnalysisTabKey, number>();
@@ -262,20 +217,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
 
   return (
     <div className="flex flex-col">
-      {/* Sticky tab bar — stacks below the permanent dashboard top bar, which
-          itself sticks below the floating global nav (see getHeaderOffset). */}
-      <div
-        className="sticky top-[calc(var(--nav-h,72px)+56px)] sm:top-[calc(var(--nav-h,72px)+60px)] z-30"
-        style={{
-          background: 'rgba(9,12,20,0.95)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-        }}
-      >
+      <div className="sticky top-[calc(var(--nav-h,72px)+56px)] sm:top-[calc(var(--nav-h,72px)+60px)] z-30">
         <AnalysisDesktopTabBar active={activeTab} onChange={scrollToSection} />
       </div>
 
-      {/* All sections rendered as one continuous vertical stack */}
       <div className="flex flex-col">
         {ANALYSIS_TABS.map(({ value, label }, idx) => {
           const SectionComponent = SECTION_COMPONENTS[value];
@@ -284,7 +229,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
               key={value}
               id={`av-${value}`}
               ref={el => { if (el) sectionRefs.current[value] = el; }}
-              style={idx > 0 ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined}
+              className={idx > 0 ? 'border-t border-white/[0.06]' : undefined}
             >
               <TabErrorBoundary tabLabel={label}>
                 <Suspense fallback={SECTION_SKELETONS[value]}>
@@ -296,7 +241,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
         })}
       </div>
 
-      {/* Mobile bottom nav — scrolls to section on tap */}
       <AnalysisMobileBottomNav active={activeTab} onChange={scrollToSection} />
     </div>
   );

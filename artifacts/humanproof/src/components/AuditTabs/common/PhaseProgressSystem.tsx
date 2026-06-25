@@ -28,6 +28,8 @@ import {
   syncCompletionsFromServer,
 } from '../../../services/actionCompletionService';
 import { syncCohortFeedbackFromServer } from '../../../services/cohortFeedbackService';
+import { recordSkillFromAction } from '../../../services/acquiredSkillsService';
+import { completeMission } from '../../../services/missionCompletionService';
 
 interface Props {
   actions: ActionPlanItem[];
@@ -35,6 +37,8 @@ interface Props {
   onActionComplete?: (actionId: string, completedCount: number) => void;
   /** Current audit score — passed through to actionCompletionService for telemetry */
   currentScore?: number;
+  /** Optional mission ID — when all actions are done, completeMission() fires automatically */
+  missionId?: string;
 }
 
 type Phase = 1 | 2 | 3;
@@ -93,19 +97,10 @@ const CheckItem: React.FC<{
       {/* Checkbox — min 44×44px touch target (Wave 9.3)
            Spring-bounce animation on check: scale 0 → 1.2 → 1.0 over 0.28s */}
       <button
+        type="button"
         onClick={phaseUnlocked ? onToggle : undefined}
         disabled={!phaseUnlocked}
-        className="flex-shrink-0 flex items-center justify-center"
-        style={{
-          cursor: phaseUnlocked ? 'pointer' : 'not-allowed',
-          minWidth: 44,
-          minHeight: 44,
-          marginTop: -10,   // compensate for the extra height so it doesn't shift layout
-          marginBottom: -10,
-          marginLeft: -10,
-          paddingLeft: 10,
-          paddingRight: 4,
-        }}
+        className={`phase-action-check flex-shrink-0 flex items-center justify-center${phaseUnlocked ? '' : ' cursor-not-allowed'}`}
         aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
       >
         <motion.div
@@ -237,10 +232,10 @@ const PhaseBlock: React.FC<{
       </AnimatePresence>
       {/* Phase header */}
       <button
+        type="button"
         onClick={() => unlocked && setOpen(o => !o)}
         disabled={!unlocked}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left"
-        style={{ cursor: unlocked ? 'pointer' : 'not-allowed' }}
+        className={`w-full flex items-center gap-3 px-4 py-3 text-left${unlocked ? '' : ' cursor-not-allowed'}`}
       >
         {/* Phase icon */}
         <div
@@ -328,7 +323,7 @@ const PhaseBlock: React.FC<{
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
-export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onActionComplete, currentScore }) => {
+export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onActionComplete, currentScore, missionId }) => {
   // Wave 1.3: Start from localStorage (instant), then merge server state on mount
   const [completedIds, setCompletedIds] = useState<Set<string>>(loadCompletionsLocal);
   const [phase1, phase2, phase3] = phaseActions(actions);
@@ -361,6 +356,7 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
   const prevP3Unlocked = useRef(phase3Unlocked);
   const [phase2JustUnlocked, setPhase2JustUnlocked] = useState(false);
   const [phase3JustUnlocked, setPhase3JustUnlocked] = useState(false);
+  const [missionComplete, setMissionComplete] = useState(false);
 
   useEffect(() => {
     if (!prevP2Unlocked.current && phase2Unlocked) {
@@ -382,6 +378,17 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
   }, [phase3Unlocked]);
 
   const totalCompleted = p1Completed + p2Completed + p3Completed;
+  const allComplete = actions.length > 0 && totalCompleted >= actions.length;
+
+  // Mission completion: fire once when all actions are done
+  const prevAllComplete = useRef(false);
+  useEffect(() => {
+    if (!prevAllComplete.current && allComplete) {
+      setMissionComplete(true);
+      if (missionId) completeMission(missionId).catch(() => {});
+    }
+    prevAllComplete.current = allComplete;
+  }, [allComplete, missionId]);
 
   const handleToggle = useCallback((id: string) => {
     setCompletedIds(prev => {
@@ -397,15 +404,43 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
         try { recordStreakActivity(); } catch { /* non-fatal */ }
         // Wave 1.3: background Supabase upsert with optional score telemetry
         markActionComplete(id, { scoreAtCompletion: currentScore }).catch(() => {});
+        // Track skill acquisition from the completed action
+        const item = actions.find(a => a.id === id);
+        if (item) recordSkillFromAction(item).catch(() => {});
       }
       return next;
     });
-  }, [onActionComplete, currentScore]);
+  }, [onActionComplete, currentScore, actions]);
 
   if (actions.length === 0) return null;
 
   return (
     <div className="space-y-3">
+      {/* Mission complete celebration banner */}
+      <AnimatePresence>
+        {missionComplete && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.28, type: 'spring', stiffness: 280, damping: 26 }}
+            className="glass-card mission-card-completed px-4 py-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="intel-chip-icon intel-chip-icon--shield flex-shrink-0">
+                <Check className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="mission-completed-title">All actions complete — mission accomplished.</p>
+                <p className="text-token-3 text-[11px]">
+                  Your intelligence profile has been updated. New escape routes are ready.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Overall progress header */}
       <div className="flex items-center justify-between">
         <div>

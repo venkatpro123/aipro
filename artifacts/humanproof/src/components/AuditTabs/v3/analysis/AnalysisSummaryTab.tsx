@@ -1,12 +1,11 @@
 // AnalysisSummaryTab.tsx — Analysis Mode Tab 1
 //
 // Executive briefing: What is happening? How serious? Why?
-// Reuses ScoreRingHero + TopDriversStrip from SummaryTab (named exports).
-// No Tilt3D, no ScoreSignalOrbit, no density stats — those are Beast Mode depth markers.
+// All surfaces use CSS utility classes — no inline styles — so light/dark mode adapts.
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, Shield, Signal, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Shield, ArrowUpRight, Compass } from 'lucide-react';
 import type { HybridResult } from '../../../../types/hybridResult';
 import type { CompanyData } from '../../../../data/companyDatabase';
 import { ScoreRingHero, TopDriversStrip, type DriverItem } from '../SummaryTab';
@@ -25,27 +24,26 @@ interface Props {
   onSwitchToBeast: () => void;
 }
 
-// Inline StatChip (not exported from SummaryTab)
+// StatChip — dynamic accent colour injected as --chip-accent CSS variable on wrapper.
+// All child elements reference it via classes; zero inline styles.
 const StatChip: React.FC<{
   label: string; value: string; sub?: string;
   color?: string; icon: React.ElementType;
 }> = ({ label, value, sub, color = 'rgba(0,212,224,0.8)', icon: Icon }) => (
   <div
-    className="flex-1 min-w-0 rounded-xl px-3 py-2.5 flex flex-col gap-0.5"
-    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+    className="stat-chip"
+    style={{ '--chip-accent': color } as React.CSSProperties}
   >
-    <div className="flex items-center gap-1 mb-0.5">
-      <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />
-      <span className="text-[10px] font-bold tracking-wider uppercase truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>
-        {label}
-      </span>
+    <div className="stat-chip-header">
+      <Icon className="w-3 h-3 stat-chip-icon" />
+      <span className="stat-chip-label">{label}</span>
     </div>
-    <span className="text-[15px] font-black leading-none" style={{ color }}>{value}</span>
-    {sub && <span className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.30)' }}>{sub}</span>}
+    <span className="stat-chip-value">{value}</span>
+    {sub && <span className="stat-chip-sub">{sub}</span>}
   </div>
 );
 
-export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emergencyMode, onSwitchToBeast }) => {
+export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emergencyMode }) => {
   const r = result as any;
   const score = result.total;
   const adaptation = useDashboardAdaptation(result, companyData);
@@ -55,21 +53,45 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
   const preparedness = r.preparednessScore;
-  const urgency = r.intelligenceBrief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
+  const urgency = r.intelligenceBrief?.urgencyLevel
+    ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
 
   const ciLow  = result.confidenceInterval?.low  ?? undefined;
   const ciHigh = result.confidenceInterval?.high ?? undefined;
   const trendDirection = r.scoreTrajectory?.trajectoryDirection ?? undefined;
 
-  const velocityIcon = r.scoreDelta?.direction === 'worsening'
-    ? TrendingUp : r.scoreDelta?.direction === 'improving'
-    ? TrendingDown : Minus;
-  const velocityColor = r.scoreDelta?.direction === 'worsening'
-    ? '#dc2626' : r.scoreDelta?.direction === 'improving'
-    ? '#10b981' : 'rgba(255,255,255,0.35)';
+  const scoreDeltaDir: string = r.scoreDelta?.direction ?? '';
+  const scoreDelta30d: number = Math.abs(r.scoreDelta?.delta30d ?? 0);
+  const velocityColor = scoreDeltaDir === 'worsening' ? '#dc2626'
+    : scoreDeltaDir === 'improving' ? '#10b981' : 'rgba(255,255,255,0.35)';
+  const VelocityIcon = scoreDeltaDir === 'worsening' ? TrendingUp
+    : scoreDeltaDir === 'improving' ? TrendingDown : Minus;
 
   const pScore = preparedness?.overallScore ?? 0;
   const pColor = pScore >= 75 ? '#10b981' : pScore >= 55 ? '#22d3ee' : pScore >= 35 ? '#f59e0b' : '#f97316';
+
+  // Strongest protection — precisionBrief (most specific) → keyProtectiveFactor (narrative)
+  const strongestProtection: string | null = useMemo(() => {
+    const src = r.precisionBrief?.topProtectiveFactor?.naturalLanguage ?? result.keyProtectiveFactor;
+    if (!src) return null;
+    const first = (src as string).match(/[^.!?]+[.!?]+/)?.[0]?.trim() ?? src;
+    return first.length > 90 ? first.slice(0, 87) + '…' : first;
+  }, [r.precisionBrief, result.keyProtectiveFactor]);
+
+  const protectionLabel: string = r.precisionBrief?.topProtectiveFactor?.label ?? 'Strongest Shield';
+
+  const futureRoleTitle: string | null = useMemo(() => {
+    const chosen = result.escapePaths?.quickestWin ?? result.escapePaths?.paths?.[0] ?? null;
+    if (!chosen) return null;
+    return chosen.title.length > 52 ? chosen.title.slice(0, 49) + '…' : chosen.title;
+  }, [result.escapePaths]);
+
+  const futureRoleHeadline: string | null = useMemo(() => {
+    const chosen = result.escapePaths?.quickestWin ?? result.escapePaths?.paths?.[0] ?? null;
+    if (!chosen) return null;
+    const h = chosen.headline ?? chosen.targetProfile ?? '';
+    return h.length > 80 ? h.slice(0, 77) + '…' : h || null;
+  }, [result.escapePaths]);
 
   const verdictLine = (s: number): string => {
     if (s >= 75) return 'High risk — months of lead time. Use it.';
@@ -78,7 +100,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
     return 'Low risk. Time to build career capital and leverage.';
   };
 
-  // Top 5 drivers
   const topDrivers: DriverItem[] = useMemo(() => {
     const dimensions: any[] = Array.isArray(result.dimensions) ? result.dimensions : [];
     return dimensions
@@ -93,21 +114,77 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
       }));
   }, [result, companyData]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Primary recommendation (single highest-priority)
   const primaryRec = useMemo(() => {
     const recs: any[] = Array.isArray(result.recommendations) ? result.recommendations : [];
     const order: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
     return [...recs].sort((a, b) => (order[a.priority] ?? 4) - (order[b.priority] ?? 4))[0] ?? null;
   }, [result]);
 
-  const truncate1Sentence = (text: string) => {
+  const truncate1 = (text: string) => {
     if (!text) return '';
-    const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
-    return sentences[0].trim();
+    const s = text.match(/[^.!?]+[.!?]+/g) ?? [text];
+    return s[0].trim();
   };
+
+  // SituationBrief narrative — prefer LLM-generated executive summary, fall back to template
+  const situationBrief = useMemo((): { headline: string; detail: string } | null => {
+    const company = result.companyName || companyData?.name || '';
+    // Prefer existing LLM-generated text
+    const llmSummary: string =
+      r.intelligenceBrief?.executiveSummary
+      ?? r.precisionBrief?.briefSummary
+      ?? r.narrative?.situationBrief
+      ?? '';
+    if (llmSummary && llmSummary.length > 20) {
+      const headline = llmSummary.length > 140 ? llmSummary.slice(0, 137) + '…' : llmSummary;
+      const detail = primaryRec ? `Priority action: ${primaryRec.title.length > 80 ? primaryRec.title.slice(0, 77) + '…' : primaryRec.title}` : '';
+      return { headline, detail };
+    }
+    // Template fallback
+    if (!company) return null;
+    const situationLine = score >= 75
+      ? `Your position at ${company} is at high risk — market signals suggest a 60–90 day action window.`
+      : score >= 55
+      ? `Elevated signals at ${company} indicate risk is building. Acting now creates 3–5× more protection than waiting.`
+      : score >= 35
+      ? `Moderate risk indicators at ${company}. Conditions are manageable today — build buffer before they compound.`
+      : `Low risk detected at ${company}. Use this stability window to build differentiated skills and optionality.`;
+    const detail = primaryRec ? `Priority action: ${primaryRec.title.length > 80 ? primaryRec.title.slice(0, 77) + '…' : primaryRec.title}` : '';
+    return { headline: situationLine, detail };
+  }, [result.companyName, companyData, r, score, primaryRec]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Derived CSS variable values for dynamic cards
+  const heroVars = {
+    '--hero-bg':     riskGradient(score),
+    '--hero-border': `${riskColor(score)}30`,
+  } as React.CSSProperties;
+
+  const recVars = {
+    '--rec-accent': riskColor(score),
+    '--rec-bg':     `${riskColor(score)}10`,
+    '--rec-border': `${riskColor(score)}30`,
+  } as React.CSSProperties;
 
   return (
     <div className="flex flex-col gap-4 py-2">
+
+      {/* Situation Brief — plain-English narrative opener so user instantly
+          understands their situation before interpreting the score ring */}
+      {situationBrief && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.20 }}
+          className="situation-brief"
+          style={{ '--situation-accent': riskColor(score) } as React.CSSProperties}
+        >
+          <p className="situation-brief-label">SITUATION BRIEF</p>
+          <p className="situation-brief-body">{situationBrief.headline}</p>
+          {situationBrief.detail && (
+            <p className="situation-brief-sub">{situationBrief.detail}</p>
+          )}
+        </motion.div>
+      )}
 
       {/* Emergency card */}
       {emergencyMode && (
@@ -115,21 +192,15 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="rounded-2xl px-4 py-3"
-          style={{
-            background: r.warnSignal?.hasActiveWARN
-              ? 'linear-gradient(135deg, rgba(220,38,38,0.10), rgba(153,27,27,0.06))'
-              : 'rgba(220,38,38,0.07)',
-            border: '1px solid rgba(220,38,38,0.28)',
-          }}
+          className={`emergency-card${r.warnSignal?.hasActiveWARN ? ' emergency-card--warn' : ''}`}
         >
           <div className="flex items-start gap-3">
-            <div className="audit-step-dot active" style={{ width: 8, height: 8, marginTop: 5, flexShrink: 0 }} />
+            <div className="w-2 h-2 rounded-full bg-red-600 mt-1.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div style={{ fontSize: '0.58rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--red,#dc2626)', marginBottom: 4, fontWeight: 800 }}>
+              <div className="emergency-label">
                 {r.warnSignal?.hasActiveWARN ? 'LEGAL NOTICE DETECTED' : `${riskLabel(score)} RISK · AHEAD OF 90%+ WHO FACE THIS`}
               </div>
-              <p style={{ fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--text-2,rgba(255,255,255,0.75))', marginBottom: 8 }}>
+              <p className="emergency-body">
                 {r.warnSignal?.hasActiveWARN
                   ? 'A WARN Act filing is confirmed — a legal 60-day advance notice for your company.'
                   : "You're discovering this risk months early. That gap is your advantage."}
@@ -142,13 +213,13 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
       {/* Reasoning spine */}
       {adaptation.feed && <ReasoningSpineCard feed={adaptation.feed} />}
 
-      {/* Score Hero */}
+      {/* Score Hero — inject dynamic background once as CSS variables */}
       <motion.div
         key={`analysis-score-${score}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl p-3 sm:p-5 flex flex-col items-center text-center relative overflow-hidden"
-        style={{ background: riskGradient(score), border: `1px solid ${riskColor(score)}30` }}
+        className="score-hero"
+        style={heroVars}
       >
         <ScoreRingHero
           score={score}
@@ -158,14 +229,15 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
           ciHigh={ciHigh}
           trendDirection={trendDirection}
         />
-        <p className="mt-3 text-[12px] leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>
-          {verdictLine(score)}
-        </p>
+        <p className="score-hero-verdict mt-3">{verdictLine(score)}</p>
         <VerdictReassurance score={score} urgency={urgency} />
-        {r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
-          <div className="mt-2 flex items-center gap-1.5 text-[11px]" style={{ color: velocityColor }}>
-            {React.createElement(velocityIcon, { className: 'w-3.5 h-3.5' })}
-            <span>{Math.abs(r.scoreDelta.delta30d ?? 0)}pt {r.scoreDelta.direction} vs 30d ago</span>
+        {scoreDelta30d >= 1 && (
+          <div
+            className="score-hero-velocity"
+            style={{ '--velocity-color': velocityColor } as React.CSSProperties}
+          >
+            <VelocityIcon className="w-3.5 h-3.5" />
+            <span>{scoreDelta30d}pt {scoreDeltaDir} vs 30d ago</span>
           </div>
         )}
       </motion.div>
@@ -175,11 +247,62 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.06 }}
-        className="flex gap-2 overflow-x-auto pb-0.5"
-        style={{ scrollbarWidth: 'none' }}
+        className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none"
       >
-        <StatChip label="Confidence" value={`${confPct}%`} sub={canonicalConf.userFacing.label.toLowerCase()} color={canonicalConf.userFacing.color} icon={Shield} />
+        <StatChip
+          label="Confidence"
+          value={`${confPct}%`}
+          sub={canonicalConf.userFacing.label.toLowerCase()}
+          color={canonicalConf.userFacing.color}
+          icon={Shield}
+        />
+        {liveCount > 0 && (
+          <StatChip
+            label="Live signals"
+            value={String(liveCount)}
+            sub={dataAge > 0 ? `${dataAge}d old` : 'fresh'}
+            icon={Shield}
+          />
+        )}
+        {preparedness && pScore > 0 && (
+          <StatChip label="Preparedness" value={`${pScore}%`} color={pColor} icon={Shield} />
+        )}
       </motion.div>
+
+      {/* Intelligence Chips: Strongest Shield + Future Role */}
+      {(strongestProtection || futureRoleTitle) && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.10 }}
+          className="flex flex-col gap-2"
+        >
+          {strongestProtection && (
+            <div className="intel-chip intel-chip--shield">
+              <div className="intel-chip-icon intel-chip-icon--shield">
+                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="intel-chip-label intel-chip-label--shield">{protectionLabel}</p>
+                <p className="intel-chip-value">{strongestProtection}</p>
+              </div>
+            </div>
+          )}
+          {futureRoleTitle && (
+            <div className="intel-chip intel-chip--escape">
+              <div className="intel-chip-icon intel-chip-icon--escape">
+                <Compass className="w-3.5 h-3.5 text-cyan" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="intel-chip-label intel-chip-label--escape">Your Escape Route</p>
+                <p className="intel-chip-value intel-chip-value--bold">{futureRoleTitle}</p>
+                {futureRoleHeadline && <p className="intel-chip-sub">{futureRoleHeadline}</p>}
+              </div>
+              <ArrowUpRight className="w-3.5 h-3.5 flex-shrink-0 mt-1 opacity-50 text-cyan" />
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Top Risk Drivers */}
       <TopDriversStrip drivers={topDrivers} />
@@ -189,51 +312,35 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
         <ScoreTrendStrip scoreTrajectory={r.scoreTrajectory} currentScore={score} />
       )}
 
-      {/* Primary recommendation */}
+      {/* Primary recommendation — dynamic accent via CSS variables */}
       {primaryRec && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.14 }}
-          style={{
-            borderLeft: `3px solid ${riskColor(score)}`,
-            background: `${riskColor(score)}10`,
-            border: `1px solid ${riskColor(score)}30`,
-            borderRadius: '12px',
-            padding: '14px 16px',
-          }}
+          className="primary-rec"
+          style={recVars}
         >
-          <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: riskColor(score), margin: '0 0 6px' }}>
+          <p className="primary-rec-eyebrow">
             TOP PRIORITY · {primaryRec.priority?.toUpperCase()}
           </p>
-          <p style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.92)', margin: '0 0 6px', lineHeight: 1.4 }}>
-            {primaryRec.title}
-          </p>
+          <p className="primary-rec-title">{primaryRec.title}</p>
           {primaryRec.description && (
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', margin: '0 0 8px', lineHeight: 1.5 }}>
-              {truncate1Sentence(primaryRec.description)}
-            </p>
+            <p className="primary-rec-desc">{truncate1(primaryRec.description)}</p>
           )}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div className="primary-rec-badges">
             {typeof primaryRec.riskReductionPct === 'number' && primaryRec.riskReductionPct > 0 && (
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#10b981', padding: '1px 6px', background: 'rgba(16,185,129,0.12)', borderRadius: '10px', border: '1px solid rgba(16,185,129,0.25)' }}>
-                -{primaryRec.riskReductionPct}% risk
-              </span>
+              <span className="rec-badge-risk">-{primaryRec.riskReductionPct}% risk</span>
             )}
             {primaryRec.effortBadge && (
-              <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', padding: '1px 6px', background: 'rgba(255,255,255,0.06)', borderRadius: '10px' }}>
-                {primaryRec.effortBadge}
-              </span>
+              <span className="rec-badge-effort">{primaryRec.effortBadge}</span>
             )}
             {primaryRec.deadline && (
-              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', padding: '1px 6px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px' }}>
-                {primaryRec.deadline}
-              </span>
+              <span className="rec-badge-deadline">{primaryRec.deadline}</span>
             )}
           </div>
         </motion.div>
       )}
-
 
     </div>
   );

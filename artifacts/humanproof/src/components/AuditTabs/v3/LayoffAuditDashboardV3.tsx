@@ -137,33 +137,18 @@ const StickyCompanyHeader: React.FC<{
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.18 }}
-          className="flex items-center justify-between px-4 py-2.5"
-          style={{
-            background: 'rgba(9,12,20,0.92)',
-            backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
-          }}
+          className="sticky-dash-header"
         >
-          {/* v39.0 F7: native title attribute reveals the full company name
-              on hover/long-press when the text truncates. Lightweight tooltip
-              that works on mobile (long-press menu) without pulling in a
-              Tooltip component dependency. */}
-          <p
-            className="text-[13px] font-semibold truncate"
-            style={{ color: 'rgba(255,255,255,0.85)' }}
-            title={companyName}
-          >
+          <p className="text-[13px] font-semibold truncate text-token-1" title={companyName}>
             {companyName}
           </p>
           <div className="flex items-center gap-3 flex-shrink-0 ml-3">
             <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{ background: color + '22', border: `1px solid ${color}40` }}
+              className="score-chip-dyn flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{ '--chip-color': color, '--chip-bg': `${color}22`, '--chip-border': `${color}40` } as React.CSSProperties}
             >
-              <span className="text-[12px] font-black" style={{ color }}>{score}</span>
-              <span className="text-[10px] font-bold tracking-wide" style={{ color: color + 'cc' }}>
-                {riskLabel(score)}
-              </span>
+              <span className="text-[12px] font-black score-val">{score}</span>
+              <span className="text-[10px] font-bold tracking-wide score-lbl">{riskLabel(score)}</span>
             </div>
             {/* ViewModeToggle injected here so it sits inline with the score chip,
                 saving a full header row vs. a separate toggle bar below. */}
@@ -182,16 +167,10 @@ const DesktopTabBar: React.FC<{
   onChange: (v: TabValue) => void;
   result: HybridResult;
 }> = ({ active, onChange, result }) => (
-  <div
+  <nav
     data-tab-bar
-    role="tablist"
     aria-label="Dashboard sections"
-    className="hidden sm:flex items-center gap-1 px-2 py-2 overflow-x-auto"
-    style={{
-      background: 'rgba(9,12,20,0.92)',
-      backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(255,255,255,0.07)',
-    }}
+    className="hidden sm:flex items-center gap-1 px-2 py-2 overflow-x-auto scrollbar-none nav-surface"
   >
     {TAB_CONFIG.map(({ value, label, Icon, getBadge }) => {
       const isActive = value === active;
@@ -199,23 +178,17 @@ const DesktopTabBar: React.FC<{
       return (
         <button
           key={value}
-          role="tab"
-          aria-selected={isActive}
+          type="button"
           aria-current={isActive ? 'page' : undefined}
           onClick={() => onChange(value)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap relative"
-          style={{
-            background: isActive ? 'rgba(0,212,224,0.12)' : 'transparent',
-            border: `1px solid ${isActive ? 'rgba(0,212,224,0.30)' : 'transparent'}`,
-            color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.50)',
-          }}
+          className={`tab-btn ${isActive ? 'tab-btn--active' : ''}`}
         >
           <Icon className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="text-[12px] font-semibold">{label}</span>
           {badge && (
             <span
-              className="text-[10px] font-black px-1.5 py-0.5 rounded-full"
-              style={{ background: badge.color + '22', color: badge.color }}
+              className="tab-badge-chip px-1.5 py-0.5 rounded-full"
+              style={{ '--badge-color': badge.color, '--badge-bg': `${badge.color}22` } as React.CSSProperties}
             >
               {badge.text}
             </span>
@@ -223,7 +196,7 @@ const DesktopTabBar: React.FC<{
         </button>
       );
     })}
-  </div>
+  </nav>
 );
 
 // ── Mobile bottom navigation ──────────────────────────────────────────────────
@@ -259,18 +232,9 @@ const MobileBottomNav: React.FC<{
   // turning `position:fixed` into "fixed relative to .page-wrap" and dropping
   // the bar ~49px below the fold (only a sliver visible).
   return createPortal(
-    <div
-      role="tablist"
+    <nav
       aria-label="Dashboard sections"
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch"
-      style={{
-        background: 'rgba(7,10,18,0.97)',
-        backdropFilter: 'blur(24px) saturate(180%)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
-        minHeight: 58,
-      }}
+      className="sm:hidden fixed bottom-0 left-0 right-0 z-[999] flex items-stretch nav-surface-heavy safe-area-bottom"
     >
       {TAB_CONFIG.map(({ value, label, shortLabel, Icon, getBadge }) => {
         const isActive = value === active;
@@ -278,69 +242,41 @@ const MobileBottomNav: React.FC<{
         return (
           <button
             key={value}
-            role="tab"
-            aria-selected={isActive}
-            aria-label={`${label} tab${badge ? `: ${badge.text}` : ''}`}
+            type="button"
+            aria-current={isActive ? 'page' : undefined}
+            aria-label={`${label}${badge ? `: ${badge.text}` : ''}`}
             onClick={() => onChange(value)}
-            className="flex-1 flex flex-col items-center justify-center relative"
-            style={{
-              color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.42)',
-              // min 58px tap target; safe-area padding added by parent
-              minHeight: 58,
-              // tight horizontal padding so 6 tabs fit on 320px screens
-              padding: '7px 1px 5px',
-              transition: 'color 0.18s ease',
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            className={`tab-btn-mobile ${isActive ? 'tab-btn-mobile--active' : ''}`}
           >
-            {/* Animated active-tab background pill */}
             {isActive && (
               <motion.div
                 layoutId="mobile-tab-pill"
-                className="absolute rounded-xl"
-                style={{
-                  inset: '3px 2px',
-                  background: 'rgba(0,212,224,0.10)',
-                  border: '1px solid rgba(0,212,224,0.22)',
-                }}
+                className="tab-btn-mobile-pill"
                 transition={{ type: 'spring', stiffness: 400, damping: 38 }}
               />
             )}
 
-            {/* Icon with notification badge */}
-            <div className="relative z-10" style={{ marginBottom: 3 }}>
+            <div className="relative z-10 mb-[3px]">
               <motion.div
                 animate={isActive ? { scale: 1.10, y: -1 } : { scale: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 420, damping: 24 }}
               >
-                {/* Icon size clamps: 18px on very narrow screens, 20px standard */}
                 <Icon
-                  style={{
-                    width: 'clamp(17px, 4.5vw, 20px)',
-                    height: 'clamp(17px, 4.5vw, 20px)',
-                  }}
+                  className="tab-icon-size"
                   strokeWidth={isActive ? 2.2 : 1.6}
                 />
               </motion.div>
               {badge && (() => {
-                // Collapse to a dot when badge text is longer than 3 chars —
-                // prevents overflow at the outermost tabs on 320px screens.
                 const isLong = badge.text.length > 3;
                 return isLong ? (
                   <span
-                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
-                    style={{ background: badge.color, boxShadow: `0 0 5px ${badge.color}aa` }}
+                    className="tab-badge-dot absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
+                    style={{ '--badge-color': badge.color } as React.CSSProperties}
                   />
                 ) : (
                   <span
-                    className="absolute -top-1 -right-1.5 min-w-[13px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black whitespace-nowrap"
-                    style={{
-                      background: badge.color,
-                      color: '#fff',
-                      fontSize: 8,
-                      lineHeight: 1,
-                      boxShadow: `0 0 5px ${badge.color}88`,
-                    }}
+                    className="tab-badge-chip absolute -top-1 -right-1.5 min-w-[13px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black whitespace-nowrap"
+                    style={{ '--badge-color': badge.color, '--badge-bg': `${badge.color}22` } as React.CSSProperties}
                   >
                     {badge.text}
                   </span>
@@ -348,21 +284,13 @@ const MobileBottomNav: React.FC<{
               })()}
             </div>
 
-            {/* Label — clamp font size so it never wraps */}
-            <span
-              className="relative z-10 font-semibold leading-none truncate w-full text-center"
-              style={{
-                fontSize: 'clamp(8px, 2.2vw, 10px)',
-                letterSpacing: isActive ? '0.03em' : '0',
-                maxWidth: '100%',
-              }}
-            >
+            <span className="relative z-10 tab-label-mobile truncate w-full text-center">
               {shortLabel}
             </span>
           </button>
         );
       })}
-    </div>,
+    </nav>,
     document.body,
   );
 };
@@ -623,43 +551,33 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               global nav pill (.nav-root, fixed top:12px height:var(--nav-h)).
               top:0 here would tuck this bar directly behind that pill once the
               page scrolls, clipping the company name and tab labels. ─────── */}
-        <div
-          className="sticky z-40"
-          style={{
-            top: 'calc(var(--nav-h, 72px) + 12px)',
-            background: 'rgba(9,12,20,0.95)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
-          }}
-        >
+        <div className="hp-sticky-bar">
           {/* Single row: company name (truncated) + score chip + mode toggle.
               On phones ≤480px the score label is hidden to prevent overflow. */}
           <div className="flex items-center gap-2 px-3 py-2.5 sm:px-4">
             {/* Company name — takes available space, truncates cleanly */}
             <p
-              className="flex-1 min-w-0 text-[13px] font-semibold truncate"
-              style={{ color: 'rgba(255,255,255,0.85)' }}
+              className="flex-1 min-w-0 text-[13px] font-semibold truncate text-token-1"
               title={companyData?.name ?? result.companyName ?? 'Company'}
             >
               {companyData?.name ?? result.companyName ?? 'Company'}
             </p>
 
             {/* Score chip — hide the text label on smallest phones */}
-            <div
-              className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
-              style={{ background: riskColor(result.total) + '22', border: `1px solid ${riskColor(result.total)}40` }}
-            >
-              <span className="text-[12px] font-black leading-none" style={{ color: riskColor(result.total) }}>
-                {result.total}
-              </span>
-              <span
-                className="hidden xs:inline text-[10px] font-bold tracking-wide"
-                style={{ color: riskColor(result.total) + 'cc' }}
-              >
-                {riskLabel(result.total)}
-              </span>
-            </div>
+            {(() => {
+              const rc = riskColor(result.total);
+              return (
+                <div
+                  className="score-chip-dyn flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
+                  style={{ '--chip-color': rc, '--chip-bg': `${rc}22`, '--chip-border': `${rc}40` } as React.CSSProperties}
+                >
+                  <span className="text-[12px] font-black leading-none score-val">{result.total}</span>
+                  <span className="hidden xs:inline text-[10px] font-bold tracking-wide score-lbl">
+                    {riskLabel(result.total)}
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* View mode toggle: Guided → Analysis → Beast */}
             <ViewModeToggle
@@ -727,38 +645,32 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         {/* ── Wave 4.3: Re-engagement nudge (day-7/30/90) ─────────────────── */}
         {reEngagementTrigger && !reEngagementDismissed && !intelligenceUpdate?.shouldPromptReaudit && (
           <div className="px-4 pt-3 sm:px-0">
-            <div
-              className="rounded-xl flex items-start gap-3 px-3 py-2.5"
-              style={{
-                background: 'rgba(34,211,238,0.06)',
-                border: '1px solid rgba(34,211,238,0.18)',
-              }}
-            >
+            <div className="reengagement-nudge flex items-start gap-3 px-3 py-2.5">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>
+                <p className="text-[10px] font-bold text-cyan">
                   {reEngagementTrigger.headline}
                 </p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                <p className="text-[10px] mt-0.5 text-token-2">
                   {reEngagementTrigger.subtext}
                 </p>
               </div>
               {props.onRecalculate && (
                 <button
+                  type="button"
                   onClick={() => {
                     setReEngagementDismissed(true);
                     clearReEngagementState();
                     props.onRecalculate?.();
                   }}
-                  className="flex-shrink-0 text-[10px] font-bold px-2 py-1 rounded-lg transition-all hover:scale-[1.03]"
-                  style={{ background: 'rgba(34,211,238,0.14)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.28)' }}
+                  className="reengagement-nudge-cta"
                 >
                   {reEngagementTrigger.ctaLabel}
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => setReEngagementDismissed(true)}
-                className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity text-[10px] px-1"
-                style={{ color: 'rgba(255,255,255,0.70)' }}
+                className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity text-[10px] px-1 text-token-1"
                 aria-label="Dismiss"
               >
                 ✕
@@ -832,8 +744,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                   key={key}
                   id={`bm-${key}`}
                   ref={el => { if (el) beastSectionRefs.current[key] = el; }}
-                  className="hp-beast-content px-3 pt-3 sm:px-0 sm:pt-0"
-                  style={idx > 0 ? { borderTop: '1px solid rgba(255,255,255,0.06)' } : undefined}
+                  className={`hp-beast-content px-3 pt-3 sm:px-0 sm:pt-0${idx > 0 ? ' hp-section-divider' : ''}`}
                 >
                   <TabErrorBoundary tabLabel={label}>
                     <Suspense fallback={<Fallback />}>

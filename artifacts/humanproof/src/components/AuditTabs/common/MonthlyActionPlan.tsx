@@ -1,14 +1,15 @@
-/**
- * MonthlyActionPlan.tsx — v45.0
- *
- * Month-by-month action calendar from monthlyActionPlanEngine.ts.
- */
+// MonthlyActionPlan.tsx — v46.0
+//
+// Month-by-month action calendar from monthlyActionPlanEngine.ts.
+// No inline styles — all surfaces use CSS utility classes.
+// Emoji icons replaced with Lucide (accessibility + consistency).
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar, Clock, ChevronRight, ChevronDown, ChevronUp,
-  CheckCircle, Lock, Zap, Star
+  CheckCircle, Lock, Zap, Star, Siren, AlertTriangle,
+  ClipboardList, ShieldCheck,
 } from "lucide-react";
 import type { MonthlyActionPlanResult, MonthPlan, WeeklyAction } from "@/services/monthlyActionPlanEngine";
 
@@ -17,39 +18,40 @@ interface MonthlyActionPlanProps {
   className?: string;
 }
 
+const URGENCY_CONFIG: Record<string, {
+  label: string;
+  badgeClass: string;
+  Icon: React.ElementType;
+}> = {
+  crisis:    { label: 'Crisis Protocol',   badgeClass: 'urgency-badge urgency-badge--crisis',     Icon: Siren },
+  elevated:  { label: 'Elevated Response', badgeClass: 'urgency-badge urgency-badge--elevated',   Icon: AlertTriangle },
+  standard:  { label: 'Strategic Plan',    badgeClass: 'urgency-badge urgency-badge--standard',   Icon: ClipboardList },
+  monitoring:{ label: 'Maintenance Mode',  badgeClass: 'urgency-badge urgency-badge--monitoring', Icon: ShieldCheck },
+};
+
 function UrgencyHeader({ mode, totalMonths }: { mode: MonthlyActionPlanResult['urgencyMode']; totalMonths: number }) {
-  const config: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    crisis:    { label: 'Crisis Protocol',   color: '#ef4444', bg: 'rgba(239,68,68,0.10)',  icon: '🚨' },
-    elevated:  { label: 'Elevated Response', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', icon: '⚡' },
-    standard:  { label: 'Strategic Plan',    color: '#3b82f6', bg: 'rgba(59,130,246,0.10)', icon: '📋' },
-    monitoring:{ label: 'Maintenance Mode',  color: '#10b981', bg: 'rgba(16,185,129,0.10)', icon: '✓' },
-  };
-  const c = config[mode] ?? config.standard;
+  const c = URGENCY_CONFIG[mode] ?? URGENCY_CONFIG.standard;
+  const { Icon } = c;
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <span className="text-base">{c.icon}</span>
+        <Icon className="w-4 h-4 text-white/60 flex-shrink-0" />
         <div>
           <div className="text-sm font-semibold text-white/90">{c.label}</div>
           <div className="text-xs text-white/45">{totalMonths}-month action calendar</div>
         </div>
       </div>
-      <span className="text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full"
-        style={{ color: c.color, background: c.bg }}>
-        {mode.toUpperCase()}
-      </span>
+      <span className={c.badgeClass}>{mode.toUpperCase()}</span>
     </div>
   );
 }
 
 function ROIStars({ rating }: { rating: number }) {
-  // roiRating is 1–10; display as 1–5 stars
   const stars = Math.round(rating / 2);
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map(n => (
-        <Star key={n} className="w-2.5 h-2.5"
-          style={{ color: n <= stars ? '#f59e0b' : 'rgba(255,255,255,0.12)', fill: n <= stars ? '#f59e0b' : 'none' }} />
+        <Star key={n} className={`roi-star ${n <= stars ? 'roi-star--filled' : 'roi-star--empty'}`} />
       ))}
     </div>
   );
@@ -60,23 +62,16 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
 
   return (
     <div className="relative">
-      {!isLast && (
-        <div className="absolute left-[15px] top-8 bottom-0 w-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-      )}
+      {!isLast && <div className="timeline-connector" />}
       <div className="flex gap-3">
         <div className="flex-shrink-0 pt-1">
-          <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[10px] font-bold relative z-10"
-            style={{
-              background: action.isBlocking ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.12)',
-              color: action.isBlocking ? '#ef4444' : '#60a5fa',
-              border: action.isBlocking ? '1px solid rgba(239,68,68,0.25)' : '1px solid rgba(59,130,246,0.20)',
-            }}>
+          <div className={`week-node ${action.isBlocking ? 'week-node--blocking' : 'week-node--normal'}`}>
             W{action.weekNumber}
           </div>
         </div>
 
         <div className="flex-1 pb-4">
-          <button onClick={() => setExpanded(!expanded)}
+          <button type="button" onClick={() => setExpanded(!expanded)}
             className="flex items-start justify-between gap-2 w-full text-left">
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-2 mb-0.5">
@@ -94,7 +89,8 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
                 <ROIStars rating={action.roiRating} />
               </div>
             </div>
-            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />
+            {expanded
+              ? <ChevronUp className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />
               : <ChevronDown className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />}
           </button>
 
@@ -119,8 +115,7 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
                   )}
 
                   {action.whyNow && (
-                    <div className="rounded-lg p-2 flex items-start gap-1.5"
-                      style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.12)' }}>
+                    <div className="why-now-box">
                       <Zap className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/60" />
                       <p className="text-xs text-white/55 leading-relaxed">
                         <span className="text-amber-400/70 font-medium">Why now: </span>{action.whyNow}
@@ -145,10 +140,7 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] text-white/30">Unlocks:</span>
                       {action.unlocks.map(u => (
-                        <span key={u} className="text-[10px] px-1.5 py-0.5 rounded-full"
-                          style={{ background: 'rgba(16,185,129,0.08)', color: 'rgba(16,185,129,0.60)' }}>
-                          {u}
-                        </span>
+                        <span key={u} className="unlock-tag">{u}</span>
                       ))}
                     </div>
                   )}
@@ -162,21 +154,18 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
   );
 }
 
-function MonthSection({ month, isActive, onClick }: { month: MonthPlan; isActive: boolean; onClick: () => void }) {
+function MonthSection({
+  month, isActive, onClick,
+}: { month: MonthPlan; isActive: boolean; onClick: () => void }) {
   return (
     <div>
-      <button onClick={onClick}
-        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left transition-colors"
-        style={{
-          background: isActive ? 'rgba(59,130,246,0.10)' : 'rgba(255,255,255,0.03)',
-          border: isActive ? '1px solid rgba(59,130,246,0.22)' : '1px solid rgba(255,255,255,0.06)',
-        }}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`month-section-btn ${isActive ? 'month-section-btn--active' : ''}`}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
-            style={{
-              background: isActive ? 'rgba(59,130,246,0.20)' : 'rgba(255,255,255,0.06)',
-              color: isActive ? '#60a5fa' : 'rgba(255,255,255,0.40)',
-            }}>
+          <div className={`month-num ${isActive ? 'month-num--active' : ''}`}>
             M{month.month}
           </div>
           <div>
@@ -184,7 +173,9 @@ function MonthSection({ month, isActive, onClick }: { month: MonthPlan; isActive
             <div className="text-xs text-white/35">{month.weeklyActions.length} weekly actions</div>
           </div>
         </div>
-        {isActive ? <ChevronUp className="w-4 h-4 text-white/30" /> : <ChevronDown className="w-4 h-4 text-white/30" />}
+        {isActive
+          ? <ChevronUp className="w-4 h-4 text-white/30" />
+          : <ChevronDown className="w-4 h-4 text-white/30" />}
       </button>
 
       <AnimatePresence>
@@ -206,12 +197,17 @@ function MonthSection({ month, isActive, onClick }: { month: MonthPlan; isActive
                 </div>
               )}
               {month.weeklyActions.map((week, i) => (
-                <WeekRow key={`w${week.weekNumber}`} action={week} index={i} isLast={i === month.weeklyActions.length - 1} />
+                <WeekRow
+                  key={`w${week.weekNumber}`}
+                  action={week}
+                  index={i}
+                  isLast={i === month.weeklyActions.length - 1}
+                />
               ))}
               {month.goNoGoGate && (
-                <div className="mt-2 mb-3 px-3 py-2 rounded-lg text-xs text-white/50 leading-relaxed"
-                  style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.12)' }}>
-                  <span className="text-amber-400/70 font-medium">Month-end gate: </span>{month.goNoGoGate}
+                <div className="go-no-go-box mt-2 mb-3">
+                  <span className="text-amber-400/70 font-medium">Month-end gate: </span>
+                  {month.goNoGoGate}
                 </div>
               )}
             </div>
@@ -225,15 +221,16 @@ function MonthSection({ month, isActive, onClick }: { month: MonthPlan; isActive
 const MonthlyActionPlan: React.FC<MonthlyActionPlanProps> = ({ plan, className = '' }) => {
   const [activeMonth, setActiveMonth] = useState(0);
 
-  const totalActions = plan.months.reduce((sum, m) => sum + m.weeklyActions.length, 0);
-  const totalBlocking = plan.months.reduce((sum, m) => sum + m.weeklyActions.filter(w => w.isBlocking).length, 0);
+  const totalActions  = plan.months.reduce((sum, m) => sum + m.weeklyActions.length, 0);
+  const totalBlocking = plan.months.reduce(
+    (sum, m) => sum + m.weeklyActions.filter(w => w.isBlocking).length, 0,
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`rounded-2xl p-4 ${className}`}
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+      className={`glass-card p-4 ${className}`}
     >
       <div className="mb-4">
         <UrgencyHeader mode={plan.urgencyMode} totalMonths={plan.months.length} />
@@ -275,7 +272,9 @@ const MonthlyActionPlan: React.FC<MonthlyActionPlanProps> = ({ plan, className =
 
       {plan.criticalPath && plan.criticalPath.length > 0 && (
         <div className="mt-4 pt-3 border-t border-white/[0.06]">
-          <div className="text-xs font-medium text-white/30 uppercase tracking-wide mb-1.5">Critical path (must-dos)</div>
+          <div className="text-xs font-medium text-white/30 uppercase tracking-wide mb-1.5">
+            Critical path (must-dos)
+          </div>
           {plan.criticalPath.map((item, i) => (
             <div key={i} className="flex items-start gap-1.5 mb-1">
               <Lock className="w-3 h-3 mt-0.5 flex-shrink-0 text-red-400/40" />
