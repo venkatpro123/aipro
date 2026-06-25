@@ -89,7 +89,7 @@ const AccuracyBar: React.FC<{
             n={record.sampleSize.toLocaleString()}
           </span>
         ) : (
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono)', fontStyle: 'italic' }}>
+          <span style={{ fontSize: '9px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)', fontStyle: 'italic' }}>
             research
           </span>
         )}

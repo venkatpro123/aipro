@@ -366,7 +366,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
         <div className="rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <p className="text-[10px] mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>MARKET MIDPOINT</p>
-          <p className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>{data.marketMidpoint}</p>
+          <p className="text-[12px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>{data.marketMidpoint}</p>
         </div>
         <div className="rounded-lg p-2" style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
           <p className="text-[10px] mb-0.5" style={{ color: `${color}70` }}>SEARCH TARGET</p>

@@ -306,7 +306,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         minHeight: '32px',
       }}>
-        <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.6rem', letterSpacing: '1px' }}>
+        <span style={{ color: 'var(--alpha-text-25)', fontSize: '0.6rem', letterSpacing: '1px' }}>
           {progress < 100
             ? `Auto-completes in ~${remainSec}s`
             : 'Loading your intelligence report…'}

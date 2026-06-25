@@ -76,7 +76,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
               <div className="flex-1 min-w-0">
                 {/* Dimension label + score delta */}
                 <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <span className="text-[11px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                  <span className="text-[11px] font-semibold truncate" style={{ color: 'var(--alpha-text-85)' }}>
                     {lever.dimensionLabel}
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">

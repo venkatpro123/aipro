@@ -1568,7 +1568,7 @@ const SourceRow: React.FC<{
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
       {icon}
-      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'rgba(255,255,255,0.80)' }}>{label}</span>
+      <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--alpha-text-85)' }}>{label}</span>
       {isDominant && impactLevel > 0 && (
         <span style={{ fontSize: '0.59rem', padding: '0 5px', borderRadius: 3, fontWeight: 800, background: `${color}22`, color, border: `1px solid ${color}38`, lineHeight: '18px' }}>
           DOMINANT

@@ -243,7 +243,7 @@ export const SignalCorrelationInsight: React.FC<Props> = ({ report }) => {
           <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: trustColor }} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <p className="text-[10px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
+              <p className="text-[10px] font-bold leading-snug" style={{ color: 'var(--alpha-text-85)' }}>
                 {report.totalContradictions} signal tension{report.totalContradictions !== 1 ? 's' : ''} detected
               </p>
               <span

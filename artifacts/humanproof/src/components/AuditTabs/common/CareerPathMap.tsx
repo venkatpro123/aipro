@@ -164,7 +164,7 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
                           {node.riskDelta > 0 ? '+' : ''}{node.riskDelta}pt
                         </span>
                       )}
-                      <ArrowRight className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.2)' }} />
+                      <ArrowRight className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
                     </div>
                   </div>
                 </button>

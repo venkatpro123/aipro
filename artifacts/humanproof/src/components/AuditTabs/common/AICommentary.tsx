@@ -215,7 +215,7 @@ export const AICommentary: React.FC<Props> = ({ activeTab, result }) => {
                 className="opacity-40 hover:opacity-70 transition-opacity"
                 aria-label="Dismiss"
               >
-                <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.80)' }} />
+                <X className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-85)' }} />
               </button>
               <button
                 onClick={dismissAll}

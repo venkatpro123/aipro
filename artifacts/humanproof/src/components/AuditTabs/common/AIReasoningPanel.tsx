@@ -82,7 +82,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
         {/* Dimension info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.82)' }}>
+            <p className="text-[11px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
               {dim.label}
             </p>
             <span className="text-[10px] font-bold px-1 py-0.5 rounded"

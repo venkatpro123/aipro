@@ -69,7 +69,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
 
         {/* Label */}
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
+          <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--alpha-text-85)' }}>
             {lever.dimensionLabel}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">

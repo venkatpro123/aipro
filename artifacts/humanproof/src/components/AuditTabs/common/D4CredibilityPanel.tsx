@@ -105,7 +105,7 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
           padding: '9px 11px',
           marginBottom: hasConflicts ? 8 : 0,
         }}>
-          <p style={{ fontSize: '0.78rem', lineHeight: 1.5, color: 'rgba(255,255,255,0.80)', margin: 0 }}>
+          <p style={{ fontSize: '0.78rem', lineHeight: 1.5, color: 'var(--alpha-text-85)', margin: 0 }}>
             Your self-reported{' '}
             <strong style={{ color: '#f97316' }}>"{getTierLabel(reportedPerformanceTier)}"</strong>
             {' '}was adjusted to{' '}

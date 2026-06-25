@@ -142,7 +142,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
                 {internalMobility.targetDepartments.slice(0, 2).map((t: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
                     style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.12)' }}>
-                    <span className="text-[11px] font-semibold flex-1" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                    <span className="text-[11px] font-semibold flex-1" style={{ color: 'var(--alpha-text-85)' }}>
                       {t.department}
                     </span>
                     <span className="text-[12px] font-black" style={{ color: '#14b8a6' }}>{t.fitScore}</span>

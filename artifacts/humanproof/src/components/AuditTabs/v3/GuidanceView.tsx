@@ -281,7 +281,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               {urgency === 'CRITICAL' ? 'This is critical.' : 'This needs your attention now.'}
             </p>
             {synthesis?.singleBiggestRisk && (
-              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.82)', margin: '8px 0 0', lineHeight: 1.6 }}>
+              <p style={{ fontSize: '14px', color: 'var(--alpha-text-85)', margin: '8px 0 0', lineHeight: 1.6 }}>
                 {synthesis.singleBiggestRisk}
               </p>
             )}
@@ -411,7 +411,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           </p>
         </div>
         {/* Verdict sentence */}
-        <p style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.82)', margin: 0 }}>
+        <p style={{ fontSize: '14px', lineHeight: 1.75, color: 'var(--alpha-text-85)', margin: 0 }}>
           {verdictSentence}
         </p>
       </Section>

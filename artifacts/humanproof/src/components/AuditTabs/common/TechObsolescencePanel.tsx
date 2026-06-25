@@ -131,7 +131,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
                 <div className="flex items-center gap-2 min-w-0">
                   <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: tc.color, opacity: 0.7 }} />
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>{tech.name}</p>
+                    <p className="text-[11px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>{tech.name}</p>
                     {tech.replacementTech && (
                       <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                         → {tech.replacementTech}

@@ -681,7 +681,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                     style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.18)' }}>
                     <Navigation style={{ width: 14, height: 14, color: '#22d3ee', flexShrink: 0, marginTop: 1 }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.80)' }}>
+                      <p className="text-[11px] font-semibold mb-1" style={{ color: 'var(--alpha-text-85)' }}>
                         Get personalized city rankings
                       </p>
                       <p className="text-[10px] leading-snug mb-2" style={{ color: 'var(--alpha-text-45)' }}>

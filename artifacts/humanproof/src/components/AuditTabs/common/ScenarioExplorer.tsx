@@ -288,7 +288,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                         {i + 1}.
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
+                        <p className="text-[11px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
                           {action.title}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">

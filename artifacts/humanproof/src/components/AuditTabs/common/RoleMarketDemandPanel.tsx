@@ -117,7 +117,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
               <Clock className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />
               <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Median time-to-fill</span>
             </div>
-            <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>
+            <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>
               {snapshot.timeToFillDays} days
             </span>
           </div>

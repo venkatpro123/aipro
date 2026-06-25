@@ -64,7 +64,7 @@ export const RiskUpdateBanner: React.FC<Props> = ({
             <p className="text-[9px] font-black tracking-[0.16em] mb-0.5" style={{ color: 'rgba(34,211,238,0.65)' }}>
               NEW SIGNAL DETECTED · {companyName.toUpperCase()}
             </p>
-            <p className="text-[11px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
+            <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--alpha-text-85)' }}>
               {headline}
             </p>
           </div>
@@ -99,7 +99,7 @@ export const RiskUpdateBanner: React.FC<Props> = ({
             onClick={onDismiss}
             className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity"
           >
-            <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.80)' }} />
+            <X className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-85)' }} />
           </button>
         </div>
       </motion.div>

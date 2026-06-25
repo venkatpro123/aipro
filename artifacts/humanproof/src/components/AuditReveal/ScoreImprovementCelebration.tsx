@@ -87,7 +87,7 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
         onClick={onDismiss}
         className="absolute top-2 right-2 p-1.5 rounded-full opacity-40 hover:opacity-80 transition-opacity"
       >
-        <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.80)' }} />
+        <X className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-85)' }} />
       </button>
 
       <div className="px-4 py-4">

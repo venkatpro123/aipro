@@ -231,7 +231,7 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
               {/* Content */}
               <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-3'}`}>
                 <div className="flex items-start justify-between gap-2 flex-wrap">
-                  <p className="text-[11px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                  <p className="text-[11px] font-semibold leading-snug" style={{ color: 'var(--alpha-text-85)' }}>
                     {ev.label}
                   </p>
                   <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}>

@@ -82,7 +82,7 @@ const ActionRow: React.FC<{
         className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left"
       >
         <CatIcon className="w-3 h-3 flex-shrink-0" style={{ color: `${color}80` }} />
-        <p className="flex-1 text-[10px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.80)' }}>
+        <p className="flex-1 text-[10px] font-semibold leading-snug" style={{ color: 'var(--alpha-text-85)' }}>
           {action.title}
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">

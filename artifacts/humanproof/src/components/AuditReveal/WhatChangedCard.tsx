@@ -95,7 +95,7 @@ export const WhatChangedCard: React.FC<Props> = ({
           onClick={onDismiss}
           className="absolute top-2.5 right-2.5 opacity-30 hover:opacity-70 transition-opacity"
         >
-          <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.80)' }} />
+          <X className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-85)' }} />
         </button>
 
         <div className="px-4 py-3">

@@ -192,7 +192,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
         </p>
       </div>
 
-      <p className="text-[10px] mt-2 text-right" style={{ color: 'rgba(255,255,255,0.2)' }}>
+      <p className="text-[10px] mt-2 text-right" style={{ color: 'var(--alpha-text-25)' }}>
         Engine {calibration.engineVersion} · Calibrated {calibration.lastCalibrationDate}
       </p>
     </div>

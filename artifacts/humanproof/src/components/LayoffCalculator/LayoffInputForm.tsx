@@ -135,7 +135,7 @@ const RoleIntelCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
       style={{ background: `${color}09`, border: `1px solid ${color}25` }}
     >
       <div className="flex items-center justify-between mb-1.5">
-        <p className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>{entry.displayTitle}</p>
+        <p className="text-xs font-bold" style={{ color: 'var(--alpha-text-85)' }}>{entry.displayTitle}</p>
         <div className="flex items-center gap-2">
           <MiniSparkline trend={entry.riskTrend} color={color} />
           <span className="text-xs font-black px-1.5 py-0.5 rounded" style={{ background: `${color}20`, color }}>{entry.currentRiskScore}%</span>

@@ -128,7 +128,7 @@ const IntelligenceBriefBlock: React.FC<{
           // Deterministic first paint — the user gets a real, signal-grounded read
           // immediately, instead of staring at a skeleton that may never resolve.
           <>
-            <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.82)' }}>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-85)' }}>
               {interimSummary}
             </p>
             <div className="flex items-center gap-2 mt-2">
@@ -223,7 +223,7 @@ const IntelligenceBriefBlock: React.FC<{
             <p className="text-[10px] font-bold tracking-wider mb-0.5" style={{ color: uc.color }}>
               TOP ACTION THIS WEEK
             </p>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.80)' }}>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-85)' }}>
               {brief.topActionThisWeek}
             </p>
           </div>
@@ -270,7 +270,7 @@ const MiniGauge: React.FC<{
           <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>/100</span>
         </div>
       </div>
-      <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
+      <p className="text-[11px] font-bold text-center" style={{ color: 'var(--alpha-text-85)' }}>{label}</p>
       <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>{sublabel}</p>
     </div>
   );
@@ -328,7 +328,7 @@ const MiniGaugeRange: React.FC<{
         <AlertOctagon className="w-2.5 h-2.5" style={{ color: '#fbbf24' }} />
         <span className="text-[10px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
       </div>
-      <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
+      <p className="text-[11px] font-bold text-center" style={{ color: 'var(--alpha-text-85)' }}>{label}</p>
       <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>{sublabel}</p>
     </div>
   );
@@ -400,7 +400,7 @@ const DualGaugePanel: React.FC<{
               <div className="w-20 h-20 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'var(--alpha-bg-08)' }}>
                 <span className="text-[10px] text-center" style={{ color: 'var(--alpha-text-35)' }}>not<br/>assessed</span>
               </div>
-              <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>Preparedness</p>
+              <p className="text-[11px] font-bold text-center" style={{ color: 'var(--alpha-text-85)' }}>Preparedness</p>
               <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>complete profile</p>
             </div>
           )

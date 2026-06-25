@@ -83,7 +83,7 @@ const ActionRow: React.FC<{
         >
           {action.urgency}
         </span>
-        <p className="flex-1 text-[10px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.80)' }}>
+        <p className="flex-1 text-[10px] font-semibold leading-snug" style={{ color: 'var(--alpha-text-85)' }}>
           {action.title}
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">

@@ -267,7 +267,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
             <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
               Primary Risk Driver
             </div>
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5, fontWeight: 600 }}>
+            <p style={{ fontSize: '11px', color: 'var(--alpha-text-85)', lineHeight: 1.5, fontWeight: 600 }}>
               {intelligenceBrief.keyRiskDriver}
             </p>
           </div>
@@ -342,7 +342,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
                 </span>
               )}
             </div>
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5, fontWeight: 600 }}>
+            <p style={{ fontSize: '11px', color: 'var(--alpha-text-85)', lineHeight: 1.5, fontWeight: 600 }}>
               {intelligenceBrief.topActionThisWeek}
             </p>
           </div>
@@ -350,10 +350,10 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
 
         {/* Model footnote */}
         <div className="mt-4 flex items-center justify-between">
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '9px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
             Model: {intelligenceBrief.modelUsed}
           </span>
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '9px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
             Refreshes when score shifts &gt;5pts or after 24h
           </span>
         </div>

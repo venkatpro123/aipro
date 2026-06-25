@@ -68,7 +68,7 @@ const EmptyPrompt: React.FC = () => (
     className="rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center py-10 px-6"
     style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}
   >
-    <Brain className="w-8 h-8 mb-3" style={{ color: 'rgba(255,255,255,0.2)' }} />
+    <Brain className="w-8 h-8 mb-3" style={{ color: 'var(--alpha-text-25)' }} />
     <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-55)', marginBottom: '6px' }}>
       Add your skills to see what to improve
     </h3>

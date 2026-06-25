@@ -136,7 +136,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
             <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(34,211,238,0.65)' }}>
               THIS WEEK — ONE THING
             </p>
-            <p className="text-[11px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>
+            <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--alpha-text-85)' }}>
               {topAction ? topAction.title : "Activate your professional network"}
             </p>
             {topAction?.effort && (
