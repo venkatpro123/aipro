@@ -57,11 +57,11 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
 
   return (
     <div className="rounded-2xl p-4"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ListChecks className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.7)' }} />
-          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-45)' }}>
             ACTION PRIORITY MATRIX
           </p>
           <TierBadge tier={1} />
@@ -91,7 +91,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                 <PIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-0.5">
-                    <p className="text-[12px] font-semibold leading-tight" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                    <p className="text-[12px] font-semibold leading-tight" style={{ color: 'var(--alpha-text-85)' }}>
                       {item.title}
                     </p>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
@@ -99,19 +99,19 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                       {item.priority}
                     </span>
                   </div>
-                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
                     {item.description}
                   </p>
                   <div className="flex items-center flex-wrap gap-2 mt-1.5">
                     {/* Sequence phase label */}
                     {item.sequencePhase && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+                        style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
                         {{ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' }[item.sequencePhase]}
                       </span>
                     )}
                     {item.deadline && (
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                         <Clock className="w-2.5 h-2.5 inline mr-1" />
                         {item.deadline}
                       </span>
@@ -132,7 +132,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                   </div>
                   {/* Evidence stat — collapsed "Why this works" one-liner */}
                   {item.evidenceStats && (
-                    <p className="text-[10px] italic mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <p className="text-[10px] italic mt-1" style={{ color: 'var(--alpha-text-35)' }}>
                       {item.evidenceStats}
                     </p>
                   )}
@@ -208,7 +208,7 @@ const EmergencyCallout: React.FC<{
               {riskLabel(score)} RISK · {score}/100
             </span>
           </div>
-          <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--alpha-text-70)' }}>
             {score >= 55
               ? `Your situation is serious — and you're ahead of ${percentileAhead}% of people who face it.`
               : `A critical company signal warrants acting now — and you're ahead of ${percentileAhead}% who catch it this early.`}
@@ -219,17 +219,17 @@ const EmergencyCallout: React.FC<{
       {/* Statistical grounding paragraph */}
       <div
         className="rounded-xl px-3 py-2.5 mb-3"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
       >
-        <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.68)' }}>
-          Most people discover layoff risk <span style={{ color: 'rgba(255,255,255,0.90)', fontWeight: 600 }}>2 weeks before it happens</span>.
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
+          Most people discover layoff risk <span style={{ color: 'var(--alpha-text-92)', fontWeight: 600 }}>2 weeks before it happens</span>.
           {' '}You're discovering it months ahead. That gap is your most valuable asset right now.
         </p>
       </div>
 
       {/* Single action focus */}
       <div className="mb-2">
-        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--alpha-text-35)' }}>
           THIS WEEK · ONE THING
         </p>
         {topAction ? (
@@ -244,11 +244,11 @@ const EmergencyCallout: React.FC<{
               <Zap className="w-3 h-3" style={{ color: '#fca5a5' }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.90)' }}>
+              <p className="text-[12px] font-bold leading-tight" style={{ color: 'var(--alpha-text-92)' }}>
                 {topAction}
               </p>
               {topActionTime && (
-                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
                   <Clock className="w-2.5 h-2.5 inline mr-1" />
                   Est. {topActionTime}
                 </p>
@@ -260,7 +260,7 @@ const EmergencyCallout: React.FC<{
             className="rounded-xl px-3 py-2.5"
             style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
           >
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
               Start with your top Phase 1 action below. One thing at a time.
             </p>
           </div>
@@ -268,7 +268,7 @@ const EmergencyCallout: React.FC<{
       </div>
 
       {/* Escape hatch */}
-      <p className="text-[10px] italic" style={{ color: 'rgba(255,255,255,0.30)' }}>
+      <p className="text-[10px] italic" style={{ color: 'var(--alpha-text-30)' }}>
         If this feels overwhelming, start only with the action above. Everything else can wait until next week.
       </p>
     </motion.div>
@@ -389,7 +389,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               >
                 IMPORTANT UPDATE
               </span>
-              <p className="text-[13px] font-bold mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
+              <p className="text-[13px] font-bold mt-1 leading-snug" style={{ color: 'var(--alpha-text-92)' }}>
                 {warnDaysLeft !== null && warnDaysLeft > 0
                   ? `Layoffs are officially planned — ${warnDaysLeft} days notice remaining`
                   : 'Your company has officially announced layoffs'}
@@ -429,7 +429,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           </div>
 
           {warnLocations.length > 0 && (
-            <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <p className="text-[10px] mb-2" style={{ color: 'var(--alpha-text-45)' }}>
               Locations: {warnLocations.slice(0, 3).join(', ')}{warnLocations.length > 3 ? ` +${warnLocations.length - 3} more` : ''}
             </p>
           )}
@@ -437,10 +437,10 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           {/* What this means + what to do */}
           <div
             className="rounded-xl px-3 py-2.5"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
           >
-            <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.72)' }}>
-              <span style={{ color: 'rgba(255,255,255,0.90)', fontWeight: 600 }}>This is official, not a guess.</span>
+            <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'var(--alpha-text-70)' }}>
+              <span style={{ color: 'var(--alpha-text-92)', fontWeight: 600 }}>This is official, not a guess.</span>
               {' '}Companies must tell employees at least 60 days before layoffs happen.
             </p>
             <p className="text-[11px] leading-relaxed font-semibold" style={{ color: '#fca5a5' }}>
@@ -481,12 +481,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                   THINGS TO WATCH
                 </span>
               </div>
-              <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.88)' }}>
+              <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'var(--alpha-text-85)' }}>
                 You have {financialRunwayMonths} month{financialRunwayMonths !== 1 ? 's' : ''} of savings — a job search could take longer than that
               </p>
-              <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--alpha-text-55)' }}>
                 People in similar situations usually take{' '}
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>8–16 weeks</span> to find a new job.
+                <span style={{ color: 'var(--alpha-text-85)', fontWeight: 600 }}>8–16 weeks</span> to find a new job.
                 {' '}Your savings may run out before then. Start looking <em>now</em>, before money pressure forces a rushed decision.
               </p>
               <div
@@ -496,7 +496,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(245,158,11,0.80)' }}>
                   WHAT TO DO NOW
                 </p>
-                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
                   1. Apply to 3 jobs this week (your résumé doesn't need to be perfect).
                   {' '}2. Message 2 people at companies you'd like to work for.
                   {' '}3. Quietly let your contacts know you're looking.
@@ -553,10 +553,10 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                   STOCK ALERT
                 </span>
               </div>
-              <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.88)' }}>
+              <p className="text-[12px] font-bold leading-snug mb-1" style={{ color: 'var(--alpha-text-85)' }}>
                 You have {equityVestMonths} month{equityVestMonths !== 1 ? 's' : ''} left before your stock fully vests
               </p>
-              <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--alpha-text-55)' }}>
                 Your unvested stock is one of your best bargaining chips right now.{' '}
                 {equityVestMonths <= 3
                   ? 'Ask for faster vesting or a bonus to stay — do this before any layoff announcement.'
@@ -564,12 +564,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               </p>
               <div
                 className="rounded-xl px-3 py-2"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
               >
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: 'var(--alpha-text-50)' }}>
                   WHAT TO SAY
                 </p>
-                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
                   "I wanted to talk about my stock given everything going on. I'm committed to staying,
                   but I'd like to explore faster vesting or a bonus to keep us both on the same page for the
                   next {equityVestMonths} months."
@@ -611,7 +611,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: '#22d3ee' }}>
             Tailored to your situation
           </div>
-          <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.78)' }}>
+          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
             {personalizedSet.profileContextNote}
           </p>
         </div>
@@ -625,7 +625,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
           }}
         >
           <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
-          <div className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+          <div className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
             <span style={{ color: '#f59e0b', fontWeight: 600 }}>General advice.</span>{' '}
             We don't have specific info for your exact role yet, so the actions below are general advice
             for tech and professional roles. They're still matched to your experience level and risk score,
