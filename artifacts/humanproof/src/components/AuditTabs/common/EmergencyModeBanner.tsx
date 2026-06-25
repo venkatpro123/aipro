@@ -14,6 +14,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ArrowRight, Flame } from 'lucide-react';
+import { RiskAlertIllustration } from '../../illustrations/CareerIllustrations';
 import type { HybridResult } from '../../../types/hybridResult';
 
 interface Props {
@@ -86,6 +87,11 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
       className="rounded-2xl overflow-hidden relative"
       style={{ background: accentBg, border: `1px solid ${accentBdr}` }}
     >
+      {/* Decorative risk-alert illustration — semi-transparent backdrop, top-right */}
+      <div className="absolute top-0 right-0 pointer-events-none" style={{ opacity: 0.10 }}>
+        <RiskAlertIllustration size={96} />
+      </div>
+
       <div className="px-4 pt-4 pb-3">
 
         {/* ── Top row: icon + headline + CTA ─── */}
